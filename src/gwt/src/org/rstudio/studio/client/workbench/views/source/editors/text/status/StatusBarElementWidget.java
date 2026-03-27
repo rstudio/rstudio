@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.Widget;
 
 public class StatusBarElementWidget extends FlowPanel implements StatusBarElement
 {
@@ -78,15 +79,39 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
    public void setIcon(ImageResource resource)
    {
       icon_.clear();
-      
+      hideSpinner();
+
       if (resource != null)
       {
          Image icon = new Image(resource);
          icon.addStyleName(RES.styles().icon());
          icon_.add(icon);
       }
-      
+
       icon_.setVisible(resource != null);
+   }
+
+   public void showSpinner()
+   {
+      icon_.setVisible(false);
+      if (spinner_ == null)
+      {
+         spinner_ = new Image(SPINNER_SVG_URI);
+         spinner_.setPixelSize(12, 12);
+         spinner_.addStyleName(RES.styles().icon());
+         spinner_.getElement().setAttribute("style",
+            spinner_.getElement().getAttribute("style") + "; top: 3px !important");
+         StatusBarElementWidget.this.insert(spinner_, 0);
+      }
+      spinner_.setVisible(true);
+   }
+
+   public void hideSpinner()
+   {
+      if (spinner_ != null)
+      {
+         spinner_.setVisible(false);
+      }
    }
 
    public void setValue(String value)
@@ -185,8 +210,20 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
    private final ArrayList<String> options_;
    private final FlowPanel icon_;
    private final Label label_;
+   private Image spinner_;
    private DecorativeImage arrows_;
    private boolean clicksEnabled_ = true;
+
+   // animated SVG spinner that works as an <img> element (inline display safe)
+   private static final String SPINNER_SVG_URI =
+      "data:image/svg+xml," +
+      "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' " +
+      "width='24' height='24'%3E" +
+      "%3Cstyle%3E@keyframes s{to{transform:rotate(360deg)}}%3C/style%3E" +
+      "%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='%23888' " +
+      "stroke-width='3' stroke-dasharray='42 14' " +
+      "style='animation:s .8s linear infinite;transform-origin:center'/%3E" +
+      "%3C/svg%3E";
    private String popupAlignment_ = POPUP_ALIGNMENT_LEFT;
 
    public final static String POPUP_ALIGNMENT_LEFT = "left";

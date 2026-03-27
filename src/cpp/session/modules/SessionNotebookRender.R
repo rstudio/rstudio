@@ -232,7 +232,6 @@
 
 .rs.addFunction("renderNotebookAsync", function()
 {
-   Sys.sleep(10)
    rmdPath    <- Sys.getenv("RS_NB_RMD_PATH")
    outputPath <- Sys.getenv("RS_NB_OUTPUT_PATH")
 

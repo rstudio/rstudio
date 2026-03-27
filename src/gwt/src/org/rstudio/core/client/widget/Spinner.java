@@ -40,9 +40,14 @@ public class Spinner extends Widget
       addStyleName(RES.styles().spinner());
    }
 
+   public static void ensureStylesInjected()
+   {
+      RES.styles().ensureInjected();
+   }
+
    private static final Resources RES = GWT.create(Resources.class);
    static
    {
-      RES.styles().ensureInjected();
+      ensureStylesInjected();
    }
 }

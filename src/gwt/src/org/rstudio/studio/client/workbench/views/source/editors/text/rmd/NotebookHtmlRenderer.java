@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.StatusBarIconType;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -44,7 +45,8 @@ import com.google.gwt.user.client.Timer;
 public class NotebookHtmlRenderer
              implements SaveFileEvent.Handler,
                         RmdRenderPendingEvent.Handler,
-                        RenderRmdEvent.Handler
+                        RenderRmdEvent.Handler,
+                        NotebookRenderFinishedEvent.Handler
 {
    public NotebookHtmlRenderer(DocDisplay display, TextEditingTarget target,
          TextEditingTarget.Display editingDisplay,
@@ -61,7 +63,8 @@ public class NotebookHtmlRenderer
 
       registrations_ = new HandlerRegistrations(
          events_.addHandler(RmdRenderPendingEvent.TYPE, this),
-         events_.addHandler(RenderRmdEvent.TYPE, this)
+         events_.addHandler(RenderRmdEvent.TYPE, this),
+         events_.addHandler(NotebookRenderFinishedEvent.TYPE, this)
       );
    }
 
@@ -72,6 +75,11 @@ public class NotebookHtmlRenderer
       {
          renderTimer_.cancel();
          renderTimer_ = null;
+      }
+      if (isRunning_)
+      {
+         isRunning_ = false;
+         clearStatus();
       }
    }
 
@@ -105,6 +113,39 @@ public class NotebookHtmlRenderer
          renderTimer_.run();
          renderTimer_.cancel();
          renderTimer_ = null;
+      }
+   }
+
+   @Override
+   public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
+   {
+      // only handle events for our document
+      if (!sentinel_.getId().equals(event.getDocId()))
+         return;
+
+      // only handle if we initiated the render
+      if (!isRunning_)
+         return;
+
+      isRunning_ = false;
+
+      if (event.succeeded())
+      {
+         clearStatus();
+      }
+      else
+      {
+         String errorMessage = event.getErrorMessage();
+         if (errorMessage != null && !errorMessage.isEmpty())
+         {
+            editingDisplay_.getStatusBar().showStatus(
+               StatusBarIconType.TYPE_ERROR,
+               constants_.errorCreatingNotebookPrefix() + errorMessage);
+         }
+         else
+         {
+            clearStatus();
+         }
       }
    }
 
@@ -146,6 +187,7 @@ public class NotebookHtmlRenderer
          public void execute()
          {
             isRunning_ = true;
+            scheduleStatusMessage();
             createNotebookDeferred(rmdPath, outputPath);
          }
       };
@@ -165,6 +207,40 @@ public class NotebookHtmlRenderer
    }
 
    // Private methods ---------------------------------------------------------
+
+   private void scheduleStatusMessage()
+   {
+      cancelStatusMessage();
+      statusTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (isRunning_)
+            {
+               editingDisplay_.getStatusBar().showStatus(
+                  StatusBarIconType.TYPE_LOADING,
+                  constants_.notebookRendering());
+            }
+         }
+      };
+      statusTimer_.schedule(1000);
+   }
+
+   private void cancelStatusMessage()
+   {
+      if (statusTimer_ != null)
+      {
+         statusTimer_.cancel();
+         statusTimer_ = null;
+      }
+   }
+
+   private void clearStatus()
+   {
+      cancelStatusMessage();
+      clearStatus();
+   }
 
    private void createNotebookDeferred(final String rmdPath,
                                        final String outputPath)
@@ -196,12 +272,14 @@ public class NotebookHtmlRenderer
 
                   editingDisplay_.showWarningBar(message);
                   isRunning_ = false;
+                  clearStatus();
                }
 
                @Override
                public void onError(ServerError error)
                {
                   isRunning_ = false;
+                  clearStatus();
                   Debug.logError(error);
                }
             }
@@ -222,6 +300,7 @@ public class NotebookHtmlRenderer
             if (!metDependencies)
             {
                isRunning_ = false;
+               clearStatus();
                return;
             }
 
@@ -233,19 +312,15 @@ public class NotebookHtmlRenderer
                      @Override
                      public void onResponseReceived(NotebookCreateResult result)
                      {
-                        if (result.succeeded())
+                        if (!result.started())
                         {
-                           events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 sentinel_.getId(),
-                                 sentinel_.getPath()));
+                           // render was not started (already up to date or
+                           // another render is in progress) -- clear state
+                           isRunning_ = false;
+                           clearStatus();
                         }
-                        else
-                        {
-                           editingDisplay_.showWarningBar(warningPrefix +
-                                 result.getErrorMessage());
-                        }
-
-                        isRunning_ = false;
+                        // if started == true, the async process is running;
+                        // onNotebookRenderFinished will handle completion
                      }
 
                      @Override
@@ -254,6 +329,7 @@ public class NotebookHtmlRenderer
                         editingDisplay_.showWarningBar(warningPrefix +
                               error.getMessage());
                         isRunning_ = false;
+                        clearStatus();
                      }
                   });
          }
@@ -265,6 +341,7 @@ public class NotebookHtmlRenderer
 
    private boolean isRunning_;
    private Timer renderTimer_;
+   private Timer statusTimer_;
    private Command renderCommand_;
 
    private final HandlerRegistrations registrations_;
