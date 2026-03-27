@@ -85,10 +85,10 @@ Confirm exit code 0 and the "Successfully uploaded" message. If it fails, report
 
 ### 6. Verify the install
 
-The install script short-circuits if it detects the target version is already present locally. To force a fresh download from S3, remove any existing copilot install first. The default tools root is `$HOME/opt/rstudio-tools/$(uname -m)` on macOS and `/opt/rstudio-tools/$(uname -m)` on Linux (unless `RSTUDIO_TOOLS_ROOT` is set).
+The install script short-circuits if it detects the target version is already present locally. To force a fresh download from S3, remove any existing copilot install first. The default tools root is `/opt/rstudio-tools/$(uname -m)` on both macOS and Linux (unless `RSTUDIO_TOOLS_ROOT` is set).
 
 ```bash
-rm -rf "${RSTUDIO_TOOLS_ROOT:-$HOME/opt/rstudio-tools/$(uname -m)}/copilot-language-server-js"
+rm -rf "${RSTUDIO_TOOLS_ROOT:-/opt/rstudio-tools/$(uname -m)}/copilot-language-server-js"
 bash dependencies/common/install-copilot-language-server
 ```
 
