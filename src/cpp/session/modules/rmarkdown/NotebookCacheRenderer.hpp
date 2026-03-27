@@ -55,6 +55,7 @@ private:
    std::string docPath_;
    std::stringstream stdOut_;
    std::stringstream stdErr_;
+   bool cancelled_ = false;
 
    static boost::weak_ptr<NotebookCacheRenderer> s_running_;
 };

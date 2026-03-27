@@ -241,7 +241,14 @@
    tryCatch({
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
       rnbData <- .rs.readRnbCache(rmdPath, cachePath)
-      .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
+
+      # render to a temp file in the same directory, then atomically
+      # move into place to avoid partial reads by other processes
+      outputDir <- dirname(outputPath)
+      tmpPath <- tempfile(tmpdir = outputDir, fileext = ".nb.html")
+      on.exit(unlink(tmpPath), add = TRUE)
+      .rs.createNotebookFromCacheData(rnbData, rmdPath, tmpPath)
+      file.rename(tmpPath, outputPath)
       cat("__RENDER_SUCCESS__\n")
    }, error = function(e) {
       cat(paste0("__RENDER_ERROR__:", jsonlite::toJSON(

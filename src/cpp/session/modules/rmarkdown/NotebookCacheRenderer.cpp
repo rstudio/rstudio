@@ -58,7 +58,10 @@ void NotebookCacheRenderer::terminateRunning()
 {
    boost::shared_ptr<NotebookCacheRenderer> instance = s_running_.lock();
    if (instance)
+   {
+      instance->cancelled_ = true;
       instance->terminate();
+   }
 }
 
 void NotebookCacheRenderer::render(const std::string& rmdPath,
@@ -120,6 +123,11 @@ void NotebookCacheRenderer::onStderr(const std::string& output)
 
 void NotebookCacheRenderer::onCompleted(int exitStatus)
 {
+   // if we were intentionally cancelled (e.g. a newer save triggered a
+   // new render), silently discard the result
+   if (cancelled_)
+      return;
+
    // build the result object
    json::Object result;
    result["doc_id"] = docId_;
