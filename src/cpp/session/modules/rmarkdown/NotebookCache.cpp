@@ -556,7 +556,7 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    FilePath rmdFile = module_context::resolveAliasedPath(rmdPath);
    FilePath outputFile = module_context::resolveAliasedPath(outputPath);
    FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
-   if (outputFile.exists() && chunkDefsFile.exists() &&
+   if (rmdFile.exists() && outputFile.exists() && chunkDefsFile.exists() &&
        outputFile.getLastWriteTime() >= chunkDefsFile.getLastWriteTime() &&
        outputFile.getLastWriteTime() >= rmdFile.getLastWriteTime())
    {

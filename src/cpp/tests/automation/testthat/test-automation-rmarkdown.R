@@ -715,3 +715,54 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
 })
+
+# https://github.com/rstudio/rstudio/issues/15925
+.rs.test("disabling preview on save prevents notebook rendering", {
+
+   contents <- .rs.heredoc('
+      ---
+      title: Notebook No Preview
+      output: html_notebook
+      ---
+
+      Some prose content.
+
+      ```{r}
+      1 + 1
+      ```
+   ')
+
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+
+      # enable "Preview on Save" and save once so a .nb.html is produced
+      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = TRUE)
+      remote$commands.execute("saveSourceDoc")
+      Sys.sleep(2)
+
+      # record the .nb.html modification time
+      remote$console.executeExpr({
+         ctx <- rstudioapi::getSourceEditorContext()
+         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+         writeLines(paste("mtime_before:", file.mtime(nbPath)))
+      })
+      mtimeBefore <- tail(remote$console.getOutput(), n = 1L)
+
+      # disable "Preview on Save", edit the document, then save again
+      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = FALSE)
+      editor$insert("\n\n<!-- extra comment -->")
+      Sys.sleep(1)
+      remote$commands.execute("saveSourceDoc")
+      Sys.sleep(2)
+
+      # verify the .nb.html was NOT updated
+      remote$console.executeExpr({
+         ctx <- rstudioapi::getSourceEditorContext()
+         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+         writeLines(paste("mtime_after:", file.mtime(nbPath)))
+      })
+      mtimeAfter <- tail(remote$console.getOutput(), n = 1L)
+
+      expect_equal(mtimeBefore, mtimeAfter)
+   })
+
+})
