@@ -569,6 +569,12 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    }
 
    // resolve the cache path from C++ (avoids .Call in child process)
+   //
+   // TODO: the child process reads from this cache directory while the main
+   // session could be writing new chunk outputs concurrently. In practice the
+   // window is small and the consequence is a slightly stale .nb.html that
+   // gets corrected on the next save. A future improvement could snapshot the
+   // cache (or at least chunks.json) before spawning the child process.
    FilePath cacheFolder = chunkCacheFolder(rmdFile, "", kSavedCtx);
    std::string cachePath = cacheFolder.getAbsolutePath();
 
