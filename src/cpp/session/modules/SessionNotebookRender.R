@@ -254,7 +254,12 @@
       tmpPath <- tempfile(tmpdir = outputDir, fileext = ".nb.html")
       on.exit(unlink(tmpPath), add = TRUE)
       .rs.createNotebookFromCacheData(rnbData, rmdPath, tmpPath)
-      file.rename(tmpPath, outputPath)
+      if (!file.rename(tmpPath, outputPath))
+      {
+         # rename can fail if the destination is locked; fall back to copy
+         if (!file.copy(tmpPath, outputPath, overwrite = TRUE))
+            stop("Failed to write notebook output to '", outputPath, "'")
+      }
       cat("__RENDER_SUCCESS__\n")
    }, error = function(e) {
       cat(paste0("__RENDER_ERROR__:", jsonlite::toJSON(
