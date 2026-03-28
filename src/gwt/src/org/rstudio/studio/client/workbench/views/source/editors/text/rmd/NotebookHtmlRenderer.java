@@ -75,8 +75,8 @@ public class NotebookHtmlRenderer
 
    public void addRenderCompleteHandler(Command callback)
    {
-      assert renderCompleteHandler_ == null :
-         "Only one render complete handler is supported at a time";
+      // only the most recent caller's continuation matters; earlier ones
+      // correspond to stale preview requests that were superseded
       renderCompleteHandler_ = callback;
    }
 
@@ -90,7 +90,11 @@ public class NotebookHtmlRenderer
       }
       if (isRunning_)
       {
-         finishRender();
+         // clear state without invoking renderCompleteHandler_ -- the
+         // editing target is being torn down so callbacks are invalid
+         isRunning_ = false;
+         renderCompleteHandler_ = null;
+         clearStatus();
       }
    }
 

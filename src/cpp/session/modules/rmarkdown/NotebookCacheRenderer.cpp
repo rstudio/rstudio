@@ -119,12 +119,14 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
 
 void NotebookCacheRenderer::onStdout(const std::string& output)
 {
-   stdOut_ << output;
+   if (!cancelled_)
+      stdOut_ << output;
 }
 
 void NotebookCacheRenderer::onStderr(const std::string& output)
 {
-   stdErr_ << output;
+   if (!cancelled_)
+      stdErr_ << output;
 }
 
 void NotebookCacheRenderer::onCompleted(int exitStatus)
