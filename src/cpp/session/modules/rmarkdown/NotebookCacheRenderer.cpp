@@ -185,14 +185,18 @@ void NotebookCacheRenderer::onCompleted(int exitStatus)
    module_context::enqueClientEvent(event);
 
    // bump chunk defs timestamp to match output file to prevent re-render
-   FilePath rmdFile = module_context::resolveAliasedPath(docPath_);
-   FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
-   FilePath outputFile(outputPath_);
-
-   if (chunkDefsFile.exists() && outputFile.exists() &&
-       chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())
+   // (only on success -- failed renders should not suppress future attempts)
+   if (succeeded)
    {
-      chunkDefsFile.setLastWriteTime(outputFile.getLastWriteTime());
+      FilePath rmdFile = module_context::resolveAliasedPath(docPath_);
+      FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
+      FilePath outputFile(outputPath_);
+
+      if (chunkDefsFile.exists() && outputFile.exists() &&
+          chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())
+      {
+         chunkDefsFile.setLastWriteTime(outputFile.getLastWriteTime());
+      }
    }
 }
 
