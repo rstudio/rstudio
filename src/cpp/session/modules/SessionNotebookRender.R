@@ -27,7 +27,13 @@
 #   RS_NB_ENCODING    -- file encoding (e.g. "UTF-8")
 #
 
-# --- Override functions that use .Call() ----------------------------------
+# --- Override / define functions not available in augmented mode -----------
+
+# .rs.trimWhitespace is defined in SessionCodeTools.R (not sourced here)
+.rs.addFunction("trimWhitespace", function(x)
+{
+   gsub("^[\\s\\n]+|[\\s\\n]+$", "", x, perl = TRUE)
+})
 
 # .rs.readLines uses .Call("rs_readLines") -- replace with base R
 .rs.addFunction("readLines", function(filePath)
