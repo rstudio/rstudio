@@ -1,7 +1,7 @@
 #
 # SessionNotebookRender.R
 #
-# Copyright (C) 2025 by Posit Software, PBC
+# Copyright (C) 2026 by Posit Software, PBC
 #
 # Unless you have received this program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
@@ -16,9 +16,10 @@
 # Designed to run in a child R process via AsyncRProcess in augmented mode
 # (Tools.R is sourced first, providing .rs.addFunction and other helpers).
 #
-# After this file is sourced, SessionRmdNotebook.R is also sourced to provide
-# the .rs.rnb.* functions. This file defines overrides for functions that
-# rely on .Call() native methods which are unavailable in the child process.
+# This file is sourced after SessionRmdNotebook.R (which provides the
+# .rs.rnb.* rendering functions), so that the overrides defined here take
+# precedence over functions that rely on .Call() native methods which are
+# unavailable in the child process.
 #
 # Parameters are passed via environment variables:
 #   RS_NB_RMD_PATH    -- absolute path to the .Rmd file
@@ -100,6 +101,10 @@
 })
 
 # --- Define .rs.readDataCapture from NotebookData.R -----------------------
+# NOTE: readDataCapture and formatDataCapture are duplicated from
+# SessionRmdNotebook.R / NotebookData.R because those files depend on
+# .Call() methods unavailable in the child process. Keep in sync with
+# the canonical implementations if the formatting logic changes.
 
 .rs.addFunction("readDataCapture", function(path)
 {
