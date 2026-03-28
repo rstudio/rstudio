@@ -252,7 +252,7 @@ public class NotebookHtmlRenderer
    private void clearStatus()
    {
       cancelStatusMessage();
-      clearStatus();
+      editingDisplay_.getStatusBar().hideStatus();
    }
 
    private void createNotebookDeferred(final String rmdPath,
