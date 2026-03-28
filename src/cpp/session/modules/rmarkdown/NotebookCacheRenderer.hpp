@@ -18,6 +18,7 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 
+#include <map>
 #include <string>
 #include <sstream>
 
@@ -39,8 +40,7 @@ public:
                       const std::string& docPath,
                       const std::string& encoding);
 
-   static bool isRunning();
-   static void terminateRunning();
+   static bool isRunning(const std::string& docPath);
 
 protected:
    void onStdout(const std::string& output) override;
@@ -59,7 +59,7 @@ private:
    std::stringstream stdErr_;
    bool cancelled_ = false;
 
-   static boost::weak_ptr<NotebookCacheRenderer> s_running_;
+   static std::map<std::string, boost::weak_ptr<NotebookCacheRenderer>> s_running_;
 };
 
 } // namespace notebook

@@ -39,7 +39,8 @@ namespace notebook {
 using namespace rstudio::core;
 
 // static member
-boost::weak_ptr<NotebookCacheRenderer> NotebookCacheRenderer::s_running_;
+std::map<std::string, boost::weak_ptr<NotebookCacheRenderer>>
+   NotebookCacheRenderer::s_running_;
 
 NotebookCacheRenderer::NotebookCacheRenderer(const std::string& docId,
                                              const std::string& docPath,
@@ -50,20 +51,13 @@ NotebookCacheRenderer::NotebookCacheRenderer(const std::string& docId,
 {
 }
 
-bool NotebookCacheRenderer::isRunning()
+bool NotebookCacheRenderer::isRunning(const std::string& docPath)
 {
-   boost::shared_ptr<NotebookCacheRenderer> instance = s_running_.lock();
+   auto it = s_running_.find(docPath);
+   if (it == s_running_.end())
+      return false;
+   boost::shared_ptr<NotebookCacheRenderer> instance = it->second.lock();
    return instance && instance->async_r::AsyncRProcess::isRunning();
-}
-
-void NotebookCacheRenderer::terminateRunning()
-{
-   boost::shared_ptr<NotebookCacheRenderer> instance = s_running_.lock();
-   if (instance)
-   {
-      instance->cancelled_ = true;
-      instance->terminate();
-   }
 }
 
 void NotebookCacheRenderer::render(const std::string& rmdPath,
@@ -75,11 +69,15 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
 {
    // cancel any in-progress render for the same document so we always
    // render the latest save; renders for other documents are left alone
-   boost::shared_ptr<NotebookCacheRenderer> running = s_running_.lock();
-   if (running && running->docPath_ == docPath)
+   auto it = s_running_.find(docPath);
+   if (it != s_running_.end())
    {
-      running->cancelled_ = true;
-      running->terminate();
+      boost::shared_ptr<NotebookCacheRenderer> running = it->second.lock();
+      if (running)
+      {
+         running->cancelled_ = true;
+         running->terminate();
+      }
    }
 
    // create the renderer
@@ -108,7 +106,7 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
 
    // store weak reference before starting (the process holds itself alive
    // via shared_from_this, but we want isRunning() to work immediately)
-   s_running_ = pRenderer;
+   s_running_[docPath] = pRenderer;
 
    // start the async R process in augmented mode (sources Tools.R first)
    pRenderer->start(
