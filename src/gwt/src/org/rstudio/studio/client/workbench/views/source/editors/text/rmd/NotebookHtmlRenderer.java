@@ -88,8 +88,7 @@ public class NotebookHtmlRenderer
       }
       if (isRunning_)
       {
-         isRunning_ = false;
-         clearStatus();
+         finishRender();
       }
    }
 
@@ -137,34 +136,30 @@ public class NotebookHtmlRenderer
       if (!isRunning_)
          return;
 
-      isRunning_ = false;
-
-      if (event.succeeded())
-      {
-         clearStatus();
-      }
-      else
+      if (!event.succeeded())
       {
          String errorMessage = event.getErrorMessage();
          if (errorMessage != null && !errorMessage.isEmpty())
          {
+            // show error in status bar (finishRender will not clear it)
+            cancelStatusMessage();
             editingDisplay_.getStatusBar().showStatus(
                StatusBarIconType.TYPE_ERROR,
                constants_.errorCreatingNotebookPrefix() + errorMessage);
-         }
-         else
-         {
-            clearStatus();
+
+            // still need to clear running state and invoke callbacks
+            isRunning_ = false;
+            if (renderCompleteHandler_ != null)
+            {
+               Command callback = renderCompleteHandler_;
+               renderCompleteHandler_ = null;
+               callback.execute();
+            }
+            return;
          }
       }
 
-      // invoke and clear any pending completion callback
-      if (renderCompleteHandler_ != null)
-      {
-         Command callback = renderCompleteHandler_;
-         renderCompleteHandler_ = null;
-         callback.execute();
-      }
+      finishRender();
    }
 
    @Override
@@ -255,6 +250,20 @@ public class NotebookHtmlRenderer
       editingDisplay_.getStatusBar().hideStatus();
    }
 
+   private void finishRender()
+   {
+      isRunning_ = false;
+      clearStatus();
+
+      // invoke and clear any pending completion callback
+      if (renderCompleteHandler_ != null)
+      {
+         Command callback = renderCompleteHandler_;
+         renderCompleteHandler_ = null;
+         callback.execute();
+      }
+   }
+
    private void createNotebookDeferred(final String rmdPath,
                                        final String outputPath)
    {
@@ -284,15 +293,13 @@ public class NotebookHtmlRenderer
                   }
 
                   editingDisplay_.showWarningBar(message);
-                  isRunning_ = false;
-                  clearStatus();
+                  finishRender();
                }
 
                @Override
                public void onError(ServerError error)
                {
-                  isRunning_ = false;
-                  clearStatus();
+                  finishRender();
                   Debug.logError(error);
                }
             }
