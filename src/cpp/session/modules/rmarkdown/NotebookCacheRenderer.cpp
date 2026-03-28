@@ -42,9 +42,11 @@ using namespace rstudio::core;
 boost::weak_ptr<NotebookCacheRenderer> NotebookCacheRenderer::s_running_;
 
 NotebookCacheRenderer::NotebookCacheRenderer(const std::string& docId,
-                                             const std::string& docPath)
+                                             const std::string& docPath,
+                                             const std::string& outputPath)
    : docId_(docId),
-     docPath_(docPath)
+     docPath_(docPath),
+     outputPath_(outputPath)
 {
 }
 
@@ -76,7 +78,7 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
 
    // create the renderer
    boost::shared_ptr<NotebookCacheRenderer> pRenderer(
-      new NotebookCacheRenderer(docId, docPath));
+      new NotebookCacheRenderer(docId, docPath, outputPath));
 
    // R source files to load:
    // 1. Tools.R is sourced automatically via R_PROCESS_AUGMENTED
@@ -185,8 +187,7 @@ void NotebookCacheRenderer::onCompleted(int exitStatus)
    // bump chunk defs timestamp to match output file to prevent re-render
    FilePath rmdFile = module_context::resolveAliasedPath(docPath_);
    FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
-   FilePath outputFile(rmdFile.getParent().completePath(
-      rmdFile.getStem() + ".nb.html"));
+   FilePath outputFile(outputPath_);
 
    if (chunkDefsFile.exists() && outputFile.exists() &&
        chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())

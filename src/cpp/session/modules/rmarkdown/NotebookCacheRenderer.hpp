@@ -49,10 +49,12 @@ protected:
 
 private:
    NotebookCacheRenderer(const std::string& docId,
-                         const std::string& docPath);
+                         const std::string& docPath,
+                         const std::string& outputPath);
 
    std::string docId_;
    std::string docPath_;
+   std::string outputPath_;
    std::stringstream stdOut_;
    std::stringstream stdErr_;
    bool cancelled_ = false;
