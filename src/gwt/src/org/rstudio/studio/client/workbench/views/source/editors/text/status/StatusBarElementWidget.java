@@ -98,9 +98,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
       {
          spinner_ = new Image(SPINNER_SVG_URI);
          spinner_.setPixelSize(12, 12);
-         spinner_.addStyleName(RES.styles().icon());
-         spinner_.getElement().setAttribute("style",
-            spinner_.getElement().getAttribute("style") + "; top: 3px !important");
+         spinner_.addStyleName(RES.styles().spinnerIcon());
          StatusBarElementWidget.this.insert(spinner_, 0);
       }
       spinner_.setVisible(true);
@@ -232,6 +230,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
    interface Styles extends CssResource
    {
       String icon();
+      String spinnerIcon();
    }
    
    public interface Resources extends ClientBundle

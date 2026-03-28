@@ -1,7 +1,7 @@
 /*
  * NotebookCacheRenderer.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -129,6 +129,17 @@ void NotebookCacheRenderer::onStderr(const std::string& output)
 
 void NotebookCacheRenderer::onCompleted(int exitStatus)
 {
+   // clean up our entry in the running map
+   auto it = s_running_.find(docPath_);
+   if (it != s_running_.end())
+   {
+      // only erase if this entry still points to us (a new render for the
+      // same document may have already replaced it)
+      boost::shared_ptr<NotebookCacheRenderer> current = it->second.lock();
+      if (!current || current.get() == this)
+         s_running_.erase(it);
+   }
+
    // if we were intentionally cancelled (e.g. a newer save triggered a
    // new render), silently discard the result
    if (cancelled_)

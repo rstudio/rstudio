@@ -75,6 +75,8 @@ public class NotebookHtmlRenderer
 
    public void addRenderCompleteHandler(Command callback)
    {
+      assert renderCompleteHandler_ == null :
+         "Only one render complete handler is supported at a time";
       renderCompleteHandler_ = callback;
    }
 
@@ -141,20 +143,13 @@ public class NotebookHtmlRenderer
          String errorMessage = event.getErrorMessage();
          if (errorMessage != null && !errorMessage.isEmpty())
          {
-            // show error in status bar (finishRender will not clear it)
+            // show error in status bar instead of clearing it
             cancelStatusMessage();
             editingDisplay_.getStatusBar().showStatus(
                StatusBarIconType.TYPE_ERROR,
                constants_.errorCreatingNotebookPrefix() + errorMessage);
 
-            // still need to clear running state and invoke callbacks
-            isRunning_ = false;
-            if (renderCompleteHandler_ != null)
-            {
-               Command callback = renderCompleteHandler_;
-               renderCompleteHandler_ = null;
-               callback.execute();
-            }
+            finishRender(false);
             return;
          }
       }
@@ -187,6 +182,14 @@ public class NotebookHtmlRenderer
       final String outputPath =
             FilePathUtils.filePathSansExtension(rmdPath) +
             RmdOutput.NOTEBOOK_EXT;
+
+      // if a render is already in progress, the C++ side will cancel it and
+      // start a new one; reset our local state so we track the new render
+      if (isRunning_)
+      {
+         isRunning_ = false;
+         clearStatus();
+      }
 
       // create the command to render the notebook
       Command renderCommand = new Command()
@@ -252,8 +255,14 @@ public class NotebookHtmlRenderer
 
    private void finishRender()
    {
+      finishRender(true);
+   }
+
+   private void finishRender(boolean shouldClearStatus)
+   {
       isRunning_ = false;
-      clearStatus();
+      if (shouldClearStatus)
+         clearStatus();
 
       // invoke and clear any pending completion callback
       if (renderCompleteHandler_ != null)
