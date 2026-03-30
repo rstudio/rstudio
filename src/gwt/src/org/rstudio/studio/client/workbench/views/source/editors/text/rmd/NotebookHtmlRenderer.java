@@ -269,7 +269,9 @@ public class NotebookHtmlRenderer
             public void onResponseReceived(Boolean cancelled)
             {
                // the C++ side will not fire NotebookRenderFinishedEvent for
-               // cancelled renders, so clean up directly
+               // cancelled renders, so clean up directly; when cancelled is
+               // false the renderer was already gone, but we still reset
+               // state to keep the UI consistent
                finishRender(false);
                clearStatus();
             }
@@ -278,6 +280,8 @@ public class NotebookHtmlRenderer
             public void onError(ServerError error)
             {
                Debug.logError(error);
+               finishRender(false);
+               clearStatus();
             }
          });
    }
