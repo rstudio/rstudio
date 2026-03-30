@@ -102,9 +102,9 @@
 
 # --- Define .rs.readDataCapture from NotebookData.R -----------------------
 # NOTE: readDataCapture and formatDataCapture are duplicated from
-# SessionRmdNotebook.R / NotebookData.R because those files depend on
-# .Call() methods unavailable in the child process. Keep in sync with
-# the canonical implementations if the formatting logic changes.
+# NotebookData.R because that file depends on .Call() methods unavailable
+# in the child process. Keep in sync with the canonical implementations
+# if the formatting logic changes.
 
 .rs.addFunction("readDataCapture", function(path)
 {
@@ -267,10 +267,11 @@
       }
       cat("__RENDER_SUCCESS__\n")
    }, error = function(e) {
-      cat(paste0("__RENDER_ERROR__:", jsonlite::toJSON(
-         list(error = e$message),
-         auto_unbox = TRUE
-      ), "\n"))
+      msg <- tryCatch(
+         jsonlite::toJSON(list(error = e$message), auto_unbox = TRUE),
+         error = function(e2) e$message
+      )
+      cat(paste0("__RENDER_ERROR__:", msg, "\n"))
       quit(save = "no", status = 1)
    })
 })

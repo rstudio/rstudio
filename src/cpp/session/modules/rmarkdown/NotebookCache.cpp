@@ -607,6 +607,19 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error cancelNotebookCacheRender(const json::JsonRpcRequest& request,
+                                json::JsonRpcResponse* pResponse)
+{
+   std::string docPath;
+   Error error = json::readParams(request.params, &docPath);
+   if (error)
+      return error;
+
+   bool cancelled = NotebookCacheRenderer::cancel(docPath);
+   pResponse->setResult(cancelled);
+   return Success();
+}
+
 Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
@@ -757,9 +770,11 @@ Error initCache()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "create_notebook_from_cache", 
+      (bind(registerRpcMethod, "create_notebook_from_cache",
             createNotebookFromCache))
-      (bind(registerRpcMethod, "extract_rmd_from_notebook", 
+      (bind(registerRpcMethod, "cancel_notebook_cache_render",
+            cancelNotebookCacheRender))
+      (bind(registerRpcMethod, "extract_rmd_from_notebook",
             extractRmdFromNotebook));
    return initBlock.execute();
 }

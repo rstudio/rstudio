@@ -1442,6 +1442,8 @@ public class TextEditingTargetNotebook
    {
       if (htmlRenderer_ != null)
          htmlRenderer_.addRenderCompleteHandler(callback);
+      else
+         callback.execute();
    }
 
    // set the output mode based on the global pref (or our local

@@ -42,6 +42,8 @@ public:
 
    static bool isRunning(const std::string& docPath);
 
+   static bool cancel(const std::string& docPath);
+
 protected:
    void onStdout(const std::string& output) override;
    void onStderr(const std::string& output) override;

@@ -60,6 +60,21 @@ bool NotebookCacheRenderer::isRunning(const std::string& docPath)
    return instance && instance->async_r::AsyncRProcess::isRunning();
 }
 
+bool NotebookCacheRenderer::cancel(const std::string& docPath)
+{
+   auto it = s_running_.find(docPath);
+   if (it == s_running_.end())
+      return false;
+
+   boost::shared_ptr<NotebookCacheRenderer> running = it->second.lock();
+   if (!running)
+      return false;
+
+   running->cancelled_ = true;
+   running->terminate();
+   return true;
+}
+
 void NotebookCacheRenderer::render(const std::string& rmdPath,
                                    const std::string& cachePath,
                                    const std::string& outputPath,
@@ -143,9 +158,12 @@ void NotebookCacheRenderer::onCompleted(int exitStatus)
    }
 
    // if we were intentionally cancelled (e.g. a newer save triggered a
-   // new render), silently discard the result
+   // new render or the user cancelled), discard the result
    if (cancelled_)
+   {
+      LOG_DEBUG_MESSAGE("Notebook render cancelled for: " + docPath_);
       return;
+   }
 
    // build the result object
    json::Object result;

@@ -90,8 +90,10 @@ public class NotebookHtmlRenderer
       }
       if (isRunning_)
       {
-         // clear state without invoking renderCompleteHandler_ -- the
-         // editing target is being torn down so callbacks are invalid
+         // cancel the C++ render process and clear state without invoking
+         // renderCompleteHandler_ -- the editing target is being torn down
+         // so callbacks are invalid
+         cancelRender();
          isRunning_ = false;
          renderCompleteHandler_ = null;
          clearStatus();
@@ -144,6 +146,8 @@ public class NotebookHtmlRenderer
 
       if (!event.succeeded())
       {
+         // the C++ backend guarantees a non-empty error_message on failure,
+         // so the empty-message branch here should not be reachable
          String errorMessage = event.getErrorMessage();
          if (errorMessage != null && !errorMessage.isEmpty())
          {
@@ -235,7 +239,8 @@ public class NotebookHtmlRenderer
             {
                editingDisplay_.getStatusBar().showStatus(
                   StatusBarIconType.TYPE_LOADING,
-                  constants_.notebookRendering());
+                  constants_.notebookRenderingClickToCancel(),
+                  event -> cancelRender());
             }
          }
       };
@@ -251,6 +256,32 @@ public class NotebookHtmlRenderer
       }
    }
 
+   private void cancelRender()
+   {
+      if (!isRunning_)
+         return;
+
+      server_.cancelNotebookCacheRender(
+         sentinel_.getPath(),
+         new ServerRequestCallback<Boolean>()
+         {
+            @Override
+            public void onResponseReceived(Boolean cancelled)
+            {
+               // the C++ side will not fire NotebookRenderFinishedEvent for
+               // cancelled renders, so clean up directly
+               finishRender(false);
+               clearStatus();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+   }
+
    private void clearStatus()
    {
       cancelStatusMessage();
@@ -262,18 +293,24 @@ public class NotebookHtmlRenderer
       finishRender(true);
    }
 
-   private void finishRender(boolean shouldClearStatus)
+   private void finishRender(boolean succeeded)
    {
       isRunning_ = false;
-      if (shouldClearStatus)
+
+      if (succeeded)
          clearStatus();
 
-      // invoke and clear any pending completion callback
-      if (renderCompleteHandler_ != null)
+      // invoke and clear any pending completion callback (only on success --
+      // on failure, the error is already shown in the status bar)
+      if (succeeded && renderCompleteHandler_ != null)
       {
          Command callback = renderCompleteHandler_;
          renderCompleteHandler_ = null;
          callback.execute();
+      }
+      else
+      {
+         renderCompleteHandler_ = null;
       }
    }
 
@@ -347,8 +384,8 @@ public class NotebookHtmlRenderer
                      {
                         if (!result.started())
                         {
-                           // render was not started (already up to date or
-                           // another render is in progress) -- clear state
+                           // render was not started (output already up to
+                           // date) -- clear state
                            isRunning_ = false;
                            clearStatus();
                         }
