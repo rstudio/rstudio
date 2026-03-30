@@ -697,21 +697,22 @@ withr::defer(.rs.automation.deleteRemote())
       # clear the console, then save the document
       remote$console.clear()
       remote$commands.execute("saveSourceDoc")
-      Sys.sleep(2)
+
+      # wait for the .nb.html to be produced
+      .rs.waitUntil("notebook output is generated", function() {
+         remote$console.executeExpr({
+            ctx <- rstudioapi::getSourceEditorContext()
+            nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+            writeLines(paste("nb_exists:", file.exists(nbPath)))
+         })
+         output <- remote$console.getOutput()
+         "nb_exists: TRUE" %in% output
+      })
 
       # verify no source() error appeared in the console
       output <- remote$console.getOutput()
       expect_false(any(grepl("unexpected symbol", output, fixed = TRUE)))
       expect_false(any(grepl("Error in source", output, fixed = TRUE)))
-
-      # verify the .nb.html was actually produced
-      remote$console.executeExpr({
-         ctx <- rstudioapi::getSourceEditorContext()
-         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-         writeLines(paste("nb_exists:", file.exists(nbPath)))
-      })
-      output <- remote$console.getOutput()
-      expect_true("nb_exists: TRUE" %in% output)
    })
 
 })
@@ -737,33 +738,42 @@ withr::defer(.rs.automation.deleteRemote())
       # enable "Preview on Save" and save once so a .nb.html is produced
       remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = TRUE)
       remote$commands.execute("saveSourceDoc")
-      Sys.sleep(2)
+
+      # wait for the .nb.html to be produced
+      .rs.waitUntil("notebook output is generated", function() {
+         remote$console.executeExpr({
+            ctx <- rstudioapi::getSourceEditorContext()
+            nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+            writeLines(paste("nb_exists:", file.exists(nbPath)))
+         })
+         output <- remote$console.getOutput()
+         "nb_exists: TRUE" %in% output
+      })
 
       # record the .nb.html modification time
       remote$console.executeExpr({
          ctx <- rstudioapi::getSourceEditorContext()
          nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-         writeLines(paste("mtime_before:", file.mtime(nbPath)))
+         writeLines(paste("mtime:", file.mtime(nbPath)))
       })
       mtimeBefore <- tail(remote$console.getOutput(), n = 1L)
 
       # disable "Preview on Save", edit the document, then save again
       remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = FALSE)
       editor$insert("\n\n<!-- extra comment -->")
-      Sys.sleep(1)
       remote$commands.execute("saveSourceDoc")
-      Sys.sleep(2)
 
       # verify the .nb.html was still updated (Preview on Save only
       # controls whether the viewer opens, not .nb.html generation)
-      remote$console.executeExpr({
-         ctx <- rstudioapi::getSourceEditorContext()
-         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-         writeLines(paste("mtime_after:", file.mtime(nbPath)))
+      .rs.waitUntil("notebook output is updated", function() {
+         remote$console.executeExpr({
+            ctx <- rstudioapi::getSourceEditorContext()
+            nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+            writeLines(paste("mtime:", file.mtime(nbPath)))
+         })
+         mtimeAfter <- tail(remote$console.getOutput(), n = 1L)
+         !identical(mtimeBefore, mtimeAfter)
       })
-      mtimeAfter <- tail(remote$console.getOutput(), n = 1L)
-
-      expect_false(identical(mtimeBefore, mtimeAfter))
    })
 
 })
