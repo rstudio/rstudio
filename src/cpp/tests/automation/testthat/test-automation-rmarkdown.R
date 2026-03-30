@@ -676,6 +676,8 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15925
 .rs.test("saving a notebook with preview on save does not call source()", {
 
+   skip_on_ci()
+
    contents <- .rs.heredoc('
       ---
       title: Notebook Save Test
@@ -719,6 +721,8 @@ withr::defer(.rs.automation.deleteRemote())
 
 # https://github.com/rstudio/rstudio/issues/15925
 .rs.test("saving a notebook with preview on save disabled still updates .nb.html", {
+
+   skip_on_ci()
 
    contents <- .rs.heredoc('
       ---

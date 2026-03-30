@@ -163,7 +163,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
 
-      // read message when dialog shows
+      // read message when dialog
+      // shows
       setARIADescribedBy(captionLabel.getElement());
 
       panel.add(scrollPanel);

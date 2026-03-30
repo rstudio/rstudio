@@ -29,7 +29,7 @@
 @external rstudio-themes-dark;
 @external rstudio-theme-aware-dialog;
 
-@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .targetPath {
@@ -37,7 +37,7 @@
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .targetScrollPanel {
-   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   background-color: THEME_DARKGREY_INACTIVE;
    border-color: THEME_DARKGREY_BACKGROUND;
 }
 
