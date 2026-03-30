@@ -40,6 +40,15 @@ public class NotebookRenderFinishedEvent
       docId_ = docId;
       docPath_ = docPath;
    }
+
+   public NotebookRenderFinishedEvent(boolean succeeded, String docId,
+         String docPath, String errorMessage)
+   {
+      docId_ = docId;
+      docPath_ = docPath;
+      succeeded_ = succeeded;
+      errorMessage_ = errorMessage;
+   }
    
    public String getDocId()
    {
@@ -63,6 +72,18 @@ public class NotebookRenderFinishedEvent
       return TYPE;
    }
    
+   public boolean succeeded()
+   {
+      return succeeded_;
+   }
+
+   public String getErrorMessage()
+   {
+      return errorMessage_;
+   }
+
    private String docId_;
    private String docPath_;
+   private boolean succeeded_ = true;
+   private String errorMessage_;
 }

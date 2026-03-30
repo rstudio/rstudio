@@ -319,6 +319,7 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
    modules/rmarkdown/NotebookAlternateEngines.cpp
    modules/rmarkdown/NotebookCache.cpp
+   modules/rmarkdown/NotebookCacheRenderer.cpp
    modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
    modules/rmarkdown/NotebookChunkOptions.cpp

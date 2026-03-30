@@ -182,6 +182,8 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String rMarkdownNotInstalledHTMLNoGenerate();
     String rMarkdownUpgradeRequired();
     String errorCreatingNotebookPrefix();
+    String notebookRendering();
+    String notebookRenderingClickToCancel();
     String creatingRNotebooks();
     String cantExecuteJobDesc(String jobDesc);
     String executingPythonChunks();

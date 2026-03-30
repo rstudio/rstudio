@@ -219,6 +219,7 @@ const int kConsoleWritePendingWarning = 201;
 const int kAssistantStatusChanged = 202;
 const int kChatBackendExit = 203;
 const int kShowMessage = 204;
+const int kNotebookRenderCompleted = 205;
 
 }
 
@@ -613,6 +614,8 @@ std::string ClientEvent::typeName() const
          return "assistant_status_changed";
       case client_events::kChatBackendExit:
          return "chat_backend_exit";
+      case client_events::kNotebookRenderCompleted:
+         return "notebook_render_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

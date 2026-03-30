@@ -299,6 +299,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
    {
+      // ignore failed renders (e.g. cancelled, error)
+      if (!event.succeeded())
+         return;
+
       // ignore if no result, no output frame/closed output frame, or frame not
       // associated with this document
       if (result_ == null ||

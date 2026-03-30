@@ -19,6 +19,7 @@
 #include "NotebookPaths.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
+#include "NotebookCacheRenderer.hpp"
 
 #include <boost/bind/bind.hpp>
 
@@ -547,7 +548,7 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
-   
+
    // if the .nb.html output already exists and is at least as new as both
    // the chunk definitions cache and the .Rmd source, there is nothing to
    // do -- skip the expensive rmarkdown::render / pandoc invocation.
@@ -561,38 +562,61 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
        outputFile.getLastWriteTime() >= rmdFile.getLastWriteTime())
    {
       json::Object result;
+      result["started"] = false;
       result["succeeded"] = true;
       pResponse->setResult(result);
       return Success();
    }
 
-   SEXP resultSEXP = R_NilValue;
-   r::sexp::Protect protect;
-   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
-   createNotebook.addParam(string_utils::utf8ToSystem(rmdPath));
-   createNotebook.addParam(string_utils::utf8ToSystem(outputPath));
-   error = createNotebook.call(&resultSEXP, &protect);
-   if (error)
+   // resolve the cache path from C++ (avoids .Call in child process)
+   //
+   // TODO: the child process reads from this cache directory while the main
+   // session could be writing new chunk outputs concurrently. In practice the
+   // window is small and the consequence is a slightly stale .nb.html that
+   // gets corrected on the next save. A future improvement could snapshot the
+   // cache (or at least chunks.json) before spawning the child process.
+   FilePath cacheFolder = chunkCacheFolder(rmdFile, "", kSavedCtx);
+   std::string cachePath = cacheFolder.getAbsolutePath();
+
+   // look up the document encoding from the source database
+   std::string encoding = "UTF-8";
+   std::string docId;
+   Error dbError = source_database::getId(rmdPath, &docId);
+   if (!dbError && !docId.empty())
    {
-      LOG_ERROR(error);
-      return error;
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+      Error getError = source_database::get(docId, pDoc);
+      if (!getError && !pDoc->encoding().empty())
+         encoding = pDoc->encoding();
    }
 
-   // bump the write time on our local chunk definition file so that it matches
-   // the notebook file; this prevents us from thinking that the .nb.html file
-   // we just wrote is ahead of the local cache.
-   if (chunkDefsFile.exists() && 
-       chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())
-      chunkDefsFile.setLastWriteTime(outputFile.getLastWriteTime());
+   // spawn the async renderer
+   NotebookCacheRenderer::render(
+      rmdFile.getAbsolutePath(),
+      cachePath,
+      outputFile.getAbsolutePath(),
+      docId,
+      rmdPath,
+      encoding);
 
-   // convert the result into JSON for the client
-   json::Value result;
-   error = r::json::jsonValueFromList(resultSEXP, &result);
+   json::Object result;
+   result["started"] = true;
+   result["succeeded"] = true;
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error cancelNotebookCacheRender(const json::JsonRpcRequest& request,
+                                json::JsonRpcResponse* pResponse)
+{
+   std::string docPath;
+   Error error = json::readParams(request.params, &docPath);
    if (error)
-      LOG_ERROR(error);
-   else
-      pResponse->setResult(result);
-   
+      return error;
+
+   bool cancelled = NotebookCacheRenderer::cancel(docPath);
+   pResponse->setResult(cancelled);
    return Success();
 }
 
@@ -746,9 +770,11 @@ Error initCache()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "create_notebook_from_cache", 
+      (bind(registerRpcMethod, "create_notebook_from_cache",
             createNotebookFromCache))
-      (bind(registerRpcMethod, "extract_rmd_from_notebook", 
+      (bind(registerRpcMethod, "cancel_notebook_cache_render",
+            cancelNotebookCacheRender))
+      (bind(registerRpcMethod, "extract_rmd_from_notebook",
             extractRmdFromNotebook));
    return initBlock.execute();
 }
