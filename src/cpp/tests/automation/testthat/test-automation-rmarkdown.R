@@ -739,24 +739,21 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = TRUE)
       remote$commands.execute("saveSourceDoc")
 
-      # wait for the .nb.html to be produced
-      .rs.waitUntil("notebook output is generated", function() {
+      # wait for the first render to fully complete by polling until the
+      # .nb.html mtime stabilizes (two consecutive reads return the same value)
+      lastMtime <- ""
+      .rs.waitUntil("notebook render settles", function() {
          remote$console.executeExpr({
             ctx <- rstudioapi::getSourceEditorContext()
             nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-            writeLines(paste("nb_exists:", file.exists(nbPath)))
+            writeLines(paste("mtime:", file.mtime(nbPath)))
          })
-         output <- remote$console.getOutput()
-         "nb_exists: TRUE" %in% output
+         currentMtime <- tail(remote$console.getOutput(), n = 1L)
+         settled <- nzchar(lastMtime) && identical(currentMtime, lastMtime)
+         lastMtime <<- currentMtime
+         settled
       })
-
-      # record the .nb.html modification time
-      remote$console.executeExpr({
-         ctx <- rstudioapi::getSourceEditorContext()
-         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-         writeLines(paste("mtime:", file.mtime(nbPath)))
-      })
-      mtimeBefore <- tail(remote$console.getOutput(), n = 1L)
+      mtimeBefore <- lastMtime
 
       # disable "Preview on Save", edit the document, then save again
       remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = FALSE)
