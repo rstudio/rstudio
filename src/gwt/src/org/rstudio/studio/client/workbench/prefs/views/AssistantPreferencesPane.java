@@ -389,7 +389,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Create Copilot Terms of Service panel at the bottom (absolute positioning)
       copilotTosPanel_ = new VerticalPanel();
-      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spacedBefore(lblCopilotTos_));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
