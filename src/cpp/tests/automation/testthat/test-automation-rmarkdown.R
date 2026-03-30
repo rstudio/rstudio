@@ -691,12 +691,15 @@ withr::defer(.rs.automation.deleteRemote())
 
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
 
-      # enable "Preview on Save" — target the wrapper for wait/click (has
-      # box model) and the inner input for reading .checked (has property);
-      # GWT CheckBox hides the native <input> so it has no layout
-      remote$dom.waitForElement("#rstudio_cb_source_on_save")
+      # enable "Preview on Save" via JS click on the wrapper element;
+      # CDP layout operations (DOM.getBoxModel) can fail in CI when the
+      # editor toolbar hasn't been laid out yet, so avoid dom.waitForElement
+      # and dom.clickElement which both depend on element geometry
+      .rs.waitUntil("source on save checkbox exists", function() {
+         remote$dom.elementExists("#rstudio_cb_source_on_save")
+      })
       if (!remote$dom.isChecked("#rstudio_cb_source_on_save input")) {
-         remote$dom.clickElement("#rstudio_cb_source_on_save")
+         remote$js.eval("document.querySelector('#rstudio_cb_source_on_save').click()")
       }
       
       # clear the console, then save the document
