@@ -698,9 +698,12 @@ withr::defer(.rs.automation.deleteRemote())
       .rs.waitUntil("source on save checkbox exists", function() {
          remote$dom.elementExists("#rstudio_cb_source_on_save")
       })
-      if (!remote$dom.isChecked("#rstudio_cb_source_on_save input")) {
-         remote$js.eval("document.querySelector('#rstudio_cb_source_on_save').click()")
-      }
+      .rs.waitUntil("preview on save is enabled", function() {
+         if (!remote$dom.isChecked("#rstudio_cb_source_on_save input")) {
+            remote$js.eval("document.querySelector('#rstudio_cb_source_on_save').click()")
+         }
+         remote$dom.isChecked("#rstudio_cb_source_on_save input")
+      })
       
       # clear the console, then save the document
       remote$console.clear()
