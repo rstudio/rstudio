@@ -691,8 +691,13 @@ withr::defer(.rs.automation.deleteRemote())
 
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
 
-      # enable "Preview on Save"
-      remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = TRUE)
+      # enable "Preview on Save" — target the wrapper for wait/click (has
+      # box model) and the inner input for reading .checked (has property);
+      # GWT CheckBox hides the native <input> so it has no layout
+      remote$dom.waitForElement("#rstudio_cb_source_on_save")
+      if (!remote$dom.isChecked("#rstudio_cb_source_on_save input")) {
+         remote$dom.clickElement("#rstudio_cb_source_on_save")
+      }
       
       # clear the console, then save the document
       remote$console.clear()
