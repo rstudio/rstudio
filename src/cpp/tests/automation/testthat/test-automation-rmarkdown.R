@@ -676,8 +676,6 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15925
 .rs.test("saving a notebook with preview on save does not call source()", {
 
-   skip_on_ci()
-
    contents <- .rs.heredoc('
       ---
       title: Notebook Save Test
@@ -694,8 +692,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
 
       # enable "Preview on Save"
-      sourceOnSaveEl <- remote$js.querySelector("#rstudio_cb_source_on_save")
-      remote$dom.clickElement(objectId = sourceOnSaveEl)
+      remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = TRUE)
       
       # clear the console, then save the document
       remote$console.clear()
@@ -722,8 +719,6 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15925
 .rs.test("saving a notebook with preview on save disabled still updates .nb.html", {
 
-   skip_on_ci()
-
    contents <- .rs.heredoc('
       ---
       title: Notebook No Preview
@@ -740,7 +735,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
 
       # enable "Preview on Save" and save once so a .nb.html is produced
-      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = TRUE)
+      remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = TRUE)
       remote$commands.execute("saveSourceDoc")
       Sys.sleep(2)
 
@@ -753,7 +748,7 @@ withr::defer(.rs.automation.deleteRemote())
       mtimeBefore <- tail(remote$console.getOutput(), n = 1L)
 
       # disable "Preview on Save", edit the document, then save again
-      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = FALSE)
+      remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = FALSE)
       editor$insert("\n\n<!-- extra comment -->")
       Sys.sleep(1)
       remote$commands.execute("saveSourceDoc")
