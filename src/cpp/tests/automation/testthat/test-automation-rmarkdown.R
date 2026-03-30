@@ -740,16 +740,20 @@ withr::defer(.rs.automation.deleteRemote())
       remote$commands.execute("saveSourceDoc")
 
       # wait for the first render to fully complete by polling until the
-      # .nb.html mtime stabilizes (two consecutive reads return the same value)
+      # .nb.html mtime stabilizes (two consecutive reads return the same value,
+      # and the file actually exists — file.mtime returns NA for missing files)
       lastMtime <- ""
       .rs.waitUntil("notebook render settles", function() {
          remote$console.executeExpr({
             ctx <- rstudioapi::getSourceEditorContext()
             nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
-            writeLines(paste("mtime:", file.mtime(nbPath)))
+            mtime <- file.mtime(nbPath)
+            writeLines(paste("mtime:", mtime))
          })
          currentMtime <- tail(remote$console.getOutput(), n = 1L)
-         settled <- nzchar(lastMtime) && identical(currentMtime, lastMtime)
+         settled <- nzchar(lastMtime) &&
+            identical(currentMtime, lastMtime) &&
+            !grepl("NA", currentMtime, fixed = TRUE)
          lastMtime <<- currentMtime
          settled
       })
