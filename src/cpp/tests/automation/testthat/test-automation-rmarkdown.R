@@ -703,7 +703,8 @@ withr::defer(.rs.automation.deleteRemote())
       remote$console.clear()
       remote$commands.execute("saveSourceDoc")
 
-      # wait for the .nb.html to be produced
+      # wait for the .nb.html to be produced (swallowErrors because on
+      # Server the console may not be focusable while a render is in progress)
       .rs.waitUntil("notebook output is generated", function() {
          remote$console.executeExpr({
             ctx <- rstudioapi::getSourceEditorContext()
@@ -712,7 +713,7 @@ withr::defer(.rs.automation.deleteRemote())
          })
          output <- remote$console.getOutput()
          "nb_exists: TRUE" %in% output
-      })
+      }, swallowErrors = TRUE)
 
       # verify no source() error appeared in the console
       output <- remote$console.getOutput()
