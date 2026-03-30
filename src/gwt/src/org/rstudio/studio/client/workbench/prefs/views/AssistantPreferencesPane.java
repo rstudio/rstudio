@@ -65,7 +65,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.FontStyle;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -390,8 +389,6 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Create Copilot Terms of Service panel at the bottom (absolute positioning)
       copilotTosPanel_ = new VerticalPanel();
-      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
-      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
       copilotTosPanel_.add(spaced(lblCopilotTos_));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
