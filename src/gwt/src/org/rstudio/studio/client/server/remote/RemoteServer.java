@@ -5946,6 +5946,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void cancelNotebookCacheRender(String docPath,
+               ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath));
+      sendRequest(RPC_SCOPE, "cancel_notebook_cache_render", params, requestCallback);
+   }
+
+   @Override
    public void replayNotebookPlots(String docId,
                                    String initialChunkId,
                                    int pixelWidth,
