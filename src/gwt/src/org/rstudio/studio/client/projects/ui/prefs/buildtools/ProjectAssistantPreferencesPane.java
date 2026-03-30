@@ -52,8 +52,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -288,11 +286,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Add container for dynamic content
       add(assistantDetailsPanel_);
 
-      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      // Add Copilot Terms of Service panel at the bottom
       copilotTosPanel_ = new VerticalPanel();
-      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
-      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spaced(spacedBefore(lblCopilotTos_)));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
