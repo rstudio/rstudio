@@ -17,6 +17,8 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -129,6 +131,7 @@ public class RSConnectDeploy extends Composite
       String urlAnchor();
       String wizard();
       String wizardDeployPage();
+      String wizardMainWidget();
    }
    
    public interface DeployResources extends ClientBundle
@@ -136,17 +139,32 @@ public class RSConnectDeploy extends Composite
       @Source("publishShinyIllustration_2x.png")
       ImageResource publishShinyIllustration2x();
 
+      @Source("publishShinyIllustrationDark_2x.png")
+      ImageResource publishShinyIllustrationDark2x();
+
       @Source("publishRmdIllustration_2x.png")
       ImageResource publishRmdIllustration2x();
+
+      @Source("publishRmdIllustrationDark_2x.png")
+      ImageResource publishRmdIllustrationDark2x();
 
       @Source("publishPlotIllustration_2x.png")
       ImageResource publishPlotIllustration2x();
 
+      @Source("publishPlotIllustrationDark_2x.png")
+      ImageResource publishPlotIllustrationDark2x();
+
       @Source("publishPresentationIllustration_2x.png")
       ImageResource publishPresentationIllustration2x();
 
+      @Source("publishPresentationIllustrationDark_2x.png")
+      ImageResource publishPresentationIllustrationDark2x();
+
       @Source("publishHTMLIllustration_2x.png")
       ImageResource publishHTMLIllustration2x();
+
+      @Source("publishHTMLIllustrationDark_2x.png")
+      ImageResource publishHTMLIllustrationDark2x();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -174,7 +192,8 @@ public class RSConnectDeploy extends Composite
                Roles.getDialogRole(),
                onClosed,
                onCancel);
-         
+         setThemeAware(true);
+
          HelpLink publishLink = HelpLink.createExternal(
                constants_.environmentVariablesHelpLinkLabel(),
                "https://docs.posit.co/connect/admin/process-management/index.html#environment-variables");
@@ -1303,22 +1322,37 @@ public class RSConnectDeploy extends Composite
          }
       }
       
+      boolean dark = useDarkDialogTheme();
       ImageResource illustration = null;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP || contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
-         illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishShinyIllustrationDark2x() : RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
-         illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishPlotIllustrationDark2x() : RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
-         illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishRmdIllustrationDark2x() : RESOURCES.publishRmdIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
                contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
-         illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishHTMLIllustrationDark2x() : RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
-         illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishPresentationIllustrationDark2x() : RESOURCES.publishPresentationIllustration2x());
       if (illustration != null)
          deployIllustration_.setResource(illustration);
    }
    
+   private static boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    private boolean isUpdate()
    {
       return fromPrevious_ != null;

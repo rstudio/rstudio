@@ -670,5 +670,5 @@ withr::defer(.rs.automation.deleteRemote())
       Sys.sleep(1)
       expect_error(remote$dom.querySelector(".pagedtable"))
    })
-   
+
 })

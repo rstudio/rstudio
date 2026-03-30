@@ -17,6 +17,7 @@
 #define CORE_CONFIG_PROFILE_HPP
 
 #include <map>
+#include <optional>
 
 #include <boost/any.hpp>
 #include <boost/function.hpp>
@@ -133,11 +134,106 @@ public:
                   catch (const boost::bad_lexical_cast&)
                   {
                      return systemError(boost::system::errc::invalid_argument,
-                                        "Invalid type requested for param " + paramName,
+                                        "Invalid value '" + iter->second + "' for param " + paramName,
                                         ERROR_LOCATION);
                   }
                }
             }
+         }
+      }
+
+      return Success();
+   }
+
+   // Returns the explicitly-set value (or nullopt) for each matched config section, in
+   // level-ascending order (global -> groups in config order -> user). Absent sections
+   // (no config block for this level) are omitted entirely. Present sections where the
+   // param is not set emit nullopt.
+   //
+   // Output order follows the order levels appear in levels_ (established by parseString),
+   // not the order of the `levels` filter parameter passed by the caller.
+   template <typename T>
+   core::Error getAllLevelValues(const std::string& paramName,
+                                 std::vector<std::optional<T>>* pValues,
+                                 const std::vector<Level>& levelFilter) const
+   {
+      DefaultParamValuesMap::const_iterator defaultValuesIter = defaultValues_.find(paramName);
+      if (defaultValuesIter == defaultValues_.end())
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "Parameter '" + paramName + "' not found in registered params",
+                            ERROR_LOCATION);
+      }
+
+      pValues->clear();
+
+      // levels_ is already sorted ascending by parseString
+      for (const LevelValues& configLevel : levels_)
+      {
+         bool matches = std::any_of(levelFilter.begin(), levelFilter.end(),
+                                    [&configLevel](const Level& l) { return l == configLevel.first; });
+         if (!matches)
+            continue;
+
+         ValuesMap::const_iterator iter = configLevel.second.find(paramName);
+         if (iter == configLevel.second.end())
+         {
+            pValues->push_back(std::nullopt);
+         }
+         else
+         {
+            try
+            {
+               pValues->push_back(boost::lexical_cast<T>(iter->second));
+            }
+            catch (const boost::bad_lexical_cast&)
+            {
+               return systemError(boost::system::errc::invalid_argument,
+                                  "Invalid value '" + iter->second + "' for param " + paramName,
+                                  ERROR_LOCATION);
+            }
+         }
+      }
+
+      return Success();
+   }
+
+   // Returns the explicitly-set ValuesMap (or nullopt) for each matched config section,
+   // in level-ascending order (global -> groups in config order -> user). Absent sections
+   // (no config block for this level) are omitted entirely. Present sections where the
+   // compound param is not set emit nullopt. Mirrors getAllLevelValues but for compound
+   // params stored in compoundLevels_. Compound param values are always raw strings;
+   // callers perform any type conversion on the individual map entries.
+   core::Error getAllCompoundLevelValues(const std::string& paramName,
+                                        std::vector<std::optional<ValuesMap>>* pValues,
+                                        const std::vector<Level>& levelFilter) const
+   {
+      DefaultParamValuesMap::const_iterator defaultValuesIter = defaultValues_.find(paramName);
+      if (defaultValuesIter == defaultValues_.end())
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "Parameter '" + paramName + "' not found in registered params",
+                            ERROR_LOCATION);
+      }
+
+      pValues->clear();
+
+      // compoundLevels_ is already sorted ascending by parseString
+      for (const LevelCompoundValues& configLevel : compoundLevels_)
+      {
+         bool matches = std::any_of(levelFilter.begin(), levelFilter.end(),
+                                    [&configLevel](const Level& l) { return l == configLevel.first; });
+         if (!matches)
+            continue;
+
+         CompoundMap::const_iterator iter = configLevel.second.find(paramName);
+         if (iter == configLevel.second.end())
+         {
+            pValues->push_back(std::nullopt);
+         }
+         else
+         {
+            pValues->push_back(iter->second);
          }
       }
 

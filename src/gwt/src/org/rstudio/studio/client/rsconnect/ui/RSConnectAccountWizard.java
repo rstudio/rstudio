@@ -50,6 +50,7 @@ public class RSConnectAccountWizard
                createIntroPage(showShinyAppsPage, showConnectCloudPage, isConnectEnabled) :
                createSelectorPage(showShinyAppsPage, showConnectCloudPage, isConnectEnabled),
             operation);
+      setThemeAware(true);
       initAuthPage(getFirstPage());
    }
    

@@ -276,6 +276,39 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
 }
 
+Error addFirstRunDocsForTemplate(const FilePath& projectFilePath,
+                                 const json::Value& projectTemplateOptions)
+{
+   if (projectTemplateOptions.isNull() || !json::isType<json::Object>(projectTemplateOptions))
+      return Success();
+
+   json::Object descriptionJson;
+   Error error = json::readObject(projectTemplateOptions.getObject(),
+                                  "description", descriptionJson);
+   if (error)
+      return error;
+
+   json::Value openFilesJson = descriptionJson["open_files"];
+   if (openFilesJson.isNull())
+      return Success();
+
+   if (!openFilesJson.isArray())
+   {
+      LOG_WARNING_MESSAGE("Template 'open_files' field is not an array");
+      return Success();
+   }
+
+   json::Array openFiles = openFilesJson.getArray();
+   if (openFiles.isEmpty())
+      return Success();
+
+   return r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+         .addParam(openFiles)
+         .call();
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -361,6 +394,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
 
    std::string existingProjectFilePath;
+   FilePath resolvedProjectFilePath = projectFilePath;
    if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
    {
       // create the project file
@@ -372,14 +406,22 @@ Error createProject(const json::JsonRpcRequest& request,
 
       FilePath projectDir = projectFilePath.getParent();
       overlay::onCreateProject(projectDir);
-
-      return Success();
    }
    else
    {
+      resolvedProjectFilePath = FilePath(existingProjectFilePath);
       pResponse->setResult(existingProjectFilePath);
-      return Success();
    }
+
+   // register first-run docs for the template now that the .Rproj file exists
+   error = addFirstRunDocsForTemplate(resolvedProjectFilePath, projectTemplateOptions);
+   if (error)
+   {
+      error.addProperty("project", resolvedProjectFilePath.getAbsolutePath());
+      LOG_ERROR(error);
+   }
+
+   return Success();
 }
 
 Error createProjectFile(const json::JsonRpcRequest& request,

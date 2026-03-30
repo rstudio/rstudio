@@ -440,6 +440,235 @@ TEST(ConfigProfileTest, CanParseTwoLevelCompoundValue)
 }
 
 
+TEST(ConfigProfileTest, GetAllLevelValues)
+{
+   // Profile with all three levels; max-cpus set at global and group but not at user level.
+   // @everyone and bob have a different param set (max-mem-mb) so the section is present in
+   // levels_ but max-cpus is absent → getAllLevelValues should return nullopt for those levels.
+   // Note: Boost's read_ini silently drops completely empty sections, so we must have at least
+   // one param in each section to ensure it is retained.
+   std::string profileStr = R"([*]
+          max-cpus=4.0
+
+          [@scientists]
+          max-cpus=8.0
+
+          [@everyone]
+          max-mem-mb=100.0
+
+          [alice]
+          max-cpus=2.0
+
+          [bob]
+          max-mem-mb=200.0)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}, {1, "@"}, {2, std::string()}});
+   profile.addParams("max-cpus", 0.0, "max-mem-mb", 0.0);
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   // alice in scientists: global=4, scientists=8, everyone=nullopt, user=2
+   // Order: global, groups (scientists, everyone), user
+   {
+      std::vector<std::optional<double>> values;
+      error = profile.getAllLevelValues("max-cpus", &values,
+                                        {{0, std::string()}, {1, "scientists"}, {1, "everyone"}, {2, "alice"}});
+      ASSERT_FALSE(error);
+      ASSERT_EQ(4u, values.size());
+      ASSERT_TRUE(values[0].has_value());  ASSERT_EQ(4.0, *values[0]);   // global
+      ASSERT_TRUE(values[1].has_value());  ASSERT_EQ(8.0, *values[1]);   // @scientists
+      ASSERT_FALSE(values[2].has_value());                                // @everyone: section present, param not set
+      ASSERT_TRUE(values[3].has_value());  ASSERT_EQ(2.0, *values[3]);   // alice
+   }
+
+   // bob in scientists: global=4, scientists=8, bob section present but max-cpus not set
+   {
+      std::vector<std::optional<double>> values;
+      error = profile.getAllLevelValues("max-cpus", &values,
+                                        {{0, std::string()}, {1, "scientists"}, {2, "bob"}});
+      ASSERT_FALSE(error);
+      ASSERT_EQ(3u, values.size());
+      ASSERT_TRUE(values[0].has_value());  ASSERT_EQ(4.0, *values[0]);
+      ASSERT_TRUE(values[1].has_value());  ASSERT_EQ(8.0, *values[1]);
+      ASSERT_FALSE(values[2].has_value());  // bob section present, param not set
+   }
+
+   // absent section (no config block) is omitted entirely
+   {
+      std::vector<std::optional<double>> values;
+      error = profile.getAllLevelValues("max-cpus", &values,
+                                        {{0, std::string()}, {2, "charlie"}});  // charlie has no section
+      ASSERT_FALSE(error);
+      ASSERT_EQ(1u, values.size());  // only global; charlie's absent section is omitted
+      ASSERT_TRUE(values[0].has_value());  ASSERT_EQ(4.0, *values[0]);
+   }
+
+   // unregistered param returns error
+   {
+      std::vector<std::optional<double>> values;
+      error = profile.getAllLevelValues("nonexistent", &values, {{0, std::string()}});
+      ASSERT_TRUE(error);
+   }
+
+   // bad value (non-numeric string where double expected) returns error
+   {
+      ConfigProfile badProfile;
+      badProfile.addSections({{0, "*"}, {2, std::string()}});
+      badProfile.addParams("max-cpus", 0.0);
+
+      Error parseError = badProfile.parseString("[*]\nmax-cpus=not-a-number\n");
+      ASSERT_FALSE(parseError);
+
+      std::vector<std::optional<double>> values;
+      error = badProfile.getAllLevelValues("max-cpus", &values, {{0, std::string()}});
+      ASSERT_TRUE(error);
+      // getMessage() returns the system error string ("Invalid argument"), not our description.
+      // The custom message with context is stored as the "description" property.
+      EXPECT_NE(std::string::npos, error.getProperty("description").find("not-a-number"));
+      EXPECT_NE(std::string::npos, error.getProperty("description").find("max-cpus"));
+   }
+}
+
+TEST(ConfigProfileTest, GetAllLevelValuesOutOfOrder)
+{
+   // Sections listed in reverse level order (user first, then group, then global).
+   // getAllLevelValues must still return values in ascending level order
+   // regardless of the order sections appear in the INI string.
+   std::string profileStr = R"([alice]
+          max-cpus=2.0
+
+          [@scientists]
+          max-cpus=8.0
+
+          [*]
+          max-cpus=4.0)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}, {1, "@"}, {2, std::string()}});
+   profile.addParams("max-cpus", 0.0);
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   std::vector<std::optional<double>> values;
+   error = profile.getAllLevelValues("max-cpus", &values,
+                                    {{0, std::string()}, {1, "scientists"}, {2, "alice"}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(3u, values.size());
+   // Output must be in ascending level order: global (0), group (1), user (2)
+   ASSERT_TRUE(values[0].has_value());  ASSERT_EQ(4.0, *values[0]);  // global — level 0
+   ASSERT_TRUE(values[1].has_value());  ASSERT_EQ(8.0, *values[1]);  // @scientists — level 1
+   ASSERT_TRUE(values[2].has_value());  ASSERT_EQ(2.0, *values[2]);  // alice — level 2
+}
+
+TEST(ConfigProfileTest, GetAllCompoundLevelValues)
+{
+   // @everyone and bob have a simple param (max-cpus) rather than the compound param so the
+   // section is retained by the INI parser but constraints is absent → nullopt.
+   std::string profileStr = R"([*]
+          constraints/cpu=x86
+
+          [@scientists]
+          constraints/gpu=nvidia
+
+          [@everyone]
+          max-cpus=5.0
+
+          [alice]
+          constraints/node=gpu-node
+
+          [bob]
+          max-cpus=10.0)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}, {1, "@"}, {2, std::string()}});
+   profile.addParams("constraints", ConfigProfile::ValuesMap{}, "max-cpus", 0.0);
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   // alice in scientists: global, scientists, everyone (no compound), alice
+   {
+      std::vector<std::optional<ConfigProfile::ValuesMap>> values;
+      error = profile.getAllCompoundLevelValues("constraints", &values,
+                                               {{0, std::string()}, {1, "scientists"}, {1, "everyone"}, {2, "alice"}});
+      ASSERT_FALSE(error);
+      ASSERT_EQ(4u, values.size());
+      ASSERT_TRUE(values[0].has_value());
+      ASSERT_EQ("x86", (*values[0]).at("cpu"));   // global
+      ASSERT_TRUE(values[1].has_value());
+      ASSERT_EQ("nvidia", (*values[1]).at("gpu")); // @scientists
+      ASSERT_FALSE(values[2].has_value());          // @everyone: section present, compound param not set
+      ASSERT_TRUE(values[3].has_value());
+      ASSERT_EQ("gpu-node", (*values[3]).at("node")); // alice
+   }
+
+   // bob: global, bob section present but compound param not set
+   {
+      std::vector<std::optional<ConfigProfile::ValuesMap>> values;
+      error = profile.getAllCompoundLevelValues("constraints", &values,
+                                               {{0, std::string()}, {2, "bob"}});
+      ASSERT_FALSE(error);
+      ASSERT_EQ(2u, values.size());
+      ASSERT_TRUE(values[0].has_value());
+      ASSERT_FALSE(values[1].has_value());  // bob section present, param not set
+   }
+
+   // charlie has no section — absent section omitted
+   {
+      std::vector<std::optional<ConfigProfile::ValuesMap>> values;
+      error = profile.getAllCompoundLevelValues("constraints", &values,
+                                               {{0, std::string()}, {2, "charlie"}});
+      ASSERT_FALSE(error);
+      ASSERT_EQ(1u, values.size());
+      ASSERT_TRUE(values[0].has_value());
+   }
+
+   // unregistered param returns error
+   {
+      std::vector<std::optional<ConfigProfile::ValuesMap>> values;
+      error = profile.getAllCompoundLevelValues("nonexistent", &values, {{0, std::string()}});
+      ASSERT_TRUE(error);
+   }
+}
+
+TEST(ConfigProfileTest, GetAllCompoundLevelValuesOutOfOrder)
+{
+   // Sections listed in reverse level order (user first, then group, then global).
+   // getAllCompoundLevelValues must still return values in ascending level order
+   // regardless of the order sections appear in the INI string.
+   std::string profileStr = R"([alice]
+          constraints/node=gpu-node
+
+          [@scientists]
+          constraints/gpu=nvidia
+
+          [*]
+          constraints/cpu=x86)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}, {1, "@"}, {2, std::string()}});
+   profile.addParams("constraints", ConfigProfile::ValuesMap{});
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   std::vector<std::optional<ConfigProfile::ValuesMap>> values;
+   error = profile.getAllCompoundLevelValues("constraints", &values,
+                                            {{0, std::string()}, {1, "scientists"}, {2, "alice"}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(3u, values.size());
+   // Output must be in ascending level order: global (0), group (1), user (2)
+   ASSERT_TRUE(values[0].has_value());
+   ASSERT_EQ("x86",      (*values[0]).at("cpu"));   // global — level 0
+   ASSERT_TRUE(values[1].has_value());
+   ASSERT_EQ("nvidia",   (*values[1]).at("gpu"));   // @scientists — level 1
+   ASSERT_TRUE(values[2].has_value());
+   ASSERT_EQ("gpu-node", (*values[2]).at("node"));  // alice — level 2
+}
+
 } // namespace tests
 } // namespace core
 } // namespace rstudio

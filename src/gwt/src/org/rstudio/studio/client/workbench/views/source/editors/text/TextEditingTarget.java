@@ -7635,6 +7635,22 @@ public class TextEditingTarget implements
 
    void renderRmd(final String format, final String paramsFile)
    {
+      // if a notebook render is in progress, wait for it to finish before
+      // previewing so the user sees the latest content
+      if (isRmdNotebook() && notebook_ != null && notebook_.isRendering())
+      {
+         view_.getStatusBar().showStatus(
+            StatusBarIconType.TYPE_LOADING,
+            constants_.notebookRenderWaiting());
+
+         notebook_.addRenderCompleteHandler(() ->
+         {
+            view_.getStatusBar().hideStatus();
+            renderRmd(format, paramsFile);
+         });
+         return;
+      }
+
       if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
          events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
 
@@ -8598,6 +8614,7 @@ public class TextEditingTarget implements
                   previewFromR();
                }
                else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_RMARKDOWN_NOTEBOOK ||
                         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
                {
                   renderRmd();

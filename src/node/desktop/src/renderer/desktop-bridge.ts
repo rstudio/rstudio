@@ -610,6 +610,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
     },
 
+    injectShinyDialogCss: (css: string) => {
+      ipcRenderer.send('desktop_inject_shiny_dialog_css', css);
+    },
+
     allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_allow_navigation', url)

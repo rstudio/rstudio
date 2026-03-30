@@ -3411,10 +3411,10 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI via redirector; use test manifest when opted in
+   // Get download URI; use test manifest when opted in
    std::string downloadUri = options().positAssistantTestManifest()
-      ? "https://www.rstudio.org/links/posit-assistant-manifest-test"
-      : "https://www.rstudio.org/links/posit-assistant-manifest";
+      ? "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest-test.json"
+      : "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest.json";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 

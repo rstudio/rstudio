@@ -84,8 +84,11 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                         int pixelWidth, int characterWidth, 
                         ServerRequestCallback<RmdChunkOptions> requestCallback);
    
-   void createNotebookFromCache(String rmdPath, String outputPath, 
+   void createNotebookFromCache(String rmdPath, String outputPath,
          ServerRequestCallback<NotebookCreateResult> requestCallback);
+
+   void cancelNotebookCacheRender(String docPath,
+         ServerRequestCallback<Boolean> requestCallback);
    
    void replayNotebookPlots(String docId, String initialChunkId, int pixelWidth, 
          int pixelHeight, ServerRequestCallback<String> requestCallback);

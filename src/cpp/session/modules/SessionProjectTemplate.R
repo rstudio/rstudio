@@ -47,13 +47,6 @@
    # evaluate skeleton function in global environment
    eval(as.call(skeleton), envir = .GlobalEnv)
    
-   # add first run documents
-   .rs.addFirstRunDocumentsForTemplate(
-      projectFilePath,
-      projectPath,
-      description$open_files
-   )
-   
    TRUE
 })
 

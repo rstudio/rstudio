@@ -791,12 +791,23 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // we get this event when the window is unloaded; it could be that the
       // window is unloading for refresh (in which case its docs could be
       // preserved) or closing for good.
+      // if the closing satellite was the last focused window, reset the
+      // pointer back to the main window so stale references aren't used
+      // for menu command routing
+      String closingWindowId = sourceWindowId(event.getName());
+      if (closingWindowId != null &&
+          closingWindowId.equals(MainWindowObject.lastFocusedWindowId().get()))
+      {
+         MainWindowObject.lastFocusedWindow().set(WindowEx.getNative());
+         MainWindowObject.lastFocusedWindowId().set(getSourceWindowId());
+      }
+
       WindowCloseMonitor.monitorSatelliteClosure(event.getName(), new Command()
       {
          @Override
          public void execute()
          {
-            closeSourceWindowDocs(sourceWindowId(event.getName()));
+            closeSourceWindowDocs(closingWindowId);
          }
       }, null);
    }

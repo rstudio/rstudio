@@ -30,6 +30,7 @@ public abstract class RSConnectDialog<W extends Widget>
                           W contents)
    {
       super(role);
+      setThemeAware(true);
       server_ = server;
       display_ = display;
       contents_ = contents;
