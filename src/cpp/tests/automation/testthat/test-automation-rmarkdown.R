@@ -761,6 +761,12 @@ withr::defer(.rs.automation.deleteRemote())
       # disable "Preview on Save", edit the document, then save again
       remote$dom.setChecked("#rstudio_cb_source_on_save input", checked = FALSE)
       editor$insert("\n\n<!-- extra comment -->")
+
+      # ensure the filesystem timestamp advances past the .nb.html's mtime;
+      # the notebook cache (NotebookCache.cpp) skips regeneration when
+      # .nb.html mtime >= .Rmd mtime, and HFS+/APFS have 1-second resolution
+      Sys.sleep(1)
+
       remote$commands.execute("saveSourceDoc")
 
       # verify the .nb.html was still updated (Preview on Save only
