@@ -27,7 +27,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.MessageDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
@@ -553,7 +552,7 @@ public class ChatPresenter extends BasePresenter
    void onUninstallPositAI()
    {
       globalDisplay_.showYesNoMessage(
-         MessageDisplay.MSG_WARNING,
+         GlobalDisplay.MSG_WARNING,
          constants_.uninstallPositAICaption(),
          constants_.uninstallPositAIMessage(),
          () -> performUninstall(),
