@@ -51,6 +51,17 @@ void* s_library = nullptr;
       __NAME__ = reinterpret_cast<decltype(__NAME__)>(symbol);                  \
    } while (0)
 
+// Resolve a global variable from libR by name.
+// dlsym returns the address of the variable, so we dereference it.
+#define RS_IMPORT_DATA(__NAME__)                                                \
+   do                                                                           \
+   {                                                                            \
+      void* symbol = nullptr;                                                   \
+      core::system::loadSymbol(s_library, #__NAME__, &symbol);                  \
+      if (symbol)                                                               \
+         __NAME__ = *reinterpret_cast<decltype(__NAME__)*>(symbol);             \
+   } while (0)
+
 // R API function pointers, resolved in initialize().
 // nullptr when the runtime R version doesn't provide them.
 SEXP (*FORMALS)(SEXP) = nullptr;
@@ -69,6 +80,9 @@ SEXP (*PRENV)(SEXP) = nullptr;
 SEXP (*PRVALUE)(SEXP) = nullptr;
 SEXP (*Rf_findVarInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVar)(SEXP, SEXP) = nullptr;
+
+// R_UnboundValue is imported so we can translate it to nullptr at the boundary.
+SEXP R_UnboundValue = nullptr;
 
 // Dispatch function pointers, set in initialize() to either the
 // resolved R symbol or a fallback implementation.
@@ -111,6 +125,8 @@ void initialize()
    RS_IMPORT_SYMBOL(R_findVarLocInFrame);
    RS_IMPORT_SYMBOL(Rf_findVarInFrame);
    RS_IMPORT_SYMBOL(Rf_findVar);
+
+   RS_IMPORT_DATA(R_UnboundValue);
 
    // closureFormals / closureBody / closureEnv
    s_closureFormals = R_ClosureFormals ? R_ClosureFormals : FORMALS;
@@ -215,14 +231,21 @@ SEXP parentEnv(SEXP envSEXP)
    return s_parentEnv(envSEXP);
 }
 
+// Convert R_UnboundValue to nullptr at the boundary so callers
+// can use simple null checks instead of referencing a non-API symbol.
+static SEXP unboundToNull(SEXP value)
+{
+   return (value == R_UnboundValue) ? nullptr : value;
+}
+
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 {
-   return s_findVarInFrame(envSEXP, nameSEXP);
+   return unboundToNull(s_findVarInFrame(envSEXP, nameSEXP));
 }
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-   return s_findVar(nameSEXP, envSEXP);
+   return unboundToNull(s_findVar(nameSEXP, envSEXP));
 }
 
 int getBindingType(SEXP symSEXP, SEXP envSEXP)

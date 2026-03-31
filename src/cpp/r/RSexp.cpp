@@ -277,7 +277,7 @@ bool ensureNamespaceLoaded(const std::string& ns)
       return false;
    
    SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP != R_UnboundValue)
+   if (nsSEXP != nullptr)
       return true;
    
    Error error = r::exec::RFunction("base:::requireNamespace")
@@ -314,7 +314,7 @@ SEXP forcePromise(SEXP objectSEXP)
 SEXP findNamespace(const std::string& name)
 {
    if (name.empty())
-       return R_UnboundValue;
+       return nullptr;
 
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
@@ -395,7 +395,7 @@ void listEnvironment(SEXP env,
    if (!includeAll && includeLastDotValue)
    {
       SEXP lastValueSEXP = findVarInFrame(env, Rf_install(".Last.value"));
-      if (lastValueSEXP != R_UnboundValue)
+      if (lastValueSEXP != nullptr)
          pNames->push_back(".Last.value");
    }
 }
@@ -572,15 +572,15 @@ SEXP findVar(const std::string& name, SEXP envSEXP)
 SEXP findVar(const std::string& name, const std::string& ns)
 {
    if (name.empty())
-      return R_UnboundValue;
+      return nullptr;
    
    if (!ns.empty())
       if (!ensureNamespaceLoaded(ns))
-         return R_UnboundValue;
+         return nullptr;
    
    SEXP envSEXP = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (envSEXP == R_UnboundValue)
-      return R_UnboundValue;
+   if (envSEXP == nullptr)
+      return nullptr;
    
    return findVar(name, envSEXP);
 }
@@ -590,15 +590,15 @@ SEXP findFunction(const std::string& name, const std::string& ns)
 {
    r::sexp::Protect protect;
    if (name.empty())
-      return R_UnboundValue;
+      return nullptr;
    
    if (!ns.empty())
       if (!ensureNamespaceLoaded(ns))
-         return R_UnboundValue;
+         return nullptr;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (env == R_UnboundValue)
-      return R_UnboundValue;
+   if (env == nullptr)
+      return nullptr;
    
    // We might want to use `Rf_findFun`, but it calls `Rf_error`
    // on failure, which involves printing the error message out
@@ -629,7 +629,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       // Otherwise, just perform a simple search through
       // the current frame.
       SEXP resultSEXP = findVarInFrame(env, nameSEXP);
-      if (resultSEXP != R_UnboundValue)
+      if (resultSEXP != nullptr)
       {
          if (Rf_isFunction(resultSEXP))
             return resultSEXP;
@@ -644,7 +644,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       env = getParentEnv(env);
    }
    
-   return R_UnboundValue;
+   return nullptr;
 }   
    
 std::string typeAsString(SEXP object)

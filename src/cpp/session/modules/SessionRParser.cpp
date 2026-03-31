@@ -223,14 +223,14 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
    
    if (canOpenArgumentList(cursor))
       if (!cursor.moveToPreviousSignificantToken())
-         return R_UnboundValue;
+         return nullptr;
    
    if (pCacheable)
       *pCacheable = true;
    
    // Attempt to resolve (potentially evaluate) the symbol, or statement,
    // forming the function call.
-   SEXP symbolSEXP = R_UnboundValue;
+   SEXP symbolSEXP = nullptr;
    
    if (cursor.isAssignmentCall())
    {
@@ -239,7 +239,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       // expressions into the associated `foo<-`(x, bar) call. By
       // not resolving a function in these situations we simply avoid
       // linting such calls.
-      return R_UnboundValue;
+      return nullptr;
    }
    else if (cursor.isSimpleCall())
    {
@@ -299,7 +299,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       
       // Don't evaluate nested function calls.
       if (call.find('(') != std::string::npos)
-         return R_UnboundValue;
+         return nullptr;
       
       // avoid output leaking to console
       r::session::utils::SuppressOutputInScope scope;
@@ -308,11 +308,11 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       if (error)
       {
          DEBUG("- Failed to evaluate call '" << call << "'");
-         return R_UnboundValue;
+         return nullptr;
       }
       
       if (functionsOnly && !Rf_isFunction(symbolSEXP))
-         return R_UnboundValue;
+         return nullptr;
    }
    
    // protect the discovered symbol here, just in case it was produced
@@ -468,7 +468,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    bool cacheable = true;
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect, &cacheable);
-   if (symbolSEXP == R_UnboundValue)
+   if (symbolSEXP == nullptr)
       return false;
    
    NSEDatabase& nseDb = nseDatabase();
@@ -836,7 +836,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    // the symbol on the search path.
    r::sexp::Protect protect;
    SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect);
-   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+   if (functionSEXP == nullptr || !Rf_isFunction(functionSEXP))
    {
       DEBUG("***** Function definition is not available on search path; giving up");
       return FunctionInformation();
@@ -2740,7 +2740,7 @@ bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
    
    r::sexp::Protect protect;
    SEXP objectSEXP = resolveObjectAssociatedWithCall(startCursor, status, &protect);
-   if (objectSEXP != R_UnboundValue)
+   if (objectSEXP != nullptr)
    {
       r::exec::RFunction getNames(".rs.getNames");
       getNames.addParam(objectSEXP);

@@ -249,7 +249,7 @@ void onDetectChanges(module_context::ChangeSource source)
       SEXP newObject = r::sexp::findVarInFrame(envir, symbol);
 
       // no object of that name, don't update
-      if (newObject == R_UnboundValue)
+      if (newObject == nullptr)
          continue;
       
       // no change

@@ -140,7 +140,7 @@ public:
    
    template <typename... T>
    explicit RFunction(const std::string& name, const T&... params)
-      : functionSEXP_(R_UnboundValue)
+      : functionSEXP_(nullptr)
    {
       commonInit(name);
       initParams(params...);

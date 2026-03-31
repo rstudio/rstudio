@@ -1027,7 +1027,7 @@ SEXP lookupCustomHandler(const std::string& uri)
       if (TYPEOF(s_customHandlersEnv) == ENVSXP)
       {
          SEXP cl = r::sexp::findVarInFrame(s_customHandlersEnv, Rf_install(handler.c_str()));
-         if (cl != R_UnboundValue && TYPEOF(cl) == CLOSXP) // need a closure
+         if (cl != nullptr && TYPEOF(cl) == CLOSXP) // need a closure
             return cl;
       }
    }
