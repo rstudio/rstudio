@@ -319,19 +319,18 @@ SEXP findNamespace(const std::string& package)
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   r::sexp::Protect protect;
+   // R_FindNamespace errors if the namespace isn't found,
+   // so we wrap it in executeSafely to catch the longjump.
    SEXP nsSEXP = R_NilValue;
-   Error error = r::exec::RFunction(".rs.getNamespace")
-         .addParam(package)
-         .call(&nsSEXP, &protect);
-   
-   if (error)
+   Error error = r::exec::executeSafely([&]()
    {
-      LOG_ERROR(error);
-      return nullptr;
-   }
+      r::sexp::Protect protect;
+      SEXP packageSEXP = Rf_mkString(package.c_str());
+      protect.add(packageSEXP);
+      nsSEXP = R_FindNamespace(packageSEXP);
+   });
 
-   if (r::sexp::inherits(nsSEXP, "error"))
+   if (error)
       return nullptr;
 
    return nsSEXP;

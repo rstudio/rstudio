@@ -13,6 +13,8 @@
  *
  */
 
+#include <core/Log.hpp>
+
 #include <r/RRuntime.hpp>
 #include <r/session/REventLoop.hpp>
 
@@ -87,7 +89,12 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    Rf_initialize_R(sizeof(args)/sizeof(args[0]), (char**)args);
 
    // initialize runtime dispatch now that libR is loaded
-   r::runtime::initialize();
+   Error error = r::runtime::initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      Rf_error("RStudio failed to initialize R runtime dispatch");
+   }
 
    // For newSession = false we need to do a few things:
    //

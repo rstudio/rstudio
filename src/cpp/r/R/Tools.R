@@ -2373,11 +2373,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    NULL
 })
 
-.rs.addFunction("getNamespace", function(package)
-{
-   tryCatch(getNamespace(package), error = identity)
-})
-
 # Hooks -------------------------------------------------------------------
 
 assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())

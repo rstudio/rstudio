@@ -16,12 +16,14 @@
 #ifndef R_R_RUNTIME_HPP
 #define R_R_RUNTIME_HPP
 
+#include <shared_core/Error.hpp>
+
 #define R_NO_REMAP
 #include <Rinternals.h>
 
 // Runtime-safe wrappers for R API functions that may or may not exist
-// depending on the version of R loaded at runtime. Each function resolves
-// the appropriate implementation once on first call and caches it.
+// depending on the version of R loaded at runtime. Symbols are resolved
+// once during initialize() and dispatched through cached function pointers.
 //
 // This avoids compile-time R_VERSION checks, which break when the version
 // of R used at compile time differs from the version loaded at runtime.
@@ -31,8 +33,9 @@ namespace r {
 namespace runtime {
 
 // Initialize the runtime dispatch layer. Must be called after R is loaded
-// but before any of the functions below are used.
-void initialize();
+// but before any of the functions below are used. Returns an error if the
+// R shared library cannot be loaded.
+core::Error initialize();
 
 // R_ClosureFormals (R >= 4.5), falls back to FORMALS.
 SEXP closureFormals(SEXP x);
@@ -46,17 +49,17 @@ SEXP closureEnv(SEXP x);
 // R_ParentEnv (R >= 4.5), falls back to struct access.
 SEXP parentEnv(SEXP envSEXP);
 
-// R_getVarEx (R >= 4.5), falls back to Rf_findVarInFrame.
+// R_getVarEx (R >= 4.6), falls back to Rf_findVarInFrame.
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
 
-// R_getVarEx with inheritance (R >= 4.5), falls back to Rf_findVar.
+// R_getVarEx with inheritance (R >= 4.6), falls back to Rf_findVar.
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 
 // R_GetBindingType (R >= 4.6), falls back to manual struct inspection.
 // Returns the R_BindingType_t enum value as an int.
 int getBindingType(SEXP symSEXP, SEXP envSEXP);
 
-// R_DelayedBindingExpression (R >= 4.6), falls back to PRCODE.
+// R_DelayedBindingExpression (R >= 4.6), falls back to promsxp struct access.
 SEXP delayedBindingExpression(SEXP symSEXP, SEXP envSEXP);
 
 // R_BindingType_t constants (must match the enum values in R >= 4.6).

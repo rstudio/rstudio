@@ -103,14 +103,11 @@ SEXP (*s_delayedBindingExpression)(SEXP, SEXP) = nullptr;
 
 // -- Public API --
 
-void initialize()
+Error initialize()
 {
    Error error = core::system::loadLibrary(kRLibraryName, &s_library);
    if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+      return error;
 
    RS_IMPORT_FUNCTION(FORMALS);
    RS_IMPORT_FUNCTION(BODY);
@@ -216,10 +213,14 @@ void initialize()
    {
       s_delayedBindingExpression = [](SEXP symSEXP, SEXP envSEXP) -> SEXP {
          SEXP promiseSEXP = Rf_findVarInFrame(envSEXP, symSEXP);
+         if (promiseSEXP == R_UnboundValue || TYPEOF(promiseSEXP) != PROMSXP)
+            return R_NilValue;
          SEXPREC* promise = reinterpret_cast<SEXPREC*>(promiseSEXP);
          return reinterpret_cast<SEXP>(promise->u.promsxp.expr);
       };
    }
+
+   return Success();
 }
 
 SEXP closureFormals(SEXP x)

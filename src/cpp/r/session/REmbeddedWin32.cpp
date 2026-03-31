@@ -21,6 +21,8 @@
 
 #define R_INTERNAL_FUNCTIONS
 #include <Rversion.h>
+#include <core/Log.hpp>
+
 #include <r/RInternal.hpp>
 #include <r/RRuntime.hpp>
 #include <r/RUtil.hpp>
@@ -324,7 +326,12 @@ void runEmbeddedR(const core::FilePath& rHome,
    CharacterMode = LinkDLL;
 
    // initialize runtime dispatch now that R.dll is loaded
-   r::runtime::initialize();
+   Error error = r::runtime::initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      Rf_error("RStudio failed to initialize R runtime dispatch");
+   }
 
    // setup main loop
    ::setup_Rmainloop();
