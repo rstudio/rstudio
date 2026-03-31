@@ -1350,7 +1350,9 @@ SEXP create(double value, Protect* pProtect)
 
 SEXP create(bool value, Protect* pProtect)
 {
-   return Rf_ScalarLogical(value);
+   SEXP valueSEXP;
+   pProtect->add(valueSEXP = Rf_ScalarLogical(value));
+   return valueSEXP;
 }
 
 SEXP create(const core::json::Array& value, Protect* pProtect)

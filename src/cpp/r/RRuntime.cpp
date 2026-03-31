@@ -104,7 +104,10 @@ void initialize()
 {
    Error error = core::system::loadLibrary(kRLibraryName, &s_library);
    if (error)
+   {
       LOG_ERROR(error);
+      return;
+   }
 
    RS_IMPORT_FUNCTION(FORMALS);
    RS_IMPORT_FUNCTION(BODY);
@@ -150,11 +153,11 @@ void initialize()
    if (R_getVarEx)
    {
       s_findVarInFrame = [](SEXP envSEXP, SEXP nameSEXP) -> SEXP {
-         return R_getVarEx(nameSEXP, envSEXP, 0 /*FALSE*/, R_UnboundValue);
+         return R_getVarEx(nameSEXP, envSEXP, 0 /*FALSE*/, nullptr);
       };
 
       s_findVar = [](SEXP nameSEXP, SEXP envSEXP) -> SEXP {
-         return R_getVarEx(nameSEXP, envSEXP, 1 /*TRUE*/, R_UnboundValue);
+         return R_getVarEx(nameSEXP, envSEXP, 1 /*TRUE*/, nullptr);
       };
    }
    else
@@ -189,8 +192,14 @@ void initialize()
          if (val == R_MissingArg)
             return kBindingTypeMissing;
 
-         if (TYPEOF(val) == PROMSXP && PRVALUE(val) == R_UnboundValue)
-            return kBindingTypeDelayed;
+         if (TYPEOF(val) == PROMSXP)
+         {
+            // Access promise value via struct; PRVALUE may not be
+            // an exported function on older R where this fallback runs.
+            SEXPREC* promise = reinterpret_cast<SEXPREC*>(val);
+            if (prom->u.promsxp.value == R_UnboundValue)
+               return kBindingTypeDelayed;
+         }
 
          return kBindingTypeValue;
 
@@ -206,7 +215,10 @@ void initialize()
    {
       s_delayedBindingExpression = [](SEXP symSEXP, SEXP envSEXP) -> SEXP {
          SEXP promiseSEXP = Rf_findVarInFrame(envSEXP, symSEXP);
-         return PRCODE(promiseSEXP);
+         // Access promise expression via struct; PRCODE may not be
+         // an exported function on older R where this fallback runs.
+         SEXPREC* promise = reinterpret_cast<SEXPREC*>(promiseSEXP);
+         return reinterpret_cast<SEXP>(promise->u.promsxp.expr);
       };
    }
 }

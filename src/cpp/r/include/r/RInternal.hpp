@@ -46,15 +46,7 @@
 // Route R_ClosureFormals / R_ClosureBody / R_ClosureEnv through the
 // runtime dispatch layer, which resolves the correct implementation
 // based on the version of R loaded at runtime.
-namespace rstudio {
-namespace r {
-namespace runtime {
-SEXP closureFormals(SEXP x);
-SEXP closureBody(SEXP x);
-SEXP closureEnv(SEXP x);
-} // namespace runtime
-} // namespace r
-} // namespace rstudio
+#include <r/RRuntime.hpp>
 
 #undef R_ClosureFormals
 #undef R_ClosureBody
