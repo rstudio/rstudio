@@ -44,10 +44,6 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-extern "C" {
-RS_IMPORT bool R_Visible;
-}
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -349,15 +345,21 @@ Error getBuiltPackagePath(const FilePath& builtPackagePathFile,
 struct AfterRestartCommandData
 {
    SEXP elSEXP;
-   SEXP resultSEXP;
+   SEXP valueSEXP;
    bool visible;
 };
 
 void executeAfterRestartCommandImpl(void* payload)
 {
+   r::sexp::Protect protect;
    AfterRestartCommandData* data = (AfterRestartCommandData*) payload;
-   data->resultSEXP = Rf_eval(data->elSEXP, R_GlobalEnv);
-   data->visible = R_Visible;
+
+   SEXP callSEXP = Rf_lang2(Rf_install("withVisible"), data->elSEXP);
+   protect.add(callSEXP);
+
+   SEXP resultSEXP = Rf_eval(callSEXP, R_GlobalEnv);
+   r::sexp::getNamedListSEXP(resultSEXP, "value", &data->valueSEXP);
+   r::sexp::getNamedListElement(resultSEXP, "visible", &data->visible);
 }
 
 Error executeAfterRestartCommand(const std::string& command)
@@ -390,7 +392,7 @@ Error executeAfterRestartCommand(const std::string& command)
    {
       AfterRestartCommandData data;
       data.elSEXP = VECTOR_ELT(parsedSEXP, i);
-      data.resultSEXP = R_NilValue;
+      data.valueSEXP = R_NilValue;
       data.visible = false;
 
       // NOTE: we use R_ToplevelExec to ensure R longjmps from errors don't
@@ -401,7 +403,7 @@ Error executeAfterRestartCommand(const std::string& command)
       {
          if (data.visible)
          {
-            r::sexp::printValue(data.resultSEXP);
+            r::sexp::printValue(data.valueSEXP);
          }
       }
       else
