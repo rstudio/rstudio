@@ -231,7 +231,7 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="22.13.1"/>
+   <property name="node.version" value="22.22.2"/>
    <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
