@@ -693,6 +693,10 @@ SEXP callHandler(const std::string& path,
 {
    // use local protection for intermediate values
    r::sexp::Protect protect;
+
+   // used below
+   SEXP trueSEXP = Rf_ScalarLogical(TRUE);
+   protect.add(trueSEXP);
    
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path);
@@ -716,7 +720,7 @@ SEXP callHandler(const std::string& path,
    protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
    
    SEXP innerCallSEXP;
-   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
+   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, trueSEXP));
    SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings

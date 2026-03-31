@@ -22,6 +22,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <Rversion.h>
 #include <r/RInternal.hpp>
+#include <r/RRuntime.hpp>
 #include <r/RUtil.hpp>
 #include <r/RVersionInfo.hpp>
 
@@ -321,6 +322,9 @@ void runEmbeddedR(const core::FilePath& rHome,
    // can see so the only side effect of this should be the disabling of the
    // console history mechanism.
    CharacterMode = LinkDLL;
+
+   // initialize runtime dispatch now that R.dll is loaded
+   r::runtime::initialize();
 
    // setup main loop
    ::setup_Rmainloop();

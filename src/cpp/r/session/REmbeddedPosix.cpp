@@ -13,6 +13,7 @@
  *
  */
 
+#include <r/RRuntime.hpp>
 #include <r/session/REventLoop.hpp>
 
 #include <Rembedded.h>
@@ -84,6 +85,9 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    // initialize R
    const char *args[]= {"RStudio", "--interactive"};
    Rf_initialize_R(sizeof(args)/sizeof(args[0]), (char**)args);
+
+   // initialize runtime dispatch now that libR is loaded
+   r::runtime::initialize();
 
    // For newSession = false we need to do a few things:
    //
