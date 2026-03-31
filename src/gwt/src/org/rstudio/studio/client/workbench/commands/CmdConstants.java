@@ -4178,4 +4178,8 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Return to main window") // $NON-NLS-1$
     String returnChatToMainDesc();
     
+    // uninstallPositAI
+    @DefaultStringValue("Uninstall Posit AI") // $NON-NLS-1$
+    String uninstallPositAILabel();
+    
 }

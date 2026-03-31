@@ -5304,6 +5304,111 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// NOTE: No isPositAiWanted()/isPaiEnabled() gate — the user may have
+// disabled Posit AI but still wants to clean up installed files.
+Error chatUninstallPositAi(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   FilePath userDataDir = xdg::userDataDir();
+   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
+   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+
+   if (!aiDir.exists() && !aiPrevDir.exists())
+   {
+      // No user-data install — check for env/system installs to give a
+      // targeted error message instead of a generic "not installed".
+      std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+      if (!envPath.empty() && FilePath(envPath).exists())
+      {
+         return systemError(
+            boost::system::errc::operation_not_permitted,
+            "Posit AI is installed via the RSTUDIO_POSIT_AI_PATH "
+            "environment variable and cannot be uninstalled "
+            "from RStudio.",
+            ERROR_LOCATION);
+      }
+
+      FilePath systemPath =
+         xdg::systemConfigDir().completePath(kPositAiDirName);
+      if (systemPath.exists())
+      {
+         return systemError(
+            boost::system::errc::operation_not_permitted,
+            "Posit AI is installed at the system level by an "
+            "administrator and cannot be uninstalled from RStudio.",
+            ERROR_LOCATION);
+      }
+
+      return systemError(
+         boost::system::errc::no_such_file_or_directory,
+         "Posit AI is not installed.",
+         ERROR_LOCATION);
+   }
+
+   // Stop chat backend
+   if (s_chatBackendPid != -1)
+   {
+      auto backendOps = s_chatBackendOps;
+      if (backendOps)
+      {
+         s_expectedShutdown = true;
+         requestBackendShutdown(*backendOps, "uninstall", 1000);
+         const int POLL_INTERVAL_MS = 50;
+         int elapsed = 0;
+         while (s_chatBackendPid != -1 && elapsed < 1000)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+         }
+      }
+      s_chatBackendOps.reset();
+      if (s_chatBackendPid != -1)
+      {
+         Error error = core::system::terminateProcess(s_chatBackendPid);
+         if (error)
+            LOG_ERROR(error);
+      }
+      s_chatBackendPid = -1;
+      clearChatBackendPort();
+      s_chatBusy = false;
+      s_backendOutputBuffer.clear();
+   }
+
+   // Stop assistant agent (NES language server)
+   if (!assistant::stopAgentForUpdate())
+      WLOG("Timeout waiting for assistant agent to stop during uninstall");
+
+   // Delete installation
+   Error error = aiDir.removeIfExists();
+   if (error)
+   {
+      return systemError(
+         boost::system::errc::io_error,
+         "Failed to remove installation: " + error.getMessage(),
+         ERROR_LOCATION);
+   }
+
+   // Clean up orphaned backup from failed install/update
+   Error prevError = aiPrevDir.removeIfExists();
+   if (prevError)
+      WLOG("Failed to remove backup directory: {}", prevError.getMessage());
+
+   // Reset cached update state so the session correctly detects the
+   // missing installation if the user cancels the subsequent restart.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState = UpdateState();
+   }
+   s_positAssistantVersion.clear();
+
+   DLOG("Posit AI uninstalled successfully");
+   pResponse->setResult(json::Value());
+   return Success();
+}
+
 // ============================================================================
 // Module Lifecycle
 // ============================================================================
@@ -5599,6 +5704,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
+      (bind(registerRpcMethod, "chat_uninstall_posit_ai", chatUninstallPositAi))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

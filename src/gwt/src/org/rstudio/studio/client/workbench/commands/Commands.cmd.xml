@@ -4413,4 +4413,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc="Return to main window"/>
 
+   <cmd id="uninstallPositAI"
+        label="Uninstall Posit AI" />
+
 </commands>
