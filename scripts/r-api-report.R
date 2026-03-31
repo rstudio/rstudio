@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+
 #
 # r-api-report.R
 #
@@ -223,3 +224,6 @@ if (length(result$former) > 0) {
 
 writeLines(out, outfile)
 message("Report written to ", outfile)
+message("")
+writeLines(readLines(outfile))
+
