@@ -627,13 +627,16 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       if (env == R_GlobalEnv)
       {
          SEXP resultSEXP = findVar(nameSEXP, R_GlobalEnv);
-         if (Rf_isFunction(resultSEXP))
-            return resultSEXP;
-         else if (TYPEOF(resultSEXP) == PROMSXP)
+         if (resultSEXP != nullptr)
          {
-            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
             if (Rf_isFunction(resultSEXP))
                return resultSEXP;
+            else if (TYPEOF(resultSEXP) == PROMSXP)
+            {
+               protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+               if (Rf_isFunction(resultSEXP))
+                  return resultSEXP;
+            }
          }
       }
       

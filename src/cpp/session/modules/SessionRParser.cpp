@@ -317,7 +317,8 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
    
    // protect the discovered symbol here, just in case it was produced
    // by an active binding
-   pProtect->add(symbolSEXP);
+   if (symbolSEXP != nullptr)
+      pProtect->add(symbolSEXP);
    
    return symbolSEXP;
 }
