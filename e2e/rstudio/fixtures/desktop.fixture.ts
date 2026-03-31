@@ -1,0 +1,135 @@
+import { test as base, type Page } from '@playwright/test';
+import { chromium } from 'playwright';
+import type { Browser, BrowserContext } from 'playwright';
+import { spawn, execSync } from 'child_process';
+import type { ChildProcess } from 'child_process';
+import { TIMEOUTS, sleep } from '../utils/constants';
+import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+
+// Constants
+export const RSTUDIO_PATH = process.platform === 'win32'
+  ? 'C:\\Program Files\\RStudio\\rstudio.exe'
+  : process.platform === 'darwin'
+    ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
+    : '/usr/bin/rstudio';
+export const CDP_PORT = 9222;
+export const CDP_URL = `http://localhost:${CDP_PORT}`;
+
+export interface DesktopSession {
+  page: Page;
+  browser: Browser;
+  rstudioProcess: ChildProcess;
+}
+
+/**
+ * Launch RStudio with CDP, connect Playwright, and return the session.
+ */
+export async function launchRStudio(): Promise<DesktopSession> {
+  // Clean up any existing RStudio processes (graceful first, then force if needed)
+  console.log('Cleaning up any existing RStudio processes...');
+  try {
+    if (process.platform === 'win32') {
+      execSync('taskkill /IM rstudio.exe', { stdio: 'ignore' });
+    } else if (process.platform === 'darwin') {
+      execSync('killall RStudio 2>/dev/null', { stdio: 'ignore' });
+    } else {
+      execSync('killall rstudio rsession 2>/dev/null', { stdio: 'ignore' });
+    }
+    await sleep(5000); // Give RStudio time to shut down gracefully
+  } catch {
+    // Process might not exist, that's fine
+  }
+  await sleep(TIMEOUTS.processCleanup);
+
+  // Wait for port 9222 to be released (up to 15 seconds)
+  const portDeadline = Date.now() + 15000;
+  while (Date.now() < portDeadline) {
+    try {
+      if (process.platform === 'win32') {
+        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
+        if (!result.trim()) break;
+      } else {
+        execSync(`lsof -i :${CDP_PORT} -t`, { encoding: 'utf-8' });
+        // If lsof succeeds, port is still in use — keep waiting
+      }
+    } catch {
+      break; // No connections on the port
+    }
+    await sleep(1000);
+  }
+
+  // Start RStudio with remote debugging enabled
+  console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
+  const rstudioProcess = spawn(RSTUDIO_PATH, [`--remote-debugging-port=${CDP_PORT}`]);
+  console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
+
+  // Wait for RStudio to start
+  await sleep(TIMEOUTS.rstudioStartup);
+
+  // Connect to CDP
+  const browser = await chromium.connectOverCDP(CDP_URL);
+  const contexts: BrowserContext[] = browser.contexts();
+  const page: Page = contexts[0].pages()[0];
+
+  // Dismiss any "save changes" modal from a previous interrupted run
+  try {
+    const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
+    await dontSaveBtn.click({ timeout: 3000 });
+    console.log('Dismissed save dialog from previous session');
+    await sleep(1000);
+  } catch {
+    // No dialog, continue normally
+  }
+
+  // Wait for RStudio's GWT app to fully initialize
+  await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
+
+  // Activate console (makes it visible without zooming)
+  await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
+  await sleep(2000);
+
+  // Wait for console to be ready
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
+  console.log('RStudio console is ready');
+
+  // Prevent "Save workspace image?" dialog on quit
+  await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
+  await sleep(1000);
+
+  return { page, browser, rstudioProcess };
+}
+
+/**
+ * Graceful shutdown: q() in console, close browser, kill process.
+ */
+export async function shutdownRStudio(session: DesktopSession): Promise<void> {
+  const { page, browser, rstudioProcess } = session;
+
+  // Close all source files without prompting to save
+  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await sleep(1000);
+
+  try {
+    await typeInConsole(page, 'q(save = "no")');
+    await sleep(5000); // Give RStudio time to shut down and release port
+    await browser.close();
+  } catch {
+    await browser.close().catch(() => {});
+    // Only force kill if graceful shutdown failed
+    rstudioProcess.kill();
+  }
+}
+
+/**
+ * Custom Playwright Test fixture that provides a shared RStudio page.
+ * Worker-scoped: RStudio launches once, all tests share the same page.
+ */
+export const test = base.extend<{}, { rstudioPage: Page }>({
+  rstudioPage: [async ({}, use) => {
+    const session = await launchRStudio();
+    await use(session.page);
+    await shutdownRStudio(session);
+  }, { scope: 'worker' }],
+});
+
+export { expect } from '@playwright/test';
