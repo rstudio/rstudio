@@ -694,5 +694,9 @@
       return(TRUE)
    
    envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
+   if (is.null(envir))
+      return(FALSE)
+
    .rs.setFunctionBreakpoints(functionName, envir, steps)
 })
+
