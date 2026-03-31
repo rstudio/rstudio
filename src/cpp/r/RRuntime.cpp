@@ -67,6 +67,11 @@ void* s_library = nullptr;
 SEXP (*FORMALS)(SEXP) = nullptr;
 SEXP (*BODY)(SEXP) = nullptr;
 SEXP (*CLOENV)(SEXP) = nullptr;
+
+SEXP (*PRCODE)(SEXP) = nullptr;
+SEXP (*PRENV)(SEXP) = nullptr;
+SEXP (*PRVALUE)(SEXP) = nullptr;
+
 SEXP (*R_ClosureFormals)(SEXP) = nullptr;
 SEXP (*R_ClosureBody)(SEXP) = nullptr;
 SEXP (*R_ClosureEnv)(SEXP) = nullptr;
@@ -74,10 +79,8 @@ SEXP (*R_ParentEnv)(SEXP) = nullptr;
 SEXP (*R_getVarEx)(SEXP, SEXP, int, SEXP) = nullptr;
 int  (*R_GetBindingType)(SEXP, SEXP) = nullptr;
 SEXP (*R_DelayedBindingExpression)(SEXP, SEXP) = nullptr;
+
 SEXP (*R_findVarLocInFrame)(SEXP, SEXP) = nullptr;
-SEXP (*PRCODE)(SEXP) = nullptr;
-SEXP (*PRENV)(SEXP) = nullptr;
-SEXP (*PRVALUE)(SEXP) = nullptr;
 SEXP (*Rf_findVarInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVar)(SEXP, SEXP) = nullptr;
 
