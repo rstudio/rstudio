@@ -43,7 +43,7 @@ namespace {
 void* s_library = nullptr;
 
 // Resolve a function pointer from libR by name.
-#define RS_IMPORT_SYMBOL(__NAME__)                                              \
+#define RS_IMPORT_FUNCTION(__NAME__)                                            \
    do                                                                           \
    {                                                                            \
       void* symbol = nullptr;                                                   \
@@ -106,25 +106,25 @@ void initialize()
    if (error)
       LOG_ERROR(error);
 
-   RS_IMPORT_SYMBOL(FORMALS);
-   RS_IMPORT_SYMBOL(BODY);
-   RS_IMPORT_SYMBOL(CLOENV);
+   RS_IMPORT_FUNCTION(FORMALS);
+   RS_IMPORT_FUNCTION(BODY);
+   RS_IMPORT_FUNCTION(CLOENV);
 
-   RS_IMPORT_SYMBOL(PRCODE);
-   RS_IMPORT_SYMBOL(PRENV);
-   RS_IMPORT_SYMBOL(PRVALUE);
+   RS_IMPORT_FUNCTION(PRCODE);
+   RS_IMPORT_FUNCTION(PRENV);
+   RS_IMPORT_FUNCTION(PRVALUE);
 
-   RS_IMPORT_SYMBOL(R_ClosureBody);
-   RS_IMPORT_SYMBOL(R_ClosureEnv);
-   RS_IMPORT_SYMBOL(R_ClosureFormals);
-   RS_IMPORT_SYMBOL(R_DelayedBindingExpression);
-   RS_IMPORT_SYMBOL(R_GetBindingType);
-   RS_IMPORT_SYMBOL(R_getVarEx);
-   RS_IMPORT_SYMBOL(R_ParentEnv);
+   RS_IMPORT_FUNCTION(R_ClosureBody);
+   RS_IMPORT_FUNCTION(R_ClosureEnv);
+   RS_IMPORT_FUNCTION(R_ClosureFormals);
+   RS_IMPORT_FUNCTION(R_DelayedBindingExpression);
+   RS_IMPORT_FUNCTION(R_GetBindingType);
+   RS_IMPORT_FUNCTION(R_getVarEx);
+   RS_IMPORT_FUNCTION(R_ParentEnv);
 
-   RS_IMPORT_SYMBOL(R_findVarLocInFrame);
-   RS_IMPORT_SYMBOL(Rf_findVarInFrame);
-   RS_IMPORT_SYMBOL(Rf_findVar);
+   RS_IMPORT_FUNCTION(R_findVarLocInFrame);
+   RS_IMPORT_FUNCTION(Rf_findVarInFrame);
+   RS_IMPORT_FUNCTION(Rf_findVar);
 
    RS_IMPORT_DATA(R_UnboundValue);
 
