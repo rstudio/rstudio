@@ -4181,5 +4181,7 @@ public interface CmdConstants extends Constants {
     // uninstallPositAI
     @DefaultStringValue("Uninstall Posit AI") // $NON-NLS-1$
     String uninstallPositAILabel();
+    @DefaultStringValue("Uninsta_ll Posit AI...") // $NON-NLS-1$
+    String uninstallPositAIMenuLabel();
     
 }

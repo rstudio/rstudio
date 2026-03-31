@@ -610,6 +610,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
+            <cmd refid="uninstallPositAI"/>
+            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
@@ -4414,6 +4416,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Return to main window"/>
 
    <cmd id="uninstallPositAI"
-        label="Uninstall Posit AI" />
+        label="Uninstall Posit AI"
+        menuLabel="Uninsta_ll Posit AI..."
+        rebindable="false"
+        windowMode="main"/>
 
 </commands>
