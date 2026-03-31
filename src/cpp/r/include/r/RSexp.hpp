@@ -45,10 +45,6 @@
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
-extern "C" {
-RS_IMPORT SEXP R_TrueValue;
-RS_IMPORT SEXP R_FalseValue;
-} // extern "C"
 
 
 namespace rstudio {

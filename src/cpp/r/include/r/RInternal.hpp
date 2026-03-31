@@ -43,12 +43,18 @@
 #include <Rinternals.h>
 #include <Rversion.h>
 
-// Compatibility defines for API functions introduced in R 4.5.0
-#if R_VERSION < R_Version(4, 5, 0)
-# define R_ClosureFormals(x) FORMALS(x)
-# define R_ClosureBody(x)    BODY(x)
-# define R_ClosureEnv(x)     CLOENV(x)
-#endif
+// Route R_ClosureFormals / R_ClosureBody / R_ClosureEnv through the
+// runtime dispatch layer, which resolves the correct implementation
+// based on the version of R loaded at runtime. Any file that includes
+// this header will use the runtime-dispatched versions transparently.
+#include <r/RRuntime.hpp>
+
+#undef R_ClosureFormals
+#undef R_ClosureBody
+#undef R_ClosureEnv
+#define R_ClosureFormals(x) ::rstudio::r::runtime::closureFormals(x)
+#define R_ClosureBody(x)    ::rstudio::r::runtime::closureBody(x)
+#define R_ClosureEnv(x)     ::rstudio::r::runtime::closureEnv(x)
 
 // Hide macros that are always unsafe for us to use, because their
 // interface has changed between versions of R

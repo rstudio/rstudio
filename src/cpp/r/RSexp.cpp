@@ -39,6 +39,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RRuntime.hpp>
 #include <r/RUtil.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
@@ -50,88 +51,7 @@ using namespace rstudio::core;
 using namespace boost::placeholders;
 
 
-// These structure definitions mirror the internal R structures from Rinternals.h.
-// The sxpinfo_struct bit fields moved in R 3.5 in order to support ALTREP objects,
-// so these definitions are only accurate for R >= 3.5.
-extern "C" {
-
-struct sxpinfo_struct
-{
-   unsigned int type  :  5;
-   unsigned int scalar:  1;
-   unsigned int obj   :  1;
-   unsigned int alt   :  1;
-   unsigned int gp    : 16;
-   unsigned int mark  :  1;
-   unsigned int debug :  1;
-   unsigned int trace :  1;
-   unsigned int spare :  1;
-   unsigned int gcgen :  1;
-   unsigned int gccls :  3;
-   unsigned int named : 16;
-   unsigned int extra : 32 - 16;
-};
-
-struct primsxp_struct
-{
-    int offset;
-};
-
-struct symsxp_struct
-{
-    struct SEXPREC *pname;
-    struct SEXPREC *value;
-    struct SEXPREC *internal;
-};
-
-struct listsxp_struct
-{
-    struct SEXPREC *carval;
-    struct SEXPREC *cdrval;
-    struct SEXPREC *tagval;
-};
-
-struct envsxp_struct
-{
-    struct SEXPREC *frame;
-    struct SEXPREC *enclos;
-    struct SEXPREC *hashtab;
-};
-
-struct closxp_struct
-{
-    struct SEXPREC *formals;
-    struct SEXPREC *body;
-    struct SEXPREC *env;
-};
-
-struct promsxp_struct
-{
-    struct SEXPREC *value;
-    struct SEXPREC *expr;
-    struct SEXPREC *env;
-};
-
-typedef struct SEXPREC
-{
-   struct sxpinfo_struct sxpinfo;
-   struct SEXPREC* attrib;
-   struct SEXPREC* gengc_next_node;
-   struct SEXPREC* gengc_prev_node;
-   union
-   {
-      struct primsxp_struct primsxp;
-      struct symsxp_struct symsxp;
-      struct listsxp_struct listsxp;
-      struct envsxp_struct envsxp;
-      struct closxp_struct closxp;
-      struct promsxp_struct promsxp;
-   } u;
-} SEXPREC;
-
-SEXP R_findVarLocInFrame(SEXP, SEXP);
-
-} // extern "C"
+#include <r/RSexpInternal.hpp>
 
 namespace rstudio {
 namespace r {
@@ -357,7 +277,7 @@ bool ensureNamespaceLoaded(const std::string& ns)
       return false;
    
    SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP != R_UnboundValue)
+   if (TYPEOF(nsSEXP) == ENVSXP)
       return true;
    
    Error error = r::exec::RFunction("base:::requireNamespace")
@@ -391,27 +311,45 @@ SEXP forcePromise(SEXP objectSEXP)
    return ::Rf_eval(objectSEXP, R_BaseEnv);
 }
 
-SEXP findNamespace(const std::string& name)
+SEXP findNamespace(const std::string& package)
 {
-   if (name.empty())
-       return R_UnboundValue;
+   if (package.empty())
+       return R_NilValue;
 
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   // Look up the namespace in the registry directly, rather than using
-   // R_FindNamespace which throws an error if the namespace isn't found.
-   SEXP nameSEXP = Rf_install(name.c_str());
-   return findVarInFrame(R_NamespaceRegistry, nameSEXP);
+   // Build and evaluate:
+   //   tryCatch(getNamespace("pkg"), error = identity, interrupt = identity)
+   //
+   // We construct the call manually rather than using RFunction / executeSafely
+   // because R_FindNamespace calls stop() for missing namespaces, and
+   // R_ToplevelExec still prints the error before catching it.
+   static SEXP tryCatchSEXP = Rf_install("tryCatch");
+   static SEXP identitySEXP = Rf_install("identity");
+   Protect protect;
+
+   SEXP packageSEXP;
+   protect.add(packageSEXP = Rf_mkString(package.c_str()));
+
+   SEXP getNamespaceSEXP;
+   protect.add(getNamespaceSEXP = Rf_lang2(Rf_install("getNamespace"), packageSEXP));
+
+   SEXP callSEXP;
+   protect.add(callSEXP = Rf_lang4(tryCatchSEXP, getNamespaceSEXP, identitySEXP, identitySEXP));
+   SET_TAG(CDDR(callSEXP), Rf_install("error"));
+   SET_TAG(CDDDR(callSEXP), Rf_install("interrupt"));
+
+   SEXP resultSEXP = Rf_eval(callSEXP, R_BaseEnv);
+   if (resultSEXP == nullptr || inherits(resultSEXP, "condition"))
+      return R_NilValue;
+
+   return resultSEXP;
 }
    
 SEXP getParentEnv(SEXP envSEXP)
 {
-#if R_VERSION >= R_Version(4, 5, 0)
-   return R_ParentEnv(envSEXP);
-#else
-   return sxpinfo::getEnclos(envSEXP);
-#endif
+   return runtime::parentEnv(envSEXP);
 }
 
 Error asPrimitiveEnvironment(SEXP envirSEXP,
@@ -479,57 +417,29 @@ void listEnvironment(SEXP env,
    if (!includeAll && includeLastDotValue)
    {
       SEXP lastValueSEXP = findVarInFrame(env, Rf_install(".Last.value"));
-      if (lastValueSEXP != R_UnboundValue)
+      if (lastValueSEXP != nullptr)
          pNames->push_back(".Last.value");
    }
 }
 
 BindingType getBindingType(const std::string& name, SEXP env)
 {
-#if R_VERSION >= R_Version(4, 6, 0)
    SEXP sym = Rf_install(name.c_str());
-   R_BindingType_t bt = R_GetBindingType(sym, env);
+   int bt = runtime::getBindingType(sym, env);
    switch (bt)
    {
-   case R_BindingTypeActive:
+   case runtime::kBindingTypeActive:
       return BindingType::ActiveBinding;
-   case R_BindingTypeDelayed:
+   case runtime::kBindingTypeDelayed:
       return BindingType::Promise;
-   case R_BindingTypeMissing:
+   case runtime::kBindingTypeMissing:
       return BindingType::Missing;
-   case R_BindingTypeUnbound:
+   case runtime::kBindingTypeUnbound:
+   case runtime::kBindingTypeNotFound:
       return BindingType::Unbound;
    default:
       return BindingType::Normal;
    }
-#else
-   // Use R_findVarLocInFrame to get the binding cell directly.
-   // This lets us classify the binding from a single lookup:
-   // active bindings via gp bits, immediate bindings via extra,
-   // and promise/missing via CAR().
-   static constexpr unsigned int ACTIVE_BINDING_MASK = 1 << 15;
-   SEXP sym = Rf_install(name.c_str());
-   SEXP loc = R_findVarLocInFrame(env, sym);
-   if (loc == nullptr || loc == R_NilValue)
-      return BindingType::Unbound;
-
-   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(loc);
-   if (info.gp & ACTIVE_BINDING_MASK)
-      return BindingType::ActiveBinding;
-
-   // immediate bindings (scalar int/real/lgl) are always normal
-   if (sxpinfo::isImmediateBinding(loc))
-      return BindingType::Normal;
-
-   SEXP val = CAR(loc);
-   if (val == R_MissingArg)
-      return BindingType::Missing;
-
-   if (TYPEOF(val) == PROMSXP && PRVALUE(val) == R_UnboundValue)
-      return BindingType::Promise;
-
-   return BindingType::Normal;
-#endif
 }
 
 SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
@@ -541,22 +451,13 @@ SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
    case BindingType::Normal:
    {
       // value is already evaluated; safe to retrieve via public API
-#if R_VERSION >= R_Version(4, 5, 0)
-      return R_getVarEx(sym, env, FALSE, R_UnboundValue);
-#else
-      return Rf_findVarInFrame(env, sym);
-#endif
+      return findVarInFrame(env, sym);
    }
 
    case BindingType::Promise:
    {
       // unevaluated promise; return the expression without forcing
-#if R_VERSION >= R_Version(4, 6, 0)
-      return R_DelayedBindingExpression(sym, env);
-#else
-      SEXP promiseSEXP = Rf_findVarInFrame(env, sym);
-      return PRCODE(promiseSEXP);
-#endif
+      return runtime::delayedBindingExpression(sym, env);
    }
 
    default:
@@ -676,20 +577,12 @@ SEXP functionBody(SEXP functionSEXP)
 
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 {
-#if R_VERSION >= R_Version(4, 5, 0)
-   return R_getVarEx(nameSEXP, envSEXP, FALSE, R_UnboundValue);
-#else
-   return Rf_findVarInFrame(envSEXP, nameSEXP);
-#endif
+   return runtime::findVarInFrame(envSEXP, nameSEXP);
 }
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-#if R_VERSION >= R_Version(4, 5, 0)
-   return R_getVarEx(nameSEXP, envSEXP, TRUE, R_UnboundValue);
-#else
-   return Rf_findVar(nameSEXP, envSEXP);
-#endif
+   return runtime::findVar(nameSEXP, envSEXP);
 }
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
@@ -701,16 +594,16 @@ SEXP findVar(const std::string& name, SEXP envSEXP)
 SEXP findVar(const std::string& name, const std::string& ns)
 {
    if (name.empty())
-      return R_UnboundValue;
+      return nullptr;
    
    if (!ns.empty())
       if (!ensureNamespaceLoaded(ns))
-         return R_UnboundValue;
+         return nullptr;
    
    SEXP envSEXP = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (envSEXP == R_UnboundValue)
-      return R_UnboundValue;
-   
+   if (TYPEOF(envSEXP) != ENVSXP)
+      return nullptr;
+
    return findVar(name, envSEXP);
 }
 
@@ -719,15 +612,15 @@ SEXP findFunction(const std::string& name, const std::string& ns)
 {
    r::sexp::Protect protect;
    if (name.empty())
-      return R_UnboundValue;
+      return nullptr;
    
    if (!ns.empty())
       if (!ensureNamespaceLoaded(ns))
-         return R_UnboundValue;
+         return nullptr;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (env == R_UnboundValue)
-      return R_UnboundValue;
+   if (TYPEOF(env) != ENVSXP)
+      return nullptr;
    
    // We might want to use `Rf_findFun`, but it calls `Rf_error`
    // on failure, which involves printing the error message out
@@ -745,20 +638,23 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       if (env == R_GlobalEnv)
       {
          SEXP resultSEXP = findVar(nameSEXP, R_GlobalEnv);
-         if (Rf_isFunction(resultSEXP))
-            return resultSEXP;
-         else if (TYPEOF(resultSEXP) == PROMSXP)
+         if (resultSEXP != nullptr)
          {
-            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
             if (Rf_isFunction(resultSEXP))
                return resultSEXP;
+            else if (TYPEOF(resultSEXP) == PROMSXP)
+            {
+               protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+               if (Rf_isFunction(resultSEXP))
+                  return resultSEXP;
+            }
          }
       }
       
       // Otherwise, just perform a simple search through
       // the current frame.
       SEXP resultSEXP = findVarInFrame(env, nameSEXP);
-      if (resultSEXP != R_UnboundValue)
+      if (resultSEXP != nullptr)
       {
          if (Rf_isFunction(resultSEXP))
             return resultSEXP;
@@ -773,7 +669,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       env = getParentEnv(env);
    }
    
-   return R_UnboundValue;
+   return nullptr;
 }   
    
 std::string typeAsString(SEXP object)
@@ -1354,7 +1250,7 @@ SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
             text == ".NaN" ||
             text == ".NAN")
    {
-      return r::sexp::create(R_NaReal, pProtect);
+      return r::sexp::create(NA_REAL, pProtect);
    }
    else if (text == ".inf" ||
             text == ".Inf" ||
@@ -1479,7 +1375,9 @@ SEXP create(double value, Protect* pProtect)
 
 SEXP create(bool value, Protect* pProtect)
 {
-   return value ? R_TrueValue : R_FalseValue;
+   SEXP valueSEXP;
+   pProtect->add(valueSEXP = Rf_ScalarLogical(value));
+   return valueSEXP;
 }
 
 SEXP create(const core::json::Array& value, Protect* pProtect)

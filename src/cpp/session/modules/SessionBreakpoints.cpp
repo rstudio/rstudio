@@ -80,7 +80,8 @@ public:
       if (srcfile != nullptr && TYPEOF(srcfile) != NILSXP)
       {
          SEXP file = r::sexp::findVar("filename", srcfile);
-         r::sexp::extract(file, &srcfilename_);
+         if (file != nullptr)
+            r::sexp::extract(file, &srcfilename_);
       }
    }
 
@@ -380,6 +381,9 @@ SEXP rs_registerShinyFunction(SEXP params)
    SEXP name = r::sexp::findVar("name", params);
    SEXP where = r::sexp::findVar("where", params);
 
+   if (expr == nullptr || fun == nullptr || name == nullptr || where == nullptr)
+      return R_NilValue;
+
    // Get the name of the object we're about to attach.
    std::string objName;
    Error error = r::sexp::extract(name, &objName);
@@ -408,8 +412,9 @@ SEXP rs_registerShinyFunction(SEXP params)
                                                unregisterShinyFunction,
                                                &protect));
    r::sexp::setAttrib(fun, "_rs_shinyDebugId", sid);
-   r::sexp::setAttrib(fun, "_rs_shinyDebugLabel",
-                      r::sexp::findVar("label", params));
+   SEXP labelSEXP = r::sexp::findVar("label", params);
+   if (labelSEXP != nullptr)
+      r::sexp::setAttrib(fun, "_rs_shinyDebugLabel", labelSEXP);
 
    r::exec::RFunction(".rs.setShinyFunction", name, where, fun).call();
 
