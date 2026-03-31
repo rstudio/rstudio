@@ -311,18 +311,27 @@ SEXP forcePromise(SEXP objectSEXP)
    return ::Rf_eval(objectSEXP, R_BaseEnv);
 }
 
-SEXP findNamespace(const std::string& name)
+SEXP findNamespace(const std::string& package)
 {
-   if (name.empty())
+   if (package.empty())
        return nullptr;
 
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   // Look up the namespace in the registry directly, rather than using
-   // R_FindNamespace which throws an error if the namespace isn't found.
-   SEXP nameSEXP = Rf_install(name.c_str());
-   return findVarInFrame(R_NamespaceRegistry, nameSEXP);
+   r::sexp::Protect protect;
+   SEXP nsSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.getNamespace")
+         .addParam(package)
+         .call(&nsSEXP, &protect);
+   
+   if (error || r::sexp::inherits(nsSEXP, "error"))
+   {
+      LOG_ERROR(error);
+      return nullptr;
+   }
+
+   return nsSEXP;
 }
    
 SEXP getParentEnv(SEXP envSEXP)
