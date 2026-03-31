@@ -182,7 +182,13 @@ If any upload fails, report the error and stop.
 After uploading, remove the downloaded archives left in the repo root by the upload script (they match `node-v*` and are not gitignored):
 
 ```bash
-trash node-v<VERSION>-*
+rm -f node-v<VERSION>-*
+```
+
+If both versions were uploaded and they differ, remove both:
+
+```bash
+rm -f node-v<BUILD_VERSION>-* node-v<INSTALLED_VERSION>-*
 ```
 
 ### 6. Verify the install
