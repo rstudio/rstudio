@@ -181,17 +181,13 @@ If any upload fails, report the error and stop.
 
 ### 6. Verify the install
 
-Run a real install in a temp directory to confirm the S3 binaries download and extract correctly. The `RSTUDIO_TOOLS_ROOT` environment variable overrides the default tools root (`/opt/rstudio-tools`), so this works without elevated privileges.
+Run the dependency installer to confirm the S3 binaries download and extract correctly. The script must be run from `dependencies/common/` because it invokes `./install-node` and `./install-yarn` via relative paths. It installs into `dependencies/common/node/` which is gitignored.
 
 ```bash
-VERIFY_DIR="$(mktemp -d)"
-trap 'rm -rf "$VERIFY_DIR"' EXIT
-RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-npm-dependencies
+cd dependencies/common && bash install-npm-dependencies
 ```
 
-Confirm exit code 0. The `trap` ensures the temp directory is cleaned up whether the install succeeds or fails. If the install fails, report the error and stop.
-
-After verification, tell the user they will need to re-run `dependencies/common/install-npm-dependencies` themselves (with appropriate privileges) to install the new Node.js into their dev environment.
+Confirm exit code 0. If the install fails, report the error and stop. This also installs the new Node.js locally for development use.
 
 ### 7. Commit and open a PR
 
