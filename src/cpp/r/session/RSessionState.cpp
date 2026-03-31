@@ -358,6 +358,7 @@ void executeAfterRestartCommandImpl(void* payload)
    protect.add(callSEXP);
 
    SEXP resultSEXP = Rf_eval(callSEXP, R_GlobalEnv);
+   protect.add(resultSEXP);
    r::sexp::getNamedListSEXP(resultSEXP, "value", &data->valueSEXP);
    r::sexp::getNamedListElement(resultSEXP, "visible", &data->visible);
 }
@@ -396,8 +397,8 @@ Error executeAfterRestartCommand(const std::string& command)
       data.visible = false;
 
       // NOTE: we use R_ToplevelExec to ensure R longjmps from errors don't
-      // escape this context, and also so that we can capture whether evaluation
-      // sets the R_Visible flag (and so results should be printed)
+      // escape this context, and also so that we can safely evaluate each
+      // expression and capture visibility via withVisible()
       int success = R_ToplevelExec(executeAfterRestartCommandImpl, &data);
       if (success)
       {
