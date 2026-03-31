@@ -325,11 +325,14 @@ SEXP findNamespace(const std::string& package)
          .addParam(package)
          .call(&nsSEXP, &protect);
    
-   if (error || r::sexp::inherits(nsSEXP, "error"))
+   if (error)
    {
       LOG_ERROR(error);
       return nullptr;
    }
+
+   if (r::sexp::inherits(nsSEXP, "error"))
+      return nullptr;
 
    return nsSEXP;
 }

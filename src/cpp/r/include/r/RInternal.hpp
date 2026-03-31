@@ -45,7 +45,8 @@
 
 // Route R_ClosureFormals / R_ClosureBody / R_ClosureEnv through the
 // runtime dispatch layer, which resolves the correct implementation
-// based on the version of R loaded at runtime.
+// based on the version of R loaded at runtime. Any file that includes
+// this header will use the runtime-dispatched versions transparently.
 #include <r/RRuntime.hpp>
 
 #undef R_ClosureFormals

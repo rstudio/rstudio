@@ -59,7 +59,8 @@ int getBindingType(SEXP symSEXP, SEXP envSEXP);
 // R_DelayedBindingExpression (R >= 4.6), falls back to PRCODE.
 SEXP delayedBindingExpression(SEXP symSEXP, SEXP envSEXP);
 
-// R_BindingType_t constants (matches the enum values in R >= 4.6).
+// R_BindingType_t constants (must match the enum values in R >= 4.6).
+// TODO: Add static_assert against R_BindingType_t once R 4.6 is released.
 constexpr int kBindingTypeUnbound = 0;
 constexpr int kBindingTypeValue   = 1;
 constexpr int kBindingTypeMissing = 2;
