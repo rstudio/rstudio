@@ -268,7 +268,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
             ? r::sexp::asNamespace(package)
             : r::sexp::findNamespace(package);
  
-      if (TYPEOF(namespaceSEXP) == ENVSXP)
+      if (namespaceSEXP != nullptr && TYPEOF(namespaceSEXP) == ENVSXP)
       {
          DEBUG("Resolving: '" << package << ":::" << symbol << "'");
       
