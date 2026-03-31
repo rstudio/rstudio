@@ -90,7 +90,10 @@ SEXP getOptionCell(const std::string& name)
    // keep reference to R options list
    static SEXP optionsSEXP =
          r::sexp::findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
-   
+
+   if (optionsSEXP == nullptr)
+      return R_NilValue;
+
    // we search through the options list directly and return
    // the underlying value to avoid duplicating the underlying
    // R object -- this allows us to detect changes if necessary
@@ -116,6 +119,9 @@ SEXP setErrorOption(SEXP value)
 {
    SEXP errorTag = Rf_install("error");
    SEXP option = r::sexp::findVar(Rf_install(".Options"), R_BaseEnv);
+   if (option == nullptr)
+      return R_NilValue;
+
    while (option != R_NilValue)
    {
       // are we removing the option?

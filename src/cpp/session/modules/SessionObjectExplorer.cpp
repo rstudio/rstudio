@@ -228,9 +228,9 @@ void onDetectChanges(module_context::ChangeSource source)
       SEXP s = Rf_install(id.c_str());
       SEXP entry = r::sexp::findVarInFrame(envCache, s);
 
-      // basic safety check on entry: make sure it's a 
+      // basic safety check on entry: make sure it's a
       // list of 5 elements
-      if (TYPEOF(entry) != VECSXP || Rf_length(entry) != 5)
+      if (entry == nullptr || TYPEOF(entry) != VECSXP || Rf_length(entry) != 5)
          continue;
       
       SEXP object = VECTOR_ELT(entry, 0);

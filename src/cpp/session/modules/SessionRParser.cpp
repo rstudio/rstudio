@@ -196,7 +196,9 @@ private:
    void addNseFunction(const std::string& name,
                        const std::string& ns)
    {
-      add(r::sexp::findFunction(name, ns), true);
+      SEXP fnSEXP = r::sexp::findFunction(name, ns);
+      if (fnSEXP != nullptr)
+         add(fnSEXP, true);
    }
    
    uintptr_t address(SEXP objectSEXP)

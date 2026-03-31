@@ -713,9 +713,11 @@ SEXP callHandler(const std::string& path,
    protect.add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
-   SEXP handlerSourceSEXP;
-   protect.add(handlerSourceSEXP = handlerSource(path));
-   
+   SEXP handlerSourceSEXP = handlerSource(path);
+   if (handlerSourceSEXP == nullptr)
+      return R_NilValue;
+   protect.add(handlerSourceSEXP);
+
    SEXP argSEXP;
    protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
    
@@ -724,19 +726,23 @@ SEXP callHandler(const std::string& path,
    SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings
-   SEXP suppressWarningsSEXP;
-   protect.add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
-   
+   SEXP suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base");
+   if (suppressWarningsSEXP == nullptr)
+      return R_NilValue;
+   protect.add(suppressWarningsSEXP);
+
    SEXP callSEXP;
    protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
    // get reference to tools namespace
    SEXP toolsSEXP = r::sexp::findNamespace("tools");
-   
+   if (toolsSEXP == nullptr)
+      return R_NilValue;
+
    // execute and return
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_eval(callSEXP, toolsSEXP));
-   
+
    return resultSEXP;
 }
 
@@ -1020,7 +1026,8 @@ SEXP lookupCustomHandler(const std::string& uri)
       if (!s_customHandlersEnv)
       {
          SEXP toolsSEXP = r::sexp::findNamespace("tools");
-         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
+         if (toolsSEXP != nullptr)
+            s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }
 
       // we only proceed if .httpd.handlers.env really exists
