@@ -441,6 +441,7 @@ For branch naming:
 - Use the 'bugfix/' prefix for code changes which fix an existing issue.
 - Use the 'feature/' prefix for code changes that add or extend existing functionality.
 - Use the 'developer/' prefix for code changes that are primarily for developer ergonomics.
+- Use the 'test/' prefix for code changes that are focused on automated tests.
 
 ## Issues
 
