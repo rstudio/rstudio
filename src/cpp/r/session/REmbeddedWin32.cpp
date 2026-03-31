@@ -325,6 +325,12 @@ void runEmbeddedR(const core::FilePath& rHome,
    // console history mechanism.
    CharacterMode = LinkDLL;
 
+   // setup main loop
+   ::setup_Rmainloop();
+
+   // reset character mode to RGui
+   CharacterMode = RGui;
+
    // initialize runtime dispatch now that R.dll is loaded
    Error error = r::runtime::initialize();
    if (error)
@@ -332,12 +338,6 @@ void runEmbeddedR(const core::FilePath& rHome,
       LOG_ERROR(error);
       Rf_error("RStudio failed to initialize R runtime dispatch");
    }
-
-   // setup main loop
-   ::setup_Rmainloop();
-
-   // reset character mode to RGui
-   CharacterMode = RGui;
 
    // run main loop
    ::run_Rmainloop();
