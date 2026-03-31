@@ -1225,7 +1225,7 @@ SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
             text == ".NaN" ||
             text == ".NAN")
    {
-      return r::sexp::create(R_NaReal, pProtect);
+      return r::sexp::create(NA_REAL, pProtect);
    }
    else if (text == ".inf" ||
             text == ".Inf" ||
