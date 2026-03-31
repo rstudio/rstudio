@@ -25,10 +25,8 @@
 
 #if defined(_WIN32)
 # define kRLibraryName "R.dll"
-#elif defined(__APPLE__)
-# define kRLibraryName "libR.dylib"
 #else
-# define kRLibraryName "libR.so"
+# include <dlfcn.h>
 #endif
 
 using namespace rstudio::core;
@@ -105,9 +103,19 @@ SEXP (*s_delayedBindingExpression)(SEXP, SEXP) = nullptr;
 
 Error initialize()
 {
+#if defined(_WIN32)
+   // On Windows, R.dll is a separate DLL resolvable via the PATH.
    Error error = core::system::loadLibrary(kRLibraryName, &s_library);
    if (error)
       return error;
+#else
+   // On POSIX, R is already loaded into the process. Use the process
+   // handle so dlsym can find R symbols without needing the library
+   // on the search path.
+   s_library = ::dlopen(nullptr, RTLD_NOW);
+   if (s_library == nullptr)
+      return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+#endif
 
    RS_IMPORT_FUNCTION(FORMALS);
    RS_IMPORT_FUNCTION(BODY);
