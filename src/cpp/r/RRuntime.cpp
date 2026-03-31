@@ -194,10 +194,8 @@ void initialize()
 
          if (TYPEOF(val) == PROMSXP)
          {
-            // Access promise value via struct; PRVALUE may not be
-            // an exported function on older R where this fallback runs.
             SEXPREC* promise = reinterpret_cast<SEXPREC*>(val);
-            if (prom->u.promsxp.value == R_UnboundValue)
+            if (promise->u.promsxp.value == R_UnboundValue)
                return kBindingTypeDelayed;
          }
 
@@ -215,8 +213,6 @@ void initialize()
    {
       s_delayedBindingExpression = [](SEXP symSEXP, SEXP envSEXP) -> SEXP {
          SEXP promiseSEXP = Rf_findVarInFrame(envSEXP, symSEXP);
-         // Access promise expression via struct; PRCODE may not be
-         // an exported function on older R where this fallback runs.
          SEXPREC* promise = reinterpret_cast<SEXPREC*>(promiseSEXP);
          return reinterpret_cast<SEXP>(promise->u.promsxp.expr);
       };
