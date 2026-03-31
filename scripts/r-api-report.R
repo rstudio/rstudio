@@ -78,14 +78,14 @@ former_api <- extract_texi_symbols("forfun")
 
 # -- Step 2: Extract R C API symbols used by RStudio ----
 
-# Scan source files (excluding RInternal.hpp and binary files)
+# Scan source files (excluding RInternal.hpp, RRuntime.cpp, and binary files)
 source_files <- list.files(
    rstudio_cpp,
    pattern = "\\.(c|cc|cpp|h|hpp|mm)$",
    recursive = TRUE,
    full.names = TRUE
 )
-source_files <- source_files[!grepl("RInternal\\.hpp$", source_files)]
+source_files <- source_files[!grepl("RInternal\\.hpp$|RRuntime\\.cpp$", source_files)]
 
 all_source <- unlist(lapply(source_files, readLines, warn = FALSE))
 
@@ -179,7 +179,7 @@ ln("============================================================")
 ln("")
 ln("Generated: ", format(Sys.Date()))
 ln("Source:    ", r_svn_repo, " (trunk)")
-ln("Scanned:  src/cpp/ (excluding RInternal.hpp)")
+ln("Scanned:  src/cpp/ (excluding RInternal.hpp, RRuntime.cpp)")
 ln("")
 ln("Public API symbols used:    ", length(result$public))
 ln("Embedding API symbols used: ", length(result$embed))
