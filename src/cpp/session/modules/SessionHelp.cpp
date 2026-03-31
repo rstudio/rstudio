@@ -736,7 +736,7 @@ SEXP callHandler(const std::string& path,
 
    // get reference to tools namespace
    SEXP toolsSEXP = r::sexp::findNamespace("tools");
-   if (toolsSEXP == nullptr)
+   if (TYPEOF(toolsSEXP) != ENVSXP)
       return R_NilValue;
 
    // execute and return
@@ -1026,7 +1026,7 @@ SEXP lookupCustomHandler(const std::string& uri)
       if (!s_customHandlersEnv)
       {
          SEXP toolsSEXP = r::sexp::findNamespace("tools");
-         if (toolsSEXP != nullptr)
+         if (TYPEOF(toolsSEXP) == ENVSXP)
             s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }
 

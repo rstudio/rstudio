@@ -277,7 +277,7 @@ bool ensureNamespaceLoaded(const std::string& ns)
       return false;
    
    SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP != nullptr)
+   if (TYPEOF(nsSEXP) == ENVSXP)
       return true;
    
    Error error = r::exec::RFunction("base:::requireNamespace")
@@ -314,26 +314,37 @@ SEXP forcePromise(SEXP objectSEXP)
 SEXP findNamespace(const std::string& package)
 {
    if (package.empty())
-       return nullptr;
+       return R_NilValue;
 
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   // R_FindNamespace errors if the namespace isn't found,
-   // so we wrap it in executeSafely to catch the longjump.
-   SEXP nsSEXP = R_NilValue;
-   Error error = r::exec::executeSafely([&]()
-   {
-      r::sexp::Protect protect;
-      SEXP packageSEXP = Rf_mkString(package.c_str());
-      protect.add(packageSEXP);
-      nsSEXP = R_FindNamespace(packageSEXP);
-   });
+   // Build and evaluate:
+   //   tryCatch(getNamespace("pkg"), error = identity, interrupt = identity)
+   //
+   // We construct the call manually rather than using RFunction / executeSafely
+   // because R_FindNamespace calls stop() for missing namespaces, and
+   // R_ToplevelExec still prints the error before catching it.
+   static SEXP tryCatchSEXP = Rf_install("tryCatch");
+   static SEXP identitySEXP = Rf_install("identity");
+   Protect protect;
 
-   if (error)
-      return nullptr;
+   SEXP packageSEXP;
+   protect.add(packageSEXP = Rf_mkString(package.c_str()));
 
-   return nsSEXP;
+   SEXP getNamespaceSEXP;
+   protect.add(getNamespaceSEXP = Rf_lang2(Rf_install("getNamespace"), packageSEXP));
+
+   SEXP callSEXP;
+   protect.add(callSEXP = Rf_lang4(tryCatchSEXP, getNamespaceSEXP, identitySEXP, identitySEXP));
+   SET_TAG(CDDR(callSEXP), Rf_install("error"));
+   SET_TAG(CDDDR(callSEXP), Rf_install("interrupt"));
+
+   SEXP resultSEXP = Rf_eval(callSEXP, R_BaseEnv);
+   if (resultSEXP == nullptr || inherits(resultSEXP, "condition"))
+      return R_NilValue;
+
+   return resultSEXP;
 }
    
 SEXP getParentEnv(SEXP envSEXP)
@@ -590,9 +601,9 @@ SEXP findVar(const std::string& name, const std::string& ns)
          return nullptr;
    
    SEXP envSEXP = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (envSEXP == nullptr)
+   if (TYPEOF(envSEXP) != ENVSXP)
       return nullptr;
-   
+
    return findVar(name, envSEXP);
 }
 
@@ -608,7 +619,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
          return nullptr;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   if (env == nullptr)
+   if (TYPEOF(env) != ENVSXP)
       return nullptr;
    
    // We might want to use `Rf_findFun`, but it calls `Rf_error`
