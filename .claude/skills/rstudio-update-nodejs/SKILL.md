@@ -183,8 +183,25 @@ If any upload fails, report the error and stop.
 
 Run the dependency installer to confirm the S3 binaries download and extract correctly. The script must be run from `dependencies/common/` because it invokes `./install-node` and `./install-yarn` via relative paths. It installs into `dependencies/common/node/` which is gitignored.
 
+First, remove any cached local installs for the new version(s) so the installer is forced to download fresh from S3. The `install-node` script skips download when it finds an existing `node/<version>/bin/node`, so stale local copies would mask a broken upload.
+
 ```bash
-cd dependencies/common && bash install-npm-dependencies
+cd dependencies/common
+# Remove cached installs for the new version(s) to force a fresh download.
+# Glob covers both plain and suffixed dirs (e.g. 22.14.0, 22.14.0-arm64, 22.14.0-installed, 22.14.0-arm64-installed).
+rm -rf node/<VERSION>*
+```
+
+If both versions are being updated to different values, remove both:
+
+```bash
+rm -rf node/<BUILD_VERSION>* node/<INSTALLED_VERSION>*
+```
+
+Then run the installer:
+
+```bash
+bash install-npm-dependencies
 ```
 
 Confirm exit code 0. If the install fails, report the error and stop. This also installs the new Node.js locally for development use.
