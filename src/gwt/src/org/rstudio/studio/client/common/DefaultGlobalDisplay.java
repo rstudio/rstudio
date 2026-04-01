@@ -417,7 +417,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       }
       if (fragment != null && !fragment.isEmpty())
       {
-         url += "#" + fragment;
+         url += "#" + URL.encode(fragment);
       }
 
       // open window
