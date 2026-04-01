@@ -29,12 +29,19 @@ if(DEFINED ENV{LIBR_HOME} AND NOT LIBR_HOME)
    set(LIBR_HOME "$ENV{LIBR_HOME}")
 endif()
 
+unset(_R_EXECUTABLE CACHE)
+
 if(LIBR_HOME)
 
    # User provided LIBR_HOME -- find R inside it.
    if(WIN32)
+      if(LIBR_FIND_WINDOWS_32BIT)
+         set(_LIBR_BIN_HINTS "${LIBR_HOME}/bin/i386" "${LIBR_HOME}/bin")
+      else()
+         set(_LIBR_BIN_HINTS "${LIBR_HOME}/bin/x64" "${LIBR_HOME}/bin")
+      endif()
       find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe
-         HINTS "${LIBR_HOME}/bin/x64" "${LIBR_HOME}/bin"
+         HINTS ${_LIBR_BIN_HINTS}
          NO_DEFAULT_PATH)
    else()
       find_program(_R_EXECUTABLE NAMES R
@@ -42,46 +49,56 @@ if(LIBR_HOME)
          NO_DEFAULT_PATH)
    endif()
 
-elseif(APPLE)
-
-   # Look for R framework
-   find_library(_LIBR_FRAMEWORK R)
-   if(_LIBR_FRAMEWORK MATCHES ".*\\.framework")
-      set(_R_EXECUTABLE "${_LIBR_FRAMEWORK}/Resources/bin/R")
-   elseif(_LIBR_FRAMEWORK)
-      # Non-framework R (e.g., Homebrew) -- resolve symlink to find bin/R
-      get_filename_component(_LIBR_FRAMEWORK_REAL "${_LIBR_FRAMEWORK}" REALPATH)
-      get_filename_component(_LIBR_FRAMEWORK_DIR "${_LIBR_FRAMEWORK_REAL}" PATH)
-      set(_R_EXECUTABLE "${_LIBR_FRAMEWORK_DIR}/../bin/R")
-   endif()
-
-elseif(WIN32)
-
-   # Check Windows registry for install path
-   get_filename_component(_R_INSTALL_PATH
-      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]" ABSOLUTE)
-
-   if(NOT EXISTS "${_R_INSTALL_PATH}")
-      message(STATUS "R path from registry '${_R_INSTALL_PATH}' doesn't exist, searching C:/R")
-      file(GLOB _R_INSTALLATIONS "C:/R/*" LIST_DIRECTORIES TRUE)
-      if(_R_INSTALLATIONS)
-         list(GET _R_INSTALLATIONS 0 _R_INSTALL_PATH)
-         message(STATUS "Found R installation at '${_R_INSTALL_PATH}'")
-      else()
-         set(_R_INSTALL_PATH "")
-      endif()
-   endif()
-
-   if(_R_INSTALL_PATH)
-      find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe
-         HINTS "${_R_INSTALL_PATH}/bin/x64" "${_R_INSTALL_PATH}/bin"
-         NO_DEFAULT_PATH)
-   endif()
-
 else()
 
-   # Unix: find R in PATH
-   find_program(_R_EXECUTABLE R)
+   # Try platform-specific discovery mechanisms first.
+   if(APPLE)
+
+      # Look for R framework
+      find_library(_LIBR_FRAMEWORK R)
+      if(_LIBR_FRAMEWORK MATCHES ".*\\.framework")
+         set(_R_EXECUTABLE "${_LIBR_FRAMEWORK}/Resources/bin/R")
+      elseif(_LIBR_FRAMEWORK)
+         # Non-framework R (e.g., Homebrew) -- resolve symlink to find bin/R
+         get_filename_component(_LIBR_FRAMEWORK_REAL "${_LIBR_FRAMEWORK}" REALPATH)
+         get_filename_component(_LIBR_FRAMEWORK_DIR "${_LIBR_FRAMEWORK_REAL}" PATH)
+         set(_R_EXECUTABLE "${_LIBR_FRAMEWORK_DIR}/../bin/R")
+      endif()
+
+   elseif(WIN32)
+
+      # Check Windows registry for install path
+      get_filename_component(_R_INSTALL_PATH
+         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]" ABSOLUTE)
+
+      if(NOT EXISTS "${_R_INSTALL_PATH}")
+         message(STATUS "R path from registry '${_R_INSTALL_PATH}' doesn't exist, searching C:/R")
+         file(GLOB _R_INSTALLATIONS "C:/R/*" LIST_DIRECTORIES TRUE)
+         if(_R_INSTALLATIONS)
+            list(GET _R_INSTALLATIONS 0 _R_INSTALL_PATH)
+            message(STATUS "Found R installation at '${_R_INSTALL_PATH}'")
+         else()
+            set(_R_INSTALL_PATH "")
+         endif()
+      endif()
+
+      if(_R_INSTALL_PATH)
+         if(LIBR_FIND_WINDOWS_32BIT)
+            set(_LIBR_BIN_HINTS "${_R_INSTALL_PATH}/bin/i386" "${_R_INSTALL_PATH}/bin")
+         else()
+            set(_LIBR_BIN_HINTS "${_R_INSTALL_PATH}/bin/x64" "${_R_INSTALL_PATH}/bin")
+         endif()
+         find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe
+            HINTS ${_LIBR_BIN_HINTS}
+            NO_DEFAULT_PATH)
+      endif()
+
+   endif()
+
+   # Fallback for all platforms: find R on the PATH.
+   if(NOT _R_EXECUTABLE OR NOT EXISTS "${_R_EXECUTABLE}")
+      find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe)
+   endif()
 
 endif()
 
@@ -213,6 +230,7 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
    LIBR_INCLUDE_DIRS
    LIBR_LIBRARIES
    LIBR_DOC_DIR
+   LIBR_LIB_DIR
 )
 
 mark_as_advanced(
