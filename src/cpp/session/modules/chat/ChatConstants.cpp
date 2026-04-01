@@ -23,6 +23,7 @@ namespace constants {
 
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
+const char* const kPositAiBackupDirName = "ai.prev";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";

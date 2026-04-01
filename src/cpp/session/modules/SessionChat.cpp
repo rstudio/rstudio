@@ -248,6 +248,7 @@ using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
 using chat_constants::kPositAiDirName;
+using chat_constants::kPositAiBackupDirName;
 using chat_constants::kServerScriptPath;
 
 // Types used throughout
@@ -3934,7 +3935,7 @@ Error installPackage(const FilePath& packagePath)
 {
    FilePath userDataDir = xdg::userDataDir();
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
    DLOG("Installing package from: {}", packagePath.getAbsolutePath());
 
@@ -5218,7 +5219,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       // so we don't need to call restoreFromBackup() here again.
       // Just verify backup was restored and clean up if needed.
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
       // Defensive cleanup: remove orphaned backup if it exists
       if (aiPrevDir.exists())
@@ -5238,7 +5239,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       // Defensive cleanup: ensure ai.prev is removed
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
       if (aiPrevDir.exists())
       {
          WLOG("Backup directory still exists after successful install, cleaning up");
@@ -5311,7 +5312,7 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
 {
    FilePath userDataDir = xdg::userDataDir();
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
    if (!aiDir.exists() && !aiPrevDir.exists())
    {
