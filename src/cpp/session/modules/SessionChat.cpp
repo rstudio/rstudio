@@ -5371,6 +5371,7 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
       // before we delete the installation directory.
       if (s_chatBackendPid != -1)
       {
+         DLOG("Backend did not exit within grace period, force terminating");
          Error error = core::system::terminateProcess(s_chatBackendPid);
          if (error)
             LOG_ERROR(error);
