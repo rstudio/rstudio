@@ -34,7 +34,6 @@
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 
-#include <r/RContext.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
@@ -502,9 +501,18 @@ bool isSuspendable(const std::string& currentPrompt)
 }
 
 
+namespace {
+bool s_browserActive = false;
+} // anonymous namespace
+
+void setBrowserActive(bool active)
+{
+   s_browserActive = active;
+}
+
 bool browserContextActive()
 {
-   return r::context::hasBrowserContext();
+   return s_browserActive;
 }
    
 namespace utils {

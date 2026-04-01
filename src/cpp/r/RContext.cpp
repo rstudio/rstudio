@@ -82,23 +82,8 @@ RContext* globalContext()
 
 bool isTopLevelContext()
 {
-   return globalContext()->callflag == CTXT_TOPLEVEL;
-}
-
-bool hasFunctionContext()
-{
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-      if (ctx->callflag & CTXT_FUNCTION)
-         return true;
-   return false;
-}
-
-bool hasBrowserContext()
-{
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-      if (ctx->callflag & CTXT_BROWSER)
-         return true;
-   return false;
+   auto* ctx = globalContext();
+   return ctx->callflag == CTXT_TOPLEVEL && ctx->nextcontext == nullptr;
 }
 
 SEXP browserContextEnv()

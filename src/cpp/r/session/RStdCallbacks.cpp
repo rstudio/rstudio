@@ -171,9 +171,9 @@ bool consoleInputHook(const std::string& prompt,
       return true;
 
    // check for user quit invocation
-    boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
-    boost::smatch match;
-    if (regex_utils::match(input, match, re))
+   boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
+   boost::smatch match;
+   if (regex_utils::match(input, match, re))
    {
       if (!s_callbacks.handleUnsavedChanges())
       {
@@ -273,6 +273,10 @@ int RReadConsole(const char *pmt,
    {
       // capture the prompt for later manipulation
       std::string prompt(pmt);
+
+      // track browser state based on the prompt (Browse[N]> )
+      static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
+      setBrowserActive(boost::regex_match(prompt, reBrowsePrompt));
 
       // invoke one time initialization
       if (!s_initialized)

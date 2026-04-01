@@ -22,7 +22,7 @@ namespace session {
 // NOTE: Invoked in handleUSR2, so this needs to be async-signal safe.
 bool isBusy()
 {
-   return r::context::hasFunctionContext();
+   return !r::context::isTopLevelContext();
 }
 
 } // namespace session

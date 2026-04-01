@@ -29,14 +29,6 @@ namespace context {
 // on the stack (i.e. the context stack is empty).
 bool isTopLevelContext();
 
-// Returns true when R has one or more function-call contexts on the stack.
-// This indicates R is actively executing code (including internal RStudio code).
-// NOTE: async-signal safe.
-bool hasFunctionContext();
-
-// Returns true when a browser context exists anywhere on the stack.
-bool hasBrowserContext();
-
 // Returns the closure environment of the first browser context on the stack,
 // or R_NilValue if there is no browser context.
 SEXP browserContextEnv();

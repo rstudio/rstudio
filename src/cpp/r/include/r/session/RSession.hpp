@@ -268,7 +268,8 @@ void setSaveAction(int saveAction);
 void setImageDirty(bool imageDirty);
 bool imageIsDirty();
 
-// check whether there is a browser context active
+// browser context state -- set from RReadConsole based on the prompt
+void setBrowserActive(bool active);
 bool browserContextActive();
 
 // quit
