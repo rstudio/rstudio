@@ -5365,19 +5365,42 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
          }
       }
       s_chatBackendOps.reset();
+
+      // Force-terminate if still running after grace period, then wait
+      // for the process to actually exit so file handles are released
+      // before we delete the installation directory.
       if (s_chatBackendPid != -1)
       {
          Error error = core::system::terminateProcess(s_chatBackendPid);
          if (error)
             LOG_ERROR(error);
+
+         const int TERM_POLL_MS = 50;
+         const int TERM_TIMEOUT_MS = 2000;
+         int termElapsed = 0;
+         while (s_chatBackendPid != -1 && termElapsed < TERM_TIMEOUT_MS)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(TERM_POLL_MS));
+            termElapsed += TERM_POLL_MS;
+         }
+
+         if (s_chatBackendPid != -1)
+            WLOG("Chat backend did not exit after terminate; "
+                 "proceeding with uninstall");
       }
+
       s_chatBackendPid = -1;
       clearChatBackendPort();
       s_chatBusy = false;
       s_backendOutputBuffer.clear();
    }
 
-   // Stop assistant agent (NES language server)
+   // Stop assistant agent (NES language server).
+   // stopAgentForUpdate() is synchronous — it waits for the agent
+   // process to exit before returning, so file handles are released.
    if (!assistant::stopAgentForUpdate())
       WLOG("Timeout waiting for assistant agent to stop during uninstall");
 
