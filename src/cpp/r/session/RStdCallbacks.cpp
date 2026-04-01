@@ -30,7 +30,6 @@
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
-#include <r/RContext.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -388,7 +387,7 @@ int RReadConsole(const char *pmt,
          // here -- any time RReadConsole is called from a nested eval,
          // the context stack will be non-toplevel.
          else if (consoleInput.isEof() &&
-                  !r::context::isTopLevelContext())
+                  !isAtTopLevel())
          {
             return 0;
          }

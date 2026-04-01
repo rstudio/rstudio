@@ -23,7 +23,7 @@
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
-#include <r/RContext.hpp>
+#include <r/session/RSession.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
@@ -398,7 +398,7 @@ Error evaluateString(const std::string& str,
    
 bool atTopLevelContext()
 {
-   return context::isTopLevelContext();
+   return session::isAtTopLevel();
 }
 
 RFunction::RFunction(SEXP functionSEXP)

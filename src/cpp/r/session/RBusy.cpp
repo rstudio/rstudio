@@ -13,7 +13,7 @@
  *
  */
 
-#include <r/RContext.hpp>
+#include <r/session/RSession.hpp>
 
 namespace rstudio {
 namespace r {
@@ -26,7 +26,7 @@ namespace session {
 // which only looked for function contexts (CTXT_FUNCTION).
 bool isBusy()
 {
-   return !r::context::isTopLevelContext();
+   return !isAtTopLevel();
 }
 
 } // namespace session

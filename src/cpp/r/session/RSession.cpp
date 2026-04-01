@@ -541,7 +541,56 @@ SEXP browserEnv()
 {
    return s_browserEnv.get();
 }
-   
+
+bool isAtTopLevel()
+{
+   return atDefaultPrompt() && !r::exec::isExecuting();
+}
+
+bool isBrowseActive()
+{
+   return browserContextActive() &&
+          browserEnv() != R_GlobalEnv;
+}
+
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
+{
+   SEXP benv = browsing ? browserEnv() : R_NilValue;
+
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.getFunctionContext")
+      .addParam(depth)
+      .addParam(benv)
+      .call(&resultSEXP, &protect);
+
+   if (error)
+      return false;
+
+   if (TYPEOF(resultSEXP) != VECSXP || Rf_length(resultSEXP) < 2)
+      return false;
+
+   int foundDepth = r::sexp::asInteger(VECTOR_ELT(resultSEXP, 0));
+   SEXP foundEnv = VECTOR_ELT(resultSEXP, 1);
+
+   if (pDepth)
+      *pDepth = foundDepth;
+   if (pEnv)
+      *pEnv = foundEnv;
+
+   return foundDepth > 0;
+}
+
+bool inDebugHiddenContext()
+{
+   bool result = false;
+   Error error = r::exec::RFunction(".rs.inDebugHiddenContext")
+      .call(&result);
+   if (error)
+      LOG_ERROR(error);
+   return result;
+}
+
 namespace utils {
    
 bool isPackratModeOn()

@@ -283,6 +283,22 @@ bool browserContextActive();
 void setBrowserEnv(SEXP env);
 SEXP browserEnv();
 
+// Returns true when R is at the top-level prompt with no evaluation contexts
+// on the stack.
+bool isAtTopLevel();
+
+// Returns true when we are in a "browse" debugging state: at a browse prompt
+// with the browser environment inside a function (not the global env).
+bool isBrowseActive();
+
+// Find the function context associated with the browser, or at a given depth.
+// Returns false if no matching context was found.
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv);
+
+// Check if the topmost function on the stack is a debugger-internal
+// function (has the "hideFromDebugger" attribute).
+bool inDebugHiddenContext();
+
 // quit
 void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
 

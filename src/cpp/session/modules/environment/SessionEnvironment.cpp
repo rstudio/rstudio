@@ -28,7 +28,6 @@
 #include <core/RecursionGuard.hpp>
 #include <core/system/LibraryLoader.hpp>
 
-#include <r/RContext.hpp>
 #include <r/RExec.hpp>
 #include <r/RHelpers.hpp>
 #include <r/RInterface.hpp>
@@ -921,7 +920,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = R_GlobalEnv;
-   r::context::getFunctionContext(requestedDepth, s_browserActive, nullptr, &env);
+   r::session::getFunctionContext(requestedDepth, s_browserActive, nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1068,7 +1067,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
-   s_browserActive = r::context::inActiveBrowseContext();
+   s_browserActive = r::session::isBrowseActive();
    if (*pContextDepth > 0 && !s_browserActive)
    {
       environmentTop = R_GlobalEnv;
@@ -1077,7 +1076,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    else
    {
       // Find the function context associated with the browser
-      r::context::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
+      r::session::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
       s_browserEnv.set(environmentTop);
    }
    
@@ -1111,7 +1110,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 
    // if we're debugging and stayed in the same frame, update the line number
-   else if (depth > 0 && !r::context::inDebugHiddenContext())
+   else if (depth > 0 && !r::session::inDebugHiddenContext())
    {
       SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
       enqueBrowserLineChangedEvent(srcref);
@@ -1137,7 +1136,7 @@ void onBeforeExecute()
    // however if R continues running then the client will properly restore
    // the state of the interruptR command
 
-   s_browserActive = r::context::inActiveBrowseContext();
+   s_browserActive = r::session::isBrowseActive();
    if (s_browserActive)
    {
       ClientEvent event(client_events::kBusy, true);
@@ -1208,7 +1207,7 @@ void initEnvironmentMonitoring()
 
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
-   if (!r::context::inActiveBrowseContext())
+   if (!r::session::isBrowseActive())
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
@@ -1442,8 +1441,8 @@ json::Value environmentStateAsJson()
       return pythonEnvironmentStateData(s_monitoredPythonModule);
    
    int contextDepth = 0;
-   bool browsing = r::context::inActiveBrowseContext();
-   r::context::getFunctionContext(0, browsing, &contextDepth, nullptr);
+   bool browsing = r::session::isBrowseActive();
+   r::session::getFunctionContext(0, browsing, &contextDepth, nullptr);
 
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
