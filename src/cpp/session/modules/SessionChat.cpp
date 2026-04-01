@@ -5444,6 +5444,7 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
       s_updateState = UpdateState();
    }
    s_positAssistantVersion.clear();
+   s_expectedShutdown = false;
 
    DLOG("Posit AI uninstalled successfully");
    pResponse->setResult(json::Value());
