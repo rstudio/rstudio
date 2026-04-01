@@ -1462,12 +1462,15 @@ SEXP rs_getBrowserEnv()
    return s_browserEnv ? s_browserEnv : R_NilValue;
 }
 
+SEXP rs_setCapturedBrowserEnv(SEXP envSEXP)
+{
+   r::session::setBrowserEnv(envSEXP);
+   return R_NilValue;
+}
+
 SEXP rs_dumpContexts()
 {
-   SEXP result = R_NilValue;
-   r::sexp::Protect protect;
-   r::exec::RFunction("sys.status").call(&result, &protect);
-   return result;
+   return r::context::dumpContexts();
 }
 
 bool isSuspendable()
@@ -1840,6 +1843,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_isBrowserActive);
    RS_REGISTER_CALL_METHOD(rs_getBrowserEnv);
+   RS_REGISTER_CALL_METHOD(rs_setCapturedBrowserEnv);
    RS_REGISTER_CALL_METHOD(rs_jumpToFunction);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);

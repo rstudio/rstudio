@@ -28,6 +28,8 @@
 #include <R_ext/RStartup.h>
 #include <r/session/RSessionUtils.hpp>
 
+typedef struct SEXPREC* SEXP;
+
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
 #define kConsoleInputNoEcho 4
@@ -271,6 +273,11 @@ bool imageIsDirty();
 // browser context state -- set from RReadConsole based on the prompt
 void setBrowserActive(bool active);
 bool browserContextActive();
+
+// browser environment -- captured by .rs.captureCurrentEnvironment()
+// which is injected into the browser REPL before user input.
+void setBrowserEnv(SEXP env);
+SEXP browserEnv();
 
 // quit
 void quit(bool saveWorkspace, int status = EXIT_SUCCESS);

@@ -1047,15 +1047,23 @@
 # Returns list(depth, env) where depth is the inner→outer depth and
 # env is the function's closure environment, or list(0, globalenv()) if
 # no matching context was found.
+# Capture the current environment at the browser prompt. This function
+# is injected into the browser REPL by RReadConsole so that it is
+# evaluated by R in the browser's evaluation environment (rho).
+# parent.frame() then returns that environment, which is the function
+# being debugged. The result is stored via .Call for C++ to read.
+.rs.addFunction("captureCurrentEnvironment", function()
+{
+   invisible(.Call("rs_setCapturedBrowserEnv", parent.frame(), PACKAGE = "(embedding)"))
+})
+
 #
 # @param depth When 0, find the function context associated with the
 #   active browser. When > 0, find the function context at the given
 #   inner-to-outer depth.
-# @param browserEnv The browser context's closure environment, read
-#   fresh from the context stack by C++. Passed explicitly because
-#   browserText() / do_sysbrowser are unreliable when called via
-#   R_tryEval (R_ToplevelExec resets R_ToplevelContext, hiding the
-#   browser context). NULL when not browsing.
+# @param browserEnv The browser context's closure environment, captured
+#   by .rs.captureCurrentEnvironment() which runs in the browser REPL.
+#   NULL when not browsing.
 .rs.addFunction("getFunctionContext", function(depth = 0L, browserEnv = NULL)
 {
    nframe <- sys.nframe() - 1L  # skip our own frame

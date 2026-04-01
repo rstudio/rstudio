@@ -55,6 +55,10 @@ bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv);
 // function (has the "hideFromDebugger" attribute).
 bool inDebugHiddenContext();
 
+// Dump the context stack as a list with type, callflag, call, and cloenv
+// for each context. For debugging/testing.
+SEXP dumpContexts();
+
 } // namespace context
 } // namespace r
 } // namespace rstudio

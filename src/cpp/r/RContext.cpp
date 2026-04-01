@@ -13,10 +13,14 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include <r/RContext.hpp>
 #include <r/RExec.hpp>
 #include <r/RInterface.hpp>
 #include <r/RSexp.hpp>
+#include <r/session/RSession.hpp>
 
 #include <setjmp.h>
 
@@ -78,6 +82,25 @@ RContext* globalContext()
    return reinterpret_cast<RContext*>(R_GlobalContext);
 }
 
+const char* contextTypeName(int callflag)
+{
+   switch (callflag)
+   {
+   case CTXT_TOPLEVEL: return "TOPLEVEL";
+   case CTXT_NEXT:     return "NEXT";
+   case CTXT_BREAK:    return "BREAK";
+   case CTXT_LOOP:     return "LOOP";
+   case CTXT_FUNCTION: return "FUNCTION";
+   case CTXT_CCODE:    return "CCODE";
+   case CTXT_RETURN:   return "RETURN";
+   case CTXT_BROWSER:  return "BROWSER";
+   case CTXT_GENERIC:  return "GENERIC";
+   case CTXT_RESTART:  return "RESTART";
+   case CTXT_BUILTIN:  return "BUILTIN";
+   default:            return "UNKNOWN";
+   }
+}
+
 } // anonymous namespace
 
 bool isTopLevelContext()
@@ -112,13 +135,16 @@ bool inActiveBrowseContext()
 
 bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
 {
-   // Call the R-side implementation which uses sys.frame() / sys.nframe()
-   // rather than walking the RCNTXT stack directly.
+   // Read the browser environment captured by .rs.captureCurrentEnvironment(),
+   // which was injected into the browser REPL by RReadConsole.
+   SEXP browserEnv = browsing ? r::session::browserEnv() : R_NilValue;
+
+   // Call the R-side implementation via the normal R_tryEval path.
    SEXP resultSEXP = R_NilValue;
    r::sexp::Protect protect;
    Error error = r::exec::RFunction(".rs.getFunctionContext")
       .addParam(depth)
-      .addParam(browsing ? browserContextEnv() : R_NilValue)
+      .addParam(browserEnv)
       .call(&resultSEXP, &protect);
 
    if (error)
@@ -154,6 +180,49 @@ bool inDebugHiddenContext()
       }
    }
    return false;
+}
+
+SEXP dumpContexts()
+{
+   r::sexp::Protect protect;
+
+   // first pass: count contexts
+   int n = 0;
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+      n++;
+
+   // build vectors
+   SEXP typeVec = Rf_allocVector(STRSXP, n);
+   protect.add(typeVec);
+   SEXP callflagVec = Rf_allocVector(INTSXP, n);
+   protect.add(callflagVec);
+   SEXP callVec = Rf_allocVector(VECSXP, n);
+   protect.add(callVec);
+   SEXP cloenvVec = Rf_allocVector(VECSXP, n);
+   protect.add(cloenvVec);
+
+   int i = 0;
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext, i++)
+   {
+      SET_STRING_ELT(typeVec, i, Rf_mkChar(contextTypeName(ctx->callflag)));
+      INTEGER(callflagVec)[i] = ctx->callflag;
+      SET_VECTOR_ELT(callVec, i, ctx->call ? ctx->call : R_NilValue);
+      SET_VECTOR_ELT(cloenvVec, i, ctx->cloenv ? ctx->cloenv : R_NilValue);
+   }
+
+   // assemble as a list (data.frame-like)
+   SEXP result = Rf_allocVector(VECSXP, 4);
+   protect.add(result);
+   SET_VECTOR_ELT(result, 0, typeVec);
+   SET_VECTOR_ELT(result, 1, callflagVec);
+   SET_VECTOR_ELT(result, 2, callVec);
+   SET_VECTOR_ELT(result, 3, cloenvVec);
+
+   std::vector<std::string> nameStrings = {"type", "callflag", "call", "cloenv"};
+   SEXP names = r::sexp::create(nameStrings, &protect);
+   Rf_setAttrib(result, R_NamesSymbol, names);
+
+   return result;
 }
 
 } // namespace context

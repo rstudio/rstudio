@@ -276,7 +276,37 @@ int RReadConsole(const char *pmt,
 
       // track browser state based on the prompt (Browse[N]> )
       static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
-      setBrowserActive(boost::regex_match(prompt, reBrowsePrompt));
+      bool browsing = boost::regex_match(prompt, reBrowsePrompt);
+      setBrowserActive(browsing);
+
+      // When entering a browse prompt, inject a call to capture the
+      // current environment. This is evaluated by R's browser REPL
+      // in the browser's rho, so parent.frame() correctly returns
+      // the environment being debugged (even during promise forcing).
+      //
+      // The flag alternates: on the first browse prompt we inject
+      // the capture call and return immediately (the client never
+      // sees this prompt). R evaluates the capture, then re-issues
+      // the browse prompt. On that second prompt we clear the flag
+      // and proceed normally. The next browse prompt (after stepping)
+      // injects again.
+      static bool s_needsCaptureEnv = false;
+      if (browsing)
+      {
+         if (!s_needsCaptureEnv)
+         {
+            s_needsCaptureEnv = true;
+            std::string cmd = ".rs.captureCurrentEnvironment()\n";
+            cmd.copy((char*)buf, cmd.size());
+            buf[cmd.size()] = '\0';
+            return 1;
+         }
+         s_needsCaptureEnv = false;
+      }
+      else
+      {
+         s_needsCaptureEnv = false;
+      }
 
       // invoke one time initialization
       if (!s_initialized)

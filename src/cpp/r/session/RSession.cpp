@@ -502,17 +502,32 @@ bool isSuspendable(const std::string& currentPrompt)
 
 
 namespace {
+
 bool s_browserActive = false;
+SEXP s_browserEnv = R_NilValue;
+
 } // anonymous namespace
 
 void setBrowserActive(bool active)
 {
    s_browserActive = active;
+   if (!active)
+      s_browserEnv = R_NilValue;
 }
 
 bool browserContextActive()
 {
    return s_browserActive;
+}
+
+void setBrowserEnv(SEXP env)
+{
+   s_browserEnv = env;
+}
+
+SEXP browserEnv()
+{
+   return s_browserEnv;
 }
    
 namespace utils {
