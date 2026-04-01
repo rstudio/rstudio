@@ -189,9 +189,9 @@ export R_LIB_DIR="@LIBR_LIB_DIR@"
 # ensure the configured R is found first in PATH
 export PATH="@LIBR_BIN_DIR@:${PATH}"
 
-# ensure R libraries (libR, libRblas, libRlapack) can be found at runtime
+# ensure R shared libraries can be found at runtime
 if [ "$(uname)" = "Darwin" ]; then
-   export DYLD_LIBRARY_PATH="${R_LIB_DIR}:${DYLD_LIBRARY_PATH}"
+   export DYLD_FALLBACK_LIBRARY_PATH="${R_LIB_DIR}:${DYLD_FALLBACK_LIBRARY_PATH}"
 else
    export LD_LIBRARY_PATH="${R_LIB_DIR}:${LD_LIBRARY_PATH}"
 fi

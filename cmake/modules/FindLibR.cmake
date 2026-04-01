@@ -24,7 +24,8 @@
 # 1. Find the R executable
 # ===========================================================================
 
-# Allow user override via environment variable or CMake variable.
+# If LIBR_HOME is set, use it to locate R. The final LIBR_HOME value
+# is canonicalized via R.home().
 if(DEFINED ENV{LIBR_HOME} AND NOT LIBR_HOME)
    set(LIBR_HOME "$ENV{LIBR_HOME}")
 endif()
@@ -153,8 +154,6 @@ if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_LIB_DIR)
 endif()
 set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory")
 
-message(STATUS "Found R: ${LIBR_HOME}")
-
 # ===========================================================================
 # 3. Find libraries
 # ===========================================================================
@@ -193,7 +192,7 @@ find_library(LIBR_CORE_LIBRARY NAMES R HINTS ${_LIBR_LIBRARY_HINTS})
 if(LIBR_CORE_LIBRARY)
    set(LIBR_LIBRARIES ${LIBR_CORE_LIBRARY})
 else()
-   message(STATUS "Could not find libR shared library")
+   message(WARNING "Could not find libR shared library")
 endif()
 
 if(WIN32)
@@ -220,7 +219,7 @@ if(LIBR_LIBRARIES)
 endif()
 
 # ===========================================================================
-# 4. Validation and cleanup
+# 4. Validation
 # ===========================================================================
 
 include(FindPackageHandleStandardArgs)
