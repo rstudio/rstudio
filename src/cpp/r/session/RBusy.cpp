@@ -20,6 +20,10 @@ namespace r {
 namespace session {
 
 // NOTE: Invoked in handleUSR2, so this needs to be async-signal safe.
+// Returns true when R is not at the default top-level prompt — this includes
+// user code execution, debug/browser sessions, loops, and internal RStudio
+// R code execution. This is intentionally broader than the previous check
+// which only looked for function contexts (CTXT_FUNCTION).
 bool isBusy()
 {
    return !r::context::isTopLevelContext();

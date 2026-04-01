@@ -474,13 +474,19 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
    error = r::sexp::getNamedListSEXP(resultSEXP, "context", &contextSEXP);
    if (!error && contextSEXP != R_NilValue)
    {
-      r::sexp::getNamedListSEXP(contextSEXP, "callfun", &result.contextCallfun);
-      r::sexp::getNamedListSEXP(contextSEXP, "cloenv", &result.contextCloenv);
-      r::sexp::getNamedListSEXP(contextSEXP, "originalCallfun", &result.originalCallfun);
-      r::sexp::getNamedListSEXP(contextSEXP, "callFunSourceRefs", &result.callFunSourceRefs);
+      error = r::sexp::getNamedListSEXP(contextSEXP, "callfun", &result.contextCallfun);
+      if (error) LOG_ERROR(error);
+      error = r::sexp::getNamedListSEXP(contextSEXP, "cloenv", &result.contextCloenv);
+      if (error) LOG_ERROR(error);
+      error = r::sexp::getNamedListSEXP(contextSEXP, "originalCallfun", &result.originalCallfun);
+      if (error) LOG_ERROR(error);
+      error = r::sexp::getNamedListSEXP(contextSEXP, "callFunSourceRefs", &result.callFunSourceRefs);
+      if (error) LOG_ERROR(error);
 
-      r::sexp::getNamedListElement(contextSEXP, "functionName", &result.functionName);
-      r::sexp::getNamedListElement(contextSEXP, "hasSourceRefs", &result.hasSourceRefs);
+      error = r::sexp::getNamedListElement(contextSEXP, "functionName", &result.functionName);
+      if (error) LOG_ERROR(error);
+      error = r::sexp::getNamedListElement(contextSEXP, "hasSourceRefs", &result.hasSourceRefs);
+      if (error) LOG_ERROR(error);
    }
 
    // Extract source context info
@@ -488,8 +494,10 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
    error = r::sexp::getNamedListSEXP(resultSEXP, "src_context", &srcContextSEXP);
    if (!error && srcContextSEXP != R_NilValue)
    {
-      r::sexp::getNamedListSEXP(srcContextSEXP, "callfun", &result.srcContextCallfun);
-      r::sexp::getNamedListSEXP(srcContextSEXP, "call", &result.srcContextCall);
+      error = r::sexp::getNamedListSEXP(srcContextSEXP, "callfun", &result.srcContextCallfun);
+      if (error) LOG_ERROR(error);
+      error = r::sexp::getNamedListSEXP(srcContextSEXP, "call", &result.srcContextCall);
+      if (error) LOG_ERROR(error);
    }
 
    // Propagate lastDebugLine update back to C++ (for simulated srcref state)
@@ -1470,7 +1478,9 @@ SEXP rs_dumpContexts()
 {
    SEXP result = R_NilValue;
    r::sexp::Protect protect;
-   r::exec::RFunction("sys.status").call(&result, &protect);
+   Error error = r::exec::RFunction("sys.status").call(&result, &protect);
+   if (error)
+      LOG_ERROR(error);
    return result;
 }
 

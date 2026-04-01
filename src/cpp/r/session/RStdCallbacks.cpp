@@ -289,7 +289,7 @@ int RReadConsole(const char *pmt,
 
       // track browser state based on the prompt (Browse[N]> )
       static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
-      bool browsing = boost::regex_match(prompt, reBrowsePrompt);
+      bool browsing = regex_utils::match(prompt, reBrowsePrompt);
       setBrowserActive(browsing);
 
       // When entering a browse prompt, inject a call to capture the
