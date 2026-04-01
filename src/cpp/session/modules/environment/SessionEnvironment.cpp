@@ -1459,7 +1459,7 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_getBrowserEnv()
 {
-   return s_browserEnv;
+   return s_browserEnv ? s_browserEnv : R_NilValue;
 }
 
 SEXP rs_dumpContexts()
