@@ -48,4 +48,6 @@ public interface ChatServerOperations
                               ServerRequestCallback<VoidResponse> requestCallback);
 
    public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback);
+
+   public void chatUninstallPositAi(ServerRequestCallback<VoidResponse> requestCallback);
 }
