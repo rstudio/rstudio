@@ -47,3 +47,9 @@ Once signed up and authenticated, the Posit Assistant chat feature is ready to u
 ## Using Posit AI
 
 Feature details coming soon.
+
+## Removing Posit AI
+
+To uninstall the downloaded Posit AI components, select **Help** \> **Diagnostics** \> **Uninstall Posit AI**. RStudio restarts after the uninstall completes.
+
+RStudio preserves your chat history and account settings, which remain available if you reinstall Posit AI.
