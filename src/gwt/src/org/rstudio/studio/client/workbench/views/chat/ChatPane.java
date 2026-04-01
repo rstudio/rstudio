@@ -48,12 +48,6 @@ public class ChatPane
       extends WorkbenchPane
       implements ChatPresenter.Display
 {
-   private enum ContentType
-   {
-      HTML,
-      URL
-   }
-
    private enum NotificationType
    {
       NONE,
@@ -278,16 +272,12 @@ public class ChatPane
    }
 
    /**
-    * Updates the iframe content and stores it for later refresh.
+    * Replaces the iframe content with the given HTML.
     *
     * @param html The HTML content to display
     */
    private void updateFrameContent(String html)
    {
-      contentType_ = ContentType.HTML;
-      currentContent_ = html;
-      currentUrl_ = null;
-
       // Remove suspended overlay if present — new content needs to be
       // visible and interactive (e.g., error messages with retry buttons).
       if (suspendedOverlay_.getParent() == mainPanel_)
@@ -323,10 +313,6 @@ public class ChatPane
    @Override
    public void loadUrl(String url)
    {
-      contentType_ = ContentType.URL;
-      currentUrl_ = url;
-      currentContent_ = null;
-
       if (suspendedOverlay_.getParent() == mainPanel_)
       {
          loadUrlFromSuspended(url);
@@ -480,15 +466,6 @@ public class ChatPane
             "Error restoring frame scroll position: " + e.message);
       }
    }-*/;
-
-   @Override
-   public void updateCachedUrl(String url)
-   {
-      if (contentType_ == ContentType.URL)
-      {
-         currentUrl_ = url;
-      }
-   }
 
    @Override
    public void setObserver(ChatPresenter.Display.Observer observer)
@@ -766,7 +743,6 @@ public class ChatPane
    @Override
    public void setStatus(ChatPresenter.Display.Status status)
    {
-      currentStatus_ = status;
       switch (status)
       {
          case STARTING:
@@ -1218,16 +1194,6 @@ public class ChatPane
    public void onSelected()
    {
       super.onSelected();
-      // Only refresh URL content (actual chat UI) when pane becomes visible
-      // HTML status messages are already displayed and don't need refresh
-      // Refreshing HTML content can cause timing issues with pending load handlers
-      if (currentStatus_ == ChatPresenter.Display.Status.READY &&
-          contentType_ == ContentType.URL &&
-          currentUrl_ != null &&
-          pendingFrame_ == null)
-      {
-         frame_.setUrl(currentUrl_);
-      }
    }
 
    // Resources ----
@@ -1262,12 +1228,9 @@ public class ChatPane
    private ToolbarButton popOutButton_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
-   private ContentType contentType_ = ContentType.HTML;
-   private String currentContent_ = null;
-   private String currentUrl_ = null;
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
-   private ChatPresenter.Display.Status currentStatus_ = null;
+
    private NotificationType currentNotificationType_ = NotificationType.NONE;
 
    // Update notification UI components

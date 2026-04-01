@@ -116,7 +116,7 @@ public class ChatPresenter extends BasePresenter
       void showManifestUnavailable(String errorMessage);
       void showReadlineNotification();
       void hideReadlineNotification();
-      void updateCachedUrl(String url);
+
       void showPoppedOutPlaceholder();
       void hidePoppedOutPlaceholder();
 
@@ -1179,11 +1179,10 @@ public class ChatPresenter extends BasePresenter
       // Mark the backend so subsequent status responses include resume_chat=true
       server_.chatNotifyUILoaded(new VoidServerRequestCallback());
 
-      // Always include &resume in the cached URL so that tab-switch reloads
-      // (via onSelected) signal resume, even if the initial load was fresh
-      String cachedResumeUrl = baseUrl + params + "&resume";
-      display_.updateCachedUrl(cachedResumeUrl);
-      cachedUrl_ = cachedResumeUrl;
+      // Always include &resume in the cached URL so that satellite windows
+      // and session-resume reloads signal resume, even if the initial load
+      // was fresh
+      cachedUrl_ = baseUrl + params + "&resume";
 
       // Reset initialization flag - we're done
       initializing_ = false;
