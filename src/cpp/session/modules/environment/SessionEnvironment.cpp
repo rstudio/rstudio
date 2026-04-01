@@ -438,8 +438,9 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
 
    // Get the current srcref for the innermost context (set by R's evaluator
    // during debug stepping). This is not accessible from R's sys.*() functions,
-   // so we pass it in.
-   SEXP currentSrcref = R_GetCurrentSrcref(NA_INTEGER);
+   // so we pass it in. Use skip=0 rather than NA_INTEGER for compatibility
+   // with R < 4.5 (where NA_INTEGER is not handled specially).
+   SEXP currentSrcref = R_GetCurrentSrcref(0);
 
    // Call .rs.callFrames(targetDepth, lineDebugState, currentSrcref)
    SEXP resultSEXP = R_NilValue;
@@ -993,9 +994,12 @@ SEXP inferDebugSrcrefs(
 {
    // R_GetCurrentSrcref(skip) is a public R API that returns the srcref
    // for the expression currently being evaluated during debugging.
-   // With NA_INTEGER it tries the active srcref first, then walks the stack.
+   // We use skip=0 to get the current srcref (R_Srcref if valid, then
+   // walks the context stack). Note: NA_INTEGER only works in R >= 4.5;
+   // in older R it is treated as a large negative skip and always
+   // returns R_NilValue.
    r::sexp::Protect protect;
-   SEXP srcref = R_GetCurrentSrcref(NA_INTEGER);
+   SEXP srcref = R_GetCurrentSrcref(0);
    if (isValidSrcref(srcref))
       return srcref;
 
