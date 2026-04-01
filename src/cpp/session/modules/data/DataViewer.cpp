@@ -339,7 +339,7 @@ SEXP findInNamedEnvir(const std::string& environmentName,
          
    // find the SEXP directly in the environment; return null if unbound
    SEXP objectSEXP = r::sexp::findVar(objectName, envirSEXP);
-   if (objectSEXP == R_UnboundValue)
+   if (objectSEXP == nullptr)
       return nullptr;
    
    return objectSEXP;
@@ -912,8 +912,7 @@ Error getGridData(const http::Request& request,
       }
 
       // can we find it _anywhere_ ?!
-      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
-          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      if (dataSEXP == nullptr || Rf_isNull(dataSEXP))
       {
          error = r::exec::RFunction(".rs.getAnywhere", objName).call(&dataSEXP, &protect);
          if (error) 
@@ -923,8 +922,7 @@ Error getGridData(const http::Request& request,
       }
 
       // couldn't find the original object
-      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
-          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      if (dataSEXP == nullptr || Rf_isNull(dataSEXP))
       {
          json::Object err;
          err["error"] = "The object no longer exists.";
