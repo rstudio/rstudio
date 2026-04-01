@@ -272,7 +272,7 @@ public class ChatPane
    }
 
    /**
-    * Updates the iframe content and stores it for later refresh.
+    * Replaces the iframe content with the given HTML.
     *
     * @param html The HTML content to display
     */
@@ -743,7 +743,6 @@ public class ChatPane
    @Override
    public void setStatus(ChatPresenter.Display.Status status)
    {
-      currentStatus_ = status;
       switch (status)
       {
          case STARTING:
@@ -1231,7 +1230,7 @@ public class ChatPane
    private String pendingMessage_ = null;
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
-   private ChatPresenter.Display.Status currentStatus_ = null;
+
    private NotificationType currentNotificationType_ = NotificationType.NONE;
 
    // Update notification UI components
