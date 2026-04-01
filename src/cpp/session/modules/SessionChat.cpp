@@ -5401,17 +5401,34 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
    // Stop assistant agent (NES language server).
    // stopAgentForUpdate() is synchronous — it waits for the agent
    // process to exit before returning, so file handles are released.
-   if (!assistant::stopAgentForUpdate())
+   bool agentStopped = assistant::stopAgentForUpdate();
+   if (!agentStopped)
       WLOG("Timeout waiting for assistant agent to stop during uninstall");
 
-   // Delete installation
+   // Delete installation.
+   // If the agent timed out it may still hold file handles open
+   // (especially on Windows), so warn when deletion fails after a
+   // timeout and suggest restarting.
    Error error = aiDir.removeIfExists();
    if (error)
    {
+      // Processes are already stopped but files remain on disk.
+      // Reset cached state so the session doesn't think PAI is usable,
+      // and tell the user to restart.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      std::string message =
+         "Failed to remove Posit AI installation: " + error.getMessage();
+      if (!agentStopped)
+         message += " (a background process may still be running)";
+      message += ". Please restart RStudio and try again.";
+
       return systemError(
-         boost::system::errc::io_error,
-         "Failed to remove installation: " + error.getMessage(),
-         ERROR_LOCATION);
+         boost::system::errc::io_error, message, ERROR_LOCATION);
    }
 
    // Clean up orphaned backup from failed install/update
