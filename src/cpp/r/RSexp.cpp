@@ -37,9 +37,10 @@
 #include <core/DateTime.hpp>
 #include <core/Thread.hpp>
 
-#include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RExec.hpp>
 #include <r/RRuntime.hpp>
+#include <r/RSexpInternal.hpp>
 #include <r/RUtil.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
@@ -49,9 +50,6 @@
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
-
-
-#include <r/RSexpInternal.hpp>
 
 namespace rstudio {
 namespace r {
