@@ -436,7 +436,7 @@ void RFunction::commonInit(const std::string& functionName)
    // handle empty function names up front
    if (functionName.empty())
    {
-      functionSEXP_ = R_UnboundValue;
+      functionSEXP_ = nullptr;
       return;
    }
    
@@ -488,18 +488,18 @@ Error RFunction::call(SEXP evalNS,
    CodeExecutingScope executingScope;
    
    // check that the function exists
-   if (functionSEXP_ != R_UnboundValue)
+   if (functionSEXP_ != nullptr)
    {
       Error existsError = safely ?
                evaluateExpressions(functionSEXP_, evalNS, pResultSEXP, pProtect) :
                evaluateExpressionsUnsafe(functionSEXP_, evalNS, pResultSEXP, pProtect, EvalTry);
       
       if (existsError)
-         functionSEXP_ = R_UnboundValue;
+         functionSEXP_ = nullptr;
    }
    
    // verify the function
-   if (functionSEXP_ == R_UnboundValue)
+   if (functionSEXP_ == nullptr)
    {
       Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       if (!functionName_.empty())

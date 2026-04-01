@@ -1530,7 +1530,7 @@ bool is_namespace(SEXP envSEXP)
 
    static SEXP nsSymSEXP = Rf_install(".__NAMESPACE__.");
    SEXP nsSEXP = r::sexp::findVarInFrame(envSEXP, nsSymSEXP);
-   return nsSEXP != R_UnboundValue;
+   return nsSEXP != nullptr;
 }
 
 // R equivalent

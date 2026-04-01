@@ -28,6 +28,7 @@ set (R_SOURCE_FILES
    RJsonRpc.cpp
    ROptions.cpp
    RRoutines.cpp
+   RRuntime.cpp
    RSexp.cpp
    RSourceManager.cpp
    RUtil.cpp
