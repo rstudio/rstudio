@@ -109,14 +109,6 @@ bool isTopLevelContext()
    return ctx->callflag == CTXT_TOPLEVEL && ctx->nextcontext == nullptr;
 }
 
-SEXP browserContextEnv()
-{
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-      if (ctx->callflag & CTXT_BROWSER)
-         return ctx->cloenv;
-   return R_NilValue;
-}
-
 bool inActiveBrowseContext()
 {
    // We're in an active browse context when we're at a browse prompt
@@ -157,23 +149,12 @@ bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
 
 bool inDebugHiddenContext()
 {
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if (ctx->callflag & CTXT_FUNCTION)
-      {
-         // If we find a debugger internal function before any user function,
-         // hide it from the user callstack.
-         SEXP hideFlag = Rf_getAttrib(ctx->callfun, Rf_install("hideFromDebugger"));
-         if (TYPEOF(hideFlag) != NILSXP && Rf_asLogical(hideFlag) == TRUE)
-            return true;
-
-         // If we find a function with source refs (user code), don't hide
-         SEXP srcref = Rf_getAttrib(ctx->callfun, Rf_install("srcref"));
-         if (srcref != R_NilValue)
-            return false;
-      }
-   }
-   return false;
+   bool result = false;
+   Error error = r::exec::RFunction(".rs.inDebugHiddenContext")
+      .call(&result);
+   if (error)
+      LOG_ERROR(error);
+   return result;
 }
 
 SEXP dumpContexts()

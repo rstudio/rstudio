@@ -29,10 +29,6 @@ namespace context {
 // on the stack (i.e. the context stack is empty).
 bool isTopLevelContext();
 
-// Returns the closure environment of the first browser context on the stack,
-// or R_NilValue if there is no browser context.
-SEXP browserContextEnv();
-
 // Returns true when we are in a "browse" debugging state: at a browse prompt
 // with the browser environment inside a function (not the global env). This
 // distinguishes interactive debugging from browsing at the top level.
