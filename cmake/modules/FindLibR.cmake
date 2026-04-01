@@ -10,223 +10,218 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+# Exports:
+#   LIBR_FOUND
+#   LIBR_HOME
+#   LIBR_EXECUTABLE
+#   LIBR_BIN_DIR
+#   LIBR_INCLUDE_DIRS
+#   LIBR_DOC_DIR
+#   LIBR_LIB_DIR
+#   LIBR_LIBRARIES
 
-# LIBR_FOUND
-# LIBR_HOME
-# LIBR_INCLUDE_DIRS
-# LIBR_DOC_DIR
-# LIBR_LIBRARIES
+# ===========================================================================
+# 1. Find the R executable
+# ===========================================================================
 
-# detection for OSX (look for R framework)
-if(APPLE)
+# If LIBR_HOME is set, use it to locate R. The final LIBR_HOME value
+# is canonicalized via R.home().
+if(DEFINED ENV{LIBR_HOME} AND NOT LIBR_HOME)
+   set(LIBR_HOME "$ENV{LIBR_HOME}")
+endif()
 
-   find_library(LIBR_LIBRARIES R)
-   
-   if(LIBR_LIBRARIES MATCHES ".*\\.framework")
-      set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")
-      set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
-      set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
-      set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
+unset(_R_EXECUTABLE CACHE)
+
+if(LIBR_HOME)
+
+   # User provided LIBR_HOME -- find R inside it.
+   if(WIN32)
+      if(LIBR_FIND_WINDOWS_32BIT)
+         set(_LIBR_BIN_HINTS "${LIBR_HOME}/bin/i386" "${LIBR_HOME}/bin")
+      else()
+         set(_LIBR_BIN_HINTS "${LIBR_HOME}/bin/x64" "${LIBR_HOME}/bin")
+      endif()
+      find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe
+         HINTS ${_LIBR_BIN_HINTS}
+         NO_DEFAULT_PATH)
    else()
-      get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
-      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
-      set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
-      execute_process(
-         COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
-                   OUTPUT_VARIABLE LIBR_HOME
-      )
-      set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
-      set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
-      set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
-      set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
-      set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
+      find_program(_R_EXECUTABLE NAMES R
+         HINTS "${LIBR_HOME}/bin"
+         NO_DEFAULT_PATH)
    endif()
 
-# detection for UNIX & Win32
 else()
 
-   # Find R executable and paths (UNIX)
-   if(UNIX)
+   # Try platform-specific discovery mechanisms first.
+   if(APPLE)
 
-      # find executable
-      find_program(LIBR_EXECUTABLE R)
-      if(LIBR_EXECUTABLE-NOTFOUND)
-         message(STATUS "Unable to locate R executable")
+      # Look for R framework
+      find_library(_LIBR_FRAMEWORK R)
+      if(_LIBR_FRAMEWORK MATCHES ".*\\.framework")
+         set(_R_EXECUTABLE "${_LIBR_FRAMEWORK}/Resources/bin/R")
+      elseif(_LIBR_FRAMEWORK)
+         # Non-framework R (e.g., Homebrew) -- resolve symlink to find bin/R
+         get_filename_component(_LIBR_FRAMEWORK_REAL "${_LIBR_FRAMEWORK}" REALPATH)
+         get_filename_component(_LIBR_FRAMEWORK_DIR "${_LIBR_FRAMEWORK_REAL}" PATH)
+         set(_R_EXECUTABLE "${_LIBR_FRAMEWORK_DIR}/../bin/R")
       endif()
 
-      # ask R for the home path
-      if(NOT LIBR_HOME)
-         execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
-                      OUTPUT_VARIABLE LIBR_HOME
-         )
-         if(LIBR_HOME)
-           set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
+   elseif(WIN32)
+
+      # Check Windows registry for install path
+      get_filename_component(_R_INSTALL_PATH
+         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]" ABSOLUTE)
+
+      if(NOT EXISTS "${_R_INSTALL_PATH}")
+         message(STATUS "R path from registry '${_R_INSTALL_PATH}' doesn't exist, searching C:/R")
+         file(GLOB _R_INSTALLATIONS "C:/R/*" LIST_DIRECTORIES TRUE)
+         if(_R_INSTALLATIONS)
+            list(GET _R_INSTALLATIONS 0 _R_INSTALL_PATH)
+            message(STATUS "Found R installation at '${_R_INSTALL_PATH}'")
+         else()
+            set(_R_INSTALL_PATH "")
          endif()
       endif()
 
-      # ask R for the include dir
-      if(NOT LIBR_INCLUDE_DIRS)
-         execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('include'))"
-            OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
-         )
-         if(LIBR_INCLUDE_DIRS)
-           set(LIBR_INCLUDE_DIRS ${LIBR_INCLUDE_DIRS} CACHE PATH "R include directory")
+      if(_R_INSTALL_PATH)
+         if(LIBR_FIND_WINDOWS_32BIT)
+            set(_LIBR_BIN_HINTS "${_R_INSTALL_PATH}/bin/i386" "${_R_INSTALL_PATH}/bin")
+         else()
+            set(_LIBR_BIN_HINTS "${_R_INSTALL_PATH}/bin/x64" "${_R_INSTALL_PATH}/bin")
          endif()
-      endif()
-
-      # ask R for the doc dir
-      if(NOT LIBR_DOC_DIR)
-         execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('doc'))"
-            OUTPUT_VARIABLE LIBR_DOC_DIR
-         )
-         if(LIBR_DOC_DIR)
-           set(LIBR_DOC_DIR ${LIBR_DOC_DIR} CACHE PATH "R doc directory")
-         endif()
-      endif()
-
-      # ask R for the lib dir
-      if(NOT LIBR_LIB_DIR)
-         execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('lib'))"
-            OUTPUT_VARIABLE LIBR_LIB_DIR
-         )
-      endif()
-
-   # Find R executable and paths (Win32)
-   else()
-
-      # allow environment variable override
-      if(DEFINED ENV{LIBR_HOME})
-         set(LIBR_HOME "$ENV{LIBR_HOME}" CACHE INTERNAL "")
-      endif()
-
-      # find the home path
-      if(NOT LIBR_HOME)
-
-         # read home from the registry
-         get_filename_component(LIBR_HOME "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]" ABSOLUTE)
-
-         # print message if not found
-         if(NOT LIBR_HOME)
-            message(STATUS "Unable to locate R home (not written to registry)")
-         endif()
-
-         # make sure path exists
-         if(NOT EXISTS "${LIBR_HOME}")
-            message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
-            file(GLOB R_INSTALLATIONS "C:/R/*" LIST_DIRECTORIES TRUE)
-            if(R_INSTALLATIONS)
-               list(GET R_INSTALLATIONS 0 LIBR_HOME)
-               message(STATUS "Found R installation at path '${LIBR_HOME}'")
-            endif()
-         endif()
-
-         # last chance
-         if(NOT EXISTS "${LIBR_HOME}")
-            message(FATAL_ERROR "Couldn't find any R installation on the system.")
-         endif()
-
-         # cache it now
-         set(LIBR_HOME "${LIBR_HOME}" CACHE INTERNAL "R home directory")
-
-      endif()
-
-      # set other R paths based on home path
-      set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
-      set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
-
-      # set library hint path based on whether we are doing a special session 32 build
-      if(LIBR_FIND_WINDOWS_32BIT)
-         set(LIBR_ARCH "i386")
-         set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/i386")
-      else()
-         set(LIBR_ARCH "x64")
-         set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
-      endif()
-      message(STATUS "LIBR_HOME: ${LIBR_HOME}")
-
-      # call dll2lib.R to ensure export files are generated
-      execute_process(
-
-         COMMAND
-            "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe"
-            "dll2lib.R"
-            "${CMAKE_C_COMPILER}"
-            
-         WORKING_DIRECTORY
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools"
-         
-         OUTPUT_VARIABLE
-            LIBR_DLL2LIB_STDOUT
-
-         ERROR_VARIABLE
-            LIBR_DLL2LIB_STDERR
-         
-         RESULT_VARIABLE
-            LIBR_DLL2LIB_RESULT)
-
-      if(NOT LIBR_DLL2LIB_RESULT EQUAL 0)
-         message(STATUS "Error converting R DLLs")
-         message(STATUS "Output: ${LIBR_DLL2LIB_STDOUT}")
-         message(STATUS "Error: ${LIBR_DLL2LIB_STDERR}")
-         message(FATAL_ERROR "Failed to generate .lib files for R DLLs!")
+         find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe
+            HINTS ${_LIBR_BIN_HINTS}
+            NO_DEFAULT_PATH)
       endif()
 
    endif()
 
-   # look for the R executable
-   find_program(LIBR_EXECUTABLE R
-                HINTS ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_EXECUTABLE-NOTFOUND)
-      message(STATUS "Unable to locate R executable")
-   endif()
-
-   # look for the core R library
-   find_library(LIBR_CORE_LIBRARY NAMES R
-                HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-   if(LIBR_CORE_LIBRARY)
-      set(LIBR_LIBRARIES ${LIBR_CORE_LIBRARY})
-   else()
-      message(STATUS "Could not find libR shared library.")
-   endif()
-
-   if(WIN32)
-      # look for lapack
-      find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack
-                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-      if(LIBR_LAPACK_LIBRARY)
-         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_LAPACK_LIBRARY})
-         if(UNIX)
-            set(LIBR_LIBRARIES ${LIBR_LIBRARIES} gfortran)
-         endif()
-      endif()
-
-      # look for blas
-      find_library(LIBR_BLAS_LIBRARY NAMES Rblas
-                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-      if(LIBR_BLAS_LIBRARY)
-         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_BLAS_LIBRARY})
-      endif()
-
-      # look for rgraphapp
-      find_library(LIBR_GRAPHAPP_LIBRARY NAMES Rgraphapp
-                   HINTS ${LIBR_LIB_DIR} ${LIBRARY_ARCH_HINT_PATH} ${LIBR_HOME}/bin)
-      if(LIBR_GRAPHAPP_LIBRARY)
-         set(LIBR_LIBRARIES ${LIBR_LIBRARIES} ${LIBR_GRAPHAPP_LIBRARY})
-      endif()
-   endif()
-
-   # cache LIBR_LIBRARIES
-   if(LIBR_LIBRARIES)
-      set(LIBR_LIBRARIES ${LIBR_LIBRARIES} CACHE PATH "R runtime libraries")
+   # Fallback for all platforms: find R on the PATH.
+   if(NOT _R_EXECUTABLE OR NOT EXISTS "${_R_EXECUTABLE}")
+      find_program(_R_EXECUTABLE NAMES R R.exe Rterm.exe)
    endif()
 
 endif()
 
-# define find requirements
+if(NOT _R_EXECUTABLE OR NOT EXISTS "${_R_EXECUTABLE}")
+   message(FATAL_ERROR "Could not find R executable. Please set LIBR_HOME.")
+endif()
+
+# ===========================================================================
+# 2. Query R for all paths (shared across all platforms)
+# ===========================================================================
+
+execute_process(
+   COMMAND "${_R_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home())"
+   OUTPUT_VARIABLE LIBR_HOME
+   RESULT_VARIABLE _R_RESULT
+)
+if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_HOME)
+   message(FATAL_ERROR "Failed to query R.home() from '${_R_EXECUTABLE}'")
+endif()
+set(LIBR_HOME "${LIBR_HOME}" CACHE PATH "R home directory" FORCE)
+
+set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable")
+get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
+
+execute_process(
+   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('include'))"
+   OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
+   RESULT_VARIABLE _R_RESULT
+)
+if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_INCLUDE_DIRS)
+   message(FATAL_ERROR "Failed to query R.home('include') from '${LIBR_EXECUTABLE}'")
+endif()
+set(LIBR_INCLUDE_DIRS "${LIBR_INCLUDE_DIRS}" CACHE PATH "R include directory")
+
+execute_process(
+   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('doc'))"
+   OUTPUT_VARIABLE LIBR_DOC_DIR
+   RESULT_VARIABLE _R_RESULT
+)
+if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_DOC_DIR)
+   message(FATAL_ERROR "Failed to query R.home('doc') from '${LIBR_EXECUTABLE}'")
+endif()
+set(LIBR_DOC_DIR "${LIBR_DOC_DIR}" CACHE PATH "R doc directory")
+
+execute_process(
+   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('lib'))"
+   OUTPUT_VARIABLE LIBR_LIB_DIR
+   RESULT_VARIABLE _R_RESULT
+)
+if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_LIB_DIR)
+   message(FATAL_ERROR "Failed to query R.home('lib') from '${LIBR_EXECUTABLE}'")
+endif()
+set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory")
+
+# ===========================================================================
+# 3. Find libraries
+# ===========================================================================
+
+set(_LIBR_LIBRARY_HINTS "${LIBR_LIB_DIR}")
+
+if(WIN32)
+   # Windows: determine architecture and add bin paths
+   if(LIBR_FIND_WINDOWS_32BIT)
+      set(LIBR_ARCH "i386")
+   else()
+      set(LIBR_ARCH "x64")
+   endif()
+   list(APPEND _LIBR_LIBRARY_HINTS
+      "${LIBR_HOME}/bin/${LIBR_ARCH}"
+      "${LIBR_HOME}/bin"
+   )
+
+   # Generate .lib files from DLLs
+   execute_process(
+      COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe" "dll2lib.R" "${CMAKE_C_COMPILER}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+      OUTPUT_VARIABLE _DLL2LIB_STDOUT
+      ERROR_VARIABLE _DLL2LIB_STDERR
+      RESULT_VARIABLE _DLL2LIB_RESULT
+   )
+   if(NOT _DLL2LIB_RESULT EQUAL 0)
+      message(STATUS "dll2lib.R output: ${_DLL2LIB_STDOUT}")
+      message(STATUS "dll2lib.R error: ${_DLL2LIB_STDERR}")
+      message(FATAL_ERROR "Failed to generate .lib files for R DLLs")
+   endif()
+endif()
+
+# Find core R library
+find_library(LIBR_CORE_LIBRARY NAMES R HINTS ${_LIBR_LIBRARY_HINTS})
+if(LIBR_CORE_LIBRARY)
+   set(LIBR_LIBRARIES ${LIBR_CORE_LIBRARY})
+else()
+   message(WARNING "Could not find libR shared library")
+endif()
+
+if(WIN32)
+   # Find Windows-specific R libraries
+   find_library(LIBR_BLAS_LIBRARY NAMES Rblas HINTS ${_LIBR_LIBRARY_HINTS})
+   if(LIBR_BLAS_LIBRARY)
+      list(APPEND LIBR_LIBRARIES ${LIBR_BLAS_LIBRARY})
+   endif()
+
+   find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack HINTS ${_LIBR_LIBRARY_HINTS})
+   if(LIBR_LAPACK_LIBRARY)
+      list(APPEND LIBR_LIBRARIES ${LIBR_LAPACK_LIBRARY})
+   endif()
+
+   find_library(LIBR_GRAPHAPP_LIBRARY NAMES Rgraphapp HINTS ${_LIBR_LIBRARY_HINTS})
+   if(LIBR_GRAPHAPP_LIBRARY)
+      list(APPEND LIBR_LIBRARIES ${LIBR_GRAPHAPP_LIBRARY})
+   endif()
+endif()
+
+# Cache the final library list
+if(LIBR_LIBRARIES)
+   set(LIBR_LIBRARIES ${LIBR_LIBRARIES} CACHE PATH "R runtime libraries")
+endif()
+
+# ===========================================================================
+# 4. Validation
+# ===========================================================================
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibR DEFAULT_MSG
    LIBR_HOME
@@ -234,16 +229,12 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
    LIBR_INCLUDE_DIRS
    LIBR_LIBRARIES
    LIBR_DOC_DIR
+   LIBR_LIB_DIR
 )
 
-if(LIBR_FOUND)
-   message(STATUS "Found R: ${LIBR_HOME}")
-   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
-endif()
-
-# mark low-level variables from FIND_* calls as advanced
 mark_as_advanced(
    LIBR_CORE_LIBRARY
-   LIBR_LAPACK_LIBRARY
    LIBR_BLAS_LIBRARY
+   LIBR_LAPACK_LIBRARY
+   LIBR_GRAPHAPP_LIBRARY
 )

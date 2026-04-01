@@ -181,10 +181,20 @@ else
     RSTUDIO_SESSION_BIN="rsession"
 fi
 
-# set R environment variables needed by rsession tests
-export R_HOME=$(R RHOME)
-export R_DOC_DIR=$(R --vanilla -s -e "cat(paste(R.home('doc'), sep=':'))")
-export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
+# set R environment variables needed by rsession tests (from CMake configuration)
+export R_HOME="@LIBR_HOME@"
+export R_DOC_DIR="@LIBR_DOC_DIR@"
+export R_LIB_DIR="@LIBR_LIB_DIR@"
+
+# ensure the configured R is found first in PATH
+export PATH="@LIBR_BIN_DIR@:${PATH}"
+
+# ensure R shared libraries can be found at runtime
+if [ "$(uname)" = "Darwin" ]; then
+   export DYLD_FALLBACK_LIBRARY_PATH="${R_LIB_DIR}:${DYLD_FALLBACK_LIBRARY_PATH}"
+else
+   export LD_LIBRARY_PATH="${R_LIB_DIR}:${LD_LIBRARY_PATH}"
+fi
 
 # Hack: on RHEL9 (docker), the reported R_DOC_DIR doesn't exist which triggers
 # test failures; create the folder if missing
