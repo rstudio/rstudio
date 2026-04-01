@@ -1200,8 +1200,6 @@ void initEnvironmentMonitoring()
 
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
-   // Note: inActiveBrowseContext() uses only the lightweight RContext.hpp and
-   // is safe to call before R tools are sourced.
    if (!r::context::inActiveBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to

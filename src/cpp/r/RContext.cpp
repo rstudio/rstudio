@@ -119,18 +119,12 @@ SEXP browserContextEnv()
 
 bool inActiveBrowseContext()
 {
-   bool foundBrowser = false;
-   bool foundFunction = false;
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if ((ctx->callflag & CTXT_BROWSER) && !(ctx->callflag & CTXT_FUNCTION))
-         foundBrowser = true;
-      else if (ctx->callflag & CTXT_FUNCTION)
-         foundFunction = true;
-      if (foundBrowser && foundFunction)
-         return true;
-   }
-   return false;
+   // We're in an active browse context when we're at a browse prompt
+   // and the browser's environment is inside a function (not at the
+   // top level). This distinguishes debugging inside a function from
+   // a bare browser() call at the global prompt.
+   return r::session::browserContextActive() &&
+          r::session::browserEnv() != R_GlobalEnv;
 }
 
 bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)

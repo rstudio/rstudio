@@ -33,9 +33,9 @@ bool isTopLevelContext();
 // or R_NilValue if there is no browser context.
 SEXP browserContextEnv();
 
-// Returns true when we are in a "browse" debugging state: a browser context
-// AND at least one function context exist on the stack. This distinguishes
-// interactive debugging from browsing at the top level.
+// Returns true when we are in a "browse" debugging state: at a browse prompt
+// with the browser environment inside a function (not the global env). This
+// distinguishes interactive debugging from browsing at the top level.
 bool inActiveBrowseContext();
 
 // Find the function context associated with the browser, or at a given depth.
