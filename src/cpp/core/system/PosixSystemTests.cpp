@@ -118,7 +118,9 @@ TEST(PosixTests, FindSubprocessNameViaPgrep)
    }
    else
    {
-      // we now have a subprocess
+      // we now have a subprocess, need a slight pause to allow the child
+      // process to complete exec before pgrep can find it
+      ::sleep(1);
       std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
       EXPECT_TRUE(children.size() >= 1u);
       if (children.size() >= 1u)
