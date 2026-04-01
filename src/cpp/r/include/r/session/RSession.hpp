@@ -270,6 +270,10 @@ void setSaveAction(int saveAction);
 void setImageDirty(bool imageDirty);
 bool imageIsDirty();
 
+// prompt state -- set from RReadConsole
+void setAtDefaultPrompt(bool atPrompt);
+bool atDefaultPrompt();
+
 // browser context state -- set from RReadConsole based on the prompt
 void setBrowserActive(bool active);
 bool browserContextActive();

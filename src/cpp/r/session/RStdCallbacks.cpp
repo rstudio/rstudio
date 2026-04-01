@@ -274,6 +274,19 @@ int RReadConsole(const char *pmt,
       // capture the prompt for later manipulation
       std::string prompt(pmt);
 
+      // track whether we're at the default top-level prompt.
+      // cleared before returning input to R (see below).
+      // only REPL prompts use hist == 1; readline(), scan(), etc. use 0.
+      if (hist == 1)
+      {
+         std::string defaultPrompt = r::options::getOption<std::string>("prompt");
+         setAtDefaultPrompt(prompt == defaultPrompt);
+      }
+      else
+      {
+         setAtDefaultPrompt(false);
+      }
+
       // track browser state based on the prompt (Browse[N]> )
       static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
       bool browsing = boost::regex_match(prompt, reBrowsePrompt);
@@ -420,6 +433,8 @@ int RReadConsole(const char *pmt,
             buf[inputLen + 1] = '\0';
          }
 
+         // R is about to execute the input — no longer at the prompt
+         setAtDefaultPrompt(false);
          return 1;
       }
       else

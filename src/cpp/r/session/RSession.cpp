@@ -503,10 +503,21 @@ bool isSuspendable(const std::string& currentPrompt)
 
 namespace {
 
+volatile bool s_atDefaultPrompt = false;
 bool s_browserActive = false;
 SEXP s_browserEnv = R_NilValue;
 
 } // anonymous namespace
+
+void setAtDefaultPrompt(bool atPrompt)
+{
+   s_atDefaultPrompt = atPrompt;
+}
+
+bool atDefaultPrompt()
+{
+   return s_atDefaultPrompt;
+}
 
 void setBrowserActive(bool active)
 {

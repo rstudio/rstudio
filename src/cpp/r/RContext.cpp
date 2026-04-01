@@ -105,8 +105,7 @@ const char* contextTypeName(int callflag)
 
 bool isTopLevelContext()
 {
-   auto* ctx = globalContext();
-   return ctx->callflag == CTXT_TOPLEVEL && ctx->nextcontext == nullptr;
+   return r::session::atDefaultPrompt() && !r::exec::isExecuting();
 }
 
 bool inActiveBrowseContext()
