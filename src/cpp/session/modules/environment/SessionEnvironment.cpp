@@ -1468,7 +1468,10 @@ SEXP rs_setCapturedBrowserEnv(SEXP envSEXP)
 
 SEXP rs_dumpContexts()
 {
-   return r::context::dumpContexts();
+   SEXP result = R_NilValue;
+   r::sexp::Protect protect;
+   r::exec::RFunction("sys.status").call(&result, &protect);
+   return result;
 }
 
 bool isSuspendable()

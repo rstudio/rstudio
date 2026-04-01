@@ -16,8 +16,9 @@
 #ifndef R_CONTEXT_HPP
 #define R_CONTEXT_HPP
 
-// Lightweight context introspection utilities. All access to R_GlobalContext
-// and the RCNTXT struct is encapsulated in RContext.cpp.
+// Context introspection utilities. These use tracked state (prompt detection,
+// captured environments) and R-side sys.*() functions rather than directly
+// accessing R_GlobalContext or the RCNTXT struct.
 
 typedef struct SEXPREC* SEXP;
 
@@ -50,10 +51,6 @@ bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv);
 // Check if the topmost function on the stack is a debugger-internal
 // function (has the "hideFromDebugger" attribute).
 bool inDebugHiddenContext();
-
-// Dump the context stack as a list with type, callflag, call, and cloenv
-// for each context. For debugging/testing.
-SEXP dumpContexts();
 
 } // namespace context
 } // namespace r
