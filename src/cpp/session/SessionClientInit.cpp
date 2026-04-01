@@ -370,7 +370,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    core::system::unsetenv(kRStudioVersion);
    if (!version.empty() && version != std::string(RSTUDIO_VERSION))
    {
-      module_context::consoleWriteError("Session version " + sessionVersion +
+      module_context::consoleWriteError("Session version " + std::string(RSTUDIO_VERSION) +
                                         " does not match server version " + version + " - "
                                         "this is an unsupported configuration, and you may "
                                         "experience unexpected issues as a result.\n\n");
