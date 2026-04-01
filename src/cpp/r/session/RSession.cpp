@@ -36,6 +36,7 @@
 
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -505,7 +506,7 @@ namespace {
 
 volatile bool s_atDefaultPrompt = false;
 bool s_browserActive = false;
-SEXP s_browserEnv = R_NilValue;
+r::sexp::PreservedSEXP s_browserEnv;
 
 } // anonymous namespace
 
@@ -523,7 +524,7 @@ void setBrowserActive(bool active)
 {
    s_browserActive = active;
    if (!active)
-      s_browserEnv = R_NilValue;
+      s_browserEnv.set(R_NilValue);
 }
 
 bool browserContextActive()
@@ -533,12 +534,12 @@ bool browserContextActive()
 
 void setBrowserEnv(SEXP env)
 {
-   s_browserEnv = env;
+   s_browserEnv.set(env);
 }
 
 SEXP browserEnv()
 {
-   return s_browserEnv;
+   return s_browserEnv.get();
 }
    
 namespace utils {

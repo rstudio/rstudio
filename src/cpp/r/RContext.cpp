@@ -59,6 +59,10 @@ bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
    if (error)
       return false;
 
+   // Validate the result is a 2-element list
+   if (TYPEOF(resultSEXP) != VECSXP || Rf_length(resultSEXP) < 2)
+      return false;
+
    int foundDepth = r::sexp::asInteger(VECTOR_ELT(resultSEXP, 0));
    SEXP foundEnv = VECTOR_ELT(resultSEXP, 1);
 

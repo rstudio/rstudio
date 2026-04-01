@@ -84,7 +84,7 @@ bool s_browserActive = false;
 // the environment being browsed (set by onConsolePrompt when entering debug).
 // this is needed because during promise forcing, the browser's environment
 // may differ from any sys.frame() visible from R.
-SEXP s_browserEnv = R_NilValue;
+r::sexp::PreservedSEXP s_browserEnv;
 
 // are we currently monitoring the environment? this is almost always true, but can be 
 // disabled by the user to help mitigate pathological cases in which environment monitoring
@@ -1064,13 +1064,13 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    if (*pContextDepth > 0 && !s_browserActive)
    {
       environmentTop = R_GlobalEnv;
-      s_browserEnv = R_NilValue;
+      s_browserEnv.set(R_NilValue);
    }
    else
    {
       // Find the function context associated with the browser
       r::context::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
-      s_browserEnv = environmentTop;
+      s_browserEnv.set(environmentTop);
    }
    
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -1457,7 +1457,7 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_getBrowserEnv()
 {
-   return s_browserEnv ? s_browserEnv : R_NilValue;
+   return s_browserEnv.get();
 }
 
 SEXP rs_setCapturedBrowserEnv(SEXP envSEXP)
