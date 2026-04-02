@@ -375,14 +375,15 @@ Error writeLockFile(const FilePath& lockFilePath)
       
       // acquired file descriptor -- now try writing our pid to the file
       // (save error number in case it fails and we need to report)
-      int status = ::write(fd, pid.c_str(), pid.size());
+      auto status = ::write(fd, pid.c_str(), pid.size());
       errorNumber = errno;
-      
+
       // close file descriptor
       ::close(fd);
-      
+
       // report if an error occurred during write
-      if (status == -1)
+      // (write() returns bytes written on success, -1 on error)
+      if (status != static_cast<ssize_t>(pid.size()))
       {
          Error error = systemError(errorNumber, ERROR_LOCATION);
          error.addProperty("lock-file", lockFilePath);
