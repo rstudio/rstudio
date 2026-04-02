@@ -110,6 +110,10 @@
 
 .rs.addFunction("saveNotebookGraphics", function(plot, filename)
 {
+   # ensure output directory exists; it may have been moved if the notebook
+   # was saved during chunk execution
+   # https://github.com/rstudio/rstudio/issues/6260
+   dir.create(dirname(filename), recursive = TRUE, showWarnings = FALSE)
    save(plot, file = filename)
 })
 

@@ -152,10 +152,18 @@ void PlotCapture::saveSnapshot()
 
    // if there's a plot on the device, write its display list before it's
    // cleared for the next page
+
+   // ensure output directory exists; it may have been moved if the notebook
+   // was saved during chunk execution
+   // https://github.com/rstudio/rstudio/issues/6260
+   Error error = plotFolder_.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
    FilePath outputFile = plotFolder_.completePath(
       core::system::generateUuid(false) + kDisplayListExt);
 
-   Error error = r::exec::RFunction(
+   error = r::exec::RFunction(
          ".rs.saveNotebookGraphics",
          lastPlot_.get(),
          string_utils::utf8ToSystem(outputFile.getAbsolutePath())).call();
@@ -246,7 +254,14 @@ void PlotCapture::removeGraphicsDevice()
    // side effect of writing the device's remaining output to files
    if (isGraphicsDeviceActive())
    {
-      Error error = r::exec::RFunction("dev.off").call();
+      // ensure output directory exists; it may have been moved if the notebook
+      // was saved during chunk execution
+      // https://github.com/rstudio/rstudio/issues/6260
+      Error error = plotFolder_.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+
+      error = r::exec::RFunction("dev.off").call();
       if (error)
          LOG_ERROR(error);
 
