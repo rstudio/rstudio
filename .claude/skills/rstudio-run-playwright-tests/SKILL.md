@@ -10,6 +10,15 @@ All commands run from the Playwright project directory:
 e2e/rstudio
 ```
 
+## Setup
+
+From the Playwright project directory (`e2e/rstudio`):
+
+```bash
+npm install
+npx playwright install
+```
+
 ## Desktop Mode (Default)
 
 No special env vars needed — `RSTUDIO_EDITION` defaults to `desktop`.
