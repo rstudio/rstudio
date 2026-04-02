@@ -2675,7 +2675,7 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = paiUtil_.isPaiSelected();
+      boolean showPaiUi = paiUtil_.isPaiEnabled();
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
    }
@@ -2699,7 +2699,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      if (paiUtil_.isPaiSelected())
+      if (paiUtil_.isPaiEnabled())
          commands.add(commands_.layoutZoomChat());
 
       return commands;
