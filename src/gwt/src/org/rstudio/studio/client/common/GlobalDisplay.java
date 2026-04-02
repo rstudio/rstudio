@@ -157,8 +157,15 @@ public abstract class GlobalDisplay extends MessageDisplay
       openRStudioLink(linkName, true);
    }
 
+   public void openRStudioLink(String linkName,
+                                boolean includeVersionInfo)
+   {
+      openRStudioLink(linkName, includeVersionInfo, null);
+   }
+
    public abstract void openRStudioLink(String linkName,
-                                        boolean includeVersionInfo);
+                                        boolean includeVersionInfo,
+                                        String fragment);
 
    /**
     * Shows a non-modal progress message. Execute the returned command

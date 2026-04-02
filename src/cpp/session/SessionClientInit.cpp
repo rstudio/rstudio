@@ -353,6 +353,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
 
    std::string sessionVersion = std::string(RSTUDIO_VERSION);
+
+   // Allow overriding the version reported to the client for testing
+   // features that depend on the version string (e.g. release notes).
+   // Set RSTUDIO_IMPERSONATE_VERSION in ~/.Renviron to use this.
+   std::string versionOverride = core::system::getenv("RSTUDIO_IMPERSONATE_VERSION");
+   if (!versionOverride.empty())
+      sessionVersion = versionOverride;
+
    sessionInfo["rstudio_version"] = sessionVersion;
 
    // check to ensure the version of this rsession process matches the version
@@ -360,9 +368,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // it is not persisted across session suspends
    std::string version = core::system::getenv(kRStudioVersion);
    core::system::unsetenv(kRStudioVersion);
-   if (!version.empty() && version != sessionVersion)
+   if (!version.empty() && version != std::string(RSTUDIO_VERSION))
    {
-      module_context::consoleWriteError("Session version " + sessionVersion +
+      module_context::consoleWriteError("Session version " + std::string(RSTUDIO_VERSION) +
                                         " does not match server version " + version + " - "
                                         "this is an unsupported configuration, and you may "
                                         "experience unexpected issues as a result.\n\n");

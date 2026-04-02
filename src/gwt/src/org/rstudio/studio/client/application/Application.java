@@ -109,6 +109,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -611,6 +613,25 @@ public class Application implements ApplicationEventHandlers
    public void onRstudioSupport()
    {
       globalDisplay_.openRStudioLink(constants_.rStudioSupportLinkName());
+   }
+
+   @Handler
+   public void onShowReleaseNotes()
+   {
+      String version = session_.getSessionInfo().getRstudioVersion();
+
+      // Release versions have the format MAJOR.MINOR.PATCH+BUILD (no
+      // hyphenated suffix). Non-release versions include a suffix like
+      // -daily, -hourly, or -dev before the +BUILD segment.
+      String fragment = null;
+      RegExp releasePattern = RegExp.compile("^(\\d+\\.\\d+\\.\\d+)\\+");
+      MatchResult match = releasePattern.exec(version);
+      if (match != null)
+      {
+         fragment = "rstudio-" + match.getGroup(1);
+      }
+
+      globalDisplay_.openRStudioLink("release_notes", false, fragment);
    }
 
    @Handler

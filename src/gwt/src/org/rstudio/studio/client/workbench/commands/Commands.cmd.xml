@@ -550,6 +550,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="showAboutDialog"/>
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
+         <cmd refid="showReleaseNotes"/>
          <separator/>
          <menu label="_Accessibility">
             <cmd refid="toggleScreenReaderSupport"/>
@@ -4419,6 +4420,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Uninstall Posit AI"
         menuLabel="Uninsta_ll Posit AI..."
         rebindable="false"
+        windowMode="main"/>
+
+   <cmd id="showReleaseNotes"
+        menuLabel="R_elease Notes"
+        context="help"
         windowMode="main"/>
 
 </commands>

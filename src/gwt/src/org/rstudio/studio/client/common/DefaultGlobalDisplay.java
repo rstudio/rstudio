@@ -402,7 +402,9 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    }-*/;
    
    @Override
-   public void openRStudioLink(String linkName, boolean includeVersionInfo)
+   public void openRStudioLink(String linkName,
+                                boolean includeVersionInfo,
+                                String fragment)
    {
       // build url
       final SessionInfo sessionInfo = session_.getSessionInfo();
@@ -413,7 +415,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
          url += "?version=" + URL.encodeQueryString(sessionInfo.getRstudioVersion());
          url += "&mode=" + URL.encodeQueryString(sessionInfo.getMode());
       }
-      
+      if (fragment != null && !fragment.isEmpty())
+      {
+         url += "#" + URL.encodePathSegment(fragment);
+      }
+
       // open window
       openWindow(url);
    }

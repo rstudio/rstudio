@@ -536,6 +536,7 @@ public abstract class
    public abstract AppCommand showTrustRequestDialog();
    public abstract AppCommand showLicenseDialog();
    public abstract AppCommand checkForUpdates();
+   public abstract AppCommand showReleaseNotes();
    public abstract AppCommand helpUsingRStudio();
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();
@@ -773,6 +774,7 @@ public abstract class
    public abstract AppCommand popOutChat();
    public abstract AppCommand returnChatToMain();
    public abstract AppCommand uninstallPositAI();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();
