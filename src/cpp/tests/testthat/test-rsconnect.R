@@ -88,3 +88,30 @@ test_that(".rs.rsconnectDeployList() includes _quarto.yml and _metadata.yml file
    expect_true("../_quarto.yml" %in% res)
    expect_true("_metadata.yml" %in% res)
 })
+
+test_that(".rs.docDeployList() tolerates non-existent resource files", {
+   dir.create(tf <- tempfile()); on.exit(unlink(tf, TRUE, TRUE))
+
+   main <- file.path(tf, "main.qmd")
+   writeLines("---\ntitle: test\n---\n", main)
+
+   # Stub quartoFileProject to return a resource that doesn't exist on disk,
+   # simulating Quarto v1.9 reporting project metadata for standalone files
+   rsEnv <- as.environment("tools:rstudio")
+   origFn <- get(".rs.quartoFileProject", envir = rsEnv)
+   assign(".rs.quartoFileProject", function(target) {
+      list(project = character(), resources = c("nonexistent_output.html"))
+   }, envir = rsEnv)
+   on.exit(assign(".rs.quartoFileProject", origFn, envir = rsEnv), add = TRUE)
+
+   result <- .rs.docDeployList(main, FALSE, main)
+
+   # totalSize must be a finite number, not NA
+   expect_true(is.finite(result$totalSize))
+
+   # the non-existent file should be excluded from the contents
+   expect_false("nonexistent_output.html" %in% result$contents)
+
+   # the .qmd file itself should still be present
+   expect_true("main.qmd" %in% result$contents)
+})

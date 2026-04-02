@@ -458,11 +458,18 @@
   # R Markdown documents)
   file_list <- unique(file_list)
 
+  # resolve full paths and keep only files that exist on disk; Quarto v1.9
+  # returns project metadata for standalone files, causing _quarto.yml to be
+  # added to the file list even when no project file exists
+  full_paths <- file.path(dirname(target), file_list)
+  exists <- file.exists(full_paths)
+  file_list <- file_list[exists]
+  full_paths <- full_paths[exists]
+
   # compose the result
   list(
     contents = file_list,
-    totalSize = sum(
-       file.info(file.path(dirname(target), file_list))$size))
+    totalSize = sum(file.info(full_paths)$size, na.rm = TRUE))
 })
 
 .rs.addFunction("makeDeploymentList", function(target, asMultipleDoc,
