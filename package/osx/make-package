@@ -260,6 +260,14 @@ set-version ${RSTUDIO_VERSION_FULL}
 case "${arch}" in *arm64*)  build_arm64=1  ;; esac
 case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
 
+# determine the primary build directory: whichever architecture is built
+# first and owns the install/package targets
+if [ -n "${build_x86_64}" ]; then
+   PRIMARY_BUILD_DIR="${BUILD_DIR_X86_64}"
+else
+   PRIMARY_BUILD_DIR="${BUILD_DIR_ARM64}"
+fi
+
 if [ "${clean}" = "1" ]; then
 
    # remove existing build dir
@@ -375,18 +383,43 @@ if [ -n "${build_arm64}" ]; then
    rm -f CMakeCache.txt
    rm -rf build/_CPack_Packages
 
-   info "Configuring for arm64 ..."
-   arch -arm64 "${CMAKE}"                                   \
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
-      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"               \
-      -DRSESSION_ALTERNATE_BUILD=1                          \
-      -DRSTUDIO_TARGET=${rstudio_target}                    \
-      -DRSTUDIO_PACKAGE_BUILD=1                             \
-      -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
-      -DGWT_BUILD=0                                         \
-      -DGWT_COPY=0                                          \
-      -DSCCACHE_ENABLED=$SCCACHE_ENABLED                    \
-      "${PKG_DIR}/../.."
+   if [ -n "${build_x86_64}" ]; then
+
+      # arm64 is the alternate build (universal package)
+      info "Configuring for arm64 (alternate) ..."
+      arch -arm64 "${CMAKE}"                                   \
+         -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
+         -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"               \
+         -DRSESSION_ALTERNATE_BUILD=1                          \
+         -DRSTUDIO_TARGET=${rstudio_target}                    \
+         -DRSTUDIO_PACKAGE_BUILD=1                             \
+         -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
+         -DGWT_BUILD=0                                         \
+         -DGWT_COPY=0                                          \
+         -DSCCACHE_ENABLED=$SCCACHE_ENABLED                    \
+         "${PKG_DIR}/../.."
+
+   else
+
+      # arm64 is the primary build (arm64-only package)
+      info "Configuring for arm64 (primary) ..."
+      arch -arm64 "${CMAKE}"                                      \
+         -DCMAKE_BUILD_TYPE=RelWithDebInfo                        \
+         -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                  \
+         -DRSTUDIO_TARGET=${rstudio_target}                       \
+         -DRSTUDIO_PACKAGE_BUILD=1                                \
+         -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64"    \
+         -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"        \
+         -DRSTUDIO_CODESIGN_KEYCHAIN_PATH="${KEYCHAIN_PATH}"      \
+         -DGWT_BUILD="${build_gwt}"                               \
+         -DGWT_COPY="${copy_gwt}"                                 \
+         -DGWT_BIN_DIR="${BUILD_DIR_ARM64}/gwt/bin"               \
+         -DGWT_WWW_DIR="${BUILD_DIR_ARM64}/gwt/www"               \
+         -DGWT_EXTRAS_DIR="${BUILD_DIR_ARM64}/gwt/extras"         \
+         -DSCCACHE_ENABLED=$SCCACHE_ENABLED                       \
+         "${PKG_DIR}/../.."
+
+   fi
    info "Done!"
 
    info "Building for arm64 with flags '${MAKEFLAGS}' ..."
@@ -415,8 +448,8 @@ if [ "${build_package}" = "1" ]; then
    rm -rf "${INSTALL_DIR}"
    mkdir -p "${INSTALL_DIR}"
 
-   # perform install
-   cd "${BUILD_DIR_X86_64}"
+   # perform install from the primary build directory
+   cd "${PRIMARY_BUILD_DIR}"
    "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
    if [ "${build_dmg}" = "1" ]; then
@@ -443,9 +476,9 @@ if [ "${build_package}" = "1" ]; then
          "${RSTUDIO_BUNDLE_NAME}.dmg"
 
       # move to expected location in build folder
-      mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+      mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${PRIMARY_BUILD_DIR}/"
 
-      info "'${BUILD_DIR_X86_64}/${RSTUDIO_BUNDLE_NAME}.dmg' has been created."
+      info "'${PRIMARY_BUILD_DIR}/${RSTUDIO_BUNDLE_NAME}.dmg' has been created."
 
    fi
 
