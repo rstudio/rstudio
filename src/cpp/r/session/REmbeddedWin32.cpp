@@ -107,9 +107,11 @@ typedef struct
     R_SIZE_T ppsize;
     int NoRenviron;
 
+#if defined(_WIN64)
     // Added in R 4.4.0; occupies alignment padding on 64-bit,
     // so does not shift subsequent field offsets.
     int nconnections;
+#endif
 
     char* rhome;
     char* home;
@@ -287,6 +289,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->RestoreAction = SA_NORESTORE;
    pRP->LoadInitFile = loadInitFile ? TRUE : FALSE;
 
+#if defined(_WIN64)
    // set max connections if requested (requires R >= 4.4.0)
    // R >= 4.4.0 sets nconnections = 128 in R_DefParams/R_DefParamsEx;
    // the field remains 0 (from memset) on older R versions.
@@ -301,6 +304,12 @@ void runEmbeddedR(const core::FilePath& rHome,
          LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
       }
    }
+#else
+   if (nconnections > 0)
+   {
+      LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+   }
+#endif
 
    // hooks
    pRP->ReadConsole = callbacks.readConsole;

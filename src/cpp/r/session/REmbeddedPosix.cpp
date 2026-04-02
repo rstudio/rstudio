@@ -56,6 +56,32 @@ namespace rstudio {
 namespace r {
 namespace session {
 
+// Local copy of R's structRstart, always including the 'nconnections'
+// field added in R 4.4.0. This allows runtime detection of nconnections
+// support regardless of which R headers were used at compile time.
+// The struct is zero-initialized before R_DefParams; R >= 4.4.0
+// populates nconnections = 128, older R leaves it as 0 (from memset).
+typedef struct
+{
+   Rboolean R_Quiet;
+   Rboolean R_NoEcho;
+   Rboolean R_Interactive;
+   Rboolean R_Verbose;
+   Rboolean LoadSiteFile;
+   Rboolean LoadInitFile;
+   Rboolean DebugInitFile;
+   SA_TYPE RestoreAction;
+   SA_TYPE SaveAction;
+   R_SIZE_T vsize;
+   R_SIZE_T nsize;
+   R_SIZE_T max_vsize;
+   R_SIZE_T max_nsize;
+   R_SIZE_T ppsize;
+   int NoRenviron;
+   int nconnections;
+   char padding[128];
+} RStartup;
+
 void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
                   const core::FilePath& /*userHome*/, // ignored on posix
                   bool quiet,
@@ -111,15 +137,11 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //      .Rprofile rather than simply saved into the global environment
    //      of the default workspace
    //
-   structRstart rp;
+   RStartup rp;
    memset(&rp, 0, sizeof(rp));
-   Rstart Rp = &rp;
-   R_DefParams(Rp);
-#if R_VERSION < R_Version(4, 0, 0)
-   Rp->R_Slave = FALSE;
-#else
+   RStartup* Rp = &rp;
+   R_DefParams((Rstart) Rp);
    Rp->R_NoEcho = FALSE;
-#endif
    Rp->R_Quiet = quiet ? TRUE : FALSE;
    Rp->R_Interactive = TRUE;
    Rp->SaveAction = defaultSaveAction;
@@ -141,7 +163,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
       }
    }
 
-   R_SetParams(Rp);
+   R_SetParams((Rstart) Rp);
 
    // redirect console
    R_Interactive = TRUE; // should have also been set by call to Rf_initialize_R
