@@ -96,12 +96,13 @@ test_that(".rs.docDeployList() tolerates non-existent resource files", {
    writeLines("---\ntitle: test\n---\n", main)
 
    # Stub quartoFileProject to return a resource that doesn't exist on disk,
-   # simulating what Quarto v1.9 may report for generated outputs
-   mockQuartoFileProject <- .rs.quartoFileProject
-   .rs.setFunction("quartoFileProject", function(target) {
+   # simulating Quarto v1.9 reporting project metadata for standalone files
+   rsEnv <- as.environment("tools:rstudio")
+   origFn <- get(".rs.quartoFileProject", envir = rsEnv)
+   assign(".rs.quartoFileProject", function(target) {
       list(project = character(), resources = c("nonexistent_output.html"))
-   })
-   on.exit(.rs.setFunction("quartoFileProject", mockQuartoFileProject), add = TRUE)
+   }, envir = rsEnv)
+   on.exit(assign(".rs.quartoFileProject", origFn, envir = rsEnv), add = TRUE)
 
    result <- .rs.docDeployList(main, FALSE, main)
 
