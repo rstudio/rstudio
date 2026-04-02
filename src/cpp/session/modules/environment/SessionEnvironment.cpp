@@ -408,31 +408,32 @@ struct CallFrameResult
    SEXP srcContextCall;
 
    CallFrameResult()
-      : contextCallfun(R_NilValue)
-      , contextCloenv(R_NilValue)
-      , originalCallfun(R_NilValue)
-      , hasSourceRefs(false)
-      , callFunSourceRefs(R_NilValue)
-      , srcContextCallfun(R_NilValue)
-      , srcContextCall(R_NilValue)
+      : contextCallfun(R_NilValue),
+        contextCloenv(R_NilValue),
+        originalCallfun(R_NilValue),
+        hasSourceRefs(false),
+        callFunSourceRefs(R_NilValue),
+        srcContextCallfun(R_NilValue),
+        srcContextCall(R_NilValue)
    {
    }
 };
 
 // Call .rs.callFrames() in R and unpack the results.
-CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
+CallFrameResult callFramesFromR(int depth,
+                                LineDebugState* pLineDebugState,
+                                r::sexp::Protect* pProtect)
 {
    CallFrameResult result;
-   r::sexp::Protect protect;
 
    // Build lineDebugState argument for R
    SEXP lineDebugStateSEXP = R_NilValue;
    if (pLineDebugState != nullptr)
    {
-      r::sexp::ListBuilder builder(&protect);
+      r::sexp::ListBuilder builder(pProtect);
       builder.add("lastDebugText", pLineDebugState->lastDebugText);
       builder.add("lastDebugLine", pLineDebugState->lastDebugLine);
-      lineDebugStateSEXP = r::sexp::create(builder, &protect);
+      lineDebugStateSEXP = r::sexp::create(builder, pProtect);
    }
 
    // Get the current srcref for the innermost context (set by R's evaluator
@@ -447,7 +448,7 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
          .addParam(depth)
          .addParam(lineDebugStateSEXP)
          .addParam(currentSrcref)
-         .call(&resultSEXP, &protect);
+         .call(&resultSEXP, pProtect);
 
    if (error)
    {
@@ -769,7 +770,8 @@ json::Object commonEnvironmentStateData(
    std::string functionCode;
    bool inFunctionEnvironment = false;
 
-   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState);
+   r::sexp::Protect protect;
+   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState, &protect);
 
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
@@ -1011,7 +1013,7 @@ SEXP inferDebugSrcrefs(
       return srcref;
 
    // Fall back to building call frames and simulating source refs
-   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState.get());
+   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState.get(), &protect);
 
    // Use the source context's callfun to simulate source refs
    if (cfResult.srcContextCallfun != R_NilValue)
@@ -1070,7 +1072,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    s_browserActive = r::session::isBrowseActive();
    if (*pContextDepth > 0 && !s_browserActive)
    {
-      environmentTop = R_GlobalEnv;
       s_browserEnv.set(R_NilValue);
    }
    else

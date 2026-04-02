@@ -273,6 +273,13 @@ int RReadConsole(const char *pmt,
       // capture the prompt for later manipulation
       std::string prompt(pmt);
 
+      // track browser state based on the prompt (Browse[N]> ).
+      // only update on REPL prompts (hist == 1); sub-prompts from
+      // readline(), scan(), etc. (hist == 0) should not clear
+      // browser state while the debugger is still on the stack.
+      static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
+      bool browsing = regex_utils::match(prompt, reBrowsePrompt);
+
       // track whether we're at the default top-level prompt.
       // cleared before returning input to R (see below).
       // only REPL prompts use hist == 1; readline(), scan(), etc. use 0.
@@ -280,45 +287,34 @@ int RReadConsole(const char *pmt,
       {
          std::string defaultPrompt = r::options::getOption<std::string>("prompt");
          setAtDefaultPrompt(prompt == defaultPrompt);
+         setBrowserActive(browsing);
       }
       else
       {
          setAtDefaultPrompt(false);
       }
 
-      // track browser state based on the prompt (Browse[N]> )
-      static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
-      bool browsing = regex_utils::match(prompt, reBrowsePrompt);
-      setBrowserActive(browsing);
-
       // When entering a browse prompt, inject a call to capture the
       // current environment. This is evaluated by R's browser REPL
       // in the browser's rho, so parent.frame() correctly returns
       // the environment being debugged (even during promise forcing).
       //
-      // The flag alternates: on the first browse prompt we inject
-      // the capture call and return immediately (the client never
-      // sees this prompt). R evaluates the capture, then re-issues
-      // the browse prompt. On that second prompt we clear the flag
-      // and proceed normally. The next browse prompt (after stepping)
+      // On the first browse prompt we inject the capture call and
+      // return immediately (the client never sees this prompt).
+      // R evaluates the capture, then re-issues the browse prompt;
+      // s_captureInjected is still true so we skip injection and
+      // proceed normally. The next new browse prompt (after stepping)
       // injects again.
-      static bool s_needsCaptureEnv = false;
-      if (browsing)
+      static bool s_captureInjected = false;
+      if (browsing && !s_captureInjected)
       {
-         if (!s_needsCaptureEnv)
-         {
-            s_needsCaptureEnv = true;
-            std::string cmd = ".rs.captureCurrentEnvironment()\n";
-            cmd.copy((char*)buf, cmd.size());
-            buf[cmd.size()] = '\0';
-            return 1;
-         }
-         s_needsCaptureEnv = false;
+         s_captureInjected = true;
+         std::string cmd = ".rs.captureCurrentEnvironment()\n";
+         cmd.copy((char*)buf, cmd.size());
+         buf[cmd.size()] = '\0';
+         return 1;
       }
-      else
-      {
-         s_needsCaptureEnv = false;
-      }
+      s_captureInjected = false;
 
       // invoke one time initialization
       if (!s_initialized)
