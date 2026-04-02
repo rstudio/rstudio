@@ -17,6 +17,7 @@
 - ([#16069](https://github.com/rstudio/rstudio/issues/16069)): Function auto-completion will now include arguments inherited via @inheritDotParams.
 - ([#16530](https://github.com/rstudio/rstudio/issues/16530)): Added Posit Connect Cloud as a publishing target
 - ([#17330](https://github.com/rstudio/rstudio/issues/17330)): Added Help > Release Notes command to open the RStudio release notes in the browser
+- ([#17339](https://github.com/rstudio/rstudio/issues/17339)): Added `r-max-connections` session option to configure the maximum number of R connections (requires R >= 4.4.0)
 
 ### Fixed
 - ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed

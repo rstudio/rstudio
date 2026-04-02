@@ -153,6 +153,12 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    // the field remains 0 (from memset) on older R versions.
    if (nconnections > 0)
    {
+      if (nconnections < 128)
+      {
+         LOG_WARNING_MESSAGE("r-max-connections must be at least 128; using 128");
+         nconnections = 128;
+      }
+
       if (Rp->nconnections > 0)
       {
          Rp->nconnections = nconnections;
