@@ -70,6 +70,7 @@ void runEmbeddedR(const core::FilePath& rHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal);
 
