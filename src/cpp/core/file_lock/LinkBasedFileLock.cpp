@@ -382,7 +382,7 @@ Error writeLockFile(const FilePath& lockFilePath)
       ::close(fd);
       
       // report if an error occurred during write
-      if (status)
+      if (status == -1)
       {
          Error error = systemError(errorNumber, ERROR_LOCATION);
          error.addProperty("lock-file", lockFilePath);
