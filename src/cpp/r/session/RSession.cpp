@@ -34,9 +34,9 @@
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 
-#include <r/RCntxt.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -69,7 +69,6 @@
 
 #include <gsl/gsl-lite.hpp>
 
-#define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
 #undef TRUE
@@ -503,20 +502,95 @@ bool isSuspendable(const std::string& currentPrompt)
 }
 
 
+namespace {
+
+volatile bool s_atDefaultPrompt = false;
+bool s_browserActive = false;
+r::sexp::PreservedSEXP s_browserEnv;
+
+} // anonymous namespace
+
+void setAtDefaultPrompt(bool atPrompt)
+{
+   s_atDefaultPrompt = atPrompt;
+}
+
+bool atDefaultPrompt()
+{
+   return s_atDefaultPrompt;
+}
+
+void setBrowserActive(bool active)
+{
+   s_browserActive = active;
+   if (!active)
+      s_browserEnv.set(R_NilValue);
+}
+
 bool browserContextActive()
 {
-   using namespace r::context;
-   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-   {
-      if (it->callflag() & CTXT_BROWSER)
-      {
-         return true;
-      }
-   }
-   
-   return false;
+   return s_browserActive;
 }
-   
+
+void setBrowserEnv(SEXP env)
+{
+   s_browserEnv.set(env);
+}
+
+SEXP browserEnv()
+{
+   return s_browserEnv.get();
+}
+
+bool isAtTopLevel()
+{
+   return atDefaultPrompt() && !r::exec::isExecuting();
+}
+
+bool isBrowseActive()
+{
+   return browserContextActive() &&
+          browserEnv() != R_GlobalEnv;
+}
+
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
+{
+   SEXP benv = browsing ? browserEnv() : R_NilValue;
+
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.getFunctionContext")
+      .addParam(depth)
+      .addParam(benv)
+      .call(&resultSEXP, &protect);
+
+   if (error)
+      return false;
+
+   if (TYPEOF(resultSEXP) != VECSXP || Rf_length(resultSEXP) < 2)
+      return false;
+
+   int foundDepth = r::sexp::asInteger(VECTOR_ELT(resultSEXP, 0));
+   SEXP foundEnv = VECTOR_ELT(resultSEXP, 1);
+
+   if (pDepth)
+      *pDepth = foundDepth;
+   if (pEnv)
+      *pEnv = foundEnv;
+
+   return foundDepth > 0;
+}
+
+bool inDebugHiddenContext()
+{
+   bool result = false;
+   Error error = r::exec::RFunction(".rs.inDebugHiddenContext")
+      .call(&result);
+   if (error)
+      LOG_ERROR(error);
+   return result;
+}
+
 namespace utils {
    
 bool isPackratModeOn()

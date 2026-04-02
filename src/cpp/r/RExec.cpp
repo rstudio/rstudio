@@ -23,10 +23,10 @@
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
+#include <r/session/RSession.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
-#include <r/RCntxt.hpp>
 #include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
@@ -396,9 +396,9 @@ Error evaluateString(const std::string& str,
    return Success();
 }
    
-bool atTopLevelContext() 
+bool atTopLevelContext()
 {
-   return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
+   return session::isAtTopLevel();
 }
 
 RFunction::RFunction(SEXP functionSEXP)

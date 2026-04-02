@@ -13,35 +13,20 @@
  *
  */
 
-#include <r/RCntxt.hpp>
-#include <r/RCntxtUtils.hpp>
-
-#include <r/RExec.hpp>
-#include <r/RSexp.hpp>
-
-using namespace rstudio;
-using namespace rstudio::core;
+#include <r/session/RSession.hpp>
 
 namespace rstudio {
 namespace r {
 namespace session {
 
-namespace {
-struct RContext {
-   struct RContext* nextcontext;
-   int callflag;
-};
-} // end anonymous namespace
-
 // NOTE: Invoked in handleUSR2, so this needs to be async-signal safe.
+// Returns true when R is not at the default top-level prompt — this includes
+// user code execution, debug/browser sessions, loops, and internal RStudio
+// R code execution. This is intentionally broader than the previous check
+// which only looked for function contexts (CTXT_FUNCTION).
 bool isBusy()
 {
-   RContext* context = (RContext*) R_GlobalContext;
-   for (; context != NULL; context = context->nextcontext)
-      if (context->callflag & CTXT_FUNCTION)
-         return true;
-
-   return false;
+   return !isAtTopLevel();
 }
 
 } // namespace session
