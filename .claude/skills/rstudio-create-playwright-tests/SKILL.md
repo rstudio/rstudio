@@ -10,11 +10,12 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 1. **Always clean up stray RStudio processes at script start** – Port 9222 conflicts cause "Target closed" errors
 2. **5-second minimum initial wait** before CDP connection – Ensures stable UI initialization
 3. **Use stable selectors** from source code, NOT dynamic `gwt-uid-XXXX` IDs – These change on every restart
-4. **Type content with `keyboard.type()`** – Keyboard shortcuts don't reliably reach the app through CDP
+4. **Use `pressSequentially()` for console/editor input, `keyboard.type()` for dialogs** – `pressSequentially()` ensures character-by-character detection in the editor; `keyboard.type()` works for dialog input and keyboard shortcuts
 5. **Add 0.2-second delay before `keyboard.press("Enter")`** – Critical for reliability. After typing, wait 0.2s before pressing Enter to ensure the keystroke is fully processed.
 6. **Graceful shutdown with `q(save = "no")`** – Better than force termination. Use `save = "no"` to skip the "Save workspace?" dialog.
 7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards. **Keyboard shortcuts: use `ControlOrMeta` for shortcuts that are Cmd on macOS and Ctrl on Windows/Linux** (e.g., `ControlOrMeta+s` for save, `ControlOrMeta+a` for select all). Playwright's `ControlOrMeta` modifier handles this automatically. Use plain `Control` only for shortcuts that use the literal Ctrl key on all platforms (e.g., `Control+Space` for autocomplete, `Control+l` for clear console).
 8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `RSTUDIO_EDITION` env var when branching on mode.
+9. **Use `.rs.api.executeCommand()` instead of `window.desktopHooks.invokeCommand()`** – `desktopHooks` only exists in Desktop's Electron shell and will crash on Server. `.rs.api.executeCommand()` works in both modes.
 
 ---
 
@@ -147,8 +148,6 @@ const CDP_URL = `http://localhost:${CDP_PORT}`;
 
 const TIMEOUTS = {
   processCleanup: 1000,
-  rstudioStartup: 5000,
-  consoleReady: 5000,
   menuDelay: 1000,
   menuItemDelay: 500,
   fileCreation: 10000,
@@ -352,19 +351,7 @@ test.describe('Tests needing dplyr', () => {
 
 Use helpers from `pages/viewer_pane.page.ts`:
 
-- **`stripBasicMarkdown(source)`** — Strips `#`, `*`, `**`, `-`, `\n` to produce expected plain text. Handles the subset of markdown used in tests — extend as needed.
-- **`expectViewerContainsText(container, expectedText, timeout?)`** — Tolerant of whitespace/wrapping and smart quote substitution.
-
-```typescript
-const markdownSource = '#### To be, or not to be\\n\\n- The slings and arrows\\n- **of outrageous** fortune';
-await sourceActions.createAndOpenFile(fileName, markdownSource);
-// ... preview ...
-const viewerFrame = switchToViewerFrame(page);
-const container = viewerFrame.locator(CONTAINER).first();
-await expectViewerContainsText(container, stripBasicMarkdown(markdownSource));
-```
-
-**Reference implementation:** `pages/viewer_pane.page.ts` → `stripBasicMarkdown()` / `expectViewerContainsText()`
+- **`switchToViewerFrame(page)`** — Switch to the viewer iframe for element interactions.
 
 ---
 

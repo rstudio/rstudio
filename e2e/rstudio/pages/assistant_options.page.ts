@@ -26,15 +26,5 @@ export class AssistantOptions extends PageObject {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Backward-compatible exports (used by other tests)
-// ---------------------------------------------------------------------------
 
-export const ASSISTANT_TAB = '#rstudio_label_assistant_options';
-export const ASSISTANT_PANEL = '#rstudio_label_assistant_options_panel';
-export const CODE_ASSISTANT_SELECT = "//label[contains(text(),'Use code assistant')]/following::select[1]";
-export const SHOW_CODE_SUGGESTIONS_SELECT = "//label[contains(text(),'Show code suggestions')]/following::select[1]";
-export const ENABLE_NES_CHECKBOX = "//label[contains(text(),'Enable next edit suggestions')]/../input";
-export const CHAT_PROVIDER_SELECT = "//label[contains(text(),'Chat provider:')]/following::select[1]";
-export const OPTIONS_OK_BUTTON = '#rstudio_preferences_confirm';
 

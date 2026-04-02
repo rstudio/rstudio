@@ -50,7 +50,7 @@ test.describe.skip('Python Shiny Tip Calculator via Posit Assistant', () => {
 
   test.afterAll(async ({ rstudioPage: page }) => {
     // Interrupt any running app
-    await page.evaluate("window.desktopHooks.invokeCommand('interruptR')");
+    await page.evaluate(".rs.api.executeCommand('interruptR')");
     await sleep(2000);
 
     // Clean up created file(s) — cover various paths the assistant might use

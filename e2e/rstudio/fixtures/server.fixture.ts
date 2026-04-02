@@ -12,7 +12,9 @@ export interface ServerSession {
  * Connect to RStudio Server, log in, and return a ready session.
  */
 export async function launchServer(): Promise<ServerSession> {
-  const serverUrl = process.env.RSTUDIO_SERVER_URL || 'http://localhost:8787';
+  const baseUrl = process.env.RSTUDIO_SERVER_URL || 'http://localhost';
+  const port = process.env.RSTUDIO_SERVER_PORT || '8787';
+  const serverUrl = `${baseUrl}:${port}`;
   const username = process.env.RSTUDIO_USER || '';
   const password = process.env.RSTUDIO_PASSWORD || '';
 

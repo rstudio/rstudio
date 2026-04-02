@@ -90,7 +90,7 @@ async function waitForGhostText(sourcePane: SourcePane): Promise<string> {
 }
 
 async function acceptGhostText(page: Page, sourcePane: SourcePane) {
-  await page.keyboard.press('Control+;');
+  await page.keyboard.press('ControlOrMeta+;');
   await sleep(2000);
   await expect(sourcePane.copilotGhostText).toHaveCount(0, { timeout: 5000 });
 }

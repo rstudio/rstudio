@@ -66,7 +66,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const ghostTextContent = ghostTextParts.join('');
       console.log('Ghost text before accept: ' + ghostTextContent);
 
-      await page.keyboard.press('Control+;');
+      await page.keyboard.press('ControlOrMeta+;');
       await sleep(2000);
 
       await expect(sourcePane.contentPane).toContainText(ghostTextContent, { timeout: 5000 });

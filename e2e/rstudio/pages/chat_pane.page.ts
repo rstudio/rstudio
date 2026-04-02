@@ -117,26 +117,4 @@ export class ChatPane extends FramePageObject {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Backward-compatible exports (used by other 4 test files)
-// ---------------------------------------------------------------------------
-
-export const CHAT_FRAME = CHAT_FRAME_SELECTOR;
-export const CHAT_ROOT = '#root';
-export const CHAT_TEXTAREA = 'textarea';
-export const MESSAGE_ITEM = '[data-message-id]';
-export const ALLOW_BTN = "button:has-text('Allow')";
-export const SEND_BTN = "button:has(svg.lucide-arrow-up)";
-export const STOP_BTN = "button:has(svg.lucide-square)";
-export const INSTALL_BTN = "button:has-text('Install')";
-export const UPDATE_BTN = "button:has-text('Update')";
-export const IGNORE_BTN = "button:has-text('Ignore')";
-export const SETTINGS_BTN = "//span[contains(text(), 'Settings')]/ancestor::button";
-export const SETTINGS_MENU = "[data-slot='dropdown-menu-content']";
-export const CONFIGURE_POSIT_AI_ITEM = "//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]";
-export const ABOUT_ITEM = "//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]";
-export const NEW_CONVERSATION_BTN = "button:has(svg.lucide-plus)";
-export const HISTORY_BTN = "button:has(svg.lucide-history)";
-export const CONVERSATION_LIST = "[class*='conversation']";
-export const DIALOG_OVERLAY = "[data-slot='dialog-overlay']";
 

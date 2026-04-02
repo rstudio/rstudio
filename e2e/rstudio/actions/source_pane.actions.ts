@@ -65,13 +65,13 @@ export class SourcePaneActions {
       const insertionText = await nesInsertionPreview.first().textContent();
       const count = await nesInsertionPreview.count();
       console.log(`  NES inline diff: "${insertionText}" (${count} suggestion(s) visible)`);
-      await this.page.keyboard.press('Control+;');
+      await this.page.keyboard.press('ControlOrMeta+;');
       await sleep(2000);
       return 'inline-diff';
     } else if (await copilotGhostText.first().isVisible()) {
       const ghostTextParts = await copilotGhostText.allTextContents();
       console.log('  NES ghost text: "' + ghostTextParts.join('') + '"');
-      await this.page.keyboard.press('Control+;');
+      await this.page.keyboard.press('ControlOrMeta+;');
       await sleep(2000);
       return 'ghost-text';
     } else {
@@ -91,12 +91,12 @@ export class SourcePaneActions {
         } else if (await nesInsertionPreview.first().isVisible()) {
           const insertionText = await nesInsertionPreview.first().textContent();
           console.log('  NES inline diff (after gutter click): "' + insertionText + '"');
-          await this.page.keyboard.press('Control+;');
+          await this.page.keyboard.press('ControlOrMeta+;');
           await sleep(2000);
         } else {
           const ghostParts = await copilotGhostText.allTextContents();
           console.log('  NES ghost text (after gutter click): "' + ghostParts.join('') + '"');
-          await this.page.keyboard.press('Control+;');
+          await this.page.keyboard.press('ControlOrMeta+;');
           await sleep(2000);
         }
         return 'gutter-clicked';
@@ -115,7 +115,8 @@ export class SourcePaneActions {
   async navigateToChunkByIndex(chunkNumber: number): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
     await sleep(300);
-    await this.page.keyboard.press('Control+Home');
+    const goToTop = process.platform === 'darwin' ? 'Meta+ArrowUp' : 'Control+Home';
+    await this.page.keyboard.press(goToTop);
     await sleep(300);
     for (let i = 0; i < chunkNumber; i++) {
       await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");

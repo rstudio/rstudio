@@ -11,6 +11,8 @@ import type { Page } from 'playwright';
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
 test.describe.serial('Detachable Assistant Sidebar - #16937', () => {
+  test.skip(process.env.RSTUDIO_EDITION === 'server', 'Satellite windows are Desktop-only — Server behavior TBD');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
@@ -61,7 +63,7 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', () => {
 
     // Listen for the new page (satellite window) before triggering pop-out
     const satellitePromise = context.waitForEvent('page', { timeout: 30000 });
-    await page.evaluate("window.desktopHooks.invokeCommand('popOutChat')");
+    await page.evaluate(".rs.api.executeCommand('popOutChat')");
     const satellitePage = await satellitePromise;
     await satellitePage.waitForLoadState('domcontentloaded');
     await sleep(3000);
