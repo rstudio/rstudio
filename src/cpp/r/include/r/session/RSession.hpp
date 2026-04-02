@@ -73,7 +73,8 @@ struct ROptions
          rProfileOnResume(false),
          restoreEnvironmentOnResume(true),
          packratEnabled(false),
-         suspendOnIncompleteStatement(false)
+         suspendOnIncompleteStatement(false),
+         rMaxConnections(0)
    {
    }
    
@@ -104,6 +105,7 @@ struct ROptions
    core::r_util::SessionScope sessionScope;
    bool packratEnabled;
    bool suspendOnIncompleteStatement;
+   int rMaxConnections;
 };
       
 struct RInitInfo

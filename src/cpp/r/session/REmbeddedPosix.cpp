@@ -13,6 +13,8 @@
  *
  */
 
+#include <cstring>
+
 #include <core/Log.hpp>
 
 #include <r/RRuntime.hpp>
@@ -59,6 +61,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
 {
@@ -109,6 +112,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //      of the default workspace
    //
    structRstart rp;
+   memset(&rp, 0, sizeof(rp));
    Rstart Rp = &rp;
    R_DefParams(Rp);
 #if R_VERSION < R_Version(4, 0, 0)
@@ -121,6 +125,22 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    Rp->SaveAction = defaultSaveAction;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
    Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
+
+   // set max connections if requested (requires R >= 4.4.0)
+   // R >= 4.4.0 sets Rp->nconnections = 128 in R_DefParams;
+   // the field remains 0 (from memset) on older R versions.
+   if (nconnections > 0)
+   {
+      if (Rp->nconnections > 0)
+      {
+         Rp->nconnections = nconnections;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+      }
+   }
+
    R_SetParams(Rp);
 
    // redirect console

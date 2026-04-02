@@ -107,6 +107,10 @@ typedef struct
     R_SIZE_T ppsize;
     int NoRenviron;
 
+    // Added in R 4.4.0; occupies alignment padding on 64-bit,
+    // so does not shift subsequent field offsets.
+    int nconnections;
+
     char* rhome;
     char* home;
     int (*ReadConsole)(const char *, char *, int, int);
@@ -229,6 +233,7 @@ void runEmbeddedR(const core::FilePath& rHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
 {
@@ -281,6 +286,21 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->SaveAction = defaultSaveAction;
    pRP->RestoreAction = SA_NORESTORE;
    pRP->LoadInitFile = loadInitFile ? TRUE : FALSE;
+
+   // set max connections if requested (requires R >= 4.4.0)
+   // R >= 4.4.0 sets nconnections = 128 in R_DefParams/R_DefParamsEx;
+   // the field remains 0 (from memset) on older R versions.
+   if (nconnections > 0)
+   {
+      if (pRP->nconnections > 0)
+      {
+         pRP->nconnections = nconnections;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+      }
+   }
 
    // hooks
    pRP->ReadConsole = callbacks.readConsole;

@@ -424,6 +424,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
                             quiet,
                             loadInitFile,
                             s_options.saveWorkspace,
+                            s_options.rMaxConnections,
                             cb,
                             stdInternalCallbacks());
 
