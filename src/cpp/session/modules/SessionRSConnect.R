@@ -458,9 +458,9 @@
   # R Markdown documents)
   file_list <- unique(file_list)
 
-  # resolve full paths and keep only files that exist on disk; resources
-  # reported by 'quarto inspect' may reference generated outputs that have
-  # not been rendered yet
+  # resolve full paths and keep only files that exist on disk; Quarto v1.9
+  # returns project metadata for standalone files, causing _quarto.yml to be
+  # added to the file list even when no project file exists
   full_paths <- file.path(dirname(target), file_list)
   exists <- file.exists(full_paths)
   file_list <- file_list[exists]
