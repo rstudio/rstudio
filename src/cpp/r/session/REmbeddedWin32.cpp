@@ -91,13 +91,13 @@ using namespace boost::placeholders;
 extern "C" {
 typedef struct
 {
-    Rboolean R_Quiet;
-    Rboolean R_NoEcho;
-    Rboolean R_Interactive;
-    Rboolean R_Verbose;
-    Rboolean LoadSiteFile;
-    Rboolean LoadInitFile;
-    Rboolean DebugInitFile;
+    int R_Quiet;
+    int R_NoEcho;
+    int R_Interactive;
+    int R_Verbose;
+    int LoadSiteFile;
+    int LoadInitFile;
+    int DebugInitFile;
     SA_TYPE RestoreAction;
     SA_TYPE SaveAction;
     R_SIZE_T vsize;
@@ -105,7 +105,8 @@ typedef struct
     R_SIZE_T max_vsize;
     R_SIZE_T max_nsize;
     R_SIZE_T ppsize;
-    int NoRenviron;
+    int NoRenviron : 16;
+    int RstartVersion : 16;
 
 #if defined(_WIN64)
     // Added in R 4.4.0; occupies alignment padding on 64-bit,
@@ -125,7 +126,7 @@ typedef struct
     void (*WriteConsoleEx)(const char *, int, int);
 
     // Added in R 4.0.0
-    Rboolean EmitEmbeddedUTF8;
+    int EmitEmbeddedUTF8;
 
     // Added in R 4.2.0
     void (*CleanUp)(SA_TYPE, int, int);
@@ -297,8 +298,13 @@ void runEmbeddedR(const core::FilePath& rHome,
    {
       if (nconnections < 128)
       {
-         LOG_WARNING_MESSAGE("r-max-connections must be at least 128; using 128");
+         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at least 128; using 128");
          nconnections = 128;
+      }
+      else if (nconnections > 32768)
+      {
+         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at most 32768; using 32768");
+         nconnections = 32768;
       }
 
       if (pRP->nconnections > 0)
@@ -313,7 +319,7 @@ void runEmbeddedR(const core::FilePath& rHome,
 #else
    if (nconnections > 0)
    {
-      LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+      LOG_WARNING_MESSAGE("r-max-connections is not supported on 32-bit Windows");
    }
 #endif
 

@@ -63,13 +63,13 @@ namespace session {
 // populates nconnections = 128, older R leaves it as 0 (from memset).
 typedef struct
 {
-   Rboolean R_Quiet;
-   Rboolean R_NoEcho;
-   Rboolean R_Interactive;
-   Rboolean R_Verbose;
-   Rboolean LoadSiteFile;
-   Rboolean LoadInitFile;
-   Rboolean DebugInitFile;
+   int R_Quiet;
+   int R_NoEcho;
+   int R_Interactive;
+   int R_Verbose;
+   int LoadSiteFile;
+   int LoadInitFile;
+   int DebugInitFile;
    SA_TYPE RestoreAction;
    SA_TYPE SaveAction;
    R_SIZE_T vsize;
@@ -77,8 +77,13 @@ typedef struct
    R_SIZE_T max_vsize;
    R_SIZE_T max_nsize;
    R_SIZE_T ppsize;
-   int NoRenviron;
+   int NoRenviron : 16;
+   int RstartVersion : 16;
    int nconnections;
+
+   // Padding, to allow for extensions in newer versions of R,
+   // in case newer versions of R expect a struct with extra
+   // memory available.
    char padding[128];
 } RStartup;
 
@@ -155,8 +160,13 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    {
       if (nconnections < 128)
       {
-         LOG_WARNING_MESSAGE("r-max-connections must be at least 128; using 128");
+         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at least 128; using 128");
          nconnections = 128;
+      }
+      else if (nconnections > 32768)
+      {
+         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at most 32768; using 32768");
+         nconnections = 32768;
       }
 
       if (Rp->nconnections > 0)
