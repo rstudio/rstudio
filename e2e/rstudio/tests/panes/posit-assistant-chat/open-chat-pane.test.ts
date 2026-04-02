@@ -32,7 +32,8 @@ test.describe('Open Chat Pane', () => {
     );
   });
 
-  test('open chat pane with keyboard shortcut', async ({ rstudioPage: page }) => {
+  test('open chat pane with keyboard shortcut', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) => {
+
     const chatIframe = page.locator("iframe[title='Posit Assistant']");
 
     // Close the sidebar if it's open to ensure the chat pane is not visible
@@ -44,17 +45,19 @@ test.describe('Open Chat Pane', () => {
     // Verify the chat iframe is not visible
     await expect(chatIframe).not.toBeVisible();
 
-    // Dispatch Ctrl+Shift+I via synthetic DOM event to bypass Chromium's native
-    // DevTools shortcut handler. CDP-injected keystrokes hit Chromium's handler
-    // before RStudio sees them; synthetic events go through the DOM event system.
-    await page.evaluate(`
-      const event = new KeyboardEvent('keydown', {
-        key: 'I', code: 'KeyI', keyCode: 73,
-        ctrlKey: true, shiftKey: true,
-        bubbles: true, cancelable: true
-      });
-      document.activeElement.dispatchEvent(event);
-    `);
+    // Open chat pane via Ctrl+Cmd+I (macOS shortcut)
+    await page.keyboard.press('Control+Meta+I');
+
+    // Previous approach: synthetic DOM event to bypass Chromium's native DevTools
+    // shortcut handler for Ctrl+Shift+I. May be needed on Windows.
+    // await page.evaluate(`
+    //   const event = new KeyboardEvent('keydown', {
+    //     key: 'I', code: 'KeyI', keyCode: 73,
+    //     ctrlKey: true, shiftKey: true,
+    //     bubbles: true, cancelable: true
+    //   });
+    //   document.activeElement.dispatchEvent(event);
+    // `);
     await sleep(2000);
 
     // Verify the chat iframe appeared

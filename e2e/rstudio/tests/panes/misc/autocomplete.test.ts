@@ -20,6 +20,8 @@ for (const context of contexts) {
       sourceActions = new SourcePaneActions(page, consoleActions);
       autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
       await consoleActions.closeAllBuffersWithoutSaving();
+      await consoleActions.typeInConsole('rm(list = ls())');
+      await sleep(500);
     });
 
     // Safety: dismiss lingering popups or partial input between tests

@@ -2,6 +2,7 @@ import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
+import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 
 export class SourcePaneActions {
@@ -204,5 +205,38 @@ export class SourcePaneActions {
       }
       return '';
     })()`);
+  }
+
+  /**
+   * Ensures the editor is in visual mode. If already in visual mode, does nothing.
+   */
+  async ensureVisualMode(): Promise<void> {
+    const toggle = this.sourcePane.visualMdToggle;
+    try {
+      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
+      if (ariaPressed === 'false') {
+        await toggle.click();
+        await clickConfirmIfVisible(this.page, 5000);
+        await sleep(2000);
+      }
+    } catch {
+      // Toggle not available — visual mode not supported for this file type
+    }
+  }
+
+  /**
+   * Ensures the editor is in source mode. If already in source mode, does nothing.
+   */
+  async ensureSourceMode(): Promise<void> {
+    const toggle = this.sourcePane.visualMdToggle;
+    try {
+      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
+      if (ariaPressed === 'true') {
+        await toggle.click();
+        await sleep(1000);
+      }
+    } catch {
+      // Toggle not found — already in source mode
+    }
   }
 }

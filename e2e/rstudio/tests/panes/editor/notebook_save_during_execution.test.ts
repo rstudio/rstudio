@@ -76,7 +76,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     // While the slow plot is rendering, save the document
     // This is the trigger for the bug — saving during execution corrupts the notebook cache
     await sleep(1000);
-    await page.keyboard.press('Control+s');
+    await page.keyboard.press('ControlOrMeta+s');
 
     // Wait for chunk execution to complete (the interrupt button disappears)
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 120000 });

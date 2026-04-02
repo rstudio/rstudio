@@ -13,7 +13,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 4. **Type content with `keyboard.type()`** – Keyboard shortcuts don't reliably reach the app through CDP
 5. **Add 0.2-second delay before `keyboard.press("Enter")`** – Critical for reliability. After typing, wait 0.2s before pressing Enter to ensure the keystroke is fully processed.
 6. **Graceful shutdown with `q(save = "no")`** – Better than force termination. Use `save = "no"` to skip the "Save workspace?" dialog.
-7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode Windows paths or commands without platform guards.
+7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards. **Keyboard shortcuts: use `ControlOrMeta` for shortcuts that are Cmd on macOS and Ctrl on Windows/Linux** (e.g., `ControlOrMeta+s` for save, `ControlOrMeta+a` for select all). Playwright's `ControlOrMeta` modifier handles this automatically. Use plain `Control` only for shortcuts that use the literal Ctrl key on all platforms (e.g., `Control+Space` for autocomplete, `Control+l` for clear console).
 8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `RSTUDIO_EDITION` env var when branching on mode.
 
 ---

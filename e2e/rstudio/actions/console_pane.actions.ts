@@ -17,6 +17,10 @@ export class ConsolePaneActions {
     await sleep(500);
     await this.consolePane.consoleInput.pressSequentially(command);
     await sleep(200);
+    if (await this.page.locator('#rstudio_popup_completions').isVisible()) {
+      await this.page.keyboard.press('Escape');
+      await sleep(100);
+    }
     await this.consolePane.consoleInput.press('Enter');
   }
 

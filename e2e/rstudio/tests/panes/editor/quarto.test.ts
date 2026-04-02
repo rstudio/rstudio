@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
-import { installDepIfPrompted, clickConfirmIfVisible } from '@pages/modals.page';
+import { installDepIfPrompted } from '@pages/modals.page';
 import {
   VIEWER_TAB, VIEWER_FRAME, PUBLISH_BTN_IN_PANEL, QUARTO_CONTENT,
   switchToViewerFrame,
@@ -34,16 +34,7 @@ test.describe('Quarto', () => {
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
     // Ensure we're in Source mode (not Visual)
-    const visualToggle = sourceActions.sourcePane.visualMdToggle;
-    try {
-      const ariaPressed = await visualToggle.getAttribute('aria-pressed', { timeout: 3000 });
-      if (ariaPressed === 'true') {
-        await visualToggle.click();
-        await sleep(1000);
-      }
-    } catch {
-      // Toggle not found — already in source mode
-    }
+    await sourceActions.ensureSourceMode();
 
     // Type the Quarto document content
     await sourceActions.sendText('title: "Test Quarto"');
@@ -61,16 +52,7 @@ test.describe('Quarto', () => {
     await sleep(1000);
 
     // Switch to Visual mode
-    try {
-      const ariaPressed = await visualToggle.getAttribute('aria-pressed', { timeout: 3000 });
-      if (ariaPressed === 'false') {
-        await visualToggle.click();
-        await clickConfirmIfVisible(page);
-        await sleep(2000);
-      }
-    } catch {
-      // Toggle not available
-    }
+    await sourceActions.ensureVisualMode();
 
     // Set preview to Viewer pane
     await sourceActions.sourcePane.formatOptions.click();
@@ -78,8 +60,8 @@ test.describe('Quarto', () => {
     await sourceActions.sourcePane.viewerPaneOption.click();
     await sleep(500);
 
-    // Render via Ctrl+Shift+K
-    await page.keyboard.press('Control+Shift+k');
+    // Render via Cmd+Shift+K / Ctrl+Shift+K
+    await page.keyboard.press('ControlOrMeta+Shift+k');
     await installDepIfPrompted(page);
 
     // Verify viewer pane shows rendered output

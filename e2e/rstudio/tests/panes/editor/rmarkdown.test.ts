@@ -173,9 +173,7 @@ test.describe('RMarkdown', () => {
     // Switch to visual mode
     await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
     await sleep(1000);
-    await sourceActions.sourcePane.visualMdToggle.click();
-    await clickConfirmIfVisible(page, 5000);
-    await sleep(2000);
+    await sourceActions.ensureVisualMode();
 
     // Run spellcheck in visual mode
     await consoleActions.typeInConsole(".rs.api.executeCommand('checkSpelling')");
@@ -211,7 +209,8 @@ test.describe('RMarkdown', () => {
     // Confirm to create the file
     await page.locator(CONFIRM_BTN).click();
     await sleep(2000);
-    await expect(sourceActions.sourcePane.contentPane).toContainText('Theming with bslib and thematic', { timeout: 10000 });
+    await sourceActions.ensureVisualMode();
+    await expect(page.locator('.ProseMirror')).toContainText('Theming with bslib and thematic', { timeout: 10000 });
 
     // Cleanup
     await consoleActions.closeAllBuffersWithoutSaving();
