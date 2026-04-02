@@ -17,7 +17,10 @@
 
 #include <cstdlib>
 
-#include <R_ext/RS.h>
+#ifdef _WIN32
+# undef TRUE
+# undef FALSE
+#endif
 
 namespace rstudio {
 namespace r {

@@ -693,6 +693,10 @@ SEXP callHandler(const std::string& path,
 {
    // use local protection for intermediate values
    r::sexp::Protect protect;
+
+   // used below
+   SEXP trueSEXP = Rf_ScalarLogical(TRUE);
+   protect.add(trueSEXP);
    
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path);
@@ -709,30 +713,36 @@ SEXP callHandler(const std::string& path,
    protect.add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
-   SEXP handlerSourceSEXP;
-   protect.add(handlerSourceSEXP = handlerSource(path));
-   
+   SEXP handlerSourceSEXP = handlerSource(path);
+   if (handlerSourceSEXP == nullptr)
+      return R_NilValue;
+   protect.add(handlerSourceSEXP);
+
    SEXP argSEXP;
    protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
    
    SEXP innerCallSEXP;
-   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
+   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, trueSEXP));
    SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings
-   SEXP suppressWarningsSEXP;
-   protect.add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
-   
+   SEXP suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base");
+   if (suppressWarningsSEXP == nullptr)
+      return R_NilValue;
+   protect.add(suppressWarningsSEXP);
+
    SEXP callSEXP;
    protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
    // get reference to tools namespace
    SEXP toolsSEXP = r::sexp::findNamespace("tools");
-   
+   if (TYPEOF(toolsSEXP) != ENVSXP)
+      return R_NilValue;
+
    // execute and return
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_eval(callSEXP, toolsSEXP));
-   
+
    return resultSEXP;
 }
 
@@ -1016,14 +1026,15 @@ SEXP lookupCustomHandler(const std::string& uri)
       if (!s_customHandlersEnv)
       {
          SEXP toolsSEXP = r::sexp::findNamespace("tools");
-         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
+         if (TYPEOF(toolsSEXP) == ENVSXP)
+            s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }
 
       // we only proceed if .httpd.handlers.env really exists
       if (TYPEOF(s_customHandlersEnv) == ENVSXP)
       {
          SEXP cl = r::sexp::findVarInFrame(s_customHandlersEnv, Rf_install(handler.c_str()));
-         if (cl != R_UnboundValue && TYPEOF(cl) == CLOSXP) // need a closure
+         if (cl != nullptr && TYPEOF(cl) == CLOSXP) // need a closure
             return cl;
       }
    }

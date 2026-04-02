@@ -21,10 +21,12 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -113,7 +116,7 @@ public class ChatPresenter extends BasePresenter
       void showManifestUnavailable(String errorMessage);
       void showReadlineNotification();
       void hideReadlineNotification();
-      void updateCachedUrl(String url);
+
       void showPoppedOutPlaceholder();
       void hidePoppedOutPlaceholder();
 
@@ -148,7 +151,9 @@ public class ChatPresenter extends BasePresenter
       UserPrefs prefs,
       SatelliteManager satelliteManager,
       PaneManager paneManager,
-      Session session)
+      Session session,
+      GlobalDisplay globalDisplay,
+      ApplicationQuit applicationQuit)
    {
       super(display);
       binder.bind(commands, this);
@@ -162,6 +167,9 @@ public class ChatPresenter extends BasePresenter
       lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
+      session_ = session;
+      globalDisplay_ = globalDisplay;
+      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -537,6 +545,42 @@ public class ChatPresenter extends BasePresenter
    void onReturnChatToMain()
    {
       returnChatToMain();
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded.
+   void onUninstallPositAI()
+   {
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         constants_.uninstallPositAICaption(),
+         constants_.uninstallPositAIMessage(),
+         () -> performUninstall(),
+         false);
+   }
+
+   private void performUninstall()
+   {
+      server_.chatUninstallPositAi(new ServerRequestCallback<VoidResponse>()
+      {
+         @Override
+         public void onResponseReceived(VoidResponse response)
+         {
+            // doRestart() is cancelable (user can decline to save unsaved
+            // changes). If canceled, PAI files are already deleted but the
+            // session continues unrestarted — an acceptable edge case
+            // consistent with other RStudio restart flows.
+            applicationQuit_.doRestart(session_);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage(
+               constants_.uninstallPositAICaption(),
+               error.getUserMessage());
+         }
+      });
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
@@ -1135,11 +1179,10 @@ public class ChatPresenter extends BasePresenter
       // Mark the backend so subsequent status responses include resume_chat=true
       server_.chatNotifyUILoaded(new VoidServerRequestCallback());
 
-      // Always include &resume in the cached URL so that tab-switch reloads
-      // (via onSelected) signal resume, even if the initial load was fresh
-      String cachedResumeUrl = baseUrl + params + "&resume";
-      display_.updateCachedUrl(cachedResumeUrl);
-      cachedUrl_ = cachedResumeUrl;
+      // Always include &resume in the cached URL so that satellite windows
+      // and session-resume reloads signal resume, even if the initial load
+      // was fresh
+      cachedUrl_ = baseUrl + params + "&resume";
 
       // Reset initialization flag - we're done
       initializing_ = false;
@@ -1168,6 +1211,9 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
+   private final Session session_;
+   private final GlobalDisplay globalDisplay_;
+   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

@@ -248,6 +248,7 @@ using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
 using chat_constants::kPositAiDirName;
+using chat_constants::kPositAiBackupDirName;
 using chat_constants::kServerScriptPath;
 
 // Types used throughout
@@ -3934,7 +3935,7 @@ Error installPackage(const FilePath& packagePath)
 {
    FilePath userDataDir = xdg::userDataDir();
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
    DLOG("Installing package from: {}", packagePath.getAbsolutePath());
 
@@ -5218,7 +5219,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       // so we don't need to call restoreFromBackup() here again.
       // Just verify backup was restored and clean up if needed.
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
       // Defensive cleanup: remove orphaned backup if it exists
       if (aiPrevDir.exists())
@@ -5238,7 +5239,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       // Defensive cleanup: ensure ai.prev is removed
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
       if (aiPrevDir.exists())
       {
          WLOG("Backup directory still exists after successful install, cleaning up");
@@ -5301,6 +5302,153 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    }
 
    pResponse->setResult(result);
+   return Success();
+}
+
+// NOTE: No isPositAiWanted()/isPaiEnabled() gate — the user may have
+// disabled Posit AI but still wants to clean up installed files.
+Error chatUninstallPositAi(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   FilePath userDataDir = xdg::userDataDir();
+   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
+
+   if (!aiDir.exists() && !aiPrevDir.exists())
+   {
+      // No user-data install — check for env/system installs to give a
+      // targeted error message instead of a generic "not installed".
+      std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+      if (!envPath.empty() && FilePath(envPath).exists())
+      {
+         return systemError(
+            boost::system::errc::operation_not_permitted,
+            "Posit AI is installed via the RSTUDIO_POSIT_AI_PATH "
+            "environment variable and cannot be uninstalled "
+            "from RStudio.",
+            ERROR_LOCATION);
+      }
+
+      FilePath systemPath =
+         xdg::systemConfigDir().completePath(kPositAiDirName);
+      if (systemPath.exists())
+      {
+         return systemError(
+            boost::system::errc::operation_not_permitted,
+            "Posit AI is installed at the system level by an "
+            "administrator and cannot be uninstalled from RStudio.",
+            ERROR_LOCATION);
+      }
+
+      return systemError(
+         boost::system::errc::no_such_file_or_directory,
+         "Posit AI is not installed.",
+         ERROR_LOCATION);
+   }
+
+   // Stop chat backend
+   if (s_chatBackendPid != -1)
+   {
+      auto backendOps = s_chatBackendOps;
+      if (backendOps)
+      {
+         s_expectedShutdown = true;
+         requestBackendShutdown(*backendOps, "uninstall", 1000);
+         const int POLL_INTERVAL_MS = 50;
+         int elapsed = 0;
+         while (s_chatBackendPid != -1 && elapsed < 1000)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+         }
+      }
+      s_chatBackendOps.reset();
+
+      // Force-terminate if still running after grace period, then wait
+      // for the process to actually exit so file handles are released
+      // before we delete the installation directory.
+      if (s_chatBackendPid != -1)
+      {
+         DLOG("Backend did not exit within grace period, force terminating");
+         Error error = core::system::terminateProcess(s_chatBackendPid);
+         if (error)
+            LOG_ERROR(error);
+
+         const int TERM_POLL_MS = 50;
+         const int TERM_TIMEOUT_MS = 2000;
+         int termElapsed = 0;
+         while (s_chatBackendPid != -1 && termElapsed < TERM_TIMEOUT_MS)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(TERM_POLL_MS));
+            termElapsed += TERM_POLL_MS;
+         }
+
+         if (s_chatBackendPid != -1)
+            WLOG("Chat backend did not exit after terminate; "
+                 "proceeding with uninstall");
+      }
+
+      s_chatBackendPid = -1;
+      clearChatBackendPort();
+      s_chatBusy = false;
+      s_backendOutputBuffer.clear();
+   }
+
+   // Stop assistant agent (NES language server).
+   // stopAgentForUpdate() is synchronous — it waits for the agent
+   // process to exit before returning, so file handles are released.
+   bool agentStopped = assistant::stopAgentForUpdate();
+   if (!agentStopped)
+      WLOG("Timeout waiting for assistant agent to stop during uninstall");
+
+   // Delete installation.
+   // If the agent timed out it may still hold file handles open
+   // (especially on Windows), so warn when deletion fails after a
+   // timeout and suggest restarting.
+   Error error = aiDir.removeIfExists();
+   if (error)
+   {
+      // Processes are already stopped but files remain on disk.
+      // Reset cached state so the session doesn't think PAI is usable,
+      // and tell the user to restart.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      std::string message =
+         "Failed to remove Posit AI installation: " + error.getMessage();
+      if (!agentStopped)
+         message += " (a background process may still be running)";
+      message += ". Please restart RStudio and try again.";
+
+      return systemError(
+         boost::system::errc::io_error, message, ERROR_LOCATION);
+   }
+
+   // Clean up orphaned backup from failed install/update
+   Error prevError = aiPrevDir.removeIfExists();
+   if (prevError)
+      WLOG("Failed to remove backup directory: {}", prevError.getMessage());
+
+   // Reset cached update state so the session correctly detects the
+   // missing installation if the user cancels the subsequent restart.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState = UpdateState();
+   }
+   s_positAssistantVersion.clear();
+   s_expectedShutdown = false;
+
+   DLOG("Posit AI uninstalled successfully");
+   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -5599,6 +5747,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
+      (bind(registerRpcMethod, "chat_uninstall_posit_ai", chatUninstallPositAi))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

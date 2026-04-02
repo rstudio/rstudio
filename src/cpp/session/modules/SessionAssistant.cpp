@@ -325,7 +325,7 @@ json::Array getVariablesContext(const std::vector<std::string>& variablesInScope
    if (variablesInScope.empty())
    {
       // No specific variables in scope - examine all recursive objects
-      variablesInScopeSEXP = Rf_ScalarLogical(TRUE);
+      variablesInScopeSEXP = r::sexp::create(true, &protect);
    }
    else
    {
@@ -859,7 +859,7 @@ json::Array getVariablesWithAction(const std::string& action)
    Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
          .addParam(R_GlobalEnv)              // envir
          .addParam(R_NilValue)               // names (NULL = all variables)
-         .addParam(Rf_ScalarLogical(TRUE))   // variablesInScope
+         .addParam(true)                     // variablesInScope
          .addParam(kAssistantMaxVariables)   // maxVariables
          .addParam(kAssistantMaxChildren)    // maxChildren
          .addUtf8Param(action)               // action

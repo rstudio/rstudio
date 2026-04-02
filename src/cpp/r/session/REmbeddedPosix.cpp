@@ -13,6 +13,9 @@
  *
  */
 
+#include <core/Log.hpp>
+
+#include <r/RRuntime.hpp>
 #include <r/session/REventLoop.hpp>
 
 #include <Rembedded.h>
@@ -40,6 +43,10 @@ extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 #endif
 
 extern int R_running_as_main_program;  // from unix/system.c
+
+extern "C" {
+void run_Rmainloop(void);
+} // extern "C"
 
 using namespace rstudio::core;
 
@@ -152,8 +159,19 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //    ptr_R_FlushConsole
    //    ptr_R_ClearerrConsole
 
-   // run main loop (does not return)
-   Rf_mainloop();
+   // initialize the main loop
+   setup_Rmainloop();
+
+   // initialize runtime dispatch now that libR is loaded
+   Error error = r::runtime::initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      Rf_error("RStudio failed to initialize R runtime dispatch");
+   }
+
+   // run the main loop
+   run_Rmainloop();
 }
 
 Error completeEmbeddedRInitialization()
