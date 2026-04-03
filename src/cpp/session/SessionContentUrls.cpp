@@ -18,11 +18,13 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 
+#include <core/system/Locale.hpp>
 #include <core/system/System.hpp>
 
 #include <core/http/Util.hpp>
@@ -31,7 +33,6 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <core/system/Locale.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

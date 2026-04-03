@@ -64,6 +64,7 @@
 #include <core/http/CSRFToken.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Locale.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionClientEventService.hpp>
@@ -88,7 +89,6 @@
 
 using namespace rstudio::core;
 
-#include <core/system/Locale.hpp>
 
 namespace rstudio {
 namespace session {

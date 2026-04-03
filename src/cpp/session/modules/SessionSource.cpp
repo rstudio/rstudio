@@ -45,6 +45,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RSourceIndex.hpp>
+#include <core/system/Locale.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Xdg.hpp>
@@ -58,7 +59,6 @@
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-#include <core/system/Locale.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>
