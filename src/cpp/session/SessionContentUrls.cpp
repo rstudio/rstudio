@@ -18,11 +18,13 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 
+#include <core/system/Locale.hpp>
 #include <core/system/System.hpp>
 
 #include <core/http/Util.hpp>
@@ -31,7 +33,6 @@
 
 #include <core/json/JsonRpc.hpp>
 
-extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 
@@ -216,7 +217,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // reset content-type with charset
    pResponse->setContentType(contentFilePath.getMimeContentType() +
                              std::string("; charset=") +
-                             (isUtf8 ? "UTF-8" : ::locale2charset(nullptr)));
+                             (isUtf8 ? "UTF-8" : core::system::currentCharset()));
 
    // set title header
    pResponse->setHeader("Title", title);

@@ -64,6 +64,7 @@
 #include <core/http/CSRFToken.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Locale.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionClientEventService.hpp>
@@ -88,7 +89,6 @@
 
 using namespace rstudio::core;
 
-extern "C" const char *locale2charset(const char *);
 
 namespace rstudio {
 namespace session {
@@ -420,7 +420,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_user_data_directory"] = json::Value();
    }
 
-   sessionInfo["system_encoding"] = std::string(::locale2charset(nullptr));
+   sessionInfo["system_encoding"] = core::system::currentCharset();
 
    std::vector<std::string> vcsAvailable;
    if (modules::source_control::isGitInstalled())

@@ -118,6 +118,7 @@ set(CORE_SOURCE_FILES
    system/ChildProcessSubprocPoll.cpp
    system/Crypto.cpp
    system/Environment.cpp
+   system/Locale.cpp
    system/Process.cpp
    system/ShellUtils.cpp
    system/System.cpp
