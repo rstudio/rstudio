@@ -8,6 +8,7 @@ import {
   switchToViewerFrame,
 } from '@pages/viewer_pane.page';
 import { clearWorkspace } from '@pages/environment_pane.page';
+import { CONSOLE_INPUT } from '@pages/console_pane.page';
 
 test.describe('RMarkdown', () => {
   let consoleActions: ConsolePaneActions;
@@ -82,11 +83,15 @@ test.describe('RMarkdown', () => {
     await sleep(5000);
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 30000 });
 
+    // Wait for R to be ready after restart
+    await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 15000 });
+
     // Verify output
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText('full of sound and fury, signifying nothing', { timeout: 20000 });
 
     // Verify no variables in global env
+    await consoleActions.clearConsole();
     await consoleActions.typeInConsole('ls(envir = globalenv())');
     await sleep(2000);
     await expect(consoleOutput).toContainText('character(0)', { timeout: 10000 });

@@ -49,9 +49,14 @@ test.describe.skip('Python Shiny Tip Calculator via Posit Assistant', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Interrupt any running app
-    await page.evaluate(".rs.api.executeCommand('interruptR')");
-    await sleep(2000);
+    // Stop any running Shiny app via the Viewer pane's stop button
+    const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
+    if (await viewerStopBtn.isVisible().catch(() => false)) {
+      await viewerStopBtn.click();
+      await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
+    } else {
+      await sleep(2000);
+    }
 
     // Clean up created file(s) — cover various paths the assistant might use
     await consoleActions.typeInConsole('unlink("app.py"); unlink("tip_calculator", recursive = TRUE); unlink("tip_calculator.py")');

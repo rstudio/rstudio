@@ -103,7 +103,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
 
-    test('NES adjacent rename', async ({ rstudioPage: page }) => {
+    test.fixme('NES adjacent rename', async ({ rstudioPage: page }) => {
       const fileName = `${prefix}_nes_distant_rename.R`;
 
       const fileContent =

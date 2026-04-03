@@ -63,7 +63,7 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', () => {
 
     // Listen for the new page (satellite window) before triggering pop-out
     const satellitePromise = context.waitForEvent('page', { timeout: 30000 });
-    await page.evaluate(".rs.api.executeCommand('popOutChat')");
+    await page.locator("[id^='rstudio_tb_popoutchat']").click();
     const satellitePage = await satellitePromise;
     await satellitePage.waitForLoadState('domcontentloaded');
     await sleep(3000);

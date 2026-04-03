@@ -84,8 +84,10 @@ export class ConsolePaneActions {
     // Run install, then print marker as a separate command.
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
-    await this.typeInConsole(`install.packages("${pkg}", repos = "https://cran.r-project.org")`);
+    const installType = 'ifelse(.Platform$OS.type == "windows" || Sys.info()["sysname"] == "Darwin", "binary", "source")';
+    await this.typeInConsole(`install.packages("${pkg}", repos = "https://cran.r-project.org", type = ${installType})`);
     await this.typeInConsole(`cat("${doneMarker}")`);
+
 
     // Wait for the done marker to appear (indicates install finished)
     const startTime = Date.now();

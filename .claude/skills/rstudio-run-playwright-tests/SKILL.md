@@ -41,8 +41,8 @@ Requires four env vars:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `RSTUDIO_EDITION` | Yes | Set to `server` |
-| `RSTUDIO_SERVER_URL` | No | Base URL without port, e.g. `http://10.12.227.184` (default: `http://localhost`) |
-| `RSTUDIO_SERVER_PORT` | No | Server port (default: `8787`) |
+| `RSTUDIO_SERVER_URL` | No | Full URL including port if needed, e.g. `http://10.12.227.184:8787` or `https://dev.example.com/s/abc123/` (default: `http://localhost:8787`) |
+| `RSTUDIO_SERVER_PORT` | No | Override the port in the URL (no default — only set if you need to override what's in the URL) |
 | `RSTUDIO_USER` | Yes | Login username |
 | `RSTUDIO_PASSWORD` | Yes | Login password |
 | `RSTUDIO_LOAD_TIMEOUT` | No | IDE load timeout in ms (default: 60000). Increase for slow servers. |

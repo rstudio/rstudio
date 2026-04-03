@@ -45,8 +45,8 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
       '```',
       '',
       '```{r verify_runnable}',
-      "cat('The quality of mercy is not strained\\n')",
-      "cat('Chunks still work.\\n')",
+      "print('The quality of mercy is not strained')",
+      "print('Chunks still work.')",
       '```',
     ].join('\\n');
 

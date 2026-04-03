@@ -47,9 +47,12 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Interrupt any running app and wait for R to return to idle
-    await page.evaluate(".rs.api.executeCommand('interruptR')");
-    await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
+    // Stop any running Shiny app via the Viewer pane's stop button
+    const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
+    if (await viewerStopBtn.isVisible().catch(() => false)) {
+      await viewerStopBtn.click();
+      await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
+    }
 
     // Clean up created file(s)
     await consoleActions.typeInConsole('unlink("app.R")');

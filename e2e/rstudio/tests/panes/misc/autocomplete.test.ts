@@ -30,6 +30,9 @@ for (const context of contexts) {
       await sleep(200);
       await page.keyboard.press('Escape');
       await sleep(200);
+      if (context === 'editor') {
+        await consoleActions.closeAllBuffersWithoutSaving();
+      }
     });
 
     /** Get completions in the current context. */

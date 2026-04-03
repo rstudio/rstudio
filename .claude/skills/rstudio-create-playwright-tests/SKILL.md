@@ -123,13 +123,16 @@ Never hardcode Windows-only commands or Chrome options without platform guards.
 
 ## Console Commands vs. UI Interactions
 
-**Prefer UI interactions when practical.** They test more of the real user path. **Use console shortcuts when the UI path is slow, flaky, or tangential to what's being tested.**
+**Default to GUI interactions.** If there's a button, menu item, or keyboard shortcut for an action, use it. Clicking a button tests more of the real user path and avoids issues with `page.evaluate` or console timing. **Use console shortcuts only when the UI path is slow, flaky, or tangential to what's being tested.**
+
+**Decision order:** GUI button/shortcut > `typeInConsole(".rs.api.executeCommand(...)")` > `page.evaluate()` (last resort)
 
 **Common patterns:**
+- **R output in chunks/tests**: Use `print()` over `cat()` when verifying output in console. `cat()` with `\n` escape characters can garble when chunk content passes through writeLines and the notebook cache.
 - **Setup/teardown**: Console is usually fine — `writeLines()` + `file.edit()`, `unlink()`, `saveAllSourceDocs` + `closeAllSourceDocs`
 - **Opening dialogs**: `.rs.api.executeCommand('showOptions')` is faster than clicking through menus
 - **Setting preferences**: Console for preconditions, UI when testing the Options dialog itself
-- **The feature under test**: Always interact through the UI
+- **Triggering features under test**: Always interact through the UI — if there's a toolbar button (e.g., `[id^='rstudio_tb_popoutchat']`), click it instead of calling the command programmatically
 
 ---
 
