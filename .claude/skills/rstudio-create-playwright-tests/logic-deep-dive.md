@@ -62,18 +62,12 @@ RStudio generates dynamic IDs like `gwt-uid-XXXX` on every restart. These are **
 
 ### Typing vs. Keyboard Shortcuts
 
-**Why direct typing works, shortcuts don't:**
+**Keyboard shortcuts work fine via CDP** — the codebase uses them extensively (`ControlOrMeta+;`, `ControlOrMeta+s`, `Control+l`, `Control+Enter`, etc.).
 
-Playwright's CDP connection sends keyboard events, but:
-- Direct typing (`page.keyboard.type()`) = character input events = works
-- Keyboard shortcuts (Ctrl+Shift+N) = modifier keys + character combinations = often ignored by the application
-
-**The fix:** Use menu clicks for operations, direct typing for content
-
-Examples:
-- ❌ `await page.keyboard.press('Control+Shift+N')` – Unreliable
-- ✅ `await page.click("button[aria-label*='File']")` then click "R Script" – Reliable
-- ✅ `await page.keyboard.type("x <- 1")` – Reliable
+The pitfalls are specific, not general:
+- **`Control` vs `ControlOrMeta`** — using the wrong one causes macOS failures (see SKILL.md Rule #7 for the full table)
+- **Platform-branched keys** — some Ace navigation keys differ on macOS (e.g., `Control+End` vs `Meta+ArrowDown`); use helpers like `sourceActions.goToEnd()`
+- **Menu clicks vs shortcuts** — prefer GUI interactions when *testing a UI workflow* (clicking a button tests more of the real path). But for setup/teardown and navigation, shortcuts are fine and often faster.
 
 ### Graceful Shutdown
 

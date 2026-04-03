@@ -128,9 +128,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         await sourceActions.createAndOpenFile(fileName, tc.preamble);
         await sleep(1000);
 
-        await sourcePane.contentPane.click();
-        await page.keyboard.press('Control+End');
-        await sleep(300);
+        await sourceActions.goToEnd();
 
         await typeLines(page, tc.fullLines, true);
 
@@ -148,9 +146,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         await sourceActions.createAndOpenFile(fileName2, tc.preamble);
         await sleep(1000);
 
-        await sourcePane.contentPane.click();
-        await page.keyboard.press('Control+End');
-        await sleep(300);
+        await sourceActions.goToEnd();
 
         await typeLines(page, tc.partialLines, false);
 

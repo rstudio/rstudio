@@ -1,12 +1,4 @@
-import { Page, Locator, FrameLocator } from '@playwright/test';
-
-export class PageSection {
-  protected section: Locator;
-
-  constructor(section: Locator) {
-    this.section = section;
-  }
-}
+import { Page, FrameLocator } from '@playwright/test';
 
 export class PageObject {
   protected page: Page;

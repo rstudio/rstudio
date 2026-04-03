@@ -67,7 +67,7 @@ export class AutocompleteActions {
     // otherwise trigger explicitly with Ctrl+Space
     const popupAlreadyVisible = await this.page.locator(COMPLETION_POPUP).isVisible();
     if (!popupAlreadyVisible) {
-      await this.page.keyboard.press('ControlOrMeta+Space');
+      await this.page.keyboard.press('Control+Space');
     }
     const items = await this.getCompletionItems();
 
@@ -142,7 +142,7 @@ export class AutocompleteActions {
     // otherwise trigger explicitly with Ctrl+Space
     const popupAlreadyVisible = await this.page.locator(COMPLETION_POPUP).isVisible();
     if (!popupAlreadyVisible) {
-      await this.page.keyboard.press('ControlOrMeta+Space');
+      await this.page.keyboard.press('Control+Space');
     }
     const items = await this.getCompletionItems();
 

@@ -59,9 +59,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
 
     // Make an edit so the file has unsaved changes — Ctrl+S during execution
     // must actually trigger a save for the bug to manifest
-    await sourceActions.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
-    await page.keyboard.press('Control+End');
+    await sourceActions.goToEnd();
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await page.keyboard.type('It droppeth as the gentle rain from heaven');

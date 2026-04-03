@@ -45,6 +45,10 @@ export async function typeInConsole(page: Page, command: string): Promise<void> 
   await sleep(500);
   await page.locator(CONSOLE_INPUT).pressSequentially(command);
   await sleep(200);
+  if (await page.locator('#rstudio_popup_completions').isVisible()) {
+    await page.keyboard.press('Escape');
+    await sleep(100);
+  }
   await page.locator(CONSOLE_INPUT).press('Enter');
 }
 

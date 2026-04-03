@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
-import { installDepIfPrompted, clickConfirmIfVisible, RMARKDOWN_MODAL, TEMPLATE_OPTION, TEMPLATE_LIST, CONFIRM_BTN, CANCEL_BTN, SPELLING_MODAL } from '@pages/modals.page';
+import { installDepIfPrompted, clickConfirmIfVisible, RMARKDOWN_MODAL, TEMPLATE_OPTION, TEMPLATE_LIST, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
 import {
   VIEWER_TAB, VIEWER_FRAME, PUBLISH_BTN_IN_PANEL, CONTAINER,
   switchToViewerFrame,

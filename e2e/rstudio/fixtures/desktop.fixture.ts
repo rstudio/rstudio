@@ -1,4 +1,4 @@
-import { test as base, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext } from 'playwright';
 import { spawn, execSync } from 'child_process';
@@ -25,7 +25,7 @@ export interface DesktopSession {
  * Launch RStudio with CDP, connect Playwright, and return the session.
  */
 export async function launchRStudio(): Promise<DesktopSession> {
-  // Clean up any existing RStudio processes (graceful first, then force if needed)
+  // Clean up any existing RStudio processes
   console.log('Cleaning up any existing RStudio processes...');
   try {
     if (process.platform === 'win32') {
@@ -61,13 +61,15 @@ export async function launchRStudio(): Promise<DesktopSession> {
   // Start RStudio with remote debugging enabled
   console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
   const rstudioProcess = spawn(RSTUDIO_PATH, [`--remote-debugging-port=${CDP_PORT}`]);
+  let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
-    throw new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
+    launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
   });
   console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
 
   // Wait for RStudio to start
   await sleep(TIMEOUTS.rstudioStartup);
+  if (launchError) throw launchError;
 
   // Connect to CDP
   const browser = await chromium.connectOverCDP(CDP_URL);
@@ -123,16 +125,3 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   }
 }
 
-/**
- * Custom Playwright Test fixture that provides a shared RStudio page.
- * Worker-scoped: RStudio launches once, all tests share the same page.
- */
-export const test = base.extend<{}, { rstudioPage: Page }>({
-  rstudioPage: [async ({}, use) => {
-    const session = await launchRStudio();
-    await use(session.page);
-    await shutdownRStudio(session);
-  }, { scope: 'worker' }],
-});
-
-export { expect } from '@playwright/test';

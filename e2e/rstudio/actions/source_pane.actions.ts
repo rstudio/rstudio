@@ -107,6 +107,15 @@ export class SourcePaneActions {
     }
   }
 
+  /** Move cursor to end of document (cross-platform). */
+  async goToEnd(): Promise<void> {
+    await this.sourcePane.aceTextInput.click({ force: true });
+    await sleep(300);
+    const goToEnd = process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End';
+    await this.page.keyboard.press(goToEnd);
+    await sleep(300);
+  }
+
   /**
    * Navigate to a chunk by its 1-based index.
    * Clicks into the editor, goes to the top of the document,

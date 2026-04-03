@@ -13,7 +13,37 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 4. **Use `pressSequentially()` for console/editor input, `keyboard.type()` for dialogs** – `pressSequentially()` ensures character-by-character detection in the editor; `keyboard.type()` works for dialog input and keyboard shortcuts
 5. **Add 0.2-second delay before `keyboard.press("Enter")`** – Critical for reliability. After typing, wait 0.2s before pressing Enter to ensure the keystroke is fully processed.
 6. **Graceful shutdown with `q(save = "no")`** – Better than force termination. Use `save = "no"` to skip the "Save workspace?" dialog.
-7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards. **Keyboard shortcuts: use `ControlOrMeta` for shortcuts that are Cmd on macOS and Ctrl on Windows/Linux** (e.g., `ControlOrMeta+s` for save, `ControlOrMeta+a` for select all). Playwright's `ControlOrMeta` modifier handles this automatically. Use plain `Control` only for shortcuts that use the literal Ctrl key on all platforms (e.g., `Control+Space` for autocomplete, `Control+l` for clear console).
+7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards.
+
+   **Keyboard shortcuts — two rules:**
+
+   **Default: use `ControlOrMeta`** for shortcuts that are Cmd on macOS and Ctrl on Windows/Linux. Playwright maps this automatically.
+
+   | `ControlOrMeta` examples | What it does |
+   |--------------------------|--------------|
+   | `ControlOrMeta+s` | Save |
+   | `ControlOrMeta+a` | Select all |
+   | `ControlOrMeta+;` | Accept Copilot/NES suggestion |
+   | `ControlOrMeta+Shift+m` | Insert pipe |
+
+   **Exception: use plain `Control`** for shortcuts that are literally Ctrl on *every* platform, including macOS. Using `ControlOrMeta` for these will fire Cmd on macOS, which does something else entirely.
+
+   | Always `Control` | Why not `ControlOrMeta` |
+   |------------------|------------------------|
+   | `Control+Space` | `Cmd+Space` = macOS Spotlight |
+   | `Control+l` | Clear console — Ctrl on all platforms |
+   | `Control+Enter` | Run line — Ctrl on all platforms |
+
+   **Platform-branched shortcuts:** Some Ace editor navigation keys use completely different key combos on macOS. These need a `process.platform` guard — neither `Control` nor `ControlOrMeta` works for both.
+
+   | Windows/Linux | macOS | Action | Helper |
+   |---------------|-------|--------|--------|
+   | `Control+End` | `Meta+ArrowDown` | Go to end of document | `sourceActions.goToEnd()` |
+   | `Control+Home` | `Meta+ArrowUp` | Go to top of document | `sourceActions.navigateToChunkByIndex(0)` or manual guard |
+
+   **Never use raw `Control+End` or `Control+Home`** in tests — always use the helper or a platform guard.
+
+   **If unsure**, check what RStudio's own shortcut settings say. If it shows "Ctrl" on macOS (not Cmd), use `Control`.
 8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `RSTUDIO_EDITION` env var when branching on mode.
 9. **Use `.rs.api.executeCommand()` instead of `window.desktopHooks.invokeCommand()`** – `desktopHooks` only exists in Desktop's Electron shell and will crash on Server. `.rs.api.executeCommand()` works in both modes.
 
@@ -140,25 +170,13 @@ Never hardcode Windows-only commands or Chrome options without platform guards.
 
 ### Constants
 
-```typescript
-const RSTUDIO_PATH = process.platform === 'win32'
-  ? 'C:\\Program Files\\RStudio\\rstudio.exe'
-  : process.platform === 'darwin'
-    ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
-    : '/usr/bin/rstudio';
-const CDP_PORT = 9222;
-const CDP_URL = `http://localhost:${CDP_PORT}`;
+Import shared constants — don't hardcode values:
 
-const TIMEOUTS = {
-  processCleanup: 1000,
-  menuDelay: 1000,
-  menuItemDelay: 500,
-  fileCreation: 10000,
-  editorReady: 1000,
-  displayOutput: 2000,
-  shutdownGraceful: 2000,
-};
-```
+- **`TIMEOUTS`** — from `utils/constants.ts`. Use named keys (e.g., `TIMEOUTS.fileOpen`) instead of magic numbers.
+- **`RSTUDIO_PATH`, `CDP_PORT`, `CDP_URL`** — from `fixtures/desktop.fixture.ts`.
+- **`CODE_SUGGESTION_PROVIDERS`, `CHAT_PROVIDERS`** — from `utils/constants.ts`.
+
+Check the source files for current keys and values.
 
 ### Process Cleanup Template
 
@@ -379,18 +397,7 @@ await sleep(1000);
 await typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
 ```
 
-**Separate constants by domain** when the same concept has different values in different contexts:
-
-```typescript
-export const CODE_SUGGESTION_PROVIDERS: Record<string, string> = {
-  'copilot': 'GitHub Copilot',
-  'posit-assistant': 'Posit AI',
-};
-
-export const CHAT_PROVIDERS: Record<string, string> = {
-  'posit-assistant': 'Posit Assistant',
-};
-```
+**Separate constants by domain** when the same concept has different values in different contexts (e.g., `CODE_SUGGESTION_PROVIDERS` vs `CHAT_PROVIDERS` in `utils/constants.ts`).
 
 ---
 

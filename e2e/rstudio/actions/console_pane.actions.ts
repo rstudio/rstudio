@@ -62,6 +62,9 @@ export class ConsolePaneActions {
   /**
    * Ensure an R package is available, installing it if necessary.
    * Returns true if the package is available after the check, false if installation failed.
+   *
+   * Uses unique timestamp markers (e.g., `__PKG_1234__`) wrapped around R output
+   * so we can reliably parse TRUE/FALSE from the console even if other output is present.
    */
   async ensurePackage(pkg: string, timeoutMs = 60000): Promise<boolean> {
     const marker = `__PKG_${Date.now()}__`;

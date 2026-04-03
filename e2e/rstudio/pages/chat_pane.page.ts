@@ -7,6 +7,7 @@ import { FramePageObject } from './page_object_base_classes';
 
 const CHAT_FRAME_SELECTOR = "iframe[title='Posit Assistant']";
 
+/** Posit Assistant chat pane — lives inside an iframe, so all locators use `this.frame` (inherited from FramePageObject). */
 export class ChatPane extends FramePageObject {
   // Inside the chat iframe
   public chatRoot: Locator;

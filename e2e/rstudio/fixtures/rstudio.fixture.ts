@@ -27,7 +27,7 @@ export const test = base.extend<{}, { rstudioPage: Page }>({
   }, { scope: 'worker' }],
 });
 
-// Clean up before each test: dismiss save dialogs and clear console
+// Dismiss any leftover save dialogs before each test
 test.beforeEach(async ({ rstudioPage: page }) => {
   try {
     await page.locator(DONT_SAVE_BTN).click({ timeout: 2000 });

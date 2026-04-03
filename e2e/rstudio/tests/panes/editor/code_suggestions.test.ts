@@ -89,8 +89,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         'print(result)\\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
-      await sleep(2000);
-      await sleep(3000);
+      await sleep(5000);
 
       await sourceActions.selectInEditor('calculate_total', 6, 0, 6);
       await sourcePane.aceTextInput.pressSequentially('final_result');
@@ -116,8 +115,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         'print(total_price)\\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
-      await sleep(2000);
-      await sleep(3000);
+      await sleep(5000);
 
       // Check for stale NES gutter icon — known RStudio bug where gutter persists across files
       if (await sourcePane.nesGutter.first().isVisible().catch(() => false)) {
@@ -155,8 +153,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         'print(order_total)\\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
-      await sleep(2000);
-      await sleep(3000);
+      await sleep(5000);
 
       await sourceActions.selectInEditor('order_total', 6, 0, 11);
 
@@ -190,8 +187,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         'message(score)\\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
-      await sleep(2000);
-      await sleep(3000);
+      await sleep(5000);
 
       await sourceActions.selectInEditor('summary(score)', 6, 0, 5);
 
