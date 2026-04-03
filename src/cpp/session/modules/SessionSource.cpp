@@ -58,7 +58,7 @@
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-extern "C" const char *locale2charset(const char *);
+#include <core/system/Locale.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -378,7 +378,7 @@ Error openDocument(const json::JsonRpcRequest& request,
       if (type == "r_markdown" && encoding == "")
          encoding = "UTF-8";
       else
-         encoding = ::locale2charset(nullptr);
+         encoding = core::system::currentCharset();
    }
    
    FilePath documentPath = module_context::resolveAliasedPath(path);

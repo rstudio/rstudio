@@ -31,7 +31,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-extern "C" const char *locale2charset(const char *);
+#include <core/system/Locale.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -216,7 +216,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // reset content-type with charset
    pResponse->setContentType(contentFilePath.getMimeContentType() +
                              std::string("; charset=") +
-                             (isUtf8 ? "UTF-8" : ::locale2charset(nullptr)));
+                             (isUtf8 ? "UTF-8" : core::system::currentCharset()));
 
    // set title header
    pResponse->setHeader("Title", title);
