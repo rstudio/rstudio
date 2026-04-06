@@ -505,20 +505,20 @@ bool isSuspendable(const std::string& currentPrompt)
 
 namespace {
 
-volatile bool s_atDefaultPrompt = false;
+volatile bool s_atTopLevelPrompt = false;
 bool s_browserActive = false;
 r::sexp::PreservedSEXP s_browserEnv;
 
 } // anonymous namespace
 
-void setAtDefaultPrompt(bool atPrompt)
+void setAtTopLevelPrompt(bool atPrompt)
 {
-   s_atDefaultPrompt = atPrompt;
+   s_atTopLevelPrompt = atPrompt;
 }
 
-bool atDefaultPrompt()
+bool atTopLevelPrompt()
 {
-   return s_atDefaultPrompt;
+   return s_atTopLevelPrompt;
 }
 
 void setBrowserActive(bool active)
@@ -545,7 +545,7 @@ SEXP browserEnv()
 
 bool isAtTopLevel()
 {
-   return atDefaultPrompt() && !r::exec::isExecuting();
+   return atTopLevelPrompt() && !r::exec::isExecuting();
 }
 
 bool isBrowseActive()
