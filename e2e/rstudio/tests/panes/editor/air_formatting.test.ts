@@ -166,7 +166,7 @@ async function reformatCode(page: Page, sourceActions: SourcePaneActions): Promi
 /** Save the current file via Cmd+S / Ctrl+S (triggers reformat-on-save if enabled). */
 async function saveFile(page: Page, sourceActions: SourcePaneActions): Promise<void> {
   await focusEditor(sourceActions);
-  await page.keyboard.press('ControlOrMeta+End');
+  await sourceActions.goToEnd();
   await page.keyboard.press('Enter');
   await page.keyboard.type('z<-4');
   await sleep(300);

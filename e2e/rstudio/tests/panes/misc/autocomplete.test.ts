@@ -24,6 +24,13 @@ for (const context of contexts) {
       await sleep(500);
     });
 
+    // Safety: ensure clean editor state before each editor test
+    test.beforeEach(async () => {
+      if (context === 'editor') {
+        await consoleActions.closeAllBuffersWithoutSaving();
+      }
+    });
+
     // Safety: dismiss lingering popups or partial input between tests
     test.afterEach(async ({ rstudioPage: page }) => {
       await page.keyboard.press('Escape');

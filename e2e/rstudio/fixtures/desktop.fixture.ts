@@ -86,6 +86,18 @@ export async function launchRStudio(): Promise<DesktopSession> {
     // No dialog, continue normally
   }
 
+  // Dismiss any other modal overlay (e.g. update notification, options dialog)
+  try {
+    const overlay = page.locator('.gwt-PopupPanelGlass');
+    if (await overlay.isVisible({ timeout: 1000 })) {
+      await page.keyboard.press('Escape');
+      console.log('Dismissed modal overlay during startup');
+      await sleep(1000);
+    }
+  } catch {
+    // No overlay
+  }
+
   // Wait for RStudio's GWT app to fully initialize
   await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
 

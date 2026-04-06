@@ -82,11 +82,12 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
 
     // --- Step 6: Provide input in the Console to unblock readline ---
     await consoleActions.consolePane.consoleTab.click();
+    await sleep(500);
     await consoleActions.consolePane.consoleInput.click({ force: true });
     await sleep(500);
     await consoleActions.consolePane.consoleInput.pressSequentially('Prospero');
-    await sleep(200);
-    await consoleActions.consolePane.consoleInput.press('Enter');
+    await sleep(300);
+    await page.keyboard.press('Enter');
     console.log('Typed "Prospero" in console to respond to readline');
 
     // --- Step 7: Assert notification disappears ---

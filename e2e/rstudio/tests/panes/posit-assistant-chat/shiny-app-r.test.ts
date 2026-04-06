@@ -13,7 +13,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   let consoleActions: ConsolePaneActions;
   let versions: EnvironmentVersions;
 
-  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
+  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -24,6 +24,10 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
     versions = await consoleActions.getEnvironmentVersions();
     console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
+
+    // Force Shiny apps to open in the Viewer pane
+    await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("shiny_viewer_type", "pane")');
+    await sleep(1000);
 
     // Clean up any leftover files from previous runs
     await consoleActions.typeInConsole('unlink("app.R")');
