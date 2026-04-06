@@ -541,6 +541,39 @@ withr::defer(.rs.automation.deleteRemote())
    
 })
 
+# https://github.com/rstudio/rstudio/issues/17350
+.rs.test("multiline expressions in chunks execute without hanging", {
+
+   contents <- .rs.heredoc('
+      ---
+      title: Multiline Chunks
+      ---
+
+      ```{r}
+      1 +
+      2
+      ```
+
+      ```{r}
+      sum(1,
+      2)
+      ```
+   ')
+
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      output <- remote$console.getOutput()
+      expect_true("[1] 3" %in% output)
+
+      editor$gotoLine(10L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      output <- remote$console.getOutput()
+      expect_true("[1] 3" %in% output)
+   })
+
+})
+
 # https://github.com/rstudio/rstudio/issues/16006
 .rs.test("command line history can be recalled after error", {
   

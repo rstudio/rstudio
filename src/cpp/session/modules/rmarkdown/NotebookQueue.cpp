@@ -110,9 +110,14 @@ public:
          return Success();
 
       // defer if R is currently executing code (we'll initiate processing when
-      // the console continues)
-      if (!module_context::isPythonReplActive() && !r::session::isAtTopLevel())
+      // the console continues). don't defer on continuation prompts — R is
+      // waiting for input to complete the expression, not executing code.
+      if (mode != ExprModeContinuation &&
+          !module_context::isPythonReplActive() &&
+          !r::session::isAtTopLevel())
+      {
          return Success();
+      }
 
       // if we have a currently executing unit, execute it; otherwise, pop the
       // next unit off the stack
