@@ -29,7 +29,7 @@ export async function launchRStudio(): Promise<DesktopSession> {
   console.log('Cleaning up any existing RStudio processes...');
   try {
     if (process.platform === 'win32') {
-      execSync('taskkill /IM rstudio.exe', { stdio: 'ignore' });
+      execSync('taskkill /F /IM rstudio.exe', { stdio: 'ignore' });
     } else if (process.platform === 'darwin') {
       execSync('killall RStudio 2>/dev/null', { stdio: 'ignore' });
     } else {

@@ -47,17 +47,6 @@ test.describe('Open Chat Pane', () => {
 
     // Open chat pane via Ctrl+Cmd+I (macOS shortcut)
     await page.keyboard.press('Control+Meta+I');
-
-    // Previous approach: synthetic DOM event to bypass Chromium's native DevTools
-    // shortcut handler for Ctrl+Shift+I. May be needed on Windows.
-    // await page.evaluate(`
-    //   const event = new KeyboardEvent('keydown', {
-    //     key: 'I', code: 'KeyI', keyCode: 73,
-    //     ctrlKey: true, shiftKey: true,
-    //     bubbles: true, cancelable: true
-    //   });
-    //   document.activeElement.dispatchEvent(event);
-    // `);
     await sleep(2000);
 
     // Verify the chat iframe appeared
