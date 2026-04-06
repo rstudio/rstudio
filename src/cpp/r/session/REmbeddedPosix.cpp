@@ -156,19 +156,9 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    // set max connections if requested (requires R >= 4.4.0)
    // R >= 4.4.0 sets Rp->nconnections = 128 in R_DefParams;
    // the field remains 0 (from memset) on older R versions.
+   nconnections = validateMaxConnections(nconnections);
    if (nconnections > 0)
    {
-      if (nconnections < 128)
-      {
-         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at least 128; using 128");
-         nconnections = 128;
-      }
-      else if (nconnections > 32768)
-      {
-         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at most 32768; using 32768");
-         nconnections = 32768;
-      }
-
       if (Rp->nconnections > 0)
       {
          Rp->nconnections = nconnections;

@@ -372,7 +372,7 @@ protected:
       "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default).")
       ("r-max-connections",
       value<int>(&rMaxConnections_)->default_value(0),
-      "Sets the maximum number of connections that R will support. When set, the value is applied to the R startup parameters. If set to 0 (the default), the R default (128) will be used. Requires R >= 4.4.0.");
+      "Sets the maximum number of connections that R will support. Valid values are 128 to 4096. When set, the value is applied to the R startup parameters. If set to 0 (the default), the R default (128) will be used. Requires R >= 4.4.0.");
 
    pLimits->add_options()
       ("limit-file-upload-size-mb",

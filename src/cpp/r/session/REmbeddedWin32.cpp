@@ -110,7 +110,11 @@ typedef struct
 
 #if defined(_WIN64)
     // Added in R 4.4.0; occupies alignment padding on 64-bit,
-    // so does not shift subsequent field offsets.
+    // so does not shift subsequent field offsets. Excluded on
+    // 32-bit because there is no padding before 'rhome' with
+    // 4-byte pointers, and inserting this field would shift all
+    // subsequent offsets. This is moot in practice: R >= 4.4.0
+    // does not support 32-bit Windows.
     int nconnections;
 #endif
 
@@ -290,23 +294,13 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->RestoreAction = SA_NORESTORE;
    pRP->LoadInitFile = loadInitFile ? TRUE : FALSE;
 
-#if defined(_WIN64)
    // set max connections if requested (requires R >= 4.4.0)
    // R >= 4.4.0 sets nconnections = 128 in R_DefParams/R_DefParamsEx;
    // the field remains 0 (from memset) on older R versions.
+   nconnections = validateMaxConnections(nconnections);
+#if defined(_WIN64)
    if (nconnections > 0)
    {
-      if (nconnections < 128)
-      {
-         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at least 128; using 128");
-         nconnections = 128;
-      }
-      else if (nconnections > 32768)
-      {
-         LOG_WARNING_MESSAGE("r-max-connections (" + std::to_string(nconnections) + ") must be at most 32768; using 32768");
-         nconnections = 32768;
-      }
-
       if (pRP->nconnections > 0)
       {
          pRP->nconnections = nconnections;
