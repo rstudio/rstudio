@@ -383,8 +383,7 @@ int RReadConsole(const char *pmt,
          // note: the old check was 'evaldepth() != 0', which is equivalent
          // here -- any time RReadConsole is called from a nested eval,
          // the context stack will be non-toplevel.
-         else if (consoleInput.isEof() &&
-                  !isAtTopLevel())
+         else if (consoleInput.isEof() && !isAtTopLevel())
          {
             return 0;
          }
