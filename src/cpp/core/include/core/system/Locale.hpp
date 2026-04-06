@@ -27,7 +27,7 @@ namespace system {
 // "ASCII" if the charset cannot be determined.
 //
 // When canonicalize is true, maps Windows codepage names to their
-// conventional equivalents (e.g. "CP1252" -> "WINDOWS-1252") for
+// conventional equivalents (e.g. "CP1252" -> "ISO-8859-1") for
 // display in the encoding dialog.
 //
 // NOTE: Calls setlocale() with a NULL argument, which is not thread-safe
