@@ -71,49 +71,64 @@ export async function launchRStudio(): Promise<DesktopSession> {
   await sleep(TIMEOUTS.rstudioStartup);
   if (launchError) throw launchError;
 
-  // Connect to CDP
-  const browser = await chromium.connectOverCDP(CDP_URL);
-  const contexts: BrowserContext[] = browser.contexts();
-  const page: Page = contexts[0].pages()[0];
-
-  // Dismiss any "save changes" modal from a previous interrupted run
+  // Connect to CDP and set up the session.
+  // If anything fails after spawn, kill the process to avoid orphaning RStudio on port 9222.
+  let browser: Browser | undefined;
   try {
-    const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
-    await dontSaveBtn.click({ timeout: 3000 });
-    console.log('Dismissed save dialog from previous session');
-    await sleep(1000);
-  } catch {
-    // No dialog, continue normally
-  }
-
-  // Dismiss any other modal overlay (e.g. update notification, options dialog)
-  try {
-    const overlay = page.locator('.gwt-PopupPanelGlass');
-    if (await overlay.isVisible({ timeout: 1000 })) {
-      await page.keyboard.press('Escape');
-      console.log('Dismissed modal overlay during startup');
-      await sleep(1000);
+    browser = await chromium.connectOverCDP(CDP_URL);
+    const contexts: BrowserContext[] = browser.contexts();
+    if (contexts.length === 0) {
+      throw new Error('CDP connected but no browser contexts available — RStudio window may not be ready');
     }
-  } catch {
-    // No overlay
+    const pages = contexts[0].pages();
+    if (pages.length === 0) {
+      throw new Error('CDP context has no pages — RStudio window may not be ready');
+    }
+    const page: Page = pages[0];
+
+    // Dismiss any "save changes" modal from a previous interrupted run
+    try {
+      const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
+      await dontSaveBtn.click({ timeout: 3000 });
+      console.log('Dismissed save dialog from previous session');
+      await sleep(1000);
+    } catch {
+      // No dialog, continue normally
+    }
+
+    // Dismiss any other modal overlay (e.g. update notification, options dialog)
+    try {
+      const overlay = page.locator('.gwt-PopupPanelGlass');
+      if (await overlay.isVisible({ timeout: 1000 })) {
+        await page.keyboard.press('Escape');
+        console.log('Dismissed modal overlay during startup');
+        await sleep(1000);
+      }
+    } catch {
+      // No overlay
+    }
+
+    // Wait for RStudio's GWT app to fully initialize
+    await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
+
+    // Activate console (makes it visible without zooming)
+    await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
+    await sleep(2000);
+
+    // Wait for console to be ready
+    await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
+    console.log('RStudio console is ready');
+
+    // Prevent "Save workspace image?" dialog on quit
+    await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
+    await sleep(1000);
+
+    return { page, browser, rstudioProcess };
+  } catch (err) {
+    await browser?.close().catch(() => {});
+    rstudioProcess.kill();
+    throw err;
   }
-
-  // Wait for RStudio's GWT app to fully initialize
-  await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
-
-  // Activate console (makes it visible without zooming)
-  await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
-  await sleep(2000);
-
-  // Wait for console to be ready
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
-  console.log('RStudio console is ready');
-
-  // Prevent "Save workspace image?" dialog on quit
-  await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
-  await sleep(1000);
-
-  return { page, browser, rstudioProcess };
 }
 
 /**

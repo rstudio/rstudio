@@ -140,24 +140,23 @@ export class SourcePaneActions {
   async navigateToChunkByLabel(label: string): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
     await sleep(300);
-    await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
+    await this.page.evaluate((lbl) => {
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
         if (editors[i].closest('#rstudio_console_input')) continue;
-        var env = editors[i].env;
+        const env = (editors[i] as any).env;
         if (env && env.editor) {
-          var editor = env.editor;
-          var text = editor.getValue();
-          var lines = text.split('\\n');
-          for (var j = 0; j < lines.length; j++) {
-            if (lines[j].match(/\`\`\`\\{r\\s+${label}[\\s,}]/)) {
-              editor.gotoLine(j + 1, 0);
+          const lines = env.editor.getValue().split('\n');
+          const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
+          for (let j = 0; j < lines.length; j++) {
+            if (pattern.test(lines[j])) {
+              env.editor.gotoLine(j + 1, 0);
               return;
             }
           }
         }
       }
-    })()`);
+    }, label);
     await sleep(300);
   }
 
@@ -167,23 +166,22 @@ export class SourcePaneActions {
    * and selects from column `startCol` to `endCol`.
    */
   async selectInEditor(marker: string, line: number, startCol: number, endCol: number): Promise<void> {
-    await this.page.evaluate(`
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
-        var env = editors[i].env;
+    await this.page.evaluate(({ marker: m, line: ln, startCol: sc, endCol: ec }) => {
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
+        const env = (editors[i] as any).env;
         if (env && env.editor) {
-          var editor = env.editor;
-          var text = editor.getValue();
-          if (text.indexOf('${marker}') !== -1) {
+          const editor = env.editor;
+          if (editor.getValue().indexOf(m) !== -1) {
             editor.focus();
-            editor.gotoLine(${line}, 0);
-            var Range = ace.require('ace/range').Range;
-            editor.selection.setRange(new Range(${line - 1}, ${startCol}, ${line - 1}, ${endCol}));
+            editor.gotoLine(ln, 0);
+            const Range = (window as any).ace.require('ace/range').Range;
+            editor.selection.setRange(new Range(ln - 1, sc, ln - 1, ec));
             break;
           }
         }
       }
-    `);
+    }, { marker, line, startCol, endCol });
     await sleep(1000);
   }
 
@@ -205,16 +203,16 @@ export class SourcePaneActions {
   }
 
   async getSelectedText(marker: string): Promise<string> {
-    return await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
-        var env = editors[i].env;
-        if (env && env.editor && env.editor.getValue().indexOf('${marker}') !== -1) {
+    return await this.page.evaluate((m) => {
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
+        const env = (editors[i] as any).env;
+        if (env && env.editor && env.editor.getValue().indexOf(m) !== -1) {
           return env.editor.getSelectedText();
         }
       }
       return '';
-    })()`);
+    }, marker);
   }
 
   /**
