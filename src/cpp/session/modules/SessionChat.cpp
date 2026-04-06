@@ -5314,8 +5314,15 @@ Error chatUninstallPositAi(const json::JsonRpcRequest& request,
       }
 
       // Already not installed — treat as success so the frontend
-      // proceeds to restart RStudio as expected.
+      // proceeds to restart RStudio as expected. Clear cached state
+      // in case the directory was removed out-of-band while the
+      // session still thinks Posit AI is available.
       DLOG("Posit AI is not installed; nothing to remove");
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
       pResponse->setResult(json::Value());
       return Success();
    }
