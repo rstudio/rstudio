@@ -23,8 +23,16 @@ namespace core {
 namespace system {
 
 // Returns the charset name (e.g. "UTF-8", "CP1252") for the current
-// LC_CTYPE locale.
-std::string currentCharset();
+// LC_CTYPE locale. Always returns a non-empty string; falls back to
+// "ASCII" if the charset cannot be determined.
+//
+// When canonicalize is true, maps Windows codepage names to their
+// conventional equivalents (e.g. "CP1252" -> "WINDOWS-1252") for
+// display in the encoding dialog.
+//
+// NOTE: Calls setlocale() with a NULL argument, which is not thread-safe
+// per the C standard. Must be called from the main thread.
+std::string currentCharset(bool canonicalize = false);
 
 } // namespace system
 } // namespace core
