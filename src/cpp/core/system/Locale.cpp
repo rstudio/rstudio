@@ -159,15 +159,15 @@ std::string currentCharsetImpl()
 std::string canonicalize(const std::string& charset)
 {
    static const std::map<std::string, std::string> s_cpMap = {
+      { "CP932",   "SHIFT-JIS" },
+      { "CP936",   "GB2312" },
+      { "CP950",   "BIG5" },
       { "CP1252",  "ISO-8859-1" },
       { "CP28591", "ISO-8859-1" },
       { "CP28592", "ISO-8859-2" },
       { "CP28597", "ISO-8859-7" },
       { "CP54936", "GB18030" },
       { "CP65001", "UTF-8" },
-      { "CP932",   "SHIFT-JIS" },
-      { "CP936",   "GB2312" },
-      { "CP950",   "BIG5" },
    };
 
    auto it = s_cpMap.find(charset);
