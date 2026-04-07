@@ -693,6 +693,38 @@
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
 
+   # For S4 objects whose defining package isn't loaded, operations like
+   # length(), is(), and str() can trigger S4 method dispatch, which calls
+   # .requirePackage() to load the package namespace and its native DLL.
+   # If the DLL is broken or missing, this can crash the R session at the
+   # OS level (e.g. STATUS_ENTRYPOINT_NOT_FOUND on Windows) in a way that
+   # R's error handling cannot intercept. Return a safe minimal description
+   # that avoids any S4-dispatching operations.
+   # https://github.com/rstudio/rstudio/issues/17353
+   if (isS4(obj))
+   {
+      cls <- class(obj)
+      pkg <- attr(cls, "package")
+      if (is.character(pkg) && length(pkg) == 1L && nzchar(pkg) &&
+          !identical(pkg, ".GlobalEnv") && !isNamespaceLoaded(pkg))
+      {
+         desc <- sprintf("Formal class '%s' [package \"%s\" not loaded]", cls[[1L]], pkg)
+         return(list(
+            name              = .rs.scalar(objName),
+            type              = .rs.scalar(cls[[1L]]),
+            clazz             = c(cls, typeof(obj)),
+            is_data           = .rs.scalar(FALSE),
+            value             = .rs.scalar(desc),
+            description       = .rs.scalar(desc),
+            size              = .rs.scalar(0L),
+            is_size_estimated = .rs.scalar(FALSE),
+            length            = .rs.scalar(0L),
+            contents          = list(),
+            contents_deferred = .rs.scalar(TRUE)
+         ))
+      }
+   }
+
    val <- "(unknown)"
    desc <- ""
 
