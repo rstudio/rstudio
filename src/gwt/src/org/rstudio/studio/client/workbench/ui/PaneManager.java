@@ -602,7 +602,7 @@ public class PaneManager
       // Fire initial chat pane state so the toolbar button latches correctly
       // on startup. Deferred so all event handlers are registered first.
       Scheduler.get().scheduleDeferred(() ->
-            eventBus_.fireEvent(new ChatPaneActiveEvent(isChatPaneActive())));
+            eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar())));
    }
 
    LogicalWindow getLogicalWindow(WindowFrame frame)
@@ -1123,7 +1123,7 @@ public class PaneManager
       commands_.toggleSidebar().setChecked(showSidebar);
 
       if (isChatInSidebar())
-         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatPaneActive()));
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    /**
@@ -1262,6 +1262,7 @@ public class PaneManager
       maximizedWindow_ = window;
 
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       panel_.setSplitterEnabled(false);
 
       // Check if sidebar is visible and get its location (needed for correct size saving)
@@ -1548,6 +1549,7 @@ public class PaneManager
       leftWidgetSizePriorToZoom_.clear();
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    private void restorePaneLayout()
@@ -2265,8 +2267,20 @@ public class PaneManager
       return false;
    }
 
-   public boolean isChatPaneActive()
+   /**
+    * Returns true when the Chat pane is visible in the sidebar and is the
+    * selected tab -- i.e., when a second click on the Assistant toolbar
+    * button would dismiss it. Chat in a quadrant panel is not considered
+    * "active" for this purpose because the button cannot dismiss it.
+    */
+   public boolean isChatActivatedInSidebar()
    {
+      if (!isChatInSidebar())
+         return false;
+
+      if (sidebar_ == null)
+         return false;
+
       if (!tabToIndex_.containsKey(Tab.Chat))
          return false;
 
@@ -2274,9 +2288,13 @@ public class PaneManager
       if (panel == null)
          return false;
 
-      // If Chat is in the sidebar, check that the sidebar is actually showing
-      if (isChatInSidebar() && sidebar_ == null)
-         return false;
+      // If another window is maximized over the sidebar, Chat is not visible
+      if (maximizedWindow_ != null)
+      {
+         LogicalWindow chatParent = panel.getParentWindow();
+         if (chatParent != null && !chatParent.equals(maximizedWindow_))
+            return false;
+      }
 
       int chatIndex = tabToIndex_.get(Tab.Chat);
       return panel.getSelectedIndex() == chatIndex;
@@ -2518,7 +2536,7 @@ public class PaneManager
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
-         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatPaneActive()));
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       });
 
       if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))

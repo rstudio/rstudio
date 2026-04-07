@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -292,10 +291,8 @@ public class GlobalToolbar extends Toolbar
             assistantSeparator_.setVisible(visible);
          });
 
-         eventBus_.addHandler(ChatPaneActiveEvent.TYPE, event -> {
-            assistantButton_.setLatched(event.isActive());
-            updateAssistantButtonLatchStyle(event.isActive());
-         });
+         eventBus_.addHandler(ChatPaneActiveEvent.TYPE, event ->
+               assistantButton_.setLatched(event.isActive()));
 
          eventBus_.addHandler(ThemeChangedEvent.TYPE, event ->
                updateAssistantButtonIcon());
@@ -338,26 +335,6 @@ public class GlobalToolbar extends Toolbar
          return isVisible
             ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
             : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftHidden2x());
-      }
-   }
-
-   private void updateAssistantButtonLatchStyle(boolean active)
-   {
-      if (assistantButton_ == null)
-         return;
-
-      boolean isDark = Document.get().getBody().hasClassName("rstudio-themes-dark-menus");
-      if (active)
-      {
-         assistantButton_.getElement().getStyle().setProperty("borderColor",
-               isDark ? "#2C3440" : "#161E2E");
-         assistantButton_.getElement().getStyle().setProperty("backgroundColor",
-               isDark ? "#3B4451" : "");
-      }
-      else
-      {
-         assistantButton_.getElement().getStyle().setProperty("borderColor", "transparent");
-         assistantButton_.getElement().getStyle().clearProperty("backgroundColor");
       }
    }
 

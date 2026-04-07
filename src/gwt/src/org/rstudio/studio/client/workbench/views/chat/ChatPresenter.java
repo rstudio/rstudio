@@ -608,18 +608,19 @@ public class ChatPresenter extends BasePresenter
       if (poppedOut_)
       {
          satelliteManager_.activateSatelliteWindow(ChatSatellite.NAME);
-         return;
       }
-
-      if (paneManager_.isChatPaneActive() && paneManager_.isChatInSidebar())
+      else if (paneManager_.isChatActivatedInSidebar())
       {
+         // Chat is visible and selected in the sidebar — dismiss it.
          // Call PaneManager directly rather than executing the toggleSidebar
          // command, to avoid GWT $entry() re-entrancy when this method runs
          // inside a delay-load callback (causes Firefox assertion errors).
          paneManager_.setSidebarPref(false);
       }
-      else if (!paneManager_.isChatPaneActive())
+      else
       {
+         // Chat is not active — activate/focus it (works for sidebar,
+         // quadrant, and hidden tab set cases).
          paneManager_.activateTab(PaneManager.Tab.Chat);
       }
    }
@@ -764,7 +765,7 @@ public class ChatPresenter extends BasePresenter
       // quadrant configurations correctly
       onActivateChat();
 
-      events_.fireEvent(new ChatPaneActiveEvent(paneManager_.isChatPaneActive()));
+      events_.fireEvent(new ChatPaneActiveEvent(paneManager_.isChatActivatedInSidebar()));
    }
 
    /**
