@@ -236,7 +236,7 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
-   if (rsconnect::isPositConnectCloudServer(server))
+   if (rsconnect:::isPositConnectCloudServer(server))
       return(list())
    .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
 })
@@ -244,7 +244,7 @@
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
 
   # retrieve application associated with these parameters
-  if (rsconnect::isPositConnectCloudServer(server)) {
+  if (rsconnect:::isPositConnectCloudServer(server)) {
     app <- tryCatch(
       .rs.rsconnect.getConnectCloudContent(id, account, server),
       error = identity
@@ -268,7 +268,7 @@
   }
 
   # infer the configuration URL for this application
-  app$config_url <- if (rsconnect::isPositConnectCloudServer(server)) {
+  app$config_url <- if (rsconnect:::isPositConnectCloudServer(server)) {
     paste(rsconnect:::connectCloudUrls()$ui, account, "content", app$id, sep = "/")
   } else if (rsconnect:::isConnectServer(server)) {
     prefix <- sub("/__api__", "", hostUrl)
@@ -280,7 +280,7 @@
 
   # try and get environment variables for this deployment (if available)
   # (not yet supported for Connect Cloud)
-  if (!rsconnect::isPositConnectCloudServer(server)) {
+  if (!rsconnect:::isPositConnectCloudServer(server)) {
     app$envVars <- .rs.rsconnect.getApplicationEnvVars(
       server  = server,
       account = account,
