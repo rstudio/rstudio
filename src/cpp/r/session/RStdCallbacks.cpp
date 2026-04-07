@@ -28,6 +28,7 @@
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRuntime.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RClientState.hpp>
@@ -49,9 +50,6 @@
 
 #include <Rembedded.h>
 
-extern "C" {
-RS_IMPORT SA_TYPE SaveAction;
-}
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -739,7 +737,9 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
    {
       // set to default if requested
       if (saveact == SA_DEFAULT)
-         saveact = SaveAction;
+      {
+         saveact = r::runtime::getSaveAction();
+      }
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
@@ -829,14 +829,14 @@ void setSaveAction(int saveAction)
    switch (saveAction)
    {
    case kSaveActionNoSave:
-      SaveAction = SA_NOSAVE;
+      r::runtime::setSaveAction(SA_NOSAVE);
       break;
    case kSaveActionSave:
-      SaveAction = SA_SAVE;
+      r::runtime::setSaveAction(SA_SAVE);
       break;
    case kSaveActionAsk:
    default:
-      SaveAction = SA_SAVEASK;
+      r::runtime::setSaveAction(SA_SAVEASK);
       break;
    }
 }
