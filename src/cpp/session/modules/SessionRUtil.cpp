@@ -348,25 +348,28 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
 
 SEXP rs_runConsoleProcess(SEXP commandSEXP, SEXP captionSEXP)
 {
-   std::string command = r::sexp::asString(commandSEXP);
-   std::string caption = r::sexp::asString(captionSEXP);
+   try
+   {
+      std::string command = r::sexp::asString(commandSEXP);
+      std::string caption = r::sexp::asString(captionSEXP);
 
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   options.redirectStdErrToStdOut = true;
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
 
-   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
-      boost::make_shared<console_process::ConsoleProcessInfo>(
-         caption, console_process::InteractionNever);
+      boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            caption, console_process::InteractionNever);
 
-   boost::shared_ptr<console_process::ConsoleProcess> pCP =
-      console_process::ConsoleProcess::create(command, options, pCPI);
+      boost::shared_ptr<console_process::ConsoleProcess> pCP =
+         console_process::ConsoleProcess::create(command, options, pCPI);
 
-   json::Object data;
-   data["process_info"] = pCP->toJson(console_process::ClientSerialization);
-   data["target_window"] = std::string();
-   ClientEvent event(client_events::kConsoleProcessCreated, data);
-   module_context::enqueClientEvent(event);
+      json::Object data;
+      data["process_info"] = pCP->toJson(console_process::ClientSerialization);
+      data["target_window"] = std::string();
+      ClientEvent event(client_events::kConsoleProcessCreated, data);
+      module_context::enqueClientEvent(event);
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    return R_NilValue;
 }

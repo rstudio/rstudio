@@ -102,8 +102,8 @@ public abstract class ProgressDialog extends ModalDialogBase
       progressBarHost_.add(progressBar_);
 
       ElementIds.assignElementId(label_, ElementIds.PROGRESS_TITLE_LABEL);
-      Roles.getProgressbarRole().set(progressBar_.getElement());
-      Roles.getProgressbarRole().setAriaLabelledbyProperty(progressBar_.getElement(),
+      Roles.getProgressbarRole().set(progressBarHost_.getElement());
+      Roles.getProgressbarRole().setAriaLabelledbyProperty(progressBarHost_.getElement(),
             Id.of(label_.getElement()));
       setLabel(title);
    } 

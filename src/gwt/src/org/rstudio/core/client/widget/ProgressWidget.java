@@ -30,6 +30,7 @@ public class ProgressWidget extends Widget
    public interface Styles extends CssResource
    {
       String track();
+      String bar();
    }
 
    public interface Resources extends ClientBundle
@@ -47,7 +48,7 @@ public class ProgressWidget extends Widget
 
       getElement().getStyle().setWidth(barWidthPct, Unit.PCT);
       getElement().getStyle().setHeight(getTrackHeightPx(), Unit.PX);
-      getElement().getStyle().setBackgroundColor("#6b9fd6");
+      getElement().addClassName(RES.styles().bar());
       getElement().getStyle().setProperty("borderRadius", "2px");
       getElement().getStyle().setProperty("animation",
          animName + " " + getAnimationDurationSecs() + "s ease-in-out infinite");
@@ -62,7 +63,7 @@ public class ProgressWidget extends Widget
    }
 
    /**
-    * Track and bar height in pixels. Subclasses can override to customize.
+    * Track height in pixels. Subclasses can override to customize.
     */
    public int getTrackHeightPx()
    {
