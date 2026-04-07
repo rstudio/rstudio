@@ -78,7 +78,7 @@ constexpr int kBindingTypeNotFound = -1;
 
 // R_GetSaveAction / R_SetSaveAction (R >= 4.6), falls back to direct SaveAction global.
 SA_TYPE getSaveAction();
-void setSaveAction(SA_TYPE action);
+SA_TYPE setSaveAction(SA_TYPE action);
 
 } // namespace runtime
 } // namespace r

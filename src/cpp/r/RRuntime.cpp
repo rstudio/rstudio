@@ -247,20 +247,38 @@ Error initialize()
    }
    else
    {
+      if (R_GetSaveAction || R_SetSaveAction)
+         LOG_WARNING_MESSAGE("Only one of R_GetSaveAction / R_SetSaveAction resolved; falling back to SaveAction global");
+
       // Resolve the SaveAction global variable by address.
       void* symbol = nullptr;
-      core::system::loadSymbol(s_library, "SaveAction", &symbol);
-      s_pSaveAction = reinterpret_cast<SA_TYPE*>(symbol);
+      Error error = core::system::loadSymbol(s_library, "SaveAction", &symbol);
+      if (error)
+      {
+         LOG_ERROR(error);
 
-      s_getSaveAction = []() -> SA_TYPE {
-         return *s_pSaveAction;
-      };
+         s_getSaveAction = []() -> SA_TYPE {
+            return SA_DEFAULT;
+         };
 
-      s_setSaveAction = [](SA_TYPE action) -> SA_TYPE {
-         SA_TYPE old = *s_pSaveAction;
-         *s_pSaveAction = action;
-         return old;
-      };
+         s_setSaveAction = [](SA_TYPE) -> SA_TYPE {
+            return SA_DEFAULT;
+         };
+      }
+      else
+      {
+         s_pSaveAction = reinterpret_cast<SA_TYPE*>(symbol);
+
+         s_getSaveAction = []() -> SA_TYPE {
+            return *s_pSaveAction;
+         };
+
+         s_setSaveAction = [](SA_TYPE action) -> SA_TYPE {
+            SA_TYPE old = *s_pSaveAction;
+            *s_pSaveAction = action;
+            return old;
+         };
+      }
    }
 
    return Success();
@@ -318,9 +336,9 @@ SA_TYPE getSaveAction()
    return s_getSaveAction();
 }
 
-void setSaveAction(SA_TYPE action)
+SA_TYPE setSaveAction(SA_TYPE action)
 {
-   s_setSaveAction(action);
+   return s_setSaveAction(action);
 }
 
 } // namespace runtime
