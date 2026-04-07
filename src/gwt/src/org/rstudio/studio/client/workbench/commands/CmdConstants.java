@@ -1464,6 +1464,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Request assistant suggestions at the cursor position.") // $NON-NLS-1$
     String assistantRequestSuggestionsDesc();
     
+    // assistantPaneToggle
+    @DefaultStringValue("Toggle Posit Assistant") // $NON-NLS-1$
+    String assistantPaneToggleLabel();
+    @DefaultStringValue("Toggle the visibility of the Posit Assistant pane.") // $NON-NLS-1$
+    String assistantPaneToggleDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();

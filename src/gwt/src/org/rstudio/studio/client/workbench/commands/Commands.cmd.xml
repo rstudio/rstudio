@@ -2145,6 +2145,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Request Suggestions"
         desc="Request assistant suggestions at the cursor position."/>
 
+   <cmd id="assistantPaneToggle"
+        label="Toggle Posit Assistant"
+        desc="Toggle the visibility of the Posit Assistant pane."/>
+
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

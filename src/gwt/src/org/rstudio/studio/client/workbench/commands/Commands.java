@@ -762,6 +762,7 @@ public abstract class
    public abstract AppCommand assistantStatus();
    public abstract AppCommand assistantRequestCompletions();
    public abstract AppCommand assistantRequestSuggestions();
+   public abstract AppCommand assistantPaneToggle();
    public abstract AppCommand assistantAcceptNextWord();
    public abstract AppCommand assistantToggleAutomaticCompletions();
    public abstract AppCommand assistantAcceptNextEditSuggestion();
