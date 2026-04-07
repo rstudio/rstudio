@@ -1668,7 +1668,8 @@ body.windows .toolbar {
 }
 
 /* Assistant toggle button in the global toolbar */
-.assistantToggleButton {
+.assistantToggleButton,
+.assistantToggleButton.toolbarButtonLatchable {
    border: 1px solid transparent;
    border-radius: 4px;
    height: 20px;
