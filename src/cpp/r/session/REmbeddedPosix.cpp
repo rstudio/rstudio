@@ -13,6 +13,8 @@
  *
  */
 
+#include <cstring>
+
 #include <core/Log.hpp>
 
 #include <r/RRuntime.hpp>
@@ -54,11 +56,43 @@ namespace rstudio {
 namespace r {
 namespace session {
 
+// Local copy of R's structRstart, always including the 'nconnections'
+// field added in R 4.4.0. This allows runtime detection of nconnections
+// support regardless of which R headers were used at compile time.
+// The struct is zero-initialized before R_DefParams; R >= 4.4.0
+// populates nconnections = 128, older R leaves it as 0 (from memset).
+typedef struct
+{
+   int R_Quiet;
+   int R_NoEcho;
+   int R_Interactive;
+   int R_Verbose;
+   int LoadSiteFile;
+   int LoadInitFile;
+   int DebugInitFile;
+   SA_TYPE RestoreAction;
+   SA_TYPE SaveAction;
+   R_SIZE_T vsize;
+   R_SIZE_T nsize;
+   R_SIZE_T max_vsize;
+   R_SIZE_T max_nsize;
+   R_SIZE_T ppsize;
+   int NoRenviron : 16;
+   int RstartVersion : 16;
+   int nconnections;
+
+   // Padding, to allow for extensions in newer versions of R,
+   // in case newer versions of R expect a struct with extra
+   // memory available.
+   char padding[128];
+} RStartup;
+
 void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
                   const core::FilePath& /*userHome*/, // ignored on posix
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
 {
@@ -108,20 +142,34 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //      .Rprofile rather than simply saved into the global environment
    //      of the default workspace
    //
-   structRstart rp;
-   Rstart Rp = &rp;
-   R_DefParams(Rp);
-#if R_VERSION < R_Version(4, 0, 0)
-   Rp->R_Slave = FALSE;
-#else
+   RStartup rp;
+   memset(&rp, 0, sizeof(rp));
+   RStartup* Rp = &rp;
+   R_DefParams((Rstart) Rp);
    Rp->R_NoEcho = FALSE;
-#endif
    Rp->R_Quiet = quiet ? TRUE : FALSE;
    Rp->R_Interactive = TRUE;
    Rp->SaveAction = defaultSaveAction;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
    Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
-   R_SetParams(Rp);
+
+   // set max connections if requested (requires R >= 4.4.0)
+   // R >= 4.4.0 sets Rp->nconnections = 128 in R_DefParams;
+   // the field remains 0 (from memset) on older R versions.
+   nconnections = validateMaxConnections(nconnections);
+   if (nconnections > 0)
+   {
+      if (Rp->nconnections > 0)
+      {
+         Rp->nconnections = nconnections;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+      }
+   }
+
+   R_SetParams((Rstart) Rp);
 
    // redirect console
    R_Interactive = TRUE; // should have also been set by call to Rf_initialize_R

@@ -75,7 +75,8 @@ struct ROptions
          rProfileOnResume(false),
          restoreEnvironmentOnResume(true),
          packratEnabled(false),
-         suspendOnIncompleteStatement(false)
+         suspendOnIncompleteStatement(false),
+         rMaxConnections(0)
    {
    }
    
@@ -106,6 +107,7 @@ struct ROptions
    core::r_util::SessionScope sessionScope;
    bool packratEnabled;
    bool suspendOnIncompleteStatement;
+   int rMaxConnections;
 };
       
 struct RInitInfo
@@ -270,9 +272,11 @@ void setSaveAction(int saveAction);
 void setImageDirty(bool imageDirty);
 bool imageIsDirty();
 
-// prompt state -- set from RReadConsole
-void setAtDefaultPrompt(bool atPrompt);
-bool atDefaultPrompt();
+// prompt state -- set from RReadConsole. true when R is at the top-level
+// REPL (either default "> " or continuation "+ " prompt), false during
+// browse prompts, readline(), scan(), or other sub-prompts.
+void setAtTopLevelPrompt(bool atPrompt);
+bool atTopLevelPrompt();
 
 // browser context state -- set from RReadConsole based on the prompt
 void setBrowserActive(bool active);

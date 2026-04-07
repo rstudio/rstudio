@@ -2680,6 +2680,7 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+      rOptions.rMaxConnections = options.rMaxConnections();
 
       // apply trust overrides for untrusted or unknown directories
       if (modules::trust::shouldSuppressStartupFiles())

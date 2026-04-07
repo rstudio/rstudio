@@ -369,7 +369,10 @@ protected:
       "If set, overrides the user/project restore workspace setting. Can be 0 (No), 1 (Yes), or 2 (Default).")
       ("r-run-rprofile",
       value<int>(&rRunRprofile_)->default_value(kRunRprofileDefault),
-      "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default).");
+      "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default).")
+      ("r-max-connections",
+      value<int>(&rMaxConnections_)->default_value(0),
+      "Sets the maximum number of connections that R will support. Valid values are 128 to 4096. When set, the value is applied to the R startup parameters. If set to 0 (the default), the R default (128) will be used. Requires R >= 4.4.0.");
 
    pLimits->add_options()
       ("limit-file-upload-size-mb",
@@ -604,6 +607,7 @@ public:
    std::string rDocDirOverride() const { return rDocDirOverride_; }
    int rRestoreWorkspace() const { return rRestoreWorkspace_; }
    int rRunRprofile() const { return rRunRprofile_; }
+   int rMaxConnections() const { return rMaxConnections_; }
    int limitFileUploadSizeMb() const { return limitFileUploadSizeMb_; }
    int limitCpuTimeMinutes() const { return limitCpuTimeMinutes_; }
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
@@ -737,6 +741,7 @@ protected:
    std::string rDocDirOverride_;
    int rRestoreWorkspace_;
    int rRunRprofile_;
+   int rMaxConnections_;
    int limitFileUploadSizeMb_;
    int limitCpuTimeMinutes_;
    bool limitXfsDiskQuota_;

@@ -1521,7 +1521,7 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
    // indicate to the client whether R currently has executing code on the
    // stack
    json::Object result;
-   result["state"] = !r::session::isAtTopLevel() ?
+   result["state"] = r::session::isAtTopLevel() ?
       RExecutionReady : RExecutionBusy;
    pResponse->setResult(result);
 

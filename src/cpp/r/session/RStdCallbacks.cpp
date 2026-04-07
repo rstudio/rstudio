@@ -280,18 +280,19 @@ int RReadConsole(const char *pmt,
       static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
       bool browsing = regex_utils::match(prompt, reBrowsePrompt);
 
-      // track whether we're at the default top-level prompt.
+      // track whether we're at the top-level REPL prompt.
       // cleared before returning input to R (see below).
       // only REPL prompts use hist == 1; readline(), scan(), etc. use 0.
+      // both the default prompt ("> ") and the continuation prompt ("+ ")
+      // indicate top-level — R is waiting for input, not executing code.
       if (hist == 1)
       {
-         std::string defaultPrompt = r::options::getOption<std::string>("prompt");
-         setAtDefaultPrompt(prompt == defaultPrompt);
+         setAtTopLevelPrompt(!browsing);
          setBrowserActive(browsing);
       }
       else
       {
-         setAtDefaultPrompt(false);
+         setAtTopLevelPrompt(false);
       }
 
       // When entering a browse prompt, inject a call to capture the
@@ -382,8 +383,7 @@ int RReadConsole(const char *pmt,
          // note: the old check was 'evaldepth() != 0', which is equivalent
          // here -- any time RReadConsole is called from a nested eval,
          // the context stack will be non-toplevel.
-         else if (consoleInput.isEof() &&
-                  !isAtTopLevel())
+         else if (consoleInput.isEof() && !isAtTopLevel())
          {
             return 0;
          }
@@ -429,7 +429,7 @@ int RReadConsole(const char *pmt,
          }
 
          // R is about to execute the input — no longer at the prompt
-         setAtDefaultPrompt(false);
+         setAtTopLevelPrompt(false);
          return 1;
       }
       else
