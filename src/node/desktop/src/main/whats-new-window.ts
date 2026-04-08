@@ -16,7 +16,6 @@
 import { BrowserWindow, ipcMain, shell } from 'electron';
 
 import { logger } from '../core/logger';
-import { appState } from './app-state';
 
 declare const WHATS_NEW_WEBPACK_ENTRY: string;
 declare const WHATS_NEW_PRELOAD_WEBPACK_ENTRY: string;
@@ -197,14 +196,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     .then(() => {
       if (activeWindow === win && !win.isDestroyed()) {
         windowReady = true;
-        void appState().modalTracker.trackElectronModalAsync(async () => {
-          win.show();
-          // Wait for the window to close before resolving, so the
-          // tracker keeps the menu disabled for the window's lifetime
-          return new Promise<void>((resolve) => {
-            win.once('closed', resolve);
-          });
-        });
+        win.show();
       }
     })
     .catch((err: unknown) => {
