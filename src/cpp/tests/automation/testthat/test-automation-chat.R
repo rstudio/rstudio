@@ -99,15 +99,15 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.elementExists("#rstudio_Sidebar_pane iframe")
    })
 
-   # 2. Wait for iframe to render "Posit AI Not Installed" heading
+   # 2. Wait for iframe to render "Posit Assistant Not Installed" heading
    .rs.waitUntil("iframe h2 shows expected text", function() {
       iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
       h2 <- iframe$contentWindow$document$querySelector("h2")
-      identical(h2$innerText, "Posit AI Not Installed")
+      identical(h2$innerText, "Posit Assistant Not Installed")
    }, swallowErrors = TRUE)
    iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
    h2 <- iframe$contentWindow$document$querySelector("h2")
-   expect_equal(h2$innerText, "Posit AI Not Installed")
+   expect_equal(h2$innerText, "Posit Assistant Not Installed")
 
    # 3. Hide the sidebar
    remote$commands.execute("toggleSidebar")
@@ -132,11 +132,11 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.waitUntil("iframe h2 shows expected text after restart", function() {
       iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
       h2 <- iframe$contentWindow$document$querySelector("h2")
-      identical(h2$innerText, "Posit AI Not Installed")
+      identical(h2$innerText, "Posit Assistant Not Installed")
    }, swallowErrors = TRUE)
    iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
    h2 <- iframe$contentWindow$document$querySelector("h2")
-   expect_equal(h2$innerText, "Posit AI Not Installed")
+   expect_equal(h2$innerText, "Posit Assistant Not Installed")
 
    # Wait for install button to appear, then verify
    .rs.waitUntil("install button rendered", function() {
@@ -146,6 +146,6 @@ withr::defer(.rs.automation.deleteRemote())
    }, swallowErrors = TRUE)
    button <- iframe$contentWindow$document$querySelector("#install-btn")
    expect_false(is.null(button))
-   expect_equal(button$innerText, "Install Posit AI")
+   expect_equal(button$innerText, "Install Posit Assistant")
    expect_false(button$disabled)
 })
