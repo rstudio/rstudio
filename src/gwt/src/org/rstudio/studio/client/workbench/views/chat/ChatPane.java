@@ -36,11 +36,11 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -940,7 +940,7 @@ public class ChatPane
 
       // Trigger observer to start initialization flow.
       // The ChatPresenter handles preference checks and update checks,
-      // showing appropriate UI based on whether Posit AI is enabled/installed.
+      // showing appropriate UI based on whether Posit Assistant is enabled/installed.
       if (observer_ != null)
       {
          observer_.onPaneReady();

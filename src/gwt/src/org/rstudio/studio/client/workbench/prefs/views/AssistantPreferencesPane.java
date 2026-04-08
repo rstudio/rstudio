@@ -777,7 +777,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
 
-                  // Show Install button for Posit AI when not installed
+                  // Show Install button for Posit Assistant when not installed
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
                       assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
                   {
@@ -869,7 +869,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onNoUpdateAvailable()
          {
-            // Posit AI is already installed and up-to-date
+            // Posit Assistant is already installed and up-to-date
             if (forAssistant)
             {
                refresh(UserPrefsAccessor.ASSISTANT_POSIT);

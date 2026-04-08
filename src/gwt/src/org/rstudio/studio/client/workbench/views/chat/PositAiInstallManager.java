@@ -28,10 +28,10 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.inject.Inject;
 
 /**
- * Manages Posit AI installation and updates.
+ * Manages Posit Assistant installation and updates.
  *
  * This class encapsulates the logic for checking for updates, installing/updating
- * Posit AI, and polling for installation status. It can be used by both the Chat
+ * Posit Assistant, and polling for installation status. It can be used by both the Chat
  * pane and the Preferences pane.
  */
 public class PositAiInstallManager
@@ -42,7 +42,7 @@ public class PositAiInstallManager
    public interface UpdateCheckCallback
    {
       /**
-       * Called when no update is available (Posit AI is already installed and up-to-date).
+       * Called when no update is available (Posit Assistant is already installed and up-to-date).
        */
       void onNoUpdateAvailable();
 
@@ -56,7 +56,7 @@ public class PositAiInstallManager
       void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall);
 
       /**
-       * Called when no compatible version of Posit AI is available for this RStudio version.
+       * Called when no compatible version of Posit Assistant is available for this RStudio version.
        */
       void onIncompatibleVersion();
 
@@ -83,7 +83,7 @@ public class PositAiInstallManager
 
       /**
        * Called when the manifest could not be downloaded (network error, missing file, etc.)
-       * and Posit AI cannot verify compatibility.
+       * and Posit Assistant cannot verify compatibility.
        */
       void onManifestUnavailable(String errorMessage);
 
@@ -142,7 +142,7 @@ public class PositAiInstallManager
    }
 
    /**
-    * Checks if an update or initial install is available for Posit AI.
+    * Checks if an update or initial install is available for Posit Assistant.
     *
     * @param callback The callback to receive the result
     */
@@ -225,7 +225,7 @@ public class PositAiInstallManager
    }
 
    /**
-    * Starts the installation or update of Posit AI.
+    * Starts the installation or update of Posit Assistant.
     *
     * @param callback The callback to receive progress and completion status
     */

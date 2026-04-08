@@ -318,7 +318,7 @@ public class ChatPresenter extends BasePresenter
                   return;
                }
 
-               // Don't poll for backend if Posit AI isn't selected as chat provider
+               // Don't poll for backend if Posit Assistant isn't selected as chat provider
                if (!paiUtil_.isChatProviderPosit())
                {
                   display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
@@ -787,7 +787,7 @@ public class ChatPresenter extends BasePresenter
             return;
          }
 
-         // Posit AI is the effective chat provider, initialize chat
+         // Posit Assistant is the effective chat provider, initialize chat
          initializing_ = true;
          checkForUpdates();
       }
@@ -803,7 +803,7 @@ public class ChatPresenter extends BasePresenter
             display_.hidePoppedOutPlaceholder();
          }
 
-         // Posit AI is not the effective chat provider, stop backend and show not-selected message
+         // Posit Assistant is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
          display_.hideReadlineNotification();
@@ -829,7 +829,7 @@ public class ChatPresenter extends BasePresenter
          return;
       }
 
-      // Check if Posit AI is selected as chat provider before initializing
+      // Check if Posit Assistant is selected as chat provider before initializing
       if (!paiUtil_.isChatProviderPosit())
       {
          cancelPopOut();
