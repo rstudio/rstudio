@@ -980,7 +980,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          false,  // includeCancel
          (Operation) () -> {
             // User chose to install/update
-            performPositAiInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+            performPositAssistantInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
          },
          (Operation) () -> {
             // User declined - revert the preference
@@ -993,9 +993,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
-    * Performs the Posit AI installation with progress dialog.
+    * Performs the Posit Assistant installation with progress dialog.
     */
-   private void performPositAiInstall(boolean forAssistant,
+   private void performPositAssistantInstall(boolean forAssistant,
                                       String previousAssistantValue,
                                       String previousChatProviderValue)
    {
@@ -1151,7 +1151,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
-      // Reset to "none" if user has Posit AI selected but PAI is no longer enabled
+      // Reset to "none" if user has Posit AI selected but Posit Assistant is no longer enabled
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
           !paiUtil_.isPositAssistantEnabled())
       {
@@ -1328,7 +1328,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
-   private boolean positAiRefreshed_ = false; // has Posit AI status been refreshed for this pane instance?
+   private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 
