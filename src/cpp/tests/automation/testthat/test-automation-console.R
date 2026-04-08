@@ -10,13 +10,13 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.clear()
    
    lines <- c(
-      "\u2714 xxx \033[34myyy\033[39m xxx",
+      "\u2714 xxx \u001b[34myyy\u001b[39m xxx",
       "\r",
-      "\u2714 xxx \033[31myyy\033[39m zzz",
+      "\u2714 xxx \u001b[31myyy\u001b[39m zzz",
       "\n",
-      "\u2714 xxx \033[34myyy\033[39m xxx",
+      "\u2714 xxx \u001b[34myyy\u001b[39m xxx",
       "\r",
-      "\u2714 xxx \033[31myyy\033[39m zzz",
+      "\u2714 xxx \u001b[31myyy\u001b[39m zzz",
       "\n"
    )
    
