@@ -353,9 +353,17 @@
    }, swallowErrors = TRUE)
 
    # Wait for the new session to be ready (console is no longer busy).
+   # Use a direct DOM check rather than js.querySelector(), which has its
+   # own internal waitUntil and would compound timeouts.
+   code <- .rs.heredoc('
+      (function() {
+         var el = document.querySelector("#rstudio_console_input");
+         return !!el && el.className.indexOf("rstudio-console-busy") === -1;
+      })()
+   ')
+
    .rs.waitUntil("console is ready after restart", function() {
-      editorEl <- self$js.querySelector("#rstudio_console_input")
-      !grepl("rstudio-console-busy", editorEl$className)
+      identical(self$js.eval(code), TRUE)
    }, swallowErrors = TRUE)
 
    # Verify the session is responsive by executing a command.
