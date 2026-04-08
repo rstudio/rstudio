@@ -565,7 +565,7 @@ public class ChatPresenter extends BasePresenter
 
    private void performUninstall()
    {
-      server_.chatUninstallPositAi(new ServerRequestCallback<VoidResponse>()
+      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
       {
          @Override
          public void onResponseReceived(VoidResponse response)

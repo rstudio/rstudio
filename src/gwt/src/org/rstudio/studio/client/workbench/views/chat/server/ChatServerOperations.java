@@ -49,5 +49,5 @@ public interface ChatServerOperations
 
    public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback);
 
-   public void chatUninstallPositAi(ServerRequestCallback<VoidResponse> requestCallback);
+   public void chatUninstallPositAssistant(ServerRequestCallback<VoidResponse> requestCallback);
 }

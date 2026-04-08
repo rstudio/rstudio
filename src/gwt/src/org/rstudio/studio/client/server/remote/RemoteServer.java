@@ -7121,9 +7121,9 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatUninstallPositAi(ServerRequestCallback<VoidResponse> requestCallback)
+   public void chatUninstallPositAssistant(ServerRequestCallback<VoidResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "chat_uninstall_posit_ai", requestCallback);
+      sendRequest(RPC_SCOPE, "chat_uninstall_posit_assistant", requestCallback);
    }
 
    @Override
