@@ -97,7 +97,7 @@ bool isCopilotAllowedByAdmin()
 bool isPositAssistantAllowedByAdmin()
 {
    return
-      session::options().allowPositAi() &&
+      session::options().allowPositAssistant() &&
       session::options().positAssistantEnabled() &&
       core::system::getenv("RSTUDIO_DISABLE_POSIT_AI").empty();
 }
