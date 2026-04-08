@@ -217,16 +217,16 @@ std::string getConfiguredChatProvider()
    return prefs::userPrefs().chatProvider();
 }
 
-// Returns true if chat provider is set to Posit AI (for Chat pane)
+// Returns true if chat provider is set to Posit Assistant (for Chat pane)
 // Checks project-level setting first, then falls back to global preference
 bool isChatProviderPosit()
 {
    return getConfiguredChatProvider() == kChatProviderPosit;
 }
 
-// Returns true if the user wants Posit AI for either chat or completions
+// Returns true if the user wants Posit Assistant for either chat or completions
 // Used to determine if install/update operations should be allowed
-bool isPositAiWanted()
+bool isPositAssistantWanted()
 {
    return isChatProviderPosit() || isPaiSelected();
 }
@@ -4161,7 +4161,7 @@ void doUpdateCheck()
 // Called during session initialization to check for updates
 Error checkForUpdatesOnStartup()
 {
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       DLOG("Update check skipped: posit not selected for chat or assistant");
       return Success();
@@ -5023,7 +5023,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // Perform on-demand update check if state hasn't been populated yet,
    // or if the caller explicitly requested a recheck.
    // This happens when user selects Posit AI in Preferences before the pref is saved.
-   // We allow the check regardless of isPositAiWanted() since checking for available
+   // We allow the check regardless of isPositAssistantWanted() since checking for available
    // updates doesn't require the preference - only actual installation does.
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
@@ -5063,7 +5063,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 Error chatInstallUpdate(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       return systemError(boost::system::errc::operation_not_permitted,
                         "Posit AI not selected for chat or assistant",
@@ -5237,7 +5237,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       // Return idle status - posit not selected for chat or assistant
       json::Object result;
@@ -5278,7 +5278,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// NOTE: No isPositAiWanted()/isPositAssistantEnabled() gate — the user may have
+// NOTE: No isPositAssistantWanted()/isPositAssistantEnabled() gate — the user may have
 // disabled Posit AI but still wants to clean up installed files.
 Error chatUninstallPositAi(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
