@@ -4133,7 +4133,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
    public PrefValue<Boolean> assistantShowMessages()
    {

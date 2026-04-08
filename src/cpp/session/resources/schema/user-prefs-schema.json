@@ -1848,8 +1848,8 @@
         "assistant_show_messages": {
             "type": "boolean",
             "default": true,
-            "title": "Display account and billing messages from AI assistant",
-            "description": "When enabled, RStudio will show messages from the Posit AI assistant in a message box."
+            "title": "Display account and billing messages from Posit Assistant",
+            "description": "When enabled, RStudio will show messages from the Posit Assistant in a message box."
         },
         "copilot_enabled": {
             "type": "boolean",

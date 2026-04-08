@@ -2100,7 +2100,7 @@ public:
    core::Error setAssistantNesAutoshow(bool val);
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
    bool assistantShowMessages();
    core::Error setAssistantShowMessages(bool val);

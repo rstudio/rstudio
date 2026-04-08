@@ -2492,10 +2492,10 @@
    clear = function() { .rs.clearUserPref("assistant_nes_autoshow") }
 )
 
-# Display account and billing messages from AI assistant
+# Display account and billing messages from Posit Assistant
 #
-# When enabled, RStudio will show messages from the Posit AI assistant in a
-# message box.
+# When enabled, RStudio will show messages from the Posit Assistant in a message
+# box.
 .rs.uiPrefs$assistantShowMessages <- list(
    get = function() { .rs.getUserPref("assistant_show_messages") },
    set = function(value) { .rs.setUserPref("assistant_show_messages", value) },
