@@ -325,7 +325,7 @@ expect_contains(output, "expected text")
 
 ## Test Environment
 
-BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit AI) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward.
+BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit Assistant) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward.
 
 ## Best Practices
 

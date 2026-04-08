@@ -132,7 +132,7 @@ void injectThemeInfo(std::string* pContent)
 }
 
 /**
- * Load CSP directives from dist/csp.json in the Posit AI installation.
+ * Load CSP directives from dist/csp.json in the Posit Assistant installation.
  *
  * Reads the file once and caches the result. The file is emitted by the
  * databot build and contains the same defaults that DatabotServer uses
@@ -391,7 +391,7 @@ Error handleAIChatRequest(const http::Request& request,
    if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);
-      pResponse->setBody("Posit AI not installed.");
+      pResponse->setBody("Posit Assistant not installed.");
       return Success();
    }
 

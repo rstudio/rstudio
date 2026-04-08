@@ -5676,7 +5676,7 @@ Error initialize()
    }
 
    // Validate assistant preference consistency
-   // If user has Posit AI selected but PAI is no longer available, reset to "none"
+   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
    if (isPaiSelected() && !isPositAssistantEnabled())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
