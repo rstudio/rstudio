@@ -418,12 +418,12 @@ public class AssistantPreferencesPane extends PreferencesPane
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
 
-               // Refresh Posit AI status when panel is shown
+               // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
                {
                   positAiRefreshed_ = true;
 
-                  // Check if Posit AI is installed
+                  // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
                      UserPrefsAccessor.ASSISTANT_POSIT,
                      new ServerRequestCallback<Boolean>()
@@ -944,9 +944,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onCheckFailed(String errorMessage)
          {
             // Check failed - this often happens when calling from Preferences pane
-            // before the preference is saved. Since we know Posit AI isn't installed
+            // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
-            // just selected Posit AI), offer to install without version info.
+            // just selected Posit Assistant), offer to install without version info.
             showInstallUpdatePrompt(null, true, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
