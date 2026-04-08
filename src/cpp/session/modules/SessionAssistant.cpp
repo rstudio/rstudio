@@ -581,8 +581,8 @@ bool isAssistantEnabled(const std::string& assistantType = "")
       return false;
    }
 
-   // For Posit AI, block if version/protocol is unsupported or manifest unavailable
-   if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
+   // For Posit Assistant, block if version/protocol is unsupported or manifest unavailable
+   if (assistant == kAssistantPosit && chat::isPositAssistantUnsupported())
    {
       s_agentNotRunningReason = AgentNotRunningReason::Unsupported;
       return false;

@@ -4076,7 +4076,7 @@ void doUpdateCheck()
    if (error)
    {
       // Malformed unsupported info — fail closed to be safe
-      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+      WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
            error.getMessage());
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
@@ -4102,8 +4102,8 @@ void doUpdateCheck()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
-   if (isPositAiUnsupported())
+   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAssistantUnsupported())
    {
       assistant::stopAgentForUpdate();
    }
@@ -4243,8 +4243,8 @@ Error checkForUpdatesOnStartup()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
-   if (isPositAiUnsupported())
+   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAssistantUnsupported())
    {
       assistant::stopAgentForUpdate();
    }
@@ -5625,7 +5625,7 @@ bool isSuspendable()
    return !s_chatBusy;
 }
 
-bool isPositAiUnsupported()
+bool isPositAssistantUnsupported()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    return s_updateState.unsupportedInstalledVersion ||
