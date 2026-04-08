@@ -35,6 +35,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -438,9 +439,13 @@ CallFrameResult callFramesFromR(int depth,
 
    // Get the current srcref for the innermost context (set by R's evaluator
    // during debug stepping). This is not accessible from R's sys.*() functions,
-   // so we pass it in. Use skip=0 rather than NA_INTEGER for compatibility
-   // with R < 4.5 (where NA_INTEGER is not handled specially).
-   SEXP currentSrcref = R_GetCurrentSrcref(0);
+   // so we pass it in.
+   //
+   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref first, giving the correct
+   // srcref for the current debug position. In R < 4.5, NA_INTEGER is not
+   // handled specially, so we use skip=0 (reads context srcref field).
+   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
+   SEXP currentSrcref = R_GetCurrentSrcref(skip);
 
    // Call .rs.callFrames(targetDepth, lineDebugState, currentSrcref)
    SEXP resultSEXP = R_NilValue;
@@ -1003,12 +1008,15 @@ SEXP inferDebugSrcrefs(
 {
    // R_GetCurrentSrcref(skip) is a public R API that returns the srcref
    // for the expression currently being evaluated during debugging.
-   // We use skip=0 to get the current srcref (R_Srcref if valid, then
-   // walks the context stack). Note: NA_INTEGER only works in R >= 4.5;
-   // in older R it is treated as a large negative skip and always
-   // returns R_NilValue.
+   //
+   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref (the evaluator's current
+   // position) first, giving the correct srcref during debug stepping.
+   // In R < 4.5, skip=NA_INTEGER is not handled specially and always
+   // returns R_NilValue, so we use skip=0 which reads the context's
+   // srcref field (correct on older R).
    r::sexp::Protect protect;
-   SEXP srcref = R_GetCurrentSrcref(0);
+   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
+   SEXP srcref = R_GetCurrentSrcref(skip);
    if (isValidSrcref(srcref))
       return srcref;
 
