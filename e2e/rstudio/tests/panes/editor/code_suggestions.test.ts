@@ -548,7 +548,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test('status bar navigates to most recent completion on click', async ({ rstudioPage: page }) => {
-      if (key === 'copilot') test.fixme(true, 'Copilot clears status bar click handler after autocomplete dismiss — need to file bug');
+      if (key === 'copilot') test.fixme(true, 'Copilot clears status bar click handler after autocomplete dismiss (https://github.com/rstudio/rstudio/issues/17372)');
       const fileName = `${prefix}_statusbar_nav.R`;
 
       // Build a long file so the editor needs to scroll

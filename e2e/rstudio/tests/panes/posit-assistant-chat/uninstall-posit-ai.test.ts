@@ -78,7 +78,7 @@ async function waitForRestart(page: Page): Promise<void> {
     // No dialog
   }
 
-  // Activate console in the new session
+  // desktopHooks used intentionally--console/R session not ready yet after restart
   await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
   await sleep(2000);
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
