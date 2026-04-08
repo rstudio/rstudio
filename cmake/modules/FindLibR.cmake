@@ -121,8 +121,9 @@ if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_HOME)
 endif()
 set(LIBR_HOME "${LIBR_HOME}" CACHE PATH "R home directory" FORCE)
 
-set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable")
-get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
+set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable" FORCE)
+get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH)
+set(LIBR_BIN_DIR "${LIBR_BIN_DIR}" CACHE FILEPATH "R bin directory" FORCE)
 
 execute_process(
    COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('include'))"
@@ -132,7 +133,7 @@ execute_process(
 if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_INCLUDE_DIRS)
    message(FATAL_ERROR "Failed to query R.home('include') from '${LIBR_EXECUTABLE}'")
 endif()
-set(LIBR_INCLUDE_DIRS "${LIBR_INCLUDE_DIRS}" CACHE PATH "R include directory")
+set(LIBR_INCLUDE_DIRS "${LIBR_INCLUDE_DIRS}" CACHE PATH "R include directory" FORCE)
 
 execute_process(
    COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('doc'))"
@@ -142,7 +143,7 @@ execute_process(
 if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_DOC_DIR)
    message(FATAL_ERROR "Failed to query R.home('doc') from '${LIBR_EXECUTABLE}'")
 endif()
-set(LIBR_DOC_DIR "${LIBR_DOC_DIR}" CACHE PATH "R doc directory")
+set(LIBR_DOC_DIR "${LIBR_DOC_DIR}" CACHE PATH "R doc directory" FORCE)
 
 execute_process(
    COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('lib'))"
@@ -152,7 +153,7 @@ execute_process(
 if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_LIB_DIR)
    message(FATAL_ERROR "Failed to query R.home('lib') from '${LIBR_EXECUTABLE}'")
 endif()
-set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory")
+set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory" FORCE)
 
 # ===========================================================================
 # 3. Find libraries
@@ -188,6 +189,7 @@ if(WIN32)
 endif()
 
 # Find core R library
+unset(LIBR_CORE_LIBRARY CACHE)
 find_library(LIBR_CORE_LIBRARY NAMES R HINTS ${_LIBR_LIBRARY_HINTS})
 if(LIBR_CORE_LIBRARY)
    set(LIBR_LIBRARIES ${LIBR_CORE_LIBRARY})
@@ -197,16 +199,19 @@ endif()
 
 if(WIN32)
    # Find Windows-specific R libraries
+   unset(LIBR_BLAS_LIBRARY CACHE)
    find_library(LIBR_BLAS_LIBRARY NAMES Rblas HINTS ${_LIBR_LIBRARY_HINTS})
    if(LIBR_BLAS_LIBRARY)
       list(APPEND LIBR_LIBRARIES ${LIBR_BLAS_LIBRARY})
    endif()
 
+   unset(LIBR_LAPACK_LIBRARY CACHE)
    find_library(LIBR_LAPACK_LIBRARY NAMES Rlapack HINTS ${_LIBR_LIBRARY_HINTS})
    if(LIBR_LAPACK_LIBRARY)
       list(APPEND LIBR_LIBRARIES ${LIBR_LAPACK_LIBRARY})
    endif()
 
+   unset(LIBR_GRAPHAPP_LIBRARY CACHE)
    find_library(LIBR_GRAPHAPP_LIBRARY NAMES Rgraphapp HINTS ${_LIBR_LIBRARY_HINTS})
    if(LIBR_GRAPHAPP_LIBRARY)
       list(APPEND LIBR_LIBRARIES ${LIBR_GRAPHAPP_LIBRARY})
@@ -215,7 +220,7 @@ endif()
 
 # Cache the final library list
 if(LIBR_LIBRARIES)
-   set(LIBR_LIBRARIES ${LIBR_LIBRARIES} CACHE PATH "R runtime libraries")
+   set(LIBR_LIBRARIES ${LIBR_LIBRARIES} CACHE PATH "R runtime libraries" FORCE)
 endif()
 
 # ===========================================================================
