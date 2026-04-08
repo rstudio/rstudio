@@ -432,8 +432,8 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_full_ui;
    }-*/;
 
-   public final native boolean getPositAiEnabled() /*-{
-      return this.posit_ai_enabled;
+   public final native boolean getPositAssistantEnabled() /*-{
+      return this.posit_assistant_enabled;
    }-*/;
 
    public final native int getWebSocketPingInterval() /*-{

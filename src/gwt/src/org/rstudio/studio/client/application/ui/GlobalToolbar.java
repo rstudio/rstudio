@@ -266,7 +266,7 @@ public class GlobalToolbar extends Toolbar
       userPrefs_.panes().addValueChangeHandler(evt -> updateSidebarToggleButton());
 
       // assistant toggle button (right side of toolbar)
-      if (sessionInfo.getPositAiEnabled())
+      if (sessionInfo.getPositAssistantEnabled())
       {
          boolean isDark = Document.get().getBody().hasClassName("rstudio-themes-dark-menus");
          assistantButton_ = new LatchingToolbarButton(
