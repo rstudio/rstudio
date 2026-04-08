@@ -84,13 +84,13 @@ TEST(ChatInstallation, GetInstalledVersionReturnsEmptyStringForNonExistentInstal
    tempDir.ensureDirectory();
 
    // Set RSTUDIO_POSIT_AI_PATH to empty directory - this ensures
-   // locatePositAiInstallation will check this location first
+   // locatePositAssistantInstallation will check this location first
    system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
 
    // Check if there's a valid installation in standard system locations
    // by temporarily unsetting env var and checking
    system::unsetenv("RSTUDIO_POSIT_AI_PATH");
-   bool hasSystemInstallation = !locatePositAiInstallation().isEmpty();
+   bool hasSystemInstallation = !locatePositAssistantInstallation().isEmpty();
    system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
 
    std::string version = getInstalledVersion();
@@ -184,7 +184,7 @@ TEST(ChatInstallation, LocatePositAiInstallationRespectsRStudioPositAiPathEnvVar
    system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
 
    // Should find it via env var
-   FilePath found = locatePositAiInstallation();
+   FilePath found = locatePositAssistantInstallation();
    EXPECT_EQ(found.getAbsolutePath(), tempDir.getAbsolutePath());
 
    // Cleanup

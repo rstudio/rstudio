@@ -57,7 +57,7 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath);
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */
-core::FilePath locatePositAiInstallation();
+core::FilePath locatePositAssistantInstallation();
 
 /**
  * Get the installed version of Posit AI from package.json.

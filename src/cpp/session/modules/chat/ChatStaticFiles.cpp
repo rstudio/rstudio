@@ -151,7 +151,7 @@ std::map<std::string, std::string> loadCspDirectives()
    {
       std::map<std::string, std::string> result;
 
-      FilePath positAiPath = locatePositAiInstallation();
+      FilePath positAiPath = locatePositAssistantInstallation();
       if (positAiPath.isEmpty())
          return result;
 
@@ -387,7 +387,7 @@ Error handleAIChatRequest(const http::Request& request,
                           http::Response* pResponse)
 {
    // Locate installation
-   FilePath positAiPath = locatePositAiInstallation();
+   FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);

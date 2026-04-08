@@ -45,7 +45,7 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath)
    return clientDir.exists() && serverScript.exists() && indexHtml.exists();
 }
 
-core::FilePath locatePositAiInstallation()
+core::FilePath locatePositAssistantInstallation()
 {
    // 1. Check environment variable override (for development/testing)
    std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
@@ -95,7 +95,7 @@ core::FilePath locatePositAiInstallation()
 
 std::string getInstalledVersion()
 {
-   core::FilePath positAiPath = locatePositAiInstallation();
+   core::FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
       return "";
 
@@ -143,7 +143,7 @@ std::string getInstalledVersion()
 
 std::string getInstalledProtocolVersion()
 {
-   core::FilePath positAiPath = locatePositAiInstallation();
+   core::FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
       return "";
 

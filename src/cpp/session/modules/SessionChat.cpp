@@ -262,7 +262,7 @@ using chat_logging::shouldLogBackendMessage;
 using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
-using chat_installation::locatePositAiInstallation;
+using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -4604,7 +4604,7 @@ Error startChatBackend(bool resumeConversation)
       return Success();
 
    // Locate installation
-   FilePath positAiPath = locatePositAiInstallation();
+   FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
       std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
@@ -4824,7 +4824,7 @@ Error chatDocFocused(const json::JsonRpcRequest& request,
 Error chatVerifyInstalled(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   FilePath installation = locatePositAiInstallation();
+   FilePath installation = locatePositAssistantInstallation();
    bool installed = !installation.isEmpty();
 
    json::Object result;
@@ -4961,7 +4961,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
 {
    json::Object result;
 
-   FilePath installation = locatePositAiInstallation();
+   FilePath installation = locatePositAssistantInstallation();
    if (installation.isEmpty())
    {
       result["status"] = "not_installed";
