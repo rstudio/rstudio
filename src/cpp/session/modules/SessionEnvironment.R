@@ -1097,9 +1097,9 @@
 #
 # When depth == 0 (BROWSER_FUNCTION), finds the outermost function whose
 # execution environment matches the browser's environment (from C++).
-# When depth > 0, finds the function at the given depth (inner→outer numbering).
+# When depth > 0, finds the function at the given depth (inner->outer numbering).
 #
-# Returns list(depth, env) where depth is the inner→outer depth and
+# Returns list(depth, env) where depth is the inner->outer depth and
 # env is the function's closure environment, or list(0, globalenv()) if
 # no matching context was found.
 # Capture the current environment at the browser prompt. This function

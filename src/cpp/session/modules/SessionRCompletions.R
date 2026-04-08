@@ -1127,7 +1127,7 @@ assign(x = ".rs.acCompletionTypes",
 # Local (explicitly declared) formals always take precedence: any name already
 # present in the wrapper's own formals is excluded from the returned set,
 # matching the behaviour of @inheritParams. Only the first `...` argument is
-# expanded (shallow expansion — we do not recurse into the target function's
+# expanded (shallow expansion -- we do not recurse into the target function's
 # own `...`).
 .rs.addFunction("getCompletionsInheritDotParams", function(token,
                                                            string,
@@ -1242,7 +1242,7 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(argumentsNode))
       return(NULL)
 
-   # Find the \item{...}{} node for `...` — the entry whose description contains
+   # Find the \item{...}{} node for `...` -- the entry whose description contains
    # the @inheritDotParams expansion.
    dotsItem <- Find(function(n) {
       identical(rdTag(n), "\\item") &&
@@ -1271,7 +1271,7 @@ assign(x = ".rs.acCompletionTypes",
    # used. Multiple @inheritDotParams on a single function is uncommon and
    # this limitation is accepted.
 
-   # Find the first non-whitespace TEXT node — the sentinel "Arguments passed on to".
+   # Find the first non-whitespace TEXT node -- the sentinel "Arguments passed on to".
    # The \code node immediately following it contains the target function name.
    inheritDotParamsText <- "Arguments passed on to"
    i <- Position(

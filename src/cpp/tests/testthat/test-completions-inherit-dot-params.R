@@ -524,7 +524,7 @@ test_that("getCompletionsFunction does not call getCompletionsInheritDotParams f
 })
 
 test_that("getCompletionsFunction returns only own formals for non-primitive base fns without @inheritDotParams", {
-   # base::mean has ... but no @inheritDotParams — getCompletionsInheritDotParams
+   # base::mean has ... but no @inheritDotParams -- getCompletionsInheritDotParams
    # is called but returns empty, so only mean's own formals are offered.
    result <- .rs.getCompletionsFunction(
       token        = "",

@@ -99,7 +99,7 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("satellite window reload does not return chat to main pane", {
    skip_on_ci()
 
-   # Skip on Desktop — the Chrome reload path (window.open navigating an
+   # Skip on Desktop -- the Chrome reload path (window.open navigating an
    # existing window) only applies to Server/browser mode.
    isDesktop <- remote$js.eval(
       "window.program_mode === 'desktop' || !!window.desktop")
@@ -147,7 +147,7 @@ withr::defer(.rs.automation.deleteRemote())
    # Verify the satellite is still open.
    expect_true(remote$satellites.isOpen("Posit Assistant"))
 
-   # Verify the sidebar is still hidden — if returnChatToMain() had been
+   # Verify the sidebar is still hidden -- if returnChatToMain() had been
    # called incorrectly, it would re-show the sidebar with chat content.
    expect_false(remote$dom.elementExists("#rstudio_Sidebar_pane"))
 

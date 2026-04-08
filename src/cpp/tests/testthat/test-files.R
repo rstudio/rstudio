@@ -107,7 +107,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
    on.exit(unlink("~/RStudioTestDirectory", recursive = TRUE), add = TRUE)
    
    if (identical(R.version$crt, "ucrt")) {
-      nihao <- enc2utf8("\u4f60\u597d")  # 你好
+      nihao <- enc2utf8("\u4f60\u597d")  # nihao
       dir.create(nihao)
       file.create(paste(nihao, "file", sep = "/"))
       file.create(paste(nihao, "R", sep = "."))
