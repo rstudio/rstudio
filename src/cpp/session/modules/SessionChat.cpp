@@ -190,7 +190,7 @@ bool peerHasCapability(const std::string& method)
 // Returns true if the Posit AI feature is enabled. This requires:
 // 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
 // 2. The posit-assistant-enabled session option
-bool isPaiEnabled()
+bool isPositAssistantEnabled()
 {
    return options().allowPositAssistant() &&
           options().positAssistantEnabled() &&
@@ -4965,7 +4965,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    if (installation.isEmpty())
    {
       result["status"] = "not_installed";
-      result["error"] = "Posit AI not installed.";
+      result["error"] = "Posit Assistant not installed.";
    }
    else if (s_chatBackendPid == -1)
    {
@@ -5278,7 +5278,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// NOTE: No isPositAiWanted()/isPaiEnabled() gate — the user may have
+// NOTE: No isPositAiWanted()/isPositAssistantEnabled() gate — the user may have
 // disabled Posit AI but still wants to clean up installed files.
 Error chatUninstallPositAi(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -5677,14 +5677,14 @@ Error initialize()
 
    // Validate assistant preference consistency
    // If user has Posit AI selected but PAI is no longer available, reset to "none"
-   if (isPaiSelected() && !isPaiEnabled())
+   if (isPaiSelected() && !isPositAssistantEnabled())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    // Validate chat provider preference consistency
    // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPaiEnabled())
+   if (isChatProviderPosit() && !isPositAssistantEnabled())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }
