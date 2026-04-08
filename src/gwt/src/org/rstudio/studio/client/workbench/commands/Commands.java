@@ -775,7 +775,7 @@ public abstract class
    // Chat satellite window
    public abstract AppCommand popOutChat();
    public abstract AppCommand returnChatToMain();
-   public abstract AppCommand uninstallPositAI();
+   public abstract AppCommand uninstallPositAssistant();
 
    // Internal
    public abstract AppCommand showDomElements();

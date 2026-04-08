@@ -612,7 +612,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
-            <cmd refid="uninstallPositAI"/>
+            <cmd refid="uninstallPositAssistant"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -4421,9 +4421,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc="Return to main window"/>
 
-   <cmd id="uninstallPositAI"
-        label="Uninstall Posit AI"
-        menuLabel="Uninsta_ll Posit AI..."
+   <cmd id="uninstallPositAssistant"
+        label="Uninstall Posit Assistant"
+        menuLabel="Uninsta_ll Posit Assistant..."
         rebindable="false"
         windowMode="main"/>
 
