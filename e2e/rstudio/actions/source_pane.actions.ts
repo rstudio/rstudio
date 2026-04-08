@@ -46,9 +46,9 @@ export class SourcePaneActions {
   }
 
   async acceptNesRename(): Promise<string> {
-    const { nesApply, copilotGhostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
+    const { nesApply, ghostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
 
-    await expect(nesApply.or(copilotGhostText).or(nesInsertionPreview).or(nesGutter).first()).toBeVisible({ timeout: TIMEOUTS.nesApply });
+    await expect(nesApply.or(ghostText).or(nesInsertionPreview).or(nesGutter).first()).toBeVisible({ timeout: TIMEOUTS.nesApply });
     await sleep(2000);
 
     if (await nesApply.first().isVisible()) {
@@ -68,8 +68,8 @@ export class SourcePaneActions {
       await this.page.keyboard.press('ControlOrMeta+;');
       await sleep(2000);
       return 'inline-diff';
-    } else if (await copilotGhostText.first().isVisible()) {
-      const ghostTextParts = await copilotGhostText.allTextContents();
+    } else if (await ghostText.first().isVisible()) {
+      const ghostTextParts = await ghostText.allTextContents();
       console.log('  NES ghost text: "' + ghostTextParts.join('') + '"');
       await this.page.keyboard.press('ControlOrMeta+;');
       await sleep(2000);
@@ -80,7 +80,7 @@ export class SourcePaneActions {
       await sleep(2000);
 
       try {
-        await expect(nesApply.or(copilotGhostText).or(nesInsertionPreview).first()).toBeVisible({ timeout: 15000 });
+        await expect(nesApply.or(ghostText).or(nesInsertionPreview).first()).toBeVisible({ timeout: 15000 });
         await sleep(2000);
 
         if (await nesApply.first().isVisible()) {
@@ -94,7 +94,7 @@ export class SourcePaneActions {
           await this.page.keyboard.press('ControlOrMeta+;');
           await sleep(2000);
         } else {
-          const ghostParts = await copilotGhostText.allTextContents();
+          const ghostParts = await ghostText.allTextContents();
           console.log('  NES ghost text (after gutter click): "' + ghostParts.join('') + '"');
           await this.page.keyboard.press('ControlOrMeta+;');
           await sleep(2000);
@@ -213,6 +213,21 @@ export class SourcePaneActions {
       }
       return '';
     }, marker);
+  }
+
+  /** Get the first visible row index (0-based) of the active source editor. */
+  async getFirstVisibleRow(): Promise<number> {
+    return await this.page.evaluate(`(function() {
+      var editors = document.querySelectorAll('.ace_editor');
+      for (var i = 0; i < editors.length; i++) {
+        if (editors[i].closest('#rstudio_console_input')) continue;
+        var env = editors[i].env;
+        if (env && env.editor) {
+          return env.editor.getFirstVisibleRow();
+        }
+      }
+      return -1;
+    })()`);
   }
 
   /**

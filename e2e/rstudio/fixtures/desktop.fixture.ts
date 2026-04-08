@@ -12,7 +12,7 @@ export const RSTUDIO_PATH = process.platform === 'win32'
   : process.platform === 'darwin'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
-export const CDP_PORT = 9222;
+export const CDP_PORT = Number(process.env.CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
 
 export interface DesktopSession {
@@ -25,23 +25,25 @@ export interface DesktopSession {
  * Launch RStudio with CDP, connect Playwright, and return the session.
  */
 export async function launchRStudio(): Promise<DesktopSession> {
-  // Clean up any existing RStudio processes
-  console.log('Cleaning up any existing RStudio processes...');
+  // Clean up any existing RStudio on our specific CDP port
+  console.log(`CDP port: ${CDP_PORT}`);
+  console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
     if (process.platform === 'win32') {
-      execSync('taskkill /F /IM rstudio.exe', { stdio: 'ignore' });
-    } else if (process.platform === 'darwin') {
-      execSync('killall RStudio 2>/dev/null', { stdio: 'ignore' });
+      execSync(
+        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"`,
+        { encoding: 'utf-8', stdio: 'pipe' }
+      );
     } else {
-      execSync('killall rstudio rsession 2>/dev/null', { stdio: 'ignore' });
+      execSync(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
     }
     await sleep(5000); // Give RStudio time to shut down gracefully
   } catch {
-    // Process might not exist, that's fine
+    // No process on that port, that's fine
   }
   await sleep(TIMEOUTS.processCleanup);
 
-  // Wait for port 9222 to be released (up to 15 seconds)
+  // Wait for port to be released (up to 15 seconds)
   const portDeadline = Date.now() + 15000;
   while (Date.now() < portDeadline) {
     try {
@@ -72,7 +74,7 @@ export async function launchRStudio(): Promise<DesktopSession> {
   if (launchError) throw launchError;
 
   // Connect to CDP and set up the session.
-  // If anything fails after spawn, kill the process to avoid orphaning RStudio on port 9222.
+  // If anything fails after spawn, kill the process to avoid orphaning RStudio.
   let browser: Browser | undefined;
   try {
     browser = await chromium.connectOverCDP(CDP_URL);

@@ -82,8 +82,8 @@ async function typeLines(page: Page, lines: string[], pressEnterAfterLast: boole
 }
 
 async function waitForGhostText(sourcePane: SourcePane): Promise<string> {
-  await expect(sourcePane.copilotGhostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
-  const parts = await sourcePane.copilotGhostText.allTextContents();
+  await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+  const parts = await sourcePane.ghostText.allTextContents();
   const text = parts.join('');
   expect(text.length).toBeGreaterThan(0);
   return text;
@@ -92,7 +92,7 @@ async function waitForGhostText(sourcePane: SourcePane): Promise<string> {
 async function acceptGhostText(page: Page, sourcePane: SourcePane) {
   await page.keyboard.press('ControlOrMeta+;');
   await sleep(2000);
-  await expect(sourcePane.copilotGhostText).toHaveCount(0, { timeout: 5000 });
+  await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
 }
 
 // --- Tests ---
