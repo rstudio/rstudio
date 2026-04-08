@@ -202,7 +202,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
 
-      btnInstall_ = new SmallButton(constants_.positAiInstallButton());
+      btnInstall_ = new SmallButton(constants_.positAssistantInstallButton());
       btnInstall_.addStyleName(RES.styles().button());
       statusButtons_.add(btnInstall_);
 
@@ -890,8 +890,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // No compatible version available - show error and revert
             globalDisplay_.showErrorMessage(
-               constants_.positAiIncompatibleTitle(),
-               constants_.positAiIncompatibleMessage(),
+               constants_.positAssistantIncompatibleTitle(),
+               constants_.positAssistantIncompatibleMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -911,8 +911,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Unsupported version with no update - show error and revert
             globalDisplay_.showErrorMessage(
-               constants_.positAiUnsupportedVersionTitle(),
-               constants_.positAiUnsupportedVersionMessage(),
+               constants_.positAssistantUnsupportedVersionTitle(),
+               constants_.positAssistantUnsupportedVersionMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -923,8 +923,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Protocol unsupported - RStudio itself needs updating
             globalDisplay_.showErrorMessage(
-               constants_.positAiUnsupportedProtocolTitle(),
-               constants_.positAiUnsupportedProtocolMessage(),
+               constants_.positAssistantUnsupportedProtocolTitle(),
+               constants_.positAssistantUnsupportedProtocolMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -935,8 +935,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(
-               constants_.positAiManifestUnavailableTitle(),
-               constants_.positAiManifestUnavailableMessage(),
+               constants_.positAssistantManifestUnavailableTitle(),
+               constants_.positAssistantManifestUnavailableMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -964,16 +964,16 @@ public class AssistantPreferencesPane extends PreferencesPane
                                         String previousChatProviderValue)
    {
       String title = isInitialInstall ?
-         constants_.positAiInstallTitle() :
-         constants_.positAiUpdateTitle();
+         constants_.positAssistantInstallTitle() :
+         constants_.positAssistantUpdateTitle();
       String message = isInitialInstall ?
          (newVersion != null ?
-            constants_.positAiInstallMessage(newVersion) :
-            constants_.positAiInstallMessageNoVersion()) :
-         constants_.positAiUpdateMessage(newVersion);
+            constants_.positAssistantInstallMessage(newVersion) :
+            constants_.positAssistantInstallMessageNoVersion()) :
+         constants_.positAssistantUpdateMessage(newVersion);
       String yesLabel = isInitialInstall ?
-         constants_.positAiInstallButton() :
-         constants_.positAiUpdateButton();
+         constants_.positAssistantInstallButton() :
+         constants_.positAssistantUpdateButton();
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
@@ -990,7 +990,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          },
          null,  // cancelOperation - not used since includeCancel is false
          yesLabel,
-         constants_.positAiCancelButton(),
+         constants_.positAssistantCancelButton(),
          true);  // yesIsDefault
    }
 
@@ -1026,7 +1026,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                           String previousChatProviderValue)
    {
       final com.google.gwt.user.client.Command dismissProgress =
-         globalDisplay_.showProgress(constants_.positAiInstallingMessage());
+         globalDisplay_.showProgress(constants_.positAssistantInstallingMessage());
 
       installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
       {
@@ -1048,8 +1048,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             dismissProgress.execute();
             globalDisplay_.showMessage(
                GlobalDisplay.MSG_INFO,
-               constants_.positAiInstallCompleteTitle(),
-               constants_.positAiInstallCompleteMessage(),
+               constants_.positAssistantInstallCompleteTitle(),
+               constants_.positAssistantInstallCompleteMessage(),
                (Operation) () -> {
                   // Refresh the assistant status if this was for the completions pref
                   if (forAssistant)
@@ -1066,8 +1066,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             dismissProgress.execute();
 
             globalDisplay_.showErrorMessage(
-               constants_.positAiInstallFailedTitle(),
-               constants_.positAiInstallFailedMessage(errorMessage),
+               constants_.positAssistantInstallFailedTitle(),
+               constants_.positAssistantInstallFailedMessage(errorMessage),
                (Operation) () -> {
                   // Revert the preference since installation failed
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
