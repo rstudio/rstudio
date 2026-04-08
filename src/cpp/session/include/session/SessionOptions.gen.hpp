@@ -489,7 +489,7 @@ protected:
    pPai->add_options()
       ("posit-assistant-enabled",
       value<bool>(&positAssistantEnabled_)->default_value(true),
-      "Indicates whether or not Posit AI integration can be enabled.")
+      "Indicates whether or not Posit Assistant integration can be enabled.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")

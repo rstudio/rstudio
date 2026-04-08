@@ -998,7 +998,7 @@
             "type": "bool",
             "memberName": "positAssistantEnabled_",
             "defaultValue": true,
-            "description": "Indicates whether or not Posit AI integration can be enabled."
+            "description": "Indicates whether or not Posit Assistant integration can be enabled."
          },
          {
             "name": "posit-assistant-ssl-certificates-file",
