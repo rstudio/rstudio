@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's New in RStudio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .header {
+      padding: 28px 36px 20px;
+      border-bottom: 1px solid #e5e5e5;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+      margin: 0;
+    }
+
+    .header .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .content {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .content iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .footer {
+      padding: 16px 36px;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      background: #fafafa;
+    }
+
+    .footer .hint {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .footer .hint strong {
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    .footer .btn-close {
+      background: #0466c8;
+      color: white;
+      padding: 8px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    .footer .btn-close:hover {
+      background: #0353a4;
+    }
+
+    .footer .btn-close:focus-visible {
+      box-shadow: 0 0 0 3px rgba(4, 102, 200, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>What's New</h1>
+      <div class="subtitle" id="release-info"></div>
+    </div>
+    <div class="content">
+      <iframe id="release-content" sandbox="allow-same-origin"></iframe>
+    </div>
+    <div class="footer">
+      <div class="hint"><strong>Help</strong> &gt; <strong>What's New</strong> to revisit this anytime</div>
+      <button class="btn-close" id="btn-get-started">Close</button>
+    </div>
+  </div>
+</body>
+</html>

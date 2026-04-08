@@ -752,6 +752,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_show_splash_screen');
     },
 
+    showWhatsNew: () => {
+      ipcRenderer.send('desktop_show_whats_new');
+    },
+
     detectRosetta: () => {
       ipcRenderer.send('desktop_detect_rosetta');
     },

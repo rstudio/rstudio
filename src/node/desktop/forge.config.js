@@ -46,7 +46,15 @@ const config = {
               html: './src/ui/splash/splash.html',
               js: './src/ui/splash/splash.ts',
               name: 'splash',
-            }
+            },
+            {
+              html: './src/ui/whats-new/whats-new-host.html',
+              js: './src/ui/whats-new/whats-new-host.ts',
+              preload: {
+                js: './src/ui/whats-new/whats-new-preload.ts',
+              },
+              name: 'whats_new',
+            },
           ],
         },
       }
