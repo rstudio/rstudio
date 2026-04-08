@@ -56,9 +56,6 @@
 #include "SessionSpelling.hpp"
 #include "SessionReticulate.hpp"
 
-#include <R_ext/RStartup.h>
-extern "C" SA_TYPE SaveAction;
-
 #include "session-config.h"
 #ifdef RSTUDIO_SERVER
 #include <core/system/Crypto.hpp>

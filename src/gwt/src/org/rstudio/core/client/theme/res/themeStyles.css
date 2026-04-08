@@ -1667,6 +1667,31 @@ body.windows .toolbar {
    border-color: THEME_DARK_CONTROL_BORDER;
 }
 
+/* Assistant toggle button in the global toolbar */
+.assistantToggleButton,
+.assistantToggleButton.toolbarButtonLatchable {
+   border: 1px solid transparent;
+   border-radius: 4px;
+   height: 20px;
+}
+
+.assistantToggleButton .toolbarButtonLeftImage {
+   margin-top: 0;
+}
+
+.assistantToggleButton .toolbarButtonLabel {
+   margin-top: 3px;
+}
+
+.assistantToggleButton.toolbarButtonLatched {
+   border-color: #161E2E;
+}
+
+.rstudio-themes-dark .assistantToggleButton.toolbarButtonLatched {
+   border-color: #2C3440;
+   background-color: #3B4451;
+}
+
 .globalToolbar {
    height: 27px;
    z-index: 1;

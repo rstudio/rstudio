@@ -17,21 +17,9 @@
 #undef TRUE
 #undef FALSE
 
-#include <Rversion.h>
-
-#define R_INTERNAL_FUNCTIONS
-#include <Rversion.h>
-#include <core/Log.hpp>
-
-#include <r/RInternal.hpp>
-#include <r/RRuntime.hpp>
-#include <r/RUtil.hpp>
-#include <r/RVersionInfo.hpp>
-
 #define Win32
-#include "REmbedded.hpp"
 
-#include <stdio.h>
+#include "REmbedded.hpp"
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
@@ -40,19 +28,26 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Version.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
 
-#include <r/RInterface.hpp>
-#include <r/RFunctionHook.hpp>
 #include <r/RExec.hpp>
+#include <r/RFunctionHook.hpp>
+#include <r/RInterface.hpp>
+#include <r/RInternal.hpp>
+#include <r/RRuntime.hpp>
+#include <r/RUtil.hpp>
+#include <r/RVersionInfo.hpp>
 #include <r/session/REventLoop.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <Rembedded.h>
-#include <graphapp.h>
+#include <R_ext/Boolean.h>
+#include <R_ext/RStartup.h>
+
 
 #ifdef ReadConsole
 # undef ReadConsole

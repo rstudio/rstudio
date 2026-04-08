@@ -57,6 +57,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -584,10 +586,23 @@ public class PaneManager
          activeWindow.showWindowFocusIndicator(true);
       });
 
+      // Re-evaluate chat command visibility when the chat provider changes
+      userPrefs.chatProvider().addValueChangeHandler(event -> manageChatCommands());
+      eventBus.addHandler(ProjectOptionsChangedEvent.TYPE, event ->
+      {
+         paiUtil_.updateProjectOptions(event.getData().getAssistantOptions());
+         manageChatCommands();
+      });
+
       manageLayoutCommands();
       manageChatCommands();
 
       new ZoomedTabStateValue();
+
+      // Fire initial chat pane state so the toolbar button latches correctly
+      // on startup. Deferred so all event handlers are registered first.
+      Scheduler.get().scheduleDeferred(() ->
+            eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar())));
    }
 
    LogicalWindow getLogicalWindow(WindowFrame frame)
@@ -1008,7 +1023,7 @@ public class PaneManager
       optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
    
-   private void setSidebarPref(boolean showSidebar)
+   public void setSidebarPref(boolean showSidebar)
    {
       PaneConfig paneConfig = getCurrentConfig();
 
@@ -1106,6 +1121,9 @@ public class PaneManager
       }
 
       commands_.toggleSidebar().setChecked(showSidebar);
+
+      if (isChatInSidebar())
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    /**
@@ -1244,6 +1262,7 @@ public class PaneManager
       maximizedWindow_ = window;
 
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       panel_.setSplitterEnabled(false);
 
       // Check if sidebar is visible and get its location (needed for correct size saving)
@@ -1530,6 +1549,7 @@ public class PaneManager
       leftWidgetSizePriorToZoom_.clear();
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    private void restorePaneLayout()
@@ -2233,6 +2253,53 @@ public class PaneManager
       return tabToPanel_.get(tab);
    }
 
+   public boolean isChatInSidebar()
+   {
+      PaneConfig config = getCurrentConfig();
+      JsArrayString sidebarTabs = config.getSidebar();
+      if (sidebarTabs == null)
+         return false;
+      for (int i = 0; i < sidebarTabs.length(); i++)
+      {
+         if (sidebarTabs.get(i).equals(Tab.Chat.name()))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Returns true when the Chat pane is visible in the sidebar and is the
+    * selected tab -- i.e., when a second click on the Assistant toolbar
+    * button would dismiss it. Chat in a quadrant panel is not considered
+    * "active" for this purpose because the button cannot dismiss it.
+    */
+   public boolean isChatActivatedInSidebar()
+   {
+      if (!isChatInSidebar())
+         return false;
+
+      if (sidebar_ == null)
+         return false;
+
+      if (!tabToIndex_.containsKey(Tab.Chat))
+         return false;
+
+      WorkbenchTabPanel panel = tabToPanel_.get(Tab.Chat);
+      if (panel == null)
+         return false;
+
+      // If another window is maximized over the sidebar, Chat is not visible
+      if (maximizedWindow_ != null)
+      {
+         LogicalWindow chatParent = panel.getParentWindow();
+         if (chatParent != null && !chatParent.equals(maximizedWindow_))
+            return false;
+      }
+
+      int chatIndex = tabToIndex_.get(Tab.Chat);
+      return panel.getSelectedIndex() == chatIndex;
+   }
+
    public LogicalWindow getSourceLogicalWindow()
    {
       return sourceLogicalWindows_.get(0);
@@ -2469,6 +2536,7 @@ public class PaneManager
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       });
 
       if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
@@ -2678,6 +2746,8 @@ public class PaneManager
       boolean showPaiUi = paiUtil_.isPaiEnabled();
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
+      commands_.assistantPaneToggle().setVisible(
+            showPaiUi && paiUtil_.isChatProviderPosit());
    }
 
    private List<AppCommand> getLayoutCommands()

@@ -537,7 +537,7 @@
    driverPath <- allFiles[grepl(libraryPattern, allFiles, ignore.case = TRUE)]
 
    if (!identical(length(driverPath), 1L))
-      stop("Failed to find ", library, " inside driver bundle.")
+      stop("Failed to find ", libraryPattern, " inside driver bundle.")
    
    normalizePath(driverPath)
 })

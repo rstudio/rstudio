@@ -392,6 +392,7 @@ public class ElementIds
    public final static String PROJECT_MENUBUTTON_TOOLBAR_SUFFIX = "toolbar";
    public final static String PROJECT_MENUBUTTON_MENUBAR_SUFFIX = "menubar";
    public final static String SIDEBAR_TOGGLE_BUTTON = "sidebar_toggle_button";
+   public final static String ASSISTANT_TOGGLE_BUTTON = "assistant_toggle_button";
 
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";

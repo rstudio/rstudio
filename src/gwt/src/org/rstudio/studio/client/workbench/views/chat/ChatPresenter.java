@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
@@ -460,6 +461,8 @@ public class ChatPresenter extends BasePresenter
          () -> {
             if (!windowsClosing_)
                returnChatToMain();
+            else
+               events_.fireEvent(new ChatPaneActiveEvent(false));
          },
          null);
    }
@@ -513,6 +516,7 @@ public class ChatPresenter extends BasePresenter
       stateDirty_ = true;
       commands_.popOutChat().setEnabled(false);
       display_.showPoppedOutPlaceholder();
+      events_.fireEvent(new ChatPaneActiveEvent(true));
 
       if (cachedUrl_ != null)
       {
@@ -593,6 +597,30 @@ public class ChatPresenter extends BasePresenter
       }
       else
       {
+         paneManager_.activateTab(PaneManager.Tab.Chat);
+      }
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded.
+   void onAssistantPaneToggle()
+   {
+      if (poppedOut_)
+      {
+         satelliteManager_.activateSatelliteWindow(ChatSatellite.NAME);
+      }
+      else if (paneManager_.isChatActivatedInSidebar())
+      {
+         // Chat is visible and selected in the sidebar — dismiss it.
+         // Call PaneManager directly rather than executing the toggleSidebar
+         // command, to avoid GWT $entry() re-entrancy when this method runs
+         // inside a delay-load callback (causes Firefox assertion errors).
+         paneManager_.setSidebarPref(false);
+      }
+      else
+      {
+         // Chat is not active — activate/focus it (works for sidebar,
+         // quadrant, and hidden tab set cases).
          paneManager_.activateTab(PaneManager.Tab.Chat);
       }
    }
@@ -736,6 +764,8 @@ public class ChatPresenter extends BasePresenter
       // Ensure the chat pane is visible — handles both sidebar and
       // quadrant configurations correctly
       onActivateChat();
+
+      events_.fireEvent(new ChatPaneActiveEvent(paneManager_.isChatActivatedInSidebar()));
    }
 
    /**

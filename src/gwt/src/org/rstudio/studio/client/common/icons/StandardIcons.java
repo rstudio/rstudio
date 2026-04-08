@@ -111,4 +111,10 @@ public interface StandardIcons extends ClientBundle
 
    @Source("toggleSidebar_right_visible_2x.png")
    ImageResource toggleSidebarRightVisible2x();
+
+   @Source("iconAssistantToolbar_2x.png")
+   ImageResource iconAssistantToolbar2x();
+
+   @Source("iconAssistantToolbarDark_2x.png")
+   ImageResource iconAssistantToolbarDark2x();
 }

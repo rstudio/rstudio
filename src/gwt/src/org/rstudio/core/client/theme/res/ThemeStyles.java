@@ -86,6 +86,7 @@ public interface ThemeStyles extends CssResource
 
    String toolbarButtonLatched();
    String toolbarButtonLatchable();
+   String assistantToggleButton();
 
    String windowFrameToolbarButton();
 

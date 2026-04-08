@@ -38,6 +38,7 @@
 #include <r/RUtil.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
@@ -345,6 +346,34 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
    return r::sexp::create(asNative, &protect);
 }
 
+SEXP rs_runConsoleProcess(SEXP commandSEXP, SEXP captionSEXP)
+{
+   try
+   {
+      std::string command = r::sexp::asString(commandSEXP);
+      std::string caption = r::sexp::asString(captionSEXP);
+
+      core::system::ProcessOptions options;
+      options.terminateChildren = true;
+
+      boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            caption, console_process::InteractionNever);
+
+      boost::shared_ptr<console_process::ConsoleProcess> pCP =
+         console_process::ConsoleProcess::create(command, options, pCPI);
+
+      json::Object data;
+      data["process_info"] = pCP->toJson(console_process::ClientSerialization);
+      data["target_window"] = std::string();
+      ClientEvent event(client_events::kConsoleProcessCreated, data);
+      module_context::enqueClientEvent(event);
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+
+   return R_NilValue;
+}
+
 SEXP rs_getSessionOverlayOption(SEXP keySEXP)
 {
    std::string key = r::sexp::asString(keySEXP);
@@ -371,6 +400,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_readIniFile);
    RS_REGISTER_CALL_METHOD(rs_rResourcesPath);
    RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess);
+   RS_REGISTER_CALL_METHOD(rs_runConsoleProcess);
    RS_REGISTER_CALL_METHOD(rs_systemToUtf8);
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);

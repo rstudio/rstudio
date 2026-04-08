@@ -14,6 +14,15 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomMetrics;
+
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
@@ -25,29 +34,19 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.*;
-
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.dom.DomMetrics;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class ProgressDialog extends ModalDialogBase
 {
    interface Resources extends ClientBundle
    {
-      ImageResource progress();
-
       @Source("ProgressDialog.css")
       Styles styles();
    }
@@ -56,7 +55,7 @@ public abstract class ProgressDialog extends ModalDialogBase
    {
       String progressDialog();
       String labelCell();
-      String progressCell();
+      String progressBarCell();
       String buttonCell();
       String displayWidget();
    }
@@ -92,13 +91,19 @@ public abstract class ProgressDialog extends ModalDialogBase
                             Window.getClientWidth() - 100);
       style.setWidth(width, Unit.PX);
       
-      progressAnim_ = new Image(resources_.progress().getSafeUri());
       stopButton_ = new ThemedButton(constants_.stopButtonText());
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
+      progressBar_ = new ProgressWidget();
+      progressBarHost_.addStyleName(ProgressWidget.trackStyle());
+      progressBarHost_.setWidth(progressBar_.getTrackWidthPx() + "px");
+      progressBarHost_.setHeight(progressBar_.getTrackHeightPx() + "px");
+      progressBarHost_.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      progressBarHost_.add(progressBar_);
+
       ElementIds.assignElementId(label_, ElementIds.PROGRESS_TITLE_LABEL);
-      Roles.getProgressbarRole().set(progressAnim_.getElement());
-      Roles.getProgressbarRole().setAriaLabelledbyProperty(progressAnim_.getElement(),
+      Roles.getProgressbarRole().set(progressBarHost_.getElement());
+      Roles.getProgressbarRole().setAriaLabelledbyProperty(progressBarHost_.getElement(),
             Id.of(label_.getElement()));
       setLabel(title);
    } 
@@ -169,9 +174,9 @@ public abstract class ProgressDialog extends ModalDialogBase
    protected void showProgress()
    {
       operationStarted_ = true;
-      progressAnim_.getElement().getStyle().setDisplay(Style.Display.INITIAL);
+      progressBarHost_.setVisible(true);
    }
-   
+
    protected void hideProgress()
    {
       if (operationStarted_)
@@ -180,7 +185,7 @@ public abstract class ProgressDialog extends ModalDialogBase
          announceCompletion(StringUtil.isNullOrEmpty(labelText_) ?
             constants_.operationCompletedText() : constants_.completedText(labelText_));
       }
-      progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
+      progressBarHost_.setVisible(false);
    }
 
    protected boolean handleEnterKey()
@@ -199,14 +204,15 @@ public abstract class ProgressDialog extends ModalDialogBase
    @UiField(provided = true)
    Widget display_;
    
-   @UiField(provided = true)
-   Image progressAnim_;
+   @UiField
+   FlowPanel progressBarHost_;
    @UiField
    Label label_;
    @UiField
    TableCellElement labelCell_;
    @UiField(provided = true)
    ThemedButton stopButton_;
+   private ProgressWidget progressBar_;
    private Widget centralWidget_;
    private boolean operationStarted_;
    private String labelText_;

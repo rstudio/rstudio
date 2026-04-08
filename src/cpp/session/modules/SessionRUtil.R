@@ -46,6 +46,15 @@
    as.list(.Call("rs_readIniFile", filePath, PACKAGE = "(embedding)"))
 })
 
+.rs.addFunction("runConsoleProcess", function(command, caption = "Console Process")
+{
+   .Call("rs_runConsoleProcess",
+         as.character(command),
+         as.character(caption),
+         PACKAGE = "(embedding)")
+   invisible(NULL)
+})
+
 .rs.addFunction("runAsyncRProcess", function(
    code,
    workingDir  = getwd(),

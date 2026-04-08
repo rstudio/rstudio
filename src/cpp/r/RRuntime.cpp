@@ -82,8 +82,14 @@ SEXP (*R_findVarLocInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVarInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*Rf_findVar)(SEXP, SEXP) = nullptr;
 
+SA_TYPE (*R_GetSaveAction)(void) = nullptr;
+SA_TYPE (*R_SetSaveAction)(SA_TYPE) = nullptr;
+
 // R_UnboundValue is imported so we can translate it to nullptr at the boundary.
 SEXP R_UnboundValue = nullptr;
+
+// Pointer to the SaveAction global in R (fallback for R < 4.6).
+SA_TYPE* s_pSaveAction = nullptr;
 
 // Dispatch function pointers, set in initialize() to either the
 // resolved R symbol or a fallback implementation.
@@ -95,6 +101,8 @@ SEXP (*s_findVarInFrame)(SEXP, SEXP) = nullptr;
 SEXP (*s_findVar)(SEXP, SEXP) = nullptr;
 int  (*s_getBindingType)(SEXP, SEXP) = nullptr;
 SEXP (*s_delayedBindingExpression)(SEXP, SEXP) = nullptr;
+SA_TYPE (*s_getSaveAction)(void) = nullptr;
+SA_TYPE (*s_setSaveAction)(SA_TYPE) = nullptr;
 
 } // anonymous namespace
 
@@ -136,6 +144,9 @@ Error initialize()
    RS_IMPORT_FUNCTION(R_findVarLocInFrame);
    RS_IMPORT_FUNCTION(Rf_findVarInFrame);
    RS_IMPORT_FUNCTION(Rf_findVar);
+
+   RS_IMPORT_FUNCTION(R_GetSaveAction);
+   RS_IMPORT_FUNCTION(R_SetSaveAction);
 
    RS_IMPORT_DATA(R_UnboundValue);
 
@@ -228,6 +239,48 @@ Error initialize()
       };
    }
 
+   // getSaveAction / setSaveAction
+   if (R_GetSaveAction && R_SetSaveAction)
+   {
+      s_getSaveAction = R_GetSaveAction;
+      s_setSaveAction = R_SetSaveAction;
+   }
+   else
+   {
+      if (R_GetSaveAction || R_SetSaveAction)
+         LOG_WARNING_MESSAGE("Only one of R_GetSaveAction / R_SetSaveAction resolved; falling back to SaveAction global");
+
+      // Resolve the SaveAction global variable by address.
+      void* symbol = nullptr;
+      Error error = core::system::loadSymbol(s_library, "SaveAction", &symbol);
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         s_getSaveAction = []() -> SA_TYPE {
+            return SA_DEFAULT;
+         };
+
+         s_setSaveAction = [](SA_TYPE) -> SA_TYPE {
+            return SA_DEFAULT;
+         };
+      }
+      else
+      {
+         s_pSaveAction = reinterpret_cast<SA_TYPE*>(symbol);
+
+         s_getSaveAction = []() -> SA_TYPE {
+            return *s_pSaveAction;
+         };
+
+         s_setSaveAction = [](SA_TYPE action) -> SA_TYPE {
+            SA_TYPE old = *s_pSaveAction;
+            *s_pSaveAction = action;
+            return old;
+         };
+      }
+   }
+
    return Success();
 }
 
@@ -276,6 +329,16 @@ int getBindingType(SEXP symSEXP, SEXP envSEXP)
 SEXP delayedBindingExpression(SEXP symSEXP, SEXP envSEXP)
 {
    return s_delayedBindingExpression(symSEXP, envSEXP);
+}
+
+SA_TYPE getSaveAction()
+{
+   return s_getSaveAction();
+}
+
+SA_TYPE setSaveAction(SA_TYPE action)
+{
+   return s_setSaveAction(action);
 }
 
 } // namespace runtime

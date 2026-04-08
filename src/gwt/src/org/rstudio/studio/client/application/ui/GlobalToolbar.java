@@ -21,11 +21,14 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -34,9 +37,11 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -45,6 +50,7 @@ import com.google.inject.Provider;
 public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands,
+                        EventBus eventBus,
                         Provider<CodeSearch> pCodeSearch,
                         UserPrefs userPrefs,
                         TrustPresenter trustPresenter)
@@ -52,6 +58,7 @@ public class GlobalToolbar extends Toolbar
       super(constants_.mainLabel());
 
       commands_ = commands;
+      eventBus_ = eventBus;
       pCodeSearch_ = pCodeSearch;
       userPrefs_ = userPrefs;
       trustPresenter_ = trustPresenter;
@@ -258,6 +265,39 @@ public class GlobalToolbar extends Toolbar
       // Keep button in sync with Sidebar location and visibility
       userPrefs_.panes().addValueChangeHandler(evt -> updateSidebarToggleButton());
 
+      // assistant toggle button (right side of toolbar)
+      if (sessionInfo.getPositAiEnabled())
+      {
+         boolean isDark = Document.get().getBody().hasClassName("rstudio-themes-dark-menus");
+         assistantButton_ = new LatchingToolbarButton(
+               "Posit Assistant",
+               constants_.positAssistantTitle(),
+               false,
+               "assistantToggle",
+               isDark
+                  ? new ImageResource2x(StandardIcons.INSTANCE.iconAssistantToolbarDark2x())
+                  : new ImageResource2x(StandardIcons.INSTANCE.iconAssistantToolbar2x()),
+               event -> commands_.assistantPaneToggle().execute());
+         assistantButton_.addStyleName(
+               ThemeResources.INSTANCE.themeStyles().assistantToggleButton());
+         ElementIds.assignElementId(assistantButton_, ElementIds.ASSISTANT_TOGGLE_BUTTON);
+         addRightWidget(assistantButton_);
+         assistantSeparator_ = addRightSeparator();
+
+         // Track command visibility to show/hide the button dynamically
+         commands_.assistantPaneToggle().addVisibleChangedHandler(event -> {
+            boolean visible = commands_.assistantPaneToggle().isVisible();
+            assistantButton_.setVisible(visible);
+            assistantSeparator_.setVisible(visible);
+         });
+
+         eventBus_.addHandler(ChatPaneActiveEvent.TYPE, event ->
+               assistantButton_.setLatched(event.isActive()));
+
+         eventBus_.addHandler(ThemeChangedEvent.TYPE, event ->
+               updateAssistantButtonIcon());
+      }
+
       // restricted mode indicator (managed by TrustPresenter)
       trustPresenter_.initializeForSession(sessionInfo);
       addRightWidget(trustPresenter_.getRestrictedModeIcon());
@@ -298,6 +338,18 @@ public class GlobalToolbar extends Toolbar
       }
    }
 
+   private void updateAssistantButtonIcon()
+   {
+      if (assistantButton_ != null)
+      {
+         boolean isDark = Document.get().getBody().hasClassName("rstudio-themes-dark-menus");
+         ImageResource icon = isDark
+            ? new ImageResource2x(StandardIcons.INSTANCE.iconAssistantToolbarDark2x())
+            : new ImageResource2x(StandardIcons.INSTANCE.iconAssistantToolbar2x());
+         assistantButton_.setLeftImage(icon);
+      }
+   }
+
    @Override
    public int getHeight()
    {
@@ -319,6 +371,7 @@ public class GlobalToolbar extends Toolbar
    }
 
    private final Commands commands_;
+   private final EventBus eventBus_;
    private final TrustPresenter trustPresenter_;
    private final ToolbarPopupMenu newMenu_;
    private final ToolbarMenuButton newButton_;
@@ -327,5 +380,7 @@ public class GlobalToolbar extends Toolbar
    private final UserPrefs userPrefs_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
    private ToolbarButton sidebarToggleButton_;
+   private LatchingToolbarButton assistantButton_;
+   private Widget assistantSeparator_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

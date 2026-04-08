@@ -1,0 +1,24 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.track {
+   width: 100%;
+   background-color: #e0e0e0;
+   border: 1px solid #ccc;
+   border-radius: 3px;
+   margin: 4px 0;
+   overflow: hidden;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .track {
+   background-color: rgba(0, 0, 0, 0.3);
+   border-color: rgba(0, 0, 0, 0.6);
+}
+
+.bar {
+   background-color: #6b9fd6;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .bar {
+   background-color: #4a8ac4;
+}

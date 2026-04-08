@@ -20,6 +20,7 @@
 
 #define R_NO_REMAP
 #include <Rinternals.h>
+#include <R_ext/RStartup.h>
 
 // Runtime-safe wrappers for R API functions that may or may not exist
 // depending on the version of R loaded at runtime. Symbols are resolved
@@ -74,6 +75,10 @@ constexpr int kBindingTypeActive  = 5;
 // Value returned by getBindingType when the symbol is not found
 // (runtime R < 4.6 and R_findVarLocInFrame returns NULL/R_NilValue).
 constexpr int kBindingTypeNotFound = -1;
+
+// R_GetSaveAction / R_SetSaveAction (R >= 4.6), falls back to direct SaveAction global.
+SA_TYPE getSaveAction();
+SA_TYPE setSaveAction(SA_TYPE action);
 
 } // namespace runtime
 } // namespace r
