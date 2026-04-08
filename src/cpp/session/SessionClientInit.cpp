@@ -534,7 +534,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_full_ui"] = options.allowFullUI();
    sessionInfo["posit_assistant_enabled"] = options.positAssistantEnabled() &&
       options.allowPositAssistant() &&
-      core::system::getenv("RSTUDIO_DISABLE_POSIT_AI").empty();
+      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 
