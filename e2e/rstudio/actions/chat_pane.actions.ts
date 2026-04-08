@@ -34,7 +34,7 @@ export class ChatPaneActions {
 
     try {
       await this.chatPane.updateBtn.click({ timeout: 1500 });
-      console.log('Clicked Update on update prompt — updating Posit AI');
+      console.log('Clicked Update on update prompt — updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
       return;
     } catch {

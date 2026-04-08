@@ -383,7 +383,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test('NES dismissed with Escape', async ({ rstudioPage: page }) => {
-      if (key === 'posit-assistant') test.fixme(true, 'Posit AI NES gutter icon persists after Escape (https://github.com/rstudio/rstudio/issues/17363)');
+      if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant NES gutter icon persists after Escape (https://github.com/rstudio/rstudio/issues/17363)');
 
       const fileName = `${prefix}_nes_dismiss.R`;
 
@@ -493,7 +493,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test('NES suggestion does not leak across documents', async ({ rstudioPage: page }) => {
-      if (key === 'posit-assistant') test.fixme(true, 'Posit AI NES suggestion leaks across documents (https://github.com/rstudio/rstudio/issues/17361)');
+      if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant NES suggestion leaks across documents (https://github.com/rstudio/rstudio/issues/17361)');
 
       const fileNameA = `${prefix}_nes_leak_a.R`;
       const fileNameB = `${prefix}_nes_leak_b.R`;

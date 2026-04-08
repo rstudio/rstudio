@@ -8,9 +8,9 @@ import { YES_BTN, NO_BTN } from '@pages/modals.page';
 import type { Page } from 'playwright';
 
 /**
- * Uninstall Posit AI — rstudio/rstudio#17322
+ * Uninstall Posit Assistant — rstudio/rstudio#17322
  *
- * Tests the "Uninstall Posit AI" command (Help > Diagnostics).
+ * Tests the "Uninstall Posit Assistant" command (Help > Diagnostics).
  * Serial because test 4 (happy path) deletes PAI and restarts RStudio,
  * affecting all subsequent tests.
  *
@@ -33,7 +33,7 @@ import type { Page } from 'playwright';
 const PALETTE_LIST = '#rstudio_command_palette_list';
 
 /**
- * Invoke "Uninstall Posit AI" via the command palette.
+ * Invoke "Uninstall Posit Assistant" via the command palette.
  * Desktop mode uses native Electron menus (not in the DOM),
  * so the command palette is the testable UI path.
  */
@@ -41,10 +41,10 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await page.keyboard.press('ControlOrMeta+Shift+P');
   await sleep(1000);
 
-  await page.keyboard.type('Uninstall Posit AI');
+  await page.keyboard.type('Uninstall Posit Assistant');
   await sleep(500);
 
-  const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit AI`);
+  const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit Assistant`);
   await expect(paletteItem).toBeVisible({ timeout: 5000 });
   await paletteItem.click();
   await sleep(500);
@@ -84,7 +84,7 @@ async function waitForRestart(page: Page): Promise<void> {
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
 }
 
-base.describe.serial('Uninstall Posit AI - #17322', { tag: ['@serial'] }, () => {
+base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] }, () => {
   base.skip(process.env.RSTUDIO_EDITION === 'server', 'Uses Desktop restart — Server not supported');
 
   let session: DesktopSession;
@@ -112,14 +112,14 @@ base.describe.serial('Uninstall Posit AI - #17322', { tag: ['@serial'] }, () => 
   // -----------------------------------------------------------------------
   // Test 1: Command visibility (palette)
   // -----------------------------------------------------------------------
-  base('Uninstall Posit AI visible in command palette', async () => {
+  base('Uninstall Posit Assistant visible in command palette', async () => {
     await page.keyboard.press('ControlOrMeta+Shift+P');
     await sleep(1000);
 
-    await page.keyboard.type('Uninstall Posit AI');
+    await page.keyboard.type('Uninstall Posit Assistant');
     await sleep(500);
 
-    const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit AI`);
+    const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit Assistant`);
     await expect(paletteItem).toBeVisible({ timeout: 5000 });
 
     // Close palette without invoking
@@ -139,7 +139,7 @@ base.describe.serial('Uninstall Posit AI - #17322', { tag: ['@serial'] }, () => 
 
     // Verify the confirmation message
     const dialogText = await page.locator('.gwt-DialogBox').innerText();
-    expect(dialogText).toContain('remove Posit AI and restart RStudio');
+    expect(dialogText).toContain('remove Posit Assistant and restart RStudio');
 
     // Click No to cancel
     await noBtn.click();
@@ -188,7 +188,7 @@ base.describe.serial('Uninstall Posit AI - #17322', { tag: ['@serial'] }, () => 
   // -----------------------------------------------------------------------
   // Test 5: Reinstall PAI (cleanup — leave things as we found them)
   // -----------------------------------------------------------------------
-  base('Reinstall Posit AI for cleanup', async () => {
+  base('Reinstall Posit Assistant for cleanup', async () => {
     // Install button should already be visible from test 4
     await expect(chatActions.chatPane.installBtn).toBeVisible({ timeout: 15000 });
     await chatActions.chatPane.installBtn.click();

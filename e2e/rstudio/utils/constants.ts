@@ -15,7 +15,7 @@ export async function sleep(ms: number): Promise<void> {
 
 export const CODE_SUGGESTION_PROVIDERS: Record<string, string> = {
   'copilot': 'GitHub Copilot',
-  'posit-assistant': 'Posit AI',
+  'posit-assistant': 'Posit Assistant',
 };
 
 export const CHAT_PROVIDERS: Record<string, string> = {

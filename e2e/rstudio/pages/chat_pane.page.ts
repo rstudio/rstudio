@@ -49,7 +49,7 @@ export class ChatPane extends FramePageObject {
     this.ignoreBtn = this.frame.locator("button:has-text('Ignore')");
     this.settingsBtn = this.frame.locator("xpath=//span[contains(text(), 'Settings')]/ancestor::button");
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
-    this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]");
+    this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit Assistant')] | //div[contains(text(), 'Configure Posit Assistant')] | //*[@role='menuitem'][contains(., 'Configure Posit Assistant')]");
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
     this.newConversationBtn = this.frame.locator("button:has(svg.lucide-plus)");
     this.historyBtn = this.frame.locator("button:has(svg.lucide-history)");

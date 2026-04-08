@@ -120,7 +120,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     for (const tc of testCases) {
       test(tc.name, async ({ rstudioPage: page }) => {
-        if (key === 'posit-assistant') test.fixme(true, 'Posit AI does not reliably produce ghost text for non-code content');
+        if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant does not reliably produce ghost text for non-code content');
 
         const fileName = `${prefix}_${tc.slug}_${Date.now()}.${tc.ext}`;
 
@@ -162,7 +162,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     // Parens test: unique pattern, both parts build on each other in the same file
     test('R code with parentheses', async ({ rstudioPage: page }) => {
-      if (key === 'posit-assistant') test.fixme(true, 'Posit AI does not reliably produce ghost text for non-code content');
+      if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant does not reliably produce ghost text for non-code content');
       const fileName = `${prefix}_r_parens_${Date.now()}.r`;
 
       await sourceActions.createAndOpenFile(fileName, '');

@@ -15,13 +15,13 @@ export class AssistantOptionsActions {
     this.consolePaneActions = consolePaneActions;
   }
 
-  /** Accept the "Update Posit AI" dialog if it appears, then dismiss "Installation Complete" */
+  /** Accept the "Update Posit Assistant" dialog if it appears, then dismiss "Installation Complete" */
   private async acceptUpdateDialog(): Promise<void> {
     try {
       const updateBtn = this.page.locator('#rstudio_dlg_yes');
       if (await updateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
         await updateBtn.click();
-        console.log('Accepted Posit AI update dialog');
+        console.log('Accepted Posit Assistant update dialog');
 
         // Wait for "Installation Complete" dialog and dismiss it
         const installOkBtn = this.page.locator('#rstudio_dlg_ok');
