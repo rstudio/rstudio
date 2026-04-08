@@ -57,9 +57,9 @@ public class PaiUtil
    }
 
    /**
-    * Returns true if the Posit AI feature is enabled.
+    * Returns true if the Posit Assistant features are enabled.
     *
-    * @return true if PAI is enabled, false otherwise
+    * @return true if Posit Assistant is enabled, false otherwise
     */
    public boolean isPositAssistantEnabled()
    {
