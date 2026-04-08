@@ -251,6 +251,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void showSplashScreen();
 
+   void showWhatsNew();
+
    void detectRosetta();
    
    String getPathForFile(File file);

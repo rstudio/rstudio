@@ -4194,4 +4194,8 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("R_elease Notes") // $NON-NLS-1$
     String showReleaseNotesMenuLabel();
     
+    // whatsNewRStudio
+    @DefaultStringValue("What's _New") // $NON-NLS-1$
+    String whatsNewRStudioMenuLabel();
+    
 }

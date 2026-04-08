@@ -469,6 +469,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onWhatsNewRStudio()
+   {
+      Desktop.getFrame().showWhatsNew();
+   }
+
+   @Handler
    void onCopyRStudioVersion()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -1285,6 +1291,7 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
          commands_.showSplashScreen().remove();
+         commands_.whatsNewRStudio().remove();
       }
 
       // remove main menu commands in desktop mode

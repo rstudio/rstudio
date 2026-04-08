@@ -62,6 +62,8 @@ import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
 import { detectRosetta } from './detect-rosetta';
 import { showPersistentSplashScreen } from './splash-screen';
+import { showWhatsNewWindow } from './whats-new-window';
+import { toReleaseSlug, isValidSlug, resolveWhatsNewContentPath } from './whats-new-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -1101,6 +1103,38 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_show_splash_screen', () => {
       showPersistentSplashScreen();
+    });
+
+    ipcMain.on('desktop_show_whats_new', () => {
+      const info = buildInfo();
+      const slug = toReleaseSlug(info.RSTUDIO_RELEASE_NAME);
+
+      if (!isValidSlug(slug) || !resolveWhatsNewContentPath(slug)) {
+        const msgBoxOptions = {
+          type: 'info' as const,
+          message: "What's New",
+          detail: "What's New information is not available.",
+          buttons: ['OK'],
+        };
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+          void appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox(focusedWindow, msgBoxOptions),
+          );
+        } else {
+          void appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox(msgBoxOptions),
+          );
+        }
+        return;
+      }
+
+      showWhatsNewWindow({
+        releaseSlug: slug,
+        releaseName: info.RSTUDIO_RELEASE_NAME,
+        version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
+        parent: this.mainWindow.window,
+      });
     });
 
     ipcMain.on('desktop_detect_rosetta', () => {

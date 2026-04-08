@@ -551,6 +551,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
          <cmd refid="showReleaseNotes"/>
+         <cmd refid="whatsNewRStudio"/>
          <separator/>
          <menu label="_Accessibility">
             <cmd refid="toggleScreenReaderSupport"/>
@@ -4429,6 +4430,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="showReleaseNotes"
         menuLabel="R_elease Notes"
         context="help"
+        windowMode="main"/>
+
+   <cmd id="whatsNewRStudio"
+        menuLabel="What's _New"
+        rebindable="false"
         windowMode="main"/>
 
 </commands>

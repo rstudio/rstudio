@@ -537,6 +537,7 @@ public abstract class
    public abstract AppCommand showLicenseDialog();
    public abstract AppCommand checkForUpdates();
    public abstract AppCommand showReleaseNotes();
+   public abstract AppCommand whatsNewRStudio();
    public abstract AppCommand helpUsingRStudio();
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();
