@@ -1799,7 +1799,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            if (tab == Tab.Chat && !paiUtil_.isPaiEnabled())
+            if (tab == Tab.Chat && !paiUtil_.isPositAssistantEnabled())
                continue;
             tabList.add(tab);
          }
@@ -1880,7 +1880,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (paiUtil_.isPaiEnabled())
+      if (paiUtil_.isPositAssistantEnabled())
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -2743,7 +2743,7 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = paiUtil_.isPaiEnabled();
+      boolean showPaiUi = paiUtil_.isPositAssistantEnabled();
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
       commands_.assistantPaneToggle().setVisible(
@@ -2769,7 +2769,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      if (paiUtil_.isPaiEnabled())
+      if (paiUtil_.isPositAssistantEnabled())
          commands.add(commands_.layoutZoomChat());
 
       return commands;

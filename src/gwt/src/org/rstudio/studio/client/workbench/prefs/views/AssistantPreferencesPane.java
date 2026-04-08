@@ -136,7 +136,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       installManager_ = new PositAiInstallManager();
 
       // Create assistant selector - conditionally include Posit AI option
-      boolean paiEnabled = paiUtil_.isPaiEnabled();
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)
@@ -1155,7 +1155,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Reset to "none" if user has Posit AI selected but PAI is no longer enabled
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
-          !paiUtil_.isPaiEnabled())
+          !paiUtil_.isPositAssistantEnabled())
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);

@@ -131,7 +131,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
             if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
-                !paiUtil_.isPaiEnabled())
+                !paiUtil_.isPositAssistantEnabled())
               checkBox.setVisible(false);
          }
 

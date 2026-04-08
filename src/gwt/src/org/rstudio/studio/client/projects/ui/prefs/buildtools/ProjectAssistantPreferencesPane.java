@@ -118,7 +118,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       paiUtil_ = paiUtil;
 
       // Create assistant selector - conditionally include Posit AI option
-      boolean paiEnabled = paiUtil_.isPaiEnabled();
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)

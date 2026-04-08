@@ -61,7 +61,7 @@ public class PaiUtil
     *
     * @return true if PAI is enabled, false otherwise
     */
-   public boolean isPaiEnabled()
+   public boolean isPositAssistantEnabled()
    {
       return session_.getSessionInfo().getPositAssistantEnabled();
    }
