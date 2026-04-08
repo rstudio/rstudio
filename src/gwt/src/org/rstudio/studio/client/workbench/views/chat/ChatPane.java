@@ -23,8 +23,10 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
@@ -43,6 +45,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ChatPane
       extends WorkbenchPane
@@ -60,12 +63,14 @@ public class ChatPane
 
    @Inject
    protected ChatPane(EventBus events,
-                      Commands commands)
+                      Commands commands,
+                      Provider<ProductEditionInfo> pEdition)
    {
       super(constants_.chatTitle(), events);
 
       events_ = events;
       commands_ = commands;
+      pEdition_ = pEdition;
 
       ensureWidget();
 
@@ -650,13 +655,24 @@ public class ChatPane
       updateFrameContent(html);
    }
 
+   private boolean isWorkbench()
+   {
+      return pEdition_.get() != null &&
+             pEdition_.get().proLicense() &&
+             !Desktop.isDesktop();
+   }
+
    private String generateNotInstalledWithInstallHTML(String newVersion)
    {
+      String description = isWorkbench() ?
+         constants_.chatNotInstalledDescriptionWorkbench() :
+         constants_.chatNotInstalledDescription();
+
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
-         "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
+         "<p class='detail'>" + description + "</p>" +
          "<p class='detail'>" +
          "<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>" +
          constants_.chatLearnMore() + "</a></p>" +
@@ -1243,6 +1259,7 @@ public class ChatPane
    // Injected ----
    private final EventBus events_;
    private final Commands commands_;
+   private final Provider<ProductEditionInfo> pEdition_;
 
    private static final int FRAME_SWAP_DELAY_MS = 350;
    private static final int FRAME_LOAD_TIMEOUT_MS = 15000;

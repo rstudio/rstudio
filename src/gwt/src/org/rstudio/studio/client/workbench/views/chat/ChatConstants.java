@@ -31,6 +31,7 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatNotInstalledTitle();
     String chatNotInstalledWithVersionMessage(String version);
     String chatNotInstalledDescription();
+    String chatNotInstalledDescriptionWorkbench();
     String chatLearnMore();
     String chatInstallButton();
     String chatInstallTermsOfUse();
