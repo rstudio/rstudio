@@ -1020,7 +1020,7 @@
             "defaultValue": false,
             "implicitValue": true,
             "isHidden": true,
-            "description": "Use the test manifest URL for Posit AI package updates."
+            "description": "Use the test manifest URL for Posit Assistant package updates."
          }
       ],
       "trust": [

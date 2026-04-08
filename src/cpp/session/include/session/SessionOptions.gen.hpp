@@ -498,7 +498,7 @@ protected:
       "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server.")
       ("posit-assistant-test-manifest",
       value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
-      "Use the test manifest URL for Posit AI package updates.");
+      "Use the test manifest URL for Posit Assistant package updates.");
 
    pTrust->add_options()
       ("project-trust-dialogs",
