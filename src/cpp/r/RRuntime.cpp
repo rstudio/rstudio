@@ -24,6 +24,7 @@
 #include <r/RSexpInternal.hpp>
 
 #if defined(_WIN32)
+# include <windows.h>
 # define kRLibraryName "R.dll"
 #else
 # include <dlfcn.h>
@@ -112,10 +113,14 @@ SA_TYPE (*s_setSaveAction)(SA_TYPE) = nullptr;
 Error initialize()
 {
 #if defined(_WIN32)
-   // On Windows, R.dll is a separate DLL resolvable via the PATH.
-   Error error = core::system::loadLibrary(kRLibraryName, &s_library);
-   if (error)
-      return error;
+   // On Windows, R.dll is already loaded into the process by the time
+   // initialize() runs (after setup_Rmainloop). Use GetModuleHandle to
+   // get its handle without requiring R.dll to be on the DLL search path.
+   // This mirrors the POSIX approach of using dlopen(NULL) to resolve
+   // symbols from the already-loaded process image.
+   s_library = reinterpret_cast<void*>(::GetModuleHandle(kRLibraryName));
+   if (s_library == nullptr)
+      return systemError(::GetLastError(), ERROR_LOCATION);
 #else
    // On POSIX, R is already loaded into the process. Use the process
    // handle so dlsym can find R symbols without needing the library
