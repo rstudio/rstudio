@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.Spinner;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -58,7 +59,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstant
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
-import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -76,8 +76,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
-import org.rstudio.core.client.widget.Spinner;
-
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -267,7 +265,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantNesCollapse_.setValue(!prefs_.assistantNesAutoshow().getGlobalValue());
       cbAssistantNesCollapse_.setTitle(constants_.assistantNesCollapseDescription());
 
-      // Create chat provider selector - conditionally include Posit AI option
+      // Create chat provider selector - conditionally include Posit Assistant option
       String[] chatProviderLabels;
       String[] chatProviderValues;
       if (paiEnabled)
@@ -340,14 +338,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       add(headerLabel(constants_.assistantChatTab()));
       add(selChatProvider_);
 
-      // Add change handler for chat provider to check for Posit AI installation
+      // Add change handler for chat provider to check for Posit Assistant installation
       selChatProvider_.addChangeHandler((event) ->
       {
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
             // Check for install/update/unsupported status
-            checkPositAiInstallation(/* forAssistant= */ false);
+            checkPositAssistantInstallation(/* forAssistant= */ false);
          }
       });
 
@@ -442,7 +440,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                            {
                               // User changed the selection — check for
                               // install, update, or unsupported status
-                              checkPositAiInstallation(/* forAssistant= */ true);
+                              checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
                         }
 
@@ -729,7 +727,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            checkPositAiInstallation(/* forAssistant= */ true);
+            checkPositAssistantInstallation(/* forAssistant= */ true);
          }
       });
    }
@@ -853,12 +851,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
-    * Checks if Posit AI needs to be installed and prompts the user to install it.
+    * Checks if Posit Assistant needs to be installed and prompts the user to install it.
     *
     * @param forAssistant True if this check is for the assistant (completions) preference,
     *                     false if it's for the chat provider preference.
     */
-   private void checkPositAiInstallation(boolean forAssistant)
+   private void checkPositAssistantInstallation(boolean forAssistant)
    {
       // Remember the previous value so we can revert if user declines
       final String previousAssistantValue = forAssistant ?
