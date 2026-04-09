@@ -640,6 +640,15 @@ var applyPinnedColumns = function() {
          if (pinIcon) pinIcon.classList.remove("pinned");
       }
    }
+
+   // Add horizontal overscroll so the last columns can be scrolled
+   // to sit next to the pinned columns.
+   var viewport = document.getElementById("gridViewport");
+   var table = document.getElementById("rsGridData");
+   if (viewport && table) {
+      var overscroll = Math.max(0, viewport.clientWidth - pinned.totalWidth);
+      table.style.paddingRight = overscroll + "px";
+   }
 };
 
 // ==========================================================================

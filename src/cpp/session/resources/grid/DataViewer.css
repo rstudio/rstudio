@@ -146,17 +146,17 @@ td {
    overflow: hidden;
 }
 
-tbody tr:hover td {
-   background-color: var(--grid-hover-bg);
+tbody tr:hover td:not(.first-child) {
+   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
 }
 
 /* Alternating row stripe */
-tbody tr:nth-child(odd) td {
+tbody tr:nth-child(odd) td:not(.first-child) {
    background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 2%);
 }
 
-tbody tr:nth-child(odd):hover td {
-   background-color: var(--grid-hover-bg);
+tbody tr:nth-child(odd):hover td:not(.first-child) {
+   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
 }
 
 
