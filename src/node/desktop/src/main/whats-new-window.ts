@@ -101,14 +101,21 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     }
   };
 
+  // TODO: Remove debug logging before shipping
+  const log = (msg: string) => logger().logDebug(`[whats-new] ${msg}`);
+  log(`WHATS_NEW_WEBPACK_ENTRY = ${WHATS_NEW_WEBPACK_ENTRY}`);
+  log(`hostUrl.protocol = ${hostUrl.protocol}, isFileMode = ${isFileMode}`);
+
   // Open external links in system browser
   win.webContents.setWindowOpenHandler((details) => {
+    log(`setWindowOpenHandler: ${details.url}`);
     openExternalSafely(details.url);
     return { action: 'deny' };
   });
 
   // Intercept main frame navigation (e.g. top-level link clicks)
   win.webContents.on('will-navigate', (event, navUrl) => {
+    log(`will-navigate: ${navUrl}, isLocal=${isLocalUrl(navUrl)}`);
     if (isLocalUrl(navUrl)) {
       return;
     }
@@ -122,6 +129,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
   // After that, local URLs are still allowed (e.g. dev-mode reloads).
   let iframeLoaded = false;
   win.webContents.on('will-frame-navigate', (details) => {
+    log(`will-frame-navigate: isMain=${details.isMainFrame}, url=${details.url}, iframeLoaded=${iframeLoaded}, isLocal=${isLocalUrl(details.url)}`);
     if (details.isMainFrame) {
       return;
     }
