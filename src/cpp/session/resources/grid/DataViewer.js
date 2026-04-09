@@ -277,7 +277,7 @@ var fetchRows = function(start, length, callback) {
          rowCache.set(start + i, result.data[i]);
       }
       if (callback) callback();
-      renderVisibleRows();
+      renderVisibleRows(true);
       updateInfoBar();
       updateSpacerHeight();
    })
@@ -306,13 +306,14 @@ var invalidateCache = function() {
 // Cell Rendering
 // ==========================================================================
 
+// Render cell contents. Returns an object { text, html } where exactly one
+// is set. When only `text` is set, callers can use the fast textContent path
+// instead of innerHTML, avoiding HTML parsing overhead.
 var renderCellContents = function(data, colIdx, rowData, clazz) {
    // NA handling: 0 means NA, or null when displayNullsAsNAs is set
    if (data === 0 || (displayNullsAsNAs && data === null)) {
-      return '<span class="naCell">NA</span>';
+      return { html: '<span class="naCell">NA</span>' };
    }
-
-   var didHighlight = false;
 
    // Row name column: parse JSON
    if (rowNumbers && colIdx === 0) {
@@ -325,7 +326,11 @@ var renderCellContents = function(data, colIdx, rowData, clazz) {
          var varLabel = varCount > 1 ? "variables" : "variable";
          data = varCount + " " + varLabel;
       }
-   } else if (cachedSearch.length > 0) {
+   }
+
+   // Search highlighting (produces HTML)
+   var didHighlight = false;
+   if (clazz !== "dataCell" && cachedSearch.length > 0) {
       var idx = data.toLowerCase().indexOf(cachedSearch.toLowerCase());
       if (idx >= 0) {
          data = highlightSearchMatch(data, cachedSearch, idx);
@@ -346,10 +351,9 @@ var renderCellContents = function(data, colIdx, rowData, clazz) {
       }
    }
 
-   var escaped = didHighlight ? data : escapeHtml(data);
-
-   // Data/list cell links
+   // Data/list cell links (produces HTML)
    if (clazz === "dataCell" || clazz === "listCell") {
+      var escaped = didHighlight ? data : escapeHtml(data);
       var cbName = clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback";
       var cbRow = rowData[0];
       var cbCol = colIdx + columnOffset;
@@ -361,10 +365,16 @@ var renderCellContents = function(data, colIdx, rowData, clazz) {
       imgEl.className = "viewerImage";
       imgEl.src = clazz === "dataCell" ? "data-viewer.png" : "object-viewer.png";
       linkEl.appendChild(imgEl);
-      escaped = "<i>" + escaped + "</i> " + linkEl.outerHTML;
+      return { html: "<i>" + escaped + "</i> " + linkEl.outerHTML };
    }
 
-   return escaped;
+   // If highlighting produced HTML, return as html
+   if (didHighlight) {
+      return { html: data };
+   }
+
+   // Common case: plain text — caller can use textContent (fast path)
+   return { text: data };
 };
 
 // Cached pinned offsets — recomputed in applyPinnedColumns and renderVisibleRows
@@ -376,17 +386,20 @@ var createCell = function(data, colIdx, rowData, clazz) {
 
    // Determine classes
    var classes = [clazz];
-   if (contents.length >= 10) classes.push("largeCell");
    if (isColumnPinned(colIdx)) {
       classes.push("pinned");
       td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
-   // "first-child" class on row names cells — GridViewerStyles.getCustomStyle()
-   // injects theme-specific background-color rules targeting td.first-child
    if (colIdx === 0 && rowNumbers) classes.push("first-child");
 
    td.className = classes.join(" ");
-   td.innerHTML = contents;
+
+   // Fast path: use textContent for plain text cells (avoids HTML parsing)
+   if (contents.text !== undefined) {
+      td.textContent = contents.text;
+   } else {
+      td.innerHTML = contents.html;
+   }
 
    if (typeof data === "string") td.title = data;
 
@@ -561,7 +574,7 @@ var togglePinColumn = function(colIdx) {
       pinnedColumns.add(colIdx);
    }
    rebuildHeaders();
-   renderVisibleRows();
+   renderVisibleRows(true);
 };
 
 // Rebuild headers in the current column order (pinned first, then unpinned)
@@ -582,12 +595,13 @@ var rebuildHeaders = function() {
    applyPinnedColumns();
 };
 
-// Compute the cumulative left offset for each pinned column based on render order
+// Compute the cumulative left offset for each pinned column based on render order.
+// Returns { offsets: { colIdx: leftPx, ... }, totalWidth: number }.
 var getPinnedOffsets = function() {
    var offsets = {};
    var cumulative = 0;
    var thead = document.getElementById("data_cols");
-   if (!thead) return offsets;
+   if (!thead) return { offsets: offsets, totalWidth: 0 };
 
    for (var i = 0; i < columnOrder.length; i++) {
       var colIdx = columnOrder[i];
@@ -596,7 +610,7 @@ var getPinnedOffsets = function() {
       var th = thead.children[i];
       cumulative += th ? th.offsetWidth : 0;
    }
-   return offsets;
+   return { offsets: offsets, totalWidth: cumulative };
 };
 
 // Apply pinned styling to header cells
@@ -604,7 +618,7 @@ var applyPinnedColumns = function() {
    var thead = document.getElementById("data_cols");
    if (!thead) return;
 
-   var offsets = getPinnedOffsets();
+   var pinned = getPinnedOffsets();
 
    for (var i = 0; i < thead.children.length; i++) {
       var th = thead.children[i];
@@ -613,7 +627,7 @@ var applyPinnedColumns = function() {
 
       if (isColumnPinned(colIdx)) {
          th.classList.add("pinned");
-         th.style.left = (offsets[colIdx] || 0) + "px";
+         th.style.left = (pinned.offsets[colIdx] || 0) + "px";
          if (pinIcon) pinIcon.classList.add("pinned");
       } else {
          th.classList.remove("pinned");
@@ -1179,6 +1193,11 @@ var scrollToTop = function() {
 var updateSpacerHeight = function() {};
 
 var updateInfoBar = function() {
+   // Suppress info bar updates during custom scrollbar drags — reading
+   // scrollTop forces style+layout recalc which causes jank. The info
+   // bar is updated once when the drag ends.
+   if (scrollbarDragging) return;
+
    var info = document.getElementById("rsGridData_info");
    if (!info) return;
 
@@ -1193,10 +1212,10 @@ var updateInfoBar = function() {
       return;
    }
 
+   // Use cached scroll position to avoid forcing layout recalc
+   var first = Math.floor(lastScrollTop / ROW_HEIGHT) + 1;
    var viewport = document.getElementById("gridViewport");
-   var scrollTop = viewport ? viewport.scrollTop : 0;
    var viewportH = viewport ? viewport.clientHeight : 0;
-   var first = Math.floor(scrollTop / ROW_HEIGHT) + 1;
    var last = Math.min(first + Math.ceil(viewportH / ROW_HEIGHT) - 1, activeRows);
 
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
@@ -1207,7 +1226,7 @@ var updateInfoBar = function() {
    info.textContent = text;
 };
 
-var renderVisibleRows = function() {
+var renderVisibleRows = function(force) {
    var viewport = document.getElementById("gridViewport");
    var tbody = document.getElementById("gridBody");
    if (!viewport || !tbody || !cols) return;
@@ -1218,6 +1237,8 @@ var renderVisibleRows = function() {
 
    if (activeRows === 0) {
       tbody.innerHTML = "";
+      renderStart = 0;
+      renderEnd = 0;
       return;
    }
 
@@ -1226,6 +1247,11 @@ var renderVisibleRows = function() {
 
    var newStart = Math.max(0, firstVisible - BUFFER_ROWS);
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
+
+   // Skip full rebuild if the render window hasn't changed
+   if (!force && newStart === renderStart && newEnd === renderEnd) {
+      return;
+   }
 
    // Check if we need to fetch more data — iterate over block-aligned
    // boundaries so we don't miss blocks when newStart is unaligned.
@@ -1243,7 +1269,7 @@ var renderVisibleRows = function() {
    }
 
    // Recompute pinned offsets for data cells
-   cachedPinnedOffsets = getPinnedOffsets();
+   cachedPinnedOffsets = getPinnedOffsets().offsets;
 
    // Build rows, counting how many we actually render (some may be
    // uncached and skipped). The bottom spacer absorbs the deficit.
@@ -1313,13 +1339,18 @@ var renderVisibleRows = function() {
    renderEnd = newEnd;
 };
 
+// Info bar update is debounced separately at a longer interval — reading
+// scrollTop for the "Showing X to Y" text forces style+layout recalc,
+// which is expensive during fast scrolling.
+var debouncedInfoBar = debounce(updateInfoBar, 150);
+
 var onScroll = debounce(function() {
    var viewport = document.getElementById("gridViewport");
    if (!viewport) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
    renderVisibleRows();
-   updateInfoBar();
+   debouncedInfoBar();
 }, 16);
 
 // ==========================================================================
@@ -1449,7 +1480,7 @@ var toggleSidebar = function() {
    }
    // Trigger grid resize after transition
    setTimeout(function() {
-      renderVisibleRows();
+      renderVisibleRows(true);
       updateInfoBar();
    }, 200);
 };
@@ -1488,6 +1519,7 @@ var scrollToColumn = function(colIdx) {
 var scrollbarV = null;   // vertical scrollbar element
 var scrollbarH = null;   // horizontal scrollbar element
 var scrollbarHideTimer = null;
+var scrollbarDragging = false;  // true while a thumb or track drag is active
 var SCROLLBAR_HIDE_DELAY = 1200;
 
 var createCustomScrollbars = function() {
@@ -1539,37 +1571,39 @@ var initScrollbarDrag = function(bar, thumb, isVertical) {
       evt.preventDefault();
       evt.stopPropagation();
       thumb.classList.add("dragging");
+      scrollbarDragging = true;
       dragStart = isVertical ? evt.clientY : evt.clientX;
       var viewport = document.getElementById("gridViewport");
       scrollStart = isVertical ? viewport.scrollTop : viewport.scrollLeft;
 
+      // Cache layout reads once at drag start — these don't change during
+      // a drag and reading them in onMove forces expensive reflow.
+      var cachedTrackSize = isVertical ? bar.clientHeight : bar.clientWidth;
+      var cachedContentSize = isVertical
+         ? viewport.scrollHeight - viewport.clientHeight
+         : viewport.scrollWidth - viewport.clientWidth;
+      var cachedThumbSize = isVertical ? thumb.offsetHeight : thumb.offsetWidth;
+      var scrollRatio = cachedTrackSize - cachedThumbSize > 0
+         ? cachedContentSize / (cachedTrackSize - cachedThumbSize) : 0;
+
       var onMove = function(e) {
          var delta = (isVertical ? e.clientY : e.clientX) - dragStart;
-         var viewport = document.getElementById("gridViewport");
-         if (!viewport) return;
-
-         // Convert pixel delta on the track to scroll delta
-         var trackSize = isVertical ? bar.clientHeight : bar.clientWidth;
-         var contentSize = isVertical
-            ? viewport.scrollHeight - viewport.clientHeight
-            : viewport.scrollWidth - viewport.clientWidth;
-         var thumbSize = isVertical
-            ? thumb.offsetHeight : thumb.offsetWidth;
-
-         if (trackSize - thumbSize > 0) {
-            var scrollDelta = delta * (contentSize / (trackSize - thumbSize));
+         if (scrollRatio > 0) {
+            var newPos = scrollStart + delta * scrollRatio;
             if (isVertical) {
-               viewport.scrollTop = scrollStart + scrollDelta;
+               viewport.scrollTop = newPos;
             } else {
-               viewport.scrollLeft = scrollStart + scrollDelta;
+               viewport.scrollLeft = newPos;
             }
          }
       };
 
       var onUp = function() {
          thumb.classList.remove("dragging");
+         scrollbarDragging = false;
          document.removeEventListener("mousemove", onMove);
          document.removeEventListener("mouseup", onUp);
+         updateInfoBar();
          scheduleScrollbarHide();
       };
 
@@ -1602,6 +1636,7 @@ var initScrollbarTrackClick = function(track, thumb, isVertical) {
       };
 
       // Jump to click position immediately
+      scrollbarDragging = true;
       scrollToPosition(evt);
 
       // Continue scrolling as user drags
@@ -1611,8 +1646,10 @@ var initScrollbarTrackClick = function(track, thumb, isVertical) {
       };
 
       var onUp = function() {
+         scrollbarDragging = false;
          document.removeEventListener("mousemove", onMove);
          document.removeEventListener("mouseup", onUp);
+         updateInfoBar();
          scheduleScrollbarHide();
       };
 
@@ -1625,70 +1662,60 @@ var updateCustomScrollbars = function() {
    var viewport = document.getElementById("gridViewport");
    if (!viewport || !scrollbarV || !scrollbarH) return;
 
+   // --- ALL LAYOUT READS (batched to avoid read-write-read thrashing) ---
    var thead = document.getElementById("data_cols");
    var headerH = thead ? thead.parentElement.offsetHeight : 0;
-
-   // Pinned column width
-   var offsets = getPinnedOffsets();
-   var pinnedWidth = 0;
-   for (var key in offsets) {
-      var th = getHeaderCell(parseInt(key));
-      if (th) {
-         var w = offsets[key] + th.offsetWidth;
-         if (w > pinnedWidth) pinnedWidth = w;
-      }
-   }
-
-   var infoBarH = 25; // matches --info-bar-height
-
-   // Determine which scrollbars are needed
+   var pinned = getPinnedOffsets();
+   var pinnedWidth = pinned.totalWidth;
    var contentH = viewport.scrollHeight;
    var viewH = viewport.clientHeight;
    var contentW = viewport.scrollWidth;
    var viewW = viewport.clientWidth;
+   var vpHeight = viewport.offsetHeight;
+   var vpWidth = viewport.offsetWidth;
+   var scrollT = viewport.scrollTop;
+   var scrollL = viewport.scrollLeft;
+
    var hasVScroll = contentH > viewH + 1;
    var hasHScroll = contentW > viewW + 1;
 
-   // -- Vertical scrollbar --
-   // Leave room for the horizontal scrollbar at the bottom if present
+   // --- COMPUTE (no DOM access) ---
    var vBottom = hasHScroll ? 10 : 0;
-   var vHeight = viewport.offsetHeight - headerH - vBottom;
+   var vHeight = vpHeight - headerH - vBottom;
+   var hWidth = vpWidth - pinnedWidth - (hasVScroll ? 10 : 0);
 
+   var vThumbH = 0, vThumbTop = 0;
+   if (hasVScroll) {
+      vThumbH = Math.max(20, (viewH / contentH) * vHeight);
+      var maxScrollV = contentH - viewH;
+      vThumbTop = maxScrollV > 0 ? (scrollT / maxScrollV) * (vHeight - vThumbH) : 0;
+   }
+
+   var hThumbW = 0, hThumbLeft = 0;
+   if (hasHScroll) {
+      hThumbW = Math.max(20, (viewW / contentW) * hWidth);
+      var maxScrollH = contentW - viewW;
+      hThumbLeft = maxScrollH > 0 ? (scrollL / maxScrollH) * (hWidth - hThumbW) : 0;
+   }
+
+   // --- ALL DOM WRITES (no layout reads below this line) ---
    scrollbarV.style.top = headerH + "px";
    scrollbarV.style.height = vHeight + "px";
-
    if (hasVScroll) {
-      var trackH = vHeight;
-      var thumbH = Math.max(20, (viewH / contentH) * trackH);
-      var maxScroll = contentH - viewH;
-      var thumbTop = maxScroll > 0
-         ? (viewport.scrollTop / maxScroll) * (trackH - thumbH)
-         : 0;
-
       var thumbEl = scrollbarV.querySelector(".scrollbar-thumb");
-      thumbEl.style.height = thumbH + "px";
-      thumbEl.style.top = thumbTop + "px";
+      thumbEl.style.height = vThumbH + "px";
+      thumbEl.style.top = vThumbTop + "px";
       scrollbarV.style.display = "";
    } else {
       scrollbarV.style.display = "none";
    }
 
-   // -- Horizontal scrollbar --
    scrollbarH.style.left = pinnedWidth + "px";
-   scrollbarH.style.width = (viewport.offsetWidth - pinnedWidth -
-      (hasVScroll ? 10 : 0)) + "px";
-
+   scrollbarH.style.width = hWidth + "px";
    if (hasHScroll) {
-      var trackW = viewport.offsetWidth - pinnedWidth - (hasVScroll ? 10 : 0);
-      var thumbW = Math.max(20, (viewW / contentW) * trackW);
-      var maxScrollH = contentW - viewW;
-      var thumbLeft = maxScrollH > 0
-         ? (viewport.scrollLeft / maxScrollH) * (trackW - thumbW)
-         : 0;
-
       var thumbElH = scrollbarH.querySelector(".scrollbar-thumb");
-      thumbElH.style.width = thumbW + "px";
-      thumbElH.style.left = thumbLeft + "px";
+      thumbElH.style.width = hThumbW + "px";
+      thumbElH.style.left = hThumbLeft + "px";
       scrollbarH.style.display = "";
    } else {
       scrollbarH.style.display = "none";
@@ -1792,13 +1819,21 @@ var initGrid = function(resCols, data) {
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
       viewport.addEventListener("scroll", onScroll);
-      // Update custom scrollbar thumb position on every scroll
+      // Update custom scrollbar thumb position — coalesce to one per frame
+      var scrollbarRafId = 0;
       viewport.addEventListener("scroll", function() {
-         updateCustomScrollbars();
          showScrollbars();
+         if (!scrollbarRafId) {
+            scrollbarRafId = requestAnimationFrame(function() {
+               scrollbarRafId = 0;
+               updateCustomScrollbars();
+            });
+         }
       });
-      // Force a final re-render when scrolling stops
+      // Force a final re-render when scrolling stops — but not during
+      // custom scrollbar drags, which generate spurious scrollend events
       viewport.addEventListener("scrollend", function() {
+         if (scrollbarDragging) return;
          onScroll.cancel();
          lastScrollTop = viewport.scrollTop;
          lastScrollLeft = viewport.scrollLeft;
@@ -1814,7 +1849,7 @@ var initGrid = function(resCols, data) {
 
    // Set up resize handler
    window.addEventListener("resize", debounce(function() {
-      renderVisibleRows();
+      renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
    }, 75));
@@ -1951,7 +1986,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       }
    }
 
-   renderVisibleRows();
+   renderVisibleRows(true);
    updateCustomScrollbars();
    return true;
 };

@@ -741,6 +741,7 @@ th.columnClickable div {
    z-index: 20;
    opacity: 0;
    transition: opacity 0.2s;
+   contain: layout style;
 }
 
 .custom-scrollbar.visible {
