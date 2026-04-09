@@ -74,12 +74,18 @@ html, body {
    flex-direction: column;
    min-width: 0;
    overflow: hidden;
+   position: relative;
 }
 
 #gridViewport {
    flex: 1;
    overflow: auto;
    position: relative;
+   /* Hide native scrollbars — custom scrollbars are rendered as sibling divs */
+   scrollbar-width: none;                /* Firefox */
+}
+#gridViewport::-webkit-scrollbar {
+   display: none;                        /* Chromium */
 }
 
 
@@ -719,4 +725,73 @@ th.columnClickable div {
 
 .grid-loading.visible {
    display: block;
+}
+
+
+/* ==========================================================================
+   Custom Scrollbars
+
+   Rendered as absolutely-positioned divs inside #gridPanel. The vertical
+   bar starts below the sticky header; the horizontal bar starts after
+   the pinned columns. Position offsets are set dynamically from JS.
+   ========================================================================== */
+
+.custom-scrollbar {
+   position: absolute;
+   z-index: 20;
+   opacity: 0;
+   transition: opacity 0.2s;
+}
+
+.custom-scrollbar.visible {
+   opacity: 1;
+}
+
+.custom-scrollbar.vertical {
+   right: 0;
+   width: 10px;
+   /* top and height set from JS */
+}
+
+.custom-scrollbar.horizontal {
+   bottom: var(--info-bar-height);
+   height: 10px;
+   /* left and width set from JS */
+}
+
+.scrollbar-track {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+}
+
+.scrollbar-thumb {
+   position: absolute;
+   border-radius: 5px;
+   background-color: var(--grid-fg);
+   opacity: 0.25;
+   transition: opacity 0.15s;
+}
+
+.scrollbar-thumb:hover,
+.scrollbar-thumb.dragging {
+   opacity: 0.5;
+}
+
+.custom-scrollbar.vertical .scrollbar-thumb {
+   width: 7px;
+   right: 1px;
+   left: 1px;
+   min-height: 20px;
+   /* top and height set from JS */
+}
+
+.custom-scrollbar.horizontal .scrollbar-thumb {
+   height: 7px;
+   bottom: 1px;
+   top: 1px;
+   min-width: 20px;
+   /* left and width set from JS */
 }

@@ -1482,6 +1482,242 @@ var scrollToColumn = function(colIdx) {
 };
 
 // ==========================================================================
+// Custom Scrollbars
+// ==========================================================================
+
+var scrollbarV = null;   // vertical scrollbar element
+var scrollbarH = null;   // horizontal scrollbar element
+var scrollbarHideTimer = null;
+var SCROLLBAR_HIDE_DELAY = 1200;
+
+var createCustomScrollbars = function() {
+   var gridPanel = document.getElementById("gridPanel");
+   if (!gridPanel) return;
+
+   // Vertical
+   scrollbarV = document.createElement("div");
+   scrollbarV.className = "custom-scrollbar vertical";
+   var trackV = document.createElement("div");
+   trackV.className = "scrollbar-track";
+   var thumbV = document.createElement("div");
+   thumbV.className = "scrollbar-thumb";
+   trackV.appendChild(thumbV);
+   scrollbarV.appendChild(trackV);
+   gridPanel.appendChild(scrollbarV);
+
+   // Horizontal
+   scrollbarH = document.createElement("div");
+   scrollbarH.className = "custom-scrollbar horizontal";
+   var trackH = document.createElement("div");
+   trackH.className = "scrollbar-track";
+   var thumbH = document.createElement("div");
+   thumbH.className = "scrollbar-thumb";
+   trackH.appendChild(thumbH);
+   scrollbarH.appendChild(trackH);
+   gridPanel.appendChild(scrollbarH);
+
+   // Show on hover
+   scrollbarV.addEventListener("mouseenter", function() { showScrollbars(); });
+   scrollbarV.addEventListener("mouseleave", function() { scheduleScrollbarHide(); });
+   scrollbarH.addEventListener("mouseenter", function() { showScrollbars(); });
+   scrollbarH.addEventListener("mouseleave", function() { scheduleScrollbarHide(); });
+
+   // Drag handling
+   initScrollbarDrag(scrollbarV, thumbV, true);
+   initScrollbarDrag(scrollbarH, thumbH, false);
+
+   // Track click (jump to position)
+   initScrollbarTrackClick(trackV, thumbV, true);
+   initScrollbarTrackClick(trackH, thumbH, false);
+};
+
+var initScrollbarDrag = function(bar, thumb, isVertical) {
+   var dragStart = 0;
+   var scrollStart = 0;
+
+   thumb.addEventListener("mousedown", function(evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      thumb.classList.add("dragging");
+      dragStart = isVertical ? evt.clientY : evt.clientX;
+      var viewport = document.getElementById("gridViewport");
+      scrollStart = isVertical ? viewport.scrollTop : viewport.scrollLeft;
+
+      var onMove = function(e) {
+         var delta = (isVertical ? e.clientY : e.clientX) - dragStart;
+         var viewport = document.getElementById("gridViewport");
+         if (!viewport) return;
+
+         // Convert pixel delta on the track to scroll delta
+         var trackSize = isVertical ? bar.clientHeight : bar.clientWidth;
+         var contentSize = isVertical
+            ? viewport.scrollHeight - viewport.clientHeight
+            : viewport.scrollWidth - viewport.clientWidth;
+         var thumbSize = isVertical
+            ? thumb.offsetHeight : thumb.offsetWidth;
+
+         if (trackSize - thumbSize > 0) {
+            var scrollDelta = delta * (contentSize / (trackSize - thumbSize));
+            if (isVertical) {
+               viewport.scrollTop = scrollStart + scrollDelta;
+            } else {
+               viewport.scrollLeft = scrollStart + scrollDelta;
+            }
+         }
+      };
+
+      var onUp = function() {
+         thumb.classList.remove("dragging");
+         document.removeEventListener("mousemove", onMove);
+         document.removeEventListener("mouseup", onUp);
+         scheduleScrollbarHide();
+      };
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+   });
+};
+
+var initScrollbarTrackClick = function(track, thumb, isVertical) {
+   track.addEventListener("mousedown", function(evt) {
+      // Ignore clicks on the thumb itself
+      if (evt.target === thumb) return;
+      evt.preventDefault();
+
+      var viewport = document.getElementById("gridViewport");
+      if (!viewport) return;
+
+      var scrollToPosition = function(e) {
+         var rect = track.getBoundingClientRect();
+         var pos = isVertical
+            ? (e.clientY - rect.top) / rect.height
+            : (e.clientX - rect.left) / rect.width;
+         pos = Math.max(0, Math.min(1, pos));
+
+         if (isVertical) {
+            viewport.scrollTop = pos * (viewport.scrollHeight - viewport.clientHeight);
+         } else {
+            viewport.scrollLeft = pos * (viewport.scrollWidth - viewport.clientWidth);
+         }
+      };
+
+      // Jump to click position immediately
+      scrollToPosition(evt);
+
+      // Continue scrolling as user drags
+      var onMove = function(e) {
+         e.preventDefault();
+         scrollToPosition(e);
+      };
+
+      var onUp = function() {
+         document.removeEventListener("mousemove", onMove);
+         document.removeEventListener("mouseup", onUp);
+         scheduleScrollbarHide();
+      };
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+   });
+};
+
+var updateCustomScrollbars = function() {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport || !scrollbarV || !scrollbarH) return;
+
+   var thead = document.getElementById("data_cols");
+   var headerH = thead ? thead.parentElement.offsetHeight : 0;
+
+   // Pinned column width
+   var offsets = getPinnedOffsets();
+   var pinnedWidth = 0;
+   for (var key in offsets) {
+      var th = getHeaderCell(parseInt(key));
+      if (th) {
+         var w = offsets[key] + th.offsetWidth;
+         if (w > pinnedWidth) pinnedWidth = w;
+      }
+   }
+
+   var infoBarH = 25; // matches --info-bar-height
+
+   // Determine which scrollbars are needed
+   var contentH = viewport.scrollHeight;
+   var viewH = viewport.clientHeight;
+   var contentW = viewport.scrollWidth;
+   var viewW = viewport.clientWidth;
+   var hasVScroll = contentH > viewH + 1;
+   var hasHScroll = contentW > viewW + 1;
+
+   // -- Vertical scrollbar --
+   // Leave room for the horizontal scrollbar at the bottom if present
+   var vBottom = hasHScroll ? 10 : 0;
+   var vHeight = viewport.offsetHeight - headerH - vBottom;
+
+   scrollbarV.style.top = headerH + "px";
+   scrollbarV.style.height = vHeight + "px";
+
+   if (hasVScroll) {
+      var trackH = vHeight;
+      var thumbH = Math.max(20, (viewH / contentH) * trackH);
+      var maxScroll = contentH - viewH;
+      var thumbTop = maxScroll > 0
+         ? (viewport.scrollTop / maxScroll) * (trackH - thumbH)
+         : 0;
+
+      var thumbEl = scrollbarV.querySelector(".scrollbar-thumb");
+      thumbEl.style.height = thumbH + "px";
+      thumbEl.style.top = thumbTop + "px";
+      scrollbarV.style.display = "";
+   } else {
+      scrollbarV.style.display = "none";
+   }
+
+   // -- Horizontal scrollbar --
+   scrollbarH.style.left = pinnedWidth + "px";
+   scrollbarH.style.width = (viewport.offsetWidth - pinnedWidth -
+      (hasVScroll ? 10 : 0)) + "px";
+
+   if (hasHScroll) {
+      var trackW = viewport.offsetWidth - pinnedWidth - (hasVScroll ? 10 : 0);
+      var thumbW = Math.max(20, (viewW / contentW) * trackW);
+      var maxScrollH = contentW - viewW;
+      var thumbLeft = maxScrollH > 0
+         ? (viewport.scrollLeft / maxScrollH) * (trackW - thumbW)
+         : 0;
+
+      var thumbElH = scrollbarH.querySelector(".scrollbar-thumb");
+      thumbElH.style.width = thumbW + "px";
+      thumbElH.style.left = thumbLeft + "px";
+      scrollbarH.style.display = "";
+   } else {
+      scrollbarH.style.display = "none";
+   }
+};
+
+var showScrollbars = function() {
+   if (scrollbarV) scrollbarV.classList.add("visible");
+   if (scrollbarH) scrollbarH.classList.add("visible");
+   scheduleScrollbarHide();
+};
+
+var scheduleScrollbarHide = function() {
+   clearTimeout(scrollbarHideTimer);
+   scrollbarHideTimer = setTimeout(function() {
+      if (scrollbarV) scrollbarV.classList.remove("visible");
+      if (scrollbarH) scrollbarH.classList.remove("visible");
+   }, SCROLLBAR_HIDE_DELAY);
+};
+
+var destroyCustomScrollbars = function() {
+   if (scrollbarV && scrollbarV.parentNode) scrollbarV.parentNode.removeChild(scrollbarV);
+   if (scrollbarH && scrollbarH.parentNode) scrollbarH.parentNode.removeChild(scrollbarH);
+   scrollbarV = null;
+   scrollbarH = null;
+   clearTimeout(scrollbarHideTimer);
+};
+
+// ==========================================================================
 // Grid Lifecycle
 // ==========================================================================
 
@@ -1556,22 +1792,31 @@ var initGrid = function(resCols, data) {
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
       viewport.addEventListener("scroll", onScroll);
-      // Force a final re-render when scrolling stops — the debounced handler
-      // can miss the final position in some edge cases (e.g. holding the
-      // scrollbar still then releasing).
+      // Update custom scrollbar thumb position on every scroll
+      viewport.addEventListener("scroll", function() {
+         updateCustomScrollbars();
+         showScrollbars();
+      });
+      // Force a final re-render when scrolling stops
       viewport.addEventListener("scrollend", function() {
          onScroll.cancel();
          lastScrollTop = viewport.scrollTop;
          lastScrollLeft = viewport.scrollLeft;
          renderVisibleRows();
          updateInfoBar();
+         updateCustomScrollbars();
       });
    }
+
+   // Create custom scrollbars
+   createCustomScrollbars();
+   updateCustomScrollbars();
 
    // Set up resize handler
    window.addEventListener("resize", debounce(function() {
       renderVisibleRows();
       updateInfoBar();
+      updateCustomScrollbars();
    }, 75));
 
    // Update column frame callback
@@ -1639,6 +1884,7 @@ var destroyGrid = function() {
    activeColumnInfo = {};
 
    invalidateCache();
+   destroyCustomScrollbars();
 
    // Clear DOM
    var thead = document.getElementById("data_cols");
@@ -1706,6 +1952,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
    }
 
    renderVisibleRows();
+   updateCustomScrollbars();
    return true;
 };
 
