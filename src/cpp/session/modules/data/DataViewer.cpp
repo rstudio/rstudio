@@ -952,6 +952,20 @@ Error getGridData(const http::Request& request,
          {
             result = getData(dataSEXP, maxRows, maxCols, fields);
          }
+         else if (show == "column_summary")
+         {
+            int column = http::util::fieldValue<int>(fields, "column", 0);
+            SEXP summarySEXP = R_NilValue;
+            r::sexp::Protect protect;
+            Error error = r::exec::RFunction(".rs.summarizeColumn")
+                  .addParam(dataSEXP)
+                  .addParam(column)
+                  .call(&summarySEXP, &protect);
+            if (!error)
+            {
+               r::json::jsonValueFromObject(summarySEXP, &result);
+            }
+         }
       }
    }
    catch (r::exec::RErrorException& e)

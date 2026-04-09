@@ -201,6 +201,27 @@ var buildFormData = function(params) {
    return parts.join("&");
 };
 
+var fetchColumnSummary = function(columnIndex, callback) {
+   var params = "show=column_summary&column=" + columnIndex +
+      "&" + window.location.search.substring(1);
+
+   fetch("../grid_data", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params
+   })
+   .then(function(response) {
+      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
+      return response.json();
+   })
+   .then(function(result) {
+      if (callback) callback(result);
+   })
+   .catch(function(err) {
+      // Silently fail — stats are non-critical
+   });
+};
+
 var fetchColumns = function(callback) {
    var params = "show=cols&" + window.location.search.substring(1) +
       "&column_offset=" + columnOffset;
@@ -1516,6 +1537,72 @@ var typeLabel = function(col) {
    return map[type] || type;
 };
 
+var formatStatValue = function(val) {
+   if (val === null || val === undefined) return "—";
+   if (typeof val === "number") {
+      if (Number.isInteger(val)) return val.toLocaleString();
+      if (Math.abs(val) >= 100) return val.toFixed(1);
+      if (Math.abs(val) >= 1) return val.toFixed(2);
+      return val.toPrecision(3);
+   }
+   return String(val);
+};
+
+var renderColumnStats = function(container, data, colType) {
+   container.innerHTML = "";
+
+   if (!data || data.error) {
+      container.textContent = data ? data.error : "Error loading summary";
+      return;
+   }
+
+   var table = document.createElement("table");
+   table.className = "sidebar-stats-table";
+
+   var addRow = function(label, value) {
+      var tr = document.createElement("tr");
+      var tdLabel = document.createElement("td");
+      tdLabel.className = "stats-label";
+      tdLabel.textContent = label;
+      var tdValue = document.createElement("td");
+      tdValue.className = "stats-value";
+      tdValue.textContent = formatStatValue(value);
+      tr.appendChild(tdLabel);
+      tr.appendChild(tdValue);
+      table.appendChild(tr);
+   };
+
+   // Type-specific stats
+   if (colType === "numeric" && data.min !== undefined) {
+      addRow("Unique", data.n_unique);
+      addRow("Min", data.min);
+      addRow("Max", data.max);
+      addRow("Mean", data.mean);
+      addRow("Median", data.median);
+      addRow("SD", data.sd);
+   } else if (colType === "character") {
+      addRow("Unique", data.n_unique);
+      if (data.min_length !== undefined) {
+         addRow("Min length", data.min_length);
+         addRow("Max length", data.max_length);
+      }
+      if (data.n_empty !== undefined) addRow("Empty", data.n_empty);
+   } else if (colType === "factor" && data.top_levels) {
+      for (var i = 0; i < data.top_levels.length; i++) {
+         addRow(data.top_levels[i], data.top_counts[i]);
+      }
+   } else if (colType === "boolean") {
+      addRow("TRUE", data.n_true);
+      addRow("FALSE", data.n_false);
+   } else if (data.min !== undefined) {
+      // Date/datetime
+      addRow("Min", data.min);
+      addRow("Max", data.max);
+   }
+
+   container.appendChild(table);
+};
+
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -1536,9 +1623,14 @@ var initSidebar = function() {
       entry.className = "sidebar-col";
       entry.setAttribute("data-col-idx", i);
 
-      // Header row: name + type
+      // Header row: expand button + name + type
       var header = document.createElement("div");
       header.className = "sidebar-col-header";
+
+      var expandBtn = document.createElement("span");
+      expandBtn.className = "sidebar-expand-btn";
+      expandBtn.title = "Show column summary";
+      header.appendChild(expandBtn);
 
       var name = document.createElement("span");
       name.className = "sidebar-col-name";
@@ -1596,12 +1688,41 @@ var initSidebar = function() {
          entry.appendChild(footer);
       }
 
-      // Click to scroll grid to column
-      (function(colIdx) {
-         entry.addEventListener("click", function() {
+      // Stats panel (hidden until expanded)
+      var statsPanel = document.createElement("div");
+      statsPanel.className = "sidebar-stats";
+      statsPanel.style.display = "none";
+      entry.appendChild(statsPanel);
+
+      // Click entry to scroll; click expand button to toggle stats
+      (function(colIdx, statsEl, btnEl, colType) {
+         var expanded = false;
+         var loaded = false;
+
+         btnEl.addEventListener("click", function(evt) {
+            evt.stopPropagation();
+            expanded = !expanded;
+            btnEl.classList.toggle("expanded", expanded);
+
+            if (expanded) {
+               statsEl.style.display = "";
+               if (!loaded) {
+                  statsEl.textContent = "Loading...";
+                  // columnIndex is 1-based for R; colIdx includes rownames at 0
+                  fetchColumnSummary(colIdx + columnOffset, function(data) {
+                     loaded = true;
+                     renderColumnStats(statsEl, data, colType);
+                  });
+               }
+            } else {
+               statsEl.style.display = "none";
+            }
+         });
+
+         entry.addEventListener("click", function(evt) {
             scrollToColumn(colIdx);
          });
-      })(i);
+      })(i, statsPanel, expandBtn, col.col_type);
 
       content.appendChild(entry);
    }

@@ -718,6 +718,67 @@ th.columnClickable div {
    font-style: italic;
 }
 
+/* --- Expand button --- */
+
+.sidebar-expand-btn {
+   display: inline-block;
+   width: 10px;
+   font-size: 10px;
+   line-height: 1;
+   cursor: pointer;
+   opacity: 0.4;
+   flex-shrink: 0;
+   text-align: center;
+   user-select: none;
+}
+
+.sidebar-expand-btn::after {
+   content: "\25B8";  /* right-pointing triangle */
+}
+
+.sidebar-expand-btn:hover {
+   opacity: 0.8;
+}
+
+.sidebar-expand-btn.expanded::after {
+   content: "\25BE";  /* down-pointing triangle */
+}
+
+.sidebar-expand-btn.expanded {
+   opacity: 0.6;
+}
+
+/* --- Stats panel --- */
+
+.sidebar-stats {
+   margin-top: 4px;
+   padding-top: 4px;
+   border-top: 1px solid var(--grid-border);
+}
+
+.sidebar-stats-table {
+   width: 100%;
+   font-size: 10px;
+   border-collapse: collapse;
+}
+
+.sidebar-stats-table td {
+   padding: 1px 0;
+   border: none;
+}
+
+.stats-label {
+   color: var(--grid-na-color);
+   padding-right: 8px;
+   white-space: nowrap;
+}
+
+.stats-value {
+   text-align: right;
+   font-family: monospace;
+   font-size: 10px;
+}
+
 
 /* ==========================================================================
    Error Overlay

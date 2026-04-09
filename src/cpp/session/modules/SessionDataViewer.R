@@ -341,6 +341,73 @@
    .rs.describeCols(colSlice, -1, -1, 64, totalCols)
 })
 
+.rs.addFunction("summarizeColumn", function(x, columnIndex)
+{
+   # columnIndex is 1-based (R convention)
+   if (columnIndex < 1 || columnIndex > ncol(x))
+      return(list(error = .rs.scalar("Column index out of range")))
+
+   col <- x[[columnIndex]]
+   n <- length(col)
+   n_na <- sum(is.na(col))
+   n_valid <- n - n_na
+   col_class <- class(col)[[1]]
+
+   result <- list(
+      n        = .rs.scalar(n),
+      n_na     = .rs.scalar(n_na),
+      n_unique = .rs.scalar(length(unique(col[!is.na(col)])))
+   )
+
+   if (is.numeric(col) && !is.factor(col))
+   {
+      vals <- col[!is.na(col)]
+      if (length(vals) > 0)
+      {
+         result$min    <- .rs.scalar(min(vals))
+         result$max    <- .rs.scalar(max(vals))
+         result$mean   <- .rs.scalar(mean(vals))
+         result$median <- .rs.scalar(median(vals))
+         result$sd     <- .rs.scalar(sd(vals))
+      }
+   }
+   else if (is.character(col))
+   {
+      vals <- col[!is.na(col)]
+      if (length(vals) > 0)
+      {
+         lens <- nchar(vals)
+         result$min_length <- .rs.scalar(min(lens))
+         result$max_length <- .rs.scalar(max(lens))
+         result$n_empty    <- .rs.scalar(sum(lens == 0))
+      }
+   }
+   else if (is.factor(col))
+   {
+      # all levels in their defined order (same as levels())
+      tbl <- table(col, useNA = "no")
+      lvls <- levels(col)
+      result$top_levels  <- lvls
+      result$top_counts  <- as.integer(tbl[lvls])
+   }
+   else if (is.logical(col))
+   {
+      result$n_true  <- .rs.scalar(sum(col == TRUE, na.rm = TRUE))
+      result$n_false <- .rs.scalar(sum(col == FALSE, na.rm = TRUE))
+   }
+   else if (inherits(col, "Date") || inherits(col, "POSIXct"))
+   {
+      vals <- col[!is.na(col)]
+      if (length(vals) > 0)
+      {
+         result$min <- .rs.scalar(as.character(min(vals)))
+         result$max <- .rs.scalar(as.character(max(vals)))
+      }
+   }
+
+   result
+})
+
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
    # check for a data.frame with compact row names
