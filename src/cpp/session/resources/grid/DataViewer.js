@@ -381,6 +381,9 @@ var createCell = function(data, colIdx, rowData, clazz) {
       classes.push("pinned");
       td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
+   // "first-child" class on row names cells — GridViewerStyles.getCustomStyle()
+   // injects theme-specific background-color rules targeting td.first-child
+   if (colIdx === 0 && rowNumbers) classes.push("first-child");
 
    td.className = classes.join(" ");
    td.innerHTML = contents;

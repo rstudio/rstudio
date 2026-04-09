@@ -172,11 +172,14 @@ td.pinned {
    background-color: var(--grid-bg);
 }
 
-/* Row names column (always first pinned) */
+/* Row names column (always first pinned).
+   Background color comes from GridViewerStyles.getCustomStyle() which
+   injects theme-specific rules for td.first-child. */
 th.pinned:first-child,
 td.pinned:first-child {
    font-weight: bold;
    text-align: right;
+   border-left: none;
 }
 
 /* Pinned header cells sit above pinned data cells */
@@ -296,7 +299,7 @@ th:hover .pin-icon {
    max-width: 300px;
 }
 
-/* --- Sort indicators (inline SVG) --- */
+/* --- Sort indicators — use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,
 th.sorting_asc .headerCell::after,
@@ -308,30 +311,34 @@ th.sorting_desc .headerCell::after {
    transform: translateY(-50%);
    width: 10px;
    height: 10px;
-   opacity: 0.5;
+   opacity: 0.4;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
 }
 
 th.sorting .headerCell::after {
    /* Both arrows (unsorted) */
-   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z' fill='%23666'/%3E%3Cpath d='M5 9L2 6h6z' fill='%23666'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
-   background-position: center;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
 }
 
 th.sorting_asc .headerCell::after {
    /* Up arrow */
-   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z' fill='%23333'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
-   background-position: center;
-   opacity: 1;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   opacity: 0.8;
 }
 
 th.sorting_desc .headerCell::after {
    /* Down arrow */
-   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z' fill='%23333'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
-   background-position: center;
-   opacity: 1;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   opacity: 0.8;
 }
 
 
