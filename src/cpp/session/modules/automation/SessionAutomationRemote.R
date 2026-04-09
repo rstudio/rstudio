@@ -390,11 +390,8 @@
    # some commands (e.g. restoreDefaultPaneAndTabLayoutNoPrompt) trigger
    # a full page reload, and we need to wait for re-initialization.
    .rs.waitUntil("GWT application is ready", function() {
-      result <- .rs.tryCatch(
-         self$js.eval("typeof window.rstudioCallbacks !== 'undefined'")
-      )
-      identical(result, TRUE)
-   })
+      self$js.eval("typeof window.rstudioCallbacks !== 'undefined'")
+   }, swallowErrors = TRUE)
 
    # Clear any popups that might be visible.
    self$keyboard.insertText("<Escape>")
