@@ -116,11 +116,21 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     openExternalSafely(navUrl);
   });
 
-  // External links clicked inside the iframe are handled by the DOM
-  // click handler in whats-new-host.ts, which routes them through IPC
-  // to openExternalSafely. We intentionally do NOT use will-frame-navigate
-  // here because it also fires for the initial iframe src load and can
-  // block it in packaged builds where the URL protocol differs.
+  // Block subframe navigations that leave the release content. We must
+  // allow the initial iframe src load through, so we skip the first
+  // subframe navigation and guard all subsequent ones.
+  let iframeLoaded = false;
+  win.webContents.on('will-frame-navigate', (details) => {
+    if (details.isMainFrame) {
+      return;
+    }
+    if (!iframeLoaded) {
+      iframeLoaded = true;
+      return;
+    }
+    details.preventDefault();
+    openExternalSafely(details.url);
+  });
 
   // Close on Escape key — uses before-input-event so it works even
   // when focus is inside the iframe
