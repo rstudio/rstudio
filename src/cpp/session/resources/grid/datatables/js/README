@@ -1,7 +1,0 @@
-The dataTables implementation in this directory has diverged from the original library.
-
-Diff against commit hash https://github.com/rstudio/rstudio/commit/2feebac3997df8e21d5a7df3763bf29fc49a597
-if looking to update dataTables to a newer version.
-
-Warning: This implementation is considered archaic with undesirable monkey patches
-Strongly consider alternate options if contemplating a library update.

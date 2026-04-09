@@ -1634,11 +1634,11 @@ body.windows .toolbar {
    padding-left: 4px;
    height: 17px;
    background: none;
-   border-color: THEME_LIGHT_CONTROL_BORDER;
+   border: 1px solid transparent;
 }
 
 .rstudio-themes-dark .toolbarButtonLatchable {
-   border-color: THEME_DARK_CONTROL_BORDER;
+   border-color: transparent;
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
