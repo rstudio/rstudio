@@ -172,6 +172,25 @@ describe('whats-new-utils', () => {
     });
   });
 
+  describe('createLocalUrlChecker (invalid slug)', () => {
+    const host = 'file:///app/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, '../etc');
+
+    it('still allows the host page directory', () => {
+      assert.isTrue(isLocal('file:///app/.webpack/renderer/whats_new/index.js'));
+    });
+
+    it('rejects arbitrary file:// paths', () => {
+      assert.isFalse(isLocal('file:///etc/passwd'));
+    });
+
+    it('rejects content subtree paths since slug is invalid', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+  });
+
   describe('createLocalUrlChecker (dev mode)', () => {
     const host = 'http://localhost:3000/whats_new/index.html';
     const isLocal = createLocalUrlChecker(host, 'globemaster-allium');

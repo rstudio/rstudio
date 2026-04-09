@@ -41,7 +41,7 @@ export function createLocalUrlChecker(
     : '';
   const contentDir = isFileMode && isValidSlug(releaseSlug)
     ? resolve(hostDir, '..', 'assets', 'whats-new', releaseSlug) + sep
-    : '';
+    : null;
 
   return (targetUrl: string): boolean => {
     try {
@@ -51,7 +51,8 @@ export function createLocalUrlChecker(
           return false;
         }
         const targetPath = resolve(fileURLToPath(target));
-        return targetPath.startsWith(hostDir) || targetPath.startsWith(contentDir);
+        return targetPath.startsWith(hostDir)
+          || (contentDir !== null && targetPath.startsWith(contentDir));
       }
       return target.origin === hostUrl.origin;
     } catch {
