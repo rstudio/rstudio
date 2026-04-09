@@ -119,14 +119,12 @@ th:focus {
    outline: none;
 }
 
-/* Virtual scroll spacer row */
-tr.spacer-row td {
+/* Virtual scroll spacer row — specificity must beat tbody tr:nth-child/hover rules */
+tbody tr.spacer-row td,
+tbody tr.spacer-row:nth-child(odd) td,
+tbody tr.spacer-row:hover td {
    padding: 0;
    border: none;
-   background: none;
-}
-
-tr.spacer-row:hover td {
    background: none;
 }
 
@@ -189,12 +187,11 @@ thead th.pinned {
 /* --- Pin icon --- */
 
 .pin-icon {
-   position: absolute;
-   top: 1px;
    display: inline-block;
    width: 12px;
    height: 12px;
-   margin-left: 4px;
+   margin-right: 3px;
+   vertical-align: middle;
    cursor: pointer;
    opacity: 0;
    transition: opacity 0.1s;

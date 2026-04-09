@@ -421,6 +421,19 @@ var createHeader = function(idx, col) {
    var interior = document.createElement("div");
    interior.className = "headerCell";
 
+   // Pin icon to the left of the label (not shown for rownames — always pinned)
+   if (!(idx === 0 && rowNumbers)) {
+      var pinIcon = document.createElement("span");
+      pinIcon.className = "pin-icon";
+      if (pinnedColumns.has(idx)) pinIcon.classList.add("pinned");
+      pinIcon.title = "Pin column";
+      pinIcon.addEventListener("click", function(evt) {
+         evt.stopPropagation();
+         togglePinColumn(idx);
+      });
+      interior.appendChild(pinIcon);
+   }
+
    var title = document.createElement("span");
    title.textContent = col.col_name;
    interior.appendChild(title);
@@ -445,19 +458,6 @@ var createHeader = function(idx, col) {
       label.textContent = col.col_label;
       label.title = col.col_label;
       interior.appendChild(label);
-   }
-
-   // Pin icon (not shown for rownames column — it's always pinned)
-   if (!(idx === 0 && rowNumbers)) {
-      var pinIcon = document.createElement("div");
-      pinIcon.className = "pin-icon";
-      if (pinnedColumns.has(idx)) pinIcon.classList.add("pinned");
-      pinIcon.title = "Pin column";
-      pinIcon.addEventListener("click", function(evt) {
-         evt.stopPropagation();
-         togglePinColumn(idx);
-      });
-      interior.appendChild(pinIcon);
    }
 
    th.appendChild(interior);
@@ -655,13 +655,16 @@ var autoSizeColumns = function() {
 
    // Padding + border + sort indicator allowance per cell
    var cellPadding = 28;
+   // Extra space for the pin icon in non-rownames columns
+   var pinIconWidth = 20;
 
    for (var i = 0; i < colCount; i++) {
       var col = cols[i];
 
       // Measure header text width (bold)
       var headerText = col.col_name || "";
-      var maxW = measureTextWidth(headerText, true) + cellPadding;
+      var headerExtra = cellPadding + ((i === 0 && rowNumbers) ? 0 : pinIconWidth);
+      var maxW = measureTextWidth(headerText, true) + headerExtra;
 
       // Measure a sample of cell values from the cache
       var sampleSize = Math.min(rowCache.size, 100);
@@ -1221,9 +1224,10 @@ var renderVisibleRows = function() {
    var newStart = Math.max(0, firstVisible - BUFFER_ROWS);
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
 
-   // Check if we need to fetch more data
-   for (var f = newStart; f <= newEnd; f += FETCH_SIZE) {
-      var blockStart = Math.floor(f / FETCH_SIZE) * FETCH_SIZE;
+   // Check if we need to fetch more data — iterate over block-aligned
+   // boundaries so we don't miss blocks when newStart is unaligned.
+   var firstBlock = Math.floor(newStart / FETCH_SIZE) * FETCH_SIZE;
+   for (var blockStart = firstBlock; blockStart <= newEnd; blockStart += FETCH_SIZE) {
       if (!rowCache.has(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
          fetchRows(blockStart, FETCH_SIZE);
       }
@@ -1238,12 +1242,15 @@ var renderVisibleRows = function() {
    // Recompute pinned offsets for data cells
    cachedPinnedOffsets = getPinnedOffsets();
 
-   // Build rows
+   // Build rows, counting how many we actually render (some may be
+   // uncached and skipped). The bottom spacer absorbs the deficit.
    var fragment = document.createDocumentFragment();
+   var renderedCount = 0;
 
    for (var r = newStart; r <= newEnd; r++) {
       var rowData = rowCache.get(r);
       if (!rowData) continue;
+      renderedCount++;
 
       var tr = document.createElement("tr");
 
@@ -1259,16 +1266,22 @@ var renderVisibleRows = function() {
       fragment.appendChild(tr);
    }
 
+   // Spacer heights. Skipped (uncached) rows are added to the bottom
+   // spacer so the total height stays correct:
+   // topSpacer + renderedCount * ROW_HEIGHT + bottomSpacer = activeRows * ROW_HEIGHT
+   var colSpan = columnOrder.length || 1;
+   var expectedCount = newEnd - newStart + 1;
+   var skippedRows = expectedCount - renderedCount;
+
    // Update tbody with spacer row + data rows
    tbody.innerHTML = "";
 
-   // Insert a spacer row to push data rows to their correct vertical position.
-   // padding-top on <tbody> is ignored by Chromium, so we use an actual <tr>.
+   // Top spacer — pushes data rows to their correct vertical position.
    if (newStart > 0) {
       var spacerTr = document.createElement("tr");
       spacerTr.className = "spacer-row";
       var spacerTd = document.createElement("td");
-      spacerTd.colSpan = columnOrder.length || 1;
+      spacerTd.colSpan = colSpan;
       spacerTd.style.height = (newStart * ROW_HEIGHT) + "px";
       spacerTd.style.padding = "0";
       spacerTd.style.border = "none";
@@ -1278,11 +1291,10 @@ var renderVisibleRows = function() {
 
    tbody.appendChild(fragment);
 
-   // Bottom spacer row to complete the full scroll height.
-   // top spacer + data rows + bottom spacer = activeRows * ROW_HEIGHT
-   var remainingRows = activeRows - newEnd - 1;
+   // Bottom spacer — fills the remaining scroll height, plus absorbs
+   // any height deficit from skipped (uncached) rows.
+   var remainingRows = activeRows - newEnd - 1 + skippedRows;
    if (remainingRows > 0) {
-      var colSpan = columnOrder.length || 1;
       var bottomTr = document.createElement("tr");
       bottomTr.className = "spacer-row";
       var bottomTd = document.createElement("td");
