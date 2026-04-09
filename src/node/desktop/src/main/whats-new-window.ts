@@ -16,6 +16,7 @@
 import { BrowserWindow, ipcMain, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
+import { createLocalUrlChecker } from './whats-new-utils';
 
 declare const WHATS_NEW_WEBPACK_ENTRY: string;
 declare const WHATS_NEW_PRELOAD_WEBPACK_ENTRY: string;
@@ -75,23 +76,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
   // Remove menu bar on Windows/Linux
   win.setMenuBarVisibility(false);
 
-  // In production the host page is file://, in dev mode it's http://localhost:PORT.
-  // file:// URLs have opaque origin ("null") so origin comparison doesn't work —
-  // use protocol check for file:// and same-origin for http(s) dev URLs.
-  const hostUrl = new URL(WHATS_NEW_WEBPACK_ENTRY);
-  const isFileMode = hostUrl.protocol === 'file:';
-
-  const isLocalUrl = (targetUrl: string): boolean => {
-    try {
-      const target = new URL(targetUrl);
-      if (isFileMode) {
-        return target.protocol === 'file:';
-      }
-      return target.origin === hostUrl.origin;
-    } catch {
-      return false;
-    }
-  };
+  const isLocalUrl = createLocalUrlChecker(WHATS_NEW_WEBPACK_ENTRY, options.releaseSlug);
 
   // Only open http(s) URLs externally — block custom URI schemes that
   // could launch local applications
@@ -106,21 +91,14 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     }
   };
 
-  // TODO: Remove debug logging before shipping
-  const log = (msg: string) => logger().logWarning(`[whats-new] ${msg}`);
-  log(`WHATS_NEW_WEBPACK_ENTRY = ${WHATS_NEW_WEBPACK_ENTRY}`);
-  log(`hostUrl.protocol = ${hostUrl.protocol}, isFileMode = ${isFileMode}`);
-
   // Open external links in system browser
   win.webContents.setWindowOpenHandler((details) => {
-    log(`setWindowOpenHandler: ${details.url}`);
     openExternalSafely(details.url);
     return { action: 'deny' };
   });
 
   // Intercept main frame navigation (e.g. top-level link clicks)
   win.webContents.on('will-navigate', (event, navUrl) => {
-    log(`will-navigate: ${navUrl}, isLocal=${isLocalUrl(navUrl)}`);
     if (isLocalUrl(navUrl)) {
       return;
     }
@@ -134,7 +112,6 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
   // After that, local URLs are still allowed (e.g. dev-mode reloads).
   let iframeLoaded = false;
   win.webContents.on('will-frame-navigate', (details) => {
-    log(`will-frame-navigate: isMain=${details.isMainFrame}, url=${details.url}, iframeLoaded=${iframeLoaded}, isLocal=${isLocalUrl(details.url)}`);
     if (details.isMainFrame) {
       return;
     }

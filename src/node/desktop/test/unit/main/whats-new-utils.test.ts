@@ -23,6 +23,7 @@ import {
   isValidSlug,
   isReleaseBuild,
   resolveWhatsNewContentPath,
+  createLocalUrlChecker,
 } from '../../../src/main/whats-new-utils';
 
 describe('whats-new-utils', () => {
@@ -125,6 +126,56 @@ describe('whats-new-utils', () => {
 
     it('returns null for an invalid slug (path traversal)', () => {
       assert.isNull(resolveWhatsNewContentPath('../etc'));
+    });
+  });
+
+  describe('createLocalUrlChecker (file mode)', () => {
+    const host = 'file:///app/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows the host page directory', () => {
+      assert.isTrue(isLocal('file:///app/.webpack/renderer/whats_new/index.js'));
+    });
+
+    it('allows the release content subtree', () => {
+      assert.isTrue(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+
+    it('rejects arbitrary file:// paths', () => {
+      assert.isFalse(isLocal('file:///etc/passwd'));
+    });
+
+    it('rejects file:// paths outside the content subtree', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/other-release/index.html',
+      ));
+    });
+
+    it('rejects http URLs in file mode', () => {
+      assert.isFalse(isLocal('https://evil.example.com'));
+    });
+
+    it('rejects invalid URLs', () => {
+      assert.isFalse(isLocal('not a url'));
+    });
+  });
+
+  describe('createLocalUrlChecker (dev mode)', () => {
+    const host = 'http://localhost:3000/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows same-origin URLs', () => {
+      assert.isTrue(isLocal('http://localhost:3000/assets/whats-new/foo/index.html'));
+    });
+
+    it('rejects different origin', () => {
+      assert.isFalse(isLocal('http://localhost:4000/foo'));
+    });
+
+    it('rejects external URLs', () => {
+      assert.isFalse(isLocal('https://evil.example.com'));
     });
   });
 

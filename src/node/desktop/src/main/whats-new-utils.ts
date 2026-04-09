@@ -19,6 +19,44 @@ import { join, resolve } from 'path';
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
 /**
+ * Create a URL checker scoped to the What's New window's allowed paths.
+ *
+ * In file mode (packaged builds), only file:// URLs within the host page
+ * directory or the release content subtree are considered local.
+ * In dev mode (http), URLs matching the host origin are considered local.
+ */
+export function createLocalUrlChecker(
+  hostEntry: string,
+  releaseSlug: string,
+): (targetUrl: string) => boolean {
+  const hostUrl = new URL(hostEntry);
+  const isFileMode = hostUrl.protocol === 'file:';
+
+  const hostDir = isFileMode
+    ? resolve(decodeURIComponent(hostUrl.pathname), '..')
+    : '';
+  const contentDir = isFileMode && isValidSlug(releaseSlug)
+    ? resolve(hostDir, '..', 'assets', 'whats-new', releaseSlug)
+    : '';
+
+  return (targetUrl: string): boolean => {
+    try {
+      const target = new URL(targetUrl);
+      if (isFileMode) {
+        if (target.protocol !== 'file:') {
+          return false;
+        }
+        const targetPath = resolve(decodeURIComponent(target.pathname));
+        return targetPath.startsWith(hostDir) || targetPath.startsWith(contentDir);
+      }
+      return target.origin === hostUrl.origin;
+    } catch {
+      return false;
+    }
+  };
+}
+
+/**
  * Convert a flower name to a filesystem-safe slug.
  *
  * Algorithm:
