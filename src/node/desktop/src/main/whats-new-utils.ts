@@ -14,7 +14,7 @@
  */
 
 import { accessSync, constants } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, sep } from 'path';
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
@@ -32,11 +32,14 @@ export function createLocalUrlChecker(
   const hostUrl = new URL(hostEntry);
   const isFileMode = hostUrl.protocol === 'file:';
 
+  // Append path separator so startsWith is a directory-boundary check,
+  // preventing sibling directories that share a prefix from matching
+  // (e.g. "globemaster-allium-old" must not match "globemaster-allium").
   const hostDir = isFileMode
-    ? resolve(decodeURIComponent(hostUrl.pathname), '..')
+    ? resolve(decodeURIComponent(hostUrl.pathname), '..') + sep
     : '';
   const contentDir = isFileMode && isValidSlug(releaseSlug)
-    ? resolve(hostDir, '..', 'assets', 'whats-new', releaseSlug)
+    ? resolve(hostDir, '..', 'assets', 'whats-new', releaseSlug) + sep
     : '';
 
   return (targetUrl: string): boolean => {

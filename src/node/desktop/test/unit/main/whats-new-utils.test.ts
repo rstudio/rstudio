@@ -153,6 +153,16 @@ describe('whats-new-utils', () => {
       ));
     });
 
+    it('rejects sibling directory sharing the slug prefix', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium-old/index.html',
+      ));
+    });
+
+    it('rejects sibling directory sharing the host dir prefix', () => {
+      assert.isFalse(isLocal('file:///app/.webpack/renderer/whats_new_evil/payload.html'));
+    });
+
     it('rejects http URLs in file mode', () => {
       assert.isFalse(isLocal('https://evil.example.com'));
     });
