@@ -125,13 +125,21 @@ th:focus {
    outline: none;
 }
 
-/* Virtual scroll spacer row — specificity must beat tbody tr:nth-child/hover rules */
+/* Virtual scroll spacer row — specificity must beat tbody tr:nth-child/hover rules.
+   Diagonal stripes suggest pending/loading data. */
 tbody tr.spacer-row td,
 tbody tr.spacer-row:nth-child(odd) td,
 tbody tr.spacer-row:hover td {
    padding: 0;
    border: none;
-   background: none;
+   background:
+      repeating-linear-gradient(
+         -45deg,
+         transparent,
+         transparent 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
+      );
 }
 
 /* --- Data cells --- */
