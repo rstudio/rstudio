@@ -198,7 +198,7 @@ export class SourcePaneActions {
           return env.editor.getValue();
         }
       }
-      return '';
+      throw new Error('No active source editor found');
     })()`);
   }
 
@@ -226,7 +226,7 @@ export class SourcePaneActions {
           return env.editor.getFirstVisibleRow();
         }
       }
-      return -1;
+      throw new Error('No active source editor found');
     })()`);
   }
 

@@ -134,6 +134,78 @@ export async function launchRStudio(): Promise<DesktopSession> {
 }
 
 /**
+ * Relaunch RStudio after a full quit+restart (e.g. uninstall Posit Assistant).
+ * The doRestart() flow quits Electron entirely and opens a new window without
+ * our CDP flag. We wait for the old process to exit, kill the non-CDP instance,
+ * and launch a fresh CDP-enabled session.
+ */
+export async function relaunchAfterRestart(session: DesktopSession): Promise<DesktopSession> {
+  const { browser, rstudioProcess } = session;
+
+  // Snapshot all RStudio PIDs before the restart so we can identify new ones
+  const pidsBefore = getRStudioPids();
+  console.log(`RStudio PIDs before restart: ${[...pidsBefore].join(', ') || 'none'}`);
+
+  // Wait for the old process to exit
+  console.log('Waiting for RStudio process to exit...');
+  const exitDeadline = Date.now() + 30000;
+  while (Date.now() < exitDeadline && rstudioProcess.exitCode === null) {
+    await sleep(500);
+  }
+  if (rstudioProcess.exitCode === null) {
+    console.log('WARNING: old process did not exit within 30s');
+    rstudioProcess.kill();
+  }
+  console.log(`Old RStudio exited (code ${rstudioProcess.exitCode})`);
+  await browser.close().catch(() => {});
+
+  // Wait for the non-CDP restart instance to spawn
+  await sleep(5000);
+
+  // Find and kill only the NEW RStudio processes (the non-CDP restart).
+  // This preserves any other RStudio instance the user has open.
+  const pidsAfter = getRStudioPids();
+  const newPids = [...pidsAfter].filter(pid => !pidsBefore.has(pid));
+  console.log(`RStudio PIDs after restart: ${[...pidsAfter].join(', ') || 'none'}`);
+  console.log(`New PIDs to kill: ${newPids.join(', ') || 'none'}`);
+
+  for (const pid of newPids) {
+    try {
+      if (process.platform === 'win32') {
+        // /T kills the entire process tree
+        execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'pipe' });
+      } else {
+        execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
+      }
+      console.log(`Killed PID ${pid}`);
+    } catch {
+      // Process may have already exited
+    }
+  }
+  await sleep(3000);
+
+  return launchRStudio();
+}
+
+/** Get all RStudio PIDs currently running. */
+function getRStudioPids(): Set<number> {
+  try {
+    if (process.platform === 'win32') {
+      const output = execSync(
+        `powershell.exe -NoProfile -Command "(Get-Process rstudio -ErrorAction SilentlyContinue).Id -join ','"`,
+        { encoding: 'utf-8' }
+      ).trim();
+      return new Set(output ? output.split(',').map(Number) : []);
+    } else {
+      const output = execSync('pgrep -f rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
+      return new Set(output ? output.split('\n').map(Number) : []);
+    }
+  } catch {
+    return new Set();
+  }
+}
+
+/**
  * Graceful shutdown: q() in console, close browser, kill process.
  */
 export async function shutdownRStudio(session: DesktopSession): Promise<void> {

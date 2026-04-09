@@ -1,5 +1,5 @@
 import { test as base, expect } from '@playwright/test';
-import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
+import { launchRStudio, shutdownRStudio, relaunchAfterRestart, type DesktopSession } from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -38,7 +38,7 @@ const PALETTE_LIST = '#rstudio_command_palette_list';
  * so the command palette is the testable UI path.
  */
 async function invokeUninstallViaPalette(page: Page): Promise<void> {
-  await page.keyboard.press('ControlOrMeta+Shift+P');
+  await page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')");
   await sleep(1000);
 
   await page.keyboard.type('Uninstall Posit Assistant');
@@ -48,40 +48,6 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await expect(paletteItem).toBeVisible({ timeout: 5000 });
   await paletteItem.click();
   await sleep(500);
-}
-
-/**
- * Wait for RStudio to complete a restart cycle.
- *
- * The Electron shell stays alive but reloads the GWT page with a new
- * R session (see session-launcher.ts launchNextSession). We detect the
- * reload by checking that a window flag set before restart has cleared,
- * then wait for the new GWT app to initialize.
- *
- * Callers must set `window.__preRestart = true` before triggering the
- * restart so the flag-clearing check works.
- */
-async function waitForRestart(page: Page): Promise<void> {
-  await page.waitForFunction(
-    '!window.__preRestart && typeof window.desktopHooks?.invokeCommand === "function"',
-    null,
-    { timeout: 60000 }
-  );
-
-  // Dismiss any save dialog that may appear after restart
-  try {
-    const dontSaveBtn = page.locator(
-      "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no"
-    );
-    await dontSaveBtn.click({ timeout: 3000 });
-  } catch {
-    // No dialog
-  }
-
-  // desktopHooks used intentionally--console/R session not ready yet after restart
-  await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
-  await sleep(2000);
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
 }
 
 base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] }, () => {
@@ -101,6 +67,10 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] },
     // Ensure PAI is installed before the suite
     await chatActions.openChatPane();
     await chatActions.dismissSetupPrompts();
+
+    // Move focus away from chat so keyboard shortcuts reach the command palette
+    await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
+    await sleep(1000);
   });
 
   base.afterAll(async () => {
@@ -113,7 +83,7 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] },
   // Test 1: Command visibility (palette)
   // -----------------------------------------------------------------------
   base('Uninstall Posit Assistant visible in command palette', async () => {
-    await page.keyboard.press('ControlOrMeta+Shift+P');
+    await page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')");
     await sleep(1000);
 
     await page.keyboard.type('Uninstall Posit Assistant');
@@ -164,19 +134,18 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] },
   // Test 4: Happy path — uninstall, restart, verify PAI gone
   // -----------------------------------------------------------------------
   base('Confirm uninstall deletes PAI and restarts', async () => {
-    // Mark the window so waitForRestart can detect the page reload
-    await page.evaluate('window.__preRestart = true');
-
     await invokeUninstallViaPalette(page);
 
     const yesBtn = page.locator(YES_BTN);
     await expect(yesBtn).toBeVisible({ timeout: 5000 });
     await yesBtn.click();
 
-    // RStudio restarts: Electron stays alive, page reloads with new R session
-    await waitForRestart(page);
+    // RStudio restarts: Electron stays alive but destroys the CDP page target.
+    // Reconnect to get a fresh page from the same process.
+    session = await relaunchAfterRestart(session);
+    page = session.page;
 
-    // Reinitialize actions on the reloaded page
+    // Reinitialize actions on the new page
     consoleActions = new ConsolePaneActions(page);
     chatActions = new ChatPaneActions(page, consoleActions);
 

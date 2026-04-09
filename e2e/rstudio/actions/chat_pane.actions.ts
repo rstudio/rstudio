@@ -27,6 +27,7 @@ export class ChatPaneActions {
       await this.chatPane.installBtn.click({ timeout: 1500 });
       console.log('Clicked Install button — waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
+      await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
       return;
     } catch {
       // No Install button
