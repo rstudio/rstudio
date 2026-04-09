@@ -3238,7 +3238,7 @@ public class UserPrefsAccessor extends Prefs
          "data_viewer_max_columns",
          _constants.dataViewerMaxColumnsTitle(), 
          _constants.dataViewerMaxColumnsDescription(), 
-         50);
+         200);
    }
 
    /**
