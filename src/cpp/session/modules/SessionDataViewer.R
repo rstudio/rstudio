@@ -165,7 +165,9 @@
       col_label       = .rs.scalar(""),
       col_vals        = "",
       col_type_r      = .rs.scalar(""),
-      total_cols      = .rs.scalar(totalCols))
+      col_na_count    = .rs.scalar(0),
+      total_cols      = .rs.scalar(totalCols),
+      total_rows      = .rs.scalar(nrow(x)))
    
    # if there are no columns, bail out
    if (length(colNames) == 0) {
@@ -214,7 +216,7 @@
       if (length(x[[idx]]) > 0)
       {
          val <- x[[idx]][[1]]
-         col_type_r <- typeof(val)
+         col_type_r <- class(val)[[1]]
          if (is.factor(val))
          {
             # we previously used the 'maxFactors' variable to try and guess
@@ -276,6 +278,9 @@
             col_type <- "list"
          }
       }
+      # count NA values
+      col_na_count <- sum(is.na(x[[idx]]))
+
       list(
          col_name        = .rs.scalar(col_name),
          col_type        = .rs.scalar(col_type),
@@ -284,7 +289,8 @@
          col_search_type = .rs.scalar(col_search_type),
          col_label       = .rs.scalar(col_label),
          col_vals        = col_vals,
-         col_type_r      = .rs.scalar(col_type_r)
+         col_type_r      = .rs.scalar(col_type_r),
+         col_na_count    = .rs.scalar(col_na_count)
       )
    })
    c(list(rowNameCol), colAttrs)

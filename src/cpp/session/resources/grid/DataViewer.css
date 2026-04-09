@@ -305,6 +305,17 @@ th:hover .pin-icon {
    max-width: 300px;
 }
 
+/* --- Column highlight flash (triggered from sidebar click) --- */
+
+@keyframes column-flash {
+   0%   { background-color: var(--grid-selection-bg); }
+   100% { background-color: var(--grid-header-bg); }
+}
+
+th.highlight-flash {
+   animation: column-flash 1s ease-out;
+}
+
 /* --- Sort indicators — use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,
@@ -658,17 +669,53 @@ th.columnClickable div {
    height: 24px;
 }
 
+.sparkline-wrapper {
+   position: relative;
+}
+
 .sparkline-bar {
    fill: var(--grid-focus-border);
    opacity: 0.6;
 }
 
-/* --- Factor/level summary --- */
+.sparkline-bar:hover {
+   opacity: 1;
+}
+
+.sparkline-tooltip {
+   position: absolute;
+   bottom: 100%;
+   left: 0;
+   margin-bottom: 4px;
+   padding: 4px 6px;
+   font-size: 10px;
+   line-height: 1.4;
+   background-color: var(--grid-fg);
+   color: var(--grid-bg);
+   border-radius: 3px;
+   white-space: nowrap;
+   pointer-events: none;
+   z-index: 30;
+}
+
+/* --- Column footer (summary + NA count) --- */
+
+.sidebar-col-footer {
+   display: flex;
+   justify-content: space-between;
+   align-items: baseline;
+   margin-top: 2px;
+}
 
 .sidebar-col-summary {
    font-size: 10px;
    color: var(--grid-na-color);
-   margin-top: 2px;
+}
+
+.sidebar-col-na {
+   font-size: 10px;
+   color: var(--grid-na-color);
+   font-style: italic;
 }
 
 

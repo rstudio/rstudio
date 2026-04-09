@@ -1429,10 +1429,16 @@ var createSparklineSVG = function(breaks, counts) {
    if (!breaks || !counts || counts.length === 0) return null;
 
    var max = 0;
+   var total = 0;
    for (var i = 0; i < counts.length; i++) {
       if (counts[i] > max) max = counts[i];
+      total += counts[i];
    }
    if (max === 0) return null;
+
+   // Wrapper div for positioning the tooltip
+   var wrapper = document.createElement("div");
+   wrapper.className = "sparkline-wrapper";
 
    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
    svg.setAttribute("viewBox", "0 0 " + counts.length + " 20");
@@ -1446,20 +1452,66 @@ var createSparklineSVG = function(breaks, counts) {
       rect.setAttribute("width", 1);
       rect.setAttribute("height", h);
       rect.setAttribute("class", "sparkline-bar");
+      rect.setAttribute("data-bin", j);
       svg.appendChild(rect);
    }
 
-   return svg;
+   wrapper.appendChild(svg);
+
+   // Tooltip on hover
+   var tooltip = document.createElement("div");
+   tooltip.className = "sparkline-tooltip";
+   tooltip.style.display = "none";
+   wrapper.appendChild(tooltip);
+
+   var formatNum = function(n) {
+      // Round to reasonable precision
+      if (Math.abs(n) >= 100) return Math.round(n).toLocaleString();
+      if (Math.abs(n) >= 1) return n.toFixed(1);
+      if (Math.abs(n) >= 0.01) return n.toFixed(2);
+      return n.toPrecision(3);
+   };
+
+   svg.addEventListener("mousemove", function(evt) {
+      var target = evt.target;
+      var bin = target.getAttribute("data-bin");
+      if (bin === null) { tooltip.style.display = "none"; return; }
+      bin = parseInt(bin);
+
+      var lo = breaks[bin];
+      var hi = breaks[bin + 1];
+      var count = counts[bin];
+      var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
+
+      tooltip.innerHTML =
+         "Range: " + formatNum(lo) + " to " + formatNum(hi) + "<br>" +
+         "Count: " + count.toLocaleString() + " (" + pct + "%)";
+      tooltip.style.display = "";
+   });
+
+   svg.addEventListener("mouseleave", function() {
+      tooltip.style.display = "none";
+   });
+
+   return wrapper;
 };
 
 var typeLabel = function(col) {
    var type = col.col_type_r || col.col_type || "";
-   // Map common R types to short labels
+   // Map common R classes to short labels
    var map = {
-      "integer": "int", "double": "dbl", "character": "chr",
-      "logical": "lgl", "complex": "cpl", "raw": "raw",
-      "factor": "fct", "Date": "date", "POSIXct": "dttm",
-      "POSIXlt": "dttm", "numeric": "dbl"
+      "character": "chr",
+      "complex": "cpl",
+      "Date": "date",
+      "double": "dbl",
+      "factor": "fct",
+      "integer": "int",
+      "logical": "lgl",
+      "numeric": "dbl",
+      "ordered": "ord",
+      "POSIXct": "dttm",
+      "POSIXlt": "dttm",
+      "raw": "raw"
    };
    return map[type] || type;
 };
@@ -1510,20 +1562,38 @@ var initSidebar = function() {
          entry.appendChild(sparkContainer);
       }
 
-      // Factor summary
+      // Footer row: type-specific summary + NA count
+      var footer = document.createElement("div");
+      footer.className = "sidebar-col-footer";
+
+      // Type-specific summary (left)
+      var summaryText = "";
       if (col.col_type === "factor" && col.col_vals) {
-         var summary = document.createElement("div");
-         summary.className = "sidebar-col-summary";
-         summary.textContent = col.col_vals.length + " levels";
-         entry.appendChild(summary);
+         summaryText = col.col_vals.length + " levels";
+      } else if (col.col_type === "boolean") {
+         summaryText = "logical";
+      }
+      if (summaryText) {
+         var summaryEl = document.createElement("span");
+         summaryEl.className = "sidebar-col-summary";
+         summaryEl.textContent = summaryText;
+         footer.appendChild(summaryEl);
       }
 
-      // Boolean summary
-      if (col.col_type === "boolean") {
-         var boolSummary = document.createElement("div");
-         boolSummary.className = "sidebar-col-summary";
-         boolSummary.textContent = "logical";
-         entry.appendChild(boolSummary);
+      // NA count (right)
+      var naCount = col.col_na_count || 0;
+      if (naCount > 0 && totalRows > 0) {
+         var naPct = ((naCount / totalRows) * 100);
+         var naText = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
+         var naEl = document.createElement("span");
+         naEl.className = "sidebar-col-na";
+         naEl.textContent = naText;
+         naEl.title = naCount.toLocaleString() + " missing values";
+         footer.appendChild(naEl);
+      }
+
+      if (footer.childNodes.length > 0) {
+         entry.appendChild(footer);
       }
 
       // Click to scroll grid to column
@@ -1578,6 +1648,12 @@ var scrollToColumn = function(colIdx) {
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
       viewport.scrollLeft = colLeft + colWidth - viewWidth;
    }
+
+   // Briefly highlight the column header
+   th.classList.add("highlight-flash");
+   setTimeout(function() {
+      th.classList.remove("highlight-flash");
+   }, 1000);
 };
 
 // ==========================================================================
@@ -1849,9 +1925,11 @@ var initGrid = function(resCols, data) {
       maxRows = loc.maxRows;
    }
 
-   // Total columns from rownames metadata
+   // Total columns/rows from rownames metadata
    var resTotalCols = cols[0].total_cols;
    totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
+   var resTotalRows = cols[0].total_rows;
+   if (resTotalRows > 0) totalRows = resTotalRows;
 
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
@@ -2122,6 +2200,10 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
 
 window.refreshData = function() {
    bootstrap();
+};
+
+window.toggleSidebar = function() {
+   toggleSidebar();
 };
 
 var debouncedSearch = debounce(function(text) {

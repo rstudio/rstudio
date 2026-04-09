@@ -27,6 +27,8 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+
+import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.widget.DataTableColumnWidget;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -86,6 +88,23 @@ public class DataTable
               });
       toolbar.addLeftWidget(filterButton_);
       filterButton_.setVisible(!isPreview);
+
+      sidebarButton_ = new LatchingToolbarButton(
+              constants_.sidebarButtonText(),
+              ToolbarButton.NoTitle,
+              false, /* textIndicatesState */
+              ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
+              (ImageResource) null,
+              new ClickHandler() {
+                 public void onClick(ClickEvent event)
+                 {
+                    sidebarVisible_ = !sidebarVisible_;
+                    sidebarButton_.setLatched(sidebarVisible_);
+                    toggleSidebar(getWindow());
+                 }
+              });
+      toolbar.addLeftWidget(sidebarButton_);
+      sidebarButton_.setVisible(!isPreview);
 
       colsSeparator_ = toolbar.addLeftSeparator();
       colsSeparator_.setVisible(false);
@@ -279,10 +298,13 @@ public class DataTable
    public void refreshData()
    {
       filtered_= false;
+      sidebarVisible_ = false;
       if (searchWidget_ != null)
          searchWidget_.setText("", false);
       if (filterButton_ != null)
          filterButton_.setLatched(false);
+      if (sidebarButton_ != null)
+         sidebarButton_.setLatched(false);
 
       refreshData(getWindow());
    }
@@ -306,6 +328,11 @@ public class DataTable
    }
 
    private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
+
+   private static final native void toggleSidebar(WindowEx frame) /*-{
+      if (frame && frame.toggleSidebar)
+         frame.toggleSidebar();
+   }-*/;
 
    private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
       if (frame && frame.setFilterUIVisible)
@@ -407,6 +434,8 @@ public class DataTable
    }-*/;
    private Host host_;
    private LatchingToolbarButton filterButton_;
+   private LatchingToolbarButton sidebarButton_;
+   private boolean sidebarVisible_ = false;
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;
