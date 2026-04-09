@@ -1616,7 +1616,17 @@ var initSidebar = function() {
    var toggle = document.getElementById("sidebarToggle");
    if (!content || !toggle || !cols) return;
 
-   toggle.textContent = "Columns";
+   toggle.innerHTML = "";
+   var toggleLabel = document.createElement("span");
+   toggleLabel.textContent = "Summary";
+   toggle.appendChild(toggleLabel);
+
+   var toggleSpinner = document.createElement("span");
+   toggleSpinner.className = "sidebar-spinner";
+   toggleSpinner.style.display = "none";
+   toggleSpinner.id = "sidebarSpinner";
+   toggle.appendChild(toggleSpinner);
+
    toggle.addEventListener("click", function() {
       toggleSidebar();
    });
@@ -1713,14 +1723,18 @@ var initSidebar = function() {
             btnEl.classList.toggle("expanded", expanded);
 
             if (expanded) {
-               statsEl.style.display = "";
                if (!loaded) {
-                  statsEl.textContent = "Loading...";
-                  // columnIndex is 1-based for R; colIdx includes rownames at 0
+                  // Show spinner in sidebar header while fetching
+                  var spinner = document.getElementById("sidebarSpinner");
+                  if (spinner) spinner.style.display = "";
                   fetchColumnSummary(colIdx + columnOffset, function(data) {
                      loaded = true;
+                     if (spinner) spinner.style.display = "none";
                      renderColumnStats(statsEl, data, colType);
+                     statsEl.style.display = "";
                   });
+               } else {
+                  statsEl.style.display = "";
                }
             } else {
                statsEl.style.display = "none";

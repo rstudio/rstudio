@@ -43,11 +43,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -86,23 +88,24 @@ public class DataTable
                     }
                  }
               });
-      sidebarButton_ = new LatchingToolbarButton(
-              constants_.sidebarButtonText(),
-              ToolbarButton.NoTitle,
-              false, /* textIndicatesState */
-              ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
-              new ImageResource2x(DataViewerResources.INSTANCE.summaryIcon2x()),
-              new ClickHandler() {
-                 public void onClick(ClickEvent event)
-                 {
-                    sidebarVisible_ = !sidebarVisible_;
-                    sidebarButton_.setLatched(sidebarVisible_);
-                    toggleSidebar(getWindow());
-                 }
-              });
+      sidebarButton_ = new HTML(
+         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle'>" +
+         "<rect x='1' y='4' width='3' height='8' rx='0.5' fill='#888'/>" +
+         "<rect x='5.5' y='0' width='3' height='12' rx='0.5' fill='#888'/>" +
+         "<rect x='10' y='6' width='3' height='6' rx='0.5' fill='#888'/>" +
+         "</svg>" +
+         " <span style='font-size:11px'>" + constants_.sidebarButtonText() + "</span>");
+      sidebarButton_.getElement().getStyle().setCursor(Style.Cursor.POINTER);
+      sidebarButton_.getElement().getStyle().setProperty("padding", "2px 5px");
+      sidebarButton_.getElement().getStyle().setProperty("whiteSpace", "nowrap");
+      sidebarButton_.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event)
+         {
+            toggleSidebar(getWindow());
+         }
+      });
       toolbar.addLeftWidget(sidebarButton_);
       sidebarButton_.setVisible(!isPreview);
-      sidebarButton_.setLatched(true);
 
       toolbar.addLeftWidget(filterButton_);
       filterButton_.setVisible(!isPreview);
@@ -299,13 +302,10 @@ public class DataTable
    public void refreshData()
    {
       filtered_= false;
-      sidebarVisible_ = false;
       if (searchWidget_ != null)
          searchWidget_.setText("", false);
       if (filterButton_ != null)
          filterButton_.setLatched(false);
-      if (sidebarButton_ != null)
-         sidebarButton_.setLatched(false);
 
       refreshData(getWindow());
    }
@@ -435,8 +435,7 @@ public class DataTable
    }-*/;
    private Host host_;
    private LatchingToolbarButton filterButton_;
-   private LatchingToolbarButton sidebarButton_;
-   private boolean sidebarVisible_ = true;
+   private HTML sidebarButton_;
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;

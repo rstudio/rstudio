@@ -756,6 +756,27 @@ th.columnClickable div {
    border-top: 1px solid var(--grid-border);
 }
 
+.sidebar-spinner {
+   display: inline-block;
+   width: 10px;
+   height: 10px;
+   margin-left: 6px;
+   vertical-align: middle;
+   border: 1.5px solid var(--grid-border);
+   border-top-color: var(--grid-fg);
+   border-radius: 50%;
+   animation: spin 0.6s linear infinite, fade-in 1s ease 0.2s both;
+}
+
+@keyframes fade-in {
+   from { opacity: 0; }
+   to   { opacity: 1; }
+}
+
+@keyframes spin {
+   to { transform: rotate(360deg); }
+}
+
 .sidebar-stats-table {
    width: 100%;
    font-size: 10px;
