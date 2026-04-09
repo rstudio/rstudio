@@ -102,7 +102,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
   };
 
   // TODO: Remove debug logging before shipping
-  const log = (msg: string) => logger().logDebug(`[whats-new] ${msg}`);
+  const log = (msg: string) => logger().logWarning(`[whats-new] ${msg}`);
   log(`WHATS_NEW_WEBPACK_ENTRY = ${WHATS_NEW_WEBPACK_ENTRY}`);
   log(`hostUrl.protocol = ${hostUrl.protocol}, isFileMode = ${isFileMode}`);
 
