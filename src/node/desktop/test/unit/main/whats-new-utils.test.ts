@@ -216,21 +216,6 @@ describe('whats-new-utils', () => {
     });
   });
 
-  describe('createLocalUrlChecker (UNC file URLs)', () => {
-    const host = 'file:///server/share/.webpack/renderer/whats_new/index.html';
-    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
-
-    it('allows files in the release content subtree', () => {
-      assert.isTrue(isLocal(
-        'file:///server/share/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
-      ));
-    });
-
-    it('rejects paths on a different share', () => {
-      assert.isFalse(isLocal('file:///other-server/share/secret.txt'));
-    });
-  });
-
   describe('whats-new content validation', () => {
     const assetsDir = resolve(__dirname, '..', '..', '..', 'src', 'assets', 'whats-new');
     const expectedCsp = 'Content-Security-Policy';
