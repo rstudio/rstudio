@@ -43,15 +43,11 @@ function init(): void {
 
   const iframe = document.getElementById('release-content') as HTMLIFrameElement | null;
 
-  // In dev mode, add a sandbox that allows scripts (webpack hot-reload).
-  // In production, no sandbox — the content is trusted local HTML, and
-  // security is enforced by the CSP in each release page, the navigation
-  // handlers in the main process, and the BrowserWindow security settings.
-  // Note: sandbox="allow-same-origin" does not work with file:// URLs
-  // because file:// origins are opaque (null), causing the iframe to
-  // refuse to render the content in packaged builds.
+  // In dev mode, webpack dev server injects a hot-reload script into served
+  // HTML. Add allow-scripts so the iframe content can load without errors.
+  // In production the iframe stays restricted (allow-same-origin only).
   if (!isProductionMode() && iframe) {
-    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+    iframe.sandbox.add('allow-scripts');
   }
 
   // Set header subtitle

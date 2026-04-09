@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, ipcMain, shell } from 'electron';
+import { BrowserWindow, ipcMain, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
 
@@ -64,6 +64,11 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
       nodeIntegration: false,
       sandbox: true,
       preload: WHATS_NEW_PRELOAD_WEBPACK_ENTRY,
+      // Use a separate session so the MainWindow's session-level
+      // webRequest.onBeforeRequest handler (which opens subframe
+      // navigations in the system browser) doesn't intercept our
+      // iframe content load.
+      session: session.fromPartition('whats-new'),
     },
   });
 
