@@ -86,15 +86,12 @@ public class DataTable
                     }
                  }
               });
-      toolbar.addLeftWidget(filterButton_);
-      filterButton_.setVisible(!isPreview);
-
       sidebarButton_ = new LatchingToolbarButton(
               constants_.sidebarButtonText(),
               ToolbarButton.NoTitle,
               false, /* textIndicatesState */
               ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
-              (ImageResource) null,
+              new ImageResource2x(DataViewerResources.INSTANCE.summaryIcon2x()),
               new ClickHandler() {
                  public void onClick(ClickEvent event)
                  {
@@ -105,6 +102,10 @@ public class DataTable
               });
       toolbar.addLeftWidget(sidebarButton_);
       sidebarButton_.setVisible(!isPreview);
+      sidebarButton_.setLatched(true);
+
+      toolbar.addLeftWidget(filterButton_);
+      filterButton_.setVisible(!isPreview);
 
       colsSeparator_ = toolbar.addLeftSeparator();
       colsSeparator_.setVisible(false);
@@ -435,7 +436,7 @@ public class DataTable
    private Host host_;
    private LatchingToolbarButton filterButton_;
    private LatchingToolbarButton sidebarButton_;
-   private boolean sidebarVisible_ = false;
+   private boolean sidebarVisible_ = true;
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;

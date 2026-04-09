@@ -110,7 +110,7 @@ var bootstrapping = false;
 var postInitActions = {};
 
 // Sidebar state
-var sidebarVisible = false;
+var sidebarVisible = true;
 
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
 var pinnedColumns = new Set();
@@ -697,9 +697,15 @@ var measureTextWidth = function(text, bold) {
 // Compute column widths by measuring header text and a sample of cached cell
 // values, then apply them with table-layout:fixed.
 var autoSizeColumns = function() {
-   var table = document.getElementById("rsGridData");
    var thead = document.getElementById("data_cols");
-   if (!table || !thead || !thead.children.length || !cols) return;
+   if (!thead || !thead.children.length || !cols) return;
+
+   // If the viewport isn't visible (e.g. background tab), measurements
+   // will be wrong. Flag for re-sizing on first activate.
+   var viewport = document.getElementById("gridViewport");
+   if (viewport && viewport.offsetHeight === 0) {
+      needsAutoSize = true;
+   }
 
    var colCount = thead.children.length;
    measuredWidths = [];
@@ -745,7 +751,6 @@ var autoSizeColumns = function() {
    }
 
    // If columns are narrower than the viewport, distribute extra space
-   var viewport = document.getElementById("gridViewport");
    var viewportWidth = viewport ? viewport.clientWidth : 0;
    if (totalWidth < viewportWidth && measuredWidths.length > 0) {
       var extra = viewportWidth - totalWidth;
@@ -761,8 +766,11 @@ var autoSizeColumns = function() {
       thead.children[i].style.width = measuredWidths[i] + "px";
    }
 
-   table.style.width = totalWidth + "px";
-   table.style.tableLayout = "fixed";
+   var table = document.getElementById("rsGridData");
+   if (table) {
+      table.style.width = totalWidth + "px";
+      table.style.tableLayout = "fixed";
+   }
 };
 
 // ==========================================================================
@@ -1726,6 +1734,12 @@ var initSidebar = function() {
 
       content.appendChild(entry);
    }
+
+   // Apply initial sidebar visibility
+   var panel = document.getElementById("sidebarPanel");
+   if (panel && sidebarVisible) {
+      panel.classList.add("expanded");
+   }
 };
 
 var toggleSidebar = function() {
@@ -2341,6 +2355,8 @@ window.applySearch = function(text) {
    debouncedSearch(text);
 };
 
+var needsAutoSize = false;
+
 window.onActivate = function() {
    // Restore scroll position and re-render
    var viewport = document.getElementById("gridViewport");
@@ -2348,8 +2364,18 @@ window.onActivate = function() {
       viewport.scrollTop = lastScrollTop;
       viewport.scrollLeft = lastScrollLeft;
    }
-   renderVisibleRows();
+
+   // Re-run auto-sizing if the initial sizing happened while the tab
+   // was hidden (measurements are wrong with no layout).
+   if (needsAutoSize && cols) {
+      needsAutoSize = false;
+      autoSizeColumns();
+      applyPinnedColumns();
+   }
+
+   renderVisibleRows(true);
    updateInfoBar();
+   updateCustomScrollbars();
 };
 
 window.onDeactivate = function() {

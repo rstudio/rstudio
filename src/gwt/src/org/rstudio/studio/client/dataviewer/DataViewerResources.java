@@ -26,4 +26,7 @@ public interface DataViewerResources extends ClientBundle
 
    @Source("FilterIcon_2x.png")
    ImageResource filterIcon2x();
+
+   @Source("SummaryIcon_2x.png")
+   ImageResource summaryIcon2x();
 }
