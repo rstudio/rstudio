@@ -189,6 +189,48 @@ describe('whats-new-utils', () => {
     });
   });
 
+  describe('createLocalUrlChecker (Windows drive-letter URLs)', () => {
+    const host = 'file:///C:/Program%20Files/RStudio/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows files in the host page directory', () => {
+      assert.isTrue(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/whats_new/index.js',
+      ));
+    });
+
+    it('allows files in the release content subtree', () => {
+      assert.isTrue(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+
+    it('rejects paths outside the allowed tree', () => {
+      assert.isFalse(isLocal('file:///C:/Windows/System32/config/SAM'));
+    });
+
+    it('rejects sibling directory sharing the slug prefix', () => {
+      assert.isFalse(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/assets/whats-new/globemaster-allium-old/index.html',
+      ));
+    });
+  });
+
+  describe('createLocalUrlChecker (UNC file URLs)', () => {
+    const host = 'file:///server/share/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows files in the release content subtree', () => {
+      assert.isTrue(isLocal(
+        'file:///server/share/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+
+    it('rejects paths on a different share', () => {
+      assert.isFalse(isLocal('file:///other-server/share/secret.txt'));
+    });
+  });
+
   describe('whats-new content validation', () => {
     const assetsDir = resolve(__dirname, '..', '..', '..', 'src', 'assets', 'whats-new');
     const expectedCsp = 'Content-Security-Policy';
