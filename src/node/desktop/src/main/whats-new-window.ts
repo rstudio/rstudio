@@ -116,9 +116,10 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     openExternalSafely(navUrl);
   });
 
-  // Block subframe navigations that leave the release content. We must
-  // allow the initial iframe src load through, so we skip the first
-  // subframe navigation and guard all subsequent ones.
+  // Block subframe navigations that leave the release content. The
+  // initial iframe src load must be allowed through unconditionally
+  // because the URL protocol may differ between dev and packaged builds.
+  // After that, local URLs are still allowed (e.g. dev-mode reloads).
   let iframeLoaded = false;
   win.webContents.on('will-frame-navigate', (details) => {
     if (details.isMainFrame) {
@@ -126,6 +127,9 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     }
     if (!iframeLoaded) {
       iframeLoaded = true;
+      return;
+    }
+    if (isLocalUrl(details.url)) {
       return;
     }
     details.preventDefault();
