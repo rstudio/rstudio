@@ -443,7 +443,8 @@ CallFrameResult callFramesFromR(int depth,
    //
    // In R >= 4.5, skip=NA_INTEGER checks R_Srcref first, giving the correct
    // srcref for the current debug position. In R < 4.5, NA_INTEGER is not
-   // handled specially, so we use skip=0 (reads context srcref field).
+   // handled specially, so we use skip=0 (checks R_Srcref, then walks
+   // context stack).
    int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
    SEXP currentSrcref = R_GetCurrentSrcref(skip);
 
@@ -1012,8 +1013,8 @@ SEXP inferDebugSrcrefs(
    // In R >= 4.5, skip=NA_INTEGER checks R_Srcref (the evaluator's current
    // position) first, giving the correct srcref during debug stepping.
    // In R < 4.5, skip=NA_INTEGER is not handled specially and always
-   // returns R_NilValue, so we use skip=0 which reads the context's
-   // srcref field (correct on older R).
+   // returns R_NilValue, so we use skip=0 (checks R_Srcref, then walks
+   // context stack) which is correct on older R.
    r::sexp::Protect protect;
    int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
    SEXP srcref = R_GetCurrentSrcref(skip);
