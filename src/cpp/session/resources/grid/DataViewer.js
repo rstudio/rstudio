@@ -79,6 +79,11 @@ var pendingFetches = new Map(); // key: "start-length" -> AbortController
 var renderStart = 0;
 var renderEnd = 0;
 
+// Incremental row recycling state
+var renderedRowElements = new Map(); // rowIndex -> <tr> element
+var topSpacerRow = null;
+var bottomSpacerRow = null;
+
 // Column resize state
 var didResize = false;
 var resizingColIdx = null;
@@ -1226,6 +1231,43 @@ var updateInfoBar = function() {
    info.textContent = text;
 };
 
+var buildRow = function(r) {
+   var rowData = rowCache.get(r);
+   if (!rowData) return null;
+
+   var tr = document.createElement("tr");
+   tr.setAttribute("data-row", r);
+
+   for (var c = 0; c < columnOrder.length; c++) {
+      var colIdx = columnOrder[c];
+      var cellData = colIdx === 0 ? rowData[0] : rowData[colIdx];
+      var clazz = getColClass(cols[colIdx]);
+      if (colIdx === 0 && rowNumbers) clazz = "textCell";
+      var td = createCell(cellData, colIdx, rowData, clazz);
+      tr.appendChild(td);
+   }
+
+   return tr;
+};
+
+var createSpacerRow = function(colSpan) {
+   var tr = document.createElement("tr");
+   tr.className = "spacer-row";
+   var td = document.createElement("td");
+   td.colSpan = colSpan;
+   td.style.padding = "0";
+   td.style.border = "none";
+   td.style.height = "0px";
+   tr.appendChild(td);
+   return tr;
+};
+
+var updateSpacerRowHeight = function(spacerTr, heightPx) {
+   if (spacerTr && spacerTr.firstChild) {
+      spacerTr.firstChild.style.height = heightPx + "px";
+   }
+};
+
 var renderVisibleRows = function(force) {
    var viewport = document.getElementById("gridViewport");
    var tbody = document.getElementById("gridBody");
@@ -1237,6 +1279,9 @@ var renderVisibleRows = function(force) {
 
    if (activeRows === 0) {
       tbody.innerHTML = "";
+      renderedRowElements.clear();
+      topSpacerRow = null;
+      bottomSpacerRow = null;
       renderStart = 0;
       renderEnd = 0;
       return;
@@ -1248,13 +1293,12 @@ var renderVisibleRows = function(force) {
    var newStart = Math.max(0, firstVisible - BUFFER_ROWS);
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
 
-   // Skip full rebuild if the render window hasn't changed
+   // Skip if the render window hasn't changed
    if (!force && newStart === renderStart && newEnd === renderEnd) {
       return;
    }
 
-   // Check if we need to fetch more data — iterate over block-aligned
-   // boundaries so we don't miss blocks when newStart is unaligned.
+   // Check if we need to fetch more data
    var firstBlock = Math.floor(newStart / FETCH_SIZE) * FETCH_SIZE;
    for (var blockStart = firstBlock; blockStart <= newEnd; blockStart += FETCH_SIZE) {
       if (!rowCache.has(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
@@ -1271,69 +1315,84 @@ var renderVisibleRows = function(force) {
    // Recompute pinned offsets for data cells
    cachedPinnedOffsets = getPinnedOffsets().offsets;
 
-   // Build rows, counting how many we actually render (some may be
-   // uncached and skipped). The bottom spacer absorbs the deficit.
-   var fragment = document.createDocumentFragment();
-   var renderedCount = 0;
+   var colSpan = columnOrder.length || 1;
 
-   for (var r = newStart; r <= newEnd; r++) {
-      var rowData = rowCache.get(r);
-      if (!rowData) continue;
-      renderedCount++;
+   // --- Full rebuild (force, or no existing spacers) ---
+   if (force || !topSpacerRow || !bottomSpacerRow) {
+      tbody.innerHTML = "";
+      renderedRowElements.clear();
 
-      var tr = document.createElement("tr");
+      topSpacerRow = createSpacerRow(colSpan);
+      tbody.appendChild(topSpacerRow);
 
-      for (var c = 0; c < columnOrder.length; c++) {
-         var colIdx = columnOrder[c];
-         var cellData = colIdx === 0 ? rowData[0] : rowData[colIdx];
-         var clazz = getColClass(cols[colIdx]);
-         if (colIdx === 0 && rowNumbers) clazz = "textCell";
-         var td = createCell(cellData, colIdx, rowData, clazz);
-         tr.appendChild(td);
+      var renderedCount = 0;
+      for (var r = newStart; r <= newEnd; r++) {
+         var tr = buildRow(r);
+         if (tr) {
+            tbody.appendChild(tr);
+            renderedRowElements.set(r, tr);
+            renderedCount++;
+         }
       }
 
-      fragment.appendChild(tr);
+      bottomSpacerRow = createSpacerRow(colSpan);
+      tbody.appendChild(bottomSpacerRow);
+
+      var skipped = (newEnd - newStart + 1) - renderedCount;
+      updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
+      updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1 + skipped) * ROW_HEIGHT);
+
+      renderStart = newStart;
+      renderEnd = newEnd;
+      return;
    }
 
-   // Spacer heights. Skipped (uncached) rows are added to the bottom
-   // spacer so the total height stays correct:
-   // topSpacer + renderedCount * ROW_HEIGHT + bottomSpacer = activeRows * ROW_HEIGHT
-   var colSpan = columnOrder.length || 1;
+   // --- Incremental update ---
+
+   // Remove rows that are no longer in the window
+   // Scrolling down: remove from top (renderStart .. newStart-1)
+   // Scrolling up: remove from bottom (newEnd+1 .. renderEnd)
+   for (var r = renderStart; r < newStart; r++) {
+      var el = renderedRowElements.get(r);
+      if (el) { el.remove(); renderedRowElements.delete(r); }
+   }
+   for (var r = newEnd + 1; r <= renderEnd; r++) {
+      var el = renderedRowElements.get(r);
+      if (el) { el.remove(); renderedRowElements.delete(r); }
+   }
+
+   // Add new rows at the top (newStart .. renderStart-1)
+   // Insert before the first data row (right after topSpacerRow)
+   var insertBeforeTop = topSpacerRow.nextSibling;
+   for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
+      if (!renderedRowElements.has(r)) {
+         var tr = buildRow(r);
+         if (tr) {
+            tbody.insertBefore(tr, insertBeforeTop);
+            renderedRowElements.set(r, tr);
+            insertBeforeTop = tr;
+         }
+      }
+   }
+
+   // Add new rows at the bottom (renderEnd+1 .. newEnd)
+   // Insert before the bottom spacer
+   for (var r = Math.max(renderEnd + 1, newStart); r <= newEnd; r++) {
+      if (!renderedRowElements.has(r)) {
+         var tr = buildRow(r);
+         if (tr) {
+            tbody.insertBefore(tr, bottomSpacerRow);
+            renderedRowElements.set(r, tr);
+         }
+      }
+   }
+
+   // Update spacer heights
+   var renderedCount = renderedRowElements.size;
    var expectedCount = newEnd - newStart + 1;
-   var skippedRows = expectedCount - renderedCount;
-
-   // Update tbody with spacer row + data rows
-   tbody.innerHTML = "";
-
-   // Top spacer — pushes data rows to their correct vertical position.
-   if (newStart > 0) {
-      var spacerTr = document.createElement("tr");
-      spacerTr.className = "spacer-row";
-      var spacerTd = document.createElement("td");
-      spacerTd.colSpan = colSpan;
-      spacerTd.style.height = (newStart * ROW_HEIGHT) + "px";
-      spacerTd.style.padding = "0";
-      spacerTd.style.border = "none";
-      spacerTr.appendChild(spacerTd);
-      tbody.appendChild(spacerTr);
-   }
-
-   tbody.appendChild(fragment);
-
-   // Bottom spacer — fills the remaining scroll height, plus absorbs
-   // any height deficit from skipped (uncached) rows.
-   var remainingRows = activeRows - newEnd - 1 + skippedRows;
-   if (remainingRows > 0) {
-      var bottomTr = document.createElement("tr");
-      bottomTr.className = "spacer-row";
-      var bottomTd = document.createElement("td");
-      bottomTd.colSpan = colSpan;
-      bottomTd.style.height = (remainingRows * ROW_HEIGHT) + "px";
-      bottomTd.style.padding = "0";
-      bottomTd.style.border = "none";
-      bottomTr.appendChild(bottomTd);
-      tbody.appendChild(bottomTr);
-   }
+   var skipped = expectedCount - renderedCount;
+   updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
+   updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1 + skipped) * ROW_HEIGHT);
 
    renderStart = newStart;
    renderEnd = newEnd;
@@ -1914,6 +1973,9 @@ var destroyGrid = function() {
    measuredWidths = [];
    pinnedColumns.clear();
    cachedPinnedOffsets = {};
+   renderedRowElements.clear();
+   topSpacerRow = null;
+   bottomSpacerRow = null;
 
    columnsPopup = null;
    activeColumnInfo = {};
