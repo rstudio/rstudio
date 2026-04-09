@@ -15,6 +15,7 @@
 
 import { accessSync, constants } from 'fs';
 import { join, resolve, sep } from 'path';
+import { fileURLToPath } from 'url';
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
@@ -36,7 +37,7 @@ export function createLocalUrlChecker(
   // preventing sibling directories that share a prefix from matching
   // (e.g. "globemaster-allium-old" must not match "globemaster-allium").
   const hostDir = isFileMode
-    ? resolve(decodeURIComponent(hostUrl.pathname), '..') + sep
+    ? resolve(fileURLToPath(hostUrl), '..') + sep
     : '';
   const contentDir = isFileMode && isValidSlug(releaseSlug)
     ? resolve(hostDir, '..', 'assets', 'whats-new', releaseSlug) + sep
@@ -49,7 +50,7 @@ export function createLocalUrlChecker(
         if (target.protocol !== 'file:') {
           return false;
         }
-        const targetPath = resolve(decodeURIComponent(target.pathname));
+        const targetPath = resolve(fileURLToPath(target));
         return targetPath.startsWith(hostDir) || targetPath.startsWith(contentDir);
       }
       return target.origin === hostUrl.origin;
