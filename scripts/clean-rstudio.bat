@@ -61,9 +61,9 @@ if exist "%MyDocsDir%\.Renviron" (
 
 echo.
 if %ERRORS% equ 0 (
-    echo Done. Cleaned %CLEANED% item(s), no errors.
+    echo Done. Cleaned %CLEANED% item^(s^), no errors.
 ) else (
-    echo Done. Cleaned %CLEANED% item(s), %ERRORS% FAILED.
+    echo Done. Cleaned %CLEANED% item^(s^), %ERRORS% FAILED.
     echo Re-run after closing RStudio and any R sessions.
     exit /b 1
 )
