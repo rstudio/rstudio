@@ -27,7 +27,6 @@
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -77,8 +76,8 @@ TestsFileType getTestType(const std::string& contents)
       }
    }
 
-   pos = contents.find("app <- ShinyDriver$new(", 0);
-   if (pos == 0)
+   pos = contents.find("AppDriver$new(", 0);
+   if (pos != std::string::npos)
       return TestsShinyTest;
 
    return TestsNone;
@@ -107,48 +106,6 @@ std::string onDetectTestsSourceType(
 
 } // anonymous namespace
 
-Error installShinyTestDependencies(const json::JsonRpcRequest& request,
-                                   json::JsonRpcResponse* pResponse)
-{
-   // Prepare the command
-   std::string cmd;
-   cmd.append("shinytest::installDependencies()");
-
-   // R binary
-   FilePath rProgramPath;
-   Error error = module_context::rScriptPath(&rProgramPath);
-   if (error)
-      return error;
-
-   // options
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   options.redirectStdErrToStdOut = true;
-
-   // build args
-   std::vector<std::string> args;
-   args.push_back("--vanilla");
-   args.push_back("-s");
-   args.push_back("-e");
-   args.push_back(cmd);
-
-   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
-         boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing shinytest dependencies", console_process::InteractionNever);
-
-   // create and execute console process
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
-            args,
-            options,
-            pCPI);
-
-   // return console process
-   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
-   return Success();
-}
-
 Error initialize()
 {
    using namespace module_context;
@@ -158,8 +115,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionTests.R"))
-      (bind(registerRpcMethod, "install_shinytest_dependencies", installShinyTestDependencies));
+      (bind(sourceModuleRFile, "SessionTests.R"));
 
    return initBlock.execute();
 }

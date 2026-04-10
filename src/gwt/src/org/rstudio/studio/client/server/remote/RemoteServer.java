@@ -6697,16 +6697,8 @@ public class RemoteServer implements Server
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE,
-                  HAS_SHINYTEST_HAS_DEPENDENCIES,
+                  HAS_SHINYTEST2_DEPENDENCIES,
                   callback);
-   }
-
-   @Override
-   public void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback)
-   {
-      sendRequest(RPC_SCOPE,
-                  INSTALL_SHINYTEST_DEPENDENCIES,
-                  new ConsoleProcessCallbackAdapter(callback));
    }
 
    @Override
@@ -6716,7 +6708,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(testFile));
 
       sendRequest(RPC_SCOPE,
-                  HAS_SHINYTEST_RESULTS,
+                  HAS_SHINYTEST2_RESULTS,
                   params,
                   true,
                   callback);
@@ -7642,9 +7634,8 @@ public class RemoteServer implements Server
    private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
    private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
 
-   private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
-   private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
-   private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
+   private static final String HAS_SHINYTEST2_DEPENDENCIES = "has_shinytest2_dependencies";
+   private static final String HAS_SHINYTEST2_RESULTS = "has_shinytest2_results";
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
    private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
