@@ -259,19 +259,21 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    
    // fix up '-std=' arguments; in particular, we only pass the C++
    // '-std' flags when compiling C++ sources, and the C '-std' flags
-   // whe compiling C sources
+   // when compiling C sources
    if (FilePath(filename).hasExtensionLowerCase(".c"))
    {
+      // remove C++ std flags (e.g. -std=c++20) from C compilations
       core::algorithm::expel_if(args, [](const std::string& arg)
       {
-         return arg.find("-std") == 0 && arg.find("++") != 0;
+         return arg.find("-std") == 0 && arg.find("++") != std::string::npos;
       });
    }
    else
    {
+      // remove C-only std flags (e.g. -std=c11) from C++ compilations
       core::algorithm::expel_if(args, [](const std::string& arg)
       {
-         return arg.find("-std") == 0 && arg.find("++") == 0;
+         return arg.find("-std") == 0 && arg.find("++") == std::string::npos;
       });
    }
    
