@@ -1913,6 +1913,10 @@ public class PaneManager
             panel = tabSet2TabPanel_;
             moveHiddenTabToTabSet2(tab, tabs2_);
          }
+
+         // Refresh chat command visibility now that the tab is no longer hidden
+         if (tab == Tab.Chat)
+            manageChatCommands();
       }
 
       // Ensure that the pane is visible (otherwise tab selection will fail)
@@ -2757,6 +2761,8 @@ public class PaneManager
       if (panel == null)
          return true;
       LogicalWindow parent = panel.getParentWindow();
+      if (parent == null)
+         return true;
       return parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
    }
 
