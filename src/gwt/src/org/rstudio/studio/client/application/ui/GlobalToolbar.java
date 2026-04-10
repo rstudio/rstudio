@@ -291,6 +291,12 @@ public class GlobalToolbar extends Toolbar
             assistantSeparator_.setVisible(visible);
          });
 
+         // Sync initial state: PaneManager may have already set the command
+         // invisible before this handler was registered (see #17368)
+         boolean initialVisible = commands_.assistantPaneToggle().isVisible();
+         assistantButton_.setVisible(initialVisible);
+         assistantSeparator_.setVisible(initialVisible);
+
          eventBus_.addHandler(ChatPaneActiveEvent.TYPE, event ->
                assistantButton_.setLatched(event.isActive()));
 
