@@ -166,10 +166,74 @@ test.describe('Tests needing packages', () => {
 });
 ```
 
+## Tags
+
+Tests use [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) to indicate platform, edition, and product tier constraints. Apply tags via the `tag` option on `test()` or `test.describe()`:
+
+```typescript
+test.describe('Feature', { tag: ['@desktop_only'] }, () => { ... });
+test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) => { ... });
+```
+
+### Available Tags
+
+| Tag | Meaning |
+|-----|---------|
+| `@parallel_safe` | Test can run in parallel without interfering with other tests |
+| `@serial` | Test must run sequentially (modifies shared state, restarts sessions, etc.) |
+| `@macos_only` | Test only applies on macOS |
+| `@windows_only` | Test only applies on Windows |
+| `@linux_only` | Test only applies on Linux |
+| `@desktop_only` | Test only applies to RStudio Desktop |
+| `@server_only` | Test only applies to RStudio Server |
+| `@pro_only` | Test requires RStudio Pro |
+| `@os_only` | Test only applies to open-source RStudio |
+
+### Filtering by Tag
+
+The config defines **projects** that automatically exclude tags not applicable to a given environment. Use `--project` to select one:
+
+```bash
+npx playwright test --project=desktop-pro-windows
+npx playwright test --project=server-pro-linux
+```
+
+To avoid passing `--project` every time, set `PW_PROJECT` in your shell profile:
+
+```bash
+export PW_PROJECT=desktop-pro-windows
+```
+
+With `PW_PROJECT` set, bare `npx playwright test` runs only that project. To switch projects, override `PW_PROJECT` inline:
+
+```bash
+PW_PROJECT=server-pro-linux RSTUDIO_EDITION=server npx playwright test
+```
+
+Without `PW_PROJECT` or `--project`, all 8 projects run.
+
+**Note:** `PW_PROJECT` trumps `--project`. If both are set to different values, `PW_PROJECT` wins. To use `--project`, unset `PW_PROJECT` first.
+
+Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+
+You can also filter manually with `--grep` and `--grep-invert`:
+
+```bash
+# Run only tests with a specific tag
+npx playwright test --grep @desktop_only
+
+# Exclude a single tag
+npx playwright test --grep-invert @pro_only
+
+# Exclude multiple tags
+npx playwright test --grep-invert "@pro_only|@server_only"
+```
+
 ## Environment Variables
 
 | Variable | Mode | Required | Description |
 |----------|------|----------|-------------|
+| `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-pro-windows`). Trumps `--project`. |
 | `RSTUDIO_EDITION` | Both | No | `desktop` (default) or `server` |
 | `CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
 | `RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |

@@ -10,7 +10,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 1. **Always clean up stray RStudio processes at script start** – Port 9222 conflicts cause "Target closed" errors
 2. **5-second minimum initial wait** before CDP connection – Ensures stable UI initialization
 3. **Use stable selectors** from source code, NOT dynamic `gwt-uid-XXXX` IDs – These change on every restart
-4. **Use `pressSequentially()` for console/editor input, `keyboard.type()` for dialogs** – `pressSequentially()` ensures character-by-character detection in the editor; `keyboard.type()` works for dialog input and keyboard shortcuts
+4. **Use `pressSequentially()` for all GWT text inputs** – Console, editor, and dialog/wizard `input.gwt-TextBox` fields all need character-by-character input. `fill()` doesn't fire GWT key events (can leave OK buttons disabled). Use `keyboard.type()` only for non-GWT inputs like the command palette search box.
 5. **Add 0.2-second delay before `keyboard.press("Enter")`** – Critical for reliability. After typing, wait 0.2s before pressing Enter to ensure the keystroke is fully processed.
 6. **Graceful shutdown with `q(save = "no")`** – Better than force termination. Use `save = "no"` to skip the "Save workspace?" dialog.
 7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards.
@@ -95,7 +95,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 - `await expect(locator).toContainText('...')` — not extract text then assert
 - `expect(items).toEqual(expect.arrayContaining([...]))` — order-independent lists
 - `click({ force: true })` on Ace textareas — overlay intercepts normal clicks
-- `pressSequentially()` for console/editor input — character-by-character
+- `pressSequentially()` for all GWT text inputs (console, editor, dialog/wizard `input.gwt-TextBox`) — `fill()` doesn't fire GWT key events, which can leave change handlers untriggered (e.g., OK button stays disabled)
 - `test.fixme()` for failing tests — never comment out
 
 ### Parallel Safety
@@ -418,6 +418,40 @@ After tests pass, review for:
 3. **Selector quality** — Verify against selector hierarchy
 4. **Playwright + TypeScript conventions** — proper async/await, type annotations, built-in assertions, lifecycle hooks, no floating promises
 5. **Duplication** — Extract shared helpers to actions
+
+---
+
+## RPC Interception (page.route) in Electron/CDP
+
+When intercepting rsession RPCs via `page.route()`:
+
+- **Use regex, not globs** — `page.route(/\/rpc\/method_name/, ...)` handles query strings; glob `**/rpc/method_name` may not.
+- **Never use `route.fetch()`** — In Electron CDP, `route.fetch()` returns empty response bodies from rsession. Use `route.fulfill()` directly with the known JSON-RPC format:
+  ```typescript
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ result: mockPayload }),
+  });
+  ```
+- **RPC URL pattern** — RStudio RPCs use `http://127.0.0.1:<port>/rpc/<method_name>` (e.g., `/rpc/chat_check_for_updates`).
+
+### Chat Pane / Posit AI Specifics
+
+- **Frontend caches the update check** — `chatCheckForUpdates` fires once at startup. Toggling the chat provider preference does NOT re-trigger it. To force a fresh check, post `retry-manifest` from inside the chat iframe:
+  ```typescript
+  await chatPane.frame.locator('body').evaluate(() => {
+    window.parent.postMessage('retry-manifest', '*');
+  });
+  ```
+  The message **must originate from the iframe** — ChatPresenter filters by `event.source`, so `window.postMessage()` from the main page is silently ignored.
+
+- **Running PAI backend overwrites blocking pages** — GWT's `updateFrameContent()` navigates the iframe to about:blank then writes blocking HTML, but `loadUrl()` (from backend polling, client events, or GWT timers) immediately reloads `ai-chat/index.html` on top. For blocking-state tests, inject the HTML directly via `page.evaluate()` after verifying the RPC interception fired.
+
+- **Options dialog has its own install/update flow** — `setChatProvider()` via the Options dialog triggers update/install dialogs that bypass RPC interception. When you need to control the RPC response, set the preference directly:
+  ```typescript
+  await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("chat_provider", "posit")');
+  ```
 
 ---
 
