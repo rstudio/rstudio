@@ -704,6 +704,16 @@
    clear = function() { .rs.clearUserPref("fold_style") }
 )
 
+# Hierarchical section folding
+#
+# Whether section headers create nested folds based on their heading level (e.g.
+# ## folds inside # sections).
+.rs.uiPrefs$hierarchicalSectionFolding <- list(
+   get = function() { .rs.getUserPref("hierarchical_section_folding") },
+   set = function(value) { .rs.setUserPref("hierarchical_section_folding", value) },
+   clear = function() { .rs.clearUserPref("hierarchical_section_folding") }
+)
+
 # Save R scripts before sourcing
 #
 # Whether to automatically save scripts before executing them.

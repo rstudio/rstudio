@@ -461,6 +461,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String generalHeaderLabel();
     String codeFormattingHeaderLabel();
     String useFormatterLabel();
+    String displayHierarchicalSectionFoldingLabel();
     String syntaxHeaderLabel();
     String editSnippetsButtonLabel();
     String listSpacingTight();

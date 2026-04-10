@@ -19,6 +19,7 @@
 - ([#15360](https://github.com/rstudio/rstudio/issues/15360)): Added `r-max-connections` session option to configure the maximum number of R connections (requires R >= 4.4.0)
 - ([#17330](https://github.com/rstudio/rstudio/issues/17330)): Added Help > Release Notes command to open the RStudio release notes in the browser
 - ([#17344](https://github.com/rstudio/rstudio/issues/17344)): Console process dialogs now support dark theme styling
+- ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior
 
 ### Fixed
 - ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
