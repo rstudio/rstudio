@@ -58,6 +58,7 @@
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RBusy.hpp>
+#include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
@@ -1282,6 +1283,13 @@ void processPendingExecution()
          console_input::updateSessionExecuting();
          ClientEvent busyEvent(client_events::kBusy, false);
          module_context::enqueClientEvent(busyEvent);
+
+         // Restore the top-level prompt flag before reissuing. Code executed
+         // by the chat backend may have called readline(), which sets
+         // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
+         // this reset, the reissued prompt carries busy=true and the chat
+         // pane's "waiting for input" notification is never dismissed.
+         r::session::setAtTopLevelPrompt(true);
          console_input::reissueLastConsolePrompt();
       }
    }

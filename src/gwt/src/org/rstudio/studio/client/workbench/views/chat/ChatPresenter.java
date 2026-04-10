@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteAction
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -59,6 +60,7 @@ import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
    implements ConsolePromptEvent.Handler,
+              ConsoleReadCompletedEvent.Handler,
               SatelliteClosedEvent.Handler,
               ChatReturnToMainEvent.Handler,
               ChatSatelliteActionEvent.Handler
@@ -249,6 +251,9 @@ public class ChatPresenter extends BasePresenter
       // Listen for console prompt events (to detect when R is waiting for input)
       events_.addHandler(ConsolePromptEvent.TYPE, this);
 
+      // Listen for console read completion (to dismiss notification after readline)
+      events_.addHandler(ConsoleReadCompletedEvent.TYPE, this);
+
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
       {
@@ -434,6 +439,16 @@ public class ChatPresenter extends BasePresenter
       if (event.getPrompt().getBusy())
          display_.showReadlineNotification();
       else
+         display_.hideReadlineNotification();
+   }
+
+   // When console input is received for a sub-prompt (readline, browser, scan,
+   // etc.), dismiss the notification immediately rather than waiting for R to
+   // return to the top-level REPL.
+   @Override
+   public void onConsoleReadCompleted(ConsoleReadCompletedEvent event)
+   {
+      if (!event.getHistory())
          display_.hideReadlineNotification();
    }
 
