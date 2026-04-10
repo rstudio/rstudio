@@ -291,6 +291,16 @@ void deduplicateStdArgs(std::vector<std::string>& args)
    if (lastStd.empty())
       return;
 
+   auto count = std::count_if(args.begin(), args.end(), [](const std::string& arg) {
+      return boost::algorithm::starts_with(arg, "-std=");
+   });
+
+   if (count <= 1)
+      return;
+
+   if (verbose(3))
+      std::cerr << "Deduplicating -std= flags (keeping: " << lastStd << ")" << std::endl;
+
    core::algorithm::expel_if(args, [](const std::string& arg) {
       return boost::algorithm::starts_with(arg, "-std=");
    });
