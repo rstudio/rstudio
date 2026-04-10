@@ -188,7 +188,7 @@ bool peerHasCapability(const std::string& method)
 // ============================================================================
 // Feature availability helper
 // ============================================================================
-bool isPositAssistantEnabled()
+bool isPositAssistantEnabledByAdmin()
 {
    return module_context::isPositAssistantEnabledByAdmin();
 }
@@ -5680,14 +5680,14 @@ Error initialize()
 
    // Validate assistant preference consistency
    // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
-   if (isPaiSelected() && !isPositAssistantEnabled())
+   if (isPaiSelected() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    // Validate chat provider preference consistency
    // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPositAssistantEnabled())
+   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }

@@ -3096,7 +3096,9 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // Use libgit2 to check if paths are already covered by existing
       // gitignore rules (including global gitignore, parent directories,
       // wildcard rules, etc.)
-      // NOTE: assumes gitIgnoreFile is at the repo root (matches the sole call site)
+      // NOTE: assumes gitIgnoreFile is at the repo root (matches the sole call site).
+      // If the repo fails to open, isIgnored() returns false for all paths,
+      // so all entries get appended as a safe fallback.
       FilePath repoRoot = gitIgnoreFile.getParent();
       libgit2::Git git(repoRoot);
 
@@ -3124,7 +3126,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
          }
       }
 
-      if (filesToIgnore.size() == 0)
+      if (filesToIgnore.empty())
          return Success();
 
       // check if we need an extra newline before appending
