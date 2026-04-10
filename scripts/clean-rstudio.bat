@@ -17,8 +17,8 @@ if not exist "%~1\" exit /b 0
 echo Removing directory: %~1
 rd /q /s "%~1" 2>nul
 if !ERRORLEVEL! neq 0 (
-    echo ERROR: Failed to remove "%~1" — is something holding it open?
-    echo        Try: handle.exe "%~1" (Sysinternals) to find the locking process.
+    echo ERROR: Failed to remove "%~1" -- is something holding it open?
+    echo        Try: handle.exe "%~1" ^(Sysinternals^) to find the locking process.
     set /a ERRORS+=1
 ) else (
     set /a CLEANED+=1
@@ -30,8 +30,8 @@ if not exist "%~1" exit /b 0
 echo Deleting file: %~1
 del /f "%~1" 2>nul
 if !ERRORLEVEL! neq 0 (
-    echo ERROR: Failed to delete "%~1" — is something holding it open?
-    echo        Try: handle.exe "%~1" (Sysinternals) to find the locking process.
+    echo ERROR: Failed to delete "%~1" -- is something holding it open?
+    echo        Try: handle.exe "%~1" ^(Sysinternals^) to find the locking process.
     set /a ERRORS+=1
 ) else (
     set /a CLEANED+=1
