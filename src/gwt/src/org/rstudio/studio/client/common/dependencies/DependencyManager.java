@@ -253,11 +253,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // build dependency array -- same as rsconnect, but require
       // rsconnect >= 1.8.0 for Connect Cloud support
       List<Dependency> deps = getFeatureDependencies("rsconnect");
-      for (Dependency dep : deps)
+      for (int i = 0; i < deps.size(); i++)
       {
+         Dependency dep = deps.get(i);
          if (StringUtil.equals(dep.getName(), "rsconnect"))
          {
-            dep.setVersion("1.8.0");
+            // Replace with a fresh Dependency to avoid mutating the
+            // shared object in the session's DependencyList cache.
+            deps.set(i, Dependency.cranPackage("rsconnect", "1.8.0"));
             break;
          }
       }
