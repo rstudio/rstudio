@@ -476,6 +476,7 @@ public class PaneManager
          commands_.openSourceDocNewColumn().setVisible(visible);
 
          manageLayoutCommands();
+         manageChatCommands();
       });
 
       eventBus_.addHandler(ZoomPaneEvent.TYPE, event ->
@@ -2743,11 +2744,20 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = paiUtil_.isPositAssistantEnabled();
+      boolean showPaiUi = paiUtil_.isPositAssistantEnabled() && !isTabHidden(Tab.Chat);
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
       commands_.assistantPaneToggle().setVisible(
             showPaiUi && paiUtil_.isChatProviderPosit());
+   }
+
+   private boolean isTabHidden(Tab tab)
+   {
+      WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+      if (panel == null)
+         return true;
+      LogicalWindow parent = panel.getParentWindow();
+      return parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
    }
 
    private List<AppCommand> getLayoutCommands()
