@@ -1767,6 +1767,14 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
+   // only add AI-related ignores when the assistant is enabled
+   bool assistantActive =
+      session::options().allowPositAssistant() &&
+      session::options().positAssistantEnabled() &&
+      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty() &&
+      (prefs::userPrefs().assistant() != kAssistantNone ||
+       prefs::userPrefs().chatProvider() != kChatProviderNone);
+
    // check for existing svn:ignore
    core::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
@@ -1787,7 +1795,8 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      svnIgnore += ".positai\n";
+      if (assistantActive)
+         svnIgnore += ".positai\n";
    }
    else
    {
@@ -1800,7 +1809,8 @@ Error augmentSvnIgnore()
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      if (!regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
+      if (assistantActive &&
+          !regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
          additions += ".positai\n";
 
       if (additions.empty())

@@ -423,10 +423,22 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePositai = R"(^\.positai$)";
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
+      // check if the AI assistant is active (admin + user level)
+      bool assistantActive =
+         session::options().allowPositAssistant() &&
+         session::options().positAssistantEnabled() &&
+         core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty() &&
+         (prefs::userPrefs().assistant() != kAssistantNone ||
+          prefs::userPrefs().chatProvider() != kChatProviderNone);
+
       std::string ignoreLines = kIgnoreRproj + newLine +
-                                kIgnoreRprojUser + newLine +
-                                kIgnorePositai + newLine +
-                                kIgnoreClaude + newLine;
+                                kIgnoreRprojUser + newLine;
+
+      if (assistantActive)
+      {
+         ignoreLines += kIgnorePositai + newLine;
+         ignoreLines += kIgnoreClaude + newLine;
+      }
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -472,8 +484,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = strIgnore.find(kIgnoreClaude) != std::string::npos;
+         bool hasPositai = !assistantActive || strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = !assistantActive || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0

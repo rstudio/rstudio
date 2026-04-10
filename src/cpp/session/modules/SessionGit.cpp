@@ -63,6 +63,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionAskPass.hpp"
+#include "SessionLibGit2.hpp"
 
 #include "SessionVCS.hpp"
 
@@ -3044,6 +3045,14 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
 
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
+   // only add AI-related ignores when the assistant is enabled
+   bool assistantActive =
+      session::options().allowPositAssistant() &&
+      session::options().positAssistantEnabled() &&
+      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty() &&
+      (prefs::userPrefs().assistant() != kAssistantNone ||
+       prefs::userPrefs().chatProvider() != kChatProviderNone);
+
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
    if (!gitIgnoreFile.exists())
@@ -3055,7 +3064,9 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
-      filesToIgnore.push_back(".positai");
+
+      if (assistantActive)
+         filesToIgnore.push_back(".positai");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -3087,41 +3098,43 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    }
    else
    {
-      // If .gitignore exists, add .Rproj.user unless it's already there
+      // Use libgit2 to check if paths are already covered by existing
+      // gitignore rules (including global gitignore, parent directories,
+      // wildcard rules, etc.)
+      FilePath repoRoot = gitIgnoreFile.getParent();
+      libgit2::Git git(repoRoot);
 
+      std::vector<std::string> filesToIgnore;
+
+      if (!git.isIgnored(".Rproj.user"))
+         filesToIgnore.push_back(".Rproj.user");
+
+      if (assistantActive && !git.isIgnored(".positai"))
+         filesToIgnore.push_back(".positai");
+
+      if (session::options().packageOutputInPackageFolder())
+      {
+         std::string packageName = r_util::packageNameFromDirectory(repoRoot);
+         if (!packageName.empty())
+         {
+            if (!git.isIgnored(packageName + ".Rcheck"))
+               filesToIgnore.push_back(packageName + ".Rcheck/");
+            if (!git.isIgnored(packageName + ".tar.gz"))
+               filesToIgnore.push_back(packageName + "*.tar.gz");
+            if (!git.isIgnored(packageName + ".tgz"))
+               filesToIgnore.push_back(packageName + "*.tgz");
+         }
+      }
+
+      if (filesToIgnore.size() == 0)
+         return Success();
+
+      // check if we need an extra newline before appending
       std::string strIgnore;
       Error error = core::readStringFromFile(gitIgnoreFile, &strIgnore);
       if (error)
          return error;
 
-      std::vector<std::string> filesToIgnore;
-
-      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.Rproj\.user/?$)")))
-         filesToIgnore.push_back(".Rproj.user");
-
-      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.positai/?$)")))
-         filesToIgnore.push_back(".positai");
-
-      if (session::options().packageOutputInPackageFolder())
-      {
-         // add any missing exclusions for package build/check output
-         std::string packageName = r_util::packageNameFromDirectory(gitIgnoreFile.getParent());
-         if (!packageName.empty())
-         {
-            std::string packageNameRegex = "^";
-            packageNameRegex += packageName;
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(\.Rcheck/$)")))
-               filesToIgnore.push_back(packageName + ".Rcheck/");
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tar\.gz$)")))
-               filesToIgnore.push_back(packageName + "*.tar.gz");
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tgz$)")))
-               filesToIgnore.push_back(packageName + "*.tgz");
-         }
-      }
-      
-      if (filesToIgnore.size() == 0)
-         return Success();
-      
       bool addExtraNewline = strIgnore.size() > 0
                              && strIgnore[strIgnore.size() - 1] != '\n';
 
