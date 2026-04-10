@@ -1981,7 +1981,7 @@ assign(x = ".rs.acCompletionTypes",
       }
       
       # Skip type inference if requested.
-      if (identical(suppressTypeInference, TRUE))
+      else if (identical(suppressTypeInference, TRUE))
       {
          type <- .rs.acCompletionTypes$UNKNOWN
       }
