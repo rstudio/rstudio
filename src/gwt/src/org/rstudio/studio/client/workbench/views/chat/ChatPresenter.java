@@ -442,9 +442,10 @@ public class ChatPresenter extends BasePresenter
          display_.hideReadlineNotification();
    }
 
-   // When console input is received for a sub-prompt (readline, browser, scan,
-   // etc.), dismiss the notification immediately rather than waiting for R to
-   // return to the top-level REPL.
+   // When console input is received for a sub-prompt (readline, scan, etc.),
+   // dismiss the notification immediately rather than waiting for R to return
+   // to the top-level REPL. Browser prompts are not handled here because they
+   // add to history; they are dismissed by onConsolePrompt() instead.
    @Override
    public void onConsoleReadCompleted(ConsoleReadCompletedEvent event)
    {
