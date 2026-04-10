@@ -745,7 +745,7 @@
    {
       val <- .rs.describeCall(obj)
    }
-   else
+   else .rs.withDebuggerDisabled(
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
@@ -773,7 +773,7 @@
             size_formatted <- format(size, units = "auto", standard = "SI")
             if (is_size_estimated)
                size_formatted <- paste(">", size_formatted)
-            
+
             fmt <- "Large %s (%s%s)"
             val <- sprintf(fmt, class, len_desc, size_formatted)
          }
@@ -801,7 +801,7 @@
             }
          }
       }
-   }
+   })
 
    list(
       name              = .rs.scalar(objName),
@@ -959,7 +959,7 @@
    if (.rs.isUnloadedS4(object))
       return(list())
 
-   .rs.valueContents(object)
+   .rs.withDebuggerDisabled(.rs.valueContents(object))
 })
 
 # Check if an object is an S4 instance whose defining package namespace
