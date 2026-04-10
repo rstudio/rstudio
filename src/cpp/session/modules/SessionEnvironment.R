@@ -745,7 +745,7 @@
    {
       val <- .rs.describeCall(obj)
    }
-   else .rs.withDebuggerDisabled(
+   else
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
@@ -796,12 +796,14 @@
             }
             else
             {
-               # normal object
-               contents <- .rs.valueContents(obj)
+               # normal object -- disable the debugger to prevent recursive
+               # debugger invocations when str() dispatches to user S3 methods
+               # https://github.com/rstudio/rstudio/issues/16987
+               contents <- .rs.withDebuggerDisabled(.rs.valueContents(obj))
             }
          }
       }
-   })
+   }
 
    list(
       name              = .rs.scalar(objName),
