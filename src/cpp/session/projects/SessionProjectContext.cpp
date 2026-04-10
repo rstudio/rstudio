@@ -424,12 +424,7 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
       // check if the AI assistant is active (admin + user level)
-      bool assistantActive =
-         session::options().allowPositAssistant() &&
-         session::options().positAssistantEnabled() &&
-         core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty() &&
-         (prefs::userPrefs().assistant() != kAssistantNone ||
-          prefs::userPrefs().chatProvider() != kChatProviderNone);
+      bool assistantActive = module_context::isPositAssistantEnabled();
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;

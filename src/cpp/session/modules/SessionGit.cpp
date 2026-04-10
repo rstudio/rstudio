@@ -3046,12 +3046,7 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
    // only add AI-related ignores when the assistant is enabled
-   bool assistantActive =
-      session::options().allowPositAssistant() &&
-      session::options().positAssistantEnabled() &&
-      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty() &&
-      (prefs::userPrefs().assistant() != kAssistantNone ||
-       prefs::userPrefs().chatProvider() != kChatProviderNone);
+   bool assistantActive = module_context::isPositAssistantEnabled();
 
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
@@ -3101,6 +3096,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // Use libgit2 to check if paths are already covered by existing
       // gitignore rules (including global gitignore, parent directories,
       // wildcard rules, etc.)
+      // NOTE: assumes gitIgnoreFile is at the repo root (matches the sole call site)
       FilePath repoRoot = gitIgnoreFile.getParent();
       libgit2::Git git(repoRoot);
 
@@ -3117,6 +3113,8 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
          std::string packageName = r_util::packageNameFromDirectory(repoRoot);
          if (!packageName.empty())
          {
+            // test representative paths — gitignore glob * matches zero-or-more
+            // characters, so e.g. "mypackage.tar.gz" matches "mypackage*.tar.gz"
             if (!git.isIgnored(packageName + ".Rcheck"))
                filesToIgnore.push_back(packageName + ".Rcheck/");
             if (!git.isIgnored(packageName + ".tar.gz"))

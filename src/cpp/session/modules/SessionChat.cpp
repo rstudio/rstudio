@@ -188,14 +188,9 @@ bool peerHasCapability(const std::string& method)
 // ============================================================================
 // Feature availability helper
 // ============================================================================
-// Returns true if the Posit Assistant feature is enabled. This requires:
-// 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
-// 2. The posit-assistant-enabled session option
 bool isPositAssistantEnabled()
 {
-   return options().allowPositAssistant() &&
-          options().positAssistantEnabled() &&
-          core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+   return module_context::isPositAssistantEnabledByAdmin();
 }
 
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
