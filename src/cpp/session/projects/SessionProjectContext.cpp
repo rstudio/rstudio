@@ -536,6 +536,13 @@ void ProjectContext::augmentRbuildignore()
    }
 }
 
+void ProjectContext::onUserPrefsChanged(const std::string& layer,
+                                        const std::string& pref)
+{
+   if (pref == kAssistant || pref == kChatProvider)
+      augmentRbuildignore();
+}
+
 SEXP rs_getProjectDirectory()
 {
    SEXP absolutePathSEXP = R_NilValue;
@@ -613,6 +620,10 @@ Error ProjectContext::initialize()
 
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
+
+      // re-augment .Rbuildignore when assistant prefs change
+      prefs::userPrefs().onChanged.connect(
+                   boost::bind(&ProjectContext::onUserPrefsChanged, this, _1, _2));
 
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)

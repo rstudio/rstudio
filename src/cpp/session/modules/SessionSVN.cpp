@@ -524,12 +524,20 @@ std::string nonPathSvnBinDir()
       return std::string();
 }
 
+Error augmentSvnIgnore();
+
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kSvnExePath)
-      return;
-
-   initSvnBin();
+   if (pref == kSvnExePath)
+   {
+      initSvnBin();
+   }
+   else if (pref == kAssistant || pref == kChatProvider)
+   {
+      Error error = augmentSvnIgnore();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 std::string translateItemStatus(const std::string& status)

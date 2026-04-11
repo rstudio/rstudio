@@ -5281,7 +5281,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// NOTE: No isPositAssistantWanted()/isPositAssistantEnabled() gate — the user may have
+// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
 // disabled Posit Assistant but still wants to clean up installed files.
 Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)

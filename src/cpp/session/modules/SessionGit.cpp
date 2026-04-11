@@ -3224,24 +3224,34 @@ std::string nonPathGitBinDir()
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kGitExePath)
-      return;
-
-   FilePath gitExePath(prefs::userPrefs().gitExePath());
-   if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
+   if (pref == kGitExePath)
    {
-      // if there is an explicit value then set it
-      s_gitExePath = gitExePath.getAbsolutePath();
-   }
-   else
-   {
-      // if we are relying on an auto-detected value then scan on windows
-      // and reset to empty on posix
+      FilePath gitExePath(prefs::userPrefs().gitExePath());
+      if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
+      {
+         // if there is an explicit value then set it
+         s_gitExePath = gitExePath.getAbsolutePath();
+      }
+      else
+      {
+         // if we are relying on an auto-detected value then scan on windows
+         // and reset to empty on posix
 #ifdef _WIN32
-      detectAndSaveGitExePath();
+         detectAndSaveGitExePath();
 #else
-      s_gitExePath = "";
+         s_gitExePath = "";
 #endif
+      }
+   }
+   else if (pref == kAssistant || pref == kChatProvider)
+   {
+      if (!s_git_.root().isEmpty())
+      {
+         FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
+         Error error = augmentGitIgnore(gitIgnore);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 }
 
