@@ -534,9 +534,12 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
    else if (pref == kAssistant || pref == kChatProvider)
    {
-      Error error = augmentSvnIgnore();
-      if (error)
-         LOG_ERROR(error);
+      if (!s_workingDir.isEmpty())
+      {
+         Error error = augmentSvnIgnore();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 }
 
@@ -1775,7 +1778,7 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
-   // only add AI-related ignores when the assistant is enabled
+   // only add AI-related ignores when the assistant is active
    bool assistantActive = module_context::isPositAssistantEnabled();
 
    // check for existing svn:ignore

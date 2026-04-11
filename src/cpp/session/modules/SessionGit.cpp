@@ -3045,7 +3045,7 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
 
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
-   // only add AI-related ignores when the assistant is enabled
+   // only add AI-related ignores when the assistant is active
    bool assistantActive = module_context::isPositAssistantEnabled();
 
    // Add stuff to .gitignore
@@ -3096,7 +3096,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // Use libgit2 to check if paths are already covered by existing
       // gitignore rules (including global gitignore, parent directories,
       // wildcard rules, etc.)
-      // NOTE: assumes gitIgnoreFile is at the repo root (matches the sole call site).
+      // NOTE: assumes gitIgnoreFile is at the repo root.
       // If the repo fails to open, isIgnored() returns false for all paths,
       // so all entries get appended as a safe fallback.
       FilePath repoRoot = gitIgnoreFile.getParent();
