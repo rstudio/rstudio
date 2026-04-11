@@ -1828,8 +1828,8 @@ Error augmentSvnIgnore()
    if (error)
       return error;
 
-   if (result.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE(result.stdErr);
+   if (setResult.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE(setResult.stdErr);
 
    return Success();
 }
