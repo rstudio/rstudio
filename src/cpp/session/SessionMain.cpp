@@ -70,6 +70,8 @@
 
 #ifdef _WIN32
 # include <core/system/Win32RuntimeLibrary.hpp>
+#else
+# include <core/system/PosixSystem.hpp>
 #endif
 
 #include <core/system/FileMonitor.hpp>
@@ -2412,6 +2414,36 @@ int main(int argc, char * const argv[])
          Error error = core::system::crypto::rsaInit();
          if (error)
             LOG_ERROR(error);
+      }
+#endif
+
+      // ensure we have enough file descriptors for the file monitor and
+      // other session operations (R packages, sockets, etc.). the default
+      // soft limit (often 1024) can be too low on some systems, causing
+      // inotify_init() to fail with EMFILE ("Too many open files").
+      // rserver already does this (ServerMain.cpp); rsession needs it too.
+#ifndef _WIN32
+      {
+         RLimitType soft, hard;
+         Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+         if (!error)
+         {
+            constexpr RLimitType kDesiredOpenFiles = 4096;
+            if (soft < kDesiredOpenFiles && hard > soft)
+            {
+               RLimitType newLimit = std::min(kDesiredOpenFiles, hard);
+               error = core::system::setResourceLimit(core::system::FilesLimit, newLimit);
+               if (error)
+               {
+                  LOG_WARNING_MESSAGE("Unable to raise open file limit: " + error.asString());
+               }
+               else
+               {
+                  LOG_DEBUG_MESSAGE("Raised open file limit from " +
+                     std::to_string(soft) + " to " + std::to_string(newLimit));
+               }
+            }
+         }
       }
 #endif
 

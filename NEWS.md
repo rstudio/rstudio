@@ -4,7 +4,7 @@
 -
 
 ### Fixed
-- 
+- ([#16067](https://github.com/rstudio/rstudio/issues/16067)): Raise the open file descriptor soft limit at session startup to avoid "Too many open files" errors during project file monitoring on Linux.
 
 ### Fixed
 - 
