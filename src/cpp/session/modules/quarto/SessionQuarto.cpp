@@ -252,6 +252,84 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
    return std::make_tuple(FilePath(), Version(), false);
 }
 
+bool isBuiltinQuartoProjectType(const std::string& type)
+{
+   return type == kQuartoProjectDefault ||
+          type == kQuartoProjectWebsite ||
+          type == kQuartoProjectSite ||
+          type == kQuartoProjectBook ||
+          type == kQuartoProjectManuscript;
+}
+
+// Resolve a custom project type to its base type by reading the extension's
+// _extension.yml. Extensions live at _extensions/<author>/<name>/_extension.yml
+// or _extensions/<name>/_extension.yml relative to the project directory.
+// The base type is declared under contributes.project.project.type.
+std::string resolveCustomProjectType(const FilePath& projectDir,
+                                     const std::string& type)
+{
+   FilePath extensionsDir = projectDir.completeChildPath("_extensions");
+   if (!extensionsDir.exists())
+      return type;
+
+   // look for _extensions/<author>/<type>/_extension.yml (the common case)
+   // or _extensions/<type>/_extension.yml
+   std::vector<FilePath> candidates;
+   std::vector<FilePath> children;
+   Error error = extensionsDir.getChildren(children);
+   if (error)
+      return type;
+
+   for (const auto& child : children)
+   {
+      if (child.isDirectory())
+      {
+         // _extensions/<author>/<type>/
+         FilePath nested = child.completeChildPath(type).completeChildPath("_extension.yml");
+         if (nested.exists())
+         {
+            candidates.push_back(nested);
+            break;
+         }
+
+         // _extensions/<type>/ (the child itself is the extension)
+         if (child.getFilename() == type)
+         {
+            FilePath direct = child.completeChildPath("_extension.yml");
+            if (direct.exists())
+            {
+               candidates.push_back(direct);
+               break;
+            }
+         }
+      }
+   }
+
+   if (candidates.empty())
+      return type;
+
+   // read the extension yaml and extract the base type
+   std::string extensionText;
+   error = core::readStringFromFile(candidates[0], &extensionText);
+   if (error)
+      return type;
+
+   try
+   {
+      YAML::Node extNode = YAML::Load(extensionText);
+      YAML::Node baseTypeNode = extNode["contributes"]["project"]["project"]["type"];
+      if (baseTypeNode.IsDefined() && baseTypeNode.IsScalar())
+      {
+         std::string baseType = baseTypeNode.as<std::string>();
+         if (!baseType.empty())
+            return baseType;
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return type;
+}
+
 core::FilePath quartoConfigFilePath(const FilePath& dirPath)
 {
    FilePath quartoYml = dirPath.completePath("_quarto.yml");
@@ -1173,37 +1251,6 @@ void readQuartoProjectConfig(const FilePath& configFile,
                              std::vector<std::string>* pBibliographies,
                              json::Object* pEditor)
 {
-   // determine type based on quarto inspect (allows us to treat custom project
-   // types as the correct base type). use cache of previously read project types
-   static std::map<std::string,std::string> s_projectTypes;
-   std::string projType;
-   std::map<std::string,std::string>::iterator it = s_projectTypes.find(configFile.getAbsolutePath());
-   if (it != s_projectTypes.end()) {
-      projType = it->second;
-   } else {
-      // Ask Quarto to get the metadata for the file
-      json::Object inspect;
-      Error error = quartoInspect(configFile.getParent().getAbsolutePath(), &inspect);
-      if (!error)
-      {
-         try
-         {
-            auto project = inspect["config"].getObject()["project"].getObject();
-            auto type = project.find("type");
-            if (type != project.end())
-            {
-               projType = (*type).getValue().getString();
-               s_projectTypes.insert({configFile.getAbsolutePath(), projType});
-            }
-         }
-         CATCH_UNEXPECTED_EXCEPTION
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-
    // read the config
    std::string configText;
    Error error = core::readStringFromFile(configFile, &configText);
@@ -1234,14 +1281,13 @@ void readQuartoProjectConfig(const FilePath& configFile,
                         if (projValue == kQuartoProjectSite)
                            projValue = kQuartoProjectWebsite;
 
-                        // use type from inspect if we can
+                        // for custom project types (e.g. from Quarto extensions),
+                        // resolve to the base type by reading _extension.yml
+                        if (!isBuiltinQuartoProjectType(projValue))
+                           projValue = resolveCustomProjectType(configFile.getParent(), projValue);
+
                         if (pType != nullptr)
-                        {
-                           if (!projType.empty())
-                              *pType = projType;
-                           else
-                              *pType = projValue;
-                        }
+                           *pType = projValue;
                      }
                      else if (projKey == "output-dir" && pOutputDir != nullptr) {
                         *pOutputDir = projValue;
