@@ -28,10 +28,11 @@ No special environment variables needed — `RSTUDIO_EDITION` defaults to `deskt
 npx playwright test
 
 # Specific test file
-npx playwright test tests/panes/editor/code_suggestions.test.ts
+npx playwright test tests/panes/misc/autocomplete.test.ts
 
 # Specific test by name
 npx playwright test -g "test name here"
+npx playwright test -g "base function: cat("
 ```
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `CDP_PORT=9222`.
