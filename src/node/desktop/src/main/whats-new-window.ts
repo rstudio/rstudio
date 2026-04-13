@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, ipcMain, session, shell } from 'electron';
+import { BrowserWindow, ipcMain, screen, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
 import { createLocalUrlChecker } from './whats-new-utils';
@@ -49,9 +49,12 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     return activeWindow;
   }
 
+  const workAreaHeight = screen.getPrimaryDisplay().workAreaSize.height;
+  const height = Math.min(825, workAreaHeight);
+
   const win = new BrowserWindow({
     width: 900,
-    height: 650,
+    height,
     minWidth: 500,
     minHeight: 400,
     center: true,
