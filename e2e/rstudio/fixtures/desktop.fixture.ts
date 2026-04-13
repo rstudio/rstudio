@@ -197,10 +197,11 @@ function getRStudioPids(): Set<number> {
       ).trim();
       return new Set(output ? output.split(',').map(Number) : []);
     } else {
-      const output = execSync('pgrep -f rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
-      return new Set(output ? output.split('\n').map(Number) : []);
+      const output = execSync('pgrep -x rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
+      return new Set(output ? output.split('\n').map(Number).filter(n => Number.isInteger(n) && n > 0) : []);
     }
-  } catch {
+  } catch (err) {
+    console.log(`WARNING: getRStudioPids() failed, returning empty set: ${err}`);
     return new Set();
   }
 }

@@ -213,7 +213,7 @@ PW_PROJECT=server-pro-linux RSTUDIO_EDITION=server npx playwright test
 
 Without `PW_PROJECT` or `--project`, all 8 projects run.
 
-**Note:** `PW_PROJECT` trumps `--project`. If both are set to different values, `PW_PROJECT` wins. To use `--project`, unset `PW_PROJECT` first.
+**Note:** `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it. To use `--project`, unset `PW_PROJECT` first.
 
 Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
 

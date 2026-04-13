@@ -40,14 +40,20 @@ const allProjects = [
 
 // PW_PROJECT selects a single project for local runs (e.g. "desktop-pro-windows").
 // When unset, all projects are available — CI runs all, or use --project to pick one.
-// PW_PROJECT trumps --project (Playwright strips --project from process.argv before
-// the config runs, so we can't detect it). To switch projects, change PW_PROJECT.
+// PW_PROJECT and --project conflict -- don't use both at the same time.
+// PW_PROJECT pre-filters the project list, so --project can't select anything outside it.
 const selectedProject = process.env.PW_PROJECT;
 const projects = selectedProject
   ? allProjects.filter(p => p.name === selectedProject)
   : allProjects;
 
 if (selectedProject) {
+  if (projects.length === 0) {
+    throw new Error(
+      `PW_PROJECT="${selectedProject}" does not match any project. ` +
+      `Available: ${allProjects.map(p => p.name).join(', ')}`
+    );
+  }
   console.log(`Project: ${selectedProject} (via PW_PROJECT)`);
 }
 

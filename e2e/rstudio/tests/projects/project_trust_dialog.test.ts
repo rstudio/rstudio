@@ -55,6 +55,7 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
     // Didn't find markers — wait and retry
     await sleep(2000);
   }
+  console.warn(`captureResult: markers not found after 3 attempts for: ${rExpression}`);
   return '';
 }
 
@@ -338,7 +339,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       trustEnabled = false;
       const markerExists = await captureResult(page, 'exists("TRUST_MARKER")');
       console.log(`Trust dialog not shown. TRUST_MARKER exists: ${markerExists}`);
-      console.log('Trust dialogs disabled — skipping remaining tests');
+      console.log('Trust dialogs disabled — set project-trust-dialogs=1 in rsession.conf to enable. Skipping remaining tests.');
       test.skip(true, 'Trust dialog not visible — requires project-trust-dialogs=1 in rsession.conf');
       return;
     }

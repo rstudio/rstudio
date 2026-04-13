@@ -36,7 +36,7 @@ npx playwright test tests/path/to/test.test.ts
 
 ## Server Mode
 
-Requires four env vars:
+Key env vars (3 required, 3 optional):
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -95,7 +95,7 @@ npx playwright test
 PW_PROJECT=server-pro-linux RSTUDIO_EDITION=server npx playwright test
 ```
 
-Without `PW_PROJECT`, all 8 projects run (each test executes once per project). `PW_PROJECT` trumps `--project` — if both are set to different values, `PW_PROJECT` wins.
+Without `PW_PROJECT`, all 8 projects run (each test executes once per project). `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it.
 
 Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
 

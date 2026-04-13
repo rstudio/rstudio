@@ -18,6 +18,7 @@ import { test as base, expect } from '@playwright/test';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
 import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { YES_BTN } from '@pages/modals.page';
 import type { Page } from 'playwright';
 
 const OBJ_NAME = 's4_test_object';
@@ -68,9 +69,22 @@ async function setupWorkspace(page: Page): Promise<void> {
   await typeInConsole(page, 'save.image()');
   await sleep(1000);
 
-  // Remove DBI so it won't be loadable after restart
+  // Remove DBI so it won't be loadable after restart.
+  // This may trigger a "loaded packages" dialog -- click Yes if it appears.
   await typeInConsole(page, 'remove.packages("DBI")');
+  await sleep(1000);
+  try {
+    await page.locator(YES_BTN).click({ timeout: 3000 });
+    console.log('Clicked Yes on loaded-packages dialog');
+  } catch {
+    // No dialog appeared
+  }
   await sleep(3000);
+
+  // Verify removal succeeded by checking the disk (not requireNamespace, which
+  // returns TRUE for already-loaded namespaces even after the files are deleted)
+  const dbiRemoved = await captureResult(page, 'file.exists(file.path(.libPaths()[1], "DBI"))');
+  expect(dbiRemoved, 'DBI should be uninstalled after remove.packages').toBe('FALSE');
 }
 
 /** Remove test objects, delete .RData, restore preferences, reinstall DBI. */
@@ -164,7 +178,7 @@ base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag:
   });
 
   base.afterAll(async () => {
-    await cleanup(page);
+    try { await cleanup(page); } catch (err) { console.log(`cleanup failed: ${err}`); }
     await shutdownRStudio(session);
   });
 });
@@ -198,7 +212,7 @@ base.describe.serial('S4 unloaded package -- RStudio restart (#17353)', { tag: [
   });
 
   base.afterAll(async () => {
-    await cleanup(page);
+    try { await cleanup(page); } catch (err) { console.log(`cleanup failed: ${err}`); }
     await shutdownRStudio(session);
   });
 });
