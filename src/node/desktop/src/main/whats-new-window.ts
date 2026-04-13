@@ -49,7 +49,10 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     return activeWindow;
   }
 
-  const workAreaHeight = screen.getPrimaryDisplay().workAreaSize.height;
+  const display = options.parent
+    ? screen.getDisplayMatching(options.parent.getBounds())
+    : screen.getPrimaryDisplay();
+  const workAreaHeight = display.workAreaSize.height;
   const height = Math.min(825, workAreaHeight);
 
   const win = new BrowserWindow({
