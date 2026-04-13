@@ -1851,6 +1851,12 @@
             "title": "Display account and billing messages from Posit Assistant",
             "description": "When enabled, RStudio will show messages from the Posit Assistant in a message box."
         },
+        "assistant_toolbar_button_visible": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show Posit Assistant button in toolbar",
+            "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
+        },
         "copilot_enabled": {
             "type": "boolean",
             "default": false,

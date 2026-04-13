@@ -173,6 +173,10 @@ public class ToolbarButton extends FocusWidget
 
       final HandlerRegistration mouseDown = addMouseDownHandler(event ->
       {
+         // Only handle primary (left) mouse button
+         if (event.getNativeButton() != NativeEvent.BUTTON_LEFT)
+            return;
+
          event.preventDefault();
          event.stopPropagation();
 
