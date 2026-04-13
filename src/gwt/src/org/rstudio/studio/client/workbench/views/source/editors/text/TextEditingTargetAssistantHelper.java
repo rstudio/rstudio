@@ -1247,6 +1247,10 @@ public class TextEditingTargetAssistantHelper
       if (editSuggestion_ == null || editSuggestion_.command == null)
          return false;
 
+      if (editSuggestion_.command.arguments == null
+          || editSuggestion_.command.arguments.length == 0)
+         return false;
+
       // Check if using Posit AI LSP
       return StringUtil.equals(
          assistant_.getAssistantType(),
@@ -1256,20 +1260,27 @@ public class TextEditingTargetAssistantHelper
    /**
     * Sends suggestion feedback to the LSP server via workspace/executeCommand.
     * Sends a completion command with the feedback argument replaced
-    * (e.g. "rejected" or "ignored"). Does not reset suggestion state.
+    * (i.e. "rejected" or "ignored"). Does not reset suggestion state.
     */
    private void sendSuggestionFeedback(String feedback)
    {
-      if (shouldSendDismissFeedback())
+      try
       {
-         AssistantCompletionCommand cmd = new AssistantCompletionCommand();
-         cmd.title = editSuggestion_.command.title;
-         cmd.command = editSuggestion_.command.command;
-         cmd.arguments = new String[] {
-            editSuggestion_.command.arguments[0],
-            feedback
-         };
-         server_.assistantDidAcceptCompletion(cmd, new VoidServerRequestCallback());
+         if (shouldSendDismissFeedback())
+         {
+            AssistantCompletionCommand cmd = new AssistantCompletionCommand();
+            cmd.title = editSuggestion_.command.title;
+            cmd.command = editSuggestion_.command.command;
+            cmd.arguments = new String[] {
+               editSuggestion_.command.arguments[0],
+               feedback
+            };
+            server_.assistantDidAcceptCompletion(cmd, new VoidServerRequestCallback());
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
       }
    }
 
