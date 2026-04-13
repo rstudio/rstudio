@@ -35,6 +35,12 @@ function init(): void {
   const release = params.get('release') ?? '';
   const releaseName = params.get('releaseName') ?? '';
   const version = params.get('version') ?? '';
+  const platform = params.get('platform') ?? '';
+
+  // Add platform class to <html> so CSS can target platform-specific styles
+  if (platform) {
+    document.documentElement.classList.add(platform);
+  }
 
   // Validate slug before constructing any path
   if (!release || !SLUG_PATTERN.test(release)) {

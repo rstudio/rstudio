@@ -189,6 +189,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     release: options.releaseSlug,
     releaseName: options.releaseName,
     version: options.version,
+    platform: process.platform,
   });
   const url = `${WHATS_NEW_WEBPACK_ENTRY}${separator}${params.toString()}`;
 
