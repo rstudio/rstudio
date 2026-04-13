@@ -30,7 +30,9 @@ import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -307,14 +309,26 @@ public class GlobalToolbar extends Toolbar
          eventBus_.addHandler(ThemeChangedEvent.TYPE, event ->
                updateAssistantButtonIcon());
 
+         // Prevent non-primary clicks from activating the button
+         assistantButton_.addDomHandler(mouseDownEvent ->
+         {
+            if (mouseDownEvent.getNativeButton() != NativeEvent.BUTTON_LEFT)
+            {
+               mouseDownEvent.preventDefault();
+               mouseDownEvent.stopPropagation();
+            }
+         }, MouseDownEvent.getType());
+
          // Right-click context menu to hide the button
-         assistantButton_.addDomHandler(contextMenuEvent -> {
+         assistantButton_.addDomHandler(contextMenuEvent ->
+         {
             contextMenuEvent.preventDefault();
             contextMenuEvent.stopPropagation();
             ToolbarPopupMenu menu = new ToolbarPopupMenu();
             menu.addItem(new MenuItem(
                   constants_.hidePositAssistantButton(),
-                  () -> {
+                  () ->
+                  {
                      userPrefs_.assistantToolbarButtonVisible().setGlobalValue(false);
                      userPrefs_.writeUserPrefs(completed -> {});
                   }));
