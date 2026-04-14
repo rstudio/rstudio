@@ -3417,8 +3417,8 @@ Error downloadManifest(json::Object* pManifest)
 
    // Get download URI; use test manifest when opted in
    std::string downloadUri = options().positAssistantTestManifest()
-      ? "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest-test.json"
-      : "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest.json";
+      ? "https://cdn.posit.co/posit-ai/manifest-test.json"
+      : "https://cdn.posit.co/posit-ai/manifest.json";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
