@@ -70,6 +70,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
     } catch { /* console not ready yet */ }
     await sleep(2000);
   }
+  console.warn('waitForSessionRestart: R session did not confirm idle after 3 attempts');
 }
 
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () => {
@@ -242,10 +243,10 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
   });
 
   test('7: read .Rprofile file is denied', async () => {
-    // Skip: databot's read tool does not deny .Rprofile (posit-dev/databot#XXXX).
+    // Skip: databot's read tool does not deny .Rprofile.
     // The R-level guardrails in SessionChat.R do deny it, but the assistant
     // prefers its own read tool over R code, bypassing the R guardrails.
-    test.skip(true, '.Rprofile not in databot read tool deny list (posit-dev/databot#XXXX)');
+    test.skip(true, '.Rprofile not in databot read tool deny list');
 
     await consoleActions.typeInConsole('writeLines("options(secret.key = 123)", ".Rprofile")');
     await sleep(500);

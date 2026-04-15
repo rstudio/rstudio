@@ -50,7 +50,6 @@ Key env vars (3 required, 3 optional):
 | `RSTUDIO_USER` | Yes | Login username |
 | `RSTUDIO_PASSWORD` | Yes | Login password |
 | `RSTUDIO_LOAD_TIMEOUT` | No | IDE load timeout in ms (default: 60000). Increase for slow servers. |
-| `RSTUDIO_EXTRA_ARGS` | No | Space-separated extra CLI args passed to RStudio Desktop at launch (e.g., `--my-flag --other-option`) |
 
 ```bash
 # All tests
