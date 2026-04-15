@@ -133,8 +133,7 @@ core::system::ProcessConfig sessionProcessConfig(
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
    // Forward www-frame-origin so the session can set CSP frame-ancestors
-   if (!options.wwwFrameOrigin().empty() &&
-        options.wwwFrameOrigin() != "none")
+   if (!options.wwwFrameOrigin().empty())
    {
       args.push_back(std::make_pair("--" kWwwFrameOriginSessionOption,
                                     options.wwwFrameOrigin()));

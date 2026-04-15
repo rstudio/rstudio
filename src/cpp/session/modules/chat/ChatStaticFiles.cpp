@@ -224,11 +224,21 @@ void rebuildCspHeaderCache()
 
    // Respect the server's www-frame-origin setting so the chat pane can
    // render inside a cross-origin iframe when configured.
-   if (directives.find("frame-ancestors") == directives.end())
+   // Always apply the server option, overriding any csp.json value, so that
+   // admin configuration is authoritative.
    {
       std::string frameOrigin = options().wwwFrameOrigin();
+
+      // Sanitize: strip characters that could break the CSP header
+      boost::algorithm::erase_all(frameOrigin, "\r");
+      boost::algorithm::erase_all(frameOrigin, "\n");
+      boost::algorithm::erase_all(frameOrigin, ";");
+      boost::algorithm::trim(frameOrigin);
+
       if (frameOrigin == "any")
          directives["frame-ancestors"] = "*";
+      else if (frameOrigin == "none")
+         directives["frame-ancestors"] = "'none'";
       else if (frameOrigin == "same" || frameOrigin.empty())
          directives["frame-ancestors"] = "'self'";
       else
