@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import type { Browser, BrowserContext } from 'playwright';
 import { spawn, execSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
-import { TIMEOUTS, sleep } from '../utils/constants';
+import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
 
 // Constants
@@ -62,7 +62,8 @@ export async function launchRStudio(): Promise<DesktopSession> {
 
   // Start RStudio with remote debugging enabled
   console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
-  const rstudioProcess = spawn(RSTUDIO_PATH, [`--remote-debugging-port=${CDP_PORT}`]);
+  const args = [`--remote-debugging-port=${CDP_PORT}`, ...RSTUDIO_EXTRA_ARGS];
+  const rstudioProcess = spawn(RSTUDIO_PATH, args);
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
     launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);

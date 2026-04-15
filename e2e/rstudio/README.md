@@ -33,6 +33,9 @@ npx playwright test tests/panes/misc/autocomplete.test.ts
 # Specific test by name
 npx playwright test -g "test name here"
 npx playwright test -g "base function: cat("
+
+# With extra RStudio CLI args
+RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 ```
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `CDP_PORT=9222`.
@@ -242,6 +245,7 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 | `RSTUDIO_USER` | Server | Yes | Login username |
 | `RSTUDIO_PASSWORD` | Server | Yes | Login password |
 | `RSTUDIO_LOAD_TIMEOUT` | Server | No | IDE load timeout in ms (default: 60000) |
+| `RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
 
 ## Further Reading
 

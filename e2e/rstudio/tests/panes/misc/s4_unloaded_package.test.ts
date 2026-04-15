@@ -171,9 +171,7 @@ base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag:
     await verifySessionSurvived(page);
   });
 
-  // The Environment pane renders a row for the S4 object but it appears as
-  // an empty sliver -- the "not loaded" description is not visibly rendered.
-  base.fixme('Environment pane shows "not loaded" label after R restart', async () => {
+  base('Environment pane shows "not loaded" label after R restart', async () => {
     await verifyEnvironmentPane(page);
   });
 
@@ -207,7 +205,7 @@ base.describe.serial('S4 unloaded package -- RStudio restart (#17353)', { tag: [
     await verifySessionSurvived(page);
   });
 
-  base.fixme('Environment pane shows "not loaded" label after RStudio restart', async () => {
+  base('Environment pane shows "not loaded" label after RStudio restart', async () => {
     await verifyEnvironmentPane(page);
   });
 

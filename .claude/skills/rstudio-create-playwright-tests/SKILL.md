@@ -174,6 +174,7 @@ Import shared constants — don't hardcode values:
 
 - **`TIMEOUTS`** — from `utils/constants.ts`. Use named keys (e.g., `TIMEOUTS.fileOpen`) instead of magic numbers.
 - **`RSTUDIO_PATH`, `CDP_PORT`, `CDP_URL`** — from `fixtures/desktop.fixture.ts`.
+- **`RSTUDIO_EXTRA_ARGS`** — from `utils/constants.ts`. Space-separated extra CLI args passed to RStudio Desktop at launch.
 - **`CODE_SUGGESTION_PROVIDERS`, `CHAT_PROVIDERS`** — from `utils/constants.ts`.
 
 Check the source files for current keys and values.
