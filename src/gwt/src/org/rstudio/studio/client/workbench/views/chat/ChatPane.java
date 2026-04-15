@@ -1006,10 +1006,11 @@ public class ChatPane
    private native void setupMessageListener() /*-{
       var self = this;
 
-      // Listen for button clicks via postMessage from our iframe only
+      // Listen for postMessage from our iframe only (source + origin check)
       $wnd.addEventListener('message', function(event) {
          var frame = self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::getFrameElement()();
          if (!frame || event.source !== frame.contentWindow) return;
+         if (event.origin !== $wnd.location.origin) return;
 
          if (event.data === 'restart-backend') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
