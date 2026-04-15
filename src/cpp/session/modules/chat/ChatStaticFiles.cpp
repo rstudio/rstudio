@@ -471,7 +471,8 @@ Error handleAIChatRequest(const http::Request& request,
             {
                http::Cookie cookie(
                   request, "posit-assistant-auth", s_chatBackendAuthToken,
-                  "/", http::Cookie::SameSite::Lax, true /* httpOnly */);
+                  "/", options().sameSite(), true /* httpOnly */,
+                  options().useSecureCookies());
                pResponse->addCookie(cookie);
             }
          }
