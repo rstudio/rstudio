@@ -469,9 +469,27 @@ Error handleAIChatRequest(const http::Request& request,
             std::lock_guard<std::mutex> lock(s_authTokenMutex);
             if (!s_chatBackendAuthToken.empty())
             {
+               // Scope cookie to the session prefix (e.g. "/s/{id}/")
+               // so multi-session deployments don't collide. Extract
+               // the path from proxiedUri() and strip "/ai-chat" onward.
+               std::string cookiePath =
+                  http::URL(request.proxiedUri()).path();
+               std::string aiChatPrefix(kAiChatUriPrefix);
+               if (aiChatPrefix.back() == '/')
+                  aiChatPrefix.pop_back();
+               size_t aiChatPos = cookiePath.find(aiChatPrefix);
+               if (aiChatPos != std::string::npos)
+                  cookiePath = cookiePath.substr(0, aiChatPos);
+               if (cookiePath.empty())
+                  cookiePath = "/";
+               else if (cookiePath.back() != '/')
+                  cookiePath += "/";
+               LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
+                                 cookiePath + "'");
+
                http::Cookie cookie(
                   request, "posit-assistant-auth", s_chatBackendAuthToken,
-                  "/", options().sameSite(), true /* httpOnly */,
+                  cookiePath, options().sameSite(), true /* httpOnly */,
                   options().useSecureCookies());
                pResponse->addCookie(cookie);
             }
