@@ -88,6 +88,9 @@ public class ChatPresenter extends BasePresenter
          void onRetryManifest();
          void onActivateChat();
          void onReturnChatToMain();
+         void onIframeError(String message);
+         void onIframeWarning(String message);
+         void onIframeConnected();
       }
 
       interface UpdateObserver
@@ -117,6 +120,8 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable(String errorMessage);
+      void showConnectionLostNotification(String message);
+      void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
 
@@ -221,6 +226,25 @@ public class ChatPresenter extends BasePresenter
          public void onReturnChatToMain()
          {
             returnChatToMain();
+         }
+
+         @Override
+         public void onIframeError(String message)
+         {
+            Debug.log("Chat iframe error: " + message);
+            display_.showConnectionLostNotification(message);
+         }
+
+         @Override
+         public void onIframeWarning(String message)
+         {
+            Debug.log("Chat iframe warning: " + message);
+         }
+
+         @Override
+         public void onIframeConnected()
+         {
+            display_.hideConnectionLostNotification();
          }
       });
 
@@ -1128,6 +1152,7 @@ public class ChatPresenter extends BasePresenter
       }
 
       initializing_ = true;
+      display_.hideConnectionLostNotification();
       display_.setStatus(Display.Status.RESTARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
