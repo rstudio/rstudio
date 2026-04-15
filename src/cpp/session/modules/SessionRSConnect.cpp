@@ -271,9 +271,9 @@ public:
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
+             "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "', " +
              (recordDir.empty() ? "" : "recordDir = '" + 
-                string_utils::singleQuotedStrEscape(recordDir) + "',") +
+                string_utils::singleQuotedStrEscape(recordDir) + "', ") +
              (pDeploy->manifestPath_.isEmpty() ? "" : "appFileManifest = '" +
                                                     string_utils::singleQuotedStrEscape(
                                                        pDeploy->manifestPath_.getAbsolutePath()) + "', ") +
@@ -281,12 +281,13 @@ public:
                 string_utils::singleQuotedStrEscape(primaryDoc) + "', ") +
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
                 string_utils::singleQuotedStrEscape(sourceDoc) + "', ") +
-             "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
+             "account = '" + string_utils::singleQuotedStrEscape(account) + "', "
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
              "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
              (appTitle.empty() ? "" : "appTitle = '" + 
                 string_utils::singleQuotedStrEscape(appTitle) + "', ") + 
-             (appId.empty() ? "" : "appId = " + appId + ", ") + 
+             (appId.empty() ? "" : "appId = '" +
+                string_utils::singleQuotedStrEscape(appId) + "', ") +
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "
