@@ -237,9 +237,7 @@ void rebuildCspHeaderCache()
 
       if (frameOrigin == "any")
          directives["frame-ancestors"] = "*";
-      else if (frameOrigin == "none")
-         directives["frame-ancestors"] = "'none'";
-      else if (frameOrigin == "same" || frameOrigin.empty())
+      else if (frameOrigin == "none" || frameOrigin == "same" || frameOrigin.empty())
          directives["frame-ancestors"] = "'self'";
       else
          directives["frame-ancestors"] = "'self' " + frameOrigin;
