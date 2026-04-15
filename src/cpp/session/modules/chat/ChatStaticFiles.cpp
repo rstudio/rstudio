@@ -28,6 +28,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -60,6 +61,12 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 // Atomic because it is written from the main thread and read from HTTP
 // handler threads.
 std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
+
+// Chat backend auth token, set by SessionChat.cpp when the backend starts.
+// In server mode, this is delivered to the PA client via an HTTP-only cookie
+// on the index.html response instead of as a URL query parameter.
+std::mutex s_authTokenMutex;
+std::string s_chatBackendAuthToken;
 
 /**
  * Inject theme information into HTML content without inline scripts.
@@ -445,7 +452,30 @@ Error handleAIChatRequest(const http::Request& request,
    if (extension == ".html" || extension == ".htm")
    {
       if (resolvedPath.getFilename() == kIndexFileName)
+      {
          injectThemeInfo(&content);
+
+         // In server mode, deliver the auth token via an HTTP-only cookie
+         // instead of a URL query parameter. This prevents the token from
+         // leaking in browser history, server logs, and the Referer header.
+         // Desktop mode continues to use the URL parameter since it's
+         // localhost-only.
+         bool isServerMode = false;
+#ifdef RSTUDIO_SERVER
+         isServerMode = (options().programMode() == kSessionProgramModeServer);
+#endif
+         if (isServerMode)
+         {
+            std::lock_guard<std::mutex> lock(s_authTokenMutex);
+            if (!s_chatBackendAuthToken.empty())
+            {
+               http::Cookie cookie(
+                  request, "posit-assistant-auth", s_chatBackendAuthToken,
+                  "/", http::Cookie::SameSite::Lax, true /* httpOnly */);
+               pResponse->addCookie(cookie);
+            }
+         }
+      }
       pResponse->setHeader("Content-Security-Policy", buildCspHeader());
    }
    pResponse->setContentType(getContentType(extension));
@@ -477,6 +507,12 @@ void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
    rebuildCspHeaderCache();
+}
+
+void setChatBackendAuthToken(const std::string& token)
+{
+   std::lock_guard<std::mutex> lock(s_authTokenMutex);
+   s_chatBackendAuthToken = token;
 }
 
 } // namespace staticfiles

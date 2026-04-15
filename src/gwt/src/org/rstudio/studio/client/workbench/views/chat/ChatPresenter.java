@@ -1189,10 +1189,15 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL, auth token, and timestamp as query parameters to bust cache
+      // Append WebSocket URL and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
-      if (authToken != null && !authToken.isEmpty())
+
+      // In Desktop mode, pass the auth token as a URL parameter since the
+      // WebSocket connects to localhost directly. In Server mode, the token
+      // is delivered via an HTTP-only cookie set by the static file handler,
+      // avoiding exposure in browser history, logs, and the Referer header.
+      if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
       {
          params += "&authToken=" + URL.encodeQueryString(authToken);
       }

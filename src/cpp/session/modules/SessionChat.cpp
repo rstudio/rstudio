@@ -112,6 +112,7 @@ void clearChatBackendPort()
    s_chatBackendPort = constants::kChatBackendPortNone;
    staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
    s_chatBackendAuthToken.clear();
+   staticfiles::setChatBackendAuthToken(std::string());
 }
 
 // Track whether session is closing (vs suspending/restarting)
@@ -4645,6 +4646,7 @@ Error startChatBackend(bool resumeConversation)
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
    s_chatBackendAuthToken = core::system::generateUuid(false);
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
