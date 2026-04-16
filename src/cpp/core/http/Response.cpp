@@ -395,6 +395,7 @@ void Response::addCookie(const Cookie& cookie)
       Cookie legacyCookie = cookie;
       legacyCookie.setName(legacyCookie.name() + kLegacyCookieSuffix);
       legacyCookie.setSameSite(Cookie::SameSite::Undefined);
+      legacyCookie.setPartitioned(false);
       addHeader("Set-Cookie", legacyCookie.cookieHeaderValue());
    }
 }
