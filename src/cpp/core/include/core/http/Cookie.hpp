@@ -73,6 +73,9 @@ public:
    void setSameSite(SameSite sameSite);
    SameSite sameSite() const { return sameSite_; }
 
+   void setPartitioned(bool partitioned) { partitioned_ = partitioned; }
+   bool partitioned() const { return partitioned_; }
+
    std::string cookieHeaderValue() const;
 
 private:
@@ -84,6 +87,7 @@ private:
    SameSite sameSite_;
    bool httpOnly_;
    bool secure_;
+   bool partitioned_ = false;
 };
 
 

@@ -136,7 +136,11 @@ std::string Cookie::cookieHeaderValue() const
    if (secure_)
       headerValue << "; secure";
 
-   // return the header value 
+   // partitioned if specified (CHIPS: requires Secure and SameSite=None)
+   if (partitioned_)
+      headerValue << "; Partitioned";
+
+   // return the header value
    return headerValue.str();
 }
 

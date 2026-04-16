@@ -162,14 +162,21 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 
    // create the cookie; don't set an expiry date as this will be a session cookie
    http::Cookie cookie(
-            ptrConnection->request(), 
-            kPortTokenCookie, 
-            persistentState().portToken(), 
+            ptrConnection->request(),
+            kPortTokenCookie,
+            persistentState().portToken(),
             path,
             options().sameSite(),
             true, // HTTP only -- client doesn't get to read this token
             options().useSecureCookies()
          );
+
+   // When SameSite=None and Secure, add the Partitioned attribute (CHIPS)
+   // so the cookie works in cross-origin iframes despite third-party cookie
+   // restrictions (e.g., Chrome Privacy Sandbox).
+   if (cookie.sameSite() == http::Cookie::SameSite::None && cookie.secure())
+      cookie.setPartitioned(true);
+
    response.addCookie(cookie);
 
    return Success();
