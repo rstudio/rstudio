@@ -42,6 +42,7 @@
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -3318,6 +3319,7 @@ struct UpdateState
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
+   std::string expectedSha256;
    std::string errorMessage;
 
    // Installation status tracking
@@ -3482,7 +3484,8 @@ Error getPackageInfoFromManifest(
     const json::Object& manifest,
     const std::string& protocolVersion,
     std::string* pPackageVersion,
-    std::string* pDownloadUrl)
+    std::string* pDownloadUrl,
+    std::string* pSha256 = nullptr)
 {
    if (!pPackageVersion || !pDownloadUrl)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
@@ -3513,6 +3516,7 @@ Error getPackageInfoFromManifest(
    SemanticVersion bestProtocol;
    std::string bestPackageVersion;
    std::string bestDownloadUrl;
+   std::string bestSha256;
    bool foundCompatible = false;
 
    for (const auto& entry : versions)
@@ -3568,12 +3572,17 @@ Error getPackageInfoFromManifest(
          continue;
       }
 
+      // Read optional sha256 field
+      std::string sha256;
+      json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
+
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)
       {
          bestProtocol = manifestProtocolVer;
          bestPackageVersion = packageVersion;
          bestDownloadUrl = downloadUrl;
+         bestSha256 = sha256;
          foundCompatible = true;
          DLOG("Found compatible protocol {}.{} with package version {}",
               manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
@@ -3590,9 +3599,12 @@ Error getPackageInfoFromManifest(
 
    *pPackageVersion = bestPackageVersion;
    *pDownloadUrl = bestDownloadUrl;
+   if (pSha256)
+      *pSha256 = bestSha256;
 
-   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}",
-        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl);
+   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}, sha256={}",
+        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl,
+        bestSha256.empty() ? "(none)" : bestSha256);
 
    return Success();
 }
@@ -3907,6 +3919,47 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    return Success();
 }
 
+// Verify SHA-256 hash of a downloaded package file
+Error verifyPackageSha256(const FilePath& packagePath,
+                          const std::string& expectedSha256)
+{
+   // Read file content
+   std::string fileContent;
+   Error error = core::readStringFromFile(packagePath, &fileContent);
+   if (error)
+   {
+      WLOG("Failed to read package file for SHA-256 verification: {}",
+           error.getMessage());
+      return error;
+   }
+
+   // Compute SHA-256
+   std::string actualSha256;
+   error = core::system::crypto::sha256Hex(fileContent, &actualSha256);
+   if (error)
+   {
+      WLOG("Failed to compute SHA-256 of downloaded package: {}",
+           error.getMessage());
+      return error;
+   }
+
+   // Compare (case-insensitive)
+   if (!boost::iequals(actualSha256, expectedSha256))
+   {
+      ELOG("SHA-256 mismatch for downloaded package!\n"
+           "  Expected: {}\n"
+           "  Actual:   {}",
+           expectedSha256, actualSha256);
+      return systemError(boost::system::errc::illegal_byte_sequence,
+                        "Downloaded package integrity check failed "
+                        "(SHA-256 mismatch)",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("SHA-256 verification passed: {}", actualSha256);
+   return Success();
+}
+
 // Install package (backup, extract, cleanup)
 Error installPackage(const FilePath& packagePath)
 {
@@ -4115,7 +4168,8 @@ void doUpdateCheck()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4153,6 +4207,7 @@ void doUpdateCheck()
          s_updateState.updateAvailable = true;
          s_updateState.newVersion = packageVersion;
          s_updateState.downloadUrl = downloadUrl;
+         s_updateState.expectedSha256 = sha256;
       }
    }
    else
@@ -4256,7 +4311,8 @@ Error checkForUpdatesOnStartup()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4323,6 +4379,7 @@ Error checkForUpdatesOnStartup()
             s_updateState.updateAvailable = true;
             s_updateState.newVersion = packageVersion;
             s_updateState.downloadUrl = downloadUrl;
+            s_updateState.expectedSha256 = sha256;
          }
       }
    }
@@ -5115,6 +5172,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    // reset s_updateState while we're downloading
    std::string downloadUrl = s_updateState.downloadUrl;
    std::string newVersion = s_updateState.newVersion;
+   std::string expectedSha256 = s_updateState.expectedSha256;
 
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
@@ -5153,6 +5211,44 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   // Verify SHA-256 integrity of the downloaded package
+   if (expectedSha256.empty())
+   {
+      ELOG("Manifest does not include a SHA-256 hash for this package; "
+           "refusing to install unverified package");
+
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (no SHA-256 hash in manifest).";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after missing hash: {}",
+              cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   error = verifyPackageSha256(tempPackage, expectedSha256);
+   if (error)
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (SHA-256 mismatch). "
+         "The download may be corrupted or tampered with.";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after integrity failure: {}",
+              cleanupError.getMessage());
 
       pResponse->setResult(json::Value());
       return Success();
