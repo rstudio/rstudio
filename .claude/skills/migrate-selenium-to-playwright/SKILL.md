@@ -1,6 +1,6 @@
 ---
 name: migrate-selenium-to-playwright
-description: Migrate Python Selenium/Selene electron tests to TypeScript/Playwright. Use when converting tests from rstudio-ide-automation/electron-tests/ to rstudio/e2e/rstudio/tests/.
+description: Migrate Python Selenium/Selene electron tests to TypeScript/Playwright. Use when converting tests from rstudio-ide-automation/rstudio_server_pro/electron-tests/ to rstudio/e2e/rstudio/tests/.
 ---
 
 # Migrate Electron Tests to Playwright
@@ -36,8 +36,7 @@ The user provides one or more targets:
 - Check BRAT (`rstudio/src/cpp/tests/automation/testthat/`) for related R-based test automation
 - Check `rstudio-ide-automation/rstudio_server_pro/electron-tests/` for other Selenium/Selene electron tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-ide-automation/rstudio_server_pro/tests/` for Selenium/Selene server tests covering the same functionality — useful for test logic, assertions, and expected values
-- Check `rstudio-ide-automation/e2e/tests/` for existing TypeScript/Playwright conversions of the same or similar tests — may already have working locators and patterns
-- Check `rstudio-pro/e2e/` for Workbench e2e patterns — `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery
+- Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable
 - Read relevant existing Playwright page objects in `e2e/rstudio/pages/`
 - Read relevant existing Playwright actions in `e2e/rstudio/actions/`
 
@@ -58,37 +57,11 @@ Use judgment — the Playwright structure is organized by function, not by the e
 
 ### Step 4: Write the TypeScript test
 
-Follow these rules:
+Follow the rules in the `rstudio-create-playwright-tests` skill (already loaded per Hard Rule 1). That skill covers imports, selector hierarchy, idiomatic patterns, parallel safety, package dependencies, cross-platform considerations, Ace/NES patterns, and CDP setup.
 
-**Imports:**
-```typescript
-import { test, expect } from '@fixtures/rstudio.fixture';
-```
-
-**Selector quality hierarchy (prefer in order):**
-1. `#id` — stable RStudio IDs (e.g., `#rstudio_console_input`)
-2. `aria-label` / `getByRole()` — accessible attributes
-3. CSS attribute selectors (`[class*=...]`, `[id^=...]`) — dynamic/partial IDs
-4. XPath — only when CSS can't express the query
-5. Never use `gwt-uid-XXXX` IDs — they change on every restart
-
-**Idiomatic Playwright patterns:**
-- `await expect(locator).toBeVisible()` — not manual waits + null checks
-- `await expect(locator).toContainText('...')` — not extract text then assert
-- `expect(items).toEqual(expect.arrayContaining([...]))` — for order-independent lists
-- `click({ force: true })` on Ace textareas — overlay intercepts normal clicks
-- `pressSequentially()` for console/editor input — character-by-character
-- `test.fixme()` for tests that can't pass yet — never comment out or omit
-
-**Parallel safety:**
-- Default to `test.describe()` (parallel-safe)
-- Use `test.describe.serial()` only when tests depend on shared state
-- Tag accordingly: `{ tag: ['@parallel_safe'] }` or `{ tag: ['@serial'] }`
-
-**Package dependencies:**
-- Use `consoleActions.ensurePackages()` in `beforeAll`
-- Skip tests if packages can't be installed: `test.skip(missingPackages.length > 0, ...)`
-- Never chain `install.packages()` with semicolons
+Migration-specific guidance:
+- Use `test.fixme()` for tests that can't pass yet -- never comment out or omit.
+- If the Selenium source has multiple near-identical methods, consider data-driven restructuring (one `forEach` loop) in the Playwright version.
 
 ### Step 5: Add missing page objects or actions
 
@@ -99,10 +72,12 @@ If the test needs locators or methods not yet available:
 
 ### Step 6: Run the test
 
-Present the command and wait for user approval before executing.
+Defer to the `rstudio-run-playwright-tests` skill for the canonical run commands (Desktop and Server). Present the command and wait for user approval before executing.
+
+Quick reference for Desktop:
 
 ```bash
-cd rstudio/e2e/rstudio && npx playwright test tests/<path>/<file>.test.ts
+cd e2e/rstudio && npx playwright test tests/<path>/<file>.test.ts --project desktop-os-windows
 ```
 
 If the test fails:
@@ -164,4 +139,4 @@ After conversion, summarize:
 - Page objects or actions added/modified
 - Test results (passed/fixme with blockers)
 - Improvements made during reevaluation
-- MIGRATION_PROGRESS.md updates
+- MIGRATION_FROM_SELENIUM_PROGRESS.md updates
