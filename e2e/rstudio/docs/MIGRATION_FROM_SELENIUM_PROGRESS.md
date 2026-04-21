@@ -7,20 +7,18 @@ Target: `e2e/rstudio/tests/`
 
 | Metric | Count |
 |--------|-------|
-| Total electron test files | 33 |
-| Total electron test methods | 124 |
+| Total electron test files | 32 |
+| Total electron test methods | 115 |
 | Files fully converted | 13 |
 | Files partially converted | 0 |
-| Files not started | 20 |
-| Playwright-only tests (no electron source) | 10 |
+| Files not started | 19 |
 
 ## Conversion Status
 
-### Root-level tests (12 files, 66 methods)
+### Root-level tests (11 files, 57 methods)
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Autocomplete.py | 9 | — | Not started | |
 | test_desktop_Citations.py | 17 | — | Not started | |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Complete | |
 | test_desktop_console.py | 11 | — | Not started | |
@@ -77,21 +75,6 @@ Target: `e2e/rstudio/tests/`
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
 | test_desktop_Create_Projects.py | 5 | — | Not started | |
-
-## Playwright-Only Tests (no electron source)
-
-| Playwright Test | Tests | Origin |
-|----------------|-------|--------|
-| panes/console/ansi_erase_in_line.test.ts | 7 | New |
-| panes/layout/pane_location_persistence.test.ts | 1 | New — issue #17177 |
-| panes/posit-assistant-chat/chat-messaging.test.ts | 3 | New |
-| panes/posit-assistant-chat/conversation-history.test.ts | 1 | New |
-| panes/posit-assistant-chat/detachable-sidebar.test.ts | 1 | New |
-| panes/posit-assistant-chat/enable-assistant.test.ts | 1 | New |
-| panes/posit-assistant-chat/open-chat-pane.test.ts | 2 | New |
-| panes/posit-assistant-chat/settings-button.test.ts | 1 | New |
-| panes/posit-assistant-chat/shiny-app-python.test.ts | 1 | New |
-| panes/posit-assistant-chat/shiny-app-r.test.ts | 1 | New |
 
 ## Fixme Tests
 
