@@ -2077,12 +2077,14 @@ assign(x = ".rs.acCompletionTypes",
    
    completions <- character()
    
-   # Get completions from dimension names for arrays
-   if (is.array(object) && !is.null(dn <- dimnames(object)))
+   # Get completions from dimension names for arrays (and other
+   # matrix-like objects such as Matrix-package sparse matrices, which
+   # have a dim() but for which is.array() returns FALSE)
+   if (!is.null(dim(object)) && !is.null(dn <- dimnames(object)))
    {
       if (numCommas + 1 <= length(dn))
-         completions <- dimnames(object)[[numCommas + 1]]
-      
+         completions <- dn[[numCommas + 1]]
+
       string <- if (numCommas == 0)
          paste("rownames(", string, ")", sep = "")
       else if (numCommas == 1)

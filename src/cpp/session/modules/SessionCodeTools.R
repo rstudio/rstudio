@@ -751,8 +751,11 @@
             }
          }, FUN.VALUE = character(1))
       }
-      else
+      else if (is.list(object))
       {
+         # Only iterate element-wise for list-like objects. Iterating across
+         # a non-list (e.g. a large sparse Matrix whose length() is nrow*ncol)
+         # can allocate hundreds of millions of elements and exhaust memory.
          vapply(object, function(value)
          {
             label <- attr(value, "label", exact = TRUE)
