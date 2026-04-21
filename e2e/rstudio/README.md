@@ -198,20 +198,20 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 The config defines **projects** that automatically exclude tags not applicable to a given environment. Use `--project` to select one:
 
 ```bash
-npx playwright test --project=desktop-pro-windows
-npx playwright test --project=server-pro-linux
+npx playwright test --project=desktop-os-windows
+npx playwright test --project=server-os-linux
 ```
 
 To avoid passing `--project` every time, set `PW_PROJECT` in your shell profile:
 
 ```bash
-export PW_PROJECT=desktop-pro-windows
+export PW_PROJECT=desktop-os-windows
 ```
 
 With `PW_PROJECT` set, bare `npx playwright test` runs only that project. To switch projects, override `PW_PROJECT` inline:
 
 ```bash
-PW_PROJECT=server-pro-linux RSTUDIO_EDITION=server npx playwright test
+PW_PROJECT=server-os-linux RSTUDIO_EDITION=server npx playwright test
 ```
 
 Without `PW_PROJECT` or `--project`, all 8 projects run.
@@ -237,7 +237,7 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 
 | Variable | Mode | Required | Description |
 |----------|------|----------|-------------|
-| `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-pro-windows`). Trumps `--project`. |
+| `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-os-windows`). Trumps `--project`. |
 | `RSTUDIO_EDITION` | Both | No | `desktop` (default) or `server` |
 | `CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
 | `RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |

@@ -90,13 +90,13 @@ The config defines **projects** that automatically exclude tags not applicable t
 
 ```bash
 # Set once in your shell profile for local development
-export PW_PROJECT=desktop-pro-windows
+export PW_PROJECT=desktop-os-windows
 
 # Then just run
 npx playwright test
 
 # To switch projects, override PW_PROJECT inline
-PW_PROJECT=server-pro-linux RSTUDIO_EDITION=server npx playwright test
+PW_PROJECT=server-os-linux RSTUDIO_EDITION=server npx playwright test
 ```
 
 Without `PW_PROJECT`, all 8 projects run (each test executes once per project). `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it.

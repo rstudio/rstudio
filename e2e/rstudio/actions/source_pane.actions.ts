@@ -116,17 +116,22 @@ export class SourcePaneActions {
     await sleep(300);
   }
 
+  /** Move cursor to top of document (cross-platform). */
+  async goToTop(): Promise<void> {
+    await this.sourcePane.aceTextInput.click({ force: true });
+    await sleep(300);
+    const goToTop = process.platform === 'darwin' ? 'Meta+ArrowUp' : 'Control+Home';
+    await this.page.keyboard.press(goToTop);
+    await sleep(300);
+  }
+
   /**
    * Navigate to a chunk by its 1-based index.
    * Clicks into the editor, goes to the top of the document,
    * then calls goToNextChunk N times.
    */
   async navigateToChunkByIndex(chunkNumber: number): Promise<void> {
-    await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
-    const goToTop = process.platform === 'darwin' ? 'Meta+ArrowUp' : 'Control+Home';
-    await this.page.keyboard.press(goToTop);
-    await sleep(300);
+    await this.goToTop();
     for (let i = 0; i < chunkNumber; i++) {
       await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
       await sleep(500);
