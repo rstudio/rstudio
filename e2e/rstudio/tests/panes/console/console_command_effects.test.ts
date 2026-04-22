@@ -63,7 +63,8 @@ test.describe('Console command effects', () => {
 
   test('install.packages() installs a real CRAN package that library() can load', async () => {
     test.setTimeout(300000);
-    await consoleActions.uninstallPackage('starwarsdb');
+    const uninstalled = await consoleActions.uninstallPackage('starwarsdb');
+    test.skip(!uninstalled, 'Could not uninstall starwarsdb to set up a fresh-install scenario');
     const failed = await consoleActions.ensurePackages(['starwarsdb'], 240000);
     test.skip(failed.length > 0, `Could not install: ${failed.join(', ')}`);
 

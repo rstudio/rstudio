@@ -141,6 +141,10 @@ export class ConsolePaneActions {
    * Avoids `requireNamespace()` for gating — it has a load side-effect that
    * would leave the namespace cached after remove.packages() wipes the files,
    * masking the uninstall from later checks.
+   *
+   * `pkg` must be a valid R package name (letters, digits, dots only, must
+   * start with a letter) — R itself enforces this, so interpolation into the
+   * double-quoted R strings below is safe.
    */
   async uninstallPackage(pkg: string, timeoutMs = 30000): Promise<boolean> {
     await this.clearConsole();
@@ -155,20 +159,31 @@ export class ConsolePaneActions {
     await this.typeInConsole(`cat("${doneMarker}")`);
 
     const startTime = Date.now();
+    let doneMarkerSeen = false;
     while (Date.now() - startTime < timeoutMs) {
       await sleep(1000);
       const text = await this.consolePane.consoleOutput.innerText();
-      if (text.includes(doneMarker)) break;
+      if (text.includes(doneMarker)) {
+        doneMarkerSeen = true;
+        break;
+      }
     }
+    if (!doneMarkerSeen) return false;
 
     const verifyMarker = `__UNINSTALL_VERIFY_${Date.now()}__`;
     await this.clearConsole();
     await this.typeInConsole(
       `cat("${verifyMarker}", "${pkg}" %in% rownames(installed.packages()), "${verifyMarker}")`,
     );
-    await sleep(1000);
-    const output = await this.consolePane.consoleOutput.innerText();
-    const match = output.match(new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`));
-    return match?.[1] === 'FALSE';
+
+    const verifyStart = Date.now();
+    const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
+    while (Date.now() - verifyStart < 15000) {
+      await sleep(500);
+      const output = await this.consolePane.consoleOutput.innerText();
+      const match = output.match(verifyPattern);
+      if (match) return match[1] === 'FALSE';
+    }
+    return false;
   }
 }

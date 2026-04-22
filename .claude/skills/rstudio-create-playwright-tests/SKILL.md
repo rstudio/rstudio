@@ -107,7 +107,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 | Waiting for an element | `await expect(locator).toBeVisible()` | `await sleep(2000)` |
 | Waiting for text | `await expect(locator).toContainText(...)` | `await sleep(1000); check text` |
 | Waiting for element to disappear | `await expect(locator).not.toBeVisible()` | `await sleep(3000)` |
-| Waiting for page/session load | `await page.waitForSelector(sel, { state: 'visible' })` | `await sleep(5000)` |
+| Waiting for page/session load | `await expect(page.locator(sel)).toBeVisible({ timeout: TIMEOUTS.sessionRestart })` | `await sleep(5000)` |
 
 **When `sleep()` is legitimate:**
 - The 0.2s pause before `keyboard.press("Enter")` after typing (Critical Rule 5 — GWT keystroke processing)

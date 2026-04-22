@@ -107,8 +107,12 @@ test.describe('Console pane', () => {
     });
 
     test.afterEach(async () => {
-      await consoleActions.consolePane.findClose.click();
-      await expect(consoleActions.consolePane.findBar).not.toBeVisible();
+      // Guarded: if beforeEach failed before opening the find bar, clicking
+      // Close here would error and mask the real root cause.
+      if (await consoleActions.consolePane.findBar.isVisible()) {
+        await consoleActions.consolePane.findClose.click();
+        await expect(consoleActions.consolePane.findBar).not.toBeVisible();
+      }
     });
 
     test('finds matches across multiple lines with "the"', async ({ rstudioPage: page }) => {

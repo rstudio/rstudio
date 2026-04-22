@@ -2,6 +2,7 @@ export const TIMEOUTS = {
   processCleanup: 1000,
   rstudioStartup: 10000,
   consoleReady: 15000,
+  sessionRestart: 30000,
   settleDelay: 1000,
   fileOpen: 20000,
   ghostText: 30000,

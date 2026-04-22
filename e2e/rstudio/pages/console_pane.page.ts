@@ -41,9 +41,12 @@ export class ConsolePane extends PageObject {
   }
 
   async consoleInputValue(): Promise<string> {
-    return this.page.evaluate(
-      "document.getElementById('rstudio_console_input').env.editor.getValue()",
-    );
+    return this.page.evaluate(() => {
+      const el = document.getElementById('rstudio_console_input') as
+        | (HTMLElement & { env?: { editor?: { getValue(): string } } })
+        | null;
+      return el?.env?.editor?.getValue() ?? '';
+    });
   }
 }
 

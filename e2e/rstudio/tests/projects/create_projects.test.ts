@@ -64,23 +64,38 @@ const ALL_TYPES = [NEW_PROJECT, R_PACKAGE, SHINY_APP, QUARTO_PROJECT, QUARTO_WEB
 
 // -- Helpers ------------------------------------------------------------------
 
+// Helpers below interpolate rExpression / projectDir / type.name directly into
+// double-quoted R strings. Callers must pass values that do not contain `"` or
+// `\` — all current inputs are controlled (hardcoded R expressions, known-safe
+// project names, Windows paths normalized to forward slashes). If these
+// helpers are ever reused with uncontrolled input, add proper escaping.
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__CP_${Date.now()}__`;
   await typeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
-  await sleep(1500);
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(new RegExp(`${marker}\\s+(.*?)\\s+${marker}`));
-  return match ? match[1].trim() : '';
+
+  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
+  const start = Date.now();
+  while (Date.now() - start < 15000) {
+    await sleep(500);
+    const output = await page.locator(CONSOLE_OUTPUT).innerText();
+    const match = output.match(pattern);
+    if (match) return match[1].trim();
+  }
+  return '';
 }
 
 async function waitForSessionRestart(page: Page): Promise<void> {
-  // Server navigates on project open/close; Desktop reloads in place.
+  // Server navigates on project open/close; Desktop reloads in place, so
+  // waitForLoadState never fires there — intentional catch.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
   await sleep(3000);
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 60000 });
   await sleep(2000);
 
-  // Confirm R is idle by running a trivial command with retries
+  // Confirm R is idle with retries. Individual attempts may fail while the
+  // console is still coming up — intentional catch inside the loop — but if
+  // all three fail we surface the timeout instead of silently returning and
+  // letting downstream code fail mysteriously.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const marker = `__READY_${Date.now()}__`;
@@ -93,6 +108,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
     }
     await sleep(2000);
   }
+  throw new Error('R session did not become idle within timeout after session restart');
 }
 
 async function openNewProjectWizard(page: Page): Promise<void> {
