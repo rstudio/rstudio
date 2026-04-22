@@ -1,5 +1,5 @@
 ---
-name: migrate-selenium-to-playwright
+name: rstudio-migrate-tests-selenium-to-playwright
 description: Migrate Python Selenium/Selene electron tests to TypeScript/Playwright. Use when converting tests from rstudio-ide-automation/rstudio_server_pro/electron-tests/ to rstudio/e2e/rstudio/tests/.
 ---
 
@@ -10,9 +10,9 @@ Converts Python test files from `rstudio-ide-automation/rstudio_server_pro/elect
 ## Arguments
 
 The user provides one or more targets:
-- A single file: `/migrate-selenium-to-playwright test_desktop_console.py`
-- A directory: `/migrate-selenium-to-playwright GlobalPrefs/`
-- A keyword: `/migrate-selenium-to-playwright citations`
+- A single file: `/rstudio-migrate-tests-selenium-to-playwright test_desktop_console.py`
+- A directory: `/rstudio-migrate-tests-selenium-to-playwright GlobalPrefs/`
+- A keyword: `/rstudio-migrate-tests-selenium-to-playwright citations`
 
 ## Hard Rules
 
