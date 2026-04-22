@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 14 |
+| Files fully converted | 15 |
 | Files partially converted | 0 |
-| Files not started | 18 |
+| Files not started | 17 |
 
 ## Conversion Status
 
@@ -74,7 +74,7 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Create_Projects.py | 5 | — | Not started | |
+| test_desktop_Create_Projects.py | 5 | projects/create_projects.test.ts (5) | Complete | |
 
 ## Fixme Tests
 
