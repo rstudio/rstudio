@@ -212,6 +212,8 @@ public:
          for (boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> connectionPtr : connections_)
          {
             auto connection = connectionPtr.lock();
+            if (!connection)
+               continue;
             ConnectionInfo connInfo;
 
             connInfo.closed = connection->closed();
@@ -522,73 +524,76 @@ private:
          if (!fromDestructor)
          {
             auto connection = connectionPtr.lock();
-            boost::posix_time::ptime startTime = connection->startTime();
-
-            bool isStreaming = isStreamingUri(connection->request().uri());
-            if (statsProvider_ && requestParsed)
+            if (connection)
             {
-               if (connections_.find(connection) != connections_.end())
-                  statsProvider_->httpEnd(connection->request(), connection->response(), isStreaming);
-               else
-               {
-                  LOG_DEBUG_MESSAGE("Closing connection not found in the list: " + connection->request().debugInfo());
-               }
-            }
+               boost::posix_time::ptime startTime = connection->startTime();
 
-            if (!startTime.is_not_a_date_time())
-            {
-               if (now > startTime)
+               bool isStreaming = isStreamingUri(connection->request().uri());
+               if (statsProvider_ && requestParsed)
                {
-                  if (!isStreaming)
-                  {
-                     boost::posix_time::time_duration requestTime = now - startTime;
-                     numRequests_++;
-                     totalTime_ += requestTime;
-                     if (minTime_ == boost::posix_time::seconds(0) || minTime_ > requestTime)
-                        minTime_ = requestTime;
-                     if (maxTime_ < requestTime)
-                     {
-                        maxTime_ = requestTime;
-                        maxUrl_ = connection->request().uri();
-                     }
-                  }
+                  if (connections_.find(connection) != connections_.end())
+                     statsProvider_->httpEnd(connection->request(), connection->response(), isStreaming);
                   else
-                     numStreaming_++;
-
-                  boost::posix_time::ptime handlerStart = connection->request().handlerStartTime();
-                  boost::posix_time::ptime handlerEnd = connection->request().handlerEndTime();
-                  if (!handlerStart.is_not_a_date_time() && !handlerEnd.is_not_a_date_time())
                   {
-                     boost::posix_time::time_duration handlerTime = handlerEnd - handlerStart;
-                     boost::posix_time::time_duration queueTime = handlerStart - startTime;
-                     boost::posix_time::time_duration postHandlerTime = now - handlerEnd;
+                     LOG_DEBUG_MESSAGE("Closing connection not found in the list: " + connection->request().debugInfo());
+                  }
+               }
 
-                     boost::posix_time::time_duration slowThreshold = boost::posix_time::milliseconds(150);
-                     boost::posix_time::time_duration slowPostThreshold = boost::posix_time::milliseconds(500);
-                     // Track slow requests - the first 50 for each poll interval so we see a sample, excluding streaming async responses
-                     if (handlerTime > slowThreshold || queueTime > slowThreshold || (!isStreaming && postHandlerTime > slowPostThreshold))
+               if (!startTime.is_not_a_date_time())
+               {
+                  if (now > startTime)
+                  {
+                     if (!isStreaming)
                      {
-                        if (pSlowRequests_->size() < MAX_SLOW_REQUESTS)
+                        boost::posix_time::time_duration requestTime = now - startTime;
+                        numRequests_++;
+                        totalTime_ += requestTime;
+                        if (minTime_ == boost::posix_time::seconds(0) || minTime_ > requestTime)
+                           minTime_ = requestTime;
+                        if (maxTime_ < requestTime)
                         {
-                           SlowRequestInfo info;
+                           maxTime_ = requestTime;
+                           maxUrl_ = connection->request().uri();
+                        }
+                     }
+                     else
+                        numStreaming_++;
 
-                           info.requestUri = connection->request().uri();
-                           info.username = connection->request().username();
-                           info.requestSequence = connection->requestSequence();
-                           info.queuedTime = queueTime;
-                           info.handlerTime = handlerTime;
-                           info.postHandlerTime = postHandlerTime;
-                           info.requestTime = now - startTime;
-                           pSlowRequests_->push_back(info);
+                     boost::posix_time::ptime handlerStart = connection->request().handlerStartTime();
+                     boost::posix_time::ptime handlerEnd = connection->request().handlerEndTime();
+                     if (!handlerStart.is_not_a_date_time() && !handlerEnd.is_not_a_date_time())
+                     {
+                        boost::posix_time::time_duration handlerTime = handlerEnd - handlerStart;
+                        boost::posix_time::time_duration queueTime = handlerStart - startTime;
+                        boost::posix_time::time_duration postHandlerTime = now - handlerEnd;
+
+                        boost::posix_time::time_duration slowThreshold = boost::posix_time::milliseconds(150);
+                        boost::posix_time::time_duration slowPostThreshold = boost::posix_time::milliseconds(500);
+                        // Track slow requests - the first 50 for each poll interval so we see a sample, excluding streaming async responses
+                        if (handlerTime > slowThreshold || queueTime > slowThreshold || (!isStreaming && postHandlerTime > slowPostThreshold))
+                        {
+                           if (pSlowRequests_->size() < MAX_SLOW_REQUESTS)
+                           {
+                              SlowRequestInfo info;
+
+                              info.requestUri = connection->request().uri();
+                              info.username = connection->request().username();
+                              info.requestSequence = connection->requestSequence();
+                              info.queuedTime = queueTime;
+                              info.handlerTime = handlerTime;
+                              info.postHandlerTime = postHandlerTime;
+                              info.requestTime = now - startTime;
+                              pSlowRequests_->push_back(info);
+                           }
                         }
                      }
                   }
+                  else
+                     debugMsg = "Request start time is before current time?";
                }
                else
-                  debugMsg = "Request start time is before current time?";
+                  debugMsg = "Closing connection that never started";
             }
-            else
-               debugMsg = "Closing connection that never started";
          }
 
          if (connections_.erase(connectionPtr) == 1 && fromDestructor && statsProvider_ && requestParsed)
