@@ -98,6 +98,34 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 - `pressSequentially()` for all GWT text inputs (console, editor, dialog/wizard `input.gwt-TextBox`) — `fill()` doesn't fire GWT key events, which can leave change handlers untriggered (e.g., OK button stays disabled)
 - `test.fixme()` for failing tests — never comment out
 
+### Waits and Timing
+
+**Default to Playwright's built-in assertions** — they retry automatically until the condition is met or the timeout expires. Reach for `sleep()` only when there is no observable DOM/state change to wait on.
+
+| Situation | Do this | Not this |
+|-----------|---------|----------|
+| Waiting for an element | `await expect(locator).toBeVisible()` | `await sleep(2000)` |
+| Waiting for text | `await expect(locator).toContainText(...)` | `await sleep(1000); check text` |
+| Waiting for element to disappear | `await expect(locator).not.toBeVisible()` | `await sleep(3000)` |
+| Waiting for page/session load | `await page.waitForSelector(sel, { state: 'visible' })` | `await sleep(5000)` |
+
+**When `sleep()` is legitimate:**
+- The 0.2s pause before `keyboard.press("Enter")` after typing (Critical Rule 5 — GWT keystroke processing)
+- Short settling delay after a UI action that has no observable DOM change (e.g., after clicking a menu item before the next element appears — keep it to 200–500ms max)
+- Polling loops where you must wait between retry attempts
+
+**Always use named constants, never magic numbers:**
+
+```typescript
+// Bad
+await sleep(3000);
+
+// Good
+await sleep(TIMEOUTS.sessionRestart);
+```
+
+Add new keys to `utils/constants.ts` `TIMEOUTS` object rather than scattering raw numbers. If a value is used only once and is truly a one-off, add a comment explaining the constraint.
+
 ### Parallel Safety
 
 - Default to `test.describe()` (parallel-safe)
