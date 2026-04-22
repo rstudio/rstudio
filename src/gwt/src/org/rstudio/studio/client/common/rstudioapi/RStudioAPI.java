@@ -30,6 +30,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
+import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowMenuEvent;
+import org.rstudio.studio.client.common.rstudioapi.model.ChoiceListDialog;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 
@@ -43,7 +45,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
+public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler,
+                                   RStudioAPIShowMenuEvent.Handler
 {
    public RStudioAPI()
    {
@@ -59,6 +62,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       server_ = server;
 
       events_.addHandler(RStudioAPIShowDialogEvent.TYPE, this);
+      events_.addHandler(RStudioAPIShowMenuEvent.TYPE, this);
    }
    
    public interface Styles extends CssResource
@@ -178,6 +182,29 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          ok,
          cancel,
          true);
+   }
+
+   private void showMenu(String title, String message, String[] choices)
+   {
+      ChoiceListDialog dlg = new ChoiceListDialog(
+         title,
+         message,
+         choices,
+         (Integer selection) ->
+            server_.showMenuCompleted(selection, new SimpleRequestCallback<>()),
+         () ->
+            server_.showMenuCompleted(null, new SimpleRequestCallback<>()));
+      dlg.showModal();
+   }
+
+   @Override
+   public void onRStudioAPIShowMenuEvent(RStudioAPIShowMenuEvent event)
+   {
+      // Only the main window responds (same convention as the show-dialog event).
+      if (Satellite.isCurrentWindowSatellite())
+         return;
+
+      showMenu(event.getTitle(), event.getMessage(), event.getChoices());
    }
 
    @Override
