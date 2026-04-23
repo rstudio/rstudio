@@ -2183,3 +2183,149 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # in other cases, restart if one of the requested packages is loaded
    .rs.loadedPackageUpdates(pkgs)
 })
+
+# Hooks -------------------------------------------------------------------
+
+.rs.defineHook(
+   package = "utils",
+   binding = "install.packages",
+   function(pkgs, lib, repos)
+   {
+      ""
+      "This is an RStudio hook."
+      "Use `utils::install.packages()` to bypass this hook if necessary."
+      ""
+
+      if (interactive())
+      {
+         # Check if package installation was disabled in this version of RStudio.
+         canInstallPackages <- .Call("rs_canInstallPackages", PACKAGE = "(embedding)")
+         if (!canInstallPackages)
+         {
+            msg <- "Package installation is disabled in this version of RStudio."
+            stop(msg, call. = FALSE)
+         }
+
+         # Notify if we're about to update an already-loaded package.
+         # Skip this within renv and packrat projects.
+         if (.rs.installPackagesRequiresRestart(pkgs))
+         {
+            response <- .rs.askForRestart("install.packages")
+            if (identical(response, TRUE))
+            {
+               call <- do.call(substitute, list(match.call(), parent.frame()))
+               call[[1L]] <- quote(install.packages)
+               names(call)[[2L]] <- ""
+               command <- paste(.rs.deparseCall(call), collapse = " ")
+
+               .rs.enqueLoadedPackageUpdates(command)
+               invokeRestart("abort")
+            }
+            else if (identical(response, FALSE))
+            {
+               # fall-through
+            }
+            else
+            {
+               invokeRestart("abort")
+            }
+         }
+
+         # Make sure Rtools is on the PATH for Windows.
+         .rs.addRToolsToPath()
+         on.exit(.rs.restorePreviousPath(), add = TRUE)
+      }
+
+      # Resolve library path.
+      if (missing(lib) || is.null(lib))
+         lib <- .libPaths()[1L]
+
+      # Check if we're installing a package from the filesystem,
+      # versus installing a package from CRAN.
+      isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
+
+      if (isLocal)
+      {
+         # Invoke the original function.
+         call <- sys.call()
+         call[[1L]] <- quote(utils::install.packages)
+         result <- eval(call, envir = parent.frame())
+
+         # Record the package source. Note that we need to resolve the path
+         # to the newly-installed package post-hoc from the provided path.
+         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+         if (shouldRecord)
+         {
+            pkgDesc <- tryCatch(
+               .rs.readPackageDescription(pkgs),
+               error = function(cnd) NULL
+            )
+
+            if (length(pkgDesc))
+            {
+               pkgPath <- file.path(lib, pkgDesc[["Package"]])
+               if (file.exists(pkgPath))
+               {
+                  tryCatch(
+                     .rs.recordPackageSource(pkgPath, pkgs),
+                     error = .rs.logWarningMessage
+                  )
+               }
+            }
+         }
+      }
+      else
+      {
+         # Get paths to DESCRIPTION files, so we can see what packages
+         # were updated before and after installation.
+         before <- .rs.installedPackagesFileInfo(lib)
+
+         # Invoke the original function.
+         call <- sys.call()
+         call[[1L]] <- quote(utils::install.packages)
+         result <- eval(call, envir = parent.frame())
+
+         # Check and see what packages were updated.
+         after <- .rs.installedPackagesFileInfo(lib)
+
+         # Figure out which packages were changed.
+         rows <- .rs.installedPackagesFileInfoDiff(before, after)
+
+         # For any packages which appear to have been updated,
+         # tag their DESCRIPTION file with their installation source.
+         .rs.recordPackageSource(rows$path)
+      }
+
+      # Notify the front-end that we've made some updates.
+      if (interactive())
+      {
+         .rs.updatePackageEvents()
+         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
+      }
+
+      # Return installation result, invisibly.
+      invisible(result)
+   })
+
+.rs.defineHook(
+   package = "utils",
+   binding = "remove.packages",
+   function(pkgs, lib)
+   {
+      ""
+      "This is an RStudio hook."
+      "Use `utils::remove.packages()` to bypass this hook if necessary."
+      ""
+
+      # Invoke original.
+      result <- utils::remove.packages(pkgs, lib)
+
+      # Notify front-end that the package library was mutated.
+      if (interactive())
+      {
+         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
+      }
+
+      # Return original result.
+      invisible(result)
+   })

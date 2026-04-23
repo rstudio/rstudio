@@ -334,11 +334,17 @@ Error initialize()
    if (wasResumed)
       rCallbacks().resumed();
    
-   // now that all initialization code has had a chance to run we 
+   // now that all initialization code has had a chance to run we
    // can register all external routines which were added to r::routines
    // during the init sequence
    r::routines::registerAll();
-   
+
+   // install R hooks (after modules are initialized and routines registered)
+   FilePath hooksFilePath = utils::rSourcePath().completePath("Hooks.R");
+   error = r::sourceManager().sourceTools(hooksFilePath);
+   if (error)
+      return error;
+
    // set default repository if requested
    if (!utils::rCRANUrl().empty() || !utils::rCRANSecondary().empty())
    {
