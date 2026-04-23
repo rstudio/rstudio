@@ -250,7 +250,11 @@ test.describe.serial('Create Projects in New Directory', () => {
 
       // Capture the actual project directory for later cleanup
       currentProjectDir = await captureResult(page, 'getwd()');
-      expect(currentProjectDir).not.toBe('');
+
+      // Project actually created on disk (.Rproj file exists)
+      const rprojExists = await captureResult(page,
+        `file.exists("${currentProjectDir}/${type.name}.Rproj")`);
+      expect(rprojExists, `.Rproj missing for ${type.name} at ${currentProjectDir}`).toBe('TRUE');
 
       // Project menu reflects the new project
       await expect(page.locator(PROJECT_MENU)).toContainText(type.name, { timeout: 15000 });
