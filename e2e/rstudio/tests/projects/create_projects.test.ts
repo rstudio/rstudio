@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
@@ -75,21 +75,23 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
   const start = Date.now();
-  while (Date.now() - start < 15000) {
+  while (Date.now() - start < TIMEOUTS.consoleReady) {
     await sleep(500);
     const output = await page.locator(CONSOLE_OUTPUT).innerText();
     const match = output.match(pattern);
     if (match) return match[1].trim();
   }
-  return '';
+  throw new Error(`captureResult: markers not found for "${rExpression}" within ${TIMEOUTS.consoleReady}ms`);
 }
 
 async function waitForSessionRestart(page: Page): Promise<void> {
   // Server navigates on project open/close; Desktop reloads in place, so
   // waitForLoadState never fires there — intentional catch.
-  await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
+  await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
   await sleep(3000);
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 60000 });
+  // 2× sessionRestart: after navigation settles, the console element may still
+  // take extra time to mount on slower Server sessions.
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.sessionRestart * 2 });
   await sleep(2000);
 
   // Confirm R is idle with retries. Individual attempts may fail while the

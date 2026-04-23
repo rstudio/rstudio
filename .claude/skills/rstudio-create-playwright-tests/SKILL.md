@@ -95,7 +95,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 - `await expect(locator).toContainText('...')` — not extract text then assert
 - `expect(items).toEqual(expect.arrayContaining([...]))` — order-independent lists
 - `click({ force: true })` on Ace textareas — overlay intercepts normal clicks
-- `pressSequentially()` for all GWT text inputs (console, editor, dialog/wizard `input.gwt-TextBox`) — `fill()` doesn't fire GWT key events, which can leave change handlers untriggered (e.g., OK button stays disabled)
+- `pressSequentially()` for GWT text inputs whose behavior depends on incremental key events firing (console, editor, most dialog/wizard `input.gwt-TextBox` fields where typing a character enables the OK button, triggers autocomplete, etc.) — `fill()` doesn't fire GWT key events in those cases. This is guidance, not a universal law: inputs driven by a discrete trigger like `press('Enter')` or a button click (e.g., the console Find/Replace bar) typically work fine with `fill()`, and `fill()` has the advantage of replacing existing text instead of appending. If unsure, start with `fill()`; switch to `pressSequentially()` only when the handler doesn't fire
 - `test.fixme()` for failing tests — never comment out
 
 ### Waits and Timing
@@ -125,6 +125,8 @@ await sleep(TIMEOUTS.sessionRestart);
 ```
 
 Add new keys to `utils/constants.ts` `TIMEOUTS` object rather than scattering raw numbers. If a value is used only once and is truly a one-off, add a comment explaining the constraint.
+
+See `utils/constants.ts` for the full list of `TIMEOUTS` keys.
 
 ### Parallel Safety
 
