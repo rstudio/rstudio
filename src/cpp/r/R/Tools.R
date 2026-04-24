@@ -2561,10 +2561,6 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
             error = function(e) NA
          )
 
-         # install.packages ignores 'dependencies' when 'lib' has multiple entries.
-         if (length(lib) > 1L)
-            userDeps <- FALSE
-
          whichDeps <- if (isTRUE(userDeps))
             c("Depends", "Imports", "LinkingTo", "Suggests")
          else if (isFALSE(userDeps))
