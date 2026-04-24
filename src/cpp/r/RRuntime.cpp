@@ -41,7 +41,9 @@ namespace {
 // Handle to the loaded R shared library, used for symbol resolution.
 void* s_library = nullptr;
 
-// Resolve a function pointer from libR by name.
+// Resolve an optional function pointer from libR by name. Silently ignores
+// resolution failure; the function pointer stays nullptr. Use for symbols
+// that are only available in certain R versions.
 #define RS_IMPORT_FUNCTION(__NAME__)                                            \
    do                                                                           \
    {                                                                            \
@@ -50,15 +52,44 @@ void* s_library = nullptr;
       __NAME__ = reinterpret_cast<decltype(__NAME__)>(symbol);                  \
    } while (0)
 
-// Resolve a global variable from libR by name.
-// dlsym returns the address of the variable, so we dereference it.
-#define RS_IMPORT_DATA(__NAME__)                                                \
+// Resolve a required function pointer from libR by name. Logs an error on
+// resolution failure so we get a diagnostic breadcrumb when a core R symbol
+// is unexpectedly missing. Use for symbols expected on all supported R
+// versions.
+#define RS_IMPORT_FUNCTION_REQUIRED(__NAME__)                                   \
    do                                                                           \
    {                                                                            \
       void* symbol = nullptr;                                                   \
-      core::system::loadSymbol(s_library, #__NAME__, &symbol);                  \
-      if (symbol)                                                               \
+      Error error = core::system::loadSymbol(s_library, #__NAME__, &symbol);    \
+      if (error)                                                                \
+      {                                                                         \
+         error.addProperty("description",                                       \
+            std::string("Failed to resolve required R symbol '")                \
+               + #__NAME__ + "'");                                              \
+         LOG_ERROR(error);                                                      \
+      }                                                                         \
+      __NAME__ = reinterpret_cast<decltype(__NAME__)>(symbol);                  \
+   } while (0)
+
+// Resolve a required global variable from libR by name. Logs an error on
+// resolution failure. dlsym returns the address of the variable, so we
+// dereference it.
+#define RS_IMPORT_DATA_REQUIRED(__NAME__)                                       \
+   do                                                                           \
+   {                                                                            \
+      void* symbol = nullptr;                                                   \
+      Error error = core::system::loadSymbol(s_library, #__NAME__, &symbol);    \
+      if (error)                                                                \
+      {                                                                         \
+         error.addProperty("description",                                       \
+            std::string("Failed to resolve required R symbol '")                \
+               + #__NAME__ + "'");                                              \
+         LOG_ERROR(error);                                                      \
+      }                                                                         \
+      else                                                                      \
+      {                                                                         \
          __NAME__ = *reinterpret_cast<decltype(__NAME__)*>(symbol);             \
+      }                                                                         \
    } while (0)
 
 // R API function pointers, resolved in initialize().
@@ -134,14 +165,21 @@ Error initialize()
       return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
 #endif
 
-   RS_IMPORT_FUNCTION(FORMALS);
-   RS_IMPORT_FUNCTION(BODY);
-   RS_IMPORT_FUNCTION(CLOENV);
+   // Core R symbols expected on all supported R versions.
+   RS_IMPORT_FUNCTION_REQUIRED(FORMALS);
+   RS_IMPORT_FUNCTION_REQUIRED(BODY);
+   RS_IMPORT_FUNCTION_REQUIRED(CLOENV);
 
-   RS_IMPORT_FUNCTION(PRCODE);
-   RS_IMPORT_FUNCTION(PRENV);
-   RS_IMPORT_FUNCTION(PRVALUE);
+   RS_IMPORT_FUNCTION_REQUIRED(PRCODE);
+   RS_IMPORT_FUNCTION_REQUIRED(PRENV);
+   RS_IMPORT_FUNCTION_REQUIRED(PRVALUE);
 
+   RS_IMPORT_FUNCTION_REQUIRED(Rf_findVarInFrame);
+   RS_IMPORT_FUNCTION_REQUIRED(Rf_findVar);
+
+   RS_IMPORT_DATA_REQUIRED(R_UnboundValue);
+
+   // Version-gated R symbols; resolution failure is expected on older R.
    RS_IMPORT_FUNCTION(R_ClosureBody);
    RS_IMPORT_FUNCTION(R_ClosureEnv);
    RS_IMPORT_FUNCTION(R_ClosureFormals);
@@ -151,13 +189,9 @@ Error initialize()
    RS_IMPORT_FUNCTION(R_ParentEnv);
 
    RS_IMPORT_FUNCTION(R_findVarLocInFrame);
-   RS_IMPORT_FUNCTION(Rf_findVarInFrame);
-   RS_IMPORT_FUNCTION(Rf_findVar);
 
    RS_IMPORT_FUNCTION(R_GetSaveAction);
    RS_IMPORT_FUNCTION(R_SetSaveAction);
-
-   RS_IMPORT_DATA(R_UnboundValue);
 
    // closureFormals / closureBody / closureEnv
    s_closureFormals = R_ClosureFormals ? R_ClosureFormals : FORMALS;
@@ -288,6 +322,43 @@ Error initialize()
             return old;
          };
       }
+   }
+
+   // Verify all dispatch function pointers are non-null. Any null pointer
+   // would crash the first call made through it, so flag it here instead
+   // of letting it manifest as a later access violation.
+   bool anyMissing = false;
+#define RS_CHECK_DISPATCH(__NAME__)                                             \
+   do                                                                           \
+   {                                                                            \
+      if (__NAME__ == nullptr)                                                  \
+      {                                                                         \
+         LOG_ERROR_MESSAGE(                                                     \
+            std::string("R runtime dispatch pointer '") + #__NAME__             \
+               + "' is null after initialize()");                               \
+         anyMissing = true;                                                     \
+      }                                                                         \
+   } while (0)
+
+   RS_CHECK_DISPATCH(s_closureFormals);
+   RS_CHECK_DISPATCH(s_closureBody);
+   RS_CHECK_DISPATCH(s_closureEnv);
+   RS_CHECK_DISPATCH(s_parentEnv);
+   RS_CHECK_DISPATCH(s_findVarInFrame);
+   RS_CHECK_DISPATCH(s_findVar);
+   RS_CHECK_DISPATCH(s_getBindingType);
+   RS_CHECK_DISPATCH(s_delayedBindingExpression);
+   RS_CHECK_DISPATCH(s_getSaveAction);
+   RS_CHECK_DISPATCH(s_setSaveAction);
+
+#undef RS_CHECK_DISPATCH
+
+   if (anyMissing)
+   {
+      return systemError(
+         boost::system::errc::function_not_supported,
+         "R runtime dispatch pointers are null after initialize()",
+         ERROR_LOCATION);
    }
 
    return Success();
