@@ -2597,11 +2597,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          call[[1L]] <- quote(utils::install.packages)
          result <- eval(call, envir = parent.frame())
 
-         # Any candidate whose directory mtime/ctime is at or after the
-         # sentinel was created or updated during this install.
+         # Any candidate whose directory mtime is at or after the sentinel
+         # was created or replaced during this install.
          after <- .rs.installedPackagesFileInfo(paths = paths)
-         changed <- !is.na(after$mtime) &
-            (after$mtime >= installStart | after$ctime >= installStart)
+         changed <- !is.na(after$mtime) & after$mtime >= installStart
 
          # Tag each updated package's DESCRIPTION with its installation source.
          .rs.recordPackageSource(after$path[changed], db = db)
