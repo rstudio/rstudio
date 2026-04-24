@@ -44,7 +44,7 @@ void* s_library = nullptr;
 // Resolve an optional function pointer from libR by name. Silently ignores
 // resolution failure; the function pointer stays nullptr. Use for symbols
 // that are only available in certain R versions.
-#define RS_IMPORT_FUNCTION(__NAME__)                                            \
+#define RS_IMPORT_FUNCTION_OPTIONAL(__NAME__)                                   \
    do                                                                           \
    {                                                                            \
       void* symbol = nullptr;                                                   \
@@ -180,18 +180,18 @@ Error initialize()
    RS_IMPORT_DATA_REQUIRED(R_UnboundValue);
 
    // Version-gated R symbols; resolution failure is expected on older R.
-   RS_IMPORT_FUNCTION(R_ClosureBody);
-   RS_IMPORT_FUNCTION(R_ClosureEnv);
-   RS_IMPORT_FUNCTION(R_ClosureFormals);
-   RS_IMPORT_FUNCTION(R_DelayedBindingExpression);
-   RS_IMPORT_FUNCTION(R_GetBindingType);
-   RS_IMPORT_FUNCTION(R_getVarEx);
-   RS_IMPORT_FUNCTION(R_ParentEnv);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_ClosureBody);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_ClosureEnv);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_ClosureFormals);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_DelayedBindingExpression);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_GetBindingType);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_getVarEx);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_ParentEnv);
 
-   RS_IMPORT_FUNCTION(R_findVarLocInFrame);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_findVarLocInFrame);
 
-   RS_IMPORT_FUNCTION(R_GetSaveAction);
-   RS_IMPORT_FUNCTION(R_SetSaveAction);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_GetSaveAction);
+   RS_IMPORT_FUNCTION_OPTIONAL(R_SetSaveAction);
 
    // closureFormals / closureBody / closureEnv
    s_closureFormals = R_ClosureFormals ? R_ClosureFormals : FORMALS;
