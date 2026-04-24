@@ -2559,8 +2559,14 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # library enumeration can be very slow on network filesystems with
          # large libraries; the candidate set is an upper bound on what
          # install.packages can touch.
+         #
+         # Query available.packages() against the same 'repos' install.packages
+         # will use (the hook's formal is either the user's explicit argument
+         # or the install.packages default, getOption("repos")), so the
+         # Repository column used by recordPackageSource matches the repo the
+         # package was actually fetched from.
          db <- as.data.frame(
-            utils::available.packages(),
+            utils::available.packages(repos = repos),
             stringsAsFactors = FALSE
          )
 
