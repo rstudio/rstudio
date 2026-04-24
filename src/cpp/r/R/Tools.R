@@ -2079,13 +2079,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    ""
 })
 
-.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL)
+.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL, db = NULL)
 {
-   # Request available packages.
-   db <- if (is.null(pkgSrc)) as.data.frame(
-      utils::available.packages(),
-      stringsAsFactors = FALSE
-   )
+   # Request available packages when not using an explicit source and no db was provided.
+   if (is.null(pkgSrc) && is.null(db))
+   {
+      db <- as.data.frame(
+         utils::available.packages(),
+         stringsAsFactors = FALSE
+      )
+   }
 
    # Record sources for each package.
    for (pkgPath in pkgPaths)
@@ -2187,11 +2190,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       object
 })
 
-.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths())
+.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths(), paths = NULL)
 {
-   pkgPaths <- list.files(lib, full.names = TRUE)
-   descPaths <- file.path(pkgPaths, "DESCRIPTION")
-   pkgInfo <- file.info(pkgPaths, extra_cols = FALSE)
+   if (is.null(paths))
+      paths <- list.files(lib, full.names = TRUE)
+   pkgInfo <- file.info(paths, extra_cols = FALSE)
    pkgInfo$path <- row.names(pkgInfo)
    pkgInfo
 })
@@ -2539,9 +2542,50 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       }
       else
       {
-         # Get paths to DESCRIPTION files, so we can see what packages
-         # were updated before and after installation.
-         before <- .rs.installedPackagesFileInfo(lib)
+         # Scope the before/after scan to the requested packages plus the
+         # dependency closure install.packages will actually traverse. A full
+         # library enumeration can be very slow on network filesystems with
+         # large libraries; the candidate set is an upper bound on what
+         # install.packages can touch.
+         db <- as.data.frame(
+            utils::available.packages(),
+            stringsAsFactors = FALSE
+         )
+
+         # 'dependencies' is a formal of utils::install.packages;
+         # .rs.defineHookImpl copies the original function's formals onto this
+         # hook, so the argument (or its default, NA) is bound in our frame
+         # even though it doesn't appear in the source signature here.
+         userDeps <- tryCatch(
+            get("dependencies", envir = environment(), inherits = FALSE),
+            error = function(e) NA
+         )
+
+         # install.packages ignores 'dependencies' when 'lib' has multiple entries.
+         if (length(lib) > 1L)
+            userDeps <- FALSE
+
+         whichDeps <- if (isTRUE(userDeps))
+            c("Depends", "Imports", "LinkingTo", "Suggests")
+         else if (isFALSE(userDeps))
+            character()
+         else if (is.character(userDeps))
+            userDeps
+         else
+            c("Depends", "Imports", "LinkingTo")
+
+         candidates <- pkgs
+         if (length(whichDeps) > 0L)
+         {
+            deps <- tools::package_dependencies(
+               pkgs, db = db, recursive = TRUE, which = whichDeps
+            )
+            candidates <- unique(c(candidates, unlist(deps, use.names = FALSE)))
+         }
+
+         paths <- unlist(lapply(lib, file.path, candidates), use.names = FALSE)
+
+         before <- .rs.installedPackagesFileInfo(paths = paths)
 
          # Invoke the original function.
          call <- sys.call()
@@ -2549,14 +2593,14 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          result <- eval(call, envir = parent.frame())
 
          # Check and see what packages were updated.
-         after <- .rs.installedPackagesFileInfo(lib)
+         after <- .rs.installedPackagesFileInfo(paths = paths)
 
          # Figure out which packages were changed.
          rows <- .rs.installedPackagesFileInfoDiff(before, after)
 
          # For any packages which appear to have been updated,
          # tag their DESCRIPTION file with their installation source.
-         .rs.recordPackageSource(rows$path)
+         .rs.recordPackageSource(rows$path, db = db)
       }
 
       # Notify the front-end that we've made some updates.
