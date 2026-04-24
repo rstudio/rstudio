@@ -1,7 +1,10 @@
 ## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
--
+- Added the `allow-package-source-recording` session option (default
+  `true`); when set to `false`, RStudio will not annotate DESCRIPTION
+  files of packages installed via `install.packages()` with the remote
+  repository they came from.
 
 ### Fixed
 - Reduced filesystem work performed by the `install.packages()` hook; the

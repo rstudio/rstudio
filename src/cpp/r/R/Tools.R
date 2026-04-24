@@ -2510,7 +2510,19 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       # versus installing a package from CRAN.
       isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
 
-      if (isLocal)
+      # Allow administrators to suppress post-install source tagging via
+      # the 'allow-package-source-recording' session option.
+      recordSources <- .Call("rs_shouldRecordPackageSources", PACKAGE = "(embedding)")
+
+      if (!recordSources)
+      {
+         # Source recording disabled; invoke install.packages with no
+         # post-install bookkeeping.
+         call <- sys.call()
+         call[[1L]] <- quote(utils::install.packages)
+         result <- eval(call, envir = parent.frame())
+      }
+      else if (isLocal)
       {
          # Invoke the original function.
          call <- sys.call()

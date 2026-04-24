@@ -491,6 +491,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          violations.push_back("allow-vcs");
       if (!allowPackageInstallation_)
          violations.push_back("allow-package-installation");
+      if (!allowPackageSourceRecording_)
+         violations.push_back("allow-package-source-recording");
       if (!allowShell_)
          violations.push_back("allow-shell");
       if (!allowTerminalWebsockets_)

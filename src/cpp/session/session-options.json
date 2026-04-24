@@ -504,6 +504,13 @@
             "description": "Indicates whether or not to allow installation of packages from the packages pane."
          },
          {
+            "name": "allow-package-source-recording",
+            "type": "bool",
+            "memberName": "allowPackageSourceRecording_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to annotate the DESCRIPTION file of packages installed via install.packages() with their repository source (RemoteType, RemoteRepos, etc)."
+         },
+         {
             "name": "allow-shell",
             "type": "bool",
             "memberName": "allowShell_",

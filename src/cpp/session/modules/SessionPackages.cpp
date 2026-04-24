@@ -294,6 +294,13 @@ SEXP rs_canInstallPackages()
                           &rProtect);
 }
 
+SEXP rs_shouldRecordPackageSources()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(session::options().allowPackageSourceRecording(),
+                          &rProtect);
+}
+
 SEXP rs_packageLibraryMutated()
 {
    // broadcast event to server
@@ -478,6 +485,7 @@ Error initialize()
    // register routines
    RS_REGISTER_CALL_METHOD(rs_enqueLoadedPackageUpdates);
    RS_REGISTER_CALL_METHOD(rs_canInstallPackages);
+   RS_REGISTER_CALL_METHOD(rs_shouldRecordPackageSources);
    RS_REGISTER_CALL_METHOD(rs_packageLibraryMutated);
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
