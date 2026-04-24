@@ -2583,7 +2583,9 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
             candidates <- unique(c(candidates, unlist(deps, use.names = FALSE)))
          }
 
-         paths <- unlist(lapply(lib, file.path, candidates), use.names = FALSE)
+         # install.packages writes to the first entry of 'lib' in the common
+         # case, so only that path needs to be scanned.
+         paths <- file.path(lib[[1L]], candidates)
 
          before <- .rs.installedPackagesFileInfo(paths = paths)
 
