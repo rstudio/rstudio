@@ -22,9 +22,11 @@
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
@@ -336,6 +338,43 @@ void onConsoleInput(const std::string& input)
    s_reposSEXP.set(reposSEXP);
 }
 
+// Builds the regex used to detect package-management function calls in
+// console input. Identifiers are matched as a prefix, optionally followed by
+// '.' or '_' and more identifier characters (so 'install' catches
+// 'install.packages', 'install_github', etc.), and must be followed by '('
+// so that variable names like 'updates <- ...' and read-only calls like
+// 'installed.packages()' do not trigger a refresh. Underscore-prefixed
+// entries (pkg_*, p_*, local_*) are listed explicitly since '\b' cannot span
+// a '_' word boundary.
+boost::regex buildPackageCallRegex()
+{
+   const std::vector<std::string> keywords = {
+      // base R and devtools/remotes entry points
+      "install",
+      "update",
+      "remove",
+      "restore",
+      "rebuild",
+      "load_all",
+      // pak
+      "pkg_install",
+      "pkg_update",
+      "pkg_remove",
+      "pkg_load",
+      "local_install",
+      // pacman
+      "p_install",
+      "p_load",
+      "p_remove",
+      "p_unload",
+   };
+
+   const std::string pattern =
+      "\\b(?:" + core::algorithm::join(keywords, "|") + ")(?:[._][\\w.]*)?\\s*\\(";
+
+   return boost::regex(pattern);
+}
+
 void onConsolePrompt(const std::string&)
 {
    // skip if we're being invoked within a readline call
@@ -347,36 +386,15 @@ void onConsolePrompt(const std::string&)
    if (isReadingUserInput)
       return;
 
-   // if the user ran a command that is likely to have installed
-   // or updated packages, then notify the client. note that this
-   // is intentionally non-specific, to help detect a variety of
-   // different package tools which might perform package install
-   static auto installCommands = {
-
-      // common terms used in package installation functions
-      "install",
-      "update",
-      "rebuild",
-      "restore",
-      "remove",
-
-      // also capture devtools::load_all()
-      "load_all",
-   };
-
    // consume last input
    std::string lastInput = s_lastInput;
    s_lastInput.clear();
 
-   // if it looks like the user ran a command that could mutate
-   // the package library, then respond
-   for (auto&& installCommand : installCommands)
+   static const boost::regex s_pkgCallPattern = buildPackageCallRegex();
+   if (boost::regex_search(lastInput, s_pkgCallPattern))
    {
-      if (boost::algorithm::contains(lastInput, installCommand))
-      {
-         rs_packageLibraryMutated();
-         return;
-      }
+      rs_packageLibraryMutated();
+      return;
    }
 
    // check and see if the 'repos' option has been mutated
