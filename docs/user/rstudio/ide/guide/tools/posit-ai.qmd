@@ -3,7 +3,7 @@ title: "Posit Assistant"
 date-meta: 2026-02-25
 ---
 
-[Posit Assistant](https://posit.ai) is a set of artificial intelligence (AI) features available as a downloadable extension for RStudio. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repository](https://github.com/rstudio/rstudio/issues).
+[Posit Assistant](https://pos.it/assistant) is a set of artificial intelligence (AI) features available as a downloadable extension for RStudio. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repository](https://github.com/rstudio/rstudio/issues).
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ Once signed up and authenticated, the Posit Assistant chat feature is ready to u
 
 ## Using Posit Assistant
 
-For information on using Posit Assistant visit <https://posit-dev.github.io/assistant/>.
+For information on using Posit Assistant, visit the [Posit Assistant documentation](https://pos.it/assistant-docs).
 
 ## Removing Posit Assistant
 
