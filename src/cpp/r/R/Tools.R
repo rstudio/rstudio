@@ -2583,22 +2583,28 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # case, so only that path needs to be scanned.
          paths <- file.path(lib[[1L]], candidates)
 
-         before <- .rs.installedPackagesFileInfo(paths = paths)
+         # Pin a reference timestamp in the library filesystem's own clock
+         # domain, so NFS / CIFS clock skew between this R session and the
+         # fs server can't cause us to miss packages whose mtime lands just
+         # before Sys.time().
+         sentinel <- tempfile("rstudio-install-sentinel-", tmpdir = lib[[1L]])
+         file.create(sentinel)
+         on.exit(unlink(sentinel, force = TRUE), add = TRUE)
+         installStart <- file.info(sentinel)$mtime
 
          # Invoke the original function.
          call <- sys.call()
          call[[1L]] <- quote(utils::install.packages)
          result <- eval(call, envir = parent.frame())
 
-         # Check and see what packages were updated.
+         # Any candidate whose directory mtime/ctime is at or after the
+         # sentinel was created or updated during this install.
          after <- .rs.installedPackagesFileInfo(paths = paths)
+         changed <- !is.na(after$mtime) &
+            (after$mtime >= installStart | after$ctime >= installStart)
 
-         # Figure out which packages were changed.
-         rows <- .rs.installedPackagesFileInfoDiff(before, after)
-
-         # For any packages which appear to have been updated,
-         # tag their DESCRIPTION file with their installation source.
-         .rs.recordPackageSource(rows$path, db = db)
+         # Tag each updated package's DESCRIPTION with its installation source.
+         .rs.recordPackageSource(after$path[changed], db = db)
       }
 
       # Notify the front-end that we've made some updates.
