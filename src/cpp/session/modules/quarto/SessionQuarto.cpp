@@ -288,8 +288,8 @@ std::string resolveCustomProjectType(const FilePath& projectDir,
    }
    else
    {
-      // bare form: try _extensions/<type>/_extension.yml directly,
-      // then fall back to _extensions/<*>/<type>/_extension.yml
+      // bare form: try _extensions/<name>/_extension.yml directly,
+      // then fall back to _extensions/<*>/<name>/_extension.yml
       extensionYml = extensionsDir
                         .completeChildPath(type)
                         .completeChildPath("_extension.yml");
@@ -299,7 +299,10 @@ std::string resolveCustomProjectType(const FilePath& projectDir,
          std::vector<FilePath> children;
          Error error = extensionsDir.getChildren(children);
          if (error)
+         {
+            LOG_ERROR(error);
             return type;
+         }
 
          extensionYml = FilePath();
          for (const auto& child : children)
@@ -326,7 +329,10 @@ std::string resolveCustomProjectType(const FilePath& projectDir,
    std::string extensionText;
    Error error = core::readStringFromFile(extensionYml, &extensionText);
    if (error)
+   {
+      LOG_ERROR(error);
       return type;
+   }
 
    try
    {
