@@ -7,7 +7,7 @@
 - 
 
 ### Fixed
-- 
+- ([#17176](https://github.com/rstudio/rstudio/issues/17176)): Fixed a startup hang when opening a Quarto project containing large directories (e.g. `_targets/`).
 
 ### Dependencies
 -

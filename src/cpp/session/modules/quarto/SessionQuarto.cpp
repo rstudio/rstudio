@@ -262,9 +262,10 @@ bool isBuiltinQuartoProjectType(const std::string& type)
 }
 
 // Resolve a custom project type to its base type by reading the extension's
-// _extension.yml. Extensions live at _extensions/<author>/<name>/_extension.yml
-// or _extensions/<name>/_extension.yml relative to the project directory.
-// The base type is declared under contributes.project.project.type.
+// _extension.yml. Extensions live under _extensions/ relative to the project
+// directory and may be referenced in _quarto.yml as either "<name>" or
+// "<author>/<name>". The base type is declared under
+// contributes.project.project.type.
 std::string resolveCustomProjectType(const FilePath& projectDir,
                                      const std::string& type)
 {
@@ -272,45 +273,58 @@ std::string resolveCustomProjectType(const FilePath& projectDir,
    if (!extensionsDir.exists())
       return type;
 
-   // look for _extensions/<author>/<type>/_extension.yml (the common case)
-   // or _extensions/<type>/_extension.yml
-   std::vector<FilePath> candidates;
-   std::vector<FilePath> children;
-   Error error = extensionsDir.getChildren(children);
-   if (error)
-      return type;
-
-   for (const auto& child : children)
+   // locate the extension yaml
+   FilePath extensionYml;
+   std::size_t slashPos = type.find('/');
+   if (slashPos != std::string::npos)
    {
-      if (child.isDirectory())
-      {
-         // _extensions/<author>/<type>/
-         FilePath nested = child.completeChildPath(type).completeChildPath("_extension.yml");
-         if (nested.exists())
-         {
-            candidates.push_back(nested);
-            break;
-         }
+      // qualified form: _extensions/<author>/<name>/_extension.yml
+      std::string author = type.substr(0, slashPos);
+      std::string name = type.substr(slashPos + 1);
+      extensionYml = extensionsDir
+                        .completeChildPath(author)
+                        .completeChildPath(name)
+                        .completeChildPath("_extension.yml");
+   }
+   else
+   {
+      // bare form: try _extensions/<type>/_extension.yml directly,
+      // then fall back to _extensions/<*>/<type>/_extension.yml
+      extensionYml = extensionsDir
+                        .completeChildPath(type)
+                        .completeChildPath("_extension.yml");
 
-         // _extensions/<type>/ (the child itself is the extension)
-         if (child.getFilename() == type)
+      if (!extensionYml.exists())
+      {
+         std::vector<FilePath> children;
+         Error error = extensionsDir.getChildren(children);
+         if (error)
+            return type;
+
+         extensionYml = FilePath();
+         for (const auto& child : children)
          {
-            FilePath direct = child.completeChildPath("_extension.yml");
-            if (direct.exists())
+            if (!child.isDirectory())
+               continue;
+
+            FilePath candidate = child
+                                    .completeChildPath(type)
+                                    .completeChildPath("_extension.yml");
+            if (candidate.exists())
             {
-               candidates.push_back(direct);
+               extensionYml = candidate;
                break;
             }
          }
       }
    }
 
-   if (candidates.empty())
+   if (!extensionYml.exists())
       return type;
 
    // read the extension yaml and extract the base type
    std::string extensionText;
-   error = core::readStringFromFile(candidates[0], &extensionText);
+   Error error = core::readStringFromFile(extensionYml, &extensionText);
    if (error)
       return type;
 
