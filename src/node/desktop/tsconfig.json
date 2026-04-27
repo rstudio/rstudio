@@ -5,7 +5,7 @@
     "target": "es2021",
     "sourceMap": true,
     "removeComments": true,
-    "rootDir": ".",
+    "rootDir": "../..",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
