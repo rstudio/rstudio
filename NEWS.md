@@ -4,7 +4,7 @@
 -
 
 ### Fixed
-- 
+- ([#17417](https://github.com/rstudio/rstudio/issues/17417)): Added missing French translations for newer commands and preferences, removed an orphaned French key, deduplicated stale entries in the French application strings, and normalized line endings in five English string files.
 
 ### Fixed
 - 
