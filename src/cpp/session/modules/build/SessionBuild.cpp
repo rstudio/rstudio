@@ -1201,22 +1201,42 @@ private:
 
       // construct command to execute
       using namespace string_utils;
-      std::string testPathEscaped = 
-         singleQuotedStrEscape(utf8ToSystem(testPath.getAbsolutePath()));
+      std::string command;
 
-      // build default test command
-      std::string command = fmt::format("testthat::test_file('{}')", testPathEscaped);
-      
-      // use devtools::load_all() if this is a package project
-      if (!pkgInfo_.empty())
+      // check if this is a tests/testthat/test-<name>.R file in a package project;
+      // if so, use devtools::test(filter = "<name>") instead of testthat::test_file()
+      boost::smatch match;
+      boost::regex reTestThat("tests/testthat/test-(.+)\\.[rR]$");
+      std::string path = testPath.getAbsolutePath();
+      if (!pkgInfo_.empty() &&
+          useDevtools() &&
+          boost::regex_search(path, match, reTestThat))
       {
+         std::string filterName = singleQuotedStrEscape(match[1]);
+         command = fmt::format("devtools::test(filter = '{}')", filterName);
          pkgOptions.workingDir = projects::projectContext().buildTargetPath();
-         command = fmt::format("devtools::load_all(); {}", command);
+         enqueCommandString(command);
       }
-      
-      enqueCommandString("Testing R file using 'testthat'");
+      else
+      {
+
+         // build default test command
+         std::string testPathEscaped =
+             singleQuotedStrEscape(utf8ToSystem(testPath.getAbsolutePath()));
+         command = fmt::format("testthat::test_file('{}')", testPathEscaped);
+
+         // use devtools::load_all() if this is a package project
+         if (!pkgInfo_.empty())
+         {
+            pkgOptions.workingDir = projects::projectContext().buildTargetPath();
+            command = fmt::format("devtools::load_all(); {}", command);
+         }
+
+         enqueCommandString("Testing R file using 'testthat'");
+      }
+
       successMessage_ = "\nTest complete";
-      
+
       rExecute(true, command, pkgOptions, cb);
    }
 

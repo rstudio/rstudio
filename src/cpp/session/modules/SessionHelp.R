@@ -343,7 +343,10 @@ options(help_type = "html")
       return()
    
    envir <- .rs.getActiveFrame()
-   out <- .rs.getHelpRpcImpl(what, from, type, envir)
+   out <- tryCatch(
+      .rs.getHelpRpcImpl(what, from, type, envir),
+      error = function(e) NULL
+   )
    if (is.null(out))
       return()
    
@@ -486,7 +489,7 @@ options(help_type = "html")
    if (is.null(data))
       return(NULL)
    
-   described <- .rs.describeObject(data, name)
+   described <- .rs.describeObject(name, data)
    description <- described$description
    type <- described$type
    size <- described$length

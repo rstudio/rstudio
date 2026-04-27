@@ -164,6 +164,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
                         OperationWithInput<Result> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setOkButtonCaption(constants_.create());

@@ -1,0 +1,81 @@
+/*
+ * SessionTrust.hpp
+ *
+ * Copyright (C) 2026 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef SESSION_TRUST_HPP
+#define SESSION_TRUST_HPP
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace trust {
+
+constexpr const char* const kTrustStatusTrusted = "trusted";
+constexpr const char* const kTrustStatusUntrusted = "untrusted";
+constexpr const char* const kTrustStatusDefault = "default";
+constexpr const char* const kTrustStatusUnknown = "unknown";
+
+// Called early in session startup, before R initialization.
+// Determines trust status for the current project directory.
+void initializeTrustState();
+
+// Whether startup files (.Rprofile, .Renviron) should be suppressed
+bool shouldSuppressStartupFiles();
+
+// Whether .RData restore should be suppressed
+bool shouldSuppressWorkspaceRestore();
+
+// Returns the explicit trust setting for the current project directory:
+// "trusted", "untrusted", or "default" (not in either list)
+std::string projectTrustStatus();
+
+// Add a directory to the trusted list (and remove from untrusted)
+core::Error grantTrust(const core::FilePath& directory);
+
+// Add a directory to the untrusted list (and remove from trusted)
+core::Error revokeTrust(const core::FilePath& directory);
+
+// Remove a directory from both trust lists
+core::Error resetTrust(const core::FilePath& directory);
+
+// Remove the current project directory from both trust lists
+core::Error resetTrust();
+
+// Returns trust request data for inclusion in session info.
+// If startup files are suppressed (unknown or untrusted), returns an
+// object with "directory", "status", and "risky_files" fields.
+// Otherwise returns an empty object.
+core::json::Object trustRequestData();
+
+// Module initialization (registers RPCs and client event handlers)
+core::Error initialize();
+
+namespace overlay {
+
+// Returns the default value for project-trust-dialogs when not explicitly configured.
+// Open-source returns false; Pro/Workbench overrides to return true.
+bool trustDialogsEnabledByDefault();
+
+} // namespace overlay
+
+} // namespace trust
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif // SESSION_TRUST_HPP

@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -241,10 +241,10 @@ public class DataEditingTarget extends UrlContentEditingTarget
       server_.modifyDocumentProperties(
             doc_.getId(),
             props,
-            new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+            new SimpleRequestCallback<VoidResponse>(constants_.errorCapitalized())
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   server_.removeCachedData(
                         oldCacheKey,

@@ -154,8 +154,19 @@ std::string rLocalHelpPort();
 // get current libpaths
 std::vector<core::FilePath> getLibPaths();
 
+// would the workspace (.RData) be restored for the current session?
+// follows the fallback chain: session option > project setting > user pref
+bool restoreWorkspaceEnabled();
+
 // is the packages pane disabled
 bool disablePackages();
+
+// is the Posit Assistant feature enabled by the administrator?
+// checks: allow-posit-assistant, posit-assistant-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT
+bool isPositAssistantEnabledByAdmin();
+
+// is the Posit Assistant feature active? (admin enabled + user has an assistant or chat provider selected)
+bool isPositAssistantEnabled();
 
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
@@ -483,13 +494,19 @@ core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
 // enqueue new console input
 core::Error enqueueConsoleInput(const std::string& input);
 
-// write output to the console (convenience wrapper for enquing a 
+// write output to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);
-   
-// write an error to the console (convenience wrapper for enquing a 
+
+// write an error to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteError(const std::string& message);
+
+// flag indicating whether an AI agent is currently executing code;
+// when set, console output/error events include agent metadata so the
+// frontend can style them differently
+void setAgentExecuting(bool executing);
+bool isAgentExecuting();
    
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);

@@ -48,7 +48,7 @@ pipeline {
       // https://issues.jenkins.io/browse/JENKINS-62249?focusedId=408066&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-408066
       steps {
         sh '''
-          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https
+          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https || true
         '''
       }
     }
@@ -164,7 +164,8 @@ pipeline {
 
     stage('Test') {
       environment {
-        PATH = "${env.HOME}/opt/bin:${env.PATH}"
+        PATH   = "${env.HOME}/opt/bin:${env.PATH}"
+        LC_ALL = "en_US.UTF-8"
       }
       steps {
         dir("package/osx/build/src/cpp") {

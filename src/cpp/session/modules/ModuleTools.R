@@ -360,6 +360,14 @@
    .rs.readPrefInternal("rs_readProjectPref", prefName)
 })
 
+.rs.addFunction("writeProjectPref", function(prefName, value) {
+   if (is.list(value))
+      value <- .rs.scalarListFromList(value)
+   .rs.writePrefInternal("rs_writeProjectPref", prefName, value)
+})
+
+.rs.addFunction("setProjectPref", .rs.writeProjectPref)
+
 .rs.addFunction("readUserState", function(stateName) {
   if (missing(stateName) || is.null(stateName))
     stop("No state name supplied")
@@ -552,6 +560,27 @@ assign(".rs.S3Overrides", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    }, add = TRUE)
    
    # Run the requested expression
+   expr
+})
+
+.rs.addFunction("withDebuggerDisabled", function(expr)
+{
+   # Temporarily disable the R debugger. This prevents breakpoints
+   # (implemented via trace()) and debug()-based stepping from triggering
+   # during the evaluation of 'expr'.
+   #
+   # This is used by environment pane inspection code to avoid recursive
+   # debugger invocations: when stopped at a breakpoint inside an S3 method
+   # (e.g. `[[.some_class`), inspecting objects can dispatch to the same
+   # method, re-triggering the breakpoint and creating infinite recursion.
+   # https://github.com/rstudio/rstudio/issues/16987
+   oldTracing <- tracingState(FALSE)
+   oldDebugging <- debuggingState(FALSE)
+   on.exit({
+      tracingState(oldTracing)
+      debuggingState(oldDebugging)
+   }, add = TRUE)
+
    expr
 })
 

@@ -133,11 +133,6 @@
    type
 })
 
-.rs.addFunction("objectAttributes", function(object)
-{
-   .Call("rs_objectAttributes", object, PACKAGE = "(embedding)")
-})
-
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
 {
    if (inherits(object, "python.builtin.object"))

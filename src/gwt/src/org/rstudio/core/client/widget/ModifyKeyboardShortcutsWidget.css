@@ -1,3 +1,11 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+
 @def MODIFIED_COLOUR #cdefcd;
 @def CUSTOM_COLOUR #EFF;
 
@@ -117,4 +125,58 @@ fieldset.showChoice {
 
 .dataGridWidget {
    border: 1px solid #ddd;
+}
+
+/* Dark theme ---- */
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget {
+   background: THEME_DARKGREY_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridHeader {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-bottom-color: THEME_DARKGREY_BORDER;
+   border-right-color: THEME_DARKGREY_BORDER;
+   color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell {
+   border-bottom-color: THEME_DARKGREY_MOST_INACTIVE !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell:first-child {
+   border-left-color: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridKeyboardSelectedRowCell:first-child,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridKeyboardSelectedRowCell:first-child:active,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridKeyboardSelectedRowCell:first-child:hover,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridKeyboardSelectedRowCell:first-child:focus {
+   border-left-color: #0AF !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .shortcutInput {
+   border-color: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .modifiedRow {
+   background-color: rgb(60, 85, 60) !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .modifiedRow td {
+   border-color: rgb(60, 85, 60) !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .customBindingRow {
+   background-color: rgb(50, 70, 75) !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .customBindingRow td {
+   border-color: rgb(50, 70, 75) !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .conflictRow {
+   background-color: rgb(90, 70, 45);
 }

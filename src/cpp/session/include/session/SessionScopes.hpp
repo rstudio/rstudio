@@ -377,6 +377,96 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
 
 } // anonymous namespace
 
+// Note - we need most of the logic from toProjectId above but since we are not changing
+// anything the logic is not quite the same. Returns an empty string if the projectDir is not
+// already in the project database.
+inline std::string lookupProjectId(const std::string& projectDir,
+                             const core::FilePath& userScratchPath,
+                             const core::FilePath& sharedStoragePath)
+{
+   // get the id map
+   core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
+   std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
+
+   std::string id;
+
+   // look for this value
+   std::map<std::string,std::string>::iterator it;
+   for (it = idMap.begin(); it != idMap.end(); it++)
+   {
+      if (it->second == projectDir)
+      {
+         id = it->first;
+
+         return id;
+      }
+   }
+
+#ifndef _WIN32
+   // if this project belongs to someone else, try to look up its shared
+   // project ID
+   struct stat st;
+   if (::stat(projectDir.c_str(), &st) == 0 &&
+       st.st_uid != ::geteuid())
+   {
+      // fix it up to a shared project ID if we have one. this could happen
+      // if e.g. a project is opened as an unshared project and later opened
+      // as a shared one.
+      std::string sharedId = sharedProjectId(sharedStoragePath, projectDir);
+
+      if (!sharedId.empty())
+      {
+         return sharedId;
+      }
+   }
+#endif
+   return std::string();
+}
+
+// Write a specific project ID mapping
+inline void writeProjectIdMapping(const std::string& projectDir,
+                                  const std::string& projectId,
+                                  const core::FilePath& userScratchPath)
+{
+   core::FilePath projectIdsPath = projectIdsFilePath(userScratchPath);
+   std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
+   core::FilePath userHomePath = core::system::userHomePath();
+
+#ifndef _WIN32
+   if (userHomePath.isEmpty())
+   {
+      core::system::User user;
+      core::Error userError = core::system::User::getCurrentUser(user);
+      if (!userError)
+      {
+         userHomePath = user.getHomePath();
+      }
+   }
+#endif
+   std::string aliasedPath = core::FilePath::createAliasedPath(core::FilePath(projectDir), userHomePath);
+
+   // Remove any existing entries with this path
+   for (auto it = idMap.begin(); it != idMap.end(); )
+   {
+      if (it->first != projectId && it->second == aliasedPath)
+         it = idMap.erase(it);
+      else
+         ++it;
+   }
+
+   idMap[projectId] = aliasedPath;
+
+   core::Error error = core::writeStringMapToFile(projectIdsPath, idMap);
+   if (error)
+      LOG_ERROR(error);
+
+#ifndef _WIN32
+   error = projectIdsPath.changeFileMode(core::FileMode::USER_READ_WRITE);
+   if (error)
+      LOG_ERROR(error);
+#endif
+}
+
 inline core::r_util::ProjectIdToFilePath projectIdToFilePath(
                                     const core::FilePath& userScratchPath,
                                     const core::FilePath& sharedProjectPath)

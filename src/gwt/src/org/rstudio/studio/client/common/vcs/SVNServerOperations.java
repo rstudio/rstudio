@@ -14,16 +14,17 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.core.client.JsArray;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.JsArray;
 
 public interface SVNServerOperations extends VCSServerOperations
 {
@@ -60,7 +61,7 @@ public interface SVNServerOperations extends VCSServerOperations
    void svnApplyPatch(String path,
                       String patch,
                       String sourceEncoding,
-                      ServerRequestCallback<Void> requestCallback);
+                      ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     *

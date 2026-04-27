@@ -47,6 +47,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
    public ShinyGadgetDialog(String caption, String url, Size preferredSize)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       url_ = url;
       preferredSize_ = preferredSize;

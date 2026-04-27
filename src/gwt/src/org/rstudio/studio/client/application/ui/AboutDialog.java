@@ -43,6 +43,7 @@ public class AboutDialog extends ModalDialogBase
    public AboutDialog(ProductInfo info)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText(constants_.title(editionInfo_.editionName()));
@@ -128,7 +129,7 @@ public class AboutDialog extends ModalDialogBase
 
    private void fetchPositAssistantVersion()
    {
-      // Only fetch if user has selected Posit AI as their assistant or chat provider
+      // Only fetch if user has selected Posit Assistant as their assistant or chat provider
       if (!paiUtil_.isPaiSelected() && !paiUtil_.isChatProviderPosit())
          return;
 

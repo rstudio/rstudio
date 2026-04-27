@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include <shared_core/json/Json.hpp>
+#include <shared_core/DateTime.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/RegexUtils.hpp>
@@ -44,13 +45,13 @@ public:
       pCoutBuf_ = std::cout.rdbuf(nullptr);
       pCerrBuf_ = std::cerr.rdbuf(nullptr);
    }
-   
+
    ~SuppressOutputScope()
    {
       std::cout.rdbuf(pCoutBuf_);
       std::cerr.rdbuf(pCerrBuf_);
    }
-   
+
 private:
    std::streambuf* pCoutBuf_;
    std::streambuf* pCerrBuf_;
@@ -90,7 +91,7 @@ TEST(MiscTest, RegexComplexityExceptionHandling)
          "abcdefghijklmnopqrstuvwxyz"
          "abcdefghijklmnopqrstuvwxyz"
          "|@";
-   
+
    // boost-level APIs will throw an exception
    {
       // REQUIRE_THROWS - not directly supported in gtest
@@ -104,7 +105,7 @@ TEST(MiscTest, RegexComplexityExceptionHandling)
          // Expected exception
       }
    }
-   
+
    {
       // REQUIRE_THROWS - not directly supported in gtest
       try {
@@ -117,7 +118,7 @@ TEST(MiscTest, RegexComplexityExceptionHandling)
          // Expected exception
       }
    }
-   
+
    // our wrappers catch and report exception, and return false
    {
       SuppressOutputScope scope;
@@ -130,7 +131,7 @@ TEST(MiscTest, RegexComplexityExceptionHandling)
       // we should instead see a report regarding complexity overload
       EXPECT_FALSE(result);
    }
-   
+
    {
       SuppressOutputScope scope;
       bool result = core::regex_utils::search(
@@ -142,7 +143,7 @@ TEST(MiscTest, RegexComplexityExceptionHandling)
       // we should instead see a report regarding complexity overload
       EXPECT_FALSE(result);
    }
-   
+
 }
 
 TEST(MiscTest, HttpAcceptEncodingParsing)
@@ -308,11 +309,85 @@ TEST(LruCacheTest, TruncatingExampleWorks)
 }
 
 TEST(LruCacheTest, TruncatingDifferentSizes)
-{ 
+{
    Truncating<long> x = 4;
    Truncating<short> y = 4;
    EXPECT_EQ(x + y, 8);
    EXPECT_EQ(x - y, 0);
+}
+
+TEST(DateTimeTest, ParsesTimestamps)
+{
+   using namespace rstudio::core::date_time;
+   std::string unixTime = "1767225600";
+   std::string basic2004 = "20260101 000000";
+   std::string extended2004 = "2026-01-01 00:00:00.000";
+   std::string basic2019 = "20260101T000000";
+   std::string extended2019 = "2026-01-01T00:00:00.000";
+
+   boost::posix_time::ptime expected = boost::posix_time::from_time_t(1767225600);
+
+   boost::posix_time::ptime outUnix;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(unixTime, &outUnix));
+   EXPECT_EQ(outUnix, expected);
+
+   boost::posix_time::ptime outBasic2004;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(basic2004, &outBasic2004));
+   EXPECT_EQ(outBasic2004, expected);
+
+   boost::posix_time::ptime outExtended2004;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(extended2004, &outExtended2004));
+   EXPECT_EQ(outExtended2004, expected);
+
+   boost::posix_time::ptime outBasic2019;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(basic2019, &outBasic2019));
+   EXPECT_EQ(outBasic2019, expected);
+
+   boost::posix_time::ptime outExtended2019;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(extended2019, &outExtended2019));
+   EXPECT_EQ(outExtended2019, expected);
+}
+
+TEST(DateTimeTest, ParsesTimeZones)
+{
+   using namespace rstudio::core::date_time;
+   std::string zulu = "2026-01-01T00:00:00.000Z";
+   std::string utcShort = "2026-01-01T00:00:00.000+00";
+   std::string utcLong = "2026-01-01T00:00:00.000+0000";
+   std::string utcExt = "2026-01-01T00:00:00.000+00:00";
+   std::string cstShort = "2025-12-31T18:00:00.000-06";
+   std::string cstLong = "2025-12-31T18:00:00.000-0600";
+   std::string cstExt = "2025-12-31T18:00:00.000-06:00";
+
+   boost::posix_time::ptime expected = boost::posix_time::from_time_t(1767225600);
+
+   boost::posix_time::ptime outZulu;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(zulu, &outZulu));
+   EXPECT_EQ(outZulu, expected);
+
+   boost::posix_time::ptime outUtcShort;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(utcShort, &outUtcShort));
+   EXPECT_EQ(outUtcShort, expected);
+
+   boost::posix_time::ptime outUtcLong;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(utcLong, &outUtcLong));
+   EXPECT_EQ(outUtcLong, expected);
+
+   boost::posix_time::ptime outUtcExt;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(utcExt, &outUtcExt));
+   EXPECT_EQ(outUtcExt, expected);
+
+   boost::posix_time::ptime outCstShort;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(cstShort, &outCstShort));
+   EXPECT_EQ(outCstShort, expected);
+
+   boost::posix_time::ptime outCstLong;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(cstLong, &outCstLong));
+   EXPECT_EQ(outCstLong, expected);
+
+   boost::posix_time::ptime outCstExt;
+   EXPECT_TRUE(parseUtcTimeFromZoneString(cstExt, &outCstExt));
+   EXPECT_EQ(outCstExt, expected);
 }
 
 } // namespace unit_tests

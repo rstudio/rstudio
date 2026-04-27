@@ -112,13 +112,12 @@ namespace prefs {
 #define kZoteroDataDir "zotero_data_dir"
 #define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
 #define kPositAssistant "posit_assistant"
-#define kPositAssistantLastUpdateCheck "lastUpdateCheck"
-#define kPositAssistantRstudioVersionChecked "rstudioVersionChecked"
 
 class UserStateValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   static std::set<std::string> localProjectPrefs();
    /**
     * 
     */

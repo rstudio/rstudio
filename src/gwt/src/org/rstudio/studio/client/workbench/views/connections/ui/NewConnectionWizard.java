@@ -70,6 +70,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
          false,
          true);
       setHelpLink(mainHelpLink_);
+      setThemeAware(true);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }

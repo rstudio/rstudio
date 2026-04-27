@@ -45,7 +45,7 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath)
    return clientDir.exists() && serverScript.exists() && indexHtml.exists();
 }
 
-core::FilePath locatePositAiInstallation()
+core::FilePath locatePositAssistantInstallation()
 {
    // 1. Check environment variable override (for development/testing)
    std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
@@ -95,7 +95,7 @@ core::FilePath locatePositAiInstallation()
 
 std::string getInstalledVersion()
 {
-   core::FilePath positAiPath = locatePositAiInstallation();
+   core::FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
       return "";
 
@@ -138,6 +138,54 @@ std::string getInstalledVersion()
    }
 
    DLOG("Installed version: {}", version);
+   return version;
+}
+
+std::string getInstalledProtocolVersion()
+{
+   core::FilePath positAiPath = locatePositAssistantInstallation();
+   if (positAiPath.isEmpty())
+      return "";
+
+   core::FilePath protoFile =
+      positAiPath.completeChildPath(kProtocolVersionFileName);
+   if (!protoFile.exists())
+   {
+      DLOG("No protocol.json found (legacy install)");
+      return "";
+   }
+
+   std::string content;
+   core::Error error = core::readStringFromFile(protoFile, &content);
+   if (error)
+   {
+      ELOG("Failed to read protocol.json: {}", error.getMessage());
+      return "";
+   }
+
+   core::json::Value jsonValue;
+   if (jsonValue.parse(content))
+   {
+      ELOG("Failed to parse protocol.json");
+      return "";
+   }
+
+   if (!jsonValue.isObject())
+   {
+      ELOG("protocol.json is not a JSON object");
+      return "";
+   }
+
+   core::json::Object obj = jsonValue.getObject();
+   if (!obj.hasMember("protocol") ||
+       !obj["protocol"].isString())
+   {
+      ELOG("protocol.json missing \"protocol\" string field");
+      return "";
+   }
+
+   std::string version = obj["protocol"].getString();
+   DLOG("Installed protocol version: {}", version);
    return version;
 }
 

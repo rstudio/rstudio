@@ -40,6 +40,7 @@ public class RSConnectReconnectWizard
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);
+      setThemeAware(true);
 
       // hook up ok button visibility toggle
       NewRSConnectAuthPage firstPage = 

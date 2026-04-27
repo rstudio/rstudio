@@ -42,7 +42,12 @@ public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorEvent.Hand
    {
       return error_.console;
    }
-   
+
+   public boolean isAgent()
+   {
+      return error_.agent;
+   }
+
    @Override
    protected void dispatch(Handler handler)
    {

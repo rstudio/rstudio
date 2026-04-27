@@ -216,13 +216,18 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
-# used to create description for promises
+# used to create description for promises (legacy path for R < 4.6.0)
 .rs.addFunction("promiseDescription", function(obj)
 {
    # NOTE: substitute() returns the expression associated with a promise,
    # without forcing it to be evaluated
    expr <- substitute(obj)
+   .rs.promiseExprDescription(expr)
+})
 
+# describe a promise from its pre-extracted expression
+.rs.addFunction("promiseExprDescription", function(expr)
+{
    # if this appears to be a call to 'lazyLoadDBfetch()', that implies
    # this is lazy-loaded data (typically associated with an R package).
    # handle those up front
@@ -677,12 +682,7 @@
       val1
 })
 
-.rs.addFunction("hasExternalPointer", function(object, nullPtr = FALSE)
-{
-   .Call("rs_hasExternalPointer", object, nullPtr, PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("describeObject", function(env, objName)
+.rs.addFunction("describeObject", function(objName, env)
 {
    obj <- get(objName, env)
 
@@ -690,42 +690,46 @@
    if (missing(obj))
       obj <- as.name("Missing argument")
 
+   # For S4 objects whose defining package isn't loaded, operations like
+   # inherits(), length(), is(), and str() can trigger S4 method dispatch,
+   # which calls .requirePackage() to load the package namespace and its
+   # native DLL. If the DLL is broken or missing, this can crash the R
+   # session at the OS level (e.g. STATUS_ENTRYPOINT_NOT_FOUND on Windows)
+   # in a way that R's error handling cannot intercept. Return a safe
+   # minimal description that avoids any S4-dispatching operations.
+   # NOTE: This must come before any call that could dispatch on the object
+   # (including inherits()).
+   # https://github.com/rstudio/rstudio/issues/17353
+   if (.rs.isUnloadedS4(obj))
+   {
+      cls <- class(obj)
+      pkg <- attr(cls, "package")
+      desc <- sprintf("Formal class '%s' [package \"%s\" not loaded]", cls[[1L]], pkg)
+      return(list(
+         name              = .rs.scalar(objName),
+         type              = .rs.scalar(cls[[1L]]),
+         clazz             = c(cls, typeof(obj)),
+         is_data           = .rs.scalar(FALSE),
+         value             = .rs.scalar(desc),
+         description       = .rs.scalar(desc),
+         size              = .rs.scalar(0L),
+         is_size_estimated = .rs.scalar(FALSE),
+         length            = .rs.scalar(0L),
+         contents          = list(),
+         contents_deferred = .rs.scalar(FALSE)
+      ))
+   }
+
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
 
-   # NOTE (kevin): we previously screened R objects for null pointers here,
-   # as we had seen in the distant past that attempting to introspect such
-   # objects would cause an R session crash. that no longer appears to be
-   # the case so we now no longer perform this check here.
-   #
-   # https://github.com/rstudio/rstudio/issues/4741
-   # https://github.com/rstudio/rstudio/issues/5546
-   #
-   # however, just in case some users are still effected, we allow users to
-   # opt-in to checking for null pointers if required.
-   checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
-   hasNullPtr <- if (identical(checkNullPtr, TRUE))
-      .rs.hasExternalPointer(obj, TRUE)
-   else
-      FALSE
+   val <- "(unknown)"
+   desc <- ""
 
-   if (hasNullPtr)
-   {
-      val <- "<Object with null pointer>"
-      desc <- "An R object containing a null external pointer"
-      size <- 0
-      len <- 0
-   }
-   else
-   {
-      val <- "(unknown)"
-      desc <- ""
-
-      # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
-      # an attempt is made to compute their metrics exactly; avoid computing the size for these
-      size <- .rs.estimatedObjectSize(obj)
-      len <- length(obj)
-   }
+   # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
+   # an attempt is made to compute their metrics exactly; avoid computing the size for these
+   size <- .rs.estimatedObjectSize(obj)
+   len <- length(obj)
 
    class <- .rs.getSingleClass(obj)
    contents <- list()
@@ -741,7 +745,7 @@
    {
       val <- .rs.describeCall(obj)
    }
-   else if (!hasNullPtr)
+   else
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
@@ -769,7 +773,7 @@
             size_formatted <- format(size, units = "auto", standard = "SI")
             if (is_size_estimated)
                size_formatted <- paste(">", size_formatted)
-            
+
             fmt <- "Large %s (%s%s)"
             val <- sprintf(fmt, class, len_desc, size_formatted)
          }
@@ -792,8 +796,10 @@
             }
             else
             {
-               # normal object
-               contents <- .rs.valueContents(obj)
+               # normal object -- disable the debugger to prevent recursive
+               # debugger invocations when str() dispatches to user S3 methods
+               # https://github.com/rstudio/rstudio/issues/16987
+               contents <- .rs.withDebuggerDisabled(.rs.valueContents(obj))
             }
          }
       }
@@ -948,7 +954,34 @@
 .rs.addFunction("getObjectContents", function(objName, env)
 {
    object <- get(objName, envir = env)
-   .rs.valueContents(object)
+
+   # Guard against S4 objects whose defining package isn't loaded.
+   # See the parallel guard in .rs.describeObject() for details.
+   # https://github.com/rstudio/rstudio/issues/17353
+   if (.rs.isUnloadedS4(object))
+      return(list())
+
+   .rs.withDebuggerDisabled(.rs.valueContents(object))
+})
+
+# Check if an object is an S4 instance whose defining package namespace
+# is not currently loaded. Operations on such objects (length(), str(), etc.)
+# can trigger namespace loading and crash the session if the package's native
+# DLL is broken or missing. https://github.com/rstudio/rstudio/issues/17353
+.rs.addFunction("isUnloadedS4", function(obj)
+{
+   if (!isS4(obj))
+      return(FALSE)
+
+   cls <- class(obj)
+   pkg <- attr(cls, "package")
+
+   is.character(pkg) &&
+      length(pkg) == 1L &&
+      !is.na(pkg) &&
+      nzchar(pkg) &&
+      !identical(pkg, ".GlobalEnv") &&
+      !isNamespaceLoaded(pkg)
 })
 
 .rs.addFunction("isAltrep", function(var)
@@ -1060,6 +1093,418 @@
       attr(result, "estimate") <- TRUE
       return(result)
    }
-   
+
    .rs.objectSize(x)
+})
+
+# Find the function context for the browser, or at a given depth.
+#
+# When depth == 0 (BROWSER_FUNCTION), finds the outermost function whose
+# execution environment matches the browser's environment (from C++).
+# When depth > 0, finds the function at the given depth (inner->outer numbering).
+#
+# Returns list(depth, env) where depth is the inner->outer depth and
+# env is the function's closure environment, or list(0, globalenv()) if
+# no matching context was found.
+# Capture the current environment at the browser prompt. This function
+# is injected into the browser REPL by RReadConsole so that it is
+# evaluated by R in the browser's evaluation environment (rho).
+# parent.frame() then returns that environment, which is the function
+# being debugged. The result is stored via .Call for C++ to read.
+.rs.addFunction("captureCurrentEnvironment", function()
+{
+   invisible(.Call("rs_setCapturedBrowserEnv", parent.frame(), PACKAGE = "(embedding)"))
+})
+
+#
+# @param depth When 0, find the function context associated with the
+#   active browser. When > 0, find the function context at the given
+#   inner-to-outer depth.
+# @param browserEnv The browser context's closure environment, captured
+#   by .rs.captureCurrentEnvironment() which runs in the browser REPL.
+#   NULL when not browsing.
+.rs.addFunction("getFunctionContext", function(depth = 0L, browserEnv = NULL)
+{
+   nframe <- sys.nframe() - 1L  # skip our own frame
+   if (nframe < 1L)
+      return(list(depth = 0L, env = globalenv()))
+
+   foundDepth <- 0L
+   foundEnv <- globalenv()
+
+   # Iterate inner-to-outer (matching C++ RCNTXT convention)
+   contextDepth <- 0L
+   for (i in rev(seq_len(nframe)))
+   {
+      contextDepth <- contextDepth + 1L
+      cloenv <- sys.frame(i)
+
+      if (depth == 0L)
+      {
+         # BROWSER_FUNCTION mode: find the outermost function whose
+         # environment matches the browser's environment
+         if (!is.null(browserEnv) && identical(cloenv, browserEnv))
+         {
+            foundDepth <- contextDepth
+            foundEnv <- cloenv
+            # keep going -- we want the outermost match
+         }
+      }
+      else if (contextDepth >= depth)
+      {
+         foundDepth <- contextDepth
+         foundEnv <- cloenv
+         break
+      }
+   }
+
+   list(depth = foundDepth, env = foundEnv)
+})
+
+# Check if the topmost function on the call stack has the hideFromDebugger
+# attribute, indicating it's a debugger-internal function.
+.rs.addFunction("inDebugHiddenContext", function()
+{
+   nframe <- sys.nframe() - 1L  # skip our own frame
+   if (nframe < 1L)
+      return(FALSE)
+
+   # Walk inner-to-outer looking for the first function context
+   for (i in rev(seq_len(nframe)))
+   {
+      fn <- sys.function(i)
+
+      # If we find a debugger internal function before any user function,
+      # hide it from the user callstack.
+      if (isTRUE(attr(fn, "hideFromDebugger", exact = TRUE)))
+         return(TRUE)
+
+      # If we find a function with source refs (user code), don't hide
+      origFn <- .rs.originalFunction(fn)
+      if (!is.null(attr(origFn, "srcref", exact = TRUE)))
+         return(FALSE)
+   }
+
+   FALSE
+})
+
+# Helper: get the "original" function, unwrapping S4 trace wrappers
+.rs.addFunction("originalFunction", function(fn)
+{
+   if (isS4(fn))
+   {
+      orig <- attr(fn, "original")
+      if (!is.null(orig)) return(orig)
+   }
+   fn
+})
+
+# Helper: check if a srcref is valid (not NULL, not a symbol like <in-bc-interp>)
+.rs.addFunction("isValidSrcref", function(srcref)
+{
+   !is.null(srcref) && is.integer(srcref)
+})
+
+# Helper: resolve source references, handling byte-code compiled contexts.
+# For byte-compiled code, the srcref on the call may be the symbol
+# <in-bc-interp> rather than a real srcref. In that case, we try to find
+# the real srcref by matching the function against the call stack.
+.rs.addFunction("resolveCallSrcref", function(callSrcref, callfun)
+{
+   if (.rs.isValidSrcref(callSrcref))
+      return(callSrcref)
+
+   # check for byte-code srcref (a symbol rather than integer vector)
+   if (!is.symbol(callSrcref))
+      return(NULL)
+
+   # try to resolve via .rs.resolveContextSourceRefs
+   tryCatch(
+      .rs.resolveContextSourceRefs(callfun),
+      error = function(e) NULL
+   )
+})
+
+# Helper: extract source reference fields as a named list
+.rs.addFunction("srcrefData", function(srcref)
+{
+   if (.rs.isValidSrcref(srcref))
+   {
+      list(
+         line_number          = srcref[1L],
+         end_line_number      = srcref[3L],
+         character_number     = srcref[5L],
+         end_character_number = srcref[6L]
+      )
+   }
+   else
+   {
+      list(
+         line_number          = 0L,
+         end_line_number      = 0L,
+         character_number     = 0L,
+         end_character_number = 0L
+      )
+   }
+})
+
+# Build call frame information for the debugger using sys.*() functions.
+#
+# This replaces the C++ callFramesAsJson() which walked the RCNTXT linked list.
+#
+# @param targetDepth The function-context depth of interest (1-based).
+#   The function/source context at this depth are returned separately for
+#   further introspection by the caller.
+# @param lineDebugState A list with 'lastDebugText' and 'lastDebugLine',
+#   or NULL if not available.
+#
+# @return A list with components:
+#   - frames: a list of frame descriptor lists (one per function context)
+#   - context_callfun: the callfun at targetDepth (or NULL)
+#   - context_cloenv: the cloenv at targetDepth (or NULL)
+#   - src_context_callfun: the source context's callfun at targetDepth (or NULL)
+#   - src_context_call: the source context's call at targetDepth (or NULL)
+.rs.addFunction("callFrames", function(targetDepth = 0L,
+                                       lineDebugState = NULL,
+                                       currentSrcref = NULL)
+{
+   # Exclude our own frame(s) from the stack. When called from C++ via
+   # r::exec::RFunction, our frame is at sys.nframe(). We want only the
+   # frames that existed before this call.
+   ownFrame <- sys.nframe()
+   nframe <- ownFrame - 1L
+
+   if (nframe < 1L)
+   {
+      return(list(frames = list(), context = NULL, src_context = NULL))
+   }
+
+   # sys.parents() and sys.calls() include our own frame; we subset below.
+   parents <- sys.parents()[seq_len(nframe)]
+   calls   <- sys.calls()[seq_len(nframe)]
+
+   # -- Phase 1: collect srcref-to-environment mapping --
+   # For each frame i with a valid srcref, map it to the parent frame's
+   # environment. This tells us "where in the parent's code was frame i called?"
+   # We iterate inner-to-outer so the first-match-wins policy selects the
+   # innermost (most current/specific) srcref, matching the old C++ behavior.
+   envSrcrefMap <- new.env(parent = emptyenv())
+
+   for (i in rev(seq_len(nframe)))
+   {
+      callSrcref <- attr(calls[[i]], "srcref", exact = TRUE)
+      callfun <- sys.function(i)
+      srcref <- .rs.resolveCallSrcref(callSrcref, callfun)
+      if (is.null(srcref))
+         next
+
+      p <- parents[i]
+      if (p == 0L)
+         next
+
+      parentEnv <- sys.frame(p)
+      key <- format(parentEnv)
+      if (is.null(envSrcrefMap[[key]]))
+      {
+         envSrcrefMap[[key]] <- list(srcref = srcref, callfun = callfun, call = calls[[i]])
+      }
+   }
+
+   # -- Phase 2: detect browser context --
+   # The browser environment is tracked by C++ (set from onConsolePrompt
+   # via getFunctionContext). We read it via .Call because during promise
+   # forcing, the browser's environment may not correspond to any
+   # sys.frame() visible from R.
+   browserCloenv <- .Call("rs_getBrowserEnv", PACKAGE = "(embedding)")
+   browserUsed <- FALSE
+
+   # -- Phase 3: build frame descriptors --
+   # Iterate from innermost to outermost frame to match the C++ convention
+   # where the RCNTXT walk starts at R_GlobalContext (innermost) and goes
+   # outward. This means depth 1 = innermost function context.
+   frames <- vector("list", nframe)
+   contextDepth <- 0L
+
+   resultContext <- NULL
+   resultSrcContext <- NULL
+   updatedLastDebugLine <- NULL
+
+   for (i in rev(seq_len(nframe)))
+   {
+      callfun <- sys.function(i)
+      cloenv  <- sys.frame(i)
+      call    <- calls[[i]]
+
+      contextDepth <- contextDepth + 1L
+      origFun <- .rs.originalFunction(callfun)
+
+      # Function name
+      functionName <- tryCatch(
+         .rs.functionNameFromCall(call),
+         error = function(e) ""
+      )
+
+      # Error handler / debug hidden checks (attribute-based)
+      isErrorHandler <- !is.null(attr(origFun, "errorHandlerType", exact = TRUE))
+      isHidden <- isTRUE(attr(origFun, "hideFromDebugger", exact = TRUE))
+
+      # Shiny function label
+      shinyLabel <- attr(origFun, "_rs_shinyDebugLabel", exact = TRUE)
+      if (is.null(shinyLabel)) shinyLabel <- ""
+
+      # Source reference resolution:
+      # For the innermost frame (contextDepth == 1), use the runtime srcref
+      # passed from C++ (R_GetCurrentSrcref), which reflects the evaluator's
+      # current position inside the function. For outer frames, use the
+      # envSrcrefMap which maps each frame's env to the srcref of the call
+      # made from that frame (set by the next-inner frame's call srcref).
+      if (contextDepth == 1L && .rs.isValidSrcref(currentSrcref))
+      {
+         srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
+      }
+      else
+      {
+         envKey <- format(cloenv)
+         mapped <- envSrcrefMap[[envKey]]
+         if (!is.null(mapped))
+         {
+            srcContext <- mapped
+         }
+         else
+         {
+            # Fall back to the srcref on this context's own call
+            callSrcref <- attr(call, "srcref", exact = TRUE)
+            resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
+            srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+         }
+      }
+
+      srcref <- srcContext$srcref
+      isRealSrcref <- .rs.isValidSrcref(srcref)
+      isSourceEquiv <- identical(cloenv, globalenv()) && isRealSrcref
+
+      # File name from srcref
+      fileName <- ""
+      if (isRealSrcref)
+      {
+         fileName <- tryCatch(
+            .rs.sourceFileFromRef(srcref),
+            error = function(e) ""
+         )
+      }
+
+      aliasedFileName <- .rs.createAliasedPath(fileName)
+
+      # Source ref data (line/character numbers)
+      srcrefInfo <- .rs.srcrefData(srcref)
+
+      # Lines from source (for real srcrefs)
+      linesText <- ""
+      if (isRealSrcref)
+      {
+         linesText <- tryCatch(
+            .rs.readSrcrefLines(srcref, TRUE),
+            error = function(e) ""
+         )
+      }
+
+      # Simulated source refs (for code without real srcrefs)
+      if (!isRealSrcref)
+      {
+         info <- "_rs_sourceinfo"
+         attr(info, "_rs_callfun") <- origFun
+
+         isBrowserFrame <- !is.null(browserCloenv) && !browserUsed &&
+             identical(cloenv, browserCloenv)
+         if (isBrowserFrame)
+         {
+            browserUsed <- TRUE
+            if (!is.null(lineDebugState))
+            {
+               attr(info, "_rs_calltext") <- lineDebugState$lastDebugText
+               attr(info, "_rs_lastline") <- lineDebugState$lastDebugLine
+            }
+         }
+         else
+         {
+            # Use the call from the next innermost frame (if any) to locate
+            # our position within this function's deparsed body. This matches
+            # the old C++ code which iterated inner-to-outer and used
+            # prevContext.call() -- the inner frame's call tells us where
+            # in the outer function's code execution currently is.
+            innerIdx <- i + 1L
+            if (innerIdx <= nframe)
+            {
+               attr(info, "_rs_callobj") <- calls[[innerIdx]]
+            }
+         }
+
+         simSrcref <- tryCatch(
+            .rs.simulateSourceRefs(info),
+            error = function(e) c(0L, 0L, 0L, 0L, 0L, 0L)
+         )
+
+         # Update lastDebugLine for the browser frame (propagated back to C++)
+         if (isBrowserFrame && .rs.isValidSrcref(simSrcref))
+         {
+            updatedLastDebugLine <- simSrcref[1L] - 1L
+         }
+
+         srcrefInfo <- .rs.srcrefData(simSrcref)
+      }
+
+      # Call summary
+      callSummary <- tryCatch(
+         .rs.callSummary(call),
+         error = function(e) ""
+      )
+
+      frame <- c(
+         list(
+            context_depth          = contextDepth,
+            function_name          = functionName,
+            is_error_handler       = isErrorHandler,
+            is_hidden              = isHidden,
+            is_source_equiv        = isSourceEquiv,
+            file_name              = fileName,
+            aliased_file_name      = aliasedFileName,
+            real_sourceref         = isRealSrcref
+         ),
+         srcrefInfo,
+         list(
+            lines                  = linesText,
+            function_line_number   = 1L,
+            call_summary           = callSummary,
+            shiny_function_label   = shinyLabel
+         )
+      )
+
+      frames[[contextDepth]] <- .rs.scalarListFromList(frame)
+
+      # Track the context at the target depth
+      if (contextDepth == targetDepth)
+      {
+         resultContext <- list(
+            callfun        = callfun,
+            cloenv         = cloenv,
+            call           = call,
+            functionName   = functionName,
+            originalCallfun = origFun,
+            hasSourceRefs  = !is.null(attr(origFun, "srcref", exact = TRUE)),
+            callFunSourceRefs = attr(origFun, "srcref", exact = TRUE)
+         )
+         resultSrcContext <- srcContext
+      }
+
+   }
+
+   # Trim to actual depth (in case nframe included our own frames)
+   frames <- frames[seq_len(contextDepth)]
+
+   list(
+      frames             = frames,
+      context            = resultContext,
+      src_context        = resultSrcContext,
+      lastDebugLine      = updatedLastDebugLine
+   )
 })

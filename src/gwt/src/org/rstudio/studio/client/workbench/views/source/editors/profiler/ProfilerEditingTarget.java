@@ -62,7 +62,7 @@ import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -709,10 +709,10 @@ public class ProfilerEditingTarget implements EditingTarget,
       sourceServer_.modifyDocumentProperties(
          doc_.getId(),
          props,
-         new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+         new SimpleRequestCallback<VoidResponse>(constants_.errorCapitalized())
          {
             @Override
-            public void onResponseReceived(Void response)
+            public void onResponseReceived(VoidResponse response)
             {
             }
 

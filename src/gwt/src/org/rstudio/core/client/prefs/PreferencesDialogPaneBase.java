@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
@@ -188,6 +189,24 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       return res_;
    }
 
+   /**
+    * Wrap all current children in a single-tab DialogTabLayoutPanel with
+    * the tab header hidden. Call at the end of a pane's constructor to
+    * get the same content container styling as tabbed panes.
+    */
+   protected void wrapWithPanel(String panelId)
+   {
+      VerticalTabPanel panel = new VerticalTabPanel(panelId);
+      while (getWidgetCount() > 0)
+         panel.add(getWidget(0));
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(getName(), false);
+      setTabPanelSize(tabPanel);
+      tabPanel.add(panel, getName(), panel.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
+   }
+
    void setDialog(PreferencesDialogBase<T> dialog)
    {
       dialog_ = dialog;
@@ -200,7 +219,9 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    
    public void setTabPanelSize(DialogTabLayoutPanel panel)
    {
-      int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 142;
+      int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
       int height = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT;
       panel.setSize(width + "px", height + "px");
    }

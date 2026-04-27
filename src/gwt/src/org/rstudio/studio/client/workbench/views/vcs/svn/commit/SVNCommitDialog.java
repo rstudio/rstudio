@@ -64,6 +64,7 @@ public class SVNCommitDialog extends ModalDialogBase
                           Session session)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       server_ = server;
       globalDisplay_ = globalDisplay;
       session_ = session;

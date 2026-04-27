@@ -17,7 +17,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
@@ -28,10 +28,10 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.inject.Inject;
 
 /**
- * Manages Posit AI installation and updates.
+ * Manages Posit Assistant installation and updates.
  *
  * This class encapsulates the logic for checking for updates, installing/updating
- * Posit AI, and polling for installation status. It can be used by both the Chat
+ * Posit Assistant, and polling for installation status. It can be used by both the Chat
  * pane and the Preferences pane.
  */
 public class PositAiInstallManager
@@ -42,23 +42,50 @@ public class PositAiInstallManager
    public interface UpdateCheckCallback
    {
       /**
-       * Called when no update is available (Posit AI is already installed and up-to-date).
+       * Called when no update is available (Posit Assistant is already installed and up-to-date).
        */
       void onNoUpdateAvailable();
 
       /**
        * Called when an update or initial install is available.
        *
-       * @param currentVersion The currently installed version (empty string if not installed)
+       * @param currentVersion The currently installed version ("0.0.0" if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        */
       void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall);
 
       /**
-       * Called when no compatible version of Posit AI is available for this RStudio version.
+       * Called when no compatible version of Posit Assistant is available for this RStudio version.
        */
       void onIncompatibleVersion();
+
+      /**
+       * Called when the installed version is unsupported and an upgrade is available.
+       *
+       * @param currentVersion The currently installed (unsupported) version
+       * @param newVersion The version to upgrade to
+       */
+      void onUnsupportedVersionUpgradeRequired(
+          String currentVersion, String newVersion);
+
+      /**
+       * Called when the installed version is unsupported and no upgrade is available.
+       *
+       * @param currentVersion The currently installed (unsupported) version
+       */
+      void onUnsupportedVersionNoUpdate(String currentVersion);
+
+      /**
+       * Called when the current RStudio protocol version is unsupported.
+       */
+      void onUnsupportedProtocol();
+
+      /**
+       * Called when the manifest could not be downloaded (network error, missing file, etc.)
+       * and Posit Assistant cannot verify compatibility.
+       */
+      void onManifestUnavailable(String errorMessage);
 
       /**
        * Called when the update check failed (e.g., network error).
@@ -115,18 +142,39 @@ public class PositAiInstallManager
    }
 
    /**
-    * Checks if an update or initial install is available for Posit AI.
+    * Checks if an update or initial install is available for Posit Assistant.
     *
     * @param callback The callback to receive the result
     */
    public void checkForUpdates(UpdateCheckCallback callback)
    {
-      chatServer_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
+      checkForUpdates(false, callback);
+   }
+
+   public void checkForUpdates(boolean forceRecheck,
+                                UpdateCheckCallback callback)
+   {
+      chatServer_.chatCheckForUpdates(forceRecheck, new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject result)
          {
-            // Check for incompatible protocol version first
+            boolean manifestUnavailable = result.getBoolean("manifestUnavailable");
+            if (manifestUnavailable)
+            {
+               String errorMessage = result.getString("errorMessage");
+               callback.onManifestUnavailable(
+                  errorMessage != null ? errorMessage : "");
+               return;
+            }
+
+            boolean unsupportedProtocol = result.getBoolean("unsupportedProtocol");
+            if (unsupportedProtocol)
+            {
+               callback.onUnsupportedProtocol();
+               return;
+            }
+
             boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
             if (noCompatibleVersion)
             {
@@ -134,8 +182,27 @@ public class PositAiInstallManager
                return;
             }
 
+            boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
+
+            // unsupportedVersion is only true when an actual package is installed
+            // (isVersionUnsupported returns false for "0.0.0"/not-installed)
+            if (unsupportedVersion)
+            {
+               String currentVersion = result.getString("currentVersion");
+               if (updateAvailable)
+               {
+                  String newVersion = result.getString("newVersion");
+                  callback.onUnsupportedVersionUpgradeRequired(
+                      currentVersion, newVersion);
+               }
+               else
+               {
+                  callback.onUnsupportedVersionNoUpdate(currentVersion);
+               }
+               return;
+            }
 
             if (updateAvailable)
             {
@@ -158,7 +225,7 @@ public class PositAiInstallManager
    }
 
    /**
-    * Starts the installation or update of Posit AI.
+    * Starts the installation or update of Posit Assistant.
     *
     * @param callback The callback to receive progress and completion status
     */
@@ -166,10 +233,10 @@ public class PositAiInstallManager
    {
       callback.onInstallStarted();
 
-      chatServer_.chatInstallUpdate(new ServerRequestCallback<Void>()
+      chatServer_.chatInstallUpdate(new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void result)
+         public void onResponseReceived(VoidResponse result)
          {
             // Start polling for update status
             pollUpdateStatus(callback, 0);

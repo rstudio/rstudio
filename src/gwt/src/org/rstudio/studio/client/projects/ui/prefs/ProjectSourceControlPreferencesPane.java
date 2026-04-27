@@ -96,6 +96,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       nudgeRight(vcsHelpLink);
       add(vcsHelpLink);
 
+      wrapWithPanel("project_source_control_prefs");
    }
 
    @Override
@@ -323,7 +324,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
 
    private static final String NONE = constants_.noneProjectSourceControlLabel();
 
-   private static final String NO_REMOTE_ORIGIN = constants_.noneLabel();
+   private static final String NO_REMOTE_ORIGIN = constants_.noneProjectSourceControlLabel();
 
    private static final ProjectPreferencesDialogResources RES =
                                     ProjectPreferencesDialogResources.INSTANCE;

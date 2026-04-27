@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
@@ -41,7 +40,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -55,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.environment.events.ContextDepth
 import org.rstudio.studio.client.workbench.views.environment.events.DebugSourceCompletedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
@@ -513,10 +513,10 @@ public class BreakpointManager
             function.fileName,
             function.packageName,
             steps,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(VoidResponse v)
                {
                   for (Breakpoint breakpoint: breakpoints)
                   {

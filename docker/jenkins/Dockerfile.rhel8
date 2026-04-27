@@ -44,6 +44,7 @@ RUN yum install -y \
     libjpeg-turbo-devel \
     libpng-devel \
     libtiff-devel \
+    libwebp-devel \
     lsof \
     make \
     ninja-build \
@@ -97,7 +98,7 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-globemaster-allium panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-golden-wattle panmirror.version.json
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel8

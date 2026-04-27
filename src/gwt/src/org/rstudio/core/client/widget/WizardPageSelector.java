@@ -125,6 +125,7 @@ public class WizardPageSelector<I,T> extends Composite
                                         55, Unit.PX);
          
          DecorativeImage arrowImage = new DecorativeImage(new ImageResource2x(res.wizardDisclosureArrow2x()));
+         arrowImage.addStyleName(styles.wizardDisclosureArrow());
          layoutPanel.add(arrowImage);
          layoutPanel.setWidgetRightWidth(arrowImage, 
                                          20, Unit.PX, 

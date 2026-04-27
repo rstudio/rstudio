@@ -1089,7 +1089,7 @@ int main(int argc, char * const argv[])
          }
 #endif
 
-         std::string url = fmt::format("http://{}:{}", address, port);
+         std::string url = http::URL::formatAddress("http", address, port);
          core::system::ProcessOptions options;
          core::system::ProcessCallbacks callbacks;
          Error error = server::process_supervisor::runProgram(

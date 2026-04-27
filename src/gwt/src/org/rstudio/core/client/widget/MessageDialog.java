@@ -49,6 +49,7 @@ public class MessageDialog extends ModalDialogBase
       setText(caption);
       messageWidget_ = message;
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+      setThemeAware(true);
 
       // read the message when dialog is shown
       setARIADescribedBy(messageWidget_.getElement());

@@ -35,7 +35,7 @@
    {
       tryCatch(
          .rs.ppm.getVulnerabilityInformationImpl(repoUrl),
-         error = function(cnd) list()
+         error = function(cnd) structure(list(), names = character())
       )
    })
 })
@@ -49,7 +49,7 @@
    # Request vulnerabilities
    ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
    if (length(ppmUrl) == 0L)
-      return(list())
+      return(structure(list(), names = character()))
    
    fmt <- "%s/__api__/repos/%s/vulns"
    endpoint <- sprintf(fmt, ppmUrl$root, ppmUrl$repos)
@@ -61,7 +61,7 @@
    )
    
    if (inherits(status, "condition"))
-      return(list())
+      return(structure(list(), names = character()))
    
    contents <- readLines(destfile, warn = FALSE)
    json <- .rs.fromJSON(contents)

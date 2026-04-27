@@ -62,6 +62,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                Operation cancelOperation)
    {
       super(constants_.chooseEncoding(), Roles.getDialogRole(), operation, cancelOperation);
+      setThemeAware(true);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;

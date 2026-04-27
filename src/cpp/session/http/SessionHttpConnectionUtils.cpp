@@ -16,6 +16,8 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
+#include "session-config.h"
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -24,6 +26,7 @@
 #include <core/FileSerializer.hpp>
 
 
+#include <core/http/CSRFToken.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Request.hpp>
 
@@ -35,11 +38,16 @@
 
 #include <r/RExec.hpp>
 
+#include <session/SessionConstants.hpp>
 #include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
 #include "../SessionRpc.hpp"
 #include "../SessionAsyncRpcConnection.hpp"
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/sessions/SessionSignature.hpp>
+#endif
 
 namespace rstudio {
 namespace session {
@@ -90,6 +98,42 @@ bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection)
                                       "events/get_events");
 }
 
+// Validates CSRF for requests handled in the background listener thread.
+// Returns true if CSRF is valid or bypassed by a signed server header.
+bool validateCSRFOrBypass(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return true;
+
+   if (core::http::validateCSRFHeaders(ptrConnection->request()))
+      return true;
+
+#ifdef RSTUDIO_SERVER
+   if (session::options().verifySignatures() && !session::options().signingKey().empty())
+   {
+      std::string bypassInfo;
+      core::Error error = server_core::sessions::verifyCSRFBypass(
+          session::options().signingKey(), ptrConnection->request(), &bypassInfo);
+      if (!error)
+      {
+         LOG_DEBUG_MESSAGE("CSRF bypassed for '" + ptrConnection->request().uri() +
+                           "' by signed server request (" + bypassInfo + ")");
+         return true;
+      }
+   }
+#endif
+   if (session::options().disableNewCSRFChecks())
+   {
+      LOG_DEBUG_MESSAGE("CSRF validation disabled via disable-new-csrf-checks=1 for '" + ptrConnection->request().uri() + "'");
+      return true;
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("CSRF validation failed for '" + ptrConnection->request().uri() + "' - use disable-new-csrf-checks=1 in rsession.conf to override this new check.");
+   }
+   return false;
+}
+
 void handleAbortNextProjParam(
                boost::shared_ptr<HttpConnection> ptrConnection)
 {
@@ -122,6 +166,13 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
 {
    if (isMethod(ptrConnection, "abort"))
    {
+      if (!validateCSRFOrBypass(ptrConnection))
+      {
+         ptrConnection->sendJsonRpcError(
+             core::Error(core::json::errc::Unauthorized, ERROR_LOCATION));
+         return true;
+      }
+
       // respond and log (try/catch so we are ALWAYS guaranteed to abort)
       try
       {
@@ -183,6 +234,13 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
    using namespace rstudio::core::json;
    if (isMethod(ptrConnection, "suspend_session"))
    {
+      if (!validateCSRFOrBypass(ptrConnection))
+      {
+         ptrConnection->sendJsonRpcError(
+             core::Error(core::json::errc::Unauthorized, ERROR_LOCATION));
+         return true;
+      }
+
       bool force = false;
       JsonRpcRequest jsonRpcRequest;
       core::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
@@ -222,10 +280,17 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
 {
    using namespace rstudio::core;
    using namespace rstudio::core::json;
-   
+
    if (!isMethod(ptrConnection, "interrupt"))
       return false;
-   
+
+   if (!validateCSRFOrBypass(ptrConnection))
+   {
+      ptrConnection->sendJsonRpcError(
+          core::Error(core::json::errc::Unauthorized, ERROR_LOCATION));
+      return true;
+   }
+
    JsonRpcRequest request;
    Error error = parseJsonRpcRequest(
             ptrConnection->request().body(),

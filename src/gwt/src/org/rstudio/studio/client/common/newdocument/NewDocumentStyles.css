@@ -1,4 +1,6 @@
  @external .gwt-Label;
+ @external rstudio-themes-dark;
+ @external rstudio-theme-aware-dialog;
    
   .fillHeight
   {
@@ -117,5 +119,9 @@
   {
     margin-bottom: 7px;
   }
-   
-   
+
+  .rstudio-themes-dark.rstudio-theme-aware-dialog .outputFormatDetails
+  {
+    color: #aaa;
+  }
+

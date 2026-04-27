@@ -23,12 +23,60 @@ namespace constants {
 
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
+const char* const kPositAiBackupDirName = "ai.prev";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
+const char* const kCspConfigPath = "dist/csp.json";
+const char* const kProtocolVersionFileName = "protocol.json";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-const char* const kProtocolVersion = "8.0";
+const char* const kProtocolVersion = "10.0";
+
+// Capabilities: JSON-RPC methods that RStudio handles
+const std::vector<std::string>& rstudioCapabilities()
+{
+   static const std::vector<std::string> s_capabilities = {
+      "runtime/getActiveSession",
+      "runtime/getDetailedContext",
+      "runtime/executeCode",
+      "runtime/getConsoleContent",
+      "workspace/readFileContent",
+      "workspace/writeFileContent",
+      "workspace/editFileContent",
+      "workspace/insertIntoNewFile",
+      "workspace/insertAtCursor",
+      "ui/openDocument",
+   };
+   return s_capabilities;
+}
+
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath)
+{
+   // Normalize root path: "/" (default) becomes empty
+   std::string root = rootPath;
+   if (root == "/")
+      root.clear();
+   if (!root.empty() && root.back() == '/')
+      root.pop_back();
+
+   // Normalize session URL: strip trailing slash
+   std::string session = sessionUrl;
+   if (!session.empty() && session.back() == '/')
+      session.pop_back();
+
+   // Normalize portmapped path: ensure leading slash, strip trailing slash
+   std::string mapped = portmappedPath;
+   if (!mapped.empty() && mapped[0] != '/')
+      mapped = "/" + mapped;
+   if (!mapped.empty() && mapped.back() == '/')
+      mapped.pop_back();
+
+   return root + session + mapped + "/ai-chat";
+}
 
 } // namespace constants
 } // namespace chat

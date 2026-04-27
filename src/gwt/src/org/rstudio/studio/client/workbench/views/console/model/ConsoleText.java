@@ -18,8 +18,9 @@ import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class ConsoleText 
+public class ConsoleText
 {
    public String text;
    public String console;
+   public boolean agent;
 }

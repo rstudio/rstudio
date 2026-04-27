@@ -38,8 +38,8 @@ public interface Server extends ApplicationServerOperations,
     */
    void log(int logEntryType, 
             String logEntry,
-            ServerRequestCallback<Void> requestCallback);
+            ServerRequestCallback<VoidResponse> requestCallback);
    
    void logException(ClientException e,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
 }

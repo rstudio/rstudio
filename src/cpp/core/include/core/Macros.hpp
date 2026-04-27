@@ -35,6 +35,20 @@
       s_once = true;                                                           \
    } while (0)
 
+// Helper macros for generating unique variable names within macros.
+#define RS_CONCAT_IMPL(a, b) a##b
+#define RS_CONCAT(a, b) RS_CONCAT_IMPL(a, b)
+#define RS_VAR(name) RS_CONCAT(name, __LINE__)
+
+// Evaluates to true on the first call at a given call site, false thereafter.
+#define RS_ONCE()                                                              \
+   ([]{                                                                        \
+      static bool s_once = false;                                              \
+      if (s_once) return false;                                                \
+      s_once = true;                                                           \
+      return true;                                                             \
+   }())
+
 /* Work around Xcode indentation rules */
 #define RS_BEGIN_NAMESPACE(__X__) namespace __X__ {
 #define RS_END_NAMESPACE(__X__) }

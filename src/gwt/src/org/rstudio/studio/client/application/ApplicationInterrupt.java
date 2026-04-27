@@ -17,7 +17,6 @@ package org.rstudio.studio.client.application;
 
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -25,7 +24,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -34,11 +32,13 @@ import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -151,10 +151,10 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
       {
          errorManager_.setDebugSessionHandlerType(
             replacedWithHandlerType,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(VoidResponse v)
                {
                   interruptR(new InterruptHandler() {
                      @Override
@@ -162,10 +162,10 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
                      {
                         errorManager_.setDebugSessionHandlerType(
                            originalDebugType,
-                           new ServerRequestCallback<Void>()
+                           new ServerRequestCallback<VoidResponse>()
                            {
                               @Override
-                              public void onResponseReceived(Void v)
+                              public void onResponseReceived(VoidResponse v)
                               {
                                  handler.onInterruptFinished();
                               }

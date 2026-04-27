@@ -36,6 +36,11 @@ namespace tests {
 const std::string handle1("unit-test01");
 const std::string msgString1("Sample message text");
 
+// Loopback address for test connections. Use 127.0.0.1 explicitly to match
+// the server's IPv4 loopback binding and avoid DNS resolution issues with
+// "localhost" on systems that prefer IPv6.
+const std::string kLoopbackAddress("127.0.0.1");
+
 using namespace console_process;
 using namespace boost::placeholders;
 
@@ -232,14 +237,18 @@ public:
 
    bool connectToServer()
    {
+      std::string uri = "http://" + kLoopbackAddress + ":" +
+            boost::lexical_cast<std::string>(port_) +
+            "/terminal/" + handle_ + "/";
+      return connectToServerWithUri(uri);
+   }
+
+   bool connectToServerWithUri(const std::string& uri)
+   {
       using websocketpp::lib::bind;
 
-      try 
+      try
       {
-         std::string uri = "http://localhost:" +
-               boost::lexical_cast<std::string>(port_) +
-               "/terminal/" + handle_ + "/";
-
          // don't clutter up unit test runs with warnings
          client_.set_access_channels(websocketpp::log::alevel::none);
          client_.set_error_channels(websocketpp::log::alevel::none);
@@ -262,6 +271,10 @@ public:
          client::connection_ptr con = client_.get_connection(uri, ec);
          if (ec)
             return false;
+
+         // set Origin header to satisfy validation in desktop mode
+         con->append_header("Origin", "http://" + kLoopbackAddress + ":" +
+               boost::lexical_cast<std::string>(port_));
 
          // Note that connect here only requests a connection. No network
          // messages are exchanged until the event loop starts running in
@@ -314,6 +327,17 @@ public:
       blockingwait(10);
       EXPECT_TRUE(gotOpened());
       EXPECT_FALSE(gotFailed());
+   }
+
+   void waitForFailure()
+   {
+      while (!gotOpened() && !gotFailed())
+      {
+         blockingwait(50);
+      }
+      blockingwait(10);
+      EXPECT_FALSE(gotOpened());
+      EXPECT_TRUE(gotFailed());
    }
 
    std::string getInput() { blockingwait(50); return input_; }
@@ -455,6 +479,63 @@ TEST(ConsoleProcessSocketTest, ClientCanMakeMultipleConnectionsToServer) {
 
    EXPECT_TRUE(pClient1->disconnectFromServer());
    EXPECT_TRUE(pClient2->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsUnregisteredHandle) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // connect with a handle that was never registered via listen()
+   const std::string unregisteredHandle = "not-registered";
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>(unregisteredHandle, pSocket->port());
+   EXPECT_TRUE(pClient->connectToServer());
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsMalformedUrl) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // connect with a URL that has no terminal handle (just a bare slash)
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>("", pSocket->port());
+   std::string uri = "http://" + kLoopbackAddress + ":" +
+         boost::lexical_cast<std::string>(pSocket->port()) + "/";
+   EXPECT_TRUE(pClient->connectToServerWithUri(uri));
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsUrlWithoutTrailingSlash) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // register the handle so we isolate the URL validation
+   boost::shared_ptr<SocketConnection> pConnection =
+         boost::make_shared<SocketConnection>(handle1, pSocket);
+   EXPECT_TRUE(pConnection->listen());
+
+   // connect with a URL missing the required trailing slash
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>(handle1, pSocket->port());
+   std::string uri = "http://" + kLoopbackAddress + ":" +
+         boost::lexical_cast<std::string>(pSocket->port()) +
+         "/terminal/" + handle1;  // no trailing slash
+   EXPECT_TRUE(pClient->connectToServerWithUri(uri));
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pConnection->stopListening());
    EXPECT_TRUE(pSocket->stopServer());
 }
 

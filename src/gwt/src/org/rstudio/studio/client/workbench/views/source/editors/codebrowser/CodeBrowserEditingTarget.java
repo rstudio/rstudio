@@ -47,7 +47,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -235,10 +235,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
          server_.modifyDocumentProperties(
                doc_.getId(),
                props,
-               new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+               new SimpleRequestCallback<VoidResponse>(constants_.errorCapitalized())
                {
                   @Override
-                  public void onResponseReceived(Void response)
+                  public void onResponseReceived(VoidResponse response)
                   {
                      contents.fillProperties(doc_.getProperties());
                   }

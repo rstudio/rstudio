@@ -32,6 +32,10 @@ core::Error initialize();
 // Returns true if session can suspend (i.e., chat backend is NOT busy)
 bool isSuspendable();
 
+// Returns true if Posit Assistant should be blocked (unsupported version,
+// unsupported protocol, or manifest unavailable)
+bool isPositAssistantUnsupported();
+
 } // end namespace chat
 } // end namespace modules
 } // end namespace session

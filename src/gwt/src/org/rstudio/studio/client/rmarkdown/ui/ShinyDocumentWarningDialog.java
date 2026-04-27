@@ -32,6 +32,7 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
          final OperationWithInput<Integer> onSelected)
    {
       super(Roles.getAlertdialogRole());
+      setThemeAware(true);
       warning_ = new ShinyDocumentWarning();
       setWidth("400px");
       setText(constants_.warningDialogText());

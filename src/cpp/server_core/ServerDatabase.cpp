@@ -16,6 +16,7 @@
 #include <server_core/ServerDatabase.hpp>
 #include <server_core/ServerDatabaseOverlay.hpp>
 
+#include <server_core/DatabaseConstants.hpp>
 #include <server_core/DatabaseUtils.hpp>
 #include <server_core/ServerLicense.hpp>
 #include <server_core/ServerKeyObfuscation.hpp>
@@ -27,6 +28,7 @@
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/Settings.hpp>
@@ -198,6 +200,9 @@ Error initialize(const std::string& databaseConfigFile,
    Error error = database::readOptions(databaseConfigFile, databaseFileUser, &options);
    if (error)
       return error;
+
+   // Named parameters that are treated as secrets with trace-db-enabled
+   core::database::addSecretParamNames({"refresh_token_key", "access_token", "refresh_token", "token_key"});
 
    // Attempt to read pool size from configuration file
    size_t poolSize = 0;

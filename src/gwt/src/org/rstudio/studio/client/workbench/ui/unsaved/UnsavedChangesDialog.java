@@ -97,6 +97,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
             Roles.getAlertdialogRole(),
             saveOperation,
             onCancelled != null ? (Operation) () -> onCancelled.execute() : null);
+      setThemeAware(true);
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
 
@@ -162,7 +163,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
 
-      // read message when dialog shows
+      // read message when dialog
+      // shows
       setARIADescribedBy(captionLabel.getElement());
 
       panel.add(scrollPanel);

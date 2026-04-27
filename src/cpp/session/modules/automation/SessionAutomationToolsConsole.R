@@ -40,6 +40,9 @@
 
 .rs.automation.addRemoteFunction("console.execute", function(code, wait = TRUE)
 {
+   # Ensure the Console tab is visible before trying to focus the input.
+   self$commands.execute("activateConsole")
+
    # Make sure the Console pane is focused.
    document <- self$client$DOM.getDocument()
    response <- self$client$DOM.querySelector(

@@ -130,7 +130,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
@@ -2125,9 +2125,9 @@ public class TextEditingTarget implements
          dirtyState_.markDirty(false);
       else
          dirtyState_.markClean();
-      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
       {
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             dirtyState_.markDirty(true);
             docDisplay_.clearSelectionHistory();
@@ -3468,12 +3468,21 @@ public class TextEditingTarget implements
                               MessageDialog.WARNING,
                               constants_.saveNewFileWithEncodingWarningCaption(),
                               constants_.saveNewFileWithEncodingWarningMessage(),
+                              false,
                               new Operation() {
 
                                  @Override
                                  public void execute()
                                  {
                                     saveCommand.execute();
+                                 }
+                              },
+                              new Operation() {
+
+                                 @Override
+                                 public void execute()
+                                 {
+                                    isSaving_ = false;
                                  }
                               },
                               false);
@@ -4013,7 +4022,7 @@ public class TextEditingTarget implements
       if (prefs_.useAirFormatter().getValue())
       {
          boolean hasAirToml = context.air != null && context.air.path != null;
-         return hasAirToml;
+         return !hasAirToml;
       }
 
       return true;
@@ -4491,26 +4500,36 @@ public class TextEditingTarget implements
          return;
       }
 
-      docUpdateSentinel_.withSavedDoc(() ->
+      withFormatContext((context) ->
       {
-         server_.formatDocument(
-               docUpdateSentinel_.getId(),
-               new ServerRequestCallback<FormatDocumentResult>()
-               {
-                  @Override
-                  public void onResponseReceived(FormatDocumentResult response)
-                  {
-                     applyEdits(response);
-                     onFormatted.execute();
-                  }
+         // If no external formatter is configured, skip formatting on save
+         if (useBuiltinFormatter(context))
+         {
+            onFormatted.execute();
+            return;
+         }
 
-                  @Override
-                  public void onError(ServerError error)
+         docUpdateSentinel_.withSavedDoc(() ->
+         {
+            server_.formatDocument(
+                  docUpdateSentinel_.getId(),
+                  new ServerRequestCallback<FormatDocumentResult>()
                   {
-                     Debug.logError(error);
-                     onFormatted.execute();
-                  }
-               });
+                     @Override
+                     public void onResponseReceived(FormatDocumentResult response)
+                     {
+                        applyEdits(response);
+                        onFormatted.execute();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        onFormatted.execute();
+                     }
+                  });
+         });
       });
    }
 
@@ -7272,9 +7291,9 @@ public class TextEditingTarget implements
             server_.saveActiveDocument(code,
                                        sweave,
                                        compilePdfHelper_.getActiveRnwWeaveName(),
-                                       new SimpleRequestCallback<Void>() {
+                                       new SimpleRequestCallback<VoidResponse>() {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   consoleDispatcher_.executeSourceCommand(
                         "~/.active-rstudio-document",
@@ -7619,6 +7638,22 @@ public class TextEditingTarget implements
 
    void renderRmd(final String format, final String paramsFile)
    {
+      // if a notebook render is in progress, wait for it to finish before
+      // previewing so the user sees the latest content
+      if (isRmdNotebook() && notebook_ != null && notebook_.isRendering())
+      {
+         view_.getStatusBar().showStatus(
+            StatusBarIconType.TYPE_LOADING,
+            constants_.notebookRenderWaiting());
+
+         notebook_.addRenderCompleteHandler(() ->
+         {
+            view_.getStatusBar().hideStatus();
+            renderRmd(format, paramsFile);
+         });
+         return;
+      }
+
       if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
          events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
 
@@ -8582,6 +8617,7 @@ public class TextEditingTarget implements
                   previewFromR();
                }
                else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_RMARKDOWN_NOTEBOOK ||
                         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
                {
                   renderRmd();
@@ -8603,7 +8639,7 @@ public class TextEditingTarget implements
       // Only enabled for R documents.
       if (fileType_ == null || !fileType_.isR())
          return false;
-      
+
       // Check document-specific preference first.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);

@@ -1,7 +1,15 @@
 @charset "UTF-8";
 
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
+
 .panel {
    border: 1px solid rgb(208, 210, 212);
+   background-color: white;
 }
 
 .table {
@@ -22,4 +30,26 @@
 
 .active .selected {
    background-color: rgb(214, 233, 247);
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .panel {
+   background-color: THEME_DARKGREY_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   scrollbar-color: THEME_DARKGREY_BACKGROUND THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
+   filter: brightness(90%) saturate(90%);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .selected {
+   background-color: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .active .selected {
+   background-color: THEME_DARK_ROW_FOCUSED;
 }

@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.resources.CoreResources;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.Roles;
@@ -22,14 +21,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -58,35 +55,13 @@ public class SlideLabel extends Composite
    {
       @Source("SlideLabel.css")
       SlideLabelCss style();
-
-      @Source("slideLabelBottom.png")
-      DataResource slideLabelBottom();
-      @Source("slideLabelBottomLeft.png")
-      DataResource slideLabelBottomLeft();
-      @Source("slideLabelBottomRight.png")
-      DataResource slideLabelBottomRight();
-      @Source("slideLabelFill.png")
-      DataResource slideLabelFill();
-      @Source("slideLabelLeft.png")
-      DataResource slideLabelLeft();
-      @Source("slideLabelRight.png")
-      DataResource slideLabelRight();
    }
 
    interface SlideLabelCss extends CssResource
    {
       String curtain();
-      String border();
-      String progress();
+      String container();
       String content();
-
-      String W();
-      String C();
-      String E();
-      String SW();
-      String S();
-      String SE();
-      
       String cancelColumn();
       String cancelButton();
    }
@@ -152,16 +127,13 @@ public class SlideLabel extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
             
-      if (showProgressSpinner)
-         progress_.setSrc(CoreResources.INSTANCE.progress_gray_as_data().getSafeUri().asString());
-      else
-         progress_.getStyle().setDisplay(Style.Display.NONE);
+      if (!showProgressSpinner)
+         progress_.setVisible(false);
       curtain_.setHeight("0px");
 
       setCancelVisible(false);
-      Roles.getPresentationRole().set(border_);
+      Roles.getPresentationRole().set(container_);
       Roles.getProgressbarRole().set(innerTable_);
-      progress_.setAlt("Spinner");
       innerTable_.setAttribute("aria-hidden", "true");
       cancel_.addClickHandler(new ClickHandler()
       {
@@ -221,7 +193,7 @@ public class SlideLabel extends Composite
                   setVisible(true);
                   innerTable_.removeAttribute("aria-hidden");
                   curtain_.setHeight("0px");
-                  height = content_.getOffsetHeight() + 14 + 14;
+                  height = container_.getOffsetHeight() + SHADOW_MARGIN;
                   super.onStart();
                }
 
@@ -279,7 +251,7 @@ public class SlideLabel extends Composite
          @Override
          protected void onUpdate(double progress)
          {
-            setHeight(height * (1-progress));
+            setHeight(height * (1 - progress));
          }
 
          @Override
@@ -304,7 +276,7 @@ public class SlideLabel extends Composite
 
    private void setHeight(double height)
    {
-      curtain_.setHeight((int)height + "px");
+      curtain_.setHeight((int) height + "px");
    }
 
    private void stopCurrentAnimation()
@@ -336,11 +308,11 @@ public class SlideLabel extends Composite
    @UiField
    HTMLPanel curtain_;
    @UiField
+   DivElement container_;
+   @UiField
    DivElement content_;
    @UiField
-   TableElement border_;
-   @UiField
-   ImageElement progress_;
+   Spinner progress_;
    @UiField
    SmallButton cancel_;
    @UiField
@@ -351,4 +323,5 @@ public class SlideLabel extends Composite
    private boolean deferredShow_ = false;
 
    private static final int ANIM_MILLIS = 250;
+   private static final int SHADOW_MARGIN = 12;
 }

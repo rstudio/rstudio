@@ -29,6 +29,7 @@
 #include <core/Database.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
+#include <core/http/URL.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
@@ -284,7 +285,7 @@ Error processPostgresqlOptions(const PostgresqlConnectionOptions& options,
    }
 
    if (options.connectionUri.empty())
-      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
+      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + core::http::URL::formatHostPort(options.host, options.port) + "/" + options.database);
    else
    {
       // matches up to the password, the password itself, and rest of it
@@ -418,7 +419,7 @@ Error applyOptionsFromSettings(const Settings& databaseSettings,
          return result;
       }
 
-      LOG_INFO_MESSAGE("Finished reading configuration for Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
+      LOG_INFO_MESSAGE("Finished reading configuration for Postgres database " + options.username + "@" + core::http::URL::formatHostPort(options.host, options.port) + "/" + options.database);
 
       *pOptions = options;
    }

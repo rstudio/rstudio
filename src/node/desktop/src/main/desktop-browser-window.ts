@@ -102,6 +102,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   tutorialUrl: string | undefined;
   presentationUrl: string | undefined;
   shinyDialogUrl: string | undefined;
+  shinyDialogFullUrl: string | undefined;
   mainWindow?: MainWindow;
 
   // debouncing due to https://github.com/rstudio/rstudio/issues/13027
@@ -523,6 +524,43 @@ export class DesktopBrowserWindow extends EventEmitter {
     }
 
     this.shinyDialogUrl = getAuthority(shinyDialogUrl);
+    this.shinyDialogFullUrl = makeAbsoluteUrl(shinyDialogUrl).toString();
+  }
+
+  injectShinyDialogCss(css: string): void {
+    if (!this.shinyDialogFullUrl) return;
+
+    let shinyOriginPath: string;
+    try {
+      const parsed = new URL(this.shinyDialogFullUrl);
+      shinyOriginPath = (parsed.origin + parsed.pathname).replace(/\/+$/, '');
+    } catch {
+      return;
+    }
+
+    for (const frame of this.window.webContents.mainFrame.framesInSubtree) {
+      let frameOriginPath: string;
+      try {
+        const parsed = new URL(frame.url);
+        frameOriginPath = (parsed.origin + parsed.pathname).replace(/\/+$/, '');
+      } catch {
+        continue;
+      }
+      if (frameOriginPath === shinyOriginPath) {
+        frame
+          .executeJavaScript(
+            `(function() {
+              var s = document.createElement('style');
+              s.textContent = ${JSON.stringify(css)};
+              document.head.appendChild(s);
+            })();`,
+          )
+          .catch(() => {
+            // frame may have navigated away
+          });
+        break;
+      }
+    }
   }
 
   getBaseUrl(): string {
@@ -532,7 +570,11 @@ export class DesktopBrowserWindow extends EventEmitter {
   keyPressEvent(event: Electron.Event, input: Electron.Input): void {
     if (process.platform === 'darwin') {
       if (input.meta && input.key.toLowerCase() === 'w') {
-        // on macOS, intercept Cmd+W and emit the window close signal
+        // On macOS, intercept Cmd+W and emit the window close signal.
+        // preventDefault() stops the global application menu accelerator
+        // from also firing, which would route 'closeSourceDoc' to the
+        // main window and close a source tab there (rstudio#17115).
+        event.preventDefault();
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
       }
     } else if (process.platform === 'win32') {

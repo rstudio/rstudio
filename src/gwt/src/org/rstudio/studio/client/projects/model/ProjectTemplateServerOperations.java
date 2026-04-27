@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 public interface ProjectTemplateServerOperations
 {
@@ -25,5 +25,5 @@ public interface ProjectTemplateServerOperations
    void executeProjectTemplate(
          String pkgName,
          String pkgBinding,
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
 }

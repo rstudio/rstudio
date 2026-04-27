@@ -253,14 +253,14 @@ public class StatusBarWidget extends Composite
    public void showStatus(StatusBarIconType type, String message, ClickHandler clickHandler)
    {
       ImageResource resource = null;
-      
+
       switch (type)
       {
       case TYPE_OK:
          resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
          break;
       case TYPE_LOADING:
-         resource = new ImageResource2x(CoreResources.INSTANCE.progress());
+         // uses SVG spinner instead of image; handled below
          break;
       case TYPE_INFO:
          resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
@@ -272,8 +272,13 @@ public class StatusBarWidget extends Composite
          resource = new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x());
          break;
       }
-      
+
       initMessage(message, false, resource);
+
+      if (type == StatusBarIconType.TYPE_LOADING)
+         message_.showSpinner();
+      else
+         message_.hideSpinner();
 
       clickHandler_ = clickHandler;
       

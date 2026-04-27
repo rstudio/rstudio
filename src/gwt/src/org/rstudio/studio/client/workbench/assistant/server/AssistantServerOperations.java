@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.assistant.server;
 import java.util.ArrayList;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
@@ -45,10 +45,10 @@ public interface AssistantServerOperations
                                ServerRequestCallback<AssistantStatusResponse> requestCallback);
 
    public void assistantDocFocused(String documentId,
-                                   ServerRequestCallback<Void> requestCallback);
+                                   ServerRequestCallback<VoidResponse> requestCallback);
 
    public void assistantDidShowCompletion(AssistantCompletion command,
-                                          ServerRequestCallback<Void> requestCallback);
+                                          ServerRequestCallback<VoidResponse> requestCallback);
 
    public void assistantGenerateCompletions(String documentId,
                                             String documentPath,
@@ -66,14 +66,14 @@ public interface AssistantServerOperations
                                             ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback);
 
    public void assistantDidAcceptCompletion(AssistantCompletionCommand completionCommand,
-                                            ServerRequestCallback<Void> requestCallback);
+                                            ServerRequestCallback<VoidResponse> requestCallback);
 
    public void assistantDidAcceptPartialCompletion(AssistantCompletion completion,
                                                  int acceptedLength,
-                                                 ServerRequestCallback<Void> requestCallback);
+                                                 ServerRequestCallback<VoidResponse> requestCallback);
 
    public void assistantRegisterOpenFiles(ArrayList<String> filePaths,
-                                          ServerRequestCallback<Void> requestCallback);
+                                          ServerRequestCallback<VoidResponse> requestCallback);
 
-   public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback);
+   public void assistantNotifyInstalled(ServerRequestCallback<VoidResponse> requestCallback);
 }

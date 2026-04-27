@@ -71,6 +71,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    public BrowseAddinsDialog(OperationWithInput<Command> operation)
    {
       super(constants_.addinCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption(constants_.executeButtonLabel());

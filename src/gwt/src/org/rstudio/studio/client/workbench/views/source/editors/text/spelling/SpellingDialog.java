@@ -41,6 +41,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    public SpellingDialog()
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setText(constants_.checkSpelling());
 
       btnAdd_ = new ThemedButton(constants_.addCapitalized());

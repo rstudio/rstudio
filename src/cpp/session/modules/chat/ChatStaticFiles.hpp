@@ -76,15 +76,16 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
 // ============================================================================
 
 /**
- * Handle HTTP requests for AI Chat static files.
+ * Handle HTTP requests for Posit Assistant Chat static files.
  *
- * Serves files from the Posit AI installation's client directory.
+ * Serves files from the Posit Assistant installation's client directory.
  * URI format: /ai-chat/<path>
  * Defaults to index.html for "/" requests.
  *
  * Security:
  * - Uses validateAndResolvePath to prevent directory traversal
  * - Only serves files from verified installation directory
+ * - Sets Content-Security-Policy header on HTML responses
  *
  * Caching:
  * - HTML/JS/CSS: no-cache (for development)
@@ -92,10 +93,36 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  *
  * @param request HTTP request object
  * @param pResponse HTTP response object to populate
- * @return Success() always (errors are communicated via HTTP status codes)
+ * @return Success() on normal handling (including 4xx responses), or an
+ *         Error if file I/O fails
  */
 core::Error handleAIChatRequest(const core::http::Request& request,
                                 core::http::Response* pResponse);
+
+// ============================================================================
+// Chat Backend Port
+// ============================================================================
+
+/**
+ * Set the chat backend (databot) port.
+ *
+ * Called by SessionChat when the backend process starts or stops. Used to
+ * build the connect-src CSP directive in desktop mode, where the WebSocket
+ * connects to a different origin than the page. Pass -1 to indicate the
+ * backend is not running.
+ */
+void setChatBackendPort(int port);
+
+/**
+ * Set the chat backend auth token.
+ *
+ * Called by SessionChat when the backend process starts or stops. In server
+ * mode, this token is delivered to the PA client via an HTTP-only cookie on
+ * the index.html response (rather than as a URL query parameter) to avoid
+ * leaking credentials in browser history, server logs, and the Referer header.
+ * Pass an empty string to clear.
+ */
+void setChatBackendAuthToken(const std::string& token);
 
 } // namespace staticfiles
 } // namespace chat

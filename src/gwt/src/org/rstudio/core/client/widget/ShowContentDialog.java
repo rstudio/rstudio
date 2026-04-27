@@ -35,6 +35,7 @@ public class ShowContentDialog extends ModalDialogBase
    public ShowContentDialog(String title, String content, Size preferredSize)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setText(title);
       preferredSize_ = preferredSize;
 

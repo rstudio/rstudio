@@ -115,6 +115,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String kernelLabel();
     String chkUseVenvLabel();
     String txtVenvPackagesNone();
+    String loadingCapabilitiesLabel();
     String quartoProjectTypeOption();
     String quartoProjectEngineOption();
     String quartoProjectKernelOption();
@@ -255,5 +256,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String miscellaneousTitle();
     String generalTitle();
     String customProjectNameLabel();
+    String chkUseGitignoreLabel();
     String scratchPathLabel();
 }

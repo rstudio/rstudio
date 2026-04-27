@@ -22,7 +22,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
 
-#include <r/RSxpInfo.hpp>
+#include <r/RSexp.hpp>
 
 namespace rstudio {
 namespace r {
@@ -31,8 +31,7 @@ namespace internal {
 
 inline bool isImmediateBinding(SEXP frameSEXP)
 {
-   r::sxpinfo* info = reinterpret_cast<r::sxpinfo*>(frameSEXP);
-   return info->extra != 0;
+   return r::sexp::sxpinfo::isImmediateBinding(frameSEXP);
 }
 
 template <typename F>
@@ -82,7 +81,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       // A hashed environment contains a VECSXP of 'frame's.
       // An unhashed environment contains a single 'frame'.
       // A 'frame' here is just a pairlist (LISTSXP).
-      SEXP hashTableSEXP = HASHTAB(valueSEXP);
+      SEXP hashTableSEXP = r::sexp::sxpinfo::getHashtab(valueSEXP);
       if (hashTableSEXP != R_NilValue)
       {
          R_xlen_t numCells = Rf_xlength(hashTableSEXP);
@@ -95,7 +94,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       }
       else
       {
-         SEXP frameSEXP = FRAME(valueSEXP);
+         SEXP frameSEXP = r::sexp::sxpinfo::getFrame(valueSEXP);
          if (recursiveFindFrame(frameSEXP, visitedEnvironments, std::forward<F>(callback)))
             return true;
       }

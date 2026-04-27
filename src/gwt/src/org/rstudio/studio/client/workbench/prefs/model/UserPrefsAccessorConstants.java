@@ -1448,6 +1448,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String globalThemeDescription();
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   @DefaultStringValue("Use dark theme modal dialogs")
+   String useDarkThemeModalDialogsTitle();
+   @DefaultStringValue("Whether modal dialogs should use dark styling when a dark editor theme is active.")
+   String useDarkThemeModalDialogsDescription();
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    @DefaultStringValue("Ignore whitespace in VCS diffs")
@@ -1962,6 +1970,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorIgnoredComponentsDescription();
 
    /**
+    * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
+    */
+   @DefaultStringValue("Use .gitignore for file monitoring")
+   String fileMonitorUseGitignoreTitle();
+   @DefaultStringValue("When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.")
+   String fileMonitorUseGitignoreDescription();
+
+   /**
     * Whether to install R package dependencies one at a time.
     */
    @DefaultStringValue("Install R package dependencies one at a time")
@@ -2082,11 +2098,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String pythonProjectEnvironmentAutomaticActivateDescription();
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    @DefaultStringValue("Check values in the Environment pane for null external pointers")
    String checkNullExternalPointersTitle();
-   @DefaultStringValue("When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.")
+   @DefaultStringValue("(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.")
    String checkNullExternalPointersDescription();
 
    /**
@@ -2154,7 +2170,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantDescription();
    @DefaultStringValue("(None)")
    String assistantEnum_none();
-   @DefaultStringValue("Posit Assistant")
+   @DefaultStringValue("Posit AI Next Edit Suggestions")
    String assistantEnum_posit();
    @DefaultStringValue("GitHub Copilot")
    String assistantEnum_copilot();
@@ -2228,12 +2244,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantNesAutoshowDescription();
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
-   @DefaultStringValue("Display account and billing messages from AI assistant")
+   @DefaultStringValue("Display account and billing messages from Posit Assistant")
    String assistantShowMessagesTitle();
-   @DefaultStringValue("When enabled, RStudio will show messages from the Posit AI assistant in a message box.")
+   @DefaultStringValue("When enabled, RStudio will show messages from the Posit Assistant in a message box.")
    String assistantShowMessagesDescription();
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   @DefaultStringValue("Show Posit Assistant button in toolbar")
+   String assistantToolbarButtonVisibleTitle();
+   @DefaultStringValue("When enabled, the Posit Assistant button is displayed in the main toolbar.")
+   String assistantToolbarButtonVisibleDescription();
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

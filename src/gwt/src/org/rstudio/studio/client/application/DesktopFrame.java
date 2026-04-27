@@ -216,6 +216,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void setShinyDialogUrl(String url);
 
+   void injectShinyDialogCss(String css);
+
    void allowNavigation(String url, CommandWithArg<Boolean> callback);
 
    void setBusy(boolean busy);
@@ -248,6 +250,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void signOut();
 
    void showSplashScreen();
+
+   void showWhatsNew();
 
    void detectRosetta();
    

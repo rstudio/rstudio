@@ -15,6 +15,7 @@
 @external search;
 @external highlight, disabled;
 @external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction;
+@external themedButton, buttonContent;
 @external gwt-CheckBox, gwt-RadioButton;
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
 @external gwt-PopupPanelGlass;
@@ -35,6 +36,7 @@
 @external editor_light, editor_dark;
 @external gwt-TextBox-readonly;
 @external gwt-TextBox;
+@external gwt-PasswordTextBox;
 @external gwt-ListBox;
 
 /* These are exposed to allow users to customize RStudio further with their rsthemes. */
@@ -62,6 +64,10 @@
 @external rstudio-themes-dark-menus;
 
 @external rstudio-classic-inverts;
+@external rstudio-theme-aware-dialog;
+@external rstudio-lock-keyhole;
+@external rstudio-trust-detail;
+@external rstudio-HyperlinkLabel;
 
 @external rstudio-animating;
 
@@ -94,6 +100,7 @@
 
 @eval THEME_DARK_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkControlBackground;
 @eval THEME_DARK_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.darkControlBorder;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
 @eval THEME_DEFAULT_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBodyBackground;
 @eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
@@ -162,6 +169,7 @@
 @url RESTORE restore2x;
 @url RESTORESELECTED restoreSelected2x;
 @url MINIMIZE minimize2x;
+@url CLOSEPANE closePane2x;
 @url MINIMIZESELECTED minimizeSelected2x;
 @url PODMINIMIZEDLEFT podMinimizedLeft;
 @url PODMINIMIZEDRIGHT podMinimizedRight;
@@ -229,6 +237,7 @@ body.windows iframe {
 
 select {
    font-size: 12px;
+   background-color: white;
 }
 
 input[type="radio"] + label {
@@ -309,11 +318,13 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;
-   height: 22px;
+   height: 25px;
+   padding: 4px 6px;
 }
 .gwt-DialogBox .search input[type=text] {
    border: none;
    height: 100%;
+   padding: 0;
 }
 
 iframe {
@@ -789,7 +800,7 @@ pre {
 }
 
 .gwt-SuggestBoxPopup {
-   z-index: 1000;
+   z-index: 1001;
    cursor: default;
 }
 
@@ -975,6 +986,26 @@ table.header > tbody > tr > td {
 }
 
 .windowframe-exclusive .minimize {
+   display: none;
+}
+
+.windowframe .close {
+   background-image: CLOSEPANE;
+   z-index: 50;
+   background-size: 14px 14px;
+}
+.windowframe .close:hover {
+   background-image: CLOSEPANE;
+   background-size: 14px 14px;
+   filter: brightness(0.4);
+}
+.rstudio-themes-dark .windowframe .close {
+   filter: invert(100%) brightness(100%);
+}
+.rstudio-themes-dark .windowframe .close:hover {
+   filter: invert(100%) brightness(150%);
+}
+.windowframe-exclusive .close {
    display: none;
 }
 
@@ -1636,6 +1667,31 @@ body.windows .toolbar {
    border-color: THEME_DARK_CONTROL_BORDER;
 }
 
+/* Assistant toggle button in the global toolbar */
+.assistantToggleButton,
+.assistantToggleButton.toolbarButtonLatchable {
+   border: 1px solid transparent;
+   border-radius: 4px;
+   height: 20px;
+}
+
+.assistantToggleButton .toolbarButtonLeftImage {
+   margin-top: 0;
+}
+
+.assistantToggleButton .toolbarButtonLabel {
+   margin-top: 2px;
+}
+
+.assistantToggleButton.toolbarButtonLatched {
+   border-color: #161E2E;
+}
+
+.rstudio-themes-dark .assistantToggleButton.toolbarButtonLatched {
+   border-color: #2C3440;
+   background-color: #3B4451;
+}
+
 .globalToolbar {
    height: 27px;
    z-index: 1;
@@ -1656,6 +1712,14 @@ body.windows .toolbar {
 
 .rstudio-themes-dark .header .toolbarButtonMenu .toolbarButtonInfoLabel {
    color: #DDD;
+}
+
+.restrictedModeIcon {
+   display: inline-flex;
+   align-items: center;
+   opacity: 0.7;
+   margin-right: 4px;
+   cursor: pointer;
 }
 
 .emptyProjectMenu .toolbarButtonRightImage {
@@ -1818,6 +1882,7 @@ body.windows table.webGlobalToolbar {
    height: 100%;
    border: 0;
    margin: 0;
+   padding: 0;
    outline: none;
    font-size: 10px;
    background-color: transparent;
@@ -1895,6 +1960,10 @@ td.environmentDataFrameCol {
    background-color: white;
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog .EditDialog {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
 .showFile {
    font-size: 12px;
    padding-left: 5px;
@@ -1922,15 +1991,15 @@ td.environmentDataFrameCol {
 
 .fileUploadPanel {
    width: 350px;
+   padding-left: 7px;
+   padding-right: 7px;
 }
 
 .fileUploadPanel .fileUploadLabel {
-   margin-left: 7px;
    margin-top: 6px;
 }
 
 .fileUploadPanel .fileUploadField {
-   margin-left: 7px;
    margin-top: 4px;
    margin-bottom: 8px;
 }
@@ -1939,6 +2008,14 @@ td.environmentDataFrameCol {
    border: 1px solid #BBB;
    padding: 5px;
    font-size: 11px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .fileUploadPanel .fileUploadTipLabel {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .fileUploadPanel input[type="file"] {
+   color-scheme: dark;
 }
 
 .fileList {
@@ -1990,7 +2067,7 @@ td.environmentDataFrameCol {
 .textBoxWithButton input[type=text] {
    position: relative;
    top: 1px;
-   height: 21px;
+   height: 25px;
    border: 1px solid #999;
 }
 
@@ -2060,7 +2137,10 @@ input[type="checkbox"] {
    vertical-align: middle;
 }
 
-.rstudio-themes-dark input[type="checkbox"] {
+.rstudio-themes-dark input[type="checkbox"],
+.macintosh .rstudio-themes-dark input[type="checkbox"],
+.linux .rstudio-themes-dark input[type="checkbox"],
+.windows-highdpi .rstudio-themes-dark input[type="checkbox"] {
    background: #d3d8dc;
    border-color: rgb(45,60,75);
 }
@@ -2170,6 +2250,10 @@ input[type="checkbox"]:checked:before {
    padding-right: 14px;
    padding-left: 14px;
    padding-bottom: 6px;
+}
+
+.dialogTabPanelNoTabs .gwt-TabLayoutPanelContent {
+   padding-top: 14px;
 }
 
 .dialogTabPanel .gwt-TabLayoutPanelTab:first-child {
@@ -2456,6 +2540,119 @@ input[type="checkbox"]:checked:before {
    padding-right: 10px;
 }
 
+.rstudio-theme-aware-dialog td.dialogContent {
+   padding-left: 14px;
+   padding-right: 14px;
+}
+
+/* Dark theme support for opt-in dialogs.
+   rstudio-themes-dark is added directly to the dialog element by setThemeAware(),
+   since GWT popups live outside #rstudio_container in the DOM. */
+.rstudio-themes-dark.rstudio-theme-aware-dialog {
+   background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTopCenter {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+   border-bottom-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .Caption {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="text"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="password"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="number"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog textarea {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   color-scheme: dark;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog select,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-ListBox {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog select option {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog select option:checked {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog select:focus option:checked {
+   background: THEME_DARKGREY_BODY_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .search input[type="text"] {
+   background: transparent;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   box-shadow: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button:active > table:first-child {
+   background: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button[disabled] .buttonContent {
+   color: #777;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog a {
+   color: #6cb4ee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog svg {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-lock-keyhole {
+   fill: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-trust-detail {
+   color: #888;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelTab {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelTab-selected {
+   background: THEME_DARKGREY_INACTIVE;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelContentContainer {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-HyperlinkLabel {
+   color: #abc;
+}
+
 .rstheme_minimizedWindowObject .left {
    background: none;
 }
@@ -2610,6 +2807,14 @@ input[type="checkbox"]:checked:before {
 
 .progressPanel {
 
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .progressPanel {
+   background-color: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .progressPanel canvas {
+   filter: invert(1);
 }
 
 .consoleClearButton {
@@ -2849,6 +3054,7 @@ body .rstudio-themes-alternate {
 
 .rstudio-themes-alternate .windowframe .minimize,
 .rstudio-themes-alternate .windowframe .maximize,
+.rstudio-themes-alternate .windowframe .close,
 .rstudio-themes-alternate .windowframe-maximized .maximize,
 .rstudio-themes-alternate .windowframe-exclusive .maximize,
 .rstudio-themes-alternate .minimizedWindow .minimize,
@@ -2858,6 +3064,7 @@ body .rstudio-themes-alternate {
 
 .rstudio-themes-alternate .windowframe .minimize:hover,
 .rstudio-themes-alternate .windowframe .maximize:hover,
+.rstudio-themes-alternate .windowframe .close:hover,
 .rstudio-themes-alternate .windowframe-maximized .maximize:hover,
 .rstudio-themes-alternate .windowframe-exclusive .maximize:hover,
 .rstudio-themes-alternate .minimizedWindow .minimize:hover,
@@ -2967,20 +3174,21 @@ body .rstudio-themes-alternate {
    background: #75AADB;
 }
 
-.gwt-TextBox, .gwt-ListBox {
+.gwt-TextBox, .gwt-PasswordTextBox, .gwt-ListBox {
 	border-radius: 4px;
 	border-width: 1px;
 	border-color: rgb(133, 133, 133);
 	border-style: solid;
 	font-size: 12px;
-	padding-left: 4px;
-	padding-right: 4px;
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 .gwt-ListBox {
 	min-height: 20px;
+	padding: 4px 6px;
 }
 
-.gwt-TextBox {
+.gwt-TextBox, .gwt-PasswordTextBox {
 	min-height: 16px;
 }

@@ -78,6 +78,12 @@ public:
 
    std::vector<std::string> loggerOverrides() const;
 
+   // Database trace logging - when enabled, logs SQL with parameter values at TRACE level
+   bool traceDbEnabled() const;
+
+   // Whether to show code locations for TRACE, DEBUG, and INFO messages
+   bool logCodeLocations() const;
+
    static FilePath defaultLogDirectory();
 
    FilePath getLogConfigFile();
@@ -102,6 +108,18 @@ private:
 };
 
 void forwardLogOptionsEnvVars(core::system::Options* pEnvironment);
+
+// Global database trace logging control
+// These are set based on the trace-db-enabled option in logging.conf
+// When enabled, SQL statements with parameter values are logged at TRACE level
+bool isDbTraceEnabled();
+void setDbTraceEnabled(bool enabled);
+
+// Global control for showing code locations in TRACE, DEBUG, and INFO messages
+// When disabled (default), these log levels omit the file/line location to reduce noise
+// When enabled, the full code location is included for easier debugging
+bool logCodeLocations();
+void setLogCodeLocations(bool enabled);
 
 } // namespace log
 } // namespace core

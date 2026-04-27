@@ -60,6 +60,11 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       Scheduler.get().scheduleDeferred(() -> hideMacHorizontalScrollbars());
    }
    
+   public Element getTableBody()
+   {
+      return getTableBodyElement();
+   }
+
    private void hideMacHorizontalScrollbars()
    {
       Element element = getElement();

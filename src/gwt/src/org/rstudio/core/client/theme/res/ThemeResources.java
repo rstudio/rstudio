@@ -91,6 +91,9 @@ public interface ThemeResources extends ClientBundle
    @Source("closeTabSelected_2x.png")
    ImageResource closeTab2x();
 
+   @Source("closeTabSelected_2x.png")
+   DataResource closePane2x();
+
    @Source("busyTab.gif")
    ImageResource busyTab();
 

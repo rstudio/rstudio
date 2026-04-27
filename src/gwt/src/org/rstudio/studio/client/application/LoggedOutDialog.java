@@ -53,6 +53,7 @@ public class LoggedOutDialog extends ModalDialogBase
    protected LoggedOutDialog() 
    {
       super(Roles.getAlertdialogRole());
+      setThemeAware(true);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
 

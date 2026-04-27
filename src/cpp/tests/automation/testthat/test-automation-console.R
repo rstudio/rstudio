@@ -10,19 +10,19 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.clear()
    
    lines <- c(
-      "✔ xxx \033[34myyy\033[39m xxx",
+      "\u2714 xxx \u001b[34myyy\u001b[39m xxx",
       "\r",
-      "✔ xxx \033[31myyy\033[39m zzz",
+      "\u2714 xxx \u001b[31myyy\u001b[39m zzz",
       "\n",
-      "✔ xxx \033[34myyy\033[39m xxx",
+      "\u2714 xxx \u001b[34myyy\u001b[39m xxx",
       "\r",
-      "✔ xxx \033[31myyy\033[39m zzz",
+      "\u2714 xxx \u001b[31myyy\u001b[39m zzz",
       "\n"
    )
    
    remote$console.executeExpr(cat(!!lines))
    output <- remote$console.getOutput()
-   expected <- c(" ✔ xxx yyy zzz ", " ✔ xxx yyy zzz ")
+   expected <- c(" \u2714 xxx yyy zzz ", " \u2714 xxx yyy zzz ")
    expect_equal(tail(output, 2L), expected)
    
 })
@@ -156,6 +156,7 @@ withr::defer(.rs.automation.deleteRemote())
       message("M1"); cat("O1\r"); message("M2")
    })
    
+   consoleOutputEl <- remote$js.querySelector("#rstudio_console_output")
    spanOutputs <- list()
    spanEls <- consoleOutputEl$querySelectorAll("span")
    for (i in seq_len(spanEls$length))

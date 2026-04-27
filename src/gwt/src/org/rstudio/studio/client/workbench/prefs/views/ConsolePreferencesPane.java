@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.LayoutGrid.TwoColumnLayoutGridBuilder;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -40,64 +42,72 @@ public class ConsolePreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
-      
+
       String version = session.getSessionInfo().getRVersionsInfo().getRVersion();
 
       consoleHighlightConditions_ = new SelectWidget(
             SelectWidget.ExternalLabel,
             false,
             prefs_.consoleHighlightConditions());
-      
+
       consoleColorMode_ = new SelectWidget(
             SelectWidget.ExternalLabel,
             false,
             prefs_.ansiConsoleMode());
-      
+
+      VerticalTabPanel panel = new VerticalTabPanel("console_prefs");
+
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
-      add(displayLabel);
-      add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
-      add(checkboxPref(prefs_.consoleSoftWrap()));
+      panel.add(displayLabel);
+      panel.add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
+      panel.add(checkboxPref(prefs_.consoleSoftWrap()));
 
       if (Version.compare(version, "4.0.0") >= 0)
       {
-         add(consoleHighlightConditions_);
+         panel.add(consoleHighlightConditions_);
       }
       else
       {
-         add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
+         panel.add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
       }
-      
+
       TwoColumnLayoutGridBuilder displayGridBuilder = new TwoColumnLayoutGridBuilder();
       displayGridBuilder.add(prefs_.consoleHighlightConditions().getTitle(), consoleHighlightConditions_);
       displayGridBuilder.add(constants_.consoleANSIEscapeCodesLabel(), consoleColorMode_);
       LayoutGrid displayGrid = displayGridBuilder.get();
       displayGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
-      add(displayGrid);
-      
+      panel.add(displayGrid);
+
       TwoColumnLayoutGridBuilder truncationGridBuilder = new TwoColumnLayoutGridBuilder();
       truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), numericPref(prefs_.consoleMaxLines()));
       truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), numericPref(prefs_.consoleLineLengthLimit()));
       LayoutGrid truncationGrid = truncationGridBuilder.get();
       truncationGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
-      add(truncationGrid);
-      
+      panel.add(truncationGrid);
+
       Label executionLabel = headerLabel(constants_.consoleExecutionLabel());
-      add(spacedBefore(executionLabel));
-      add(checkboxPref(constants_.consoleDiscardPendingConsoleInputOnErrorLabel(), prefs_.discardPendingConsoleInputOnError()));
-      
+      panel.add(spacedBefore(executionLabel));
+      panel.add(checkboxPref(constants_.consoleDiscardPendingConsoleInputOnErrorLabel(), prefs_.discardPendingConsoleInputOnError()));
+
       Label debuggingLabel = headerLabel(constants_.debuggingHeaderLabel());
-      add(spacedBefore(debuggingLabel));
-      add(debuggingLabel);
-      add(spaced(checkboxPref(
+      panel.add(spacedBefore(debuggingLabel));
+      panel.add(debuggingLabel);
+      panel.add(spaced(checkboxPref(
          constants_.debuggingExpandTracebacksLabel(),
          prefs_.autoExpandErrorTracebacks(),
          true /*defaultSpaced*/)));
 
       Label otherLabel = headerLabel(constants_.otherHeaderCaption());
-      add(spacedBefore(otherLabel));
-      add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
-      add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
-      add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
+      panel.add(spacedBefore(otherLabel));
+      panel.add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
+      panel.add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
+      panel.add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.consoleLabel(), false);
+      setTabPanelSize(tabPanel);
+      tabPanel.add(panel, constants_.consoleLabel(), panel.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
 
    @Override
@@ -126,20 +136,20 @@ public class ConsolePreferencesPane extends PreferencesPane
       RestartRequirement restartRequirement = super.onApply(prefs);
 
       prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
-      
+
       if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
          restartRequirement.setSessionRestartRequired(true);
       }
-      
+
       String highlight = consoleHighlightConditions_.getValue();
       if (prefs_.consoleHighlightConditions().getGlobalValue() != highlight)
       {
          prefs_.consoleHighlightConditions().setGlobalValue(highlight);
          restartRequirement.setRestartRequired();
       }
-      
+
       return restartRequirement;
    }
 

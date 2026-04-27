@@ -48,11 +48,13 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    {
       super(constants_.newProjectWizardCaption(),
             constants_.createProjectCaption(),
-            Roles.getDialogRole(), 
-            input, 
+            Roles.getDialogRole(),
+            input,
             createFirstPage(sessionInfo),
             operation);
-    
+
+      setThemeAware(true);
+
       sessionInfo_ = sessionInfo;
       allowOpenInNewWindow_ = allowOpenInNewWindow;
       

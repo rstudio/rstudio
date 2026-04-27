@@ -14,6 +14,7 @@
  */
 
 #include "SessionNodeTools.hpp"
+#include "SessionLogging.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -88,7 +89,14 @@ Error findNode(FilePath* pNodePath, const std::string& rOptionName)
          {
             *pNodePath = FilePath(nodePath);
             if (pNodePath->exists())
+            {
+               DLOG("Found node via R option '{}': '{}'.",
+                    rOptionName, pNodePath->getAbsolutePath());
                return Success();
+            }
+
+            WLOG("R option '{}' set to '{}', but path does not exist.",
+                 rOptionName, nodePath);
          }
       }
    }
@@ -97,11 +105,16 @@ Error findNode(FilePath* pNodePath, const std::string& rOptionName)
    if (!session::options().nodePath().isEmpty())
    {
       FilePath nodePath = session::options().nodePath();
+      DLOG("Checking admin-configured node path: '{}'.",
+           nodePath.getAbsolutePath());
+
       FilePath arm64NodePath;
 
       // on arm64 Mac, substitute the arm64-specific node binary
       if (findNodeMacArm64(nodePath, &arm64NodePath))
       {
+         DLOG("Substituted arm64 node path: '{}'.",
+              arm64NodePath.getAbsolutePath());
          nodePath = arm64NodePath;
       }
 
@@ -114,29 +127,42 @@ Error findNode(FilePath* pNodePath, const std::string& rOptionName)
             FilePath nodeExePath = nodePath.completeChildPath(suffix);
             if (nodeExePath.exists())
             {
+               DLOG("Found node in admin-configured directory: '{}'.",
+                    nodeExePath.getAbsolutePath());
                *pNodePath = nodeExePath;
                return Success();
             }
          }
 
+         WLOG("Admin-configured node directory '{}' does not contain a '{}' binary.",
+              nodePath.getAbsolutePath(), kNodeExe);
          return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
       }
       else if (nodePath.isRegularFile())
       {
+         DLOG("Found node at admin-configured path: '{}'.",
+              nodePath.getAbsolutePath());
          *pNodePath = nodePath;
          return Success();
       }
       else
       {
+         WLOG("Admin-configured node path '{}' does not exist.",
+              nodePath.getAbsolutePath());
          return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
       }
    }
 
    // Search PATH
+   DLOG("No admin-configured node path; searching PATH for '{}'.", kNodeExe);
    Error error = system::findProgramOnPath(kNodeExe, pNodePath);
    if (error)
+   {
+      WLOG("'{}' not found on PATH.", kNodeExe);
       return error;
+   }
 
+   DLOG("Found node on PATH: '{}'.", pNodePath->getAbsolutePath());
    return Success();
 }
 

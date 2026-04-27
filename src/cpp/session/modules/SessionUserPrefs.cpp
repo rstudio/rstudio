@@ -231,7 +231,7 @@ SEXP rs_clearUserPref(SEXP prefNameSEXP)
    Error error = userPrefs().clearValue(prefName);
    userPrefs().notifyClient(kUserPrefsUserLayer, prefName);
    module_context::events().onPreferencesSaved();
-   return error ? R_FalseValue : R_TrueValue;
+   return error ? Rf_ScalarLogical(FALSE) : Rf_ScalarLogical(TRUE);
 }
 
 SEXP rs_readApiPref(SEXP prefName)
@@ -275,6 +275,62 @@ SEXP rs_readProjectPref(SEXP prefNameSEXP)
    
    r::sexp::Protect protect;
    return r::sexp::create(*value, &protect);
+}
+
+SEXP rs_writeProjectPref(SEXP prefName, SEXP value)
+{
+   if (!projects::projectContext().hasProject())
+   {
+      r::exec::error("No project is currently open.");
+      return R_NilValue;
+   }
+
+   json::Value prefValue;
+
+   // extract name of preference to write
+   std::string pref = r::sexp::safeAsString(prefName, "");
+   if (pref.empty())
+   {
+      r::exec::error("No preference name supplied.");
+      return R_NilValue;
+   }
+
+   // extract value to write
+   Error error = r::json::jsonValueFromObject(value, &prefValue);
+   if (error)
+   {
+      r::exec::error("Unexpected value: " + error.getSummary());
+      return R_NilValue;
+   }
+
+   // if this corresponds to an existing preference, ensure type consistency
+   boost::optional<json::Value> previous = userPrefs().readValue(pref);
+   if (previous)
+   {
+      if ((*previous).getType() != prefValue.getType())
+      {
+         r::exec::error("Type mismatch: expected " +
+                  json::typeAsString((*previous).getType()) + "; got " +
+                  json::typeAsString(prefValue.getType()));
+         return R_NilValue;
+      }
+   }
+
+   // write the private project pref
+   error = rstudio::session::prefs::writeProjectPref(pref, prefValue);
+   if (error)
+   {
+      r::exec::error("Could not save project preference: " + error.asString());
+      return R_NilValue;
+   }
+
+   // notify the client
+   userPrefs().notifyClient(kUserPrefsProjectLayer, pref);
+
+   // let other modules know we've updated the prefs
+   module_context::events().onPreferencesSaved();
+
+   return R_NilValue;
 }
 
 SEXP rs_allPrefs()
@@ -413,6 +469,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_readUserState);
    RS_REGISTER_CALL_METHOD(rs_writeUserState);
    RS_REGISTER_CALL_METHOD(rs_readProjectPref);
+   RS_REGISTER_CALL_METHOD(rs_writeProjectPref);
    RS_REGISTER_CALL_METHOD(rs_allPrefs);
    RS_REGISTER_CALL_METHOD(rs_removePref);
 

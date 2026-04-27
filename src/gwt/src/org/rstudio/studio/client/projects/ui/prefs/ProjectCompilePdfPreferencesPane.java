@@ -66,6 +66,8 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       rootDoc_ = new RootDocumentChooser();
       nudgeRight(rootDoc_);
       add(rootDoc_);
+
+      wrapWithPanel("project_compile_pdf_prefs");
    }
 
    @Override

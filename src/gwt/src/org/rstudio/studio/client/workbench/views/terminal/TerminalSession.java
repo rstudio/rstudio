@@ -37,7 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -240,10 +240,10 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onConnected()
                {
-                  consoleProcess_.start(new ServerRequestCallback<Void>()
+                  consoleProcess_.start(new ServerRequestCallback<VoidResponse>()
                   {
                      @Override
-                     public void onResponseReceived(Void response)
+                     public void onResponseReceived(VoidResponse response)
                      {
                         connected_ = true;
                         connecting_ = false;
@@ -473,7 +473,7 @@ public class TerminalSession extends XTermWidget
             new VoidServerRequestCallback() {
 
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   sendUserInput();
                }
@@ -701,10 +701,10 @@ public class TerminalSession extends XTermWidget
 
       // Talk directly to the server; this will wake it up if suspended so
       // it can actually get rid of the process record.
-      server_.processInterrupt(getHandle(), new ServerRequestCallback<Void>()
+      server_.processInterrupt(getHandle(), new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             server_.processReap(getHandle(), new VoidServerRequestCallback());
             cleanupAfterTerminate();

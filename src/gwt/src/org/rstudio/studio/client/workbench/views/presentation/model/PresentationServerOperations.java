@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.presentation.model;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 public interface PresentationServerOperations extends RPubsServerOperations
 {
@@ -26,11 +26,11 @@ public interface PresentationServerOperations extends RPubsServerOperations
    void showHelpTopic(String what, String from, int type);
    
    void setWorkingDirectory(String path,
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
    
    void createStandalonePresentation(
                            String targetFile,
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
    
    void createDesktopViewInBrowserPresentation(
                            ServerRequestCallback<String> requestCallback);
@@ -39,21 +39,21 @@ public interface PresentationServerOperations extends RPubsServerOperations
                ServerRequestCallback<PresentationRPubsSource> requestCallback);
    
    void setPresentationSlideIndex(int index, 
-                              ServerRequestCallback<Void> requestCallback);
+                              ServerRequestCallback<VoidResponse> requestCallback);
    
    void presentationExecuteCode(String code,
-                                ServerRequestCallback<Void> requestCallback);
+                                ServerRequestCallback<VoidResponse> requestCallback);
    
    void createNewPresentation(String filePath,
-                              ServerRequestCallback<Void> requestCallback);
+                              ServerRequestCallback<VoidResponse> requestCallback);
    
    void showPresentationPane(String filePath,
-                             ServerRequestCallback<Void> requestCallback);
+                             ServerRequestCallback<VoidResponse> requestCallback);
    
-   void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
+   void closePresentationPane(ServerRequestCallback<VoidResponse> requestCallaback); 
    
    void tutorialQuizResponse(int slideIndex, int answer, boolean correct,
-                             ServerRequestCallback<Void> requestCallback);
+                             ServerRequestCallback<VoidResponse> requestCallback);
    
    void getSlideNavigationForFile(
                      String filePath,
@@ -64,6 +64,6 @@ public interface PresentationServerOperations extends RPubsServerOperations
                      String baseDir,
                      ServerRequestCallback<SlideNavigation> requestCallback);
    
-   void clearPresentationCache(ServerRequestCallback<Void> requestCallback);
+   void clearPresentationCache(ServerRequestCallback<VoidResponse> requestCallback);
    
 }

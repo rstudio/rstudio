@@ -2,6 +2,7 @@
     "$id": "https://rstudio.com/rstudio.preferences.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "RStudio User Preferences",
+    "$comment": "Preferences marked '\"local\": true' can be overridden at the project level and are stored in .Rproj.user (per-user). Preferences without a 'local' field are either global-only or stored in the shared .Rproj file.",
     "type": "object",
     "properties": {
         "run_rprofile_on_resume": {
@@ -1108,6 +1109,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".positai",
                 ".quartoignore",
                 ".r",
                 ".rbuildignore",
@@ -1193,6 +1195,12 @@
             "enum": ["default", "alternate"],
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
+        },
+        "use_dark_theme_modal_dialogs": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use dark theme modal dialogs",
+            "description": "Whether modal dialogs should use dark styling when a dark editor theme is active."
         },
         "git_diff_ignore_whitespace": {
             "type": "boolean",
@@ -1600,6 +1608,13 @@
             "title": "List of path components ignored by file monitor",
             "description": "List of path components; file monitor will ignore paths containing one or more of these components."
         },
+        "file_monitor_use_gitignore": {
+            "type": "boolean",
+            "default": true,
+            "local": true,
+            "title": "Use .gitignore for file monitoring",
+            "description": "When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing."
+        },
         "install_pkg_deps_individually": {
             "type": "boolean",
             "default": true,
@@ -1719,7 +1734,7 @@
             "default": true
         },
         "check_null_external_pointers": {
-            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "description": "(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.",
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
@@ -1771,7 +1786,7 @@
         "assistant": {
             "type": "string",
             "enum": ["none", "posit", "copilot"],
-            "enumReadable": ["(None)", "Posit Assistant", "GitHub Copilot"],
+            "enumReadable": ["(None)", "Posit AI Next Edit Suggestions", "GitHub Copilot"],
             "default": "posit",
             "title": "AI Assistant",
             "description": "Select which AI assistant to use for code suggestions and assistance."
@@ -1833,8 +1848,14 @@
         "assistant_show_messages": {
             "type": "boolean",
             "default": true,
-            "title": "Display account and billing messages from AI assistant",
-            "description": "When enabled, RStudio will show messages from the Posit AI assistant in a message box."
+            "title": "Display account and billing messages from Posit Assistant",
+            "description": "When enabled, RStudio will show messages from the Posit Assistant in a message box."
+        },
+        "assistant_toolbar_button_visible": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show Posit Assistant button in toolbar",
+            "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
         },
         "copilot_enabled": {
             "type": "boolean",

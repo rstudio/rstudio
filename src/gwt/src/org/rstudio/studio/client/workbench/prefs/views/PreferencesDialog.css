@@ -1,5 +1,9 @@
 
 @external gwt-CheckBox gwt-Label;
+@external rstudio-themes-dark, rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 
 @eval PANEL_CONTAINER_WIDTH org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidth();
 @eval PANEL_CONTAINER_HEIGHT org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerHeight();
@@ -96,4 +100,15 @@
 .userDictEditButton {
    margin-left: 8px !important;
    margin-top: 2px !important;
+}
+
+/* Dark theme ---- */
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .paneLayoutTable td.paneLayoutTable {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .themeInfobar {
+   border-color: THEME_DARKGREY_BORDER;
 }

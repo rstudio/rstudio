@@ -3,6 +3,7 @@
 
   <mime-type type="text/x-r-source">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-source"/>
     <comment>R Source File</comment>
     <glob pattern="*.R"/>
     <glob pattern="*.r"/>
@@ -10,28 +11,32 @@
 
   <mime-type type="text/x-r-doc">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-doc"/>
     <comment>R Documentation File</comment>
     <glob pattern="*.Rd"/>
     <glob pattern="*.rd"/>
   </mime-type>
 
- <mime-type type="text/x-r-sweave">
+  <mime-type type="text/x-r-sweave">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-sweave"/>
     <comment>R Sweave File</comment>
     <glob pattern="*.Rnw"/>
     <glob pattern="*.rnw"/>
     <glob pattern="*.Rtex"/>
     <glob pattern="*.rtex"/>
   </mime-type>
-  
+
   <mime-type type="text/x-quarto-markdown">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-quarto-markdown"/>
     <comment>Quarto Markdown File</comment>
     <glob pattern="*.qmd"/>
   </mime-type>
 
   <mime-type type="text/x-r-markdown">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-markdown"/>
     <comment>R Markdown File</comment>
     <glob pattern="*.Rmd"/>
     <glob pattern="*.rmd"/>
@@ -41,6 +46,7 @@
 
   <mime-type type="text/x-r-html">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-html"/>
     <comment>R HTML File</comment>
     <glob pattern="*.Rhtml"/>
     <glob pattern="*.rhtml"/>
@@ -48,12 +54,14 @@
 
   <mime-type type="text/x-r-presentation">
     <sub-class-of type="text/plain"/>
+    <icon name="text-x-r-presentation"/>
     <comment>R Presentation File</comment>
     <glob pattern="*.Rpres"/>
     <glob pattern="*.rpres"/>
   </mime-type>
 
   <mime-type type="application/x-r-data">
+    <icon name="application-x-r-data"/>
     <comment>R Data File</comment>
     <glob pattern="*.RData"/>
     <glob pattern="*.Rdata"/>
@@ -62,6 +70,7 @@
   </mime-type>
 
   <mime-type type="application/x-r-project">
+    <icon name="application-x-r-project"/>
     <comment>R Project</comment>
     <glob pattern="*.Rproj"/>
     <glob pattern="*.RProj"/>

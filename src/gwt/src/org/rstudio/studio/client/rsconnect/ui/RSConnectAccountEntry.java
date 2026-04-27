@@ -53,7 +53,8 @@ public class RSConnectAccountEntry extends Composite
       if (account == null)
          return;
       
-      DecorativeImage icon = new DecorativeImage(account.isShinyAppsAccount() ?
+      DecorativeImage icon = new DecorativeImage(
+            (account.isShinyAppsAccount() || account.isConnectCloudAccount()) ?
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconSmall2x()) :
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconSmall2x()));
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);

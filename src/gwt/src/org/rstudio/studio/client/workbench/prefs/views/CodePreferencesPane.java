@@ -84,7 +84,7 @@ public class CodePreferencesPane extends PreferencesPane
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
             prefs_.numSpacesForTab())));
-      tabWidth_.setWidth("36px");
+      tabWidth_.setWidth("48px");
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
@@ -106,7 +106,7 @@ public class CodePreferencesPane extends PreferencesPane
       editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), constants_.editorScrollMultiplierDesc(),
               1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
               prefs_.editorScrollMultiplier())));
-      editorScrollMultiplier_.setWidth("38px");
+      editorScrollMultiplier_.setWidth("60px");
 
       delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
          (Prefs.EnumValue) prefs_.surroundSelection(),

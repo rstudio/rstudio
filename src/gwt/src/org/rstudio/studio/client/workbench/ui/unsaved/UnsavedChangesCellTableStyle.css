@@ -76,3 +76,41 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
    margin: 30px;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableWidget {
+   background-color: THEME_DARKGREY_INACTIVE;
+   color: #eee;
+}
+
+/* Even, hovered, selected, and keyboard-selected rows share the even-row
+   color, mirroring the light-mode combined selector above. */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRow,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableHoveredRow,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableSelectedRow,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedRow {
+   background: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRowCell,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableHoveredRowCell,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableSelectedRowCell,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedRowCell,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedCell {
+   border-color: THEME_DARKGREY_INACTIVE;
+}
+
+/* Odd rows defined after the combined selector so they win for
+   odd+selected rows, preserving the alternating stripe. */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRow {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRowCell {
+   border-color: THEME_DARKGREY_MOST_INACTIVE;
+}
+

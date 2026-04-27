@@ -5,6 +5,9 @@
 @external ace_sb, ace_cursor, ace_hidden;
 
 @external rstudio-themes-dark-menus;
+@external rstudio-agent-input;
+@external rstudio-agent-output;
+@external rstudio-agent-error;
 @external js-focus-visible, focus-visible;
 
 @eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
@@ -190,4 +193,9 @@
    padding: 4px;
    font-style: italic;
    color: #888888;
+}
+
+/* Styling for agent-generated console output */
+.rstudio-agent-input {
+   font-style: italic;
 }

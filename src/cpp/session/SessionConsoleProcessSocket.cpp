@@ -19,8 +19,9 @@
 
 #include <boost/make_shared.hpp>
 
-#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include <core/http/URL.hpp>
 
 #include "http/SessionTcpIpHttpConnectionListener.hpp"
 
@@ -40,6 +41,16 @@ namespace {
 // rapid reseeding via srand(time) causes same "random" sequence to be
 // returned by rand; only an issue for unit tests, really
 bool s_didSeedRand = false;
+
+bool isLoopbackHost(const std::string& host)
+{
+   if (host == "localhost")
+      return true;
+
+   boost::system::error_code ec;
+   auto addr = boost::asio::ip::make_address(host, ec);
+   return !ec && addr.is_loopback();
+}
 
 } // anonymous namespace
 
@@ -126,6 +137,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
                boost::bind(&ConsoleProcessSocket::onClose, this, &*pwsServer_, _1));
       pwsServer_->set_open_handler(
                boost::bind(&ConsoleProcessSocket::onOpen, this, &*pwsServer_, _1));
+      pwsServer_->set_validate_handler(
+               boost::bind(&ConsoleProcessSocket::onValidate, this, &*pwsServer_, _1));
       pwsServer_->set_fail_handler(
             boost::bind(&ConsoleProcessSocket::onFail, this, &*pwsServer_, _1));
 
@@ -146,21 +159,17 @@ Error ConsoleProcessSocket::ensureServerRunning()
             }
             else
             {
-               // TODO (gary) can we just try ipv6 without sniffing, then do
-               // ipv4 if ipv6 fails?
-#if !defined(_WIN32) && !defined(__APPLE__)
-               if (core::FilePath("/proc/net/if_inet6").exists())
-               {
-                  // listen will fail without ipv6 support on the machine so we
-                  // only use it for machines with a ipv6 stack
-                  pwsServer_->listen(boost::asio::ip::tcp::v6(), port);
-               }
-               else
-#endif
-               {
-                  // no ipv6 support, fall back to ipv4
-                  pwsServer_->listen(boost::asio::ip::tcp::v4(), static_cast<uint16_t>(port));
-               }
+               // bind to IPv4 loopback only -- the terminal websocket should
+               // not be reachable from the network. in server mode the rserver
+               // proxy handles external connections, and in desktop mode only
+               // the local Electron client needs access.
+               //
+               // IPv4 loopback (127.0.0.1) is sufficient because:
+               // - desktop mode: the Electron client connects to ws://127.0.0.1
+               // - server mode: the GWT client uses the /p/ proxy path (not /p6/),
+               //   so rserver connects via "localhost" which resolves to 127.0.0.1
+               pwsServer_->listen(boost::asio::ip::address_v4::loopback(),
+                                  static_cast<uint16_t>(port));
             }
 
             pwsServer_->start_accept();
@@ -370,6 +379,66 @@ void ConsoleProcessSocket::onOpen(terminalServer* s, websocketpp::connection_hdl
    // notify the specific connection, if available
    if (details.connectionCallbacks_.onConnectionOpened)
       details.connectionCallbacks_.onConnectionOpened();
+}
+
+bool ConsoleProcessSocket::onValidate(terminalServer* s,
+                                      websocketpp::connection_hdl hdl)
+{
+   // reject connections whose URL path does not contain a terminal handle
+   std::string handle = getHandle(s, hdl);
+   if (handle.empty())
+   {
+      LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                          "with missing or invalid terminal handle in URL path");
+      return false;
+   }
+
+   // reject connections for terminal handles not registered via listen()
+   ConsoleProcessSocketConnectionDetails details = connections_.get(handle);
+   if (details.handle_.empty())
+   {
+      LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                          "for unregistered terminal handle: " + handle);
+      return false;
+   }
+
+   // in desktop mode, check the Origin header to prevent cross-site
+   // websocket hijacking (CSWSH); reject if the origin is not loopback.
+   // in server mode, the rserver proxy authenticates external connections
+   // so the Origin check is not needed there.
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      terminalServer::connection_ptr con = s->get_con_from_hdl(hdl);
+      std::string origin = con->get_request_header("Origin");
+
+      // reject empty Origin -- browser clients (including Electron) always
+      // send an Origin header on websocket upgrades per RFC 6455; a missing
+      // Origin is unexpected and should not bypass validation
+      if (origin.empty())
+      {
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with missing Origin header in desktop mode");
+         return false;
+      }
+
+      http::URL originUrl(origin);
+      if (!originUrl.isValid())
+      {
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with malformed Origin header: " + origin);
+         return false;
+      }
+
+      std::string host = originUrl.hostname();
+      if (!isLoopbackHost(host))
+      {
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with non-loopback origin: " + origin);
+         return false;
+      }
+   }
+
+   return true;
 }
 
 void ConsoleProcessSocket::onHttp(terminalServer* s, websocketpp::connection_hdl hdl)

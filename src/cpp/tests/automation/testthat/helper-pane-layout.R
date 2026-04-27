@@ -64,7 +64,7 @@
          }
       }
    }
-   return(FALSE)
+   stop(sprintf("Tab '%s' not found in quadrant '%s'", tabName, quadrantClass))
 }
 
 # Helper function to fetch the checked state of a list of tabs
@@ -75,6 +75,7 @@
    # Create a map of tab names to their checked state
    result <- logical(length(tabNames))
    names(result) <- tabNames
+   found <- logical(length(tabNames))
 
    # Process all labels once
    for (i in seq_len(length(labels))) {
@@ -90,11 +91,21 @@
                checkbox <- remote$js.querySelector(paste0("#", forAttr))
                if (!is.null(checkbox)) {
                   result[j] <- checkbox$checked
+                  found[j] <- TRUE
                   break  # Found the checkbox for this tab
                }
             }
          }
       }
+   }
+
+   missing <- tabNames[!found]
+   if (length(missing) > 0L) {
+      stop(sprintf(
+         "Tab(s) not found in quadrant '%s': %s",
+         quadrantClass,
+         paste(missing, collapse = ", ")
+      ))
    }
 
    return(result)

@@ -108,7 +108,9 @@ public class DummyGlobalDisplay extends GlobalDisplay
     }
 
     @Override
-    public void openRStudioLink(String linkName, boolean includeVersionInfo)
+    public void openRStudioLink(String linkName,
+                                 boolean includeVersionInfo,
+                                 String fragment)
     {
 
     }

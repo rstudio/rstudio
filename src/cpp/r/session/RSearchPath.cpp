@@ -126,9 +126,9 @@ Error save(const FilePath& statePath)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
    
-   for (SEXP envSEXP = ENCLOS(R_GlobalEnv);
+   for (SEXP envSEXP = r::sexp::getParentEnv(R_GlobalEnv);
         envSEXP != R_BaseEnv;
-        envSEXP = ENCLOS(envSEXP))
+        envSEXP = r::sexp::getParentEnv(envSEXP))
    {
       // screen out UserDefinedDatabase elements (attempting to persist
       // a UserDefinedDatabase caused mischief in at least one case (e.g. see
@@ -238,26 +238,26 @@ void repairSearchPath()
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
+      thisSEXP = r::sexp::getParentEnv(thisSEXP);
+
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;
-      
+
       std::string name = CHAR(STRING_ELT(nameSEXP, 0));
       if (name != "tools:rstudio")
          continue;
-      
+
       toolsSEXP = thisSEXP;
-      SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
+      r::sexp::sxpinfo::setEnclos(prevSEXP, r::sexp::getParentEnv(thisSEXP));
    }
    
    thisSEXP = R_GlobalEnv;
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
+      thisSEXP = r::sexp::getParentEnv(thisSEXP);
+
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;
@@ -265,8 +265,8 @@ void repairSearchPath()
       std::string name = CHAR(STRING_ELT(nameSEXP, 0));
       if (isBasePackage(name))
       {
-         SET_ENCLOS(prevSEXP, toolsSEXP);
-         SET_ENCLOS(toolsSEXP, thisSEXP);
+         r::sexp::sxpinfo::setEnclos(prevSEXP, toolsSEXP);
+         r::sexp::sxpinfo::setEnclos(toolsSEXP, thisSEXP);
          return;
       }
    }

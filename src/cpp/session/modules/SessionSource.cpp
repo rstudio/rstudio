@@ -45,6 +45,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RSourceIndex.hpp>
+#include <core/system/Locale.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Xdg.hpp>
@@ -58,7 +59,6 @@
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -378,7 +378,7 @@ Error openDocument(const json::JsonRpcRequest& request,
       if (type == "r_markdown" && encoding == "")
          encoding = "UTF-8";
       else
-         encoding = ::locale2charset(nullptr);
+         encoding = core::system::currentCharset();
    }
    
    FilePath documentPath = module_context::resolveAliasedPath(path);
@@ -793,6 +793,13 @@ Error formatDocumentImpl(
    std::string formatType = prefs::userPrefs().codeFormatter();
    if (formatType == kCodeFormatterNone)
    {
+      if (!prefs::userPrefs().useAirFormatter())
+      {
+         json::JsonRpcResponse response = callback();
+         continuation(Success(), &response);
+         return Success();
+      }
+
       std::string airExePath;
       Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
       if (error)
@@ -992,12 +999,12 @@ Error formatCode(
    };
    
    Error error;
-   
+
    std::string id, path, code;
    error = json::readParams(request.params, &id, &path, &code);
    if (error)
       return onError(error, ERROR_LOCATION);
-   
+
    // Resolve the document path if available
    FilePath documentPath;
    if (!path.empty())
@@ -1014,29 +1021,30 @@ Error formatCode(
    FilePath codeDir = data.codeDir;
    return formatDocumentImpl(codePath, continuation, [=]()
    {
+      // read from the tempfile we wrote
       std::string code;
       Error error = readStringFromFile(codePath, &code);
       if (error)
          LOG_ERROR(error);
-      
+
       // trim a final newline in the formatted selection
       if (boost::algorithm::ends_with(code, "\r\n"))
          code = code.substr(0, code.length() - 2);
       else if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
-      
+
       // add back in the indent we computed (only if air formatter was used)
       if (!indent.empty())
       {
          code = indent + code;
          boost::algorithm::replace_all(code, "\n", "\n" + indent);
       }
-      
+
       // Clean up the temporary directory
       Error removeError = codeDir.removeIfExists();
       if (removeError)
          LOG_ERROR(removeError);
-      
+
       json::JsonRpcResponse response;
       response.setResult(code);
       return response;

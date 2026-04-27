@@ -38,6 +38,17 @@ core::Error verifyRequestSignature(const std::string& rsaPublicKey,
                                    const core::http::Request& request,
                                    bool includeUsername = true);
 
+// Signs the X-RS-CSRF-Bypass header value and sets X-RS-CSRF-Bypass-Sig on the request.
+// No-op if X-RS-CSRF-Bypass is not present.
+core::Error signCSRFBypass(const std::string& rsaPrivateKey,
+                           core::http::Request& request);
+
+// Verifies the X-RS-CSRF-Bypass signature. Returns Success and sets pBypassInfo
+// if valid. Returns an error if the header is missing or the signature is invalid.
+core::Error verifyCSRFBypass(const std::string& rsaPublicKey,
+                             const core::http::Request& request,
+                             std::string* pBypassInfo);
+
 } // namespace sessions
 } // namespace server_core
 } // namespace rstudio

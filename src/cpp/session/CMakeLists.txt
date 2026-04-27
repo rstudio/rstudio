@@ -187,6 +187,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
+   modules/chat/ChatIntegrity.cpp
    modules/chat/ChatStaticFiles.cpp
    modules/SessionAssistant.cpp
    modules/SessionCodeSearch.cpp
@@ -213,9 +214,11 @@ set(SESSION_SOURCE_FILES
    modules/SessionHistory.cpp
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
+   modules/SessionLibGit2.cpp
    modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
+   modules/SessionLogging.cpp
    modules/SessionLSP.cpp
    modules/SessionMarkers.cpp
    modules/SessionNodeTools.cpp
@@ -255,6 +258,8 @@ set(SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
+   modules/SessionTrust.cpp
+   modules/SessionTrustOverlay.cpp
    modules/SessionUserPrefs.cpp
    modules/SessionUserPrefsMigration.cpp
    modules/build/SessionBuild.cpp
@@ -315,6 +320,7 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
    modules/rmarkdown/NotebookAlternateEngines.cpp
    modules/rmarkdown/NotebookCache.cpp
+   modules/rmarkdown/NotebookCacheRenderer.cpp
    modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
    modules/rmarkdown/NotebookChunkOptions.cpp
@@ -380,6 +386,7 @@ set(SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
+   projects/SessionProjectsOverlay.cpp
    "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
 )
 
@@ -509,6 +516,7 @@ include_directories(
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
+   ${LIBGIT2_SOURCE_DIR}/include
 )
 
 # link directories
@@ -564,6 +572,7 @@ set(SESSION_LIBRARIES
    rstudio-monitor
    rstudio-r
    rstudio-session-workers
+   libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
 

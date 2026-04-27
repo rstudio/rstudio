@@ -42,6 +42,7 @@ public class ClearAllDialog extends ModalDialogBase
                          final ProgressOperationWithInput<Boolean> okOperation)
    {
       super(Roles.getAlertdialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       numObjects_ = numObjects;
       

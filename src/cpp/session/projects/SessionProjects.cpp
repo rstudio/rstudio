@@ -14,6 +14,7 @@
  */
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/projects/SessionProjectsOverlay.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -23,7 +24,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
-#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 
@@ -33,6 +33,7 @@
 
 #include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
+#include "../modules/SessionTrust.hpp"
 
 using namespace rstudio::core;
 
@@ -241,7 +242,6 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
-   contextJson["quarto_capabilities"] = quarto::quartoCapabilities();
    contextJson["working_directory"] = module_context::createAliasedPath(
          r::session::utils::safeCurrentPath());
 
@@ -276,6 +276,39 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
 }
 
+Error addFirstRunDocsForTemplate(const FilePath& projectFilePath,
+                                 const json::Value& projectTemplateOptions)
+{
+   if (projectTemplateOptions.isNull() || !json::isType<json::Object>(projectTemplateOptions))
+      return Success();
+
+   json::Object descriptionJson;
+   Error error = json::readObject(projectTemplateOptions.getObject(),
+                                  "description", descriptionJson);
+   if (error)
+      return error;
+
+   json::Value openFilesJson = descriptionJson["open_files"];
+   if (openFilesJson.isNull())
+      return Success();
+
+   if (!openFilesJson.isArray())
+   {
+      LOG_WARNING_MESSAGE("Template 'open_files' field is not an array");
+      return Success();
+   }
+
+   json::Array openFiles = openFilesJson.getArray();
+   if (openFiles.isEmpty())
+      return Success();
+
+   return r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+         .addParam(openFiles)
+         .call();
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -292,6 +325,11 @@ Error createProject(const json::JsonRpcRequest& request,
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
+
+   FilePath projectDir = projectFilePath.getParent();
+   error = overlay::ensureProjectIdForPath(projectDir);
+   if (error)
+      LOG_ERROR(error);
 
    // new shiny or quarto project
    if (!newShinyAppJson.isNull())
@@ -356,6 +394,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
 
    std::string existingProjectFilePath;
+   FilePath resolvedProjectFilePath = projectFilePath;
    if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
    {
       // create the project file
@@ -365,13 +404,24 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      return Success();
+      FilePath projectDir = projectFilePath.getParent();
+      overlay::onCreateProject(projectDir);
    }
    else
    {
+      resolvedProjectFilePath = FilePath(existingProjectFilePath);
       pResponse->setResult(existingProjectFilePath);
-      return Success();
    }
+
+   // register first-run docs for the template now that the .Rproj file exists
+   error = addFirstRunDocsForTemplate(resolvedProjectFilePath, projectTemplateOptions);
+   if (error)
+   {
+      error.addProperty("project", resolvedProjectFilePath.getAbsolutePath());
+      LOG_ERROR(error);
+   }
+
+   return Success();
 }
 
 Error createProjectFile(const json::JsonRpcRequest& request,
@@ -616,6 +666,9 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
+   json::Object localPrefs = prefs::readLocalProjectPrefs();
+   optionsJson["local_prefs"] = localPrefs;
+   optionsJson["trust_status"] = modules::trust::projectTrustStatus();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -826,7 +879,9 @@ Error writeProjectConfig(const json::Object& configJson)
    error = writeProjectScratchPath(configJson);
    if (error)
       LOG_ERROR(error);
-   
+
+   overlay::onProjectConfigUpdate(existingConfig, config);
+
    return Success();
 }
 
@@ -844,12 +899,14 @@ Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson;
+   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson,
+      localPrefsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
                                        "vcs_options", &vcsOptionsJson,
                                        "build_options", &buildOptionsJson,
-                                       "assistant_options", &assistantOptionsJson);
+                                       "assistant_options", &assistantOptionsJson,
+                                       "local_prefs", &localPrefsJson);
    if (error)
       return error;
 
@@ -890,7 +947,35 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = s_projectContext.writeAssistantOptions(assistantOptions);
    if (error)
       LOG_ERROR(error);
-   
+
+   // write local project prefs
+   error = prefs::writeLocalProjectPrefs(localPrefsJson);
+   if (error)
+      LOG_ERROR(error);
+
+   // write trust status if provided
+   json::Object allOptions;
+   error = json::readParam(request.params, 0, &allOptions);
+   if (!error)
+   {
+      auto it = allOptions.find("trust_status");
+      if (it != allOptions.end() && json::isType<std::string>((*it).getValue()))
+      {
+         std::string trustStatus = (*it).getValue().getString();
+         FilePath directory = s_projectContext.directory();
+
+         if (trustStatus == modules::trust::kTrustStatusTrusted)
+            error = modules::trust::grantTrust(directory);
+         else if (trustStatus == modules::trust::kTrustStatusUntrusted)
+            error = modules::trust::revokeTrust(directory);
+         else if (trustStatus == modules::trust::kTrustStatusDefault)
+            error = modules::trust::resetTrust(directory);
+
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
    // notify modules
    module_context::events().onProjectOptionsUpdated();
 
@@ -1142,6 +1227,8 @@ void startup(const std::string& firstProjectPath)
       // for project sharing events
       s_projectId = options().sessionScope().projectId();
    }
+
+   overlay::onProjectStartup(s_projectContext, s_projectId);
 }
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)

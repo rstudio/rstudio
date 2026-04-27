@@ -196,8 +196,10 @@ class WorkbenchTabPanel
       if (areTabsIdentical(tabs))
          return;
 
+      clearing_ = true;
       tabPanel_.clear();
       tabs_.clear();
+      clearing_ = false;
 
       for (WorkbenchTab tab : tabs)
          add(tab);

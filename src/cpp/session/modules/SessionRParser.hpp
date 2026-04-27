@@ -907,8 +907,9 @@ public:
    bool symbolHasDefinitionInRange(const std::string& symbol,
                                    const Position& position) const
    {
-      for (SymbolRanges::const_iterator it = symbolRanges().begin();
-           it != symbolRanges().end();
+      const SymbolRanges& ranges = getRoot()->symbolRanges_;
+      for (SymbolRanges::const_iterator it = ranges.begin();
+           it != ranges.end();
            ++it)
       {
          if (it->first.contains(position) &&
@@ -968,38 +969,45 @@ public:
    {
       if (!definedSymbols_.count(symbolName))
          return false;
-      
+
       if (checkChildNodes && isSymbolUsedInChildNode(symbolName))
          return false;
-      
-      std::size_t definitionCount =
-            definedSymbols_[symbolName].size();
-      
-      std::size_t useCount = 0;
-      useCount += referencedSymbols_[symbolName].size();
-      if (checkNseCalls)
-         useCount += nseReferencedSymbols_[symbolName].size();
-      
-      // NOTE: We record a definition at the same position of 
-      // each reference as well, so a symbol is effectively defined
-      // but not used if there is only one definition, and one reference,
-      // and they both map to the same position.
-      if (definitionCount == 1 &&
-          useCount == 1)
+
+      // NOTE: We record a definition at the same position as
+      // each reference, so a symbol is effectively defined but
+      // not used if every reference position coincides with a
+      // definition position (i.e. the only "uses" are the
+      // definitions themselves).
+      const Positions& defnPositions = definedSymbols_[symbolName];
+      boost::container::flat_set<Position> defnSet(
+            defnPositions.begin(), defnPositions.end());
+
+      SymbolPositions::const_iterator refsIt =
+            referencedSymbols_.find(symbolName);
+      if (refsIt != referencedSymbols_.end())
       {
-         Position defnPos = definedSymbols_[symbolName][0];
-         Position usePos;
-         
-         if (referencedSymbols_[symbolName].size())
-            usePos = referencedSymbols_[symbolName][0];
-         else if (nseReferencedSymbols_[symbolName].size())
-            usePos = nseReferencedSymbols_[symbolName][0];
-         
-         return defnPos == usePos;
+         for (const Position& pos : refsIt->second)
+         {
+            if (!defnSet.count(pos))
+               return false;
+         }
       }
-      
-      return false;
-      
+
+      if (checkNseCalls)
+      {
+         SymbolPositions::const_iterator nseIt =
+               nseReferencedSymbols_.find(symbolName);
+         if (nseIt != nseReferencedSymbols_.end())
+         {
+            for (const Position& pos : nseIt->second)
+            {
+               if (!defnSet.count(pos))
+                  return false;
+            }
+         }
+      }
+
+      return true;
    }
    
    std::string suggestSimilarSymbolFor(const ParseItem& item) const
@@ -1035,7 +1043,7 @@ public:
          const Position& end)
    {
       core::algorithm::insert(
-            symbolRanges()[Range(begin, end)],
+            getRoot()->symbolRanges_[Range(begin, end)],
             symbols.begin(),
             symbols.end());
    }
@@ -1076,11 +1084,7 @@ private:
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
    
    typedef std::map<Range, std::set<std::string> > SymbolRanges;
-   static SymbolRanges& symbolRanges()
-   {
-      static SymbolRanges instance;
-      return instance;
-   }
+   SymbolRanges symbolRanges_;
 };
 
 class ParseStatus
@@ -1489,13 +1493,6 @@ private:
    // this should be the case but should attempt to enforce
    // this.
    Stack<RToken> bracketStack_;
-   
-   // NOTE: This is kind of a hack based on the fact that only
-   // function scopes are parsed as explicit scopes; this is an
-   // alternative mechanism to make symbols available within
-   // given ranges.
-   typedef std::map< Range, std::set<std::string> > SymbolRanges;
-   SymbolRanges symbolRanges_;
    
    FilePath filePath_;
 };

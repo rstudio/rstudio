@@ -91,6 +91,90 @@ if(RSTUDIO_INSTALL_FREEDESKTOP)
          DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
    install(FILES ${RSTUDIO_ICONS_256}/application-x-r-project.png
          DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .R icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-source.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-source.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-source.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-source.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-source.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .Rd icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-doc.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-doc.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-doc.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-doc.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-doc.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .Rnw/.Rtex icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-sweave.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-sweave.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-sweave.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-sweave.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-sweave.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .qmd icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-quarto-markdown.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-quarto-markdown.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-quarto-markdown.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-quarto-markdown.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-quarto-markdown.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .Rmd icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-markdown.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-markdown.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-markdown.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-markdown.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-markdown.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .Rhtml icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-html.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-html.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-html.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-html.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-html.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
+   # .Rpres icon
+   install(FILES ${RSTUDIO_ICONS_16}/text-x-r-presentation.png
+         DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/text-x-r-presentation.png
+         DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/text-x-r-presentation.png
+         DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/text-x-r-presentation.png
+         DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/text-x-r-presentation.png
+         DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
 endif()
 
 if(APPLE)

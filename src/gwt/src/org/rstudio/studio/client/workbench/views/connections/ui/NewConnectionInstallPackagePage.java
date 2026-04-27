@@ -26,7 +26,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -83,10 +83,10 @@ public class NewConnectionInstallPackagePage
                @Override
                public void execute()
                {
-                  server_.connectionAddPackage(info_.getPackage(), new ServerRequestCallback<Void>()
+                  server_.connectionAddPackage(info_.getPackage(), new ServerRequestCallback<VoidResponse>()
                   {
                      @Override
-                     public void onResponseReceived(Void empty)
+                     public void onResponseReceived(VoidResponse empty)
                      {
                         wizard.closeDialog();
                         

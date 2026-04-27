@@ -3,6 +3,7 @@
 build_*/
 build-*/
 *-build/
+!src/node/desktop/src/assets/whats-new/developer-build/
 *_build/
 *-build-*/
 *_build_*/
@@ -55,6 +56,10 @@ venv/
 
 .claude/settings.local.json
 .claude/skills/*.local/
+.claude/worktrees/
+docs/superpowers
+.superpowers/
+.positai/
 AGENTS.md
 GEMINI.md
 spec/

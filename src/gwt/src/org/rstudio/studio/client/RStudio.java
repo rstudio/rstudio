@@ -63,6 +63,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorResources;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarResources;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatellite;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
@@ -341,6 +342,12 @@ public class RStudio implements EntryPoint
       else if (PlumberAPISatellite.NAME.equals(view))
       {
          RStudioGinjector.INSTANCE.getPlumberAPISatellite().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
+      else if (ChatSatellite.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getChatSatellite().go(
                RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }

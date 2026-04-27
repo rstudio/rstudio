@@ -471,9 +471,9 @@ describe('FilePath', () => {
     it('createDirectory should succeed if directory in FilePath already exists', async () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
-      let result = await fp.createDirectory();
+      await fp.createDirectory();
       assert.isTrue(await fp.existsAsync());
-      result = await fp.createDirectory();
+      const result = await fp.createDirectory();
       assert(isSuccessful(result));
       assert.isTrue(await fp.existsAsync());
       await fsPromises.rmdir(target);

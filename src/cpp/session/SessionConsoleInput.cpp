@@ -36,6 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
+#include <r/session/RBusy.hpp>
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
 
@@ -79,31 +80,6 @@ void setSessionExecuting(bool executing)
    END_LOCK_MUTEX
 }
 
-
-void setExecuting(bool executing)
-{
-   if (s_rProcessingInput == static_cast<int>(executing))
-      return;
-
-   // Executing also prevents suspension
-   suspend::checkBlockingOp(executing, suspend::kExecuting);
-
-   s_rProcessingInput = executing;
-
-   // When the session starts executing the first time, update its 'executing' on the file system
-   // to notify the homepage the session is busy.
-   //
-   // When the session stops executing, don't immediately update that state to avoid lots of repeated writes
-   // at a rate that's not useful and particularly harmful in nfs replicated file systems that seem to impose
-   // 250ms of latency for this type of op.
-
-   // Instead, updateSessionExecuting is called periodically to resync the file system state to the in memory
-   // state, it should always be clearing the state as we always update the 0 to 1 transitions immediately.
-   if (executing && s_sessionExecuting != static_cast<int>(executing))
-   {
-      setSessionExecuting(executing);
-   }
-}
 
 void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
 {
@@ -149,10 +125,40 @@ bool canSuspend(const std::string& prompt)
 
 } // anonymous namespace
 
+void setExecuting(bool executing)
+{
+   if (s_rProcessingInput == static_cast<int>(executing))
+      return;
+
+   // Executing also prevents suspension
+   suspend::checkBlockingOp(executing, suspend::kExecuting);
+
+   s_rProcessingInput = executing;
+
+   // When the session starts executing the first time, update its 'executing' on the file system
+   // to notify the homepage the session is busy.
+   //
+   // When the session stops executing, don't immediately update that state to avoid lots of repeated writes
+   // at a rate that's not useful and particularly harmful in nfs replicated file systems that seem to impose
+   // 250ms of latency for this type of op.
+
+   // Instead, updateSessionExecuting is called periodically to resync the file system state to the in memory
+   // state, it should always be clearing the state as we always update the 0 to 1 transitions immediately.
+   if (executing && s_sessionExecuting != static_cast<int>(executing))
+   {
+      setSessionExecuting(executing);
+   }
+}
+
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
-   // save the last prompt (for re-issuing)
-   s_lastPrompt = prompt;
+   // save the last prompt for re-issuing, but only when R is at the
+   // top-level REPL. mid-execution prompts (e.g. readline, browser)
+   // should not overwrite the saved prompt, since reissueLastConsolePrompt
+   // is called after code execution completes and should restore the
+   // top-level prompt, not a transient one.
+   if (!r::session::isBusy())
+      s_lastPrompt = prompt;
 
    // enque the event
    json::Object data;
@@ -162,7 +168,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
       prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
-   
+   data["busy"] = r::session::isBusy();
+
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
    
@@ -435,6 +442,17 @@ bool rConsoleRead(const std::string& prompt,
       module_context::events().onConsoleInput(pConsoleInput->text);
    }
 
+   // notify the client that console input has been received (including
+   // cancelled input, since consumers may need to dismiss UI affordances
+   // shown while waiting for input)
+   if (init::isSessionInitialized())
+   {
+      json::Object data;
+      data["history"] = addToHistory;
+      ClientEvent event(client_events::kConsoleReadCompleted, data);
+      clientEventQueue().add(event);
+   }
+
    // we are about to return input to r so set the flag indicating that state
    setExecuting(true);
 
@@ -448,7 +466,11 @@ bool rConsoleRead(const std::string& prompt,
 
    if (!pConsoleInput->isNoEcho()) 
    {
-      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = pConsoleInput->console;
+      promptData[kConsoleAgent] = false;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
       clientEventQueue().add(promptEvent);
       enqueueConsoleInput(*pConsoleInput);
    }

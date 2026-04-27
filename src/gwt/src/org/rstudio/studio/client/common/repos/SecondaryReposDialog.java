@@ -62,6 +62,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    {
       super(constants_.secondaryReposDialog(),
             Roles.getDialogRole(), operation);
+      setThemeAware(true);
 
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;

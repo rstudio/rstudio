@@ -32,6 +32,7 @@ public class RSConnectCloudDialog extends ModalDialog<NewRSConnectAccountResult>
    {
       super(constants_.connectingShinyAppsAccount(), Roles.getDialogRole(), operation, cancelOperation);
       setWidth("400px");
+      setThemeAware(true);
    }
 
    @Override

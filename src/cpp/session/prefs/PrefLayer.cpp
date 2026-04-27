@@ -112,21 +112,18 @@ Error PrefLayer::writePrefs(const core::json::Object &prefs)
    return systemError(boost::system::errc::function_not_supported, ERROR_LOCATION);
 }
 
-Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile, 
-                                   const core::FilePath& schemaFile)
+Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
+                                   const core::FilePath& schemaFile,
+                                   core::json::Object* pOutPrefs)
 {
+   // Start with empty output
+   *pOutPrefs = json::Object();
+
    json::Value val;
    std::string contents;
    Error error = readStringFromFile(prefsFile, &contents);
    if (error || contents.empty())
    {
-      // No prefs file or an empty one; use an empty cache
-      RECURSIVE_LOCK_MUTEX(mutex_)
-      {
-         cache_ = boost::make_shared<json::Object>();
-      }
-      END_LOCK_MUTEX
-
       if (error && !isNotFoundError(error))
       {
          // If we hit an unexpected error (e.g. permission denied), it's still not fatal (we can live
@@ -139,7 +136,7 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
    error = val.parse(contents);
    if (error)
    {
-      // Couldn't parse prefs JSON; use empty cache
+      // Couldn't parse prefs JSON
       error = prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
    }
    else if (val.isObject())
@@ -161,18 +158,14 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
             {
                // We made the prefs fit the schema, but had to discard some values to make it work.
                // Log a warning.
-               LOG_WARNING_MESSAGE("Invalid values found in " + 
-                  prefsFile.getAbsolutePath() + ": " + 
+               LOG_WARNING_MESSAGE("Invalid values found in " +
+                  prefsFile.getAbsolutePath() + ": " +
                   algorithm::join(violations, ", "));
             }
          }
       }
-      // Successful parse of valid prefs object
-      RECURSIVE_LOCK_MUTEX(mutex_)
-      {
-         cache_ = boost::make_shared<json::Object>(val.getObject());
-      }
-      END_LOCK_MUTEX
+      // Populate output with the parsed (and possibly coerced) object
+      *pOutPrefs = val.getObject();
    }
    else
    {
@@ -182,19 +175,6 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
          static_cast<int>(PrefErrorCode::LOAD_ERROR),
          "Invalid value while parsing preferences: " + val.write(),
          ERROR_LOCATION);
-   }
-
-   // If there was an error and no cache yet, create an empty one as a convenience 
-   if (error)
-   {
-      RECURSIVE_LOCK_MUTEX(mutex_)
-      {
-         if (!cache_)
-         {
-            cache_ = boost::make_shared<json::Object>();
-         }
-      }
-      END_LOCK_MUTEX
    }
 
    return error;

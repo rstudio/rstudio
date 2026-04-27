@@ -44,7 +44,16 @@ public:
       prefsFile_ = core::system::xdg::userConfigDir().completePath(kApiPrefsFile);
 
       // Load prefs; there's no schema for these prefs since API users can write any prefs they like
-      return loadPrefsFromFile(prefsFile_, core::FilePath());
+      json::Object prefs;
+      Error error = loadPrefsFromFile(prefsFile_, core::FilePath(), &prefs);
+
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         cache_ = boost::make_shared<json::Object>(std::move(prefs));
+      }
+      END_LOCK_MUTEX
+
+      return error;
    }
 
    core::Error writePrefs(const core::json::Object &prefs)

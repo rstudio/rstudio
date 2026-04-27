@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include <boost/format.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -40,6 +41,7 @@
 #include <session/prefs/UserState.hpp>
 
 #include "SessionProjectFirstRun.hpp"
+#include "../modules/SessionLibGit2.hpp"
 
 #define kStorageFolder "projects"
 
@@ -418,8 +420,20 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
 
+      const char * const kIgnorePositai = R"(^\.positai$)";
+      const char * const kIgnoreClaude = R"(^\.claude$)";
+
+      // check if the AI assistant is active (admin + user level)
+      bool assistantActive = module_context::isPositAssistantEnabled();
+
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
+
+      if (assistantActive)
+      {
+         ignoreLines += kIgnorePositai + newLine;
+         ignoreLines += kIgnoreClaude + newLine;
+      }
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -465,6 +479,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
+         bool hasPositai = !assistantActive || strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = !assistantActive || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -476,6 +492,10 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
+         if (!hasPositai)
+            strIgnore += kIgnorePositai + newLine;
+         if (!hasClaude)
+            strIgnore += kIgnoreClaude + newLine;
 
          if (session::options().packageOutputInPackageFolder())
          {
@@ -504,7 +524,7 @@ void ProjectContext::augmentRbuildignore()
             }
          }
 
-         if (hasRProj && hasRProjUser && hasAllPackageExclusions)
+         if (hasRProj && hasRProjUser && hasPositai && hasClaude && hasAllPackageExclusions)
             return;
 
          error = core::writeStringToFile(rbuildIgnorePath,
@@ -514,6 +534,13 @@ void ProjectContext::augmentRbuildignore()
             LOG_ERROR(error);
       }
    }
+}
+
+void ProjectContext::onUserPrefsChanged(const std::string& layer,
+                                        const std::string& pref)
+{
+   if (pref == kAssistant || pref == kChatProvider)
+      augmentRbuildignore();
 }
 
 SEXP rs_getProjectDirectory()
@@ -594,6 +621,10 @@ Error ProjectContext::initialize()
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
+      // re-augment .Rbuildignore when assistant prefs change
+      prefs::userPrefs().onChanged.connect(
+                   boost::bind(&ProjectContext::onUserPrefsChanged, this, _1, _2));
+
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)
       {
@@ -654,6 +685,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // python virtual environments
       "/virtualenv/",
       "/venv/",
+
+      // python bytecode cache
+      "/__pycache__/",
       
       // mostly for internal use
       "/RStudio.app/",
@@ -723,6 +757,21 @@ void ProjectContext::onDeferredInit(bool newSession)
    FileMonitorFilterContext context;
    context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
    context.ignoredComponents = fileMonitorIgnoredComponents();
+
+   // Initialize gitignore support. The Git object (and its underlying
+   // git_repository handle) is kept alive for the lifetime of the file
+   // monitor. This is safe because libgit2 uses an internal attribute
+   // cache that checks .gitignore file timestamps and reloads when they
+   // change, so updated rules are picked up without re-opening the repo.
+   //
+   // NOTE: git_repository objects are not thread-safe for concurrent access.
+   // This is fine here because the file monitor filter callback is invoked
+   // from a single thread.
+   if (prefs::userPrefs().fileMonitorUseGitignore())
+   {
+      using modules::libgit2::Git;
+      context.pGit = boost::make_shared<Git>(directory());
+   }
 
    core::system::file_monitor::registerMonitor(
          directory(),
@@ -814,6 +863,20 @@ bool ProjectContext::fileMonitorFilter(
    for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
+
+   // Check gitignore rules for directories only. The primary goal is to
+   // exclude build directories (build/, node_modules/, _site/, etc.) from
+   // the file monitor and code search index. Individual gitignored files
+   // (e.g. .R files generated from .R.in) are still indexed so they
+   // remain discoverable via Go to File/Function.
+   if (fileInfo.isDirectory() && context.pGit && context.pGit->isOpen())
+   {
+      // Pass the absolute path directly; libgit2's git_ignore_path_is_ignored
+      // accepts absolute paths and internally computes the workdir-relative
+      // path. This correctly handles projects nested inside a larger git repo.
+      if (context.pGit->isIgnored(path))
+         return false;
+   }
 
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }

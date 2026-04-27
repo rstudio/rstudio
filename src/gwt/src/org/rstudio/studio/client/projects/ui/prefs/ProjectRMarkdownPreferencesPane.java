@@ -112,6 +112,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       
       zoteroLibs_ = new ZoteroLibrariesWidget(zoteroServer, true);
       add(zoteroLibs_);
+
+      wrapWithPanel("project_rmarkdown_prefs");
    }
 
    @Override

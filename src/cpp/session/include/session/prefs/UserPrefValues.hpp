@@ -20,6 +20,8 @@
 #ifndef SESSION_USER_PREF_VALUES_HPP
 #define SESSION_USER_PREF_VALUES_HPP
 
+#include <set>
+
 #include <session/prefs/Preferences.hpp>
 
 namespace rstudio {
@@ -306,6 +308,7 @@ namespace prefs {
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
+#define kUseDarkThemeModalDialogs "use_dark_theme_modal_dialogs"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
@@ -401,6 +404,7 @@ namespace prefs {
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
+#define kFileMonitorUseGitignore "file_monitor_use_gitignore"
 #define kInstallPkgDepsIndividually "install_pkg_deps_individually"
 #define kGraphicsBackend "graphics_backend"
 #define kGraphicsBackendDefault "default"
@@ -456,6 +460,7 @@ namespace prefs {
 #define kAssistantNesEnabled "assistant_nes_enabled"
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
+#define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -492,6 +497,7 @@ class UserPrefValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   static std::set<std::string> localProjectPrefs();
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */
@@ -1519,6 +1525,12 @@ public:
    core::Error setGlobalTheme(std::string val);
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   bool useDarkThemeModalDialogs();
+   core::Error setUseDarkThemeModalDialogs(bool val);
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    bool gitDiffIgnoreWhitespace();
@@ -1897,6 +1909,12 @@ public:
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
 
    /**
+    * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
+    */
+   bool fileMonitorUseGitignore();
+   core::Error setFileMonitorUseGitignore(bool val);
+
+   /**
     * Whether to install R package dependencies one at a time.
     */
    bool installPkgDepsIndividually();
@@ -1987,7 +2005,7 @@ public:
    core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    bool checkNullExternalPointers();
    core::Error setCheckNullExternalPointers(bool val);
@@ -2083,10 +2101,16 @@ public:
    core::Error setAssistantNesAutoshow(bool val);
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
    bool assistantShowMessages();
    core::Error setAssistantShowMessages(bool val);
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   bool assistantToolbarButtonVisible();
+   core::Error setAssistantToolbarButtonVisible(bool val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

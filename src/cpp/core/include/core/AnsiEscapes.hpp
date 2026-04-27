@@ -38,6 +38,7 @@
 #define kAnsiEscapeGroupStartError    "\033G1;"
 #define kAnsiEscapeGroupStartWarning  "\033G2;"
 #define kAnsiEscapeGroupStartMessage  "\033G3;"
+#define kAnsiEscapeGroupStartAgent    "\033G4;"
 #define kAnsiEscapeGroupEnd           "\033g"
 
 

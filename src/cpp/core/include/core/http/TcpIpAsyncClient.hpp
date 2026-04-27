@@ -92,7 +92,7 @@ private:
 
    virtual std::string getDefaultHostHeader()
    {
-      return address_ + ":" + port_;
+      return URL::formatHostPort(address_, port_);
    }
 
    virtual void addErrorProperties(Error& error)

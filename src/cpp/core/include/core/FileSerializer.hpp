@@ -304,6 +304,12 @@ Error writeStringToFile(const core::FilePath& filePath,
                         int maxOpenRetrySeconds = 0,
                         bool logError = true);
 
+// Writes a string to a file atomically by first writing to a temporary file
+// in the same directory and then renaming it into place.
+Error writeStringToFileAtomic(const core::FilePath& filePath,
+                              const std::string& str,
+                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough);
+
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,

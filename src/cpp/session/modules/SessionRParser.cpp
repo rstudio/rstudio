@@ -196,7 +196,9 @@ private:
    void addNseFunction(const std::string& name,
                        const std::string& ns)
    {
-      add(r::sexp::findFunction(name, ns), true);
+      SEXP fnSEXP = r::sexp::findFunction(name, ns);
+      if (fnSEXP != nullptr)
+         add(fnSEXP, true);
    }
    
    uintptr_t address(SEXP objectSEXP)
@@ -223,14 +225,14 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
    
    if (canOpenArgumentList(cursor))
       if (!cursor.moveToPreviousSignificantToken())
-         return R_UnboundValue;
+         return nullptr;
    
    if (pCacheable)
       *pCacheable = true;
    
    // Attempt to resolve (potentially evaluate) the symbol, or statement,
    // forming the function call.
-   SEXP symbolSEXP = R_UnboundValue;
+   SEXP symbolSEXP = nullptr;
    
    if (cursor.isAssignmentCall())
    {
@@ -239,7 +241,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       // expressions into the associated `foo<-`(x, bar) call. By
       // not resolving a function in these situations we simply avoid
       // linting such calls.
-      return R_UnboundValue;
+      return nullptr;
    }
    else if (cursor.isSimpleCall())
    {
@@ -266,7 +268,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
             ? r::sexp::asNamespace(package)
             : r::sexp::findNamespace(package);
  
-      if (TYPEOF(namespaceSEXP) == ENVSXP)
+      if (namespaceSEXP != nullptr && TYPEOF(namespaceSEXP) == ENVSXP)
       {
          DEBUG("Resolving: '" << package << ":::" << symbol << "'");
       
@@ -299,7 +301,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       
       // Don't evaluate nested function calls.
       if (call.find('(') != std::string::npos)
-         return R_UnboundValue;
+         return nullptr;
       
       // avoid output leaking to console
       r::session::utils::SuppressOutputInScope scope;
@@ -308,16 +310,17 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       if (error)
       {
          DEBUG("- Failed to evaluate call '" << call << "'");
-         return R_UnboundValue;
+         return nullptr;
       }
       
       if (functionsOnly && !Rf_isFunction(symbolSEXP))
-         return R_UnboundValue;
+         return nullptr;
    }
    
    // protect the discovered symbol here, just in case it was produced
    // by an active binding
-   pProtect->add(symbolSEXP);
+   if (symbolSEXP != nullptr)
+      pProtect->add(symbolSEXP);
    
    return symbolSEXP;
 }
@@ -468,7 +471,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    bool cacheable = true;
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect, &cacheable);
-   if (symbolSEXP == R_UnboundValue)
+   if (symbolSEXP == nullptr)
       return false;
    
    NSEDatabase& nseDb = nseDatabase();
@@ -836,7 +839,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    // the symbol on the search path.
    r::sexp::Protect protect;
    SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect);
-   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+   if (functionSEXP == nullptr || !Rf_isFunction(functionSEXP))
    {
       DEBUG("***** Function definition is not available on search path; giving up");
       return FunctionInformation();
@@ -926,19 +929,34 @@ public:
 
          // For a native R style pipe |>, this is only true if we see a '_' at the top level
 
-         bool usesTopLevelPlaceholder;
+         bool usesTopLevelPlaceholder = false;
          if (prevToken.contentEquals(L"|>"))
-            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, "_");
-         else
-            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, ".");
-         if (!usesTopLevelPlaceholder)
          {
+            // For the native pipe |>, the _ placeholder is only
+            // valid as the value of a named argument.
             for (auto&& item : namedArguments)
             {
-               if (item.second == ".")
+               if (item.second == "_")
                {
                   usesTopLevelPlaceholder = true;
                   break;
+               }
+            }
+         }
+         else
+         {
+            // For magrittr's %>%, the . placeholder can appear
+            // as either an unnamed or named argument value.
+            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, ".");
+            if (!usesTopLevelPlaceholder)
+            {
+               for (auto&& item : namedArguments)
+               {
+                  if (item.second == ".")
+                  {
+                     usesTopLevelPlaceholder = true;
+                     break;
+                  }
                }
             }
          }
@@ -1040,8 +1058,12 @@ public:
          std::size_t formalIndex = formalIndices[index];
          std::string formalName = formalNames[formalIndex];
          DEBUG("-- Adding positional match: " << formalName);
-         
+
          matchedCall[formalName] = argument;
+
+         // Track matched indices so that formalIndices can be
+         // trimmed below, consistent with sections 1 and 2.
+         matchedIndices.push_back(formalIndex);
          index++;
       }
       
@@ -1440,7 +1462,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
                                       RTokenCursor& clone,
                                       ParseStatus& status)
 {
-   std::size_t braceBalance = 0;
+   int braceBalance = 0;
    std::wstring symbol = startCursor.content();
    
    do
@@ -1623,7 +1645,7 @@ void handleIdentifier(RTokenCursor& cursor,
                break;
             }
             
-            if (node->getReferencedSymbols().count(symbolName))
+            if (node->getDefinedSymbols().count(symbolName))
             {
                break;
             }
@@ -1659,7 +1681,7 @@ ParseResults parse(const FilePath& filePath,
                    const std::wstring& rCode,
                    const ParseOptions& parseOptions)
 {
-   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
+   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::wstring::npos)
       return ParseResults();
    
    RTokens rTokens(rCode, RTokens::StripComments);
@@ -1725,7 +1747,7 @@ bool closesArgumentList(const RTokenCursor& cursor,
    case ParseStatus::ParseStateParenArgumentList:
       return cursor.isType(RToken::RPAREN);
    case ParseStatus::ParseStateSingleBracketArgumentList:
-      return cursor.isType(RToken::RBRACE);
+      return cursor.isType(RToken::RBRACKET);
    case ParseStatus::ParseStateDoubleBracketArgumentList:
       return cursor.isType(RToken::RDBRACKET);
    default:
@@ -2199,19 +2221,19 @@ void validateGlueCallImpl(RTokenCursor cursor,
          
       case EmbeddedString:
       {
+         // Skip escapes.
+         if (value[it] == '\\')
+         {
+            it += 1;
+            continue;
+         }
+
+         // Check for closing delimiter.
          if (value[it] == stringDelimiter)
          {
             state = previousState;
          }
-         else if (value[it] == '\\')
-         {
-            it += 1;
-            
-            char ch = value[it];
-            if (ch == stringDelimiter)
-               state = previousState;
-         }
-         
+
          continue;
       }
          
@@ -2329,14 +2351,20 @@ void validateFunctionCall(RTokenCursor cursor,
       if (matched.namedArguments().count(".open"))
       {
          std::string value = matched.namedArguments().at(".open");
-         Error error = string_utils::jsonLiteralUnescape(value, &open);
+         std::string unescaped;
+         Error error = string_utils::jsonLiteralUnescape(value, &unescaped);
+         if (!error)
+            open = unescaped;
       }
-      
+
       std::string close = "}";
       if (matched.namedArguments().count(".close"))
       {
          std::string value = matched.namedArguments().at(".close");
-         Error error = string_utils::jsonLiteralUnescape(value, &close);
+         std::string unescaped;
+         Error error = string_utils::jsonLiteralUnescape(value, &unescaped);
+         if (!error)
+            close = unescaped;
       }
       
       validateGlueCall(cursor, status, open, close, keys);
@@ -2659,35 +2687,41 @@ bool handleElseToken(RTokenCursor& cursor,
    if (!cursor.moveToNextSignificantToken())
       return false;
    
-   // The 'else' can consume all non-if control flow statements.
-   while (status.isInControlFlowStatement())
+   // The 'else' can consume all non-if control flow statements
+   // and expressions, then pop the matching 'if' state.
+   while (status.isInControlFlowStatement() ||
+          status.isInControlFlowExpression())
    {
       if (status.isInIfStatementOrExpression())
          break;
-      
+
       status.popState();
    }
-   
-   // TODO: Can we validate that this 'else' was valid?
-   
-   // Now, pop the 'if' state.
-   status.popState();
-   
-   // Interestingly, this construct is _not_ valid at the top level:
-   //
-   //    if (1) 2
-   //    else 3
-   //
-   // but this is okay:
-   //
-   //    {
-   //       if (1) 2
-   //       else 3
-   //    }
-   //
-   // So, if we're now at the top level, this is an error!
-   if (status.isAtTopLevel() && cursor.isFirstSignificantTokenOnLine())
+
+   if (!status.isInIfStatementOrExpression())
+   {
+      // 'else' without a matching 'if'
       status.lint().unexpectedToken(cursor);
+   }
+   else
+   {
+      status.popState();
+      if (status.isAtTopLevel() && cursor.isFirstSignificantTokenOnLine())
+      {
+         // This construct is _not_ valid at the top level:
+         //
+         //    if (1) 2
+         //    else 3
+         //
+         // but this is okay:
+         //
+         //    {
+         //       if (1) 2
+         //       else 3
+         //    }
+         status.lint().unexpectedToken(cursor);
+      }
+   }
    
    // Move after the 'else' token.
    if (!cursor.moveToNextSignificantToken())
@@ -2709,7 +2743,7 @@ bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
    
    r::sexp::Protect protect;
    SEXP objectSEXP = resolveObjectAssociatedWithCall(startCursor, status, &protect);
-   if (objectSEXP != R_UnboundValue)
+   if (objectSEXP != nullptr)
    {
       r::exec::RFunction getNames(".rs.getNames");
       getNames.addParam(objectSEXP);

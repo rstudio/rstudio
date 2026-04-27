@@ -13,6 +13,7 @@
  *
  */
 
+#include <algorithm>
 #include <string>
 #include <atomic>
 
@@ -328,6 +329,49 @@ Error decode(const char* pData, std::size_t n, std::string* pOutput)
 {
    Decoder decode;
    return decode(pData, n, pOutput);
+}
+
+Error encodeUrl(const std::string& input, std::string* pOutput)
+{
+   std::string stdB64;
+   Error error = encode(input, &stdB64);
+   if (error)
+      return error;
+
+   // Convert standard base64 to base64url: + -> -, / -> _, strip padding.
+   for (char& c : stdB64)
+   {
+      if (c == '+') c = '-';
+      else if (c == '/') c = '_';
+   }
+   stdB64.erase(std::remove(stdB64.begin(), stdB64.end(), '='), stdB64.end());
+
+   *pOutput = std::move(stdB64);
+   return Success();
+}
+
+Error decodeUrl(const std::string& input, std::string* pOutput)
+{
+   // Convert base64url to standard base64: - -> +, _ -> /, add padding.
+   std::string stdB64 = input;
+   for (char& c : stdB64)
+   {
+      if (c == '-') c = '+';
+      else if (c == '_') c = '/';
+   }
+   switch (stdB64.size() % 4)
+   {
+      case 0: break;
+      case 2: stdB64 += "=="; break;
+      case 3: stdB64 += "="; break;
+      default:
+         return systemError(
+            boost::system::errc::illegal_byte_sequence,
+            "Invalid base64url length",
+            ERROR_LOCATION);
+   }
+
+   return decode(stdB64, pOutput);
 }
 
 } // namespace base64

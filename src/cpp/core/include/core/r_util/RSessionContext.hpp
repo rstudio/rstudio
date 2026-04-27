@@ -104,9 +104,17 @@ public:
       id_(id), userId_(userId)
    {}
 
-   ProjectId(const std::string& id, uid_t userId):
-      id_(id)
+   ProjectId(const std::string& id, uid_t userId)
    {
+      id_ = std::string();
+      if (id.length() == kProjectIdLen)
+      {
+         id_ = id;
+      }
+      else if (id.length() == (kProjectIdLen + kUserIdLen))
+      {
+         id_ = id.substr(kUserIdLen);
+      }
       userId_ = obfuscatedUserId(userId);
    }
 

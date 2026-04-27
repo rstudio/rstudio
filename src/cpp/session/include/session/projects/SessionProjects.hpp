@@ -41,6 +41,16 @@
 
 namespace rstudio {
 namespace session {
+namespace modules {
+namespace libgit2 {
+class Git;
+} // namespace libgit2
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
 namespace projects {
 
 
@@ -58,6 +68,7 @@ struct FileMonitorFilterContext
 {
    std::vector<std::string> ignoredComponents;
    bool ignoreObjectFiles;
+   boost::shared_ptr<modules::libgit2::Git> pGit;
 };
 
 // vcs options
@@ -255,6 +266,7 @@ private:
    void updatePackageInfo();
 
    void augmentRbuildignore();
+   void onUserPrefsChanged(const std::string& layer, const std::string& pref);
 
    // adds default open docs if specified in the project and it has
    // never been opened before

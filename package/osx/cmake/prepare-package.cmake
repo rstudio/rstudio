@@ -101,10 +101,17 @@ else()
 
 endif()
 
-# find out where x64 homebrew lives
-set(HOMEBREW_X64_PREFIX "/usr/local")
+# find out where homebrew lives for the primary architecture
+# UNAME_M reflects the primary build arch: x86_64 when configured under
+# arch -x86_64 (universal or x64-only), arm64 when configured under
+# arch -arm64 (arm64-only)
+if("@UNAME_M@" STREQUAL "arm64")
+   set(HOMEBREW_PRIMARY_PREFIX "/opt/homebrew")
+else()
+   set(HOMEBREW_PRIMARY_PREFIX "/usr/local")
+endif()
 
-# copy required Homebrew libraries
+# copy required Homebrew libraries for the primary architecture
 list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
 if(@RSTUDIO_PRO_BUILD@)
    list(APPEND HOMEBREW_LIBS krb5 libpq)
@@ -112,7 +119,7 @@ endif()
 
 file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
 foreach(LIB ${HOMEBREW_LIBS})
-   set(LIBPATH "${HOMEBREW_X64_PREFIX}/opt/${LIB}/lib")
+   set(LIBPATH "${HOMEBREW_PRIMARY_PREFIX}/opt/${LIB}/lib")
    file(GLOB LIBFILES "${LIBPATH}/*.dylib")
    foreach(LIBFILE ${LIBFILES})
       file(

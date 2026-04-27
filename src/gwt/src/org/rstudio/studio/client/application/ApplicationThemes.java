@@ -30,13 +30,13 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
-import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -103,6 +103,13 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    @Override
    public void onComputeThemeColors(ComputeThemeColorsEvent event)
    {
+      // Cancel any pending fallback timer since the event arrived
+      // normally via the CSS load callback.
+      if (themeColorsFallback_ != null)
+      {
+         themeColorsFallback_.cancel();
+         themeColorsFallback_ = null;
+      }
       onComputeThemeColors();
    }
    
@@ -153,20 +160,26 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    {
       RStudioThemes.initializeThemes(userPrefs_.get(), userState_.get(), Document.get(), root_);
 
-      // Compute theme colors over multiple animation frames to ensure that
-      // all styles have been properly applied.
-      AnimationScheduler.get().requestAnimationFrame(t1 ->
+      // Safety-net: if the CSS load callback doesn't fire (e.g., JSNI
+      // failure, Electron protocol interception), recompute theme
+      // colors after a timeout to avoid permanently stale values.
+      if (themeColorsFallback_ != null)
       {
-         onComputeThemeColors();
-         AnimationScheduler.get().requestAnimationFrame(t2 ->
+         themeColorsFallback_.cancel();
+      }
+
+      themeColorsFallback_ = new Timer()
+      {
+         @Override
+         public void run()
          {
+            Debug.logWarning(
+               "Theme CSS load callback did not fire; " +
+               "computing theme colors via fallback timer.");
             onComputeThemeColors();
-            AnimationScheduler.get().requestAnimationFrame(t3 ->
-            {
-               onComputeThemeColors();
-            });
-         });
-      });
+         }
+      };
+      themeColorsFallback_.schedule(THEME_COLORS_TIMEOUT_MS);
    }
    
    private final Provider<UserPrefs> userPrefs_;
@@ -175,4 +188,6 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    private final EventBus events_;
    private JsObject themeColors_;
    private Element root_;
+   private Timer themeColorsFallback_;
+   private static final int THEME_COLORS_TIMEOUT_MS = 5000;
 }

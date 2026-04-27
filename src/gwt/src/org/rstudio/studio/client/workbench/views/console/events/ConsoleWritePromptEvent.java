@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 
 public class ConsoleWritePromptEvent extends GwtEvent<ConsoleWritePromptEvent.Handler>
 {
@@ -26,17 +27,22 @@ public class ConsoleWritePromptEvent extends GwtEvent<ConsoleWritePromptEvent.Ha
       void onConsoleWritePrompt(ConsoleWritePromptEvent event);
    }
 
-   public ConsoleWritePromptEvent(String prompt)
+   public ConsoleWritePromptEvent(ConsoleText text)
    {
-      prompt_ = prompt;
+      text_ = text;
    }
 
    public String getPrompt()
    {
-      return prompt_;
+      return text_.text;
    }
 
-   private String prompt_;
+   public boolean isAgent()
+   {
+      return text_.agent;
+   }
+
+   private final ConsoleText text_;
 
    @Override
    public Type<Handler> getAssociatedType()

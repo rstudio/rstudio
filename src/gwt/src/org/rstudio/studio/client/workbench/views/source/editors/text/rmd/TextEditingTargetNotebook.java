@@ -50,7 +50,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -223,10 +223,10 @@ public class TextEditingTargetNotebook
                outlineWidthHandler));
 
       releaseOnDismiss.add(docDisplay_.addValueChangeHandler(
-            new ValueChangeHandler<Void>()
+            new ValueChangeHandler<VoidResponse>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> arg0)
+         public void onValueChange(ValueChangeEvent<VoidResponse> arg0)
          {
             // check the setup chunk's CRC32 next time we run a chunk
             validateSetupChunk_ = true;
@@ -261,10 +261,10 @@ public class TextEditingTargetNotebook
             server_.interruptChunk(
                   editingTarget_.getId(),
                   chunkId,
-                  new ServerRequestCallback<Void>()
+                  new ServerRequestCallback<VoidResponse>()
                   {
                      @Override
-                     public void onResponseReceived(Void response)
+                     public void onResponseReceived(VoidResponse response)
                      {
                         RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(null);
                      }
@@ -1431,6 +1431,19 @@ public class TextEditingTargetNotebook
       // Clean up HTML renderer
       if (htmlRenderer_ != null)
          htmlRenderer_.onDismiss();
+   }
+
+   public boolean isRendering()
+   {
+      return htmlRenderer_ != null && htmlRenderer_.isRendering();
+   }
+
+   public void addRenderCompleteHandler(Command callback)
+   {
+      if (htmlRenderer_ != null)
+         htmlRenderer_.addRenderCompleteHandler(callback);
+      else
+         callback.execute();
    }
 
    // set the output mode based on the global pref (or our local

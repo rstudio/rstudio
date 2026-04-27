@@ -109,6 +109,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -467,6 +469,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onWhatsNewRStudio()
+   {
+      Desktop.getFrame().showWhatsNew();
+   }
+
+   @Handler
    void onCopyRStudioVersion()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -611,6 +619,25 @@ public class Application implements ApplicationEventHandlers
    public void onRstudioSupport()
    {
       globalDisplay_.openRStudioLink(constants_.rStudioSupportLinkName());
+   }
+
+   @Handler
+   public void onShowReleaseNotes()
+   {
+      String version = session_.getSessionInfo().getRstudioVersion();
+
+      // Release versions have the format MAJOR.MINOR.PATCH+BUILD (no
+      // hyphenated suffix). Non-release versions include a suffix like
+      // -daily, -hourly, or -dev before the +BUILD segment.
+      String fragment = null;
+      RegExp releasePattern = RegExp.compile("^(\\d+\\.\\d+\\.\\d+)\\+");
+      MatchResult match = releasePattern.exec(version);
+      if (match != null)
+      {
+         fragment = "rstudio-" + match.getGroup(1);
+      }
+
+      globalDisplay_.openRStudioLink("release_notes", false, fragment);
    }
 
    @Handler
@@ -942,8 +969,22 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
+      // During a deliberate restart, in-flight RPCs may return
+      // INVALID_CLIENT_ID which triggers this event spuriously.
+      // Early-return to avoid cleanupWorkbench() calling disconnect(),
+      // which would poison the RPC layer and break the ping loop in
+      // waitForSessionRestart.
+      if (pApplicationQuit_.get().isSuspendingAndRestarting())
+         return;
+
       cleanupWorkbench();
-      view_.showApplicationDisconnected();
+
+      // only show the disconnected state in server mode (desktop mode has its
+      // own handling triggered by process exit)
+      if (!Desktop.isDesktop())
+      {
+         view_.showApplicationDisconnected();
+      }
    }
 
    @Override
@@ -1250,6 +1291,7 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
          commands_.showSplashScreen().remove();
+         commands_.whatsNewRStudio().remove();
       }
 
       // remove main menu commands in desktop mode

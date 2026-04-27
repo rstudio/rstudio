@@ -135,6 +135,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                                   OperationWithInput<Result> operation)
    {
       super(constants_.newQuartoDocumentCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       loadAndPersistClientState();

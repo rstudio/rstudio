@@ -89,7 +89,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
          vulns_.forEach((String key) ->
          {
             PackageVulnerabilityListMap pvlMap = vulns_.get(key);
-            if (pvlMap == null || !pvlMap.has(name))
+            if (pvlMap == null || isArray(pvlMap) || !pvlMap.has(name))
                return;
 
             String vulnText = "";
@@ -178,7 +178,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
             vulns_.forEach((String key) ->
             {
                PackageVulnerabilityListMap pvlMap = vulns_.get(key);
-               if (pvlMap == null || !pvlMap.has(name))
+               if (pvlMap == null || isArray(pvlMap) || !pvlMap.has(name))
                   return;
 
                List<PackageVulnerability> pvList = pvlMap.get(name).asList();
@@ -196,6 +196,13 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
             });
          }
       }
+
+      // Guard against empty R lists serialized as JS arrays instead of objects.
+      // The 'in' operator on arrays traverses Array.prototype, causing false
+      // matches for package names like 'keys', 'pop', 'find', etc.
+      private static native boolean isArray(Object obj) /*-{
+         return Array.isArray(obj);
+      }-*/;
 
       private final ListDataProvider<PackageInfo> dataProvider_;
       private final PackagesDataGridStyle style_;

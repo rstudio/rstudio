@@ -33,7 +33,7 @@ import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 
@@ -81,7 +81,7 @@ public class CheckSpelling
                         SpellingDoc spellingDoc,
                         Display view,
                         ProgressDisplay progressDisplay,
-                        ResultCallback<Void, Exception> callback)
+                        ResultCallback<VoidResponse, Exception> callback)
    {
       realtimeSpellChecker_ = spellChecker;
       spellingDoc_ = spellingDoc;
@@ -261,7 +261,7 @@ public class CheckSpelling
             GlobalDisplay.MSG_INFO,
             constants_.checkSpelling(),
             constants_.spellCheckIsComplete());
-      callback_.onSuccess(Void.create());
+      callback_.onSuccess(VoidResponse.create());
    }
 
    private void close()
@@ -363,7 +363,7 @@ public class CheckSpelling
    private final SpellingDoc spellingDoc_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;
-   private final ResultCallback<org.rstudio.studio.client.server.Void, Exception> callback_;
+   private final ResultCallback<org.rstudio.studio.client.server.VoidResponse, Exception> callback_;
    private final SpellingDoc.Anchor initialCursorPos_;
 
    private final HashMap<String, String> changeAll_ = new HashMap<>();

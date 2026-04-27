@@ -86,6 +86,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    editor <- remote$editor.getInstance()
    editor$insert(code)
+   Sys.sleep(0.1)
    
    # Save it, and build the package.
    remote$commands.execute("saveSourceDoc")

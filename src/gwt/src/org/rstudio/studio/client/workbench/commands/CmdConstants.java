@@ -1464,6 +1464,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Request assistant suggestions at the cursor position.") // $NON-NLS-1$
     String assistantRequestSuggestionsDesc();
     
+    // assistantPaneToggle
+    @DefaultStringValue("Toggle Posit Assistant") // $NON-NLS-1$
+    String assistantPaneToggleLabel();
+    @DefaultStringValue("Toggle the visibility of the Posit Assistant pane.") // $NON-NLS-1$
+    String assistantPaneToggleDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();
@@ -4157,5 +4163,39 @@ public interface CmdConstants extends Constants {
     // copyRStudioVersion
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();
+    
+    // showTrustRequestDialog
+    @DefaultStringValue("Show Trust Dialog") // $NON-NLS-1$
+    String showTrustRequestDialogLabel();
+    
+    // popOutChat
+    @DefaultStringValue("Show Posit Assistant in Separate Window") // $NON-NLS-1$
+    String popOutChatLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String popOutChatButtonLabel();
+    @DefaultStringValue("Show Posit Assistant in a separate window") // $NON-NLS-1$
+    String popOutChatDesc();
+    
+    // returnChatToMain
+    @DefaultStringValue("Return Posit Assistant to Main Window") // $NON-NLS-1$
+    String returnChatToMainLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String returnChatToMainButtonLabel();
+    @DefaultStringValue("Return to main window") // $NON-NLS-1$
+    String returnChatToMainDesc();
+    
+    // uninstallPositAssistant
+    @DefaultStringValue("Uninstall Posit Assistant") // $NON-NLS-1$
+    String uninstallPositAssistantLabel();
+    @DefaultStringValue("Uninsta_ll Posit Assistant...") // $NON-NLS-1$
+    String uninstallPositAssistantMenuLabel();
+    
+    // showReleaseNotes
+    @DefaultStringValue("R_elease Notes") // $NON-NLS-1$
+    String showReleaseNotesMenuLabel();
+    
+    // whatsNewRStudio
+    @DefaultStringValue("What's _New") // $NON-NLS-1$
+    String whatsNewRStudioMenuLabel();
     
 }

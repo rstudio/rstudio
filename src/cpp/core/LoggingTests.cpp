@@ -938,7 +938,10 @@ TEST(LoggingTest, FileLogsAreCreatedWithCorrectPermissions)
    FilePath tmpConfPath;
    ASSERT_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
 
-   FilePath logSubDir = tmpConfPath.getParent().completeChildPath("logsubdir");
+   std::string user = core::system::getenv("USER");
+   if (user.empty())
+      user = "unknown";
+   FilePath logSubDir = tmpConfPath.getParent().completeChildPath("log-" + user);
    FilePath innerLogSubDir = logSubDir.completeChildPath("logsubdir2");
 
    std::string confFileContents =
@@ -986,7 +989,10 @@ TEST(LoggingTest, CanForceLogDirectory)
    FilePath tmpConfPath;
    ASSERT_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
 
-   FilePath defaultLogDir = tmpConfPath.getParent().completeChildPath("defaultlogdir");
+   std::string user = core::system::getenv("USER");
+   if (user.empty())
+      user = "unknown";
+   FilePath defaultLogDir = tmpConfPath.getParent().completeChildPath("log-" + user + "-defaultlogdir");
    FilePath overrideLogDir = tmpConfPath.getParent();
 
    std::string confFileContents =

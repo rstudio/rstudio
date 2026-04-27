@@ -32,7 +32,7 @@ public interface ShellDisplay extends ShellOutputWriter,
                                       HasKeyPressHandlers,
                                       HasKeyUpHandlers
 {
-   void consoleWriteInput(String input, String console);
+   void consoleWriteInput(String input, String console, boolean agent);
    void consolePrompt(String prompt, boolean showInput);
    void ensureInputVisible();
    InputEditorDisplay getInputEditorDisplay();

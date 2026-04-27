@@ -65,12 +65,12 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    
    // Locate the function with this name
    SEXP userCommandsEnvSEXP = r::sexp::findVar(".rs.userCommands", R_GlobalEnv);
-   if (userCommandsEnvSEXP == R_UnboundValue)
+   if (userCommandsEnvSEXP == nullptr)
       return noSuchSymbol(".rs.userCommands", ERROR_LOCATION);
    
    // Get the function bound in this environment
    SEXP fnSEXP = r::sexp::findVar(name, userCommandsEnvSEXP);
-   if (fnSEXP == R_UnboundValue)
+   if (fnSEXP == nullptr)
       return noSuchSymbol(name, ERROR_LOCATION);
    
    // Execute function

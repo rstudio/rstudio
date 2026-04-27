@@ -61,6 +61,13 @@
    background-color: #f2dede;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .invalidPkgName {
+   background-color: rgba(220, 53, 69, 0.25);
+}
+
 .quartoProjectTypeSelect {
    margin-top: 2px;
    height: 21px;

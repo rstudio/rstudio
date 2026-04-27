@@ -82,6 +82,10 @@ codesign-directory () {
 
 }
 
+# remove Finder detritus that interferes with codesigning
+echo "[i] Cleaning Finder metadata from ${package}"
+find "${package}" -name '.DS_Store' -delete || true
+
 echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 

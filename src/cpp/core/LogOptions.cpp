@@ -43,6 +43,8 @@ namespace log {
 #define kMaxRotations      "max-rotations"
 #define kDeleteDays        "delete-days"
 #define kWarnSyslog        "warn-syslog"
+#define kTraceDbEnabled    "trace-db-enabled"
+#define kLogCodeLocations  "log-code-locations"
 #define kLogConfFile       "logging.conf"
 
 #define kLogLevelEnvVar    "RS_LOG_LEVEL"
@@ -67,6 +69,12 @@ namespace log {
 #define kBaseLevel         0
 #define kBinaryLevel       1
 #define kLogSectionLevel   2
+
+// Global flag for database trace logging
+static bool s_dbTraceEnabled = false;
+
+// Global flag for showing code locations in TRACE/DEBUG/INFO messages
+static bool s_logCodeLocations = false;
 
 namespace {
 
@@ -326,7 +334,9 @@ void LogOptions::initProfile()
    profile_.addParams(
       kLogLevel, defaultLogLevel_,
       kLoggerType, defaultLoggerType_,
-      kLogMessageFormat, defaultMessageFormatType_);
+      kLogMessageFormat, defaultMessageFormatType_,
+      kTraceDbEnabled, false,
+      kLogCodeLocations, false);
 
    // add logger-specific params
    LoggerOptionsVisitor visitor(profile_);
@@ -529,6 +539,22 @@ std::vector<std::string> LogOptions::loggerOverrides() const
    return profile_.getLevelNames(kLogSectionLevel);
 }
 
+bool LogOptions::traceDbEnabled() const
+{
+   std::vector<ConfigProfile::Level> levels = getLevels(std::string());
+   bool traceDb = false;
+   profile_.getParam(kTraceDbEnabled, &traceDb, levels);
+   return traceDb;
+}
+
+bool LogOptions::logCodeLocations() const
+{
+   std::vector<ConfigProfile::Level> levels = getLevels(std::string());
+   bool logLocations = false;
+   profile_.getParam(kLogCodeLocations, &logLocations, levels);
+   return logLocations;
+}
+
 void forwardLogOptionsEnvVars(core::system::Options* pEnvironment)
 {
    // forward relevant log configuration environment variables (i.e. all those we respect above)
@@ -536,6 +562,26 @@ void forwardLogOptionsEnvVars(core::system::Options* pEnvironment)
                                  kLogFormatEnvVar,   kLogDirEnvVar,
                                  kLogConfEnvVar},
                                 pEnvironment);
+}
+
+bool isDbTraceEnabled()
+{
+   return s_dbTraceEnabled;
+}
+
+void setDbTraceEnabled(bool enabled)
+{
+   s_dbTraceEnabled = enabled;
+}
+
+bool logCodeLocations()
+{
+   return s_logCodeLocations;
+}
+
+void setLogCodeLocations(bool enabled)
+{
+   s_logCodeLocations = enabled;
 }
 
 } // namespace log

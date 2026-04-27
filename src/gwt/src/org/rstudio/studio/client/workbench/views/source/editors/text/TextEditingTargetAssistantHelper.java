@@ -461,8 +461,11 @@ public class TextEditingTargetAssistantHelper
     */
    private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
    {
+      if (dismissed_)
+         return;
+
       resetSuggestion();
-      
+
       // The completion data gets modified when doing partial (word-by-word)
       // completions, so we need to use a copy and preserve the original
       // (which we need to send back to the server as-is in some language-server methods).
@@ -1267,6 +1270,9 @@ public class TextEditingTargetAssistantHelper
          @Override
          public void run()
          {
+            if (dismissed_)
+               return;
+
             if (!isAssistantAvailable())
                return;
 
@@ -1393,14 +1399,11 @@ public class TextEditingTargetAssistantHelper
                               }
                            }
 
-                           events_.fireEvent(new AssistantEvent(
-                                 completions.isEmpty()
-                                    ? AssistantEventType.COMPLETION_RECEIVED_NONE
-                                    : AssistantEventType.COMPLETION_RECEIVED_SOME));
-
                            // If we don't have any completions available, fall back to NES for Copilot
                            if (completions.isEmpty())
                            {
+                              events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+
                               if (shouldFallbackToNes())
                               {
                                  nesTimer_.schedule(20);
@@ -1412,6 +1415,9 @@ public class TextEditingTargetAssistantHelper
                            // the user to view/select them. For now, use the last one.
                            // https://github.com/rstudio/rstudio/issues/16055
                            AssistantCompletion completion = completions.get(completions.size() - 1);
+
+                           events_.fireEvent(new AssistantEvent(
+                              AssistantEventType.COMPLETION_RECEIVED_SOME, completion));
 
                            // The completion data gets modified when doing partial (word-by-word)
                            // completions, so we need to use a copy and preserve the original
@@ -1887,6 +1893,9 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestions()
    {
+      if (dismissed_)
+         return;
+
       if (!isAssistantAvailable())
          return;
 
@@ -2021,6 +2030,9 @@ public class TextEditingTargetAssistantHelper
 
       Timers.singleShot(() ->
       {
+         if (dismissed_ || editSuggestion_ == null)
+            return;
+
          ignoreNextDocumentChangeEvents();
 
          // Use anchored position to insert at the ghost text location,
@@ -2504,6 +2516,15 @@ public class TextEditingTargetAssistantHelper
 
    public void onDismiss()
    {
+      dismissed_ = true;
+
+      // Invalidate any in-flight async RPC requests so their callbacks
+      // are rejected when they arrive. Without this, a stale completion
+      // response can reschedule nesTimer_ and render a gutter icon on a
+      // dismissed editor. (https://github.com/rstudio/rstudio/issues/17108)
+      requestId_ += 1;
+      nesId_ += 1;
+
       // Cancel all timers and reset suggestion state
       suspendTimer_.cancel();
       nesTimer_.cancel();
@@ -2526,6 +2547,7 @@ public class TextEditingTargetAssistantHelper
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
    private int nesId_ = 0;
+   private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    private final HandlerRegistration commandsRegistration_;

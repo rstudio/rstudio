@@ -2247,6 +2247,19 @@ core::Error UserPrefValues::setGlobalTheme(std::string val)
 }
 
 /**
+ * Whether modal dialogs should use dark styling when a dark editor theme is active.
+ */
+bool UserPrefValues::useDarkThemeModalDialogs()
+{
+   return readPref<bool>("use_dark_theme_modal_dialogs");
+}
+
+core::Error UserPrefValues::setUseDarkThemeModalDialogs(bool val)
+{
+   return writePref("use_dark_theme_modal_dialogs", val);
+}
+
+/**
  * Whether to ignore whitespace when generating diffs of version controlled files.
  */
 bool UserPrefValues::gitDiffIgnoreWhitespace()
@@ -3066,6 +3079,19 @@ core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array va
 }
 
 /**
+ * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
+ */
+bool UserPrefValues::fileMonitorUseGitignore()
+{
+   return readPref<bool>("file_monitor_use_gitignore");
+}
+
+core::Error UserPrefValues::setFileMonitorUseGitignore(bool val)
+{
+   return writePref("file_monitor_use_gitignore", val);
+}
+
+/**
  * Whether to install R package dependencies one at a time.
  */
 bool UserPrefValues::installPkgDepsIndividually()
@@ -3261,7 +3287,7 @@ core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool va
 }
 
 /**
- * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
  */
 bool UserPrefValues::checkNullExternalPointers()
 {
@@ -3469,7 +3495,7 @@ core::Error UserPrefValues::setAssistantNesAutoshow(bool val)
 }
 
 /**
- * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+ * When enabled, RStudio will show messages from the Posit Assistant in a message box.
  */
 bool UserPrefValues::assistantShowMessages()
 {
@@ -3479,6 +3505,19 @@ bool UserPrefValues::assistantShowMessages()
 core::Error UserPrefValues::setAssistantShowMessages(bool val)
 {
    return writePref("assistant_show_messages", val);
+}
+
+/**
+ * When enabled, the Posit Assistant button is displayed in the main toolbar.
+ */
+bool UserPrefValues::assistantToolbarButtonVisible()
+{
+   return readPref<bool>("assistant_toolbar_button_visible");
+}
+
+core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
+{
+   return writePref("assistant_toolbar_button_visible", val);
 }
 
 /**
@@ -3889,6 +3928,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
       kGlobalTheme,
+      kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
       kGitSignedCommits,
       kConsoleDoubleClickSelect,
@@ -3952,6 +3992,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
+      kFileMonitorUseGitignore,
       kInstallPkgDepsIndividually,
       kGraphicsBackend,
       kGraphicsAntialiasing,
@@ -3984,6 +4025,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
       kAssistantShowMessages,
+      kAssistantToolbarButtonVisible,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
@@ -4002,6 +4044,13 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
+   });
+}
+
+std::set<std::string> UserPrefValues::localProjectPrefs()
+{
+   return std::set<std::string>({
+      kFileMonitorUseGitignore,
    });
 }
    

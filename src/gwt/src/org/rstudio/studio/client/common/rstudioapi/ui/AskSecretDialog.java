@@ -59,6 +59,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                           Operation cancelOperation)
    {
       super(title, Roles.getDialogRole(), okOperation, cancelOperation);
+      setThemeAware(true);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      

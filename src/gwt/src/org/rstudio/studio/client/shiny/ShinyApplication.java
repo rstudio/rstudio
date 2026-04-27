@@ -37,7 +37,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -298,10 +298,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    
    private void stopShinyApplication(String id, Command onStopped)
    {
-      server_.stopShinyApp(id, new ServerRequestCallback<Void>()
+      server_.stopShinyApp(id, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             if (onStopped != null)
                onStopped.execute();

@@ -95,7 +95,6 @@ export class WinstonLogger implements Logger {
     // on dev builds, always log to console
     if (!consoleLogging && !app.isPackaged) {
       this.logger.add(new Console());
-      consoleLogging = true;
     }
 
     if (optionError) {

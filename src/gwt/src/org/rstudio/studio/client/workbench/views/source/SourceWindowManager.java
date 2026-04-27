@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -51,10 +52,11 @@ import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.InsertAtCursorEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.SaveDocumentEvent;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -698,8 +700,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          InsertAtCursorEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new InsertAtCursorEvent(data));
       }
+      else if (type == EditorCommandEvent.TYPE_SAVE_DOCUMENT)
+      {
+         SaveDocumentEvent.Data data = event.getData();
+         Set<String> ids = Collections.singleton(data.getId());
+         pSource_.get().saveUnsavedDocuments(ids, () -> {});
+      }
       else
+      {
          assert false: "Unrecognized editor event type '" + type + "'";
+      }
    }
 
    @Override
@@ -781,12 +791,23 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // we get this event when the window is unloaded; it could be that the
       // window is unloading for refresh (in which case its docs could be
       // preserved) or closing for good.
+      // if the closing satellite was the last focused window, reset the
+      // pointer back to the main window so stale references aren't used
+      // for menu command routing
+      String closingWindowId = sourceWindowId(event.getName());
+      if (closingWindowId != null &&
+          closingWindowId.equals(MainWindowObject.lastFocusedWindowId().get()))
+      {
+         MainWindowObject.lastFocusedWindow().set(WindowEx.getNative());
+         MainWindowObject.lastFocusedWindowId().set(getSourceWindowId());
+      }
+
       WindowCloseMonitor.monitorSatelliteClosure(event.getName(), new Command()
       {
          @Override
          public void execute()
          {
-            closeSourceWindowDocs(sourceWindowId(event.getName()));
+            closeSourceWindowDocs(closingWindowId);
          }
       }, null);
    }
@@ -1027,8 +1048,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = getSourceWindowObject(mostRecentSourceWindow_);
             if (window != null && !window.isClosed())
             {
-               size = new Size(window.getInnerWidth(),
-                     window.getInnerHeight());
+               size = Desktop.hasDesktopFrame()
+                     ? new Size(window.getOuterWidth(),
+                           window.getOuterHeight())
+                     : new Size(window.getInnerWidth(),
+                           window.getInnerHeight());
                if (position == null)
                   position = Point.create(
                         window.getScreenX() + 50,
@@ -1152,13 +1176,23 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = input.second;
 
             // read the window's current geometry
+            // In desktop mode, use outer dimensions because Electron's
+            // setSize() sets the outer window size including title bar.
+            // In web mode, use inner dimensions because window.open()
+            // width/height set the content area size.
+            int width = Desktop.hasDesktopFrame()
+                  ? window.getOuterWidth()
+                  : window.getInnerWidth();
+            int height = Desktop.hasDesktopFrame()
+                  ? window.getOuterHeight()
+                  : window.getInnerHeight();
             SatelliteWindowGeometry newGeometry =
                   SatelliteWindowGeometry.create(
                         sourceWindows_.get(windowId),
                         window.getScreenX(),
                         window.getScreenY(),
-                        window.getInnerWidth(),
-                        window.getInnerHeight());
+                        width,
+                        height);
 
             // compare to the old geometry (if any)
             if (windowGeometry_.hasKey(windowId))
@@ -1277,10 +1311,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
       // update the doc window ID on the server
       server_.modifyDocumentProperties(docId,
-             props, new ServerRequestCallback<Void>()
+             props, new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(VoidResponse v)
                {
                   if (onComplete != null)
                      onComplete.execute();

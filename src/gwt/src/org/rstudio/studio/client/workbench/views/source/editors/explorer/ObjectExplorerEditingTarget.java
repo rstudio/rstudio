@@ -30,7 +30,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -166,10 +166,10 @@ public class ObjectExplorerEditingTarget
       server_.modifyDocumentProperties(
          doc_.getId(),
          props,
-         new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+         new SimpleRequestCallback<VoidResponse>(constants_.errorCapitalized())
          {
             @Override
-            public void onResponseReceived(Void response)
+            public void onResponseReceived(VoidResponse response)
             {
                // The id does not change when this
                if (remove)

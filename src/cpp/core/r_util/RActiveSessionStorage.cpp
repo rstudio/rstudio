@@ -14,6 +14,7 @@
  */
 
 #include <boost/current_function.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
@@ -82,12 +83,52 @@ Error FileActiveSessionStorage::readProperty(const std::string& name, std::strin
    return Success();
 }
 
+uintmax_t computeSuspendSizeImpl(const FilePath& scratchPath)
+{
+   FilePath suspendPath = scratchPath.completePath("suspended-session-data");
+   if (!suspendPath.exists())
+      return 0;
+
+   return suspendPath.getSizeRecursive();
+}
+
+uintmax_t FileActiveSessionStorage::computeSuspendSize()
+{
+   return computeSuspendSizeImpl(scratchPath_);
+}
+
 Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
 {
    std::vector<FilePath> failedFiles;
    pValues->clear();
    for (const std::string& name : names)
    {
+      // Convert project filename to projectId since we don't store project-id as a file in properites
+      if (name == ActiveSession::kProjectId)
+      {
+         FilePath projPathFile = getPropertyFile(ActiveSession::kProject);
+         std::string projPath;
+         Error error = core::readStringFromFile(projPathFile, &projPath);
+         if (error)
+            failedFiles.push_back(projPathFile);
+         boost::algorithm::trim(projPath);
+         if (!projectToIdFunction_.empty())
+         {
+            ProjectId projId = projectToIdFunction_(projPath);
+            pValues->insert(std::pair<std::string, std::string>{name,  projId.asString()});
+         }
+         else
+            LOG_DEBUG_MESSAGE("Unable to read projectId from active session");
+         continue;
+      }
+
+      // This is a computed property, though maybe we should just compute it after it suspend and save it to avoid this special case?
+      if (name == ActiveSession::kSuspendSize)
+      {
+         pValues->insert(std::pair<std::string, std::string>{name, std::to_string(computeSuspendSize())});
+         continue;
+      }
+
       FilePath readPath = getPropertyFile(name);
       std::string value = "";
 
@@ -148,6 +189,8 @@ Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std:
    std::vector<FilePath> failedFiles{};
    for (auto&& prop : properties)
    {
+      if (prop.first == ActiveSession::kSuspendSize)
+         continue; // Suspend-size is computed, not saved for file storage so ignore this in the off chance we get here
       FilePath writePath = getPropertyFile(prop.first);
       Error error = core::writeStringToFile(writePath, prop.second, string_utils::LineEndingPassthrough, true, 0, false);
 
@@ -175,9 +218,66 @@ Error FileActiveSessionStorage::destroy()
    return scratchPath_.removeIfExists();
 }
 
+Error FileActiveSessionStorage::clearScratchPath()
+{
+   return scratchPath_.removeIfExists();
+}
+
+Error FileActiveSessionStorage::isEmpty(bool* pIsEmpty)
+{
+   *pIsEmpty = !scratchPath_.exists();
+   return Success();
+}
+
 Error FileActiveSessionStorage::isValid(bool* pValue)
 {
-   *pValue = scratchPath_.exists();
+   *pValue = false;
+
+   if (!scratchPath_.exists())
+      return Success();
+
+   // Check editor property - non-R sessions (VS Code, Positron) don't need project validation
+   std::string editorVal;
+   Error error = readProperty(ActiveSession::kEditor, &editorVal);
+   if (error)
+      return Success(); // Can't read properties, not valid
+
+   bool isRSession = editorVal == kWorkbenchRStudio || editorVal.empty();
+   if (!isRSession)
+   {
+      *pValue = true;
+      return Success();
+   }
+
+   // R session: ensure project property is present and non-empty.
+   // Retry logic handles NFS race conditions where the file may be briefly empty during writes.
+   std::string projectVal;
+   error = readProperty(ActiveSession::kProject, &projectVal);
+   if (error)
+      return Success(); // Can't read, not valid
+
+   if (!projectVal.empty())
+   {
+      *pValue = true;
+      return Success();
+   }
+
+   // Project is empty — check if property file exists and retry
+   FilePath projectFile = getPropertyFile(ActiveSession::kProject);
+   if (projectFile.exists())
+   {
+      int retryCount = 3;
+      do {
+         boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+         error = readProperty(ActiveSession::kProject, &projectVal);
+         if (!error && !projectVal.empty())
+         {
+            *pValue = true;
+            return Success();
+         }
+      } while (--retryCount > 0);
+   }
+
    return Success();
 }
 
@@ -303,7 +403,7 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
    }
 
    if (!names.empty())
-      LOG_DEBUG_MESSAGE("Read properties { " + boost::join(names, ", ") + " } from server for session " + id_ + " result: " + response.result().writeFormatted());
+      LOG_DEBUG_MESSAGE("Response - properties read from server for session " + id_ + ": " + response.result().writeFormatted());
 
    resultObj = response.result().getObject();
 
@@ -348,6 +448,11 @@ Error RpcActiveSessionStorage::readProperties(std::map<std::string, std::string>
 {
    LOG_DEBUG_MESSAGE("Reading properties all properties from server for session " + id_);
    return readProperties({}, pValues);
+}
+
+uintmax_t RpcActiveSessionStorage::computeSuspendSize()
+{
+   return computeSuspendSizeImpl(scratchPath_);
 }
 
 Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
@@ -454,6 +559,25 @@ Error RpcActiveSessionStorage::destroy()
    LOG_ERROR(error);
    return error;
 #endif
+}
+
+Error RpcActiveSessionStorage::clearScratchPath()
+{
+   if (!scratchPath_.isEmpty())
+      return scratchPath_.removeIfExists();
+   return Success();
+}
+
+Error RpcActiveSessionStorage::isEmpty(bool* pIsEmpty)
+{
+   // isValid returns true when the session exists and is valid,
+   // but isEmpty should return true when the session does NOT exist.
+   bool isValid = false;
+   Error error = this->isValid(&isValid);
+   if (error)
+      return error;
+   *pIsEmpty = !isValid;
+   return Success();
 }
 
 Error RpcActiveSessionStorage::isValid(bool* pValue)

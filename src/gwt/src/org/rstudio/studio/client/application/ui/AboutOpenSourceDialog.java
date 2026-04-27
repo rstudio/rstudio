@@ -37,6 +37,7 @@ public class AboutOpenSourceDialog extends ModalDialogBase
    public AboutOpenSourceDialog(ProductNotice notice)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setText(constants_.openSourceComponentsText());
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);

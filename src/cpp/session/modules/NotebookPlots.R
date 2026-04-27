@@ -26,12 +26,12 @@
 {
    dpi <- if (dpi <= 0) .rs.notebooks.defaultPlotDpi else dpi
    
-   if (units == "px") # px = automatic size behavior 
+   if (units == "px") # px = automatic size behavior
    {
       height <- height * pixelRatio
       width <- width * pixelRatio
-      dpi <- dpi * pixelRatio
    }
+   dpi <- dpi * pixelRatio
 
    # form the arguments to the graphics device creator
    args <- list(
@@ -110,6 +110,10 @@
 
 .rs.addFunction("saveNotebookGraphics", function(plot, filename)
 {
+   # ensure output directory exists; it may have been moved if the notebook
+   # was saved during chunk execution
+   # https://github.com/rstudio/rstudio/issues/6260
+   dir.create(dirname(filename), recursive = TRUE, showWarnings = FALSE)
    save(plot, file = filename)
 })
 

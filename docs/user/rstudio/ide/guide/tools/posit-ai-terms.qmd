@@ -1,0 +1,14 @@
+---
+title: "Posit AI Terms and Conditions"
+date-meta: 2026-02-25
+---
+
+## Posit Assistant/Posit AI Next Edit Suggestions License
+
+1. **Grant of License** Posit Software, PBC ("Posit") grants you a non-exclusive, non-transferable license to download, install, and use Posit Assistant and Posit AI Next Edit Suggestions for personal or internal business purposes at no cost.
+2. **Ownership & Restrictions** Posit retains all ownership, copyright, and intellectual property rights to the software. By downloading this software, you agree not to:
+   * **Decompile or Reverse Engineer:** You may not attempt to discover or modify the source code.
+   * **Redistribute:** You may not host this software on other websites, include it in software bundles, or distribute it via other media without written permission.
+   * **Sell:** You may not rent, lease, lend, or sell the software or any portion of it.
+3. **No Warranty ("As-Is")** The software is provided "as-is," without any warranty of any kind. Posit is not liable for any damages (including data loss or hardware failure) arising from the use or inability to use this software.
+4. **Termination** This license is effective until terminated. Your rights under this license will terminate automatically if you fail to comply with any of its terms.

@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
+import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -65,6 +66,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(TestMocks.class);
       suite.addTestSuite(ApplicationUtilsTests.class);
       suite.addTestSuite(ProjectMRUEntryTests.class);
+      suite.addTestSuite(YamlTreeTests.class);
 
       return suite;
    }

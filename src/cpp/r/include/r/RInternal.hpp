@@ -41,6 +41,20 @@
 
 #define R_NO_REMAP
 #include <Rinternals.h>
+#include <Rversion.h>
+
+// Route R_ClosureFormals / R_ClosureBody / R_ClosureEnv through the
+// runtime dispatch layer, which resolves the correct implementation
+// based on the version of R loaded at runtime. Any file that includes
+// this header will use the runtime-dispatched versions transparently.
+#include <r/RRuntime.hpp>
+
+#undef R_ClosureFormals
+#undef R_ClosureBody
+#undef R_ClosureEnv
+#define R_ClosureFormals(x) ::rstudio::r::runtime::closureFormals(x)
+#define R_ClosureBody(x)    ::rstudio::r::runtime::closureBody(x)
+#define R_ClosureEnv(x)     ::rstudio::r::runtime::closureEnv(x)
 
 // Hide macros that are always unsafe for us to use, because their
 // interface has changed between versions of R
@@ -207,7 +221,6 @@
 #define Rf_inherits INTERNAL_R_FUNCTION
 #define Rf_isArray INTERNAL_R_FUNCTION
 #define Rf_isFactor INTERNAL_R_FUNCTION
-#define Rf_isFrame INTERNAL_R_FUNCTION
 #define Rf_isFunction INTERNAL_R_FUNCTION
 #define Rf_isInteger INTERNAL_R_FUNCTION
 #define Rf_isLanguage INTERNAL_R_FUNCTION

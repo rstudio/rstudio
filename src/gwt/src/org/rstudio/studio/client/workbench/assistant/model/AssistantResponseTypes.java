@@ -64,6 +64,10 @@ public class AssistantResponseTypes
          {
             return constants_.assistantLaunchError(assistantName);
          }
+         else if (reason == Unsupported)
+         {
+            return constants_.assistantUnsupportedError(assistantName);
+         }
          else
          {
             return constants_.assistantUnknownErrorShort();
@@ -76,7 +80,8 @@ public class AssistantResponseTypes
             return false;
 
          int intReason = (int) reason.valueOf();
-         return intReason == Unknown || intReason == NotInstalled || intReason == LaunchError;
+         return intReason == Unknown || intReason == NotInstalled ||
+                intReason == LaunchError || intReason == Unsupported;
       }
 
       public static int Unknown = 0;
@@ -85,6 +90,7 @@ public class AssistantResponseTypes
       public static int DisabledViaProjectPreferences = 3;
       public static int DisabledViaGlobalOptions = 4;
       public static int LaunchError = 5;
+      public static int Unsupported = 6;
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

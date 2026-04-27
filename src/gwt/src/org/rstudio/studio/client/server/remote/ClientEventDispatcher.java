@@ -102,6 +102,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
@@ -161,6 +162,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
@@ -234,6 +236,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStarted
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
+import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
@@ -317,7 +320,7 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ConsoleWritePrompt)
          {
-            String prompt = event.getData();
+            ConsoleText prompt = event.getData();
             eventBus_.dispatchEvent(new ConsoleWritePromptEvent(prompt));
          }
          else if (type == ClientEvent.ConsoleWriteInput)
@@ -1206,6 +1209,20 @@ public class ClientEventDispatcher
          {
             ChatBackendExitEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ChatBackendExitEvent(data.getExitCode(), data.getCrashed()));
+         }
+         else if (type == ClientEvent.NotebookRenderCompleted)
+         {
+            NotebookCreateResult data = event.getData();
+            eventBus_.dispatchEvent(new NotebookRenderFinishedEvent(
+                  data.succeeded(),
+                  data.getDocId(),
+                  data.getDocPath(),
+                  data.getErrorMessage()));
+         }
+         else if (type == ClientEvent.ConsoleReadCompleted)
+         {
+            ConsoleReadCompletedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ConsoleReadCompletedEvent(data.getHistory()));
          }
          else
          {

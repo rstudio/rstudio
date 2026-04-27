@@ -52,7 +52,8 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
          // cancel returns null
          operation.execute(null);
       });
-      
+      setThemeAware(true);
+
       RStudioGinjector.INSTANCE.injectMembers(this);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       

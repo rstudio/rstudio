@@ -42,5 +42,6 @@ public interface AssistantUIConstants extends com.google.gwt.i18n.client.Message
     String assistantDisabledViaProjectPreferencesError(String assistantName);
     String assistantDisabledViaGlobalOptionsError(String assistantName);
     String assistantLaunchError(String assistantName);
+    String assistantUnsupportedError(String assistantName);
     String assistantUnknownErrorShort();
 }

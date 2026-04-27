@@ -49,6 +49,7 @@ RUN apt-get update && \
     libssh2-1-dev \
     libtiff5-dev\
     libtool \
+    libwebp-dev \
     libxml2-dev \
     libxslt1-dev \
     lsof \
@@ -104,7 +105,7 @@ RUN /bin/bash /tmp/install-dependencies
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-globemaster-allium panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-golden-wattle panmirror.version.json
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common

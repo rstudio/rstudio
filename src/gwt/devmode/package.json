@@ -7,11 +7,11 @@
     "daemon-stream-stop":  "deemon --kill ts-node codeserver-stream.ts"
   },
   "devDependencies": {
-    "deemon": "^1.13.5"
+    "deemon": "^1.13.7"
   },
   "dependencies": {
-    "@types/node": "^24.2.0",
+    "@types/node": "^25.5.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }

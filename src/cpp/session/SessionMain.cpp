@@ -85,6 +85,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
@@ -154,10 +155,12 @@
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
 #include "modules/SessionGraphics.hpp"
+#include "modules/SessionLibGit2.hpp"
 #include "modules/SessionDependencies.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
+#include "modules/SessionTrust.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
@@ -247,6 +250,18 @@
 #include "session-config.h"
 
 #include <tests/TestRunner.hpp>
+
+// Forward declare to avoid pulling in SessionLogging.hpp, which
+// redefines logging macros for section tagging.
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace logging {
+core::Error initialize();
+} // namespace logging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -577,6 +592,23 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    }
 #endif
 
+   // check if R version exceeds the maximum supported version
+   {
+      Version rVersion = rstudio::r::version();
+      Version maxVersion(RSTUDIO_R_VERSION_MAXIMUM);
+      if (rVersion > maxVersion)
+      {
+         std::string rVersionStr = rVersion;
+         std::string maxVersionStr = maxVersion;
+         LOG_WARNING_MESSAGE(
+            "R version " + rVersionStr +
+            " is newer than the maximum version of R tested with this "
+            "version of RStudio (" + maxVersionStr + "). "
+            "If you experience issues, please try updating RStudio to "
+            "a newer version.");
+      }
+   }
+
    // execute core initialization functions
    using boost::bind;
    using namespace rstudio::core::system;
@@ -607,6 +639,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // prefs (early init required -- many modules including projects below require
       // preference access)
       (modules::prefs::initialize)
+
+      // libgit2 (early init required -- project init below uses libgit2
+      // for gitignore-aware file monitoring)
+      (modules::libgit2::initialize)
 
       // projects (early project init required -- module inits below
       // can then depend on e.g. computed defaultEncoding)
@@ -645,6 +681,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
+      (modules::logging::initialize)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)
@@ -732,6 +769,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lsp::initialize)
       (modules::assistant::initialize)
       (modules::chat::initialize)
+      (modules::trust::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)
 
@@ -930,6 +968,10 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_enabled"] = isPpmMetadataColumnEnabled();
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
+
+   dataJson["startup_files_suppressed"] =
+      modules::trust::shouldSuppressStartupFiles();
+   dataJson["trust_request"] = modules::trust::trustRequestData();
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
@@ -1682,31 +1724,7 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
-   // check options for session-specific override
-   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
-      return false;
-   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
-      return true;
-
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().restoreWorkspace)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   // no project override
-   return prefs::userPrefs().loadWorkspace() ||
-          !rsession::options().initialEnvironmentFileOverride().isEmpty();
+   return module_context::restoreWorkspaceEnabled();
 }
 
 bool alwaysSaveHistoryOption()
@@ -2500,7 +2518,10 @@ int main(int argc, char * const argv[])
       // it is created with the default value of ~, so if our session options
       // have specified that a different directory should be used, we should
       // persist the value to the session state as soon as possible
-      module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
+      module_context::activeSession().setWorkingDir(module_context::createAliasedPath(workingDir));
+
+      // initialize directory trust state before R initialization
+      modules::trust::initializeTrustState();
 
       // start http connection listener
       error = waitWithTimeout(
@@ -2659,6 +2680,19 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+      rOptions.rMaxConnections = options.rMaxConnections();
+
+      // apply trust overrides for untrusted or unknown directories
+      if (modules::trust::shouldSuppressStartupFiles())
+      {
+         rOptions.disableRProfileOnStart = true;
+         core::system::setenv("R_ENVIRON_USER", "");
+      }
+
+      if (modules::trust::shouldSuppressWorkspaceRestore())
+      {
+         rOptions.restoreWorkspace = false;
+      }
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

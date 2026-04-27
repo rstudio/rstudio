@@ -24,8 +24,8 @@ namespace session {
 namespace modules {
 namespace environment {
 
-core::json::Value varToJson(SEXP env, const r::sexp::Variable& var);
-bool isUnevaluatedPromise(SEXP var);
+core::json::Value varToJson(const std::string& name, SEXP env);
+bool isUnevaluatedPromise(const std::string& name, SEXP env);
 bool functionDiffersFromSource(SEXP srcRef, const std::string& functionCode);
 void sourceRefToJson(const SEXP srcref, core::json::Object* pObject);
 core::Error sourceFileFromRef(const SEXP srcref, std::string* pFileName);

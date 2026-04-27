@@ -52,7 +52,7 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.events.EditEvent;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -276,7 +276,7 @@ public class AceEditor implements DocDisplay
       private final Anchor end_;
    }
 
-   private class AceEditorChangeTracker extends EventBasedChangeTracker<Void>
+   private class AceEditorChangeTracker extends EventBasedChangeTracker<VoidResponse>
    {
       private AceEditorChangeTracker()
       {
@@ -433,9 +433,14 @@ public class AceEditor implements DocDisplay
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
-      
+
       // https://github.com/rstudio/rstudio/issues/13118
       setColorPreview(userPrefs_.colorPreview().getValue());
+
+      // Register event listeners eagerly so that editors managed outside of
+      // the GWT widget hierarchy (e.g. Visual mode code chunks) can still
+      // receive events. See https://github.com/rstudio/rstudio/issues/17007
+      registerEditorEventListeners();
    }
 
    public void attach()
@@ -535,6 +540,13 @@ public class AceEditor implements DocDisplay
 
    private void registerEditorEventListeners()
    {
+      // Clear any existing registrations so this method is safe to call
+      // multiple times (e.g. from both the constructor and on re-attach).
+      for (HandlerRegistration handler : editorEventListeners_)
+         if (handler != null)
+            handler.removeHandler();
+      editorEventListeners_.clear();
+
       editorEventListeners_.add(events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
       {
          @Override
@@ -3551,7 +3563,7 @@ public class AceEditor implements DocDisplay
    }
 
    public HandlerRegistration addValueChangeHandler(
-         ValueChangeHandler<Void> handler)
+         ValueChangeHandler<VoidResponse> handler)
    {
       return handlers_.addHandler(ValueChangeEvent.getType(), handler);
    }
@@ -4302,6 +4314,15 @@ public class AceEditor implements DocDisplay
 
       while (endRow <= endRowLimit)
       {
+         // skip comment and empty lines without counting their bracket tokens;
+         // this is necessary since roxygen comments can contain bracket tokens
+         // (e.g. #' [foo()]) that would otherwise interfere with bracket balancing
+         if (rowIsEmptyOrComment(endRow))
+         {
+            endRow++;
+            continue;
+         }
+
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -4319,7 +4340,7 @@ public class AceEditor implements DocDisplay
          }
 
          // continue search if line ends with binary operator
-         if (rowEndsInBinaryOperatorOrOpenParen(endRow) || rowIsEmptyOrComment(endRow))
+         if (rowEndsInBinaryOperatorOrOpenParen(endRow))
          {
             endRow++;
             continue;

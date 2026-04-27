@@ -115,6 +115,7 @@ private:
                   terminalMessage_ptr msg);
    void onClose(terminalServer* s, websocketpp::connection_hdl hdl);
    void onOpen(terminalServer* s, websocketpp::connection_hdl hdl);
+   bool onValidate(terminalServer* s, websocketpp::connection_hdl hdl);
    void onHttp(terminalServer* s, websocketpp::connection_hdl hdl);
    void onFail(terminalServer* s, websocketpp::connection_hdl hdl);
 

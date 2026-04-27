@@ -17,6 +17,8 @@
 #define SESSION_CHAT_CONSTANTS_HPP
 
 #include <chrono>
+#include <string>
+#include <vector>
 
 namespace rstudio {
 namespace session {
@@ -28,9 +30,15 @@ namespace constants {
 // Installation paths
 // ============================================================================
 extern const char* const kPositAiDirName;
+extern const char* const kPositAiBackupDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
+extern const char* const kCspConfigPath;
+extern const char* const kProtocolVersionFileName;
+
+// Sentinel value: no backend port is assigned
+constexpr int kChatBackendPortNone = -1;
 
 // ============================================================================
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
@@ -54,9 +62,30 @@ constexpr size_t kMaxBufferSize = 1024;
 constexpr std::chrono::milliseconds kMaxDelay{100};
 
 // ============================================================================
+// Capability negotiation
+// ============================================================================
+
+// Returns the set of JSON-RPC methods that RStudio can handle
+// (i.e., requests/notifications that the peer may send to RStudio).
+const std::vector<std::string>& rstudioCapabilities();
+
+// ============================================================================
 // Restart limits
 // ============================================================================
 constexpr int kMaxRestartAttempts = 1;
+
+// ============================================================================
+// WebSocket URL assembly
+// ============================================================================
+
+// Assembles a server-mode WebSocket path from its components. Each component
+// is normalized (trailing slashes removed, leading slash ensured on
+// portmappedPath) and the default root path "/" is treated as empty.
+// Appends the fixed "/ai-chat" endpoint suffix.
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath);
 
 } // namespace constants
 } // namespace chat

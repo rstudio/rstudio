@@ -32,6 +32,12 @@ export function createSplashScreen(): BrowserWindow {
     hasShadow: false,
   });
 
+  // Workaround for Electron crash on Windows when the mouse is over a
+  // transparent frameless window during teardown. Ignoring mouse events
+  // prevents hit tests from triggering during window destruction.
+  // https://github.com/electron/electron/pull/49929
+  splash.setIgnoreMouseEvents(true);
+
   splash.loadURL(SPLASH_WEBPACK_ENTRY).catch((err: unknown) => logger().logError(err));
   return splash;
 }

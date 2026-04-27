@@ -50,13 +50,13 @@ public class ShellInteractionManager implements ShellOutputWriter
    }
 
    @Override
-   public void consoleWriteOutput(String output)
+   public void consoleWriteOutput(String output, boolean agent)
    {
       output = maybeSuppressOutputPrefix(output);
       if (StringUtil.isNullOrEmpty(output))
          return;
 
-      display_.consoleWriteOutput(output);
+      display_.consoleWriteOutput(output, agent);
    }
 
    private String maybeSuppressOutputPrefix(String output)
@@ -77,11 +77,11 @@ public class ShellInteractionManager implements ShellOutputWriter
    }
 
    @Override
-   public void consoleWriteError(String error)
+   public void consoleWriteError(String error, boolean agent)
    {
       // show the error in the console then re-prompt
       display_.consoleWriteError(
-              constants_.consoleWriteError(error));
+              constants_.consoleWriteError(error), agent);
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
    }
@@ -94,7 +94,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    }
 
    @Override
-   public void consoleWritePrompt(String prompt)
+   public void consoleWritePrompt(String prompt, boolean agent)
    {
       consolePrompt(prompt);
    }
@@ -114,11 +114,11 @@ public class ShellInteractionManager implements ShellOutputWriter
 
       outputPrefixToSuppress_ = null;
       // update console with prompt and input
-      display_.consoleWritePrompt(promptText);
+      display_.consoleWritePrompt(promptText, false);
       final boolean echoInput = showInputForPrompt(promptText);
       if (echoInput)
       {
-         display_.consoleWriteInput(input, "");
+         display_.consoleWriteInput(input, "", false);
          if (Desktop.isDesktop() && BrowseCap.isWindows())
             outputPrefixToSuppress_ = commandEntry;
       }
@@ -244,7 +244,7 @@ public class ShellInteractionManager implements ShellOutputWriter
             event.stopPropagation();
 
             if (display_.isPromptEmpty())
-               display_.consoleWriteOutput("^C");
+               display_.consoleWriteOutput("^C", false);
 
             inputHandler_.execute(ShellInput.createInterrupt());
          }

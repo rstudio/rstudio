@@ -185,4 +185,8 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String environmentVariablesDialogTitle();
     String environmentVariablesHelpLinkLabel();
     String noEnvVarsAvailable();
+    String positConnectCloud();
+    String positConnectCloudSubTitle();
+    String positConnectCloudCaption();
+    String connectingConnectCloudAccount();
 }

@@ -70,6 +70,7 @@ public class ClassIds
    // WindowFrameButton (combined with unique suffix for each panel)
    public final static String PANEL_MIN_BTN = "panel_min_btn";
    public final static String PANEL_MAX_BTN = "panel_max_btn";
+   public final static String PANEL_CLOSE_BTN = "panel_close_btn";
 
    // Chunk Context (combined with unique suffix for each panel)
    public final static String CHUNK = "chunk";

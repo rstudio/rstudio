@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -29,7 +29,7 @@ public interface ThemeServerOperations
 
    void addTheme(ServerRequestCallback<String> request, String themeLocation);
 
-   void removeTheme(ServerRequestCallback<Void> request, String themeName);
+   void removeTheme(ServerRequestCallback<VoidResponse> request, String themeName);
 
    void getThemeName(ServerRequestCallback<String> request, String themeLocation);
 

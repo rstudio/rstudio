@@ -17,6 +17,7 @@
 #define NO_PROXY_RULES
 
 #include <core/Result.hpp>
+#include <core/http/URL.hpp>
 
 namespace rstudio {
 namespace core {
@@ -156,7 +157,7 @@ inline std::unique_ptr<NoProxyRule> createNoProxyRule(
     const std::string& address,
     const std::string& port)
 {
-   return createNoProxyRule(address + ":" + port);
+   return createNoProxyRule(URL::formatHostPort(address, port));
 }
 
 } // namespace http

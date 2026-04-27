@@ -17,7 +17,7 @@ package org.rstudio.studio.client.server;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// Type returned to ServerRequestCallback::onResponseReceived when 
+// Type returned to ServerRequestCallback::onResponseReceived when
 // the remote method conceptually has a "void" return type
 
 public class Void extends JavaScriptObject
@@ -25,7 +25,7 @@ public class Void extends JavaScriptObject
    public static final native Void create() /*-{
       return new Object();
    }-*/;
-   
+
    protected Void()
    {
    }

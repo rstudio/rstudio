@@ -19,6 +19,7 @@
 #define kConsoleText  "text"
 #define kConsoleId    "console"
 #define kConsoleFlags "flags"
+#define kConsoleAgent "agent"
 
 namespace rstudio {
 namespace core {

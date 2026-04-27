@@ -157,7 +157,7 @@ public class AppNameTextbox extends Composite
    {
       if (StringUtil.isNullOrEmpty(title))
          title = name;
-      appTitle_.setTitle(title);
+      appTitle_.setText(title);
       name_ = name;
    }
 

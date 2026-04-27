@@ -41,7 +41,7 @@ SEXP rs_signalNotebookCondition(SEXP typeSEXP,
    // extract message (make sure we got one)
    std::string message = r::sexp::asUtf8String(messageSEXP);
    if (message.empty())
-      return R_FalseValue;
+      return Rf_ScalarLogical(FALSE);
 
    // extract condition type
    Condition conditionType = static_cast<Condition>(r::sexp::asInteger(typeSEXP));
@@ -52,7 +52,7 @@ SEXP rs_signalNotebookCondition(SEXP typeSEXP,
 
    // broadcast signaled condition to notebook exec context
    events().onCondition(conditionType, message);
-   return R_TrueValue;
+   return Rf_ScalarLogical(TRUE);
 }
 
 } // anonymous namespace

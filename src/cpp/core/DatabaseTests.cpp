@@ -23,8 +23,6 @@
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
-#include "config.h"
-
 namespace rstudio {
 namespace core {
 namespace tests {
@@ -36,13 +34,8 @@ using namespace core::database;
 namespace {
 Error initializeCommonTestSchema(IConnection& connection)
 {
-   // Disable WAL mode to prevent WAL/SHM files
-   Error error = connection.executeStr("PRAGMA journal_mode = DELETE;");
-   if (error)
-      return error;
-
    Query query = connection.query("create table Test(id int, text varchar(255))");
-   error = connection.execute(query);
+   Error error = connection.execute(query);
    return error;
 }
 } // anonymous namespace
@@ -78,10 +71,11 @@ core::database::PostgresqlConnectionOptions postgresConnectionOptions()
 {
    PostgresqlConnectionOptions options;
    options.connectionTimeoutSeconds = 10;
-   options.database = "rstudio-test";
+   options.database = "rstudio_test";
    options.host = "localhost";
    options.username = "postgres";
-   options.password = "postgres";
+   const char* dbPass = std::getenv("RSTUDIO_TEST_DB_PASS");
+   options.password = (dbPass) ? dbPass : "postgres";
 
    return options;
 }
@@ -232,13 +226,13 @@ TEST_F(DatabaseTestsFixture, CanBulkInsert)
    Rowset rowset;
    error = sqliteConnection->execute(selectQuery, rowset);
    ASSERT_FALSE(error) << "Failed to select bulk inserted data: " << error.getMessage();
-   
+
    int i = 1;
    for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
    {
       Row& row = *it;
-   ASSERT_EQ(i * 1000, row.get<int>(0));
-   ASSERT_EQ(safe_convert::numberToString(i * 1000), row.get<std::string>(1)); 
+      ASSERT_EQ(i * 1000, row.get<int>(0));
+      ASSERT_EQ(safe_convert::numberToString(i * 1000), row.get<std::string>(1));
       ++i;
    }
 }
@@ -247,7 +241,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
 {
    FilePath dbPath = FilePath("/tmp/rstudio-test-db-pool");
    dbPath.removeIfExists();
-   
+
    SqliteConnectionOptions options;
    options.file = dbPath.getAbsolutePath();
 
@@ -256,10 +250,6 @@ TEST(DatabaseTest, CanUseConnectionPool)
    ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
    boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
    ASSERT_TRUE(connection) << "Failed to get connection from pool";
-
-   // Disable WAL mode to prevent WAL/SHM files
-   error = connection->executeStr("PRAGMA journal_mode = DELETE;");
-   ASSERT_FALSE(error) << "Failed to set journal mode: " << error.getMessage();
 
    Query query = connection->query("create table Test(id int, text varchar(255))");
    error = connection->execute(query);
@@ -276,7 +266,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
       ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
    }
 
-   int rowId; 
+   int rowId;
    std::string rowText;
    query = connection->query("select id, text from Test where id = 50")
       .withOutput(rowId)
@@ -289,7 +279,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
 
    boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
    ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-   
+
    Query query2 = connection2->query("select id, text from Test where id = 25")
       .withOutput(rowId)
       .withOutput(rowText);
@@ -309,7 +299,28 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
       GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
    }
    Error error;
-   // generate some schema files
+
+   // Copy the real CreateTables files to a temp directory so we can add test migration
+   // files alongside them. This validates the production schema as part of the test.
+   FilePath dbSchemaDir(RSTUDIO_DB_SCHEMA_DIR);
+   FilePath schemaDir;
+   ASSERT_FALSE(FilePath::tempFilePath(schemaDir));
+   ASSERT_FALSE(schemaDir.ensureDirectory());
+
+   std::string createTablesContent;
+   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.sqlite"), &createTablesContent);
+   ASSERT_FALSE(error) << "Failed to read CreateTables.sqlite from " << dbSchemaDir.getAbsolutePath();
+   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.sqlite"), createTablesContent);
+   ASSERT_FALSE(error) << "Failed to copy CreateTables.sqlite";
+
+   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.postgresql"), &createTablesContent);
+   ASSERT_FALSE(error) << "Failed to read CreateTables.postgresql from " << dbSchemaDir.getAbsolutePath();
+   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.postgresql"), createTablesContent);
+   ASSERT_FALSE(error) << "Failed to copy CreateTables.postgresql";
+
+   // Test migration files create and modify test-specific tables.
+   // Migration filenames use the 3-part convention: {version}_{Release-Name}_{Description}.{ext}
+   // Versions use "99..." timestamps to sort after all production migration versions.
    std::string schema1 =
       R""(
       CREATE TABLE TestTable1_Persons(
@@ -323,6 +334,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
          id int,
          fk_person_id int
       );
+
+      UPDATE schema_version SET current_version = '99000000000000000000001', release_name = 'Test Release';
       )"";
 
    // sqlite cannot alter tables very well, so adding constraints necessitates dropping
@@ -349,6 +362,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       DROP TABLE TestTable2_AccountHolders;
       ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+
+      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
       )"";
 
    // postgresql supports modification of tables
@@ -362,6 +377,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       ALTER TABLE TestTable2_AccountHolders
       ADD FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id);
+
+      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
       )"";
 
    std::string schema3Sqlite =
@@ -376,33 +393,36 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       DROP TABLE TestTable2_AccountHolders;
       ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+
+      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
       )"";
 
    std::string schema3Postgresql =
       R""(
       ALTER TABLE TestTable2_AccountHolders
       ADD COLUMN creation_time text;
+
+      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
       )"";
 
-   FilePath workingDir = core::system::currentWorkingDir(core::system::currentProcessId());
-   FilePath outFile1 = workingDir.completeChildPath("1_InitialTables.sql");
-   FilePath outFile2Sqlite = workingDir.completeChildPath("2_ConstraintsForInitialTables.sqlite");
-   FilePath outFile2Postgresql = workingDir.completeChildPath("2_ConstraintsForInitialTables.postgresql");
-   FilePath outFile3Sqlite = workingDir.completeChildPath("3_AddAccountCreationTime.sqlite");
-   FilePath outFile3Postgresql = workingDir.completeChildPath("3_AddAccountCreationTime.postgresql");
+   FilePath outFile1 = schemaDir.completeChildPath("99000000000000000000001_Test-Release_InitialTables.sql");
+   FilePath outFile2Sqlite = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.sqlite");
+   FilePath outFile2Postgresql = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.postgresql");
+   FilePath outFile3Sqlite = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.sqlite");
+   FilePath outFile3Postgresql = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.postgresql");
 
    error = writeStringToFile(outFile1, schema1);
-   ASSERT_FALSE(error) << "Failed to write initial schema file: " << error.getMessage();
-   
+   ASSERT_FALSE(error) << "Failed to write initial test tables schema file: " << error.getMessage();
+
    error = writeStringToFile(outFile2Sqlite, schema2Sqlite);
    ASSERT_FALSE(error) << "Failed to write SQLite constraints schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile2Postgresql, schema2Postgresql);
    ASSERT_FALSE(error) << "Failed to write PostgreSQL constraints schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile3Sqlite, schema3Sqlite);
    ASSERT_FALSE(error) << "Failed to write SQLite account creation schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile3Postgresql, schema3Postgresql);
    ASSERT_FALSE(error) << "Failed to write PostgreSQL account creation schema file: " << error.getMessage();
 
@@ -410,29 +430,44 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    error = connect(postgresConnectionOptions(), &postgresConnection);
    ASSERT_FALSE(error) << "Failed to connect to PostgreSQL database for schema update test: " << error.getMessage();
 
-   SchemaUpdater sqliteUpdater(sqliteConnection, workingDir);
-   SchemaUpdater postgresUpdater(postgresConnection, workingDir);
+   // Reset the PostgreSQL test database so the test is repeatable.
+   // The SQLite DB is already cleaned up by the fixture (file is deleted in TearDown).
+   error = postgresConnection->executeStr("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+   ASSERT_FALSE(error) << "Failed to reset PostgreSQL test database: " << error.getMessage();
 
+   SchemaUpdater sqliteUpdater(sqliteConnection, schemaDir);
+   SchemaUpdater postgresUpdater(postgresConnection, schemaDir);
+
+   // First update: creates schema from the real CreateTables files (production version)
    error = sqliteUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update SQLite schema: " << error.getMessage();
-   
+   ASSERT_FALSE(error) << "Failed initial SQLite schema creation: " << error.getMessage();
+
    error = postgresUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update PostgreSQL schema: " << error.getMessage();
+   ASSERT_FALSE(error) << "Failed initial PostgreSQL schema creation: " << error.getMessage();
+
+   // Second update: applies test migration files (versions higher than production)
+   error = sqliteUpdater.update();
+   ASSERT_FALSE(error) << "Failed to apply SQLite test migrations: " << error.getMessage();
+
+   error = postgresUpdater.update();
+   ASSERT_FALSE(error) << "Failed to apply PostgreSQL test migrations: " << error.getMessage();
+
+   SchemaVersion expectedVersion("99000000000000000000003", "Test Release");
 
    SchemaVersion currentSchemaVersion;
    error = sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get SQLite schema version: " << error.getMessage();
-   ASSERT_EQ(currentSchemaVersion, SchemaVersion("3", RSTUDIO_RELEASE_NAME));
-   
+   ASSERT_EQ(currentSchemaVersion, expectedVersion);
+
    currentSchemaVersion = SchemaVersion();
    error = postgresUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get PostgreSQL schema version: " << error.getMessage();
-   ASSERT_EQ(currentSchemaVersion, SchemaVersion("3", RSTUDIO_RELEASE_NAME));
+   ASSERT_EQ(currentSchemaVersion, expectedVersion);
 
    // ensure repeated calls to update work without error
    error = sqliteUpdater.update();
    ASSERT_FALSE(error) << "Failed to update SQLite schema (repeated call): " << error.getMessage();
-   
+
    error = postgresUpdater.update();
    ASSERT_FALSE(error) << "Failed to update PostgreSQL schema (repeated call): " << error.getMessage();
 
@@ -556,7 +591,7 @@ TEST_F(DatabaseTestsFixture, CanExecuteStrWithMultipleQueries)
    Rowset rowset;
    error = sqliteConnection->execute(selectQuery, rowset);
    ASSERT_FALSE(error) << "Failed to select from TestTable_3: " << error.getMessage();
-   
+
    int i = 0;
    std::string vals[2][2];
    vals[0][0] = "Hello";
@@ -566,7 +601,7 @@ TEST_F(DatabaseTestsFixture, CanExecuteStrWithMultipleQueries)
    for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
    {
       Row& row = *it;
-   ASSERT_EQ(std::string(vals[i][0]), row.get<std::string>(0)); 
+   ASSERT_EQ(std::string(vals[i][0]), row.get<std::string>(0));
    ASSERT_EQ(std::string(vals[i][1]), row.get<std::string>(1));
       ++i;
    }
@@ -584,11 +619,11 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_TRUE(validateOptions(options, nullptr));
 
    std::string connectionStr;
-   
-   // There urls on invalid because they don't include passwords and we don't have ssl support.
+
+   // There urls are invalid because they don't include passwords and we don't have ssl support.
    options.connectionUri = "postgres://localhost";
    EXPECT_TRUE(validateOptions(options, &connectionStr));
-   
+
    options.connectionUri = "postgres://joe@myhost/";
    EXPECT_TRUE(validateOptions(options, &connectionStr));
 
@@ -631,6 +666,7 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr));
    EXPECT_EQ(std::string("host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test' password='12345'"), connectionStr);
 
+   // When password is returned separately (3-arg validateOptions), it doesn't appear in the connection string
    std::string password;
    EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
    EXPECT_EQ(std::string("12345"), password) << "Expected password to be '12345' but got '" << password << "'";
@@ -698,9 +734,96 @@ TEST_F(DatabaseTestsFixture, WithoutputReturnsErrorWhenValueIsNull)
 
    bool dataReturned = false;
    error = sqliteConnection->execute(query, &dataReturned);
-   
+
    // The query fails with error for selecting a null value without a null indicator
    ASSERT_TRUE(error) << "Expected error when retrieving NULL value without indicator, but got success. Error message: " << error.getMessage();
+}
+
+TEST_F(DatabaseTestsFixture, GetOptionalValueCastsNumericTypes)
+{
+   Query query = sqliteConnection->query("create table CastTest(i_val integer, f_val real, b_val bigint, t_val text)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create CastTest table: " << error.getMessage();
+
+   query = sqliteConnection->query("insert into CastTest (i_val, f_val, b_val, t_val) values (1, 2.2, 3, 'test')");
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to insert values into CastTest: " << error.getMessage();
+
+   Rowset rows;
+   query = sqliteConnection->query("select i_val, f_val, b_val, t_val from CastTest");
+   error = sqliteConnection->execute(query, rows);
+
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      boost::optional<int> i_val;
+      boost::optional<double> f_val;
+      boost::optional<long long> b_val;
+      boost::optional<std::string> t_val;
+
+      // Test without conversions first
+      error = rows.getOptionalValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 1);
+      error = rows.getOptionalValue(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 2.2);
+      error = rows.getOptionalValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 3);
+      error = rows.getOptionalValue(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val.value(), "test");
+
+      // Test int conversions
+      error = rows.getOptionalValue<int>(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 1);
+      error = rows.getOptionalValue<int>(it, "f_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 2);
+      error = rows.getOptionalValue<int>(it, "b_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 3);
+      error = rows.getOptionalValue<int>(it, "t_val", &i_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to int";
+
+      // Test float conversions
+      error = rows.getOptionalValue<double>(it, "i_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 1.0);
+      error = rows.getOptionalValue<double>(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 2.2);
+      error = rows.getOptionalValue<double>(it, "b_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 3.0);
+      error = rows.getOptionalValue<double>(it, "t_val", &f_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to double";
+
+      // Test long long conversions
+      error = rows.getOptionalValue<long long>(it, "i_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 1);
+      error = rows.getOptionalValue<long long>(it, "f_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 2);
+      error = rows.getOptionalValue<long long>(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 3);
+      error = rows.getOptionalValue<long long>(it, "t_val", &b_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to long long";
+
+      // Make sure strings don't mingle
+      error = rows.getOptionalValue<std::string>(it, "i_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting i_val to string";
+      error = rows.getOptionalValue<std::string>(it, "f_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting f_val to string";
+      error = rows.getOptionalValue<std::string>(it, "b_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting b_val to string";
+      error = rows.getOptionalValue<std::string>(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val.value(), "test");
+   }
 }
 
 class ConnectionPoolTestsFixture : public ::testing::Test
@@ -764,7 +887,7 @@ TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
 
    boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
    ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-   
+
    Query select25 = connection2->query("select id, text from Test where id = 25")
          .withOutput(rowId)
          .withOutput(rowText);

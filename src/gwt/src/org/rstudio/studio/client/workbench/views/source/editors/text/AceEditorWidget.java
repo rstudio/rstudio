@@ -41,7 +41,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -130,7 +130,7 @@ import jsinterop.base.Js;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
-                 HasValueChangeHandlers<Void>,
+                 HasValueChangeHandlers<VoidResponse>,
                  HasContextMenuHandlers,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
@@ -312,9 +312,9 @@ public class AceEditorWidget extends Composite
          AceEditorNative.addEventListener(
                editor_,
                "undo",
-               new CommandWithArg<Void>()
+               new CommandWithArg<VoidResponse>()
                {
-                  public void execute(Void arg)
+                  public void execute(VoidResponse arg)
                   {
                      fireEvent(new UndoRedoEvent(false));
                   }
@@ -323,9 +323,9 @@ public class AceEditorWidget extends Composite
          AceEditorNative.addEventListener(
                editor_,
                "redo",
-               new CommandWithArg<Void>()
+               new CommandWithArg<VoidResponse>()
                {
-                  public void execute(Void arg)
+                  public void execute(VoidResponse arg)
                   {
                      fireEvent(new UndoRedoEvent(true));
                   }
@@ -383,10 +383,10 @@ public class AceEditorWidget extends Composite
          AceEditorNative.addEventListener(
                editor_,
                "changeSelection",
-               new CommandWithArg<Void>()
+               new CommandWithArg<VoidResponse>()
                {
                   @Override
-                  public void execute(Void event)
+                  public void execute(VoidResponse event)
                   {
                      fireEvent(new AceSelectionChangedEvent());
                   }
@@ -752,7 +752,7 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setValue(code);
    }
 
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<Void> handler)
+   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<VoidResponse> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }

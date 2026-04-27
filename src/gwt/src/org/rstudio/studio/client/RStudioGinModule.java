@@ -91,6 +91,8 @@ import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIPanel;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIView;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIWindow;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatelliteView;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatelliteWindow;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
@@ -119,6 +121,7 @@ import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.ShowDOMElementIDs;
+import org.rstudio.studio.client.workbench.TrustPresenter;
 import org.rstudio.studio.client.workbench.UserInterfaceHighlighter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -311,6 +314,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RnwWeaveRegistry.class).asEagerSingleton();
       bind(LatexProgramRegistry.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
+      bind(TrustPresenter.class).in(Singleton.class);
       bind(UserInterfaceHighlighter.class).asEagerSingleton();
       bind(ShowDOMElementIDs.class).asEagerSingleton();
       bind(DefaultCRANMirror.class).in(Singleton.class);
@@ -357,6 +361,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(PlumberAPIView.class).to(PlumberAPIWindow.class);
+      bind(ChatSatelliteView.class).to(ChatSatelliteWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       

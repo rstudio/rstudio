@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.history.model;
 
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArrayNumber;
@@ -41,7 +41,7 @@ public interface HistoryServerOperations
     *  removeHistoryItems -- indexes of items to remove 
     */
    void removeHistoryItems(JsArrayNumber itemIndexes, 
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
    
    
    /*
@@ -58,7 +58,7 @@ public interface HistoryServerOperations
    /*
     *  clearHistory -- clear the entire history 
     */
-   void clearHistory(ServerRequestCallback<Void> requestCallback);
+   void clearHistory(ServerRequestCallback<VoidResponse> requestCallback);
    
    
    /*

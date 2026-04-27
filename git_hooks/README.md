@@ -3,7 +3,6 @@
 ## Implemented Hooks
 - [pre-commit](./hooks/pre-commit)
     - runs linting and formatting on staged JavaScript and TypeScript files
-    - scan staged files for possible secrets (see [secrets README](./secrets/README.md))
 - [pre-push](./hooks/pre-push): prevents pushes to the main branch
 
 ## Install Hooks
