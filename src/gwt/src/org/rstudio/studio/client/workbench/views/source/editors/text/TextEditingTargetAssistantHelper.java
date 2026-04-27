@@ -464,6 +464,7 @@ public class TextEditingTargetAssistantHelper
       if (dismissed_)
          return;
 
+      sendSuggestionFeedback("ignored");
       resetSuggestion();
 
       // The completion data gets modified when doing partial (word-by-word)
@@ -640,6 +641,7 @@ public class TextEditingTargetAssistantHelper
          @Override
          protected void discard()
          {
+            sendSuggestionFeedback("rejected");
             resetSuggestion();
          }
 
@@ -1237,6 +1239,52 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
+    * Checks whether dismiss feedback should be sent to the LSP server.
+    * Only sends dismiss feedback for Posit AI.
+    */
+   private boolean shouldSendDismissFeedback()
+   {
+      if (editSuggestion_ == null || editSuggestion_.command == null)
+         return false;
+
+      if (editSuggestion_.command.arguments == null
+          || editSuggestion_.command.arguments.length == 0)
+         return false;
+
+      // Check if using Posit AI LSP
+      return StringUtil.equals(
+         assistant_.getAssistantType(),
+         UserPrefsAccessor.ASSISTANT_POSIT);
+   }
+
+   /**
+    * Sends suggestion feedback to the LSP server via workspace/executeCommand.
+    * Sends a completion command with the feedback argument replaced
+    * (i.e. "rejected" or "ignored"). Does not reset suggestion state.
+    */
+   private void sendSuggestionFeedback(String feedback)
+   {
+      try
+      {
+         if (shouldSendDismissFeedback())
+         {
+            AssistantCompletionCommand cmd = new AssistantCompletionCommand();
+            cmd.title = editSuggestion_.command.title;
+            cmd.command = editSuggestion_.command.command;
+            cmd.arguments = new String[] {
+               editSuggestion_.command.arguments[0],
+               feedback
+            };
+            server_.assistantDidAcceptCompletion(cmd, new VoidServerRequestCallback());
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+   }
+
+   /**
     * Creates anchors for the current suggestion range.
     * The start anchor uses the default insertRight=false so it automatically
     * moves forward when text is inserted at its position (e.g., newlines or
@@ -1424,6 +1472,7 @@ public class TextEditingTargetAssistantHelper
                            // (which we need to send back to the server as-is in some language-server methods).
                            AssistantCompletion normalized = normalizeCompletion(completion);
 
+                           sendSuggestionFeedback("ignored");
                            resetSuggestion();
                            editSuggestion_ = new EditSuggestion(normalized);
                            editSuggestion_.type = SuggestionType.GHOST_TEXT;
@@ -1713,6 +1762,7 @@ public class TextEditingTargetAssistantHelper
                   {
                      if (nativeEvent != null && shouldDismissSuggestion(nativeEvent))
                      {
+                        sendSuggestionFeedback("ignored");
                         resetSuggestion();
                      }
                   }
@@ -1771,6 +1821,7 @@ public class TextEditingTargetAssistantHelper
 
                display_.addUndoRedoHandler((event) ->
                {
+                  sendSuggestionFeedback("ignored");
                   resetSuggestion();
                }),
 
@@ -1800,6 +1851,7 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
+                           sendSuggestionFeedback("rejected");
                            resetSuggestion();
                            return;
                         }
@@ -1831,6 +1883,7 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
+                           sendSuggestionFeedback("rejected");
                            resetSuggestion();
                            return;
                         }
@@ -1881,6 +1934,7 @@ public class TextEditingTargetAssistantHelper
                         // Let Ace close its popup first
                         if (!display_.hasActiveAceCompleter())
                         {
+                           sendSuggestionFeedback("rejected");
                            hideGhostText();
                            editSuggestion_ = null;
                         }
@@ -2125,6 +2179,7 @@ public class TextEditingTargetAssistantHelper
       // Dismiss any active next edit suggestion
       if (hasActiveSuggestion())
       {
+         sendSuggestionFeedback("rejected");
          resetSuggestion();
       }
    }
@@ -2528,6 +2583,7 @@ public class TextEditingTargetAssistantHelper
       // Cancel all timers and reset suggestion state
       suspendTimer_.cancel();
       nesTimer_.cancel();
+      sendSuggestionFeedback("ignored");
       resetSuggestion();
 
       // Clear diff view state

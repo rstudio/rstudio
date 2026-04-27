@@ -111,25 +111,25 @@ Tests can run against multiple RStudio Server instances in parallel. This works 
 
 **Targeting a server:**
 ```bash
-RSTUDIO_SERVER_URL=https://server1:80 RSTUDIO_EDITION=server \
+PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server \
   npx playwright test tests/panes/misc/autocomplete.test.ts
 ```
 
 **Parallel execution (5 servers):**
-Each process gets its own `RSTUDIO_SERVER_URL` — no shared config files, no conflicts:
+Each process gets its own `PW_RSTUDIO_SERVER_URL` — no shared config files, no conflicts:
 
 ```bash
 # Terminal / CI / shell script
-RSTUDIO_SERVER_URL=https://server1:80 RSTUDIO_EDITION=server npx playwright test tests/file1.test.ts &
-RSTUDIO_SERVER_URL=https://server2:80 RSTUDIO_EDITION=server npx playwright test tests/file2.test.ts &
-RSTUDIO_SERVER_URL=https://server3:80 RSTUDIO_EDITION=server npx playwright test tests/file3.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server npx playwright test tests/file1.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server2:80 PW_RSTUDIO_MODE=server npx playwright test tests/file2.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server3:80 PW_RSTUDIO_MODE=server npx playwright test tests/file3.test.ts &
 wait
 ```
 
 **Claude subagent execution:**
 Same commands, but each Agent tool call targets a different server with `run_in_background: true`. Results are collected and aggregated by the parent agent.
 
-**Desktop mode is unaffected** — it doesn't use `RSTUDIO_SERVER_URL`. The env var is only read by the server fixture path.
+**Desktop mode is unaffected** — it doesn't use `PW_RSTUDIO_SERVER_URL`. The env var is only read by the server fixture path.
 
 ## Output
 

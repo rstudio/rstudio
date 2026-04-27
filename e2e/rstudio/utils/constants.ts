@@ -15,8 +15,8 @@ export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const RSTUDIO_EXTRA_ARGS: string[] = process.env.RSTUDIO_EXTRA_ARGS
-  ? process.env.RSTUDIO_EXTRA_ARGS.split(' ').filter(Boolean)
+export const RSTUDIO_EXTRA_ARGS: string[] = process.env.PW_RSTUDIO_EXTRA_ARGS
+  ? process.env.PW_RSTUDIO_EXTRA_ARGS.split(' ').filter(Boolean)
   : [];
 
 export const CODE_SUGGESTION_PROVIDERS: Record<string, string> = {
