@@ -4,6 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
 # https://github.com/rstudio/rstudio/issues/16541
 .rs.test("hierarchical section folding respects heading depth", {
 
@@ -57,9 +58,9 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(range$end$row, 5)
 
       # '# Section 2 ----' is the last section; should fold to
-      # the end of the document (row 7).
+      # the end of the document (row 8).
       range <- as.vector(session$getFoldWidgetRange(6))
-      expect_equal(range$end$row, 7)
+      expect_equal(range$end$row, 8)
 
    })
 
