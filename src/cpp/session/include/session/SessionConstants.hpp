@@ -110,6 +110,7 @@
 #define kRootPathSessionOption            "session-root-path"
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
 #define kSameSiteSessionOption            "session-same-site"
+#define kWwwFrameOriginSessionOption      "session-www-frame-origin"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

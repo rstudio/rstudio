@@ -2502,6 +2502,15 @@
    clear = function() { .rs.clearUserPref("assistant_show_messages") }
 )
 
+# Show Posit Assistant button in toolbar
+#
+# When enabled, the Posit Assistant button is displayed in the main toolbar.
+.rs.uiPrefs$assistantToolbarButtonVisible <- list(
+   get = function() { .rs.getUserPref("assistant_toolbar_button_visible") },
+   set = function(value) { .rs.setUserPref("assistant_toolbar_button_visible", value) },
+   clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.

@@ -2252,6 +2252,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantShowMessagesDescription();
 
    /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   @DefaultStringValue("Show Posit Assistant button in toolbar")
+   String assistantToolbarButtonVisibleTitle();
+   @DefaultStringValue("When enabled, the Posit Assistant button is displayed in the main toolbar.")
+   String assistantToolbarButtonVisibleDescription();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")

@@ -113,6 +113,17 @@ core::Error handleAIChatRequest(const core::http::Request& request,
  */
 void setChatBackendPort(int port);
 
+/**
+ * Set the chat backend auth token.
+ *
+ * Called by SessionChat when the backend process starts or stops. In server
+ * mode, this token is delivered to the PA client via an HTTP-only cookie on
+ * the index.html response (rather than as a URL query parameter) to avoid
+ * leaking credentials in browser history, server logs, and the Referer header.
+ * Pass an empty string to clear.
+ */
+void setChatBackendAuthToken(const std::string& token);
+
 } // namespace staticfiles
 } // namespace chat
 } // namespace modules

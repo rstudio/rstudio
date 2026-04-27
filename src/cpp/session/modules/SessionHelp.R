@@ -343,7 +343,10 @@ options(help_type = "html")
       return()
    
    envir <- .rs.getActiveFrame()
-   out <- .rs.getHelpRpcImpl(what, from, type, envir)
+   out <- tryCatch(
+      .rs.getHelpRpcImpl(what, from, type, envir),
+      error = function(e) NULL
+   )
    if (is.null(out))
       return()
    

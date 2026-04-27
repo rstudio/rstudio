@@ -23,7 +23,6 @@ import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.Version;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -237,7 +236,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       List<Dependency> deps = getFeatureDependencies("rsconnect");
       if (requiresRmarkdown)
          deps.addAll(getFeatureDependencies("rmarkdown"));
-      
+
       withDependencies(
         constants_.publishingPaneHeader(),
         userAction,
@@ -245,6 +244,33 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         userPrompt,
         deps,
         true, // silently update any embedded packages needed (none at present)
+        onCompleted
+      );
+   }
+
+   public void withConnectCloudDependencies(String userAction, final CommandWithArg<Boolean> onCompleted)
+   {
+      // build dependency array -- same as rsconnect, but require
+      // rsconnect >= 1.8.0 for Connect Cloud support
+      List<Dependency> deps = getFeatureDependencies("rsconnect");
+      for (int i = 0; i < deps.size(); i++)
+      {
+         Dependency dep = deps.get(i);
+         if (StringUtil.equals(dep.getName(), "rsconnect"))
+         {
+            // Replace with a fresh Dependency to avoid mutating the
+            // shared object in the session's DependencyList cache.
+            deps.set(i, Dependency.cranPackage("rsconnect", "1.8.0"));
+            break;
+         }
+      }
+
+      withDependencies(
+        constants_.publishingPaneHeader(),
+        userAction,
+        getFeatureDescription("rsconnect"),
+        deps,
+        true,
         onCompleted
       );
    }

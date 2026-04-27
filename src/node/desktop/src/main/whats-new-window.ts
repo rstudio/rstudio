@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, ipcMain, session, shell } from 'electron';
+import { BrowserWindow, ipcMain, screen, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
 import { createLocalUrlChecker } from './whats-new-utils';
@@ -49,9 +49,15 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     return activeWindow;
   }
 
+  const display = options.parent
+    ? screen.getDisplayMatching(options.parent.getBounds())
+    : screen.getPrimaryDisplay();
+  const workAreaHeight = display.workAreaSize.height;
+  const height = Math.min(825, workAreaHeight);
+
   const win = new BrowserWindow({
     width: 900,
-    height: 650,
+    height,
     minWidth: 500,
     minHeight: 400,
     center: true,
@@ -189,6 +195,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     release: options.releaseSlug,
     releaseName: options.releaseName,
     version: options.version,
+    platform: process.platform,
   });
   const url = `${WHATS_NEW_WEBPACK_ENTRY}${separator}${params.toString()}`;
 

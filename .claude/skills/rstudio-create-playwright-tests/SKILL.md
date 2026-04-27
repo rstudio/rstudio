@@ -10,7 +10,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 1. **Always clean up stray RStudio processes at script start** – Port 9222 conflicts cause "Target closed" errors
 2. **5-second minimum initial wait** before CDP connection – Ensures stable UI initialization
 3. **Use stable selectors** from source code, NOT dynamic `gwt-uid-XXXX` IDs – These change on every restart
-4. **Use `pressSequentially()` for console/editor input, `keyboard.type()` for dialogs** – `pressSequentially()` ensures character-by-character detection in the editor; `keyboard.type()` works for dialog input and keyboard shortcuts
+4. **Use `pressSequentially()` for all GWT text inputs** – Console, editor, and dialog/wizard `input.gwt-TextBox` fields all need character-by-character input. `fill()` doesn't fire GWT key events (can leave OK buttons disabled). Use `keyboard.type()` only for non-GWT inputs like the command palette search box.
 5. **Add 0.2-second delay before `keyboard.press("Enter")`** – Critical for reliability. After typing, wait 0.2s before pressing Enter to ensure the keystroke is fully processed.
 6. **Graceful shutdown with `q(save = "no")`** – Better than force termination. Use `save = "no"` to skip the "Save workspace?" dialog.
 7. **Write cross-platform code** – Tests run on Windows, macOS, and Linux. Use `process.platform` for platform-specific logic. Never hardcode platform-specific paths or commands without platform guards.
@@ -95,8 +95,38 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 - `await expect(locator).toContainText('...')` — not extract text then assert
 - `expect(items).toEqual(expect.arrayContaining([...]))` — order-independent lists
 - `click({ force: true })` on Ace textareas — overlay intercepts normal clicks
-- `pressSequentially()` for console/editor input — character-by-character
+- `pressSequentially()` for GWT text inputs whose behavior depends on incremental key events firing (console, editor, most dialog/wizard `input.gwt-TextBox` fields where typing a character enables the OK button, triggers autocomplete, etc.) — `fill()` doesn't fire GWT key events in those cases. This is guidance, not a universal law: inputs driven by a discrete trigger like `press('Enter')` or a button click (e.g., the console Find/Replace bar) typically work fine with `fill()`, and `fill()` has the advantage of replacing existing text instead of appending. If unsure, start with `fill()`; switch to `pressSequentially()` only when the handler doesn't fire
 - `test.fixme()` for failing tests — never comment out
+
+### Waits and Timing
+
+**Default to Playwright's built-in assertions** — they retry automatically until the condition is met or the timeout expires. Reach for `sleep()` only when there is no observable DOM/state change to wait on.
+
+| Situation | Do this | Not this |
+|-----------|---------|----------|
+| Waiting for an element | `await expect(locator).toBeVisible()` | `await sleep(2000)` |
+| Waiting for text | `await expect(locator).toContainText(...)` | `await sleep(1000); check text` |
+| Waiting for element to disappear | `await expect(locator).not.toBeVisible()` | `await sleep(3000)` |
+| Waiting for page/session load | `await expect(page.locator(sel)).toBeVisible({ timeout: TIMEOUTS.sessionRestart })` | `await sleep(5000)` |
+
+**When `sleep()` is legitimate:**
+- The 0.2s pause before `keyboard.press("Enter")` after typing (Critical Rule 5 — GWT keystroke processing)
+- Short settling delay after a UI action that has no observable DOM change (e.g., after clicking a menu item before the next element appears — keep it to 200–500ms max)
+- Polling loops where you must wait between retry attempts
+
+**Always use named constants, never magic numbers:**
+
+```typescript
+// Bad
+await sleep(3000);
+
+// Good
+await sleep(TIMEOUTS.sessionRestart);
+```
+
+Add new keys to `utils/constants.ts` `TIMEOUTS` object rather than scattering raw numbers. If a value is used only once and is truly a one-off, add a comment explaining the constraint.
+
+See `utils/constants.ts` for the full list of `TIMEOUTS` keys.
 
 ### Parallel Safety
 
@@ -110,11 +140,11 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 - Skip tests if packages can't be installed: `test.skip(missingPackages.length > 0, reason)`
 - Never chain `install.packages()` with semicolons
 
-### Page Objects & Actions
+### Page Objects, Actions, and Utilities
 
-- Add new locators to appropriate `pages/` file
-- Add new methods to appropriate `actions/` file
-- Follow existing patterns
+- **Page-scoped logic** (locators, element-interaction helpers) → `pages/` and `actions/` files.
+- **Cross-cutting helpers** (suite-lifecycle utilities, env/fixture concerns, generic test-infra that isn't tied to a specific pane) → `utils/`.
+- Follow existing patterns in the appropriate directory.
 
 ### Project Isolation
 
@@ -124,6 +154,34 @@ When project isolation is needed, use a fixed project name per test suite. The l
 - **`beforeAll`**: delete the project directory if it exists from a previous run, then create fresh
 - **`afterEach`**: delete all files inside except `.Rproj`, close all source docs, reset state
 - **No `afterAll` cleanup** — the directory lingers until next run's `beforeAll` cleans it up
+
+### Sandbox (R-side scratch directory)
+
+Any spec that creates files or directories on the R-side filesystem must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+
+**Pattern:** add to every spec that creates files/dirs:
+
+```typescript
+import { useSuiteSandbox } from '@utils/sandbox';
+
+const sandbox = useSuiteSandbox();
+
+test('writes land in sandbox', async ({ rstudioPage: page }) => {
+  await typeInConsole(page, `writeLines("hi", "${sandbox.dir}/foo.txt")`);
+});
+```
+
+`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
+
+**Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
+
+**Env vars (optional):**
+- `RSTUDIO_PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
+- `RSTUDIO_PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
+
+**Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
+
+**Low-level helpers** (`createSandbox` / `removeSandbox`) are also exported from `@utils/sandbox` if you need to manage the lifecycle manually.
 
 ### Cross-Platform Considerations
 
@@ -174,6 +232,7 @@ Import shared constants — don't hardcode values:
 
 - **`TIMEOUTS`** — from `utils/constants.ts`. Use named keys (e.g., `TIMEOUTS.fileOpen`) instead of magic numbers.
 - **`RSTUDIO_PATH`, `CDP_PORT`, `CDP_URL`** — from `fixtures/desktop.fixture.ts`.
+- **`RSTUDIO_EXTRA_ARGS`** — from `utils/constants.ts`. Space-separated extra CLI args passed to RStudio Desktop at launch.
 - **`CODE_SUGGESTION_PROVIDERS`, `CHAT_PROVIDERS`** — from `utils/constants.ts`.
 
 Check the source files for current keys and values.
@@ -418,6 +477,40 @@ After tests pass, review for:
 3. **Selector quality** — Verify against selector hierarchy
 4. **Playwright + TypeScript conventions** — proper async/await, type annotations, built-in assertions, lifecycle hooks, no floating promises
 5. **Duplication** — Extract shared helpers to actions
+
+---
+
+## RPC Interception (page.route) in Electron/CDP
+
+When intercepting rsession RPCs via `page.route()`:
+
+- **Use regex, not globs** — `page.route(/\/rpc\/method_name/, ...)` handles query strings; glob `**/rpc/method_name` may not.
+- **Never use `route.fetch()`** — In Electron CDP, `route.fetch()` returns empty response bodies from rsession. Use `route.fulfill()` directly with the known JSON-RPC format:
+  ```typescript
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ result: mockPayload }),
+  });
+  ```
+- **RPC URL pattern** — RStudio RPCs use `http://127.0.0.1:<port>/rpc/<method_name>` (e.g., `/rpc/chat_check_for_updates`).
+
+### Chat Pane / Posit AI Specifics
+
+- **Frontend caches the update check** — `chatCheckForUpdates` fires once at startup. Toggling the chat provider preference does NOT re-trigger it. To force a fresh check, post `retry-manifest` from inside the chat iframe:
+  ```typescript
+  await chatPane.frame.locator('body').evaluate(() => {
+    window.parent.postMessage('retry-manifest', '*');
+  });
+  ```
+  The message **must originate from the iframe** — ChatPresenter filters by `event.source`, so `window.postMessage()` from the main page is silently ignored.
+
+- **Running PAI backend overwrites blocking pages** — GWT's `updateFrameContent()` navigates the iframe to about:blank then writes blocking HTML, but `loadUrl()` (from backend polling, client events, or GWT timers) immediately reloads `ai-chat/index.html` on top. For blocking-state tests, inject the HTML directly via `page.evaluate()` after verifying the RPC interception fired.
+
+- **Options dialog has its own install/update flow** — `setChatProvider()` via the Options dialog triggers update/install dialogs that bypass RPC interception. When you need to control the RPC response, set the preference directly:
+  ```typescript
+  await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("chat_provider", "posit")');
+  ```
 
 ---
 

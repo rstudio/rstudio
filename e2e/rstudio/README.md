@@ -28,10 +28,14 @@ No special environment variables needed — `RSTUDIO_EDITION` defaults to `deskt
 npx playwright test
 
 # Specific test file
-npx playwright test tests/panes/editor/code_suggestions.test.ts
+npx playwright test tests/panes/misc/autocomplete.test.ts
 
 # Specific test by name
 npx playwright test -g "test name here"
+npx playwright test -g "base function: cat("
+
+# With extra RStudio CLI args
+RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 ```
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `CDP_PORT=9222`.
@@ -151,6 +155,22 @@ Tests run on Windows, macOS, and Linux. Key rules:
 - Use plain `Control` for shortcuts that are literally Ctrl on every platform, including macOS (e.g., `Control+Enter` for Run Line, `Control+l` for Clear Console). Using `ControlOrMeta` for these fires Cmd on macOS, which does something else entirely.
 - Use `process.platform` guards for platform-branched keys like `Control+End` (Windows/Linux) vs `Meta+ArrowDown` (macOS).
 
+### Sandbox (R-side scratch directory)
+
+Specs that create files or directories on disk must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent — so tests don't pollute `~/`, the repo tree, or wherever R's cwd happens to be.
+
+```typescript
+import { useSuiteSandbox } from '@utils/sandbox';
+
+const sandbox = useSuiteSandbox();
+
+test('writes land in sandbox', async ({ rstudioPage: page }) => {
+  await typeInConsole(page, `writeLines("hi", "${sandbox.dir}/foo.txt")`);
+});
+```
+
+`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected. Override the root with `RSTUDIO_PW_SANDBOX`. See the Playwright skill for full details.
+
 ### Package Dependencies
 
 ```typescript
@@ -166,10 +186,74 @@ test.describe('Tests needing packages', () => {
 });
 ```
 
+## Tags
+
+Tests use [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) to indicate platform, edition, and product tier constraints. Apply tags via the `tag` option on `test()` or `test.describe()`:
+
+```typescript
+test.describe('Feature', { tag: ['@desktop_only'] }, () => { ... });
+test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) => { ... });
+```
+
+### Available Tags
+
+| Tag | Meaning |
+|-----|---------|
+| `@parallel_safe` | Test can run in parallel without interfering with other tests |
+| `@serial` | Test must run sequentially (modifies shared state, restarts sessions, etc.) |
+| `@macos_only` | Test only applies on macOS |
+| `@windows_only` | Test only applies on Windows |
+| `@linux_only` | Test only applies on Linux |
+| `@desktop_only` | Test only applies to RStudio Desktop |
+| `@server_only` | Test only applies to RStudio Server |
+| `@pro_only` | Test requires RStudio Pro |
+| `@os_only` | Test only applies to open-source RStudio |
+
+### Filtering by Tag
+
+The config defines **projects** that automatically exclude tags not applicable to a given environment. Use `--project` to select one:
+
+```bash
+npx playwright test --project=desktop-os-windows
+npx playwright test --project=server-os-linux
+```
+
+To avoid passing `--project` every time, set `PW_PROJECT` in your shell profile:
+
+```bash
+export PW_PROJECT=desktop-os-windows
+```
+
+With `PW_PROJECT` set, bare `npx playwright test` runs only that project. To switch projects, override `PW_PROJECT` inline:
+
+```bash
+PW_PROJECT=server-os-linux RSTUDIO_EDITION=server npx playwright test
+```
+
+Without `PW_PROJECT` or `--project`, all 8 projects run.
+
+**Note:** `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it. To use `--project`, unset `PW_PROJECT` first.
+
+Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+
+You can also filter manually with `--grep` and `--grep-invert`:
+
+```bash
+# Run only tests with a specific tag
+npx playwright test --grep @desktop_only
+
+# Exclude a single tag
+npx playwright test --grep-invert @pro_only
+
+# Exclude multiple tags
+npx playwright test --grep-invert "@pro_only|@server_only"
+```
+
 ## Environment Variables
 
 | Variable | Mode | Required | Description |
 |----------|------|----------|-------------|
+| `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-os-windows`). Trumps `--project`. |
 | `RSTUDIO_EDITION` | Both | No | `desktop` (default) or `server` |
 | `CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
 | `RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |
@@ -177,6 +261,9 @@ test.describe('Tests needing packages', () => {
 | `RSTUDIO_USER` | Server | Yes | Login username |
 | `RSTUDIO_PASSWORD` | Server | Yes | Login password |
 | `RSTUDIO_LOAD_TIMEOUT` | Server | No | IDE load timeout in ms (default: 60000) |
+| `RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
+| `RSTUDIO_PW_SANDBOX` | Both | No | Override the sandbox root (absolute path). Unset uses `dirname(tempdir())`. |
+| `RSTUDIO_PW_SANDBOX_CREATE` | Both | No | Set to `true`/`1` to auto-create an overridden sandbox root if it's missing. Default `false` — fails loud on typos. |
 
 ## Further Reading
 
