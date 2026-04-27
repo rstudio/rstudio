@@ -249,8 +249,8 @@ test.describe.serial('Create Projects in New Directory', () => {
         `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
       );
       await sleep(TIMEOUTS.pollInterval);
-    } catch {
-      // Best-effort cleanup
+    } catch (err) {
+      console.warn('default_project_location restore failed:', err);
     }
   });
 

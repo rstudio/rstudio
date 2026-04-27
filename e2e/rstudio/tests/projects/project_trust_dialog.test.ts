@@ -274,8 +274,8 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       await typeInConsole(page,
         `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`);
       await sleep(500);
-    } catch {
-      // Best-effort cleanup
+    } catch (err) {
+      console.warn('project_trust_dialog afterAll cleanup failed:', err);
     }
   });
 
