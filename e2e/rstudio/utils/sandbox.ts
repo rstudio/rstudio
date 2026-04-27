@@ -70,11 +70,13 @@ export async function createSandbox(page: Page): Promise<string> {
   }
   // Marker timeout. Surface the underlying R error if one is in the buffer
   // (e.g., the override root doesn't exist), otherwise echo the console tail
-  // and the resolved root expression so the failure is actionable.
+  // and the resolved root expression so the failure is actionable. R formats
+  // errors as `Error in <call> :\n  <message>`, so capture indented
+  // continuation lines along with the header.
   const tail = await page.locator(CONSOLE_OUTPUT).innerText();
-  const errMatch = tail.match(/(?:Error in|Error:)[^\n]*/);
+  const errMatch = tail.match(/(?:Error in|Error:)[^\n]*(?:\n[ \t]+[^\n]*)*/);
   const detail = errMatch
-    ? `R error: ${errMatch[0]}`
+    ? `R error: ${errMatch[0].replace(/\n+/g, ' | ').trim()}`
     : `console tail: ${tail.slice(-300).replace(/\n+/g, ' | ').trim()}`;
   throw new Error(
     `createSandbox: marker not found within ${TIMEOUTS.consoleReady}ms\n` +
