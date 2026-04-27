@@ -1273,6 +1273,16 @@ private:
       parsers.add(testthatErrorParser(shinyPath.completePath("tests/testthat")));
       initErrorParser(shinyPath, parsers);
 
+      // shinytest2 tests gate themselves on NOT_CRAN — without it they
+      // silently skip, so set it here for interactive runs.
+      core::system::Options childEnv;
+      if (testOptions.environment)
+         childEnv = *testOptions.environment;
+      else
+         core::system::environment(&childEnv);
+      core::system::setenv(&childEnv, "NOT_CRAN", "true");
+      testOptions.environment = childEnv;
+
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
       if (error)

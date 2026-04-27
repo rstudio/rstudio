@@ -19,7 +19,5 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 
 public interface TestServerOperations
 {
-   void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback);
-
    void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback);
 }

@@ -62,7 +62,15 @@ bool isOnlySpaceBefore(const std::string& contents, size_t pos)
 
 TestsFileType getTestType(const std::string& contents)
 {
-   size_t pos = contents.find("test_that(", 0);
+   // shinytest2 tests are testthat tests that drive a Shiny app via
+   // AppDriver$new(); check for that first so we classify them as shinytest
+   // (and surface the shinytest UI commands) before the generic testthat
+   // detection below.
+   size_t pos = contents.find("AppDriver$new(", 0);
+   if (pos != std::string::npos)
+      return TestsShinyTest;
+
+   pos = contents.find("test_that(", 0);
    if (pos != std::string::npos && (pos == 0 || isspace(contents.at(pos - 1))))
       return TestsTestThat;
 
@@ -75,10 +83,6 @@ TestsFileType getTestType(const std::string& contents)
          return TestsTestThat;
       }
    }
-
-   pos = contents.find("AppDriver$new(", 0);
-   if (pos != std::string::npos)
-      return TestsShinyTest;
 
    return TestsNone;
 }

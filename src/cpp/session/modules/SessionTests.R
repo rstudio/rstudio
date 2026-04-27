@@ -13,10 +13,6 @@
 #
 #
 
-.rs.addJsonRpcHandler("has_shinytest2_dependencies", function() {
-   .rs.scalar(.rs.isPackageInstalled("shinytest2"))
-})
-
 .rs.addJsonRpcHandler("has_shinytest2_results", function(testFile) {
 
    # Find the Shiny app directory by walking up from the test file.
@@ -31,11 +27,16 @@
       stop("Could not find Shiny app for test file ", testFile)
    }
 
-   # shinytest2 uses testthat3 snapshots stored in tests/testthat/_snaps/
+   # testthat 3 records pending snapshot diffs as files matching '*.new.*'
+   # (e.g. snapshot.new.png) under tests/testthat/_snaps/. Their presence is
+   # what 'snapshot_review()' will offer to compare.
    snapsDir <- file.path(shinyDir, "tests", "testthat", "_snaps")
-   dirExists <- dir.exists(snapsDir)
+   hasPendingDiffs <- length(list.files(
+      snapsDir,
+      pattern = "\\.new\\.",
+      recursive = TRUE)) > 0
 
    list(
       appDir = .rs.scalar(shinyDir),
-      testDirExists = .rs.scalar(dirExists))
+      testDirExists = .rs.scalar(hasPendingDiffs))
 })

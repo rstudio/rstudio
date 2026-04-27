@@ -6694,14 +6694,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
-   {
-      sendRequest(RPC_SCOPE,
-                  HAS_SHINYTEST2_DEPENDENCIES,
-                  callback);
-   }
-
-   @Override
    public void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback)
    {
       JSONArray params = new JSONArray();
@@ -7634,7 +7626,6 @@ public class RemoteServer implements Server
    private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
    private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
 
-   private static final String HAS_SHINYTEST2_DEPENDENCIES = "has_shinytest2_dependencies";
    private static final String HAS_SHINYTEST2_RESULTS = "has_shinytest2_results";
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";

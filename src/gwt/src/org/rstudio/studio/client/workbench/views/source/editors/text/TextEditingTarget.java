@@ -9524,7 +9524,7 @@ public class TextEditingTarget implements
                checkTestPackageDependencies(() ->
                {
                   String snapsPath = results.appDir + "/tests/testthat";
-                  String code = "testthat::snapshot_review(\"" +
+                  String code = "testthat::snapshot_review(path = \"" +
                         snapsPath.replace("\"", "\\\"") + "\")";
                   events_.fireEvent(new SendToConsoleEvent(code, true));
                }, false);

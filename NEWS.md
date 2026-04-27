@@ -4,7 +4,7 @@
 -
 
 ### Fixed
-- 
+- ([#17084](https://github.com/rstudio/rstudio/issues/17084)): The Shiny test commands (Record Test, Run Tests, Compare Results) now use the `shinytest2` package; `shinytest` has been deprecated.
 
 ### Fixed
 - 
