@@ -10,8 +10,8 @@
     "deemon": "^1.13.7"
   },
   "dependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
