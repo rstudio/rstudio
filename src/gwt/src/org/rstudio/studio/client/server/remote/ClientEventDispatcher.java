@@ -162,6 +162,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
@@ -1217,6 +1218,11 @@ public class ClientEventDispatcher
                   data.getDocId(),
                   data.getDocPath(),
                   data.getErrorMessage()));
+         }
+         else if (type == ClientEvent.ConsoleReadCompleted)
+         {
+            ConsoleReadCompletedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ConsoleReadCompletedEvent(data.getHistory()));
          }
          else
          {

@@ -5,6 +5,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import type { Page } from 'playwright';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 // --- Content building blocks ---
 
@@ -99,6 +100,9 @@ async function acceptGhostText(page: Page, sourcePane: SourcePane) {
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(`${provider} › Ghost text by file type`, () => {
+    // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
+    // and closeSourceAndDeleteFile land there.
+    useSuiteSandbox();
     const prefix = provider.toLowerCase().replace(/\s+/g, '_');
 
     let consoleActions: ConsolePaneActions;

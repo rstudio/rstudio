@@ -269,13 +269,43 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
 
 std::string extractStdArg(const std::vector<std::string>& args)
 {
+   // return the last '-std=' flag, since when multiple flags are present
+   // the last one takes precedence (matching compiler semantics)
+   std::string result;
    for (const std::string& arg : args)
    {
       if (boost::algorithm::starts_with(arg, "-std="))
-         return arg;
+         result = arg;
    }
+   return result;
+}
 
-   return std::string();
+// When R embeds a default standard in CXX (e.g. '-std=gnu++17') and the
+// package requests a different one via CXX_STD in Makevars, R CMD SHLIB
+// produces both flags. Compilers handle this via "last flag wins", but
+// libclang can get confused (especially with precompiled headers).
+// Deduplicate by keeping only the last '-std=' flag.
+void deduplicateStdArgs(std::vector<std::string>& args)
+{
+   std::string lastStd = extractStdArg(args);
+   if (lastStd.empty())
+      return;
+
+   auto count = std::count_if(args.begin(), args.end(), [](const std::string& arg) {
+      return boost::algorithm::starts_with(arg, "-std=");
+   });
+
+   if (count <= 1)
+      return;
+
+   if (verbose(3))
+      std::cerr << "Deduplicating -std= flags (keeping: " << lastStd << ")" << std::endl;
+
+   core::algorithm::expel_if(args, [](const std::string& arg) {
+      return boost::algorithm::starts_with(arg, "-std=");
+   });
+
+   args.push_back(lastStd);
 }
 
 std::string buildFileHash(const FilePath& filePath)
@@ -1130,6 +1160,9 @@ ClangCompilationDatabase::CompilationConfig
    // add them to the compile args
    args.insert(args.begin(), compileArgs.begin(), compileArgs.end());
 
+   // deduplicate '-std=' flags
+   deduplicateStdArgs(args);
+
    CompilationConfig config;
    config.args = args;
    config.PCH = cppPkg;
@@ -1300,6 +1333,14 @@ std::vector<std::string> ClangCompilationDatabase::packageCompilationArgs(
       env.push_back(std::make_pair("USE_CXX1Z", "1"));
       env.push_back(std::make_pair("USE_CXX17", "1"));
    }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++20"))
+   {
+      env.push_back(std::make_pair("USE_CXX20", "1"));
+   }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++23"))
+   {
+      env.push_back(std::make_pair("USE_CXX23", "1"));
+   }
 
    // Run R CMD SHLIB
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
@@ -1327,6 +1368,9 @@ std::vector<std::string> ClangCompilationDatabase::packageCompilationArgs(
 
    // add these to our args
    args.insert(args.begin(), compileArgs.begin(), compileArgs.end());
+
+   // deduplicate '-std=' flags
+   deduplicateStdArgs(args);
 
    if (pPkgInfo)
       *pPkgInfo = pkgInfo;

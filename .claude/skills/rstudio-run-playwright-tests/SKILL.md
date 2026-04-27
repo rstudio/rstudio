@@ -29,14 +29,18 @@ npx playwright test
 
 # Specific test file
 npx playwright test tests/path/to/test.test.ts
+
+# With extra RStudio CLI args
+RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 ```
 
 - Connects to RStudio Desktop via CDP on port 9222
 - The fixture handles launching and shutting down RStudio Desktop automatically
+- `RSTUDIO_EXTRA_ARGS` passes space-separated CLI flags to the RStudio process at launch
 
 ## Server Mode
 
-Requires four env vars:
+Key env vars (3 required, 3 optional):
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -63,6 +67,54 @@ RSTUDIO_EDITION=server RSTUDIO_SERVER_URL=http://<ip> RSTUDIO_USER=<user> RSTUDI
 - **Run a specific test by name:** `npx playwright test -g "test name here"`
 - **Don't use `-x`** — without it, all test blocks run even if one fails, maximizing coverage per run
 - **Retries:** config has `retries: 0` by default; add `--retries 1` if flakiness is expected
+
+## Tags
+
+Tests use Playwright tags to indicate platform, edition, and product tier constraints.
+
+| Tag | Meaning |
+|-----|---------|
+| `@parallel_safe` | Test can run in parallel without interfering with other tests |
+| `@serial` | Test must run sequentially (modifies shared state, restarts sessions, etc.) |
+| `@macos_only` | Test only applies on macOS |
+| `@windows_only` | Test only applies on Windows |
+| `@linux_only` | Test only applies on Linux |
+| `@desktop_only` | Test only applies to RStudio Desktop |
+| `@server_only` | Test only applies to RStudio Server |
+| `@pro_only` | Test requires RStudio Pro |
+| `@os_only` | Test only applies to open-source RStudio |
+
+### Filtering by Tag
+
+The config defines **projects** that automatically exclude tags not applicable to a given environment. Use `PW_PROJECT` to select one:
+
+```bash
+# Set once in your shell profile for local development
+export PW_PROJECT=desktop-os-windows
+
+# Then just run
+npx playwright test
+
+# To switch projects, override PW_PROJECT inline
+PW_PROJECT=server-os-linux RSTUDIO_EDITION=server npx playwright test
+```
+
+Without `PW_PROJECT`, all 8 projects run (each test executes once per project). `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it.
+
+Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+
+You can also filter manually with `--grep` and `--grep-invert`:
+
+```bash
+# Run only tests with a specific tag
+npx playwright test --grep @desktop_only
+
+# Exclude a single tag
+npx playwright test --grep-invert @pro_only
+
+# Exclude multiple tags
+npx playwright test --grep-invert "@pro_only|@server_only"
+```
 
 ## Test Running Protocol
 

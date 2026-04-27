@@ -3521,6 +3521,19 @@ core::Error UserPrefValues::setAssistantShowMessages(bool val)
 }
 
 /**
+ * When enabled, the Posit Assistant button is displayed in the main toolbar.
+ */
+bool UserPrefValues::assistantToolbarButtonVisible()
+{
+   return readPref<bool>("assistant_toolbar_button_visible");
+}
+
+core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
+{
+   return writePref("assistant_toolbar_button_visible", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -4026,6 +4039,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
       kAssistantShowMessages,
+      kAssistantToolbarButtonVisible,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

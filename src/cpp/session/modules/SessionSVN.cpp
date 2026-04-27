@@ -524,12 +524,23 @@ std::string nonPathSvnBinDir()
       return std::string();
 }
 
+Error augmentSvnIgnore();
+
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kSvnExePath)
-      return;
-
-   initSvnBin();
+   if (pref == kSvnExePath)
+   {
+      initSvnBin();
+   }
+   else if (pref == kAssistant || pref == kChatProvider)
+   {
+      if (!s_workingDir.isEmpty())
+      {
+         Error error = augmentSvnIgnore();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 }
 
 std::string translateItemStatus(const std::string& status)
@@ -1767,6 +1778,9 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
+   // only add AI-related ignores when the assistant is active
+   bool assistantActive = module_context::isPositAssistantEnabled();
+
    // check for existing svn:ignore
    core::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
@@ -1787,7 +1801,8 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      svnIgnore += ".positai\n";
+      if (assistantActive)
+         svnIgnore += ".positai\n";
    }
    else
    {
@@ -1796,11 +1811,12 @@ Error augmentSvnIgnore()
       if (addExtraNewline)
          svnIgnore += "\n";
 
-      // Add .Rproj.user and .positai unless they're already there
+      // Add missing entries
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      if (!regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
+      if (assistantActive &&
+          !regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
          additions += ".positai\n";
 
       if (additions.empty())
@@ -1815,8 +1831,8 @@ Error augmentSvnIgnore()
    if (error)
       return error;
 
-   if (result.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE(result.stdErr);
+   if (setResult.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE(setResult.stdErr);
 
    return Success();
 }

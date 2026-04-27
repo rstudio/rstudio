@@ -1,4 +1,4 @@
-## RStudio 2026.04.0 "Globemaster Allium" Release Notes
+## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
 - Support for the upcoming R 4.6.0 release.
@@ -20,38 +20,17 @@
 - ([#17330](https://github.com/rstudio/rstudio/issues/17330)): Added Help > Release Notes command to open the RStudio release notes in the browser
 - ([#17344](https://github.com/rstudio/rstudio/issues/17344)): Console process dialogs now support dark theme styling
 - ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior
+-
 
 ### Fixed
-- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
-- ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
-- ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
-- ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
-- ([#16733](https://github.com/rstudio/rstudio/issues/16733)): Fixed an issue where a Presentation tab would be added to TabSet2 when it was assigned to the Sidebar
-- ([#16771](https://github.com/rstudio/rstudio/issues/16771)): Clarified in documentation that additional source columns are added to the left
-- ([#8531](https://github.com/rstudio/rstudio/issues/8531)): Fixed an issue where table chunk outputs did not use all available space when printing
-- ([#16740](https://github.com/rstudio/rstudio/issues/16740)): Fixed an issue with opening files from operating system file manager when RStudio had a secondary window open
-- ([#16688](https://github.com/rstudio/rstudio/issues/16688)): Fixed an issue with pane layout when exiting RStudio with a zoomed column region
-- ([#16798](https://github.com/rstudio/rstudio/issues/16798)): Fixed an issue where whole-word search and replace would not correctly match search terms containing dots
-- ([#16814](https://github.com/rstudio/rstudio/issues/16814)): Fixed an issue where apostrophes in file names were displayed as HTML entities in the Files pane
-- ([#16834](https://github.com/rstudio/rstudio/issues/16834)): Fixed an issue where an error message was shown on Windows when using "Write Diagnostics File"
-- ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
-- ([#16845](https://github.com/rstudio/rstudio/issues/16845)): Fixed issue where adding source columns or changing Sidebar visibility in Pane Layout options caused Console column to fill entire window
-- ([#16885](https://github.com/rstudio/rstudio/issues/16885)): Fixed an issue where console warning annotation boxes could include excess content
-- ([#16842](https://github.com/rstudio/rstudio/issues/16842)): Fixed issue where Packages pane checkboxes did not display the correct state for renv projects using a shared cache
-- ([#16985](https://github.com/rstudio/rstudio/issues/16985)): Fixed an issue where the Environment pane would drop the first list element when a user-defined `str` method existed in the global environment
-- ([#16995](https://github.com/rstudio/rstudio/issues/16995)): Fixed an issue where the chunk toolbar could be duplicated when pressing Enter after a chunk header at the end of a document
-- ([#17026](https://github.com/rstudio/rstudio/pull/17026)): Fixed an issue where roxygen parentheses interfered with Ctrl+Enter execution
-- ([#14626](https://github.com/rstudio/rstudio/issues/14626)): Fixed an issue where RStudio-specific file type icons (e.g. .Rmd, .qmd, .Rpres) were not shown in file managers on Linux
-- ([#15609](https://github.com/rstudio/rstudio/issues/15609)): Fixed an issue where RStudio startup on Windows was delayed by several seconds on systems with endpoint security software
-- ([#15863](https://github.com/rstudio/rstudio/issues/15863)): Fixed an issue where "Use Selection for Find" (Cmd+E) incorrectly jumped to the next match instead of only populating the find bar
-- ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
-- ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
-- ([#17115](https://github.com/rstudio/rstudio/issues/17115)): Fixed an issue on macOS Desktop where the "Close" keyboard shortcut in secondary windows (e.g. Shiny app, Help pop-out) were also processed by the main window
-- ([#14882](https://github.com/rstudio/rstudio/issues/14882)): Fixed an issue where YAML comments in R Markdown documents were dropped or displaced when the front matter was modified (e.g. when toggling "Chunk Output in Console")
-- ([#17333](https://github.com/rstudio/rstudio/issues/17333)): Fixed an issue where the publishing wizard would fail when publishing Quarto documents with Quarto v1.9
-- ([#17353](https://github.com/rstudio/rstudio/issues/17353)): Fixed a crash when the Environment pane inspects S4 objects whose defining package has a broken or missing native DLL
+- 
+
+### Fixed
+- 
 
 ### Dependencies
+-
+
 - Ace 1.43.5
 - Copilot Language Server 1.459.0
 - Electron 39.8.7

@@ -15,7 +15,7 @@
 #
 #
 
-RHOME=$1
-. $RHOME/etc/ldpaths
+R_HOME=$1
+. $R_HOME/etc/ldpaths
 echo -n "${@LIBRARY_PATH_ENVVAR@}"
 

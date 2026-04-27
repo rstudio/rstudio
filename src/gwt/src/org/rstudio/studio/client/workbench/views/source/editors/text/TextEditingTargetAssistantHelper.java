@@ -1399,14 +1399,11 @@ public class TextEditingTargetAssistantHelper
                               }
                            }
 
-                           events_.fireEvent(new AssistantEvent(
-                                 completions.isEmpty()
-                                    ? AssistantEventType.COMPLETION_RECEIVED_NONE
-                                    : AssistantEventType.COMPLETION_RECEIVED_SOME));
-
                            // If we don't have any completions available, fall back to NES for Copilot
                            if (completions.isEmpty())
                            {
+                              events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+
                               if (shouldFallbackToNes())
                               {
                                  nesTimer_.schedule(20);
@@ -1418,6 +1415,9 @@ public class TextEditingTargetAssistantHelper
                            // the user to view/select them. For now, use the last one.
                            // https://github.com/rstudio/rstudio/issues/16055
                            AssistantCompletion completion = completions.get(completions.size() - 1);
+
+                           events_.fireEvent(new AssistantEvent(
+                              AssistantEventType.COMPLETION_RECEIVED_SOME, completion));
 
                            // The completion data gets modified when doing partial (word-by-word)
                            // completions, so we need to use a copy and preserve the original

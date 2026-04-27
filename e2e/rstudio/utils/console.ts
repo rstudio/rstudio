@@ -1,3 +1,21 @@
+import type { Page } from 'playwright';
+
+/**
+ * Read the current browser selection's text plus the screen position of its
+ * bounding rect, which the Find in Console tests use as a match identity
+ * (two matches with the same text can differ only by screen position).
+ */
+export async function getSelectionInfo(
+  page: Page,
+): Promise<{ text: string; pos: string }> {
+  return page.evaluate(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return { text: '', pos: '' };
+    const r = sel.getRangeAt(0).getBoundingClientRect();
+    return { text: sel.toString(), pos: `${r.top},${r.left}` };
+  });
+}
+
 /**
  * Extract only the output lines from the console panel text.
  * Console output includes echoed commands (lines starting with ">")

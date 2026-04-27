@@ -222,6 +222,9 @@ protected:
       (kSameSiteSessionOption,
       value<int>(wwwSameSite)->default_value(0),
       "The value of the SameSite attribute used in cookie issued by the session.")
+      (kWwwFrameOriginSessionOption,
+      value<std::string>(&wwwFrameOrigin_)->default_value(""),
+      "The www-frame-origin value forwarded from rserver, used for CSP frame-ancestors directives.")
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
@@ -559,6 +562,7 @@ public:
    std::string rootPath() const { return rootPath_; }
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
+   std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewAllowList() const { return directoryViewAllowList_; }
    boost::optional<std::tuple<int,int>> sessionPortRange() const { return sessionPortRange_; }
@@ -693,6 +697,7 @@ protected:
    std::string rootPath_;
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
+   std::string wwwFrameOrigin_;
    bool restrictDirectoryView_;
    std::string directoryViewAllowList_;
    boost::optional<std::tuple<int,int>> sessionPortRange_;

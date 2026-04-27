@@ -307,6 +307,11 @@ public class TextEditingTargetWidget
          }
       }));
 
+      releaseOnDismiss_.add(userPrefs_.marginColumn().bind((arg) ->
+      {
+         Scheduler.get().scheduleDeferred(() -> syncEditorWidth());
+      }));
+
    }
 
    public void initWidgetSize()

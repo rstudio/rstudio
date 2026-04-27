@@ -221,6 +221,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblProjectOverride_.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
 
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
+      cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -348,6 +349,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             checkPositAssistantInstallation(/* forAssistant= */ false);
          }
       });
+
+      add(cbAssistantToolbarButtonVisible_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -1349,6 +1352,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Label lblAssistantStatus_;
    private final Spinner imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
+   private final CheckBox cbAssistantToolbarButtonVisible_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesCollapse_;
    private final List<SmallButton> statusButtons_;

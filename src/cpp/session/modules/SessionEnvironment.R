@@ -773,7 +773,7 @@
             size_formatted <- format(size, units = "auto", standard = "SI")
             if (is_size_estimated)
                size_formatted <- paste(">", size_formatted)
-            
+
             fmt <- "Large %s (%s%s)"
             val <- sprintf(fmt, class, len_desc, size_formatted)
          }
@@ -796,8 +796,10 @@
             }
             else
             {
-               # normal object
-               contents <- .rs.valueContents(obj)
+               # normal object -- disable the debugger to prevent recursive
+               # debugger invocations when str() dispatches to user S3 methods
+               # https://github.com/rstudio/rstudio/issues/16987
+               contents <- .rs.withDebuggerDisabled(.rs.valueContents(obj))
             }
          }
       }
@@ -959,7 +961,7 @@
    if (.rs.isUnloadedS4(object))
       return(list())
 
-   .rs.valueContents(object)
+   .rs.withDebuggerDisabled(.rs.valueContents(object))
 })
 
 # Check if an object is an S4 instance whose defining package namespace

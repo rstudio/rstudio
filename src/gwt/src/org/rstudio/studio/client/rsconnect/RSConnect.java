@@ -578,6 +578,26 @@ public class RSConnect implements SessionInitEvent.Handler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
+      // if deploying to Connect Cloud, ensure rsconnect >= 1.8.0 is installed
+      if (CONNECT_CLOUD_SERVICE_NAME.equalsIgnoreCase(
+            event.getRecord().getServer()))
+      {
+         dependencyManager_.withConnectCloudDependencies(
+            constants_.publishingContentLabel(),
+            (succeeded) ->
+            {
+               if (succeeded)
+                  lintAndDeploy(event);
+            });
+      }
+      else
+      {
+         lintAndDeploy(event);
+      }
+   }
+
+   private void lintAndDeploy(final RSConnectDeployInitiatedEvent event)
+   {
       // shortcut: when deploying static content we don't need to do any linting
       if (event.getSettings().getAsStatic())
       {

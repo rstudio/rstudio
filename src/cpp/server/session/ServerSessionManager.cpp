@@ -132,6 +132,13 @@ core::system::ProcessConfig sessionProcessConfig(
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
+   // Forward www-frame-origin so the session can set CSP frame-ancestors
+   if (!options.wwwFrameOrigin().empty())
+   {
+      args.push_back(std::make_pair("--" kWwwFrameOriginSessionOption,
+                                    options.wwwFrameOrigin()));
+   }
+
    args.push_back({ "--" kSessionUseFileStorage, options.sessionUseFileStorage() ? "1" : "0"});
 
    // create launch token if we haven't already
