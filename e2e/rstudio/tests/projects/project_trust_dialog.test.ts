@@ -260,21 +260,11 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
+      // Reset trust entries before sandbox teardown closes the project.
+      // useSuiteSandbox's afterAll handles closing the active project and
+      // deleting the project directory along with the rest of the sandbox.
       if (projectDir) {
-        // Reset trust entries
         await resetTrust(page, projectDir);
-
-        // Close the project via command palette (executeCommand blocks R).
-        // The sandbox afterAll hook (registered by useSuiteSandbox) deletes
-        // the project directory along with the rest of the sandbox.
-        await page.keyboard.press('ControlOrMeta+Shift+p');
-        await sleep(1000);
-        await page.keyboard.type('Close Current Project');
-        await sleep(500);
-        const closeItem = page.locator(`${PALETTE_LIST} >> text=Close Current Project`);
-        await expect(closeItem).toBeVisible({ timeout: 5000 });
-        await closeItem.click();
-        await waitForSessionRestart(page);
       }
 
       // Restore preferences

@@ -173,7 +173,7 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 
 `useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
 
-**Wizard-driven tests:** the New Project Wizard has its own directory field. `setwd()` alone doesn't change its default — type the sandbox path into the field explicitly.
+**Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
 
 **Env vars (optional):**
 - `RSTUDIO_PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
