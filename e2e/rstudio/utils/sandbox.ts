@@ -7,6 +7,14 @@ const PALETTE_LIST = '#rstudio_command_palette_list';
 const CLOSE_PROJECT_LABEL = 'Close Current Project';
 
 /**
+ * Prefix for per-suite sandbox subdirectories. Exported so specs that need
+ * to detect leftover sandbox paths from a crashed prior run (see
+ * `create_projects.test.ts` and `project_trust_dialog.test.ts`) can match
+ * against the same value.
+ */
+export const SANDBOX_DIR_PREFIX = 'pw_rstudio_';
+
+/**
  * Per-spec R-side sandbox directory for test artifacts.
  *
  * Creates a unique subdirectory on whichever machine R is running on (local
@@ -48,7 +56,7 @@ export async function createSandbox(page: Page): Promise<string> {
   const rCode = [
     `{ root <- ${rootExpr()}`,
     `if (!dir.exists(root)) { if (${createRoot ? 'TRUE' : 'FALSE'}) dir.create(root, recursive = TRUE) else stop(sprintf("Sandbox root does not exist: %s", root)) }`,
-    `d <- tempfile("rstudio_pw_", tmpdir = root)`,
+    `d <- tempfile("${SANDBOX_DIR_PREFIX}", tmpdir = root)`,
     `dir.create(d, recursive = TRUE)`,
     `setwd(d)`,
     `cat("${marker}", d, "${marker}") }`,

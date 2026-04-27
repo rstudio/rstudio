@@ -3,7 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
-import { useSuiteSandbox } from '@utils/sandbox';
+import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -232,7 +232,7 @@ test.describe.serial('Create Projects in New Directory', () => {
       '.rs.api.readRStudioPreference("default_project_location")',
     );
     const basename = current.split(/[/\\]/).pop() || '';
-    originalDefaultProjectLocation = basename.startsWith('rstudio_pw_') ? '' : current;
+    originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await typeInConsole(
@@ -243,11 +243,15 @@ test.describe.serial('Create Projects in New Directory', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await typeInConsole(
-      page,
-      `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
-    );
-    await sleep(TIMEOUTS.pollInterval);
+    try {
+      await typeInConsole(
+        page,
+        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
+      );
+      await sleep(TIMEOUTS.pollInterval);
+    } catch {
+      // Best-effort cleanup
+    }
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
