@@ -7,8 +7,12 @@ import {
   VIEWER_TAB, VIEWER_FRAME, PUBLISH_BTN_IN_PANEL, QUARTO_CONTENT,
   switchToViewerFrame,
 } from '@pages/viewer_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 test.describe('Quarto', () => {
+  // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
+  // and closeSourceAndDeleteFile land there.
+  useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 

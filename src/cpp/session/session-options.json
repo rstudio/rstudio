@@ -375,6 +375,14 @@
             "description": "The value of the SameSite attribute used in cookie issued by the session."
          },
          {
+            "name": {"constant": "kWwwFrameOriginSessionOption", "value": "session-www-frame-origin"},
+            "isHidden": true,
+            "memberName": "wwwFrameOrigin_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "The www-frame-origin value forwarded from rserver, used for CSP frame-ancestors directives."
+         },
+         {
             "name": "restrict-directory-view",
             "type": "bool",
             "memberName": "restrictDirectoryView_",

@@ -423,10 +423,17 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePositai = R"(^\.positai$)";
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
+      // check if the AI assistant is active (admin + user level)
+      bool assistantActive = module_context::isPositAssistantEnabled();
+
       std::string ignoreLines = kIgnoreRproj + newLine +
-                                kIgnoreRprojUser + newLine +
-                                kIgnorePositai + newLine +
-                                kIgnoreClaude + newLine;
+                                kIgnoreRprojUser + newLine;
+
+      if (assistantActive)
+      {
+         ignoreLines += kIgnorePositai + newLine;
+         ignoreLines += kIgnoreClaude + newLine;
+      }
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -472,8 +479,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = strIgnore.find(kIgnoreClaude) != std::string::npos;
+         bool hasPositai = !assistantActive || strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = !assistantActive || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -527,6 +534,13 @@ void ProjectContext::augmentRbuildignore()
             LOG_ERROR(error);
       }
    }
+}
+
+void ProjectContext::onUserPrefsChanged(const std::string& layer,
+                                        const std::string& pref)
+{
+   if (pref == kAssistant || pref == kChatProvider)
+      augmentRbuildignore();
 }
 
 SEXP rs_getProjectDirectory()
@@ -606,6 +620,10 @@ Error ProjectContext::initialize()
 
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
+
+      // re-augment .Rbuildignore when assistant prefs change
+      prefs::userPrefs().onChanged.connect(
+                   boost::bind(&ProjectContext::onUserPrefsChanged, this, _1, _2));
 
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)

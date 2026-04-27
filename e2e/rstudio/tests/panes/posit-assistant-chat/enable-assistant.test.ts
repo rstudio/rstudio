@@ -17,7 +17,6 @@ test.describe.serial('Enable Posit Assistant', () => {
     assistantOptions = assistantActions.assistantOptions;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
   });
 

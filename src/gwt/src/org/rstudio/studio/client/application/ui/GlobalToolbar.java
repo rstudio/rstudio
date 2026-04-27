@@ -29,6 +29,11 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -282,26 +287,56 @@ public class GlobalToolbar extends Toolbar
                ThemeResources.INSTANCE.themeStyles().assistantToggleButton());
          ElementIds.assignElementId(assistantButton_, ElementIds.ASSISTANT_TOGGLE_BUTTON);
          addRightWidget(assistantButton_);
-         assistantSeparator_ = addRightSeparator();
+         Widget sep = Toolbar.getSeparator();
+         sep.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarSeparator());
+         assistantSeparator_ = addRightWidget(sep);
 
          // Track command visibility to show/hide the button dynamically
-         commands_.assistantPaneToggle().addVisibleChangedHandler(event -> {
-            boolean visible = commands_.assistantPaneToggle().isVisible();
-            assistantButton_.setVisible(visible);
-            assistantSeparator_.setVisible(visible);
-         });
+         commands_.assistantPaneToggle().addVisibleChangedHandler(event ->
+               updateAssistantButtonVisibility());
+
+         // Hide/show when the preference changes
+         userPrefs_.assistantToolbarButtonVisible().addValueChangeHandler(event ->
+               updateAssistantButtonVisibility());
 
          // Sync initial state: PaneManager may have already set the command
          // invisible before this handler was registered (see #17368)
-         boolean initialVisible = commands_.assistantPaneToggle().isVisible();
-         assistantButton_.setVisible(initialVisible);
-         assistantSeparator_.setVisible(initialVisible);
+         updateAssistantButtonVisibility();
 
          eventBus_.addHandler(ChatPaneActiveEvent.TYPE, event ->
                assistantButton_.setLatched(event.isActive()));
 
          eventBus_.addHandler(ThemeChangedEvent.TYPE, event ->
                updateAssistantButtonIcon());
+
+         // Prevent non-primary clicks from activating the button
+         assistantButton_.addDomHandler(mouseDownEvent ->
+         {
+            if (mouseDownEvent.getNativeButton() != NativeEvent.BUTTON_LEFT)
+            {
+               mouseDownEvent.preventDefault();
+               mouseDownEvent.stopPropagation();
+            }
+         }, MouseDownEvent.getType());
+
+         // Right-click context menu to hide the button
+         assistantButton_.addDomHandler(contextMenuEvent ->
+         {
+            contextMenuEvent.preventDefault();
+            contextMenuEvent.stopPropagation();
+            ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            menu.addItem(new MenuItem(
+                  constants_.hidePositAssistantButton(),
+                  () ->
+                  {
+                     userPrefs_.assistantToolbarButtonVisible().setGlobalValue(false);
+                     userPrefs_.writeUserPrefs(completed -> {});
+                  }));
+            menu.showRelativeTo(
+                  contextMenuEvent.getNativeEvent().getClientX(),
+                  contextMenuEvent.getNativeEvent().getClientY(),
+                  ElementIds.ASSISTANT_TOGGLE_BUTTON + "_context");
+         }, ContextMenuEvent.getType());
       }
 
       // restricted mode indicator (managed by TrustPresenter)
@@ -341,6 +376,17 @@ public class GlobalToolbar extends Toolbar
          return isVisible
             ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
             : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftHidden2x());
+      }
+   }
+
+   private void updateAssistantButtonVisibility()
+   {
+      if (assistantButton_ != null)
+      {
+         boolean visible = commands_.assistantPaneToggle().isVisible() &&
+                           userPrefs_.assistantToolbarButtonVisible().getValue();
+         assistantButton_.setVisible(visible);
+         assistantSeparator_.setVisible(visible);
       }
    }
 

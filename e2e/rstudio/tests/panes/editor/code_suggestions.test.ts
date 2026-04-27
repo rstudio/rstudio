@@ -4,9 +4,13 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(provider, () => {
+    // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
+    // and closeSourceAndDeleteFile land there.
+    useSuiteSandbox();
     const prefix = provider.toLowerCase().replace(/\s+/g, '_');
 
     let consoleActions: ConsolePaneActions;
@@ -307,7 +311,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // 'nums' starts at column 22: summarize <- function(nums) {
       await sourceActions.selectInEditor('nums', 1, 22, 26);
       // Use .first() because leaked NES diff view (#17361) may add a second readonly textarea
-      await sourcePane.aceTextInput.first().pressSequentially('scores');
+      await sourcePane.aceTextInput.first().pressSequentially('measurements');
       await sleep(5000);
 
       // Wait for any NES indicator
@@ -317,7 +321,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesInsertionPreview)
           .or(sourcePane.nesGutter)
           .first()
-      ).toBeVisible({ timeout: TIMEOUTS.nesApply });
+      ).toBeVisible({ timeout: 10000 });
       await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Apply button
@@ -330,11 +334,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         // Verify diff view is dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
         await expect(sourcePane.nesDiscard).toHaveCount(0, { timeout: 5000 });
+        await expect(sourcePane.nesSuggestionContent).toHaveCount(0, { timeout: 5000 });
 
-        // Verify the suggestion was applied — body should now use 'scores'
+        // Verify the suggestion was applied — body should now use 'measurements'
         const content = await sourceActions.getEditorContent();
         console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\\n'));
-        expect(content).toContain('scores');
+        expect(content).toContain('measurements');
         expect(content).not.toContain('nums');
         console.log('  Apply confirmed — suggestion applied to editor');
       } else {

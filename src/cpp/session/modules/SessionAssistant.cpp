@@ -96,10 +96,7 @@ bool isCopilotAllowedByAdmin()
 
 bool isPositAssistantAllowedByAdmin()
 {
-   return
-      session::options().allowPositAssistant() &&
-      session::options().positAssistantEnabled() &&
-      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+   return module_context::isPositAssistantEnabledByAdmin();
 }
 
 struct AssistantRequest

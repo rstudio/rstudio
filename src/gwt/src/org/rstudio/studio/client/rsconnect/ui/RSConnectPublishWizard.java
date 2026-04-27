@@ -45,8 +45,8 @@ public class RSConnectPublishWizard
          // can be published to Connect if user has accounts configured
          return new PublishMultiplePage(constants_.publish(), constants_.publish(), null, input, null);
       }
-      else if ((input.isWebsiteRmd() ||
-               (!input.isMultiRmd() && !input.isExternalUIEnabled())))
+      else if (!input.isExternalUIEnabled() &&
+               (input.isWebsiteRmd() || !input.isMultiRmd()))
       {
          // only self-managed Connect is available (website or external
          // publishing disabled), so skip the service selection page
