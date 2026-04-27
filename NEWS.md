@@ -6,9 +6,6 @@
 ### Fixed
 - ([#17440](https://github.com/rstudio/rstudio/issues/17440)): Fixed an issue where triggering tab completion inside `[` on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory
 
-### Fixed
-- 
-
 ### Dependencies
 -
 

@@ -2079,8 +2079,13 @@ assign(x = ".rs.acCompletionTypes",
    
    # Get completions from dimension names for arrays (and other
    # matrix-like objects such as Matrix-package sparse matrices, which
-   # have a dim() but for which is.array() returns FALSE)
-   if (!is.null(dim(object)) && !is.null(dn <- dimnames(object)))
+   # have a dim() but for which is.array() returns FALSE). Exclude
+   # data.frames so they continue to use the rownames special-case below;
+   # otherwise auto-generated rownames like "1", "2" would be offered as
+   # completions for `df[|`.
+   if (!inherits(object, "data.frame") &&
+       !is.null(dim(object)) &&
+       !is.null(dn <- dimnames(object)))
    {
       if (numCommas + 1 <= length(dn))
          completions <- dn[[numCommas + 1]]
@@ -2092,7 +2097,7 @@ assign(x = ".rs.acCompletionTypes",
       else
          paste("dimnames(", string, ")[", numCommas + 1, "]", sep = "")
    }
-   
+
    # Get completions from rownames for data.frames if we have no commas, e.g.
    # `mtcars[|`
    else if (inherits(object, "data.frame") &&
