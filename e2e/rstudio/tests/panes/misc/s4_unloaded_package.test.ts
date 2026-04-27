@@ -151,7 +151,7 @@ async function verifyEnvironmentPane(page: Page): Promise<void> {
 // Test 1: R session restart
 // ==========================================================================
 base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag: ['@serial'] }, () => {
-  base.skip(process.env.RSTUDIO_EDITION === 'server', 'Uses Desktop launch -- Server not supported');
+  base.skip(process.env.PW_RSTUDIO_MODE === 'server', 'Uses Desktop launch -- Server not supported');
 
   let session: DesktopSession;
   let page: Page;
@@ -185,7 +185,7 @@ base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag:
 // Test 2: Full RStudio Desktop restart
 // ==========================================================================
 base.describe.serial('S4 unloaded package -- RStudio restart (#17353)', { tag: ['@serial'] }, () => {
-  base.skip(process.env.RSTUDIO_EDITION === 'server', 'Uses Desktop launch -- Server not supported');
+  base.skip(process.env.PW_RSTUDIO_MODE === 'server', 'Uses Desktop launch -- Server not supported');
 
   let session: DesktopSession;
   let page: Page;

@@ -12,7 +12,7 @@ export const RSTUDIO_PATH = process.platform === 'win32'
   : process.platform === 'darwin'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
-export const CDP_PORT = Number(process.env.CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
+export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
 
 export interface DesktopSession {

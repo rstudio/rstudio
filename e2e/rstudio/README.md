@@ -21,7 +21,7 @@ npx playwright install
 
 ### Desktop Mode (Default)
 
-No special environment variables needed — `RSTUDIO_EDITION` defaults to `desktop`.
+No special environment variables needed — `PW_RSTUDIO_MODE` defaults to `desktop`.
 
 ```bash
 # All tests
@@ -35,20 +35,20 @@ npx playwright test -g "test name here"
 npx playwright test -g "base function: cat("
 
 # With extra RStudio CLI args
-RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
+PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 ```
 
-The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `CDP_PORT=9222`.
+The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
 ### Server Mode
 
-Set `RSTUDIO_EDITION=server` and provide credentials:
+Set `PW_RSTUDIO_MODE=server` and provide credentials:
 
 ```bash
-RSTUDIO_EDITION=server \
-  RSTUDIO_SERVER_URL=http://10.0.0.1:8787 \
-  RSTUDIO_USER=myuser \
-  RSTUDIO_PASSWORD=mypass \
+PW_RSTUDIO_MODE=server \
+  PW_RSTUDIO_SERVER_URL=http://10.0.0.1:8787 \
+  PW_RSTUDIO_SERVER_USER=myuser \
+  PW_RSTUDIO_SERVER_PASSWORD=mypass \
   npx playwright test
 ```
 
@@ -93,7 +93,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 
 ### Fixtures
 
-The unified fixture (`rstudio.fixture.ts`) checks `RSTUDIO_EDITION` and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
+The unified fixture (`rstudio.fixture.ts`) checks `PW_RSTUDIO_MODE` and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
 - **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
 - **Server**: Launches a headed Chromium browser, navigates to the server URL, fills in credentials, waits for the IDE to load.
@@ -169,7 +169,13 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 });
 ```
 
-`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected. Override the root with `RSTUDIO_PW_SANDBOX`. See the Playwright skill for full details.
+`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected. Override the root with `PW_SANDBOX` and `PW_SANDBOX_CREATE`.
+
+**Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it -- override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
+
+**Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
+
+**Low-level helpers:** `createSandbox` / `removeSandbox` are also exported from `@utils/sandbox` if you need to manage the lifecycle manually.
 
 ### Package Dependencies
 
@@ -227,7 +233,7 @@ export PW_PROJECT=desktop-os-windows
 With `PW_PROJECT` set, bare `npx playwright test` runs only that project. To switch projects, override `PW_PROJECT` inline:
 
 ```bash
-PW_PROJECT=server-os-linux RSTUDIO_EDITION=server npx playwright test
+PW_PROJECT=server-os-linux PW_RSTUDIO_MODE=server npx playwright test
 ```
 
 Without `PW_PROJECT` or `--project`, all 8 projects run.
@@ -254,22 +260,22 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 | Variable | Mode | Required | Description |
 |----------|------|----------|-------------|
 | `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-os-windows`). Trumps `--project`. |
-| `RSTUDIO_EDITION` | Both | No | `desktop` (default) or `server` |
-| `CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
-| `RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |
-| `RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
-| `RSTUDIO_USER` | Server | Yes | Login username |
-| `RSTUDIO_PASSWORD` | Server | Yes | Login password |
-| `RSTUDIO_LOAD_TIMEOUT` | Server | No | IDE load timeout in ms (default: 60000) |
-| `RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
-| `RSTUDIO_PW_SANDBOX` | Both | No | Override the sandbox root (absolute path). Unset uses `dirname(tempdir())`. |
-| `RSTUDIO_PW_SANDBOX_CREATE` | Both | No | Set to `true`/`1` to auto-create an overridden sandbox root if it's missing. Default `false` — fails loud on typos. |
+| `PW_RSTUDIO_MODE` | Both | No | `desktop` (default) or `server` |
+| `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
+| `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |
+| `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
+| `PW_RSTUDIO_SERVER_USER` | Server | Yes | Login username |
+| `PW_RSTUDIO_SERVER_PASSWORD` | Server | Yes | Login password |
+| `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | Server | No | Post-login wait for the IDE console, in ms (default: 60000) |
+| `PW_RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
+| `PW_SANDBOX` | Both | No | Override the sandbox root (absolute path). Unset uses `dirname(tempdir())`. |
+| `PW_SANDBOX_CREATE` | Both | No | Set to `true`/`1` to auto-create an overridden sandbox root if it's missing. Default `false` — fails loud on typos. |
 
-## Further Reading
+## Claude Skills
 
-For detailed patterns, edge cases, and the reasoning behind these conventions, see the Claude skill files:
+Claude skills are available for use when working with this test suite:
 
-- `.claude/skills/rstudio-create-playwright-tests/SKILL.md` — comprehensive guide to writing tests
+- `.claude/skills/rstudio-create-playwright-tests/SKILL.md` — guide for writing tests
 - `.claude/skills/rstudio-create-playwright-tests/logic-deep-dive.md` — architectural reasoning
 - `.claude/skills/rstudio-run-playwright-tests/SKILL.md` — test execution protocol
 
