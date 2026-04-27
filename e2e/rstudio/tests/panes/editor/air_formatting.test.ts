@@ -33,6 +33,7 @@ import { test } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { sleep } from '@utils/constants';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 // --- Test data (from issue #16721) ---
 
@@ -207,6 +208,9 @@ function expectUnchanged(content: string): void {
 // --- Tests ---
 
 test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
+  // Sets cwd to a per-spec sandbox; the relative paths used throughout this
+  // spec (TEST_FILE, air.toml, .air.toml) all resolve into that sandbox.
+  useSuiteSandbox();
   let page: Page;
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;

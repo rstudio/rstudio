@@ -25,7 +25,6 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
 
     await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);

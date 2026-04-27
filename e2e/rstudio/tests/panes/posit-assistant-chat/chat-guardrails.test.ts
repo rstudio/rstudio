@@ -20,7 +20,7 @@
  *   8.  file() connection to .env     -> denied, content not exposed
  *   9.  Read normal .R file           -> allowed, content shown
  *  10.  Bindings restored after chat  -> console write works normally
- *  11.  User console code unaffected  -> write to ~/ works from console
+ *  11.  User console code unaffected  -> write outside project works from console
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -30,6 +30,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 const TS = Date.now();
 const PROJECT_NAME = 'guardrail_test_project';
@@ -74,9 +75,12 @@ async function waitForSessionRestart(page: Page): Promise<void> {
 }
 
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () => {
+  const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;
+  // Forward-slash sandbox path for safe interpolation into R double-quoted strings.
+  let sandboxR = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -84,23 +88,22 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
     chatActions = new ChatPaneActions(page, consoleActions);
     chatPane = chatActions.chatPane;
 
-    // Delete leftover project from a previous run, then create fresh
+    sandboxR = sandbox.dir.replace(/\\/g, '/');
+    const projectDir = `${sandboxR}/${PROJECT_NAME}`;
+
+    // Create the project inside the sandbox (sandbox afterAll handles teardown).
     await consoleActions.typeInConsole(
-      `unlink("~/${PROJECT_NAME}", recursive = TRUE)`
+      `dir.create("${projectDir}")`
     );
     await sleep(500);
     await consoleActions.typeInConsole(
-      `dir.create("~/${PROJECT_NAME}")`
-    );
-    await sleep(500);
-    await consoleActions.typeInConsole(
-      `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), "~/${PROJECT_NAME}/${PROJECT_NAME}.Rproj")`
+      `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), "${projectDir}/${PROJECT_NAME}.Rproj")`
     );
     await sleep(500);
 
     // Switch to the new project (triggers session restart)
     await consoleActions.typeInConsole(
-      `.rs.api.openProject("~/${PROJECT_NAME}/${PROJECT_NAME}.Rproj")`
+      `.rs.api.openProject("${projectDir}/${PROJECT_NAME}.Rproj")`
     );
     await waitForSessionRestart(page);
 
@@ -116,9 +119,11 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
   });
 
   test.afterAll(async () => {
-    // Clean up test files inside the project
+    // Files inside the project and outside-project files now live in the
+    // sandbox and are removed by the sandbox afterAll (registered by
+    // useSuiteSandbox). Only the tempdir file is outside the sandbox.
     await consoleActions.typeInConsole(
-      `{ unlink("${PROJECT_FILE}"); unlink("${RENAME_SRC}"); unlink(".env"); unlink(".Renviron"); unlink(".Rprofile"); unlink("${READ_FILE}"); unlink(file.path(tempdir(), "${TEMP_FILE}")); unlink("~/${OUTSIDE_FILE}") }`
+      `unlink(file.path(tempdir(), "${TEMP_FILE}"))`
     );
     await sleep(500);
   });
@@ -184,12 +189,15 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
   // --- Denied writes ---
 
   test('3: write outside project directory is denied', async () => {
+    // Sandbox root is one level above the project, so it's outside the
+    // project dir and a valid target for the "outside the project" guardrail.
+    const outsidePath = `${sandboxR}/${OUTSIDE_FILE}`;
     await askAssistant(
-      `Using R, please create a file at ~/${OUTSIDE_FILE} containing "hello".`
+      `Using R, please create a file at ${outsidePath} containing "hello".`
     );
 
     // The file must not exist -- guardrails should block the R write
-    expect(await fileExists(`"~/${OUTSIDE_FILE}"`)).toBe(false);
+    expect(await fileExists(`"${outsidePath}"`)).toBe(false);
   });
 
   test('4: rename from project to outside is denied', async () => {
@@ -197,14 +205,15 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
     await consoleActions.typeInConsole(`writeLines("rename me", "${RENAME_SRC}")`);
     await sleep(500);
 
+    const outsideDest = `${sandboxR}/${RENAME_SRC}`;
     await askAssistant(
-      `Using R, rename the file ${RENAME_SRC} to ~/${RENAME_SRC}.`
+      `Using R, rename the file ${RENAME_SRC} to ${outsideDest}.`
     );
 
     // Source file should still be in the project (rename failed)
     expect(await fileExists(`"${RENAME_SRC}"`)).toBe(true);
     // Destination should not exist
-    expect(await fileExists(`"~/${RENAME_SRC}"`)).toBe(false);
+    expect(await fileExists(`"${outsideDest}"`)).toBe(false);
 
     await consoleActions.typeInConsole(`unlink("${RENAME_SRC}")`);
     await sleep(500);
@@ -318,7 +327,7 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
     // Write OUTSIDE the project directory from the console.
     // If guardrails leaked into user code, this would be blocked.
     const file = `guardrail_user_${TS}.txt`;
-    const rPath = `"~/${file}"`;
+    const rPath = `"${sandboxR}/${file}"`;
 
     await consoleActions.clearConsole();
     await consoleActions.typeInConsole(`writeLines("user_test", ${rPath})`);

@@ -155,6 +155,22 @@ Tests run on Windows, macOS, and Linux. Key rules:
 - Use plain `Control` for shortcuts that are literally Ctrl on every platform, including macOS (e.g., `Control+Enter` for Run Line, `Control+l` for Clear Console). Using `ControlOrMeta` for these fires Cmd on macOS, which does something else entirely.
 - Use `process.platform` guards for platform-branched keys like `Control+End` (Windows/Linux) vs `Meta+ArrowDown` (macOS).
 
+### Sandbox (R-side scratch directory)
+
+Specs that create files or directories on disk must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent — so tests don't pollute `~/`, the repo tree, or wherever R's cwd happens to be.
+
+```typescript
+import { useSuiteSandbox } from '@utils/sandbox';
+
+const sandbox = useSuiteSandbox();
+
+test('writes land in sandbox', async ({ rstudioPage: page }) => {
+  await typeInConsole(page, `writeLines("hi", "${sandbox.dir}/foo.txt")`);
+});
+```
+
+`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected. Override the root with `RSTUDIO_PW_SANDBOX`. See the Playwright skill for full details.
+
 ### Package Dependencies
 
 ```typescript
@@ -246,6 +262,8 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 | `RSTUDIO_PASSWORD` | Server | Yes | Login password |
 | `RSTUDIO_LOAD_TIMEOUT` | Server | No | IDE load timeout in ms (default: 60000) |
 | `RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
+| `RSTUDIO_PW_SANDBOX` | Both | No | Override the sandbox root (absolute path). Unset uses `dirname(tempdir())`. |
+| `RSTUDIO_PW_SANDBOX_CREATE` | Both | No | Set to `true`/`1` to auto-create an overridden sandbox root if it's missing. Default `false` — fails loud on typos. |
 
 ## Further Reading
 

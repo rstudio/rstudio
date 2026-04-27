@@ -4,6 +4,7 @@ export const TIMEOUTS = {
   consoleReady: 15000,
   sessionRestart: 30000,
   settleDelay: 1000,
+  pollInterval: 500,
   fileOpen: 20000,
   ghostText: 30000,
   nesApply: 30000,

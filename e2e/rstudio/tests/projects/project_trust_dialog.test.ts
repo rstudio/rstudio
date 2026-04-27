@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 /**
@@ -213,9 +214,11 @@ async function createProjectViaUI(page: Page, name: string): Promise<void> {
 // -- Test Suite ---------------------------------------------------------------
 
 test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@serial'] }, () => {
+  const sandbox = useSuiteSandbox();
   let projectDir = '';
   let trustEnabled = true;
   let originalLoadWorkspace = 'FALSE';
+  let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     // Dismiss any leftover dialog/overlay from a prior failed run.
@@ -239,16 +242,19 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       '.rs.api.readRStudioPreference("load_workspace")');
     console.log(`Original load_workspace: ${originalLoadWorkspace}`);
 
-    // Ensure we're in the home directory before cleanup (can't delete a dir we're in)
-    await typeInConsole(page, 'setwd("~")');
-    await sleep(500);
+    // Redirect the New Project Wizard's parent-directory field into the
+    // sandbox by overriding the default_project_location preference. The
+    // field itself is read-only, so setting the pref is the only way.
+    // If a prior crashed run left our sandbox path in the pref, treat it
+    // as leftover state and restore to the schema default on afterAll.
+    const current = await captureResult(page,
+      '.rs.api.readRStudioPreference("default_project_location")');
+    const basename = current.split(/[/\\]/).pop() || '';
+    originalDefaultProjectLocation = basename.startsWith('rstudio_pw_') ? '' : current;
 
-    // Clean up any leftover test project from a prior run
-    await typeInConsole(page, `unlink("~/trust_test_project", recursive = TRUE)`);
-    await sleep(500);
-
-    // Reset trust for the test project directory in case a prior run left it in trust.json
-    await typeInConsole(page, '.rs.trust.reset(path.expand("~/trust_test_project"))');
+    const escaped = sandbox.dir.replace(/\\/g, '/');
+    await typeInConsole(page,
+      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`);
     await sleep(500);
   });
 
@@ -258,7 +264,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
         // Reset trust entries
         await resetTrust(page, projectDir);
 
-        // Close the project via command palette (executeCommand blocks R)
+        // Close the project via command palette (executeCommand blocks R).
+        // The sandbox afterAll hook (registered by useSuiteSandbox) deletes
+        // the project directory along with the rest of the sandbox.
         await page.keyboard.press('ControlOrMeta+Shift+p');
         await sleep(1000);
         await page.keyboard.type('Close Current Project');
@@ -267,16 +275,14 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
         await expect(closeItem).toBeVisible({ timeout: 5000 });
         await closeItem.click();
         await waitForSessionRestart(page);
-
-        // Delete the test project directory
-        const escaped = projectDir.replace(/\\/g, '/');
-        await typeInConsole(page, `unlink("${escaped}", recursive = TRUE)`);
-        await sleep(1000);
       }
 
-      // Restore original workspace preference
+      // Restore preferences
       await typeInConsole(page,
         `.rs.api.writeRStudioPreference("load_workspace", ${originalLoadWorkspace})`);
+      await sleep(500);
+      await typeInConsole(page,
+        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`);
       await sleep(500);
     } catch {
       // Best-effort cleanup
