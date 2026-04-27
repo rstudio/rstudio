@@ -2199,6 +2199,22 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    pkgInfo
 })
 
+.rs.addFunction("installPackagesWhichDeps", function(userDeps)
+{
+   # Maps the user's 'dependencies' argument (TRUE / FALSE / character /
+   # NA / anything else) onto the 'which' vector accepted by
+   # tools::package_dependencies. Mirrors install.packages's own defaults:
+   # NA / unrecognized -> hard deps only; TRUE -> include Suggests.
+   if (isTRUE(userDeps))
+      c("Depends", "Imports", "LinkingTo", "Suggests")
+   else if (isFALSE(userDeps))
+      character()
+   else if (is.character(userDeps))
+      userDeps
+   else
+      c("Depends", "Imports", "LinkingTo")
+})
+
 .rs.addFunction("installedPackagesFileInfoDiff", function(before, after)
 {
    result <- merge(before, after, by = "path", all = TRUE)
@@ -2564,10 +2580,22 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # will use (the hook's formal is either the user's explicit argument
          # or the install.packages default, getOption("repos")), so the
          # Repository column used by recordPackageSource matches the repo the
-         # package was actually fetched from.
-         db <- as.data.frame(
-            utils::available.packages(repos = repos),
-            stringsAsFactors = FALSE
+         # package was actually fetched from. On a transient network/DNS
+         # failure or stale 'repos =', surface a warning and skip source
+         # recording rather than poisoning the user's install with an error
+         # from a bookkeeping lookup.
+         db <- tryCatch(
+            as.data.frame(
+               utils::available.packages(repos = repos),
+               stringsAsFactors = FALSE
+            ),
+            error = function(cnd)
+            {
+               fmt <- "available.packages() failed; skipping post-install source recording: %s"
+               msg <- sprintf(fmt, conditionMessage(cnd))
+               .rs.logInfoMessage(msg)
+               NULL
+            }
          )
 
          # 'dependencies' is a formal of utils::install.packages;
@@ -2579,36 +2607,66 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
             error = function(e) NA
          )
 
-         whichDeps <- if (isTRUE(userDeps))
-            c("Depends", "Imports", "LinkingTo", "Suggests")
-         else if (isFALSE(userDeps))
-            character()
-         else if (is.character(userDeps))
-            userDeps
-         else
-            c("Depends", "Imports", "LinkingTo")
+         whichDeps <- .rs.installPackagesWhichDeps(userDeps)
 
          candidates <- pkgs
-         if (length(whichDeps) > 0L)
+         if (!is.null(db))
          {
-            deps <- tools::package_dependencies(
-               pkgs, db = db, recursive = TRUE, which = whichDeps
-            )
-            candidates <- unique(c(candidates, unlist(deps, use.names = FALSE)))
+            # If any requested packages aren't present in db (Bioconductor,
+            # R-universe, a private mirror, etc.), tools::package_dependencies
+            # returns an empty character vector for those entries and their
+            # transitive deps won't be tagged. Surface the mismatch so the
+            # user can cross-check 'repos'.
+            absent <- setdiff(pkgs, db$Package)
+            if (length(absent) > 0L)
+            {
+               fmt <- "package(s) not present in available.packages(): %s; dependencies may not be tagged (check 'repos')"
+               msg <- sprintf(fmt, paste(absent, collapse = ", "))
+               .rs.logInfoMessage(msg)
+            }
+
+            if (length(whichDeps) > 0L)
+            {
+               deps <- tools::package_dependencies(
+                  pkgs,
+                  db = db,
+                  recursive = TRUE,
+                  which = whichDeps
+               )
+               candidates <- unique(c(candidates, unlist(deps, use.names = FALSE)))
+            }
          }
 
-         # install.packages writes to the first entry of 'lib' in the common
-         # case, so only that path needs to be scanned.
-         paths <- file.path(lib[[1L]], candidates)
+         # install.packages recycles 'lib' against 'pkgs' (see ?install.packages),
+         # so candidates can land in any of the supplied library entries; scan
+         # all of them rather than just the first. install.packages itself
+         # errors out if any 'lib' entry is non-writable, so each entry here
+         # is a possible install target.
+         paths <- as.vector(outer(lib, candidates, file.path))
 
          # Pin a reference timestamp in the library filesystem's own clock
          # domain, so NFS / CIFS clock skew between this R session and the
          # fs server can't cause us to miss packages whose mtime lands just
-         # before Sys.time().
+         # before Sys.time(). If sentinel creation fails (read-only library,
+         # full disk, restrictive umask), file.create() returns FALSE and
+         # file.info()$mtime would be NA, silently disabling all tagging;
+         # fall back to Sys.time() so install.packages still runs and we
+         # still attempt source recording.
          sentinel <- tempfile("rstudio-install-sentinel-", tmpdir = lib[[1L]])
-         file.create(sentinel)
          on.exit(unlink(sentinel, force = TRUE), add = TRUE)
-         installStart <- file.info(sentinel)$mtime
+         sentinelOk <- isTRUE(suppressWarnings(file.create(sentinel)))
+         installStart <- if (sentinelOk)
+         {
+            file.info(sentinel)$mtime
+         }
+         else
+         {
+            .rs.logWarningMessage(sprintf(
+               "could not create sentinel file in '%s'; falling back to Sys.time() for install timestamp",
+               lib[[1L]]
+            ))
+            Sys.time()
+         }
 
          # Invoke the original function.
          call <- sys.call()
@@ -2620,8 +2678,11 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          after <- .rs.installedPackagesFileInfo(paths = paths)
          changed <- !is.na(after$mtime) & after$mtime >= installStart
 
-         # Tag each updated package's DESCRIPTION with its installation source.
-         .rs.recordPackageSource(after$path[changed], db = db)
+         # Tag each updated package's DESCRIPTION with its installation
+         # source. Skip when available.packages() failed earlier; without
+         # 'db' we can't match repository entries.
+         if (!is.null(db))
+            .rs.recordPackageSource(after$path[changed], db = db)
       }
 
       # Notify the front-end that we've made some updates.

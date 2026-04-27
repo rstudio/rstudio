@@ -346,13 +346,23 @@ void onConsoleInput(const std::string& input)
 }
 
 // Builds the regex used to detect package-management function calls in
-// console input. Identifiers are matched as a prefix, optionally followed by
-// '.' or '_' and more identifier characters (so 'install' catches
-// 'install.packages', 'install_github', etc.), and must be followed by '('
-// so that variable names like 'updates <- ...' and read-only calls like
-// 'installed.packages()' do not trigger a refresh. Underscore-prefixed
-// entries (pkg_*, p_*, local_*) are listed explicitly since '\b' cannot span
-// a '_' word boundary.
+// console input. Identifiers are matched as a prefix, optionally followed
+// by '.' or '_' and more identifier characters (so 'install' catches
+// 'install.packages', 'install_github', etc.).
+//
+// Two separate gates keep false positives out:
+//
+//   * The trailing '\(' rejects keyword-prefixed expressions that aren't
+//     function calls -- e.g. 'updates <- c(1, 2)' has 'update' followed
+//     by 's <-', not '('.
+//
+//   * The required '[._]' at the start of the optional suffix keeps the
+//     keyword from extending across plain word characters to reach a '('
+//     later in the line -- without it, '[\w.]*' could consume 'ed.packages'
+//     in 'installed.packages()' and the trailing '\(' would then match.
+//
+// Underscore-prefixed entries (pkg_*, p_*, local_*) are listed explicitly
+// since '\b' cannot span a '_' word boundary.
 boost::regex buildPackageCallRegex()
 {
    const std::vector<std::string> keywords = {
@@ -397,8 +407,7 @@ void onConsolePrompt(const std::string&)
    std::string lastInput = s_lastInput;
    s_lastInput.clear();
 
-   static const boost::regex s_pkgCallPattern = buildPackageCallRegex();
-   if (boost::regex_search(lastInput, s_pkgCallPattern))
+   if (isPackageManagementCall(lastInput))
    {
       rs_packageLibraryMutated();
       return;
@@ -460,6 +469,12 @@ Error getPackageState(const json::JsonRpcRequest& ,
 }
 
 } // anonymous namespace
+
+bool isPackageManagementCall(const std::string& input)
+{
+   static const boost::regex s_pattern = buildPackageCallRegex();
+   return boost::regex_search(input, s_pattern);
+}
 
 void enquePackageStateChanged()
 {
