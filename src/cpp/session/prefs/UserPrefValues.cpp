@@ -986,6 +986,19 @@ core::Error UserPrefValues::setFoldStyle(std::string val)
 }
 
 /**
+ * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+ */
+bool UserPrefValues::hierarchicalSectionFolding()
+{
+   return readPref<bool>("hierarchical_section_folding");
+}
+
+core::Error UserPrefValues::setHierarchicalSectionFolding(bool val)
+{
+   return writePref("hierarchical_section_folding", val);
+}
+
+/**
  * Whether to automatically save scripts before executing them.
  */
 bool UserPrefValues::saveBeforeSourcing()
@@ -3508,6 +3521,19 @@ core::Error UserPrefValues::setAssistantShowMessages(bool val)
 }
 
 /**
+ * When enabled, the Posit Assistant button is displayed in the main toolbar.
+ */
+bool UserPrefValues::assistantToolbarButtonVisible()
+{
+   return readPref<bool>("assistant_toolbar_button_visible");
+}
+
+core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
+{
+   return writePref("assistant_toolbar_button_visible", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -3818,6 +3844,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSoftWrapRmdFiles,
       kFocusConsoleAfterExec,
       kFoldStyle,
+      kHierarchicalSectionFolding,
       kSaveBeforeSourcing,
       kConsoleSoftWrap,
       kSyntaxColorConsole,
@@ -4012,6 +4039,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
       kAssistantShowMessages,
+      kAssistantToolbarButtonVisible,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

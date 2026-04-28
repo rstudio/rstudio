@@ -63,6 +63,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionAskPass.hpp"
+#include "SessionLibGit2.hpp"
 
 #include "SessionVCS.hpp"
 
@@ -3044,6 +3045,9 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
 
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
+   // only add AI-related ignores when the assistant is active
+   bool assistantActive = module_context::isPositAssistantEnabled();
+
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
    if (!gitIgnoreFile.exists())
@@ -3055,7 +3059,9 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
-      filesToIgnore.push_back(".positai");
+
+      if (assistantActive)
+         filesToIgnore.push_back(".positai");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -3087,41 +3093,48 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    }
    else
    {
-      // If .gitignore exists, add .Rproj.user unless it's already there
+      // Use libgit2 to check if paths are already covered by existing
+      // gitignore rules (including global gitignore, parent directories,
+      // wildcard rules, etc.)
+      // NOTE: assumes gitIgnoreFile is at the repo root.
+      // If the repo fails to open, isIgnored() returns false for all paths,
+      // so all entries get appended as a safe fallback.
+      FilePath repoRoot = gitIgnoreFile.getParent();
+      libgit2::Git git(repoRoot);
 
+      std::vector<std::string> filesToIgnore;
+
+      if (!git.isIgnored(".Rproj.user"))
+         filesToIgnore.push_back(".Rproj.user");
+
+      if (assistantActive && !git.isIgnored(".positai"))
+         filesToIgnore.push_back(".positai");
+
+      if (session::options().packageOutputInPackageFolder())
+      {
+         std::string packageName = r_util::packageNameFromDirectory(repoRoot);
+         if (!packageName.empty())
+         {
+            // test representative paths — gitignore glob * matches zero-or-more
+            // characters, so e.g. "mypackage.tar.gz" matches "mypackage*.tar.gz"
+            if (!git.isIgnored(packageName + ".Rcheck"))
+               filesToIgnore.push_back(packageName + ".Rcheck/");
+            if (!git.isIgnored(packageName + ".tar.gz"))
+               filesToIgnore.push_back(packageName + "*.tar.gz");
+            if (!git.isIgnored(packageName + ".tgz"))
+               filesToIgnore.push_back(packageName + "*.tgz");
+         }
+      }
+
+      if (filesToIgnore.empty())
+         return Success();
+
+      // check if we need an extra newline before appending
       std::string strIgnore;
       Error error = core::readStringFromFile(gitIgnoreFile, &strIgnore);
       if (error)
          return error;
 
-      std::vector<std::string> filesToIgnore;
-
-      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.Rproj\.user/?$)")))
-         filesToIgnore.push_back(".Rproj.user");
-
-      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.positai/?$)")))
-         filesToIgnore.push_back(".positai");
-
-      if (session::options().packageOutputInPackageFolder())
-      {
-         // add any missing exclusions for package build/check output
-         std::string packageName = r_util::packageNameFromDirectory(gitIgnoreFile.getParent());
-         if (!packageName.empty())
-         {
-            std::string packageNameRegex = "^";
-            packageNameRegex += packageName;
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(\.Rcheck/$)")))
-               filesToIgnore.push_back(packageName + ".Rcheck/");
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tar\.gz$)")))
-               filesToIgnore.push_back(packageName + "*.tar.gz");
-            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tgz$)")))
-               filesToIgnore.push_back(packageName + "*.tgz");
-         }
-      }
-      
-      if (filesToIgnore.size() == 0)
-         return Success();
-      
       bool addExtraNewline = strIgnore.size() > 0
                              && strIgnore[strIgnore.size() - 1] != '\n';
 
@@ -3211,24 +3224,34 @@ std::string nonPathGitBinDir()
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kGitExePath)
-      return;
-
-   FilePath gitExePath(prefs::userPrefs().gitExePath());
-   if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
+   if (pref == kGitExePath)
    {
-      // if there is an explicit value then set it
-      s_gitExePath = gitExePath.getAbsolutePath();
-   }
-   else
-   {
-      // if we are relying on an auto-detected value then scan on windows
-      // and reset to empty on posix
+      FilePath gitExePath(prefs::userPrefs().gitExePath());
+      if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
+      {
+         // if there is an explicit value then set it
+         s_gitExePath = gitExePath.getAbsolutePath();
+      }
+      else
+      {
+         // if we are relying on an auto-detected value then scan on windows
+         // and reset to empty on posix
 #ifdef _WIN32
-      detectAndSaveGitExePath();
+         detectAndSaveGitExePath();
 #else
-      s_gitExePath = "";
+         s_gitExePath = "";
 #endif
+      }
+   }
+   else if (pref == kAssistant || pref == kChatProvider)
+   {
+      if (!s_git_.root().isEmpty())
+      {
+         FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
+         Error error = augmentGitIgnore(gitIgnore);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 }
 

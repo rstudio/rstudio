@@ -26,7 +26,6 @@ const initI18n = () => {
         fr: { translation: fr },
       },
       fallbackLng: 'en',
-      showSupportNotice: false,
     })
     .catch((err) => {
       console.log('Error when initializing i18next: ');

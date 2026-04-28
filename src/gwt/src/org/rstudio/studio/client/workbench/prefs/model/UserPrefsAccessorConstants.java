@@ -656,6 +656,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String foldStyleEnum_begin_and_end();
 
    /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   @DefaultStringValue("Hierarchical section folding")
+   String hierarchicalSectionFoldingTitle();
+   @DefaultStringValue("Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).")
+   String hierarchicalSectionFoldingDescription();
+
+   /**
     * Whether to automatically save scripts before executing them.
     */
    @DefaultStringValue("Save R scripts before sourcing")
@@ -2250,6 +2258,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantShowMessagesTitle();
    @DefaultStringValue("When enabled, RStudio will show messages from the Posit Assistant in a message box.")
    String assistantShowMessagesDescription();
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   @DefaultStringValue("Show Posit Assistant button in toolbar")
+   String assistantToolbarButtonVisibleTitle();
+   @DefaultStringValue("When enabled, the Posit Assistant button is displayed in the main toolbar.")
+   String assistantToolbarButtonVisibleDescription();
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

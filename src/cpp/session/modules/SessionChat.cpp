@@ -21,6 +21,7 @@
 #include "chat/ChatTypes.hpp"
 #include "chat/ChatLogging.hpp"
 #include "chat/ChatInstallation.hpp"
+#include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
 
 #include <algorithm>
@@ -58,6 +59,7 @@
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RBusy.hpp>
+#include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
@@ -111,6 +113,7 @@ void clearChatBackendPort()
    s_chatBackendPort = constants::kChatBackendPortNone;
    staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
    s_chatBackendAuthToken.clear();
+   staticfiles::setChatBackendAuthToken(std::string());
 }
 
 // Track whether session is closing (vs suspending/restarting)
@@ -187,14 +190,9 @@ bool peerHasCapability(const std::string& method)
 // ============================================================================
 // Feature availability helper
 // ============================================================================
-// Returns true if the Posit Assistant feature is enabled. This requires:
-// 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
-// 2. The posit-assistant-enabled session option
-bool isPositAssistantEnabled()
+bool isPositAssistantEnabledByAdmin()
 {
-   return options().allowPositAssistant() &&
-          options().positAssistantEnabled() &&
-          core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+   return module_context::isPositAssistantEnabledByAdmin();
 }
 
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
@@ -1282,6 +1280,13 @@ void processPendingExecution()
          console_input::updateSessionExecuting();
          ClientEvent busyEvent(client_events::kBusy, false);
          module_context::enqueClientEvent(busyEvent);
+
+         // Restore the top-level prompt flag before reissuing. Code executed
+         // by the chat backend may have called readline(), which sets
+         // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
+         // this reset, the reissued prompt carries busy=true and the chat
+         // pane's "waiting for input" notification is never dismissed.
+         r::session::setAtTopLevelPrompt(true);
          console_input::reissueLastConsolePrompt();
       }
    }
@@ -3314,6 +3319,7 @@ struct UpdateState
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
+   std::string expectedSha256;
    std::string errorMessage;
 
    // Installation status tracking
@@ -3414,8 +3420,8 @@ Error downloadManifest(json::Object* pManifest)
 
    // Get download URI; use test manifest when opted in
    std::string downloadUri = options().positAssistantTestManifest()
-      ? "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest-test.json"
-      : "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/posit-ai-preview/manifest.json";
+      ? "https://cdn.posit.co/posit-ai/manifest-test.json"
+      : "https://cdn.posit.co/posit-ai/manifest.json";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
@@ -3472,126 +3478,6 @@ Error downloadManifest(json::Object* pManifest)
    return Success();
 }
 
-// Parse manifest to get package info for current protocol version
-// Selects the highest minor version that matches the major version
-Error getPackageInfoFromManifest(
-    const json::Object& manifest,
-    const std::string& protocolVersion,
-    std::string* pPackageVersion,
-    std::string* pDownloadUrl)
-{
-   if (!pPackageVersion || !pDownloadUrl)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   // Get "versions" object
-   json::Object versions;
-   Error error = json::readObject(manifest, "versions", versions);
-   if (error)
-   {
-      WLOG("Manifest missing 'versions' field");
-      return error;
-   }
-
-   // Parse RStudio's protocol version to get major version
-   SemanticVersion rstudioProtocol;
-   if (!rstudioProtocol.parse(protocolVersion))
-   {
-      WLOG("Failed to parse RStudio protocol version: {}", protocolVersion);
-      return systemError(boost::system::errc::invalid_argument,
-                        "Invalid protocol version format",
-                        ERROR_LOCATION);
-   }
-
-   DLOG("Looking for compatible protocols with major version {}", rstudioProtocol.major);
-
-   // Find all compatible protocol versions (matching major version)
-   // and select the highest minor version
-   SemanticVersion bestProtocol;
-   std::string bestPackageVersion;
-   std::string bestDownloadUrl;
-   bool foundCompatible = false;
-
-   for (const auto& entry : versions)
-   {
-      std::string manifestProtocol = entry.getName();
-
-      // Parse this manifest protocol version
-      SemanticVersion manifestProtocolVer;
-      if (!manifestProtocolVer.parse(manifestProtocol))
-      {
-         WLOG("Skipping manifest entry with invalid protocol version: {}", manifestProtocol);
-         continue;
-      }
-
-      // Check if major version matches
-      if (manifestProtocolVer.major != rstudioProtocol.major)
-      {
-         DLOG("Skipping protocol {} (major version mismatch)", manifestProtocol);
-         continue;
-      }
-
-      // Extract version info for this protocol
-      json::Value versionValue = entry.getValue();
-      if (!versionValue.isObject())
-      {
-         WLOG("Skipping protocol {} (value is not an object)", manifestProtocol);
-         continue;
-      }
-
-      json::Object versionInfo = versionValue.getObject();
-
-      std::string packageVersion;
-      std::string downloadUrl;
-
-      error = json::readObject(versionInfo, "version", packageVersion);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'version' field)", manifestProtocol);
-         continue;
-      }
-
-      error = json::readObject(versionInfo, "url", downloadUrl);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'url' field)", manifestProtocol);
-         continue;
-      }
-
-      // Validate download URL is HTTPS
-      if (!isHttpsUrl(downloadUrl))
-      {
-         WLOG("Skipping protocol {} (non-HTTPS URL: {})", manifestProtocol, downloadUrl);
-         continue;
-      }
-
-      // Check if this is the best (highest) protocol version so far
-      if (!foundCompatible || manifestProtocolVer > bestProtocol)
-      {
-         bestProtocol = manifestProtocolVer;
-         bestPackageVersion = packageVersion;
-         bestDownloadUrl = downloadUrl;
-         foundCompatible = true;
-         DLOG("Found compatible protocol {}.{} with package version {}",
-              manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
-      }
-   }
-
-   if (!foundCompatible)
-   {
-      WLOG("No compatible protocol found in manifest for major version {}", rstudioProtocol.major);
-      return systemError(boost::system::errc::protocol_not_supported,
-                        "No compatible protocol version found in manifest",
-                        ERROR_LOCATION);
-   }
-
-   *pPackageVersion = bestPackageVersion;
-   *pDownloadUrl = bestDownloadUrl;
-
-   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}",
-        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl);
-
-   return Success();
-}
 
 // Extract recommended RStudio version from manifest
 // Returns Success() and populates output params if field is present and valid
@@ -3903,6 +3789,8 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    return Success();
 }
 
+
+
 // Install package (backup, extract, cleanup)
 Error installPackage(const FilePath& packagePath)
 {
@@ -4111,7 +3999,8 @@ void doUpdateCheck()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4149,6 +4038,7 @@ void doUpdateCheck()
          s_updateState.updateAvailable = true;
          s_updateState.newVersion = packageVersion;
          s_updateState.downloadUrl = downloadUrl;
+         s_updateState.expectedSha256 = sha256;
       }
    }
    else
@@ -4252,7 +4142,8 @@ Error checkForUpdatesOnStartup()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4319,6 +4210,7 @@ Error checkForUpdatesOnStartup()
             s_updateState.updateAvailable = true;
             s_updateState.newVersion = packageVersion;
             s_updateState.downloadUrl = downloadUrl;
+            s_updateState.expectedSha256 = sha256;
          }
       }
    }
@@ -4642,6 +4534,7 @@ Error startChatBackend(bool resumeConversation)
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
    s_chatBackendAuthToken = core::system::generateUuid(false);
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -5110,6 +5003,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    // reset s_updateState while we're downloading
    std::string downloadUrl = s_updateState.downloadUrl;
    std::string newVersion = s_updateState.newVersion;
+   std::string expectedSha256 = s_updateState.expectedSha256;
 
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
@@ -5148,6 +5042,44 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   // Verify SHA-256 integrity of the downloaded package
+   if (expectedSha256.empty())
+   {
+      ELOG("Manifest does not include a SHA-256 hash for this package; "
+           "refusing to install unverified package");
+
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (no SHA-256 hash in manifest).";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after missing hash: {}",
+              cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   error = integrity::verifyPackageSha256(tempPackage, expectedSha256);
+   if (error)
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (SHA-256 mismatch). "
+         "The download may be corrupted or tampered with.";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after integrity failure: {}",
+              cleanupError.getMessage());
 
       pResponse->setResult(json::Value());
       return Success();
@@ -5278,7 +5210,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// NOTE: No isPositAssistantWanted()/isPositAssistantEnabled() gate — the user may have
+// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
 // disabled Posit Assistant but still wants to clean up installed files.
 Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -5677,14 +5609,14 @@ Error initialize()
 
    // Validate assistant preference consistency
    // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
-   if (isPaiSelected() && !isPositAssistantEnabled())
+   if (isPaiSelected() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    // Validate chat provider preference consistency
    // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPositAssistantEnabled())
+   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }

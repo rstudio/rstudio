@@ -81,3 +81,27 @@ code {
 .feature-section:last-child {
   margin-bottom: 0;
 }
+
+/* Section overline label (e.g. "INTRODUCING") */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+}
+
+/* Tagline beneath a section heading */
+.tagline {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 14px 0;
+}
+
+/* Divider between major sections */
+.section-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0 0 28px 0;
+}

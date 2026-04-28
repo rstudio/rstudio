@@ -29,6 +29,12 @@ export class ChatPane extends FramePageObject {
   public historyBtn: Locator;
   public conversationList: Locator;
 
+  // Blocking state elements (inside the chat iframe)
+  public retryManifestBtn: Locator;
+  public copyErrorBtn: Locator;
+  public errorDetail: Locator;
+  public updateRequiredBtn: Locator;
+
   // Outside the iframe (main page — GWT wrapper)
   public dialogOverlay: Locator;
   public readlineNotification: Locator;
@@ -49,11 +55,17 @@ export class ChatPane extends FramePageObject {
     this.ignoreBtn = this.frame.locator("button:has-text('Ignore')");
     this.settingsBtn = this.frame.locator("xpath=//span[contains(text(), 'Settings')]/ancestor::button");
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
-    this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit Assistant')] | //div[contains(text(), 'Configure Posit Assistant')] | //*[@role='menuitem'][contains(., 'Configure Posit Assistant')]");
+    this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]");
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
     this.newConversationBtn = this.frame.locator("button:has(svg.lucide-plus)");
     this.historyBtn = this.frame.locator("button:has(svg.lucide-history)");
     this.conversationList = this.frame.locator("[class*='conversation']");
+
+    // Blocking state elements
+    this.retryManifestBtn = this.frame.locator('#retry-manifest-btn');
+    this.copyErrorBtn = this.frame.locator('#copy-error-btn');
+    this.errorDetail = this.frame.locator('#error-detail');
+    this.updateRequiredBtn = this.frame.locator('#update-btn');
 
     this.dialogOverlay = page.locator("[data-slot='dialog-overlay']");
     this.readlineNotification = page.locator('text=R is waiting for input in the Console.');

@@ -226,6 +226,8 @@ public class CodePreferencesPane extends PreferencesPane
             false);
 
       displayPanel.add(foldMode_);
+      displayPanel.add(checkboxPref(constants_.displayHierarchicalSectionFoldingLabel(),
+            prefs_.hierarchicalSectionFolding()));
 
       indentGuides_ = new SelectWidget(
          prefs_.indentGuides().getTitle() + ":",

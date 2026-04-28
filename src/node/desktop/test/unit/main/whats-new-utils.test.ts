@@ -23,7 +23,20 @@ import {
   isValidSlug,
   isReleaseBuild,
   resolveWhatsNewContentPath,
+  createLocalUrlChecker,
 } from '../../../src/main/whats-new-utils';
+
+// Unix-style file URLs (no drive letter) are not valid Windows paths,
+// so fileURLToPath throws on Windows. Skip the corresponding describes
+// there without invoking their bodies; the Windows drive-letter cases
+// are exercised in a dedicated describe.
+function describePosix(title: string, fn: () => void): void {
+  if (process.platform === 'win32') {
+    describe.skip(title, () => { /* skipped on Windows */ });
+  } else {
+    describe(title, fn);
+  }
+}
 
 describe('whats-new-utils', () => {
   describe('toReleaseSlug', () => {
@@ -125,6 +138,112 @@ describe('whats-new-utils', () => {
 
     it('returns null for an invalid slug (path traversal)', () => {
       assert.isNull(resolveWhatsNewContentPath('../etc'));
+    });
+  });
+
+  describePosix('createLocalUrlChecker (file mode)', () => {
+    const host = 'file:///app/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows the host page directory', () => {
+      assert.isTrue(isLocal('file:///app/.webpack/renderer/whats_new/index.js'));
+    });
+
+    it('allows the release content subtree', () => {
+      assert.isTrue(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+
+    it('rejects arbitrary file:// paths', () => {
+      assert.isFalse(isLocal('file:///etc/passwd'));
+    });
+
+    it('rejects file:// paths outside the content subtree', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/other-release/index.html',
+      ));
+    });
+
+    it('rejects sibling directory sharing the slug prefix', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium-old/index.html',
+      ));
+    });
+
+    it('rejects sibling directory sharing the host dir prefix', () => {
+      assert.isFalse(isLocal('file:///app/.webpack/renderer/whats_new_evil/payload.html'));
+    });
+
+    it('rejects http URLs in file mode', () => {
+      assert.isFalse(isLocal('https://evil.example.com'));
+    });
+
+    it('rejects invalid URLs', () => {
+      assert.isFalse(isLocal('not a url'));
+    });
+  });
+
+  describePosix('createLocalUrlChecker (invalid slug)', () => {
+    const host = 'file:///app/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, '../etc');
+
+    it('still allows the host page directory', () => {
+      assert.isTrue(isLocal('file:///app/.webpack/renderer/whats_new/index.js'));
+    });
+
+    it('rejects arbitrary file:// paths', () => {
+      assert.isFalse(isLocal('file:///etc/passwd'));
+    });
+
+    it('rejects content subtree paths since slug is invalid', () => {
+      assert.isFalse(isLocal(
+        'file:///app/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+  });
+
+  describe('createLocalUrlChecker (dev mode)', () => {
+    const host = 'http://localhost:3000/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows same-origin URLs', () => {
+      assert.isTrue(isLocal('http://localhost:3000/assets/whats-new/foo/index.html'));
+    });
+
+    it('rejects different origin', () => {
+      assert.isFalse(isLocal('http://localhost:4000/foo'));
+    });
+
+    it('rejects external URLs', () => {
+      assert.isFalse(isLocal('https://evil.example.com'));
+    });
+  });
+
+  describe('createLocalUrlChecker (Windows drive-letter URLs)', () => {
+    const host = 'file:///C:/Program%20Files/RStudio/.webpack/renderer/whats_new/index.html';
+    const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
+
+    it('allows files in the host page directory', () => {
+      assert.isTrue(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/whats_new/index.js',
+      ));
+    });
+
+    it('allows files in the release content subtree', () => {
+      assert.isTrue(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/assets/whats-new/globemaster-allium/index.html',
+      ));
+    });
+
+    it('rejects paths outside the allowed tree', () => {
+      assert.isFalse(isLocal('file:///C:/Windows/System32/config/SAM'));
+    });
+
+    it('rejects sibling directory sharing the slug prefix', () => {
+      assert.isFalse(isLocal(
+        'file:///C:/Program%20Files/RStudio/.webpack/renderer/assets/whats-new/globemaster-allium-old/index.html',
+      ));
     });
   });
 

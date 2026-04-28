@@ -13,9 +13,10 @@
  *
  */
 
-import { BrowserWindow, ipcMain, shell } from 'electron';
+import { BrowserWindow, ipcMain, screen, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
+import { createLocalUrlChecker } from './whats-new-utils';
 
 declare const WHATS_NEW_WEBPACK_ENTRY: string;
 declare const WHATS_NEW_PRELOAD_WEBPACK_ENTRY: string;
@@ -48,9 +49,15 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     return activeWindow;
   }
 
+  const display = options.parent
+    ? screen.getDisplayMatching(options.parent.getBounds())
+    : screen.getPrimaryDisplay();
+  const workAreaHeight = display.workAreaSize.height;
+  const height = Math.min(825, workAreaHeight);
+
   const win = new BrowserWindow({
     width: 900,
-    height: 650,
+    height,
     minWidth: 500,
     minHeight: 400,
     center: true,
@@ -64,29 +71,18 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
       nodeIntegration: false,
       sandbox: true,
       preload: WHATS_NEW_PRELOAD_WEBPACK_ENTRY,
+      // Use a separate session so the MainWindow's session-level
+      // webRequest.onBeforeRequest handler (which opens subframe
+      // navigations in the system browser) doesn't intercept our
+      // iframe content load.
+      session: session.fromPartition('whats-new'),
     },
   });
 
   // Remove menu bar on Windows/Linux
   win.setMenuBarVisibility(false);
 
-  // In production the host page is file://, in dev mode it's http://localhost:PORT.
-  // file:// URLs have opaque origin ("null") so origin comparison doesn't work —
-  // use protocol check for file:// and same-origin for http(s) dev URLs.
-  const hostUrl = new URL(WHATS_NEW_WEBPACK_ENTRY);
-  const isFileMode = hostUrl.protocol === 'file:';
-
-  const isLocalUrl = (targetUrl: string): boolean => {
-    try {
-      const target = new URL(targetUrl);
-      if (isFileMode) {
-        return target.protocol === 'file:';
-      }
-      return target.origin === hostUrl.origin;
-    } catch {
-      return false;
-    }
-  };
+  const isLocalUrl = createLocalUrlChecker(WHATS_NEW_WEBPACK_ENTRY, options.releaseSlug);
 
   // Only open http(s) URLs externally — block custom URI schemes that
   // could launch local applications
@@ -116,10 +112,20 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     openExternalSafely(navUrl);
   });
 
-  // Intercept iframe subframe navigation (links clicked inside release content).
-  // Skip main frame — already handled by will-navigate above.
+  // Block subframe navigations that leave the release content. The
+  // initial iframe src load must be allowed through unconditionally
+  // because the URL protocol may differ between dev and packaged builds.
+  // After that, local URLs are still allowed (e.g. dev-mode reloads).
+  let iframeLoaded = false;
   win.webContents.on('will-frame-navigate', (details) => {
-    if (details.isMainFrame || isLocalUrl(details.url)) {
+    if (details.isMainFrame) {
+      return;
+    }
+    if (!iframeLoaded) {
+      iframeLoaded = true;
+      return;
+    }
+    if (isLocalUrl(details.url)) {
       return;
     }
     details.preventDefault();
@@ -189,6 +195,7 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     release: options.releaseSlug,
     releaseName: options.releaseName,
     version: options.version,
+    platform: process.platform,
   });
   const url = `${WHATS_NEW_WEBPACK_ENTRY}${separator}${params.toString()}`;
 

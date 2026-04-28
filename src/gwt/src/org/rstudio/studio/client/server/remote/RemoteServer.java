@@ -6588,6 +6588,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void showMenuCompleted(Integer selection,
+                                 ServerRequestCallback<VoidResponse> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, selection == null ? JSONNull.getInstance() : new JSONNumber(selection));
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_SHOW_MENU_COMPLETED, params, true, callback);
+   }
+
+   @Override
    public void stopShinyApp(String id, ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
@@ -7631,6 +7640,7 @@ public class RemoteServer implements Server
 
    private static final String LAUNCH_EMBEDDED_SHINY_CONNECTION_UI = "launch_embedded_shiny_connection_ui";
    private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
+   private static final String RSTUDIOAPI_SHOW_MENU_COMPLETED = "rstudioapi_show_menu_completed";
 
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 

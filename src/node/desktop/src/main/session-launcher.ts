@@ -541,11 +541,6 @@ export class SessionLauncher {
       return true;
     }
 
-    // TODO(#17369): Re-enable auto-show at startup once test environments
-    // have been updated to handle the What's New window. Until then, only
-    // the RSTUDIO_SHOW_WHATS_NEW env var and Help > What's New trigger it.
-    return false;
-
     // RSTUDIO_DISABLE_WHATS_NEW: force skip
     if (getenv('RSTUDIO_DISABLE_WHATS_NEW')) {
       return false;

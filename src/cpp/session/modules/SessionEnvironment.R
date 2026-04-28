@@ -690,16 +690,15 @@
    if (missing(obj))
       obj <- as.name("Missing argument")
 
-   if (inherits(obj, "python.builtin.object"))
-      return(.rs.reticulate.describeObject(objName, env))
-
    # For S4 objects whose defining package isn't loaded, operations like
-   # length(), is(), and str() can trigger S4 method dispatch, which calls
-   # .requirePackage() to load the package namespace and its native DLL.
-   # If the DLL is broken or missing, this can crash the R session at the
-   # OS level (e.g. STATUS_ENTRYPOINT_NOT_FOUND on Windows) in a way that
-   # R's error handling cannot intercept. Return a safe minimal description
-   # that avoids any S4-dispatching operations.
+   # inherits(), length(), is(), and str() can trigger S4 method dispatch,
+   # which calls .requirePackage() to load the package namespace and its
+   # native DLL. If the DLL is broken or missing, this can crash the R
+   # session at the OS level (e.g. STATUS_ENTRYPOINT_NOT_FOUND on Windows)
+   # in a way that R's error handling cannot intercept. Return a safe
+   # minimal description that avoids any S4-dispatching operations.
+   # NOTE: This must come before any call that could dispatch on the object
+   # (including inherits()).
    # https://github.com/rstudio/rstudio/issues/17353
    if (.rs.isUnloadedS4(obj))
    {
@@ -720,6 +719,9 @@
          contents_deferred = .rs.scalar(FALSE)
       ))
    }
+
+   if (inherits(obj, "python.builtin.object"))
+      return(.rs.reticulate.describeObject(objName, env))
 
    val <- "(unknown)"
    desc <- ""
@@ -771,7 +773,7 @@
             size_formatted <- format(size, units = "auto", standard = "SI")
             if (is_size_estimated)
                size_formatted <- paste(">", size_formatted)
-            
+
             fmt <- "Large %s (%s%s)"
             val <- sprintf(fmt, class, len_desc, size_formatted)
          }
@@ -794,8 +796,10 @@
             }
             else
             {
-               # normal object
-               contents <- .rs.valueContents(obj)
+               # normal object -- disable the debugger to prevent recursive
+               # debugger invocations when str() dispatches to user S3 methods
+               # https://github.com/rstudio/rstudio/issues/16987
+               contents <- .rs.withDebuggerDisabled(.rs.valueContents(obj))
             }
          }
       }
@@ -957,7 +961,7 @@
    if (.rs.isUnloadedS4(object))
       return(list())
 
-   .rs.valueContents(object)
+   .rs.withDebuggerDisabled(.rs.valueContents(object))
 })
 
 # Check if an object is an S4 instance whose defining package namespace

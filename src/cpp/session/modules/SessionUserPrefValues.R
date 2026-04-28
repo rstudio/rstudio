@@ -704,6 +704,16 @@
    clear = function() { .rs.clearUserPref("fold_style") }
 )
 
+# Hierarchical section folding
+#
+# Whether section headers create nested folds based on their heading level (e.g.
+# ## folds inside # sections).
+.rs.uiPrefs$hierarchicalSectionFolding <- list(
+   get = function() { .rs.getUserPref("hierarchical_section_folding") },
+   set = function(value) { .rs.setUserPref("hierarchical_section_folding", value) },
+   clear = function() { .rs.clearUserPref("hierarchical_section_folding") }
+)
+
 # Save R scripts before sourcing
 #
 # Whether to automatically save scripts before executing them.
@@ -2500,6 +2510,15 @@
    get = function() { .rs.getUserPref("assistant_show_messages") },
    set = function(value) { .rs.setUserPref("assistant_show_messages", value) },
    clear = function() { .rs.clearUserPref("assistant_show_messages") }
+)
+
+# Show Posit Assistant button in toolbar
+#
+# When enabled, the Posit Assistant button is displayed in the main toolbar.
+.rs.uiPrefs$assistantToolbarButtonVisible <- list(
+   get = function() { .rs.getUserPref("assistant_toolbar_button_visible") },
+   set = function(value) { .rs.setUserPref("assistant_toolbar_button_visible", value) },
+   clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
 )
 
 # Enable GitHub Copilot

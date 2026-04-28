@@ -161,6 +161,13 @@ bool restoreWorkspaceEnabled();
 // is the packages pane disabled
 bool disablePackages();
 
+// is the Posit Assistant feature enabled by the administrator?
+// checks: allow-posit-assistant, posit-assistant-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT
+bool isPositAssistantEnabledByAdmin();
+
+// is the Posit Assistant feature active? (admin enabled + user has an assistant or chat provider selected)
+bool isPositAssistantEnabled();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 

@@ -442,6 +442,17 @@ bool rConsoleRead(const std::string& prompt,
       module_context::events().onConsoleInput(pConsoleInput->text);
    }
 
+   // notify the client that console input has been received (including
+   // cancelled input, since consumers may need to dismiss UI affordances
+   // shown while waiting for input)
+   if (init::isSessionInitialized())
+   {
+      json::Object data;
+      data["history"] = addToHistory;
+      ClientEvent event(client_events::kConsoleReadCompleted, data);
+      clientEventQueue().add(event);
+   }
+
    // we are about to return input to r so set the flag indicating that state
    setExecuting(true);
 

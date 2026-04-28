@@ -900,13 +900,15 @@ public class RSConnectDeploy extends Composite
                      public void onResponseReceived(
                            RSConnectApplicationResult info)
                      {
-                        // create a single-entry array with the app ID 
-                        JsArray<RSConnectApplicationInfo> infos = 
-                              JsArray.createArray().cast();
+                        appProgressPanel_.setVisible(false);
                         if (info.getApp() != null)
                         {
-                           infos.push(info.getApp());
-                           onAppsReceived_.onResponseReceived(infos);
+                           // we found the app by ID; show its info directly
+                           // without requiring a name match (the app's name on
+                           // the server may differ from the local record, e.g.
+                           // on Connect Cloud where the API doesn't return a
+                           // name field)
+                           showAppInfo(info.getApp());
                         }
                         else if (!StringUtil.isNullOrEmpty(info.getError()))
                         {

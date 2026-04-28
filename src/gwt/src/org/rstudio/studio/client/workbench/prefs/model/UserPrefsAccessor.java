@@ -118,6 +118,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SOFT_WRAP_RMD_FILES = "soft_wrap_rmd_files";
    public static final String FOCUS_CONSOLE_AFTER_EXEC = "focus_console_after_exec";
    public static final String FOLD_STYLE = "fold_style";
+   public static final String HIERARCHICAL_SECTION_FOLDING = "hierarchical_section_folding";
    public static final String SAVE_BEFORE_SOURCING = "save_before_sourcing";
    public static final String CONSOLE_SOFT_WRAP = "console_soft_wrap";
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
@@ -312,6 +313,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_ENABLED = "assistant_nes_enabled";
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
+   public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -1445,6 +1447,18 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
    public final static String FOLD_STYLE_BEGIN_AND_END = "begin-and-end";
+
+   /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   public PrefValue<Boolean> hierarchicalSectionFolding()
+   {
+      return bool(
+         "hierarchical_section_folding",
+         _constants.hierarchicalSectionFoldingTitle(), 
+         _constants.hierarchicalSectionFoldingDescription(), 
+         true);
+   }
 
    /**
     * Whether to automatically save scripts before executing them.
@@ -4145,6 +4159,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   public PrefValue<Boolean> assistantToolbarButtonVisible()
+   {
+      return bool(
+         "assistant_toolbar_button_visible",
+         _constants.assistantToolbarButtonVisibleTitle(), 
+         _constants.assistantToolbarButtonVisibleDescription(), 
+         true);
+   }
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -4574,6 +4600,8 @@ public class UserPrefsAccessor extends Prefs
          focusConsoleAfterExec().setValue(layer, source.getBool("focus_console_after_exec"));
       if (source.hasKey("fold_style"))
          foldStyle().setValue(layer, source.getString("fold_style"));
+      if (source.hasKey("hierarchical_section_folding"))
+         hierarchicalSectionFolding().setValue(layer, source.getBool("hierarchical_section_folding"));
       if (source.hasKey("save_before_sourcing"))
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
       if (source.hasKey("console_soft_wrap"))
@@ -4962,6 +4990,8 @@ public class UserPrefsAccessor extends Prefs
          assistantNesAutoshow().setValue(layer, source.getBool("assistant_nes_autoshow"));
       if (source.hasKey("assistant_show_messages"))
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
+      if (source.hasKey("assistant_toolbar_button_visible"))
+         assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5076,6 +5106,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(softWrapRmdFiles());
       prefs.add(focusConsoleAfterExec());
       prefs.add(foldStyle());
+      prefs.add(hierarchicalSectionFolding());
       prefs.add(saveBeforeSourcing());
       prefs.add(consoleSoftWrap());
       prefs.add(syntaxColorConsole());
@@ -5270,6 +5301,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesEnabled());
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
+      prefs.add(assistantToolbarButtonVisible());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());

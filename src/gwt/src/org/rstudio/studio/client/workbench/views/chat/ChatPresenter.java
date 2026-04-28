@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteAction
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -59,6 +60,7 @@ import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
    implements ConsolePromptEvent.Handler,
+              ConsoleReadCompletedEvent.Handler,
               SatelliteClosedEvent.Handler,
               ChatReturnToMainEvent.Handler,
               ChatSatelliteActionEvent.Handler
@@ -86,6 +88,9 @@ public class ChatPresenter extends BasePresenter
          void onRetryManifest();
          void onActivateChat();
          void onReturnChatToMain();
+         void onIframeError(String message);
+         void onIframeWarning(String message);
+         void onIframeConnected();
       }
 
       interface UpdateObserver
@@ -115,6 +120,8 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable(String errorMessage);
+      void showConnectionLostNotification(String message);
+      void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
 
@@ -220,6 +227,25 @@ public class ChatPresenter extends BasePresenter
          {
             returnChatToMain();
          }
+
+         @Override
+         public void onIframeError(String message)
+         {
+            Debug.log("Chat iframe error: " + message);
+            display_.showConnectionLostNotification(message);
+         }
+
+         @Override
+         public void onIframeWarning(String message)
+         {
+            Debug.log("Chat iframe warning: " + message);
+         }
+
+         @Override
+         public void onIframeConnected()
+         {
+            display_.hideConnectionLostNotification();
+         }
       });
 
       // Set up update observer
@@ -248,6 +274,9 @@ public class ChatPresenter extends BasePresenter
 
       // Listen for console prompt events (to detect when R is waiting for input)
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+
+      // Listen for console read completion (to dismiss notification after readline)
+      events_.addHandler(ConsoleReadCompletedEvent.TYPE, this);
 
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
@@ -434,6 +463,17 @@ public class ChatPresenter extends BasePresenter
       if (event.getPrompt().getBusy())
          display_.showReadlineNotification();
       else
+         display_.hideReadlineNotification();
+   }
+
+   // When console input is received for a sub-prompt (readline, scan, etc.),
+   // dismiss the notification immediately rather than waiting for R to return
+   // to the top-level REPL. Browser prompts are not handled here because they
+   // add to history; they are dismissed by onConsolePrompt() instead.
+   @Override
+   public void onConsoleReadCompleted(ConsoleReadCompletedEvent event)
+   {
+      if (!event.getHistory())
          display_.hideReadlineNotification();
    }
 
@@ -1112,6 +1152,7 @@ public class ChatPresenter extends BasePresenter
       }
 
       initializing_ = true;
+      display_.hideConnectionLostNotification();
       display_.setStatus(Display.Status.RESTARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
@@ -1173,10 +1214,15 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL, auth token, and timestamp as query parameters to bust cache
+      // Append WebSocket URL and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
-      if (authToken != null && !authToken.isEmpty())
+
+      // In Desktop mode, pass the auth token as a URL parameter since the
+      // WebSocket connects to localhost directly. In Server mode, the token
+      // is delivered via an HTTP-only cookie set by the static file handler,
+      // avoiding exposure in browser history, logs, and the Referer header.
+      if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
       {
          params += "&authToken=" + URL.encodeQueryString(authToken);
       }

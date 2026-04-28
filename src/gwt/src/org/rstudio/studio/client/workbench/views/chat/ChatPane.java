@@ -58,7 +58,8 @@ public class ChatPane
       UPDATE_COMPLETE,
       UPDATE_ERROR,
       UPDATE_CHECK_FAILURE,
-      READLINE
+      READLINE,
+      CONNECTION_LOST
    }
 
    @Inject
@@ -560,6 +561,45 @@ public class ChatPane
    }
 
    @Override
+   public void showConnectionLostNotification(String message)
+   {
+      // Don't overwrite higher-priority update notifications
+      if (currentNotificationType_ == NotificationType.UPDATING ||
+          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         return;
+      }
+
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
+      updateMessageLabel_.setHTML(SafeHtmlUtils.htmlEscape(message));
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
+         .addButton(constants_.chatRestartButton(), () -> {
+            if (observer_ != null)
+            {
+               observer_.onRestartBackend();
+            }
+         })
+         .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
+
+      currentNotificationType_ = NotificationType.CONNECTION_LOST;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideConnectionLostNotification()
+   {
+      if (currentNotificationType_ == NotificationType.CONNECTION_LOST)
+      {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
    public void showReadlineNotification()
    {
       // Don't overwrite higher-priority update notifications
@@ -966,10 +1006,11 @@ public class ChatPane
    private native void setupMessageListener() /*-{
       var self = this;
 
-      // Listen for button clicks via postMessage from our iframe only
+      // Listen for postMessage from our iframe only (source + origin check)
       $wnd.addEventListener('message', function(event) {
          var frame = self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::getFrameElement()();
          if (!frame || event.source !== frame.contentWindow) return;
+         if (event.origin !== $wnd.location.origin) return;
 
          if (event.data === 'restart-backend') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
@@ -991,6 +1032,15 @@ public class ChatPane
          }
          else if (event.data === 'retry-manifest') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRetryManifestRequest()();
+         }
+         else if (event.data && event.data.type === 'assistant-error') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeError(Ljava/lang/String;)(event.data.message || '');
+         }
+         else if (event.data && event.data.type === 'assistant-warning') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeWarning(Ljava/lang/String;)(event.data.message || '');
+         }
+         else if (event.data && event.data.type === 'assistant-connected') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeConnected()();
          }
       });
    }-*/;
@@ -1050,6 +1100,30 @@ public class ChatPane
       if (observer_ != null)
       {
          observer_.onReturnChatToMain();
+      }
+   }
+
+   private void handleIframeError(String message)
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeError(message);
+      }
+   }
+
+   private void handleIframeWarning(String message)
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeWarning(message);
+      }
+   }
+
+   private void handleIframeConnected()
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeConnected();
       }
    }
 

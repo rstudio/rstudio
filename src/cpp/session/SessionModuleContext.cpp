@@ -1533,6 +1533,20 @@ bool disablePackages()
    return !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
 }
 
+bool isPositAssistantEnabledByAdmin()
+{
+   return session::options().allowPositAssistant() &&
+          session::options().positAssistantEnabled() &&
+          core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+}
+
+bool isPositAssistantEnabled()
+{
+   return isPositAssistantEnabledByAdmin() &&
+          (prefs::userPrefs().assistant() != kAssistantNone ||
+           prefs::userPrefs().chatProvider() != kChatProviderNone);
+}
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {

@@ -63,6 +63,7 @@ import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
+import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowMenuEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -162,6 +163,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
@@ -992,6 +994,11 @@ public class ClientEventDispatcher
             RStudioAPIShowDialogEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new RStudioAPIShowDialogEvent(data));
          }
+         else if (type == ClientEvent.RStudioAPIShowMenu)
+         {
+            RStudioAPIShowMenuEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new RStudioAPIShowMenuEvent(data));
+         }
          else if (type == ClientEvent.ObjectExplorerEvent)
          {
             ObjectExplorerEvent.Data data = event.getData();
@@ -1217,6 +1224,11 @@ public class ClientEventDispatcher
                   data.getDocId(),
                   data.getDocPath(),
                   data.getErrorMessage()));
+         }
+         else if (type == ClientEvent.ConsoleReadCompleted)
+         {
+            ConsoleReadCompletedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ConsoleReadCompletedEvent(data.getHistory()));
          }
          else
          {

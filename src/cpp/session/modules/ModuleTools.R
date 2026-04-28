@@ -563,6 +563,27 @@ assign(".rs.S3Overrides", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    expr
 })
 
+.rs.addFunction("withDebuggerDisabled", function(expr)
+{
+   # Temporarily disable the R debugger. This prevents breakpoints
+   # (implemented via trace()) and debug()-based stepping from triggering
+   # during the evaluation of 'expr'.
+   #
+   # This is used by environment pane inspection code to avoid recursive
+   # debugger invocations: when stopped at a breakpoint inside an S3 method
+   # (e.g. `[[.some_class`), inspecting objects can dispatch to the same
+   # method, re-triggering the breakpoint and creating infinite recursion.
+   # https://github.com/rstudio/rstudio/issues/16987
+   oldTracing <- tracingState(FALSE)
+   oldDebugging <- debuggingState(FALSE)
+   on.exit({
+      tracingState(oldTracing)
+      debuggingState(oldDebugging)
+   }, add = TRUE)
+
+   expr
+})
+
 .rs.addFunction("sessionModulePath", function()
 {
    .Call("rs_sessionModulePath", PACKAGE = "(embedding)")

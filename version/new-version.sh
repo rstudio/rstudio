@@ -67,12 +67,6 @@ else
     BASE_COMMIT_SHA=$(git rev-parse HEAD)
 fi
 
-# First check if NEWS.md exists. If it does, we need to exit and provide an error message.
-if [ -e "NEWS.md" ]; then
-    echo "The NEWS.md file already exists." >&2
-    exit 1
-fi
-
 BASE_COMMIT_FLOWER_NAME=$(echo ${RELEASE_FLOWER} | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
 # Next, check if the base commit file already exists. If it does, we need to exit and provide an error message.
 BASE_COMMIT_FILE="version/base_commit/${BASE_COMMIT_FLOWER_NAME}.BASE_COMMIT"

@@ -165,11 +165,13 @@
 
    <!-- acesupport file watcher for development -->
    <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
-      <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
-         <arg value="install"/>
-         <arg value="--network-timeout"/>
-         <arg value="240000"/>
-      </exec>
+      <retry retrycount="3">
+         <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="install"/>
+            <arg value="--network-timeout"/>
+            <arg value="240000"/>
+         </exec>
+      </retry>
    </target>
 
    <target name="acesupport-watch-check">
@@ -265,11 +267,13 @@
       <echo message="panmirror minify: ${panmirror.minify}"/>
 
       <mkdir dir="${panmirror.build.dir}"/>
-      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
-         <arg value="install"/>
-         <arg value="--network-timeout"/>
-         <arg value="240000"/>
-      </exec>
+      <retry retrycount="3">
+         <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="install"/>
+            <arg value="--network-timeout"/>
+            <arg value="240000"/>
+         </exec>
+      </retry>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="build"/>
          <arg value="--minify"/>
