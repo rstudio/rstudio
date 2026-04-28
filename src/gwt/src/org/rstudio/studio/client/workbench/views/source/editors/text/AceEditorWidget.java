@@ -307,6 +307,34 @@ public class AceEditorWidget extends Composite
 
    private void attachImpl()
    {
+      // Pref bindings are extracted into their own statements (rather than
+      // inlined into the variadic add() below) to work around a GWT compiler
+      // issue that produced "execute is not a function" errors at runtime when
+      // the bind() calls were mixed into a long varargs literal alongside
+      // CommandWithArg-bearing addEventListener() calls.
+      HandlerRegistration tabKeyReg = uiPrefs_.tabKeyMoveFocus().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean movesFocus)
+         {
+            if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
+            {
+               editor_.setTabMovesFocus(movesFocus);
+               tabMovesFocus_ = movesFocus;
+            }
+         }
+      });
+
+      HandlerRegistration scrollReg = uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
+      {
+         @Override
+         public void execute(Integer scrollPercentage)
+         {
+            double scrollRatio = ((double) scrollPercentage) / 100.0;
+            syncScrollSpeed(scrollRatio);
+         }
+      });
+
       aceEventHandlers_.add(
 
          AceEditorNative.addEventListener(
@@ -392,31 +420,8 @@ public class AceEditorWidget extends Composite
                   }
                }),
 
-         // This command binding has to be an anonymous inner class (not a lambda)
-         // due to an issue with using lambda bindings with Ace, which sometimes
-         // results in a blocking exception on startup in devmode.
-         uiPrefs_.tabKeyMoveFocus().bind(new CommandWithArg<Boolean>()
-         {
-            @Override
-            public void execute(Boolean movesFocus)
-            {
-               if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
-               {
-                  editor_.setTabMovesFocus(movesFocus);
-                  tabMovesFocus_ = movesFocus;
-               }
-            }
-         }),
-
-         uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
-         {
-            @Override
-            public void execute(Integer scrollPercentage)
-            {
-               double scrollRatio = ((double) scrollPercentage) / 100.0;
-               syncScrollSpeed(scrollRatio);
-            }
-         })
+         tabKeyReg,
+         scrollReg
       );
 
       globalEventHandlers_.add(
