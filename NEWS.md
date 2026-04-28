@@ -1,6 +1,7 @@
 ## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
+- ([#15614](https://github.com/rstudio/rstudio/issues/15614)): The splash screen can again be dismissed with a mouse click or key press.
 - ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior
 
 ### Fixed
