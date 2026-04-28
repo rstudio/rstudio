@@ -3,4 +3,10 @@
 <module rename-to="rstudio">
    <inherits name="org.rstudio.studio.RStudio" />
    <set-property name="compiler.stackMode" value="native"/>
+
+   <!-- Suppress the Super Dev Mode redirect hook in production desktop builds.
+        The hook is the only sessionStorage access in the GWT bootstrap; in the
+        Electron child process spawned by Session > New Session it contends with
+        the parent's Session Storage LevelDB lock and adds ~4s to startup. -->
+   <set-configuration-property name="devModeRedirectEnabled" value="false"/>
 </module>
