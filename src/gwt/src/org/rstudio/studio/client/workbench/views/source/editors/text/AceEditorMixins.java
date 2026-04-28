@@ -32,7 +32,8 @@ public class AceEditorMixins
    public AceEditorMixins(AceEditor editor)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
+      aceEditor_ = editor;
       editor_ = editor.getWidget().getEditor();
       timer_ = new Timer()
       {
@@ -42,13 +43,13 @@ public class AceEditorMixins
             Desktop.getFrame().setGlobalMouseSelection(lastSelection_);
          }
       };
-      
+
       initializeMixins(editor_);
 
       // on Linux, record whenever the user selects something in Ace
       if (BrowseCap.isLinuxDesktop())
       {
-         selectionChangedReg_ = editor.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+         selectionChangedReg_ = aceEditor_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
          {
             @Override
             public void onSelectionChanged(AceSelectionChangedEvent event)
@@ -58,6 +59,32 @@ public class AceEditorMixins
                   return;
 
                // save the current selection, and prepare to update pasteboard
+               String selection = editor_.getSelectedText();
+               lastSelection_ = selection;
+               timer_.schedule(TIMER_DELAY_MS);
+            }
+         });
+      }
+   }
+
+   public void attach()
+   {
+      timer_.cancel();
+
+      // re-register the selection handler on Linux Desktop
+      if (BrowseCap.isLinuxDesktop())
+      {
+         if (selectionChangedReg_ != null)
+            selectionChangedReg_.removeHandler();
+
+         selectionChangedReg_ = aceEditor_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+         {
+            @Override
+            public void onSelectionChanged(AceSelectionChangedEvent event)
+            {
+               if (!editor_.isFocused())
+                  return;
+
                String selection = editor_.getSelectedText();
                lastSelection_ = selection;
                timer_.schedule(TIMER_DELAY_MS);
@@ -181,7 +208,8 @@ public class AceEditorMixins
    }-*/;
    
    private static final int TIMER_DELAY_MS = 100;
-   
+
+   private final AceEditor aceEditor_;
    private final AceEditorNative editor_;
    private final Timer timer_;
 

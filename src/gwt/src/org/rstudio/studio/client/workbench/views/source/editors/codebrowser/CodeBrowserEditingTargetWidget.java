@@ -206,7 +206,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          public void close()
          {
          }
-         
+
+         @Override
+         public void attach()
+         {
+         }
+
          @Override
          public void detach()
          {

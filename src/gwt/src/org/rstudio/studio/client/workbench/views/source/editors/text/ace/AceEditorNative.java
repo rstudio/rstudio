@@ -439,6 +439,11 @@ public class AceEditorNative extends JavaScriptObject
       $wnd.require("mode/r_code_model").setVerticallyAlignFunctionArgs(verticallyAlign);
    }-*/;
 
+   public static native void setHierarchicalSectionFolding(
+         boolean enable) /*-{
+      $wnd.require("mode/r_code_model").setHierarchicalSectionFolding(enable);
+   }-*/;
+
    public final native int getFirstVisibleRow() /*-{
       return this.getFirstVisibleRow();
    }-*/;
@@ -731,6 +736,15 @@ public class AceEditorNative extends JavaScriptObject
          public void execute(Boolean arg)
          {
             setVerticallyAlignFunctionArgs(arg);
+         }
+      });
+
+      userPrefs.hierarchicalSectionFolding().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            setHierarchicalSectionFolding(arg);
          }
       });
 

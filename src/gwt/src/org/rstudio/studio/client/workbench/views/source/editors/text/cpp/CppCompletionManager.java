@@ -64,6 +64,12 @@ public class CppCompletionManager implements CompletionManager
       completionContext_ = completionContext;
       snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
       handlers_ = new HandlerRegistrations();
+      addHandlers();
+   }
+
+   private void addHandlers()
+   {
+      handlers_.removeHandler();
 
       handlers_.add(docDisplay_.addClickHandler(new ClickHandler()
       {
@@ -90,6 +96,12 @@ public class CppCompletionManager implements CompletionManager
    public void close()
    {
       terminateCompletionRequest();
+   }
+
+   @Override
+   public void attach()
+   {
+      addHandlers();
    }
 
    @Override

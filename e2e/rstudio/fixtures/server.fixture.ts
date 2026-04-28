@@ -12,18 +12,18 @@ export interface ServerSession {
  * Connect to RStudio Server, log in, and return a ready session.
  */
 export async function launchServer(): Promise<ServerSession> {
-  const baseUrl = process.env.RSTUDIO_SERVER_URL || 'http://localhost:8787';
+  const baseUrl = process.env.PW_RSTUDIO_SERVER_URL || 'http://localhost:8787';
   const url = new URL(baseUrl);
-  if (process.env.RSTUDIO_SERVER_PORT) {
-    url.port = process.env.RSTUDIO_SERVER_PORT;
+  if (process.env.PW_RSTUDIO_SERVER_PORT) {
+    url.port = process.env.PW_RSTUDIO_SERVER_PORT;
   }
   const serverUrl = url.toString().replace(/\/$/, '');
-  const username = process.env.RSTUDIO_USER || '';
-  const password = process.env.RSTUDIO_PASSWORD || '';
+  const username = process.env.PW_RSTUDIO_SERVER_USER || '';
+  const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
 
   if (!username || !password) {
     throw new Error(
-      'RSTUDIO_USER and RSTUDIO_PASSWORD environment variables are required for server mode'
+      'PW_RSTUDIO_SERVER_USER and PW_RSTUDIO_SERVER_PASSWORD environment variables are required for server mode'
     );
   }
 
@@ -47,8 +47,8 @@ export async function launchServer(): Promise<ServerSession> {
   console.log(`Logged in as ${username}`);
 
   // Wait for console to be ready
-  const loadTimeout = Number(process.env.RSTUDIO_LOAD_TIMEOUT) || 60_000;
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loadTimeout });
+  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
   console.log('RStudio console is ready');
 
   // Dismiss any leftover save dialog from a previous session

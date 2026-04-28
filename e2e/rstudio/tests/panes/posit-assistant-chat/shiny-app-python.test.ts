@@ -24,7 +24,6 @@ test.describe.skip('Python Shiny Tip Calculator via Posit Assistant', () => {
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
 
     // Clean up any leftover files from previous runs

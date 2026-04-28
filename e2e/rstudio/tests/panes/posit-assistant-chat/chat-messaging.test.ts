@@ -19,7 +19,6 @@ test.describe.serial('Chat Messaging', () => {
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
 
     await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);

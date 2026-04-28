@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 13 |
+| Files fully converted | 15 |
 | Files partially converted | 0 |
-| Files not started | 19 |
+| Files not started | 17 |
 
 ## Conversion Status
 
@@ -21,7 +21,7 @@ Target: `e2e/rstudio/tests/`
 |----------------|---------|-------------------|--------|-------|
 | test_desktop_Citations.py | 17 | — | Not started | |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Complete | |
-| test_desktop_console.py | 11 | — | Not started | |
+| test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | — | Not started | |
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
 | test_desktop_Package_Installation.py | 1 | — | Not started | |
@@ -74,7 +74,7 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Create_Projects.py | 5 | — | Not started | |
+| test_desktop_Create_Projects.py | 5 | projects/create_projects.test.ts (5) | Complete | |
 
 ## Fixme Tests
 

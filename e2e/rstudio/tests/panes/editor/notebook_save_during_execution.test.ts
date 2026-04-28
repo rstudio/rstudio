@@ -7,8 +7,12 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () => {
+  // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
+  // and closeSourceAndDeleteFile land there.
+  useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
   let missingPackages: string[] = [];
