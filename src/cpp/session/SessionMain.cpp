@@ -2426,13 +2426,19 @@ int main(int argc, char * const argv[])
       {
          RLimitType soft, hard;
          Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
-         if (!error)
+         if (error)
+         {
+            LOG_WARNING_MESSAGE("Error trying to get system open files limits - using system defaults: " + error.asString());
+         }
+         else
          {
             constexpr RLimitType kDesiredOpenFiles = 4096;
             if (soft < kDesiredOpenFiles && hard > soft)
             {
+               // preserve the existing hard limit -- rsession runs as a non-root
+               // process and could not re-raise the hard limit if we lowered it.
                RLimitType newLimit = std::min(kDesiredOpenFiles, hard);
-               error = core::system::setResourceLimit(core::system::FilesLimit, newLimit);
+               error = core::system::setResourceLimit(core::system::FilesLimit, newLimit, hard);
                if (error)
                {
                   LOG_WARNING_MESSAGE("Unable to raise open file limit: " + error.asString());
