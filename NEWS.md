@@ -4,7 +4,7 @@
 -
 
 ### Fixed
-- 
+- ([#17441](https://github.com/rstudio/rstudio/issues/17441)): Fixed an issue where connecting a Posit Connect Cloud account would hang when the associated Posit Cloud account had multiple Connect Cloud accounts
 
 ### Fixed
 - 
