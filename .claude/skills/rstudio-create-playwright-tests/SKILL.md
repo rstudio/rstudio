@@ -44,7 +44,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
    **Never use raw `Control+End` or `Control+Home`** in tests — always use the helper or a platform guard.
 
    **If unsure**, check what RStudio's own shortcut settings say. If it shows "Ctrl" on macOS (not Cmd), use `Control`.
-8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `RSTUDIO_EDITION` env var when branching on mode.
+8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `PW_RSTUDIO_MODE` env var when branching on mode.
 9. **Use `.rs.api.executeCommand()` instead of `window.desktopHooks.invokeCommand()`** – `desktopHooks` only exists in Desktop's Electron shell and will crash on Server. `.rs.api.executeCommand()` works in both modes.
 
 ---
@@ -176,8 +176,8 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 **Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
 
 **Env vars (optional):**
-- `RSTUDIO_PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
-- `RSTUDIO_PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
+- `PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
+- `PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
 
 **Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
 

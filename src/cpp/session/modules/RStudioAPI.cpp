@@ -41,6 +41,7 @@ namespace {
 module_context::WaitForMethodFunction s_waitForShowDialog;
 module_context::WaitForMethodFunction s_waitForOpenFileDialog;
 module_context::WaitForMethodFunction s_waitForRStudioApiResponse;
+module_context::WaitForMethodFunction s_waitForShowMenu;
 
 SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
 {
@@ -138,6 +139,57 @@ SEXP rs_showDialog(SEXP titleSEXP,
    }
    CATCH_UNEXPECTED_EXCEPTION
    
+   return R_NilValue;
+}
+
+ClientEvent showMenuEvent(const std::string& title,
+                          const std::string& message,
+                          const std::vector<std::string>& choices)
+{
+   json::Object data;
+   data["title"] = title;
+   data["message"] = message;
+   data["choices"] = json::toJsonArray(choices);
+   return ClientEvent(client_events::kRStudioAPIShowMenu, data);
+}
+
+SEXP rs_showMenu(SEXP titleSEXP,
+                 SEXP messageSEXP,
+                 SEXP choicesSEXP)
+{
+   try
+   {
+      std::string title = r::sexp::asString(titleSEXP);
+      std::string message = r::sexp::asString(messageSEXP);
+
+      std::vector<std::string> choices;
+      if (!r::sexp::fillVectorString(choicesSEXP, &choices))
+         return R_NilValue;
+
+      ClientEvent event = showMenuEvent(title, message, choices);
+
+      // wait for rstudioapi_show_menu_completed
+      json::JsonRpcRequest request;
+      if (!s_waitForShowMenu(&request, event))
+         return R_NilValue;
+
+      // cancel: client sends null
+      if (request.params[0].isNull())
+         return R_NilValue;
+
+      int selection = 0;
+      Error error = json::readParam(request.params, 0, &selection);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+
+      r::sexp::Protect rProtect;
+      return r::sexp::create(selection, &rProtect);
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
@@ -325,9 +377,11 @@ Error initialize()
    s_waitForShowDialog         = registerWaitForMethod("rstudioapi_show_dialog_completed");
    s_waitForOpenFileDialog     = registerWaitForMethod("open_file_dialog_completed");
    s_waitForRStudioApiResponse = registerWaitForMethod("rstudioapi_response");
+   s_waitForShowMenu           = registerWaitForMethod("rstudioapi_show_menu_completed");
 
    // register R callables
    RS_REGISTER_CALL_METHOD(rs_showDialog);
+   RS_REGISTER_CALL_METHOD(rs_showMenu);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
    RS_REGISTER_CALL_METHOD(rs_highlightUi);

@@ -23,13 +23,13 @@ export const SANDBOX_DIR_PREFIX = 'pw_rstudio_';
  * convention. Override with the env vars documented below.
  *
  * Env vars:
- *   RSTUDIO_PW_SANDBOX         Override the sandbox root. Unset uses OS temp parent.
- *   RSTUDIO_PW_SANDBOX_CREATE  When "true"/"1", create an overridden root if missing.
- *                              Default false — fail loud on typos.
+ *   PW_SANDBOX         Override the sandbox root. Unset uses OS temp parent.
+ *   PW_SANDBOX_CREATE  When "true"/"1", create an overridden root if missing.
+ *                      Default false — fail loud on typos.
  */
 
-const SANDBOX_ROOT_ENV = 'RSTUDIO_PW_SANDBOX';
-const SANDBOX_CREATE_ENV = 'RSTUDIO_PW_SANDBOX_CREATE';
+const SANDBOX_ROOT_ENV = 'PW_SANDBOX';
+const SANDBOX_CREATE_ENV = 'PW_SANDBOX_CREATE';
 
 function shouldCreateRoot(): boolean {
   const v = process.env[SANDBOX_CREATE_ENV];

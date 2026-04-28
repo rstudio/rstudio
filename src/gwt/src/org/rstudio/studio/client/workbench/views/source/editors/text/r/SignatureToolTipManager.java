@@ -139,6 +139,13 @@ public abstract class SignatureToolTipManager
          }
       };
 
+      addHandlers();
+   }
+
+   private void addHandlers()
+   {
+      handlers_.removeHandler();
+
       handlers_.add(docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
@@ -284,6 +291,11 @@ public abstract class SignatureToolTipManager
       detachPreviewHandler();
       monitor_.cancel();
       monitoring_ = false;
+   }
+
+   public void attach()
+   {
+      addHandlers();
    }
 
    public void detach()
