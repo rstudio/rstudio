@@ -74,6 +74,8 @@ pipeline {
       steps {
         script {
 
+          utils.ensureFullCommitHistory()
+
           // Tests common to both Workbench and open source
           utils.postReviewCheck(title: "Build Package")
           utils.postReviewCheck(title: "GWT Unit Tests")
