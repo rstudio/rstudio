@@ -31,6 +31,7 @@ pipeline {
           sh 'printenv'
           sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
+          utils.ensureFullCommitHistory()
           utils.addRemoteRef("${env.CHANGE_TARGET}")
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')

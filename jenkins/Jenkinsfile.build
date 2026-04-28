@@ -56,7 +56,9 @@ pipeline {
       steps {
         script {
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
-          
+
+          utils.ensureFullCommitHistory()
+
           // Get the current commit
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
 

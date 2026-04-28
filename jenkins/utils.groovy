@@ -732,5 +732,21 @@ def getDocsDraftName(String branchName) {
   return ""
 }
 
+/**
+  * Ensures the full commit history is available for versioning.
+  * If the repo was shallow-cloned, fetches missing commits without
+  * downloading file content to minimize data transfer.
+  */
+void ensureFullCommitHistory() {
+  def isShallow = sh(
+    script: 'git rev-parse --is-shallow-repository',
+    returnStdout: true
+  ).trim()
+  if (isShallow == 'true') {
+    withCredentials([gitUsernamePassword(credentialsId: 'posit-jenkins-rstudio', gitToolName: 'Default')]) {
+      sh 'git fetch --filter=blob:none --unshallow origin'
+    }
+  }
+}
 
 return this

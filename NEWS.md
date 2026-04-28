@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#16067](https://github.com/rstudio/rstudio/issues/16067)): Raise the open file descriptor soft limit at session startup to avoid "Too many open files" errors during project file monitoring on Linux.
 - ([#17417](https://github.com/rstudio/rstudio/issues/17417)): Added missing French translations for newer commands and preferences, removed an orphaned French key, deduplicated stale entries in the French application strings, and normalized line endings in five English string files.
 
 ### Dependencies
