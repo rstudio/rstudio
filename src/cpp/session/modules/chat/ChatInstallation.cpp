@@ -64,9 +64,8 @@ core::FilePath locatePositAssistantInstallation()
    }
 
    // 2. Check user data directory (XDG-based, platform-appropriate)
-   // Linux: ~/.local/share/rstudio/ai
-   // macOS: ~/Library/Application Support/RStudio/ai
-   // Windows: %LOCALAPPDATA%/RStudio/ai
+   // Linux/macOS: ~/.local/share/rstudio/pai/bin
+   // Windows: %LOCALAPPDATA%/rstudio/pai/bin
    core::FilePath userPositAiPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
    if (verifyPositAiInstallation(userPositAiPath))
    {
@@ -75,8 +74,8 @@ core::FilePath locatePositAssistantInstallation()
    }
 
    // 3. Check system-wide installation (XDG config directory)
-   // Linux: /etc/rstudio/ai
-   // Windows: C:/ProgramData/RStudio/ai
+   // Linux/macOS: /etc/rstudio/pai/bin
+   // Windows: C:/ProgramData/rstudio/pai/bin
    core::FilePath systemPositAiPath = core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
    if (verifyPositAiInstallation(systemPositAiPath))
    {

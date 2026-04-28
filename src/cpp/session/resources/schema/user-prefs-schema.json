@@ -568,6 +568,12 @@
             "title": "Fold style in editor",
             "description": "The style of folding to use."
         },
+        "hierarchical_section_folding": {
+            "type": "boolean",
+            "default": true,
+            "title": "Hierarchical section folding",
+            "description": "Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections)."
+        },
         "save_before_sourcing": {
             "type": "boolean",
             "default": true,

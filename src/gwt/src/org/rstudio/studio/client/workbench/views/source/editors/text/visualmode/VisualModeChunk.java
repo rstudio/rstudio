@@ -270,6 +270,11 @@ public class VisualModeChunk
       editorHost_.appendChild(editorContainer_);
       chunkHost_.appendChild(editorHost_);
 
+      // Manually drive the attach lifecycle since the editor is inserted
+      // into the DOM via raw Element.appendChild(), bypassing GWT's widget
+      // tree (so AttachEvent never fires on the AceEditorWidget).
+      editor_.attach();
+
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
       gutterHost_ = Document.get().createDivElement();
@@ -394,11 +399,14 @@ public class VisualModeChunk
       // aren't attached to a dead editor instance
       chunk.destroy = () ->
       {
+         // Detach the editor subsystems before cleaning up handlers
+         editor_.detach();
+
          for (HandlerRegistration reg: releaseOnDismiss_)
          {
             reg.removeHandler();
          }
-         
+
          for (Command cmd: destroyHandlers_)
          {
             cmd.execute();

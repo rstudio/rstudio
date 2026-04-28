@@ -3788,7 +3788,10 @@ public class TextEditingTarget implements
          autoSaveTimer_.cancel();
       
       if (bgIdleMonitor_ != null)
-         bgIdleMonitor_.endMonitoring();
+         bgIdleMonitor_.onDetach();
+
+      if (mathjax_ != null)
+         mathjax_.detachHandlers();
 
       if (assistant_ != null)
          assistant_.onDismiss();

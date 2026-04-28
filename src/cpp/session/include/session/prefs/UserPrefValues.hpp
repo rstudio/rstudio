@@ -159,6 +159,7 @@ namespace prefs {
 #define kFoldStyle "fold_style"
 #define kFoldStyleBeginOnly "begin-only"
 #define kFoldStyleBeginAndEnd "begin-and-end"
+#define kHierarchicalSectionFolding "hierarchical_section_folding"
 #define kSaveBeforeSourcing "save_before_sourcing"
 #define kConsoleSoftWrap "console_soft_wrap"
 #define kSyntaxColorConsole "syntax_color_console"
@@ -941,6 +942,12 @@ public:
     */
    std::string foldStyle();
    core::Error setFoldStyle(std::string val);
+
+   /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   bool hierarchicalSectionFolding();
+   core::Error setHierarchicalSectionFolding(bool val);
 
    /**
     * Whether to automatically save scripts before executing them.

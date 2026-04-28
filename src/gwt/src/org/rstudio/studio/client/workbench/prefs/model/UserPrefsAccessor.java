@@ -118,6 +118,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SOFT_WRAP_RMD_FILES = "soft_wrap_rmd_files";
    public static final String FOCUS_CONSOLE_AFTER_EXEC = "focus_console_after_exec";
    public static final String FOLD_STYLE = "fold_style";
+   public static final String HIERARCHICAL_SECTION_FOLDING = "hierarchical_section_folding";
    public static final String SAVE_BEFORE_SOURCING = "save_before_sourcing";
    public static final String CONSOLE_SOFT_WRAP = "console_soft_wrap";
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
@@ -1446,6 +1447,18 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
    public final static String FOLD_STYLE_BEGIN_AND_END = "begin-and-end";
+
+   /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   public PrefValue<Boolean> hierarchicalSectionFolding()
+   {
+      return bool(
+         "hierarchical_section_folding",
+         _constants.hierarchicalSectionFoldingTitle(), 
+         _constants.hierarchicalSectionFoldingDescription(), 
+         true);
+   }
 
    /**
     * Whether to automatically save scripts before executing them.
@@ -4587,6 +4600,8 @@ public class UserPrefsAccessor extends Prefs
          focusConsoleAfterExec().setValue(layer, source.getBool("focus_console_after_exec"));
       if (source.hasKey("fold_style"))
          foldStyle().setValue(layer, source.getString("fold_style"));
+      if (source.hasKey("hierarchical_section_folding"))
+         hierarchicalSectionFolding().setValue(layer, source.getBool("hierarchical_section_folding"));
       if (source.hasKey("save_before_sourcing"))
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
       if (source.hasKey("console_soft_wrap"))
@@ -5091,6 +5106,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(softWrapRmdFiles());
       prefs.add(focusConsoleAfterExec());
       prefs.add(foldStyle());
+      prefs.add(hierarchicalSectionFolding());
       prefs.add(saveBeforeSourcing());
       prefs.add(consoleSoftWrap());
       prefs.add(syntaxColorConsole());
