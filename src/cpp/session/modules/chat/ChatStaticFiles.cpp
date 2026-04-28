@@ -28,6 +28,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -60,6 +61,12 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 // Atomic because it is written from the main thread and read from HTTP
 // handler threads.
 std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
+
+// Chat backend auth token, set by SessionChat.cpp when the backend starts.
+// In server mode, this is delivered to the PA client via an HTTP-only cookie
+// on the index.html response instead of as a URL query parameter.
+std::mutex s_authTokenMutex;
+std::string s_chatBackendAuthToken;
 
 /**
  * Inject theme information into HTML content without inline scripts.
@@ -222,10 +229,26 @@ void rebuildCspHeaderCache()
    if (directives.empty())
       directives["default-src"] = "'self'";
 
-   // Prevent clickjacking: the chat pane should never be framed by
-   // external origins.
-   if (directives.find("frame-ancestors") == directives.end())
-      directives["frame-ancestors"] = "'self'";
+   // Respect the server's www-frame-origin setting so the chat pane can
+   // render inside a cross-origin iframe when configured.
+   // Always apply the server option, overriding any csp.json value, so that
+   // admin configuration is authoritative.
+   {
+      std::string frameOrigin = options().wwwFrameOrigin();
+
+      // Sanitize: strip characters that could break the CSP header
+      boost::algorithm::erase_all(frameOrigin, "\r");
+      boost::algorithm::erase_all(frameOrigin, "\n");
+      boost::algorithm::erase_all(frameOrigin, ";");
+      boost::algorithm::trim(frameOrigin);
+
+      if (frameOrigin == "any")
+         directives["frame-ancestors"] = "*";
+      else if (frameOrigin == "none" || frameOrigin == "same" || frameOrigin.empty())
+         directives["frame-ancestors"] = "'self'";
+      else
+         directives["frame-ancestors"] = "'self' " + frameOrigin;
+   }
 
    // In desktop mode, the WebSocket connects to a different port (different
    // origin), so connect-src must include it explicitly. In server mode the
@@ -445,7 +468,49 @@ Error handleAIChatRequest(const http::Request& request,
    if (extension == ".html" || extension == ".htm")
    {
       if (resolvedPath.getFilename() == kIndexFileName)
+      {
          injectThemeInfo(&content);
+
+         // In server mode, deliver the auth token via an HTTP-only cookie
+         // instead of a URL query parameter. This prevents the token from
+         // leaking in browser history, server logs, and the Referer header.
+         // Desktop mode continues to use the URL parameter since it's
+         // localhost-only.
+         bool isServerMode = false;
+#ifdef RSTUDIO_SERVER
+         isServerMode = (options().programMode() == kSessionProgramModeServer);
+#endif
+         if (isServerMode)
+         {
+            std::lock_guard<std::mutex> lock(s_authTokenMutex);
+            if (!s_chatBackendAuthToken.empty())
+            {
+               // Scope cookie to the session prefix (e.g. "/s/{id}/")
+               // so multi-session deployments don't collide. Extract
+               // the path from proxiedUri() and strip "/ai-chat" onward.
+               std::string cookiePath =
+                  http::URL(request.proxiedUri()).path();
+               std::string aiChatPrefix(kAiChatUriPrefix);
+               if (aiChatPrefix.back() == '/')
+                  aiChatPrefix.pop_back();
+               size_t aiChatPos = cookiePath.find(aiChatPrefix);
+               if (aiChatPos != std::string::npos)
+                  cookiePath = cookiePath.substr(0, aiChatPos);
+               if (cookiePath.empty())
+                  cookiePath = "/";
+               else if (cookiePath.back() != '/')
+                  cookiePath += "/";
+               LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
+                                 cookiePath + "'");
+
+               http::Cookie cookie(
+                  request, "posit-assistant-auth", s_chatBackendAuthToken,
+                  cookiePath, options().sameSite(), true /* httpOnly */,
+                  options().useSecureCookies());
+               pResponse->addCookie(cookie);
+            }
+         }
+      }
       pResponse->setHeader("Content-Security-Policy", buildCspHeader());
    }
    pResponse->setContentType(getContentType(extension));
@@ -477,6 +542,12 @@ void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
    rebuildCspHeaderCache();
+}
+
+void setChatBackendAuthToken(const std::string& token)
+{
+   std::lock_guard<std::mutex> lock(s_authTokenMutex);
+   s_chatBackendAuthToken = token;
 }
 
 } // namespace staticfiles

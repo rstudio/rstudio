@@ -14,7 +14,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep } from '@utils/constants';
 
 const BASE_URL = 'https://www.rstudio.org/links/release_notes';
-const isDesktop = (process.env.RSTUDIO_EDITION || 'desktop').toLowerCase() === 'desktop';
+const isDesktop = (process.env.PW_RSTUDIO_MODE || 'desktop').toLowerCase() === 'desktop';
 
 test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () => {
 
@@ -28,6 +28,7 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
     test('command executes without error', async ({ rstudioPage: page }) => {
       // Desktop opens the URL via shell.openExternal() — Playwright cannot
       // intercept it, so we just verify the command doesn't throw.
+      await consoleActions.clearConsole();
       await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
       await sleep(2000);
 

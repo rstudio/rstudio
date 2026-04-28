@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "CommonJS"
+    "module": "CommonJS",
+    "types": ["node"]
   }
 }

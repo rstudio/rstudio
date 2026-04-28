@@ -52,6 +52,7 @@ RUN apt-get update && \
     libssl-dev \
     libtiff5-dev\
     libtool \
+    libuv1-dev \
     libwebp-dev \
     libxml2-dev \
     libxslt1-dev \

@@ -1,8 +1,22 @@
-import type { Page } from 'playwright';
+import type { Page, Route } from 'playwright';
 import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
+
+/** Fields returned by the chatCheckForUpdates RPC. */
+export interface UpdateCheckResult {
+  updateAvailable: boolean;
+  noCompatibleVersion: boolean;
+  unsupportedInstalledVersion: boolean;
+  unsupportedProtocol: boolean;
+  manifestUnavailable: boolean;
+  errorMessage: string;
+  currentVersion: string;
+  newVersion: string;
+  downloadUrl: string;
+  isInitialInstall: boolean;
+}
 
 export class ChatPaneActions {
   readonly page: Page;
@@ -13,6 +27,63 @@ export class ChatPaneActions {
     this.page = page;
     this.chatPane = new ChatPane(page);
     this.consolePaneActions = consolePaneActions;
+  }
+
+  /** The mock result returned by the intercepted RPC. Null = no interception. */
+  private updateCheckMock: UpdateCheckResult | null = null;
+
+  /** Default (non-blocking) update check result. */
+  static defaultUpdateCheckResult(): UpdateCheckResult {
+    return {
+      updateAvailable: false,
+      noCompatibleVersion: false,
+      unsupportedInstalledVersion: false,
+      unsupportedProtocol: false,
+      manifestUnavailable: false,
+      errorMessage: '',
+      currentVersion: '1.0.0',
+      newVersion: '',
+      downloadUrl: '',
+      isInitialInstall: false,
+    };
+  }
+
+  /**
+   * Install a Playwright route handler that intercepts `chatCheckForUpdates`
+   * RPC responses and replaces the result with `this.updateCheckMock`.
+   * Call once per page; subsequent calls to `setUpdateCheckMock()` swap the
+   * payload without re-registering the route.
+   */
+  async interceptUpdateCheck(): Promise<void> {
+    // Use regex so query strings don't break matching
+    await this.page.route(/\/rpc\/chat_check_for_updates/, async (route: Route) => {
+      if (!this.updateCheckMock) {
+        console.log('[interceptUpdateCheck] no mock, passing through');
+        await route.continue();
+        return;
+      }
+      console.log('[interceptUpdateCheck] fulfilling with mock');
+      // Fulfill directly with our mock -- don't call route.fetch() because
+      // rsession returns empty bodies when requests overlap via CDP.
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ result: this.updateCheckMock }),
+      });
+    });
+  }
+
+  /** Set the mock payload for subsequent intercepted RPC calls. */
+  setUpdateCheckMock(overrides: Partial<UpdateCheckResult>): void {
+    this.updateCheckMock = {
+      ...ChatPaneActions.defaultUpdateCheckResult(),
+      ...overrides,
+    };
+  }
+
+  /** Disable interception so the real backend response flows through. */
+  clearUpdateCheckMock(): void {
+    this.updateCheckMock = null;
   }
 
   async openChatPane(): Promise<void> {
@@ -27,6 +98,7 @@ export class ChatPaneActions {
       await this.chatPane.installBtn.click({ timeout: 1500 });
       console.log('Clicked Install button — waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
+      await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
       return;
     } catch {
       // No Install button
