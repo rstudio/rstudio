@@ -71,6 +71,8 @@ pipeline {
     stage('Versioning') {
       steps {
         script {
+          utils.ensureFullCommitHistory()
+
           (RSTUDIO_VERSION,
             RSTUDIO_VERSION_MAJOR,
             RSTUDIO_VERSION_MINOR,
