@@ -86,7 +86,7 @@ fi
 
 # common
 cd ../common
-./install-common noble
+./install-common resolute
 cd ../linux
 
 # Python packages for i18n
