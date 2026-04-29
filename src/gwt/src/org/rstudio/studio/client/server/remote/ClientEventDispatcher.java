@@ -63,6 +63,7 @@ import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
+import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowMenuEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -992,6 +993,11 @@ public class ClientEventDispatcher
          {
             RStudioAPIShowDialogEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new RStudioAPIShowDialogEvent(data));
+         }
+         else if (type == ClientEvent.RStudioAPIShowMenu)
+         {
+            RStudioAPIShowMenuEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new RStudioAPIShowMenuEvent(data));
          }
          else if (type == ClientEvent.ObjectExplorerEvent)
          {

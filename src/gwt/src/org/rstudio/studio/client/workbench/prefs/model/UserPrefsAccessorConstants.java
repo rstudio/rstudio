@@ -656,6 +656,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String foldStyleEnum_begin_and_end();
 
    /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   @DefaultStringValue("Hierarchical section folding")
+   String hierarchicalSectionFoldingTitle();
+   @DefaultStringValue("Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).")
+   String hierarchicalSectionFoldingDescription();
+
+   /**
     * Whether to automatically save scripts before executing them.
     */
    @DefaultStringValue("Save R scripts before sourcing")

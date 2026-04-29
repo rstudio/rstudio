@@ -14,7 +14,7 @@
  */
 
 import { app } from 'electron';
-import PropertiesReader from 'properties-reader';
+import PropertiesReader, { Reader } from 'properties-reader';
 import { FilePath } from '../core/file-path';
 import { parseCommandLineLogLevel } from '../core/logger';
 import { Xdg } from '../core/xdg';
@@ -29,7 +29,7 @@ interface LogConfig {
 }
 
 class LogOptions {
-  private logConfContent: PropertiesReader.Reader;
+  private logConfContent: Reader;
   private executableName: string;
 
   /**
@@ -54,12 +54,12 @@ class LogOptions {
       }
 
       if (location.existsSync()) {
-        this.logConfContent = PropertiesReader(location.getAbsolutePathNative());
+        this.logConfContent = PropertiesReader({ sourceFile: location.getAbsolutePathNative() });
       } else {
-        this.logConfContent = PropertiesReader('');
+        this.logConfContent = PropertiesReader();
       }
     } else {
-      this.logConfContent = PropertiesReader('').read(logConfig.config);
+      this.logConfContent = PropertiesReader().read(logConfig.config);
     }
   }
 

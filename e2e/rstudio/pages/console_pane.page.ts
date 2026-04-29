@@ -11,6 +11,14 @@ export class ConsolePane extends PageObject {
   public consoleTab: Locator;
   public consoleOutput: Locator;
   public interruptRBtn: Locator;
+  public tracebackBtn: Locator;
+  public stackTrace: Locator;
+  public findBar: Locator;
+  public findInput: Locator;
+  public findNext: Locator;
+  public findClose: Locator;
+  public findBtn: Locator;
+  public findCaseSensitive: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -18,6 +26,27 @@ export class ConsolePane extends PageObject {
     this.consoleTab = page.locator('#rstudio_workbench_tab_console');
     this.consoleOutput = page.locator('#rstudio_workbench_panel_console');
     this.interruptRBtn = page.locator("[id^='rstudio_tb_interruptr']");
+    this.tracebackBtn = page.locator("[class*='show_traceback_text']");
+    this.stackTrace = page.locator("[class*='stack_trace']");
+
+    // Find in Console: #rstudio_find_replace_bar is the inner panel;
+    // the Close button is a sibling at the shelf level, so scope it at the console panel.
+    const consolePanel = page.locator('#rstudio_workbench_panel_console');
+    this.findBar = consolePanel.locator('#rstudio_find_replace_bar');
+    this.findInput = this.findBar.locator('input[type="text"]');
+    this.findNext = this.findBar.getByRole('button', { name: 'Next' });
+    this.findClose = consolePanel.getByRole('button', { name: 'Close' }).first();
+    this.findBtn = consolePanel.locator('button[aria-label="Find in Console"]').first();
+    this.findCaseSensitive = this.findBar.getByRole('checkbox', { name: 'Case sensitive' });
+  }
+
+  async consoleInputValue(): Promise<string> {
+    return this.page.evaluate(() => {
+      const el = document.getElementById('rstudio_console_input') as
+        | (HTMLElement & { env?: { editor?: { getValue(): string } } })
+        | null;
+      return el?.env?.editor?.getValue() ?? '';
+    });
   }
 }
 

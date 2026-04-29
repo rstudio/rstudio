@@ -527,6 +527,19 @@
       PACKAGE = "(embedding)")
 })
 
+.rs.addApiFunction("showMenu", function(title, message, choices) {
+
+   choices <- as.character(choices)
+   if (length(choices) == 0L)
+      return(NULL)
+
+   .Call("rs_showMenu",
+      title = as.character(title)[[1L]],
+      message = as.character(message)[[1L]],
+      choices = choices,
+      PACKAGE = "(embedding)")
+})
+
 .rs.addApiFunction("showQuestion", function(title, message, ok = "OK", cancel = "Cancel") {
    
    # fix up ok, cancel

@@ -1,5 +1,5 @@
 ---
-name: migrate-selenium-to-playwright
+name: rstudio-migrate-tests-selenium-to-playwright
 description: Migrate Python Selenium/Selene electron tests to TypeScript/Playwright. Use when converting tests from rstudio-ide-automation/rstudio_server_pro/electron-tests/ to rstudio/e2e/rstudio/tests/.
 ---
 
@@ -10,9 +10,9 @@ Converts Python test files from `rstudio-ide-automation/rstudio_server_pro/elect
 ## Arguments
 
 The user provides one or more targets:
-- A single file: `/migrate-selenium-to-playwright test_desktop_console.py`
-- A directory: `/migrate-selenium-to-playwright GlobalPrefs/`
-- A keyword: `/migrate-selenium-to-playwright citations`
+- A single file: `/rstudio-migrate-tests-selenium-to-playwright test_desktop_console.py`
+- A directory: `/rstudio-migrate-tests-selenium-to-playwright GlobalPrefs/`
+- A keyword: `/rstudio-migrate-tests-selenium-to-playwright citations`
 
 ## Hard Rules
 
@@ -111,25 +111,25 @@ Tests can run against multiple RStudio Server instances in parallel. This works 
 
 **Targeting a server:**
 ```bash
-RSTUDIO_SERVER_URL=https://server1:80 RSTUDIO_EDITION=server \
+PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server \
   npx playwright test tests/panes/misc/autocomplete.test.ts
 ```
 
 **Parallel execution (5 servers):**
-Each process gets its own `RSTUDIO_SERVER_URL` — no shared config files, no conflicts:
+Each process gets its own `PW_RSTUDIO_SERVER_URL` — no shared config files, no conflicts:
 
 ```bash
 # Terminal / CI / shell script
-RSTUDIO_SERVER_URL=https://server1:80 RSTUDIO_EDITION=server npx playwright test tests/file1.test.ts &
-RSTUDIO_SERVER_URL=https://server2:80 RSTUDIO_EDITION=server npx playwright test tests/file2.test.ts &
-RSTUDIO_SERVER_URL=https://server3:80 RSTUDIO_EDITION=server npx playwright test tests/file3.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server npx playwright test tests/file1.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server2:80 PW_RSTUDIO_MODE=server npx playwright test tests/file2.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server3:80 PW_RSTUDIO_MODE=server npx playwright test tests/file3.test.ts &
 wait
 ```
 
 **Claude subagent execution:**
 Same commands, but each Agent tool call targets a different server with `run_in_background: true`. Results are collected and aggregated by the parent agent.
 
-**Desktop mode is unaffected** — it doesn't use `RSTUDIO_SERVER_URL`. The env var is only read by the server fixture path.
+**Desktop mode is unaffected** — it doesn't use `PW_RSTUDIO_SERVER_URL`. The env var is only read by the server fixture path.
 
 ## Output
 

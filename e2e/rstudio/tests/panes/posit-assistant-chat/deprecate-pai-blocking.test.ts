@@ -105,7 +105,6 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@serial
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
 
     // Let Posit Assistant load normally first
     await chatActions.openChatPane();

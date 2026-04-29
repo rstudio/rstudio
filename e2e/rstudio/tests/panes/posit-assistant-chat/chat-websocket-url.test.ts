@@ -23,7 +23,6 @@ test.describe('Chat WebSocket URL', () => {
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
 
     // Listen for the RPC that delivers the WebSocket path to the frontend.

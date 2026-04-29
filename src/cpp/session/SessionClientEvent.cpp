@@ -221,6 +221,7 @@ const int kChatBackendExit = 203;
 const int kShowMessage = 204;
 const int kNotebookRenderCompleted = 205;
 const int kConsoleReadCompleted = 206;
+const int kRStudioAPIShowMenu = 207;
 
 }
 
@@ -619,6 +620,8 @@ std::string ClientEvent::typeName() const
          return "notebook_render_completed";
       case client_events::kConsoleReadCompleted:
          return "console_read_completed";
+      case client_events::kRStudioAPIShowMenu:
+         return "rstudioapi_show_menu";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));
