@@ -718,7 +718,7 @@
       return(NULL)
    
    # Find a page target. The title is typically "RStudio" but is prefixed
-   # when a project is open (e.g. "myproject · RStudio").
+   # when a project is open (e.g. "myproject - RStudio").
    pageTargets <- Filter(function(target) {
       identical(target$type, "page")
    }, targets$targetInfos)
@@ -768,7 +768,7 @@
    }
    
    # Find a page target. The title is typically "RStudio Server" but is
-   # prefixed when a project is open (e.g. "myproject · RStudio Server").
+   # prefixed when a project is open (e.g. "myproject - RStudio Server").
    pageTargets <- Filter(function(target) {
       identical(target$type, "page")
    }, targets$targetInfos)

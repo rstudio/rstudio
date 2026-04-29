@@ -58,7 +58,7 @@ scaffoldShinytest2Project <- function()
       remote$dom.elementExists("#rstudio_dlg_ok")
    })
 
-   # Dismiss the dialog before exercising the with-diffs branch — leaving
+   # Dismiss the dialog before exercising the with-diffs branch -- leaving
    # it up makes subsequent UI commands flaky.
    remote$modals.click("ok")
    .rs.waitUntil("info dialog dismissed", function() {
