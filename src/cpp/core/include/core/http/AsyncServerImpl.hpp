@@ -658,10 +658,24 @@ private:
       // or we could lose out on processing opportunities on the server (i.e. a bottleneck)
       try
       {
-         if (!ec) 
+         if (!ec)
          {
             boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> weak(ptrNextConnection_);
             addConnection(weak);
+
+            // Enable TCP keepalive so the OS reaps half-open sockets when a
+            // peer disappears without sending FIN/RST (browser tab discard,
+            // laptop sleep, NAT timeout). Without this, proxied long-lived
+            // websockets accumulate until rserver hits its memory limit.
+            // No-op for non-TCP protocols; we use the error_code overload to
+            // avoid throwing in the accept hot path.
+            boost::system::error_code keepAliveEc;
+            ptrNextConnection_->socket().set_option(
+               boost::asio::socket_base::keep_alive(true), keepAliveEc);
+            if (keepAliveEc)
+               LOG_DEBUG_MESSAGE(serverName_ + " - could not enable keepalive: " +
+                                 keepAliveEc.message());
+
             ptrNextConnection_->startReading();
          }
          else

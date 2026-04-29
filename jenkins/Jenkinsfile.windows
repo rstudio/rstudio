@@ -46,6 +46,17 @@ pipeline {
     stage('Checkout Load and Version') {
       agent { label "linux" }
       stages {
+        stage('Load Utils') {
+          steps {
+            script {
+              sh 'printenv'
+              sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
+              utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
+              utils.ensureFullCommitHistory()
+            }
+          }
+        }
+
         stage ('Checkout') { // checkout stage required here in order for versioning to work properly
           when { expression { params.COMMIT_HASH != '' } }
           steps {
@@ -53,16 +64,6 @@ pipeline {
               branches: [[name: params.COMMIT_HASH]],
               extensions: [],
               userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
-          }
-        }
-
-        stage('Load Utils') {
-          steps {
-            script {
-              sh 'printenv'
-              sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
-              utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
-            }
           }
         }
 

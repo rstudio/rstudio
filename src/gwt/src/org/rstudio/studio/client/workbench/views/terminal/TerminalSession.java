@@ -971,13 +971,7 @@ public class TerminalSession extends XTermWidget
     */
    private void playBell()
    {
-      if (BrowseCap.isLinuxDesktop())
-      {
-         // Avoid using desktop bell on Linux until https://github.com/rstudio/rstudio/issues/16966
-         // is resolved, which will require an Electron update.
-         playBellWeb();
-      }
-      else if (Desktop.isDesktop())
+      if (Desktop.isDesktop())
       {
          Desktop.getFrame().beep();
       }

@@ -29,12 +29,135 @@
 
 }
 {
-   Boost Remove 
+   Boost Remove
    Memcheck:Cond
    fun:_ZN13rstudio_boost10filesystem6detail28directory_iterator_incrementERNS0_18directory_iteratorEPNS_6system10error_codeE
    fun:_ZN12_GLOBAL__N_114remove_all_auxERKN13rstudio_boost10filesystem4pathENS1_9file_typeEPNS0_6system10error_codeE
    fun:_ZN13rstudio_boost10filesystem6detail10remove_allERKNS0_4pathEPNS_6system10error_codeE
    fun:_ZN13rstudio_boost10filesystem10remove_allERKNS0_4pathE
    fun:_ZNK7rstudio4core8FilePath6removeEv
+   ...
+}
+
+# ---------------------------------------------------------------------------
+# Leak false positives — runtime/library allocations that valgrind reports at
+# process exit but are owned by glibc, OpenSSL, or boost::asio thread-local
+# caches (freed only on thread exit, which doesn't happen before the process
+# does). All known patterns; suppress to keep the leak report actionable.
+# ---------------------------------------------------------------------------
+
+{
+   glibc-NSS-compat-initgroups-module-load
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:malloc
+   ...
+   fun:compat_call.constprop.0
+}
+
+{
+   glibc-cxa-thread-atexit-tls-destructor-record
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:__cxa_thread_atexit_impl
+   fun:__cxa_thread_atexit
+   ...
+}
+
+{
+   glibc-resolv-conf-tls-cache
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:malloc
+   fun:__libc_alloc_buffer_allocate
+   fun:alloc_buffer_allocate
+   fun:__resolv_conf_allocate
+   ...
+}
+
+{
+   boost-asio-tls-recycling-allocator
+   Memcheck:Leak
+   match-leak-kinds: definite,possible
+   fun:memalign
+   fun:_ZN13rstudio_boost4asio11aligned_newEmm
+   ...
+}
+
+{
+   openssl3-tls-DRBG-RAND-context
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible
+   fun:malloc
+   fun:CRYPTO_zalloc
+   fun:EVP_RAND_CTX_new
+   ...
+}
+
+{
+   openssl3-tls-error-queue-mark
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:malloc
+   fun:CRYPTO_zalloc
+   ...
+   fun:ERR_set_mark
+   ...
+}
+
+# ---------------------------------------------------------------------------
+# Program-lifetime objects: real allocations that are never freed because the
+# owning subsystem runs for the whole process. Not bugs, not actionable.
+# ---------------------------------------------------------------------------
+
+{
+   rstudio-load-balancer-monitor-pinned
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   ...
+   fun:_ZN7rstudio6server13load_balancer15monitorLauncherEv
+   ...
+}
+
+{
+   rstudio-load-balancer-monitor-backoff-timer-pinned
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   ...
+   fun:_ZN7rstudio4core18ExponentialBackoff4nextEv
+   ...
+}
+
+# ---------------------------------------------------------------------------
+# Process-monitor worker thread shutdown race: the monitorMain loop sits in
+# `read()` inside a posixCall. At process exit the thread is killed mid-call,
+# so its stack-allocated std::vector buffer and std::function heap object
+# look "definitely lost" because the thread never unwinds. Single-block,
+# one-shot — the per-iteration allocation pattern would show many blocks.
+# ---------------------------------------------------------------------------
+
+{
+   rstudio-process-monitor-thread-shutdown-supervisor-poll
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   ...
+   fun:_ZN7rstudio4core6system17ProcessSupervisor4pollEv
+   fun:_ZN7rstudio6server14ProcessMonitor11monitorMainEv
+   ...
+}
+
+{
+   rstudio-process-monitor-thread-shutdown-asyncchildprocess-poll
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   ...
+   fun:_ZN7rstudio4core6system17AsyncChildProcess4pollEv
+   ...
+   fun:_ZN7rstudio6server14ProcessMonitor11monitorMainEv
    ...
 }

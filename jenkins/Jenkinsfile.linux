@@ -63,6 +63,7 @@ pipeline {
           steps {
             script {
               utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
+              utils.ensureFullCommitHistory()
             }
           }
         }

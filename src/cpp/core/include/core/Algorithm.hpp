@@ -188,7 +188,7 @@ bool get(const AssociativeContainer& container,
 {
    if (!container.count(key))
       return false;
-   
+
    *ppValue = &(const_cast<AssociativeContainer&>(container)[key]);
    return true;
 }
@@ -224,7 +224,7 @@ inline std::vector<std::string> split(const std::string& string,
                                       const std::string& delim)
 {
    std::vector<std::string> result;
-   
+
    if (UNLIKELY(delim.size() == 0))
    {
       std::size_t n = string.size();
@@ -233,22 +233,22 @@ inline std::vector<std::string> split(const std::string& string,
          result.push_back(std::string(string[i], 1));
       return result;
    }
-   
+
    std::string::size_type start = 0;
    std::string::size_type end   = string.find(delim, start);
-   
+
    // Add all of the initial split pieces
    while (end != std::string::npos)
    {
       result.push_back(string_utils::substring(string, start, end));
-      
+
       start = end + delim.size();
       end   = string.find(delim, start);
    }
-   
+
    // Add the final piece
    result.push_back(string_utils::substring(string, start));
-   
+
    // And return!
    return result;
 }
@@ -274,7 +274,7 @@ inline std::string join(Iterator begin,
 {
    if (begin >= end)
       return std::string();
-   
+
    std::string result;
    result += f(*begin);
    for (Iterator it = begin + 1; it != end; ++it)
@@ -283,7 +283,7 @@ inline std::string join(Iterator begin,
       result += f(*it);
    }
    return result;
-   
+
 }
 
 template <typename Iterator>
@@ -294,6 +294,20 @@ inline std::string join(Iterator begin,
    auto callback = [](const std::string& string) { return string; };
    return join(begin, end, delim, std::move(callback));
 }
+
+template <typename CALLBACK>
+struct Defer {
+   explicit Defer(CALLBACK func) : func(std::move(func)) {}
+   ~Defer() { func(); }
+
+   Defer() = delete;
+   Defer(const Defer&) = delete;
+   Defer(Defer&&) = delete;
+   Defer& operator=(const Defer&) = delete;
+   Defer& operator=(Defer&&) = delete;
+
+   CALLBACK func;
+};
 
 } // namespace algorithm
 } // namespace core

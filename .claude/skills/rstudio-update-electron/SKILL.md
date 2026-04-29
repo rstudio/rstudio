@@ -13,7 +13,17 @@ The user provides the **target Electron version** (e.g. `39.8.4`).
 
 ## Steps
 
-### 1. Update `NEWS.md`
+### 1. Verify starting branch
+
+Before doing anything else, confirm the current branch is `main`. Starting off anything other than `main` would base the work on the wrong commit.
+
+```bash
+git branch --show-current
+```
+
+If the output is not `main`, **stop immediately** and warn the user that they must switch to `main` (and pull the latest) before re-running this skill. Do not proceed with any further steps.
+
+### 2. Update `NEWS.md`
 
 Find the `### Dependencies` section and update the Electron version line:
 
@@ -21,7 +31,7 @@ Find the `### Dependencies` section and update the Electron version line:
 - Electron <NEW_VERSION>
 ```
 
-### 2. Update `src/node/desktop/package.json` and lockfile
+### 3. Update `src/node/desktop/package.json` and lockfile
 
 Run from `src/node/desktop`:
 
@@ -39,7 +49,7 @@ After the install, verify that:
 
 The lockfile must be included in the commit — if it drifts from the manifest, `npm ci` in CI will fail.
 
-### 3. Run tests
+### 4. Run tests
 
 Run from `src/node/desktop`:
 
@@ -49,6 +59,6 @@ cd src/node/desktop && npm test
 
 Confirm the command exits successfully. If tests fail, report the failures and stop.
 
-### 4. Done
+### 5. Done
 
 Report that the Electron version has been updated and both `npm i` and `npm test` passed.

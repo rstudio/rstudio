@@ -26,6 +26,18 @@ import {
   createLocalUrlChecker,
 } from '../../../src/main/whats-new-utils';
 
+// Unix-style file URLs (no drive letter) are not valid Windows paths,
+// so fileURLToPath throws on Windows. Skip the corresponding describes
+// there without invoking their bodies; the Windows drive-letter cases
+// are exercised in a dedicated describe.
+function describePosix(title: string, fn: () => void): void {
+  if (process.platform === 'win32') {
+    describe.skip(title, () => { /* skipped on Windows */ });
+  } else {
+    describe(title, fn);
+  }
+}
+
 describe('whats-new-utils', () => {
   describe('toReleaseSlug', () => {
     it('lowercases and replaces spaces with hyphens', () => {
@@ -129,7 +141,7 @@ describe('whats-new-utils', () => {
     });
   });
 
-  describe('createLocalUrlChecker (file mode)', () => {
+  describePosix('createLocalUrlChecker (file mode)', () => {
     const host = 'file:///app/.webpack/renderer/whats_new/index.html';
     const isLocal = createLocalUrlChecker(host, 'globemaster-allium');
 
@@ -172,7 +184,7 @@ describe('whats-new-utils', () => {
     });
   });
 
-  describe('createLocalUrlChecker (invalid slug)', () => {
+  describePosix('createLocalUrlChecker (invalid slug)', () => {
     const host = 'file:///app/.webpack/renderer/whats_new/index.html';
     const isLocal = createLocalUrlChecker(host, '../etc');
 
