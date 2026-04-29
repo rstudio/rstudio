@@ -744,7 +744,7 @@ void ensureFullCommitHistory() {
   ).trim()
   if (isShallow == 'true') {
     withCredentials([gitUsernamePassword(credentialsId: 'posit-jenkins-rstudio', gitToolName: 'Default')]) {
-      sh 'git fetch --filter=blob:none --unshallow origin'
+      sh 'git fetch --filter=blob:none --shallow-since="18 months ago" origin'
     }
   }
 }
