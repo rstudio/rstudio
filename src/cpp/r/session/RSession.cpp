@@ -550,8 +550,17 @@ bool isAtTopLevel()
 
 bool isBrowseActive()
 {
+   // browserContextActive() reflects whether we last saw a Browse[N]> prompt;
+   // browserEnv() is set by .rs.captureCurrentEnvironment() (injected at the
+   // browser prompt) to parent.frame(). We require a non-nil captured env to
+   // distinguish "in a browser, env captured" from the brief window where
+   // setBrowserActive(true) has run but the inject has not yet completed.
+   //
+   // Note: R_GlobalEnv is a *valid* captured env for top-level debugging
+   // (e.g. debugSource() of a script with breakpoints), so we must not
+   // exclude it here.
    return browserContextActive() &&
-          browserEnv() != R_GlobalEnv;
+          browserEnv() != R_NilValue;
 }
 
 bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
