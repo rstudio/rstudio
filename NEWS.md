@@ -17,5 +17,5 @@
 - Copilot Language Server 1.480.0
 - Electron 41.3.0
 - Node.js 22.22.2 (copilot, Posit AI)
-- Quarto 1.9.36
+- Quarto 1.9.37
 - xterm.js 6.0.0
