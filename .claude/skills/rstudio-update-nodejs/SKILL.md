@@ -26,11 +26,21 @@ Each version is a semver string like `22.14.0` (no `v` prefix).
 
 ## Steps
 
-### 1. Validate the version(s)
+### 1. Verify starting branch
+
+Before doing anything else, confirm the current branch is `main`. This skill creates a new feature branch off the current branch, so starting off anything other than `main` would base the work on the wrong commit.
+
+```bash
+git branch --show-current
+```
+
+If the output is not `main`, **stop immediately** and warn the user that they must switch to `main` (and pull the latest) before re-running this skill. Do not proceed with any further steps.
+
+### 2. Validate the version(s)
 
 Confirm each provided version matches the format `X.Y.Z` (digits and dots only). If any version doesn't match, ask the user to correct it before proceeding.
 
-### 2. Check prerequisites
+### 3. Check prerequisites
 
 Before modifying any files, verify that AWS credentials and required tools are in place. The upload script needs working AWS access, and discovering a credential problem after editing files wastes effort.
 
@@ -44,7 +54,7 @@ aws sts get-caller-identity
 
 If `aws` or `wget` is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
 
-### 3. Create a branch
+### 4. Create a branch
 
 Use the following naming convention:
 
@@ -57,13 +67,13 @@ Use the following naming convention:
 git checkout -b <BRANCH_NAME>
 ```
 
-### 4. Update version strings
+### 5. Update version strings
 
 Each file uses a different syntax — match the existing pattern exactly. Only update files for the version(s) being changed.
 
 Before editing, note the current values of `RSTUDIO_NODE_VERSION` and `RSTUDIO_INSTALLED_NODE_VERSION` from `cmake/globals.cmake` so you can find-and-replace accurately.
 
-#### 4a. Build-time Node files (only if updating build)
+#### 5a. Build-time Node files (only if updating build)
 
 **`cmake/globals.cmake`** (~line 243) — CMake cache variable:
 ```cmake
@@ -103,7 +113,7 @@ set(RSTUDIO_NODE_VERSION "<VERSION>")
 "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\<VERSION>;${env:PATH}"
 ```
 
-#### 4b. Installed Node files (only if updating installed)
+#### 5b. Installed Node files (only if updating installed)
 
 **`cmake/globals.cmake`** (~line 246) — CMake cache variable:
 ```cmake
@@ -133,7 +143,7 @@ The `v` prefix is required here and only here. All other files use the bare vers
 
 Build-time updates do NOT get a NEWS.md entry — only installed node does.
 
-#### 4c. Verify edits
+#### 5c. Verify edits
 
 Three files contain both versions (`cmake/globals.cmake`, `rstudio-tools.sh`, `rstudio-tools.cmd`). When updating both versions, take care not to cross-contaminate the two variables in these files.
 
@@ -148,13 +158,13 @@ Confirm:
 - Syntax matches each file's format (CMake quotes, bash quotes, batch no-quotes, XML attributes, JSON strings)
 - The `v` prefix appears ONLY in `upload-node.sh`
 
-### 5. Upload to S3
+### 6. Upload to S3
 
 Upload Node.js binaries for each unique new version using `dependencies/tools/upload-node.sh`. This script downloads platform archives from nodejs.org and uploads them to the `rstudio-buildtools` S3 bucket.
 
-The script reads its version from the hardcoded `NODE_VERSION` variable on line 13 (set in Step 4b for installed updates). The upload covers all platforms: darwin-arm64, darwin-x64, linux-arm64, linux-x64, win-x64, win-arm64.
+The script reads its version from the hardcoded `NODE_VERSION` variable on line 13 (set in Step 5b for installed updates). The upload covers all platforms: darwin-arm64, darwin-x64, linux-arm64, linux-x64, win-x64, win-arm64.
 
-**If updating installed** (or both to the same version): `upload-node.sh` already has the correct version from Step 4b. Run it:
+**If updating installed** (or both to the same version): `upload-node.sh` already has the correct version from Step 5b. Run it:
 
 ```bash
 bash dependencies/tools/upload-node.sh
@@ -162,7 +172,7 @@ bash dependencies/tools/upload-node.sh
 
 Confirm exit code 0.
 
-**If updating build only**: `upload-node.sh` wasn't edited in Step 4 (it tracks the installed version by convention). Temporarily edit it to `NODE_VERSION="v<BUILD_VERSION>"`, run it, then revert to the original installed value:
+**If updating build only**: `upload-node.sh` wasn't edited in Step 5 (it tracks the installed version by convention). Temporarily edit it to `NODE_VERSION="v<BUILD_VERSION>"`, run it, then revert to the original installed value:
 
 ```bash
 # Save the original value, set to build version, upload, restore
@@ -170,7 +180,7 @@ bash dependencies/tools/upload-node.sh
 git checkout dependencies/tools/upload-node.sh
 ```
 
-**If updating both to different versions**: `upload-node.sh` was set to the installed version in Step 4b. Upload the build version first (temporarily), then the installed version:
+**If updating both to different versions**: `upload-node.sh` was set to the installed version in Step 5b. Upload the build version first (temporarily), then the installed version:
 
 1. Edit `upload-node.sh` to `NODE_VERSION="v<BUILD_VERSION>"`
 2. Run `bash dependencies/tools/upload-node.sh` — confirm exit code 0
@@ -191,7 +201,7 @@ If both versions were uploaded and they differ, remove both:
 rm -f node-v<BUILD_VERSION>-* node-v<INSTALLED_VERSION>-*
 ```
 
-### 6. Verify the install
+### 7. Verify the install
 
 Run the dependency installer to confirm the S3 binaries download and extract correctly. The script must be run from `dependencies/common/` because it invokes `./install-node` and `./install-yarn` via relative paths. It installs into `dependencies/common/node/` which is gitignored.
 
@@ -218,7 +228,7 @@ bash install-npm-dependencies
 
 Confirm exit code 0. If the install fails, report the error and stop. This also installs the new Node.js locally for development use.
 
-### 7. Commit and open a PR
+### 8. Commit and open a PR
 
 Commit all modified files and open a pull request.
 
