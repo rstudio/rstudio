@@ -130,6 +130,14 @@ var pinnedColumns = new Set();
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
+// Listener refs — kept at module scope so destroyGrid can remove them and
+// avoid duplicate handlers across bootstrap cycles.
+var scrollUpdateListener = null;
+var scrollbarUpdateListener = null;
+var scrollEndListener = null;
+var resizeListener = null;
+var pendingScrollbarRaf = 0;
+
 // ==========================================================================
 // Utilities
 // ==========================================================================
@@ -240,6 +248,9 @@ var fetchColumnSummary = function(columnIndex, callback) {
       .catch(function(err) {
          if (err && err.name === "AbortError") return;
          console.warn("fetchColumnSummary failed:", err);
+         // Still invoke the callback so the sidebar can render an error
+         // state instead of staying on a "Loading..." spinner forever.
+         if (callback) callback({ error: "Failed to load summary" });
       });
 };
 
@@ -426,6 +437,9 @@ var createCell = function(data, colIdx, rowData, clazz) {
       td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
    if (colIdx === 0 && rowNumbers) classes.push("first-child");
+   // Long cells get a max-width + ellipsis treatment via .largeCell so they
+   // don't wrap and break row height.
+   if (typeof data === "string" && data.length >= 10) classes.push("largeCell");
    td.className = classes.join(" ");
 
    renderCellContents(td, data, colIdx, rowData, clazz);
@@ -628,6 +642,15 @@ var rebuildHeaders = function() {
       var colIdx = columnOrder[i];
       var th = existing[colIdx] || createHeader(colIdx, cols[colIdx]);
       thead.appendChild(th);
+      delete existing[colIdx];
+   }
+
+   // Remove any leftover headers whose columns are no longer in columnOrder
+   // (defensive: keeps thead consistent if the visible column set shrinks).
+   for (var leftoverIdx in existing) {
+      if (existing.hasOwnProperty(leftoverIdx)) {
+         thead.removeChild(existing[leftoverIdx]);
+      }
    }
 
    autoSizeColumns();
@@ -731,10 +754,12 @@ var autoSizeColumns = function() {
    if (!thead || !thead.children.length || !cols) return;
 
    // If the viewport isn't visible (e.g. background tab), measurements
-   // will be wrong. Flag for re-sizing on first activate.
+   // will be wrong. Flag and bail; onActivate will re-run sizing once the
+   // tab has real layout.
    var viewport = document.getElementById("gridViewport");
    if (viewport && viewport.offsetHeight === 0) {
       needsAutoSize = true;
+      return;
    }
 
    var colCount = thead.children.length;
@@ -850,6 +875,10 @@ var initResizeHandlers = function() {
 
    document.addEventListener("mousemove", function(evt) {
       if (resizingColIdx === null) return;
+      // Detect a stale drag — the user may have released the mouse outside
+      // the iframe, so we never saw the mouseup. evt.buttons === 0 means no
+      // mouse buttons are pressed; clean up and bail out.
+      if (evt.buttons === 0) { endResize(); return; }
       var delta = evt.clientX - initResizeX;
       if (delta !== 0) didResize = true;
       applyResizeDelta(delta);
@@ -857,9 +886,13 @@ var initResizeHandlers = function() {
    });
 
    var endResize = function() {
+      // Always remove the body class, even if resizingColIdx was already
+      // cleared elsewhere (e.g. resetGridState during teardown). Otherwise
+      // body.col-resizing's pointer-events: none would freeze the UI.
+      document.body.classList.remove("col-resizing");
       if (resizingColIdx === null) return;
       resizingColIdx = null;
-      document.body.classList.remove("col-resizing");
+      saveState();
       // Reset didResize after the click event that follows mouseup has been
       // dispatched, so exactly one click is suppressed (the one synthesized
       // from this drag) and subsequent clicks sort normally.
@@ -869,6 +902,9 @@ var initResizeHandlers = function() {
    };
 
    document.addEventListener("mouseup", endResize);
+   // Fallback: if focus leaves the iframe entirely, cancel any in-flight drag
+   // so col-resizing doesn't get stuck after a mouseup-outside scenario.
+   window.addEventListener("blur", endResize);
 };
 
 var getHeaderCell = function(colIdx) {
@@ -910,7 +946,8 @@ var applyResizeDelta = function(delta) {
    }
 
    invalidatePinnedOffsets();
-   saveState();
+   // Note: saveState fires once at end of drag (in endResize), not on every
+   // mousemove — repeated localStorage writes during a drag would cause jank.
 };
 
 // ==========================================================================
@@ -1422,14 +1459,17 @@ var renderVisibleRows = function(force) {
       topSpacerRow = createSpacerRow(colSpan);
       fragment.appendChild(topSpacerRow);
 
-      var renderedCount = 0;
+      // Render only the contiguous prefix from newStart. If a row is missing
+      // from cache (out-of-order fetch), stop here — the unrendered tail
+      // becomes part of the bottom spacer so cached rows downstream of the
+      // gap don't get displayed at the wrong vertical position.
+      var lastRendered = newStart - 1;
       for (var r = newStart; r <= newEnd; r++) {
          var tr = buildRow(r);
-         if (tr) {
-            fragment.appendChild(tr);
-            renderedRowElements.set(r, tr);
-            renderedCount++;
-         }
+         if (!tr) break;
+         fragment.appendChild(tr);
+         renderedRowElements.set(r, tr);
+         lastRendered = r;
       }
 
       bottomSpacerRow = createSpacerRow(colSpan);
@@ -1438,9 +1478,9 @@ var renderVisibleRows = function(force) {
       tbody.innerHTML = "";
       tbody.appendChild(fragment);
 
-      var skipped = (newEnd - newStart + 1) - renderedCount;
       updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-      updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1 + skipped) * ROW_HEIGHT);
+      updateSpacerRowHeight(bottomSpacerRow,
+         Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT);
 
       renderStart = newStart;
       renderEnd = newEnd;
@@ -1580,16 +1620,21 @@ var createSparklineSVG = function(breaks, counts) {
       var target = evt.target;
       var bin = target.getAttribute("data-bin");
       if (bin === null) { tooltip.style.display = "none"; return; }
-      bin = parseInt(bin);
+      bin = parseInt(bin, 10);
 
       var lo = breaks[bin];
       var hi = breaks[bin + 1];
       var count = counts[bin];
       var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
 
-      tooltip.innerHTML =
-         "Range: " + formatNum(lo) + " to " + formatNum(hi) + "<br>" +
-         "Count: " + count.toLocaleString() + " (" + pct + "%)";
+      // Build with DOM nodes rather than innerHTML so future format changes
+      // can't accidentally interpret data values as markup.
+      tooltip.textContent = "";
+      tooltip.appendChild(document.createTextNode(
+         "Range: " + formatNum(lo) + " to " + formatNum(hi)));
+      tooltip.appendChild(document.createElement("br"));
+      tooltip.appendChild(document.createTextNode(
+         "Count: " + count.toLocaleString() + " (" + pct + "%)"));
       tooltip.style.display = "";
    });
 
@@ -1685,6 +1730,11 @@ var renderColumnStats = function(container, data, colType) {
 
    container.appendChild(table);
 };
+
+// Tracks how many sidebar column-summary fetches are in flight so the shared
+// spinner only hides when all of them have completed (rather than the first
+// one back hiding the spinner while others are still pending).
+var pendingSummaryFetches = 0;
 
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
@@ -1799,12 +1849,16 @@ var initSidebar = function() {
 
             if (expanded) {
                if (!loaded) {
-                  // Show spinner in sidebar header while fetching
+                  // Show spinner while at least one summary fetch is in flight
                   var spinner = document.getElementById("sidebarSpinner");
+                  pendingSummaryFetches++;
                   if (spinner) spinner.style.display = "";
                   fetchColumnSummary(colIdx + columnOffset, function(data) {
                      loaded = true;
-                     if (spinner) spinner.style.display = "none";
+                     pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
+                     if (spinner && pendingSummaryFetches === 0) {
+                        spinner.style.display = "none";
+                     }
                      renderColumnStats(statsEl, data, colType);
                      statsEl.style.display = "";
                   });
@@ -1845,6 +1899,7 @@ var toggleSidebar = function() {
    setTimeout(function() {
       renderVisibleRows(true);
       updateInfoBar();
+      updateCustomScrollbars();
    }, TIMING.sidebarTransition);
    saveState();
 };
@@ -2050,8 +2105,10 @@ var updateCustomScrollbars = function() {
 
    // --- COMPUTE (no DOM access) ---
    var vBottom = hasHScroll ? 10 : 0;
-   var vHeight = vpHeight - headerH - vBottom;
-   var hWidth = vpWidth - pinnedWidth - (hasVScroll ? 10 : 0);
+   // Clamp to >= 0 so an oversized header or pinned region can't produce
+   // negative track sizes (which break thumb positioning math).
+   var vHeight = Math.max(0, vpHeight - headerH - vBottom);
+   var hWidth = Math.max(0, vpWidth - pinnedWidth - (hasVScroll ? 10 : 0));
 
    var vThumbH = 0, vThumbTop = 0;
    if (hasVScroll) {
@@ -2194,21 +2251,24 @@ var initGrid = function(resCols, data) {
    // Set up scroll handler
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
-      viewport.addEventListener("scroll", onScroll);
+      scrollUpdateListener = onScroll;
+      viewport.addEventListener("scroll", scrollUpdateListener);
+
       // Update custom scrollbar thumb position — coalesce to one per frame
-      var scrollbarRafId = 0;
-      viewport.addEventListener("scroll", function() {
+      scrollbarUpdateListener = function() {
          showScrollbars();
-         if (!scrollbarRafId) {
-            scrollbarRafId = requestAnimationFrame(function() {
-               scrollbarRafId = 0;
+         if (!pendingScrollbarRaf) {
+            pendingScrollbarRaf = requestAnimationFrame(function() {
+               pendingScrollbarRaf = 0;
                updateCustomScrollbars();
             });
          }
-      });
+      };
+      viewport.addEventListener("scroll", scrollbarUpdateListener);
+
       // Force a final re-render when scrolling stops — but not during
       // custom scrollbar drags, which generate spurious scrollend events
-      viewport.addEventListener("scrollend", function() {
+      scrollEndListener = function() {
          if (scrollbarDragging) return;
          onScroll.cancel();
          lastScrollTop = viewport.scrollTop;
@@ -2216,7 +2276,8 @@ var initGrid = function(resCols, data) {
          renderVisibleRows();
          updateInfoBar();
          updateCustomScrollbars();
-      });
+      };
+      viewport.addEventListener("scrollend", scrollEndListener);
    }
 
    // Create custom scrollbars
@@ -2225,12 +2286,13 @@ var initGrid = function(resCols, data) {
 
    // Set up resize handler — recompute pinned overscroll padding too, since
    // it depends on viewport width.
-   window.addEventListener("resize", debounce(function() {
+   resizeListener = debounce(function() {
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
-   }, TIMING.resizeDebounce));
+   }, TIMING.resizeDebounce);
+   window.addEventListener("resize", resizeListener);
 
    // Update column frame callback
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
@@ -2300,19 +2362,26 @@ var resetGridState = function() {
    invalidatePinnedOffsets();
    needsAutoSize = false;
 
-   // Resize
+   // Resize — also clear the body class in case a drag was in progress when
+   // teardown was triggered.
    didResize = false;
    resizingColIdx = null;
    initResizeX = null;
    initResizingWidth = null;
    origTableWidth = null;
    resizingBoundsExceeded = 0;
+   if (typeof document !== "undefined" && document.body) {
+      document.body.classList.remove("col-resizing");
+   }
 
    // Popups
    if (dismissActivePopup) dismissActivePopup(true);
    dismissActivePopup = null;
    columnsPopup = null;
    activeColumnInfo = {};
+
+   // Sidebar
+   pendingSummaryFetches = 0;
 };
 
 // ==========================================================================
@@ -2330,11 +2399,12 @@ var STATE_KEY_PREFIX = "rstudio.dataViewer:";
 var stateKey = function() {
    var loc = parseLocationUrl();
    if (!loc.obj) return null;
-   // env can be empty (the URL builder sometimes omits it for global-env
-   // objects); fall back to a sentinel so the key is still well-formed and
-   // stable across calls.
-   var env = loc.env || "_";
-   return STATE_KEY_PREFIX + env + ":" + loc.obj;
+   // Encode each component so colons inside an env or obj name can't collide
+   // with the separator, and an empty env (common for global-env objects)
+   // simply becomes an empty segment without a sentinel.
+   return STATE_KEY_PREFIX +
+      encodeURIComponent(loc.env || "") + ":" +
+      encodeURIComponent(loc.obj);
 };
 
 var saveState = function() {
@@ -2384,7 +2454,9 @@ var applySavedState = function(state) {
 
    if (Array.isArray(state.pinnedColumns)) {
       state.pinnedColumns.forEach(function(idx) {
-         if (typeof idx === "number" && idx > 0 && idx < colCount) {
+         // Allow idx 0 — when rowNumbers is false, the first column is a
+         // regular data column that may be user-pinned.
+         if (typeof idx === "number" && idx >= 0 && idx < colCount) {
             pinnedColumns.add(idx);
          }
       });
@@ -2447,10 +2519,30 @@ var destroyGrid = function() {
 
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
-      viewport.removeEventListener("scroll", onScroll);
+      if (scrollUpdateListener) {
+         viewport.removeEventListener("scroll", scrollUpdateListener);
+         scrollUpdateListener = null;
+      }
+      if (scrollbarUpdateListener) {
+         viewport.removeEventListener("scroll", scrollbarUpdateListener);
+         scrollbarUpdateListener = null;
+      }
+      if (scrollEndListener) {
+         viewport.removeEventListener("scrollend", scrollEndListener);
+         scrollEndListener = null;
+      }
       viewport.scrollTop = 0;
       viewport.scrollLeft = 0;
    }
+   if (resizeListener) {
+      window.removeEventListener("resize", resizeListener);
+      resizeListener = null;
+   }
+   if (pendingScrollbarRaf) {
+      cancelAnimationFrame(pendingScrollbarRaf);
+      pendingScrollbarRaf = 0;
+   }
+   onScroll.cancel();
 };
 
 var bootstrap = function(data) {
@@ -2495,9 +2587,15 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
 
       if (visible) {
          var el = initialize(th, col, colIdx);
-         if (el) th.appendChild(el);
-      } else if (th.children.length > 1) {
-         th.removeChild(th.lastChild);
+         if (el) {
+            el.classList.add("header-injected-ui");
+            th.appendChild(el);
+         }
+      } else {
+         // Remove only the injected UI, never the permanent .resizer or
+         // .headerCell. Marker class is set when the UI is appended above.
+         var injected = th.querySelector(".header-injected-ui");
+         if (injected) th.removeChild(injected);
       }
    }
 

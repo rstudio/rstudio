@@ -28,6 +28,12 @@
    --grid-na-color: var(--rstudio-disabledForeground, #b0b0b0);
    --grid-focus-border: var(--rstudio-focusBorder, #4d9de0);
 
+   /* Computed mix shades — keep these in one place so theme tweaks land
+      consistently across hover/stripe rules. */
+   --grid-row-hover-bg:  color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
+   --grid-row-stripe-bg: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 2%);
+   --grid-row-active-bg: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 5%);
+
    --row-height: 23px;
    --sidebar-width: 240px;
    --info-bar-height: 25px;
@@ -129,7 +135,8 @@ th:focus {
    Diagonal stripes suggest pending/loading data. */
 tbody tr.spacer-row td,
 tbody tr.spacer-row:nth-child(odd) td,
-tbody tr.spacer-row:hover td {
+tbody tr.spacer-row:hover td,
+tbody tr.spacer-row:nth-child(odd):hover td {
    padding: 0;
    border: none;
    background:
@@ -155,16 +162,16 @@ td {
 }
 
 tbody tr:hover td:not(.first-child) {
-   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
+   background-color: var(--grid-row-hover-bg);
 }
 
 /* Alternating row stripe */
 tbody tr:nth-child(odd) td:not(.first-child) {
-   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 2%);
+   background-color: var(--grid-row-stripe-bg);
 }
 
 tbody tr:nth-child(odd):hover td:not(.first-child) {
-   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
+   background-color: var(--grid-row-hover-bg);
 }
 
 
@@ -569,7 +576,7 @@ th.columnClickable div {
 }
 
 .histBack.selected {
-   background-color: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 5%);
+   background-color: var(--grid-row-active-bg);
 }
 
 .numValueBox {

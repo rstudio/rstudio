@@ -88,13 +88,19 @@ public class DataTable
                     }
                  }
               });
+      // Use fill='currentColor' so the icon picks up the toolbar's text
+      // color and adapts to the active IDE theme.
       sidebarButton_ = new HTML(
-         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle'>" +
-         "<rect x='1' y='4' width='3' height='8' rx='0.5' fill='#888'/>" +
-         "<rect x='5.5' y='0' width='3' height='12' rx='0.5' fill='#888'/>" +
-         "<rect x='10' y='6' width='3' height='6' rx='0.5' fill='#888'/>" +
+         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle;color:#888'>" +
+         "<rect x='1' y='4' width='3' height='8' rx='0.5' fill='currentColor'/>" +
+         "<rect x='5.5' y='0' width='3' height='12' rx='0.5' fill='currentColor'/>" +
+         "<rect x='10' y='6' width='3' height='6' rx='0.5' fill='currentColor'/>" +
          "</svg>" +
-         " <span style='font-size:11px'>" + constants_.sidebarButtonText() + "</span>");
+         " <span style='font-size:11px'></span>");
+      // Set the i18n text via DOM API rather than HTML concatenation so a
+      // localized value containing "<" or "&" can't be interpreted as markup.
+      Element sidebarLabelEl = Element.as(sidebarButton_.getElement().getLastChild());
+      sidebarLabelEl.setInnerText(constants_.sidebarButtonText());
       sidebarButton_.getElement().getStyle().setCursor(Style.Cursor.POINTER);
       sidebarButton_.getElement().getStyle().setProperty("padding", "2px 5px");
       sidebarButton_.getElement().getStyle().setProperty("whiteSpace", "nowrap");

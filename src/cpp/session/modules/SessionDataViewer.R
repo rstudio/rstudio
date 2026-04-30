@@ -384,9 +384,16 @@
    }
    else if (is.factor(col))
    {
-      # all levels in their defined order (same as levels())
+      # Cap the number of levels we send back so a high-cardinality factor
+      # (e.g. zip codes, gene IDs) doesn't bloat the response and DOM.
+      maxLevels <- 50L
       tbl <- table(col, useNA = "no")
       lvls <- levels(col)
+      if (length(lvls) > maxLevels)
+      {
+         lvls <- lvls[seq_len(maxLevels)]
+         result$truncated <- .rs.scalar(TRUE)
+      }
       result$top_levels  <- lvls
       result$top_counts  <- as.integer(tbl[lvls])
    }
