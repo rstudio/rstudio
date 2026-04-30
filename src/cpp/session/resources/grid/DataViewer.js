@@ -31,8 +31,7 @@ var TIMING = {
    resizeDebounce: 75,          // window resize → relayout
    sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
    columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
-   scrollbarHide: 1200,         // delay before custom scrollbars fade out
-   stateSaveDebounce: 200       // coalesce localStorage writes during interactive resizing/filtering
+   scrollbarHide: 1200          // delay before custom scrollbars fade out
 };
 
 // ==========================================================================
@@ -1825,10 +1824,11 @@ var initSidebar = function() {
       content.appendChild(entry);
    }
 
-   // Apply initial sidebar visibility
+   // Apply initial sidebar visibility — toggle authoritatively so a previous
+   // "expanded" class from an earlier bootstrap doesn't override saved state.
    var panel = document.getElementById("sidebarPanel");
-   if (panel && sidebarVisible) {
-      panel.classList.add("expanded");
+   if (panel) {
+      panel.classList.toggle("expanded", sidebarVisible);
    }
 };
 
@@ -2329,11 +2329,15 @@ var STATE_KEY_PREFIX = "rstudio.dataViewer:";
 
 var stateKey = function() {
    var loc = parseLocationUrl();
-   if (!loc.env || !loc.obj) return null;
-   return STATE_KEY_PREFIX + loc.env + ":" + loc.obj;
+   if (!loc.obj) return null;
+   // env can be empty (the URL builder sometimes omits it for global-env
+   // objects); fall back to a sentinel so the key is still well-formed and
+   // stable across calls.
+   var env = loc.env || "_";
+   return STATE_KEY_PREFIX + env + ":" + loc.obj;
 };
 
-var saveState = debounce(function() {
+var saveState = function() {
    var key = stateKey();
    if (!key) return;
    var state = {
@@ -2349,7 +2353,7 @@ var saveState = debounce(function() {
    } catch (e) {
       // localStorage may be unavailable (private browsing) or full
    }
-}, TIMING.stateSaveDebounce);
+};
 
 var loadSavedState = function() {
    var key = stateKey();
