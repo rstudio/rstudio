@@ -607,7 +607,6 @@ th.columnClickable div {
 #sidebarPanel {
    width: 0;
    overflow: hidden;
-   border-right: 1px solid var(--grid-border);
    display: flex;
    flex-direction: column;
    flex-shrink: 0;
@@ -617,6 +616,7 @@ th.columnClickable div {
 
 #sidebarPanel.expanded {
    width: var(--sidebar-width);
+   border-right: 1px solid var(--grid-border);
 }
 
 #sidebarToggle {

@@ -31,7 +31,8 @@ var TIMING = {
    resizeDebounce: 75,          // window resize → relayout
    sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
    columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
-   scrollbarHide: 1200          // delay before custom scrollbars fade out
+   scrollbarHide: 1200,         // delay before custom scrollbars fade out
+   stateSaveDebounce: 200       // coalesce localStorage writes during interactive resizing/filtering
 };
 
 // ==========================================================================
@@ -567,6 +568,7 @@ var handleSortClick = function(colIdx, th) {
    fetchRows(0, FETCH_SIZE, function() {
       scrollToTop();
    });
+   saveState();
 };
 
 // ==========================================================================
@@ -605,6 +607,7 @@ var togglePinColumn = function(colIdx) {
    invalidatePinnedOffsets();
    rebuildHeaders();
    renderVisibleRows(true);
+   saveState();
 };
 
 // Rebuild headers in the current column order (pinned first, then unpinned).
@@ -789,9 +792,15 @@ var autoSizeColumns = function() {
          if (cellW > maxW) maxW = cellW;
       }
 
-      // Clamp to min/max — allow wider max for character columns
-      var upperBound = (col.col_type === "character") ? MAX_COL_WIDTH_CHAR : MAX_COL_WIDTH;
-      var w = Math.max(MIN_COL_WIDTH, Math.min(upperBound, maxW));
+      // Manual widths (user resize) take precedence over computed widths.
+      // Otherwise clamp to min/max — allow wider max for character columns.
+      var w;
+      if (typeof manualWidths[colIdx] === "number" && manualWidths[colIdx] > 0) {
+         w = manualWidths[colIdx];
+      } else {
+         var upperBound = (col.col_type === "character") ? MAX_COL_WIDTH_CHAR : MAX_COL_WIDTH;
+         w = Math.max(MIN_COL_WIDTH, Math.min(upperBound, maxW));
+      }
       measuredWidths.push(w);
       totalWidth += w;
    }
@@ -902,6 +911,7 @@ var applyResizeDelta = function(delta) {
    }
 
    invalidatePinnedOffsets();
+   saveState();
 };
 
 // ==========================================================================
@@ -983,6 +993,7 @@ var applyFilters = function() {
    fetchRows(0, FETCH_SIZE, function() {
       scrollToTop();
    });
+   saveState();
 };
 
 var createNumericFilterUI = function(idx, col, onDismiss) {
@@ -1835,6 +1846,7 @@ var toggleSidebar = function() {
       renderVisibleRows(true);
       updateInfoBar();
    }, TIMING.sidebarTransition);
+   saveState();
 };
 
 var scrollToColumn = function(colIdx) {
@@ -2147,6 +2159,10 @@ var initGrid = function(resCols, data) {
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
+   // Restore saved per-object UI state before headers are built (so pinning
+   // order is correct) and before fetchRows (so sort/filters are sent).
+   applySavedState(loadSavedState());
+
    // Build headers (pinned columns first, then unpinned)
    columnOrder = getColumnOrder();
    var thead = document.getElementById("data_cols");
@@ -2156,6 +2172,7 @@ var initGrid = function(resCols, data) {
       var colIdx = columnOrder[c];
       thead.appendChild(createHeader(colIdx, cols[colIdx]));
    }
+   applySortIndicators();
 
    // Initialize sidebar
    initSidebar();
@@ -2298,6 +2315,112 @@ var resetGridState = function() {
    activeColumnInfo = {};
 };
 
+// ==========================================================================
+// State Persistence
+// ==========================================================================
+//
+// Per-object UI state (pinned columns, sidebar visibility, manual column
+// widths, sort order, filter values) is saved to localStorage keyed by
+// env+obj. State is loaded on bootstrap and applied before the first row
+// fetch so it shows up in the initial render. Saves are debounced.
+
+var STATE_VERSION = 1;
+var STATE_KEY_PREFIX = "rstudio.dataViewer:";
+
+var stateKey = function() {
+   var loc = parseLocationUrl();
+   if (!loc.env || !loc.obj) return null;
+   return STATE_KEY_PREFIX + loc.env + ":" + loc.obj;
+};
+
+var saveState = debounce(function() {
+   var key = stateKey();
+   if (!key) return;
+   var state = {
+      version: STATE_VERSION,
+      pinnedColumns: Array.from(pinnedColumns),
+      sidebarVisible: sidebarVisible,
+      manualWidths: manualWidths.slice(),
+      sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
+      filters: cachedFilterValues.slice()
+   };
+   try {
+      localStorage.setItem(key, JSON.stringify(state));
+   } catch (e) {
+      // localStorage may be unavailable (private browsing) or full
+   }
+}, TIMING.stateSaveDebounce);
+
+var loadSavedState = function() {
+   var key = stateKey();
+   if (!key) return null;
+   try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return null;
+      var state = JSON.parse(raw);
+      if (state.version !== STATE_VERSION) return null;
+      return state;
+   } catch (e) {
+      return null;
+   }
+};
+
+// Apply restored state. Must be called after `cols` is populated but before
+// the first row fetch (so sort/filters are included in fetch params) and
+// before headers are built (so pinning order is correct).
+var applySavedState = function(state) {
+   if (!state || !cols) return;
+   var colCount = cols.length;
+
+   if (Array.isArray(state.pinnedColumns)) {
+      state.pinnedColumns.forEach(function(idx) {
+         if (typeof idx === "number" && idx > 0 && idx < colCount) {
+            pinnedColumns.add(idx);
+         }
+      });
+   }
+
+   if (typeof state.sidebarVisible === "boolean") {
+      sidebarVisible = state.sidebarVisible;
+   }
+
+   if (Array.isArray(state.manualWidths)) {
+      for (var i = 0; i < state.manualWidths.length && i < colCount; i++) {
+         var w = state.manualWidths[i];
+         if (typeof w === "number" && w > 0) manualWidths[i] = w;
+      }
+   }
+
+   if (state.sort &&
+       typeof state.sort.col === "number" && state.sort.col < colCount &&
+       (state.sort.dir === "asc" || state.sort.dir === "desc")) {
+      sortColumn = state.sort.col;
+      sortDirection = state.sort.dir;
+   }
+
+   if (Array.isArray(state.filters)) {
+      cachedFilterValues = state.filters.slice(0, colCount);
+   }
+};
+
+// Apply asc/desc CSS classes on header cells based on current sort state.
+// Mirrors the inline class manipulation in handleSortClick, but works from
+// the cached sortColumn/sortDirection (used after restoring saved state).
+var applySortIndicators = function() {
+   var thead = document.getElementById("data_cols");
+   if (!thead) return;
+   for (var i = 0; i < thead.children.length; i++) {
+      var th = thead.children[i];
+      th.classList.remove("sorting", "sorting_asc", "sorting_desc");
+      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+      if (colIdx === sortColumn && sortDirection) {
+         th.classList.add("sorting_" + sortDirection);
+      } else {
+         th.classList.add("sorting");
+      }
+   }
+};
+
 var destroyGrid = function() {
    resetGridState();
    invalidateCache();
@@ -2410,6 +2533,7 @@ window.setFilterUIVisible = function(visible) {
          if (hadFilters) {
             invalidateCache();
             fetchRows(0, FETCH_SIZE);
+            saveState();
          }
       }
    );
