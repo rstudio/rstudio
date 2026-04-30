@@ -6,7 +6,7 @@ ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
-    zypper --non-interactive install -y \
+    zypper --non-interactive install --allow-downgrade -y \
     ant \
     autoconf \
     automake \

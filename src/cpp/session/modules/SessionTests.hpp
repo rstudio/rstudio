@@ -37,7 +37,7 @@ enum TestsFileType
    // A testthat file
    TestsTestThat,
 
-   // A shinytest file
+   // A shinytest2 file
    TestsShinyTest
 };
 

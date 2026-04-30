@@ -70,6 +70,8 @@
 
 #ifdef _WIN32
 # include <core/system/Win32RuntimeLibrary.hpp>
+#else
+# include <core/system/PosixSystem.hpp>
 #endif
 
 #include <core/system/FileMonitor.hpp>
@@ -2277,6 +2279,16 @@ int main(int argc, char * const argv[])
          return 0;
       }
 
+      // warn if --run-tests was invoked without the rstudio-tests helper, which
+      // sets up R_HOME / R_DOC_DIR / R_LIB_DIR and other environment needed for tests
+      if (options.runTests() && core::system::getenv("RSTUDIO_TESTS_HELPER").empty())
+      {
+         std::cerr << "WARNING: 'rsession --run-tests' was invoked directly. "
+                   << "Prefer the 'rstudio-tests' helper script, which configures "
+                   << "the environment variables (R_HOME, R_DOC_DIR, R_LIB_DIR) "
+                   << "and arguments needed for the test harness." << std::endl;
+      }
+
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;
@@ -2412,6 +2424,42 @@ int main(int argc, char * const argv[])
          Error error = core::system::crypto::rsaInit();
          if (error)
             LOG_ERROR(error);
+      }
+#endif
+
+      // ensure we have enough file descriptors for the file monitor and
+      // other session operations (R packages, sockets, etc.). the default
+      // soft limit (often 1024) can be too low on some systems, causing
+      // inotify_init() to fail with EMFILE ("Too many open files").
+      // rserver already does this (ServerMain.cpp); rsession needs it too.
+#ifndef _WIN32
+      {
+         RLimitType soft, hard;
+         Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+         if (error)
+         {
+            LOG_WARNING_MESSAGE("Error trying to get system open files limits - using system defaults: " + error.asString());
+         }
+         else
+         {
+            constexpr RLimitType kDesiredOpenFiles = 4096;
+            if (soft < kDesiredOpenFiles && hard > soft)
+            {
+               // preserve the existing hard limit -- rsession runs as a non-root
+               // process and could not re-raise the hard limit if we lowered it.
+               RLimitType newLimit = std::min(kDesiredOpenFiles, hard);
+               error = core::system::setResourceLimit(core::system::FilesLimit, newLimit, hard);
+               if (error)
+               {
+                  LOG_WARNING_MESSAGE("Unable to raise open file limit: " + error.asString());
+               }
+               else
+               {
+                  LOG_DEBUG_MESSAGE("Raised open file limit from " +
+                     std::to_string(soft) + " to " + std::to_string(newLimit));
+               }
+            }
+         }
       }
 #endif
 

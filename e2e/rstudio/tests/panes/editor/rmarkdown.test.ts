@@ -9,8 +9,12 @@ import {
 } from '@pages/viewer_pane.page';
 import { clearWorkspace } from '@pages/environment_pane.page';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 test.describe('RMarkdown', () => {
+  // Sets cwd to a per-spec sandbox; all relative file paths used by
+  // createAndOpenFile / closeSourceAndDeleteFile / file.edit / unlink land there.
+  useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 

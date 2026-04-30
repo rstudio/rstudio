@@ -14,7 +14,7 @@
  *
  */
 
-import PropertiesReader from 'properties-reader';
+import PropertiesReader, { Reader } from 'properties-reader';
 import { FilePath } from '../../core/file-path';
 import { Xdg } from '../../core/xdg';
 import DesktopOptions from './desktop-options';
@@ -24,7 +24,7 @@ import { safeError } from '../../core/err';
 const INI_FILE = 'desktop.ini';
 
 class FilePreferences extends DesktopOptions {
-  private properties?: PropertiesReader.Reader;
+  private properties?: Reader;
 
   constructor() {
     super();
@@ -36,7 +36,7 @@ class FilePreferences extends DesktopOptions {
 
     if (FilePath.existsSync(desktopIni)) {
       try {
-        this.properties = PropertiesReader(desktopIni);
+        this.properties = PropertiesReader({ sourceFile: desktopIni });
       } catch (err: unknown) {
         // too early in startup to use logging
         console.error(`Unable to migrate legacy desktop preferences: ${safeError(err).message}`);

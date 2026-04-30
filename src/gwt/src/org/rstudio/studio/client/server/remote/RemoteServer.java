@@ -6588,6 +6588,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void showMenuCompleted(Integer selection,
+                                 ServerRequestCallback<VoidResponse> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, selection == null ? JSONNull.getInstance() : new JSONNumber(selection));
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_SHOW_MENU_COMPLETED, params, true, callback);
+   }
+
+   @Override
    public void stopShinyApp(String id, ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
@@ -6694,29 +6703,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
-   {
-      sendRequest(RPC_SCOPE,
-                  HAS_SHINYTEST_HAS_DEPENDENCIES,
-                  callback);
-   }
-
-   @Override
-   public void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback)
-   {
-      sendRequest(RPC_SCOPE,
-                  INSTALL_SHINYTEST_DEPENDENCIES,
-                  new ConsoleProcessCallbackAdapter(callback));
-   }
-
-   @Override
    public void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(testFile));
 
       sendRequest(RPC_SCOPE,
-                  HAS_SHINYTEST_RESULTS,
+                  HAS_SHINYTEST2_RESULTS,
                   params,
                   true,
                   callback);
@@ -7631,6 +7624,7 @@ public class RemoteServer implements Server
 
    private static final String LAUNCH_EMBEDDED_SHINY_CONNECTION_UI = "launch_embedded_shiny_connection_ui";
    private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
+   private static final String RSTUDIOAPI_SHOW_MENU_COMPLETED = "rstudioapi_show_menu_completed";
 
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 
@@ -7642,9 +7636,7 @@ public class RemoteServer implements Server
    private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
    private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
 
-   private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
-   private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
-   private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
+   private static final String HAS_SHINYTEST2_RESULTS = "has_shinytest2_results";
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
    private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";

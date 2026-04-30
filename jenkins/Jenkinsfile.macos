@@ -40,6 +40,7 @@ pipeline {
       steps {
         script {
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
+          utils.ensureFullCommitHistory()
         }
       }
     }
@@ -71,6 +72,8 @@ pipeline {
     stage('Versioning') {
       steps {
         script {
+          utils.ensureFullCommitHistory()
+
           (RSTUDIO_VERSION,
             RSTUDIO_VERSION_MAJOR,
             RSTUDIO_VERSION_MINOR,

@@ -3,6 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
+import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -192,9 +193,12 @@ async function cleanupProject(page: Page, projectDir: string): Promise<void> {
 // -- Tests --------------------------------------------------------------------
 
 test.describe.serial('Create Projects in New Directory', () => {
+  const sandbox = useSuiteSandbox();
+
   // Tracked per-test so afterEach can clean up on failure
   let currentProjectDir = '';
   let source: SourcePane;
+  let originalDefaultProjectLocation = '';
 
   test.beforeEach(async ({ rstudioPage: page }) => {
     source = new SourcePane(page);
@@ -218,12 +222,35 @@ test.describe.serial('Create Projects in New Directory', () => {
       await closeCurrentProject(page);
     }
 
-    // Return to home and clean up any stale test directories
-    await typeInConsole(page, 'setwd("~")');
-    await sleep(500);
-    for (const type of ALL_TYPES) {
-      await typeInConsole(page, `unlink("~/${type.name}", recursive = TRUE)`);
-      await sleep(300);
+    // Redirect the New Project Wizard's parent-directory field into the
+    // sandbox by overriding the default_project_location preference. The
+    // field itself is read-only, so setting the pref is the only way.
+    // If a prior crashed run left our sandbox path in the pref, treat it
+    // as leftover state and restore to the schema default on afterAll.
+    const current = await captureResult(
+      page,
+      '.rs.api.readRStudioPreference("default_project_location")',
+    );
+    const basename = current.split(/[/\\]/).pop() || '';
+    originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
+
+    const escaped = sandbox.dir.replace(/\\/g, '/');
+    await typeInConsole(
+      page,
+      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`,
+    );
+    await sleep(TIMEOUTS.pollInterval);
+  });
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    try {
+      await typeInConsole(
+        page,
+        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
+      );
+      await sleep(TIMEOUTS.pollInterval);
+    } catch (err) {
+      console.warn('default_project_location restore failed:', err);
     }
   });
 

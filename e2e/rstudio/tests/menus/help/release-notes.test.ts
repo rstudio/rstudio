@@ -14,7 +14,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep } from '@utils/constants';
 
 const BASE_URL = 'https://www.rstudio.org/links/release_notes';
-const isDesktop = (process.env.RSTUDIO_EDITION || 'desktop').toLowerCase() === 'desktop';
+const isDesktop = (process.env.PW_RSTUDIO_MODE || 'desktop').toLowerCase() === 'desktop';
 
 test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () => {
 

@@ -730,8 +730,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       }
       else
       {
-         dependencies.addAll(getFeatureDependencies("shinytest"));
-         message = constants_.shinytestMessage();
+         dependencies.addAll(getFeatureDependencies("shinytest2"));
+         message = constants_.shinytest2Message();
       }
 
       withDependencies(

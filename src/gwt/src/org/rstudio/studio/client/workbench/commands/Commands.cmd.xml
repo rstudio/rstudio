@@ -3809,10 +3809,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Run tests using the testthat package"/>
 
    <cmd id="testShinytestFile"
-        label="Run shinytest Test"
+        label="Run shinytest2 Test"
         menuLabel="Run test for file"
         buttonLabel="Run Test"
-        desc="Run test using the shinytest package"/>
+        desc="Run test using the shinytest2 package"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"

@@ -4,6 +4,7 @@ export const TIMEOUTS = {
   consoleReady: 15000,
   sessionRestart: 30000,
   settleDelay: 1000,
+  pollInterval: 500,
   fileOpen: 20000,
   ghostText: 30000,
   nesApply: 30000,
@@ -14,8 +15,8 @@ export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const RSTUDIO_EXTRA_ARGS: string[] = process.env.RSTUDIO_EXTRA_ARGS
-  ? process.env.RSTUDIO_EXTRA_ARGS.split(' ').filter(Boolean)
+export const RSTUDIO_EXTRA_ARGS: string[] = process.env.PW_RSTUDIO_EXTRA_ARGS
+  ? process.env.PW_RSTUDIO_EXTRA_ARGS.split(' ').filter(Boolean)
   : [];
 
 export const CODE_SUGGESTION_PROVIDERS: Record<string, string> = {

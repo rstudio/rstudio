@@ -44,7 +44,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
    **Never use raw `Control+End` or `Control+Home`** in tests — always use the helper or a platform guard.
 
    **If unsure**, check what RStudio's own shortcut settings say. If it shows "Ctrl" on macOS (not Cmd), use `Control`.
-8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `RSTUDIO_EDITION` env var when branching on mode.
+8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `PW_RSTUDIO_MODE` env var when branching on mode.
 9. **Use `.rs.api.executeCommand()` instead of `window.desktopHooks.invokeCommand()`** – `desktopHooks` only exists in Desktop's Electron shell and will crash on Server. `.rs.api.executeCommand()` works in both modes.
 
 ---
@@ -140,11 +140,11 @@ See `utils/constants.ts` for the full list of `TIMEOUTS` keys.
 - Skip tests if packages can't be installed: `test.skip(missingPackages.length > 0, reason)`
 - Never chain `install.packages()` with semicolons
 
-### Page Objects & Actions
+### Page Objects, Actions, and Utilities
 
-- Add new locators to appropriate `pages/` file
-- Add new methods to appropriate `actions/` file
-- Follow existing patterns
+- **Page-scoped logic** (locators, element-interaction helpers) → `pages/` and `actions/` files.
+- **Cross-cutting helpers** (suite-lifecycle utilities, env/fixture concerns, generic test-infra that isn't tied to a specific pane) → `utils/`.
+- Follow existing patterns in the appropriate directory.
 
 ### Project Isolation
 
@@ -154,6 +154,34 @@ When project isolation is needed, use a fixed project name per test suite. The l
 - **`beforeAll`**: delete the project directory if it exists from a previous run, then create fresh
 - **`afterEach`**: delete all files inside except `.Rproj`, close all source docs, reset state
 - **No `afterAll` cleanup** — the directory lingers until next run's `beforeAll` cleans it up
+
+### Sandbox (R-side scratch directory)
+
+Any spec that creates files or directories on the R-side filesystem must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+
+**Pattern:** add to every spec that creates files/dirs:
+
+```typescript
+import { useSuiteSandbox } from '@utils/sandbox';
+
+const sandbox = useSuiteSandbox();
+
+test('writes land in sandbox', async ({ rstudioPage: page }) => {
+  await typeInConsole(page, `writeLines("hi", "${sandbox.dir}/foo.txt")`);
+});
+```
+
+`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
+
+**Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
+
+**Env vars (optional):**
+- `PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
+- `PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
+
+**Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
+
+**Low-level helpers** (`createSandbox` / `removeSandbox`) are also exported from `@utils/sandbox` if you need to manage the lifecycle manually.
 
 ### Cross-Platform Considerations
 

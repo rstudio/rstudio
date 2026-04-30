@@ -78,7 +78,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
-    console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
     await consoleActions.clearConsole();
 
     // -----------------------------------------------------------------------

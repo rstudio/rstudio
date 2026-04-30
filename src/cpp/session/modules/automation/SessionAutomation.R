@@ -717,10 +717,24 @@
    if (inherits(targets, "error"))
       return(NULL)
    
-   # Check for the RStudio window.
-   currentTarget <- Find(function(target) target$title == "RStudio", targets$targetInfos)
-   if (is.null(currentTarget))
+   # Find a page target. The title is typically "RStudio" but is prefixed
+   # when a project is open (e.g. "myproject - RStudio").
+   pageTargets <- Filter(function(target) {
+      identical(target$type, "page")
+   }, targets$targetInfos)
+   
+   if (length(pageTargets) == 0L)
       return(NULL)
+   
+   currentTarget <- Find(function(target) {
+      grepl("RStudio", target$title, fixed = TRUE)
+   }, pageTargets)
+   
+   if (is.null(currentTarget))
+      currentTarget <- pageTargets[[1L]]
+   
+   fmt <- "Attaching to target [title=%s, url=%s]."
+   .rs.alog(fmt, currentTarget$title, currentTarget$url)
    
    # Attach to this target.
    currentTargetId <- currentTarget$targetId
@@ -753,13 +767,24 @@
          return(NULL)
    }
    
-   # Find a page.
-   currentTarget <- Find(function(target) {
-      target$type == "page" && target$title == "RStudio Server"
+   # Find a page target. The title is typically "RStudio Server" but is
+   # prefixed when a project is open (e.g. "myproject - RStudio Server").
+   pageTargets <- Filter(function(target) {
+      identical(target$type, "page")
    }, targets$targetInfos)
    
-   if (is.null(currentTarget))
+   if (length(pageTargets) == 0L)
       return(NULL)
+   
+   currentTarget <- Find(function(target) {
+      grepl("RStudio Server", target$title, fixed = TRUE)
+   }, pageTargets)
+   
+   if (is.null(currentTarget))
+      currentTarget <- pageTargets[[1L]]
+   
+   fmt <- "Attaching to target [title=%s, url=%s]."
+   .rs.alog(fmt, currentTarget$title, currentTarget$url)
    
    # Attach to this target.
    currentTargetId <- currentTarget$targetId

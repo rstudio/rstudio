@@ -2,8 +2,10 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
+import { useSuiteSandbox } from '@utils/sandbox';
 
 test.describe('Run Line button', () => {
+  const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 
@@ -16,11 +18,12 @@ test.describe('Run Line button', () => {
     await consoleActions.clearConsole();
     await consoleActions.typeInConsole('.rs.api.executeCommand("closeAllSourceDocs")');
 
-    const fileName = `submit_order_${Date.now()}.R`;
+    const sandboxR = sandbox.dir.replace(/\\/g, '/');
+    const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
     await consoleActions.typeInConsole(
-      `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${fileName}")`,
+      `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${filePath}")`,
     );
-    await consoleActions.typeInConsole(`file.edit("${fileName}")`);
+    await consoleActions.typeInConsole(`file.edit("${filePath}")`);
     await sleep(1500);
 
     await sourceActions.goToTop();
@@ -35,6 +38,5 @@ test.describe('Run Line button', () => {
     });
 
     await consoleActions.typeInConsole('.rs.api.executeCommand("closeAllSourceDocs")');
-    await consoleActions.typeInConsole(`unlink("${fileName}")`);
   });
 });

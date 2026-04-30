@@ -24,7 +24,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String convertingThemeProgressCaption();
     String withDataImportMongoProgressCaption();
     String testthatMessage();
-    String shinytestMessage();
+    String shinytest2Message();
     String preparingTestsProgressCaption();
     String testingToolsContext();
     String noFilesSelectedCaption();
