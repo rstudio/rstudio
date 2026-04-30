@@ -2311,7 +2311,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             {
                fmt <- "available.packages() failed; skipping post-install source recording: %s"
                msg <- sprintf(fmt, conditionMessage(cnd))
-               .rs.logInfoMessage(msg)
+               .rs.logWarningMessage(msg)
                NULL
             }
          )
@@ -2340,7 +2340,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             {
                fmt <- "package(s) not present in available.packages(): %s; dependencies may not be tagged (check 'repos')"
                msg <- sprintf(fmt, paste(absent, collapse = ", "))
-               .rs.logInfoMessage(msg)
+               .rs.logWarningMessage(msg)
             }
 
             # Mirror install.packages's getDependencies(): expand 'direct'

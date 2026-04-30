@@ -119,7 +119,12 @@ test_that(".rs.installedPackagesFileInfo(paths=) returns NA mtime for missing pa
 
 # --- helpers for hook integration tests ---------------------------------------
 
-.rs.tests.makeLocalSourceRepo <- function(pkgName = "rstudioTestPkg")
+# Build one or more source packages into a local file:// repository.
+# 'pkgSpecs' is a named list whose names are package names and whose
+# values are named character vectors of extra DESCRIPTION fields
+# (e.g. c(Imports = "otherPkg")). The default builds a single package
+# with no extras for back-compat with single-package tests.
+.rs.tests.makeLocalSourceRepo <- function(pkgSpecs = list(rstudioTestPkg = character()))
 {
    base <- tempfile("rstudio-test-repo-")
    dir.create(base)
@@ -128,37 +133,47 @@ test_that(".rs.installedPackagesFileInfo(paths=) returns NA mtime for missing pa
    dir.create(src)
    dir.create(contrib, recursive = TRUE)
 
-   pkgDir <- file.path(src, pkgName)
-   dir.create(pkgDir)
-   writeLines(
-      c(
+   pkgNames <- names(pkgSpecs)
+
+   for (pkgName in pkgNames)
+   {
+      pkgDir <- file.path(src, pkgName)
+      dir.create(pkgDir)
+      lines <- c(
          paste0("Package: ", pkgName),
          "Version: 0.0.1",
          "Title: Demo",
          "Description: Test fixture for RStudio install-hook tests.",
          "License: GPL-3",
          "Encoding: UTF-8"
-      ),
-      file.path(pkgDir, "DESCRIPTION")
-   )
-   writeLines(paste0("# generated namespace for ", pkgName),
-              file.path(pkgDir, "NAMESPACE"))
+      )
+      extras <- pkgSpecs[[pkgName]]
+      if (length(extras))
+         lines <- c(lines, paste0(names(extras), ": ", extras))
+      writeLines(lines, file.path(pkgDir, "DESCRIPTION"))
+      writeLines(paste0("# generated namespace for ", pkgName),
+                 file.path(pkgDir, "NAMESPACE"))
+   }
 
    oldwd <- setwd(src)
    on.exit(setwd(oldwd), add = TRUE)
-   system2(
-      "R",
-      c("CMD", "build", "--no-build-vignettes", "--no-manual", pkgName),
-      stdout = FALSE,
-      stderr = FALSE
-   )
-   tarball <- list.files(src, pattern = "\\.tar\\.gz$", full.names = TRUE)
-   file.copy(tarball, contrib)
+   for (pkgName in pkgNames)
+   {
+      system2(
+         "R",
+         c("CMD", "build", "--no-build-vignettes", "--no-manual", pkgName),
+         stdout = FALSE,
+         stderr = FALSE
+      )
+   }
+   tarballs <- list.files(src, pattern = "\\.tar\\.gz$", full.names = TRUE)
+   file.copy(tarballs, contrib)
    tools::write_PACKAGES(contrib, type = "source")
 
    list(
-      base    = base,
-      pkgName = pkgName,
+      base     = base,
+      pkgName  = pkgNames[[1L]],   # back-compat: first package
+      pkgNames = pkgNames,
       reposUrl = paste0("file://", file.path(base, "repo"))
    )
 }
@@ -263,5 +278,58 @@ test_that(".rs.recordPackageSource(db=) tags without a network call", {
    expect_true("RemoteType" %in% colnames(tagged))
    expect_identical(unname(tagged[1, "RemoteType"]), "standard")
    expect_identical(unname(tagged[1, "RemotePkgRef"]), r$pkgName)
+
+})
+
+test_that(".rs.recordPackageSource is a no-op for empty pkgPaths", {
+
+   # Pass a non-empty 'db' so the function skips its network-fetch
+   # branch entirely; the loop body should then be a zero-iteration
+   # no-op rather than tripping any code path.
+   db <- data.frame(
+      Package    = "ignored",
+      Version    = "0.0.1",
+      Repository = "ignored",
+      stringsAsFactors = FALSE
+   )
+   expect_no_error(.rs.recordPackageSource(character(), db = db))
+
+})
+
+test_that("install hook tags transitive dependency DESCRIPTIONs", {
+
+   skip_on_os("windows")  # 'R CMD build' availability varies in CI
+
+   r <- .rs.tests.makeLocalSourceRepo(list(
+      rstudioTestPkgA = character(),
+      rstudioTestPkgB = c(Imports = "rstudioTestPkgA")
+   ))
+   on.exit(unlink(r$base, recursive = TRUE), add = TRUE)
+
+   lib <- tempfile("library-")
+   dir.create(lib)
+   on.exit(unlink(lib, recursive = TRUE), add = TRUE)
+
+   install.packages(
+      "rstudioTestPkgB",
+      lib   = lib,
+      repos = r$reposUrl,
+      type  = "source",
+      quiet = TRUE
+   )
+
+   # Both the requested package and its transitive dependency should
+   # have their DESCRIPTIONs tagged with the source repo. Before this
+   # change, only packages directly named to install.packages got
+   # tagged; the dependency closure was scanned but not recorded.
+   for (name in c("rstudioTestPkgA", "rstudioTestPkgB"))
+   {
+      descPath <- file.path(lib, name, "DESCRIPTION")
+      expect_true(file.exists(descPath), info = name)
+      desc <- read.dcf(descPath)
+      expect_true("RemoteType" %in% colnames(desc), info = name)
+      expect_true("RemoteRepos" %in% colnames(desc), info = name)
+      expect_identical(unname(desc[1, "RemoteType"]), "standard", info = name)
+   }
 
 })

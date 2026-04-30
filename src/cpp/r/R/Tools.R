@@ -2100,13 +2100,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
 
-   # Read the package's DESCRIPTION file.
-   pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
+   # Read the DESCRIPTION file directly. The skip-if-tagged check below
+   # must read from the same source we write to; packageDescription()
+   # prefers Meta/package.rds, which can be out of sync with DESCRIPTION
+   # (e.g. after a manual rebuild) and would let us silently append a
+   # duplicate set of Remote* lines.
+   descPath <- file.path(pkgPath, "DESCRIPTION")
+   descMatrix <- tryCatch(read.dcf(descPath), error = function(e) NULL)
+   if (is.null(descMatrix) || nrow(descMatrix) == 0L)
+      return()
 
    # If the package already has some remote fields recorded, then skip.
    # Currently, this is relevant for packages installed from R-universe.
-   remotes <- grep("^Remote", names(pkgDesc), value = TRUE)
-   if (length(remotes))
+   if (length(grep("^Remote", colnames(descMatrix))))
       return()
 
    remoteFields <- if (!is.null(pkgSrc))
@@ -2125,7 +2131,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          return()
 
       # Grab the package version.
-      pkgVersion <- pkgDesc[["Version"]]
+      pkgVersion <- if ("Version" %in% colnames(descMatrix))
+         descMatrix[1L, "Version"]
+      else
+         NA_character_
 
       # Normalize the repository path, removing source / binary suffixes.
       pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
@@ -2150,7 +2159,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
    # Update the DESCRIPTION file. We read and write the DESCRIPTION file
    # just to avoid issues with potential trailing lines.
-   descPath <- file.path(pkgPath, "DESCRIPTION")
    descContents <- readLines(descPath, warn = FALSE)
    descContents <- descContents[nzchar(descContents)]
    descContents <- c(descContents, remoteText)
