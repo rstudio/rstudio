@@ -154,7 +154,53 @@
    # we pass totalCols in the rownames col so we can pass this information
    # along when we retrieve column data, without changing the response format
    totalCols <- if (totalCols > 0) totalCols else ncol(x)
-   
+
+   # Cap the col_max_chars hint computation at this many columns. Above
+   # the cap, each per-column scan would add up; the client falls back to
+   # sampling the visible rows instead.
+   maxCharsCap <- 200L
+   computeMaxChars <- ncol(x) > 0 && ncol(x) <= maxCharsCap
+
+   # Cheap upper bound on the displayed character count for a column.
+   # Only handles types where the bound is a property of range/levels/type
+   # rather than a per-element format() call. Returns NA if the column type
+   # is not a known-cheap case so the client falls back to sampling.
+   colMaxChars <- function(col) {
+      if (length(col) == 0L)
+         return(NA_integer_)
+      if (is.logical(col))
+         return(5L)  # "FALSE"
+      if (inherits(col, "Date"))
+         return(10L) # "YYYY-MM-DD"
+      if (inherits(col, "POSIXt"))
+         return(19L) # "YYYY-MM-DD HH:MM:SS"
+      if (is.factor(col)) {
+         lvls <- levels(col)
+         if (length(lvls) == 0L) return(0L)
+         return(max(nchar(lvls, type = "width"), na.rm = TRUE))
+      }
+      if (is.character(col))
+         return(max(nchar(col, type = "width"), 0L, na.rm = TRUE))
+      if (is.integer(col)) {
+         rng <- suppressWarnings(range(col, na.rm = TRUE))
+         if (!all(is.finite(rng))) return(NA_integer_)
+         return(max(nchar(as.character(rng))))
+      }
+      if (is.numeric(col) && !is.object(col)) {
+         # Treat doubles whose values are all integral the same as integer;
+         # avoid format() on the full column otherwise (expensive and
+         # options-dependent).
+         finiteCol <- col[is.finite(col)]
+         if (length(finiteCol) == 0L) return(NA_integer_)
+         if (all(finiteCol == trunc(finiteCol))) {
+            rng <- range(finiteCol)
+            return(max(nchar(as.character(rng))))
+         }
+         return(NA_integer_)
+      }
+      NA_integer_
+   }
+
    # the first column is always the row names
    rowNameCol <- list(
       col_name        = .rs.scalar(""),
@@ -168,6 +214,20 @@
       col_na_count    = .rs.scalar(0),
       total_cols      = .rs.scalar(totalCols),
       total_rows      = .rs.scalar(nrow(x)))
+
+   # Add a max-chars hint for the row names column. For default integer
+   # rownames this is just nchar(nrow(x)); custom character rownames need
+   # an actual scan but it's still O(n) of nchar, which is cheap.
+   if (computeMaxChars) {
+      rn <- rownames(x)
+      if (length(rn) > 0L) {
+         rnChars <- if (is.numeric(rn))
+            nchar(as.character(suppressWarnings(max(rn, na.rm = TRUE))))
+         else
+            max(nchar(rn, type = "width"), 0L, na.rm = TRUE)
+         rowNameCol$col_max_chars <- .rs.scalar(as.integer(rnChars))
+      }
+   }
    
    # if there are no columns, bail out
    if (length(colNames) == 0) {
@@ -281,7 +341,7 @@
       # count NA values
       col_na_count <- sum(is.na(x[[idx]]))
 
-      list(
+      result <- list(
          col_name        = .rs.scalar(col_name),
          col_type        = .rs.scalar(col_type),
          col_breaks      = as.character(col_breaks),
@@ -292,6 +352,17 @@
          col_type_r      = .rs.scalar(col_type_r),
          col_na_count    = .rs.scalar(col_na_count)
       )
+
+      # Optionally include a cheap upper bound on displayed character count.
+      # The client uses this for initial column width sizing instead of
+      # sampling rows; absence of the field means "sample on the client."
+      if (computeMaxChars) {
+         maxCh <- colMaxChars(x[[idx]])
+         if (!is.na(maxCh))
+            result$col_max_chars <- .rs.scalar(as.integer(maxCh))
+      }
+
+      result
    })
    c(list(rowNameCol), colAttrs)
 })

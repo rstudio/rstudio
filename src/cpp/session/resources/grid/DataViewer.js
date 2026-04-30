@@ -756,6 +756,20 @@ var measureTextWidth = function(text, bold) {
    return Math.ceil(measureCtx.measureText(text).width);
 };
 
+// Average character width, derived from a representative reference string at
+// the same font/size as the data cells. Used to translate the server-provided
+// col_max_chars hint into a pixel width without measuring every cell.
+var AVG_CHAR_REF_STRING =
+   "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz .,-_";
+var avgCharWidthCache = 0;
+var avgCharWidth = function() {
+   if (!avgCharWidthCache) {
+      avgCharWidthCache =
+         measureTextWidth(AVG_CHAR_REF_STRING, false) / AVG_CHAR_REF_STRING.length;
+   }
+   return avgCharWidthCache;
+};
+
 // Compute column widths by measuring header text and a sample of cached cell
 // values, then apply them with table-layout:fixed.
 var autoSizeColumns = function() {
@@ -806,7 +820,21 @@ var autoSizeColumns = function() {
          ? TD_DATA_EXTRA : TD_EXTRA;
       cellExtra += rowNamesPad;
 
-      // Measure a sample of cell values from the cache
+      // If the server provided a max-chars hint, derive a baseline cell
+      // width from it (avgCharWidth × N + chrome). This is exact for
+      // numeric/integer/Date/POSIXct/logical columns, exact-by-bound for
+      // character/factor (max nchar across values), and absent for column
+      // types whose accurate length would require expensive formatting.
+      // We still sample below — the hint is a baseline, not a ceiling.
+      if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+         var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
+         if (hintW > maxW) maxW = hintW;
+      }
+
+      // Measure a sample of cell values from the cache. When the hint is
+      // present this catches cases where the avg-char-width estimate
+      // under-counts (e.g., a column of unusually wide glyphs); when it
+      // isn't, this is the sole source of width data for the column.
       var sampleSize = Math.min(rowCache.size, 100);
       for (var r = 0; r < sampleSize; r++) {
          var row = rowCache.get(r);
