@@ -185,7 +185,10 @@ var showError = function(msg) {
 var parseLocationUrl = function() {
    var result = {
       env: "", obj: "", cacheKey: "", id: "", dataSource: "",
-      maxDisplayColumns: -1, maxCols: 0, maxRows: 0
+      maxDisplayColumns: -1, maxCols: 0, maxRows: 0,
+      // Default true so the sidebar shows when the param is absent (e.g.
+      // older callers that don't pass it).
+      showSummary: true
    };
    var query = window.location.search.substring(1);
    var vars = query.split("&");
@@ -200,6 +203,7 @@ var parseLocationUrl = function() {
       else if (key === "max_display_columns") result.maxDisplayColumns = parseInt(val, 10);
       else if (key === "max_cols") result.maxCols = parseInt(val, 10);
       else if (key === "max_rows") result.maxRows = parseInt(val, 10);
+      else if (key === "show_summary") result.showSummary = (val === "1" || val === "true");
    }
    return result;
 };
@@ -2223,6 +2227,10 @@ var initGrid = function(resCols, data) {
 
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
+
+   // Apply the data_viewer_show_summary preference as the default; saved
+   // per-object state (below) overrides it when present.
+   sidebarVisible = loc.showSummary;
 
    // Restore saved per-object UI state before headers are built (so pinning
    // order is correct) and before fetchRows (so sort/filters are sent).

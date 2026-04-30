@@ -1748,6 +1748,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxCellSizeDescription();
 
    /**
+    * Whether the Summary side panel is shown by default when opening the data viewer.
+    */
+   @DefaultStringValue("Show data viewer summary panel by default")
+   String dataViewerShowSummaryTitle();
+   @DefaultStringValue("Whether the Summary side panel is shown by default when opening the data viewer.")
+   String dataViewerShowSummaryDescription();
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    @DefaultStringValue("Enable support for screen readers")

@@ -1433,6 +1433,12 @@
             "title": "Maximum number of character in data viewer cells",
             "description": "The maximum number of characters to show in a data viewer cell."
         },
+        "data_viewer_show_summary": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show data viewer summary panel by default",
+            "description": "Whether the Summary side panel is shown by default when opening the data viewer."
+        },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,

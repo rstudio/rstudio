@@ -368,10 +368,12 @@ json::Object makeDataItem(SEXP dataSEXP,
    dataItem["object"] = objName;
    dataItem["environment"] = envName;
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
-      http::util::urlEncode(envName, true) + "&obj=" + 
+      http::util::urlEncode(envName, true) + "&obj=" +
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
-      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" +
+      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns()) +
+      "&show_summary=" +
+      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0");
    dataItem["preview"] = preview;
 
    return dataItem;
