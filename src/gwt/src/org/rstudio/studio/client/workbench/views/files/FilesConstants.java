@@ -28,6 +28,8 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String invalidSelectionCaption();
     String invalidSelectionMessage();
     String permanentDeleteMessage();
+    String moveToTrashMessage();
+    String moveToTrashSuffix();
     String selectedFilesMessage(int size);
     String cannotBeUndoneMessage();
     String confirmDeleteCaption();
