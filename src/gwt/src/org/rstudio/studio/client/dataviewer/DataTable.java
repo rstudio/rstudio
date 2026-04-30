@@ -88,10 +88,10 @@ public class DataTable
                     }
                  }
               });
-      // Use fill='currentColor' so the icon picks up the toolbar's text
-      // color and adapts to the active IDE theme.
+      // Use fill='currentColor' so the icon picks up the surrounding text
+      // color (and thus adapts to the active IDE theme).
       sidebarButton_ = new HTML(
-         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle;color:#888'>" +
+         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle'>" +
          "<rect x='1' y='4' width='3' height='8' rx='0.5' fill='currentColor'/>" +
          "<rect x='5.5' y='0' width='3' height='12' rx='0.5' fill='currentColor'/>" +
          "<rect x='10' y='6' width='3' height='6' rx='0.5' fill='currentColor'/>" +

@@ -246,10 +246,15 @@ var fetchColumnSummary = function(columnIndex, callback) {
    gridDataFetch(params)
       .then(function(result) { if (callback) callback(result); })
       .catch(function(err) {
-         if (err && err.name === "AbortError") return;
+         if (err && err.name === "AbortError") {
+            // Still invoke the callback (with null) so the caller can balance
+            // any pending-fetch bookkeeping (e.g. the sidebar spinner refcount).
+            if (callback) callback(null);
+            return;
+         }
          console.warn("fetchColumnSummary failed:", err);
-         // Still invoke the callback so the sidebar can render an error
-         // state instead of staying on a "Loading..." spinner forever.
+         // Render an error state instead of staying on a "Loading..." spinner
+         // forever.
          if (callback) callback({ error: "Failed to load summary" });
       });
 };
@@ -1854,11 +1859,14 @@ var initSidebar = function() {
                   pendingSummaryFetches++;
                   if (spinner) spinner.style.display = "";
                   fetchColumnSummary(colIdx + columnOffset, function(data) {
-                     loaded = true;
                      pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
                      if (spinner && pendingSummaryFetches === 0) {
                         spinner.style.display = "none";
                      }
+                     // Aborted requests pass null — leave loaded=false so a
+                     // re-expand can retry.
+                     if (data === null) return;
+                     loaded = true;
                      renderColumnStats(statsEl, data, colType);
                      statsEl.style.display = "";
                   });
