@@ -75,7 +75,7 @@ pipeline {
             echo "Commit_hash value: ${params.COMMIT_HASH}"
             checkout([$class: 'GitSCM',
                       branches: [[name: "${params.COMMIT_HASH}"]],
-                      extensions: [],
+                      extensions: utils.gitCheckoutExtensions(),
                       userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
           }
         }
@@ -190,7 +190,7 @@ pipeline {
                   // We need to checkout the correct commit again here because the matrix builds run on different agents
                   checkout([$class: 'GitSCM',
                             branches: [[name: "${params.COMMIT_HASH}"]],
-                            extensions: [],
+                            extensions: utils.gitCheckoutExtensions(),
                             userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
                 }
               }
@@ -396,11 +396,6 @@ pipeline {
                 }
               }
             }
-            post {
-              always {
-                deleteDir()
-              }
-            }
           }
         }
       }
@@ -444,7 +439,6 @@ pipeline {
   post {
     always {
       node('linux') {
-        deleteDir()
         sendNotifications slack_channel: SLACK_CHANNEL
       }
     }

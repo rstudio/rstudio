@@ -749,4 +749,28 @@ void ensureFullCommitHistory() {
   }
 }
 
+/**
+  * Returns the standard list of GitSCM extensions used for checkout calls.
+  *
+  * - CloneOption with noTags (the build does not depend on git tags) and an
+  *   optional reference repo. When env.GIT_REFERENCE_REPO is set on the agent,
+  *   initial clones reuse objects from that bare clone so only missing objects
+  *   are fetched over the network.
+  * - CleanBeforeCheckout so each checkout resets untracked files before
+  *   fetching, allowing .git to persist across builds (the next fetch is then
+  *   incremental) while still starting each build from a clean tree.
+  *
+  * To enable the cache, set GIT_REFERENCE_REPO on each agent (e.g.
+  * /var/cache/git/rstudio.git) to a periodically-updated bare clone of the
+  * repository. If unset, this returns extensions that still benefit from
+  * noTags and CleanBeforeCheckout.
+  */
+def gitCheckoutExtensions() {
+  def cloneOpts = [$class: 'CloneOption', noTags: true, timeout: 30]
+  if (env.GIT_REFERENCE_REPO) {
+    cloneOpts['reference'] = env.GIT_REFERENCE_REPO
+  }
+  return [cloneOpts, [$class: 'CleanBeforeCheckout']]
+}
+
 return this

@@ -62,7 +62,7 @@ pipeline {
           steps {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
-              extensions: [],
+              extensions: utils.gitCheckoutExtensions(),
               userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
           }
         }
@@ -88,11 +88,6 @@ pipeline {
               // SHOULD_REBUILD = utils.rebuildCheck()
             }
           }
-        }
-      }
-      post {
-        always {
-          deleteDir()
         }
       }
     }
@@ -126,7 +121,7 @@ pipeline {
           steps {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
-              extensions: [],
+              extensions: utils.gitCheckoutExtensions(),
               userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
           }
         }
@@ -313,12 +308,6 @@ pipeline {
         // Also depends on flavor, so must be in the matrix
         script {
           utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
-        }
-      }
-
-      post {
-        always {
-          deleteDir()
         }
       }
     } // stage ("Upload Daily Build Redirects")

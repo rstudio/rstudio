@@ -63,7 +63,7 @@ pipeline {
           sleep(time: 5, unit: 'SECONDS')
           checkout([$class: 'GitSCM',
                     branches: [[name: "${params.COMMIT_HASH}"]],
-                    extensions: [],
+                    extensions: utils.gitCheckoutExtensions(),
                     userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: "${GIT_URL}"]]])
         }
       }
@@ -265,7 +265,6 @@ pipeline {
 
   post {
     always {
-      deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
   }

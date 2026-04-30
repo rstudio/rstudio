@@ -64,7 +64,7 @@ pipeline {
           $class: 'GitSCM',
           branches: scm.branches,
           doGenerateSubmoduleConfigurations: true,
-          extensions: scm.extensions + [[$class: 'SubmoduleOption', parentCredentials: true]],
+          extensions: scm.extensions + utils.gitCheckoutExtensions() + [[$class: 'SubmoduleOption', parentCredentials: true]],
           userRemoteConfigs: scm.userRemoteConfigs])
       }
     }
