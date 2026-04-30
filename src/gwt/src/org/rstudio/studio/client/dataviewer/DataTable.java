@@ -328,6 +328,18 @@ public class DataTable
       }
    }
 
+   public void onDismiss()
+   {
+      try
+      {
+         onDismiss(getWindow());
+      }
+      catch(Exception e)
+      {
+         // swallow — close path must not throw
+      }
+   }
+
    private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
 
    private static final native void toggleSidebar(WindowEx frame) /*-{
@@ -359,6 +371,11 @@ public class DataTable
    private static final native void onDeactivate(WindowEx frame) /*-{
       if (frame && frame.onDeactivate)
          frame.onDeactivate();
+   }-*/;
+
+   private static final native void onDismiss(WindowEx frame) /*-{
+      if (frame && frame.onDismiss)
+         frame.onDismiss();
    }-*/;
 
    private static final native boolean isLimitedColumnFrame(WindowEx frame) /*-{

@@ -246,6 +246,12 @@ public class DataEditingTargetWidget extends Composite
       if (table_ != null)
          table_.onDeactivate();
    }
+
+   public void onDismiss()
+   {
+      if (table_ != null)
+         table_.onDismiss();
+   }
    
    @Override
    public RStudioFrame getDataTableFrame()

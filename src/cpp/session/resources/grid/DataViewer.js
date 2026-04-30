@@ -2369,6 +2369,12 @@ var loadSavedState = function() {
    }
 };
 
+var clearSavedState = function() {
+   var key = stateKey();
+   if (!key) return;
+   try { localStorage.removeItem(key); } catch (e) {}
+};
+
 // Apply restored state. Must be called after `cols` is populated but before
 // the first row fetch (so sort/filters are included in fetch params) and
 // before headers are built (so pinning order is correct).
@@ -2609,6 +2615,13 @@ window.onDeactivate = function() {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
    }
+};
+
+// Called from GWT when the data viewer tab is being closed (dismissType
+// CLOSE, not MOVE). Discard the saved state so it doesn't accumulate in
+// localStorage past the lifetime of the tab.
+window.onDismiss = function() {
+   clearSavedState();
 };
 
 window.setData = function(data) {
