@@ -2201,18 +2201,22 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("installPackagesWhichDeps", function(userDeps)
 {
-   # Maps the user's 'dependencies' argument (TRUE / FALSE / character /
-   # NA / anything else) onto the 'which' vector accepted by
-   # tools::package_dependencies. Mirrors install.packages's own defaults:
-   # NA / unrecognized -> hard deps only; TRUE -> include Suggests.
+   # Maps the user's 'dependencies' argument onto the dependency types
+   # tools::package_dependencies should query. Returns a list with
+   # 'direct' (types to expand for the requested pkgs) and 'transitive'
+   # (types to recurse through for added dependencies) so we can mirror
+   # install.packages's getDependencies(): when dependencies = TRUE, the
+   # requested pkgs pull in Suggests but their dependencies do not.
+   strong <- c("Depends", "Imports", "LinkingTo")
+   userDeps <- if (is.character(userDeps)) userDeps[!is.na(userDeps)] else userDeps
    if (isTRUE(userDeps))
-      c("Depends", "Imports", "LinkingTo", "Suggests")
+      list(direct = c(strong, "Suggests"), transitive = strong)
    else if (isFALSE(userDeps))
-      character()
+      list(direct = character(), transitive = character())
    else if (is.character(userDeps))
-      userDeps
+      list(direct = userDeps, transitive = userDeps)
    else
-      c("Depends", "Imports", "LinkingTo")
+      list(direct = strong, transitive = strong)
 })
 
 .rs.addFunction("installedPackagesFileInfoDiff", function(before, after)

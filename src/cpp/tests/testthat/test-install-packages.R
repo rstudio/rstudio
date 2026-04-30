@@ -60,19 +60,34 @@ test_that(".rs.installPackagesWhichDeps maps the 'dependencies' argument correct
    all  <- c("Depends", "Imports", "LinkingTo", "Suggests")
 
    # NA (install.packages's default) and unrecognized values fall back to hard deps.
-   expect_identical(.rs.installPackagesWhichDeps(NA),  hard)
-   expect_identical(.rs.installPackagesWhichDeps(NULL), hard)
+   expect_identical(.rs.installPackagesWhichDeps(NA),
+                    list(direct = hard, transitive = hard))
+   expect_identical(.rs.installPackagesWhichDeps(NULL),
+                    list(direct = hard, transitive = hard))
 
-   # TRUE / FALSE
-   expect_identical(.rs.installPackagesWhichDeps(TRUE),  all)
-   expect_identical(.rs.installPackagesWhichDeps(FALSE), character())
+   # TRUE includes Suggests directly but only recurses through strong deps,
+   # mirroring install.packages's getDependencies() behavior.
+   expect_identical(.rs.installPackagesWhichDeps(TRUE),
+                    list(direct = all, transitive = hard))
+   expect_identical(.rs.installPackagesWhichDeps(FALSE),
+                    list(direct = character(), transitive = character()))
 
-   # Explicit character vector is passed through verbatim.
+   # Explicit character vector is passed through verbatim for both direct and
+   # transitive (install.packages applies the user's choice on every level).
    expect_identical(
       .rs.installPackagesWhichDeps(c("Depends", "Suggests")),
-      c("Depends", "Suggests")
+      list(direct = c("Depends", "Suggests"),
+           transitive = c("Depends", "Suggests"))
    )
-   expect_identical(.rs.installPackagesWhichDeps(character()), character())
+   expect_identical(.rs.installPackagesWhichDeps(character()),
+                    list(direct = character(), transitive = character()))
+
+   # NA values inside a character vector are dropped so they don't propagate
+   # into tools::package_dependencies(which = ...).
+   expect_identical(
+      .rs.installPackagesWhichDeps(c("Depends", NA_character_)),
+      list(direct = "Depends", transitive = "Depends")
+   )
 
 })
 
