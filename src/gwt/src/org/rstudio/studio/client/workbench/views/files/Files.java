@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.ResultCallback;
@@ -692,7 +691,6 @@ public class Files
                                              super.onError(error);
                                              return;
                                           }
-                                          Debug.logError(error);
                                           String prefix = selectedFiles.size() == 1
                                                 ? constants_.deleteToTrashFailedSingleMessage(
                                                       selectedFiles.get(0).getName())
