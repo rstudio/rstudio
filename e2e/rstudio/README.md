@@ -126,6 +126,7 @@ test.describe('Feature name', () => {
 
 - **Parallel safety**: Default to `test.describe()`. Use `test.describe.serial()` only when tests share state (e.g., multi-turn chat conversations).
 - **Failing tests**: Use `test.fixme()` — never comment tests out.
+- **Cleanup**: prefer a `beforeAll` calling `consoleActions.closeAllBuffersWithoutSaving()` over per-test cleanup. Use `saveAllSourceDocs` → `closeAllSourceDocs` only when the test must flush in-editor edits to disk.
 - **File naming**: Test files use snake_case: `feature_name.test.ts`.
 - **Temporary files**: Use timestamps (`test_${Date.now()}.R`) to avoid collisions.
 
