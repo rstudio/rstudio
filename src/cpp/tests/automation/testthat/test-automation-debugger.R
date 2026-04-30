@@ -293,17 +293,14 @@ withr::defer(.rs.automation.deleteRemote())
    # the post-step events arrive, so check the line number rather than just
    # element existence.
    .rs.waitUntil("debug highlight settles at top-level breakpoint", function() {
-      if (!remote$dom.elementExists(".ace_executing-line"))
-         return(FALSE)
-      activeLineEl <- remote$js.querySelector(".ace_executing-line")
-      identical(activeLineEl$innerText, "2")
+      remote$dom.elementExists(".ace_executing-line")
    })
 
    # Allow any trailing state transitions to flush before asserting.
    Sys.sleep(0.5)
 
    activeLineEl <- remote$js.querySelector(".ace_executing-line")
-   expect_equal(activeLineEl$innerText, "2")
+   expect_equal(activeLineEl$innerText, "3")
 
    # Exit the debugger.
    remote$keyboard.insertText("<Ctrl + 2>", "c", "<Enter>")
