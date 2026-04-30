@@ -58,12 +58,17 @@ pipeline {
         }
 
         stage ('Checkout') { // checkout stage required here in order for versioning to work properly
-          when { expression { params.COMMIT_HASH != '' } }
+          // Always run so CleanBeforeCheckout (in gitCheckoutExtensions) is applied
+          // even when COMMIT_HASH is empty.
           steps {
-            checkout([$class: 'GitSCM',
-              branches: [[name: params.COMMIT_HASH]],
-              extensions: utils.gitCheckoutExtensions(),
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
+            script {
+              def branches = params.COMMIT_HASH ? [[name: params.COMMIT_HASH]] : scm.branches
+              def remotes = params.COMMIT_HASH ? [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]] : scm.userRemoteConfigs
+              checkout([$class: 'GitSCM',
+                branches: branches,
+                extensions: utils.gitCheckoutExtensions(),
+                userRemoteConfigs: remotes])
+            }
           }
         }
 
@@ -117,12 +122,18 @@ pipeline {
 
       stages {
         stage ('Checkout') {
-          when { expression { params.COMMIT_HASH != '' } }
+          // Always run so CleanBeforeCheckout (in gitCheckoutExtensions) is applied
+          // even when COMMIT_HASH is empty. The Windows agent's workspace is reused
+          // across builds by customWorkspace; this ensures untracked files are reset.
           steps {
-            checkout([$class: 'GitSCM',
-              branches: [[name: params.COMMIT_HASH]],
-              extensions: utils.gitCheckoutExtensions(),
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
+            script {
+              def branches = params.COMMIT_HASH ? [[name: params.COMMIT_HASH]] : scm.branches
+              def remotes = params.COMMIT_HASH ? [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]] : scm.userRemoteConfigs
+              checkout([$class: 'GitSCM',
+                branches: branches,
+                extensions: utils.gitCheckoutExtensions(),
+                userRemoteConfigs: remotes])
+            }
           }
         }
 

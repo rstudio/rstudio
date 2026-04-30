@@ -55,16 +55,22 @@ pipeline {
     }
 
     stage ("Checkout") {
-      when { expression { params.COMMIT_HASH != '' } }
-
+      // Always run so CleanBeforeCheckout (in gitCheckoutExtensions) is applied
+      // even when COMMIT_HASH is empty. When unset, fall back to the SCM-configured
+      // branch so the implicit checkout that populated this workspace is repeated
+      // with the standard extensions.
       steps {
-        echo "Commit_hash value: ${params.COMMIT_HASH}"
-        retry(5) {
-          sleep(time: 5, unit: 'SECONDS')
-          checkout([$class: 'GitSCM',
-                    branches: [[name: "${params.COMMIT_HASH}"]],
-                    extensions: utils.gitCheckoutExtensions(),
-                    userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: "${GIT_URL}"]]])
+        script {
+          echo "Commit_hash value: ${params.COMMIT_HASH}"
+          def branches = params.COMMIT_HASH ? [[name: params.COMMIT_HASH]] : scm.branches
+          def remotes = params.COMMIT_HASH ? [[credentialsId: 'posit-jenkins-rstudio', url: "${GIT_URL}"]] : scm.userRemoteConfigs
+          retry(5) {
+            sleep(time: 5, unit: 'SECONDS')
+            checkout([$class: 'GitSCM',
+                      branches: branches,
+                      extensions: utils.gitCheckoutExtensions(),
+                      userRemoteConfigs: remotes])
+          }
         }
       }
     }

@@ -69,14 +69,20 @@ pipeline {
         }
 
         stage("Checkout") {
-          when { expression { params.COMMIT_HASH != '' } }
-
+          // Always run so CleanBeforeCheckout (in gitCheckoutExtensions) is applied
+          // even when COMMIT_HASH is empty. When unset, fall back to the SCM-configured
+          // branch so the implicit checkout that populated this workspace is repeated
+          // with the standard extensions.
           steps {
-            echo "Commit_hash value: ${params.COMMIT_HASH}"
-            checkout([$class: 'GitSCM',
-                      branches: [[name: "${params.COMMIT_HASH}"]],
-                      extensions: utils.gitCheckoutExtensions(),
-                      userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
+            script {
+              echo "Commit_hash value: ${params.COMMIT_HASH}"
+              def branches = params.COMMIT_HASH ? [[name: params.COMMIT_HASH]] : scm.branches
+              def remotes = params.COMMIT_HASH ? [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]] : scm.userRemoteConfigs
+              checkout([$class: 'GitSCM',
+                        branches: branches,
+                        extensions: utils.gitCheckoutExtensions(),
+                        userRemoteConfigs: remotes])
+            }
           }
         }
 
@@ -185,13 +191,18 @@ pipeline {
 
             stages {
               stage('Checkout') {
-                when { expression { params.COMMIT_HASH != '' } }
                 steps {
-                  // We need to checkout the correct commit again here because the matrix builds run on different agents
-                  checkout([$class: 'GitSCM',
-                            branches: [[name: "${params.COMMIT_HASH}"]],
-                            extensions: utils.gitCheckoutExtensions(),
-                            userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
+                  // Re-checkout on the matrix cell agent: when COMMIT_HASH is set, target
+                  // that commit; otherwise repeat the SCM checkout. Always run so
+                  // CleanBeforeCheckout resets untracked files between builds.
+                  script {
+                    def branches = params.COMMIT_HASH ? [[name: params.COMMIT_HASH]] : scm.branches
+                    def remotes = params.COMMIT_HASH ? [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]] : scm.userRemoteConfigs
+                    checkout([$class: 'GitSCM',
+                              branches: branches,
+                              extensions: utils.gitCheckoutExtensions(),
+                              userRemoteConfigs: remotes])
+                  }
                 }
               }
 
