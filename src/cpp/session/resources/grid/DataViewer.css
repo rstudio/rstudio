@@ -191,9 +191,10 @@ td.pinned {
    injects theme-specific rules for td.first-child. */
 th.pinned:first-child,
 td.pinned:first-child {
-   font-weight: bold;
    text-align: right;
    border-left: none;
+   padding-left: 9px;
+   padding-right: 9px;
 }
 
 /* Pinned header cells sit above pinned data cells */

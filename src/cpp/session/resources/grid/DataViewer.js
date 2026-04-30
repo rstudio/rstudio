@@ -23,6 +23,17 @@ var BUFFER_ROWS = 200;
 var FETCH_SIZE = 500;
 var FETCH_THRESHOLD = 100;
 
+// User-facing timings, all in milliseconds. Tweak together when tuning feel.
+var TIMING = {
+   filterDebounce: 200,         // numeric/text filter input → applyFilters
+   searchDebounce: 100,         // global search input → applyFilters
+   infoBarDebounce: 150,        // "Showing X to Y" text update during scroll
+   resizeDebounce: 75,          // window resize → relayout
+   sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
+   columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
+   scrollbarHide: 1200          // delay before custom scrollbars fade out
+};
+
 // ==========================================================================
 // State
 // ==========================================================================
@@ -115,6 +126,10 @@ var sidebarVisible = true;
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
 var pinnedColumns = new Set();
 
+// Set when initial autoSize ran with a hidden viewport (offsetHeight === 0);
+// the next onActivate re-measures.
+var needsAutoSize = false;
+
 // ==========================================================================
 // Utilities
 // ==========================================================================
@@ -201,59 +216,58 @@ var buildFormData = function(params) {
    return parts.join("&");
 };
 
+// Shared POST to ../grid_data, returns a Promise resolving to parsed JSON.
+// On non-2xx, throws an Error whose message is the response body.
+var gridDataFetch = function(body, signal) {
+   var init = {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body
+   };
+   if (signal) init.signal = signal;
+   return fetch("../grid_data", init).then(function(response) {
+      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
+      return response.json();
+   });
+};
+
 var fetchColumnSummary = function(columnIndex, callback) {
    var params = "show=column_summary&column=" + columnIndex +
       "&" + window.location.search.substring(1);
 
-   fetch("../grid_data", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params
-   })
-   .then(function(response) {
-      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
-      return response.json();
-   })
-   .then(function(result) {
-      if (callback) callback(result);
-   })
-   .catch(function(err) {
-      // Silently fail — stats are non-critical
-   });
+   gridDataFetch(params)
+      .then(function(result) { if (callback) callback(result); })
+      .catch(function(err) {
+         if (err && err.name === "AbortError") return;
+         console.warn("fetchColumnSummary failed:", err);
+      });
 };
 
 var fetchColumns = function(callback) {
    var params = "show=cols&" + window.location.search.substring(1) +
       "&column_offset=" + columnOffset;
 
-   fetch("../grid_data", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params
-   })
-   .then(function(response) {
-      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
-      return response.json();
-   })
-   .then(function(result) {
-      if (result.error) { showError(result.error); return; }
-      callback(result);
-   })
-   .catch(function(err) {
-      try {
-         var parsed = JSON.parse(err.message);
-         if (parsed.error) showError(parsed.error);
-         else showError(err.message);
-      } catch(e) {
-         showError(err.message || "The object could not be displayed.");
-      }
-   });
+   gridDataFetch(params)
+      .then(function(result) {
+         if (result.error) { showError(result.error); return; }
+         callback(result);
+      })
+      .catch(function(err) {
+         try {
+            var parsed = JSON.parse(err.message);
+            if (parsed.error) showError(parsed.error);
+            else showError(err.message);
+         } catch(e) {
+            showError(err.message || "The object could not be displayed.");
+         }
+      });
 };
 
 var fetchRows = function(start, length, callback) {
    var key = start + "-" + length;
    if (pendingFetches.has(key)) return;
 
+   var startToken = drawCounter;
    var loc = parseLocationUrl();
    var params = {
       env: loc.env,
@@ -262,7 +276,7 @@ var fetchRows = function(start, length, callback) {
       show: "data",
       start: start,
       length: length,
-      draw: ++drawCounter,
+      draw: startToken,
       column_offset: columnOffset,
       max_display_columns: maxDisplayColumns,
       max_rows: maxRows,
@@ -283,40 +297,34 @@ var fetchRows = function(start, length, callback) {
    var controller = new AbortController();
    pendingFetches.set(key, controller);
 
-   fetch("../grid_data", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: buildFormData(params),
-      signal: controller.signal
-   })
-   .then(function(response) {
-      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
-      return response.json();
-   })
-   .then(function(result) {
-      pendingFetches.delete(key);
-      if (result.error) { showError(result.error); return; }
-      totalRows = result.recordsTotal;
-      filteredRows = result.recordsFiltered;
-      // Store rows in cache
-      for (var i = 0; i < result.data.length; i++) {
-         rowCache.set(start + i, result.data[i]);
-      }
-      if (callback) callback();
-      renderVisibleRows(true);
-      updateInfoBar();
-      updateSpacerHeight();
-   })
-   .catch(function(err) {
-      pendingFetches.delete(key);
-      if (err.name === "AbortError") return;
-      try {
-         var parsed = JSON.parse(err.message);
-         if (parsed.error) showError(parsed.error);
-      } catch(e) {
-         // Ignore non-JSON errors during fetch
-      }
-   });
+   gridDataFetch(buildFormData(params), controller.signal)
+      .then(function(result) {
+         pendingFetches.delete(key);
+         // Discard responses for requests that started before the most recent
+         // invalidate (sort, filter, search, column-frame change).
+         // AbortController covers most cases, but races are still possible.
+         if (startToken !== drawCounter) return;
+         if (result.error) { showError(result.error); return; }
+         totalRows = result.recordsTotal;
+         filteredRows = result.recordsFiltered;
+         for (var i = 0; i < result.data.length; i++) {
+            rowCache.set(start + i, result.data[i]);
+         }
+         if (callback) callback();
+         renderVisibleRows(true);
+         updateInfoBar();
+         updateSpacerHeight();
+      })
+      .catch(function(err) {
+         pendingFetches.delete(key);
+         if (err.name === "AbortError") return;
+         try {
+            var parsed = JSON.parse(err.message);
+            if (parsed.error) showError(parsed.error);
+         } catch(e) {
+            // Ignore non-JSON errors during fetch
+         }
+      });
 };
 
 var invalidateCache = function() {
@@ -326,24 +334,28 @@ var invalidateCache = function() {
    pendingFetches.clear();
    totalRows = 0;
    filteredRows = 0;
+   // Bump the staleness token so any in-flight responses that slip past
+   // AbortController are discarded by fetchRows' response handler.
+   drawCounter++;
 };
 
 // ==========================================================================
 // Cell Rendering
 // ==========================================================================
 
-// Render cell contents. Returns an object { text, html } where exactly one
-// is set. When only `text` is set, callers can use the fast textContent path
-// instead of innerHTML, avoiding HTML parsing overhead.
-var renderCellContents = function(data, colIdx, rowData, clazz) {
+// Render cell contents directly into the given td. Uses textContent for the
+// common plain-text case (fastest, no HTML parsing) and innerHTML only when a
+// cell needs markup (NA pill, search highlight, data/list link).
+var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    // NA handling: 0 means NA, or null when displayNullsAsNAs is set
    if (data === 0 || (displayNullsAsNAs && data === null)) {
-      return { html: '<span class="naCell">NA</span>' };
+      td.innerHTML = '<span class="naCell">NA</span>';
+      return;
    }
 
    // Row name column: parse JSON
    if (rowNumbers && colIdx === 0) {
-      data = JSON.parse(data).toString();
+      try { data = JSON.parse(data).toString(); } catch(e) { data = String(data); }
    }
 
    if (clazz === "dataCell") {
@@ -391,16 +403,15 @@ var renderCellContents = function(data, colIdx, rowData, clazz) {
       imgEl.className = "viewerImage";
       imgEl.src = clazz === "dataCell" ? "data-viewer.png" : "object-viewer.png";
       linkEl.appendChild(imgEl);
-      return { html: "<i>" + escaped + "</i> " + linkEl.outerHTML };
+      td.innerHTML = "<i>" + escaped + "</i> " + linkEl.outerHTML;
+      return;
    }
 
-   // If highlighting produced HTML, return as html
    if (didHighlight) {
-      return { html: data };
+      td.innerHTML = data;
+   } else {
+      td.textContent = data;
    }
-
-   // Common case: plain text — caller can use textContent (fast path)
-   return { text: data };
 };
 
 // Cached pinned offsets — recomputed in applyPinnedColumns and renderVisibleRows
@@ -408,24 +419,16 @@ var cachedPinnedOffsets = {};
 
 var createCell = function(data, colIdx, rowData, clazz) {
    var td = document.createElement("td");
-   var contents = renderCellContents(data, colIdx, rowData, clazz);
 
-   // Determine classes
    var classes = [clazz];
    if (isColumnPinned(colIdx)) {
       classes.push("pinned");
       td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
    if (colIdx === 0 && rowNumbers) classes.push("first-child");
-
    td.className = classes.join(" ");
 
-   // Fast path: use textContent for plain text cells (avoids HTML parsing)
-   if (contents.text !== undefined) {
-      td.textContent = contents.text;
-   } else {
-      td.innerHTML = contents.html;
-   }
+   renderCellContents(td, data, colIdx, rowData, clazz);
 
    if (typeof data === "string") td.title = data;
 
@@ -599,6 +602,7 @@ var togglePinColumn = function(colIdx) {
    } else {
       pinnedColumns.add(colIdx);
    }
+   invalidatePinnedOffsets();
    rebuildHeaders();
    renderVisibleRows(true);
 };
@@ -630,7 +634,20 @@ var rebuildHeaders = function() {
 
 // Compute the cumulative left offset for each pinned column based on render order.
 // Returns { offsets: { colIdx: leftPx, ... }, totalWidth: number }.
+//
+// Result is cached. Each entry costs an offsetWidth read which forces layout,
+// and this function is called from renderVisibleRows on every scroll. Callers
+// that change column widths or pinning must invalidate via
+// invalidatePinnedOffsets().
+var pinnedOffsetsCache = null;
+
+var invalidatePinnedOffsets = function() {
+   pinnedOffsetsCache = null;
+};
+
 var getPinnedOffsets = function() {
+   if (pinnedOffsetsCache !== null) return pinnedOffsetsCache;
+
    var offsets = {};
    var cumulative = 0;
    var thead = document.getElementById("data_cols");
@@ -643,7 +660,8 @@ var getPinnedOffsets = function() {
       var th = thead.children[i];
       cumulative += th ? th.offsetWidth : 0;
    }
-   return { offsets: offsets, totalWidth: cumulative };
+   pinnedOffsetsCache = { offsets: offsets, totalWidth: cumulative };
+   return pinnedOffsetsCache;
 };
 
 // Apply pinned styling to header cells
@@ -669,12 +687,18 @@ var applyPinnedColumns = function() {
       }
    }
 
-   // Add horizontal overscroll so the last columns can be scrolled
-   // to sit next to the pinned columns.
+   // Horizontal overscroll: lets the user scroll the rightmost column to sit
+   // just past the pinned columns for side-by-side context. Only meaningful
+   // when content is wider than the viewport — otherwise it would introduce
+   // a phantom scrollbar over empty space.
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var overscroll = Math.max(0, viewport.clientWidth - pinned.totalWidth);
+      var currentPad = parseFloat(table.style.paddingRight) || 0;
+      var contentWidth = table.offsetWidth - currentPad;
+      var overscroll = contentWidth > viewport.clientWidth
+         ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
+         : 0;
       table.style.paddingRight = overscroll + "px";
    }
 };
@@ -683,22 +707,19 @@ var applyPinnedColumns = function() {
 // Column Auto-Sizing
 // ==========================================================================
 
-// Measure the natural text width of a string using a hidden off-screen element.
-// The element is created once and reused for all measurements.
-var measureEl = null;
+// Measure the natural text width of a string using a 2d canvas. Avoids the
+// layout flush that an offsetWidth read on a DOM element would force, which
+// matters when measuring 100+ rows × N columns at startup.
+var measureCanvas = null;
+var measureCtx = null;
 var measureTextWidth = function(text, bold) {
-   if (!measureEl) {
-      measureEl = document.createElement("div");
-      measureEl.style.cssText =
-         "position:absolute;visibility:hidden;height:auto;width:auto;" +
-         "white-space:nowrap;font-size:11px;" +
-         "font-family:'DejaVu Sans','Lucida Grande','Segoe UI',Verdana,Helvetica,sans-serif;" +
-         "padding:0 5px;";
-      document.body.appendChild(measureEl);
+   if (!measureCtx) {
+      measureCanvas = document.createElement("canvas");
+      measureCtx = measureCanvas.getContext("2d");
    }
-   measureEl.style.fontWeight = bold ? "bold" : "normal";
-   measureEl.textContent = text;
-   return measureEl.offsetWidth;
+   measureCtx.font = (bold ? "bold " : "") +
+      "11px 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif";
+   return Math.ceil(measureCtx.measureText(text).width);
 };
 
 // Compute column widths by measuring header text and a sample of cached cell
@@ -718,18 +739,17 @@ var autoSizeColumns = function() {
    measuredWidths = [];
    var totalWidth = 0;
 
-   // CSS-derived chrome (see DataViewer.css):
-   //   td/th: 5px each side + 1px border-right
-   //   .dataCell/.listCell: padding-right overridden to 16px (+11 over base)
+   // CSS-derived chrome added beyond the measured text width:
+   //   td/th: padding 5px each side + 1px border-right = 11px
+   //   .dataCell/.listCell: padding-right overridden to 16px (= 22px chrome)
    //   .headerCell: padding-right 18px (sort indicator area)
    //   .pin-icon: 12px width + 3px margin-right = 15px
-   // measureTextWidth's element uses padding:0 5px, mirroring td/th's
-   // horizontal padding — so its returned offsetWidth already covers that.
-   // Constants below add the remaining chrome plus a small sub-pixel margin.
-   var TD_EXTRA      = 1 + 2;             // border + safety
-   var TD_DATA_EXTRA = 1 + 11 + 2;        // border + .dataCell padding-right override + safety
-   var TH_EXTRA      = 1 + 18 + 2;        // border + .headerCell padding-right + safety
+   //   .first-child (rownames): +4px padding each side beyond the base 5px
+   var TD_EXTRA      = 11 + 2;            // chrome + sub-pixel safety
+   var TD_DATA_EXTRA = 22 + 2;
+   var TH_EXTRA      = 11 + 18 + 2;
    var PIN_ICON_W    = 15;
+   var ROWNAMES_PAD  = 8;
 
    for (var i = 0; i < colCount; i++) {
       var th = thead.children[i];
@@ -737,15 +757,18 @@ var autoSizeColumns = function() {
       if (isNaN(colIdx)) colIdx = i;
       var col = cols[colIdx];
       var isRowNames = (colIdx === 0 && rowNumbers);
+      var rowNamesPad = isRowNames ? ROWNAMES_PAD : 0;
 
       // Measure header text width (bold)
       var pinChrome = isRowNames ? 0 : PIN_ICON_W;
-      var maxW = measureTextWidth(col.col_name || "", true) + TH_EXTRA + pinChrome;
+      var maxW = measureTextWidth(col.col_name || "", true) +
+                 TH_EXTRA + pinChrome + rowNamesPad;
 
       // Cell chrome depends on the cell class
       var colClass = getColClass(col);
       var cellExtra = (colClass === "dataCell" || colClass === "listCell")
          ? TD_DATA_EXTRA : TD_EXTRA;
+      cellExtra += rowNamesPad;
 
       // Measure a sample of cell values from the cache
       var sampleSize = Math.min(rowCache.size, 100);
@@ -762,7 +785,7 @@ var autoSizeColumns = function() {
          if (isRowNames) {
             try { cellText = JSON.parse(cellText).toString(); } catch(e) {}
          }
-         var cellW = measureTextWidth(cellText, isRowNames) + cellExtra;
+         var cellW = measureTextWidth(cellText, false) + cellExtra;
          if (cellW > maxW) maxW = cellW;
       }
 
@@ -783,6 +806,8 @@ var autoSizeColumns = function() {
       table.style.width = totalWidth + "px";
       table.style.tableLayout = "fixed";
    }
+
+   invalidatePinnedOffsets();
 };
 
 // ==========================================================================
@@ -794,7 +819,7 @@ var initResizeHandlers = function() {
       if (evt.target.className !== "resizer") return;
 
       resizingColIdx = parseInt(evt.target.getAttribute("data-col"));
-      didResize = true;
+      didResize = false;
       initResizeX = evt.clientX;
       resizingBoundsExceeded = 0;
 
@@ -818,6 +843,7 @@ var initResizeHandlers = function() {
    document.addEventListener("mousemove", function(evt) {
       if (resizingColIdx === null) return;
       var delta = evt.clientX - initResizeX;
+      if (delta !== 0) didResize = true;
       applyResizeDelta(delta);
       evt.preventDefault();
    });
@@ -826,10 +852,15 @@ var initResizeHandlers = function() {
       if (resizingColIdx === null) return;
       resizingColIdx = null;
       document.body.classList.remove("col-resizing");
+      // Reset didResize after the click event that follows mouseup has been
+      // dispatched, so exactly one click is suppressed (the one synthesized
+      // from this drag) and subsequent clicks sort normally.
+      if (didResize) {
+         setTimeout(function() { didResize = false; }, 0);
+      }
    };
 
    document.addEventListener("mouseup", endResize);
-   document.addEventListener("mouseleave", endResize);
 };
 
 var getHeaderCell = function(colIdx) {
@@ -869,6 +900,8 @@ var applyResizeDelta = function(delta) {
    if (table) {
       table.style.width = (origTableWidth + delta) + "px";
    }
+
+   invalidatePinnedOffsets();
 };
 
 // ==========================================================================
@@ -996,7 +1029,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
          if (searchText.length > 0) searchText = "numeric|" + searchText;
          setColumnSearch(idx, searchText);
          applyFilters();
-      }, 200);
+      }, TIMING.filterDebounce);
 
       numVal.addEventListener("change", function() { updateView(numVal.value); });
       numVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
@@ -1048,7 +1081,7 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
    var updateView = debounce(function() {
       setColumnSearch(idx, "character|" + encodeURIComponent(input.value));
       applyFilters();
-   }, 200);
+   }, TIMING.filterDebounce);
 
    input.addEventListener("keyup", function() { updateView(); });
    input.addEventListener("keydown", function(evt) {
@@ -1294,10 +1327,8 @@ var buildRow = function(r) {
 
    for (var c = 0; c < columnOrder.length; c++) {
       var colIdx = columnOrder[c];
-      var cellData = colIdx === 0 ? rowData[0] : rowData[colIdx];
       var clazz = getColClass(cols[colIdx]);
-      if (colIdx === 0 && rowNumbers) clazz = "textCell";
-      var td = createCell(cellData, colIdx, rowData, clazz);
+      var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
       tr.appendChild(td);
    }
 
@@ -1373,24 +1404,29 @@ var renderVisibleRows = function(force) {
 
    // --- Full rebuild (force, or no existing spacers) ---
    if (force || !topSpacerRow || !bottomSpacerRow) {
-      tbody.innerHTML = "";
       renderedRowElements.clear();
 
+      // Build into a fragment so the tbody only takes a single layout hit
+      // for the whole rebuild rather than one per row.
+      var fragment = document.createDocumentFragment();
       topSpacerRow = createSpacerRow(colSpan);
-      tbody.appendChild(topSpacerRow);
+      fragment.appendChild(topSpacerRow);
 
       var renderedCount = 0;
       for (var r = newStart; r <= newEnd; r++) {
          var tr = buildRow(r);
          if (tr) {
-            tbody.appendChild(tr);
+            fragment.appendChild(tr);
             renderedRowElements.set(r, tr);
             renderedCount++;
          }
       }
 
       bottomSpacerRow = createSpacerRow(colSpan);
-      tbody.appendChild(bottomSpacerRow);
+      fragment.appendChild(bottomSpacerRow);
+
+      tbody.innerHTML = "";
+      tbody.appendChild(fragment);
 
       var skipped = (newEnd - newStart + 1) - renderedCount;
       updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
@@ -1455,16 +1491,29 @@ var renderVisibleRows = function(force) {
 // Info bar update is debounced separately at a longer interval — reading
 // scrollTop for the "Showing X to Y" text forces style+layout recalc,
 // which is expensive during fast scrolling.
-var debouncedInfoBar = debounce(updateInfoBar, 150);
+var debouncedInfoBar = debounce(updateInfoBar, TIMING.infoBarDebounce);
 
-var onScroll = debounce(function() {
-   var viewport = document.getElementById("gridViewport");
-   if (!viewport) return;
-   lastScrollTop = viewport.scrollTop;
-   lastScrollLeft = viewport.scrollLeft;
-   renderVisibleRows();
-   debouncedInfoBar();
-}, 16);
+// RAF-throttle scroll: render at most once per animation frame so virtual
+// scroll updates happen during the scroll, not 16ms after it stops.
+var pendingScrollRaf = 0;
+var onScroll = function() {
+   if (pendingScrollRaf) return;
+   pendingScrollRaf = requestAnimationFrame(function() {
+      pendingScrollRaf = 0;
+      var viewport = document.getElementById("gridViewport");
+      if (!viewport) return;
+      lastScrollTop = viewport.scrollTop;
+      lastScrollLeft = viewport.scrollLeft;
+      renderVisibleRows();
+      debouncedInfoBar();
+   });
+};
+onScroll.cancel = function() {
+   if (pendingScrollRaf) {
+      cancelAnimationFrame(pendingScrollRaf);
+      pendingScrollRaf = 0;
+   }
+};
 
 // ==========================================================================
 // Sidebar
@@ -1785,7 +1834,7 @@ var toggleSidebar = function() {
    setTimeout(function() {
       renderVisibleRows(true);
       updateInfoBar();
-   }, 200);
+   }, TIMING.sidebarTransition);
 };
 
 var scrollToColumn = function(colIdx) {
@@ -1793,7 +1842,7 @@ var scrollToColumn = function(colIdx) {
    var thead = document.getElementById("data_cols");
    if (!viewport || !thead) return;
 
-   var th = thead.children[colIdx];
+   var th = getHeaderCell(colIdx);
    if (!th) return;
 
    // Scroll horizontally so the column is visible
@@ -1818,7 +1867,7 @@ var scrollToColumn = function(colIdx) {
    th.classList.add("highlight-flash");
    setTimeout(function() {
       th.classList.remove("highlight-flash");
-   }, 1000);
+   }, TIMING.columnFlash);
 };
 
 // ==========================================================================
@@ -1829,7 +1878,6 @@ var scrollbarV = null;   // vertical scrollbar element
 var scrollbarH = null;   // horizontal scrollbar element
 var scrollbarHideTimer = null;
 var scrollbarDragging = false;  // true while a thumb or track drag is active
-var SCROLLBAR_HIDE_DELAY = 1200;
 
 var createCustomScrollbars = function() {
    var gridPanel = document.getElementById("gridPanel");
@@ -2042,7 +2090,7 @@ var scheduleScrollbarHide = function() {
    scrollbarHideTimer = setTimeout(function() {
       if (scrollbarV) scrollbarV.classList.remove("visible");
       if (scrollbarH) scrollbarH.classList.remove("visible");
-   }, SCROLLBAR_HIDE_DELAY);
+   }, TIMING.scrollbarHide);
 };
 
 var destroyCustomScrollbars = function() {
@@ -2158,12 +2206,14 @@ var initGrid = function(resCols, data) {
    createCustomScrollbars();
    updateCustomScrollbars();
 
-   // Set up resize handler
+   // Set up resize handler — recompute pinned overscroll padding too, since
+   // it depends on viewport width.
    window.addEventListener("resize", debounce(function() {
+      applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
-   }, 75));
+   }, TIMING.resizeDebounce));
 
    // Update column frame callback
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
@@ -2204,34 +2254,52 @@ var initWithData = function(data) {
    updateInfoBar();
 };
 
-var destroyGrid = function() {
-   // Dismiss any active popups
-   if (dismissActivePopup) dismissActivePopup(true);
-
-   // Clean state
+// Reset all per-grid transient state so a fresh bootstrap starts clean.
+// Persistent configuration (rowNumbers, ordering, displayNullsAsNAs, viewer
+// callbacks, sidebarVisible, lastScroll{Top,Left}) is intentionally not
+// touched here — those survive across data refreshes.
+var resetGridState = function() {
+   // Data
    cols = null;
-   resizingColIdx = null;
-   origColWidths = [];
-   initResizingWidth = null;
-   origTableWidth = null;
-   initResizeX = null;
-   resizingBoundsExceeded = 0;
-   dismissActivePopup = null;
-   cachedSearch = "";
-   cachedFilterValues = [];
    sortColumn = -1;
    sortDirection = "";
-   manualWidths = [];
-   measuredWidths = [];
+   cachedSearch = "";
+   cachedFilterValues = [];
    pinnedColumns.clear();
-   cachedPinnedOffsets = {};
+   columnOrder = [];
+
+   // Column widths
+   measuredWidths = [];
+   manualWidths = [];
+   origColWidths = [];
+
+   // Render window
+   renderStart = 0;
+   renderEnd = 0;
    renderedRowElements.clear();
    topSpacerRow = null;
    bottomSpacerRow = null;
+   cachedPinnedOffsets = {};
+   invalidatePinnedOffsets();
+   needsAutoSize = false;
 
+   // Resize
+   didResize = false;
+   resizingColIdx = null;
+   initResizeX = null;
+   initResizingWidth = null;
+   origTableWidth = null;
+   resizingBoundsExceeded = 0;
+
+   // Popups
+   if (dismissActivePopup) dismissActivePopup(true);
+   dismissActivePopup = null;
    columnsPopup = null;
    activeColumnInfo = {};
+};
 
+var destroyGrid = function() {
+   resetGridState();
    invalidateCache();
    destroyCustomScrollbars();
 
@@ -2379,13 +2447,11 @@ var debouncedSearch = debounce(function(text) {
          scrollToTop();
       });
    }
-}, 100);
+}, TIMING.searchDebounce);
 
 window.applySearch = function(text) {
    debouncedSearch(text);
 };
-
-var needsAutoSize = false;
 
 window.onActivate = function() {
    // Restore scroll position and re-render
