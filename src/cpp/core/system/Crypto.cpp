@@ -41,9 +41,9 @@
 #include <boost/utility.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Thread.hpp>
-
+#include <core/Algorithm.hpp>
 #include <core/Log.hpp>
+#include <core/Thread.hpp>
 
 #include <memory>
 
@@ -483,9 +483,23 @@ Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
 }
 
 namespace {
-EVP_PKEY* s_pRSA;
+EVP_PKEY* s_pRSA = nullptr;
 std::string s_modulo;
 std::string s_exponent;
+}
+
+static std::string bn_to_string(const BIGNUM* bn)
+{
+   if (!bn)
+      return std::string();
+   auto hex = make_unique_ptr(BN_bn2hex(bn), [](char* p){ OPENSSL_free(p); });
+   if (!hex)
+   {
+      Error err = getLastCryptoError(ERROR_LOCATION);
+      LOG_ERROR(err);
+      return std::string();
+   }
+   return hex.get();
 }
 
 core::Error rsaInit()
@@ -498,42 +512,38 @@ core::Error rsaInit()
       return getLastCryptoError(ERROR_LOCATION);
 
    // generate an RSA key pair
-   s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
+   auto pRSA = make_unique_ptr(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
+   if (!pRSA)
+      return getLastCryptoError(ERROR_LOCATION);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
    // extract exponent + modulus for future use
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    const BIGNUM *bn, *be;
-   RSA* pRsaKeyPair = EVP_PKEY_get1_RSA(s_pRSA);
+   auto pRsaKeyPair = make_unique_ptr(EVP_PKEY_get1_RSA(pRSA.get()), RSA_free);
+   if (!pRsaKeyPair)
+      return getLastCryptoError(ERROR_LOCATION);
    bn = pRsaKeyPair->n;
    be = pRsaKeyPair->e;
 #elif OPENSSL_VERSION_NUMBER < 0x30000000L
-   // extract exponent + modulus for future use
    const BIGNUM *bn, *be;
-   RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(s_pRSA);
+   RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(pRSA.get());
    RSA_get0_key(pRsaKeyPair, &bn, &be, nullptr);
 #else
-   // extract exponent + modulus for future use
    BIGNUM* bn = nullptr;
-   if (EVP_PKEY_get_bn_param(s_pRSA, "n", &bn) != 1)
+   algorithm::Defer defer_bn([&bn]{ BN_free(bn); }); // BN_free(nullptr) is a no-op
+   if (EVP_PKEY_get_bn_param(pRSA.get(), "n", &bn) != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    BIGNUM* be = nullptr;
-   if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
+   algorithm::Defer defer_be([&be]{ BN_free(be); }); // BN_free(nullptr) is a no-op
+   if (EVP_PKEY_get_bn_param(pRSA.get(), "e", &be) != 1)
       return getLastCryptoError(ERROR_LOCATION);
 #endif
 
-   char* n = BN_bn2hex(bn);
-   s_modulo = n;
-   OPENSSL_free(n);
+   s_modulo = bn_to_string(bn);
+   s_exponent = bn_to_string(be);
 
-   char* e = BN_bn2hex(be);
-   s_exponent = e;
-   OPENSSL_free(e);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-   RSA_free(pRsaKeyPair);
-#endif
-
+   s_pRSA = pRSA.release();
    return Success();
 }
 
@@ -608,19 +618,26 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
 
-   unsigned char* buffer = (unsigned char*) OPENSSL_malloc(size);
+   auto buffer = make_unique_ptr(
+      (unsigned char*) OPENSSL_malloc(size),
+      [size](unsigned char* p) {
+         // Wipe and deallocate the decryption buffer
+         OPENSSL_cleanse(p, size);
+         OPENSSL_free(p);
+      }
+   );
    if (buffer == nullptr)
       return getLastCryptoError(ERROR_LOCATION);
 
    status = EVP_PKEY_decrypt(
             ctx.get(),
-            buffer, &size,
+            buffer.get(), &size,
             cipherTextBytes.data(), cipherTextBytes.size());
 
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
 
-   pPlainText->assign(buffer, buffer + size);
+   pPlainText->assign(buffer.get(), buffer.get() + size);
    return Success();
 }
 

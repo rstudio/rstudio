@@ -72,8 +72,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -229,7 +227,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
@@ -9366,37 +9363,6 @@ public class TextEditingTarget implements
       view_.showReadOnlyWarning(alternatives);
    }
 
-   void installShinyTestDependencies(final Command success) {
-      server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
-         @Override
-         public void onResponseReceived(ConsoleProcess process)
-         {
-            final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
-            dialog.showModal();
-
-            process.addProcessExitHandler(new ProcessExitEvent.Handler()
-            {
-               @Override
-               public void onProcessExit(ProcessExitEvent event)
-               {
-                  if (event.getExitCode() == 0)
-                  {
-                     success.execute();
-                     dialog.closeDialog();
-                  }
-               }
-            });
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            globalDisplay_.showErrorMessage(constants_.installShinyTestDependenciesError(), error.getUserMessage());
-         }
-      });
-   }
-
    void checkTestPackageDependencies(final Command success, boolean isTestThat) {
       dependencyManager_.withTestPackage(
          new Command()
@@ -9404,40 +9370,7 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               if (isTestThat)
-                  success.execute();
-               else {
-                  server_.hasShinyTestDependenciesInstalled(new ServerRequestCallback<Boolean>() {
-                     @Override
-                     public void onResponseReceived(Boolean hasPackageDependencies)
-                     {
-                        if (hasPackageDependencies)
-                           success.execute();
-                        else {
-                           globalDisplay_.showYesNoMessage(
-                              GlobalDisplay.MSG_WARNING,
-                              constants_.checkTestPackageDependenciesCaption(),
-                              constants_.checkTestPackageDependenciesMessage(),
-                              new Operation()
-                              {
-                                 public void execute()
-                                 {
-                                    installShinyTestDependencies(success);
-                                 }
-                              },
-                              false);
-                        }
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                        globalDisplay_.showErrorMessage(constants_.checkTestPackageDependenciesError()
-                                , error.getMessage());
-                     }
-                  });
-               }
+               success.execute();
             }
          },
          isTestThat
@@ -9536,7 +9469,7 @@ public class TextEditingTarget implements
                   shinyAppPath = docUpdateSentinel_.getPath();
                }
 
-               String code = "shinytest::recordTest(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
+               String code = "shinytest2::record_test(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },
@@ -9593,9 +9526,9 @@ public class TextEditingTarget implements
             {
                checkTestPackageDependencies(() ->
                {
-                  String testName = FilePathUtils.fileNameSansExtension(testFile);
-                  String code = "shinytest::viewTestDiff(\"" +
-                        results.appDir + "\", \"" + testName + "\")";
+                  String snapsPath = results.appDir + "/tests/testthat";
+                  String code = "testthat::snapshot_review(path = \"" +
+                        snapsPath.replace("\"", "\\\"") + "\")";
                   events_.fireEvent(new SendToConsoleEvent(code, true));
                }, false);
             }

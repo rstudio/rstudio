@@ -278,6 +278,9 @@ protected:
       ("allow-package-installation",
       value<bool>(&allowPackageInstallation_)->default_value(true),
       "Indicates whether or not to allow installation of packages from the packages pane.")
+      ("allow-package-source-recording",
+      value<bool>(&allowPackageSourceRecording_)->default_value(true),
+      "Indicates whether or not to annotate the DESCRIPTION file of packages installed via install.packages() with their repository source (RemoteType, RemoteRepos, etc).")
       ("allow-shell",
       value<bool>(&allowShell_)->default_value(true),
       "Indicates whether or not to allow access to the shell dialog.")
@@ -580,6 +583,7 @@ public:
    bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
    bool allowVcs() const { return allowVcs_ || allowOverlay(); }
    bool allowPackageInstallation() const { return allowPackageInstallation_ || allowOverlay(); }
+   bool allowPackageSourceRecording() const { return allowPackageSourceRecording_ || allowOverlay(); }
    bool allowShell() const { return allowShell_ || allowOverlay(); }
    bool allowTerminalWebsockets() const { return allowTerminalWebsockets_ || allowOverlay(); }
    bool allowFileDownloads() const { return allowFileDownloads_ || allowOverlay(); }
@@ -715,6 +719,7 @@ protected:
    bool allowCRANReposEdit_;
    bool allowVcs_;
    bool allowPackageInstallation_;
+   bool allowPackageSourceRecording_;
    bool allowShell_;
    bool allowTerminalWebsockets_;
    bool allowFileDownloads_;

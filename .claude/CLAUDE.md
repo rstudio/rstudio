@@ -310,6 +310,17 @@ ESLint — it does not catch type errors that the webpack build will reject.
 
 ## Code Style
 
+### Non-ASCII Characters
+
+Avoid using non-ASCII characters (e.g. `·`, `—`, smart quotes) in source files,
+including comments. Use ASCII equivalents instead (e.g. `-`, `--`, `"`, `'`).
+Non-ASCII characters can cause portability issues across platforms, and the
+test in `src/cpp/tests/testthat/test-linter.R` will fail if any `.R` file
+under `src/cpp` contains them.
+
+The exception is localization `.properties` files (e.g. `*_fr.properties`),
+which may contain actual accented characters.
+
 ### R
 
 When documenting R code, use Roxygen style for formatting. For example:

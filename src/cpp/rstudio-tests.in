@@ -181,6 +181,9 @@ else
     RSTUDIO_SESSION_BIN="rsession"
 fi
 
+# marker for rsession to detect that --run-tests was launched via this helper
+export RSTUDIO_TESTS_HELPER=1
+
 # set R environment variables needed by rsession tests (from CMake configuration)
 export R_HOME="@LIBR_HOME@"
 export R_DOC_DIR="@LIBR_DOC_DIR@"

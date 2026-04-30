@@ -379,57 +379,6 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
    return errors;
 }
 
-std::vector<module_context::SourceMarker> parseShinyTestErrors(
-                                           const FilePath& basePath,
-                                           const FilePath& rdsPath,
-                                           const std::string& output)
-{
-   using namespace module_context;
-   std::vector<SourceMarker> errors;
-
-   try
-   {
-      FilePath basePathResolved = module_context::resolveAliasedPath(basePath.getAbsolutePath());
-
-      std::vector<std::string> failed;
-      r::exec::RFunction rFunc(".rs.readShinytestResultRds", rdsPath.getAbsolutePath());
-      Error error = rFunc.call(&failed);
-      if (error) 
-         LOG_ERROR(error);
-
-      for (size_t idxFailed = 0; idxFailed < failed.size(); idxFailed++)
-      {
-         std::string file, line, type, message;
-         
-         file = failed.at(idxFailed);
-         line = "0";
-         std::string column = "0";
-         type = "failure";
-         message = std::string("Differences detected in " + file + ".");
-
-         // ask the shinytest package where the tests live (this location varies between versions of
-         // the shinytest package
-         std::string testsDir;
-         r::exec::RFunction findTests(".rs.findShinyTestsDir", 
-               basePathResolved.getAbsolutePath());
-         error = findTests.call(&testsDir);
-         if (error)
-            LOG_ERROR(error);
-
-         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                          FilePath(testsDir).completePath(file + ".R"),
-                          core::safe_convert::stringTo<int>(line, 1),
-                          core::safe_convert::stringTo<int>(column, 1),
-                          core::html_utils::HTML(message),
-                          true);
-         errors.push_back(err);
-      }
-   }
-   CATCH_UNEXPECTED_EXCEPTION;
-
-   return errors;
-}
-
 } // anonymous namespace
 
 CompileErrorParser gccErrorParser(const FilePath& basePath)
@@ -448,11 +397,6 @@ CompileErrorParser testthatErrorParser(const FilePath& basePath)
    module_context::packageVersion("testthat", &testthatVersion);
 
    return boost::bind(parseTestThatErrors, basePath, _1, testthatVersion);
-}
-
-CompileErrorParser shinytestErrorParser(const FilePath& basePath, const FilePath& rdsPath)
-{
-   return boost::bind(parseShinyTestErrors, basePath, rdsPath, _1);
 }
 
 } // namespace build

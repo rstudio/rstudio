@@ -27,6 +27,6 @@ if command -v lsb_release &> /dev/null; then
   fi
 fi
 
-echo Error: Unsupported Debian release
+echo "Error: Unsupported Debian release (expected script: $platform_script)"
 exit 1
 
