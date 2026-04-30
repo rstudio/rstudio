@@ -603,17 +603,24 @@ var togglePinColumn = function(colIdx) {
    renderVisibleRows(true);
 };
 
-// Rebuild headers in the current column order (pinned first, then unpinned)
+// Rebuild headers in the current column order (pinned first, then unpinned).
+// Reorder existing <th> elements rather than recreating them so any attached
+// filter UI / popup state is preserved across pin toggles.
 var rebuildHeaders = function() {
    var thead = document.getElementById("data_cols");
    if (!thead || !cols) return;
 
    columnOrder = getColumnOrder();
 
-   thead.innerHTML = "";
+   var existing = {};
+   for (var i = 0; i < thead.children.length; i++) {
+      var th = thead.children[i];
+      existing[parseInt(th.getAttribute("data-col-idx"), 10)] = th;
+   }
+
    for (var i = 0; i < columnOrder.length; i++) {
       var colIdx = columnOrder[i];
-      var th = createHeader(colIdx, cols[colIdx]);
+      var th = existing[colIdx] || createHeader(colIdx, cols[colIdx]);
       thead.appendChild(th);
    }
 
@@ -711,35 +718,51 @@ var autoSizeColumns = function() {
    measuredWidths = [];
    var totalWidth = 0;
 
-   // Padding + border + sort indicator allowance per cell
-   var cellPadding = 28;
-   // Extra space for the pin icon in non-rownames columns
-   var pinIconWidth = 20;
+   // CSS-derived chrome (see DataViewer.css):
+   //   td/th: 5px each side + 1px border-right
+   //   .dataCell/.listCell: padding-right overridden to 16px (+11 over base)
+   //   .headerCell: padding-right 18px (sort indicator area)
+   //   .pin-icon: 12px width + 3px margin-right = 15px
+   // measureTextWidth's element uses padding:0 5px, mirroring td/th's
+   // horizontal padding — so its returned offsetWidth already covers that.
+   // Constants below add the remaining chrome plus a small sub-pixel margin.
+   var TD_EXTRA      = 1 + 2;             // border + safety
+   var TD_DATA_EXTRA = 1 + 11 + 2;        // border + .dataCell padding-right override + safety
+   var TH_EXTRA      = 1 + 18 + 2;        // border + .headerCell padding-right + safety
+   var PIN_ICON_W    = 15;
 
    for (var i = 0; i < colCount; i++) {
-      var col = cols[i];
+      var th = thead.children[i];
+      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+      if (isNaN(colIdx)) colIdx = i;
+      var col = cols[colIdx];
+      var isRowNames = (colIdx === 0 && rowNumbers);
 
       // Measure header text width (bold)
-      var headerText = col.col_name || "";
-      var headerExtra = cellPadding + ((i === 0 && rowNumbers) ? 0 : pinIconWidth);
-      var maxW = measureTextWidth(headerText, true) + headerExtra;
+      var pinChrome = isRowNames ? 0 : PIN_ICON_W;
+      var maxW = measureTextWidth(col.col_name || "", true) + TH_EXTRA + pinChrome;
+
+      // Cell chrome depends on the cell class
+      var colClass = getColClass(col);
+      var cellExtra = (colClass === "dataCell" || colClass === "listCell")
+         ? TD_DATA_EXTRA : TD_EXTRA;
 
       // Measure a sample of cell values from the cache
       var sampleSize = Math.min(rowCache.size, 100);
       for (var r = 0; r < sampleSize; r++) {
          var row = rowCache.get(r);
          if (!row) continue;
-         var cellVal = row[i];
+         var cellVal = row[colIdx];
          if (cellVal === 0 || cellVal === null || cellVal === undefined) {
             // NA — short
             cellVal = "NA";
          }
          var cellText = String(cellVal);
          // For row names (col 0), the value is JSON-encoded
-         if (i === 0 && rowNumbers) {
+         if (isRowNames) {
             try { cellText = JSON.parse(cellText).toString(); } catch(e) {}
          }
-         var cellW = measureTextWidth(cellText, i === 0 && rowNumbers) + cellPadding;
+         var cellW = measureTextWidth(cellText, isRowNames) + cellExtra;
          if (cellW > maxW) maxW = cellW;
       }
 
@@ -748,17 +771,6 @@ var autoSizeColumns = function() {
       var w = Math.max(MIN_COL_WIDTH, Math.min(upperBound, maxW));
       measuredWidths.push(w);
       totalWidth += w;
-   }
-
-   // If columns are narrower than the viewport, distribute extra space
-   var viewportWidth = viewport ? viewport.clientWidth : 0;
-   if (totalWidth < viewportWidth && measuredWidths.length > 0) {
-      var extra = viewportWidth - totalWidth;
-      var perCol = extra / measuredWidths.length;
-      for (var i = 0; i < measuredWidths.length; i++) {
-         measuredWidths[i] = Math.round(measuredWidths[i] + perCol);
-      }
-      totalWidth = viewportWidth;
    }
 
    // Apply widths and lock to fixed layout
@@ -795,6 +807,11 @@ var initResizeHandlers = function() {
          }
       }
 
+      // Lock the cursor and suppress pointer events on grid content so the
+      // drag isn't interrupted by hover effects, native tooltips, or
+      // cursor:pointer elements (e.g. the pin icon) the cursor passes over.
+      document.body.classList.add("col-resizing");
+
       evt.preventDefault();
    });
 
@@ -805,15 +822,14 @@ var initResizeHandlers = function() {
       evt.preventDefault();
    });
 
-   document.addEventListener("mouseup", function(evt) {
+   var endResize = function() {
       if (resizingColIdx === null) return;
       resizingColIdx = null;
-   });
+      document.body.classList.remove("col-resizing");
+   };
 
-   document.addEventListener("mouseleave", function(evt) {
-      if (resizingColIdx === null) return;
-      resizingColIdx = null;
-   });
+   document.addEventListener("mouseup", endResize);
+   document.addEventListener("mouseleave", endResize);
 };
 
 var getHeaderCell = function(colIdx) {

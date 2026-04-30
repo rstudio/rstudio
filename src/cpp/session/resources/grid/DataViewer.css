@@ -386,6 +386,21 @@ th.sorting_desc .headerCell::after {
    opacity: 0.5;
 }
 
+/* While a column resize is in progress, lock the cursor and let mouse events
+   fall through to <body>/<document> so cursor:pointer or hover behavior on
+   elements the cursor passes over (e.g. the pin icon) cannot interrupt the
+   drag. The mousemove/mouseup listeners are bound to document and still fire
+   via bubbling. */
+body.col-resizing {
+   cursor: ew-resize !important;
+   user-select: none;
+}
+
+body.col-resizing * {
+   pointer-events: none !important;
+   cursor: ew-resize !important;
+}
+
 
 /* ==========================================================================
    Column Type Header (data import mode)
