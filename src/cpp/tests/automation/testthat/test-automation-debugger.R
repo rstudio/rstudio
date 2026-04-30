@@ -287,10 +287,20 @@ withr::defer(.rs.automation.deleteRemote())
    # Source the document -- the breakpoint should fire at line 2.
    remote$commands.execute("sourceActiveDocument")
 
-   # The debug highlight should appear at the breakpoint line.
-   .rs.waitUntil("debug highlight appears at top-level breakpoint", function() {
-      remote$dom.elementExists(".ace_executing-line")
+   # Wait for the debug highlight to settle at the breakpoint line. The
+   # auto-step past .doTrace (BreakpointManager.onContextDepthChanged) can
+   # leave the highlight transiently pointing at a neighbouring line before
+   # the post-step events arrive, so check the line number rather than just
+   # element existence.
+   .rs.waitUntil("debug highlight settles at top-level breakpoint", function() {
+      if (!remote$dom.elementExists(".ace_executing-line"))
+         return(FALSE)
+      activeLineEl <- remote$js.querySelector(".ace_executing-line")
+      identical(activeLineEl$innerText, "2")
    })
+
+   # Allow any trailing state transitions to flush before asserting.
+   Sys.sleep(0.5)
 
    activeLineEl <- remote$js.querySelector(".ace_executing-line")
    expect_equal(activeLineEl$innerText, "2")
