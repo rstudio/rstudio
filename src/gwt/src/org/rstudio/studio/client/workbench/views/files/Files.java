@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.ResultCallback;
@@ -682,7 +683,24 @@ public class Files
 
                               server_.deleteFiles(
                                     selectedFiles,
-                                    new VoidServerRequestCallback(progress));
+                                    new VoidServerRequestCallback(progress) {
+                                       @Override
+                                       public void onError(ServerError error)
+                                       {
+                                          if (!useTrash)
+                                          {
+                                             super.onError(error);
+                                             return;
+                                          }
+                                          Debug.logError(error);
+                                          String prefix = selectedFiles.size() == 1
+                                                ? constants_.deleteToTrashFailedSingleMessage(
+                                                      selectedFiles.get(0).getName())
+                                                : constants_.deleteToTrashFailedMultipleMessage();
+                                          progress.onError(prefix + "\n\n" + error.getUserMessage());
+                                          progress.onCompleted();
+                                       }
+                                    });
                            }
                         },
                        true);
