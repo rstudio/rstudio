@@ -149,23 +149,17 @@ public class DataTable
       // EnvironmentPane (refresh button followed by a NoText
       // ToolbarMenuButton whose dropdown arrow opens a popup of
       // related options).
-      refreshButton_ = new HTML(
-         "<svg width='14' height='14' viewBox='0 0 24 24' " +
-         "style='vertical-align:middle' fill='currentColor'>" +
-         "<path d='M17.65,6.35C16.2,4.9,14.21,4,12,4c-4.42,0-7.99,3.58-7.99,8" +
-         "s3.57,8,7.99,8c3.73,0,6.84-2.55,7.73-6h-2.08c-0.82,2.33-3.04,4-5.65,4" +
-         "c-3.31,0-6-2.69-6-6s2.69-6,6-6c1.66,0,3.14,0.69,4.22,1.78L13,11h7V4" +
-         "L17.65,6.35z'/>" +
-         "</svg>");
-      refreshButton_.getElement().getStyle().setCursor(Style.Cursor.POINTER);
-      refreshButton_.getElement().getStyle().setProperty("padding", "2px 5px");
-      refreshButton_.setTitle(constants_.refreshButtonTitle());
-      refreshButton_.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            refreshData(getWindow());
-         }
-      });
+      refreshButton_ = new ToolbarButton(
+         ToolbarButton.NoText,
+         constants_.refreshButtonTitle(),
+         new ImageResource2x(DataViewerResources.INSTANCE.refreshIcon2x()),
+         new ClickHandler() {
+            public void onClick(ClickEvent event)
+            {
+               refreshData(getWindow());
+            }
+         });
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
 
       optionsMenu_ = new ToolbarPopupMenu();
       optionsMenu_.addItem(new CheckableMenuItem(
@@ -524,7 +518,7 @@ public class DataTable
    private Host host_;
    private LatchingToolbarButton filterButton_;
    private HTML sidebarButton_;
-   private HTML refreshButton_;
+   private ToolbarButton refreshButton_;
    private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;
    private DataTableColumnWidget columnTextWidget_;

@@ -29,4 +29,7 @@ public interface DataViewerResources extends ClientBundle
 
    @Source("SummaryIcon_2x.png")
    ImageResource summaryIcon2x();
+
+   @Source("RefreshIcon_2x.png")
+   ImageResource refreshIcon2x();
 }
