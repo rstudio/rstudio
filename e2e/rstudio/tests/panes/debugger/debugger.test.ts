@@ -28,7 +28,7 @@ async function writeAndOpen(fileName: string, content: string): Promise<void> {
   await consoleActions.typeInConsole(`writeLines(c(${lines}), "${fullPath}")`);
   await sleep(TIMEOUTS.settleDelay);
   await consoleActions.typeInConsole(`file.edit("${fullPath}")`);
-  await sleep(TIMEOUTS.fileOpen / 4);
+  await sleep(TIMEOUTS.fileEditSettle);
 }
 
 async function resetAfterTest(): Promise<void> {
@@ -42,10 +42,12 @@ async function resetAfterTest(): Promise<void> {
   try {
     if (await debuggerActions.debuggerPage.debugToolbar.isVisible()) {
       await debuggerActions.stopDebug();
-      await debuggerActions.waitForDebugExit().catch(() => {});
+      await debuggerActions.waitForDebugExit().catch((err) => {
+        console.warn('[debugger.test] waitForDebugExit during cleanup failed:', err);
+      });
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('[debugger.test] resetAfterTest cleanup error:', err);
   }
   await consoleActions.clearConsole();
 }
@@ -64,7 +66,7 @@ test.describe('R debugger', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Block 1 — Gutter breakpoints (mirrors BRAT #15072 + gaps)
+  // Block 1 — Gutter breakpoints
   // -------------------------------------------------------------------------
 
   test.describe.serial('Gutter breakpoints', { tag: ['@serial'] }, () => {
@@ -95,7 +97,7 @@ test.describe('R debugger', () => {
     });
 
     test('single gutter breakpoint highlights correct row', async () => {
-      // Mirrors BRAT regression for rstudio/rstudio#15072.
+      // Regression coverage for rstudio/rstudio#15072.
       const fileName = `bp_brace_${Date.now()}.R`;
       const content = [
         'brace_fn <- function() {',
@@ -123,9 +125,7 @@ test.describe('R debugger', () => {
 
       // Breakpoint on line 3 (the `{` opening the brace block). The active
       // debug line lands on row 2 (= line 3, 0-indexed); the gutter
-      // executing-line icon shows "3". BRAT #15072 asserts line 4 for the
-      // related regression but observed behavior in current builds keeps
-      // the marker on line 3 — verified empirically.
+      // executing-line icon shows "3".
       await expect.poll(
         () => debuggerActions.getActiveDebugLineRow(),
         { timeout: TIMEOUTS.fileOpen },
@@ -240,12 +240,17 @@ test.describe('R debugger', () => {
 
       // Step Into descends into inner(); the exact landing row depends on
       // R's debug state machine (function header vs first executable line),
-      // so we assert that the marker *moved* off the inner() call line —
-      // that's the user-visible property of Step Into.
+      // so we assert (a) the marker moved off the inner() call line and
+      // (b) it landed inside inner()'s body (rows 0–2). Combined, these
+      // distinguish a real descent from "debug exited" or "stepped over".
       await expect.poll(
         () => debuggerActions.getActiveDebugLineRow(),
         { timeout: TIMEOUTS.fileOpen },
       ).not.toBe(4);
+      const after = await debuggerActions.getActiveDebugLineRow();
+      expect(after).toBeGreaterThanOrEqual(0);
+      expect(after).toBeLessThanOrEqual(2);
+      await expect(debuggerActions.debuggerPage.debugToolbar).toBeVisible();
     });
 
     test('Finish executes the remainder of the current function', async () => {
@@ -269,11 +274,12 @@ test.describe('R debugger', () => {
       await debuggerActions.stepOut();
 
       await debuggerActions.waitForDebugExit();
+      await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
     });
 
     test('Continue jumps to the next breakpoint', async () => {
-      // Mirrors the continue-stepping behaviour from BRAT regression #15201
-      // without the package-build setup.
+      // Continue-stepping coverage for rstudio/rstudio#15201 without the
+      // package-build setup.
       const fileName = `step_continue_${Date.now()}.R`;
       const content = [
         'step_continue_fn <- function() {',
@@ -349,11 +355,13 @@ test.describe('R debugger', () => {
       await consoleActions.typeInConsole('browser_entry_fn()');
 
       await debuggerActions.waitForDebugMode();
-      // The active debug line is on or just past the browser() call —
-      // assert it lands on a row inside the function body.
+      // After browser() on line 2, R pauses on the browser() call itself
+      // (row 1) before advancing. Assert the marker lands on row 1 or row
+      // 2 — anywhere inside the function body but not on the function
+      // declaration (row 0) or past the closing brace.
       const row = await debuggerActions.getActiveDebugLineRow();
       expect(row).toBeGreaterThanOrEqual(1);
-      expect(row).toBeLessThan(5);
+      expect(row).toBeLessThanOrEqual(2);
     });
 
     test('Continue past browser() exits debug', async () => {
@@ -373,6 +381,7 @@ test.describe('R debugger', () => {
       await debuggerActions.waitForDebugMode();
       await debuggerActions.continueDebug();
       await debuggerActions.waitForDebugExit();
+      await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
     });
   });
 
@@ -404,6 +413,11 @@ test.describe('R debugger', () => {
 
       await debuggerActions.debuggerPage.rerunWithDebugLink.click();
       await debuggerActions.waitForDebugMode();
+      // Confirm the rerun actually paused inside rerun_fn rather than
+      // bouncing out: an active debug line should be visible.
+      await expect(debuggerActions.debuggerPage.activeDebugLine.first()).toBeVisible({
+        timeout: TIMEOUTS.fileOpen,
+      });
     });
   });
 

@@ -21,6 +21,7 @@ The user provides one or more targets:
 3. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
 4. **Tests must work on Desktop and Server** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only patterns.
 5. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
+6. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
 
 ## Steps
 
@@ -39,6 +40,8 @@ The user provides one or more targets:
 - Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable
 - Read relevant existing Playwright page objects in `e2e/rstudio/pages/`
 - Read relevant existing Playwright actions in `e2e/rstudio/actions/`
+
+**For large files or batch migrations:** if the source has many methods (say 10+) or you're migrating a directory, consider launching a general-purpose subagent to analyze the Python source(s) and return a brief covering: test methods to convert, pytest markers / skip reasons, fixtures used, page objects referenced, parallel safety hints, and any unusual patterns. This keeps the main context lean for the writing and running phases. For typical single-file migrations with a handful of methods, do the analysis inline.
 
 ### Step 3: Determine the target location
 
@@ -62,6 +65,17 @@ Follow the rules in the `rstudio-create-playwright-tests` skill (already loaded 
 Migration-specific guidance:
 - Use `test.fixme()` for tests that can't pass yet -- never comment out or omit.
 - If the Selenium source has multiple near-identical methods, consider data-driven restructuring (one `forEach` loop) in the Playwright version.
+- When the Python source has `@pytest.mark.skip` or `pytest.skip()`:
+  1. Read the skip reason. Check if any linked issue is still open.
+  2. If the reason is Selenium-specific, stale, or resolved → write the test like any other and verify it passes.
+  3. If the reason still applies (open RStudio bug, missing feature) → `test.fixme()` with the reason / URL preserved as a comment directly above:
+     ```typescript
+     // @skip: https://github.com/rstudio/rstudio/issues/12345
+     test.fixme("test name", async () => {});
+     ```
+     If the Python skip has only a reason string (no URL), preserve the string verbatim. If the Python source has bare `@skip` with no reason, write `// @skip: no reason given in Python source`.
+
+  Don't auto-fixme based on the marker alone.
 
 ### Step 5: Add missing page objects or actions
 
@@ -71,6 +85,8 @@ If the test needs locators or methods not yet available:
 - Follow existing patterns in those files
 
 ### Step 6: Run the test
+
+**Hard gate (Hard Rule 6):** a test doesn't count as migrated until it passes here.
 
 Defer to the `rstudio-run-playwright-tests` skill for the canonical run commands (Desktop and Server). Present the command and wait for user approval before executing.
 
@@ -104,6 +120,56 @@ Edit `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`:
 - Add the Playwright target path and test count
 - Add notes if relevant
 - Add any fixme tests to the Fixme Tests table with blocker description
+
+### Step 9: Commit and submit
+
+Each substep requires explicit approval before proceeding. Ron may stop at any point -- not every migration goes all the way to merge.
+
+**9.1 Check branch.** Run `git branch --show-current`, report the branch, ask Ron to confirm. Branch prefix for Playwright migration work: `test/ron/` (e.g., `test/ron/migrate-debugger`). Kebab-case for the descriptive part. Never commit directly to main.
+
+**9.2 Review changes.** Run `git fetch origin`. Determine the base branch -- never assume `main`. Check `git log --oneline` or ask. For short-lived solo `test/ron/...` branches, defer the base-branch merge to 9.5. Run `git status` (never `-uall`), `git diff`, `git log --oneline -5`. Summarize what changed. Flag anything that shouldn't be committed (secrets, scratch files, unrelated changes).
+
+**9.3 Stage and commit.** Stage specific files by name (never `git add -A`). Draft a commit message focused on the "why" -- concise, single line preferred, uppercase first letter, no Co-Authored-By. Show the message, wait for approval. Commit, then `git status`.
+
+**9.4 Push.** Show the push command, wait for approval, push with `-u`. Never push to main directly.
+
+**9.5 Create PR.** If `origin/<base>` has moved since the last sync, propose `git merge origin/<base>` and wait for approval before running; then push the merge commit. Draft PR title (under 70 chars) and summary. Summary only -- no "Test plan" section, no AI attribution. Ask about reviewers; aliases: Kevin → `kevinushey`, Gary → `gtritchie`, JonV → `jonvanausdeln`, AT → `astayleraz`. Show full PR details, wait for approval. Create with `gh pr create` (use `--reviewer` if specified). Add the `automation` label. Return the PR URL.
+
+**9.6 Merge** (only if Ron asks to merge this session). Check and report source + target branches, confirm both, wait for approval, merge.
+
+**9.7 Branch cleanup** (only after merge). Offer to delete the local branch, wait for explicit approval.
+
+**Style throughout:** never ` - ` (space-hyphen-space) -- use `--` or em dash, no spaces. Never use `#N` numbering in GitHub comments (auto-links to wrong issues) -- use `1.`, `(1)`, or `Finding 1`.
+
+### Step 10: Roborev review and assessment
+
+Invoke the `roborev-review` skill on the commit to request a code review.
+
+When findings come back, **assess them before presenting to Ron**:
+- Read each finding in the actual code context
+- Verify the finding is real and not a false positive
+- Judge real severity; don't blindly trust roborev's label, and don't overstate
+- Note any findings you'd skip and why
+
+Present the assessed findings with recommendations. Wait for approval before editing any files. Severity policy:
+- Fix High and Medium findings
+- Fix Low findings only if they're real bugs or silent failures
+- Skip cosmetic Lows and "add tests for simple scripts" suggestions
+
+Apply fixes manually. **Do not invoke `roborev-fix`** -- Ron prefers manual fixes through the migration flow. Re-run the test (Hard Rule 6 still applies). Commit per Step 9. Re-run `roborev-review` on the new commit. Repeat until no actionable findings remain.
+
+Close reviewed findings via the `roborev-respond` skill once they're addressed.
+
+## Compact Instructions
+
+If context compacts mid-migration, preserve:
+- **Source and target paths** for each file being migrated
+- **Per-method status**: which methods passed Step 6, which ended up `test.fixme()` and why
+- **Page object / action additions** made during the migration (so they're not duplicated)
+- **Open roborev findings** in progress: job ID, finding being fixed, severity assessment
+- **Open blockers** flagged for Ron (issues to file, upstream bugs found)
+
+If a step has been completed, that fact also survives -- don't redo work Ron has already approved.
 
 ## Server Mode Parallelism
 

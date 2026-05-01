@@ -6,6 +6,7 @@ export const TIMEOUTS = {
   settleDelay: 1000,
   pollInterval: 500,
   fileOpen: 20000,
+  fileEditSettle: 5000,
   ghostText: 30000,
   nesApply: 30000,
   displayOutput: 2000,

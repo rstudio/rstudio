@@ -17,13 +17,13 @@ const DEBUG_TOOLBAR = '[role="toolbar"][aria-label="Console Tab Debug"]';
 // shortcut (AppCommand.getTooltip). desc strings come from
 // Commands.cmd.xml and are stable across releases. Match by prefix so the
 // shortcut suffix doesn't break the selector when keybindings change.
-const DEBUG_BUTTON_TITLE_PREFIX: Record<string, string> = {
+const DEBUG_BUTTON_TITLE_PREFIX = {
   step: 'Execute the next line of code',
   stepInto: 'Step into the current function call',
   finish: 'Execute the remainder of the current function or loop',
   continue: 'Continue execution until the next breakpoint is encountered',
   stop: 'Exit debug mode',
-};
+} as const;
 
 export class DebuggerPage extends PageObject {
   // Editor-side debug visuals (Ace classes — stable, not GWT-obfuscated).
@@ -31,6 +31,12 @@ export class DebuggerPage extends PageObject {
   public breakpoints: Locator;
   public pendingBreakpoints: Locator;
   public inactiveBreakpoints: Locator;
+  // Matches breakpoints in any of the three states (active/pending/inactive).
+  // Use this when waiting for a breakpoint to appear without caring which
+  // state it landed in — RStudio may transition through pending before
+  // settling on active or inactive depending on whether the function is in
+  // scope at click time.
+  public anyBreakpointMarker: Locator;
   public activeDebugLine: Locator;
   public executingLineGutter: Locator;
 
@@ -45,10 +51,6 @@ export class DebuggerPage extends PageObject {
   // Console-side error widget — "Rerun with Debug" link.
   public rerunWithDebugLink: Locator;
 
-  // Console output, used to detect the Browse[N]> prompt that signals R is
-  // currently paused at a breakpoint or browser() call.
-  public consoleOutput: Locator;
-
   constructor(page: Page) {
     super(page);
 
@@ -56,6 +58,11 @@ export class DebuggerPage extends PageObject {
     this.breakpoints = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_breakpoint')]`);
     this.pendingBreakpoints = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_pending-breakpoint')]`);
     this.inactiveBreakpoints = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_inactive-breakpoint')]`);
+    this.anyBreakpointMarker = page.locator(
+      `${ACTIVE_EDITOR}//*[contains(@class,'ace_breakpoint')` +
+      ` or contains(@class,'ace_pending-breakpoint')` +
+      ` or contains(@class,'ace_inactive-breakpoint')]`,
+    );
     this.activeDebugLine = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_active_debug_line')]`);
     this.executingLineGutter = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_executing-line')]`);
 
@@ -69,15 +76,17 @@ export class DebuggerPage extends PageObject {
     // The "Rerun with Debug" link lives in ConsoleError.ui.xml within the
     // .consoleErrorCommands container. Like Environment-pane classes, the
     // CSS class names are GWT-obfuscated, so locate by the literal anchor
-    // text (which is stable, baked into ViewConsoleConstants).
+    // text (stable, baked into ConsoleError.ui.xml:90).
     this.rerunWithDebugLink = page.locator('#rstudio_workbench_panel_console').getByText('Rerun with Debug');
-
-    this.consoleOutput = page.locator('#rstudio_workbench_panel_console');
   }
 
-  /** Click target inside a gutter cell that lands on the breakpoint area
-   *  (left edge of the cell, before the line number). */
+  /** Locate the gutter cell for `line` by its rendered line-number text.
+   *  Filtering by text instead of `nth(line - 1)` survives Ace's gutter
+   *  virtualization in long / scrolled editors, where the Nth DOM cell
+   *  doesn't necessarily correspond to source line N+1. */
   gutterCellForLine(line: number): Locator {
-    return this.gutterCells.nth(line - 1);
+    return this.gutterCells.filter({
+      hasText: new RegExp(`^\\s*${line}\\s*$`),
+    });
   }
 }

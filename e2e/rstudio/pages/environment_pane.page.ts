@@ -31,15 +31,31 @@ export class EnvironmentPane extends PageObject {
     return (await this.panel.innerText()).trim();
   }
 
-  /** Returns true when the panel text contains both `name` and `value`. */
+  /** Returns true when a single object-grid row contains both `name` and
+   *  `value`. Row-scoped matching avoids false positives where `name`
+   *  appears in one row (e.g. as another variable's value) and `value`
+   *  appears in a different row. */
   async hasVariable(name: string, value: string): Promise<boolean> {
-    const text = await this.getPanelText();
-    return text.includes(name) && text.includes(value);
+    const rowCount = await this.objectGridRows.count();
+    for (let i = 0; i < rowCount; i++) {
+      const rowText = await this.objectGridRows.nth(i).innerText();
+      if (rowText.includes(name) && rowText.includes(value)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  /** Locator for a call frame whose visible text matches `frameLabel`. */
-  callFrameByText(frameLabel: string): Locator {
-    return this.panel.getByText(frameLabel, { exact: false });
+  /** Locator for a call frame whose visible text matches `frameLabel`.
+   *  Pass `exact = true` to require an exact text match; the default is
+   *  substring matching. The locator is scoped to the Environment panel,
+   *  but the panel renders both the call-frame list and the locals grid —
+   *  pass `exact = true` (or use `.first()` on the result) when the label
+   *  could also appear as a local variable name. The traceback region's
+   *  CSS classes are GWT-obfuscated, which is why scoping happens at the
+   *  whole-panel level rather than the call-frame region itself. */
+  callFrameByText(frameLabel: string, exact = false): Locator {
+    return this.panel.getByText(frameLabel, { exact });
   }
 }
 
