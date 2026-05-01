@@ -7,6 +7,10 @@
   repository they came from.
 
 ### Fixed
+- ([#17506](https://github.com/rstudio/rstudio/issues/17506)): Source-marker
+  messages in the Build, Markers, and Compile PDF panes are now rendered as
+  plain text by default; only messages that the server explicitly marks as
+  HTML (e.g. C++ Find Usages highlighting) are rendered via `innerHTML`.
 - Reduced filesystem work performed by the `install.packages()` hook; the
   before/after scan is now scoped to the requested packages and their
   dependency closure rather than the entire library.
@@ -22,7 +26,7 @@
 ### Fixed
 - 
 - ([#17510](https://github.com/rstudio/rstudio/issues/17510)): Data Import: column names, character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code.
-- ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
+- ([#17508](https://github.com/rstudio/rstudio/issues/17508)): Enabled the MathJax `Safe` extension in the IDE, the HTML preview, the presentation preview, and the rendered R Markdown viewer.
 - ([#12235](https://github.com/rstudio/rstudio/issues/12235)): RStudio Desktop's Session > New Session now opens noticeably faster.
 - ([#17440](https://github.com/rstudio/rstudio/issues/17440)): Fixed an issue where triggering tab completion inside `[` on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory
 - ([#17176](https://github.com/rstudio/rstudio/issues/17176)): Fixed a startup hang when opening a Quarto project containing large directories (e.g. `_targets/`).
@@ -31,6 +35,7 @@
 - ([#16966](https://github.com/rstudio/rstudio/issues/16966)): Restored the desktop terminal bell on Linux, now that the underlying Electron crash has been fixed.
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): The Files pane delete confirmation now reflects whether the file will be moved to the system Trash/Recycle Bin or permanently deleted, based on the "Delete files to Trash/Recycle Bin" preference.
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): When sending a file to the system Trash/Recycle Bin fails, the Files pane now reports the error and leaves the file on disk; previously it would silently fall back to permanently deleting the file.
+- ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 
 ### Dependencies
 - Ace 1.43.5

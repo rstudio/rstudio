@@ -261,6 +261,8 @@ json::Object logEntryJson(const core::tex::LogEntry& logEntry)
    obj["line"] = logEntry.line();
    obj["column"] = 1;
    obj["message"] = core::html_utils::HTML(logEntry.message()).text();
+   // Latex log entries are always plain text; the client renders via innerText.
+   obj["message_is_html"] = false;
    obj["log_path"] = module_context::createAliasedPath(logEntry.logFilePath());
    obj["log_line"] = logEntry.logLine();
    obj["show_error_list"] = true;
