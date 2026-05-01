@@ -99,7 +99,7 @@ public class MathJaxLoader
          return;
 
       $wnd.MathJax = {
-         extensions: ['tex2jax.js'],
+         extensions: ['tex2jax.js', 'Safe.js'],
          jax: ['input/TeX', 'output/HTML-CSS'],
          tex2jax: {
             inlineMath:  [['$', '$'], ['\\(', '\\)']],
