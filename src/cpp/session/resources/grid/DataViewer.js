@@ -1388,11 +1388,18 @@ var updateInfoBar = function() {
       return;
    }
 
-   // Use cached scroll position to avoid forcing layout recalc
-   var first = Math.floor(lastScrollTop / ROW_HEIGHT) + 1;
+   // Use cached scroll position to avoid forcing layout recalc.
+   // Clamp to rows that are entirely visible — partially scrolled rows at
+   // top or bottom don't count, otherwise the displayed range can show one
+   // more row than the user is actually looking at.
    var viewport = document.getElementById("gridViewport");
    var viewportH = viewport ? viewport.clientHeight : 0;
-   var last = Math.min(first + Math.ceil(viewportH / ROW_HEIGHT) - 1, activeRows);
+   var first = Math.ceil(lastScrollTop / ROW_HEIGHT) + 1;
+   var last = Math.floor((lastScrollTop + viewportH) / ROW_HEIGHT);
+   // If no row is fully visible (viewport shorter than a row), or after
+   // clamping last falls below first, fall back to showing the single row
+   // currently in view rather than an empty range.
+   last = Math.max(first, Math.min(last, activeRows));
 
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
       " of " + activeRows.toLocaleString() + " entries";
