@@ -70,8 +70,9 @@
 
 // Enables the MathJax Safe extension, which neutralizes unsafe TeX commands
 // (e.g. \href to a javascript: URI, dangerous CSS in \style) when rendering
-// user-authored math. Required because rendered Rmd output is loaded into the
-// IDE's same-origin Viewer pane.
+// user-authored math. Required for rendered Rmd output because it is loaded
+// into IDE-controlled web views (the Viewer pane, the HTML preview, and the
+// presentation preview) that share the IDE's same-origin context.
 #define kMathjaxSafeConfigScript \
    "<script type=\"text/x-mathjax-config\">" \
    "MathJax.Hub.Config({ extensions: [\"Safe.js\"] });" \
@@ -1091,7 +1092,8 @@ private:
          result.append(kMathjaxSafeConfigScript "\n");
 
 #if defined(_WIN32)
-         // on Windows desktop also add the QtWebEngine-specific config block
+         // on Windows desktop, also tweak HTML-CSS rendering (font scaling +
+         // disable web fonts) to work around QtWebEngine rendering quirks
          if (session::options().programMode() == kSessionProgramModeDesktop)
             result.append(kQtMathJaxConfigScript "\n");
 #endif
