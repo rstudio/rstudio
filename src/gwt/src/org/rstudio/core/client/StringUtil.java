@@ -289,6 +289,54 @@ public class StringUtil
       return s == null ? "" : s;
    }
 
+   /**
+    * Decodes the HTML entities produced by the server's
+    * {@code core::string_utils::htmlEscape}. This is the inverse of that
+    * specific escape function and is intended for unwrapping server-side
+    * escaping when the resulting string will be displayed as plain text
+    * (rather than via innerHTML).
+    *
+    * Decoding is performed in a single left-to-right pass so that an escaped
+    * ampersand (e.g. {@code &amp;lt;}) decodes back to {@code &lt;} without
+    * being double-decoded into a raw {@code <}.
+    */
+   public static String htmlUnescape(String s)
+   {
+      if (s == null || s.isEmpty())
+         return s;
+
+      // Fast path: nothing to decode
+      if (s.indexOf('&') < 0)
+         return s;
+
+      StringBuilder out = new StringBuilder(s.length());
+      int i = 0;
+      int n = s.length();
+      while (i < n)
+      {
+         char c = s.charAt(i);
+         if (c == '&')
+         {
+            // Keep this entity table in sync with core::string_utils::htmlEscape
+            // (src/cpp/core/StringUtils.cpp). Match is case-sensitive; the
+            // server only emits the lowercase forms below.
+            if (s.startsWith("&lt;", i))        { out.append('<');  i += 4; }
+            else if (s.startsWith("&gt;", i))   { out.append('>');  i += 4; }
+            else if (s.startsWith("&quot;", i)) { out.append('"');  i += 6; }
+            else if (s.startsWith("&#x27;", i)) { out.append('\''); i += 6; }
+            else if (s.startsWith("&#x2F;", i)) { out.append('/');  i += 6; }
+            else if (s.startsWith("&amp;", i))  { out.append('&');  i += 5; }
+            else                                 { out.append(c);    i += 1; }
+         }
+         else
+         {
+            out.append(c);
+            i += 1;
+         }
+      }
+      return out.toString();
+   }
+
    public static String indent(String str, String indent)
    {
       if (isNullOrEmpty(str))

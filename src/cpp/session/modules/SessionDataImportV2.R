@@ -80,9 +80,7 @@
 
       switch(optionType,
          "character" = {
-            optionValue <- gsub("\\", "\\\\", optionValue, fixed = TRUE)
-            optionValue <- gsub("\"", "\\\"", optionValue, fixed = TRUE)
-            return (paste("\"", optionValue, "\"", sep = ""))
+            return (encodeString(optionValue, quote = "\""))
          },
          "locale" = {
             localeDefaults <- formals(readr::locale)
@@ -90,7 +88,11 @@
             localeOrNull <- function(paramName, jsonName) {
                if (!identical(localeDefaults[[paramName]], optionValue[[jsonName]])) {
                   if (typeof(localeDefaults[[paramName]]) == "character") {
-                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
+                     sprintf(
+                        "%s = %s",
+                        paramName,
+                        encodeString(optionValue[[jsonName]], quote = "\"")
+                     )
                   }
                   else {
                      paste(paramName, " = ", optionValue[[jsonName]])
@@ -124,6 +126,11 @@
                col_assignedType <- col$assignedType[[1]]
                col_name <- col$name[[1]]
 
+               # Column names originate from the file being imported and so
+               # cannot be trusted; encode as an R string literal before
+               # interpolating into code that will be eval(parse())'d.
+               col_name_literal <- encodeString(col_name, quote = "\"")
+
                if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
                   identical(col_only, TRUE))
                {
@@ -138,7 +145,13 @@
                      }
                      else
                      {
-                        parseString <- paste("format = \"", col_parseString, "\"", sep = "")
+                        # Same trust-boundary concern as col_name above: encode
+                        # as an R string literal before splicing into code that
+                        # will be eval(parse())'d.
+                        parseString <- sprintf(
+                           "format = %s",
+                           encodeString(col_parseString, quote = "\"")
+                        )
                      }
                   }
 
@@ -159,7 +172,7 @@
                      )
                   }
 
-                  colParams[[col_name]] <- paste("\"", col_name, "\" = ", colType, sep="")
+                  colParams[[col_name]] <- paste(col_name_literal, " = ", colType, sep="")
                }
             }
 
@@ -331,25 +344,25 @@
 
          cacheDataCode <- append(
             cacheDataCode,
-            paste(
+            sprintf(
+               "%s <- %s",
                cacheUrlName,
-               " <- \"",
-               downloadResource,
-               "\"",
-               sep = "")
+               encodeString(downloadResource, quote = "\"")
+            )
          )
 
          if (cacheDataWorkingDir)
          {
             cacheDataCode <- append(
                cacheDataCode,
-               paste(
+               sprintf(
+                  "%s <- %s",
                   cacheVariableName,
-                  " <- \"",
-                  options$dataName,
-                  resourceExtension,
-                  "\"",
-                  sep = "")
+                  encodeString(
+                     paste(options$dataName, resourceExtension, sep = ""),
+                     quote = "\""
+                  )
+               )
             )
          }
          else
@@ -364,7 +377,11 @@
 
             cacheDataCode <- append(
                cacheDataCode,
-               paste(cacheVariableName, " <- \"", localFile, "\"", sep = "")
+               sprintf(
+                  "%s <- %s",
+                  cacheVariableName,
+                  encodeString(localFile, quote = "\"")
+               )
             )
          }
 

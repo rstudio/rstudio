@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -639,12 +640,18 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      String message = constants_.permanentDeleteMessage();
       if (selectedFiles.size() == 0)
       {
          return;
       }
-      else if (selectedFiles.size() == 1)
+
+      boolean useTrash = Desktop.isDesktop() && pPrefs_.get().deleteToTrash().getValue();
+
+      String message = useTrash
+            ? constants_.moveToTrashMessage()
+            : constants_.permanentDeleteMessage();
+      message += " ";
+      if (selectedFiles.size() == 1)
       {
          message += selectedFiles.get(0).getName();
       }
@@ -652,7 +659,9 @@ public class Files
       {
          message += constants_.selectedFilesMessage(selectedFiles.size());
       }
-      message += constants_.cannotBeUndoneMessage();
+      message += useTrash
+            ? " " + constants_.moveToTrashSuffix()
+            : constants_.cannotBeUndoneMessage();
 
 
       // validation -- not prohibited move of public folder
@@ -673,7 +682,23 @@ public class Files
 
                               server_.deleteFiles(
                                     selectedFiles,
-                                    new VoidServerRequestCallback(progress));
+                                    new VoidServerRequestCallback(progress) {
+                                       @Override
+                                       public void onError(ServerError error)
+                                       {
+                                          if (!useTrash)
+                                          {
+                                             super.onError(error);
+                                             return;
+                                          }
+                                          String prefix = selectedFiles.size() == 1
+                                                ? constants_.deleteToTrashFailedSingleMessage(
+                                                      selectedFiles.get(0).getName())
+                                                : constants_.deleteToTrashFailedMultipleMessage();
+                                          progress.onError(prefix + "\n\n" + error.getUserMessage());
+                                          progress.onCompleted();
+                                       }
+                                    });
                            }
                         },
                        true);

@@ -19,37 +19,55 @@ npx playwright install
 
 ## Running Tests
 
+### Pick a project first
+
+Bare `npx playwright test` runs the suite against all 8 projects sequentially--hours of test time. Always pass `--project=<name>` (or set `PW_PROJECT`) to scope to one configuration.
+
+Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+
 ### Desktop Mode (Default)
 
-No special environment variables needed — `PW_RSTUDIO_MODE` defaults to `desktop`.
+No special environment variables needed--`PW_RSTUDIO_MODE` defaults to `desktop`.
 
 ```bash
 # All tests
-npx playwright test
+npx playwright test --project=desktop-os-macos
 
 # Specific test file
-npx playwright test tests/panes/misc/autocomplete.test.ts
+npx playwright test tests/panes/misc/autocomplete.test.ts --project=desktop-os-windows
 
 # Specific test by name
-npx playwright test -g "test name here"
-npx playwright test -g "base function: cat("
+npx playwright test -g "test name here" --project=desktop-os-linux
+npx playwright test -g "base function: cat(" --project=desktop-pro-macos
 
 # With extra RStudio CLI args
-PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
+PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test --project=desktop-pro-windows
+
+# Pro on Linux
+npx playwright test --project=desktop-pro-linux
 ```
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
 ### Server Mode
 
-Set `PW_RSTUDIO_MODE=server` and provide credentials:
+Set `PW_RSTUDIO_MODE=server` and provide credentials. `PW_RSTUDIO_SERVER_URL` defaults to `http://localhost:8787`; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set (no default--if unset, the port comes from the URL).
 
 ```bash
 PW_RSTUDIO_MODE=server \
-  PW_RSTUDIO_SERVER_URL=http://10.0.0.1:8787 \
+  PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
+  PW_RSTUDIO_SERVER_PORT=80 \
   PW_RSTUDIO_SERVER_USER=myuser \
   PW_RSTUDIO_SERVER_PASSWORD=mypass \
-  npx playwright test
+  npx playwright test --project=server-os-linux
+
+# Pro on Linux
+PW_RSTUDIO_MODE=server \
+  PW_RSTUDIO_SERVER_URL=http://10.0.0.2 \
+  PW_RSTUDIO_SERVER_PORT=80 \
+  PW_RSTUDIO_SERVER_USER=myuser \
+  PW_RSTUDIO_SERVER_PASSWORD=mypass \
+  npx playwright test --project=server-pro-linux
 ```
 
 ### Viewing the Report
@@ -126,6 +144,7 @@ test.describe('Feature name', () => {
 
 - **Parallel safety**: Default to `test.describe()`. Use `test.describe.serial()` only when tests share state (e.g., multi-turn chat conversations).
 - **Failing tests**: Use `test.fixme()` — never comment tests out.
+- **Cleanup**: prefer a `beforeAll` calling `consoleActions.closeAllBuffersWithoutSaving()` over per-test cleanup. Use `saveAllSourceDocs` → `closeAllSourceDocs` only when the test must flush in-editor edits to disk.
 - **File naming**: Test files use snake_case: `feature_name.test.ts`.
 - **Temporary files**: Use timestamps (`test_${Date.now()}.R`) to avoid collisions.
 

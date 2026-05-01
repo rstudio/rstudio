@@ -361,16 +361,13 @@ core::Error deleteFile(const FilePath& filePath)
    if (session::options().programMode() == kSessionProgramModeDesktop &&
        prefs::userPrefs().deleteToTrash())
    {
+      // The Files pane confirmation prompt (Files.java::onDeleteFiles) tells the user
+      // their file is being moved to the system trash, so don't silently fall back to
+      // a permanent delete on failure -- surface the error and leave the file in place.
       Error error = core::system::recycle_bin::sendTo(filePath);
       if (error)
-      {
          LOG_ERROR(error);
-         return filePath.remove();
-      }
-      else
-      {
-         return Success();
-      }
+      return error;
    }
    else
    {

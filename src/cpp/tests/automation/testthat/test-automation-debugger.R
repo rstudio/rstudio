@@ -183,6 +183,140 @@ withr::defer(.rs.automation.deleteRemote())
       # Check the console output.
       output <- remote$console.getOutput(1L)
       expect_equal(output, "[1] \"This is my S7 method.\"")
-      
+
    })
+})
+
+# Multi-line input at the Browse[N]> prompt previously triggered continuation
+# prompts ("+ ") that called setBrowserActive(false), clearing the captured
+# browser environment mid-eval and confusing debugger introspection.
+.rs.test("browser state survives multi-line input at the Browse prompt", {
+
+   contents <- .rs.heredoc('
+      f <- function() {
+         x <- 1
+         browser()
+         x + 1
+      }
+   ')
+
+   remote$editor.openWithContents(".R", contents)
+   remote$commands.execute("sourceActiveDocument")
+
+   # Wait for the source to complete and the function to be defined.
+   .rs.waitUntil("function f is defined", function() {
+      tryCatch({
+         remote$console.executeExpr(stopifnot(is.function(f)))
+         TRUE
+      }, error = function(e) FALSE)
+   })
+
+   # Run the function -- hits browser().
+   remote$console.execute("f()")
+
+   # Verify we're at the browser prompt with a debug highlight.
+   .rs.waitUntil("debug highlight appears", function() {
+      remote$dom.elementExists(".ace_executing-line")
+   })
+
+   # Submit a multi-line expression at Browse[N]>. The {...} block forces R
+   # to parse line-by-line, issuing continuation prompts ("+ ") in between.
+   # Pre-fix, those continuation prompts called setBrowserActive(false),
+   # which cleared the cached browser state mid-eval so the body of the
+   # block would observe .rs.isBrowserActive() == FALSE and an empty
+   # browser environment.
+   multilineCode <- .rs.heredoc('
+      {
+         status <- .rs.isBrowserActive()
+         envIsGlobal <- identical(
+            .Call("rs_getBrowserEnv", PACKAGE = "(embedding)"),
+            globalenv()
+         )
+         cat("DBG isBrowserActive:", status,
+             "envIsGlobal:", envIsGlobal, "\n")
+      }
+   ')
+   remote$console.execute(multilineCode)
+
+   .rs.waitUntil("multi-line eval finished", function()
+   {
+      # We might get put into a nested debugger invocation. If this happens,
+      # then make sure we step through it.
+      output <- remote$console.getOutput(n = 1L)
+      if (grepl("^debug at", output))
+      {
+         remote$keyboard.sendKeys("c", "<Enter>")
+         return(FALSE)
+      }
+      
+      any(grepl("^DBG isBrowserActive: ", output))
+   })
+
+   output <- remote$console.getOutput()
+   hits <- output[grepl("^DBG isBrowserActive: ", output)]
+   line <- hits[length(hits)]
+   expect_match(line, "isBrowserActive: TRUE")
+   expect_match(line, "envIsGlobal: FALSE")
+
+   # Debug highlight should still be visible after the multi-line eval.
+   expect_true(remote$dom.elementExists(".ace_executing-line"))
+
+   # Exit the debugger and clean up.
+   remote$keyboard.insertText("<Ctrl + 2>", "c", "<Enter>")
+   remote$console.executeExpr(rm(list = "f"))
+   remote$keyboard.insertText("<Ctrl + L>")
+})
+
+# https://github.com/rstudio/rstudio/issues/17481
+# Hitting a breakpoint at the top level of a sourced script (where the
+# captured browser environment is globalenv()) previously caused
+# isBrowseActive() to return FALSE -- onConsolePrompt then took an early
+# return without firing kContextDepthChanged, so the debug highlight and
+# debugger toolbar never appeared.
+.rs.test("debugger UI appears for top-level breakpoints in sourced scripts", {
+
+   contents <- .rs.heredoc('
+      x <- 1
+      y <- 22
+      print(x + y)
+   ')
+
+   remote$editor.openWithContents(".R", contents)
+
+   # Place a breakpoint. Note: gutterLayer$children is a JS HTMLCollection
+   # accessed with 0-based indexing through the BRAT R wrapper, so [[2L]]
+   # is the third gutter cell -- the line containing print(x + y).
+   gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
+   gutterCell <- gutterLayer$children[[2L]]
+   remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
+
+   editor <- remote$editor.getInstance()
+   editor$clearSelection()
+
+   # Source the document -- the breakpoint should fire at the print() line.
+   remote$commands.execute("sourceActiveDocument")
+
+   # Wait for the debug highlight to settle. The auto-step past .doTrace
+   # (BreakpointManager.onContextDepthChanged) can leave the highlight
+   # transiently pointing at a neighbouring line before the post-step
+   # events arrive, so poll for the actual line number ("3", matching
+   # the print() line) rather than just element existence.
+   .rs.waitUntil("debug highlight settles at top-level breakpoint", function() {
+      if (!remote$dom.elementExists(".ace_executing-line"))
+         return(FALSE)
+      activeLineEl <- remote$js.querySelector(".ace_executing-line")
+      identical(activeLineEl$innerText, "3")
+   })
+
+   activeLineEl <- remote$js.querySelector(".ace_executing-line")
+   expect_equal(activeLineEl$innerText, "3")
+
+   # Exit the debugger and confirm the script actually completes (not
+   # hung): print(x + y) should produce "[1] 23" once execution resumes.
+   remote$keyboard.insertText("<Ctrl + 2>", "c", "<Enter>")
+   .rs.waitUntil("script completes after debugger exit", function() {
+      output <- remote$console.getOutput()
+      any(grepl("^\\[1\\] 23$", output))
+   })
+   remote$keyboard.insertText("<Ctrl + L>")
 })

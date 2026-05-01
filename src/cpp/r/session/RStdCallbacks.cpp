@@ -281,12 +281,33 @@ int RReadConsole(const char *pmt,
       // track whether we're at the top-level REPL prompt.
       // cleared before returning input to R (see below).
       // only REPL prompts use hist == 1; readline(), scan(), etc. use 0.
-      // both the default prompt ("> ") and the continuation prompt ("+ ")
-      // indicate top-level — R is waiting for input, not executing code.
+      // continuation prompts (typically "+ ") also use hist == 1, but they
+      // indicate that R is mid-parse on a previous expression -- the
+      // underlying REPL (browser or top-level) has not changed, so the
+      // browser-active flag must be preserved across them. In particular,
+      // calling setBrowserActive(false) on a continuation prompt while
+      // inside a browser would clear the captured browser environment and
+      // cause subsequent debugger introspection to fail.
+      //
+      // atTopLevelPrompt, on the other hand, must still be updated: R is
+      // at a REPL prompt waiting for input. Downstream components rely on
+      // this to distinguish REPL-idle state from mid-expression state;
+      // see isAtTopLevel() and its callers. We key it off the cached
+      // browser state since the continuation prompt itself doesn't
+      // reveal whether we're in a browser.
       if (hist == 1)
       {
-         setAtTopLevelPrompt(!browsing);
-         setBrowserActive(browsing);
+         std::string continuePrompt = r::options::getOption<std::string>("continue");
+         bool isContinuation = !continuePrompt.empty() && (prompt == continuePrompt);
+         if (isContinuation)
+         {
+            setAtTopLevelPrompt(!browserContextActive());
+         }
+         else
+         {
+            setAtTopLevelPrompt(!browsing);
+            setBrowserActive(browsing);
+         }
       }
       else
       {
@@ -426,7 +447,7 @@ int RReadConsole(const char *pmt,
             buf[inputLen + 1] = '\0';
          }
 
-         // R is about to execute the input — no longer at the prompt
+         // R is about to execute the input -- no longer at the prompt
          setAtTopLevelPrompt(false);
          return 1;
       }

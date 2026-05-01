@@ -550,8 +550,21 @@ bool isAtTopLevel()
 
 bool isBrowseActive()
 {
+   // browserContextActive() reflects whether we last saw a Browse[N]> prompt;
+   // browserEnv() is set via rs_setCapturedBrowserEnv (called from
+   // .rs.captureCurrentEnvironment()) to the environment being debugged.
+   // We require a non-nil captured env to distinguish "in a browser, env
+   // captured" from the brief window where setBrowserActive(true) has run
+   // but the capture has not yet completed. That window spans from when
+   // setBrowserActive(true) is called in RReadConsole to when
+   // .rs.captureCurrentEnvironment() runs and rs_setCapturedBrowserEnv
+   // installs a non-nil value.
+   //
+   // Note: R_GlobalEnv is a *valid* captured env for top-level debugging
+   // (e.g. debugSource() of a script with breakpoints), so we must not
+   // exclude it here.
    return browserContextActive() &&
-          browserEnv() != R_GlobalEnv;
+          browserEnv() != R_NilValue;
 }
 
 bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
