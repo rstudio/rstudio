@@ -126,15 +126,10 @@ SEXP rs_shinyviewer(SEXP urlSEXP,
       int options = SHINY_VIEWER_OPTIONS_NONE;
 
       std::string path = r::sexp::safeAsString(pathSEXP);
-      if (path.find("/shinytest/recorder") != std::string::npos ||
-          path.find("/shinytest/diffviewerapp") != std::string::npos)
+      if (path.find("/shinytest2/internal/recorder") != std::string::npos)
       {
           viewertype = kShinyViewerTypeWindow;
-          options = SHINY_VIEWER_OPTIONS_NOTOOLS;
-      }
-      if (path.find("/shinytest/recorder") != std::string::npos)
-      {
-          options |= SHINY_VIEWER_OPTIONS_WIDE;
+          options = SHINY_VIEWER_OPTIONS_NOTOOLS | SHINY_VIEWER_OPTIONS_WIDE;
       }
       
       json::Value meta;

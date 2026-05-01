@@ -377,4 +377,78 @@ public class StringUtilTests extends GWTTestCase
          "#'"
       );
    }
+
+   // -- StringUtil.htmlUnescape tests ----------------------------------------
+
+   public void testHtmlUnescapeNullAndEmpty()
+   {
+      assertNull(StringUtil.htmlUnescape(null));
+      assertEquals("", StringUtil.htmlUnescape(""));
+   }
+
+   public void testHtmlUnescapeNoEntities()
+   {
+      assertEquals("hello world", StringUtil.htmlUnescape("hello world"));
+      assertEquals("plain text", StringUtil.htmlUnescape("plain text"));
+   }
+
+   public void testHtmlUnescapeAllEscapes()
+   {
+      // These are exactly the escapes produced by the server's
+      // core::string_utils::htmlEscape (StringUtils.cpp).
+      assertEquals("<", StringUtil.htmlUnescape("&lt;"));
+      assertEquals(">", StringUtil.htmlUnescape("&gt;"));
+      assertEquals("&", StringUtil.htmlUnescape("&amp;"));
+      assertEquals("\"", StringUtil.htmlUnescape("&quot;"));
+      assertEquals("'", StringUtil.htmlUnescape("&#x27;"));
+      assertEquals("/", StringUtil.htmlUnescape("&#x2F;"));
+   }
+
+   public void testHtmlUnescapeXssPayloads()
+   {
+      // Compiler-controlled text that must round-trip via the server-side
+      // htmlEscape and the client-side htmlUnescape we just added.
+      assertEquals(
+         "<script>alert(1)</script>",
+         StringUtil.htmlUnescape("&lt;script&gt;alert(1)&lt;&#x2F;script&gt;"));
+      assertEquals(
+         "<img src=x onerror=alert(1)>",
+         StringUtil.htmlUnescape("&lt;img src=x onerror=alert(1)&gt;"));
+   }
+
+   public void testHtmlUnescapeAmpersandLast()
+   {
+      // The encoder emits &amp; for '&' and &lt; for '<'. So the literal
+      // input "&lt;" round-trips through encode -> "&amp;lt;" -> decode.
+      // Decoding must NOT collapse "&amp;lt;" all the way to "<": that would
+      // mean an escaped ampersand had been over-decoded.
+      assertEquals("&lt;", StringUtil.htmlUnescape("&amp;lt;"));
+      assertEquals("&amp;", StringUtil.htmlUnescape("&amp;amp;"));
+      assertEquals("&", StringUtil.htmlUnescape("&amp;"));
+   }
+
+   public void testHtmlUnescapeUnknownEntityPreserved()
+   {
+      // Entities we don't recognize are passed through untouched.
+      assertEquals("&unknown;", StringUtil.htmlUnescape("&unknown;"));
+      assertEquals("&#999;", StringUtil.htmlUnescape("&#999;"));
+      assertEquals("a & b", StringUtil.htmlUnescape("a & b"));
+   }
+
+   public void testHtmlUnescapeCaseSensitive()
+   {
+      // The server only emits lowercase entity names, so the decoder is
+      // case-sensitive. Uppercase variants are passed through untouched.
+      assertEquals("&LT;", StringUtil.htmlUnescape("&LT;"));
+      assertEquals("&AMP;", StringUtil.htmlUnescape("&AMP;"));
+   }
+
+   public void testHtmlUnescapeAdjacentEntities()
+   {
+      // Adjacent entities must each be decoded independently; no run-on
+      // matching across entity boundaries.
+      assertEquals("&&", StringUtil.htmlUnescape("&amp;&amp;"));
+      assertEquals("<>", StringUtil.htmlUnescape("&lt;&gt;"));
+      assertEquals("<<", StringUtil.htmlUnescape("&lt;&lt;"));
+   }
 }

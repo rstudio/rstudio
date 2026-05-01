@@ -89,7 +89,7 @@ After editing, verify all four files contain the new version string.
 
 ### 6. Upload to S3
 
-Run the upload script. It downloads release archives for all supported platforms (linux-amd64, linux-arm64, linux-rhel7-amd64, macos, win) from the Quarto GitHub releases page and copies each to the `rstudio-buildtools` S3 bucket.
+Run the upload script. It downloads release archives for all supported platforms (linux-amd64, linux-arm64, macos, win) from the Quarto GitHub releases page and copies each to the `rstudio-buildtools` S3 bucket.
 
 ```bash
 bash dependencies/tools/upload-quarto.sh

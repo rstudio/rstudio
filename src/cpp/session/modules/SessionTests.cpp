@@ -27,7 +27,6 @@
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -63,11 +62,26 @@ bool isOnlySpaceBefore(const std::string& contents, size_t pos)
 
 TestsFileType getTestType(const std::string& contents)
 {
-   size_t pos = contents.find("test_that(", 0);
-   if (pos != std::string::npos && (pos == 0 || isspace(contents.at(pos - 1))))
+   // shinytest2 tests are testthat tests that drive a Shiny app via
+   // AppDriver$new(). Classify a file as shinytest only when *both* tokens
+   // appear (with test_that( on a token boundary) — that way an offhand
+   // AppDriver$new( in a comment of a plain testthat file doesn't trip
+   // the shinytest UI commands.
+   size_t testThatPos = contents.find("test_that(", 0);
+   bool hasTestThat =
+         testThatPos != std::string::npos &&
+         (testThatPos == 0 || isspace(contents.at(testThatPos - 1)));
+
+   if (hasTestThat &&
+       contents.find("AppDriver$new(", 0) != std::string::npos)
+   {
+      return TestsShinyTest;
+   }
+
+   if (hasTestThat)
       return TestsTestThat;
 
-   pos = contents.find("context(\"", 0);
+   size_t pos = contents.find("context(\"", 0);
    if (pos != std::string::npos && (pos == 0 || isOnlySpaceBefore(contents, pos)))
    {
       pos = contents.find("test_", 0);
@@ -76,10 +90,6 @@ TestsFileType getTestType(const std::string& contents)
          return TestsTestThat;
       }
    }
-
-   pos = contents.find("app <- ShinyDriver$new(", 0);
-   if (pos == 0)
-      return TestsShinyTest;
 
    return TestsNone;
 }
@@ -107,48 +117,6 @@ std::string onDetectTestsSourceType(
 
 } // anonymous namespace
 
-Error installShinyTestDependencies(const json::JsonRpcRequest& request,
-                                   json::JsonRpcResponse* pResponse)
-{
-   // Prepare the command
-   std::string cmd;
-   cmd.append("shinytest::installDependencies()");
-
-   // R binary
-   FilePath rProgramPath;
-   Error error = module_context::rScriptPath(&rProgramPath);
-   if (error)
-      return error;
-
-   // options
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   options.redirectStdErrToStdOut = true;
-
-   // build args
-   std::vector<std::string> args;
-   args.push_back("--vanilla");
-   args.push_back("-s");
-   args.push_back("-e");
-   args.push_back(cmd);
-
-   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
-         boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing shinytest dependencies", console_process::InteractionNever);
-
-   // create and execute console process
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
-            args,
-            options,
-            pCPI);
-
-   // return console process
-   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
-   return Success();
-}
-
 Error initialize()
 {
    using namespace module_context;
@@ -158,8 +126,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionTests.R"))
-      (bind(registerRpcMethod, "install_shinytest_dependencies", installShinyTestDependencies));
+      (bind(sourceModuleRFile, "SessionTests.R"));
 
    return initBlock.execute();
 }

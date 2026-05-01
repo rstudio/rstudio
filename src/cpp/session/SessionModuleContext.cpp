@@ -2889,6 +2889,7 @@ json::Value sourceMarkerJson(const SourceMarker& sourceMarker)
    obj["line"] = sourceMarker.line;
    obj["column"] = sourceMarker.column;
    obj["message"] = sourceMarker.message.text();
+   obj["message_is_html"] = sourceMarker.messageIsHtml;
    obj["log_path"] = "";
    obj["log_line"] = -1;
    obj["show_error_list"] = sourceMarker.showErrorList;

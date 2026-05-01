@@ -2279,6 +2279,16 @@ int main(int argc, char * const argv[])
          return 0;
       }
 
+      // warn if --run-tests was invoked without the rstudio-tests helper, which
+      // sets up R_HOME / R_DOC_DIR / R_LIB_DIR and other environment needed for tests
+      if (options.runTests() && core::system::getenv("RSTUDIO_TESTS_HELPER").empty())
+      {
+         std::cerr << "WARNING: 'rsession --run-tests' was invoked directly. "
+                   << "Prefer the 'rstudio-tests' helper script, which configures "
+                   << "the environment variables (R_HOME, R_DOC_DIR, R_LIB_DIR) "
+                   << "and arguments needed for the test harness." << std::endl;
+      }
+
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;

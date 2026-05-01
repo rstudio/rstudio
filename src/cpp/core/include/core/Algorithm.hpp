@@ -295,9 +295,9 @@ inline std::string join(Iterator begin,
    return join(begin, end, delim, std::move(callback));
 }
 
-template <typename CALLBACK>
+template <typename VOID_FUNC>
 struct Defer {
-   explicit Defer(CALLBACK func) : func(std::move(func)) {}
+   explicit Defer(VOID_FUNC func) : func(std::move(func)) {}
    ~Defer() { func(); }
 
    Defer() = delete;
@@ -306,7 +306,7 @@ struct Defer {
    Defer& operator=(const Defer&) = delete;
    Defer& operator=(Defer&&) = delete;
 
-   CALLBACK func;
+   VOID_FUNC func;
 };
 
 } // namespace algorithm

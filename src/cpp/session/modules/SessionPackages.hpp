@@ -16,6 +16,8 @@
 #ifndef SESSION_PACKAGES_HPP
 #define SESSION_PACKAGES_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -24,11 +26,16 @@ namespace core {
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace packages {
 
 core::Error initialize();
 void enquePackageStateChanged();
+
+// Returns true if 'input' looks like a package-management function call
+// (install/update/remove and friends). Exposed for testing; also used
+// internally by onConsolePrompt to decide when to refresh the Packages pane.
+bool isPackageManagementCall(const std::string& input);
 
 } // namespace packages
 } // namespace modules

@@ -68,6 +68,16 @@
 #define kMathjaxSegment "mathjax"
 #define kMathjaxBeginComment "<!-- dynamically load mathjax"
 
+// Enables the MathJax Safe extension, which neutralizes unsafe TeX commands
+// (e.g. \href to a javascript: URI, dangerous CSS in \style) when rendering
+// user-authored math. Required for rendered Rmd output because it is loaded
+// into IDE-controlled web views (the Viewer pane, the HTML preview, and the
+// presentation preview) that share the IDE's same-origin context.
+#define kMathjaxSafeConfigScript \
+   "<script type=\"text/x-mathjax-config\">" \
+   "MathJax.Hub.Config({ extensions: [\"Safe.js\"] });" \
+   "</script>"
+
 #define kStandardRenderFunc "rmarkdown::render"
 #define kShinyRenderFunc "rmarkdown::run"
 
@@ -1077,17 +1087,18 @@ private:
       }
       else if (match[0] == kMathjaxBeginComment)
       {
-         // we found the start of the MathJax section; add the MathJax config
-         // block if we're in a configuration that requires it
-#if defined(_WIN32)
-         if (session::options().programMode() != kSessionProgramModeDesktop)
-            return match[0];
+         // we found the start of the MathJax section; emit a config block to
+         // load the Safe extension before MathJax processes the page
+         result.append(kMathjaxSafeConfigScript "\n");
 
-         result.append(kQtMathJaxConfigScript "\n");
-         result.append(match[0]);
-#else
-         return match[0];
+#if defined(_WIN32)
+         // on Windows desktop, also tweak HTML-CSS rendering (font scaling +
+         // disable web fonts) to work around QtWebEngine rendering quirks
+         if (session::options().programMode() == kSessionProgramModeDesktop)
+            result.append(kQtMathJaxConfigScript "\n");
 #endif
+
+         result.append(match[0]);
       }
       else if (hasMathjax_)
       {

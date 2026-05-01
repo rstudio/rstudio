@@ -59,7 +59,16 @@ public class SourceMarker extends JavaScriptObject
    public final native String getMessage() /*-{
       return this.message;
    }-*/;
-   
+
+   /*
+    * Returns true if getMessage() should be rendered as raw HTML, false if
+    * it should be rendered as plain text. Older payloads may omit this field;
+    * default to false so unknown markers are rendered safely as text.
+    */
+   public final native boolean getMessageIsHtml() /*-{
+      return !!this.message_is_html;
+   }-*/;
+
    /*
     * Can return empty string for no log path
     */

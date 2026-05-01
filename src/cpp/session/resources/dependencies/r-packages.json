@@ -270,8 +270,8 @@
             "location": "cran",
             "source": true
         },
-        "shinytest": {
-            "version": "1.3.1",
+        "shinytest2": {
+            "version": "0.2.0",
             "location": "cran",
             "source": false
         },
@@ -538,10 +538,10 @@
                 "rstudioapi"
             ]
         },
-        "shinytest": {
+        "shinytest2": {
             "description": "Shiny Tests",
             "packages": [
-                "shinytest"
+                "shinytest2"
             ]
         },
         "testthat": {

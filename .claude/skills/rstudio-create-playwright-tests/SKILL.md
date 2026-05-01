@@ -448,13 +448,15 @@ Use helpers from `pages/viewer_pane.page.ts`:
 
 ## RStudio-Specific Patterns
 
-**Closing source files:** Save first, then close — prevents "Save changes?" dialogs:
+**Closing source files in cleanup hooks:**
 
-```typescript
-await typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
-await sleep(1000);
-await typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
-```
+Default to `consoleActions.closeAllBuffersWithoutSaving()` — that's the suite norm:
+- Both fixtures use it on shutdown (`desktop.fixture.ts:217`, `server.fixture.ts:90`)
+- ~12 test files call it in `beforeAll` to clear any leftover buffers from a prior crashed run
+
+Use `saveAllSourceDocs` → `closeAllSourceDocs` only when the test specifically needs to flush in-editor edits to disk first (the one justified case in the suite is `code_suggestions.test.ts`, validating autocomplete on saved content). For generic tidy-up, this pair is wrong — sourcing a file with a breakpoint or other R-modifying side effect can leave the buffer dirty in ways that trip `closeAllSourceDocs`'s "Save changes?" prompt.
+
+**Where to put the cleanup:** prefer `beforeAll` (defensive against prior crashed runs) over per-test `afterEach`. Unique timestamped filenames keep tests from colliding, so per-test buffer cleanup is rarely needed. Reach for `afterEach` only when the test must reset some other state mid-suite (e.g., a serial block where one test's leftover modal/toolbar would break the next).
 
 **Separate constants by domain** when the same concept has different values in different contexts (e.g., `CODE_SUGGESTION_PROVIDERS` vs `CHAT_PROVIDERS` in `utils/constants.ts`).
 

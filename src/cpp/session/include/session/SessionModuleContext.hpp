@@ -887,43 +887,38 @@ struct SourceMarker
 
    SourceMarker()
       : type(Empty),
-      isCustom(false)
+      isCustom(false),
+      messageIsHtml(false)
    {
    }
 
-   SourceMarker(Type type,
-                const core::FilePath& path,
-                int line,
-                int column,
-                const core::html_utils::HTML& message,
-                bool showErrorList)
-      : type(type),
-        path(path),
-        line(line),
-        column(column),
-        message(message),
-        showErrorList(showErrorList),
-        isCustom(false)
-   {
-   }
-
+   // The trailing booleans are defaulted so that the common case of plain-text
+   // markers from compilers/linters can call the constructor with 6 arguments.
+   //
+   // messageIsHtml is opt-in for markers whose message is intentional HTML
+   // (e.g. clang Find Usages, which highlights the matched symbol with
+   // <strong>). When false, the client renders the message via innerText
+   // rather than innerHTML so that attacker-controlled compiler output cannot
+   // inject HTML/JS even if the server-side escape is ever bypassed.
    SourceMarker(Type type,
                 const core::FilePath& path,
                 int line,
                 int column,
                 const core::html_utils::HTML& message,
                 bool showErrorList,
-                bool isCustom)
+                bool isCustom = false,
+                bool messageIsHtml = false)
       : type(type),
         path(path),
         line(line),
         column(column),
         message(message),
         showErrorList(showErrorList),
-        isCustom(isCustom)
+        isCustom(isCustom),
+        messageIsHtml(messageIsHtml)
    {
    }
-   
+
    explicit operator bool() const
    {
       return type != Empty;
@@ -936,6 +931,7 @@ struct SourceMarker
    core::html_utils::HTML message;
    bool showErrorList;
    bool isCustom;
+   bool messageIsHtml;
 };
 
 SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
