@@ -217,7 +217,7 @@
 
    # Add a max-chars hint for the row names column. Use .row_names_info()
    # so we avoid materializing the full row-name vector for the common
-   # case of automatic rownames — type=1L returns a signed row count:
+   # case of automatic rownames -- type=1L returns a signed row count:
    # negative for the compact c(NA, -n) form (auto), positive otherwise.
    if (computeMaxChars) {
       rnInfo <- .row_names_info(x, type = 1L)
@@ -227,7 +227,7 @@
             # Automatic rownames: widest displayed value is the row count.
             rnChars <- nchar(as.character(-rnInfo))
          } else if (rnInfo > 0L) {
-            # Explicit rownames — cheap to bound for integer/character.
+            # Explicit rownames -- cheap to bound for integer/character.
             rnAttr <- attr(x, "row.names", exact = TRUE)
             if (is.integer(rnAttr)) {
                rng <- suppressWarnings(range(rnAttr, na.rm = TRUE))
