@@ -7,6 +7,10 @@
   repository they came from.
 
 ### Fixed
+- Hardened source-marker rendering in the Build, Markers, and Compile PDF
+  panes so that compiler/linter-controlled error text is rendered as plain
+  text by default; only messages that the server explicitly marks as HTML
+  (e.g. C++ Find Usages highlighting) are rendered via `innerHTML`.
 - Reduced filesystem work performed by the `install.packages()` hook; the
   before/after scan is now scoped to the requested packages and their
   dependency closure rather than the entire library.

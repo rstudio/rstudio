@@ -35,6 +35,7 @@ namespace html_utils {
 
 
 HTML::HTML(const std::string& text, bool isHTML)
+   : isHTML_(isHTML)
 {
    if (!isHTML)
       text_ = string_utils::htmlEscape(text);

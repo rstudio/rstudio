@@ -97,9 +97,23 @@ public class SourceMarkerItemCodec
       TableCellElement tdMsg = Document.get().createTDElement();
       tdMsg.setClassName(resources_.styles().messageCell());
 
+      // Source-marker messages are often derived from compiler/linter output
+      // and can contain attacker-controlled text (e.g. via #pragma message or
+      // #warning in a .cpp file). Only render as HTML when the server has
+      // explicitly marked the message as safe HTML (e.g. <strong> highlighting
+      // from clang Find Usages). For plain-text messages, render via innerText
+      // and decode the server-side HTML entity escaping for display.
       VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tdMsg);
-      vc.setPreserveHTML(true);
-      vc.submit(entry.getMessage());
+      if (entry.getMessageIsHtml())
+      {
+         vc.setPreserveHTML(true);
+         vc.submit(entry.getMessage());
+      }
+      else
+      {
+         vc.setPreserveHTML(false);
+         vc.submit(StringUtil.htmlUnescape(entry.getMessage()));
+      }
 
       tr.appendChild(tdMsg);
 
