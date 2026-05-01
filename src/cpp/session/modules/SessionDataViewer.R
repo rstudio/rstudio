@@ -215,25 +215,28 @@
       total_cols      = .rs.scalar(totalCols),
       total_rows      = .rs.scalar(nrow(x)))
 
-   # Add a max-chars hint for the row names column. Read the row.names
-   # attribute directly so we don't materialize the full row-name vector
-   # for the common case of automatic row names (which is stored in the
-   # compact form c(NA_integer_, -n) — O(1) to inspect).
+   # Add a max-chars hint for the row names column. Use .row_names_info()
+   # so we avoid materializing the full row-name vector for the common
+   # case of automatic rownames — type=1L returns a signed row count:
+   # negative for the compact c(NA, -n) form (auto), positive otherwise.
    if (computeMaxChars) {
-      rnAttr <- attr(x, "row.names", exact = TRUE)
+      rnInfo <- .row_names_info(x, type = 1L)
       rnChars <- NA_integer_
-      if (is.integer(rnAttr) && length(rnAttr) == 2L && is.na(rnAttr[1L])) {
-         # Automatic row names: row.names is c(NA, -nrow). Widest displayed
-         # rowname is nrow(x), so we just need nchar of that.
-         rnChars <- nchar(as.character(abs(rnAttr[2L])))
-      } else if (is.integer(rnAttr) && length(rnAttr) > 0L) {
-         # Explicit integer rownames — cheap to bound via range().
-         rng <- suppressWarnings(range(rnAttr, na.rm = TRUE))
-         if (all(is.finite(rng)))
-            rnChars <- max(nchar(as.character(rng)))
-      } else if (is.character(rnAttr) && length(rnAttr) > 0L) {
-         # Custom character rownames — nchar is O(n) but doesn't format.
-         rnChars <- max(nchar(rnAttr, type = "width"), 0L, na.rm = TRUE)
+      if (is.integer(rnInfo) && length(rnInfo) == 1L && !is.na(rnInfo)) {
+         if (rnInfo < 0L) {
+            # Automatic rownames: widest displayed value is the row count.
+            rnChars <- nchar(as.character(-rnInfo))
+         } else if (rnInfo > 0L) {
+            # Explicit rownames — cheap to bound for integer/character.
+            rnAttr <- attr(x, "row.names", exact = TRUE)
+            if (is.integer(rnAttr)) {
+               rng <- suppressWarnings(range(rnAttr, na.rm = TRUE))
+               if (all(is.finite(rng)))
+                  rnChars <- max(nchar(as.character(rng)))
+            } else if (is.character(rnAttr)) {
+               rnChars <- max(nchar(rnAttr, type = "width"), 0L, na.rm = TRUE)
+            }
+         }
       }
       if (!is.na(rnChars))
          rowNameCol$col_max_chars <- .rs.scalar(as.integer(rnChars))
