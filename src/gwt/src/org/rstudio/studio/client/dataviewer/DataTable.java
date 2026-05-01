@@ -116,9 +116,37 @@ public class DataTable
       toolbar.addLeftWidget(sidebarButton_);
       sidebarButton_.setVisible(!isPreview);
 
+      toolbar.addLeftWidget(filterButton_);
+      filterButton_.setVisible(!isPreview);
+
+      colsSeparator_ = toolbar.addLeftSeparator();
+      colsSeparator_.setVisible(false);
+      addColumnControls(toolbar);
+
+      searchWidget_ = new SearchWidget(constants_.searchWidgetLabel(), new SuggestOracle() {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<>()));
+         }
+      });
+      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            applySearch(getWindow(), event.getValue());
+         }
+      });
+
+      toolbar.addRightWidget(searchWidget_);
+      searchWidget_.setVisible(!isPreview);
+
       // Gear icon — opens a popup of data viewer options. Currently houses
-      // the "show Summary panel by default" toggle; other per-viewer or
-      // per-user preferences can hang off this menu in future.
+      // the "show Summary panel by default" toggle; other per-user data
+      // viewer preferences can hang off this menu in future.
       optionsMenu_ = new ToolbarPopupMenu();
       optionsMenu_.addItem(new CheckableMenuItem(
             constants_.optionsShowSummaryDefault())
@@ -171,40 +199,14 @@ public class DataTable
             optionsMenu_.showRelativeTo(optionsButton_);
          }
       });
-      toolbar.addLeftWidget(optionsButton_);
+      Widget optionsSeparator = toolbar.addRightSeparator();
+      toolbar.addRightWidget(optionsButton_);
+      optionsSeparator.setVisible(!isPreview);
       optionsButton_.setVisible(!isPreview);
 
-      toolbar.addLeftWidget(filterButton_);
-      filterButton_.setVisible(!isPreview);
-
-      colsSeparator_ = toolbar.addLeftSeparator();
-      colsSeparator_.setVisible(false);
-      addColumnControls(toolbar);
-
-      searchWidget_ = new SearchWidget(constants_.searchWidgetLabel(), new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<>()));
-         }
-      });
-      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            applySearch(getWindow(), event.getValue());
-         }
-      });
-
-      toolbar.addRightWidget(searchWidget_);
-      searchWidget_.setVisible(!isPreview);
-      
       if (isPreview)
       {
-         ToolbarLabel label = 
+         ToolbarLabel label =
             new ToolbarLabel(constants_.toolbarLabel());
          label.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
          toolbar.addRightWidget(label);
