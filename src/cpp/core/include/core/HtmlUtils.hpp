@@ -31,15 +31,13 @@ namespace html_utils {
 class HTML
 {
 public:
-   HTML() : isHTML_(false) {}
+   HTML() {}
    explicit HTML(const std::string& text, bool isHTML = false);
 
    const std::string& text() const { return text_; }
-   bool isHTML() const { return isHTML_; }
 
  private:
    std::string text_;
-   bool isHTML_;
 };
 
 

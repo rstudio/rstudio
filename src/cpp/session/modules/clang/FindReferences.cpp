@@ -182,13 +182,17 @@ public:
             message = htmlMessage(loc, lines[line]);
 
 
-         // create marker
+         // create marker; messageIsHtml=true because htmlMessage() above wraps
+         // the matched symbol in <strong>, which the client must render as
+         // HTML rather than as plain text.
          SourceMarker marker(SourceMarker::Usage,
                              startLoc.filePath,
                              startLoc.line,
                              startLoc.column,
                              core::html_utils::HTML(message, true),
-                             true);
+                             true,    // showErrorList
+                             false,   // isCustom
+                             true);   // messageIsHtml
 
          // add it to the list
          markers.push_back(marker);

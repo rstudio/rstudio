@@ -16,6 +16,7 @@
 #include "SessionMarkers.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/optional.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
@@ -153,6 +154,11 @@ public:
                   int line, column;
                   std::string message;
                   bool showErrorList;
+                  // message_is_html is optional: pre-fix state files do not
+                  // carry it, but their saved messages were always run
+                  // through htmlEscape, so treating them as HTML is correct
+                  // (innerHTML decodes the entities back for display).
+                  boost::optional<bool> messageIsHtml;
                   Error error = json::readObject(
                      markerJson.getObject(),
                      "type", type,
@@ -160,7 +166,8 @@ public:
                      "line", line,
                      "column", column,
                      "message", message,
-                     "show_error_list", showErrorList);
+                     "show_error_list", showErrorList,
+                     "message_is_html", messageIsHtml);
                   if (error)
                   {
                      LOG_ERROR(error);
@@ -172,8 +179,14 @@ public:
                       module_context::resolveAliasedPath(path),
                       line,
                       column,
+                      // The saved text is already in its final form
+                      // (escape-encoded for plain text, raw for HTML);
+                      // pass isHTML=true so the constructor does not
+                      // re-escape it.
                       core::html_utils::HTML(message, true),
-                      showErrorList);
+                      showErrorList,
+                      false,                              // isCustom
+                      messageIsHtml.get_value_or(true));  // messageIsHtml
 
                   markers.push_back(marker);
                }

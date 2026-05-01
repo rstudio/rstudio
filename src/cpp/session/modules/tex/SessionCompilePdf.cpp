@@ -255,14 +255,14 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
 // NOTE: sync changes with SessionModuleContext.cpp sourceMarkerJson
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
-   core::html_utils::HTML message(logEntry.message());
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
    obj["path"] = module_context::createAliasedPath(logEntry.filePath());
    obj["line"] = logEntry.line();
    obj["column"] = 1;
-   obj["message"] = message.text();
-   obj["message_is_html"] = message.isHTML();
+   obj["message"] = core::html_utils::HTML(logEntry.message()).text();
+   // Latex log entries are always plain text; the client renders via innerText.
+   obj["message_is_html"] = false;
    obj["log_path"] = module_context::createAliasedPath(logEntry.logFilePath());
    obj["log_line"] = logEntry.logLine();
    obj["show_error_list"] = true;
