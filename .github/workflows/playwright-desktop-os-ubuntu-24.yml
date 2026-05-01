@@ -59,23 +59,27 @@ jobs:
             | sudo tar xz -C /usr/local
 
       - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
         run: |
-          rig add ${{ inputs.r_version }}
-          rig default ${{ inputs.r_version }}
+          rig add "$R_VERSION"
+          rig default "$R_VERSION"
           rig ls
           mkdir -p "$R_LIBS_USER"
 
       - name: Resolve RStudio .deb URL
         id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
-          URL="${{ inputs.rstudio_installer_url }}"
+          URL="$INSTALLER_URL"
           SHA=""
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -r '."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -r '."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -r '."noble-amd64".filename')
+            URL=$(echo "$MANIFEST" | jq -er '."noble-amd64".link')
+            SHA=$(echo "$MANIFEST" | jq -er '."noble-amd64".sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '."noble-amd64".filename')
             echo "Auto-resolved latest noble-amd64 daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
@@ -143,13 +147,15 @@ jobs:
         working-directory: e2e/rstudio
         env:
           PW_RSTUDIO_MODE: desktop
+          PW_PROJECT_NAME: ${{ inputs.project }}
+          PW_GREP: ${{ inputs.grep }}
         run: |
-          if [ -n "${{ inputs.grep }}" ]; then
+          if [ -n "$PW_GREP" ]; then
             xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "${{ inputs.project }}" --grep "${{ inputs.grep }}"
+              npx playwright test --project "$PW_PROJECT_NAME" --grep "$PW_GREP"
           else
             xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "${{ inputs.project }}"
+              npx playwright test --project "$PW_PROJECT_NAME"
           fi
 
       - name: Upload Playwright report
