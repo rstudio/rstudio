@@ -2207,6 +2207,7 @@ var attachCustomScrollbar = function(viewport, host, axis, options) {
 var gridScrollbarV_ = null;
 var gridScrollbarH_ = null;
 var sidebarScrollbar_ = null;
+var sidebarScrollListener_ = null;
 
 var anyScrollbarDragging = function() {
    return (gridScrollbarV_ && gridScrollbarV_.isDragging()) ||
@@ -2225,7 +2226,15 @@ var createCustomScrollbars = function() {
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
          var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-         return { top: headerH, bottom: hasHScroll ? 10 : 0 };
+         // The bar's host is #gridPanel, which includes the info bar
+         // below the scrollable viewport. Add its height to the bottom
+         // inset so the bar doesn't extend over the info bar area.
+         var infoBar = document.getElementById("rsGridData_info");
+         var infoBarH = infoBar ? infoBar.offsetHeight : 0;
+         return {
+            top: headerH,
+            bottom: infoBarH + (hasHScroll ? 10 : 0)
+         };
       },
       onDragEnd: updateInfoBar
    });
@@ -2248,9 +2257,15 @@ var attachSidebarScrollbar = function() {
    var sidebarToggle = document.getElementById("sidebarToggle");
    if (!sidebarPanel || !sidebarContent) return;
 
+   // Tear down any previous instance + its scroll listener to avoid
+   // accumulating handlers across re-bootstraps.
    if (sidebarScrollbar_) {
       sidebarScrollbar_.destroy();
       sidebarScrollbar_ = null;
+   }
+   if (sidebarScrollListener_) {
+      sidebarContent.removeEventListener("scroll", sidebarScrollListener_);
+      sidebarScrollListener_ = null;
    }
 
    sidebarScrollbar_ = attachCustomScrollbar(
@@ -2260,10 +2275,12 @@ var attachSidebarScrollbar = function() {
          }
       });
 
-   sidebarContent.addEventListener("scroll", function() {
+   sidebarScrollListener_ = function() {
+      if (!sidebarScrollbar_) return;
       sidebarScrollbar_.show();
       sidebarScrollbar_.update();
-   });
+   };
+   sidebarContent.addEventListener("scroll", sidebarScrollListener_);
 };
 
 var updateCustomScrollbars = function() {
@@ -2281,6 +2298,13 @@ var destroyCustomScrollbars = function() {
    if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
    if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
    if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
+   if (sidebarScrollListener_) {
+      var sidebarContent = document.getElementById("sidebarContent");
+      if (sidebarContent) {
+         sidebarContent.removeEventListener("scroll", sidebarScrollListener_);
+      }
+      sidebarScrollListener_ = null;
+   }
 };
 
 // ==========================================================================
