@@ -1388,21 +1388,31 @@ var updateInfoBar = function() {
       return;
    }
 
-   // Use cached scroll position to avoid forcing layout recalc.
    // Count a row as "in view" when at least 50% of it is visible.
+   //
+   // The viewport's full height is not the same as the area in which data
+   // rows are actually visible: the sticky <thead> overlays the top, and
+   // when horizontal scroll is active the custom horizontal scrollbar
+   // overlays the bottom 10px. Compute an effective body-visible height
+   // and use that for the bottom edge.
    //
    // Top edge: ceil((scrollTop + H/2) / H) is round-half-down of
    // scrollTop/H + 1, which keeps a row scrolled exactly halfway out in
    // the range (Math.round would round half away from zero and exclude
    // it).
    //
-   // Bottom edge: Math.round((scrollTop + viewportH) / H) is round-half-
-   // up, which correctly includes a row that's exactly 50% visible at
-   // the bottom edge.
+   // Bottom edge: Math.round is half-up, which correctly includes a row
+   // that's exactly 50% visible at the bottom of the data area.
    var viewport = document.getElementById("gridViewport");
    var viewportH = viewport ? viewport.clientHeight : 0;
+   var headerEl = document.getElementById("data_cols");
+   var headerH = (headerEl && headerEl.parentElement)
+      ? headerEl.parentElement.offsetHeight : 0;
+   var hasHScroll = viewport
+      ? viewport.scrollWidth > viewport.clientWidth + 1 : false;
+   var bodyH = Math.max(0, viewportH - headerH - (hasHScroll ? 10 : 0));
    var first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
-   var last = Math.round((lastScrollTop + viewportH) / ROW_HEIGHT);
+   var last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
    // Clamp both bounds against the data extent. At max scroll on a
    // viewport shorter than a row, first can otherwise overshoot
    // activeRows and produce an out-of-bounds range like "11 to 11 of 10".
