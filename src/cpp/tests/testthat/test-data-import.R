@@ -18,42 +18,51 @@ context("data import")
 test_that("assembleDataImport escapes column names against R code injection", {
    skip_if_not_installed("readr")
 
-   # A column name containing R syntax that would, without escaping, close the
-   # cols() argument and inject a top-level call.
-   evil <- 'foo"); .rs.injection.sentinel <- TRUE; readr::cols("'
-
-   opts <- list(
-      mode = "text",
-      importLocation = "data.csv",
-      delimiter = ",",
-      columnDefinitions = list(
-         list(
-            name = evil,
-            assignedType = "character",
-            only = NULL,
-            parseString = NULL,
-            index = 0,
-            rType = "character"
-         )
-      ),
-      openDataViewer = FALSE
+   # Each entry is a column name that, without escaping, would either escape
+   # the cols() argument and inject a top-level call (the quote/paren case),
+   # or break parse() outright (the backslash/newline cases).
+   evilNames <- list(
+      injection = 'foo"); .rs.injection.sentinel <- TRUE; readr::cols("',
+      backslash = 'foo\\bar',
+      newline   = 'foo\nbar'
    )
 
-   info <- .rs.assembleDataImport(opts)
+   for (evil in evilNames)
+   {
+      opts <- list(
+         mode = "text",
+         importLocation = "data.csv",
+         delimiter = ",",
+         columnDefinitions = list(
+            list(
+               name = evil,
+               assignedType = "character",
+               only = NULL,
+               parseString = NULL,
+               index = 0,
+               rType = "character"
+            )
+         ),
+         openDataViewer = FALSE
+      )
 
-   # The assembled previewCode must parse as a single top-level expression.
-   # If the column name escapes the cols() argument, parse() yields multiple
-   # expressions instead.
-   parsed <- parse(text = info$previewCode)
-   expect_length(parsed, 1L)
+      info <- .rs.assembleDataImport(opts)
 
-   # The single expression must be a call to readr::read_csv.
-   expect_equal(as.character(parsed[[1L]][[1L]]), c("::", "readr", "read_csv"))
+      # The assembled previewCode must parse as a single top-level expression.
+      # If the column name escapes the cols() argument, parse() yields multiple
+      # expressions instead.
+      parsed <- parse(text = info$previewCode)
+      expect_length(parsed, 1L)
 
-   # The column name should round-trip: the col_types argument should contain
-   # one named slot whose name equals the original (unescaped) malicious string.
-   call <- parsed[[1L]]
-   col_types <- call$col_types
-   expect_false(is.null(col_types))
-   expect_equal(names(eval(col_types)$cols), evil)
+      # The single expression must be a call to readr::read_csv. R deparses
+      # readr::read_csv as a 3-element call object: `::`, `readr`, `read_csv`.
+      expect_equal(as.character(parsed[[1L]][[1L]]), c("::", "readr", "read_csv"))
+
+      # The column name should round-trip: the col_types argument should contain
+      # one named slot whose name equals the original (unescaped) malicious string.
+      call <- parsed[[1L]]
+      col_types <- call$col_types
+      expect_false(is.null(col_types))
+      expect_equal(names(eval(col_types)$cols), evil)
+   }
 })

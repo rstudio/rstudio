@@ -143,7 +143,13 @@
                      }
                      else
                      {
-                        parseString <- paste("format = \"", col_parseString, "\"", sep = "")
+                        # Same trust-boundary concern as col_name above: encode
+                        # as an R string literal before splicing into code that
+                        # will be eval(parse())'d.
+                        parseString <- sprintf(
+                           "format = %s",
+                           encodeString(col_parseString, quote = "\"")
+                        )
                      }
                   }
 
