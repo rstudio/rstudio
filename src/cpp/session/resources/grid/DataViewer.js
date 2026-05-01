@@ -1372,7 +1372,7 @@ var updateInfoBar = function() {
    // Suppress info bar updates during custom scrollbar drags — reading
    // scrollTop forces style+layout recalc which causes jank. The info
    // bar is updated once when the drag ends.
-   if (scrollbarDragging) return;
+   if (anyScrollbarDragging()) return;
 
    var info = document.getElementById("rsGridData_info");
    if (!info) return;
@@ -1926,12 +1926,15 @@ var initSidebar = function() {
                      loaded = true;
                      renderColumnStats(statsEl, data, colType);
                      statsEl.style.display = "";
+                     if (sidebarScrollbar_) sidebarScrollbar_.update();
                   });
                } else {
                   statsEl.style.display = "";
+                  if (sidebarScrollbar_) sidebarScrollbar_.update();
                }
             } else {
                statsEl.style.display = "none";
+               if (sidebarScrollbar_) sidebarScrollbar_.update();
             }
          });
 
@@ -1949,6 +1952,11 @@ var initSidebar = function() {
    if (panel) {
       panel.classList.toggle("expanded", sidebarVisible);
    }
+
+   // Attach the floating sidebar scrollbar after the content is in place
+   // (so its initial measurement reflects the populated entries).
+   attachSidebarScrollbar();
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
 
 var toggleSidebar = function() {
@@ -2006,233 +2014,264 @@ var scrollToColumn = function(colIdx) {
 // Custom Scrollbars
 // ==========================================================================
 
-var scrollbarV = null;   // vertical scrollbar element
-var scrollbarH = null;   // horizontal scrollbar element
-var scrollbarHideTimer = null;
-var scrollbarDragging = false;  // true while a thumb or track drag is active
+// Floating-overlay scrollbar attached to a scrollable element. Each instance
+// owns its own DOM, drag/track-click handlers, and activity-based fade
+// timer. Returns { update, destroy, show, isDragging }.
+//
+// `viewport`  — the scrollable element whose scroll position the bar reflects.
+// `host`      — the positioned ancestor that the bar is appended into. Must
+//               have position:relative (or absolute/fixed); see the CSS
+//               rules on .custom-scrollbar.{vertical,horizontal}.
+// `axis`      — "vertical" or "horizontal".
+// `options.getInsets`     — optional () => {top, bottom, left, right}: gaps
+//               between the bar and the host edges. Used for the grid's
+//               sticky header and pinned-column offsets.
+// `options.onDragEnd`     — optional callback fired when a thumb/track drag
+//               completes. The grid uses this to re-render the info bar.
+var attachCustomScrollbar = function(viewport, host, axis, options) {
+   options = options || {};
+   var isVertical = (axis === "vertical");
 
-var createCustomScrollbars = function() {
-   var gridPanel = document.getElementById("gridPanel");
-   if (!gridPanel) return;
+   var bar = document.createElement("div");
+   bar.className = "custom-scrollbar " + axis;
+   var track = document.createElement("div");
+   track.className = "scrollbar-track";
+   var thumb = document.createElement("div");
+   thumb.className = "scrollbar-thumb";
+   track.appendChild(thumb);
+   bar.appendChild(track);
+   host.appendChild(bar);
 
-   // Vertical
-   scrollbarV = document.createElement("div");
-   scrollbarV.className = "custom-scrollbar vertical";
-   var trackV = document.createElement("div");
-   trackV.className = "scrollbar-track";
-   var thumbV = document.createElement("div");
-   thumbV.className = "scrollbar-thumb";
-   trackV.appendChild(thumbV);
-   scrollbarV.appendChild(trackV);
-   gridPanel.appendChild(scrollbarV);
+   var hideTimer = 0;
+   var dragging = false;
 
-   // Horizontal
-   scrollbarH = document.createElement("div");
-   scrollbarH.className = "custom-scrollbar horizontal";
-   var trackH = document.createElement("div");
-   trackH.className = "scrollbar-track";
-   var thumbH = document.createElement("div");
-   thumbH.className = "scrollbar-thumb";
-   trackH.appendChild(thumbH);
-   scrollbarH.appendChild(trackH);
-   gridPanel.appendChild(scrollbarH);
+   var scheduleHide = function() {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function() {
+         bar.classList.remove("visible");
+      }, TIMING.scrollbarHide);
+   };
 
-   // Show on hover
-   scrollbarV.addEventListener("mouseenter", function() { showScrollbars(); });
-   scrollbarV.addEventListener("mouseleave", function() { scheduleScrollbarHide(); });
-   scrollbarH.addEventListener("mouseenter", function() { showScrollbars(); });
-   scrollbarH.addEventListener("mouseleave", function() { scheduleScrollbarHide(); });
+   var show = function() {
+      bar.classList.add("visible");
+      scheduleHide();
+   };
 
-   // Drag handling
-   initScrollbarDrag(scrollbarV, thumbV, true);
-   initScrollbarDrag(scrollbarH, thumbH, false);
-
-   // Track click (jump to position)
-   initScrollbarTrackClick(trackV, thumbV, true);
-   initScrollbarTrackClick(trackH, thumbH, false);
-};
-
-var initScrollbarDrag = function(bar, thumb, isVertical) {
-   var dragStart = 0;
-   var scrollStart = 0;
+   bar.addEventListener("mouseenter", show);
+   bar.addEventListener("mouseleave", scheduleHide);
 
    thumb.addEventListener("mousedown", function(evt) {
       evt.preventDefault();
       evt.stopPropagation();
       thumb.classList.add("dragging");
-      scrollbarDragging = true;
-      dragStart = isVertical ? evt.clientY : evt.clientX;
-      var viewport = document.getElementById("gridViewport");
-      scrollStart = isVertical ? viewport.scrollTop : viewport.scrollLeft;
+      dragging = true;
 
-      // Cache layout reads once at drag start — these don't change during
-      // a drag and reading them in onMove forces expensive reflow.
-      var cachedTrackSize = isVertical ? bar.clientHeight : bar.clientWidth;
-      var cachedContentSize = isVertical
+      var dragStart = isVertical ? evt.clientY : evt.clientX;
+      var scrollStart = isVertical ? viewport.scrollTop : viewport.scrollLeft;
+      // Cache layout reads once at drag start — they don't change during a
+      // drag and reading them in onMove forces expensive reflow.
+      var trackSize = isVertical ? bar.clientHeight : bar.clientWidth;
+      var contentSize = isVertical
          ? viewport.scrollHeight - viewport.clientHeight
          : viewport.scrollWidth - viewport.clientWidth;
-      var cachedThumbSize = isVertical ? thumb.offsetHeight : thumb.offsetWidth;
-      var scrollRatio = cachedTrackSize - cachedThumbSize > 0
-         ? cachedContentSize / (cachedTrackSize - cachedThumbSize) : 0;
+      var thumbSize = isVertical ? thumb.offsetHeight : thumb.offsetWidth;
+      var ratio = (trackSize - thumbSize) > 0
+         ? contentSize / (trackSize - thumbSize) : 0;
 
       var onMove = function(e) {
          var delta = (isVertical ? e.clientY : e.clientX) - dragStart;
-         if (scrollRatio > 0) {
-            var newPos = scrollStart + delta * scrollRatio;
-            if (isVertical) {
-               viewport.scrollTop = newPos;
-            } else {
-               viewport.scrollLeft = newPos;
-            }
+         if (ratio > 0) {
+            var newPos = scrollStart + delta * ratio;
+            if (isVertical) viewport.scrollTop = newPos;
+            else viewport.scrollLeft = newPos;
          }
       };
-
       var onUp = function() {
          thumb.classList.remove("dragging");
-         scrollbarDragging = false;
+         dragging = false;
          document.removeEventListener("mousemove", onMove);
          document.removeEventListener("mouseup", onUp);
-         updateInfoBar();
-         scheduleScrollbarHide();
+         if (options.onDragEnd) options.onDragEnd();
+         scheduleHide();
       };
 
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
    });
-};
 
-var initScrollbarTrackClick = function(track, thumb, isVertical) {
    track.addEventListener("mousedown", function(evt) {
-      // Ignore clicks on the thumb itself
       if (evt.target === thumb) return;
       evt.preventDefault();
 
-      var viewport = document.getElementById("gridViewport");
-      if (!viewport) return;
-
-      var scrollToPosition = function(e) {
+      var jump = function(e) {
          var rect = track.getBoundingClientRect();
          var pos = isVertical
             ? (e.clientY - rect.top) / rect.height
             : (e.clientX - rect.left) / rect.width;
          pos = Math.max(0, Math.min(1, pos));
-
          if (isVertical) {
-            viewport.scrollTop = pos * (viewport.scrollHeight - viewport.clientHeight);
+            viewport.scrollTop = pos *
+               (viewport.scrollHeight - viewport.clientHeight);
          } else {
-            viewport.scrollLeft = pos * (viewport.scrollWidth - viewport.clientWidth);
+            viewport.scrollLeft = pos *
+               (viewport.scrollWidth - viewport.clientWidth);
          }
       };
 
-      // Jump to click position immediately
-      scrollbarDragging = true;
-      scrollToPosition(evt);
+      dragging = true;
+      jump(evt);
 
-      // Continue scrolling as user drags
-      var onMove = function(e) {
-         e.preventDefault();
-         scrollToPosition(e);
-      };
-
+      var onMove = function(e) { e.preventDefault(); jump(e); };
       var onUp = function() {
-         scrollbarDragging = false;
+         dragging = false;
          document.removeEventListener("mousemove", onMove);
          document.removeEventListener("mouseup", onUp);
-         updateInfoBar();
-         scheduleScrollbarHide();
+         if (options.onDragEnd) options.onDragEnd();
+         scheduleHide();
       };
 
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
    });
+
+   var update = function() {
+      var contentSize = isVertical ? viewport.scrollHeight : viewport.scrollWidth;
+      var viewSize = isVertical ? viewport.clientHeight : viewport.clientWidth;
+      var scrollPos = isVertical ? viewport.scrollTop : viewport.scrollLeft;
+
+      var insets = options.getInsets ? options.getInsets() : {};
+      var insetTop = insets.top || 0;
+      var insetBottom = insets.bottom || 0;
+      var insetLeft = insets.left || 0;
+      var insetRight = insets.right || 0;
+
+      var hostSize = isVertical ? host.offsetHeight : host.offsetWidth;
+      // Clamp to >= 0 so oversized insets can't produce negative track
+      // sizes (which break thumb positioning math).
+      var barSize = Math.max(0, hostSize -
+         (isVertical ? insetTop + insetBottom : insetLeft + insetRight));
+
+      var hasScroll = contentSize > viewSize + 1;
+
+      if (isVertical) {
+         bar.style.top = insetTop + "px";
+         bar.style.height = barSize + "px";
+      } else {
+         bar.style.left = insetLeft + "px";
+         bar.style.width = barSize + "px";
+      }
+
+      if (hasScroll && barSize > 0) {
+         var thumbSize = Math.max(20, (viewSize / contentSize) * barSize);
+         var maxScroll = contentSize - viewSize;
+         var thumbPos = maxScroll > 0
+            ? (scrollPos / maxScroll) * (barSize - thumbSize) : 0;
+         if (isVertical) {
+            thumb.style.height = thumbSize + "px";
+            thumb.style.top = thumbPos + "px";
+         } else {
+            thumb.style.width = thumbSize + "px";
+            thumb.style.left = thumbPos + "px";
+         }
+         bar.style.display = "";
+      } else {
+         bar.style.display = "none";
+      }
+   };
+
+   var destroy = function() {
+      clearTimeout(hideTimer);
+      if (bar.parentNode) bar.parentNode.removeChild(bar);
+   };
+
+   return {
+      element: bar,
+      update: update,
+      destroy: destroy,
+      show: show,
+      isDragging: function() { return dragging; }
+   };
+};
+
+// Grid scrollbars (vertical + horizontal); sidebar gets its own vertical bar
+// when initSidebar runs.
+var gridScrollbarV_ = null;
+var gridScrollbarH_ = null;
+var sidebarScrollbar_ = null;
+
+var anyScrollbarDragging = function() {
+   return (gridScrollbarV_ && gridScrollbarV_.isDragging()) ||
+          (gridScrollbarH_ && gridScrollbarH_.isDragging()) ||
+          (sidebarScrollbar_ && sidebarScrollbar_.isDragging());
+};
+
+var createCustomScrollbars = function() {
+   var gridPanel = document.getElementById("gridPanel");
+   var viewport = document.getElementById("gridViewport");
+   if (!gridPanel || !viewport) return;
+
+   gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanel, "vertical", {
+      getInsets: function() {
+         var thead = document.getElementById("data_cols");
+         var headerH = thead && thead.parentElement
+            ? thead.parentElement.offsetHeight : 0;
+         var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
+         return { top: headerH, bottom: hasHScroll ? 10 : 0 };
+      },
+      onDragEnd: updateInfoBar
+   });
+
+   gridScrollbarH_ = attachCustomScrollbar(viewport, gridPanel, "horizontal", {
+      getInsets: function() {
+         var pinnedWidth = getPinnedOffsets().totalWidth;
+         var hasVScroll = viewport.scrollHeight > viewport.clientHeight + 1;
+         return { left: pinnedWidth, right: hasVScroll ? 10 : 0 };
+      },
+      onDragEnd: updateInfoBar
+   });
+};
+
+// Vertical scrollbar for the Summary sidebar. Appended below the toggle
+// label so the bar tracks only the scrollable content list.
+var attachSidebarScrollbar = function() {
+   var sidebarPanel = document.getElementById("sidebarPanel");
+   var sidebarContent = document.getElementById("sidebarContent");
+   var sidebarToggle = document.getElementById("sidebarToggle");
+   if (!sidebarPanel || !sidebarContent) return;
+
+   if (sidebarScrollbar_) {
+      sidebarScrollbar_.destroy();
+      sidebarScrollbar_ = null;
+   }
+
+   sidebarScrollbar_ = attachCustomScrollbar(
+      sidebarContent, sidebarPanel, "vertical", {
+         getInsets: function() {
+            return { top: sidebarToggle ? sidebarToggle.offsetHeight : 0 };
+         }
+      });
+
+   sidebarContent.addEventListener("scroll", function() {
+      sidebarScrollbar_.show();
+      sidebarScrollbar_.update();
+   });
 };
 
 var updateCustomScrollbars = function() {
-   var viewport = document.getElementById("gridViewport");
-   if (!viewport || !scrollbarV || !scrollbarH) return;
-
-   // --- ALL LAYOUT READS (batched to avoid read-write-read thrashing) ---
-   var thead = document.getElementById("data_cols");
-   var headerH = thead ? thead.parentElement.offsetHeight : 0;
-   var pinned = getPinnedOffsets();
-   var pinnedWidth = pinned.totalWidth;
-   var contentH = viewport.scrollHeight;
-   var viewH = viewport.clientHeight;
-   var contentW = viewport.scrollWidth;
-   var viewW = viewport.clientWidth;
-   var vpHeight = viewport.offsetHeight;
-   var vpWidth = viewport.offsetWidth;
-   var scrollT = viewport.scrollTop;
-   var scrollL = viewport.scrollLeft;
-
-   var hasVScroll = contentH > viewH + 1;
-   var hasHScroll = contentW > viewW + 1;
-
-   // --- COMPUTE (no DOM access) ---
-   var vBottom = hasHScroll ? 10 : 0;
-   // Clamp to >= 0 so an oversized header or pinned region can't produce
-   // negative track sizes (which break thumb positioning math).
-   var vHeight = Math.max(0, vpHeight - headerH - vBottom);
-   var hWidth = Math.max(0, vpWidth - pinnedWidth - (hasVScroll ? 10 : 0));
-
-   var vThumbH = 0, vThumbTop = 0;
-   if (hasVScroll) {
-      vThumbH = Math.max(20, (viewH / contentH) * vHeight);
-      var maxScrollV = contentH - viewH;
-      vThumbTop = maxScrollV > 0 ? (scrollT / maxScrollV) * (vHeight - vThumbH) : 0;
-   }
-
-   var hThumbW = 0, hThumbLeft = 0;
-   if (hasHScroll) {
-      hThumbW = Math.max(20, (viewW / contentW) * hWidth);
-      var maxScrollH = contentW - viewW;
-      hThumbLeft = maxScrollH > 0 ? (scrollL / maxScrollH) * (hWidth - hThumbW) : 0;
-   }
-
-   // --- ALL DOM WRITES (no layout reads below this line) ---
-   scrollbarV.style.top = headerH + "px";
-   scrollbarV.style.height = vHeight + "px";
-   if (hasVScroll) {
-      var thumbEl = scrollbarV.querySelector(".scrollbar-thumb");
-      thumbEl.style.height = vThumbH + "px";
-      thumbEl.style.top = vThumbTop + "px";
-      scrollbarV.style.display = "";
-   } else {
-      scrollbarV.style.display = "none";
-   }
-
-   scrollbarH.style.left = pinnedWidth + "px";
-   scrollbarH.style.width = hWidth + "px";
-   if (hasHScroll) {
-      var thumbElH = scrollbarH.querySelector(".scrollbar-thumb");
-      thumbElH.style.width = hThumbW + "px";
-      thumbElH.style.left = hThumbLeft + "px";
-      scrollbarH.style.display = "";
-   } else {
-      scrollbarH.style.display = "none";
-   }
+   if (gridScrollbarV_) gridScrollbarV_.update();
+   if (gridScrollbarH_) gridScrollbarH_.update();
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
 
 var showScrollbars = function() {
-   if (scrollbarV) scrollbarV.classList.add("visible");
-   if (scrollbarH) scrollbarH.classList.add("visible");
-   scheduleScrollbarHide();
-};
-
-var scheduleScrollbarHide = function() {
-   clearTimeout(scrollbarHideTimer);
-   scrollbarHideTimer = setTimeout(function() {
-      if (scrollbarV) scrollbarV.classList.remove("visible");
-      if (scrollbarH) scrollbarH.classList.remove("visible");
-   }, TIMING.scrollbarHide);
+   if (gridScrollbarV_) gridScrollbarV_.show();
+   if (gridScrollbarH_) gridScrollbarH_.show();
 };
 
 var destroyCustomScrollbars = function() {
-   if (scrollbarV && scrollbarV.parentNode) scrollbarV.parentNode.removeChild(scrollbarV);
-   if (scrollbarH && scrollbarH.parentNode) scrollbarH.parentNode.removeChild(scrollbarH);
-   scrollbarV = null;
-   scrollbarH = null;
-   clearTimeout(scrollbarHideTimer);
+   if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
+   if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
+   if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
 };
 
 // ==========================================================================
@@ -2338,7 +2377,7 @@ var initGrid = function(resCols, data) {
       // Force a final re-render when scrolling stops — but not during
       // custom scrollbar drags, which generate spurious scrollend events
       scrollEndListener = function() {
-         if (scrollbarDragging) return;
+         if (anyScrollbarDragging()) return;
          onScroll.cancel();
          lastScrollTop = viewport.scrollTop;
          lastScrollLeft = viewport.scrollLeft;

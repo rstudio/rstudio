@@ -619,6 +619,9 @@ th.columnClickable div {
    flex-shrink: 0;
    background-color: var(--grid-bg);
    transition: width 0.15s ease;
+   /* Anchor the absolutely-positioned floating scrollbar inside the
+      sidebar panel rather than the page. */
+   position: relative;
 }
 
 #sidebarPanel.expanded {
@@ -650,6 +653,12 @@ th.columnClickable div {
    flex: 1;
    overflow-y: auto;
    overflow-x: hidden;
+   /* Hide native scrollbar — a custom floating one is rendered inside
+      #sidebarPanel by attachSidebarScrollbar. */
+   scrollbar-width: none;                /* Firefox */
+}
+#sidebarContent::-webkit-scrollbar {
+   display: none;                        /* Chromium */
 }
 
 /* --- Column entry --- */
