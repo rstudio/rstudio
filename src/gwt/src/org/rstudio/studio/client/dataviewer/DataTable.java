@@ -161,9 +161,25 @@ public class DataTable
          });
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
 
-      optionsMenu_ = new ToolbarPopupMenu();
-      optionsMenu_.addItem(new CheckableMenuItem(
-            constants_.optionsShowSummaryDefault())
+      // Refresh the show-summary item's checked state every time the
+      // popup is about to open, in case the pref was changed elsewhere
+      // (global Options dialog, another open data viewer) since we last
+      // showed it.
+      optionsMenu_ = new ToolbarPopupMenu() {
+         @Override
+         public void getDynamicPopupMenu(
+               ToolbarPopupMenu.DynamicPopupMenuCallback callback) {
+            if (showSummaryItem_ != null) showSummaryItem_.onStateChanged();
+            super.getDynamicPopupMenu(callback);
+         }
+      };
+
+      // Read AND write through getGlobalValue/setGlobalValue so the user-
+      // layer value the menu reflects is the same one we mutate. Reading
+      // the merged value (getValue()) while writing the user layer can
+      // desync the check state from what's persisted when a project layer
+      // is active.
+      showSummaryItem_ = new CheckableMenuItem(constants_.optionsShowSummaryDefault())
       {
          @Override
          public String getLabel()
@@ -175,7 +191,7 @@ public class DataTable
          public boolean isChecked()
          {
             return RStudioGinjector.INSTANCE.getUserPrefs()
-                  .dataViewerShowSummary().getValue();
+                  .dataViewerShowSummary().getGlobalValue();
          }
 
          @Override
@@ -186,7 +202,8 @@ public class DataTable
             prefs.writeUserPrefs();
             onStateChanged();
          }
-      });
+      };
+      optionsMenu_.addItem(showSummaryItem_);
       optionsMenuButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
             constants_.optionsButtonTitle(),
@@ -521,6 +538,7 @@ public class DataTable
    private ToolbarButton refreshButton_;
    private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;
+   private CheckableMenuItem showSummaryItem_;
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;

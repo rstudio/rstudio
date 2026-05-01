@@ -1403,25 +1403,34 @@ var updateInfoBar = function() {
    //
    // Bottom edge: Math.round is half-up, which correctly includes a row
    // that's exactly 50% visible at the bottom of the data area.
-   var viewport = document.getElementById("gridViewport");
-   var viewportH = viewport ? viewport.clientHeight : 0;
-   var headerEl = document.getElementById("data_cols");
-   var headerH = (headerEl && headerEl.parentElement)
-      ? headerEl.parentElement.offsetHeight : 0;
-   var hasHScroll = viewport
-      ? viewport.scrollWidth > viewport.clientWidth + 1 : false;
-   var bodyH = Math.max(0, viewportH - headerH - (hasHScroll ? 10 : 0));
-   var first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
-   var last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
-   // Clamp both bounds against the data extent. At max scroll on a
-   // viewport shorter than a row, first can otherwise overshoot
-   // activeRows and produce an out-of-bounds range like "11 to 11 of 10".
-   first = Math.max(1, Math.min(first, activeRows));
-   last = Math.max(first, Math.min(last, activeRows));
+   var first, last;
+   if (activeRows === 0) {
+      // Filter matched no rows. Use a 0/0 range so we don't claim a
+      // bogus "Showing 1 to 1 of 0" — the (filtered from N total) suffix
+      // below explains why.
+      first = 0;
+      last = 0;
+   } else {
+      var viewport = document.getElementById("gridViewport");
+      var viewportH = viewport ? viewport.clientHeight : 0;
+      var headerEl = document.getElementById("data_cols");
+      var headerH = (headerEl && headerEl.parentElement)
+         ? headerEl.parentElement.offsetHeight : 0;
+      var hasHScroll = viewport
+         ? viewport.scrollWidth > viewport.clientWidth + 1 : false;
+      var bodyH = Math.max(0, viewportH - headerH - (hasHScroll ? 10 : 0));
+      first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
+      last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
+      // Clamp both bounds against the data extent. At max scroll on a
+      // viewport shorter than a row, first can otherwise overshoot
+      // activeRows and produce an out-of-bounds range like "11 to 11 of 10".
+      first = Math.max(1, Math.min(first, activeRows));
+      last = Math.max(first, Math.min(last, activeRows));
+   }
 
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
       " of " + activeRows.toLocaleString() + " entries";
-   if (filteredRows > 0 && filteredRows < totalRows) {
+   if (filteredRows < totalRows) {
       text += " (filtered from " + totalRows.toLocaleString() + " total)";
    }
    info.textContent = text;
