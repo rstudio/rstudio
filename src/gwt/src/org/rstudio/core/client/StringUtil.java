@@ -317,6 +317,9 @@ public class StringUtil
          char c = s.charAt(i);
          if (c == '&')
          {
+            // Keep this entity table in sync with core::string_utils::htmlEscape
+            // (src/cpp/core/StringUtils.cpp). Match is case-sensitive; the
+            // server only emits the lowercase forms below.
             if (s.startsWith("&lt;", i))        { out.append('<');  i += 4; }
             else if (s.startsWith("&gt;", i))   { out.append('>');  i += 4; }
             else if (s.startsWith("&quot;", i)) { out.append('"');  i += 6; }

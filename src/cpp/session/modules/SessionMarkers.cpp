@@ -16,7 +16,6 @@
 #include "SessionMarkers.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/optional.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
@@ -154,25 +153,35 @@ public:
                   int line, column;
                   std::string message;
                   bool showErrorList;
-                  // message_is_html is optional: pre-fix state files do not
-                  // carry it, but their saved messages were always run
-                  // through htmlEscape, so treating them as HTML is correct
-                  // (innerHTML decodes the entities back for display).
-                  boost::optional<bool> messageIsHtml;
+                  const json::Object& obj = markerJson.getObject();
                   Error error = json::readObject(
-                     markerJson.getObject(),
+                     obj,
                      "type", type,
                      "path", path,
                      "line", line,
                      "column", column,
                      "message", message,
-                     "show_error_list", showErrorList,
-                     "message_is_html", messageIsHtml);
+                     "show_error_list", showErrorList);
                   if (error)
                   {
                      LOG_ERROR(error);
                      continue;
                   }
+
+                  // message_is_html is read best-effort. Pre-fix state files
+                  // do not carry it, and a corrupt or hand-edited file with a
+                  // wrong-type value should not cause us to drop the entire
+                  // marker; fall back to the legacy default in either case.
+                  //
+                  // Default to true: pre-fix state was always rendered via
+                  // innerHTML, so defaulting to true preserves both
+                  // escape-encoded plain-text messages (which innerHTML
+                  // decodes back) and the raw <strong> HTML emitted by clang
+                  // Find Usages.
+                  bool messageIsHtml = true;
+                  json::Object::Iterator it = obj.find("message_is_html");
+                  if (it != obj.end() && (*it).getValue().isBool())
+                     messageIsHtml = (*it).getValue().getBool();
 
                   module_context::SourceMarker marker(
                       (module_context::SourceMarker::Type)type,
@@ -185,8 +194,8 @@ public:
                       // re-escape it.
                       core::html_utils::HTML(message, true),
                       showErrorList,
-                      false,                              // isCustom
-                      messageIsHtml.get_value_or(true));  // messageIsHtml
+                      false,            // isCustom
+                      messageIsHtml);
 
                   markers.push_back(marker);
                }

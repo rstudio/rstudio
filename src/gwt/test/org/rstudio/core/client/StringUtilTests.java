@@ -434,4 +434,21 @@ public class StringUtilTests extends GWTTestCase
       assertEquals("&#999;", StringUtil.htmlUnescape("&#999;"));
       assertEquals("a & b", StringUtil.htmlUnescape("a & b"));
    }
+
+   public void testHtmlUnescapeCaseSensitive()
+   {
+      // The server only emits lowercase entity names, so the decoder is
+      // case-sensitive. Uppercase variants are passed through untouched.
+      assertEquals("&LT;", StringUtil.htmlUnescape("&LT;"));
+      assertEquals("&AMP;", StringUtil.htmlUnescape("&AMP;"));
+   }
+
+   public void testHtmlUnescapeAdjacentEntities()
+   {
+      // Adjacent entities must each be decoded independently; no run-on
+      // matching across entity boundaries.
+      assertEquals("&&", StringUtil.htmlUnescape("&amp;&amp;"));
+      assertEquals("<>", StringUtil.htmlUnescape("&lt;&gt;"));
+      assertEquals("<<", StringUtil.htmlUnescape("&lt;&lt;"));
+   }
 }
