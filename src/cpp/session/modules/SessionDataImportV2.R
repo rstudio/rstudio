@@ -124,6 +124,11 @@
                col_assignedType <- col$assignedType[[1]]
                col_name <- col$name[[1]]
 
+               # Column names originate from the file being imported and so
+               # cannot be trusted; encode as an R string literal before
+               # interpolating into code that will be eval(parse())'d.
+               col_name_literal <- encodeString(col_name, quote = "\"")
+
                if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
                   identical(col_only, TRUE))
                {
@@ -159,7 +164,7 @@
                      )
                   }
 
-                  colParams[[col_name]] <- paste("\"", col_name, "\" = ", colType, sep="")
+                  colParams[[col_name]] <- paste(col_name_literal, " = ", colType, sep="")
                }
             }
 
