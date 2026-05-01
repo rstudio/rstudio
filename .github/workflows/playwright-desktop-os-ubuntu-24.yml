@@ -3,8 +3,8 @@ name: "Test: Playwright (Desktop, Ubuntu 24, Open Source)"
 on:
   workflow_dispatch:
     inputs:
-      rstudio_deb_url:
-        description: "URL to a Desktop .deb. Leave empty for the latest noble-amd64 daily. To pin a specific build, paste its full URL from dailies.rstudio.com."
+      rstudio_installer_url:
+        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
         type: string
         default: ""
       r_version:
@@ -21,7 +21,7 @@ on:
         default: ""
   workflow_call:
     inputs:
-      rstudio_deb_url:
+      rstudio_installer_url:
         type: string
         default: ""
       r_version:
@@ -68,7 +68,7 @@ jobs:
       - name: Resolve RStudio .deb URL
         id: resolve
         run: |
-          URL="${{ inputs.rstudio_deb_url }}"
+          URL="${{ inputs.rstudio_installer_url }}"
           SHA=""
           FILENAME=""
           if [ -z "$URL" ]; then
