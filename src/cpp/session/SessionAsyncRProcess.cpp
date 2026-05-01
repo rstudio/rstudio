@@ -73,8 +73,10 @@ void AsyncRProcess::start(const char* rCommand,
             session::options().coreRSourcePath();
       
       const core::FilePath rTools = rPath.completeChildPath("Tools.R");
-      
+      const core::FilePath rHooks = rPath.completeChildPath("Hooks.R");
+
       // insert at begin as Tools.R needs to be sourced first
+      rSourceFiles.insert(rSourceFiles.begin(), rHooks);
       rSourceFiles.insert(rSourceFiles.begin(), rTools);
    }
 

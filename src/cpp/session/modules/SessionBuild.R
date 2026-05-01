@@ -88,30 +88,6 @@ options(buildtools.with = function(code)
       siteDir
 })
 
-.rs.addFunction("readShinytestResultRds", function(rdsPath)
-{
-   failures <- Filter(function(e) !identical(e$pass, TRUE), readRDS(rdsPath)$results)
-   sapply(failures, function(e) e$name)
-})
-
-.rs.addFunction("findShinyTestsDir", function(appDir)
-{
-   tryCatch(
-      
-      expr = shinytest:::findTestsDir(
-         appDir = appDir,
-         mustExit = FALSE,
-         quiet = TRUE
-      ),
-      
-      error = function(e) {
-         file.path(appDir, "tests")
-      }
-      
-   )
-   
-})
-
 .rs.addFunction("generateCommandScript", function(command)
 {
    # Generate header, which allows us to forward the 'repos' option.

@@ -305,8 +305,7 @@
 {
    .rs.tryCatch({
       buttonSelector <- sprintf("#rstudio_dlg_%s", buttonName)
-      buttonId <- self$dom.querySelector(buttonSelector)
-      self$dom.clickElement(objectId = buttonId)
+      self$dom.clickElement(buttonSelector)
       TRUE
    })
 })

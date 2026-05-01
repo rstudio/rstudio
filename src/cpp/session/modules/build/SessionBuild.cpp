@@ -651,7 +651,7 @@ private:
       // track build type
       type_ = type;
 
-      // add testthat and shinytest result parsers
+      // add testthat result parsers
       if (type == kTestFile)
       {
          openErrorList_ = false;
@@ -1246,15 +1246,13 @@ private:
                   const std::string& type)
    {
       // normalize paths between all tests and single test
-      std::string shinyTestName;
+      // shinytest2 stores tests in tests/testthat/
+      std::string shinyTestFile;
       if (type == kTestShinyFile) {
-        shinyTestName = shinyPath.getFilename();
+        shinyTestFile = shinyPath.getAbsolutePath();
         shinyPath = shinyPath.getParent();
-        if (shinyPath.getFilename() == "shinytests" ||
-            shinyPath.getFilename() == "shinytest")
+        if (shinyPath.getFilename() == "testthat")
         {
-           // In newer versions of shinytest, tests are stored in a "shinytest" or "shinytests"
-           // folder under the "tests" folder.
            shinyPath = shinyPath.getParent();
         }
         if (shinyPath.getFilename() == "tests")
@@ -1265,34 +1263,28 @@ private:
         else
         {
            // If this doesn't look like it's in a tests directory, bail out.
-           terminateWithError("Could not find Shiny app for test in " + 
+           terminateWithError("Could not find Shiny app for test in " +
               shinyPath.getAbsolutePath());
         }
       }
 
-      // get temp path to store rds results
-      FilePath tempPath;
-      Error error = FilePath::tempFilePath(tempPath);
-      if (error)
-      {
-         terminateWithError("Find temp dir", error);
-         return;
-      }
-      error = tempPath.ensureDirectory();
-      if (error)
-      {
-         terminateWithError("Creating temp dir", error);
-         return;
-      }
-      FilePath tempRdsFile = tempPath.completePath(core::system::generateUuid() + ".rds");
-
-      // initialize parser
+      // shinytest2 is testthat-based, so use the testthat error parser
       CompileErrorParsers parsers;
-      parsers.add(shinytestErrorParser(shinyPath, tempRdsFile));
+      parsers.add(testthatErrorParser(shinyPath.completePath("tests/testthat")));
       initErrorParser(shinyPath, parsers);
 
+      // shinytest2 tests gate themselves on NOT_CRAN — without it they
+      // silently skip, so set it here for interactive runs.
+      core::system::Options childEnv;
+      if (testOptions.environment)
+         childEnv = *testOptions.environment;
+      else
+         core::system::environment(&childEnv);
+      core::system::setenv(&childEnv, "NOT_CRAN", "true");
+      testOptions.environment = childEnv;
+
       FilePath rScriptPath;
-      error = module_context::rScriptPath(&rScriptPath);
+      Error error = module_context::rScriptPath(&rScriptPath);
       if (error)
       {
          terminateWithError("Locating R script", error);
@@ -1304,36 +1296,23 @@ private:
       cmd << "--vanilla";
       cmd << "-s";
       cmd << "-e";
-      
+
       if (type == kTestShiny)
       {
-        boost::format fmt(
-           "result <- shinytest::testApp('%1%');"
-           "saveRDS(result, '%2%')"
-        );
-
-        cmd << boost::str(fmt %
-                             shinyPath.getAbsolutePath() %
-                          tempRdsFile.getAbsolutePath());
+        boost::format fmt("shinytest2::test_app('%1%')");
+        cmd << boost::str(fmt % shinyPath.getAbsolutePath());
       }
       else if (type == kTestShinyFile)
       {
-        boost::format fmt(
-           "result <- shinytest::testApp('%1%', '%2%');"
-           "saveRDS(result, '%3%')"
-        );
-
-        cmd << boost::str(fmt %
-                             shinyPath.getAbsolutePath() %
-                          shinyTestName %
-                          tempRdsFile.getAbsolutePath());
+        boost::format fmt("testthat::test_file('%1%')");
+        cmd << boost::str(fmt % shinyTestFile);
       }
       else
       {
         terminateWithError("Shiny test type is unsupported.");
       }
 
-      enqueCommandString("Testing Shiny application using 'shinytest'");
+      enqueCommandString("Testing Shiny application using 'shinytest2'");
       successMessage_ = "\nTest complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      testOptions,

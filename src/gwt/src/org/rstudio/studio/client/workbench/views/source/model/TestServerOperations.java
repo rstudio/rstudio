@@ -14,15 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 
 public interface TestServerOperations
 {
-   void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback);
-   
-   void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback);
-
    void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback);
 }

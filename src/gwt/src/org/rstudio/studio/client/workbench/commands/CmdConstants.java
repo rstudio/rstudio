@@ -3459,13 +3459,13 @@ public interface CmdConstants extends Constants {
     String testTestthatFileDesc();
     
     // testShinytestFile
-    @DefaultStringValue("Run shinytest Test") // $NON-NLS-1$
+    @DefaultStringValue("Run shinytest2 Test") // $NON-NLS-1$
     String testShinytestFileLabel();
     @DefaultStringValue("Run Test") // $NON-NLS-1$
     String testShinytestFileButtonLabel();
     @DefaultStringValue("Run test for file") // $NON-NLS-1$
     String testShinytestFileMenuLabel();
-    @DefaultStringValue("Run test using the shinytest package") // $NON-NLS-1$
+    @DefaultStringValue("Run test using the shinytest2 package") // $NON-NLS-1$
     String testShinytestFileDesc();
     
     // stopBuild
