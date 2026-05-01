@@ -80,9 +80,7 @@
 
       switch(optionType,
          "character" = {
-            optionValue <- gsub("\\", "\\\\", optionValue, fixed = TRUE)
-            optionValue <- gsub("\"", "\\\"", optionValue, fixed = TRUE)
-            return (paste("\"", optionValue, "\"", sep = ""))
+            return (encodeString(optionValue, quote = "\""))
          },
          "locale" = {
             localeDefaults <- formals(readr::locale)
@@ -90,7 +88,11 @@
             localeOrNull <- function(paramName, jsonName) {
                if (!identical(localeDefaults[[paramName]], optionValue[[jsonName]])) {
                   if (typeof(localeDefaults[[paramName]]) == "character") {
-                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
+                     sprintf(
+                        "%s = %s",
+                        paramName,
+                        encodeString(optionValue[[jsonName]], quote = "\"")
+                     )
                   }
                   else {
                      paste(paramName, " = ", optionValue[[jsonName]])
@@ -342,25 +344,25 @@
 
          cacheDataCode <- append(
             cacheDataCode,
-            paste(
+            sprintf(
+               "%s <- %s",
                cacheUrlName,
-               " <- \"",
-               downloadResource,
-               "\"",
-               sep = "")
+               encodeString(downloadResource, quote = "\"")
+            )
          )
 
          if (cacheDataWorkingDir)
          {
             cacheDataCode <- append(
                cacheDataCode,
-               paste(
+               sprintf(
+                  "%s <- %s",
                   cacheVariableName,
-                  " <- \"",
-                  options$dataName,
-                  resourceExtension,
-                  "\"",
-                  sep = "")
+                  encodeString(
+                     paste(options$dataName, resourceExtension, sep = ""),
+                     quote = "\""
+                  )
+               )
             )
          }
          else
@@ -375,7 +377,11 @@
 
             cacheDataCode <- append(
                cacheDataCode,
-               paste(cacheVariableName, " <- \"", localFile, "\"", sep = "")
+               sprintf(
+                  "%s <- %s",
+                  cacheVariableName,
+                  encodeString(localFile, quote = "\"")
+               )
             )
          }
 

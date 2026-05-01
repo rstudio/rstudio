@@ -66,3 +66,110 @@ test_that("assembleDataImport escapes column names against R code injection", {
       expect_equal(names(eval(col_types)$cols), evil)
    }
 })
+
+test_that("assembleDataImport escapes character option values", {
+   skip_if_not_installed("readr")
+
+   # Same shape of test as the column-name case, but exercising the
+   # "character" option-type path used for read_csv arguments such as `na`.
+   evilValues <- list(
+      injection = 'NA"); .rs.injection.sentinel <- TRUE; c("',
+      backslash = 'na\\sentinel',
+      newline   = 'na\nsentinel'
+   )
+
+   for (evil in evilValues)
+   {
+      opts <- list(
+         mode = "text",
+         importLocation = "data.csv",
+         delimiter = ",",
+         na = evil,
+         openDataViewer = FALSE
+      )
+
+      info <- .rs.assembleDataImport(opts)
+
+      parsed <- parse(text = info$previewCode)
+      expect_length(parsed, 1L)
+      expect_equal(as.character(parsed[[1L]][[1L]]), c("::", "readr", "read_csv"))
+
+      # The na argument should round-trip to the original (unescaped) string.
+      expect_equal(parsed[[1L]]$na, evil)
+   }
+})
+
+test_that("assembleDataImport escapes locale option values", {
+   skip_if_not_installed("readr")
+
+   # Locale values reach the generated code via the "locale" option-type
+   # branch, which formerly pasted the value into "..." with no escaping.
+   evil <- 'UTC"); .rs.injection.sentinel <- TRUE; readr::locale("'
+
+   opts <- list(
+      mode = "text",
+      importLocation = "data.csv",
+      delimiter = ",",
+      locale = list(
+         dateName     = "en",
+         dateFormat   = "%AD",
+         timeFormat   = "%AT",
+         decimalMark  = ".",
+         groupingMark = ",",
+         tz           = evil,
+         encoding     = "UTF-8",
+         asciify      = FALSE
+      ),
+      openDataViewer = FALSE
+   )
+
+   info <- .rs.assembleDataImport(opts)
+
+   parsed <- parse(text = info$previewCode)
+   expect_length(parsed, 1L)
+
+   # The malicious tz value should round-trip in the parsed locale() call.
+   # We inspect the AST rather than eval() since readr::locale validates
+   # tz strings against the system tz database.
+   localeCall <- parsed[[1L]]$locale
+   expect_false(is.null(localeCall))
+   expect_equal(localeCall$tz, evil)
+})
+
+test_that("assembleDataImport escapes import URLs in cache code", {
+   skip_if_not_installed("readr")
+
+   # When canCacheData is TRUE and importLocation is a URL, the assembled
+   # importCode includes assignments such as `url <- "<importLocation>"`.
+   # The URL must be encoded as an R string literal.
+   evilUrl <- 'https://example.com/"); .rs.injection.sentinel <- TRUE; x <- c("data.csv'
+
+   opts <- list(
+      mode = "text",
+      importLocation = evilUrl,
+      delimiter = ",",
+      canCacheData = TRUE,
+      openDataViewer = FALSE
+   )
+
+   info <- .rs.assembleDataImport(opts)
+
+   # importCode must parse as a sequence of top-level expressions; if the URL
+   # escapes its string literal, parse() will reject the input.
+   parsed <- parse(text = info$importCode)
+   expect_gt(length(parsed), 0L)
+
+   # Locate the `url <- "..."` assignment and confirm it round-trips.
+   urlValue <- NULL
+   for (expr in as.list(parsed))
+   {
+      if (is.call(expr) && identical(as.character(expr[[1L]]), "<-") &&
+          identical(as.character(expr[[2L]]), "url"))
+      {
+         urlValue <- expr[[3L]]
+         break
+      }
+   }
+   expect_false(is.null(urlValue))
+   expect_equal(urlValue, evilUrl)
+})
