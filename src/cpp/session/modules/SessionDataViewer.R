@@ -215,18 +215,28 @@
       total_cols      = .rs.scalar(totalCols),
       total_rows      = .rs.scalar(nrow(x)))
 
-   # Add a max-chars hint for the row names column. For default integer
-   # rownames this is just nchar(nrow(x)); custom character rownames need
-   # an actual scan but it's still O(n) of nchar, which is cheap.
+   # Add a max-chars hint for the row names column. Read the row.names
+   # attribute directly so we don't materialize the full row-name vector
+   # for the common case of automatic row names (which is stored in the
+   # compact form c(NA_integer_, -n) — O(1) to inspect).
    if (computeMaxChars) {
-      rn <- rownames(x)
-      if (length(rn) > 0L) {
-         rnChars <- if (is.numeric(rn))
-            nchar(as.character(suppressWarnings(max(rn, na.rm = TRUE))))
-         else
-            max(nchar(rn, type = "width"), 0L, na.rm = TRUE)
-         rowNameCol$col_max_chars <- .rs.scalar(as.integer(rnChars))
+      rnAttr <- attr(x, "row.names", exact = TRUE)
+      rnChars <- NA_integer_
+      if (is.integer(rnAttr) && length(rnAttr) == 2L && is.na(rnAttr[1L])) {
+         # Automatic row names: row.names is c(NA, -nrow). Widest displayed
+         # rowname is nrow(x), so we just need nchar of that.
+         rnChars <- nchar(as.character(abs(rnAttr[2L])))
+      } else if (is.integer(rnAttr) && length(rnAttr) > 0L) {
+         # Explicit integer rownames — cheap to bound via range().
+         rng <- suppressWarnings(range(rnAttr, na.rm = TRUE))
+         if (all(is.finite(rng)))
+            rnChars <- max(nchar(as.character(rng)))
+      } else if (is.character(rnAttr) && length(rnAttr) > 0L) {
+         # Custom character rownames — nchar is O(n) but doesn't format.
+         rnChars <- max(nchar(rnAttr, type = "width"), 0L, na.rm = TRUE)
       }
+      if (!is.na(rnChars))
+         rowNameCol$col_max_chars <- .rs.scalar(as.integer(rnChars))
    }
    
    # if there are no columns, bail out
