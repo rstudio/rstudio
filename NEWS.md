@@ -21,8 +21,7 @@
 
 ### Fixed
 - 
-- Data Import: column names from imported files are now properly escaped when generating preview and import code.
-- ([#17510](https://github.com/rstudio/rstudio/issues/17510)): Data Import: character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code, matching the column-name treatment.
+- ([#17510](https://github.com/rstudio/rstudio/issues/17510)): Data Import: column names, character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code.
 - ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 - ([#12235](https://github.com/rstudio/rstudio/issues/12235)): RStudio Desktop's Session > New Session now opens noticeably faster.
 - ([#17440](https://github.com/rstudio/rstudio/issues/17440)): Fixed an issue where triggering tab completion inside `[` on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory
