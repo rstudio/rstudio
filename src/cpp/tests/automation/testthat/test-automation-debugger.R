@@ -202,7 +202,14 @@ withr::defer(.rs.automation.deleteRemote())
 
    remote$editor.openWithContents(".R", contents)
    remote$commands.execute("sourceActiveDocument")
-   Sys.sleep(0.5)
+
+   # Wait for the source to complete and the function to be defined.
+   .rs.waitUntil("function f is defined", function() {
+      tryCatch({
+         remote$console.executeExpr(stopifnot(is.function(f)))
+         TRUE
+      }, error = function(e) FALSE)
+   })
 
    # Run the function -- hits browser().
    remote$console.execute("f()")
@@ -276,7 +283,9 @@ withr::defer(.rs.automation.deleteRemote())
 
    remote$editor.openWithContents(".R", contents)
 
-   # Place a breakpoint on line 2.
+   # Place a breakpoint. Note: gutterLayer$children is a JS HTMLCollection
+   # accessed with 0-based indexing through the BRAT R wrapper, so [[2L]]
+   # is the third gutter cell -- the line containing print(x + y).
    gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
    gutterCell <- gutterLayer$children[[2L]]
    remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
@@ -284,25 +293,30 @@ withr::defer(.rs.automation.deleteRemote())
    editor <- remote$editor.getInstance()
    editor$clearSelection()
 
-   # Source the document -- the breakpoint should fire at line 2.
+   # Source the document -- the breakpoint should fire at the print() line.
    remote$commands.execute("sourceActiveDocument")
 
-   # Wait for the debug highlight to settle at the breakpoint line. The
-   # auto-step past .doTrace (BreakpointManager.onContextDepthChanged) can
-   # leave the highlight transiently pointing at a neighbouring line before
-   # the post-step events arrive, so check the line number rather than just
-   # element existence.
+   # Wait for the debug highlight to settle. The auto-step past .doTrace
+   # (BreakpointManager.onContextDepthChanged) can leave the highlight
+   # transiently pointing at a neighbouring line before the post-step
+   # events arrive, so poll for the actual line number ("3", matching
+   # the print() line) rather than just element existence.
    .rs.waitUntil("debug highlight settles at top-level breakpoint", function() {
-      remote$dom.elementExists(".ace_executing-line")
+      if (!remote$dom.elementExists(".ace_executing-line"))
+         return(FALSE)
+      activeLineEl <- remote$js.querySelector(".ace_executing-line")
+      identical(activeLineEl$innerText, "3")
    })
-
-   # Allow any trailing state transitions to flush before asserting.
-   Sys.sleep(0.5)
 
    activeLineEl <- remote$js.querySelector(".ace_executing-line")
    expect_equal(activeLineEl$innerText, "3")
 
-   # Exit the debugger.
+   # Exit the debugger and confirm the script actually completes (not
+   # hung): print(x + y) should produce "[1] 23" once execution resumes.
    remote$keyboard.insertText("<Ctrl + 2>", "c", "<Enter>")
+   .rs.waitUntil("script completes after debugger exit", function() {
+      output <- remote$console.getOutput()
+      any(grepl("^\\[1\\] 23$", output))
+   })
    remote$keyboard.insertText("<Ctrl + L>")
 })
