@@ -55,7 +55,8 @@ function startServer(root) {
          });
          res.end(body);
       } catch (err) {
-         res.writeHead(500).end(String(err));
+         console.error("server error:", err);
+         res.writeHead(500).end("internal error");
       }
    });
    return new Promise((resolveServer) => {
