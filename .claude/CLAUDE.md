@@ -297,6 +297,13 @@ where `<scope>` is one of `core`, `rserver`, `rsession`, or `r`.
 
     cd src/gwt && ant unittest
 
+The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight)
+are exercised in headless chromium via:
+
+    cd src/gwt && ant testpage
+
+`ant test` runs both `unittest` and `testpage`.
+
 
 ### Desktop (Electron) Verification
 
