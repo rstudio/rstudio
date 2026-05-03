@@ -466,19 +466,20 @@
    }
    else if (is.factor(col))
    {
-      # Cap the number of levels we send back so a high-cardinality factor
-      # (e.g. zip codes, gene IDs) doesn't bloat the response and DOM.
-      # Sort by count descending so the truncated set is the most frequent
-      # levels (the "top" in `top_levels`), not the alphabetically-first.
+      # Display levels in their R-encoded order (preserves the structure of
+      # ordered factors and any deliberate level ordering set by the user).
+      # Cap the count to keep the response and DOM bounded for very
+      # high-cardinality factors.
       maxLevels <- 50L
-      tbl <- sort(table(col, useNA = "no"), decreasing = TRUE)
-      if (length(tbl) > maxLevels)
+      tbl <- table(col, useNA = "no")
+      lvls <- levels(col)
+      if (length(lvls) > maxLevels)
       {
-         tbl <- tbl[seq_len(maxLevels)]
+         lvls <- lvls[seq_len(maxLevels)]
          result$truncated <- .rs.scalar(TRUE)
       }
-      result$top_levels <- names(tbl)
-      result$top_counts <- as.integer(tbl)
+      result$top_levels  <- lvls
+      result$top_counts  <- as.integer(tbl[lvls])
    }
    else if (is.logical(col))
    {
