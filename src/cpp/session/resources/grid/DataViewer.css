@@ -28,7 +28,7 @@
    --grid-na-color: var(--rstudio-disabledForeground, #b0b0b0);
    --grid-focus-border: var(--rstudio-focusBorder, #4d9de0);
 
-   /* Computed mix shades — keep these in one place so theme tweaks land
+   /* Computed mix shades -- keep these in one place so theme tweaks land
       consistently across hover/stripe rules. */
    --grid-row-hover-bg:  color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
    --grid-row-stripe-bg: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 2%);
@@ -87,7 +87,7 @@ html, body {
    flex: 1;
    overflow: auto;
    position: relative;
-   /* Hide native scrollbars — custom scrollbars are rendered as sibling divs */
+   /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
    scrollbar-width: none;                /* Firefox */
 }
 #gridViewport::-webkit-scrollbar {
@@ -131,7 +131,7 @@ th:focus {
    outline: none;
 }
 
-/* Virtual scroll spacer row — specificity must beat tbody tr:nth-child/hover rules.
+/* Virtual scroll spacer row -- specificity must beat tbody tr:nth-child/hover rules.
    Diagonal stripes suggest pending/loading data. */
 tbody tr.spacer-row td,
 tbody tr.spacer-row:nth-child(odd) td,
@@ -332,7 +332,7 @@ th.highlight-flash {
    animation: column-flash 1s ease-out;
 }
 
-/* --- Sort indicators — use mask-image so color follows the theme --- */
+/* --- Sort indicators -- use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,
 th.sorting_asc .headerCell::after,
@@ -653,7 +653,7 @@ th.columnClickable div {
    flex: 1;
    overflow-y: auto;
    overflow-x: hidden;
-   /* Hide native scrollbar — a custom floating one is rendered inside
+   /* Hide native scrollbar -- a custom floating one is rendered inside
       #sidebarPanel by attachSidebarScrollbar. */
    scrollbar-width: none;                /* Firefox */
 }

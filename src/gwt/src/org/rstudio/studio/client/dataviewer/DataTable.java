@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
@@ -145,7 +146,7 @@ public class DataTable
       toolbar.addRightWidget(searchWidget_);
       searchWidget_.setVisible(!isPreview);
 
-      // Refresh + options dropdown — mirrors the pattern used in
+      // Refresh + options dropdown -- mirrors the pattern used in
       // EnvironmentPane (refresh button followed by a NoText
       // ToolbarMenuButton whose dropdown arrow opens a popup of
       // related options).
@@ -418,7 +419,9 @@ public class DataTable
       }
       catch(Exception e)
       {
-         // swallow — close path must not throw
+         // The close path must not throw, but a silent catch hides bugs;
+         // log so failures show up in dev/diagnostics output.
+         Debug.logException(e);
       }
    }
 

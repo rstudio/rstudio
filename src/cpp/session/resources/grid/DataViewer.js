@@ -25,10 +25,10 @@ var FETCH_THRESHOLD = 100;
 
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
 var TIMING = {
-   filterDebounce: 200,         // numeric/text filter input → applyFilters
-   searchDebounce: 100,         // global search input → applyFilters
+   filterDebounce: 200,         // numeric/text filter input -> applyFilters
+   searchDebounce: 100,         // global search input -> applyFilters
    infoBarDebounce: 150,        // "Showing X to Y" text update during scroll
-   resizeDebounce: 75,          // window resize → relayout
+   resizeDebounce: 75,          // window resize -> relayout
    sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
    columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
    scrollbarHide: 1200          // delay before custom scrollbars fade out
@@ -130,7 +130,7 @@ var pinnedColumns = new Set();
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
-// Listener refs — kept at module scope so destroyGrid can remove them and
+// Listener refs -- kept at module scope so destroyGrid can remove them and
 // avoid duplicate handlers across bootstrap cycles.
 var scrollUpdateListener = null;
 var scrollbarUpdateListener = null;
@@ -158,12 +158,10 @@ var debounce = function(func, wait) {
 };
 
 var escapeHtml = function(html) {
-   if (!html) return "";
-   if (typeof html === "number") return html.toString();
-   var replacements = {
-      "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", " ": "&nbsp;"
-   };
-   return html.replace(/[&<>" ]/g, function(ch) { return replacements[ch]; });
+   if (html === null || html === undefined) return "";
+   var s = (typeof html === "string") ? html : String(html);
+   var replacements = { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" };
+   return s.replace(/[&<>"]/g, function(ch) { return replacements[ch]; });
 };
 
 var highlightSearchMatch = function(data, search, pos) {
@@ -373,9 +371,17 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       return;
    }
 
-   // Row name column: parse JSON
+   // Coerce to string up front so the rest of the function can use String
+   // methods (substring, toLowerCase, indexOf) without crashing on null,
+   // undefined, or numeric cell values (e.g. the preview-mode row index).
+   if (typeof data !== "string") {
+      data = (data === null || data === undefined) ? "" : String(data);
+   }
+
+   // Row name column: parse JSON to unwrap quoted character row names; numeric
+   // automatic row names parse to a number whose toString matches the wire form.
    if (rowNumbers && colIdx === 0) {
-      try { data = JSON.parse(data).toString(); } catch(e) { data = String(data); }
+      try { data = String(JSON.parse(data)); } catch(e) { /* leave as-is */ }
    }
 
    if (clazz === "dataCell") {
@@ -409,21 +415,33 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       }
    }
 
-   // Data/list cell links (produces HTML)
+   // Data/list cell links: build the link with a real click handler so
+   // user-controlled row names never get concatenated into a javascript: URL.
    if (clazz === "dataCell" || clazz === "listCell") {
       var escaped = didHighlight ? data : escapeHtml(data);
+      td.innerHTML = "<i>" + escaped + "</i> ";
+
       var cbName = clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback";
-      var cbRow = rowData[0];
       var cbCol = colIdx + columnOffset;
-      var href = "javascript:window." + cbName + "(" + cbRow + ", " + cbCol + ")";
+      // rowData[0] arrives JSON-encoded for character row names and as a plain
+      // numeric string (or a number, in preview mode) for automatic ones;
+      // JSON.parse handles both.
+      var cbRow;
+      try { cbRow = JSON.parse(rowData[0]); } catch(e) { cbRow = rowData[0]; }
+
       var linkEl = document.createElement("a");
       linkEl.className = "viewerLink";
-      linkEl.href = href;
+      linkEl.href = "#";
+      linkEl.addEventListener("click", function(evt) {
+         evt.preventDefault();
+         var fn = window[cbName];
+         if (typeof fn === "function") fn(cbRow, cbCol);
+      });
       var imgEl = document.createElement("img");
       imgEl.className = "viewerImage";
       imgEl.src = clazz === "dataCell" ? "data-viewer.png" : "object-viewer.png";
       linkEl.appendChild(imgEl);
-      td.innerHTML = "<i>" + escaped + "</i> " + linkEl.outerHTML;
+      td.appendChild(linkEl);
       return;
    }
 
@@ -434,7 +452,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    }
 };
 
-// Cached pinned offsets — recomputed in applyPinnedColumns and renderVisibleRows
+// Cached pinned offsets -- recomputed in applyPinnedColumns and renderVisibleRows
 var cachedPinnedOffsets = {};
 
 var createCell = function(data, colIdx, rowData, clazz) {
@@ -453,7 +471,14 @@ var createCell = function(data, colIdx, rowData, clazz) {
 
    renderCellContents(td, data, colIdx, rowData, clazz);
 
-   if (typeof data === "string") td.title = data;
+   // Tooltip: for the row-names column, unwrap the JSON-encoded form so the
+   // tooltip shows `foo` rather than `"foo"`. Other columns pass through;
+   // non-strings (numbers, NA sentinels) intentionally get no tooltip.
+   if (rowNumbers && colIdx === 0 && typeof data === "string") {
+      try { td.title = String(JSON.parse(data)); } catch(e) { td.title = data; }
+   } else if (typeof data === "string") {
+      td.title = data;
+   }
 
    return td;
 };
@@ -489,7 +514,7 @@ var createHeader = function(idx, col) {
    var interior = document.createElement("div");
    interior.className = "headerCell";
 
-   // Pin icon to the left of the label (not shown for rownames — always pinned)
+   // Pin icon to the left of the label (not shown for rownames -- always pinned)
    if (!(idx === 0 && rowNumbers)) {
       var pinIcon = document.createElement("span");
       pinIcon.className = "pin-icon";
@@ -530,7 +555,7 @@ var createHeader = function(idx, col) {
 
    th.appendChild(interior);
 
-   // Resize handle — appended to <th> directly (not inside headerCell)
+   // Resize handle -- appended to <th> directly (not inside headerCell)
    // so it isn't clipped by overflow:hidden on the interior div
    var resizer = document.createElement("div");
    resizer.className = "resizer";
@@ -613,7 +638,7 @@ var getColumnOrder = function() {
    return pinned.concat(unpinned);
 };
 
-// Cached column order — recomputed when pinning changes
+// Cached column order -- recomputed when pinning changes
 var columnOrder = [];
 
 var isColumnPinned = function(colIdx) {
@@ -723,7 +748,7 @@ var applyPinnedColumns = function() {
 
    // Horizontal overscroll: lets the user scroll the rightmost column to sit
    // just past the pinned columns for side-by-side context. Only meaningful
-   // when content is wider than the viewport — otherwise it would introduce
+   // when content is wider than the viewport -- otherwise it would introduce
    // a phantom scrollbar over empty space.
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
@@ -743,7 +768,7 @@ var applyPinnedColumns = function() {
 
 // Measure the natural text width of a string using a 2d canvas. Avoids the
 // layout flush that an offsetWidth read on a DOM element would force, which
-// matters when measuring 100+ rows × N columns at startup.
+// matters when measuring 100+ rows x N columns at startup.
 var measureCanvas = null;
 var measureCtx = null;
 var measureTextWidth = function(text, bold) {
@@ -821,11 +846,11 @@ var autoSizeColumns = function() {
       cellExtra += rowNamesPad;
 
       // If the server provided a max-chars hint, derive a baseline cell
-      // width from it (avgCharWidth × N + chrome). This is exact for
+      // width from it (avgCharWidth x N + chrome). This is exact for
       // numeric/integer/Date/POSIXct/logical columns, exact-by-bound for
       // character/factor (max nchar across values), and absent for column
       // types whose accurate length would require expensive formatting.
-      // We still sample below — the hint is a baseline, not a ceiling.
+      // We still sample below -- the hint is a baseline, not a ceiling.
       if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
          var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
          if (hintW > maxW) maxW = hintW;
@@ -841,7 +866,7 @@ var autoSizeColumns = function() {
          if (!row) continue;
          var cellVal = row[colIdx];
          if (cellVal === 0 || cellVal === null || cellVal === undefined) {
-            // NA — short
+            // NA -- short
             cellVal = "NA";
          }
          var cellText = String(cellVal);
@@ -854,7 +879,7 @@ var autoSizeColumns = function() {
       }
 
       // Manual widths (user resize) take precedence over computed widths.
-      // Otherwise clamp to min/max — allow wider max for character columns.
+      // Otherwise clamp to min/max -- allow wider max for character columns.
       var w;
       if (typeof manualWidths[colIdx] === "number" && manualWidths[colIdx] > 0) {
          w = manualWidths[colIdx];
@@ -912,7 +937,7 @@ var initResizeHandlers = function() {
 
    document.addEventListener("mousemove", function(evt) {
       if (resizingColIdx === null) return;
-      // Detect a stale drag — the user may have released the mouse outside
+      // Detect a stale drag -- the user may have released the mouse outside
       // the iframe, so we never saw the mouseup. evt.buttons === 0 means no
       // mouse buttons are pressed; clean up and bail out.
       if (evt.buttons === 0) { endResize(); return; }
@@ -984,7 +1009,7 @@ var applyResizeDelta = function(delta) {
 
    invalidatePinnedOffsets();
    // Note: saveState fires once at end of drag (in endResize), not on every
-   // mousemove — repeated localStorage writes during a drag would cause jank.
+   // mousemove -- repeated localStorage writes during a drag would cause jank.
 };
 
 // ==========================================================================
@@ -1095,14 +1120,22 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       numVal.style.textAlign = "center";
       numVal.value = filterFromRange(min, max);
 
+      // Numeric tokens accept optional scientific-notation suffix (1e10,
+      // 2.5e-5). The range separator is `-` surrounded by required
+      // whitespace, which disambiguates from a leading negative sign.
+      var NUM = "-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?";
+      var SINGLE_RE = new RegExp("^\\s*" + NUM + "\\s*$");
+      var RANGE_RE = new RegExp(
+         "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
+
       var updateView = debounce(function(v) {
          var searchText = "";
-         v = v.replace(/[^-0-9 .]/g, "");
-         var digit = v.match(/^\s*-?\d+\.?\d*\s*$/);
-         if (digit !== null && digit.length > 0) {
+         v = v.replace(/[^-+0-9 .eE]/g, "");
+         var digit = v.match(SINGLE_RE);
+         if (digit !== null) {
             searchText = digit[0].trim();
          } else {
-            var matches = v.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
+            var matches = v.match(RANGE_RE);
             if (matches !== null && matches.length > 2) {
                if (Math.abs(parseFloat(matches[1]) - col.col_breaks[0]) !== 0 ||
                    Math.abs(parseFloat(matches[2]) - col.col_breaks[col.col_breaks.length - 1]) !== 0) {
@@ -1147,7 +1180,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(numVal);
-   }, onDismiss, false);
+   }, onDismiss);
 
    ele.textContent = "[...]";
    return ele;
@@ -1215,7 +1248,7 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
          list.appendChild(opt);
       }
       popup.appendChild(list);
-   }, onDismiss, false);
+   }, onDismiss);
 
    return ele;
 };
@@ -1254,12 +1287,16 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
          list.appendChild(opt);
       }
       popup.appendChild(list);
-   }, onDismiss, false);
+   }, onDismiss);
 
    return ele;
 };
 
-var invokeFilterPopup = function(ele, buildPopup, onDismiss, dismissOnClick) {
+// Light-dismiss popups: any body click outside the popup dismisses, plus any
+// unstopped click inside the popup (e.g., a factor list item that wants
+// "apply and close" semantics). Inner controls that should NOT dismiss the
+// popup must stopPropagation on their click events.
+var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
    var popup = null;
 
    var dismissPopup = function(actionComplete) {
@@ -1275,10 +1312,8 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss, dismissOnClick) {
       return false;
    };
 
-   var checkLightDismiss = function(evt) {
-      if (popup && (!dismissOnClick || !popup.contains(evt.target))) {
-         dismissPopup(true);
-      }
+   var checkLightDismiss = function() {
+      if (popup) dismissPopup(true);
    };
 
    var checkEscDismiss = function(evt) {
@@ -1331,7 +1366,7 @@ var createColumnTypesUI = function(th, idx, col) {
 
    th.classList.add("columnClickable");
    th.addEventListener("click", function(evt) {
-      if (columnsPopup == null || columnsPopup !== th) {
+      if (columnsPopup !== th) {
          columnsPopup = th;
          var rect = host.getBoundingClientRect();
          var parentRect = th.getBoundingClientRect();
@@ -1369,7 +1404,7 @@ var scrollToTop = function() {
 var updateSpacerHeight = function() {};
 
 var updateInfoBar = function() {
-   // Suppress info bar updates during custom scrollbar drags — reading
+   // Suppress info bar updates during custom scrollbar drags -- reading
    // scrollTop forces style+layout recalc which causes jank. The info
    // bar is updated once when the drag ends.
    if (anyScrollbarDragging()) return;
@@ -1406,7 +1441,7 @@ var updateInfoBar = function() {
    var first, last;
    if (activeRows === 0) {
       // Filter matched no rows. Use a 0/0 range so we don't claim a
-      // bogus "Showing 1 to 1 of 0" — the (filtered from N total) suffix
+      // bogus "Showing 1 to 1 of 0" -- the (filtered from N total) suffix
       // below explains why.
       first = 0;
       last = 0;
@@ -1531,7 +1566,7 @@ var renderVisibleRows = function(force) {
       fragment.appendChild(topSpacerRow);
 
       // Render only the contiguous prefix from newStart. If a row is missing
-      // from cache (out-of-order fetch), stop here — the unrendered tail
+      // from cache (out-of-order fetch), stop here -- the unrendered tail
       // becomes part of the bottom spacer so cached rows downstream of the
       // gap don't get displayed at the wrong vertical position.
       var lastRendered = newStart - 1;
@@ -1609,7 +1644,7 @@ var renderVisibleRows = function(force) {
    renderEnd = newEnd;
 };
 
-// Info bar update is debounced separately at a longer interval — reading
+// Info bar update is debounced separately at a longer interval -- reading
 // scrollTop for the "Showing X to Y" text forces style+layout recalc,
 // which is expensive during fast scrolling.
 var debouncedInfoBar = debounce(updateInfoBar, TIMING.infoBarDebounce);
@@ -1737,7 +1772,7 @@ var typeLabel = function(col) {
 };
 
 var formatStatValue = function(val) {
-   if (val === null || val === undefined) return "—";
+   if (val === null || val === undefined) return "--";
    if (typeof val === "number") {
       if (Number.isInteger(val)) return val.toLocaleString();
       if (Math.abs(val) >= 100) return val.toFixed(1);
@@ -1929,7 +1964,7 @@ var initSidebar = function() {
                      if (spinner && pendingSummaryFetches === 0) {
                         spinner.style.display = "none";
                      }
-                     // Aborted requests pass null — leave loaded=false so a
+                     // Aborted requests pass null -- leave loaded=false so a
                      // re-expand can retry.
                      if (data === null) return;
                      loaded = true;
@@ -1955,7 +1990,7 @@ var initSidebar = function() {
       content.appendChild(entry);
    }
 
-   // Apply initial sidebar visibility — toggle authoritatively so a previous
+   // Apply initial sidebar visibility -- toggle authoritatively so a previous
    // "expanded" class from an earlier bootstrap doesn't override saved state.
    var panel = document.getElementById("sidebarPanel");
    if (panel) {
@@ -2027,15 +2062,15 @@ var scrollToColumn = function(colIdx) {
 // owns its own DOM, drag/track-click handlers, and activity-based fade
 // timer. Returns { update, destroy, show, isDragging }.
 //
-// `viewport`  — the scrollable element whose scroll position the bar reflects.
-// `host`      — the positioned ancestor that the bar is appended into. Must
+// `viewport`  -- the scrollable element whose scroll position the bar reflects.
+// `host`      -- the positioned ancestor that the bar is appended into. Must
 //               have position:relative (or absolute/fixed); see the CSS
 //               rules on .custom-scrollbar.{vertical,horizontal}.
-// `axis`      — "vertical" or "horizontal".
-// `options.getInsets`     — optional () => {top, bottom, left, right}: gaps
+// `axis`      -- "vertical" or "horizontal".
+// `options.getInsets`     -- optional () => {top, bottom, left, right}: gaps
 //               between the bar and the host edges. Used for the grid's
 //               sticky header and pinned-column offsets.
-// `options.onDragEnd`     — optional callback fired when a thumb/track drag
+// `options.onDragEnd`     -- optional callback fired when a thumb/track drag
 //               completes. The grid uses this to re-render the info bar.
 var attachCustomScrollbar = function(viewport, host, axis, options) {
    options = options || {};
@@ -2077,7 +2112,7 @@ var attachCustomScrollbar = function(viewport, host, axis, options) {
 
       var dragStart = isVertical ? evt.clientY : evt.clientX;
       var scrollStart = isVertical ? viewport.scrollTop : viewport.scrollLeft;
-      // Cache layout reads once at drag start — they don't change during a
+      // Cache layout reads once at drag start -- they don't change during a
       // drag and reading them in onMove forces expensive reflow.
       var trackSize = isVertical ? bar.clientHeight : bar.clientWidth;
       var contentSize = isVertical
@@ -2340,7 +2375,7 @@ var initGrid = function(resCols, data) {
       maxDisplayColumns = cols.length;
    }
 
-   if (loc.maxRows != null && loc.maxRows > 0) {
+   if (loc.maxRows > 0) {
       maxRows = loc.maxRows;
    }
 
@@ -2395,7 +2430,7 @@ var initGrid = function(resCols, data) {
       scrollUpdateListener = onScroll;
       viewport.addEventListener("scroll", scrollUpdateListener);
 
-      // Update custom scrollbar thumb position — coalesce to one per frame
+      // Update custom scrollbar thumb position -- coalesce to one per frame
       scrollbarUpdateListener = function() {
          showScrollbars();
          if (!pendingScrollbarRaf) {
@@ -2407,7 +2442,7 @@ var initGrid = function(resCols, data) {
       };
       viewport.addEventListener("scroll", scrollbarUpdateListener);
 
-      // Force a final re-render when scrolling stops — but not during
+      // Force a final re-render when scrolling stops -- but not during
       // custom scrollbar drags, which generate spurious scrollend events
       scrollEndListener = function() {
          if (anyScrollbarDragging()) return;
@@ -2425,7 +2460,7 @@ var initGrid = function(resCols, data) {
    createCustomScrollbars();
    updateCustomScrollbars();
 
-   // Set up resize handler — recompute pinned overscroll padding too, since
+   // Set up resize handler -- recompute pinned overscroll padding too, since
    // it depends on viewport width.
    resizeListener = debounce(function() {
       applyPinnedColumns();
@@ -2476,9 +2511,15 @@ var initWithData = function(data) {
 
 // Reset all per-grid transient state so a fresh bootstrap starts clean.
 // Persistent configuration (rowNumbers, ordering, displayNullsAsNAs, viewer
-// callbacks, sidebarVisible, lastScroll{Top,Left}) is intentionally not
-// touched here — those survive across data refreshes.
+// callbacks, sidebarVisible) is intentionally not touched here -- those
+// survive across data refreshes.
 var resetGridState = function() {
+   // Scroll position: cleared together with the viewport scrollTop reset in
+   // destroyGrid so a stale value can't be restored by onActivate after a
+   // refresh.
+   lastScrollTop = 0;
+   lastScrollLeft = 0;
+
    // Data
    cols = null;
    sortColumn = -1;
@@ -2503,7 +2544,7 @@ var resetGridState = function() {
    invalidatePinnedOffsets();
    needsAutoSize = false;
 
-   // Resize — also clear the body class in case a drag was in progress when
+   // Resize -- also clear the body class in case a drag was in progress when
    // teardown was triggered.
    didResize = false;
    resizingColIdx = null;
@@ -2595,7 +2636,7 @@ var applySavedState = function(state) {
 
    if (Array.isArray(state.pinnedColumns)) {
       state.pinnedColumns.forEach(function(idx) {
-         // Allow idx 0 — when rowNumbers is false, the first column is a
+         // Allow idx 0 -- when rowNumbers is false, the first column is a
          // regular data column that may be user-pinned.
          if (typeof idx === "number" && idx >= 0 && idx < colCount) {
             pinnedColumns.add(idx);
