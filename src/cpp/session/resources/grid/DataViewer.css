@@ -847,6 +847,12 @@ th.columnClickable div {
    font-size: 10px;
 }
 
+.stats-empty {
+   color: var(--grid-na-color);
+   font-size: 10px;
+   font-style: italic;
+}
+
 
 /* ==========================================================================
    Error Overlay

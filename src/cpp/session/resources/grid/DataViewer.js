@@ -342,11 +342,15 @@ var fetchRows = function(start, length, callback) {
       .catch(function(err) {
          pendingFetches.delete(key);
          if (err.name === "AbortError") return;
+         // Surface every other failure (network errors, 500s with HTML
+         // bodies, CORS rejections, JSON-shaped {error: ...} payloads).
+         // Silent failures here leave the table frozen on "Loading" with
+         // no signal to the user.
          try {
             var parsed = JSON.parse(err.message);
-            if (parsed.error) showError(parsed.error);
+            showError(parsed.error || err.message);
          } catch(e) {
-            // Ignore non-JSON errors during fetch
+            showError(err.message || "Failed to load data.");
          }
       });
 };
@@ -1902,6 +1906,19 @@ var renderColumnStats = function(container, data, colType) {
       // Date/datetime
       addRow("Min", data.min);
       addRow("Max", data.max);
+   }
+
+   // If no type-specific stats were added (unsupported column type, or a
+   // column whose only values are NA), surface that explicitly rather
+   // than leaving the panel blank.
+   if (!table.firstChild) {
+      var msg = document.createElement("div");
+      msg.className = "stats-empty";
+      msg.textContent = (data.n_na === data.n && data.n > 0)
+         ? "All values are missing."
+         : "No summary available for this column.";
+      container.appendChild(msg);
+      return;
    }
 
    container.appendChild(table);

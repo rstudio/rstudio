@@ -92,3 +92,119 @@ test_that(".rs.describeColSlice() returns NULL for empty data frames", {
    tbl <- data.frame()
    expect_equal(.rs.describeColSlice(tbl, 1, 1), NULL)
 })
+
+# Helper: strip the rs.scalar class wrapper so tests can compare against
+# bare R values without forcing every expect_equal to know the wrapping.
+.rs.summarize.bare <- function(x) {
+   if (is.null(x)) return(NULL)
+   unclass(x)
+}
+
+test_that(".rs.summarizeColumn() reports out-of-range column indices", {
+   df <- data.frame(x = 1:3, y = letters[1:3], stringsAsFactors = FALSE)
+   expect_true(!is.null(.rs.summarizeColumn(df, 0)$error))
+   expect_true(!is.null(.rs.summarizeColumn(df, -1)$error))
+   expect_true(!is.null(.rs.summarizeColumn(df, 99)$error))
+})
+
+test_that(".rs.summarizeColumn() summarizes numeric columns", {
+   df <- data.frame(x = c(1, 2, NA, 4, 5))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n), 5L)
+   expect_equal(.rs.summarize.bare(r$n_na), 1L)
+   expect_equal(.rs.summarize.bare(r$n_unique), 4L)
+   expect_equal(.rs.summarize.bare(r$min), 1)
+   expect_equal(.rs.summarize.bare(r$max), 5)
+   expect_equal(.rs.summarize.bare(r$mean), 3)
+   expect_equal(.rs.summarize.bare(r$median), 3)
+})
+
+test_that(".rs.summarizeColumn() handles all-NA numeric columns without producing min/max", {
+   df <- data.frame(x = NA_real_)
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n), 1L)
+   expect_equal(.rs.summarize.bare(r$n_na), 1L)
+   expect_null(r$min)
+   expect_null(r$max)
+   expect_null(r$mean)
+})
+
+test_that(".rs.summarizeColumn() summarizes character columns", {
+   df <- data.frame(
+      x = c("apple", "banana", "", NA, "cherry"),
+      stringsAsFactors = FALSE
+   )
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n_unique), 4L)
+   expect_equal(.rs.summarize.bare(r$min_length), 0L)
+   expect_equal(.rs.summarize.bare(r$max_length), 6L)
+   # n_empty counts only "" not NA values
+   expect_equal(.rs.summarize.bare(r$n_empty), 1L)
+})
+
+test_that(".rs.summarizeColumn() preserves factor level order and aligns counts", {
+   # Use a non-alphabetical level ordering to confirm we don't sort.
+   df <- data.frame(
+      x = factor(c("medium", "high", "low", "medium", "low", "low"),
+                 levels = c("low", "medium", "high"))
+   )
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(r$top_levels, c("low", "medium", "high"))
+   # top_counts must align positionally with top_levels.
+   expect_equal(r$top_counts, c(3L, 2L, 1L))
+   expect_null(r$truncated)
+})
+
+test_that(".rs.summarizeColumn() truncates factors with > 50 levels and flags truncated", {
+   lvls <- sprintf("L%03d", 1:75)
+   df <- data.frame(x = factor(sample(lvls, 200, replace = TRUE), levels = lvls))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(length(r$top_levels), 50L)
+   expect_equal(length(r$top_counts), 50L)
+   # Truncation preserves encoding order: first 50 levels, in order.
+   expect_equal(r$top_levels, lvls[1:50])
+   expect_equal(.rs.summarize.bare(r$truncated), TRUE)
+})
+
+test_that(".rs.summarizeColumn() summarizes logical columns", {
+   df <- data.frame(x = c(TRUE, TRUE, FALSE, NA, TRUE))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n_true), 3L)
+   expect_equal(.rs.summarize.bare(r$n_false), 1L)
+})
+
+test_that(".rs.summarizeColumn() summarizes Date columns", {
+   df <- data.frame(x = as.Date(c("2024-01-01", "2024-06-15", NA, "2024-12-31")))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$min), "2024-01-01")
+   expect_equal(.rs.summarize.bare(r$max), "2024-12-31")
+})
+
+test_that(".rs.summarizeColumn() summarizes POSIXct columns", {
+   df <- data.frame(x = as.POSIXct(c("2024-01-01 09:00:00", "2024-06-15 17:30:00"),
+                                   tz = "UTC"))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_match(.rs.summarize.bare(r$min), "^2024-01-01")
+   expect_match(.rs.summarize.bare(r$max), "^2024-06-15")
+})
+
+test_that(".rs.summarizeColumn() returns base stats for unsupported column types", {
+   # complex and raw don't match any of the typed branches.
+   df <- data.frame(x = as.complex(c(1, 2, NA)))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n), 3L)
+   expect_equal(.rs.summarize.bare(r$n_na), 1L)
+   # No type-specific stats keys.
+   expect_null(r$min)
+   expect_null(r$top_levels)
+   expect_null(r$n_true)
+})
+
+test_that(".rs.summarizeColumn() handles zero-row data frames", {
+   df <- data.frame(x = integer(0))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_equal(.rs.summarize.bare(r$n), 0L)
+   expect_equal(.rs.summarize.bare(r$n_na), 0L)
+   expect_equal(.rs.summarize.bare(r$n_unique), 0L)
+   expect_null(r$min)
+})

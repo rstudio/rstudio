@@ -963,7 +963,17 @@ Error getGridData(const http::Request& request,
                   .addParam(dataSEXP)
                   .addParam(column)
                   .call(&summarySEXP, &protect);
-            if (!error)
+            if (error)
+            {
+               // Surface the failure rather than returning a null body --
+               // otherwise the sidebar spinner stops on a blank panel with
+               // no user-visible indication of what went wrong.
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to compute column summary.";
+               result = err;
+            }
+            else
             {
                r::json::jsonValueFromObject(summarySEXP, &result);
             }
