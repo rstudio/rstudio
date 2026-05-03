@@ -23,6 +23,12 @@ var BUFFER_ROWS = 200;
 var FETCH_SIZE = 500;
 var FETCH_THRESHOLD = 100;
 
+// rowCache eviction. Holding ~20k rows in memory comfortably covers any
+// reasonable visible-window-plus-prefetch; once we exceed the limit we
+// trim back to the threshold, keeping the rows nearest the visible window.
+var ROW_CACHE_LIMIT = 20000;
+var ROW_CACHE_TARGET = 15000;
+
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
 var TIMING = {
    filterDebounce: 200,         // numeric/text filter input -> applyFilters
@@ -130,12 +136,11 @@ var pinnedColumns = new Set();
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
-// Listener refs -- kept at module scope so destroyGrid can remove them and
-// avoid duplicate handlers across bootstrap cycles.
-var scrollUpdateListener = null;
-var scrollbarUpdateListener = null;
-var scrollEndListener = null;
-var resizeListener = null;
+// Module-scoped scroll/resize listeners so addEventListener is idempotent
+// across bootstrap cycles -- if two bootstrap() calls overlap, the second's
+// destroyGrid would otherwise leak the first's anonymous handlers.
+// Defined later (after their dependencies) but declared here to make the
+// scope explicit.
 var pendingScrollbarRaf = 0;
 
 // ==========================================================================
@@ -328,6 +333,7 @@ var fetchRows = function(start, length, callback) {
          for (var i = 0; i < result.data.length; i++) {
             rowCache.set(start + i, result.data[i]);
          }
+         trimRowCache();
          if (callback) callback();
          renderVisibleRows(true);
          updateInfoBar();
@@ -355,6 +361,23 @@ var invalidateCache = function() {
    // Bump the staleness token so any in-flight responses that slip past
    // AbortController are discarded by fetchRows' response handler.
    drawCounter++;
+};
+
+// Cap rowCache size so a long scroll through a multi-million-row dataset
+// can't accumulate the entire row set in memory. Trims by distance from the
+// current visible window: rows near the user's view are kept, rows far away
+// are evicted. Cheap O(n log n) when triggered, and the soft hysteresis
+// (LIMIT vs TARGET) keeps the trigger rate low during steady scroll.
+var trimRowCache = function() {
+   if (rowCache.size <= ROW_CACHE_LIMIT) return;
+   var center = (renderStart + renderEnd) / 2;
+   var keys = Array.from(rowCache.keys());
+   keys.sort(function(a, b) {
+      return Math.abs(a - center) - Math.abs(b - center);
+   });
+   for (var i = ROW_CACHE_TARGET; i < keys.length; i++) {
+      rowCache.delete(keys[i]);
+   }
 };
 
 // ==========================================================================
@@ -1229,10 +1252,6 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
    invokeFilterPopup(ele, function(popup) {
       var list = document.createElement("div");
       list.className = "choiceList";
-      var current = 0;
-      var searchVals = getColumnSearch(idx).split("|");
-      if (searchVals.length > 1 && searchVals[0] === "factor")
-         current = parseInt(searchVals[1]);
 
       for (var i = 0; i < col.col_vals.length; i++) {
          var opt = document.createElement("div");
@@ -1506,7 +1525,13 @@ var updateSpacerRowHeight = function(spacerTr, heightPx) {
    }
 };
 
-var renderVisibleRows = function(force) {
+// Render rows visible in the current scroll window. Two paths:
+//   - Incremental (default): patch the existing DOM, adding/removing only
+//     rows that crossed the window edge. Fast; used for normal scroll.
+//   - Full rebuild (forceRebuild=true): wipe and re-render the whole window.
+//     Required after fetches, sort/filter, sidebar toggle, resize, etc. --
+//     anything that invalidates row content or window layout.
+var renderVisibleRows = function(forceRebuild) {
    var viewport = document.getElementById("gridViewport");
    var tbody = document.getElementById("gridBody");
    if (!viewport || !tbody || !cols) return;
@@ -1532,7 +1557,7 @@ var renderVisibleRows = function(force) {
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
 
    // Skip if the render window hasn't changed
-   if (!force && newStart === renderStart && newEnd === renderEnd) {
+   if (!forceRebuild && newStart === renderStart && newEnd === renderEnd) {
       return;
    }
 
@@ -1556,7 +1581,7 @@ var renderVisibleRows = function(force) {
    var colSpan = columnOrder.length || 1;
 
    // --- Full rebuild (force, or no existing spacers) ---
-   if (force || !topSpacerRow || !bottomSpacerRow) {
+   if (forceRebuild || !topSpacerRow || !bottomSpacerRow) {
       renderedRowElements.clear();
 
       // Build into a fragment so the tbody only takes a single layout hit
@@ -1608,37 +1633,47 @@ var renderVisibleRows = function(force) {
    }
 
    // Add new rows at the top (newStart .. renderStart-1)
-   // Insert before the first data row (right after topSpacerRow)
+   // Insert before the first data row (right after topSpacerRow). If a row
+   // is missing from cache, bail out and re-enter via the full-rebuild
+   // path so the contiguous-prefix logic can position rows correctly --
+   // skipping rows here would leave subsequent ones at the wrong offset.
+   var missingRow = false;
    var insertBeforeTop = topSpacerRow.nextSibling;
    for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
       if (!renderedRowElements.has(r)) {
          var tr = buildRow(r);
-         if (tr) {
-            tbody.insertBefore(tr, insertBeforeTop);
-            renderedRowElements.set(r, tr);
-            insertBeforeTop = tr;
-         }
+         if (!tr) { missingRow = true; break; }
+         tbody.insertBefore(tr, insertBeforeTop);
+         renderedRowElements.set(r, tr);
+         insertBeforeTop = tr;
       }
    }
 
-   // Add new rows at the bottom (renderEnd+1 .. newEnd)
-   // Insert before the bottom spacer
-   for (var r = Math.max(renderEnd + 1, newStart); r <= newEnd; r++) {
-      if (!renderedRowElements.has(r)) {
-         var tr = buildRow(r);
-         if (tr) {
+   // Add new rows at the bottom (renderEnd+1 .. newEnd), insert before the
+   // bottom spacer. Same fall-back rule as the top edge.
+   if (!missingRow) {
+      for (var r = Math.max(renderEnd + 1, newStart); r <= newEnd; r++) {
+         if (!renderedRowElements.has(r)) {
+            var tr = buildRow(r);
+            if (!tr) { missingRow = true; break; }
             tbody.insertBefore(tr, bottomSpacerRow);
             renderedRowElements.set(r, tr);
          }
       }
    }
 
+   if (missingRow) {
+      // Drop the spacers so the next pass takes the full-rebuild branch,
+      // which handles missing rows via the contiguous-prefix rule.
+      topSpacerRow = null;
+      bottomSpacerRow = null;
+      renderVisibleRows(true);
+      return;
+   }
+
    // Update spacer heights
-   var renderedCount = renderedRowElements.size;
-   var expectedCount = newEnd - newStart + 1;
-   var skipped = expectedCount - renderedCount;
    updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-   updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1 + skipped) * ROW_HEIGHT);
+   updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1) * ROW_HEIGHT);
 
    renderStart = newStart;
    renderEnd = newEnd;
@@ -1670,6 +1705,41 @@ onScroll.cancel = function() {
       pendingScrollRaf = 0;
    }
 };
+
+// Update custom scrollbar thumb position; coalesce to one per frame.
+var onScrollbarUpdate = function() {
+   showScrollbars();
+   if (!pendingScrollbarRaf) {
+      pendingScrollbarRaf = requestAnimationFrame(function() {
+         pendingScrollbarRaf = 0;
+         updateCustomScrollbars();
+      });
+   }
+};
+
+// Force a final re-render when scrolling stops -- but not during custom
+// scrollbar drags, which generate spurious scrollend events.
+var onScrollEnd = function() {
+   if (anyScrollbarDragging()) return;
+   onScroll.cancel();
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport) return;
+   lastScrollTop = viewport.scrollTop;
+   lastScrollLeft = viewport.scrollLeft;
+   renderVisibleRows();
+   updateInfoBar();
+   updateCustomScrollbars();
+};
+
+// Window resize handler: debounce wrapper is created once here so its
+// internal timer state survives across bootstraps and addEventListener
+// stays idempotent.
+var onResize = debounce(function() {
+   applyPinnedColumns();
+   renderVisibleRows(true);
+   updateInfoBar();
+   updateCustomScrollbars();
+}, TIMING.resizeDebounce);
 
 // ==========================================================================
 // Sidebar
@@ -2242,7 +2312,6 @@ var attachCustomScrollbar = function(viewport, host, axis, options) {
 var gridScrollbarV_ = null;
 var gridScrollbarH_ = null;
 var sidebarScrollbar_ = null;
-var sidebarScrollListener_ = null;
 
 var anyScrollbarDragging = function() {
    return (gridScrollbarV_ && gridScrollbarV_.isDragging()) ||
@@ -2284,6 +2353,15 @@ var createCustomScrollbars = function() {
    });
 };
 
+// Module-scoped sidebar scroll listener -- defined once so addEventListener
+// is idempotent across re-bootstraps. Reads sidebarScrollbar_ at call time
+// so it's safe to register before/after attachCustomScrollbar fires.
+var onSidebarScroll = function() {
+   if (!sidebarScrollbar_) return;
+   sidebarScrollbar_.show();
+   sidebarScrollbar_.update();
+};
+
 // Vertical scrollbar for the Summary sidebar. Appended below the toggle
 // label so the bar tracks only the scrollable content list.
 var attachSidebarScrollbar = function() {
@@ -2292,15 +2370,12 @@ var attachSidebarScrollbar = function() {
    var sidebarToggle = document.getElementById("sidebarToggle");
    if (!sidebarPanel || !sidebarContent) return;
 
-   // Tear down any previous instance + its scroll listener to avoid
-   // accumulating handlers across re-bootstraps.
+   // Tear down any previous instance to avoid stacking scrollbar overlays.
+   // The scroll listener is module-scoped and idempotent, so no need to
+   // detach/reattach it.
    if (sidebarScrollbar_) {
       sidebarScrollbar_.destroy();
       sidebarScrollbar_ = null;
-   }
-   if (sidebarScrollListener_) {
-      sidebarContent.removeEventListener("scroll", sidebarScrollListener_);
-      sidebarScrollListener_ = null;
    }
 
    sidebarScrollbar_ = attachCustomScrollbar(
@@ -2310,12 +2385,7 @@ var attachSidebarScrollbar = function() {
          }
       });
 
-   sidebarScrollListener_ = function() {
-      if (!sidebarScrollbar_) return;
-      sidebarScrollbar_.show();
-      sidebarScrollbar_.update();
-   };
-   sidebarContent.addEventListener("scroll", sidebarScrollListener_);
+   sidebarContent.addEventListener("scroll", onSidebarScroll);
 };
 
 var updateCustomScrollbars = function() {
@@ -2333,12 +2403,9 @@ var destroyCustomScrollbars = function() {
    if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
    if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
    if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
-   if (sidebarScrollListener_) {
-      var sidebarContent = document.getElementById("sidebarContent");
-      if (sidebarContent) {
-         sidebarContent.removeEventListener("scroll", sidebarScrollListener_);
-      }
-      sidebarScrollListener_ = null;
+   var sidebarContent = document.getElementById("sidebarContent");
+   if (sidebarContent) {
+      sidebarContent.removeEventListener("scroll", onSidebarScroll);
    }
 };
 
@@ -2424,51 +2491,23 @@ var initGrid = function(resCols, data) {
       });
    }
 
-   // Set up scroll handler
+   // Set up scroll handler. addEventListener is idempotent on the same
+   // function reference, so the module-scoped listeners declared below can
+   // be re-registered safely even if a previous bootstrap is still in flight.
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
-      scrollUpdateListener = onScroll;
-      viewport.addEventListener("scroll", scrollUpdateListener);
-
-      // Update custom scrollbar thumb position -- coalesce to one per frame
-      scrollbarUpdateListener = function() {
-         showScrollbars();
-         if (!pendingScrollbarRaf) {
-            pendingScrollbarRaf = requestAnimationFrame(function() {
-               pendingScrollbarRaf = 0;
-               updateCustomScrollbars();
-            });
-         }
-      };
-      viewport.addEventListener("scroll", scrollbarUpdateListener);
-
-      // Force a final re-render when scrolling stops -- but not during
-      // custom scrollbar drags, which generate spurious scrollend events
-      scrollEndListener = function() {
-         if (anyScrollbarDragging()) return;
-         onScroll.cancel();
-         lastScrollTop = viewport.scrollTop;
-         lastScrollLeft = viewport.scrollLeft;
-         renderVisibleRows();
-         updateInfoBar();
-         updateCustomScrollbars();
-      };
-      viewport.addEventListener("scrollend", scrollEndListener);
+      viewport.addEventListener("scroll", onScroll);
+      viewport.addEventListener("scroll", onScrollbarUpdate);
+      viewport.addEventListener("scrollend", onScrollEnd);
    }
 
    // Create custom scrollbars
    createCustomScrollbars();
    updateCustomScrollbars();
 
-   // Set up resize handler -- recompute pinned overscroll padding too, since
-   // it depends on viewport width.
-   resizeListener = debounce(function() {
-      applyPinnedColumns();
-      renderVisibleRows(true);
-      updateInfoBar();
-      updateCustomScrollbars();
-   }, TIMING.resizeDebounce);
-   window.addEventListener("resize", resizeListener);
+   // Resize handler -- recompute pinned overscroll padding too, since it
+   // depends on viewport width.
+   window.addEventListener("resize", onResize);
 
    // Update column frame callback
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
@@ -2610,13 +2649,24 @@ var saveState = function() {
 var loadSavedState = function() {
    var key = stateKey();
    if (!key) return null;
+   var raw;
    try {
-      var raw = localStorage.getItem(key);
-      if (!raw) return null;
+      raw = localStorage.getItem(key);
+   } catch (e) {
+      return null;
+   }
+   if (!raw) return null;
+   try {
       var state = JSON.parse(raw);
-      if (state.version !== STATE_VERSION) return null;
+      if (state.version !== STATE_VERSION) {
+         // Stale schema; remove so it doesn't accumulate forever.
+         try { localStorage.removeItem(key); } catch (_) {}
+         return null;
+      }
       return state;
    } catch (e) {
+      // Corrupt JSON; drop it.
+      try { localStorage.removeItem(key); } catch (_) {}
       return null;
    }
 };
@@ -2701,25 +2751,13 @@ var destroyGrid = function() {
 
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
-      if (scrollUpdateListener) {
-         viewport.removeEventListener("scroll", scrollUpdateListener);
-         scrollUpdateListener = null;
-      }
-      if (scrollbarUpdateListener) {
-         viewport.removeEventListener("scroll", scrollbarUpdateListener);
-         scrollbarUpdateListener = null;
-      }
-      if (scrollEndListener) {
-         viewport.removeEventListener("scrollend", scrollEndListener);
-         scrollEndListener = null;
-      }
+      viewport.removeEventListener("scroll", onScroll);
+      viewport.removeEventListener("scroll", onScrollbarUpdate);
+      viewport.removeEventListener("scrollend", onScrollEnd);
       viewport.scrollTop = 0;
       viewport.scrollLeft = 0;
    }
-   if (resizeListener) {
-      window.removeEventListener("resize", resizeListener);
-      resizeListener = null;
-   }
+   window.removeEventListener("resize", onResize);
    if (pendingScrollbarRaf) {
       cancelAnimationFrame(pendingScrollbarRaf);
       pendingScrollbarRaf = 0;

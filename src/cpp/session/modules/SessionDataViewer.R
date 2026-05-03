@@ -434,8 +434,6 @@
    col <- x[[columnIndex]]
    n <- length(col)
    n_na <- sum(is.na(col))
-   n_valid <- n - n_na
-   col_class <- class(col)[[1]]
 
    result <- list(
       n        = .rs.scalar(n),
@@ -470,16 +468,17 @@
    {
       # Cap the number of levels we send back so a high-cardinality factor
       # (e.g. zip codes, gene IDs) doesn't bloat the response and DOM.
+      # Sort by count descending so the truncated set is the most frequent
+      # levels (the "top" in `top_levels`), not the alphabetically-first.
       maxLevels <- 50L
-      tbl <- table(col, useNA = "no")
-      lvls <- levels(col)
-      if (length(lvls) > maxLevels)
+      tbl <- sort(table(col, useNA = "no"), decreasing = TRUE)
+      if (length(tbl) > maxLevels)
       {
-         lvls <- lvls[seq_len(maxLevels)]
+         tbl <- tbl[seq_len(maxLevels)]
          result$truncated <- .rs.scalar(TRUE)
       }
-      result$top_levels  <- lvls
-      result$top_counts  <- as.integer(tbl[lvls])
+      result$top_levels <- names(tbl)
+      result$top_counts <- as.integer(tbl)
    }
    else if (is.logical(col))
    {
