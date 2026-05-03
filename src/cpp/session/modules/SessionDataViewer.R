@@ -466,10 +466,18 @@
    }
    else if (is.factor(col))
    {
-      # Display levels in their R-encoded order (preserves the structure of
-      # ordered factors and any deliberate level ordering set by the user).
-      # Cap the count to keep the response and DOM bounded for very
-      # high-cardinality factors.
+      # Display levels in their R-encoded order. This preserves the
+      # structure of ordered factors as well as any deliberate ordering set
+      # by the user (e.g. via `factor(x, levels = ...)`), which the analyst
+      # is more likely to want to see than a frequency ranking.
+      #
+      # Trade-off: when the level count exceeds the cap, we truncate to the
+      # first N by encoding order, not the N most frequent. For very
+      # high-cardinality factors (zip codes, gene IDs), the visible set may
+      # therefore not include the most prevalent values. If that becomes a
+      # real complaint, options to consider are raising `maxLevels`, sorting
+      # by count for the truncation case only, or pushing the truncation to
+      # the client and sending all levels.
       maxLevels <- 50L
       tbl <- table(col, useNA = "no")
       lvls <- levels(col)
