@@ -3,6 +3,8 @@
 <head>
   <script type="text/javascript" src="../tools/rstudio-ace/build_support/mini_require.js"></script>
   <script type="text/javascript" src="../tools/rstudio-ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
@@ -313,6 +315,35 @@ for ()
 <li><pre data-expected="4">
 for () {
     x > 0;
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+for (int i = 0; i &lt; 5; i++)
+    if (i == 4) {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+for ()
+    while () {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+if (a)
+    if (b) {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+while (a)
+    for (b)
+        if (c) {
+            body;
+        }
 </pre></li>
 
 <li><pre data-expected="4" data-expected-open-brace="0">
