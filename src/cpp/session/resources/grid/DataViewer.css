@@ -89,6 +89,10 @@ html, body {
    position: relative;
    /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
    scrollbar-width: none;                /* Firefox */
+   /* Suppress the rubber-band/bounce effect at the scroll boundary; the table
+      has known dimensions, so the boundary is already obvious without it.
+      Also prevents scroll chaining out of the iframe. */
+   overscroll-behavior: none;
 }
 #gridViewport::-webkit-scrollbar {
    display: none;                        /* Chromium */
@@ -656,6 +660,9 @@ th.columnClickable div {
    /* Hide native scrollbar -- a custom floating one is rendered inside
       #sidebarPanel by attachSidebarScrollbar. */
    scrollbar-width: none;                /* Firefox */
+   /* Same rationale as #gridViewport: known content height, so suppress
+      the bounce and prevent scroll chaining. */
+   overscroll-behavior: none;
 }
 #sidebarContent::-webkit-scrollbar {
    display: none;                        /* Chromium */
