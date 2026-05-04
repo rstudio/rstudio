@@ -1,60 +1,51 @@
 import { defineConfig } from '@playwright/test';
+import os from 'os';
+
+const platform = os.platform();
+const desktopOsExclusions: string[] = [];
+if (platform !== 'win32')  desktopOsExclusions.push('@windows_only');
+if (platform !== 'darwin') desktopOsExclusions.push('@macos_only');
+if (platform !== 'linux')  desktopOsExclusions.push('@linux_only');
+
+// Server always targets Linux regardless of host OS, so its OS filter is hardcoded.
+const serverOsExclusions = ['@windows_only', '@macos_only'];
+
+const edition = (process.env.PW_RSTUDIO_EDITION ?? 'os').toLowerCase();
+if (edition !== 'os' && edition !== 'pro') {
+  throw new Error(`PW_RSTUDIO_EDITION="${edition}" -- expected "os" or "pro"`);
+}
+const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 
 const allProjects = [
-  // Desktop open-source
   {
-    name: 'desktop-os-windows',
-    grepInvert: /@server_only|@pro_only|@macos_only|@linux_only/,
+    name: 'desktop',
+    use: { mode: 'desktop' as const },
+    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
   },
   {
-    name: 'desktop-os-macos',
-    grepInvert: /@server_only|@pro_only|@windows_only|@linux_only/,
-  },
-  {
-    name: 'desktop-os-linux',
-    grepInvert: /@server_only|@pro_only|@windows_only|@macos_only/,
-  },
-  // Desktop Pro
-  {
-    name: 'desktop-pro-windows',
-    grepInvert: /@server_only|@os_only|@macos_only|@linux_only/,
-  },
-  {
-    name: 'desktop-pro-macos',
-    grepInvert: /@server_only|@os_only|@windows_only|@linux_only/,
-  },
-  {
-    name: 'desktop-pro-linux',
-    grepInvert: /@server_only|@os_only|@windows_only|@macos_only/,
-  },
-  // Server (Linux only)
-  {
-    name: 'server-os-linux',
-    grepInvert: /@desktop_only|@pro_only|@windows_only|@macos_only/,
-  },
-  {
-    name: 'server-pro-linux',
-    grepInvert: /@desktop_only|@os_only|@windows_only|@macos_only/,
+    name: 'server',
+    use: { mode: 'server' as const },
+    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
   },
 ];
 
-// PW_PROJECT selects a single project for local runs (e.g. "desktop-pro-windows").
-// When unset, all projects are available — CI runs all, or use --project to pick one.
-// PW_PROJECT and --project conflict -- don't use both at the same time.
-// PW_PROJECT pre-filters the project list, so --project can't select anything outside it.
-const selectedProject = process.env.PW_PROJECT;
-const projects = selectedProject
-  ? allProjects.filter(p => p.name === selectedProject)
-  : allProjects;
+if (process.env.PW_PROJECT) {
+  console.warn('PW_PROJECT is no longer used; switch to --project=desktop|server or PW_RSTUDIO_MODE=desktop|server');
+}
 
-if (selectedProject) {
-  if (projects.length === 0) {
-    throw new Error(
-      `PW_PROJECT="${selectedProject}" does not match any project. ` +
-      `Available: ${allProjects.map(p => p.name).join(', ')}`
-    );
-  }
-  console.log(`Project: ${selectedProject} (via PW_PROJECT)`);
+const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
+const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
+
+let projects;
+if (projectFlagPresent) {
+  // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
+  projects = allProjects;
+} else if (modeEnv === 'server') {
+  projects = allProjects.filter(p => p.name === 'server');
+} else if (modeEnv === 'desktop' || modeEnv === undefined) {
+  projects = allProjects.filter(p => p.name === 'desktop');
+} else {
+  throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
 
 export default defineConfig({

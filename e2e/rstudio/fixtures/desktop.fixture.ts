@@ -3,8 +3,35 @@ import { chromium } from 'playwright';
 import type { Browser, BrowserContext } from 'playwright';
 import { spawn, execSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+
+const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
+const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
+
+function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    throw new Error(`Failed to read RStudio prefs (${sourceLabel}) at ${filePath}: ${(err as Error).message}`);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stripJsonComments(raw));
+  } catch (err) {
+    throw new Error(`Failed to parse RStudio prefs (${sourceLabel}) at ${filePath}: ${(err as Error).message}`);
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    const got = Array.isArray(parsed) ? 'array' : typeof parsed;
+    throw new Error(`RStudio prefs (${sourceLabel}) at ${filePath} must be a JSON object, got ${got}`);
+  }
+  return parsed as Record<string, unknown>;
+}
 
 // Constants
 export const RSTUDIO_PATH = process.platform === 'win32'
@@ -19,12 +46,56 @@ export interface DesktopSession {
   page: Page;
   browser: Browser;
   rstudioProcess: ChildProcess;
+  configRoot: string;
+}
+
+interface TempConfig {
+  root: string;
+  configHome: string;
+  configDir: string;
+  dataHome: string;
+}
+
+/**
+ * Create an isolated RStudio config directory tree with a prefs file
+ * built by merging fixtures/base-prefs.jsonc with an optional override
+ * from PW_RSTUDIO_PREFS_OVERRIDE. Plumbed into RStudio via
+ * RSTUDIO_CONFIG_* env vars at spawn time so the user's real profile
+ * is untouched.
+ *
+ * Desktop only -- Server mode doesn't spawn RStudio, so this mechanism
+ * doesn't apply directly. See https://github.com/rstudio/rstudio/issues/17520
+ * for tracking parity with Server mode.
+ */
+function createTempConfig(): TempConfig {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pw_rstudio_config_'));
+  const configHome = path.join(root, 'config-home');
+  const configDir = path.join(root, 'config-dir');
+  const dataHome = path.join(root, 'data-home');
+  for (const d of [configHome, configDir, dataHome]) {
+    fs.mkdirSync(d, { recursive: true });
+  }
+
+  const basePrefs = readPrefsFile(BASE_PREFS_PATH, 'base');
+  const overridePath = process.env[OVERRIDE_PREFS_ENV];
+  const overridePrefs = overridePath ? readPrefsFile(overridePath, OVERRIDE_PREFS_ENV) : {};
+  const prefs = { ...basePrefs, ...overridePrefs };
+
+  fs.writeFileSync(
+    path.join(configHome, 'rstudio-prefs.json'),
+    JSON.stringify(prefs, null, 2),
+  );
+
+  return { root, configHome, configDir, dataHome };
 }
 
 /**
  * Launch RStudio with CDP, connect Playwright, and return the session.
+ *
+ * `existingConfigRoot` lets relaunchAfterRestart reuse the same config
+ * directory across a quit-and-restart so prefs/state persist.
  */
-export async function launchRStudio(): Promise<DesktopSession> {
+export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
   // Clean up any existing RStudio on our specific CDP port
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
@@ -60,10 +131,37 @@ export async function launchRStudio(): Promise<DesktopSession> {
     await sleep(1000);
   }
 
+  // Set up the isolated config directory (or reuse one across a restart)
+  let tempConfig: TempConfig;
+  if (existingConfigRoot) {
+    tempConfig = {
+      root: existingConfigRoot,
+      configHome: path.join(existingConfigRoot, 'config-home'),
+      configDir: path.join(existingConfigRoot, 'config-dir'),
+      dataHome: path.join(existingConfigRoot, 'data-home'),
+    };
+    // Defensively recreate child dirs in case anything cleared them between runs
+    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.dataHome]) {
+      fs.mkdirSync(d, { recursive: true });
+    }
+  } else {
+    tempConfig = createTempConfig();
+  }
+  const configRoot = tempConfig.root;
+  console.log(`RStudio config root: ${configRoot}`);
+
   // Start RStudio with remote debugging enabled
   console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
   const args = [`--remote-debugging-port=${CDP_PORT}`, ...RSTUDIO_EXTRA_ARGS];
-  const rstudioProcess = spawn(RSTUDIO_PATH, args);
+  const rstudioProcess = spawn(RSTUDIO_PATH, args, {
+    env: {
+      ...process.env,
+      RSTUDIO_CONFIG_ROOT: tempConfig.root,
+      RSTUDIO_CONFIG_HOME: tempConfig.configHome,
+      RSTUDIO_CONFIG_DIR: tempConfig.configDir,
+      RSTUDIO_DATA_HOME: tempConfig.dataHome,
+    },
+  });
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
     launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
@@ -122,11 +220,7 @@ export async function launchRStudio(): Promise<DesktopSession> {
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
     console.log('RStudio console is ready');
 
-    // Prevent "Save workspace image?" dialog on quit
-    await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
-    await sleep(1000);
-
-    return { page, browser, rstudioProcess };
+    return { page, browser, rstudioProcess, configRoot };
   } catch (err) {
     await browser?.close().catch(() => {});
     rstudioProcess.kill();
@@ -141,7 +235,7 @@ export async function launchRStudio(): Promise<DesktopSession> {
  * and launch a fresh CDP-enabled session.
  */
 export async function relaunchAfterRestart(session: DesktopSession): Promise<DesktopSession> {
-  const { browser, rstudioProcess } = session;
+  const { browser, rstudioProcess, configRoot } = session;
 
   // Snapshot all RStudio PIDs before the restart so we can identify new ones
   const pidsBefore = getRStudioPids();
@@ -185,7 +279,7 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
   }
   await sleep(3000);
 
-  return launchRStudio();
+  return launchRStudio(configRoot);
 }
 
 /** Get all RStudio PIDs currently running. */
@@ -211,7 +305,7 @@ function getRStudioPids(): Set<number> {
  * Graceful shutdown: q() in console, close browser, kill process.
  */
 export async function shutdownRStudio(session: DesktopSession): Promise<void> {
-  const { page, browser, rstudioProcess } = session;
+  const { page, browser, rstudioProcess, configRoot } = session;
 
   // Close all source files without prompting to save
   await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
@@ -225,6 +319,12 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
     await browser.close().catch(() => {});
     // Only force kill if graceful shutdown failed
     rstudioProcess.kill();
+  }
+
+  try {
+    fs.rmSync(configRoot, { recursive: true, force: true });
+  } catch {
+    // Best effort; OS will clean up the temp dir eventually
   }
 }
 
