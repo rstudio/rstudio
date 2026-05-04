@@ -4,9 +4,9 @@ import { launchServer, shutdownServer } from './server.fixture';
 import { sleep } from '../utils/constants';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
 
-const mode = (process.env.PW_RSTUDIO_MODE || 'desktop').toLowerCase();
-
 const DONT_SAVE_BTN = "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no";
+
+type Mode = 'desktop' | 'server';
 
 /** Capture R/RStudio versions once per worker and log them. */
 async function logVersions(page: Page): Promise<void> {
@@ -18,11 +18,12 @@ async function logVersions(page: Page): Promise<void> {
 /**
  * Unified Playwright Test fixture that provides a shared RStudio page.
  *
- * Set PW_RSTUDIO_MODE=server to connect to RStudio Server instead of Desktop.
- * Server mode requires PW_RSTUDIO_SERVER_USER, PW_RSTUDIO_SERVER_PASSWORD, and optionally PW_RSTUDIO_SERVER_URL.
+ * The `mode` option is set per-project in playwright.config.ts; select with
+ * `--project=desktop` (default) or `--project=server`.
  */
-export const test = base.extend<{}, { rstudioPage: Page }>({
-  rstudioPage: [async ({}, use) => {
+export const test = base.extend<{}, { mode: Mode; rstudioPage: Page }>({
+  mode: ['desktop', { option: true, scope: 'worker' }],
+  rstudioPage: [async ({ mode }, use) => {
     if (mode === 'server') {
       const session = await launchServer();
       await logVersions(session.page);

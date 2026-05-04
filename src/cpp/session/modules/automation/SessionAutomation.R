@@ -57,7 +57,7 @@
 {
    packages <- c(
       "devtools", "dplyr", "here", "httr", "later", "processx",
-      "ps", "reticulate", "styler", "testthat", "usethis",
+      "ps", "reticulate", "stringr", "styler", "testthat", "usethis",
       "websocket", "withr", "xml2"
    )
    

@@ -527,7 +527,36 @@
      </java>
    </target>
 
-   <target name="test" depends="unittest">
+   <!-- Headless runner for the standalone HTML test pages under test/.
+        Exercises the acesupport autoindent / highlight harnesses in a real
+        browser (Playwright's bundled chromium), catching regressions in
+        acesupport. Pulls in playwright via `npm ci`, then shells out to
+        runner.mjs which serves src/gwt/ over a local HTTP server and
+        aggregates per-page pass/fail counts. -->
+
+   <property name="testpage.runner.dir" value="test/runner"/>
+
+   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
+   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
+   <set-if-unset  property="npm.bin" value="npm"/>
+
+   <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
+   <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
+   <set-if-unset  property="node.bin" value="node"/>
+
+   <target name="testpage" depends="acesupport"
+           description="Runs the standalone HTML test pages under test/ in headless chromium">
+      <retry retrycount="3">
+         <exec executable="${npm.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="ci"/>
+         </exec>
+      </retry>
+      <exec executable="${node.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="runner.mjs"/>
+      </exec>
+   </target>
+
+   <target name="test" depends="unittest,testpage">
    </target>
 
 </project>

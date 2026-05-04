@@ -14,7 +14,6 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep } from '@utils/constants';
 
 const BASE_URL = 'https://www.rstudio.org/links/release_notes';
-const isDesktop = (process.env.PW_RSTUDIO_MODE || 'desktop').toLowerCase() === 'desktop';
 
 test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () => {
 
@@ -24,41 +23,38 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
     consoleActions = new ConsolePaneActions(page);
   });
 
-  if (isDesktop) {
-    test('command executes without error', async ({ rstudioPage: page }) => {
-      // Desktop opens the URL via shell.openExternal() — Playwright cannot
-      // intercept it, so we just verify the command doesn't throw.
-      await consoleActions.clearConsole();
-      await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
-      await sleep(2000);
+  test('command executes without error', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
+    // Desktop opens the URL via shell.openExternal() — Playwright cannot
+    // intercept it, so we just verify the command doesn't throw.
+    await consoleActions.clearConsole();
+    await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
+    await sleep(2000);
 
-      // Verify no error appeared in the console
-      const output = await page.locator('#rstudio_console_output').innerText();
-      expect(output).not.toContain('Error');
-    });
-  } else {
-    test('opens correct URL', async ({ rstudioPage: page }) => {
-      const context = page.context();
-      const newPagePromise = context.waitForEvent('page', { timeout: 15000 });
+    const output = await page.locator('#rstudio_console_output').innerText();
+    expect(output).not.toContain('Error');
+  });
 
-      await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
+  test('opens correct URL', { tag: ['@server_only'] }, async ({ rstudioPage: page }) => {
+    const context = page.context();
+    const newPagePromise = context.waitForEvent('page', { timeout: 15000 });
 
-      const newPage = await newPagePromise;
-      const initialUrl = newPage.url();
-      expect(initialUrl).toContain(BASE_URL);
+    await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
 
-      // Verify the redirect lands on the Posit docs release notes page
-      await newPage.waitForLoadState('load', { timeout: 15000 });
-      const finalUrl = newPage.url();
-      expect(finalUrl).toContain('docs.posit.co/ide/news/');
+    const newPage = await newPagePromise;
+    const initialUrl = newPage.url();
+    expect(initialUrl).toContain(BASE_URL);
 
-      // If the initial URL had a version fragment, verify it survived the redirect
-      const fragment = new URL(initialUrl).hash;
-      if (fragment) {
-        expect(finalUrl).toContain(fragment);
-      }
+    // Verify the redirect lands on the Posit docs release notes page
+    await newPage.waitForLoadState('load', { timeout: 15000 });
+    const finalUrl = newPage.url();
+    expect(finalUrl).toContain('docs.posit.co/ide/news/');
 
-      await newPage.close();
-    });
-  }
+    // If the initial URL had a version fragment, verify it survived the redirect
+    const fragment = new URL(initialUrl).hash;
+    if (fragment) {
+      expect(finalUrl).toContain(fragment);
+    }
+
+    await newPage.close();
+  });
 });

@@ -14,6 +14,28 @@
 #
 
 context("rstudioapi")
+test_that("invalid marker type generates informative error", {
+   NULL_type <- list(type = NULL,
+                     file = ".\\R\\fake_script.R",
+                     line = 1L,
+                     column = 1L,
+                     message = "Some message")
+   zerolength_type <- NULL_type
+   zerolength_type[["type"]] <- character(0)
+   
+   expect_error(
+      rstudioapi::sourceMarkers(name = "with_NULL_type",
+                                markers = list(NULL_type)),
+      regexp = "Invalid marker type", fixed = TRUE
+   )
+   
+   expect_error(
+      rstudioapi::sourceMarkers(name = "with_zerolength_type",
+                                markers = list(zerolength_type)),
+      regexp = "Invalid marker type", fixed = TRUE
+   )
+})
+
 # Tests comments out until https://github.com/rstudio/rstudio/issues/12275 is resolved
 # test_that("command callbacks are invoked", {
 # 

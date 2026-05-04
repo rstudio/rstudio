@@ -50,9 +50,7 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await sleep(500);
 }
 
-base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial'] }, () => {
-  base.skip(process.env.PW_RSTUDIO_MODE === 'server', 'Uses Desktop restart — Server not supported');
-
+base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial', '@desktop_only'] }, () => {
   let session: DesktopSession;
   let page: Page;
   let consoleActions: ConsolePaneActions;

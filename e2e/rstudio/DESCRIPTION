@@ -1,0 +1,17 @@
+Package: rstudio.e2e.tests
+Type: Package
+Title: R Package Dependencies for RStudio Playwright E2E Tests
+Version: 0.0.1
+Description: Lists the R packages that RStudio Playwright tests rely on.
+    Consumed by the workflow at .github/workflows/playwright-desktop-os-ubuntu-24.yml
+    via pak::local_install_dev_deps(). Not a real R package -- only the Imports
+    field is meaningful here.
+Imports:
+    data.table,
+    nycflights13,
+    rmarkdown,
+    rlang,
+    roxygen2,
+    shiny,
+    testthat,
+    tidyverse
