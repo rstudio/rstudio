@@ -2933,7 +2933,9 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Resolve aliased paths (e.g., ~/file.R)
+   // Resolve aliased paths (e.g., ~/file.R). We intentionally do not check for
+   // existence here -- callers may legitimately ask to open a path that does
+   // not yet exist (the editor will create a new buffer).
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
    // Optional 1-based line number; default of -1 disables line positioning
@@ -2951,15 +2953,18 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
       line = lineValue.getInt();
    }
 
-   // Open the file in the editor (editFile expects a 1-based line number, or
-   // -1 to skip line positioning)
+   // Open the file in the editor (editFile expects a 1-based line number; any
+   // negative value skips line positioning)
    module_context::editFile(resolvedPath, line);
 
    // Return success
    json::Object result;
    result["success"] = true;
 
-   DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   if (line > 0)
+      DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   else
+      DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
    sendJsonRpcResponse(ops, requestId, result);
 }
 
@@ -2987,7 +2992,9 @@ void handleRevealInFilesPane(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Resolve aliased paths (e.g., ~/folder)
+   // Resolve aliased paths (e.g., ~/folder). Unlike ui/openDocument, reveal
+   // requires an existing target -- we cannot navigate the Files pane to a
+   // path that is not on disk.
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
    if (!resolvedPath.exists())
