@@ -10,7 +10,7 @@ In the table below, a Value of "Non-empty" means RStudio treats the variable as 
 | Environment Variable | Value | Platform | Impact |
 |---|---|---|---|
 | `RS_NO_SPLASH` | Non-empty | Desktop | Disables the splash screen shown while RStudio is starting up. |
-| `RSTUDIO_DISABLE_CHECK_FOR_UPDATES` | Non-empty | Desktop, Server | Disables automatic checks for new RStudio releases. |
+| `RSTUDIO_DISABLE_CHECK_FOR_UPDATES` | Non-empty | Desktop | Disables automatic checks for new RStudio releases. |
 | `RSTUDIO_DISABLE_EXTERNAL_PUBLISH` | Non-empty | Desktop, Server | Disables publishing to external services such as RPubs. Publishing to internal services (e.g., Posit Connect) remains available. |
 | `RSTUDIO_DISABLE_PACKAGES` | Non-empty | Desktop, Server | Disables the package management UI. |
 | `RSTUDIO_DISABLE_PACKAGE_INSTALL_PROMPT` | Non-empty | Desktop, Server | Suppresses prompts to install missing packages required by your code. |
