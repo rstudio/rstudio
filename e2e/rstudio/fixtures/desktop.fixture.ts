@@ -13,9 +13,24 @@ import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
 
-function readPrefsFile(filePath: string): Record<string, unknown> {
-  const raw = fs.readFileSync(filePath, 'utf8');
-  return JSON.parse(stripJsonComments(raw));
+function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    throw new Error(`Failed to read RStudio prefs (${sourceLabel}) at ${filePath}: ${(err as Error).message}`);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stripJsonComments(raw));
+  } catch (err) {
+    throw new Error(`Failed to parse RStudio prefs (${sourceLabel}) at ${filePath}: ${(err as Error).message}`);
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    const got = Array.isArray(parsed) ? 'array' : typeof parsed;
+    throw new Error(`RStudio prefs (${sourceLabel}) at ${filePath} must be a JSON object, got ${got}`);
+  }
+  return parsed as Record<string, unknown>;
 }
 
 // Constants
@@ -61,9 +76,9 @@ function createTempConfig(): TempConfig {
     fs.mkdirSync(d, { recursive: true });
   }
 
-  const basePrefs = readPrefsFile(BASE_PREFS_PATH);
+  const basePrefs = readPrefsFile(BASE_PREFS_PATH, 'base');
   const overridePath = process.env[OVERRIDE_PREFS_ENV];
-  const overridePrefs = overridePath ? readPrefsFile(overridePath) : {};
+  const overridePrefs = overridePath ? readPrefsFile(overridePath, OVERRIDE_PREFS_ENV) : {};
   const prefs = { ...basePrefs, ...overridePrefs };
 
   fs.writeFileSync(
