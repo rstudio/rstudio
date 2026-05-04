@@ -2,14 +2,15 @@
 //
 // Each target page is expected to populate `#passed` and `#failed` spans,
 // the same convention the existing pages use for in-browser display.
-// We serve src/gwt/ over a local HTTP server (file:// breaks AMD/relative
-// imports), navigate Playwright's bundled chromium to each page, wait
-// until the counts are populated, and exit non-zero on any failure or
-// uncaught console error.
+// We serve src/gwt/ over a local HTTP server (the browser's same-origin
+// policy blocks cross-directory `<script src>` loads under file://),
+// navigate Playwright's bundled chromium to each page, wait until the
+// counts are populated, and exit non-zero on any failure, uncaught page
+// error, or failed request.
 
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
@@ -38,12 +39,16 @@ function startServer(root) {
       try {
          const url = new URL(req.url, "http://localhost");
          const requested = decodeURIComponent(url.pathname);
-         const safe = join(root, requested).replace(/\\/g, "/");
-         if (!safe.startsWith(root.replace(/\\/g, "/"))) {
+         const safe = resolve(join(root, requested));
+         const rel = relative(root, safe);
+         if (rel.startsWith("..") || isAbsolute(rel)) {
             res.writeHead(403).end("forbidden");
             return;
          }
-         const info = await stat(safe).catch(() => null);
+         const info = await stat(safe).catch((err) => {
+            if (err.code === "ENOENT") return null;
+            throw err;
+         });
          if (!info || !info.isFile()) {
             res.writeHead(404).end("not found");
             return;
@@ -97,6 +102,7 @@ async function runPage(page, baseUrl, relativeUrl) {
          failed: 0,
          consoleErrors,
          pageErrors,
+         failedRequests,
       };
    }
 
@@ -129,12 +135,22 @@ async function main() {
          const page = await context.newPage();
          try {
             results.push(await runPage(page, baseUrl, relativeUrl));
+         } catch (err) {
+            results.push({
+               url: relativeUrl,
+               status: "fail",
+               passed: 0,
+               failed: 0,
+               consoleErrors: [],
+               pageErrors: [String(err)],
+               failedRequests: [],
+            });
          } finally {
             await page.close();
          }
       }
    } finally {
-      await browser.close();
+      await browser.close().catch((err) => console.error("browser.close():", err));
       await new Promise((res) => server.close(res));
    }
 
