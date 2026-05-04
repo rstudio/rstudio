@@ -1,0 +1,14 @@
+{
+  "name": "rstudio-gwt-test-runner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless runner for the standalone HTML test pages under src/gwt/test/.",
+  "type": "module",
+  "scripts": {
+    "test": "node runner.mjs",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "1.59.1"
+  }
+}

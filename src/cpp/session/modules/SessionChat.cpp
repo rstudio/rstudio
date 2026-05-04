@@ -2933,17 +2933,93 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Resolve aliased paths (e.g., ~/file.R)
+   // Resolve aliased paths (e.g., ~/file.R). We intentionally do not check for
+   // existence here -- callers may legitimately ask to open a path that does
+   // not yet exist (the editor will create a new buffer).
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
-   // Open the file in the editor
-   module_context::editFile(resolvedPath);
+   // Optional 1-based line number; default of -1 disables line positioning
+   int line = -1;
+   auto lineIt = params.find("line");
+   if (lineIt != params.end())
+   {
+      const json::Value& lineValue = (*lineIt).getValue();
+      if (!lineValue.isInt() || lineValue.getInt() < 1)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: line must be a positive integer");
+         return;
+      }
+      line = lineValue.getInt();
+   }
+
+   // Open the file in the editor (editFile expects a 1-based line number; any
+   // negative value skips line positioning)
+   module_context::editFile(resolvedPath, line);
 
    // Return success
    json::Object result;
    result["success"] = true;
 
-   DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   if (line > 0)
+      DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   else
+      DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRevealInFilesPane(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling ui/revealInFilesPane request");
+
+   // Extract path parameter
+   std::string path;
+   Error error = json::readObject(params, "path", path);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
+      return;
+   }
+
+   // Convert URI to path if needed (handles file:// URIs)
+   std::string filePath = uriToPath(path);
+
+   if (filePath.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
+      return;
+   }
+
+   // Resolve aliased paths (e.g., ~/folder). Unlike ui/openDocument, reveal
+   // requires an existing target -- we cannot navigate the Files pane to a
+   // path that is not on disk.
+   FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
+
+   if (!resolvedPath.exists())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Path does not exist: " + path);
+      return;
+   }
+
+   // If the path points to a file, reveal its parent directory in the Files pane
+   FilePath dirPath = resolvedPath.isDirectory() ? resolvedPath : resolvedPath.getParent();
+
+   // Fire a directory_navigate client event with activate=true to bring the
+   // Files pane to the front
+   json::Object eventData;
+   eventData["directory"] = module_context::createAliasedPath(dirPath);
+   eventData["activate"] = true;
+   ClientEvent event(client_events::kDirectoryNavigate, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Revealed in Files pane: {}", dirPath.getAbsolutePath());
    sendJsonRpcResponse(ops, requestId, result);
 }
 
@@ -3087,6 +3163,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/openDocument")
    {
       handleOpenDocument(ops, requestId, params);
+   }
+   else if (method == "ui/revealInFilesPane")
+   {
+      handleRevealInFilesPane(ops, requestId, params);
    }
    else
    {

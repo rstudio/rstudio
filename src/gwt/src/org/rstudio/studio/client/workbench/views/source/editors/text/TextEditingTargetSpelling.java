@@ -250,7 +250,6 @@ public class TextEditingTargetSpelling extends SpellingContext
                                    });
 
                                    menu.addItem(suggestionItem);
-                                   i++;
                                 }
 
                                 // Only add a separator if we have suggestions to separate from

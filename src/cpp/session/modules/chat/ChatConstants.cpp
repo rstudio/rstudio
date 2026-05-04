@@ -47,6 +47,8 @@ const std::vector<std::string>& rstudioCapabilities()
       "workspace/insertIntoNewFile",
       "workspace/insertAtCursor",
       "ui/openDocument",
+      "ui/openDocument/line",
+      "ui/revealInFilesPane",
    };
    return s_capabilities;
 }
