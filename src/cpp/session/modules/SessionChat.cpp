@@ -5299,13 +5299,13 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
    FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
+   // No user-data install paths exist. Distinguish env/system/none to give
+   // the user a targeted message. Each branch delivers its message via
+   // client_info on the JSON-RPC error so the frontend can show it verbatim
+   // (Error::getSummary() would otherwise wrap the system errno text and
+   // obscure our description).
    if (!aiDir.exists() && !aiPrevDir.exists())
    {
-      // No user-data install — check for env/system installs to give a
-      // targeted message instead of a generic "not installed". The user
-      // message is delivered via client_info so the frontend can show it
-      // verbatim (Error::getSummary() would otherwise wrap the system
-      // errno text and obscure our description).
       std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
       if (!envPath.empty() && FilePath(envPath).exists())
       {
@@ -5330,11 +5330,9 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          return Success();
       }
 
-      // Already not installed — surface a clear message to the user and
-      // skip the restart. Still clear cached state in case the directory
-      // was removed out-of-band while the session thinks Posit Assistant
-      // is available.
       DLOG("Posit Assistant is not installed; nothing to remove");
+      // Clear cached state in case the directory was removed out-of-band
+      // while the session still thinks Posit Assistant is available.
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState = UpdateState();
