@@ -20,6 +20,7 @@
 - ([#17508](https://github.com/rstudio/rstudio/issues/17508)): Enabled the MathJax `Safe` extension in the IDE, the HTML preview, the presentation preview, and the rendered R Markdown viewer.
 - ([#17510](https://github.com/rstudio/rstudio/issues/17510)): Data Import: column names, character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code.
 - ([#17530](https://github.com/rstudio/rstudio/issues/17530)): The spell-check context menu now shows the full set of correction suggestions; previously a stray loop increment caused every other suggestion to be skipped, capping the menu at 3 items instead of 5.
+- ([#4402](https://github.com/rstudio/rstudio/issues/4402)): Reindenting C/C++ code with a brace-less control-flow statement (e.g. a `for` whose body is a single braced `if`) no longer over-indents the line that follows the body.
 - ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Reduced filesystem work performed by the `install.packages()` hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like `updates <-` or `installed.packages()`.
@@ -28,7 +29,7 @@
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.480.0
-- Electron 41.3.0
+- Electron 41.5.0
 - Node.js 22.22.2 (copilot, Posit AI)
 - Quarto 1.9.37
 - xterm.js 6.0.0

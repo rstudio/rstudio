@@ -1470,11 +1470,15 @@ var CppCodeModel = function(session, tokenizer,
                         ["for", "while", "do", "try"],
                         tokenCursor.currentValue()))
                   {
-                     // ... and the first token wasn't a semi-colon, then indent
-                     if (startValue !== ";") {
+                     // If we walked back from the end of a statement
+                     // (terminated by ';' or '}'), the body of this control
+                     // flow is complete -- keep walking to find the
+                     // surrounding context. Otherwise, indent relative to
+                     // this keyword.
+                     if (startValue !== ";" && startValue !== "}") {
                         return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                      }
-                     
+
                   }
 
                   // We hit a colon ':'...
@@ -1559,7 +1563,13 @@ var CppCodeModel = function(session, tokenizer,
                   // We hit an 'if' or an 'else'
                   if (tokenCursor.currentValue() === "if" ||
                       tokenCursor.currentValue() === "else") {
-                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                     // If we walked back from the end of a statement
+                     // (terminated by ';' or '}'), the body is complete --
+                     // keep walking to find the surrounding context (e.g.
+                     // an outer brace-less for/while/if).
+                     if (startValue !== ";" && startValue !== "}") {
+                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                     }
                   }
 
                   // We hit 'template <'
