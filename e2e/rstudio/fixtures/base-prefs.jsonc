@@ -1,0 +1,9 @@
+{
+  // Use GWT (DOM) dialogs so Playwright can interact with confirm/info modals.
+  // Required by tests that interact with Yes/No or message dialogs (e.g.
+  // uninstall-posit-ai.test.ts).
+  "native_file_dialogs": false,
+
+  // Skip the "Save workspace?" prompt on quit so shutdown is clean.
+  "save_workspace": "never"
+}
