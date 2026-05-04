@@ -84,9 +84,9 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -er '."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '."noble-amd64".filename')
+            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".link')
+            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".filename')
             echo "Auto-resolved latest noble-amd64 daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
