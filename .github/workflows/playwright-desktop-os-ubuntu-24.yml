@@ -12,9 +12,9 @@ on:
         type: string
         default: "release"
       project:
-        description: "Playwright project to run."
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
-        default: "desktop-os-linux"
+        default: "desktop"
       grep:
         description: "Optional Playwright --grep pattern to filter tests."
         type: string
@@ -29,7 +29,7 @@ on:
         default: "release"
       project:
         type: string
-        default: "desktop-os-linux"
+        default: "desktop"
       grep:
         type: string
         default: ""
