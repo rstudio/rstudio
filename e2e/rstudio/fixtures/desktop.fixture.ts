@@ -117,14 +117,21 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   }
 
   // Set up the isolated config directory (or reuse one across a restart)
-  const tempConfig: TempConfig = existingConfigRoot
-    ? {
-        root: existingConfigRoot,
-        configHome: path.join(existingConfigRoot, 'config-home'),
-        configDir: path.join(existingConfigRoot, 'config-dir'),
-        dataHome: path.join(existingConfigRoot, 'data-home'),
-      }
-    : createTempConfig();
+  let tempConfig: TempConfig;
+  if (existingConfigRoot) {
+    tempConfig = {
+      root: existingConfigRoot,
+      configHome: path.join(existingConfigRoot, 'config-home'),
+      configDir: path.join(existingConfigRoot, 'config-dir'),
+      dataHome: path.join(existingConfigRoot, 'data-home'),
+    };
+    // Defensively recreate child dirs in case anything cleared them between runs
+    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.dataHome]) {
+      fs.mkdirSync(d, { recursive: true });
+    }
+  } else {
+    tempConfig = createTempConfig();
+  }
   const configRoot = tempConfig.root;
   console.log(`RStudio config root: ${configRoot}`);
 
