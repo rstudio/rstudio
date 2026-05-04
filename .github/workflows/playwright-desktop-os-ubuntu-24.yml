@@ -163,7 +163,9 @@ jobs:
             ARGS+=(--grep "$PW_GREP")
           fi
           if [ -n "$PW_TEST_SELECTOR" ]; then
+            set -f
             ARGS+=($PW_TEST_SELECTOR)
+            set +f
           fi
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
