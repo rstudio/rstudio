@@ -158,14 +158,15 @@ jobs:
           PW_GREP: ${{ inputs.grep }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
         run: |
-          ARGS=(--project "$PW_PROJECT_NAME")
-          if [ -n "$PW_GREP" ]; then
-            ARGS+=(--grep "$PW_GREP")
-          fi
+          ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
             set -f
             ARGS+=($PW_TEST_SELECTOR)
             set +f
+          fi
+          ARGS+=(--project "$PW_PROJECT_NAME")
+          if [ -n "$PW_GREP" ]; then
+            ARGS+=(--grep "$PW_GREP")
           fi
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
