@@ -37,6 +37,7 @@ PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 - Connects to RStudio Desktop via CDP on port 9222
 - The fixture handles launching and shutting down RStudio Desktop automatically
 - `PW_RSTUDIO_EXTRA_ARGS` passes space-separated CLI flags to the RStudio process at launch
+- `PW_RSTUDIO_PREFS_OVERRIDE` points at a JSON/JSONC file whose keys override the suite-wide RStudio prefs (`fixtures/base-prefs.jsonc`) per-key
 
 ## Server Mode
 
