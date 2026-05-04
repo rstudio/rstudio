@@ -87,6 +87,17 @@ std::string assembleWebSocketPath(
    const std::string& sessionUrl,
    const std::string& portmappedPath);
 
+// ============================================================================
+// ui/previewUrl validators
+// ============================================================================
+
+// Returns true when `url` begins with lowercase "http://" or "https://".
+// Validation is case-sensitive on purpose: module_context::viewer() uses
+// case-sensitive starts_with(url, "http") to distinguish URLs from file
+// paths, so an uppercase scheme would silently route the URL to the
+// file-path branch.
+bool isValidPreviewUrlScheme(const std::string& url);
+
 } // namespace constants
 } // namespace chat
 } // namespace modules

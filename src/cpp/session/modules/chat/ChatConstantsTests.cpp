@@ -109,3 +109,58 @@ TEST(AssembleWebSocketPath, DeepRootPath)
       assembleWebSocketPath("/org/team/rstudio", "", "/p/58fab3e4"),
       "/org/team/rstudio/p/58fab3e4/ai-chat");
 }
+
+// -- isValidPreviewUrlScheme -------------------------------------------------
+
+TEST(IsValidPreviewUrlScheme, EmptyStringRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme(""));
+}
+
+TEST(IsValidPreviewUrlScheme, HttpLocalhostAccepted)
+{
+   EXPECT_TRUE(isValidPreviewUrlScheme("http://localhost:4321"));
+}
+
+TEST(IsValidPreviewUrlScheme, HttpsExampleAccepted)
+{
+   EXPECT_TRUE(isValidPreviewUrlScheme("https://example.com"));
+}
+
+TEST(IsValidPreviewUrlScheme, UppercaseHttpRejected)
+{
+   // module_context::viewer() uses case-sensitive starts_with("http"), so
+   // accepting uppercase here would silently route the URL to the file-path
+   // branch.
+   EXPECT_FALSE(isValidPreviewUrlScheme("HTTP://example.com"));
+}
+
+TEST(IsValidPreviewUrlScheme, MixedCaseHttpsRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("Https://example.com"));
+}
+
+TEST(IsValidPreviewUrlScheme, FileSchemeRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("file:///tmp/x.html"));
+}
+
+TEST(IsValidPreviewUrlScheme, JavascriptSchemeRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("javascript:alert(1)"));
+}
+
+TEST(IsValidPreviewUrlScheme, FtpSchemeRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("ftp://example.com"));
+}
+
+TEST(IsValidPreviewUrlScheme, ProtocolRelativeRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("//example.com"));
+}
+
+TEST(IsValidPreviewUrlScheme, NoSchemeRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlScheme("example.com"));
+}
