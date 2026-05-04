@@ -3023,6 +3023,68 @@ void handleRevealInFilesPane(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handlePreviewUrl(core::system::ProcessOperations& ops,
+                      const json::Value& requestId,
+                      const json::Object& params)
+{
+   DLOG("Handling ui/previewUrl request");
+
+   // Extract url parameter
+   std::string url;
+   Error error = json::readObject(params, "url", url);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: url required");
+      return;
+   }
+
+   if (!chat::constants::isValidPreviewUrlScheme(url))
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid url: only http and https schemes are supported");
+      return;
+   }
+
+   // Optional height parameter: 0 = no change, -1 = maximize, positive = pixels.
+   int height = 0;
+   auto heightIt = params.find("height");
+   if (heightIt != params.end())
+   {
+      const json::Value& heightValue = (*heightIt).getValue();
+      if (!heightValue.isInt())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be an integer");
+         return;
+      }
+      if (!chat::constants::isValidPreviewUrlHeight(heightValue.getInt()))
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be -1, 0, or a positive integer");
+         return;
+      }
+      height = heightValue.getInt();
+   }
+
+   // Navigate the Viewer pane. module_context::viewer() handles server-mode
+   // port mapping and fires kViewerNavigate.
+   module_context::viewer(url, height);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   // Log the URL with query/fragment redacted -- URLs from assistant tool
+   // calls can include access tokens or other secrets in the query string.
+   auto queryPos = url.find_first_of("?#");
+   std::string urlForLog = (queryPos == std::string::npos)
+                              ? url
+                              : url.substr(0, queryPos) + "...";
+   DLOG("Previewing url in viewer pane: {} (height={})", urlForLog, height);
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -3167,6 +3229,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/revealInFilesPane")
    {
       handleRevealInFilesPane(ops, requestId, params);
+   }
+   else if (method == "ui/previewUrl")
+   {
+      handlePreviewUrl(ops, requestId, params);
    }
    else
    {
