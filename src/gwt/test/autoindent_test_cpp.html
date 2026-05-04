@@ -316,6 +316,35 @@ for () {
     x > 0;
 </pre></li>
 
+<li><pre data-expected="0" open-brace-skip>
+for (int i = 0; i &lt; 5; i++)
+    if (i == 4) {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+for ()
+    while () {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+if (a)
+    if (b) {
+        body;
+    }
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+while (a)
+    for (b)
+        if (c) {
+            body;
+        }
+</pre></li>
+
 <li><pre data-expected="4" data-expected-open-brace="0">
 else
 </pre></li>

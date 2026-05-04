@@ -10,9 +10,7 @@ import type { Page } from 'playwright';
 // Return button in satellite window (has explicit ElementIds assignment)
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
-test.describe.serial('Detachable Assistant Sidebar - #16937', () => {
-  test.skip(process.env.PW_RSTUDIO_MODE === 'server', 'Satellite windows are Desktop-only — Server behavior TBD');
-
+test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_only'] }, () => {
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;

@@ -44,7 +44,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
    **Never use raw `Control+End` or `Control+Home`** in tests — always use the helper or a platform guard.
 
    **If unsure**, check what RStudio's own shortcut settings say. If it shows "Ctrl" on macOS (not Cmd), use `Control`.
-8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. Use `PW_RSTUDIO_MODE` env var when branching on mode.
+8. **Write tests that work on both Desktop and Server** – Tests connect via CDP on Desktop and via browser login on Server, but test logic should be the same. Use stable element IDs instead of wrapper selectors. When a test only applies to one mode, prefer the `@desktop_only` or `@server_only` tag (handled by project-level `grepInvert`); use `testInfo.project.name` only when runtime branching is genuinely required.
 9. **Use `.rs.api.executeCommand()` instead of `window.desktopHooks.invokeCommand()`** – `desktopHooks` only exists in Desktop's Electron shell and will crash on Server. `.rs.api.executeCommand()` works in both modes.
 
 ---

@@ -308,7 +308,11 @@ public class TextEditingTargetSpelling extends SpellingContext
    @Override
    public void invalidateAllWords()
    {
-      docDisplay_.removeMarkers((a, m) -> a != null && a.text().toLowerCase().contains("spellcheck"));
+      docDisplay_.removeMarkers((a, m) -> {
+         if (a == null) return false;
+         String text = a.text();
+         return text != null && text.toLowerCase().contains("spellcheck");
+      });
       lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
    }
 

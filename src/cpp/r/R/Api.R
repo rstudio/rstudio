@@ -254,7 +254,7 @@
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style", "usage")
-         if (is.null(marker$type) || (!marker$type %in% markerTypes))
+         if (length(marker$type) == 0L || (!marker$type %in% markerTypes))
             stop("Invalid marker type (", marker$type, ")", call. = FALSE)
          if (!is.character(marker$file))
             stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)

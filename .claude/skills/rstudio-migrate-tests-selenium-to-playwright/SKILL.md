@@ -93,7 +93,7 @@ Defer to the `rstudio-run-playwright-tests` skill for the canonical run commands
 Quick reference for Desktop:
 
 ```bash
-cd e2e/rstudio && npx playwright test tests/<path>/<file>.test.ts --project desktop-os-windows
+cd e2e/rstudio && npx playwright test tests/<path>/<file>.test.ts
 ```
 
 If the test fails:
@@ -177,8 +177,8 @@ Tests can run against multiple RStudio Server instances in parallel. This works 
 
 **Targeting a server:**
 ```bash
-PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server \
-  npx playwright test tests/panes/misc/autocomplete.test.ts
+PW_RSTUDIO_SERVER_URL=https://server1:80 \
+  npx playwright test tests/panes/misc/autocomplete.test.ts --project=server
 ```
 
 **Parallel execution (5 servers):**
@@ -186,9 +186,9 @@ Each process gets its own `PW_RSTUDIO_SERVER_URL` — no shared config files, no
 
 ```bash
 # Terminal / CI / shell script
-PW_RSTUDIO_SERVER_URL=https://server1:80 PW_RSTUDIO_MODE=server npx playwright test tests/file1.test.ts &
-PW_RSTUDIO_SERVER_URL=https://server2:80 PW_RSTUDIO_MODE=server npx playwright test tests/file2.test.ts &
-PW_RSTUDIO_SERVER_URL=https://server3:80 PW_RSTUDIO_MODE=server npx playwright test tests/file3.test.ts &
+PW_RSTUDIO_SERVER_URL=https://server1:80 npx playwright test tests/file1.test.ts --project=server &
+PW_RSTUDIO_SERVER_URL=https://server2:80 npx playwright test tests/file2.test.ts --project=server &
+PW_RSTUDIO_SERVER_URL=https://server3:80 npx playwright test tests/file3.test.ts --project=server &
 wait
 ```
 
