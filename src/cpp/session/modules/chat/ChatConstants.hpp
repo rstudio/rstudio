@@ -98,6 +98,11 @@ std::string assembleWebSocketPath(
 // file-path branch.
 bool isValidPreviewUrlScheme(const std::string& url);
 
+// Returns true when `height` is a valid value for ui/previewUrl:
+// -1 (maximize), 0 (no change), or any positive integer (pixel height).
+// Anything < -1 is rejected.
+bool isValidPreviewUrlHeight(int height);
+
 } // namespace constants
 } // namespace chat
 } // namespace modules

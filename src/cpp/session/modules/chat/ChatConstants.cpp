@@ -89,6 +89,11 @@ bool isValidPreviewUrlScheme(const std::string& url)
           boost::algorithm::starts_with(url, "https://");
 }
 
+bool isValidPreviewUrlHeight(int height)
+{
+   return height >= -1;
+}
+
 } // namespace constants
 } // namespace chat
 } // namespace modules

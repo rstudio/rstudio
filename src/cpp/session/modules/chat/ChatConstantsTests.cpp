@@ -164,3 +164,32 @@ TEST(IsValidPreviewUrlScheme, NoSchemeRejected)
 {
    EXPECT_FALSE(isValidPreviewUrlScheme("example.com"));
 }
+
+// -- isValidPreviewUrlHeight -------------------------------------------------
+
+TEST(IsValidPreviewUrlHeight, MinusTwoRejected)
+{
+   EXPECT_FALSE(isValidPreviewUrlHeight(-2));
+}
+
+TEST(IsValidPreviewUrlHeight, MinusOneAccepted)
+{
+   // -1 is the maximize sentinel.
+   EXPECT_TRUE(isValidPreviewUrlHeight(-1));
+}
+
+TEST(IsValidPreviewUrlHeight, ZeroAccepted)
+{
+   // 0 means "no height change".
+   EXPECT_TRUE(isValidPreviewUrlHeight(0));
+}
+
+TEST(IsValidPreviewUrlHeight, OneAccepted)
+{
+   EXPECT_TRUE(isValidPreviewUrlHeight(1));
+}
+
+TEST(IsValidPreviewUrlHeight, TypicalPixelHeightAccepted)
+{
+   EXPECT_TRUE(isValidPreviewUrlHeight(1024));
+}
