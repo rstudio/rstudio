@@ -7,5 +7,11 @@ Certain aspects of RStudio can be controlled by setting environment variables be
 
 | Environment Variable | Value | Platform | Impact |
 |---|---|---|---|
+| `RS_NO_SPLASH` | Any non-empty value (e.g. `1`) | Desktop | Disables the splash screen shown while RStudio is starting up. |
+| `RSTUDIO_DISABLE_CHECK_FOR_UPDATES` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables automatic checks for new RStudio releases. |
+| `RSTUDIO_DISABLE_EXTERNAL_PUBLISH` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables publishing to external services such as RPubs. Publishing to internal services (e.g. Posit Connect) remains available. |
+| `RSTUDIO_DISABLE_PACKAGES` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables the package management UI. |
+| `RSTUDIO_DISABLE_PACKAGE_INSTALL_PROMPT` | Any non-empty value (e.g. `1`) | Desktop, Server | Suppresses prompts to install missing packages required by your code. |
 | `RSTUDIO_DISABLE_POSIT_ASSISTANT` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables and hides the [Posit Assistant](../guide/tools/posit-ai.qmd) features. The Posit Assistant toolbar button and pane are not displayed, and Posit Assistant cannot be installed or used. |
+| `RSTUDIO_DISABLE_PUBLISH` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables content publishing entirely, including both internal and external services. |
 | `RSTUDIO_DISABLE_WHATS_NEW` | Any non-empty value (e.g. `1`) | Desktop | Suppresses the "What's New" dialog that is otherwise shown after RStudio is updated to a new version. |
