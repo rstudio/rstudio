@@ -121,9 +121,9 @@ public class DataTable
          span.setClassName(img.getClassName());
          span.setInnerHTML(
             "<svg width='14' height='10' viewBox='0 0 14 12' style='vertical-align:middle;position:relative;top:-2px'>" +
-            "<rect x='0.5' y='4' width='4' height='8' rx='0.5' fill='currentColor'/>" +
+            "<rect x='0.5' y='6' width='4' height='6' rx='0.5' fill='currentColor'/>" +
             "<rect x='5'   y='0' width='4' height='12' rx='0.5' fill='currentColor'/>" +
-            "<rect x='9.5' y='6' width='4' height='6' rx='0.5' fill='currentColor'/>" +
+            "<rect x='9.5' y='4' width='4' height='8' rx='0.5' fill='currentColor'/>" +
             "</svg>");
          img.getParentElement().replaceChild(span, img);
       }

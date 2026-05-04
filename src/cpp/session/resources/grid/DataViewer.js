@@ -168,6 +168,14 @@ var sidebarVisible = true;
 // it out from under still-pending fetches.
 var pendingSummaryFetches = 0;
 
+// Active cell coordinates. activeRow is the 0-based index into the
+// currently displayed (filtered/sorted) rows; activeCol is the 0-based
+// position in columnOrder (display order, accounting for pinning).
+// Both -1 when no cell is selected. Reset by anything that changes row
+// identity (sort, filter, search, column pagination).
+var activeRow = -1;
+var activeCol = -1;
+
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
 var pinnedColumns = new Set();
 
@@ -692,6 +700,10 @@ var handleSortClick = function(colIdx, th) {
    sortColumn = newDir ? colIdx : -1;
    sortDirection = newDir;
 
+   // Sort changes row identity at every index; clear the active cell so
+   // we don't re-highlight a different row at the old coordinate.
+   clearActiveCell();
+
    // Update header classes
    for (var i = 0; i < headers.length; i++) {
       headers[i].classList.remove("sorting_asc", "sorting_desc");
@@ -745,6 +757,9 @@ var togglePinColumn = function(colIdx) {
    } else {
       pinnedColumns.add(colIdx);
    }
+   // Pinning reorders columns, so the active cell's display index would
+   // now refer to a different column; clear it.
+   clearActiveCell();
    invalidatePinnedOffsets();
    rebuildHeaders();
    renderVisibleRows(true);
@@ -1188,6 +1203,7 @@ var setColumnSearch = function(idx, val) {
 };
 
 var applyFilters = function() {
+   clearActiveCell();
    invalidateCache();
    fetchRows(0, FETCH_SIZE, function() {
       scrollToTop();
@@ -1599,6 +1615,7 @@ var buildRow = function(r) {
       var colIdx = columnOrder[c];
       var clazz = getColClass(cols[colIdx]);
       var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
+      if (r === activeRow && c === activeCol) td.classList.add("activeCell");
       tr.appendChild(td);
    }
 
@@ -1883,7 +1900,9 @@ var createSparklineSVG = function(breaks, counts) {
    wrapper.appendChild(tooltip);
 
    var formatNum = function(n) {
-      // Round to reasonable precision
+      // Integer-valued breaks (including 0) render without a fractional
+      // part: "0" rather than "0.00", "5" rather than "5.0".
+      if (Number.isInteger(n)) return n.toLocaleString();
       if (Math.abs(n) >= 100) return Math.round(n).toLocaleString();
       if (Math.abs(n) >= 1) return n.toFixed(1);
       if (Math.abs(n) >= 0.01) return n.toFixed(2);
@@ -1896,16 +1915,26 @@ var createSparklineSVG = function(breaks, counts) {
       if (bin === null) { tooltip.style.display = "none"; return; }
       bin = parseInt(bin, 10);
 
-      var lo = breaks[bin];
-      var hi = breaks[bin + 1];
+      // breaks arrive from R as strings (col_breaks is as.character'd
+      // server-side); coerce here so arithmetic doesn't fall into string
+      // concatenation via the `+` operator.
+      var lo = Number(breaks[bin]);
+      var hi = Number(breaks[bin + 1]);
       var count = counts[bin];
       var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
+
+      // For integer-binned histograms (server emits breaks like
+      // 0.5, 1.5, 2.5, ... so each bin holds one integer value), show the
+      // integer rather than the awkward "Range: 0.5 to 1.5".
+      var mid = (lo + hi) / 2;
+      var isIntegerBin = (hi - lo) === 1 && Number.isInteger(mid);
 
       // Build with DOM nodes rather than innerHTML so future format changes
       // can't accidentally interpret data values as markup.
       tooltip.textContent = "";
-      tooltip.appendChild(document.createTextNode(
-         "Range: " + formatNum(lo) + " to " + formatNum(hi)));
+      tooltip.appendChild(document.createTextNode(isIntegerBin
+         ? "Value: " + mid
+         : "Range: " + formatNum(lo) + " to " + formatNum(hi)));
       tooltip.appendChild(document.createElement("br"));
       tooltip.appendChild(document.createTextNode(
          "Count: " + count.toLocaleString() + " (" + pct + "%)"));
@@ -2233,6 +2262,205 @@ var scrollToColumn = function(colIdx) {
    setTimeout(function() {
       th.classList.remove("highlight-flash");
    }, TIMING.columnFlash);
+};
+
+// ==========================================================================
+// Active Cell / Keyboard Navigation
+// ==========================================================================
+
+// Pinned-row offset accounted for in vertical-scroll math. Headers are
+// outside #gridViewport (separate sticky thead row in the same scrolling
+// table) so we don't need to subtract a pinned-row band, but the
+// horizontal scrollbar at the bottom can occlude the last row -- the
+// visible test below uses clientHeight which already excludes the
+// scrollbar track.
+var getActiveCellTd = function() {
+   if (activeRow < 0 || activeCol < 0) return null;
+   var tr = renderedRowElements.get(activeRow);
+   if (!tr) return null;
+   return tr.children[activeCol] || null;
+};
+
+var clearActiveCell = function() {
+   var td = getActiveCellTd();
+   if (td) td.classList.remove("activeCell");
+   activeRow = -1;
+   activeCol = -1;
+};
+
+var ensureActiveCellVisible = function() {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport) return;
+
+   // Vertical: rows are uniform-height so we can compute target scrollTop
+   // directly without consulting the DOM (the row may not be rendered yet
+   // -- the scroll itself triggers the render).
+   var rowTop = activeRow * ROW_HEIGHT;
+   var rowBottom = rowTop + ROW_HEIGHT;
+   var viewTop = viewport.scrollTop;
+   var viewBottom = viewTop + viewport.clientHeight;
+   if (rowTop < viewTop) {
+      viewport.scrollTop = rowTop;
+   } else if (rowBottom > viewBottom) {
+      viewport.scrollTop = rowBottom - viewport.clientHeight;
+   }
+
+   // Horizontal: header cells share widths with body cells, and headers
+   // are always rendered, so the header at the same display index gives
+   // an accurate offsetLeft/offsetWidth even when the body row isn't
+   // rendered yet.
+   var thead = document.getElementById("data_cols");
+   if (!thead) return;
+   var th = thead.children[activeCol];
+   if (!th) return;
+
+   var pinnedWidth = 0;
+   if (rowNumbers && thead.children[0]) {
+      pinnedWidth = thead.children[0].offsetWidth;
+   }
+   var colLeft = th.offsetLeft;
+   var colWidth = th.offsetWidth;
+   var viewLeft = viewport.scrollLeft;
+   var viewWidth = viewport.clientWidth;
+   if (colLeft < viewLeft + pinnedWidth) {
+      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
+   } else if (colLeft + colWidth > viewLeft + viewWidth) {
+      viewport.scrollLeft = colLeft + colWidth - viewWidth;
+   }
+};
+
+var setActiveCell = function(row, col) {
+   var maxRow = filteredRows - 1;
+   var maxCol = columnOrder.length - 1;
+   if (maxRow < 0 || maxCol < 0) return;
+   row = Math.max(0, Math.min(maxRow, row));
+   col = Math.max(0, Math.min(maxCol, col));
+   if (row === activeRow && col === activeCol) return;
+
+   var prev = getActiveCellTd();
+   if (prev) prev.classList.remove("activeCell");
+
+   activeRow = row;
+   activeCol = col;
+
+   ensureActiveCellVisible();
+
+   // Apply to the new td if it's currently rendered. If it isn't yet,
+   // ensureActiveCellVisible will have scrolled it into view; the next
+   // renderVisibleRows call (triggered by the scroll event) will pick up
+   // the .activeCell class via buildRow.
+   var next = getActiveCellTd();
+   if (next) next.classList.add("activeCell");
+};
+
+var copyActiveCell = function() {
+   var td = getActiveCellTd();
+   if (!td) return false;
+   var text = td.textContent || "";
+   if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function(err) {
+         console.warn("Clipboard write failed:", err);
+      });
+   } else {
+      // Pre-Clipboard-API fallback. execCommand("copy") is deprecated but
+      // still widely supported and remains the only synchronous path.
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+      document.body.removeChild(ta);
+   }
+   return true;
+};
+
+var onGridKeyDown = function(evt) {
+   // Ignore keystrokes that are clearly meant for inputs inside the grid
+   // (filter popups, search boxes injected over the viewport).
+   var t = evt.target;
+   if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+      return;
+   }
+
+   var key = evt.key;
+   var isCopy = (evt.ctrlKey || evt.metaKey) && (key === "c" || key === "C");
+
+   if (isCopy) {
+      if (copyActiveCell()) evt.preventDefault();
+      return;
+   }
+
+   var maxRow = filteredRows - 1;
+   var maxCol = columnOrder.length - 1;
+   if (maxRow < 0 || maxCol < 0) return;
+
+   var navKeys = {
+      "ArrowUp": 1, "ArrowDown": 1, "ArrowLeft": 1, "ArrowRight": 1,
+      "Home": 1, "End": 1, "PageUp": 1, "PageDown": 1
+   };
+   if (!navKeys[key]) return;
+
+   evt.preventDefault();
+
+   // First navigation keypress with no active cell lands on (0, 0)
+   // without applying the delta -- otherwise ArrowDown would skip
+   // straight to row 1.
+   if (activeRow < 0 || activeCol < 0) {
+      setActiveCell(0, 0);
+      return;
+   }
+
+   var r = activeRow;
+   var c = activeCol;
+   var pageRows = Math.max(
+      1,
+      Math.floor(document.getElementById("gridViewport").clientHeight / ROW_HEIGHT) - 1);
+   var jump = evt.ctrlKey || evt.metaKey;
+
+   switch (key) {
+      case "ArrowUp":    r = r - 1; break;
+      case "ArrowDown":  r = r + 1; break;
+      case "ArrowLeft":  c = c - 1; break;
+      case "ArrowRight": c = c + 1; break;
+      case "Home":       c = 0;      if (jump) r = 0;      break;
+      case "End":        c = maxCol; if (jump) r = maxRow; break;
+      case "PageUp":     r = r - pageRows; break;
+      case "PageDown":   r = r + pageRows; break;
+   }
+
+   setActiveCell(r, c);
+};
+
+var onGridCellClick = function(evt) {
+   // Ignore clicks on cell-internal interactive elements (drill-in links,
+   // filter triggers) -- their own handlers should run undisturbed.
+   var t = evt.target;
+   if (!t) return;
+   if (t.closest && t.closest("a, button, input, .viewerLink")) return;
+
+   var td = t.closest ? t.closest("td") : null;
+   if (!td) return;
+   var tr = td.parentElement;
+   if (!tr || !tr.hasAttribute("data-row")) return;
+
+   var row = parseInt(tr.getAttribute("data-row"), 10);
+   if (isNaN(row)) return;
+
+   var col = -1;
+   for (var i = 0; i < tr.children.length; i++) {
+      if (tr.children[i] === td) { col = i; break; }
+   }
+   if (col < 0) return;
+
+   setActiveCell(row, col);
+
+   // Focus the viewport so subsequent keystrokes route through the grid
+   // keyboard handler. Using preventScroll keeps the click from yanking
+   // the user out of their visual context.
+   var viewport = document.getElementById("gridViewport");
+   if (viewport && viewport.focus) viewport.focus({ preventScroll: true });
 };
 
 // ==========================================================================
@@ -2607,6 +2835,16 @@ var initGrid = function(resCols, data) {
       viewport.addEventListener("scroll", onScroll);
       viewport.addEventListener("scroll", onScrollbarUpdate);
       viewport.addEventListener("scrollend", onScrollEnd);
+
+      // Keyboard navigation + cell click. tabindex=0 makes the viewport
+      // focusable so the keydown listener fires; clicking a cell focuses
+      // it explicitly (preventScroll keeps the visual context stable).
+      viewport.setAttribute("tabindex", "0");
+      viewport.addEventListener("keydown", onGridKeyDown);
+   }
+   var gridBody = document.getElementById("gridBody");
+   if (gridBody) {
+      gridBody.addEventListener("click", onGridCellClick);
    }
 
    // Create custom scrollbars
@@ -2680,6 +2918,8 @@ var resetGridState = function() {
    cachedFilterValues = [];
    pinnedColumns.clear();
    columnOrder = [];
+   activeRow = -1;
+   activeCol = -1;
 
    // Column widths
    measuredWidths = [];
@@ -3053,6 +3293,7 @@ window.toggleSidebar = function() {
 var debouncedSearch = debounce(function(text) {
    if (text !== cachedSearch) {
       cachedSearch = text;
+      clearActiveCell();
       invalidateCache();
       fetchRows(0, FETCH_SIZE, function() {
          scrollToTop();
@@ -3183,6 +3424,9 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    } else {
       maxDisplayColumns = Math.min(cap, maxDisplayColumns);
    }
+   // Column window changed -- the active cell's display index may now
+   // refer to a different column; clear before bootstrap rebuilds DOM.
+   clearActiveCell();
    bootstrap();
 };
 

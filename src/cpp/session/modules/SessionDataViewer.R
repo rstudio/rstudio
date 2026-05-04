@@ -319,13 +319,28 @@
             hist_vals <- x[[idx]][is.finite(x[[idx]])]
             if (length(hist_vals) > 1)
             {
+               # For whole-number columns spanning a small range, draw one
+               # bar per integer value (so e.g. a 1-5 Likert column shows 5
+               # distinct bars rather than Sturges' default binning, which
+               # smears the discrete structure). Gaps in the range get a
+               # zero-height bar, which is itself informative.
+               int_breaks <- NULL
+               min_v <- min(hist_vals)
+               max_v <- max(hist_vals)
+               n_distinct <- max_v - min_v + 1
+               if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
+                  int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
+
                # create histogram for brushing -- suppress warnings as in rare cases
                # an otherwise benign integer overflow can occurs; see
                # https://github.com/rstudio/rstudio/issues/3232
-               h <- suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
+               h <- if (is.null(int_breaks))
+                  suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
+               else
+                  suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
                col_breaks <- h$breaks
                col_counts <- h$counts
-               
+
                # record column type
                col_type <- "numeric"
                col_search_type <- "numeric"
