@@ -1,0 +1,175 @@
+name: "Test: Playwright (Desktop, Ubuntu 24, Open Source)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      rstudio_installer_url:
+        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run."
+        type: string
+        default: "desktop-os-linux"
+      grep:
+        description: "Optional Playwright --grep pattern to filter tests."
+        type: string
+        default: ""
+  workflow_call:
+    inputs:
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "desktop-os-linux"
+      grep:
+        type: string
+        default: ""
+
+jobs:
+  e2e-desktop-ubuntu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      R_LIBS_USER: ${{ github.workspace }}/R-libs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb jq
+
+      - name: Install rig
+        run: |
+          curl -fsSL https://github.com/r-lib/rig/releases/latest/download/rig-linux-latest.tar.gz \
+            | sudo tar xz -C /usr/local
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          rig add "$R_VERSION"
+          rig default "$R_VERSION"
+          rig ls
+          mkdir -p "$R_LIBS_USER"
+
+      - name: Resolve RStudio .deb URL
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+        run: |
+          URL="$INSTALLER_URL"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
+            URL=$(echo "$MANIFEST" | jq -er '."noble-amd64".link')
+            SHA=$(echo "$MANIFEST" | jq -er '."noble-amd64".sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '."noble-amd64".filename')
+            echo "Auto-resolved latest noble-amd64 daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "$URL")
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+      - name: Download RStudio .deb
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "${{ steps.resolve.outputs.filename }}" \
+            "${{ steps.resolve.outputs.url }}"
+
+      - name: Verify SHA-256
+        if: steps.resolve.outputs.sha256 != ''
+        run: |
+          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
+            | sha256sum -c -
+
+      - name: Install RStudio
+        run: |
+          sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
+          ls -la /usr/bin/rstudio
+
+      - name: Restore R library cache
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        id: r-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-r-${{ inputs.r_version }}-
+
+      - name: Install R packages from DESCRIPTION
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        run: |
+          Rscript -e '
+            options(repos = c(P3M = "https://packagemanager.posit.co/cran/__linux__/noble/latest"))
+            if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
+            pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
+          '
+
+      - name: Save R library cache
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != '' && steps.r-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+
+      - name: Install npm dependencies
+        working-directory: e2e/rstudio
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e/rstudio
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: desktop
+          PW_PROJECT_NAME: ${{ inputs.project }}
+          PW_GREP: ${{ inputs.grep }}
+        run: |
+          if [ -n "$PW_GREP" ]; then
+            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+              npx playwright test --project "$PW_PROJECT_NAME" --grep "$PW_GREP"
+          else
+            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+              npx playwright test --project "$PW_PROJECT_NAME"
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
