@@ -5302,27 +5302,32 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
    if (!aiDir.exists() && !aiPrevDir.exists())
    {
       // No user-data install — check for env/system installs to give a
-      // targeted error message instead of a generic "not installed".
+      // targeted message instead of a generic "not installed". The user
+      // message is delivered via client_info so the frontend can show it
+      // verbatim (Error::getSummary() would otherwise wrap the system
+      // errno text and obscure our description).
       std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
       if (!envPath.empty() && FilePath(envPath).exists())
       {
-         return systemError(
-            boost::system::errc::operation_not_permitted,
-            "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
-            "environment variable and cannot be uninstalled "
-            "from RStudio.",
-            ERROR_LOCATION);
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
+               "environment variable and cannot be uninstalled "
+               "from RStudio."));
+         return Success();
       }
 
       FilePath systemPath =
          xdg::systemConfigDir().completePath(kPositAiDirName);
       if (systemPath.exists())
       {
-         return systemError(
-            boost::system::errc::operation_not_permitted,
-            "Posit Assistant is installed at the system level by an "
-            "administrator and cannot be uninstalled from RStudio.",
-            ERROR_LOCATION);
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed at the system level by an "
+               "administrator and cannot be uninstalled from RStudio."));
+         return Success();
       }
 
       // Already not installed — surface a clear message to the user and
@@ -5335,10 +5340,10 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          s_updateState = UpdateState();
       }
       s_positAssistantVersion.clear();
-      return systemError(
-         boost::system::errc::operation_not_permitted,
-         "Posit Assistant is not installed.",
-         ERROR_LOCATION);
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is not installed."));
+      return Success();
    }
 
    // Stop chat backend
