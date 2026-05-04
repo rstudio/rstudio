@@ -51,6 +51,7 @@ const std::vector<std::string>& rstudioCapabilities()
       "ui/openDocument",
       "ui/openDocument/line",
       "ui/revealInFilesPane",
+      "ui/previewUrl",
    };
    return s_capabilities;
 }
