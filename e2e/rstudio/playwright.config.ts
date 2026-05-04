@@ -38,6 +38,7 @@ const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
 
 let projects;
 if (projectFlagPresent) {
+  // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
   projects = allProjects;
 } else if (modeEnv === 'server') {
   projects = allProjects.filter(p => p.name === 'server');

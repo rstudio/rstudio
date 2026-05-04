@@ -21,7 +21,7 @@ npx playwright install
 
 ### Pick a mode
 
-The suite has two Playwright projects: `desktop` (default) and `server`. Each filters tests automatically by host OS (via `os.platform()`) and by edition (via `PW_RSTUDIO_EDITION`, default `os`).
+The suite has two Playwright projects: `desktop` (default) and `server`. Each filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
 
 ### Desktop Mode (Default)
 
