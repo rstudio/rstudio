@@ -2936,14 +2936,72 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
    // Resolve aliased paths (e.g., ~/file.R)
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
-   // Open the file in the editor
-   module_context::editFile(resolvedPath);
+   // Optional 1-based line number; default of -1 disables line positioning
+   int line = -1;
+   json::readObject(params, "line", line);
+
+   // Open the file in the editor (editFile expects a 1-based line number, or
+   // -1 to skip line positioning)
+   module_context::editFile(resolvedPath, line >= 1 ? line : -1);
 
    // Return success
    json::Object result;
    result["success"] = true;
 
-   DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRevealInFilesPane(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling ui/revealInFilesPane request");
+
+   // Extract path parameter
+   std::string path;
+   Error error = json::readObject(params, "path", path);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
+      return;
+   }
+
+   // Convert URI to path if needed (handles file:// URIs)
+   std::string filePath = uriToPath(path);
+
+   if (filePath.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
+      return;
+   }
+
+   // Resolve aliased paths (e.g., ~/folder)
+   FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
+
+   if (!resolvedPath.exists())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Path does not exist: " + path);
+      return;
+   }
+
+   // If the path points to a file, reveal its parent directory in the Files pane
+   FilePath dirPath = resolvedPath.isDirectory() ? resolvedPath : resolvedPath.getParent();
+
+   // Fire a directory_navigate client event with activate=true to bring the
+   // Files pane to the front
+   json::Object eventData;
+   eventData["directory"] = module_context::createAliasedPath(dirPath);
+   eventData["activate"] = true;
+   ClientEvent event(client_events::kDirectoryNavigate, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Revealed in Files pane: {}", dirPath.getAbsolutePath());
    sendJsonRpcResponse(ops, requestId, result);
 }
 
@@ -3087,6 +3145,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/openDocument")
    {
       handleOpenDocument(ops, requestId, params);
+   }
+   else if (method == "ui/revealInFilesPane")
+   {
+      handleRevealInFilesPane(ops, requestId, params);
    }
    else
    {
