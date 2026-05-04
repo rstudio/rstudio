@@ -57,8 +57,8 @@
 {
    packages <- c(
       "devtools", "dplyr", "here", "httr", "later", "processx",
-      "ps", "reticulate", "stringr", "styler", "testthat", "usethis",
-      "websocket", "withr", "xml2"
+      "ps", "reticulate", "rstudioapi", "stringr", "styler",
+      "testthat", "usethis", "websocket", "withr", "xml2"
    )
    
    if (!requireNamespace("renv", quietly = TRUE))
