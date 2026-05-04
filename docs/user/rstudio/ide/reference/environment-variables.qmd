@@ -8,4 +8,4 @@ Certain aspects of RStudio can be controlled by setting environment variables be
 | Environment Variable | Value | Platform | Impact |
 |---|---|---|---|
 | `RSTUDIO_DISABLE_POSIT_ASSISTANT` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables and hides the [Posit Assistant](../guide/tools/posit-ai.qmd) features. The Posit Assistant toolbar button and pane are not displayed, and Posit Assistant cannot be installed or used. |
-| `RSTUDIO_DISABLE_WHATS_NEW` | `1` | Desktop | Suppresses the "What's New" dialog that is otherwise shown after RStudio is updated to a new version. |
+| `RSTUDIO_DISABLE_WHATS_NEW` | Any non-empty value (e.g. `1`) | Desktop | Suppresses the "What's New" dialog that is otherwise shown after RStudio is updated to a new version. |
