@@ -185,7 +185,13 @@ void handlePreviewUrl(core::system::ProcessOperations& ops,
    json::Object result;
    result["success"] = true;
 
-   DLOG("Previewing url in viewer pane: {} (height={})", url, height);
+   // Redact query/fragment -- URLs from assistant tool calls can carry
+   // access tokens in the query string.
+   auto queryPos = url.find_first_of("?#");
+   std::string urlForLog = (queryPos == std::string::npos)
+                              ? url
+                              : url.substr(0, queryPos) + "...";
+   DLOG("Previewing url in viewer pane: {} (height={})", urlForLog, height);
    sendJsonRpcResponse(ops, requestId, result);
 }
 ```
@@ -203,6 +209,12 @@ void handlePreviewUrl(core::system::ProcessOperations& ops,
   accepted schemes (to match `module_context::viewer()`'s temp-file
   behavior, for example), the helper can be relaxed without renaming the
   method.
+- **Log redaction:** the handler logs the URL with query and fragment
+  components stripped, since URLs from assistant tool calls can carry
+  OAuth tokens, API keys, or other secrets in the query string. The
+  scheme/host/path portion is retained for debuggability. `DLOG` only
+  emits at debug log level so this matters mostly when debug logging is
+  enabled, but the redaction is cheap and defensive in depth.
 
 ## Verification plan
 

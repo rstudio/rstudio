@@ -381,7 +381,13 @@ void handlePreviewUrl(core::system::ProcessOperations& ops,
    json::Object result;
    result["success"] = true;
 
-   DLOG("Previewing url in viewer pane: {} (height={})", url, height);
+   // Log the URL with query/fragment redacted -- URLs from assistant tool
+   // calls can include access tokens or other secrets in the query string.
+   auto queryPos = url.find_first_of("?#");
+   std::string urlForLog = (queryPos == std::string::npos)
+                              ? url
+                              : url.substr(0, queryPos) + "...";
+   DLOG("Previewing url in viewer pane: {} (height={})", urlForLog, height);
    sendJsonRpcResponse(ops, requestId, result);
 }
 ```
