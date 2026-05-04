@@ -44,9 +44,9 @@ To uninstall the downloaded Posit Assistant components, select **Help** \> **Dia
 
 RStudio preserves your chat history and account settings, which remain available if you reinstall Posit Assistant.
 
-## Hiding Posit Assistant Features
+## Hiding Posit Assistant features
 
-To disable and hide the Posit Assistant features entirely, set the `RSTUDIO_DISABLE_POSIT_ASSISTANT` environment variable to any value (e.g. `RSTUDIO_DISABLE_POSIT_ASSISTANT=1`) before starting RStudio. When set, the Posit Assistant toolbar button and pane are not displayed, and Posit Assistant cannot be installed or used in that session.
+To disable and hide the Posit Assistant features entirely, set the `RSTUDIO_DISABLE_POSIT_ASSISTANT` environment variable to any value (e.g., `RSTUDIO_DISABLE_POSIT_ASSISTANT=1`) before starting RStudio. When the variable is set, RStudio does not display the Posit Assistant toolbar button or pane, and you cannot install or use Posit Assistant in that session.
 
 On RStudio Server, administrators can also disable Posit Assistant for all users by adding the following line to `/etc/rstudio/rsession.conf`:
 
