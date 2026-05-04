@@ -18,9 +18,20 @@
 // Constants
 // ==========================================================================
 
+// Visual row height in pixels (kept in sync with the grid CSS). All
+// virtual-scroll math and spacer-row sizing assumes a uniform row height.
 var ROW_HEIGHT = 23;
+
+// Number of off-screen rows rendered above and below the viewport so the
+// recycler has a buffer to draw from before the next fetch lands.
 var BUFFER_ROWS = 200;
+
+// Default fetch chunk for row requests, sized to comfortably cover the
+// visible window plus the buffer above.
 var FETCH_SIZE = 500;
+
+// Pixel distance from the viewport edge at which we trigger the next
+// row-fetch ahead of the user's scroll.
 var FETCH_THRESHOLD = 100;
 
 // rowCache eviction. Holding ~20k rows in memory comfortably covers any
@@ -28,6 +39,29 @@ var FETCH_THRESHOLD = 100;
 // trim back to the threshold, keeping the rows nearest the visible window.
 var ROW_CACHE_LIMIT = 20000;
 var ROW_CACHE_TARGET = 15000;
+
+// Column width bounds, in pixels. MIN/MAX bound auto-sizing; DEFAULT is
+// the fallback when no width can be inferred; MAX_COL_WIDTH_CHAR caps
+// widths derived from the col_max_chars hint so a 1000-char column can't
+// blow out the grid.
+var MIN_COL_WIDTH = 50;
+var MAX_COL_WIDTH = 300;
+var MAX_COL_WIDTH_CHAR = 500;
+var DEFAULT_COL_WIDTH = 120;
+
+// Reference string for the canvas-based "average character width" probe.
+// A mix of digits, upper- and lowercase letters, and common punctuation
+// produces a stable per-font heuristic that the col_max_chars-to-pixel
+// conversion uses.
+var AVG_CHAR_REF_STRING =
+   "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz .,-_";
+
+// Persisted UI state version + localStorage key prefix. Bump
+// STATE_VERSION when the stored state shape changes incompatibly so old
+// payloads are dropped on next read instead of being applied with
+// mismatched indices.
+var STATE_VERSION = 1;
+var STATE_KEY_PREFIX = "rstudio.dataViewer:";
 
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
 var TIMING = {
@@ -129,19 +163,58 @@ var postInitActions = {};
 // Sidebar state
 var sidebarVisible = true;
 
+// In-flight column-summary fetches; the shared sidebar spinner only
+// hides when this drops back to zero so partial completion doesn't yank
+// it out from under still-pending fetches.
+var pendingSummaryFetches = 0;
+
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
 var pinnedColumns = new Set();
+
+// Pinned-column layout cache. cachedPinnedOffsets[colIdx] -> px offset
+// from the viewport's left edge; the more elaborate pinnedOffsetsCache
+// also tracks total pinned width. Both are invalidated by mutations
+// affecting widths or pinning (invalidatePinnedOffsets()).
+var cachedPinnedOffsets = {};
+var pinnedOffsetsCache = null;
+
+// Current column display order (pinned first, then unpinned), recomputed
+// by rebuildHeaders.
+var columnOrder = [];
+
+// Per-column auto-sized widths in pixels, indexed by column position.
+// Populated by autoSizeColumns; user-driven resizes go to manualWidths
+// (in the Column resize state group above).
+var measuredWidths = [];
+
+// Canvas-based text measurer. Lazily initialized so a non-DOM context
+// (tests) doesn't pay the canvas allocation up front.
+var measureCanvas = null;
+var measureCtx = null;
+
+// Cached "1 character width" derived from AVG_CHAR_REF_STRING. Invalid
+// until a measureTextWidth call has populated it; reset to 0 to force
+// a re-measure (e.g. after a font change).
+var avgCharWidthCache = 0;
 
 // Set when initial autoSize ran with a hidden viewport (offsetHeight === 0);
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
-// Module-scoped scroll/resize listeners so addEventListener is idempotent
-// across bootstrap cycles -- if two bootstrap() calls overlap, the second's
-// destroyGrid would otherwise leak the first's anonymous handlers.
-// Defined later (after their dependencies) but declared here to make the
-// scope explicit.
+// Custom scrollbar handles (vertical/horizontal grid + sidebar). Null
+// before createCustomScrollbars and again after destroyCustomScrollbars.
+var gridScrollbarV_ = null;
+var gridScrollbarH_ = null;
+var sidebarScrollbar_ = null;
+
+// requestAnimationFrame tokens used to coalesce scroll/scrollbar updates
+// to once per frame. Non-zero means a frame is already scheduled.
 var pendingScrollbarRaf = 0;
+var pendingScrollRaf = 0;
+
+// Latched so a localStorage write failure is reported once per session
+// rather than spamming the console on every state-change debounce tick.
+var persistWarned = false;
 
 // ==========================================================================
 // Utilities
@@ -232,7 +305,11 @@ var buildFormData = function(params) {
 };
 
 // Shared POST to ../grid_data, returns a Promise resolving to parsed JSON.
-// On non-2xx, throws an Error whose message is the response body.
+// On non-2xx, throws an Error whose message is the server-formatted error
+// (when the body is a JSON {error: ...} payload), or a clean status-code
+// message otherwise (so a proxy 502 HTML page or gateway timeout doesn't
+// render raw markup into the error chrome). The HTTP status is also
+// attached as `err.status` for callers that want to branch on it.
 var gridDataFetch = function(body, signal) {
    var init = {
       method: "POST",
@@ -241,7 +318,22 @@ var gridDataFetch = function(body, signal) {
    };
    if (signal) init.signal = signal;
    return fetch("../grid_data", init).then(function(response) {
-      if (!response.ok) return response.text().then(function(t) { throw new Error(t); });
+      if (!response.ok) {
+         return response.text().then(function(t) {
+            var msg;
+            try {
+               var parsed = JSON.parse(t);
+               if (parsed && parsed.error) msg = parsed.error;
+            } catch (e) { /* not JSON */ }
+            if (!msg) {
+               msg = "Server returned " + response.status +
+                     (response.statusText ? " " + response.statusText : "");
+            }
+            var err = new Error(msg);
+            err.status = response.status;
+            throw err;
+         });
+      }
       return response.json();
    });
 };
@@ -261,8 +353,8 @@ var fetchColumnSummary = function(columnIndex, callback) {
          }
          console.warn("fetchColumnSummary failed:", err);
          // Render an error state instead of staying on a "Loading..." spinner
-         // forever.
-         if (callback) callback({ error: "Failed to load summary" });
+         // forever. Pass through the server-formatted message when available.
+         if (callback) callback({ error: (err && err.message) || "Failed to load summary." });
       });
 };
 
@@ -276,13 +368,7 @@ var fetchColumns = function(callback) {
          callback(result);
       })
       .catch(function(err) {
-         try {
-            var parsed = JSON.parse(err.message);
-            if (parsed.error) showError(parsed.error);
-            else showError(err.message);
-         } catch(e) {
-            showError(err.message || "The object could not be displayed.");
-         }
+         showError(err.message || "The object could not be displayed.");
       });
 };
 
@@ -342,16 +428,11 @@ var fetchRows = function(start, length, callback) {
       .catch(function(err) {
          pendingFetches.delete(key);
          if (err.name === "AbortError") return;
-         // Surface every other failure (network errors, 500s with HTML
-         // bodies, CORS rejections, JSON-shaped {error: ...} payloads).
-         // Silent failures here leave the table frozen on "Loading" with
-         // no signal to the user.
-         try {
-            var parsed = JSON.parse(err.message);
-            showError(parsed.error || err.message);
-         } catch(e) {
-            showError(err.message || "Failed to load data.");
-         }
+         // Surface every other failure (network errors, 500s, CORS
+         // rejections, JSON-shaped {error: ...} payloads). Silent failures
+         // here leave the table frozen on "Loading" with no signal to the
+         // user. gridDataFetch normalizes err.message to a clean string.
+         showError(err.message || "Failed to load data.");
       });
 };
 
@@ -479,9 +560,6 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    }
 };
 
-// Cached pinned offsets -- recomputed in applyPinnedColumns and renderVisibleRows
-var cachedPinnedOffsets = {};
-
 var createCell = function(data, colIdx, rowData, clazz) {
    var td = document.createElement("td");
 
@@ -520,14 +598,6 @@ var getColClass = function(col) {
    if (col.col_type === "list") return "listCell";
    return "textCell";
 };
-
-var MIN_COL_WIDTH = 50;
-var MAX_COL_WIDTH = 300;
-var MAX_COL_WIDTH_CHAR = 500;
-var DEFAULT_COL_WIDTH = 120;
-
-// Measured column widths after auto-sizing (indexed by column position)
-var measuredWidths = [];
 
 var createHeader = function(idx, col) {
    var th = document.createElement("th");
@@ -665,9 +735,6 @@ var getColumnOrder = function() {
    return pinned.concat(unpinned);
 };
 
-// Cached column order -- recomputed when pinning changes
-var columnOrder = [];
-
 var isColumnPinned = function(colIdx) {
    return (colIdx === 0 && rowNumbers) || pinnedColumns.has(colIdx);
 };
@@ -681,6 +748,11 @@ var togglePinColumn = function(colIdx) {
    invalidatePinnedOffsets();
    rebuildHeaders();
    renderVisibleRows(true);
+   // Pinning changes the horizontal pinned-overscroll padding (see
+   // applyPinnedColumns), which shifts the scrollable content width;
+   // refresh the custom scrollbars so the thumb size matches before the
+   // user scrolls.
+   updateCustomScrollbars();
    saveState();
 };
 
@@ -721,12 +793,11 @@ var rebuildHeaders = function() {
 // Compute the cumulative left offset for each pinned column based on render order.
 // Returns { offsets: { colIdx: leftPx, ... }, totalWidth: number }.
 //
-// Result is cached. Each entry costs an offsetWidth read which forces layout,
-// and this function is called from renderVisibleRows on every scroll. Callers
-// that change column widths or pinning must invalidate via
+// Result is cached in pinnedOffsetsCache (declared with the rest of the
+// state). Each entry costs an offsetWidth read which forces layout, and
+// this function is called from renderVisibleRows on every scroll.
+// Callers that change column widths or pinning must invalidate via
 // invalidatePinnedOffsets().
-var pinnedOffsetsCache = null;
-
 var invalidatePinnedOffsets = function() {
    pinnedOffsetsCache = null;
 };
@@ -796,8 +867,6 @@ var applyPinnedColumns = function() {
 // Measure the natural text width of a string using a 2d canvas. Avoids the
 // layout flush that an offsetWidth read on a DOM element would force, which
 // matters when measuring 100+ rows x N columns at startup.
-var measureCanvas = null;
-var measureCtx = null;
 var measureTextWidth = function(text, bold) {
    if (!measureCtx) {
       measureCanvas = document.createElement("canvas");
@@ -808,12 +877,10 @@ var measureTextWidth = function(text, bold) {
    return Math.ceil(measureCtx.measureText(text).width);
 };
 
-// Average character width, derived from a representative reference string at
-// the same font/size as the data cells. Used to translate the server-provided
-// col_max_chars hint into a pixel width without measuring every cell.
-var AVG_CHAR_REF_STRING =
-   "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz .,-_";
-var avgCharWidthCache = 0;
+// Average character width, derived from AVG_CHAR_REF_STRING measured at
+// the same font/size as the data cells. Used to translate the server-
+// provided col_max_chars hint into a pixel width without measuring every
+// cell.
 var avgCharWidth = function() {
    if (!avgCharWidthCache) {
       avgCharWidthCache =
@@ -1048,14 +1115,20 @@ var createFilterUI = function(idx, col) {
 
    var host = document.createElement("div");
    var val = null, ui = null;
-   host.className = "colFilter unfiltered";
+   // Use classList rather than `className =` here and below so we don't
+   // clobber the marker class that setHeaderUIVisible adds to the host
+   // -- otherwise toggling filter visibility off after a filter has been
+   // applied leaves stale UI in the DOM (the querySelectorAll for the
+   // marker can no longer find it).
+   host.classList.add("colFilter", "unfiltered");
 
    var setUnfiltered = function() {
       if (ui !== null) {
          if (ui.parentNode === host) host.replaceChild(val, ui);
          ui = null;
       }
-      host.className = "colFilter unfiltered";
+      host.classList.remove("filtered");
+      host.classList.add("unfiltered");
       clear.style.display = "none";
    };
 
@@ -1092,7 +1165,8 @@ var createFilterUI = function(idx, col) {
       if (ui) {
          ui.classList.add("filterValue");
          host.replaceChild(ui, val);
-         host.className = "colFilter filtered";
+         host.classList.remove("unfiltered");
+         host.classList.add("filtered");
          clear.style.display = "block";
          ui.dispatchEvent(new MouseEvent("click", { bubbles: true }));
          evt.preventDefault();
@@ -1123,6 +1197,25 @@ var applyFilters = function() {
 
 var createNumericFilterUI = function(idx, col, onDismiss) {
    var ele = document.createElement("div");
+
+   // Render the active numeric filter into the header label: "[15, 30]"
+   // for a range, "[15]" for a single value, "[...]" while the popup is
+   // open with no value yet. Keeps the user oriented on what's filtered
+   // without having to reopen the popup.
+   var renderActiveFilter = function() {
+      var raw = parseSearchString(getColumnSearch(idx));
+      if (raw.length === 0) {
+         ele.textContent = "[...]";
+         return;
+      }
+      var sep = raw.indexOf("_");
+      if (sep > 0) {
+         ele.textContent = "[" + raw.substring(0, sep) +
+                           ", " + raw.substring(sep + 1) + "]";
+      } else {
+         ele.textContent = "[" + raw + "]";
+      }
+   };
 
    invokeFilterPopup(ele, function(popup) {
       popup.classList.add("numericFilterPopup");
@@ -1173,6 +1266,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
          if (searchText.length > 0) searchText = "numeric|" + searchText;
          setColumnSearch(idx, searchText);
          applyFilters();
+         renderActiveFilter();
       }, TIMING.filterDebounce);
 
       numVal.addEventListener("change", function() { updateView(numVal.value); });
@@ -1209,7 +1303,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       popup.appendChild(numVal);
    }, onDismiss);
 
-   ele.textContent = "[...]";
+   renderActiveFilter();
    return ele;
 };
 
@@ -1688,9 +1782,9 @@ var renderVisibleRows = function(forceRebuild) {
 // which is expensive during fast scrolling.
 var debouncedInfoBar = debounce(updateInfoBar, TIMING.infoBarDebounce);
 
-// RAF-throttle scroll: render at most once per animation frame so virtual
-// scroll updates happen during the scroll, not 16ms after it stops.
-var pendingScrollRaf = 0;
+// RAF-throttle scroll (via pendingScrollRaf): render at most once per
+// animation frame so virtual scroll updates happen during the scroll,
+// not 16ms after it stops.
 var onScroll = function() {
    if (pendingScrollRaf) return;
    pendingScrollRaf = requestAnimationFrame(function() {
@@ -1924,11 +2018,6 @@ var renderColumnStats = function(container, data, colType) {
    container.appendChild(table);
 };
 
-// Tracks how many sidebar column-summary fetches are in flight so the shared
-// spinner only hides when all of them have completed (rather than the first
-// one back hiding the spinner while others are still pending).
-var pendingSummaryFetches = 0;
-
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -2054,10 +2143,14 @@ var initSidebar = function() {
                      // Aborted requests pass null -- leave loaded=false so a
                      // re-expand can retry.
                      if (data === null) return;
-                     loaded = true;
+                     // Errors render the message but also leave loaded=false
+                     // so collapsing and re-expanding the entry kicks off a
+                     // fresh fetch (instead of pinning the user on a stale
+                     // error until full reload).
                      renderColumnStats(statsEl, data, colType);
                      statsEl.style.display = "";
                      if (sidebarScrollbar_) sidebarScrollbar_.update();
+                     if (!data.error) loaded = true;
                   });
                } else {
                   statsEl.style.display = "";
@@ -2106,6 +2199,7 @@ var toggleSidebar = function() {
       updateCustomScrollbars();
    }, TIMING.sidebarTransition);
    saveState();
+   if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
 };
 
 var scrollToColumn = function(colIdx) {
@@ -2324,12 +2418,6 @@ var attachCustomScrollbar = function(viewport, host, axis, options) {
    };
 };
 
-// Grid scrollbars (vertical + horizontal); sidebar gets its own vertical bar
-// when initSidebar runs.
-var gridScrollbarV_ = null;
-var gridScrollbarH_ = null;
-var sidebarScrollbar_ = null;
-
 var anyScrollbarDragging = function() {
    return (gridScrollbarV_ && gridScrollbarV_.isDragging()) ||
           (gridScrollbarH_ && gridScrollbarH_.isDragging()) ||
@@ -2436,7 +2524,10 @@ var initGrid = function(resCols, data) {
       return;
    }
 
-   // Parse numeric col_breaks from strings (legacy JSON serializer issue)
+   // R serializes col_breaks via as.character() to preserve full numeric
+   // precision over the JSON wire (avoiding the precision loss that an R
+   // double -> JSON-number round-trip can introduce). Convert back to
+   // numbers here so the rest of the client can do arithmetic on them.
    for (var i = 0; i < resCols.length; i++) {
       if (resCols[i].col_breaks) {
          for (var j = 0; j < resCols[i].col_breaks.length; j++) {
@@ -2528,6 +2619,11 @@ var initGrid = function(resCols, data) {
 
    // Update column frame callback
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
+
+   // Sync the host's latched-state mirror with sidebarVisible after URL
+   // params + saved state have both resolved -- the callback may have
+   // been registered before bootstrap ran with a different default.
+   if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
 
    // Run post-init actions
    for (var actionName in postInitActions) {
@@ -2630,9 +2726,9 @@ var resetGridState = function() {
 // widths, sort order, filter values) is saved to localStorage keyed by
 // env+obj. State is loaded on bootstrap and applied before the first row
 // fetch so it shows up in the initial render. Saves are debounced.
-
-var STATE_VERSION = 1;
-var STATE_KEY_PREFIX = "rstudio.dataViewer:";
+//
+// STATE_VERSION / STATE_KEY_PREFIX are declared with the rest of the
+// module-scoped constants up top.
 
 var stateKey = function() {
    var loc = parseLocationUrl();
@@ -2645,11 +2741,26 @@ var stateKey = function() {
       encodeURIComponent(loc.obj);
 };
 
+// Fingerprint of the current column structure -- a join of names lets
+// applySavedState ignore state saved against an incompatible object that
+// was reassigned to the same env+obj name (e.g. df <- mtcars; df <- iris).
+// Width/sort/filter indices and per-column filter values would otherwise
+// be applied silently to mismatched columns.
+var columnFingerprint = function() {
+   if (!cols) return "";
+   var names = [];
+   for (var i = 0; i < cols.length; i++) {
+      names.push(cols[i].col_name || "");
+   }
+   return names.join(" ");
+};
+
 var saveState = function() {
    var key = stateKey();
    if (!key) return;
    var state = {
       version: STATE_VERSION,
+      columns: columnFingerprint(),
       pinnedColumns: Array.from(pinnedColumns),
       sidebarVisible: sidebarVisible,
       manualWidths: manualWidths.slice(),
@@ -2659,7 +2770,14 @@ var saveState = function() {
    try {
       localStorage.setItem(key, JSON.stringify(state));
    } catch (e) {
-      // localStorage may be unavailable (private browsing) or full
+      // localStorage may be unavailable (private browsing), full, or
+      // blocked by a stricter site policy. Warn once per session so a
+      // confused user has something to grep for; silent failure here
+      // means pin/sort/filter state appears to silently revert on reload.
+      if (!persistWarned) {
+         persistWarned = true;
+         console.warn("Data viewer: failed to persist UI state to localStorage:", e);
+      }
    }
 };
 
@@ -2699,6 +2817,16 @@ var clearSavedState = function() {
 // before headers are built (so pinning order is correct).
 var applySavedState = function(state) {
    if (!state || !cols) return;
+   // Drop state saved against a different column structure: the
+   // pinned-column indices, manual widths, and filter values are all
+   // positional, so applying them to an unrelated frame would corrupt
+   // the user's view (e.g. typed filter strings landing on numeric
+   // columns) with no obvious recovery.
+   if (typeof state.columns === "string" &&
+       state.columns !== columnFingerprint()) {
+      clearSavedState();
+      return;
+   }
    var colCount = cols.length;
 
    if (Array.isArray(state.pinnedColumns)) {
@@ -2802,12 +2930,21 @@ var bootstrap = function(data) {
 // Filter/Header UI Visibility
 // ==========================================================================
 
-var setHeaderUIVisible = function(visible, initialize, hide) {
+// `markerClass` distinguishes the different injected UIs (filter vs.
+// column-definitions) so toggling one doesn't accidentally remove the
+// other; it also makes the show path idempotent -- a stray duplicate
+// setFilterUIVisible(true) clears any existing instances before adding,
+// instead of stacking copies on top of each other.
+//
+// postInitActions keys are also marker-scoped so a queued
+// setFilterUIVisible(true) doesn't get clobbered by a queued
+// setColumnDefinitionsUIVisible(true).
+var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
    var thead = document.getElementById("data_cols");
 
    if (thead === null || cols === null) {
-      postInitActions["setHeaderUIVisible"] = visible
-         ? function() { setHeaderUIVisible(true, initialize, hide); }
+      postInitActions["setHeaderUIVisible:" + markerClass] = visible
+         ? function() { setHeaderUIVisible(true, initialize, hide, markerClass); }
          : null;
       return false;
    }
@@ -2822,17 +2959,20 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
       var col = cols[colIdx];
 
+      // Always strip any existing instances of this marker first so
+      // visible=true is idempotent and visible=false fully cleans up
+      // (querySelector would have only handled one match).
+      var existing = th.querySelectorAll("." + markerClass);
+      for (var k = 0; k < existing.length; k++) {
+         th.removeChild(existing[k]);
+      }
+
       if (visible) {
          var el = initialize(th, col, colIdx);
          if (el) {
-            el.classList.add("header-injected-ui");
+            el.classList.add(markerClass);
             th.appendChild(el);
          }
-      } else {
-         // Remove only the injected UI, never the permanent .resizer or
-         // .headerCell. Marker class is set when the UI is appended above.
-         var injected = th.querySelector(".header-injected-ui");
-         if (injected) th.removeChild(injected);
       }
    }
 
@@ -2880,7 +3020,8 @@ window.setFilterUIVisible = function(visible) {
             fetchRows(0, FETCH_SIZE);
             saveState();
          }
-      }
+      },
+      "filter-injected-ui"
    );
 };
 
@@ -2896,7 +3037,8 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
       function(thead) {
          var wrappers = thead.querySelectorAll(".columnTypeWrapper");
          wrappers.forEach(function(w) { w.remove(); });
-      }
+      },
+      "column-types-injected-ui"
    );
 };
 
@@ -2986,6 +3128,13 @@ window.setOption = function(option, value) {
       case "columnFrameCallback":
          window.columnFrameCallback = value;
          break;
+      case "sidebarStateCallback":
+         window.sidebarStateCallback = value;
+         // Sync the host immediately with the current state, since the
+         // callback typically registers after bootstrap has already
+         // resolved sidebarVisible from URL params + saved state.
+         value(sidebarVisible);
+         break;
    }
 };
 
@@ -3024,8 +3173,15 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    if (bootstrapping) return;
    if (newOffset >= totalCols) return;
    if (newOffset >= 0) columnOffset = newOffset;
+   // Always clamp maxDisplayColumns to the remaining column count: when
+   // newMax is supplied we honor it (capped); otherwise we still need to
+   // shrink the existing window so a bumped offset can't request a slice
+   // running off the end.
+   var cap = totalCols - columnOffset;
    if (newMax > 0) {
-      maxDisplayColumns = Math.min(totalCols - columnOffset, newMax);
+      maxDisplayColumns = Math.min(cap, newMax);
+   } else {
+      maxDisplayColumns = Math.min(cap, maxDisplayColumns);
    }
    bootstrap();
 };

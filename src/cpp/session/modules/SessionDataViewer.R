@@ -289,6 +289,10 @@
       if (length(x[[idx]]) > 0)
       {
          val <- x[[idx]][[1]]
+         # col_type_r feeds the sidebar's typeLabel map in DataViewer.js;
+         # changing this from typeof(val) to class(val)[[1]] is a wire-
+         # protocol-visible behavior change (e.g. Date columns now report
+         # "Date" instead of "double").
          col_type_r <- class(val)[[1]]
          if (is.factor(val))
          {
@@ -433,74 +437,83 @@
 
    col <- x[[columnIndex]]
    n <- length(col)
-   n_na <- sum(is.na(col))
+
+   # Each statistic is wrapped individually: exotic numerics that pass
+   # is.numeric (difftime, S4 numerics, units::units, ...) and columns
+   # whose is.na returns a non-logical can throw on a single call. With
+   # error-surfacing in place at the C++ layer, a single throw would blank
+   # the entire panel rather than degrading gracefully.
+   tryStat <- function(expr) {
+      tryCatch(expr, error = function(e) NULL)
+   }
+
+   nonNa <- tryStat(col[!is.na(col)])
 
    result <- list(
       n        = .rs.scalar(n),
-      n_na     = .rs.scalar(n_na),
-      n_unique = .rs.scalar(length(unique(col[!is.na(col)])))
+      n_na     = .rs.scalar(.rs.nullCoalesce(tryStat(sum(is.na(col))), NA_integer_)),
+      n_unique = .rs.scalar(.rs.nullCoalesce(tryStat(length(unique(nonNa))), NA_integer_))
    )
+
+   addStat <- function(name, expr) {
+      val <- tryStat(expr)
+      if (!is.null(val)) result[[name]] <<- .rs.scalar(val)
+   }
 
    if (is.numeric(col) && !is.factor(col))
    {
-      vals <- col[!is.na(col)]
-      if (length(vals) > 0)
+      if (!is.null(nonNa) && length(nonNa) > 0)
       {
-         result$min    <- .rs.scalar(min(vals))
-         result$max    <- .rs.scalar(max(vals))
-         result$mean   <- .rs.scalar(mean(vals))
-         result$median <- .rs.scalar(median(vals))
-         result$sd     <- .rs.scalar(sd(vals))
+         addStat("min",    min(nonNa))
+         addStat("max",    max(nonNa))
+         addStat("mean",   mean(nonNa))
+         addStat("median", median(nonNa))
+         addStat("sd",     sd(nonNa))
       }
    }
    else if (is.character(col))
    {
-      vals <- col[!is.na(col)]
-      if (length(vals) > 0)
+      if (!is.null(nonNa) && length(nonNa) > 0)
       {
-         lens <- nchar(vals)
-         result$min_length <- .rs.scalar(min(lens))
-         result$max_length <- .rs.scalar(max(lens))
-         result$n_empty    <- .rs.scalar(sum(lens == 0))
+         lens <- tryStat(nchar(nonNa))
+         if (!is.null(lens))
+         {
+            addStat("min_length", min(lens))
+            addStat("max_length", max(lens))
+            addStat("n_empty",    sum(lens == 0))
+         }
       }
    }
    else if (is.factor(col))
    {
-      # Display levels in their R-encoded order. This preserves the
-      # structure of ordered factors as well as any deliberate ordering set
-      # by the user (e.g. via `factor(x, levels = ...)`), which the analyst
-      # is more likely to want to see than a frequency ranking.
-      #
-      # Trade-off: when the level count exceeds the cap, we truncate to the
-      # first N by encoding order, not the N most frequent. For very
-      # high-cardinality factors (zip codes, gene IDs), the visible set may
-      # therefore not include the most prevalent values. If that becomes a
-      # real complaint, options to consider are raising `maxLevels`, sorting
-      # by count for the truncation case only, or pushing the truncation to
-      # the client and sending all levels.
+      # Display levels in their R-encoded order to preserve ordered factors
+      # and any user-set order. When the level count exceeds the cap we
+      # truncate to the first N by encoding order, not the N most frequent.
       maxLevels <- 50L
-      tbl <- table(col, useNA = "no")
-      lvls <- levels(col)
-      if (length(lvls) > maxLevels)
+      tbl <- tryStat(table(col, useNA = "no"))
+      lvls <- tryStat(levels(col))
+      if (!is.null(tbl) && !is.null(lvls))
       {
-         lvls <- lvls[seq_len(maxLevels)]
-         result$truncated <- .rs.scalar(TRUE)
+         if (length(lvls) > maxLevels)
+         {
+            lvls <- lvls[seq_len(maxLevels)]
+            result$truncated <- .rs.scalar(TRUE)
+         }
+         result$top_levels  <- lvls
+         result$top_counts  <- as.integer(tbl[lvls])
       }
-      result$top_levels  <- lvls
-      result$top_counts  <- as.integer(tbl[lvls])
    }
    else if (is.logical(col))
    {
-      result$n_true  <- .rs.scalar(sum(col == TRUE, na.rm = TRUE))
-      result$n_false <- .rs.scalar(sum(col == FALSE, na.rm = TRUE))
+      addStat("n_true",  sum(col == TRUE, na.rm = TRUE))
+      addStat("n_false", sum(col == FALSE, na.rm = TRUE))
    }
    else if (inherits(col, "Date") || inherits(col, "POSIXct"))
    {
-      vals <- col[!is.na(col)]
-      if (length(vals) > 0)
+      if (!is.null(nonNa) && length(nonNa) > 0)
       {
-         result$min <- .rs.scalar(as.character(min(vals)))
-         result$max <- .rs.scalar(as.character(max(vals)))
+         addStat("min", as.character(min(nonNa)))
+         addStat("max", as.character(max(nonNa)))
       }
    }
 

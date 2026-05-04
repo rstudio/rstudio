@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -46,15 +47,15 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -93,30 +94,39 @@ public class DataTable
                     }
                  }
               });
-      // Use fill='currentColor' so the icon picks up the surrounding text
-      // color (and thus adapts to the active IDE theme).
-      sidebarButton_ = new HTML(
-         "<svg width='14' height='12' viewBox='0 0 14 12' style='vertical-align:middle'>" +
-         "<rect x='1' y='4' width='3' height='8' rx='0.5' fill='currentColor'/>" +
-         "<rect x='5.5' y='0' width='3' height='12' rx='0.5' fill='currentColor'/>" +
-         "<rect x='10' y='6' width='3' height='6' rx='0.5' fill='currentColor'/>" +
-         "</svg>" +
-         " <span style='font-size:11px'></span>");
-      // Set the i18n text via DOM API rather than HTML concatenation so a
-      // localized value containing "<" or "&" can't be interpreted as markup.
-      Element sidebarLabelEl = Element.as(sidebarButton_.getElement().getLastChild());
-      sidebarLabelEl.setInnerText(constants_.sidebarButtonText());
-      sidebarButton_.getElement().getStyle().setCursor(Style.Cursor.POINTER);
-      sidebarButton_.getElement().getStyle().setProperty("padding", "2px 5px");
-      sidebarButton_.getElement().getStyle().setProperty("whiteSpace", "nowrap");
-      sidebarButton_.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            toggleSidebar(getWindow());
-         }
-      });
-      toolbar.addLeftWidget(sidebarButton_);
-      sidebarButton_.setVisible(!isPreview);
+      sidebarButton_ = new LatchingToolbarButton(
+              constants_.sidebarButtonText(),
+              ToolbarButton.NoTitle,
+              false, /* textIndicatesState */
+              ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
+              new ImageResource2x(DataViewerResources.INSTANCE.summaryIcon2x()),
+              new ClickHandler() {
+                 public void onClick(ClickEvent event)
+                 {
+                    // JS owns sidebarVisible; the latched state is updated
+                    // when JS fires sidebarStateCallback back at us.
+                    toggleSidebar(getWindow());
+                 }
+              });
+      // Replace the rendered PNG with the inline bar-chart SVG: SVG
+      // picks up the active IDE theme via fill='currentColor' and stays
+      // sharp at any device pixel ratio. Preserve the original img
+      // element's class so layout (margins, sizing) is unchanged.
+      NodeList<Element> sidebarImgs =
+            sidebarButton_.getElement().getElementsByTagName("img");
+      if (sidebarImgs.getLength() > 0)
+      {
+         Element img = sidebarImgs.getItem(0);
+         Element span = Document.get().createSpanElement();
+         span.setClassName(img.getClassName());
+         span.setInnerHTML(
+            "<svg width='14' height='10' viewBox='0 0 14 12' style='vertical-align:middle;position:relative;top:-2px'>" +
+            "<rect x='0.5' y='4' width='4' height='8' rx='0.5' fill='currentColor'/>" +
+            "<rect x='5'   y='0' width='4' height='12' rx='0.5' fill='currentColor'/>" +
+            "<rect x='9.5' y='6' width='4' height='6' rx='0.5' fill='currentColor'/>" +
+            "</svg>");
+         img.getParentElement().replaceChild(span, img);
+      }
 
       toolbar.addLeftWidget(filterButton_);
       filterButton_.setVisible(!isPreview);
@@ -142,9 +152,6 @@ public class DataTable
             applySearch(getWindow(), event.getValue());
          }
       });
-
-      toolbar.addRightWidget(searchWidget_);
-      searchWidget_.setVisible(!isPreview);
 
       // Refresh + options dropdown -- mirrors the pattern used in
       // EnvironmentPane (refresh button followed by a NoText
@@ -211,12 +218,28 @@ public class DataTable
             optionsMenu_,
             false);
 
+      // Right-side layout:
+      //    [search] | [summary] | [refresh] [options]
+      // Search widget anchors the right edge. The summary toggle sits
+      // in the middle on its own; the options dropdown trails the
+      // refresh button so we don't have to deal with the visual
+      // mismatch between a latched LatchingToolbarButton and an
+      // adjacent ToolbarMenuButton.
+      toolbar.addRightWidget(searchWidget_);
+      searchWidget_.setVisible(!isPreview);
+
+      Widget summarySeparator = toolbar.addRightSeparator();
+      toolbar.addRightWidget(sidebarButton_);
+      sidebarButton_.setVisible(!isPreview);
+
       Widget refreshSeparator = toolbar.addRightSeparator();
       toolbar.addRightWidget(refreshButton_);
-      toolbar.addRightWidget(optionsMenuButton_);
-      refreshSeparator.setVisible(!isPreview);
       refreshButton_.setVisible(!isPreview);
+      toolbar.addRightWidget(optionsMenuButton_);
       optionsMenuButton_.setVisible(!isPreview);
+
+      summarySeparator.setVisible(!isPreview);
+      refreshSeparator.setVisible(!isPreview);
 
       if (isPreview)
       {
@@ -382,6 +405,20 @@ public class DataTable
       setColumnFrameCallback(getWindow(), getDataTableColumnCallback());
    }
 
+   public void setSidebarStateCallback()
+   {
+      // JS owns the canonical sidebarVisible state (URL params + saved
+      // localStorage state can both influence it). On registration the JS
+      // side fires the callback once with the current value, so the latched
+      // state syncs without us having to track it locally.
+      setSidebarStateCallback(getWindow(), new CommandWithArg<Boolean>() {
+         public void execute(Boolean visible) {
+            if (sidebarButton_ != null)
+               sidebarButton_.setLatched(visible != null && visible);
+         }
+      });
+   }
+
    public void refreshData()
    {
       filtered_= false;
@@ -535,9 +572,17 @@ public class DataTable
             columnFrameCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(offset, max);
          }));
    }-*/;
+
+   private static final native void setSidebarStateCallback(WindowEx frame, CommandWithArg<Boolean> sidebarStateCallback) /*-{
+      frame.setOption(
+         "sidebarStateCallback",
+         $entry(function(visible) {
+            sidebarStateCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(@java.lang.Boolean::valueOf(Z)(!!visible));
+         }));
+   }-*/;
    private Host host_;
    private LatchingToolbarButton filterButton_;
-   private HTML sidebarButton_;
+   private LatchingToolbarButton sidebarButton_;
    private ToolbarButton refreshButton_;
    private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;

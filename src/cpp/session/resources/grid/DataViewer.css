@@ -630,7 +630,10 @@ th.columnClickable div {
 
 #sidebarPanel.expanded {
    width: var(--sidebar-width);
-   border-right: 1px solid var(--grid-border);
+   /* Slightly darker than the standard --grid-border so the divider
+      between the data and the summary panel reads as a panel boundary,
+      not just an interior cell border. */
+   border-left: 1px solid color-mix(in srgb, var(--grid-border), var(--grid-fg) 30%);
 }
 
 #sidebarToggle {
