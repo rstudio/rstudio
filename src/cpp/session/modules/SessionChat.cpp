@@ -2938,11 +2938,22 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
 
    // Optional 1-based line number; default of -1 disables line positioning
    int line = -1;
-   json::readObject(params, "line", line);
+   auto lineIt = params.find("line");
+   if (lineIt != params.end())
+   {
+      const json::Value& lineValue = (*lineIt).getValue();
+      if (!lineValue.isInt() || lineValue.getInt() < 1)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: line must be a positive integer");
+         return;
+      }
+      line = lineValue.getInt();
+   }
 
    // Open the file in the editor (editFile expects a 1-based line number, or
    // -1 to skip line positioning)
-   module_context::editFile(resolvedPath, line >= 1 ? line : -1);
+   module_context::editFile(resolvedPath, line);
 
    // Return success
    json::Object result;
