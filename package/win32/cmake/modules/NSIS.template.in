@@ -53,8 +53,12 @@
   ; RSTUDIO CHANGE - Add version info
   ;
   ;Version info
-  VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR_NUMERIC@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
+  ; Each component of VIProductVersion must fit in 16 bits (NSIS limit, max
+  ; 65535); concatenating MAJOR+MINOR overflows and gets truncated, leaving
+  ; setup.exe's File Version showing an unrelated value (#17128).
+  VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
+  VIAddVersionKey FileVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductName "RStudio"
   VIAddVersionKey CompanyName "Posit Software, PBC"
   VIAddVersionKey FileDescription "RStudio"
