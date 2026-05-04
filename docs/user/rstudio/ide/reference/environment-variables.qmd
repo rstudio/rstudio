@@ -5,7 +5,7 @@ date-meta: 2026-05-04
 
 Certain aspects of RStudio can be controlled by setting environment variables before starting RStudio. These variables are read at startup, so they must be set in the environment that launches RStudio (for example, in your shell profile, a launcher script, or your operating system's environment settings).
 
-| Environment Variable | Value | Supported In | Impact |
+| Environment Variable | Value | Platform | Impact |
 |---|---|---|---|
 | `RSTUDIO_DISABLE_POSIT_ASSISTANT` | Any non-empty value (e.g. `1`) | Desktop, Server | Disables and hides the [Posit Assistant](../guide/tools/posit-ai.qmd) features. The Posit Assistant toolbar button and pane are not displayed, and Posit Assistant cannot be installed or used. |
 | `RSTUDIO_DISABLE_WHATS_NEW` | `1` | Desktop | Suppresses the "What's New" dialog that is otherwise shown after RStudio is updated to a new version. |
