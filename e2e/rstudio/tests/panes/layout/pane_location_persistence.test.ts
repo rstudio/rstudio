@@ -90,9 +90,7 @@ async function moveTab(page: Page, tabLabel: string, fromContainer: string, toCo
  * to the sidebar in a single session, then restarts and checks both
  * persisted.
  */
-base.describe('Pane location persistence - #17177', () => {
-  base.skip(process.env.PW_RSTUDIO_MODE === 'server', 'Uses Desktop restart — Server session restart TBD');
-
+base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, () => {
   let session: DesktopSession;
 
   base('Pane assignments persist after restart', async () => {
