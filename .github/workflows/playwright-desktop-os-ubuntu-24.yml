@@ -19,6 +19,10 @@ on:
         description: "Optional Playwright --grep pattern to filter tests."
         type: string
         default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
   workflow_call:
     inputs:
       rstudio_installer_url:
@@ -31,6 +35,9 @@ on:
         type: string
         default: "desktop"
       grep:
+        type: string
+        default: ""
+      test_selector:
         type: string
         default: ""
 
@@ -149,14 +156,17 @@ jobs:
           PW_RSTUDIO_MODE: desktop
           PW_PROJECT_NAME: ${{ inputs.project }}
           PW_GREP: ${{ inputs.grep }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
         run: |
+          ARGS=(--project "$PW_PROJECT_NAME")
           if [ -n "$PW_GREP" ]; then
-            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "$PW_PROJECT_NAME" --grep "$PW_GREP"
-          else
-            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "$PW_PROJECT_NAME"
+            ARGS+=(--grep "$PW_GREP")
           fi
+          if [ -n "$PW_TEST_SELECTOR" ]; then
+            ARGS+=($PW_TEST_SELECTOR)
+          fi
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            npx playwright test "${ARGS[@]}"
 
       - name: Upload Playwright report
         if: always()
