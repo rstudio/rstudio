@@ -1,4 +1,4 @@
-name: "Test: Playwright (Desktop, Ubuntu 24, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, Ubuntu 24, Open Source)"
 
 on:
   workflow_dispatch:

@@ -3,7 +3,7 @@ Type: Package
 Title: R Package Dependencies for RStudio Playwright E2E Tests
 Version: 0.0.1
 Description: Lists the R packages that RStudio Playwright tests rely on.
-    Consumed by the workflow at .github/workflows/playwright-desktop-os-ubuntu-24.yml
+    Consumed by the workflows at .github/workflows/test-e2e-rstudio-desktop-os-*.yml
     via pak::local_install_dev_deps(). Not a real R package -- only the Imports
     field is meaningful here.
 Imports:
