@@ -145,12 +145,9 @@ th:focus-visible {
    opacity: 1;
 }
 
-/* Virtual scroll spacer row -- specificity must beat tbody tr:nth-child/hover rules.
-   Diagonal stripes suggest pending/loading data. */
+/* Virtual scroll spacer row. Diagonal stripes suggest pending/loading data. */
 tbody tr.spacer-row td,
-tbody tr.spacer-row:nth-child(odd) td,
-tbody tr.spacer-row:hover td,
-tbody tr.spacer-row:nth-child(odd):hover td {
+tbody tr.spacer-row:hover td {
    padding: 0;
    border: none;
    background:
@@ -179,12 +176,14 @@ tbody tr:hover td:not(.first-child) {
    background-color: var(--grid-row-hover-bg);
 }
 
-/* Alternating row stripe */
-tbody tr:nth-child(odd) td:not(.first-child) {
+/* Alternating row stripe -- keyed off a class set by the renderer from the
+   data-row index, since the virtualized tbody only holds the visible window
+   plus spacer rows and DOM position would flip the pattern as we scroll. */
+tbody tr.odd-row td:not(.first-child) {
    background-color: var(--grid-row-stripe-bg);
 }
 
-tbody tr:nth-child(odd):hover td:not(.first-child) {
+tbody tr.odd-row:hover td:not(.first-child) {
    background-color: var(--grid-row-hover-bg);
 }
 

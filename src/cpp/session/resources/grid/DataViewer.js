@@ -1687,6 +1687,10 @@ var buildRow = function(r) {
    tr.setAttribute("role", "row");
    // aria-rowindex is 1-based and includes the header row.
    tr.setAttribute("aria-rowindex", String(r + 2));
+   // Zebra striping is driven by data-row parity, not DOM position. The tbody
+   // contains a leading spacer row plus only the virtual window of data rows,
+   // so :nth-child would flip the stripe pattern as the window slides.
+   if (r % 2 === 1) tr.classList.add("odd-row");
 
    for (var c = 0; c < columnOrder.length; c++) {
       var colIdx = columnOrder[c];
