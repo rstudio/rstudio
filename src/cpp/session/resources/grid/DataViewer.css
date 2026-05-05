@@ -131,20 +131,6 @@ th {
    user-select: none;
 }
 
-/* Mouse focus stays unstyled (mouse users get a hover affordance), but
-   keyboard focus is highlighted so AT users know where they are. */
-th:focus { outline: none; }
-th:focus-visible {
-   outline: 2px solid var(--grid-focus-border);
-   outline-offset: -2px;
-}
-.pin-icon:focus { outline: none; }
-.pin-icon:focus-visible {
-   outline: 2px solid var(--grid-focus-border);
-   outline-offset: 1px;
-   opacity: 1;
-}
-
 /* Virtual scroll spacer row -- specificity must beat tbody tr:nth-child/hover rules.
    Diagonal stripes suggest pending/loading data. */
 tbody tr.spacer-row td,
@@ -188,19 +174,22 @@ tbody tr:nth-child(odd):hover td:not(.first-child) {
    background-color: var(--grid-row-hover-bg);
 }
 
-/* Active cell highlight (keyboard nav + click). Outline draws outside
-   the cell box so it doesn't shift layout, and beats the row-hover
-   background by virtue of being a separate paint phase. Scoped to
-   :focus-within so the outline disappears when focus leaves the grid
-   (e.g. Shift+Tab to the toolbar) -- otherwise it would look like
-   keyboard focus is in two places. */
-#gridViewport:focus-within td.activeCell {
+/* Active cell / header highlight (keyboard nav + click). The grid is a
+   single tabstop on #gridViewport; one cell or header carries the
+   active-descendant outline at any time. Outline draws outside the box
+   so it doesn't shift layout, and beats the row-hover background by
+   virtue of being a separate paint phase. Scoped to :focus-within so
+   the outline disappears when focus leaves the grid (e.g. Shift+Tab
+   to the toolbar) -- otherwise it would look like keyboard focus is
+   in two places. */
+#gridViewport:focus-within td.activeCell,
+#gridViewport:focus-within th.activeHeader {
    outline: 2px solid var(--grid-focus-border);
    outline-offset: -2px;
 }
 
 /* Suppress the browser's default focus ring on the viewport itself --
-   the .activeCell outline is the focus indicator. */
+   the active-descendant outline above is the focus indicator. */
 #gridViewport:focus {
    outline: none;
 }

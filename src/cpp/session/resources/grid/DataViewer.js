@@ -176,6 +176,11 @@ var pendingSummaryFetches = 0;
 var activeRow = -1;
 var activeCol = -1;
 
+// Active column header (display index in columnOrder), or -1 when no
+// header is active. Mutually exclusive with the active cell: setting one
+// clears the other. Reachable from the body via ArrowUp at row 0.
+var activeHeaderCol = -1;
+
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
 var pinnedColumns = new Set();
 
@@ -625,6 +630,7 @@ var getColClass = function(col) {
 var createHeader = function(idx, col) {
    var th = document.createElement("th");
    th.className = "sorting";
+   th.id = "rsGridHeader_" + idx;
    th.setAttribute("data-col-idx", idx);
    th.setAttribute("scope", "col");
 
@@ -637,24 +643,26 @@ var createHeader = function(idx, col) {
 
    // Pin icon to the left of the label (not shown for rownames -- always pinned)
    if (!(idx === 0 && rowNumbers)) {
+      // The pin icon is a click affordance only -- it isn't a tabstop and
+      // is not announced as a separate button. Keyboard users pin/unpin
+      // by activating the column header (P key in header mode), which
+      // keeps the grid a single tabstop per the WAI-ARIA grid pattern.
       var pinIcon = document.createElement("span");
       pinIcon.className = "pin-icon";
       var pinned = pinnedColumns.has(idx);
       if (pinned) pinIcon.classList.add("pinned");
-      pinIcon.setAttribute("role", "button");
-      pinIcon.setAttribute("tabindex", "0");
-      pinIcon.setAttribute("aria-pressed", pinned ? "true" : "false");
-      pinIcon.setAttribute("aria-label",
-         (pinned ? "Unpin column " : "Pin column ") + col.col_name);
+      pinIcon.setAttribute("aria-hidden", "true");
       pinIcon.title = pinned ? "Unpin column" : "Pin column";
-      var activatePin = function(evt) {
+      pinIcon.addEventListener("click", function(evt) {
          evt.stopPropagation();
          evt.preventDefault();
          togglePinColumn(idx);
-      };
-      pinIcon.addEventListener("click", activatePin);
-      pinIcon.addEventListener("keydown", function(evt) {
-         if (evt.key === "Enter" || evt.key === " ") activatePin(evt);
+         // Focus the viewport and mark the column the user just pinned
+         // as the active header so subsequent keyboard nav routes to
+         // the grid and starts from this column.
+         var displayIdx = columnOrder.indexOf(idx);
+         if (displayIdx >= 0) setActiveHeader(displayIdx);
+         focusGridViewport();
       });
       interior.appendChild(pinIcon);
    }
@@ -694,11 +702,12 @@ var createHeader = function(idx, col) {
    resizer.setAttribute("data-col", idx);
    th.appendChild(resizer);
 
-   // Sort click + keyboard handlers. Sortable headers are reachable via
-   // tab and announced as buttons so AT users can sort with Enter/Space.
+   // Sort click handler. Headers are not individually focusable -- the
+   // grid is a single tabstop. Keyboard sort is handled by the grid-level
+   // keydown handler when the header is the active descendant
+   // (Enter/Space in header mode).
    if (ordering && col.col_type !== "rownames") {
       th.style.cursor = "pointer";
-      th.setAttribute("tabindex", "0");
       th.setAttribute("role", "columnheader");
       th.setAttribute("aria-sort",
          idx === sortColumn ? sortAriaValue(sortDirection) : "none");
@@ -707,13 +716,12 @@ var createHeader = function(idx, col) {
          if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
          if (didResize) { didResize = false; return; }
          handleSortClick(idx, th);
-      });
-      th.addEventListener("keydown", function(evt) {
-         if (evt.target !== th) return;
-         if (evt.key === "Enter" || evt.key === " ") {
-            evt.preventDefault();
-            handleSortClick(idx, th);
-         }
+         // Mark this column as the active header and focus the viewport
+         // so subsequent keyboard nav (arrow / Enter / P) operates from
+         // here without an extra trip back through the body.
+         var displayIdx = columnOrder.indexOf(idx);
+         if (displayIdx >= 0) setActiveHeader(displayIdx);
+         focusGridViewport();
       });
    }
 
@@ -812,8 +820,15 @@ var togglePinColumn = function(colIdx) {
       pinnedColumns.add(colIdx);
    }
    // Pinning reorders columns, so the active cell's display index would
-   // now refer to a different column; clear it.
+   // now refer to a different column; clear it. The active header, if
+   // any, follows the pinned column to its new display index so that
+   // keyboard users keep their place after pressing P.
    clearActiveCell();
+   var headerOrigCol = -1;
+   if (activeHeaderCol >= 0) {
+      headerOrigCol = columnOrder[activeHeaderCol];
+      clearActiveHeader();
+   }
    invalidatePinnedOffsets();
    rebuildHeaders();
    renderVisibleRows(true);
@@ -823,6 +838,10 @@ var togglePinColumn = function(colIdx) {
    // user scrolls.
    updateCustomScrollbars();
    saveState();
+   if (headerOrigCol >= 0) {
+      var newDisplayIdx = columnOrder.indexOf(headerOrigCol);
+      if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx);
+   }
 };
 
 // Rebuild headers in the current column order (pinned first, then unpinned).
@@ -901,8 +920,6 @@ var applyPinnedColumns = function() {
       var th = thead.children[i];
       var colIdx = columnOrder[i];
       var pinIcon = th.querySelector(".pin-icon");
-      var col = cols[colIdx];
-      var colName = col ? col.col_name : "";
       var nowPinned = isColumnPinned(colIdx);
 
       if (nowPinned) {
@@ -915,9 +932,6 @@ var applyPinnedColumns = function() {
       if (pinIcon) {
          if (nowPinned) pinIcon.classList.add("pinned");
          else pinIcon.classList.remove("pinned");
-         pinIcon.setAttribute("aria-pressed", nowPinned ? "true" : "false");
-         pinIcon.setAttribute("aria-label",
-            (nowPinned ? "Unpin column " : "Pin column ") + colName);
          pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
       }
    }
@@ -1693,7 +1707,13 @@ var buildRow = function(r) {
       var clazz = getColClass(cols[colIdx]);
       var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
       td.setAttribute("role", "gridcell");
-      if (r === activeRow && c === activeCol) td.classList.add("activeCell");
+      if (r === activeRow && c === activeCol) {
+         td.classList.add("activeCell");
+         // Stable id so the viewport's aria-activedescendant can refer
+         // to this cell. Re-applied here because rows are recreated
+         // when they scroll back into view.
+         td.id = activeCellId(r, c);
+      }
       tr.appendChild(td);
    }
 
@@ -2396,11 +2416,54 @@ var getActiveCellTd = function() {
    return tr.children[activeCol] || null;
 };
 
+var activeCellId = function(row, col) {
+   return "rsGridCell_" + row + "_" + col;
+};
+
+var getActiveHeaderTh = function() {
+   if (activeHeaderCol < 0) return null;
+   var thead = document.getElementById("data_cols");
+   if (!thead) return null;
+   return thead.children[activeHeaderCol] || null;
+};
+
+// Mirror the active descendant on the viewport so screen readers can
+// follow virtual focus into the grid. The viewport is the focused
+// element; the active cell or header is its activedescendant.
+var setViewportActiveDescendant = function(id) {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport) return;
+   if (id) {
+      viewport.setAttribute("aria-activedescendant", id);
+   } else {
+      viewport.removeAttribute("aria-activedescendant");
+   }
+};
+
+// Used by click handlers (cell, header, pin) to bring focus into the
+// grid -- without it, subsequent keystrokes would route to whatever was
+// focused before the click instead of onGridKeyDown.
+var focusGridViewport = function() {
+   var viewport = document.getElementById("gridViewport");
+   if (viewport && viewport.focus) viewport.focus({ preventScroll: true });
+};
+
 var clearActiveCell = function() {
    var td = getActiveCellTd();
-   if (td) td.classList.remove("activeCell");
+   if (td) {
+      td.classList.remove("activeCell");
+      td.removeAttribute("id");
+   }
    activeRow = -1;
    activeCol = -1;
+   if (activeHeaderCol < 0) setViewportActiveDescendant(null);
+};
+
+var clearActiveHeader = function() {
+   var th = getActiveHeaderTh();
+   if (th) th.classList.remove("activeHeader");
+   activeHeaderCol = -1;
+   if (activeRow < 0 || activeCol < 0) setViewportActiveDescendant(null);
 };
 
 var ensureActiveCellVisible = function() {
@@ -2450,10 +2513,19 @@ var setActiveCell = function(row, col) {
    if (maxRow < 0 || maxCol < 0) return;
    row = Math.max(0, Math.min(maxRow, row));
    col = Math.max(0, Math.min(maxCol, col));
-   if (row === activeRow && col === activeCol) return;
+   if (row === activeRow && col === activeCol && activeHeaderCol < 0) return;
+
+   if (activeHeaderCol >= 0) {
+      var prevTh = getActiveHeaderTh();
+      if (prevTh) prevTh.classList.remove("activeHeader");
+      activeHeaderCol = -1;
+   }
 
    var prev = getActiveCellTd();
-   if (prev) prev.classList.remove("activeCell");
+   if (prev) {
+      prev.classList.remove("activeCell");
+      prev.removeAttribute("id");
+   }
 
    activeRow = row;
    activeCol = col;
@@ -2463,9 +2535,67 @@ var setActiveCell = function(row, col) {
    // Apply to the new td if it's currently rendered. If it isn't yet,
    // ensureActiveCellVisible will have scrolled it into view; the next
    // renderVisibleRows call (triggered by the scroll event) will pick up
-   // the .activeCell class via buildRow.
+   // the .activeCell class and id via buildRow.
    var next = getActiveCellTd();
-   if (next) next.classList.add("activeCell");
+   if (next) {
+      next.classList.add("activeCell");
+      next.id = activeCellId(row, col);
+   }
+   setViewportActiveDescendant(activeCellId(row, col));
+};
+
+var ensureActiveHeaderVisible = function() {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport) return;
+   var thead = document.getElementById("data_cols");
+   if (!thead) return;
+   var th = thead.children[activeHeaderCol];
+   if (!th) return;
+
+   var pinnedWidth = 0;
+   if (rowNumbers && thead.children[0]) {
+      pinnedWidth = thead.children[0].offsetWidth;
+   }
+   var colLeft = th.offsetLeft;
+   var colWidth = th.offsetWidth;
+   var viewLeft = viewport.scrollLeft;
+   var viewWidth = viewport.clientWidth;
+   if (colLeft < viewLeft + pinnedWidth) {
+      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
+   } else if (colLeft + colWidth > viewLeft + viewWidth) {
+      viewport.scrollLeft = colLeft + colWidth - viewWidth;
+   }
+};
+
+var setActiveHeader = function(col) {
+   var maxCol = columnOrder.length - 1;
+   if (maxCol < 0) return;
+   col = Math.max(0, Math.min(maxCol, col));
+   if (col === activeHeaderCol) return;
+
+   if (activeRow >= 0 || activeCol >= 0) {
+      var prevCellTd = getActiveCellTd();
+      if (prevCellTd) {
+         prevCellTd.classList.remove("activeCell");
+         prevCellTd.removeAttribute("id");
+      }
+      activeRow = -1;
+      activeCol = -1;
+   }
+
+   var prevTh = getActiveHeaderTh();
+   if (prevTh) prevTh.classList.remove("activeHeader");
+
+   activeHeaderCol = col;
+   ensureActiveHeaderVisible();
+
+   var nextTh = getActiveHeaderTh();
+   if (nextTh) {
+      nextTh.classList.add("activeHeader");
+      setViewportActiveDescendant(nextTh.id);
+   } else {
+      setViewportActiveDescendant(null);
+   }
 };
 
 var copyActiveCell = function() {
@@ -2513,7 +2643,28 @@ var onGridKeyDown = function(evt) {
 
    var maxRow = filteredRows - 1;
    var maxCol = columnOrder.length - 1;
-   if (maxRow < 0 || maxCol < 0) return;
+   if (maxCol < 0) return;
+
+   // Header-mode actions: Enter/Space cycles sort; P toggles pin. Both
+   // are no-ops on the rownames column.
+   if (activeHeaderCol >= 0) {
+      var origCol = columnOrder[activeHeaderCol];
+      var col = cols[origCol];
+      var isRownames = col && col.col_type === "rownames";
+      if (key === "Enter" || key === " ") {
+         evt.preventDefault();
+         if (ordering && !isRownames) {
+            var th = getActiveHeaderTh();
+            if (th) handleSortClick(origCol, th);
+         }
+         return;
+      }
+      if (key === "p" || key === "P") {
+         evt.preventDefault();
+         if (!isRownames) togglePinColumn(origCol);
+         return;
+      }
+   }
 
    var navKeys = {
       "ArrowUp": 1, "ArrowDown": 1, "ArrowLeft": 1, "ArrowRight": 1,
@@ -2523,11 +2674,49 @@ var onGridKeyDown = function(evt) {
 
    evt.preventDefault();
 
-   // First navigation keypress with no active cell lands on (0, 0)
-   // without applying the delta -- otherwise ArrowDown would skip
-   // straight to row 1.
-   if (activeRow < 0 || activeCol < 0) {
-      setActiveCell(0, 0);
+   // First navigation keypress with no active descendant lands on (0, 0)
+   // (or the first header if the body is empty) without applying the
+   // delta -- otherwise ArrowDown would skip straight to row 1.
+   if (activeRow < 0 && activeCol < 0 && activeHeaderCol < 0) {
+      if (maxRow >= 0) setActiveCell(0, 0);
+      else setActiveHeader(0);
+      return;
+   }
+
+   // Header-mode arrow navigation. ArrowDown drops back into the body at
+   // the same column; Home/End jump to the first/last column; Left/Right
+   // walk between headers; PageUp/PageDown are inert.
+   if (activeHeaderCol >= 0) {
+      switch (key) {
+         case "ArrowDown":
+            if (maxRow >= 0) setActiveCell(0, activeHeaderCol);
+            return;
+         case "ArrowUp":
+            return;
+         case "ArrowLeft":
+            setActiveHeader(activeHeaderCol - 1);
+            return;
+         case "ArrowRight":
+            setActiveHeader(activeHeaderCol + 1);
+            return;
+         case "Home":
+            setActiveHeader(0);
+            return;
+         case "End":
+            setActiveHeader(maxCol);
+            return;
+         case "PageUp":
+         case "PageDown":
+            return;
+      }
+   }
+
+   if (maxRow < 0) return;
+
+   // ArrowUp from row 0 enters header mode at the same column. Other
+   // arrow keys fall through to the body movement below.
+   if (key === "ArrowUp" && activeRow === 0) {
+      setActiveHeader(activeCol);
       return;
    }
 
@@ -2576,10 +2765,9 @@ var onGridCellClick = function(evt) {
    setActiveCell(row, col);
 
    // Focus the viewport so subsequent keystrokes route through the grid
-   // keyboard handler. Using preventScroll keeps the click from yanking
-   // the user out of their visual context.
-   var viewport = document.getElementById("gridViewport");
-   if (viewport && viewport.focus) viewport.focus({ preventScroll: true });
+   // keyboard handler. preventScroll keeps the click from yanking the
+   // user out of their visual context.
+   focusGridViewport();
 };
 
 // ==========================================================================
@@ -3037,6 +3225,7 @@ var resetGridState = function() {
    columnOrder = [];
    activeRow = -1;
    activeCol = -1;
+   activeHeaderCol = -1;
 
    // Column widths
    measuredWidths = [];
