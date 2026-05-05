@@ -16,6 +16,8 @@
 #ifndef SESSION_SERVER_RPC_HPP
 #define SESSION_SERVER_RPC_HPP
 
+#include <boost/asio/io_context.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -26,7 +28,12 @@ namespace rstudio {
 namespace session {
 namespace server_rpc {
 
-core::Error invokeServerRpc(const core::json::JsonRpcRequest& request, core::json::JsonRpcResponse* pResponse);
+// reference to the IO context used for server RPC methods
+// useful if building clients "by hand" that conceptually perform server RPCs
+boost::asio::io_context& ioContext();
+
+core::Error invokeServerRpc(const core::json::JsonRpcRequest& request,
+                            core::json::JsonRpcResponse* pResponse);
 
 core::Error invokeServerRpc(const std::string& endpoint,
                             const core::json::Object& request,

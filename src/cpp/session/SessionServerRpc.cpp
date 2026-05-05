@@ -105,7 +105,22 @@ void rpcWorkerThreadFunc()
    s_ioContext.run();
 }
 
+void ensureRpcWorkerThreadRunning()
+{
+   // start RPC worker thread if it hasn't already been started
+   boost::call_once(s_threadOnce,
+                    boost::bind(core::thread::safeLaunchThread,
+                                rpcWorkerThreadFunc,
+                                nullptr));
+}
+
 } // anonymous namespace
+
+boost::asio::io_context& ioContext()
+{
+   ensureRpcWorkerThreadRunning();
+   return s_ioContext;
+}
 
 Error invokeServerRpc(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
@@ -153,14 +168,12 @@ void invokeServerRpcAsync(const std::string& endpoint,
                           const socket_rpc::RpcResultHandler& onResult,
                           const socket_rpc::RpcErrorHandler& onError)
 {
-   boost::call_once(s_threadOnce,
-
    // start RPC worker thread if it hasn't already been started
-                    boost::bind(core::thread::safeLaunchThread,
-                                rpcWorkerThreadFunc,
-                                nullptr));
+   ensureRpcWorkerThreadRunning();
    if (overlay::useHttp())
+   {
       overlay::invokeServerRpcAsync(s_ioContext, endpoint, request, onResult, onError);
+   }
    else
    {
 #ifdef _WIN32
