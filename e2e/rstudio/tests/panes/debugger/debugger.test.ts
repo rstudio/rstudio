@@ -233,8 +233,10 @@ test.describe('R debugger', () => {
       await debuggerActions.waitForDebugMode();
 
       // Breakpoint at line 5 (the `inner()` call) → row 4 at debug entry.
-      const rowBefore = await debuggerActions.getActiveDebugLineRow();
-      expect(rowBefore).toBe(4);
+      await expect.poll(
+        () => debuggerActions.getActiveDebugLineRow(),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(4);
 
       await debuggerActions.stepInto();
 
@@ -299,8 +301,10 @@ test.describe('R debugger', () => {
       await consoleActions.typeInConsole('step_continue_fn()');
 
       await debuggerActions.waitForDebugMode();
-      const firstRow = await debuggerActions.getActiveDebugLineRow();
-      expect(firstRow).toBe(1); // 0-indexed → line 2
+      await expect.poll(
+        () => debuggerActions.getActiveDebugLineRow(),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(1); // 0-indexed → line 2
 
       await debuggerActions.continueDebug();
       await expect.poll(
@@ -328,6 +332,60 @@ test.describe('R debugger', () => {
       await debuggerActions.stopDebug();
       await debuggerActions.waitForDebugExit();
 
+      await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
+    });
+
+    test('Continue chains through five breakpoints', async () => {
+      const fileName = `continue_chain_${Date.now()}.R`;
+      const content = [
+        'five_continues_fn <- function() {',
+        '   a <- 1',
+        '   b <- 2',
+        '   c <- 3',
+        '   d <- 4',
+        '   e <- 5',
+        '   f <- 6',
+        '}',
+      ].join('\n');
+
+      await writeAndOpen(fileName, content);
+      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await sleep(TIMEOUTS.settleDelay);
+      for (const line of [2, 3, 4, 5, 6, 7]) {
+        await debuggerActions.setBreakpoint(line);
+      }
+      await consoleActions.typeInConsole('five_continues_fn()');
+
+      await debuggerActions.waitForDebugMode();
+      await expect.poll(
+        () => debuggerActions.getActiveDebugLineRow(),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(1); // 0-indexed → line 2
+
+      // Each Continue lands on the next breakpoint, and the prior
+      // assignment becomes visible in the Environment pane.
+      const stops: Array<{ row: number; name: string; value: string }> = [
+        { row: 2, name: 'a', value: '1' },
+        { row: 3, name: 'b', value: '2' },
+        { row: 4, name: 'c', value: '3' },
+        { row: 5, name: 'd', value: '4' },
+        { row: 6, name: 'e', value: '5' },
+      ];
+      for (const { row, name, value } of stops) {
+        await debuggerActions.continueDebug();
+        await expect.poll(
+          () => debuggerActions.getActiveDebugLineRow(),
+          { timeout: TIMEOUTS.fileOpen },
+        ).toBe(row);
+        await expect.poll(
+          () => envPane.hasVariable(name, value),
+          { timeout: TIMEOUTS.fileOpen },
+        ).toBe(true);
+      }
+
+      // 6th Continue runs the last line and exits debug cleanly.
+      await debuggerActions.continueDebug();
+      await debuggerActions.waitForDebugExit();
       await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
     });
   });

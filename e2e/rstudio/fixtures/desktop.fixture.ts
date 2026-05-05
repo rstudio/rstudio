@@ -159,7 +159,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
-      RSTUDIO_DATA_HOME: tempConfig.dataHome,
+      // RSTUDIO_DATA_HOME intentionally not overridden -- share local Posit Assistant install/login
     },
   });
   let launchError: Error | undefined;
