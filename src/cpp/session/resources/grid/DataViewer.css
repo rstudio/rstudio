@@ -290,6 +290,12 @@ th:hover .pin-icon {
 .dataCell,
 .listCell {
    padding-right: 16px;
+   /* The viewer-link icon is absolutely positioned at right:0; anchor it
+      to the cell so short values get the icon at the cell edge instead
+      of escaping to a distant positioned ancestor. .largeCell already
+      sets position: relative for cells with long string values, but data
+      and list cells need it regardless of length. */
+   position: relative;
 }
 
 .largeCell {
