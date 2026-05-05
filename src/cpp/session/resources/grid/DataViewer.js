@@ -251,8 +251,11 @@ var escapeHtml = function(html) {
    // means a future copy-paste like attr='${escapeHtml(x)}' is safe by
    // construction rather than relying on every caller to remember.
    var replacements = {
-      "<": "&lt;", ">": "&gt;", "&": "&amp;",
-      '"': "&quot;", "'": "&#39;"
+      "<": "&lt;",
+      ">": "&gt;",
+      "&": "&amp;",
+      '"': "&quot;",
+      "'": "&#39;"
    };
    return s.replace(/[&<>"']/g, function(ch) { return replacements[ch]; });
 };
