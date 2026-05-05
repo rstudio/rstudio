@@ -64,7 +64,7 @@ jobs:
 
       - name: Install rig
         run: |
-          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-macos-arm64-latest.tar.gz \
+          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-macos-arm64-latest.tar.gz \
             | sudo tar xz -C /usr/local
 
       - name: Install R via rig
@@ -116,6 +116,10 @@ jobs:
       - name: Install RStudio
         run: |
           MOUNT=$(hdiutil attach -nobrowse -readonly "${{ steps.resolve.outputs.filename }}" | grep -oE '/Volumes/.*' | tail -1)
+          if [ -z "$MOUNT" ]; then
+            echo "ERROR: failed to resolve mount path from hdiutil" >&2
+            exit 1
+          fi
           echo "Mounted at: $MOUNT"
           sudo cp -R "$MOUNT/RStudio.app" /Applications/
           hdiutil detach "$MOUNT"

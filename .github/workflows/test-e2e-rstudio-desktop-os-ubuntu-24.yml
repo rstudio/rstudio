@@ -69,7 +69,7 @@ jobs:
 
       - name: Install rig
         run: |
-          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
+          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
             | sudo tar xz -C /usr/local
 
       - name: Install R via rig
