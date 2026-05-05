@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8"/ >
-    <link rel="stylesheet" href="datatables/css/jquery.dataTables.min.css" />
-    <link rel="stylesheet" href="datatables/css/dataTables.scroller.min.css" />
-    <link rel="stylesheet" href="dtstyles.css" />
-    <script type="text/javascript" src="closest_polyfill.js"></script>
-    <script type="text/javascript" src="datatables/js/jquery.js"></script>
-    <script type="text/javascript" src="datatables/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="datatables/js/dataTables.scroller.min.js"></script>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="DataViewer.css">
     <script type="text/javascript" src="hist.js"></script>
-    <script type="text/javascript" src="dtviewer.js"></script>
+    <script type="text/javascript" src="DataViewer.js"></script>
 </head>
-<body style="overflow: hidden">
-    <div id="errorMask">
+<body>
+    <div id="errorMask"></div>
+    <div id="errorWrapper" role="alert" aria-live="assertive">
+        <div id="error"></div>
+        <input type="button" onClick="window.location.reload();" value="Retry">
     </div>
-    <div id="errorWrapper">
-        <div id="error">
+
+    <div id="gridContainer">
+        <div id="gridPanel">
+            <div id="gridViewport">
+                <table id="rsGridData" class="autoSize" role="grid">
+                    <thead>
+                        <tr id="data_cols" role="row"></tr>
+                    </thead>
+                    <tbody id="gridBody"></tbody>
+                </table>
+            </div>
+            <div id="rsGridData_info" aria-live="polite" aria-atomic="true"></div>
         </div>
-        <input type="button" onClick="window.location.reload();" value="Retry" />
+
+        <div id="sidebarPanel">
+            <div id="sidebarToggle"></div>
+            <div id="sidebarContent"></div>
+        </div>
     </div>
 </body>
 </html>

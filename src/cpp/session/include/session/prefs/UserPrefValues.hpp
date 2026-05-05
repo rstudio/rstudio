@@ -354,6 +354,7 @@ namespace prefs {
 #define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kDataViewerMaxCellSize "data_viewer_max_cell_size"
+#define kDataViewerShowSummary "data_viewer_show_summary"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -1746,6 +1747,12 @@ public:
     */
    int dataViewerMaxCellSize();
    core::Error setDataViewerMaxCellSize(int val);
+
+   /**
+    * Whether the Summary side panel is shown by default when opening the data viewer.
+    */
+   bool dataViewerShowSummary();
+   core::Error setDataViewerShowSummary(bool val);
 
    /**
     * Support accessibility aids such as screen readers.

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
@@ -157,6 +158,11 @@ public class DataEditingTarget extends UrlContentEditingTarget
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
       handlers_.clear();
+
+      // Discard any saved per-object UI state when the tab is being closed
+      // (not when it's just being moved between source columns).
+      if (dismissType == EditingTarget.DISMISS_TYPE_CLOSE && view_ != null)
+         view_.onDismiss();
    }
    
    private void doQueuedRefresh()

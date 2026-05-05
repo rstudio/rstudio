@@ -106,6 +106,9 @@ public class ClassIds
    // Data Table filter button
    public final static String DATA_TABLE_FILTER_TOGGLE = "dt_filter_toggle";
 
+   // Data Table sidebar toggle button
+   public final static String DATA_TABLE_SIDEBAR_TOGGLE = "dt_sidebar_toggle";
+
    // Document outline toggle button
    public final static String VISUAL_OUTLINE_TOGGLE = "visual_md_outline_toggle";
    public final static String SOURCE_OUTLINE_TOGGLE = "source_outline_toggle";

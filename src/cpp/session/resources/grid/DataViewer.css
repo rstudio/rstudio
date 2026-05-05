@@ -1,0 +1,1022 @@
+/*
+ * gridviewer.css
+ *
+ * Copyright (C) 2025 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+/* ==========================================================================
+   CSS Custom Properties (themed via ThemeColorExtractor)
+   ========================================================================== */
+
+:root {
+   --grid-bg: var(--rstudio-editor-background, #ffffff);
+   --grid-fg: var(--rstudio-editor-foreground, #000000);
+   --grid-border: var(--rstudio-panel-border, #cfd4d8);
+   --grid-header-bg: var(--rstudio-editorWidget-background, #f7f8f9);
+   --grid-header-fg: var(--rstudio-editor-foreground, #555555);
+   --grid-hover-bg: var(--rstudio-list-hoverBackground, #e8e8e8);
+   --grid-selection-bg: var(--rstudio-selectionBackground, #daeffe);
+   --grid-na-color: var(--rstudio-disabledForeground, #b0b0b0);
+   --grid-focus-border: var(--rstudio-focusBorder, #4d9de0);
+
+   /* Computed mix shades -- keep these in one place so theme tweaks land
+      consistently across hover/stripe rules. */
+   --grid-row-hover-bg:  color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
+   --grid-row-stripe-bg: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 2%);
+   --grid-row-active-bg: color-mix(in srgb, var(--grid-bg), var(--grid-fg) 5%);
+
+   --row-height: 23px;
+   --sidebar-width: 240px;
+   --info-bar-height: 25px;
+}
+
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+* {
+   box-sizing: border-box;
+}
+
+html, body {
+   height: 100%;
+   margin: 0;
+   font-family: 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+   font-size: 11px;
+   background-color: var(--grid-bg);
+   color: var(--grid-fg);
+   overflow: hidden;
+}
+
+::selection {
+   background: var(--grid-selection-bg);
+}
+
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+#gridContainer {
+   display: flex;
+   width: 100%;
+   height: 100%;
+   position: relative;
+}
+
+#gridPanel {
+   flex: 1;
+   display: flex;
+   flex-direction: column;
+   min-width: 0;
+   overflow: hidden;
+   position: relative;
+}
+
+#gridViewport {
+   flex: 1;
+   overflow: auto;
+   position: relative;
+   /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
+   scrollbar-width: none;                /* Firefox */
+   /* Suppress the rubber-band/bounce effect at the scroll boundary; the table
+      has known dimensions, so the boundary is already obvious without it.
+      Also prevents scroll chaining out of the iframe. */
+   overscroll-behavior: none;
+}
+#gridViewport::-webkit-scrollbar {
+   display: none;                        /* Chromium */
+}
+
+
+/* ==========================================================================
+   Table
+   ========================================================================== */
+
+#rsGridData {
+   border-collapse: separate;
+   border-spacing: 0;
+}
+
+/* --- Header --- */
+
+thead {
+   position: sticky;
+   top: 0;
+   z-index: 10;
+}
+
+th {
+   text-align: left;
+   font-size: 11px;
+   font-weight: bold;
+   color: var(--grid-header-fg);
+   background-color: var(--grid-header-bg);
+   padding: 5px 5px;
+   border-bottom: 1px solid var(--grid-border);
+   border-right: 1px solid var(--grid-border);
+   position: relative;
+   white-space: nowrap;
+   overflow: visible;
+   user-select: none;
+}
+
+/* Mouse focus stays unstyled (mouse users get a hover affordance), but
+   keyboard focus is highlighted so AT users know where they are. */
+th:focus { outline: none; }
+th:focus-visible {
+   outline: 2px solid var(--grid-focus-border);
+   outline-offset: -2px;
+}
+.pin-icon:focus { outline: none; }
+.pin-icon:focus-visible {
+   outline: 2px solid var(--grid-focus-border);
+   outline-offset: 1px;
+   opacity: 1;
+}
+
+/* Virtual scroll spacer row -- specificity must beat tbody tr:nth-child/hover rules.
+   Diagonal stripes suggest pending/loading data. */
+tbody tr.spacer-row td,
+tbody tr.spacer-row:nth-child(odd) td,
+tbody tr.spacer-row:hover td,
+tbody tr.spacer-row:nth-child(odd):hover td {
+   padding: 0;
+   border: none;
+   background:
+      repeating-linear-gradient(
+         -45deg,
+         transparent,
+         transparent 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
+      );
+}
+
+/* --- Data cells --- */
+
+td {
+   padding: 4px 5px;
+   border-bottom: 1px solid var(--grid-border);
+   border-right: 1px solid var(--grid-border);
+   font-size: 11px;
+   background-color: var(--grid-bg);
+   height: var(--row-height);
+   overflow: hidden;
+}
+
+tbody tr:hover td:not(.first-child) {
+   background-color: var(--grid-row-hover-bg);
+}
+
+/* Alternating row stripe */
+tbody tr:nth-child(odd) td:not(.first-child) {
+   background-color: var(--grid-row-stripe-bg);
+}
+
+tbody tr:nth-child(odd):hover td:not(.first-child) {
+   background-color: var(--grid-row-hover-bg);
+}
+
+/* Active cell highlight (keyboard nav + click). Outline draws outside
+   the cell box so it doesn't shift layout, and beats the row-hover
+   background by virtue of being a separate paint phase. */
+td.activeCell {
+   outline: 2px solid var(--grid-focus-border);
+   outline-offset: -2px;
+}
+
+/* Suppress the browser's default focus ring on the viewport itself --
+   the .activeCell outline is the focus indicator. */
+#gridViewport:focus {
+   outline: none;
+}
+
+
+/* ==========================================================================
+   Pinned Columns
+   ========================================================================== */
+
+th.pinned {
+   position: sticky;
+   /* left is set dynamically via inline style */
+   z-index: 5;
+   background-color: var(--grid-header-bg);
+}
+
+td.pinned {
+   position: sticky;
+   /* left is set dynamically via inline style */
+   z-index: 5;
+   background-color: var(--grid-bg);
+}
+
+/* Row names column (always first pinned).
+   Background color comes from GridViewerStyles.getCustomStyle() which
+   injects theme-specific rules for td.first-child. */
+th.pinned:first-child,
+td.pinned:first-child {
+   text-align: right;
+   border-left: none;
+   padding-left: 9px;
+   padding-right: 9px;
+}
+
+/* Pinned header cells sit above pinned data cells */
+thead th.pinned {
+   z-index: 15;
+}
+
+/* --- Pin icon --- */
+
+.pin-icon {
+   display: inline-block;
+   width: 12px;
+   height: 12px;
+   margin-right: 3px;
+   vertical-align: middle;
+   cursor: pointer;
+   opacity: 0;
+   transition: opacity 0.1s;
+   /* Material Symbols "keep" icon, rotated 30deg to point down-left.
+      Uses mask-image so background-color (themeable) controls the fill. */
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3E%3Cg transform='rotate(45 480 -480)'%3E%3Cpath d='m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z'/%3E%3C/g%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-size: contain;
+   -webkit-mask-position: center;
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3E%3Cg transform='rotate(45 480 -480)'%3E%3Cpath d='m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z'/%3E%3C/g%3E%3C/svg%3E");
+   mask-repeat: no-repeat;
+   mask-size: contain;
+   mask-position: center;
+}
+
+th:hover .pin-icon {
+   opacity: 0.6;
+}
+
+.pin-icon:hover {
+   opacity: 1 !important;
+}
+
+.pin-icon.pinned {
+   opacity: 0.8;
+}
+
+.pin-icon.pinned:hover {
+   opacity: 1;
+}
+
+
+
+/* ==========================================================================
+   Cell Types
+   ========================================================================== */
+
+.numberCell {
+   text-align: right;
+}
+
+.dataCell,
+.listCell {
+   padding-right: 16px;
+   /* The viewer-link icon is absolutely positioned at right:0; anchor it
+      to the cell so short values get the icon at the cell edge instead
+      of escaping to a distant positioned ancestor. .largeCell already
+      sets position: relative for cells with long string values, but data
+      and list cells need it regardless of length. */
+   position: relative;
+}
+
+.largeCell {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   position: relative;
+}
+
+.naCell {
+   color: var(--grid-na-color);
+   font-style: italic;
+}
+
+.searchMatch {
+   background-color: var(--grid-selection-bg);
+}
+
+.viewerImage {
+   width: 12px;
+   height: 12px;
+}
+
+.viewerLink {
+   position: absolute;
+   right: 2px;
+}
+
+/* Max width for auto-sized columns */
+.autoSize .numberCell,
+.autoSize .textCell,
+.autoSize .dataCell,
+.autoSize .listCell {
+   max-width: 300px;
+}
+
+
+/* ==========================================================================
+   Header Internals
+   ========================================================================== */
+
+.headerCell {
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   overflow: hidden;
+   position: relative;
+   padding-right: 18px;
+}
+
+.colLabel {
+   font-size: 10px;
+   font-weight: normal;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   overflow: hidden;
+   margin-top: 2px;
+   max-width: 300px;
+}
+
+/* --- Column highlight flash (triggered from sidebar click) --- */
+
+@keyframes column-flash {
+   0%   { background-color: var(--grid-selection-bg); }
+   100% { background-color: var(--grid-header-bg); }
+}
+
+th.highlight-flash {
+   animation: column-flash 1s ease-out;
+}
+
+/* --- Sort indicators -- use mask-image so color follows the theme --- */
+
+th.sorting .headerCell::after,
+th.sorting_asc .headerCell::after,
+th.sorting_desc .headerCell::after {
+   content: '';
+   position: absolute;
+   right: 2px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 10px;
+   height: 10px;
+   opacity: 0.4;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+}
+
+th.sorting .headerCell::after {
+   /* Both arrows (unsorted) */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
+}
+
+th.sorting_asc .headerCell::after {
+   /* Up arrow */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   opacity: 0.8;
+}
+
+th.sorting_desc .headerCell::after {
+   /* Down arrow */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   opacity: 0.8;
+}
+
+
+/* ==========================================================================
+   Column Resizer
+   ========================================================================== */
+
+.resizer {
+   position: absolute;
+   top: 0;
+   right: -3px;
+   width: 7px;
+   height: 100%;
+   cursor: ew-resize;
+   z-index: 16;
+}
+
+.resizer:hover {
+   background-color: var(--grid-focus-border);
+   opacity: 0.5;
+}
+
+/* While a column resize is in progress, lock the cursor and let mouse events
+   fall through to <body>/<document> so cursor:pointer or hover behavior on
+   elements the cursor passes over (e.g. the pin icon) cannot interrupt the
+   drag. The mousemove/mouseup listeners are bound to document and still fire
+   via bubbling. */
+body.col-resizing {
+   cursor: ew-resize !important;
+   user-select: none;
+}
+
+body.col-resizing * {
+   pointer-events: none !important;
+   cursor: ew-resize !important;
+}
+
+
+/* ==========================================================================
+   Column Type Header (data import mode)
+   ========================================================================== */
+
+.columnTypeWrapper {
+   text-align: right;
+   padding-right: 0;
+}
+
+.columnTypeHeader {
+   font-weight: normal;
+   font-style: italic;
+   margin-top: 3px;
+}
+
+th.columnClickable {
+   cursor: pointer;
+   vertical-align: bottom;
+}
+
+th.columnClickable div {
+   padding-right: 15px;
+   user-select: none;
+}
+
+.disabledColumn {
+   background-color: var(--grid-header-bg);
+}
+
+
+/* ==========================================================================
+   Filter UI
+   ========================================================================== */
+
+.colFilter,
+.numValueBox {
+   border: 1px solid var(--grid-border);
+   background-color: var(--grid-bg);
+   border-radius: 3px;
+}
+
+.colFilter {
+   margin-top: 4px;
+   white-space: nowrap;
+   padding: 2px 3px;
+   position: relative;
+   font-weight: normal;
+}
+
+.unfiltered {
+   font-style: italic;
+   color: var(--grid-na-color);
+   min-width: 35px;
+   border: 1px solid transparent;
+   margin-top: 5px;
+}
+
+.filterPopup {
+   position: absolute;
+   overflow: hidden;
+   z-index: 25;
+   font-size: 11px;
+   background-color: var(--grid-bg);
+   border: 1px solid var(--grid-border);
+   box-shadow: 0 5px 5px 0 rgba(0, 0, 0, 0.25);
+}
+
+.numericFilterPopup {
+   padding: 4px;
+   padding-bottom: 8px;
+}
+
+.choiceList {
+   max-height: 300px;
+   max-width: 400px;
+   min-width: 50px;
+   overflow-y: auto;
+   overflow-x: hidden;
+}
+
+.choiceListItem {
+   padding: 4px 8px;
+   cursor: pointer;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   max-width: 400px;
+}
+
+.choiceListItem:hover {
+   background-color: var(--grid-hover-bg);
+}
+
+.filterValue {
+   padding-right: 14px;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   overflow: hidden;
+   width: 100%;
+}
+
+.textFilterBox {
+   border: none;
+   width: 100%;
+   height: 100%;
+   padding: 0;
+   background-color: var(--grid-bg);
+   color: var(--grid-fg);
+}
+
+.textFilterBox:focus {
+   outline: none;
+}
+
+.clearFilter {
+   position: absolute;
+   top: 2px;
+   right: 2px;
+   width: 11px;
+   height: 11px;
+   cursor: pointer;
+   opacity: 0.5;
+}
+
+.clearFilter:hover {
+   opacity: 1;
+}
+
+/* Clear filter icon as inline SVG */
+.clearFilter::after {
+   content: '';
+   display: block;
+   width: 11px;
+   height: 11px;
+   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E");
+   background-repeat: no-repeat;
+}
+
+
+/* ==========================================================================
+   Histogram (filter popup)
+   ========================================================================== */
+
+.numHist {
+   width: 80px;
+   height: 80px;
+   margin: 4px 7px 10px 7px;
+   padding: 10px;
+   position: relative;
+}
+
+.histBar {
+   background-color: var(--grid-focus-border);
+   opacity: 0.5;
+   cursor: pointer;
+}
+
+.selected .histBar {
+   opacity: 1;
+}
+
+.histBack {
+   cursor: pointer;
+}
+
+.histBack.selected {
+   background-color: var(--grid-row-active-bg);
+}
+
+.numValueBox {
+   margin-top: 10px;
+   border-radius: 2px;
+   margin-left: 5px;
+   margin-right: 5px;
+   width: 100px;
+   background-color: var(--grid-bg);
+   color: var(--grid-fg);
+}
+
+
+/* ==========================================================================
+   Info Bar
+   ========================================================================== */
+
+#rsGridData_info {
+   background-color: var(--grid-header-bg);
+   color: var(--grid-header-fg);
+   font-size: 11px;
+   padding: 5px;
+   width: 100%;
+   border-top: 1px solid var(--grid-border);
+   height: var(--info-bar-height);
+   text-align: left;
+   flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   Sidebar
+   ========================================================================== */
+
+#sidebarPanel {
+   width: 0;
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   flex-shrink: 0;
+   background-color: var(--grid-bg);
+   transition: width 0.15s ease;
+   /* Anchor the absolutely-positioned floating scrollbar inside the
+      sidebar panel rather than the page. */
+   position: relative;
+}
+
+#sidebarPanel.expanded {
+   width: var(--sidebar-width);
+   /* Slightly darker than the standard --grid-border so the divider
+      between the data and the summary panel reads as a panel boundary,
+      not just an interior cell border. */
+   border-left: 1px solid color-mix(in srgb, var(--grid-border), var(--grid-fg) 30%);
+}
+
+#sidebarToggle {
+   height: 28px;
+   border-bottom: 1px solid var(--grid-border);
+   display: flex;
+   align-items: center;
+   padding: 0 8px;
+   cursor: pointer;
+   flex-shrink: 0;
+   background-color: var(--grid-header-bg);
+   font-size: 11px;
+   font-weight: bold;
+   color: var(--grid-header-fg);
+   white-space: nowrap;
+   overflow: hidden;
+}
+
+#sidebarToggle:hover {
+   background-color: var(--grid-hover-bg);
+}
+
+#sidebarContent {
+   flex: 1;
+   overflow-y: auto;
+   overflow-x: hidden;
+   /* Hide native scrollbar -- a custom floating one is rendered inside
+      #sidebarPanel by attachSidebarScrollbar. */
+   scrollbar-width: none;                /* Firefox */
+   /* Same rationale as #gridViewport: known content height, so suppress
+      the bounce and prevent scroll chaining. */
+   overscroll-behavior: none;
+}
+#sidebarContent::-webkit-scrollbar {
+   display: none;                        /* Chromium */
+}
+
+/* --- Column entry --- */
+
+.sidebar-col {
+   padding: 6px 8px;
+   border-bottom: 1px solid var(--grid-border);
+   cursor: pointer;
+}
+
+.sidebar-col:hover {
+   background-color: var(--grid-hover-bg);
+}
+
+.sidebar-col-header {
+   display: flex;
+   align-items: baseline;
+   gap: 6px;
+   margin-bottom: 2px;
+}
+
+.sidebar-col-name {
+   font-weight: bold;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   flex: 1;
+   min-width: 0;
+}
+
+.sidebar-col-type {
+   font-size: 10px;
+   color: var(--grid-na-color);
+   flex-shrink: 0;
+   font-family: monospace;
+}
+
+/* --- Sparkline histogram --- */
+
+.sidebar-sparkline {
+   margin-top: 3px;
+}
+
+.sidebar-sparkline svg {
+   display: block;
+   width: 100%;
+   height: 24px;
+}
+
+.sparkline-wrapper {
+   position: relative;
+}
+
+.sparkline-bar {
+   fill: var(--grid-focus-border);
+   opacity: 0.6;
+}
+
+.sparkline-bar:hover {
+   opacity: 1;
+}
+
+.sparkline-tooltip {
+   position: absolute;
+   top: 100%;
+   left: 0;
+   margin-top: 4px;
+   padding: 4px 6px;
+   font-size: 10px;
+   line-height: 1.4;
+   background-color: var(--grid-fg);
+   color: var(--grid-bg);
+   border-radius: 3px;
+   white-space: nowrap;
+   pointer-events: none;
+   z-index: 30;
+}
+
+/* --- Column footer (summary + NA count) --- */
+
+.sidebar-col-footer {
+   display: flex;
+   justify-content: space-between;
+   align-items: baseline;
+   margin-top: 2px;
+}
+
+.sidebar-col-summary {
+   font-size: 10px;
+   color: var(--grid-na-color);
+}
+
+.sidebar-col-na {
+   font-size: 10px;
+   color: var(--grid-na-color);
+   font-style: italic;
+}
+
+/* --- Expand button --- */
+
+.sidebar-expand-btn {
+   display: inline-block;
+   width: 10px;
+   font-size: 10px;
+   line-height: 1;
+   cursor: pointer;
+   opacity: 0.4;
+   flex-shrink: 0;
+   text-align: center;
+   user-select: none;
+}
+
+.sidebar-expand-btn::after {
+   content: "\25B8";  /* right-pointing triangle */
+}
+
+.sidebar-expand-btn:hover {
+   opacity: 0.8;
+}
+
+.sidebar-expand-btn.expanded::after {
+   content: "\25BE";  /* down-pointing triangle */
+}
+
+.sidebar-expand-btn.expanded {
+   opacity: 0.6;
+}
+
+/* --- Stats panel --- */
+
+.sidebar-stats {
+   margin-top: 4px;
+   padding-top: 4px;
+   border-top: 1px solid var(--grid-border);
+}
+
+.sidebar-spinner {
+   display: inline-block;
+   width: 10px;
+   height: 10px;
+   margin-left: 6px;
+   vertical-align: middle;
+   border: 1.5px solid var(--grid-border);
+   border-top-color: var(--grid-fg);
+   border-radius: 50%;
+   animation: spin 0.6s linear infinite, fade-in 1s ease 0.2s both;
+}
+
+@keyframes fade-in {
+   from { opacity: 0; }
+   to   { opacity: 1; }
+}
+
+@keyframes spin {
+   to { transform: rotate(360deg); }
+}
+
+.sidebar-stats-table {
+   width: 100%;
+   font-size: 10px;
+   border-collapse: collapse;
+}
+
+.sidebar-stats-table td {
+   padding: 1px 0;
+   border: none;
+}
+
+.stats-label {
+   color: var(--grid-na-color);
+   padding-right: 8px;
+   white-space: nowrap;
+}
+
+.stats-value {
+   text-align: right;
+   font-family: monospace;
+   font-size: 10px;
+}
+
+.stats-empty {
+   color: var(--grid-na-color);
+   font-size: 10px;
+   font-style: italic;
+}
+
+
+/* ==========================================================================
+   Error Overlay
+   ========================================================================== */
+
+#errorMask {
+   background-color: rgba(0, 0, 0, 0.3);
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   z-index: 50;
+   display: none;
+   position: absolute;
+}
+
+#errorWrapper {
+   margin: 10% auto 0;
+   width: 33%;
+   text-align: center;
+   display: none;
+   padding: 30px;
+   font-size: 12px;
+   border: 2px solid var(--grid-border);
+   z-index: 100;
+   border-radius: 4px;
+   overflow: hidden;
+   background-color: var(--grid-bg);
+   position: absolute;
+   left: 29%;
+}
+
+#errorWrapper input {
+   margin-top: 30px;
+}
+
+
+/* ==========================================================================
+   Loading indicator
+   ========================================================================== */
+
+.grid-loading {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   color: var(--grid-na-color);
+   font-size: 12px;
+   z-index: 1;
+   display: none;
+}
+
+.grid-loading.visible {
+   display: block;
+}
+
+
+/* ==========================================================================
+   Custom Scrollbars
+
+   Rendered as absolutely-positioned divs inside #gridPanel. The vertical
+   bar starts below the sticky header; the horizontal bar starts after
+   the pinned columns. Position offsets are set dynamically from JS.
+   ========================================================================== */
+
+.custom-scrollbar {
+   position: absolute;
+   z-index: 20;
+   opacity: 0;
+   transition: opacity 0.2s;
+   contain: layout style;
+}
+
+.custom-scrollbar.visible {
+   opacity: 1;
+}
+
+.custom-scrollbar.vertical {
+   right: 0;
+   width: 10px;
+   /* top and height set from JS */
+}
+
+.custom-scrollbar.horizontal {
+   bottom: var(--info-bar-height);
+   height: 10px;
+   /* left and width set from JS */
+}
+
+.scrollbar-track {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+}
+
+.scrollbar-thumb {
+   position: absolute;
+   border-radius: 5px;
+   background-color: var(--grid-fg);
+   opacity: 0.25;
+   transition: opacity 0.15s;
+}
+
+.scrollbar-thumb:hover,
+.scrollbar-thumb.dragging {
+   opacity: 0.5;
+}
+
+.custom-scrollbar.vertical .scrollbar-thumb {
+   width: 7px;
+   right: 1px;
+   left: 1px;
+   min-height: 20px;
+   /* top and height set from JS */
+}
+
+.custom-scrollbar.horizontal .scrollbar-thumb {
+   height: 7px;
+   bottom: 1px;
+   top: 1px;
+   min-width: 20px;
+   /* left and width set from JS */
+}
+
+/* Honor user vestibular-accessibility preference: drop animations and
+   transitions instead of slow fades / spins / column-flash pulses. */
+@media (prefers-reduced-motion: reduce) {
+   *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+   }
+}

@@ -2728,6 +2728,19 @@ core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
 }
 
 /**
+ * Whether the Summary side panel is shown by default when opening the data viewer.
+ */
+bool UserPrefValues::dataViewerShowSummary()
+{
+   return readPref<bool>("data_viewer_show_summary");
+}
+
+core::Error UserPrefValues::setDataViewerShowSummary(bool val)
+{
+   return writePref("data_viewer_show_summary", val);
+}
+
+/**
  * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
@@ -3978,6 +3991,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,
+      kDataViewerShowSummary,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,

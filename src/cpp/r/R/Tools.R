@@ -1613,6 +1613,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("tryOr", function(default, expr)
+{
+   tryCatch(expr, error = function(cnd) default)
+})
+
 .rs.addFunction("emptyCoalesce", function(...)
 {
    for (i in seq_len(...length()))

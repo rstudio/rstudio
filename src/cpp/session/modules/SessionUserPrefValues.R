@@ -1944,6 +1944,16 @@
    clear = function() { .rs.clearUserPref("data_viewer_max_cell_size") }
 )
 
+# Show data viewer summary panel by default
+#
+# Whether the Summary side panel is shown by default when opening the data
+# viewer.
+.rs.uiPrefs$dataViewerShowSummary <- list(
+   get = function() { .rs.getUserPref("data_viewer_show_summary") },
+   set = function(value) { .rs.setUserPref("data_viewer_show_summary", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_show_summary") }
+)
+
 # Enable support for screen readers
 #
 # Support accessibility aids such as screen readers.

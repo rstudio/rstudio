@@ -1,6 +1,9 @@
 ## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): The data viewer is now faster and supports pinnable columns, a Summary sidebar with type-aware stats and sparkline histograms, keyboard navigation, and clipboard copy.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Added the `data_viewer_show_summary` user preference, which controls the default visibility of the data viewer's Summary sidebar.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Raised the default value of `data_viewer_max_columns` from 50 to 200.
 - ([#17477](https://github.com/rstudio/rstudio/issues/17477)): Posit Assistant: the `ui/openDocument` JSON-RPC method now accepts an optional 1-based `line` parameter, and RStudio advertises the `ui/openDocument/line` capability so the assistant can open documents at a specific line.
 - ([#17478](https://github.com/rstudio/rstudio/issues/17478)): Posit Assistant: added the `ui/revealInFilesPane` JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.
 - ([#17479](https://github.com/rstudio/rstudio/issues/17479)): Posit Assistant: added the `ui/previewUrl` JSON-RPC method, which navigates the Viewer pane to an `http(s)` URL (e.g., a local Shiny app); supports an optional `height` parameter that mirrors `rstudioapi::viewer()` (`-1` for maximize, `0` for no change, positive for pixels).
@@ -30,7 +33,6 @@
 - ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Reduced filesystem work performed by the `install.packages()` hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like `updates <-` or `installed.packages()`.
-- ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 
 ### Dependencies
 - Ace 1.43.5

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
@@ -27,6 +29,9 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+
+import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.DataTableColumnWidget;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -35,12 +40,17 @@ import org.rstudio.core.client.widget.SimpleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -84,6 +94,40 @@ public class DataTable
                     }
                  }
               });
+      // Pass null leftImage so the toolbar emits an empty <img> placeholder
+      // we can swap for an inline bar-chart SVG. SVG picks up the active
+      // IDE theme via fill='currentColor' and stays sharp at any device
+      // pixel ratio, so a static PNG isn't worth shipping.
+      sidebarButton_ = new LatchingToolbarButton(
+              constants_.sidebarButtonText(),
+              ToolbarButton.NoTitle,
+              false, /* textIndicatesState */
+              ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
+              null,
+              new ClickHandler() {
+                 public void onClick(ClickEvent event)
+                 {
+                    // JS owns sidebarVisible; the latched state is updated
+                    // when JS fires sidebarStateCallback back at us.
+                    toggleSidebar(getWindow());
+                 }
+              });
+      NodeList<Element> sidebarImgs =
+            sidebarButton_.getElement().getElementsByTagName("img");
+      if (sidebarImgs.getLength() > 0)
+      {
+         Element img = sidebarImgs.getItem(0);
+         Element span = Document.get().createSpanElement();
+         span.setClassName(img.getClassName());
+         span.setInnerHTML(
+            "<svg width='14' height='10' viewBox='0 0 14 12' style='vertical-align:middle;position:relative;top:-2px'>" +
+            "<rect x='0.5' y='6' width='4' height='6' rx='0.5' fill='currentColor'/>" +
+            "<rect x='5'   y='0' width='4' height='12' rx='0.5' fill='currentColor'/>" +
+            "<rect x='9.5' y='4' width='4' height='8' rx='0.5' fill='currentColor'/>" +
+            "</svg>");
+         img.getParentElement().replaceChild(span, img);
+      }
+
       toolbar.addLeftWidget(filterButton_);
       filterButton_.setVisible(!isPreview);
 
@@ -109,12 +153,97 @@ public class DataTable
          }
       });
 
+      // Refresh + options dropdown -- mirrors the pattern used in
+      // EnvironmentPane (refresh button followed by a NoText
+      // ToolbarMenuButton whose dropdown arrow opens a popup of
+      // related options).
+      refreshButton_ = new ToolbarButton(
+         ToolbarButton.NoText,
+         constants_.refreshButtonTitle(),
+         new ImageResource2x(DataViewerResources.INSTANCE.refreshIcon2x()),
+         new ClickHandler() {
+            public void onClick(ClickEvent event)
+            {
+               refreshData(getWindow());
+            }
+         });
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+
+      // Refresh the show-summary item's checked state every time the
+      // popup is about to open, in case the pref was changed elsewhere
+      // (global Options dialog, another open data viewer) since we last
+      // showed it.
+      optionsMenu_ = new ToolbarPopupMenu() {
+         @Override
+         public void getDynamicPopupMenu(
+               ToolbarPopupMenu.DynamicPopupMenuCallback callback) {
+            if (showSummaryItem_ != null) showSummaryItem_.onStateChanged();
+            super.getDynamicPopupMenu(callback);
+         }
+      };
+
+      // Read AND write through getGlobalValue/setGlobalValue so the user-
+      // layer value the menu reflects is the same one we mutate. Reading
+      // the merged value (getValue()) while writing the user layer can
+      // desync the check state from what's persisted when a project layer
+      // is active.
+      showSummaryItem_ = new CheckableMenuItem(constants_.optionsShowSummaryDefault())
+      {
+         @Override
+         public String getLabel()
+         {
+            return constants_.optionsShowSummaryDefault();
+         }
+
+         @Override
+         public boolean isChecked()
+         {
+            return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .dataViewerShowSummary().getGlobalValue();
+         }
+
+         @Override
+         public void onInvoked()
+         {
+            UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+            prefs.dataViewerShowSummary().setGlobalValue(!isChecked());
+            prefs.writeUserPrefs();
+            onStateChanged();
+         }
+      };
+      optionsMenu_.addItem(showSummaryItem_);
+      optionsMenuButton_ = new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            constants_.optionsButtonTitle(),
+            optionsMenu_,
+            false);
+
+      // Right-side layout:
+      //    [search] | [summary] | [refresh] [options]
+      // Search widget anchors the right edge. The summary toggle sits
+      // in the middle on its own; the options dropdown trails the
+      // refresh button so we don't have to deal with the visual
+      // mismatch between a latched LatchingToolbarButton and an
+      // adjacent ToolbarMenuButton.
       toolbar.addRightWidget(searchWidget_);
       searchWidget_.setVisible(!isPreview);
-      
+
+      Widget summarySeparator = toolbar.addRightSeparator();
+      toolbar.addRightWidget(sidebarButton_);
+      sidebarButton_.setVisible(!isPreview);
+
+      Widget refreshSeparator = toolbar.addRightSeparator();
+      toolbar.addRightWidget(refreshButton_);
+      refreshButton_.setVisible(!isPreview);
+      toolbar.addRightWidget(optionsMenuButton_);
+      optionsMenuButton_.setVisible(!isPreview);
+
+      summarySeparator.setVisible(!isPreview);
+      refreshSeparator.setVisible(!isPreview);
+
       if (isPreview)
       {
-         ToolbarLabel label = 
+         ToolbarLabel label =
             new ToolbarLabel(constants_.toolbarLabel());
          label.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
          toolbar.addRightWidget(label);
@@ -276,6 +405,20 @@ public class DataTable
       setColumnFrameCallback(getWindow(), getDataTableColumnCallback());
    }
 
+   public void setSidebarStateCallback()
+   {
+      // JS owns the canonical sidebarVisible state (URL params + saved
+      // localStorage state can both influence it). On registration the JS
+      // side fires the callback once with the current value, so the latched
+      // state syncs without us having to track it locally.
+      setSidebarStateCallback(getWindow(), new CommandWithArg<Boolean>() {
+         public void execute(Boolean visible) {
+            if (sidebarButton_ != null)
+               sidebarButton_.setLatched(visible != null && visible);
+         }
+      });
+   }
+
    public void refreshData()
    {
       filtered_= false;
@@ -305,38 +448,92 @@ public class DataTable
       }
    }
 
+   public void onDismiss()
+   {
+      try
+      {
+         onDismiss(getWindow());
+      }
+      catch(Exception e)
+      {
+         // The close path must not throw, but a silent catch hides bugs;
+         // log so failures show up in dev/diagnostics output.
+         Debug.logException(e);
+      }
+   }
+
    private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
 
+   // Surface "frame is here but the method we expected is missing" so the
+   // mismatch shows up in dev logs instead of a silent no-op. The
+   // frame-absent case is normal during teardown and intentionally quiet.
+   private static void logMissingFrameMethod(String name)
+   {
+      Debug.log("DataTable: iframe missing method '" + name + "'");
+   }
+
+   private static final native void toggleSidebar(WindowEx frame) /*-{
+      if (!frame) return;
+      if (frame.toggleSidebar)
+         frame.toggleSidebar();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("toggleSidebar");
+   }-*/;
+
    private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
-      if (frame && frame.setFilterUIVisible)
+      if (!frame) return false;
+      if (frame.setFilterUIVisible)
          return frame.setFilterUIVisible(visible);
+      @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setFilterUIVisible");
       return false;
    }-*/;
 
    private static final native void refreshData(WindowEx frame) /*-{
-      if (frame && frame.refreshData)
+      if (!frame) return;
+      if (frame.refreshData)
          frame.refreshData();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("refreshData");
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{
-      if (frame && frame.applySearch)
+      if (!frame) return;
+      if (frame.applySearch)
          frame.applySearch(text);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("applySearch");
    }-*/;
-   
+
    private static final native void onActivate(WindowEx frame) /*-{
-      if (frame && frame.onActivate)
+      if (!frame) return;
+      if (frame.onActivate)
          frame.onActivate();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onActivate");
    }-*/;
 
    private static final native void onDeactivate(WindowEx frame) /*-{
-      if (frame && frame.onDeactivate)
+      if (!frame) return;
+      if (frame.onDeactivate)
          frame.onDeactivate();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onDeactivate");
+   }-*/;
+
+   private static final native void onDismiss(WindowEx frame) /*-{
+      if (!frame) return;
+      if (frame.onDismiss)
+         frame.onDismiss();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onDismiss");
    }-*/;
 
    private static final native boolean isLimitedColumnFrame(WindowEx frame) /*-{
-       if (frame && frame.isLimitedColumnFrame)
-           return frame.isLimitedColumnFrame();
-       return false;
+      if (!frame) return false;
+      if (frame.isLimitedColumnFrame)
+          return frame.isLimitedColumnFrame();
+      @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("isLimitedColumnFrame");
+      return false;
    }-*/;
 
    private void nextColumnPage()
@@ -361,26 +558,40 @@ public class DataTable
    }
 
    private static final native void nextColumnPage(WindowEx frame) /*-{
-      if (frame && frame.nextColumnPage)
-          frame.nextColumnPage();
+      if (!frame) return;
+      if (frame.nextColumnPage)
+         frame.nextColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("nextColumnPage");
    }-*/;
    private static final native void prevColumnPage(WindowEx frame) /*-{
-       if (frame && frame.prevColumnPage)
-           frame.prevColumnPage();
+      if (!frame) return;
+      if (frame.prevColumnPage)
+         frame.prevColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("prevColumnPage");
    }-*/;
    private static final native void firstColumnPage(WindowEx frame) /*-{
-       if (frame && frame.firstColumnPage)
-           frame.firstColumnPage();
+      if (!frame) return;
+      if (frame.firstColumnPage)
+         frame.firstColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("firstColumnPage");
    }-*/;
    private static final native void lastColumnPage(WindowEx frame) /*-{
-       if (frame && frame.lastColumnPage)
-           frame.lastColumnPage();
+      if (!frame) return;
+      if (frame.lastColumnPage)
+         frame.lastColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("lastColumnPage");
    }-*/;
 
    private static final native void setOffsetAndMaxColumns(WindowEx frame, int offset, int max) /*-{
-       if (frame && frame.setOffsetAndMaxColumns) {
-           frame.setOffsetAndMaxColumns(offset, max);
-       }
+      if (!frame) return;
+      if (frame.setOffsetAndMaxColumns)
+         frame.setOffsetAndMaxColumns(offset, max);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setOffsetAndMaxColumns");
    }-*/;
    private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(
@@ -405,8 +616,21 @@ public class DataTable
             columnFrameCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(offset, max);
          }));
    }-*/;
+
+   private static final native void setSidebarStateCallback(WindowEx frame, CommandWithArg<Boolean> sidebarStateCallback) /*-{
+      frame.setOption(
+         "sidebarStateCallback",
+         $entry(function(visible) {
+            sidebarStateCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(@java.lang.Boolean::valueOf(Z)(!!visible));
+         }));
+   }-*/;
    private Host host_;
    private LatchingToolbarButton filterButton_;
+   private LatchingToolbarButton sidebarButton_;
+   private ToolbarButton refreshButton_;
+   private ToolbarMenuButton optionsMenuButton_;
+   private ToolbarPopupMenu optionsMenu_;
+   private CheckableMenuItem showSummaryItem_;
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;

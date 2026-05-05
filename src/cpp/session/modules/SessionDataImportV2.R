@@ -208,6 +208,9 @@
                col <- colsByIndex[[colIdx + 1]]
 
                if (!identical(col$rType, NULL)) {
+                  # rType is sourced from col_type_r in SessionDataViewer.R,
+                  # which now reports class(val)[[1]] -- so Date/POSIXct/POSIXlt
+                  # appear here verbatim and must be mapped explicitly.
                   colParams[[colIdx]] <- switch(col$rType,
                      "date" = "date",
                      "time" = "date",
@@ -217,6 +220,9 @@
                      "integer" = "numeric",
                      "logical" = "numeric",
                      "dateTime" = "date",
+                     "Date" = "date",
+                     "POSIXct" = "date",
+                     "POSIXlt" = "date",
                      "character" = "text",
                      "\"text\""
                   )
