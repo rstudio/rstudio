@@ -335,7 +335,7 @@ test.describe('R debugger', () => {
       await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
     });
 
-    test('Continue chains through five breakpoints', async () => {
+    test('Continue chains through six breakpoints', async () => {
       const fileName = `continue_chain_${Date.now()}.R`;
       const content = [
         'five_continues_fn <- function() {',
