@@ -114,17 +114,15 @@ core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pKeyPathUsed)
 {
    // determine path to use for secure cookie key file
-   core::FilePath secureKeyPath;
-   if (core::system::effectiveUserIsRoot())
-   {
-      // check in our default configuration folder
-      secureKeyPath = core::system::xdg::findSystemConfigFile(
-            "secure key", filename);
-      if (!secureKeyPath.exists())
-         secureKeyPath = core::FilePath("/var/lib/rstudio-server")
-            .completePath(filename);
-   }
-   else
+   // always try system paths first - the service account owns these and can read them
+   core::FilePath secureKeyPath = core::system::xdg::findSystemConfigFile(
+         "secure key", filename);
+   if (!secureKeyPath.exists())
+      secureKeyPath = core::FilePath("/var/lib/rstudio-server")
+         .completePath(filename);
+
+   // if no system key exists and we're not privileged, fall back to user cache
+   if (!secureKeyPath.exists() && !core::system::effectiveUserIsRoot())
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())
@@ -138,6 +136,14 @@ core::Error readSecureKeyFile(const std::string& filename,
    }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
+}
+
+core::FilePath systemKeyFilePath(const std::string& filename)
+{
+   core::FilePath path = core::system::xdg::findSystemConfigFile("secure key", filename);
+   if (!path.exists())
+      path = core::FilePath("/var/lib/rstudio-server").completePath(filename);
+   return path;
 }
 
 core::Error readSecureKeyFile(const FilePath& secureKeyPath,

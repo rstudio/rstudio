@@ -41,7 +41,7 @@ public:
    LocalStreamHttpConnectionListener(const FilePath& streamPath,
                                      core::FileMode streamFileMode,
                                      const std::string& secret,
-                                     int limitRpcClientUid)
+                                     int64_t limitRpcClientUid)
       : localStreamPath_(streamPath),
         streamFileMode_(streamFileMode),
         secret_(secret)
@@ -53,7 +53,7 @@ public:
          permittedClients_.push_back(currentUserIdentity().userId);
 
          // also add rpc client
-         permittedClients_.push_back(limitRpcClientUid);
+         permittedClients_.push_back(static_cast<UidType>(limitRpcClientUid));
       }
    }
 

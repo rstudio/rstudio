@@ -24,6 +24,7 @@
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>
 
+#include <server/ServerOptions.hpp>
 #include <server/ServerPaths.hpp>
 #include <server/session/ServerSessionManager.hpp>
 
@@ -41,7 +42,8 @@ namespace overlay {
 typedef boost::function<void(
    const auth::SecureAsyncUriHandlerFunction&,
    http::AsyncUriHandlerFunction,
-   bool,
+   bool /*fallbackAllowed*/,
+   bool /*requireAdminAuth*/,
    boost::shared_ptr<core::http::AsyncConnection>)> ValidationHandler;
 
 Error initialize(
@@ -66,6 +68,15 @@ namespace {
 std::string s_sessionSharedSecret;
 boost::shared_ptr<http::AsyncServer> s_pSessionRpcServer;
 
+// Cached uid of the configured server-user (e.g. "rstudio-server"), resolved
+// once at session_rpc::initialize(). Used by the admin-endpoint authorization
+// gate in validationHandler so the decision is driven by SO_PEERCRED, not by
+// any cookie-derived username. -1 means lookup failed/uninitialized; in that
+// case only uid=0 (root) callers can satisfy the gate.
+// int64_t avoids the uid_t->int narrowing that would misidentify UID >= 2^31 or
+// the nobody sentinel (4294967295) as the uninitialized sentinel.
+int64_t s_serverUserUid = -1;
+
 void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
 {
    pProfile->config.environment.push_back(
@@ -77,6 +88,18 @@ void writeInvalidRequest(boost::shared_ptr<core::http::AsyncConnection> pConnect
    http::Response& response = pConnection->response();
    response.setStatusCode(core::http::status::BadRequest);
    response.setStatusMessage("Invalid request.");
+   pConnection->writeResponse();
+}
+
+// Used by the admin-auth gate in validationHandler. The caller is authenticated
+// (or anonymous on the cookie-less path) but not authorized for an admin RPC.
+// 403 is the right status here - the request itself is well-formed.
+void writeForbiddenResponse(boost::shared_ptr<core::http::AsyncConnection> pConnection,
+                            const std::string& reason)
+{
+   http::Response& response = pConnection->response();
+   response.setStatusCode(core::http::status::Forbidden);
+   response.setStatusMessage(reason);
    pConnection->writeResponse();
 }
 
@@ -113,6 +136,7 @@ void validationHandler(
       const auth::SecureAsyncUriHandlerFunction& handler,
       http::AsyncUriHandlerFunction unauthorizedResponseFunction,
       bool fallbackAllowed, // failure should not be logged
+      bool requireAdminAuth, // endpoint registered with allowUserAccess=false
       boost::shared_ptr<core::http::AsyncConnection> pConnection)
 {
    std::string username;
@@ -145,7 +169,7 @@ void validationHandler(
       }
 
       // get user on the other end of the socket (if available)
-      int uid = pConnection->request().remoteUid();
+      int64_t uid = pConnection->request().remoteUid();
       if (uid != -1)
       {
          core::system::User user;
@@ -162,6 +186,34 @@ void validationHandler(
       }
    }
    pConnection->setUsername(username);
+
+   // API-level authorization for endpoints registered with allowUserAccess=false:
+   // require the caller to be root or the configured server-user. Decision is
+   // driven by SO_PEERCRED (not by `username`, which can come from a cookie).
+   if (requireAdminAuth)
+   {
+      const int64_t uid = pConnection->request().remoteUid();
+      if (uid == -1)
+      {
+         LOG_WARNING_MESSAGE("Admin RPC " + pConnection->request().uri() +
+                             " rejected: no peer credentials");
+         writeForbiddenResponse(pConnection,
+            "Forbidden: admin operations require local socket transport");
+         return;
+      }
+      if (uid != 0 && uid != s_serverUserUid)
+      {
+         LOG_WARNING_MESSAGE("Admin RPC " + pConnection->request().uri() +
+                             " rejected: caller uid=" + std::to_string(uid) +
+                             " is not root or " + server::options().serverUser());
+         writeForbiddenResponse(pConnection,
+            "Forbidden: admin operations require root or " +
+            server::options().serverUser());
+         return;
+      }
+      LOG_DEBUG_MESSAGE("Admin RPC " + pConnection->request().uri() +
+                        " invoked by uid=" + std::to_string(uid));
+   }
 
    LOG_DEBUG_MESSAGE("Handling session rpc: " + pConnection->request().debugInfo());
 
@@ -182,6 +234,7 @@ void addHandler(const std::string& prefix,
                                    handler,
                                    writeInvalidRequest,
                                    false /*fallbackAllowed*/,
+                                   !allowUserAccess /*requireAdminAuth*/,
                                    _1));
 
       overlay::addHandler(prefix, handler, allowUserAccess);
@@ -198,6 +251,7 @@ void addHttpProxyHandler(const std::string &prefix,
                                    handler,
                                    writeInvalidRequest,
                                    false /*fallbackAllowed*/,
+                                   false /*requireAdminAuth - proxy handlers are not admin-only*/,
                                    _1));
 
       overlay::addHttpProxyHandler(prefix, handler);
@@ -243,6 +297,19 @@ Error initialize()
                                        &s_sessionSharedSecret);
    if (error)
       return error;
+
+   // resolve the configured server-user's uid so the admin-RPC gate in
+   // validationHandler can compare peer-creds numerically rather than via
+   // a (cookie-derived) username
+   {
+      core::system::User saUser;
+      core::Error saErr = core::system::User::getUserFromIdentifier(
+            server::options().serverUser(), saUser);
+      if (saErr)
+         LOG_ERROR(saErr);
+      else
+         s_serverUserUid = static_cast<int64_t>(saUser.getUserId());
+   }
 
    // inject the shared secret into the session
    sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);

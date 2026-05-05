@@ -50,6 +50,10 @@ core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContentsHash,
                               std::string* pKeyFileUsed);
 
+// Returns the system path where the named key file lives (or would live).
+// Does not attempt to read or create the file.
+core::FilePath systemKeyFilePath(const std::string& filename);
+
 } // namespace key_file
 } // namespace server
 } // namespace rstudio

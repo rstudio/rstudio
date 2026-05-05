@@ -425,7 +425,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    std::string limitUid = core::system::getenv(kRStudioLimitRpcClientUid);
    if (!limitUid.empty())
    {
-      limitRpcClientUid_ = core::safe_convert::stringTo<int>(limitUid, -1);
+      limitRpcClientUid_ = core::safe_convert::stringTo<int64_t>(limitUid, -1);
       core::system::unsetenv(kRStudioLimitRpcClientUid);
    }
 

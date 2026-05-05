@@ -864,9 +864,23 @@ int main(int argc, char * const argv[])
                        ", min: " + std::to_string(system::crypto::getMinimumEncryptionVersion()));
 
       // initialize secure cookie module
-      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+      // In verify-installation mode, skip if the key file exists but is not
+      // readable by the caller - the cookie key is not needed for the session
+      // launch + exit path that verify-installation follows.
+      {
+         FilePath cookieKeyPath = options.secureCookieKeyFile().isEmpty()
+            ? key_file::systemKeyFilePath("secure-cookie-key")
+            : options.secureCookieKeyFile();
+         bool skip = options.verifyInstallation() &&
+                     cookieKeyPath.exists() &&
+                     ::access(cookieKeyPath.getAbsolutePath().c_str(), R_OK) != 0;
+         if (!skip)
+         {
+            error = core::http::secure_cookie::initialize(cookieKeyPath);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
+         }
+      }
 
       // execute any database commands if passed
       if (!options.dbCommand().empty())
@@ -937,18 +951,29 @@ int main(int argc, char * const argv[])
          uri_handlers::setRequestFilter(rootPathRequestFilter);
       }
       // initialize socket rpc so we can send distributed events
-      error = key_file::readSecureKeyFile("session-rpc-key", &s_rpcSecret);
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+      // In verify-installation mode, skip if the key file exists but is not
+      // readable - the session RPC is unused for the verify-installation path.
+      {
+         FilePath rpcKeyPath = key_file::systemKeyFilePath("session-rpc-key");
+         bool skip = options.verifyInstallation() &&
+                     rpcKeyPath.exists() &&
+                     ::access(rpcKeyPath.getAbsolutePath().c_str(), R_OK) != 0;
+         if (!skip)
+         {
+            error = key_file::readSecureKeyFile("session-rpc-key", &s_rpcSecret);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
 
-      error = core::socket_rpc::initializeSecret(s_rpcSecret);
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+            error = core::socket_rpc::initializeSecret(s_rpcSecret);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // initialize the session rpc handler
-      error = session_rpc::initialize();
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+            // session_rpc::initialize reads session-rpc-key; must be skipped together with initializeSecret
+            error = session_rpc::initialize();
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
+         }
+      }
 
       // call overlay initialize
       error = overlay::initialize(serverUser);
