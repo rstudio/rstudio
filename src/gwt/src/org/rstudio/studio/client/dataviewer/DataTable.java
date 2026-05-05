@@ -94,12 +94,16 @@ public class DataTable
                     }
                  }
               });
+      // Pass null leftImage so the toolbar emits an empty <img> placeholder
+      // we can swap for an inline bar-chart SVG. SVG picks up the active
+      // IDE theme via fill='currentColor' and stays sharp at any device
+      // pixel ratio, so a static PNG isn't worth shipping.
       sidebarButton_ = new LatchingToolbarButton(
               constants_.sidebarButtonText(),
               ToolbarButton.NoTitle,
               false, /* textIndicatesState */
               ClassIds.DATA_TABLE_SIDEBAR_TOGGLE,
-              new ImageResource2x(DataViewerResources.INSTANCE.summaryIcon2x()),
+              null,
               new ClickHandler() {
                  public void onClick(ClickEvent event)
                  {
@@ -108,10 +112,6 @@ public class DataTable
                     toggleSidebar(getWindow());
                  }
               });
-      // Replace the rendered PNG with the inline bar-chart SVG: SVG
-      // picks up the active IDE theme via fill='currentColor' and stays
-      // sharp at any device pixel ratio. Preserve the original img
-      // element's class so layout (margins, sizing) is unchanged.
       NodeList<Element> sidebarImgs =
             sidebarButton_.getElement().getElementsByTagName("img");
       if (sidebarImgs.getLength() > 0)
@@ -464,46 +464,76 @@ public class DataTable
 
    private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
 
+   // Surface "frame is here but the method we expected is missing" so the
+   // mismatch shows up in dev logs instead of a silent no-op. The
+   // frame-absent case is normal during teardown and intentionally quiet.
+   private static void logMissingFrameMethod(String name)
+   {
+      Debug.log("DataTable: iframe missing method '" + name + "'");
+   }
+
    private static final native void toggleSidebar(WindowEx frame) /*-{
-      if (frame && frame.toggleSidebar)
+      if (!frame) return;
+      if (frame.toggleSidebar)
          frame.toggleSidebar();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("toggleSidebar");
    }-*/;
 
    private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
-      if (frame && frame.setFilterUIVisible)
+      if (!frame) return false;
+      if (frame.setFilterUIVisible)
          return frame.setFilterUIVisible(visible);
+      @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setFilterUIVisible");
       return false;
    }-*/;
 
    private static final native void refreshData(WindowEx frame) /*-{
-      if (frame && frame.refreshData)
+      if (!frame) return;
+      if (frame.refreshData)
          frame.refreshData();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("refreshData");
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{
-      if (frame && frame.applySearch)
+      if (!frame) return;
+      if (frame.applySearch)
          frame.applySearch(text);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("applySearch");
    }-*/;
-   
+
    private static final native void onActivate(WindowEx frame) /*-{
-      if (frame && frame.onActivate)
+      if (!frame) return;
+      if (frame.onActivate)
          frame.onActivate();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onActivate");
    }-*/;
 
    private static final native void onDeactivate(WindowEx frame) /*-{
-      if (frame && frame.onDeactivate)
+      if (!frame) return;
+      if (frame.onDeactivate)
          frame.onDeactivate();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onDeactivate");
    }-*/;
 
    private static final native void onDismiss(WindowEx frame) /*-{
-      if (frame && frame.onDismiss)
+      if (!frame) return;
+      if (frame.onDismiss)
          frame.onDismiss();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onDismiss");
    }-*/;
 
    private static final native boolean isLimitedColumnFrame(WindowEx frame) /*-{
-       if (frame && frame.isLimitedColumnFrame)
-           return frame.isLimitedColumnFrame();
-       return false;
+      if (!frame) return false;
+      if (frame.isLimitedColumnFrame)
+          return frame.isLimitedColumnFrame();
+      @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("isLimitedColumnFrame");
+      return false;
    }-*/;
 
    private void nextColumnPage()
@@ -528,26 +558,40 @@ public class DataTable
    }
 
    private static final native void nextColumnPage(WindowEx frame) /*-{
-      if (frame && frame.nextColumnPage)
-          frame.nextColumnPage();
+      if (!frame) return;
+      if (frame.nextColumnPage)
+         frame.nextColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("nextColumnPage");
    }-*/;
    private static final native void prevColumnPage(WindowEx frame) /*-{
-       if (frame && frame.prevColumnPage)
-           frame.prevColumnPage();
+      if (!frame) return;
+      if (frame.prevColumnPage)
+         frame.prevColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("prevColumnPage");
    }-*/;
    private static final native void firstColumnPage(WindowEx frame) /*-{
-       if (frame && frame.firstColumnPage)
-           frame.firstColumnPage();
+      if (!frame) return;
+      if (frame.firstColumnPage)
+         frame.firstColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("firstColumnPage");
    }-*/;
    private static final native void lastColumnPage(WindowEx frame) /*-{
-       if (frame && frame.lastColumnPage)
-           frame.lastColumnPage();
+      if (!frame) return;
+      if (frame.lastColumnPage)
+         frame.lastColumnPage();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("lastColumnPage");
    }-*/;
 
    private static final native void setOffsetAndMaxColumns(WindowEx frame, int offset, int max) /*-{
-       if (frame && frame.setOffsetAndMaxColumns) {
-           frame.setOffsetAndMaxColumns(offset, max);
-       }
+      if (!frame) return;
+      if (frame.setOffsetAndMaxColumns)
+         frame.setOffsetAndMaxColumns(offset, max);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setOffsetAndMaxColumns");
    }-*/;
    private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(

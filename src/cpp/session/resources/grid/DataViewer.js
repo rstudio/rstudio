@@ -441,7 +441,6 @@ var fetchRows = function(start, length, callback) {
          if (callback) callback();
          renderVisibleRows(true);
          updateInfoBar();
-         updateSpacerHeight();
       })
       .catch(function(err) {
          pendingFetches.delete(key);
@@ -558,6 +557,10 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       var linkEl = document.createElement("a");
       linkEl.className = "viewerLink";
       linkEl.href = "#";
+      var openLabel = clazz === "dataCell"
+         ? "Open data viewer for this cell"
+         : "Open object viewer for this cell";
+      linkEl.setAttribute("aria-label", openLabel);
       linkEl.addEventListener("click", function(evt) {
          evt.preventDefault();
          var fn = window[cbName];
@@ -566,6 +569,8 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       var imgEl = document.createElement("img");
       imgEl.className = "viewerImage";
       imgEl.src = clazz === "dataCell" ? "data-viewer.png" : "object-viewer.png";
+      // Image is decorative -- the surrounding link carries the accessible name.
+      imgEl.setAttribute("alt", "");
       linkEl.appendChild(imgEl);
       td.appendChild(linkEl);
       return;
@@ -621,6 +626,7 @@ var createHeader = function(idx, col) {
    var th = document.createElement("th");
    th.className = "sorting";
    th.setAttribute("data-col-idx", idx);
+   th.setAttribute("scope", "col");
 
    if (idx === 0 && rowNumbers) {
       th.classList.add("pinned");
@@ -633,11 +639,22 @@ var createHeader = function(idx, col) {
    if (!(idx === 0 && rowNumbers)) {
       var pinIcon = document.createElement("span");
       pinIcon.className = "pin-icon";
-      if (pinnedColumns.has(idx)) pinIcon.classList.add("pinned");
-      pinIcon.title = "Pin column";
-      pinIcon.addEventListener("click", function(evt) {
+      var pinned = pinnedColumns.has(idx);
+      if (pinned) pinIcon.classList.add("pinned");
+      pinIcon.setAttribute("role", "button");
+      pinIcon.setAttribute("tabindex", "0");
+      pinIcon.setAttribute("aria-pressed", pinned ? "true" : "false");
+      pinIcon.setAttribute("aria-label",
+         (pinned ? "Unpin column " : "Pin column ") + col.col_name);
+      pinIcon.title = pinned ? "Unpin column" : "Pin column";
+      var activatePin = function(evt) {
          evt.stopPropagation();
+         evt.preventDefault();
          togglePinColumn(idx);
+      };
+      pinIcon.addEventListener("click", activatePin);
+      pinIcon.addEventListener("keydown", function(evt) {
+         if (evt.key === "Enter" || evt.key === " ") activatePin(evt);
       });
       interior.appendChild(pinIcon);
    }
@@ -677,17 +694,36 @@ var createHeader = function(idx, col) {
    resizer.setAttribute("data-col", idx);
    th.appendChild(resizer);
 
-   // Sort click handler
+   // Sort click + keyboard handlers. Sortable headers are reachable via
+   // tab and announced as buttons so AT users can sort with Enter/Space.
    if (ordering && col.col_type !== "rownames") {
       th.style.cursor = "pointer";
+      th.setAttribute("tabindex", "0");
+      th.setAttribute("role", "columnheader");
+      th.setAttribute("aria-sort",
+         idx === sortColumn ? sortAriaValue(sortDirection) : "none");
       th.addEventListener("click", function(evt) {
          if (evt.target.className === "resizer") return;
+         if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
          if (didResize) { didResize = false; return; }
          handleSortClick(idx, th);
+      });
+      th.addEventListener("keydown", function(evt) {
+         if (evt.target !== th) return;
+         if (evt.key === "Enter" || evt.key === " ") {
+            evt.preventDefault();
+            handleSortClick(idx, th);
+         }
       });
    }
 
    return th;
+};
+
+var sortAriaValue = function(dir) {
+   if (dir === "asc") return "ascending";
+   if (dir === "desc") return "descending";
+   return "none";
 };
 
 var handleSortClick = function(colIdx, th) {
@@ -714,19 +750,27 @@ var handleSortClick = function(colIdx, th) {
    // we don't re-highlight a different row at the old coordinate.
    clearActiveCell();
 
-   // Update header classes
+   // Update header classes and aria-sort. AT users hear "ascending" /
+   // "descending" / "none" in place of the visual arrow cue.
    for (var i = 0; i < headers.length; i++) {
       headers[i].classList.remove("sorting_asc", "sorting_desc");
       if (!headers[i].classList.contains("sorting")) {
          headers[i].classList.add("sorting");
       }
+      if (headers[i].hasAttribute("aria-sort")) {
+         headers[i].setAttribute("aria-sort", "none");
+      }
    }
    if (newDir === "asc") {
       th.classList.remove("sorting");
       th.classList.add("sorting_asc");
+      th.setAttribute("aria-sort", "ascending");
    } else if (newDir === "desc") {
       th.classList.remove("sorting");
       th.classList.add("sorting_desc");
+      th.setAttribute("aria-sort", "descending");
+   } else {
+      th.setAttribute("aria-sort", "none");
    }
 
    // Re-fetch data
@@ -857,15 +901,24 @@ var applyPinnedColumns = function() {
       var th = thead.children[i];
       var colIdx = columnOrder[i];
       var pinIcon = th.querySelector(".pin-icon");
+      var col = cols[colIdx];
+      var colName = col ? col.col_name : "";
+      var nowPinned = isColumnPinned(colIdx);
 
-      if (isColumnPinned(colIdx)) {
+      if (nowPinned) {
          th.classList.add("pinned");
          th.style.left = (pinned.offsets[colIdx] || 0) + "px";
-         if (pinIcon) pinIcon.classList.add("pinned");
       } else {
          th.classList.remove("pinned");
          th.style.left = "";
-         if (pinIcon) pinIcon.classList.remove("pinned");
+      }
+      if (pinIcon) {
+         if (nowPinned) pinIcon.classList.add("pinned");
+         else pinIcon.classList.remove("pinned");
+         pinIcon.setAttribute("aria-pressed", nowPinned ? "true" : "false");
+         pinIcon.setAttribute("aria-label",
+            (nowPinned ? "Unpin column " : "Pin column ") + colName);
+         pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
       }
    }
 
@@ -991,7 +1044,7 @@ var autoSizeColumns = function() {
          var cellText = String(cellVal);
          // For row names (col 0), the value is JSON-encoded
          if (isRowNames) {
-            try { cellText = JSON.parse(cellText).toString(); } catch(e) {}
+            try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
          }
          var cellW = measureTextWidth(cellText, false) + cellExtra;
          if (cellW > maxW) maxW = cellW;
@@ -1542,11 +1595,22 @@ var scrollToTop = function() {
    if (viewport) viewport.scrollTop = 0;
 };
 
-// No-op: spacer height is now handled by top/bottom spacer <tr> elements
-// inside renderVisibleRows. Table minHeight is never set.
-var updateSpacerHeight = function() {};
+var updateAriaRowCount = function() {
+   // Expose the navigable row count to assistive tech. Use filteredRows so
+   // a screen reader announces the rows the user can actually move through,
+   // not the unfiltered backing total.
+   var table = document.getElementById("rsGridData");
+   if (!table) return;
+   if (totalRows > 0) {
+      table.setAttribute("aria-rowcount", String(filteredRows));
+   } else {
+      table.removeAttribute("aria-rowcount");
+   }
+};
 
 var updateInfoBar = function() {
+   updateAriaRowCount();
+
    // Suppress info bar updates during custom scrollbar drags -- reading
    // scrollTop forces style+layout recalc which causes jank. The info
    // bar is updated once when the drag ends.
@@ -1620,11 +1684,15 @@ var buildRow = function(r) {
 
    var tr = document.createElement("tr");
    tr.setAttribute("data-row", r);
+   tr.setAttribute("role", "row");
+   // aria-rowindex is 1-based and includes the header row.
+   tr.setAttribute("aria-rowindex", String(r + 2));
 
    for (var c = 0; c < columnOrder.length; c++) {
       var colIdx = columnOrder[c];
       var clazz = getColClass(cols[colIdx]);
       var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
+      td.setAttribute("role", "gridcell");
       if (r === activeRow && c === activeCol) td.classList.add("activeCell");
       tr.appendChild(td);
    }
@@ -2063,6 +2131,11 @@ var initSidebar = function() {
    if (!content || !toggle || !cols) return;
 
    toggle.innerHTML = "";
+   toggle.setAttribute("role", "button");
+   toggle.setAttribute("tabindex", "0");
+   toggle.setAttribute("aria-controls", "sidebarContent");
+   toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
+   toggle.setAttribute("aria-label", "Toggle column summary panel");
    var toggleLabel = document.createElement("span");
    toggleLabel.textContent = "Summary";
    toggle.appendChild(toggleLabel);
@@ -2073,9 +2146,16 @@ var initSidebar = function() {
    toggleSpinner.id = "sidebarSpinner";
    toggle.appendChild(toggleSpinner);
 
-   toggle.addEventListener("click", function() {
+   var activateToggle = function(evt) {
+      evt.preventDefault();
       toggleSidebar();
+   };
+   toggle.addEventListener("click", activateToggle);
+   toggle.addEventListener("keydown", function(evt) {
+      if (evt.key === "Enter" || evt.key === " ") activateToggle(evt);
    });
+
+   content.setAttribute("role", "list");
 
    content.innerHTML = "";
 
@@ -2086,14 +2166,24 @@ var initSidebar = function() {
       var entry = document.createElement("div");
       entry.className = "sidebar-col";
       entry.setAttribute("data-col-idx", i);
+      entry.setAttribute("role", "listitem");
 
       // Header row: expand button + name + type
       var header = document.createElement("div");
       header.className = "sidebar-col-header";
+      header.setAttribute("role", "button");
+      header.setAttribute("tabindex", "0");
+      header.setAttribute("aria-label",
+         "Scroll to column " + col.col_name);
 
       var expandBtn = document.createElement("span");
       expandBtn.className = "sidebar-expand-btn";
       expandBtn.title = "Show column summary";
+      expandBtn.setAttribute("role", "button");
+      expandBtn.setAttribute("tabindex", "0");
+      expandBtn.setAttribute("aria-expanded", "false");
+      expandBtn.setAttribute("aria-label",
+         "Toggle summary for column " + col.col_name);
       header.appendChild(expandBtn);
 
       var name = document.createElement("span");
@@ -2159,14 +2249,16 @@ var initSidebar = function() {
       entry.appendChild(statsPanel);
 
       // Click entry to scroll; click expand button to toggle stats
-      (function(colIdx, statsEl, btnEl, colType) {
+      (function(colIdx, statsEl, btnEl, headerEl, colType) {
          var expanded = false;
          var loaded = false;
 
-         btnEl.addEventListener("click", function(evt) {
+         var toggleStats = function(evt) {
             evt.stopPropagation();
+            evt.preventDefault();
             expanded = !expanded;
             btnEl.classList.toggle("expanded", expanded);
+            btnEl.setAttribute("aria-expanded", expanded ? "true" : "false");
 
             if (expanded) {
                if (!loaded) {
@@ -2199,12 +2291,23 @@ var initSidebar = function() {
                statsEl.style.display = "none";
                if (sidebarScrollbar_) sidebarScrollbar_.update();
             }
+         };
+
+         btnEl.addEventListener("click", toggleStats);
+         btnEl.addEventListener("keydown", function(evt) {
+            if (evt.key === "Enter" || evt.key === " ") toggleStats(evt);
          });
 
-         entry.addEventListener("click", function(evt) {
-            scrollToColumn(colIdx);
+         var scrollToCol = function() { scrollToColumn(colIdx); };
+         entry.addEventListener("click", scrollToCol);
+         headerEl.addEventListener("keydown", function(evt) {
+            if (evt.target !== headerEl) return;
+            if (evt.key === "Enter" || evt.key === " ") {
+               evt.preventDefault();
+               scrollToCol();
+            }
          });
-      })(i, statsPanel, expandBtn, col.col_type);
+      })(i, statsPanel, expandBtn, header, col.col_type);
 
       content.appendChild(entry);
    }
@@ -2231,6 +2334,8 @@ var toggleSidebar = function() {
    } else {
       panel.classList.remove("expanded");
    }
+   var toggle = document.getElementById("sidebarToggle");
+   if (toggle) toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    // Trigger grid resize after transition
    setTimeout(function() {
       renderVisibleRows(true);
@@ -2368,22 +2473,26 @@ var copyActiveCell = function() {
    if (!td) return false;
    var text = td.textContent || "";
    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Async path: optimistically claim success and let the caller
+      // preventDefault() the keystroke; the .catch() is for diagnostics
+      // since the browser already swallowed the default copy gesture.
       navigator.clipboard.writeText(text).catch(function(err) {
          console.warn("Clipboard write failed:", err);
       });
-   } else {
-      // Pre-Clipboard-API fallback. execCommand("copy") is deprecated but
-      // still widely supported and remains the only synchronous path.
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); } catch (e) { /* ignore */ }
-      document.body.removeChild(ta);
+      return true;
    }
-   return true;
+   // Pre-Clipboard-API fallback. execCommand("copy") is deprecated but
+   // still widely supported and remains the only synchronous path.
+   var ta = document.createElement("textarea");
+   ta.value = text;
+   ta.style.position = "fixed";
+   ta.style.opacity = "0";
+   document.body.appendChild(ta);
+   ta.select();
+   var ok = false;
+   try { ok = document.execCommand("copy"); } catch (e) { /* ok stays false */ }
+   document.body.removeChild(ta);
+   return ok;
 };
 
 var onGridKeyDown = function(evt) {
@@ -2833,7 +2942,6 @@ var initGrid = function(resCols, data) {
       fetchRows(0, FETCH_SIZE, function() {
          autoSizeColumns();
          applyPinnedColumns();
-         updateSpacerHeight();
       });
    }
 
@@ -2904,7 +3012,6 @@ var initWithData = function(data) {
       rowCache.set(r, row);
    }
 
-   updateSpacerHeight();
    renderVisibleRows();
    updateInfoBar();
 };
@@ -3002,7 +3109,7 @@ var columnFingerprint = function() {
    for (var i = 0; i < cols.length; i++) {
       names.push(cols[i].col_name || "");
    }
-   return names.join(" ");
+   return names.join(" ");
 };
 
 var saveState = function() {
@@ -3059,7 +3166,7 @@ var loadSavedState = function() {
 var clearSavedState = function() {
    var key = stateKey();
    if (!key) return;
-   try { localStorage.removeItem(key); } catch (e) {}
+   try { localStorage.removeItem(key); } catch (e) { /* quota / disabled storage */ }
 };
 
 // Apply restored state. Must be called after `cols` is populated but before

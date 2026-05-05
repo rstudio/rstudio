@@ -176,3 +176,62 @@ viewerDoc <- function() {
       rm(".rs.persist_test_df", envir = .GlobalEnv)
    })
 })
+
+# escapeHtml is private inside the gridviewer IIFE, so we cover it via the
+# rendered DOM: cell text and column names flow through escapeHtml on their
+# way to innerHTML. Two recent commits (escape ', formatting) touched the
+# function -- these tests guard against silently regressing them.
+.rs.test("data viewer escapes HTML-special characters in cell values", {
+   remote$console.executeExpr({
+      .rs.escape_test_df <- data.frame(
+         a = c("<script>x</script>", "tom & jerry", "\"quoted\"", "it's"),
+         stringsAsFactors = FALSE
+      )
+      View(.rs.escape_test_df)
+   })
+   doc <- viewerDoc()
+
+   # Walk the body and concatenate the innerHTML of every value cell.
+   # Cells aren't tagged with column indices, so we collect across rows
+   # and rely on the test data being unique per row.
+   tds <- doc$querySelectorAll("#gridBody .textCell")
+   bodyHtml <- ""
+   for (i in seq_len(tds$length)) {
+      bodyHtml <- paste0(bodyHtml, tds[[i - 1L]]$innerHTML, "\n")
+   }
+
+   # Each special character should appear as its escaped form somewhere
+   # in the body, and the raw characters should never appear.
+   expect_match(bodyHtml, "&lt;script&gt;", fixed = TRUE)
+   expect_match(bodyHtml, "tom &amp; jerry", fixed = TRUE)
+   expect_match(bodyHtml, "&quot;quoted&quot;", fixed = TRUE)
+   expect_match(bodyHtml, "it&#39;s", fixed = TRUE)
+   expect_false(grepl("<script>", bodyHtml, fixed = TRUE))
+
+   remote$commands.execute("closeSourceDoc")
+   remote$console.executeExpr({
+      rm(".rs.escape_test_df", envir = .GlobalEnv)
+   })
+})
+
+.rs.test("data viewer escapes HTML-special characters in column names", {
+   remote$console.executeExpr({
+      .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE)
+      names(.rs.escape_hdr_df) <- "<b>&\"'"
+      View(.rs.escape_hdr_df)
+   })
+   doc <- viewerDoc()
+
+   th <- doc$querySelector('th[data-col-idx="1"]')
+   html <- th$innerHTML
+   expect_match(html, "&lt;b&gt;", fixed = TRUE)
+   expect_match(html, "&amp;", fixed = TRUE)
+   expect_match(html, "&quot;", fixed = TRUE)
+   expect_match(html, "&#39;", fixed = TRUE)
+   expect_false(grepl("<b>", html, fixed = TRUE))
+
+   remote$commands.execute("closeSourceDoc")
+   remote$console.executeExpr({
+      rm(".rs.escape_hdr_df", envir = .GlobalEnv)
+   })
+})

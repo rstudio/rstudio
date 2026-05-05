@@ -131,8 +131,18 @@ th {
    user-select: none;
 }
 
-th:focus {
-   outline: none;
+/* Mouse focus stays unstyled (mouse users get a hover affordance), but
+   keyboard focus is highlighted so AT users know where they are. */
+th:focus { outline: none; }
+th:focus-visible {
+   outline: 2px solid var(--grid-focus-border);
+   outline-offset: -2px;
+}
+.pin-icon:focus { outline: none; }
+.pin-icon:focus-visible {
+   outline: 2px solid var(--grid-focus-border);
+   outline-offset: 1px;
+   opacity: 1;
 }
 
 /* Virtual scroll spacer row -- specificity must beat tbody tr:nth-child/hover rules.
@@ -993,4 +1003,14 @@ th.columnClickable div {
    top: 1px;
    min-width: 20px;
    /* left and width set from JS */
+}
+
+/* Honor user vestibular-accessibility preference: drop animations and
+   transitions instead of slow fades / spins / column-flash pulses. */
+@media (prefers-reduced-motion: reduce) {
+   *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+   }
 }

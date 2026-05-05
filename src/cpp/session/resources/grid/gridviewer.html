@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="errorMask"></div>
-    <div id="errorWrapper">
+    <div id="errorWrapper" role="alert" aria-live="assertive">
         <div id="error"></div>
         <input type="button" onClick="window.location.reload();" value="Retry">
     </div>
@@ -16,14 +16,14 @@
     <div id="gridContainer">
         <div id="gridPanel">
             <div id="gridViewport">
-                <table id="rsGridData" class="autoSize">
+                <table id="rsGridData" class="autoSize" role="grid">
                     <thead>
-                        <tr id="data_cols"></tr>
+                        <tr id="data_cols" role="row"></tr>
                     </thead>
                     <tbody id="gridBody"></tbody>
                 </table>
             </div>
-            <div id="rsGridData_info"></div>
+            <div id="rsGridData_info" aria-live="polite" aria-atomic="true"></div>
         </div>
 
         <div id="sidebarPanel">

@@ -975,7 +975,17 @@ Error getGridData(const http::Request& request,
             }
             else
             {
-               r::json::jsonValueFromObject(summarySEXP, &result);
+               // Mirror the error branch above -- a successful R call followed
+               // by a failed SEXP -> JSON conversion would otherwise return
+               // 200 OK with a stale or default-constructed result body.
+               Error convertError = r::json::jsonValueFromObject(summarySEXP, &result);
+               if (convertError)
+               {
+                  LOG_ERROR(convertError);
+                  json::Object err;
+                  err["error"] = "Failed to encode column summary.";
+                  result = err;
+               }
             }
          }
       }
