@@ -190,8 +190,11 @@ tbody tr:nth-child(odd):hover td:not(.first-child) {
 
 /* Active cell highlight (keyboard nav + click). Outline draws outside
    the cell box so it doesn't shift layout, and beats the row-hover
-   background by virtue of being a separate paint phase. */
-td.activeCell {
+   background by virtue of being a separate paint phase. Scoped to
+   :focus-within so the outline disappears when focus leaves the grid
+   (e.g. Shift+Tab to the toolbar) -- otherwise it would look like
+   keyboard focus is in two places. */
+#gridViewport:focus-within td.activeCell {
    outline: 2px solid var(--grid-focus-border);
    outline-offset: -2px;
 }
