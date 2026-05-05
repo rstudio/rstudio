@@ -29,17 +29,17 @@ test_that("invalid marker type generates informative error", {
    vector_type[["type"]] <- c("warning", "error")
    
    expect_error(
-      sourceMarkers(name = "with_NULL_type", markers = list(NULL_type)),
+      .rs.api.sourceMarkers(name = "with_NULL_type", markers = list(NULL_type)),
       regexp = "Invalid marker type", fixed = TRUE
    )
    
    expect_error(
-      sourceMarkers(name = "with_char0_type", markers = list(char0_type)),
+      .rs.api.sourceMarkers(name = "with_char0_type", markers = list(char0_type)),
       regexp = "Invalid marker type", fixed = TRUE
    )
    
    expect_error(
-      sourceMarkers(name = "with_vector_type", markers = list(vector_type)),
+      .rs.api.sourceMarkers(name = "with_vector_type", markers = list(vector_type)),
       regexp = "Invalid marker type", fixed = TRUE
    )
 })
