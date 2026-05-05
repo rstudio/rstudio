@@ -1652,15 +1652,19 @@ var updateInfoBar = function() {
 
    var info = document.getElementById("rsGridData_info");
    if (!info) return;
+   var textEl = document.getElementById("rsGridData_info_text");
+   var sortEl = document.getElementById("rsGridData_info_sort");
 
    if (statusTextOverride) {
-      info.textContent = statusTextOverride;
+      if (textEl) textEl.textContent = statusTextOverride;
+      if (sortEl) sortEl.textContent = "";
       return;
    }
 
    var activeRows = filteredRows;
    if (totalRows === 0) {
-      info.textContent = "";
+      if (textEl) textEl.textContent = "";
+      if (sortEl) sortEl.textContent = "";
       return;
    }
 
@@ -1709,7 +1713,14 @@ var updateInfoBar = function() {
    if (filteredRows < totalRows) {
       text += " (filtered from " + totalRows.toLocaleString() + " total)";
    }
-   info.textContent = text;
+   if (textEl) textEl.textContent = text;
+
+   var sortText = "";
+   if (sortColumn >= 0 && sortDirection && cols && cols[sortColumn]) {
+      var dirText = sortDirection === "asc" ? "ascending" : "descending";
+      sortText = "Sorted by: " + cols[sortColumn].col_name + " (" + dirText + ")";
+   }
+   if (sortEl) sortEl.textContent = sortText;
 };
 
 var buildRow = function(r) {
@@ -3501,8 +3512,10 @@ var destroyGrid = function() {
    var tbody = document.getElementById("gridBody");
    if (tbody) { tbody.innerHTML = ""; }
 
-   var info = document.getElementById("rsGridData_info");
-   if (info) info.textContent = "";
+   var infoText = document.getElementById("rsGridData_info_text");
+   if (infoText) infoText.textContent = "";
+   var infoSort = document.getElementById("rsGridData_info_sort");
+   if (infoSort) infoSort.textContent = "";
 
    var viewport = document.getElementById("gridViewport");
    if (viewport) {

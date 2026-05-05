@@ -636,6 +636,15 @@ th.columnClickable div {
    height: var(--info-bar-height);
    text-align: left;
    flex-shrink: 0;
+   box-sizing: border-box;
+}
+
+#rsGridData_info_sort {
+   float: right;
+}
+
+#rsGridData_info_text {
+   overflow: hidden;
 }
 
 
