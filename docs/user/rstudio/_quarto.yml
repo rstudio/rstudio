@@ -117,6 +117,7 @@ website:
         collapse-level: 1
         contents:
           - ide/reference/shortcuts.qmd
+          - ide/reference/environment-variables.qmd
           
           
   page-footer:

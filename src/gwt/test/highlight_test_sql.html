@@ -1,6 +1,8 @@
 <html>
 <head>
   <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
@@ -35,6 +37,7 @@
 <body>
 
   <h2>SQL Highlight Tester</h2>
+  <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
   <div id="editor" style="position: absolute; width: 600px; height: 600px; border: 1px solid #999"></div>
 
   <script type="text/javascript">
@@ -85,9 +88,8 @@
     }
   }
 
-  var div = document.createElement("div");
-  div.innerHTML = "Passed " + count + " of " + n + " tests.";
-  document.body.appendChild(div);
+  document.getElementById("passed").innerText = String(count);
+  document.getElementById("failed").innerText = String(n - count);
 
   </script>
 

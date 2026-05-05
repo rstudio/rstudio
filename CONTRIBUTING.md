@@ -26,7 +26,7 @@ We welcome contributions to RStudio. To submit a contribution:
 
 1. [Fork](https://github.com/rstudio/rstudio/fork) the repository and make your changes.
 
-2. Ensure that you have signed the [individual](https://posit.co/wp-content/uploads/2022/10/positindividualcontributoragreement-1.pdf) or [corporate](https://posit.co/wp-content/uploads/2022/10/positcorporatecontributoragreement-1.pdf) contributor agreement as appropriate. You can send the signed copy to <contribute@posit.co>.
+2. Ensure that you have signed the [individual](https://posit.co/individual-contributor-agreement) or [corporate](https://posit.co/corporate-contributor-agreement) contributor agreement as appropriate. You can send the signed copy to <contribute@posit.co>.
 
 3. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
 

@@ -56,6 +56,8 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompl
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
@@ -620,9 +622,19 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            // Backend delivers user-facing text via client_info; fall back
+            // to the generic user message when no client_info is provided.
+            String message = error.getUserMessage();
+            JSONValue clientInfo = error.getClientInfo();
+            if (clientInfo != null)
+            {
+               JSONString clientInfoStr = clientInfo.isString();
+               if (clientInfoStr != null)
+                  message = clientInfoStr.stringValue();
+            }
             globalDisplay_.showErrorMessage(
                constants_.uninstallPositAssistantCaption(),
-               error.getUserMessage());
+               message);
          }
       });
    }

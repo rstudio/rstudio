@@ -2933,17 +2933,155 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Resolve aliased paths (e.g., ~/file.R)
+   // Resolve aliased paths (e.g., ~/file.R). We intentionally do not check for
+   // existence here -- callers may legitimately ask to open a path that does
+   // not yet exist (the editor will create a new buffer).
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
-   // Open the file in the editor
-   module_context::editFile(resolvedPath);
+   // Optional 1-based line number; default of -1 disables line positioning
+   int line = -1;
+   auto lineIt = params.find("line");
+   if (lineIt != params.end())
+   {
+      const json::Value& lineValue = (*lineIt).getValue();
+      if (!lineValue.isInt() || lineValue.getInt() < 1)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: line must be a positive integer");
+         return;
+      }
+      line = lineValue.getInt();
+   }
+
+   // Open the file in the editor (editFile expects a 1-based line number; any
+   // negative value skips line positioning)
+   module_context::editFile(resolvedPath, line);
 
    // Return success
    json::Object result;
    result["success"] = true;
 
-   DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   if (line > 0)
+      DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   else
+      DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRevealInFilesPane(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling ui/revealInFilesPane request");
+
+   // Extract path parameter
+   std::string path;
+   Error error = json::readObject(params, "path", path);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
+      return;
+   }
+
+   // Convert URI to path if needed (handles file:// URIs)
+   std::string filePath = uriToPath(path);
+
+   if (filePath.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
+      return;
+   }
+
+   // Resolve aliased paths (e.g., ~/folder). Unlike ui/openDocument, reveal
+   // requires an existing target -- we cannot navigate the Files pane to a
+   // path that is not on disk.
+   FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
+
+   if (!resolvedPath.exists())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Path does not exist: " + path);
+      return;
+   }
+
+   // If the path points to a file, reveal its parent directory in the Files pane
+   FilePath dirPath = resolvedPath.isDirectory() ? resolvedPath : resolvedPath.getParent();
+
+   // Fire a directory_navigate client event with activate=true to bring the
+   // Files pane to the front
+   json::Object eventData;
+   eventData["directory"] = module_context::createAliasedPath(dirPath);
+   eventData["activate"] = true;
+   ClientEvent event(client_events::kDirectoryNavigate, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Revealed in Files pane: {}", dirPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handlePreviewUrl(core::system::ProcessOperations& ops,
+                      const json::Value& requestId,
+                      const json::Object& params)
+{
+   DLOG("Handling ui/previewUrl request");
+
+   // Extract url parameter
+   std::string url;
+   Error error = json::readObject(params, "url", url);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: url required");
+      return;
+   }
+
+   if (!chat::constants::isValidPreviewUrlScheme(url))
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid url: only http and https schemes are supported");
+      return;
+   }
+
+   // Optional height parameter: 0 = no change, -1 = maximize, positive = pixels.
+   int height = 0;
+   auto heightIt = params.find("height");
+   if (heightIt != params.end())
+   {
+      const json::Value& heightValue = (*heightIt).getValue();
+      if (!heightValue.isInt())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be an integer");
+         return;
+      }
+      if (!chat::constants::isValidPreviewUrlHeight(heightValue.getInt()))
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be -1, 0, or a positive integer");
+         return;
+      }
+      height = heightValue.getInt();
+   }
+
+   // Navigate the Viewer pane. module_context::viewer() handles server-mode
+   // port mapping and fires kViewerNavigate.
+   module_context::viewer(url, height);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   // Log the URL with query/fragment redacted -- URLs from assistant tool
+   // calls can include access tokens or other secrets in the query string.
+   auto queryPos = url.find_first_of("?#");
+   std::string urlForLog = (queryPos == std::string::npos)
+                              ? url
+                              : url.substr(0, queryPos) + "...";
+   DLOG("Previewing url in viewer pane: {} (height={})", urlForLog, height);
    sendJsonRpcResponse(ops, requestId, result);
 }
 
@@ -3087,6 +3225,14 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/openDocument")
    {
       handleOpenDocument(ops, requestId, params);
+   }
+   else if (method == "ui/revealInFilesPane")
+   {
+      handleRevealInFilesPane(ops, requestId, params);
+   }
+   else if (method == "ui/previewUrl")
+   {
+      handlePreviewUrl(ops, requestId, params);
    }
    else
    {
@@ -5219,43 +5365,48 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
    FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
+   // No user-data install paths exist. Distinguish env/system/none to give
+   // the user a targeted message. Each branch delivers its message via
+   // client_info on the JSON-RPC error so the frontend can show it verbatim
+   // (Error::getSummary() would otherwise wrap the system errno text and
+   // obscure our description).
    if (!aiDir.exists() && !aiPrevDir.exists())
    {
-      // No user-data install — check for env/system installs to give a
-      // targeted error message instead of a generic "not installed".
       std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
       if (!envPath.empty() && FilePath(envPath).exists())
       {
-         return systemError(
-            boost::system::errc::operation_not_permitted,
-            "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
-            "environment variable and cannot be uninstalled "
-            "from RStudio.",
-            ERROR_LOCATION);
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
+               "environment variable and cannot be uninstalled "
+               "from RStudio."));
+         return Success();
       }
 
       FilePath systemPath =
          xdg::systemConfigDir().completePath(kPositAiDirName);
       if (systemPath.exists())
       {
-         return systemError(
-            boost::system::errc::operation_not_permitted,
-            "Posit Assistant is installed at the system level by an "
-            "administrator and cannot be uninstalled from RStudio.",
-            ERROR_LOCATION);
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed at the system level by an "
+               "administrator and cannot be uninstalled from RStudio."));
+         return Success();
       }
 
-      // Already not installed — treat as success so the frontend
-      // proceeds to restart RStudio as expected. Clear cached state
-      // in case the directory was removed out-of-band while the
-      // session still thinks Posit Assistant is available.
       DLOG("Posit Assistant is not installed; nothing to remove");
+      // Clear cached state in case the directory was removed out-of-band
+      // while the session still thinks Posit Assistant is available.
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState = UpdateState();
       }
       s_positAssistantVersion.clear();
-      pResponse->setResult(json::Value());
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is not installed."));
       return Success();
    }
 

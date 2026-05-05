@@ -19,56 +19,55 @@ npx playwright install
 
 ## Running Tests
 
-### Pick a project first
+### Pick a mode
 
-Bare `npx playwright test` runs the suite against all 8 projects sequentially--hours of test time. Always pass `--project=<name>` (or set `PW_PROJECT`) to scope to one configuration.
-
-Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+The suite has two Playwright projects: `desktop` (default) and `server`. Each filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
 
 ### Desktop Mode (Default)
 
-No special environment variables needed--`PW_RSTUDIO_MODE` defaults to `desktop`.
+No flag needed--`desktop` is the default project.
 
 ```bash
 # All tests
-npx playwright test --project=desktop-os-macos
+npx playwright test
 
 # Specific test file
-npx playwright test tests/panes/misc/autocomplete.test.ts --project=desktop-os-windows
+npx playwright test tests/panes/misc/autocomplete.test.ts
 
 # Specific test by name
-npx playwright test -g "test name here" --project=desktop-os-linux
-npx playwright test -g "base function: cat(" --project=desktop-pro-macos
+npx playwright test -g "test name here"
+npx playwright test -g "base function: cat("
 
 # With extra RStudio CLI args
-PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test --project=desktop-pro-windows
+PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 
-# Pro on Linux
-npx playwright test --project=desktop-pro-linux
+# Pro edition
+PW_RSTUDIO_EDITION=pro npx playwright test
 ```
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
 ### Server Mode
 
-Set `PW_RSTUDIO_MODE=server` and provide credentials. `PW_RSTUDIO_SERVER_URL` defaults to `http://localhost:8787`; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set (no default--if unset, the port comes from the URL).
+Pass `--project=server` and provide credentials. `PW_RSTUDIO_SERVER_URL` defaults to `http://localhost:8787`; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set (no default--if unset, the port comes from the URL).
 
 ```bash
-PW_RSTUDIO_MODE=server \
-  PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
+PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
   PW_RSTUDIO_SERVER_PORT=80 \
   PW_RSTUDIO_SERVER_USER=myuser \
   PW_RSTUDIO_SERVER_PASSWORD=mypass \
-  npx playwright test --project=server-os-linux
+  npx playwright test --project=server
 
-# Pro on Linux
-PW_RSTUDIO_MODE=server \
+# Pro edition
+PW_RSTUDIO_EDITION=pro \
   PW_RSTUDIO_SERVER_URL=http://10.0.0.2 \
   PW_RSTUDIO_SERVER_PORT=80 \
   PW_RSTUDIO_SERVER_USER=myuser \
   PW_RSTUDIO_SERVER_PASSWORD=mypass \
-  npx playwright test --project=server-pro-linux
+  npx playwright test --project=server
 ```
+
+`PW_RSTUDIO_MODE=desktop|server` is a fallback when `--project` isn't passed; if both are set, `--project` wins.
 
 ### Viewing the Report
 
@@ -111,7 +110,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 
 ### Fixtures
 
-The unified fixture (`rstudio.fixture.ts`) checks `PW_RSTUDIO_MODE` and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
+The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
 - **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
 - **Server**: Launches a headed Chromium browser, navigates to the server URL, fills in credentials, waits for the IDE to load.
@@ -253,30 +252,20 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 
 ### Filtering by Tag
 
-The config defines **projects** that automatically exclude tags not applicable to a given environment. Use `--project` to select one:
+The config defines two **projects** -- `desktop` and `server` -- each with a `grepInvert` computed at config load:
+
+- **OS**: `desktop` excludes OS-only tags that don't match the host (`os.platform()`); `server` always excludes `@windows_only|@macos_only` (server targets Linux).
+- **Edition**: `PW_RSTUDIO_EDITION=os` (default) excludes `@pro_only`; `PW_RSTUDIO_EDITION=pro` excludes `@os_only`.
+- **Mode**: each project also excludes the opposite mode's tag (`@server_only` from `desktop`, `@desktop_only` from `server`).
+
+Select a project with `--project`:
 
 ```bash
-npx playwright test --project=desktop-os-windows
-npx playwright test --project=server-os-linux
+npx playwright test --project=desktop
+npx playwright test --project=server
 ```
 
-To avoid passing `--project` every time, set `PW_PROJECT` in your shell profile:
-
-```bash
-export PW_PROJECT=desktop-os-windows
-```
-
-With `PW_PROJECT` set, bare `npx playwright test` runs only that project. To switch projects, override `PW_PROJECT` inline:
-
-```bash
-PW_PROJECT=server-os-linux PW_RSTUDIO_MODE=server npx playwright test
-```
-
-Without `PW_PROJECT` or `--project`, all 8 projects run.
-
-**Note:** `PW_PROJECT` and `--project` conflict--don't use both at the same time. `PW_PROJECT` pre-filters the project list, so `--project` can't select anything outside it. To use `--project`, unset `PW_PROJECT` first.
-
-Available projects: `desktop-os-windows`, `desktop-os-macos`, `desktop-os-linux`, `desktop-pro-windows`, `desktop-pro-macos`, `desktop-pro-linux`, `server-os-linux`, `server-pro-linux`.
+`PW_RSTUDIO_MODE=desktop|server` is a fallback for shell aliases when `--project` isn't passed. **`--project` wins** when both are set.
 
 You can also filter manually with `--grep` and `--grep-invert`:
 
@@ -295,8 +284,8 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 
 | Variable | Mode | Required | Description |
 |----------|------|----------|-------------|
-| `PW_PROJECT` | Both | No | Select a single project (e.g., `desktop-os-windows`). Trumps `--project`. |
-| `PW_RSTUDIO_MODE` | Both | No | `desktop` (default) or `server` |
+| `PW_RSTUDIO_MODE` | Both | No | Fallback for `--project` (`desktop` or `server`); `--project` wins if both set. Default: `desktop`. |
+| `PW_RSTUDIO_EDITION` | Both | No | `os` (default) or `pro`. Filters out `@pro_only` or `@os_only` tagged tests. |
 | `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
 | `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |
 | `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
