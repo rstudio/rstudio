@@ -1,7 +1,8 @@
+<!-- include an entry in NEWS.md if required -->
 
 ### Intent
 
-> Describe briefly what problem this pull request resolves, or what new feature it introduces. Include screenshots of any new or altered UI. Link to any Github issues that are related. 
+> Describe briefly what problem this pull request resolves, or what new feature it introduces. Include screenshots of any new or altered UI. Link to any Github issues that are related.
 
 ### Approach
 
@@ -27,5 +28,3 @@
 - [ ] This PR passes all local unit tests
 
 <!-- Note for community contributors: Please sign our contributor agreement as described in CONTRIBUTING.md and note that you've done so in this space. Very much appreciate your contributions and support! -->
-
-
