@@ -24,14 +24,14 @@ test_that("invalid marker type generates informative error", {
    zerolength_type[["type"]] <- character(0)
    
    expect_error(
-      rstudioapi::sourceMarkers(name = "with_NULL_type",
-                                markers = list(NULL_type)),
+      .rs.api.sourceMarkers(name = "with_NULL_type",
+                            markers = list(NULL_type)),
       regexp = "Invalid marker type", fixed = TRUE
    )
-   
+
    expect_error(
-      rstudioapi::sourceMarkers(name = "with_zerolength_type",
-                                markers = list(zerolength_type)),
+      .rs.api.sourceMarkers(name = "with_zerolength_type",
+                            markers = list(zerolength_type)),
       regexp = "Invalid marker type", fixed = TRUE
    )
 })
