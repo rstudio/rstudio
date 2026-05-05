@@ -203,6 +203,13 @@ var columnOrder = [];
 // (in the Column resize state group above).
 var measuredWidths = [];
 
+// Authoritative table content width; mirrors the sum of measuredWidths after
+// autoSizeColumns. Prefer this over deriving content width from
+// table.offsetWidth - paddingRight, which the browser may reconcile
+// inconsistently when box-sizing: border-box, table-layout: fixed, and a
+// dynamic paddingRight all interact.
+var totalTableWidth = 0;
+
 // Canvas-based text measurer. Lazily initialized so a non-DOM context
 // (tests) doesn't pay the canvas allocation up front.
 var measureCanvas = null;
@@ -921,6 +928,12 @@ var applyPinnedColumns = function() {
    var thead = document.getElementById("data_cols");
    if (!thead) return;
 
+   // No-op if column widths haven't been measured yet (e.g. autoSizeColumns
+   // bailed because the viewport was hidden). Without a real totalTableWidth
+   // the overscroll calculation below would silently produce paddingRight=0;
+   // wait for the next autoSizeColumns + applyPinnedColumns pair instead.
+   if (totalTableWidth === 0) return;
+
    var pinned = getPinnedOffsets();
 
    for (var i = 0; i < thead.children.length; i++) {
@@ -950,9 +963,7 @@ var applyPinnedColumns = function() {
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var currentPad = parseFloat(table.style.paddingRight) || 0;
-      var contentWidth = table.offsetWidth - currentPad;
-      var overscroll = contentWidth > viewport.clientWidth
+      var overscroll = totalTableWidth > viewport.clientWidth
          ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
          : 0;
       table.style.paddingRight = overscroll + "px";
@@ -1095,6 +1106,7 @@ var autoSizeColumns = function() {
       table.style.tableLayout = "fixed";
    }
 
+   totalTableWidth = totalWidth;
    invalidatePinnedOffsets();
 };
 
@@ -1114,7 +1126,7 @@ var initResizeHandlers = function() {
       var th = getHeaderCell(resizingColIdx);
       if (th) {
          initResizingWidth = th.offsetWidth;
-         origTableWidth = document.getElementById("rsGridData").offsetWidth;
+         origTableWidth = totalTableWidth;
          if (typeof origColWidths[resizingColIdx] === "undefined") {
             origColWidths[resizingColIdx] = initResizingWidth;
          }
@@ -1198,6 +1210,7 @@ var applyResizeDelta = function(delta) {
    var table = document.getElementById("rsGridData");
    if (table) {
       table.style.width = (origTableWidth + delta) + "px";
+      totalTableWidth = origTableWidth + delta;
    }
 
    invalidatePinnedOffsets();
@@ -1708,6 +1721,10 @@ var buildRow = function(r) {
    tr.setAttribute("role", "row");
    // aria-rowindex is 1-based and includes the header row.
    tr.setAttribute("aria-rowindex", String(r + 2));
+   // Zebra striping is driven by data-row parity, not DOM position. The tbody
+   // contains a leading spacer row plus only the virtual window of data rows,
+   // so :nth-child would flip the stripe pattern as the window slides.
+   if (r % 2 === 1) tr.classList.add("odd-row");
 
    for (var c = 0; c < columnOrder.length; c++) {
       var colIdx = columnOrder[c];
@@ -2365,6 +2382,11 @@ var toggleSidebar = function() {
    if (toggle) toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    // Trigger grid resize after transition
    setTimeout(function() {
+      // viewport.clientWidth changes when the sidebar opens/closes, which
+      // can flip the totalTableWidth > viewport.clientWidth comparison in
+      // applyPinnedColumns -- recompute paddingRight so the horizontal
+      // overscroll matches the new viewport width.
+      applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
@@ -3272,6 +3294,7 @@ var resetGridState = function() {
    measuredWidths = [];
    manualWidths = [];
    origColWidths = [];
+   totalTableWidth = 0;
 
    // Render window
    renderStart = 0;
