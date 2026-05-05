@@ -195,9 +195,11 @@ var columnOrder = [];
 // (in the Column resize state group above).
 var measuredWidths = [];
 
-// Sum of column widths, kept in sync by autoSizeColumns/applyResizeDelta.
-// Read by applyPinnedColumns -- using table.offsetWidth there is
-// unreliable under box-sizing: border-box + dynamic paddingRight.
+// Authoritative table content width; mirrors the sum of measuredWidths after
+// autoSizeColumns. Prefer this over deriving content width from
+// table.offsetWidth - paddingRight, which the browser may reconcile
+// inconsistently when box-sizing: border-box, table-layout: fixed, and a
+// dynamic paddingRight all interact.
 var totalTableWidth = 0;
 
 // Canvas-based text measurer. Lazily initialized so a non-DOM context
@@ -900,6 +902,12 @@ var applyPinnedColumns = function() {
    var thead = document.getElementById("data_cols");
    if (!thead) return;
 
+   // No-op if column widths haven't been measured yet (e.g. autoSizeColumns
+   // bailed because the viewport was hidden). Without a real totalTableWidth
+   // the overscroll calculation below would silently produce paddingRight=0;
+   // wait for the next autoSizeColumns + applyPinnedColumns pair instead.
+   if (totalTableWidth === 0) return;
+
    var pinned = getPinnedOffsets();
 
    for (var i = 0; i < thead.children.length; i++) {
@@ -1181,8 +1189,8 @@ var applyResizeDelta = function(delta) {
    var table = document.getElementById("rsGridData");
    if (table) {
       table.style.width = (origTableWidth + delta) + "px";
+      totalTableWidth = origTableWidth + delta;
    }
-   totalTableWidth = origTableWidth + delta;
 
    invalidatePinnedOffsets();
    // Note: saveState fires once at end of drag (in endResize), not on every
@@ -2343,6 +2351,11 @@ var toggleSidebar = function() {
    if (toggle) toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    // Trigger grid resize after transition
    setTimeout(function() {
+      // viewport.clientWidth changes when the sidebar opens/closes, which
+      // can flip the totalTableWidth > viewport.clientWidth comparison in
+      // applyPinnedColumns -- recompute paddingRight so the horizontal
+      // overscroll matches the new viewport width.
+      applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
