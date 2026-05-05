@@ -155,6 +155,10 @@ public class SessionInfo extends JavaScriptObject
       return this.resumed;
    }-*/;
 
+   public final native boolean getDeferredInitCompleted() /*-{
+      return !!this.deferred_init_completed;
+   }-*/;
+
    public final native String getDefaultPrompt() /*-{
       return this.prompt;
    }-*/;
