@@ -19,6 +19,14 @@ on:
         description: "Optional Playwright --grep pattern to filter tests."
         type: string
         default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
+        type: string
+        default: ""
   workflow_call:
     inputs:
       rstudio_installer_url:
@@ -31,6 +39,12 @@ on:
         type: string
         default: "desktop"
       grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+      rstudio_extra_args:
         type: string
         default: ""
 
@@ -55,7 +69,7 @@ jobs:
 
       - name: Install rig
         run: |
-          curl -fsSL https://github.com/r-lib/rig/releases/latest/download/rig-linux-latest.tar.gz \
+          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
             | sudo tar xz -C /usr/local
 
       - name: Install R via rig
@@ -77,9 +91,9 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -er '."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '."noble-amd64".filename')
+            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".link')
+            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".filename')
             echo "Auto-resolved latest noble-amd64 daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
@@ -149,14 +163,21 @@ jobs:
           PW_RSTUDIO_MODE: desktop
           PW_PROJECT_NAME: ${{ inputs.project }}
           PW_GREP: ${{ inputs.grep }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
-          if [ -n "$PW_GREP" ]; then
-            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "$PW_PROJECT_NAME" --grep "$PW_GREP"
-          else
-            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-              npx playwright test --project "$PW_PROJECT_NAME"
+          ARGS=()
+          if [ -n "$PW_TEST_SELECTOR" ]; then
+            set -f
+            ARGS+=($PW_TEST_SELECTOR)
+            set +f
           fi
+          ARGS+=(--project "$PW_PROJECT_NAME")
+          if [ -n "$PW_GREP" ]; then
+            ARGS+=(--grep "$PW_GREP")
+          fi
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            npx playwright test "${ARGS[@]}"
 
       - name: Upload Playwright report
         if: always()
