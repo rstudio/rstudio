@@ -195,6 +195,11 @@ var columnOrder = [];
 // (in the Column resize state group above).
 var measuredWidths = [];
 
+// Sum of column widths, kept in sync by autoSizeColumns/applyResizeDelta.
+// Read by applyPinnedColumns -- using table.offsetWidth there is
+// unreliable under box-sizing: border-box + dynamic paddingRight.
+var totalTableWidth = 0;
+
 // Canvas-based text measurer. Lazily initialized so a non-DOM context
 // (tests) doesn't pay the canvas allocation up front.
 var measureCanvas = null;
@@ -929,9 +934,7 @@ var applyPinnedColumns = function() {
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var currentPad = parseFloat(table.style.paddingRight) || 0;
-      var contentWidth = table.offsetWidth - currentPad;
-      var overscroll = contentWidth > viewport.clientWidth
+      var overscroll = totalTableWidth > viewport.clientWidth
          ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
          : 0;
       table.style.paddingRight = overscroll + "px";
@@ -1074,6 +1077,7 @@ var autoSizeColumns = function() {
       table.style.tableLayout = "fixed";
    }
 
+   totalTableWidth = totalWidth;
    invalidatePinnedOffsets();
 };
 
@@ -1093,7 +1097,7 @@ var initResizeHandlers = function() {
       var th = getHeaderCell(resizingColIdx);
       if (th) {
          initResizingWidth = th.offsetWidth;
-         origTableWidth = document.getElementById("rsGridData").offsetWidth;
+         origTableWidth = totalTableWidth;
          if (typeof origColWidths[resizingColIdx] === "undefined") {
             origColWidths[resizingColIdx] = initResizingWidth;
          }
@@ -1178,6 +1182,7 @@ var applyResizeDelta = function(delta) {
    if (table) {
       table.style.width = (origTableWidth + delta) + "px";
    }
+   totalTableWidth = origTableWidth + delta;
 
    invalidatePinnedOffsets();
    // Note: saveState fires once at end of drag (in endResize), not on every
@@ -3042,6 +3047,7 @@ var resetGridState = function() {
    measuredWidths = [];
    manualWidths = [];
    origColWidths = [];
+   totalTableWidth = 0;
 
    // Render window
    renderStart = 0;
