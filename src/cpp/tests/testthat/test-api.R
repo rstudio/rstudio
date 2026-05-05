@@ -16,7 +16,10 @@
 context("rstudioapi")
 test_that("invalid marker type generates informative error", {
    NULL_type <- list(type = NULL,
-                     file = ".\\R\\fake_script.R",
+                     # 'file' would have to point to an actual R script to
+                     # prevent the error 'The system cannot find the path
+                     # specified' in normalizePath() in case of a valid 'type'.
+                     file = file.path(".", "R", "fake_script.R"),
                      line = 1L,
                      column = 1L,
                      message = "Some message")
