@@ -9,6 +9,8 @@
   controlled by the new `data_viewer_show_summary` user preference.
   The default value of `data_viewer_max_columns` has also been
   raised from 50 to 200.
+- ([#17477](https://github.com/rstudio/rstudio/issues/17477)): Posit Assistant: the `ui/openDocument` JSON-RPC method now accepts an optional 1-based `line` parameter, and RStudio advertises the `ui/openDocument/line` capability so the assistant can open documents at a specific line.
+- ([#17478](https://github.com/rstudio/rstudio/issues/17478)): Posit Assistant: added the `ui/revealInFilesPane` JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.
 - ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
 
 ### Fixed
@@ -21,6 +23,7 @@
 - ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior.
 - ([#16966](https://github.com/rstudio/rstudio/issues/16966)): Restored the desktop terminal bell on Linux, now that the underlying Electron crash has been fixed.
 - ([#17084](https://github.com/rstudio/rstudio/issues/17084)): The Shiny test commands (Record Test, Run Tests, Compare Results) now use the `shinytest2` package; `shinytest` has been deprecated.
+- ([#17128](https://github.com/rstudio/rstudio/issues/17128)): The Windows installer's File Version now matches its Product Version; previously the installer concatenated the major and minor version components into a single value that exceeded NSIS's 16-bit-per-component limit and was truncated to an unrelated number.
 - ([#17176](https://github.com/rstudio/rstudio/issues/17176)): Fixed a startup hang when opening a Quarto project containing large directories (e.g. `_targets/`).
 - ([#17417](https://github.com/rstudio/rstudio/issues/17417)): Added missing French translations for newer commands and preferences, removed an orphaned French key, deduplicated stale entries in the French application strings, and normalized line endings in five English string files.
 - ([#17440](https://github.com/rstudio/rstudio/issues/17440)): Fixed an issue where triggering tab completion inside `[` on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory.
