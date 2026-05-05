@@ -246,8 +246,15 @@ var debounce = function(func, wait) {
 var escapeHtml = function(html) {
    if (html === null || html === undefined) return "";
    var s = (typeof html === "string") ? html : String(html);
-   var replacements = { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" };
-   return s.replace(/[&<>"]/g, function(ch) { return replacements[ch]; });
+   // Escape ' as well as the four canonical chars: no current call site
+   // emits user data into a single-quoted attribute, but covering ' here
+   // means a future copy-paste like attr='${escapeHtml(x)}' is safe by
+   // construction rather than relying on every caller to remember.
+   var replacements = {
+      "<": "&lt;", ">": "&gt;", "&": "&amp;",
+      '"': "&quot;", "'": "&#39;"
+   };
+   return s.replace(/[&<>"']/g, function(ch) { return replacements[ch]; });
 };
 
 var highlightSearchMatch = function(data, search, pos) {
