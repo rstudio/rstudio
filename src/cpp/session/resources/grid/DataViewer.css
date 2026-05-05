@@ -181,7 +181,14 @@ tbody tr:nth-child(odd):hover td:not(.first-child) {
    virtue of being a separate paint phase. Scoped to :focus-within so
    the outline disappears when focus leaves the grid (e.g. Shift+Tab
    to the toolbar) -- otherwise it would look like keyboard focus is
-   in two places. */
+   in two places.
+
+   Note: th and .pin-icon intentionally have no :focus / :focus-visible
+   styling of their own. Neither element is individually focusable now;
+   the only visible focus indicator inside the grid is the .activeCell /
+   .activeHeader outline below, driven by aria-activedescendant. Adding
+   per-element focus rings here would re-introduce the dual-focus look
+   this design eliminated. */
 #gridViewport:focus-within td.activeCell,
 #gridViewport:focus-within th.activeHeader {
    outline: 2px solid var(--grid-focus-border);

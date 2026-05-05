@@ -177,8 +177,11 @@ var activeRow = -1;
 var activeCol = -1;
 
 // Active column header (display index in columnOrder), or -1 when no
-// header is active. Mutually exclusive with the active cell: setting one
-// clears the other. Reachable from the body via ArrowUp at row 0.
+// header is active. setActiveCell and setActiveHeader enforce mutual
+// exclusion -- calling one clears the other -- but clearActiveCell on its
+// own does not touch activeHeaderCol, so callers that change the column
+// window (e.g. setMaxColumns) must also call clearActiveHeader. Reachable
+// from the body via ArrowUp at row 0.
 var activeHeaderCol = -1;
 
 // Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
@@ -659,7 +662,10 @@ var createHeader = function(idx, col) {
          togglePinColumn(idx);
          // Focus the viewport and mark the column the user just pinned
          // as the active header so subsequent keyboard nav routes to
-         // the grid and starts from this column.
+         // the grid and starts from this column. displayIdx can be -1
+         // when the column lives past maxDisplayColumns and the unpin
+         // pushed it out of the visible window -- in that case we just
+         // focus the grid without setting an active header.
          var displayIdx = columnOrder.indexOf(idx);
          if (displayIdx >= 0) setActiveHeader(displayIdx);
          focusGridViewport();
@@ -702,28 +708,29 @@ var createHeader = function(idx, col) {
    resizer.setAttribute("data-col", idx);
    th.appendChild(resizer);
 
-   // Sort click handler. Headers are not individually focusable -- the
+   // Header click handler. Headers are not individually focusable -- the
    // grid is a single tabstop. Keyboard sort is handled by the grid-level
    // keydown handler when the header is the active descendant
-   // (Enter/Space in header mode).
-   if (ordering && col.col_type !== "rownames") {
+   // (Enter/Space in header mode). Every header (including rownames and
+   // when ordering is disabled) routes the click into the grid so
+   // subsequent keystrokes operate on the column the user just clicked;
+   // sort cycling additionally requires ordering && !rownames.
+   var sortable = ordering && col.col_type !== "rownames";
+   if (sortable) {
       th.style.cursor = "pointer";
       th.setAttribute("role", "columnheader");
       th.setAttribute("aria-sort",
          idx === sortColumn ? sortAriaValue(sortDirection) : "none");
-      th.addEventListener("click", function(evt) {
-         if (evt.target.className === "resizer") return;
-         if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
-         if (didResize) { didResize = false; return; }
-         handleSortClick(idx, th);
-         // Mark this column as the active header and focus the viewport
-         // so subsequent keyboard nav (arrow / Enter / P) operates from
-         // here without an extra trip back through the body.
-         var displayIdx = columnOrder.indexOf(idx);
-         if (displayIdx >= 0) setActiveHeader(displayIdx);
-         focusGridViewport();
-      });
    }
+   th.addEventListener("click", function(evt) {
+      if (evt.target.className === "resizer") return;
+      if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
+      if (didResize) { didResize = false; return; }
+      if (sortable) handleSortClick(idx, th);
+      var displayIdx = columnOrder.indexOf(idx);
+      if (displayIdx >= 0) setActiveHeader(displayIdx);
+      focusGridViewport();
+   });
 
    return th;
 };
@@ -2513,7 +2520,18 @@ var setActiveCell = function(row, col) {
    if (maxRow < 0 || maxCol < 0) return;
    row = Math.max(0, Math.min(maxRow, row));
    col = Math.max(0, Math.min(maxCol, col));
-   if (row === activeRow && col === activeCol && activeHeaderCol < 0) return;
+   if (row === activeRow && col === activeCol && activeHeaderCol < 0) {
+      // Defensive reapply: any future caller that rebuilds rows without
+      // restoring the active cell would leave the model and DOM out of
+      // sync; idempotent class/id/aria reassignment closes that gap.
+      var existing = getActiveCellTd();
+      if (existing) {
+         existing.classList.add("activeCell");
+         existing.id = activeCellId(row, col);
+      }
+      setViewportActiveDescendant(activeCellId(row, col));
+      return;
+   }
 
    if (activeHeaderCol >= 0) {
       var prevTh = getActiveHeaderTh();
@@ -2541,6 +2559,11 @@ var setActiveCell = function(row, col) {
       next.classList.add("activeCell");
       next.id = activeCellId(row, col);
    }
+   // The activedescendant id may briefly point at an element that
+   // doesn't exist yet (cell scrolled into view but not rendered until
+   // the scroll event fires renderVisibleRows). buildRow re-applies the
+   // id when the td finally materializes, so screen readers see a valid
+   // descendant by the time keyboard movement settles.
    setViewportActiveDescendant(activeCellId(row, col));
 };
 
@@ -2571,7 +2594,19 @@ var setActiveHeader = function(col) {
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
    col = Math.max(0, Math.min(maxCol, col));
-   if (col === activeHeaderCol) return;
+   if (col === activeHeaderCol) {
+      // Defensive reapply: any future caller that rebuilds headers without
+      // restoring the active header would leave the model and DOM out of
+      // sync; idempotent class/aria reassignment closes that gap.
+      var existingTh = getActiveHeaderTh();
+      if (existingTh) {
+         existingTh.classList.add("activeHeader");
+         setViewportActiveDescendant(existingTh.id);
+      } else {
+         setViewportActiveDescendant(null);
+      }
+      return;
+   }
 
    if (activeRow >= 0 || activeCol >= 0) {
       var prevCellTd = getActiveCellTd();
@@ -2636,17 +2671,15 @@ var onGridKeyDown = function(evt) {
    var key = evt.key;
    var isCopy = (evt.ctrlKey || evt.metaKey) && (key === "c" || key === "C");
 
-   if (isCopy) {
-      if (copyActiveCell()) evt.preventDefault();
-      return;
-   }
-
    var maxRow = filteredRows - 1;
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
 
    // Header-mode actions: Enter/Space cycles sort; P toggles pin. Both
-   // are no-ops on the rownames column.
+   // are no-ops on the rownames column. Header-mode dispatch runs before
+   // the copy block so header-specific handling for Ctrl+C (e.g. copying
+   // the column name) can be added here without the body-mode copy path
+   // pre-empting it.
    if (activeHeaderCol >= 0) {
       var origCol = columnOrder[activeHeaderCol];
       var col = cols[origCol];
@@ -2664,6 +2697,11 @@ var onGridKeyDown = function(evt) {
          if (!isRownames) togglePinColumn(origCol);
          return;
       }
+   }
+
+   if (isCopy) {
+      if (copyActiveCell()) evt.preventDefault();
+      return;
    }
 
    var navKeys = {
@@ -3226,6 +3264,9 @@ var resetGridState = function() {
    activeRow = -1;
    activeCol = -1;
    activeHeaderCol = -1;
+   // The viewport persists across destroyGrid; clear its activedescendant so
+   // it can't reference an id whose td/th was just removed from the DOM.
+   setViewportActiveDescendant(null);
 
    // Column widths
    measuredWidths = [];
@@ -3730,9 +3771,12 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    } else {
       maxDisplayColumns = Math.min(cap, maxDisplayColumns);
    }
-   // Column window changed -- the active cell's display index may now
-   // refer to a different column; clear before bootstrap rebuilds DOM.
+   // Column window changed -- the active cell or header's display index
+   // may now refer to a different column; clear before bootstrap rebuilds
+   // DOM. (bootstrap -> destroyGrid -> resetGridState clears these too,
+   // but doing it explicitly keeps the local invariant obvious.)
    clearActiveCell();
+   clearActiveHeader();
    bootstrap();
 };
 
