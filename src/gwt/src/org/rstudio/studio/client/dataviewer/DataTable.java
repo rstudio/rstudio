@@ -56,6 +56,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -211,6 +212,11 @@ public class DataTable
             onStateChanged();
          }
       };
+      optionsMenu_.addItem(new MenuItem(
+            constants_.optionsResetView(),
+            false,
+            () -> refreshAndReset()));
+      optionsMenu_.addSeparator();
       optionsMenu_.addItem(showSummaryItem_);
       optionsMenuButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
@@ -429,6 +435,17 @@ public class DataTable
 
       refreshData(getWindow());
    }
+
+   public void refreshAndReset()
+   {
+      filtered_ = false;
+      if (searchWidget_ != null)
+         searchWidget_.setText("", false);
+      if (filterButton_ != null)
+         filterButton_.setLatched(false);
+
+      refreshAndReset(getWindow());
+   }
    
    public void onActivate()
    {
@@ -494,6 +511,14 @@ public class DataTable
          frame.refreshData();
       else
          @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("refreshData");
+   }-*/;
+
+   private static final native void refreshAndReset(WindowEx frame) /*-{
+      if (!frame) return;
+      if (frame.refreshAndReset)
+         frame.refreshAndReset();
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("refreshAndReset");
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{

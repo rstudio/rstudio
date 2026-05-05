@@ -23,5 +23,6 @@ public interface DataViewerConstants extends Constants {
     String toolbarLabel();
     String refreshButtonTitle();
     String optionsButtonTitle();
+    String optionsResetView();
     String optionsShowSummaryDefault();
 }
