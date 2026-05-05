@@ -177,11 +177,12 @@ viewerDoc <- function() {
    })
 })
 
-# escapeHtml is private inside the gridviewer IIFE, so we cover it via the
-# rendered DOM: cell text and column names flow through escapeHtml on their
-# way to innerHTML. Two recent commits (escape ', formatting) touched the
-# function -- these tests guard against silently regressing them.
-.rs.test("data viewer escapes HTML-special characters in cell values", {
+# Cell text and column names ride td.textContent, so the browser handles
+# entity encoding -- we only assert the observable security property
+# (HTML-special chars never escape into the DOM as markup) instead of
+# pinning down which entity forms come back from innerHTML, since
+# textContent only encodes <, >, and & and leaves quotes as plain text.
+.rs.test("data viewer renders HTML-special cell values as text, not markup", {
    remote$console.executeExpr({
       .rs.escape_test_df <- data.frame(
          a = c("<script>x</script>", "tom & jerry", "\"quoted\"", "it's"),
@@ -191,22 +192,30 @@ viewerDoc <- function() {
    })
    doc <- viewerDoc()
 
-   # Walk the body and concatenate the innerHTML of every value cell.
-   # Cells aren't tagged with column indices, so we collect across rows
-   # and rely on the test data being unique per row.
+   # Nothing user-supplied should have escaped into a real DOM element.
+   expect_equal(doc$querySelectorAll("#gridBody script")$length, 0)
+
+   # Round-trip via textContent: the visible text matches the original
+   # values exactly, including the quote characters that textContent
+   # leaves alone.
    tds <- doc$querySelectorAll("#gridBody .textCell")
+   bodyText <- ""
+   for (i in seq_len(tds$length)) {
+      bodyText <- paste0(bodyText, tds[[i - 1L]]$textContent, "\n")
+   }
+   expect_match(bodyText, "<script>x</script>", fixed = TRUE)
+   expect_match(bodyText, "tom & jerry", fixed = TRUE)
+   expect_match(bodyText, "\"quoted\"", fixed = TRUE)
+   expect_match(bodyText, "it's", fixed = TRUE)
+
+   # Spot-check innerHTML for the chars textContent does encode, so a
+   # regression to raw <, >, & in the rendered DOM is still caught.
    bodyHtml <- ""
    for (i in seq_len(tds$length)) {
       bodyHtml <- paste0(bodyHtml, tds[[i - 1L]]$innerHTML, "\n")
    }
-
-   # Each special character should appear as its escaped form somewhere
-   # in the body, and the raw characters should never appear.
    expect_match(bodyHtml, "&lt;script&gt;", fixed = TRUE)
    expect_match(bodyHtml, "tom &amp; jerry", fixed = TRUE)
-   expect_match(bodyHtml, "&quot;quoted&quot;", fixed = TRUE)
-   expect_match(bodyHtml, "it&#39;s", fixed = TRUE)
-   expect_false(grepl("<script>", bodyHtml, fixed = TRUE))
 
    remote$commands.execute("closeSourceDoc")
    remote$console.executeExpr({
@@ -214,7 +223,7 @@ viewerDoc <- function() {
    })
 })
 
-.rs.test("data viewer escapes HTML-special characters in column names", {
+.rs.test("data viewer renders HTML-special column names as text, not markup", {
    remote$console.executeExpr({
       .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE)
       names(.rs.escape_hdr_df) <- "<b>&\"'"
@@ -223,11 +232,19 @@ viewerDoc <- function() {
    doc <- viewerDoc()
 
    th <- doc$querySelector('th[data-col-idx="1"]')
+
+   # No <b> element should have appeared in the header from the column
+   # name alone -- if escaping regressed, this query would find one.
+   expect_equal(th$querySelectorAll("b")$length, 0)
+
+   # The visible header text matches the original column name verbatim.
+   expect_match(th$textContent, "<b>&\"'", fixed = TRUE)
+
+   # innerHTML still encodes <, >, and & -- guard against a regression
+   # that would set innerHTML directly from raw col_name.
    html <- th$innerHTML
    expect_match(html, "&lt;b&gt;", fixed = TRUE)
    expect_match(html, "&amp;", fixed = TRUE)
-   expect_match(html, "&quot;", fixed = TRUE)
-   expect_match(html, "&#39;", fixed = TRUE)
    expect_false(grepl("<b>", html, fixed = TRUE))
 
    remote$commands.execute("closeSourceDoc")
