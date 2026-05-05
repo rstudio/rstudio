@@ -1,14 +1,9 @@
 ## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
-- Rewrote the data viewer frontend, adding user-pinnable columns, a
-  Summary side panel with type-aware column stats, persistence of
-  per-object UI state (pin set, sidebar visibility, manual column
-  widths, sort, filters) across data viewer reopenings, and tighter
-  column auto-sizing. The Summary panel's default visibility is
-  controlled by the new `data_viewer_show_summary` user preference.
-  The default value of `data_viewer_max_columns` has also been
-  raised from 50 to 200.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): The data viewer is now faster and supports pinnable columns, a Summary sidebar with type-aware stats and sparkline histograms, keyboard navigation, and clipboard copy.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Added the `data_viewer_show_summary` user preference, which controls the default visibility of the data viewer's Summary sidebar.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Raised the default value of `data_viewer_max_columns` from 50 to 200.
 - ([#17477](https://github.com/rstudio/rstudio/issues/17477)): Posit Assistant: the `ui/openDocument` JSON-RPC method now accepts an optional 1-based `line` parameter, and RStudio advertises the `ui/openDocument/line` capability so the assistant can open documents at a specific line.
 - ([#17478](https://github.com/rstudio/rstudio/issues/17478)): Posit Assistant: added the `ui/revealInFilesPane` JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.
 - ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
