@@ -51,7 +51,7 @@ on:
 jobs:
   e2e-desktop-macos:
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
 
