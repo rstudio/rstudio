@@ -113,31 +113,43 @@ core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContentsHash,
                               std::string* pKeyPathUsed)
 {
-   // determine path to use for secure cookie key file
-   core::FilePath secureKeyPath;
-   if (core::system::effectiveUserIsRoot())
-   {
-      // check in our default configuration folder
-      secureKeyPath = core::system::xdg::findSystemConfigFile(
-            "secure key", filename);
-      if (!secureKeyPath.exists())
-         secureKeyPath = core::FilePath("/var/lib/rstudio-server")
-            .completePath(filename);
-   }
-   else
+   // Try system paths first - the service account owns these and can read
+   // them, so non-root rserver deployments share /var/lib/rstudio-server
+   // with privileged setup steps.
+   core::FilePath secureKeyPath = core::system::xdg::findSystemConfigFile(
+         "secure key", filename);
+   if (!secureKeyPath.exists())
+      secureKeyPath = core::FilePath("/var/lib/rstudio-server")
+         .completePath(filename);
+
+   // If no system key exists and we're not privileged, fall back to the
+   // user cache (read if present, generate otherwise).
+   if (!secureKeyPath.exists() && !core::system::effectiveUserIsRoot())
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())
       {
-         LOG_INFO_MESSAGE("Running without privilege; using secure key at " + secureKeyPath.getAbsolutePath());
+         LOG_INFO_MESSAGE("Running without privilege; using secure key at " +
+                          secureKeyPath.getAbsolutePath());
       }
       else
       {
-         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " + secureKeyPath.getAbsolutePath());
+         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " +
+                          secureKeyPath.getAbsolutePath());
       }
    }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
+}
+
+core::FilePath systemKeyFilePath(const std::string& filename)
+{
+   // use the silent variant; callers use this as a probe and the
+   // INFO-logging findSystemConfigFile would emit a line on every miss
+   core::FilePath path = core::system::xdg::systemConfigFile(filename);
+   if (!path.exists())
+      path = core::FilePath("/var/lib/rstudio-server").completePath(filename);
+   return path;
 }
 
 core::Error readSecureKeyFile(const FilePath& secureKeyPath,

@@ -113,7 +113,7 @@ public:
    std::string forwarded() const { return headerValue("Forwarded"); }
    
    // only applies to local stream connections (returns -1 if unknown)
-   int remoteUid() const { return remoteUid_; }
+   int64_t remoteUid() const { return remoteUid_; }
    
    boost::posix_time::ptime ifModifiedSince() const;
    
@@ -242,7 +242,7 @@ private:
 
    std::string method_;
    std::string uri_;
-   int remoteUid_;
+   int64_t remoteUid_;
    std::string username_;
    std::string handlerPrefix_;
    long requestSequence_ = 0;
