@@ -64,7 +64,7 @@ jobs:
 
       - name: Install rig
         run: |
-          curl -fLs -o rig.pkg https://github.com/r-lib/rig/releases/download/latest/rig-macos-arm64-latest.pkg
+          curl -fLs -o rig.pkg https://github.com/r-lib/rig/releases/download/latest/rig-latest-macOS-arm64.pkg
           sudo installer -pkg rig.pkg -target /
 
       - name: Install R via rig
