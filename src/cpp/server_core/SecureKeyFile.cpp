@@ -113,39 +113,30 @@ core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContentsHash,
                               std::string* pKeyPathUsed)
 {
-   // For non-root callers, prefer an existing user-cache key. This
-   // preserves the prior behavior for unprivileged installs that already
-   // generated their key under ~/.cache/rstudio, avoiding a one-time
-   // session invalidation when the service-account search path was added
-   // for service-user deployments below.
-   if (!core::system::effectiveUserIsRoot())
-   {
-      core::FilePath cachePath =
-         core::system::xdg::userCacheDir().completePath(filename);
-      if (cachePath.exists())
-      {
-         LOG_INFO_MESSAGE("Running without privilege; using secure key at " +
-                          cachePath.getAbsolutePath());
-         return readSecureKeyFile(cachePath, pContents, pContentsHash, pKeyPathUsed);
-      }
-   }
-
-   // Otherwise try system paths - a service account owns these and can
-   // read them, which is required when rserver and rsession share a key
-   // under /var/lib/rstudio-server.
+   // Try system paths first - the service account owns these and can read
+   // them, so non-root rserver deployments share /var/lib/rstudio-server
+   // with privileged setup steps.
    core::FilePath secureKeyPath = core::system::xdg::findSystemConfigFile(
          "secure key", filename);
    if (!secureKeyPath.exists())
       secureKeyPath = core::FilePath("/var/lib/rstudio-server")
          .completePath(filename);
 
-   // If no system key exists and we're not privileged, generate one in
-   // the user cache.
+   // If no system key exists and we're not privileged, fall back to the
+   // user cache (read if present, generate otherwise).
    if (!secureKeyPath.exists() && !core::system::effectiveUserIsRoot())
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
-      LOG_INFO_MESSAGE("Running without privilege; generating secure key at " +
-                       secureKeyPath.getAbsolutePath());
+      if (secureKeyPath.exists())
+      {
+         LOG_INFO_MESSAGE("Running without privilege; using secure key at " +
+                          secureKeyPath.getAbsolutePath());
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " +
+                          secureKeyPath.getAbsolutePath());
+      }
    }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
