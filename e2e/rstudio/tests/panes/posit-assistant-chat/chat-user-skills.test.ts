@@ -6,14 +6,17 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { createAndOpenProject } from '@utils/project';
 
 // ---------------------------------------------------------------------------
-// Project-level skill (lives in .positai/skills/ under the workspace root)
+// Project-level skill (lives in <project>/.positai/skills/ under a sandbox
+// project. Absolute paths are computed in beforeAll once the sandbox dir
+// is known.)
 // ---------------------------------------------------------------------------
 
+const PROJECT_NAME = 'user_skills_test_project';
 const PROJECT_SKILL_NAME = 'custom-data-summary';
-const PROJECT_SKILL_DIR = `.positai/skills/${PROJECT_SKILL_NAME}`;
-const PROJECT_SKILL_PATH = `${PROJECT_SKILL_DIR}/SKILL.md`;
 const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 
 // ---------------------------------------------------------------------------
@@ -65,11 +68,14 @@ async function createSkillFile(
 // ---------------------------------------------------------------------------
 
 test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
+  const sandbox = useSuiteSandbox();
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
   let assistantActions: AssistantOptionsActions;
   let versions: EnvironmentVersions;
+  let projectSkillDir = '';
+  let projectSkillPath = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -78,6 +84,23 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
+    await consoleActions.clearConsole();
+
+    // -----------------------------------------------------------------------
+    // Step 0: Create a real project inside the sandbox so the
+    // "project-level" skill actually lands in a project directory rather
+    // than in the user's home dir.
+    // -----------------------------------------------------------------------
+    const sandboxR = sandbox.dir.replace(/\\/g, '/');
+    const projectDir = await createAndOpenProject(page, sandboxR, PROJECT_NAME);
+    projectSkillDir = `${projectDir}/.positai/skills/${PROJECT_SKILL_NAME}`;
+    projectSkillPath = `${projectSkillDir}/SKILL.md`;
+
+    // Re-create actions after session restart
+    consoleActions = new ConsolePaneActions(page);
+    assistantActions = new AssistantOptionsActions(page, consoleActions);
+    chatActions = new ChatPaneActions(page, consoleActions);
+    chatPane = chatActions.chatPane;
     await consoleActions.clearConsole();
 
     // -----------------------------------------------------------------------
@@ -96,11 +119,11 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // -----------------------------------------------------------------------
     // Step 2: Create a project-level skill (.positai/skills/ in workspace)
     // -----------------------------------------------------------------------
-    console.log(`Creating project skill at: ${PROJECT_SKILL_PATH}`);
+    console.log(`Creating project skill at: ${projectSkillPath}`);
     await createSkillFile(
       consoleActions,
-      PROJECT_SKILL_DIR,
-      PROJECT_SKILL_PATH,
+      projectSkillDir,
+      projectSkillPath,
       PROJECT_SKILL_NAME,
       'Summarize or describe a dataset.',
       PROJECT_MARKER,
@@ -123,7 +146,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // Step 4: Verify both files exist and have correct content
     // -----------------------------------------------------------------------
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(`cat(readLines("${PROJECT_SKILL_PATH}"), sep = "\\n")`);
+    await consoleActions.typeInConsole(`cat(readLines("${projectSkillPath}"), sep = "\\n")`);
     await sleep(2000);
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
     console.log(`Project skill content:\n${projectOutput}`);
@@ -159,9 +182,9 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
   });
 
   test.afterAll(async () => {
-    // Clean up the project-level skill directory
-    await consoleActions.typeInConsole('unlink(".positai", recursive = TRUE)');
-    await sleep(1000);
+    // The project-level skill lives inside the sandbox project; the sandbox
+    // afterAll (registered by useSuiteSandbox) removes the entire sandbox
+    // tree, so no explicit cleanup is needed for it here.
 
     // Clean up only the specific user-level skill we created (leave ~/.positai/ intact)
     await consoleActions.typeInConsole(`unlink("${USER_SKILL_DIR}", recursive = TRUE)`);

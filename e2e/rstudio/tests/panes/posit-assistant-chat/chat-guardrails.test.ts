@@ -24,13 +24,13 @@
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Page } from 'playwright';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { createAndOpenProject } from '@utils/project';
 
 const TS = Date.now();
 const PROJECT_NAME = 'guardrail_test_project';
@@ -39,40 +39,6 @@ const TEMP_FILE = `guardrail_temp_${TS}.txt`;
 const OUTSIDE_FILE = `guardrail_outside_${TS}.txt`;
 const RENAME_SRC = `guardrail_rename_${TS}.txt`;
 const READ_FILE = `guardrail_read_${TS}.R`;
-
-const CONSOLE_INPUT = '#rstudio_console_input .ace_text-input';
-const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
-
-/** Wait for session restart after project switch. */
-async function waitForSessionRestart(page: Page): Promise<void> {
-  await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
-  await sleep(3000);
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 60000 });
-  await sleep(2000);
-
-  await page.waitForFunction(
-    'typeof window.rstudioapi !== "undefined" || typeof window.$RStudio !== "undefined"',
-    null,
-    { timeout: 15000 }
-  ).catch(() => {});
-  await sleep(1000);
-
-  // Confirm R is idle
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const marker = `__READY_${Date.now()}__`;
-      await page.locator(CONSOLE_INPUT).click({ force: true });
-      await page.keyboard.pressSequentially(`cat("${marker}")`);
-      await sleep(200);
-      await page.keyboard.press('Enter');
-      await sleep(1500);
-      const output = await page.locator(CONSOLE_OUTPUT).innerText();
-      if (output.includes(marker)) return;
-    } catch { /* console not ready yet */ }
-    await sleep(2000);
-  }
-  console.warn('waitForSessionRestart: R session did not confirm idle after 3 attempts');
-}
 
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () => {
   const sandbox = useSuiteSandbox();
@@ -89,23 +55,9 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
     chatPane = chatActions.chatPane;
 
     sandboxR = sandbox.dir.replace(/\\/g, '/');
-    const projectDir = `${sandboxR}/${PROJECT_NAME}`;
 
     // Create the project inside the sandbox (sandbox afterAll handles teardown).
-    await consoleActions.typeInConsole(
-      `dir.create("${projectDir}")`
-    );
-    await sleep(500);
-    await consoleActions.typeInConsole(
-      `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), "${projectDir}/${PROJECT_NAME}.Rproj")`
-    );
-    await sleep(500);
-
-    // Switch to the new project (triggers session restart)
-    await consoleActions.typeInConsole(
-      `.rs.api.openProject("${projectDir}/${PROJECT_NAME}.Rproj")`
-    );
-    await waitForSessionRestart(page);
+    await createAndOpenProject(page, sandboxR, PROJECT_NAME);
 
     // Re-create actions after session restart
     consoleActions = new ConsolePaneActions(page);
