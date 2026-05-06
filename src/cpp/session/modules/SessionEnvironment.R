@@ -131,7 +131,7 @@
    {
       .rs.getSignature(val)
    }
-   else if (inherits(val, c("Date", "POSIXct", "POSIXlt")))
+   else if (inherits(val, c("Date", "POSIXct", "POSIXlt", "difftime")))
    {
       if (length(val) == 1)
       {
