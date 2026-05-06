@@ -346,6 +346,19 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::GA_initapp(0, 0);
    ::readconsolecfg();
 
+   // Initialize runtime dispatch before setup_Rmainloop so any code reached
+   // from .Rprofile / Rprofile.site (e.g. download.file -> R_Busy / REprintf
+   // -> rConsoleWrite -> ...) can safely call through r::runtime / r::sexp.
+   // R.dll is already loaded (R_DefParams / getDLLVersion above), and we only
+   // resolve symbol addresses here -- value-dependent reads use lazy pointer
+   // dereferencing (see s_pUnboundValue / s_pSaveAction in RRuntime.cpp).
+   Error error = r::runtime::initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      Rf_error("RStudio failed to initialize R runtime dispatch");
+   }
+
    // Set CharacterMode to LinkDLL during main loop setup. The mode can't be
    // RGui during setup_Rmainloop or calls to history functions (e.g. timestamp)
    // which occur during .Rprofile execution will crash when R attempts to
@@ -360,14 +373,6 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // reset character mode to RGui
    CharacterMode = RGui;
-
-   // initialize runtime dispatch now that R.dll is loaded
-   Error error = r::runtime::initialize();
-   if (error)
-   {
-      LOG_ERROR(error);
-      Rf_error("RStudio failed to initialize R runtime dispatch");
-   }
 
    // run main loop
    ::run_Rmainloop();
