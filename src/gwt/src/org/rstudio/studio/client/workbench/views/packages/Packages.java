@@ -90,7 +90,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.CleanUnusedDialog;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -188,19 +187,20 @@ public class Packages
          private PackageInstallOptions lastKnownState_;
       };
 
-      updatePackageState(true, false);
+      // Register the deferred init handler immediately so we get notified
+      // when R finishes its deferred init (for fresh starts, suspend/resume,
+      // and session restarts).
+      events.addHandler(DeferredInitCompletedEvent.TYPE, this);
 
-      // after 2 seconds also add the DeferredInitCompleted handler
-      // (we wait because if we don't then on first load in a new
-      // session where the packages tab is showing updatePackageState
-      // will be called twice)
-      new Timer() {
-         @Override
-         public void run()
-         {
-            events.addHandler(DeferredInitCompletedEvent.TYPE, Packages.this);
-         }
-      }.schedule(2000);
+      // For re-join scenarios (where R has been running and already completed
+      // its deferred init), we need to fetch the package state ourselves --
+      // the deferred init event won't fire again until the next R restart.
+      // We pass showProgress=true here -- the handler uses false because it
+      // runs in the background, but re-join is a user-visible reconnect.
+      // For new sessions and suspend/resume, the event is still to come, so
+      // we let the handler do the work to avoid a redundant call.
+      if (session.getSessionInfo().getDeferredInitCompleted())
+         updatePackageState(true, false);
    }
 
    void onInstallPackage()
