@@ -70,8 +70,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Invoke-WebRequest `
             -Uri 'https://github.com/r-lib/rig/releases/download/latest/rig-windows-latest.exe' `
-            -OutFile rig-setup.exe
-          Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait
+            -OutFile rig-setup.exe `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
+          $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
       - name: Install R via rig
@@ -80,7 +82,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           rig ls
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
@@ -116,7 +120,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Invoke-WebRequest `
             -Uri '${{ steps.resolve.outputs.url }}' `
-            -OutFile '${{ steps.resolve.outputs.filename }}'
+            -OutFile '${{ steps.resolve.outputs.filename }}' `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
@@ -133,7 +138,8 @@ jobs:
       - name: Install RStudio
         run: |
           $ErrorActionPreference = 'Stop'
-          Start-Process -FilePath '.\${{ steps.resolve.outputs.filename }}' -ArgumentList '/S' -Wait
+          $p = Start-Process -FilePath '.\${{ steps.resolve.outputs.filename }}' -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
             Write-Error "RStudio binary not found at $exe after install."
