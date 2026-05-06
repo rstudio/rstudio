@@ -156,7 +156,12 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    public final native boolean getDeferredInitCompleted() /*-{
-      return !!this.deferred_init_completed;
+      // default to true if the field is missing or non-boolean -- worst case
+      // is one redundant fetch (the pre-flag behavior); the alternative is a
+      // silent failure where the Packages pane never populates
+      return typeof this.deferred_init_completed === "boolean"
+         ? this.deferred_init_completed
+         : true;
    }-*/;
 
    public final native String getDefaultPrompt() /*-{

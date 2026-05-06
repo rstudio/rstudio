@@ -195,6 +195,8 @@ public class Packages
       // For re-join scenarios (where R has been running and already completed
       // its deferred init), we need to fetch the package state ourselves --
       // the deferred init event won't fire again until the next R restart.
+      // We pass showProgress=true here -- the handler uses false because it
+      // runs in the background, but re-join is a user-visible reconnect.
       // For new sessions and suspend/resume, the event is still to come, so
       // we let the handler do the work to avoid a redundant call.
       if (session.getSessionInfo().getDeferredInitCompleted())
