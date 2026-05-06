@@ -1101,6 +1101,12 @@ public class Files
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
       {
+         // for server URLs, tag user-initiated Files-pane downloads so the
+         // server can audit them without also auditing internal /files/
+         // traffic (e.g. HTML sub-resources, file.show(), browseURL previews).
+         // Desktop URLs are file:// and don't go through the session.
+         if (!fileURL.startsWith("file:"))
+            fileURL += (fileURL.contains("?") ? "&" : "?") + "download=1";
          globalDisplay_.openWindow(fileURL);
       }
    }

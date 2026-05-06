@@ -86,7 +86,6 @@
 using namespace rstudio::core;
 using namespace http;
 using namespace http::util;
-using namespace rstudio::monitor;
 
 
 namespace rstudio {
@@ -613,9 +612,17 @@ void handleFilesRequest(const http::Request& request,
       }
    }
 
-   // let the monitor client know the user has downloaded this file
-   client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
-                           module_context::createAliasedPath(filePath)));
+   // if this request was initiated as an explicit download from the Files
+   // pane, let the monitor client know the user has downloaded this file
+   // (other consumers of /files/ - file.show(), browseURL(), Sweave/PDF/HTML
+   // previews, and HTML sub-resource fetches - omit the download flag and
+   // are not logged)
+   if (request.queryParamValue("download") == "1")
+   {
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                              module_context::createAliasedPath(filePath)));
+   }
 
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
