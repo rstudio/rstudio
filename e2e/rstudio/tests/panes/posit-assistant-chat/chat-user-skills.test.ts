@@ -83,7 +83,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     chatActions = new ChatPaneActions(page, consoleActions);
     chatPane = chatActions.chatPane;
 
-    versions = await consoleActions.getEnvironmentVersions();
     await consoleActions.clearConsole();
 
     // -----------------------------------------------------------------------
@@ -102,6 +101,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     chatActions = new ChatPaneActions(page, consoleActions);
     chatPane = chatActions.chatPane;
     await consoleActions.clearConsole();
+    versions = await consoleActions.getEnvironmentVersions();
 
     // -----------------------------------------------------------------------
     // Step 1: Stop any running backend FIRST.
