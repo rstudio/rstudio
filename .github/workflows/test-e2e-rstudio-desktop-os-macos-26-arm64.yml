@@ -72,7 +72,16 @@ jobs:
           R_VERSION: ${{ inputs.r_version }}
         run: |
           rig add "$R_VERSION"
-          rig default "$R_VERSION"
+          # On macOS rig identifies installed R by major.minor (e.g. "4.4"),
+          # not full patch (e.g. "4.4.3"), since the macOS R installer only
+          # allows one patch version per major.minor on disk. Strip the
+          # patch component for `rig default` while leaving aliases intact.
+          if [[ "$R_VERSION" =~ ^([0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
+            RIG_NAME="${BASH_REMATCH[1]}"
+          else
+            RIG_NAME="$R_VERSION"
+          fi
+          rig default "$RIG_NAME"
           rig ls
           mkdir -p "$R_LIBS_USER"
 
