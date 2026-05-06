@@ -86,6 +86,7 @@
 using namespace rstudio::core;
 using namespace http;
 using namespace http::util;
+using namespace rstudio::monitor;
 
 
 namespace rstudio {
@@ -611,7 +612,11 @@ void handleFilesRequest(const http::Request& request,
          return;
       }
    }
-   
+
+   // let the monitor client know the user has downloaded this file
+   client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                           module_context::createAliasedPath(filePath)));
+
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }

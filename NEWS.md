@@ -33,6 +33,7 @@
 - ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Reduced filesystem work performed by the `install.packages()` hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like `updates <-` or `installed.packages()`.
+- ([rstudio/rstudio-pro#9965](https://github.com/rstudio/rstudio-pro/issues/9965)): Direct file downloads from the Files pane now generate `session_file_download` audit events, matching the behavior of downloads via More -> Export.
 
 ### Dependencies
 - Ace 1.43.5
