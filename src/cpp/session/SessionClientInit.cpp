@@ -320,6 +320,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // resumed
    sessionInfo["resumed"] = resumed;
+
+   // whether R's deferred init hook has already completed for the current R
+   // session -- false during fresh start or suspend/resume (event still to
+   // fire), true on re-join (event already fired)
+   sessionInfo["deferred_init_completed"] = init::isDeferredInitCompleted();
    if (resumed)
    {
       // console actions

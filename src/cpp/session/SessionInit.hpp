@@ -29,6 +29,9 @@ void ensureSessionInitialized();
 bool isSessionInitialized();
 bool isSessionInitializedAndRestored();
 
+void setDeferredInitCompleted(bool completed);
+bool isDeferredInitCompleted();
+
 } // namespace init
 } // namespace session
 } // namespace rstudio

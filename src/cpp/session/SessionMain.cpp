@@ -571,6 +571,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // save state we need to reference later
    suspend::setSessionResumed(rInitInfo.resumed);
 
+   // a fresh R session is starting (or restarting) -- the deferred init hook
+   // has not yet run for this R session
+   init::setDeferredInitCompleted(false);
+
    // record built-in waitForMethod handlers
    module_context::registerWaitForMethod(kLocatorCompleted);
    module_context::registerWaitForMethod(kEditCompleted);
@@ -974,6 +978,11 @@ void rSessionInitHook(bool newSession)
    dataJson["startup_files_suppressed"] =
       modules::trust::shouldSuppressStartupFiles();
    dataJson["trust_request"] = modules::trust::trustRequestData();
+
+   // record that deferred init has completed for this R session, so that a
+   // client connecting after this point (a re-join) can distinguish itself
+   // from a client connecting before deferred init has fired
+   init::setDeferredInitCompleted(true);
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
