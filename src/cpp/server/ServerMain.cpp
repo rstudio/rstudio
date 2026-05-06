@@ -868,15 +868,24 @@ int main(int argc, char * const argv[])
       // readable by the caller - the cookie key is not needed for the session
       // launch + exit path that verify-installation follows.
       {
-         FilePath cookieKeyPath = options.secureCookieKeyFile().isEmpty()
-            ? key_file::systemKeyFilePath("secure-cookie-key")
-            : options.secureCookieKeyFile();
-         bool skip = options.verifyInstallation() &&
-                     cookieKeyPath.exists() &&
-                     ::access(cookieKeyPath.getAbsolutePath().c_str(), R_OK) != 0;
+         const FilePath& cookieKeyFile = options.secureCookieKeyFile();
+         bool skip = false;
+         if (options.verifyInstallation())
+         {
+            FilePath probePath = cookieKeyFile.isEmpty()
+               ? key_file::systemKeyFilePath("secure-cookie-key")
+               : cookieKeyFile;
+            skip = probePath.exists() &&
+                   ::access(probePath.getAbsolutePath().c_str(), R_OK) != 0;
+         }
          if (!skip)
          {
-            error = core::http::secure_cookie::initialize(cookieKeyPath);
+            // When no explicit key file is configured, route through the
+            // parameterless overload so unprivileged callers get the
+            // user-cache fallback in key_file::readSecureKeyFile.
+            error = cookieKeyFile.isEmpty()
+               ? core::http::secure_cookie::initialize()
+               : core::http::secure_cookie::initialize(cookieKeyFile);
             if (error)
                return core::system::exitFailure(error, ERROR_LOCATION);
          }
