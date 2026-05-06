@@ -45,6 +45,9 @@ export async function waitForSessionRestart(page: Page): Promise<void> {
  * `.Rproj` file, and open the project in RStudio. Triggers a session
  * restart and waits for it to complete. Returns the absolute project
  * directory path.
+ *
+ * Callers must reconstruct any page-action wrappers held over this call;
+ * the session restart invalidates them.
  */
 export async function createAndOpenProject(
   page: Page,
