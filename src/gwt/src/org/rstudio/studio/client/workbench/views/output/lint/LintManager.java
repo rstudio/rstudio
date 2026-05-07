@@ -364,6 +364,13 @@ public class LintManager
       if (docDisplay_.isPopupVisible())
          return;
 
+      // A single lint cycle can call showLint more than once (e.g. an
+      // immediate R-lint pass followed by a merged R + yaml-lint pass). Each
+      // pass kicks off an async spell-check request, so a stale callback
+      // could otherwise overwrite the latest render. Capture the generation
+      // here and drop the spell-check render if a newer pass has run.
+      final int generation = ++showLintGeneration_;
+
       JsArray<LintItem> finalLint;
 
       // Filter out items at the last cursor position, if the cursor hasn't moved.
@@ -387,6 +394,9 @@ public class LintManager
             @Override
             public void onResponseReceived(JsArray<LintItem> response)
             {
+               if (generation != showLintGeneration_)
+                  return;
+
                for (int i = 0; i < response.length(); i++)
                   finalLint.push(response.get(i));
 
@@ -472,6 +482,7 @@ public class LintManager
    private boolean explicit_;
    private boolean showMarkers_;
    private boolean excludeCurrentStatement_;
+   private int showLintGeneration_ = 0;
    
    private LintServerOperations server_;
    private UserPrefs userPrefs_;
