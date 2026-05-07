@@ -371,20 +371,20 @@ public class LintManager
       // here and drop the spell-check render if a newer pass has run.
       final int generation = ++showLintGeneration_;
 
-      JsArray<LintItem> finalLint;
-
-      // Filter out items at the last cursor position, if the cursor hasn't moved.
-      if (context.excludeCurrentStatement && docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
+      // Always copy into a fresh array. The spell-check callback below
+      // appends to finalLint, and aliasing the caller's lint array would
+      // leak those spell items back into a subsequent yaml-merge pass and
+      // duplicate them on the next render.
+      JsArray<LintItem> finalLint = JsArray.createArray().cast();
+      boolean filterCursor = context.excludeCurrentStatement &&
+            docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition);
+      Position pos = context.cursorPosition;
+      for (int i = 0; i < lint.length(); i++)
       {
-         finalLint = JsArray.createArray().cast();
-         Position pos = context.cursorPosition;
-         for (int i = 0; i < lint.length(); i++)
-            if (!lint.get(i).asRange().contains(pos))
-               finalLint.push(lint.get(i));
-      }
-      else
-      {
-         finalLint = lint;
+         LintItem item = lint.get(i);
+         if (filterCursor && item.asRange().contains(pos))
+            continue;
+         finalLint.push(item);
       }
 
       if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
