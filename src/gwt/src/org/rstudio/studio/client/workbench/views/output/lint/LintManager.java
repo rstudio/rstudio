@@ -394,6 +394,8 @@ public class LintManager
             @Override
             public void onResponseReceived(JsArray<LintItem> response)
             {
+               if (context.token.isInvalid())
+                  return;
                if (generation != showLintGeneration_)
                   return;
 
