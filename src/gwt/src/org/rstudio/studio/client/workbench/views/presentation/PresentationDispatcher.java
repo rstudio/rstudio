@@ -144,7 +144,7 @@ public class PresentationDispatcher
       if (cmdName == "help-doc")
          performHelpDocCommand(param1);
       else if (cmdName == "help-topic")
-         performHelpTopicCommand(param1, param2);
+         performHelpTopicCommand(param1);
       else if (cmdName == "console")
          performConsoleCommand(params);
       else if (cmdName == "console-input")
@@ -178,22 +178,22 @@ public class PresentationDispatcher
       }
    }
 
-   private void performHelpTopicCommand(String param1, String param2)
+   private void performHelpTopicCommand(String topicSpec)
    {
-      // split on :: if it's there
-      if (param1 != null)
-      {
-         String topic = param1;
-         String packageName = null;
-         int delimLoc = param1.indexOf("::");
-         if (delimLoc != -1)
-         {
-            packageName = StringUtil.substring(param1, 0, delimLoc);
-            topic = StringUtil.substring(param1, delimLoc+2);
-         }
+      if (topicSpec == null)
+         return;
 
-         server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);
+      // split on :: if present (e.g. "package::topic")
+      String topic = topicSpec;
+      String packageName = null;
+      int delimLoc = topicSpec.indexOf("::");
+      if (delimLoc != -1)
+      {
+         packageName = StringUtil.substring(topicSpec, 0, delimLoc);
+         topic = StringUtil.substring(topicSpec, delimLoc + 2);
       }
+
+      server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);
    }
 
    private void performConsoleCommand(String params)
