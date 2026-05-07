@@ -616,14 +616,21 @@ void handleFilesRequest(const http::Request& request,
       std::string referer = request.headerValue("Referer");
       if (!referer.empty())
       {
-         std::string refererHost = http::URL(referer).host();
-         std::string requestHost = http::URL(request.proxiedUri()).host();
-         if (refererHost != requestHost)
+         // Compare scheme + host + effective port so that http vs https on
+         // the same host don't get treated as same-origin, and so that
+         // implicit default ports (e.g. "example.com" vs "example.com:80")
+         // canonicalize to the same value.
+         http::URL refererUrl(referer);
+         http::URL requestUrl(request.proxiedUri());
+         if (refererUrl.protocol() != requestUrl.protocol() ||
+             refererUrl.hostWithPort() != requestUrl.hostWithPort())
          {
             WLOGF("Rejecting /files/ request with mismatched Referer "
-                  "(no Sec-Fetch-Site; Referer host '{}' vs request host '{}') "
-                  "for URI {}",
-                  refererHost, requestHost, request.uri());
+                  "(no Sec-Fetch-Site; Referer origin '{}://{}' vs "
+                  "request origin '{}://{}') for URI {}",
+                  refererUrl.protocol(), refererUrl.hostWithPort(),
+                  requestUrl.protocol(), requestUrl.hostWithPort(),
+                  request.uri());
             pResponse->setError(http::status::BadRequest,
                                 "Cross-origin request not allowed");
             return;

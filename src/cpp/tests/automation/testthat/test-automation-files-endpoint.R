@@ -82,4 +82,23 @@ withr::defer(.rs.automation.deleteRemote())
    # direct URL navigation in older browsers; the residual attack window
    # (older browser + attacker-strips-referer) is the documented trade-off.
    expect_equal(getStatus(), 200)
+
+   # Edge case: same host:port but different scheme is NOT same-origin.
+   # The handler compares scheme + host:port to canonicalize away from
+   # bare-host-equality bugs. AsyncServerImpl's pre-handler check is
+   # host-only, so it lets this through; the /files/ handler rejects it.
+   crossSchemeReferer <- sprintf("https://localhost:8788/")
+   expect_equal(
+      getStatus(list(list(Referer = crossSchemeReferer))),
+      400
+   )
+
+   # Edge case: same scheme + same host but different port -> rejected.
+   # Caught upstream by AsyncServerImpl, but asserted here so a
+   # regression that loosens host:port comparison is visible.
+   crossPortReferer <- "http://localhost:9999/"
+   expect_equal(
+      getStatus(list(list(Referer = crossPortReferer))),
+      400
+   )
 })
