@@ -44,7 +44,6 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-#include <core/http/URL.hpp>
 #include <core/http/CSRFToken.hpp>
 
 #include <core/system/ShellUtils.hpp>
@@ -573,24 +572,30 @@ void handleFilesRequest(const http::Request& request,
       return;
    }
 
-   // Require a same-origin Referer header. Files served from the user's
-   // home directory are returned with native MIME types (HTML as text/html),
+   // Block cross-site requests to /files/. The handler serves files from
+   // the user's home directory with native MIME types (HTML as text/html),
    // so loading one cross-origin would execute attacker-controlled content
-   // in the RStudio session origin. The default cross-origin check in
-   // AsyncServerImpl only rejects when Origin/Referer is present and
-   // mismatched, so an empty Referer (e.g. via Referrer-Policy: no-referrer)
-   // would otherwise slip through.
+   // in the RStudio session origin. The default Origin/Referer check in
+   // AsyncServerImpl only rejects when those headers are present and
+   // mismatched, so a redirect from an attacker page that strips the
+   // Referer (e.g. via Referrer-Policy: no-referrer) slips through.
+   //
+   // Sec-Fetch-Site is a browser-controlled Fetch Metadata header that
+   // can't be set or stripped from page-level JavaScript or referrer
+   // policy, so it remains a reliable signal even when Referer is gone.
+   // We reject only "cross-site" so that user-initiated navigations
+   // (typed URL / bookmark, value "none") and same-origin / same-site
+   // navigations from inside RStudio continue to work.
    //
    // Addresses rstudio-pro#10980.
-   std::string referer = request.headerValue("Referer");
-   std::string refererHost = http::URL(referer).host();
-   std::string requestHost = http::URL(request.proxiedUri()).host();
-   if (refererHost.empty() || refererHost != requestHost)
+   std::string secFetchSite = request.headerValue("Sec-Fetch-Site");
+   if (secFetchSite == "cross-site")
    {
-      WLOGF("Rejecting /files/ request with missing or mismatched Referer "
-            "(got '{}', expected '{}') for URI {}",
-            refererHost, requestHost, request.uri());
-      pResponse->setError(http::status::BadRequest, "Invalid Referer");
+      WLOGF("Rejecting cross-site /files/ request (Sec-Fetch-Site: '{}') "
+            "for URI {}",
+            secFetchSite, request.uri());
+      pResponse->setError(http::status::BadRequest,
+                          "Cross-site request not allowed");
       return;
    }
 
