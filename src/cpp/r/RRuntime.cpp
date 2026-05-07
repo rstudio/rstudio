@@ -71,27 +71,6 @@ void* s_library = nullptr;
       __NAME__ = reinterpret_cast<decltype(__NAME__)>(symbol);                  \
    } while (0)
 
-// Resolve a required global variable from libR by name. Logs an error on
-// resolution failure. dlsym returns the address of the variable, so we
-// dereference it.
-#define RS_IMPORT_DATA_REQUIRED(__NAME__)                                       \
-   do                                                                           \
-   {                                                                            \
-      void* symbol = nullptr;                                                   \
-      Error error = core::system::loadSymbol(s_library, #__NAME__, &symbol);    \
-      if (error)                                                                \
-      {                                                                         \
-         error.addProperty("description",                                       \
-            std::string("Failed to resolve required R symbol '")                \
-               + #__NAME__ + "'");                                              \
-         LOG_ERROR(error);                                                      \
-      }                                                                         \
-      else                                                                      \
-      {                                                                         \
-         __NAME__ = *reinterpret_cast<decltype(__NAME__)*>(symbol);             \
-      }                                                                         \
-   } while (0)
-
 // R API function pointers, resolved in initialize().
 // nullptr when the runtime R version doesn't provide them.
 SEXP (*FORMALS)(SEXP) = nullptr;
@@ -117,8 +96,11 @@ SEXP (*Rf_findVar)(SEXP, SEXP) = nullptr;
 SA_TYPE (*R_GetSaveAction)(void) = nullptr;
 SA_TYPE (*R_SetSaveAction)(SA_TYPE) = nullptr;
 
-// R_UnboundValue is imported so we can translate it to nullptr at the boundary.
-SEXP R_UnboundValue = nullptr;
+// Pointer to R's R_UnboundValue global. Resolved by address (not value) so
+// initialize() can run before setup_Rmainloop -- R sets the underlying SEXP
+// in InitMemory() during setup_Rmainloop, and dereferencing lazily ensures
+// we always read the current value.
+SEXP* s_pUnboundValue = nullptr;
 
 // Pointer to the SaveAction global in R (fallback for R < 4.6).
 SA_TYPE* s_pSaveAction = nullptr;
@@ -145,9 +127,13 @@ Error initialize()
 {
 #if defined(_WIN32)
    // On Windows, R.dll is already loaded into the process by the time
-   // initialize() runs (after setup_Rmainloop). Like the POSIX path,
-   // this avoids loading a new copy of the library and instead obtains
-   // a handle to the already-loaded R.dll for symbol resolution.
+   // initialize() runs (loaded by the OS dynamic linker on session startup;
+   // numerous R API calls have already executed before this point).
+   // Like the POSIX path, this avoids loading a new copy of the library
+   // and instead obtains a handle to the already-loaded R.dll for symbol
+   // resolution. Address-only resolution (no value reads) so this is safe
+   // to call before setup_Rmainloop populates R's globals; see s_pUnboundValue
+   // and s_pSaveAction below for the lazy-dereference pattern.
    s_library = reinterpret_cast<void*>(::GetModuleHandle(kRLibraryName));
    if (s_library == nullptr)
    {
@@ -177,7 +163,20 @@ Error initialize()
    RS_IMPORT_FUNCTION_REQUIRED(Rf_findVarInFrame);
    RS_IMPORT_FUNCTION_REQUIRED(Rf_findVar);
 
-   RS_IMPORT_DATA_REQUIRED(R_UnboundValue);
+   {
+      void* symbol = nullptr;
+      Error error = core::system::loadSymbol(s_library, "R_UnboundValue", &symbol);
+      if (error)
+      {
+         error.addProperty("description",
+            "Failed to resolve required R symbol 'R_UnboundValue'");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         s_pUnboundValue = reinterpret_cast<SEXP*>(symbol);
+      }
+   }
 
    // Version-gated R symbols; resolution failure is expected on older R.
    RS_IMPORT_FUNCTION_OPTIONAL(R_ClosureBody);
@@ -257,7 +256,7 @@ Error initialize()
          if (TYPEOF(val) == PROMSXP)
          {
             SEXPREC* promise = reinterpret_cast<SEXPREC*>(val);
-            if (promise->u.promsxp.value == R_UnboundValue)
+            if (promise->u.promsxp.value == *s_pUnboundValue)
                return kBindingTypeDelayed;
          }
 
@@ -275,7 +274,7 @@ Error initialize()
    {
       s_delayedBindingExpression = [](SEXP symSEXP, SEXP envSEXP) -> SEXP {
          SEXP promiseSEXP = Rf_findVarInFrame(envSEXP, symSEXP);
-         if (promiseSEXP == R_UnboundValue || TYPEOF(promiseSEXP) != PROMSXP)
+         if (promiseSEXP == *s_pUnboundValue || TYPEOF(promiseSEXP) != PROMSXP)
             return R_NilValue;
          SEXPREC* promise = reinterpret_cast<SEXPREC*>(promiseSEXP);
          return reinterpret_cast<SEXP>(promise->u.promsxp.expr);
@@ -350,6 +349,7 @@ Error initialize()
    RS_CHECK_DISPATCH(s_delayedBindingExpression);
    RS_CHECK_DISPATCH(s_getSaveAction);
    RS_CHECK_DISPATCH(s_setSaveAction);
+   RS_CHECK_DISPATCH(s_pUnboundValue);
 
 #undef RS_CHECK_DISPATCH
 
@@ -388,7 +388,7 @@ SEXP parentEnv(SEXP envSEXP)
 // can use simple null checks instead of referencing a non-API symbol.
 static SEXP unboundToNull(SEXP value)
 {
-   return (value == R_UnboundValue) ? nullptr : value;
+   return (value == *s_pUnboundValue) ? nullptr : value;
 }
 
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)

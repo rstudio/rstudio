@@ -207,16 +207,24 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //    ptr_R_FlushConsole
    //    ptr_R_ClearerrConsole
 
-   // initialize the main loop
-   setup_Rmainloop();
-
-   // initialize runtime dispatch now that libR is loaded
+   // Initialize runtime dispatch before setup_Rmainloop so any code reached
+   // from .Rprofile / Rprofile.site can safely call through r::runtime /
+   // r::sexp. libR is already loaded into the process; we only resolve
+   // symbol addresses here -- value-dependent reads use lazy pointer
+   // dereferencing (see s_pUnboundValue / s_pSaveAction in RRuntime.cpp).
+   //
+   // Use R_Suicide rather than Rf_error on the failure branch: Rf_error
+   // longjmps to R_ToplevelContext, which is not set up until
+   // setup_Rmainloop runs.
    Error error = r::runtime::initialize();
    if (error)
    {
       LOG_ERROR(error);
-      Rf_error("RStudio failed to initialize R runtime dispatch");
+      R_Suicide("RStudio failed to initialize R runtime dispatch");
    }
+
+   // initialize the main loop
+   setup_Rmainloop();
 
    // run the main loop
    run_Rmainloop();
