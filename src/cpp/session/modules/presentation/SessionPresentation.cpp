@@ -92,8 +92,19 @@ SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
                                  "No presentation is currently active");
       }
 
-      // resolve against presentation directory
       std::string helpDoc = r::sexp::asString(helpDocSEXP);
+
+      // doc must be relative to the presentation directory - the URL
+      // contract for /help/presentation/?doc= does not accept absolute
+      // paths
+      if (FilePath(helpDoc).isAbsolute())
+      {
+         throw r::exec::RErrorException(
+                                 "Help doc path must be relative to the "
+                                 "presentation directory");
+      }
+
+      // resolve against presentation directory to verify existence
       FilePath helpDocPath = presentation::state::directory().completeChildPath(
          helpDoc);
       if (!helpDocPath.exists())
@@ -102,10 +113,10 @@ SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
                                         + " not found.");
       }
 
-      // build url and fire event
-      std::string url = "help/presentation/?file=";
-      std::string file = module_context::createAliasedPath(helpDocPath);
-      url += http::util::urlEncode(file, true);
+      // build url with the relative path; the server resolves it
+      // against the active presentation's directory
+      std::string url = "help/presentation/?doc=";
+      url += http::util::urlEncode(helpDoc, true);
 
       ClientEvent event(client_events::kShowHelp, url);
       module_context::enqueClientEvent(event);

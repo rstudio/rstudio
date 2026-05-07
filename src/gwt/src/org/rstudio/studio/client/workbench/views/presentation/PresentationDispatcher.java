@@ -171,9 +171,10 @@ public class PresentationDispatcher
    {
       if (param1 != null)
       {
-         String docFile = getPresentationPath(param1);
-         String url = "help/presentation/?file=" + URL.encodeQueryString(docFile);
-         eventBus_.fireEvent(new ShowHelpEvent(url));  
+         // Send the path as a presentation-relative reference; the
+         // server resolves it against the active presentation directory.
+         String url = "help/presentation/?doc=" + URL.encodeQueryString(param1);
+         eventBus_.fireEvent(new ShowHelpEvent(url));
       }
    }
 

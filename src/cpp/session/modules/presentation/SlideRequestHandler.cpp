@@ -1209,7 +1209,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                    const std::string& jsCallbacks,
                                    core::http::Response* pResponse)
 {
-   // We save the directory used by the most recent (validated) file=
+   // We save the directory used by the most recent (validated) doc=
    // request so relative resource fetches (images, css, ...) referenced
    // from a rendered help doc can still resolve after the presentation
    // tab closes. The directory is only ever set from a path that was
@@ -1226,21 +1226,22 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       return;
    }
 
-   std::string file = request.queryParamValue("file");
-   if (!file.empty())
+   // doc= names a help doc relative to the active presentation. The
+   // URL contract is "always relative" - absolute paths are rejected so
+   // the URL cannot express anything outside the presentation directory
+   // (rstudio-pro#10907).
+   std::string doc = request.queryParamValue("doc");
+   if (!doc.empty())
    {
-      // file= requires an active presentation, and the requested file
-      // must live within that presentation's directory. Without this
-      // constraint, any reachable .Rmd would be auto-knit by an attacker
-      // (rstudio-pro#10907).
-      if (!presentation::state::isActive())
+      if (!presentation::state::isActive() || FilePath(doc).isAbsolute())
       {
          pResponse->setNotFoundError(request);
          return;
       }
 
-      FilePath filePath = module_context::resolveAliasedPath(file);
-      if (!isPathWithin(filePath, presentation::state::directory()))
+      FilePath presDir = presentation::state::directory();
+      FilePath filePath = presDir.completePath(doc);
+      if (!isPathWithin(filePath, presDir))
       {
          pResponse->setNotFoundError(request);
          return;
@@ -1262,9 +1263,9 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
    else
    {
-      // relative file reference - serve only if a help dir was set by
-      // an earlier authorized file= request, and only for paths that
-      // canonically resolve to within that dir
+      // relative resource fetch from a rendered help doc - serve only
+      // if a help dir was set by an earlier authorized doc= request,
+      // and only for paths that canonically resolve to within that dir
       if (!s_presentationHelpDir.exists())
       {
          pResponse->setNotFoundError(request);
