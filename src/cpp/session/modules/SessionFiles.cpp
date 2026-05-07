@@ -44,6 +44,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/URL.hpp>
 #include <core/http/CSRFToken.hpp>
 
 #include <core/system/ShellUtils.hpp>
@@ -583,9 +584,21 @@ void handleFilesRequest(const http::Request& request,
    // Sec-Fetch-Site is a browser-controlled Fetch Metadata header that
    // can't be set or stripped from page-level JavaScript or referrer
    // policy, so it remains a reliable signal even when Referer is gone.
-   // We reject only "cross-site" so that user-initiated navigations
-   // (typed URL / bookmark, value "none") and same-origin / same-site
-   // navigations from inside RStudio continue to work.
+   // We reject "cross-site" so user-initiated navigations (typed URL /
+   // bookmark, value "none") and same-origin / same-site navigations
+   // from inside RStudio continue to work. "same-site" is allowed so
+   // that Posit Workbench front-ends iframe-embedding RStudio across
+   // sibling subdomains keep functioning.
+   //
+   // For older browsers that don't send Sec-Fetch-Site, fall back to a
+   // same-origin Referer check. AsyncServerImpl already rejects non-empty
+   // mismatched Origin/Referer for all requests, so this is mostly
+   // defense-in-depth, but keeping the policy explicit at the handler
+   // makes the security contract for /files/ self-documenting. The
+   // "everything missing" case (no Sec-Fetch-Site, no Referer) is
+   // intentionally allowed to preserve direct URL navigation in older
+   // browsers; the AsyncServerImpl layer is what closes that gap when
+   // Referer is present but stripped of credentials.
    //
    // Addresses rstudio-pro#10980.
    std::string secFetchSite = request.headerValue("Sec-Fetch-Site");
@@ -597,6 +610,25 @@ void handleFilesRequest(const http::Request& request,
       pResponse->setError(http::status::BadRequest,
                           "Cross-site request not allowed");
       return;
+   }
+   else if (secFetchSite.empty())
+   {
+      std::string referer = request.headerValue("Referer");
+      if (!referer.empty())
+      {
+         std::string refererHost = http::URL(referer).host();
+         std::string requestHost = http::URL(request.proxiedUri()).host();
+         if (refererHost != requestHost)
+         {
+            WLOGF("Rejecting /files/ request with mismatched Referer "
+                  "(no Sec-Fetch-Site; Referer host '{}' vs request host '{}') "
+                  "for URI {}",
+                  refererHost, requestHost, request.uri());
+            pResponse->setError(http::status::BadRequest,
+                                "Cross-origin request not allowed");
+            return;
+         }
+      }
    }
 
    // get prefix and uri (strip query string)

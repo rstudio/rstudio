@@ -14,7 +14,7 @@ withr::defer(.rs.automation.deleteRemote())
 # automation.ensureRunningServerInstance), so we can drive raw HTTP requests
 # from the test driver via httr without dealing with auth cookies.
 
-.rs.test("/files/ rejects cross-site requests", {
+.rs.test("/files/ enforces cross-site protections", {
    skip_if(.rs.isDesktop())
 
    # Drop a small test file in the home directory so the handler reaches the
@@ -32,28 +32,54 @@ withr::defer(.rs.automation.deleteRemote())
       ))
    })
 
-   url <- sprintf("http://localhost:8788/files/%s", testFile)
-   getStatus <- function(secFetchSite = NULL) {
-      response <- if (is.null(secFetchSite)) {
-         httr::GET(url)
-      } else {
-         httr::GET(url, httr::add_headers(`Sec-Fetch-Site` = secFetchSite))
-      }
-      httr::status_code(response)
+   serverHost <- "http://localhost:8788"
+   url <- sprintf("%s/files/%s", serverHost, testFile)
+   request <- function(headers = list()) {
+      args <- c(list(url), lapply(headers, function(v) {
+         do.call(httr::add_headers, v)
+      }))
+      do.call(httr::GET, args)
+   }
+   getStatus <- function(headers = list()) {
+      httr::status_code(request(headers))
    }
 
-   # Cross-site requests must be rejected.
-   expect_equal(getStatus("cross-site"), 400)
+   # Primary check: Sec-Fetch-Site == "cross-site" is the explicit attacker
+   # signal and must be rejected.
+   expect_equal(
+      getStatus(list(list(`Sec-Fetch-Site` = "cross-site"))),
+      400
+   )
 
-   # All other Sec-Fetch-Site values are legitimate and must pass through.
-   # "none" covers user-typed URLs and bookmarks; "same-origin" / "same-site"
-   # cover navigations from inside RStudio (or a sibling subdomain).
-   expect_equal(getStatus("same-origin"), 200)
-   expect_equal(getStatus("same-site"),   200)
-   expect_equal(getStatus("none"),        200)
+   # Other Sec-Fetch-Site values are legitimate. "none" covers user-typed
+   # URLs and bookmarks. "same-origin" covers in-RStudio navigation.
+   # "same-site" is allowed deliberately so Posit Workbench front-ends
+   # iframe-embedding RStudio across sibling subdomains keep functioning.
+   expect_equal(getStatus(list(list(`Sec-Fetch-Site` = "same-origin"))), 200)
+   expect_equal(getStatus(list(list(`Sec-Fetch-Site` = "same-site"))),   200)
+   expect_equal(getStatus(list(list(`Sec-Fetch-Site` = "none"))),        200)
 
-   # Older browsers don't send Sec-Fetch-* headers at all; the existing
-   # AsyncServerImpl Origin/Referer check still catches non-empty mismatched
-   # Referers, so we accept the absent-header case here.
-   expect_equal(getStatus(NULL), 200)
+   # Older browsers don't send Sec-Fetch-Site. The handler's fallback
+   # check then enforces a same-origin Referer when one is present.
+   sameOriginReferer <- sprintf("%s/", serverHost)
+   crossOriginReferer <- "https://attacker.example/"
+
+   # Sec-Fetch-Site absent + same-origin Referer -> allowed.
+   expect_equal(
+      getStatus(list(list(Referer = sameOriginReferer))),
+      200
+   )
+
+   # Sec-Fetch-Site absent + cross-origin Referer -> rejected. This is
+   # caught by AsyncServerImpl's pre-handler check, but the assertion
+   # documents the end-to-end policy.
+   expect_equal(
+      getStatus(list(list(Referer = crossOriginReferer))),
+      400
+   )
+
+   # Sec-Fetch-Site absent + Referer absent -> allowed. This preserves
+   # direct URL navigation in older browsers; the residual attack window
+   # (older browser + attacker-strips-referer) is the documented trade-off.
+   expect_equal(getStatus(), 200)
 })
