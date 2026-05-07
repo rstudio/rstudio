@@ -29,12 +29,26 @@ public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserEvent.Hand
 
    public OpenFileInBrowserEvent(FileSystemItem file)
    {
+      this(file, false);
+   }
+
+   public OpenFileInBrowserEvent(FileSystemItem file, boolean isDownload)
+   {
       file_ = file;
+      isDownload_ = isDownload;
    }
 
    public FileSystemItem getFile()
    {
       return file_;
+   }
+
+   // true when the user explicitly initiated a download (e.g. clicked a
+   // binary file in the Files pane); false for view-style navigations
+   // (e.g. clicking a link in source code, or HTML "Show in Browser")
+   public boolean isDownload()
+   {
+      return isDownload_;
    }
 
    @Override
@@ -50,4 +64,5 @@ public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserEvent.Hand
    }
 
    private final FileSystemItem file_;
+   private final boolean isDownload_;
 }

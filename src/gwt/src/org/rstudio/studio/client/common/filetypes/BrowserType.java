@@ -28,7 +28,11 @@ public class BrowserType extends FileType
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      eventBus.fireEvent(new OpenFileInBrowserEvent(file));
+      // BrowserType is the fallback for non-editable, non-text files - the
+      // file will be fetched and either saved by the browser (binary) or
+      // rendered. Mark this as a download so server-side audit logging
+      // distinguishes it from view-style navigations.
+      eventBus.fireEvent(new OpenFileInBrowserEvent(file, true));
    }
 
    @Override

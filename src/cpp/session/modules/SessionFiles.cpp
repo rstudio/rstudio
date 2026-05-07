@@ -611,7 +611,19 @@ void handleFilesRequest(const http::Request& request,
          return;
       }
    }
-   
+
+   // if this request was initiated as an explicit download from the Files
+   // pane, let the monitor client know the user has downloaded this file
+   // (other consumers of /files/ - file.show(), browseURL(), Sweave/PDF/HTML
+   // previews, and HTML sub-resource fetches - omit the download flag and
+   // are not logged)
+   if (request.queryParamValue("download") == "1")
+   {
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                              module_context::createAliasedPath(filePath)));
+   }
+
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }
