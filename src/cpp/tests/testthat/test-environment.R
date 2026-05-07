@@ -126,12 +126,28 @@ test_that("memory usage stats are reasonable", {
 })
 
 test_that("missing arguments can be described", {
-   
+
    # simulate a missing value argument
    delayedAssign("x", quote(expr = ))
    desc <- .rs.describeObject("x", environment())
    expect_identical(desc$name, .rs.scalar("x"))
-   
+
+})
+
+test_that("date/time scalars are formatted in the environment pane", {
+   # https://github.com/rstudio/rstudio/issues/17556
+   # difftime objects previously fell through to NO_VALUE because they
+   # carry attributes (so the atomic-no-attributes branch is skipped) and
+   # weren't included in the date/time class list.
+   env <- new.env(parent = emptyenv())
+   env$dt <- as.difftime(90, units = "secs")
+   env$ts <- .POSIXct(1234567890, tz = "UTC")
+
+   dt_desc <- .rs.describeObject("dt", env)
+   expect_identical(dt_desc$value, .rs.scalar(format(env$dt, usetz = TRUE)))
+
+   ts_desc <- .rs.describeObject("ts", env)
+   expect_identical(ts_desc$value, .rs.scalar(format(env$ts, usetz = TRUE)))
 })
 
 test_that(".rs.isSerializable() works as expected", {

@@ -10,6 +10,7 @@
 - ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
 
 ### Fixed
+- ([#17556](https://github.com/rstudio/rstudio/issues/17556)): `difftime` objects (e.g. the result of subtracting two `Sys.time()` values) now show their formatted value in the Environment pane instead of an empty cell.
 - ([#17481](https://github.com/rstudio/rstudio/issues/17481)): Fixed two debugger regressions: top-level breakpoints (e.g. via `debugSource()`) no longer fail to show the debug highlight or call stack, and multi-line input at the `Browse[N]>` prompt no longer clears the captured browser context.
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): The Files pane delete confirmation now reflects whether the file will be moved to the system Trash/Recycle Bin or permanently deleted, based on the "Delete files to Trash/Recycle Bin" preference.
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): When sending a file to the system Trash/Recycle Bin fails, the Files pane now reports the error and leaves the file on disk; previously it would silently fall back to permanently deleting the file.
