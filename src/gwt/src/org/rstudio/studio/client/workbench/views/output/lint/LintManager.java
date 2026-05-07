@@ -318,8 +318,7 @@ public class LintManager
                   boolean isRmdRChunk = docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded) &&
                         docDisplay_.getFileType().isR();
                   // Show R lint + spell check immediately so that a hung or failed
-                  // yaml-lint provider can't suppress source-mode spell check
-                  // (see rstudio/rstudio#15711).
+                  // yaml-lint provider can't suppress source-mode spell check.
                   showLint(context, lint);
 
                   if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
@@ -327,6 +326,10 @@ public class LintManager
                      yamlLinter_.getLint(context.explicit, yamlLint -> {
                         if (context.token.isInvalid())
                            return;
+                        // The immediate showLint above already rendered R-lint
+                        // + spell and cleared any prior yaml render. Skipping
+                        // a second showLint here is required so we don't bump
+                        // showLintGeneration_ and drop that pass.
                         if (yamlLint.length() == 0)
                            return;
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
