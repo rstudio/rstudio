@@ -44,6 +44,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/URL.hpp>
 #include <core/http/CSRFToken.hpp>
 
 #include <core/system/ShellUtils.hpp>
@@ -562,16 +563,37 @@ core::Error touchFile(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
-void handleFilesRequest(const http::Request& request, 
+void handleFilesRequest(const http::Request& request,
                         http::Response* pResponse)
-{   
+{
    Options& options = session::options();
    if (options.programMode() != kSessionProgramModeServer)
    {
       pResponse->setNotFoundError(request);
       return;
    }
-   
+
+   // Require a same-origin Referer header. Files served from the user's
+   // home directory are returned with native MIME types (HTML as text/html),
+   // so loading one cross-origin would execute attacker-controlled content
+   // in the RStudio session origin. The default cross-origin check in
+   // AsyncServerImpl only rejects when Origin/Referer is present and
+   // mismatched, so an empty Referer (e.g. via Referrer-Policy: no-referrer)
+   // would otherwise slip through.
+   //
+   // Addresses rstudio-pro#10980.
+   std::string referer = request.headerValue("Referer");
+   std::string refererHost = http::URL(referer).host();
+   std::string requestHost = http::URL(request.proxiedUri()).host();
+   if (refererHost.empty() || refererHost != requestHost)
+   {
+      WLOGF("Rejecting /files/ request with missing or mismatched Referer "
+            "(got '{}', expected '{}') for URI {}",
+            refererHost, requestHost, request.uri());
+      pResponse->setError(http::status::BadRequest, "Invalid Referer");
+      return;
+   }
+
    // get prefix and uri (strip query string)
    std::string prefix = "/files/";
    std::string uri = request.uri();
