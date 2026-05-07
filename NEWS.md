@@ -16,6 +16,7 @@
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): When sending a file to the system Trash/Recycle Bin fails, the Files pane now reports the error and leaves the file on disk; previously it would silently fall back to permanently deleting the file.
 - ([#12235](https://github.com/rstudio/rstudio/issues/12235)): RStudio Desktop's Session > New Session now opens noticeably faster.
 - ([#15614](https://github.com/rstudio/rstudio/issues/15614)): The splash screen can again be dismissed with a mouse click or key press.
+- ([#15711](https://github.com/rstudio/rstudio/issues/15711)): Source-mode spell check no longer disappears on Quarto and R Markdown documents when the bundled YAML diagnostics worker fails to respond; spell-check lint is now applied independently of YAML lint.
 - ([#16067](https://github.com/rstudio/rstudio/issues/16067)): Raise the open file descriptor soft limit at session startup to avoid "Too many open files" errors during project file monitoring on Linux.
 - ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior.
 - ([#16966](https://github.com/rstudio/rstudio/issues/16966)): Restored the desktop terminal bell on Linux, now that the underlying Electron crash has been fixed.
