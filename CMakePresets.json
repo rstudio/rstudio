@@ -1,0 +1,31 @@
+{
+   "version": 3,
+   "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+   "configurePresets": [
+      {
+         "name": "default",
+         "displayName": "Default",
+         "generator": "Ninja",
+         "binaryDir": "${sourceDir}/build",
+         "condition": {
+            "type": "notEquals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Windows"
+         },
+         "cacheVariables": {
+            "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+         }
+      },
+      {
+         "name": "windows-x64",
+         "displayName": "Windows x64",
+         "inherits": "default",
+         "condition": {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Windows"
+         },
+         "architecture": { "value": "x64", "strategy": "external" }
+      }
+   ]
+}
