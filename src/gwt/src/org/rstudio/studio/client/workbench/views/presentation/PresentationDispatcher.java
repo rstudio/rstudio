@@ -167,13 +167,13 @@ public class PresentationDispatcher
    }
 
 
-   private void performHelpDocCommand(String param1, String param2)
+   private void performHelpDocCommand(String docPath, String param2)
    {
-      if (param1 != null)
+      if (docPath != null)
       {
          // Send the path as a presentation-relative reference; the
          // server resolves it against the active presentation directory.
-         String url = "help/presentation/?doc=" + URL.encodeQueryString(param1);
+         String url = "help/presentation/?doc=" + URL.encodeQueryString(docPath);
          eventBus_.fireEvent(new ShowHelpEvent(url));
       }
    }
