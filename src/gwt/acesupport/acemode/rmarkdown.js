@@ -117,7 +117,15 @@ oop.inherits(Mode, MarkdownMode);
 
    function activeMode(state)
    {
-      return Utils.activeMode(state, "markdown");
+      var mode = Utils.activeMode(state, "markdown");
+      // roxygen (rdoc) blocks within R / C++ chunks belong to those chunks'
+      // languages -- otherwise lines like #' @param in an R chunk would be
+      // reported as r-rdoc and routed to Markdown handling.
+      if (mode === "r-rdoc")
+         return "r";
+      else if (mode === "r-cpp-rdoc")
+         return "r-cpp";
+      return mode;
    }
 
    this.insertChunkInfo = {

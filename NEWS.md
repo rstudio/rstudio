@@ -8,6 +8,7 @@
 - ([#17478](https://github.com/rstudio/rstudio/issues/17478)): Posit Assistant: added the `ui/revealInFilesPane` JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.
 - ([#17479](https://github.com/rstudio/rstudio/issues/17479)): Posit Assistant: added the `ui/previewUrl` JSON-RPC method, which navigates the Viewer pane to an `http(s)` URL (e.g., a local Shiny app); supports an optional `height` parameter that mirrors `rstudioapi::viewer()` (`-1` for maximize, `0` for no change, positive for pixels).
 - ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
+- ([#5809](https://github.com/rstudio/rstudio/issues/5809)): Roxygen tag autocompletion (e.g. `@param`, `@return`) now works on `#'` lines inside R code chunks of R Markdown and Quarto documents, matching the behavior in plain `.R` files.
 
 ### Fixed
 - ([#17481](https://github.com/rstudio/rstudio/issues/17481)): Fixed two debugger regressions: top-level breakpoints (e.g. via `debugSource()`) no longer fail to show the debug highlight or call stack, and multi-line input at the `Browse[N]>` prompt no longer clears the captured browser context.
