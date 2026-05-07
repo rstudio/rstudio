@@ -161,7 +161,7 @@ jobs:
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
         run: |
           $ErrorActionPreference = 'Stop'
-          Rscript -e 'options(repos = c(P3M = "https://packagemanager.posit.co/cran/latest")); if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak"); pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)'
+          Rscript -e "options(repos = c(P3M = 'https://packagemanager.posit.co/cran/latest')); if (!requireNamespace('pak', quietly = TRUE)) install.packages('pak'); pak::local_install_dev_deps(root = 'e2e/rstudio', ask = FALSE, upgrade = FALSE)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Save R library cache
