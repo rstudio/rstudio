@@ -972,7 +972,7 @@ public class Files
 
    public void onOpenFileInBrowser(OpenFileInBrowserEvent event)
    {
-      showFileInBrowser(event.getFile());
+      showFileInBrowser(event.getFile(), event.isDownload());
    }
 
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
@@ -1097,15 +1097,22 @@ public class Files
 
    private void showFileInBrowser(FileSystemItem file)
    {
+      showFileInBrowser(file, false);
+   }
+
+   private void showFileInBrowser(FileSystemItem file, boolean asDownload)
+   {
       // show the file in a new window if we can get a file url for it
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
       {
-         // for server URLs, tag user-initiated Files-pane downloads so the
-         // server can audit them without also auditing internal /files/
-         // traffic (e.g. HTML sub-resources, file.show(), browseURL previews).
+         // for server URLs initiated as a download (e.g. user clicked a
+         // binary file in the Files pane), tag the URL so the server can
+         // audit it without also auditing view-style navigations (HTML
+         // "Show in Browser", source-code link clicks) or internal /files/
+         // traffic (HTML sub-resources, file.show(), browseURL previews).
          // Desktop URLs are file:// and don't go through the session.
-         if (!fileURL.startsWith("file:"))
+         if (asDownload && !fileURL.startsWith("file:"))
             fileURL += (fileURL.contains("?") ? "&" : "?") + "download=1";
          globalDisplay_.openWindow(fileURL);
       }
