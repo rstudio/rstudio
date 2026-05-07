@@ -349,14 +349,18 @@ void runEmbeddedR(const core::FilePath& rHome,
    // Initialize runtime dispatch before setup_Rmainloop so any code reached
    // from .Rprofile / Rprofile.site (e.g. download.file -> R_Busy / REprintf
    // -> rConsoleWrite -> ...) can safely call through r::runtime / r::sexp.
-   // R.dll is already loaded (R_DefParams / getDLLVersion above), and we only
-   // resolve symbol addresses here -- value-dependent reads use lazy pointer
+   // R.dll has been loaded by the OS dynamic linker, and we only resolve
+   // symbol addresses here -- value-dependent reads use lazy pointer
    // dereferencing (see s_pUnboundValue / s_pSaveAction in RRuntime.cpp).
+   //
+   // Use R_Suicide rather than Rf_error on the failure branch: Rf_error
+   // longjmps to R_ToplevelContext, which is not set up until
+   // setup_Rmainloop runs.
    Error error = r::runtime::initialize();
    if (error)
    {
       LOG_ERROR(error);
-      Rf_error("RStudio failed to initialize R runtime dispatch");
+      R_Suicide("RStudio failed to initialize R runtime dispatch");
    }
 
    // Set CharacterMode to LinkDLL during main loop setup. The mode can't be

@@ -71,27 +71,6 @@ void* s_library = nullptr;
       __NAME__ = reinterpret_cast<decltype(__NAME__)>(symbol);                  \
    } while (0)
 
-// Resolve a required global variable from libR by name. Logs an error on
-// resolution failure. dlsym returns the address of the variable, so we
-// dereference it.
-#define RS_IMPORT_DATA_REQUIRED(__NAME__)                                       \
-   do                                                                           \
-   {                                                                            \
-      void* symbol = nullptr;                                                   \
-      Error error = core::system::loadSymbol(s_library, #__NAME__, &symbol);    \
-      if (error)                                                                \
-      {                                                                         \
-         error.addProperty("description",                                       \
-            std::string("Failed to resolve required R symbol '")                \
-               + #__NAME__ + "'");                                              \
-         LOG_ERROR(error);                                                      \
-      }                                                                         \
-      else                                                                      \
-      {                                                                         \
-         __NAME__ = *reinterpret_cast<decltype(__NAME__)*>(symbol);             \
-      }                                                                         \
-   } while (0)
-
 // R API function pointers, resolved in initialize().
 // nullptr when the runtime R version doesn't provide them.
 SEXP (*FORMALS)(SEXP) = nullptr;
@@ -148,7 +127,8 @@ Error initialize()
 {
 #if defined(_WIN32)
    // On Windows, R.dll is already loaded into the process by the time
-   // initialize() runs (R_DefParams / getDLLVersion both load R.dll).
+   // initialize() runs (loaded by the OS dynamic linker on session startup;
+   // numerous R API calls have already executed before this point).
    // Like the POSIX path, this avoids loading a new copy of the library
    // and instead obtains a handle to the already-loaded R.dll for symbol
    // resolution. Address-only resolution (no value reads) so this is safe
