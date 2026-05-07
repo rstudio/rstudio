@@ -142,7 +142,7 @@ public class PresentationDispatcher
          String param2)
    {
       if (cmdName == "help-doc")
-         performHelpDocCommand(param1, param2);
+         performHelpDocCommand(param1);
       else if (cmdName == "help-topic")
          performHelpTopicCommand(param1, param2);
       else if (cmdName == "console")
@@ -167,7 +167,7 @@ public class PresentationDispatcher
    }
 
 
-   private void performHelpDocCommand(String docPath, String param2)
+   private void performHelpDocCommand(String docPath)
    {
       if (docPath != null)
       {
