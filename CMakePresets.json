@@ -7,6 +7,11 @@
          "displayName": "Default",
          "generator": "Ninja",
          "binaryDir": "${sourceDir}/build",
+         "condition": {
+            "type": "notEquals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Windows"
+         },
          "cacheVariables": {
             "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
          }
