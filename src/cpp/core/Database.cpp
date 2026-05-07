@@ -182,11 +182,12 @@ static constexpr long kConnectionHeldTooLongMs = 500;
 // Minimum interval between held-too-long warnings (seconds)
 static constexpr int kHeldTooLongWarningIntervalSec = 3600;
 
-// Maximum number of retries for transient SQLite locking errors
-static constexpr int kMaxSqliteRetries = 3;
+// Linear backoff for transient SQLite lock errors: 5 retries at
+// 300+600+900+1200+1500 ms = 4500 ms total, below the 30s busy_timeout.
+static constexpr int kMaxSqliteRetries = 5;
 
 // Delay between retries in milliseconds (will be multiplied by retry attempt)
-static constexpr int kSqliteRetryDelayMs = 100;
+static constexpr int kSqliteRetryDelayMs = 300;
 
 /**
  * @brief Checks if a SOCI error is a transient SQLite locking error that can be retried.
