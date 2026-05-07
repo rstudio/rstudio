@@ -435,6 +435,7 @@ When fixing a bug or adding a new feature, add an entry to the appropriate secti
 Exceptions — do NOT add a NEWS.md entry for:
 - Fixes to unreleased features still under active development
 - Fixes to bugs introduced since the last release (i.e., bugs no official-release user has encountered)
+- Open-source companion PRs for rstudio-pro changes (typically identified by a link to a pro-repo PR/issue or wording like "open-source companion") -- these are tracked in a separate NEWS file in the pro repository
 
 
 ## Pull Requests
