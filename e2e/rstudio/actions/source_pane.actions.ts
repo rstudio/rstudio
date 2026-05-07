@@ -220,6 +220,22 @@ export class SourcePaneActions {
     }, marker);
   }
 
+  /** Get the cursor position (0-based row and column) in the active source editor. */
+  async getActiveEditorCursor(): Promise<{ row: number; column: number }> {
+    return await this.page.evaluate(`(function() {
+      var editors = document.querySelectorAll('.ace_editor');
+      for (var i = 0; i < editors.length; i++) {
+        if (editors[i].closest('#rstudio_console_input')) continue;
+        var env = editors[i].env;
+        if (env && env.editor) {
+          var pos = env.editor.getCursorPosition();
+          return { row: pos.row, column: pos.column };
+        }
+      }
+      throw new Error('No active source editor found');
+    })()`);
+  }
+
   /** Get the first visible row index (0-based) of the active source editor. */
   async getFirstVisibleRow(): Promise<number> {
     return await this.page.evaluate(`(function() {
