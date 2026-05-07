@@ -53,6 +53,8 @@
 
 #include <session/SessionUrlPorts.hpp>
 
+#include <monitor/MonitorClient.hpp>
+
 #include "SessionSpelling.hpp"
 #include "SessionReticulate.hpp"
 
@@ -443,6 +445,17 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    {
       pResponse->setNotFoundError(request);
       return;
+   }
+
+   // if this request was initiated as an explicit download from the Files
+   // pane, let the monitor client know the user has downloaded this file.
+   // The Files pane appends ?download=1 only when the user clicked a file
+   // for download; bare /file_show?path=... requests are not logged.
+   if (request.queryParamValue("download") == "1")
+   {
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                              module_context::createAliasedPath(filePath)));
    }
 
    // send it back
