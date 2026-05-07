@@ -1104,6 +1104,8 @@ void handlePresentationFileRequest(const http::Request& request,
    setWebCacheableFileResponse(filePath, request, pResponse);
 }
 
+} // anonymous namespace
+
 bool isPathWithin(const FilePath& filePath, const FilePath& dirPath)
 {
    if (!filePath.exists() || !dirPath.exists())
@@ -1119,15 +1121,12 @@ bool isPathWithin(const FilePath& filePath, const FilePath& dirPath)
 // automatically on every fetch and JavaScript cannot forge it. Reject
 // anything that is identified as cross-site. Older browsers omit the
 // header; in that case fall through and rely on the path constraint.
-bool isPresentationHelpFetchSiteAllowed(const core::http::Request& request)
+bool isPresentationHelpFetchSiteAllowed(const std::string& fetchSite)
 {
-   std::string fetchSite = request.headerValue("Sec-Fetch-Site");
    if (fetchSite.empty())
       return true;
    return fetchSite == "same-origin" || fetchSite == "none";
 }
-
-} // anonymous namespace
 
 bool clearKnitrCache(ErrorResponse* pErrorResponse)
 {
@@ -1220,7 +1219,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    // Reject obvious cross-site requests before doing anything else.
    // The presentation help endpoint can knit R Markdown via knitr,
    // which executes embedded R code; CSRF here means RCE.
-   if (!isPresentationHelpFetchSiteAllowed(request))
+   if (!isPresentationHelpFetchSiteAllowed(request.headerValue("Sec-Fetch-Site")))
    {
       pResponse->setNotFoundError(request);
       return;
