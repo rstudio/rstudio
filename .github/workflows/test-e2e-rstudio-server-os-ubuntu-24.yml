@@ -58,7 +58,7 @@ jobs:
       - name: Install OS dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get install -y xvfb jq
 
       - name: Install rig
         run: |
@@ -200,7 +200,8 @@ jobs:
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
-          npx playwright test "${ARGS[@]}"
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            npx playwright test "${ARGS[@]}"
 
       - name: Upload Playwright report
         if: always()
