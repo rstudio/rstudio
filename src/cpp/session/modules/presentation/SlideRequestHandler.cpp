@@ -1111,9 +1111,14 @@ bool isPathWithin(const FilePath& filePath, const FilePath& dirPath)
    if (!filePath.exists() || !dirPath.exists())
       return false;
 
-   // canonicalize both sides so symlinks and ".." cannot escape
+   // Canonicalize both sides so symlinks and ".." get resolved.
+   // getCanonicalPath() falls back to a lexical normalization if the
+   // filesystem call fails, in which case symlink resolution is not
+   // guaranteed; defend against that by failing closed on empty.
    FilePath canonicalFile(filePath.getCanonicalPath());
    FilePath canonicalDir(dirPath.getCanonicalPath());
+   if (canonicalFile.isEmpty() || canonicalDir.isEmpty())
+      return false;
    return canonicalFile.isWithin(canonicalDir);
 }
 
@@ -1240,7 +1245,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
 
       FilePath presDir = presentation::state::directory();
       FilePath filePath = presDir.completePath(doc);
-      if (!isPathWithin(filePath, presDir))
+      if (filePath.isDirectory() || !isPathWithin(filePath, presDir))
       {
          pResponse->setNotFoundError(request);
          return;
@@ -1274,7 +1279,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       std::string path = http::util::pathAfterPrefix(request,
                                                      "/help/presentation/");
       FilePath target = s_presentationHelpDir.completePath(path);
-      if (!isPathWithin(target, s_presentationHelpDir))
+      if (target.isDirectory() || !isPathWithin(target, s_presentationHelpDir))
       {
          pResponse->setNotFoundError(request);
          return;

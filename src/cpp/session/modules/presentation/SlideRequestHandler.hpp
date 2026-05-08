@@ -59,7 +59,8 @@ void handlePresentationHelpRequest(const core::http::Request& request,
 
 // Returns true if `filePath` canonically resolves to a location within
 // `dirPath`. Both paths must exist on disk; returns false if either is
-// missing. Canonicalization defeats symlink and ".." escapes.
+// missing. Resolves symlinks and ".." components, with a lexical
+// fallback if the filesystem call fails.
 bool isPathWithin(const core::FilePath& filePath,
                   const core::FilePath& dirPath);
 
