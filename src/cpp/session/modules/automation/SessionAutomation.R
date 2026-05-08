@@ -340,13 +340,28 @@
       # still need to wait for the kernel to reap the process so the
       # listening socket on port 8788 is released before the caller
       # binds a new rserver to the same port.
-      .rs.tryCatch(ps::ps_kill(handle, grace = 2000))
+      #
+      # Let ps_kill errors propagate (e.g., EPERM): silently swallowing
+      # them would let the caller try to bind 8788 against a still-live
+      # rserver and produce a confusing 'address already in use'.
+      ps::ps_kill(handle, grace = 2000)
 
       deadline <- Sys.time() + 5
       while (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))) &&
              Sys.time() < deadline)
       {
          Sys.sleep(0.1)
+      }
+
+      # Fail closed if the process didn't actually exit. Reporting
+      # success here would let the caller race a still-listening
+      # rserver and mask whatever kept it alive.
+      if (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))))
+      {
+         stop(sprintf(
+            "Failed to terminate existing rserver (pid %d) on port 8788 within 5s.",
+            proc$pid
+         ))
       }
 
       return(invisible(TRUE))
