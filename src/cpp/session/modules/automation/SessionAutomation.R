@@ -339,19 +339,14 @@
 
 .rs.addFunction("automation.ensureRunningServerInstance", function(serverDataDir)
 {
-   # Check and see if we already have an rserver instance listening.
-   procs <- subset(ps::ps(), name == "rserver")
-   for (i in seq_len(nrow(procs)))
-   {
-      proc <- procs[i, ]
-      if (identical(proc$status, "zombie"))
-         next
-      
-      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
-      if (8788L %in% conns$lport)
-         return(TRUE)
-   }
-   
+   # Always kill any existing automation rserver listening on 8788 and
+   # start a fresh one. Reusing an existing instance silently masks code
+   # changes (so tests run against a stale binary) and stale instances
+   # accumulate across runs when the cleanup finalizer doesn't fire
+   # (Ctrl+C, crashes, terminal closes). The kill is a no-op if nothing
+   # is listening.
+   .rs.automation.killAutomationServer()
+
    # Get the path to the rserver executable.
    parentHandle <- ps::ps_parent()
    parentEnv <- ps::ps_environ(parentHandle)
@@ -841,17 +836,31 @@
       RSTUDIO_AUTOMATION_REUSE_REMOTE = "TRUE"
    )
    
-   # Figure out where we're writing our test results.
-   reportFile <- .rs.nullCoalesce(reportFile, {
-      tempfile("junit-", fileext = ".xml")
-   })
-   
+   # Figure out where we're writing our test results. Default to a fixed
+   # path under the OS temp directory so the report is discoverable
+   # without having to grep per-session tempdirs. Override via
+   # RSTUDIO_AUTOMATION_REPORT_DIR or the --automation-report-file option.
+   defaultReportDir <- if (.rs.platform.isWindows)
+   {
+      file.path(Sys.getenv("TEMP", unset = Sys.getenv("TMP", unset = "C:/Temp")),
+                "rstudio-automation")
+   }
+   else
+   {
+      "/tmp/rstudio-automation"
+   }
+   reportDir <- Sys.getenv("RSTUDIO_AUTOMATION_REPORT_DIR",
+                           unset = defaultReportDir)
+   .rs.ensureDirectory(reportDir)
+   reportFile <- .rs.nullCoalesce(reportFile, file.path(reportDir, "results.xml"))
+   failuresFile <- file.path(reportDir, "failures.log")
+
    # Create a junit-style reporter, for Jenkins.
    junitReporter <- testthat::JunitReporter$new(file = reportFile)
-   
+
    # Create a regular progress reporter.
    progressReporter <- testthat::ProgressReporter$new()
-   
+
    # Use a custom reporter for screenshot handling.
    ScreenshotReporter <- R6::R6Class(
       classname = "RStudioScreenshotReporter",
@@ -863,15 +872,62 @@
          }
       )
    )
-   
+
    screenshotReporter <- ScreenshotReporter$new()
-   
+
+   # Reporter that writes test failures to a plain-text log file via
+   # file(). The standard reporters use cat() which goes to R's console
+   # and is captured by rsession (so the lines never reach the terminal
+   # or a redirectable file descriptor); writing through file() bypasses
+   # that capture so the failures end up on disk for inspection after
+   # the run.
+   FailureLogReporter <- R6::R6Class(
+      classname = "RStudioFailureLogReporter",
+      inherit = testthat::Reporter,
+      public = list(
+         con = NULL,
+         currentContext = NULL,
+         currentTest = NULL,
+         initialize = function(file) {
+            self$con <- base::file(file, open = "w")
+         },
+         start_context = function(context) {
+            self$currentContext <- context
+         },
+         start_test = function(context, test) {
+            self$currentTest <- test
+         },
+         add_result = function(context, test, result) {
+            if (inherits(result, c("expectation_failure", "expectation_error")))
+            {
+               ref <- if (!is.null(result$srcref))
+                  paste(format(result$srcref), collapse = " ")
+               else
+                  "<unknown>"
+               writeLines(c(
+                  sprintf("[FAIL] %s :: %s", self$currentContext, self$currentTest),
+                  sprintf("  at %s", ref),
+                  paste0("  ", strsplit(format(result), "\n", fixed = TRUE)[[1]]),
+                  ""
+               ), con = self$con)
+               flush(self$con)
+            }
+         },
+         end_reporter = function() {
+            close(self$con)
+         }
+      )
+   )
+
+   failureLogReporter <- FailureLogReporter$new(file = failuresFile)
+
    # Combine with the default reporter.
    multiReporter <- testthat::MultiReporter$new(
       reporters = list(
          progressReporter,
          junitReporter,
-         screenshotReporter
+         screenshotReporter,
+         failureLogReporter
       )
    )
    
@@ -905,7 +961,13 @@
       writeLines(stripped, con = reportFile)
    }
 
-   writeLines(c("", "==> Finishing running RStudio automation", ""))
+   writeLines(c(
+      "",
+      "==> Finishing running RStudio automation",
+      sprintf("    JUnit report:  %s", reportFile),
+      sprintf("    Failure log:   %s", failuresFile),
+      ""
+   ))
 
    # Quit when we're done.
    quit(save = "no", status = 0L)

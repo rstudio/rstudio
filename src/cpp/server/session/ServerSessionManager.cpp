@@ -39,6 +39,8 @@
 #include "../ServerMetrics.hpp"
 #include "server-config.h"
 
+#include <atomic>
+#include <csignal>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -59,6 +61,12 @@ namespace server {
 namespace {
 
 static std::string s_launcherToken;
+
+// PID of the rsession launched as the automation host (the one we passed
+// --run-automation=1 to). When that process exits we raise SIGTERM on
+// ourselves so rserver completes its normal shutdown sequence rather
+// than blocking forever in waitForSignals(). Zero means "no host yet".
+static std::atomic<PidType> s_automationHostPid{0};
 
 void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
 {
@@ -268,6 +276,16 @@ core::system::ProcessConfig sessionProcessConfig(
 
 void onProcessExit(const std::string& username, PidType pid)
 {
+   PidType automationHost = s_automationHostPid.load();
+   if (automationHost != 0 && pid == automationHost)
+   {
+      LOG_INFO_MESSAGE(
+            "Automation host rsession (pid " +
+            safe_convert::numberToString(pid) +
+            ") exited; signaling rserver shutdown.");
+      s_automationHostPid.store(0);
+      ::kill(::getpid(), SIGTERM);
+   }
 }
 
 } // anonymous namespace
@@ -446,6 +464,22 @@ Error SessionManager::launchAndTrackSession(
    LOG_DEBUG_MESSAGE("Launched session process for user: " + runAsUser + ": " + profile.executablePath +
                      " pid: " + safe_convert::numberToString(pid));
    metrics::sessionLaunch(metrics::kEditorRStudio);
+
+   // If this rsession was launched as the automation host (i.e., the
+   // first session under --run-automation, the one that was passed
+   // --run-automation=1 in createSessionLaunchProfile), remember its
+   // pid so onProcessExit can shut rserver down when it exits.
+   if (server::options().runAutomation())
+   {
+      for (const auto& arg : config.args)
+      {
+         if (arg.first == "--run-automation" && arg.second == "1")
+         {
+            s_automationHostPid.store(pid);
+            break;
+         }
+      }
+   }
 
    // track it for subsequent reaping
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
