@@ -341,10 +341,14 @@
       # listening socket on port 8788 is released before the caller
       # binds a new rserver to the same port.
       #
-      # Let ps_kill errors propagate (e.g., EPERM): silently swallowing
-      # them would let the caller try to bind 8788 against a still-live
-      # rserver and produce a confusing 'address already in use'.
-      ps::ps_kill(handle, grace = 2000)
+      # Tolerate the benign race where the process exits between
+      # discovery and kill: older `ps` versions raise no_such_process
+      # in that case. Real failures (e.g., EPERM) still propagate so
+      # we don't silently let the caller race a still-live rserver.
+      tryCatch(
+         ps::ps_kill(handle, grace = 2000),
+         no_such_process = function(cnd) invisible(NULL)
+      )
 
       deadline <- Sys.time() + 5
       while (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))) &&
