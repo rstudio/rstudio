@@ -158,20 +158,16 @@ public class LintItem extends JavaScriptObject
             type = "info";
          }
 
+         // 'text' must be set; Ace's gutter tooltip pipes it through createTextNode and would otherwise show 'html' as literal markup.
          var annotation = {
             row: item["start.row"],
             column: item["start.column"],
-            type: type
+            type: type,
+            text: item["text"],
+            html: item["html"],
+            className: item.className,
+            tooltip: item.tooltip
          };
-         
-         var html = item["html"]
-         if (html)
-            annotation.html = html;
-         else 
-            annotation.text = item["text"];
-         
-         annotation.className = item.className;
-         annotation.tooltip = item.tooltip;
 
          aceAnnotations.push(annotation);
       }
