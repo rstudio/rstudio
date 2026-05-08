@@ -50,19 +50,31 @@ async function openPaneLayoutOptions(page: Page): Promise<void> {
 }
 
 async function closePaneLayoutOptions(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 10000 });
+}
+
+// Best-effort dialog dismissal for cleanup hooks. Unlike closePaneLayoutOptions,
+// this tolerates an already-closed dialog without failing the test.
+async function dismissDialogIfOpen(page: Page): Promise<void> {
   if (await page.locator(DIALOG_BOX).count() === 0) return;
   await page.keyboard.press('Escape');
   await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 10000 });
-  await sleep(300);
 }
 
 // Reload-based reset; the GWT command calls window.reload() once prefs save.
+// Uses a window-scoped sentinel so we can detect a successful reload (the new
+// document won't have the property) versus a no-op (still present).
 async function resetUILayout(page: Page): Promise<void> {
+  const sentinel = `__pl_reset_${Date.now()}_${Math.random()}`;
+  await page.evaluate((s) => { (window as unknown as Record<string, true>)[s] = true; }, sentinel);
   await typeInConsole(page, ".rs.api.executeCommand('restoreDefaultPaneAndTabLayoutNoPrompt')");
-  // Wait for the resulting page reload to settle.
-  await sleep(3000);
+  await page.waitForFunction(
+    (s) => !(s in (window as unknown as Record<string, unknown>)),
+    sentinel,
+    { timeout: 30000 },
+  );
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
-  await sleep(2000);
 }
 
 async function getQuadrantDropdownText(page: Page, quadrant: string): Promise<string> {
@@ -199,12 +211,14 @@ async function verifyDropdownOptions(
 // ---------------------------------------------------------------------------
 
 test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag: ['@serial'] }, () => {
+  test.afterEach(async ({ rstudioPage: page }) => {
+    // If a test threw before its own close, dismiss any leftover dialog so the
+    // next test in this serial chain starts clean.
+    await dismissDialogIfOpen(page);
+  });
+
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Make sure no dialog leaks; reset to a clean default layout.
-    if (await page.locator(DIALOG_BOX).count() > 0) {
-      await page.keyboard.press('Escape');
-      await sleep(500);
-    }
+    await dismissDialogIfOpen(page);
     await resetUILayout(page);
   });
 
@@ -423,7 +437,7 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await closePaneLayoutOptions(page);
   });
 
-  test('TabSet quadrants can be swapped while maintaining their tab configurations', async ({ rstudioPage: page }) => {
+  test('TabSet quadrants swap while keeping tab configurations', async ({ rstudioPage: page }) => {
     await openPaneLayoutOptions(page);
 
     const tabset1Initial = await getQuadrantDropdownText(page, PL_RIGHT_TOP);
@@ -585,9 +599,9 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
   test('add column preserves layout when sidebar not visible', async ({ rstudioPage: page }) => {
     await resetUILayout(page);
 
-    if (await page.locator(SIDEBAR_PANE).count() > 0) {
+    if ((await page.locator(SIDEBAR_PANE).count()) > 0) {
       await typeInConsole(page, ".rs.api.executeCommand('toggleSidebar')");
-      await page.waitForSelector(SIDEBAR_PANE, { state: 'detached', timeout: 10000 });
+      await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 10000 });
     }
 
     await openPaneLayoutOptions(page);
@@ -599,7 +613,7 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
 
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
 
-    expect(await page.locator(SIDEBAR_PANE).count(), 'Sidebar should not be visible').toBe(0);
+    await expect(page.locator(SIDEBAR_PANE), 'Sidebar should not be visible').toHaveCount(0);
     const sourceWidth = await page.locator(SOURCE1_PANE).evaluate((el) => (el as HTMLElement).offsetWidth);
     const consoleWidth = await page.locator(CONSOLE_PANE).evaluate((el) => (el as HTMLElement).offsetWidth);
     const tabSetWidth = await page.locator(TABSET2_PANE).evaluate((el) => (el as HTMLElement).offsetWidth);
