@@ -114,7 +114,9 @@ jobs:
       - name: Install RStudio Server
         run: |
           sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
+          sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
+          sudo systemctl start rstudio-server
           sudo systemctl status rstudio-server --no-pager
 
       - name: Generate test credentials
