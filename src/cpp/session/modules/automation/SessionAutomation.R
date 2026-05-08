@@ -327,14 +327,31 @@
       proc <- procs[i, ]
       if (identical(proc$status, "zombie"))
          next
-      
-      conns <- ps::ps_connections(proc$ps_handle[[1L]])
-      if (8788L %in% conns$lport)
+
+      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
+      if (!isTRUE(8788L %in% conns$lport))
+         next
+
+      handle <- ps::ps_handle(pid = proc$pid)
+
+      # ps_kill() on Unix sends SIGTERM, waits up to `grace` ms, then
+      # escalates to SIGKILL. Use a generous grace period so rserver
+      # has a chance to do its own cleanup. After ps_kill returns we
+      # still need to wait for the kernel to reap the process so the
+      # listening socket on port 8788 is released before the caller
+      # binds a new rserver to the same port.
+      .rs.tryCatch(ps::ps_kill(handle, grace = 2000))
+
+      deadline <- Sys.time() + 5
+      while (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))) &&
+             Sys.time() < deadline)
       {
-         handle <- ps::ps_handle(pid = proc$pid)
-         return(ps::ps_kill(handle))
+         Sys.sleep(0.1)
       }
+
+      return(invisible(TRUE))
    }
+   invisible(FALSE)
 })
 
 .rs.addFunction("automation.ensureRunningServerInstance", function(serverDataDir)
@@ -851,9 +868,12 @@
    }
    reportDir <- Sys.getenv("RSTUDIO_AUTOMATION_REPORT_DIR",
                            unset = defaultReportDir)
-   .rs.ensureDirectory(reportDir)
    reportFile <- .rs.nullCoalesce(reportFile, file.path(reportDir, "results.xml"))
-   failuresFile <- file.path(reportDir, "failures.log")
+   # Place the failure log next to the resolved report file so the two
+   # are always discovered together, even when --automation-report-file
+   # points outside the default report directory.
+   failuresFile <- file.path(dirname(reportFile), "failures.log")
+   .rs.ensureDirectory(dirname(reportFile))
 
    # Create a junit-style reporter, for Jenkins.
    junitReporter <- testthat::JunitReporter$new(file = reportFile)
