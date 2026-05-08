@@ -1106,14 +1106,15 @@ public class Files
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
       {
-         // for server URLs initiated as a download (e.g. user clicked a
-         // binary file in the Files pane), tag the URL so the server can
-         // audit it without also auditing view-style navigations (HTML
-         // "Show in Browser", source-code link clicks) or internal /files/
-         // traffic (HTML sub-resources, file.show(), browseURL previews).
+         // for server URLs that aren't user-initiated downloads (HTML
+         // "Show in Browser", source-code link clicks), tag the URL so
+         // the server skips audit logging - matching the marker that
+         // module_context::createFileUrl applies to server-side preview
+         // flows. Files-pane downloads stay unmarked and are logged like
+         // any other top-level navigation.
          // Desktop URLs are file:// and don't go through the session.
-         if (asDownload && !fileURL.startsWith("file:"))
-            fileURL += (fileURL.contains("?") ? "&" : "?") + "download=1";
+         if (!asDownload && !fileURL.startsWith("file:"))
+            fileURL += (fileURL.contains("?") ? "&" : "?") + "show=1";
          globalDisplay_.openWindow(fileURL);
       }
    }

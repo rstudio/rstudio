@@ -2401,22 +2401,25 @@ void showFile(const FilePath& filePath, const std::string& window)
 
 std::string createFileUrl(const core::FilePath& filePath)
 {
-   // determine url based on whether this is in ~ or not
+   // determine url based on whether this is in ~ or not. Tag the result
+   // with show=1 so handleFilesRequest / handleFileShow can distinguish
+   // server-initiated preview/show flows from user-initiated downloads
+   // and skip audit logging for the former.
    std::string url;
    if (isVisibleUserFile(filePath))
    {
       auto home = module_context::userHomePath();
       auto path = filePath.getRelativePath(home);
-      url = "files/" + path;
+      url = "files/" + path + "?show=1";
    }
    else if (isPathViewAllowed(filePath))
    {
-      url = "show" + filePath.getAbsolutePath();
+      url = "show" + filePath.getAbsolutePath() + "?show=1";
    }
    else
    {
       auto path = core::http::util::urlEncode(filePath.getAbsolutePath(), true);
-      url = "file_show?path=" + path;
+      url = "file_show?path=" + path + "&show=1";
    }
    return url;
 }
