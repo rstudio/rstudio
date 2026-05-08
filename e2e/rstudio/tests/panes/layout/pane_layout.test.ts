@@ -198,7 +198,7 @@ async function verifyDropdownOptions(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag: ['@desktop_only', '@serial'] }, () => {
+test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag: ['@serial'] }, () => {
   test.afterAll(async ({ rstudioPage: page }) => {
     // Make sure no dialog leaks; reset to a clean default layout.
     if (await page.locator(DIALOG_BOX).count() > 0) {
