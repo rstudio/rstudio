@@ -57,6 +57,19 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                    const std::string& jsCallbacks,
                                    core::http::Response* pResponse);
 
+// Returns true if `filePath` canonically resolves to a location within
+// `dirPath`. Both paths must exist on disk; returns false if either is
+// missing. Resolves symlinks and ".." components, with a lexical
+// fallback if the filesystem call fails.
+bool isPathWithin(const core::FilePath& filePath,
+                  const core::FilePath& dirPath);
+
+// Returns true if `fetchSite` (a Sec-Fetch-Site header value) does not
+// indicate a cross-site request. Empty values (older browsers without
+// Fetch Metadata) are treated as allowed; in that case the path
+// constraint is the security boundary.
+bool isPresentationHelpFetchSiteAllowed(const std::string& fetchSite);
+
 bool savePresentationAsStandalone(const core::FilePath& filePath,
                                   ErrorResponse* pErrorResponse);
 

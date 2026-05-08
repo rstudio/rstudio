@@ -1106,6 +1106,33 @@ void handlePresentationFileRequest(const http::Request& request,
 
 } // anonymous namespace
 
+bool isPathWithin(const FilePath& filePath, const FilePath& dirPath)
+{
+   if (!filePath.exists() || !dirPath.exists())
+      return false;
+
+   // Canonicalize both sides so symlinks and ".." get resolved.
+   // getCanonicalPath() falls back to a lexical normalization if the
+   // filesystem call fails, in which case symlink resolution is not
+   // guaranteed; defend against that by failing closed on empty.
+   FilePath canonicalFile(filePath.getCanonicalPath());
+   FilePath canonicalDir(dirPath.getCanonicalPath());
+   if (canonicalFile.isEmpty() || canonicalDir.isEmpty())
+      return false;
+   return canonicalFile.isWithin(canonicalDir);
+}
+
+// Defense in depth against CSRF: modern browsers set Sec-Fetch-Site
+// automatically on every fetch and JavaScript cannot forge it. Reject
+// anything that is identified as cross-site. Older browsers omit the
+// header; in that case fall through and rely on the path constraint.
+bool isPresentationHelpFetchSiteAllowed(const std::string& fetchSite)
+{
+   if (fetchSite.empty())
+      return true;
+   return fetchSite == "same-origin" || fetchSite == "none";
+}
+
 bool clearKnitrCache(ErrorResponse* pErrorResponse)
 {
    FilePath rmdFile = presentation::state::filePath();
@@ -1186,29 +1213,46 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                    const std::string& jsCallbacks,
                                    core::http::Response* pResponse)
 {
-   // we save the most recent /help/presentation/&file=parameter so we
-   // can resolve relative file references against it. we do this
-   // separately from presentation::state::directory so that the help
-   // urls can be available within the help pane (and history)
-   // independent of the duration of the presentation tab
+   // We save the directory used by the most recent (validated) doc=
+   // request so relative resource fetches (images, css, ...) referenced
+   // from a rendered help doc can still resolve after the presentation
+   // tab closes. The directory is only ever set from a path that was
+   // already validated as being within the active presentation, so it
+   // is safe to keep using once a presentation has been displayed.
    static FilePath s_presentationHelpDir;
 
-   // check if this is a root request
-   std::string file = request.queryParamValue("file");
-   if (!file.empty())
+   // Reject obvious cross-site requests before doing anything else.
+   // The presentation help endpoint can knit R Markdown via knitr,
+   // which executes embedded R code; CSRF here means RCE.
+   if (!isPresentationHelpFetchSiteAllowed(request.headerValue("Sec-Fetch-Site")))
    {
-      // ensure file exists
-      FilePath filePath = module_context::resolveAliasedPath(file);
-      if (!filePath.exists())
+      pResponse->setNotFoundError(request);
+      return;
+   }
+
+   // doc= names a help doc relative to the active presentation. The
+   // URL contract is "always relative" - absolute paths are rejected so
+   // the URL cannot express anything outside the presentation directory
+   // (rstudio-pro#10907).
+   std::string doc = request.queryParamValue("doc");
+   if (!doc.empty())
+   {
+      if (!presentation::state::isActive() || FilePath(doc).isAbsolute())
       {
          pResponse->setNotFoundError(request);
          return;
       }
 
-      // save the help dir
+      FilePath presDir = presentation::state::directory();
+      FilePath filePath = presDir.completePath(doc);
+      if (filePath.isDirectory() || !isPathWithin(filePath, presDir))
+      {
+         pResponse->setNotFoundError(request);
+         return;
+      }
+
       s_presentationHelpDir = filePath.getParent();
 
-      // check for markdown
       if (filePath.getMimeContentType() == "text/x-markdown" ||
           filePath.getMimeContentType() == "text/x-r-markdown")
       {
@@ -1216,32 +1260,32 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                                jsCallbacks,
                                                pResponse);
       }
-
-      // just a stock file
       else
       {
          setWebCacheableFileResponse(filePath, request, pResponse);
       }
    }
-
-   // it's a relative file reference
    else
    {
-      // make sure the directory exists
+      // relative resource fetch from a rendered help doc - serve only
+      // if a help dir was set by an earlier authorized doc= request,
+      // and only for paths that canonically resolve to within that dir
       if (!s_presentationHelpDir.exists())
       {
-         pResponse->setNotFoundError(s_presentationHelpDir.getAbsolutePath(), request);
+         pResponse->setNotFoundError(request);
          return;
       }
 
-      // resolve the file reference
       std::string path = http::util::pathAfterPrefix(request,
                                                      "/help/presentation/");
+      FilePath target = s_presentationHelpDir.completePath(path);
+      if (target.isDirectory() || !isPathWithin(target, s_presentationHelpDir))
+      {
+         pResponse->setNotFoundError(request);
+         return;
+      }
 
-      // serve the file back
-      setWebCacheableFileResponse(
-         s_presentationHelpDir.completePath(path),
-                                  request, pResponse);
+      setWebCacheableFileResponse(target, request, pResponse);
    }
 }
 
