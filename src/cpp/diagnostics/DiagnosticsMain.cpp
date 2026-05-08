@@ -95,6 +95,7 @@ int main(int argc, char** argv)
 
    writeLogFile("rdesktop.log", std::cout);
    writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
+   writeLogFile("positai.log", std::cout);
    writeUserPrefs(std::cout);
 
    return EXIT_SUCCESS;
