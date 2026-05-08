@@ -33,21 +33,16 @@ public class AceAnnotation extends JavaScriptObject
          type = "info";
       }
       
-      var annotation = {
+      // 'text' must be set; Ace's gutter tooltip pipes it through createTextNode and would otherwise show 'html' as literal markup.
+      return {
          row: row,
          column: column,
-         type: type
+         type: type,
+         text: text,
+         html: html,
+         className: className,
+         tooltip: tooltip
       };
-      
-      if (html) 
-         annotation.html = html;
-      else
-         annotation.text = text;
-
-      annotation.className = className;
-      annotation.tooltip = tooltip;
-
-      return annotation;
    }-*/;
    
    public final native int row() /*-{ return this.row; }-*/;

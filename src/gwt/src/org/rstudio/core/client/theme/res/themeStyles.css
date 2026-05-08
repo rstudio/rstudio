@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_gutter_annotation, ace_info, ace_tooltip, ace_content, ace_line;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_gutter_annotation, ace_info, ace_tooltip, ace_gutter-tooltip, ace_icon, ace_icon_svg, ace_content, ace_line;
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
@@ -384,6 +384,13 @@ pre {
    max-height: 300px;
    overflow: hidden;
    white-space: pre-wrap;
+}
+
+.ace_gutter-tooltip .ace_icon,
+.ace_gutter-tooltip .ace_icon_svg {
+   position: relative;
+   left: -4px;
+   top: 1px;
 }
 
 .ace_breakpoint,

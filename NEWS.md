@@ -10,6 +10,7 @@
 - ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
 
 ### Fixed
+- ([#17581](https://github.com/rstudio/rstudio/issues/17581)): Diagnostic gutter tooltips no longer show literal `<SPAN>` markup around the message; lint annotations now keep the original text alongside any rendered HTML so the tooltip renders cleanly while the diagnostics popup continues to support ANSI-colored content.
 - ([#17556](https://github.com/rstudio/rstudio/issues/17556)): `difftime` objects (e.g. the result of subtracting two `Sys.time()` values) now show their formatted value in the Environment pane instead of an empty cell.
 - ([#17568](https://github.com/rstudio/rstudio/issues/17568)): Source-mode spell check now flags misspelled words inside Markdown, R Markdown, and Quarto headings; previously only paragraph text was checked.
 - ([#17481](https://github.com/rstudio/rstudio/issues/17481)): Fixed two debugger regressions: top-level breakpoints (e.g. via `debugSource()`) no longer fail to show the debug highlight or call stack, and multi-line input at the `Browse[N]>` prompt no longer clears the captured browser context.
