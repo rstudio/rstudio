@@ -447,30 +447,11 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   // Audit user-initiated downloads. Skip when:
-   //  - the URL was constructed by an internal preview/show flow
-   //    (?show=1 marker, set by module_context::createFileUrl); or
-   //  - the request is an HTML sub-resource fetch, identified via
-   //    Sec-Fetch-Dest. We log when the header is missing (older
-   //    browsers default to "log") or signals a top-level navigation.
+   if (module_context::shouldAuditFileDownload(request, filePath))
    {
-      const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
-      const bool isSubResource =
-         fetchDest == "style"        || fetchDest == "script"        ||
-         fetchDest == "image"        || fetchDest == "font"          ||
-         fetchDest == "audio"        || fetchDest == "video"         ||
-         fetchDest == "track"        || fetchDest == "object"        ||
-         fetchDest == "embed"        || fetchDest == "manifest"      ||
-         fetchDest == "xslt"         || fetchDest == "report"        ||
-         fetchDest == "worker"       || fetchDest == "serviceworker" ||
-         fetchDest == "audioworklet" || fetchDest == "paintworklet";
-      const bool isPreview = request.queryParamValue("show") == "1";
-      if (!isSubResource && !isPreview)
-      {
-         using namespace monitor;
-         client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
-                                 module_context::createAliasedPath(filePath)));
-      }
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                              module_context::createAliasedPath(filePath)));
    }
 
    // send it back

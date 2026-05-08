@@ -42,6 +42,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/collection/Tree.hpp>
 
+#include <core/http/Request.hpp>
 #include <core/http/Util.hpp>
 
 #include <core/system/Process.hpp>
@@ -2397,6 +2398,53 @@ void showFile(const FilePath& filePath, const std::string& window)
             "on this server.\n");
       }
    }
+}
+
+bool shouldAuditFileDownload(const core::http::Request& request,
+                             const core::FilePath& filePath)
+{
+   // Skip when the URL was constructed by an internal preview/show flow
+   // (?show=1 marker, set by createFileUrl above and by Files.java's
+   // showFileInBrowser for view-style navigations).
+   if (request.queryParamValue("show") == "1")
+      return false;
+
+   // Skip HTML sub-resource fetches. Browsers signal these via
+   // Sec-Fetch-Dest. Top-level navigations send "document" (or omit the
+   // header on older browsers); embedded resources send their resource
+   // type. Treat anything in the explicit sub-resource set as not-a-
+   // download so a single HTML preview doesn't generate an audit row
+   // per asset.
+   const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
+   if (fetchDest == "style"        || fetchDest == "script"        ||
+       fetchDest == "image"        || fetchDest == "font"          ||
+       fetchDest == "audio"        || fetchDest == "video"         ||
+       fetchDest == "track"        || fetchDest == "object"        ||
+       fetchDest == "embed"        || fetchDest == "manifest"      ||
+       fetchDest == "xslt"         || fetchDest == "report"        ||
+       fetchDest == "worker"       || fetchDest == "serviceworker" ||
+       fetchDest == "audioworklet" || fetchDest == "paintworklet")
+      return false;
+
+   // Skip when the response will be served as a browser-renderable
+   // Content-Type. The bytes are being viewed inline rather than saved
+   // to disk, so it isn't a download from the user's perspective. Note
+   // this means a real "right-click -> Save As" on a rendered PDF will
+   // not produce an audit row; that's an accepted trade-off for not
+   // logging the much more common inline-view case.
+   const std::string mimeType = filePath.getMimeContentType();
+   if (mimeType.rfind("text/", 0) == 0     ||
+       mimeType.rfind("image/", 0) == 0    ||
+       mimeType.rfind("audio/", 0) == 0    ||
+       mimeType.rfind("video/", 0) == 0    ||
+       mimeType == "application/pdf"       ||
+       mimeType == "application/json"      ||
+       mimeType == "application/xml"       ||
+       mimeType == "application/javascript"||
+       mimeType == "application/xhtml+xml")
+      return false;
+
+   return true;
 }
 
 std::string createFileUrl(const core::FilePath& filePath)
