@@ -10,6 +10,7 @@ export const TIMEOUTS = {
   ghostText: 30000,
   nesApply: 30000,
   displayOutput: 2000,
+  layoutSettle: 300,
 };
 
 export async function sleep(ms: number): Promise<void> {
