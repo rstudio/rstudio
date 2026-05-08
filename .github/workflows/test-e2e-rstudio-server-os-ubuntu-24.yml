@@ -116,6 +116,17 @@ jobs:
           sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
           sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
+
+      - name: Configure verbose RStudio Server logging
+        run: |
+          sudo tee /etc/rstudio/logging.conf >/dev/null <<'EOF'
+          [*]
+          log-level=debug
+          logger-type=file
+          EOF
+
+      - name: Start RStudio Server
+        run: |
           sudo systemctl start rstudio-server
           sudo systemctl status rstudio-server --no-pager
 
@@ -219,9 +230,17 @@ jobs:
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
-      - name: Capture rstudio-server logs on failure
+      - name: Capture rstudio-server logs and diagnostics on failure
         if: failure()
         run: |
+          echo "=== /etc/rstudio/logging.conf ==="
+          sudo cat /etc/rstudio/logging.conf 2>&1 || echo "(missing)"
+          echo "=== layout: /var/log/rstudio ==="
+          sudo find /var/log/rstudio -ls 2>&1 || echo "(missing)"
+          echo "=== layout: /var/lib/rstudio-server *.log ==="
+          sudo find /var/lib/rstudio-server -name '*.log' -ls 2>&1 || echo "(missing)"
+          echo "=== full journalctl (last hour, all units) ==="
+          sudo journalctl --since="1 hour ago" --no-pager
           sudo journalctl -u rstudio-server --no-pager > rstudio-server.log || true
           sudo cp -r /var/log/rstudio rstudio-var-log || true
           sudo chmod -R a+r rstudio-var-log || true
