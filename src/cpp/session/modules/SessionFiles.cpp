@@ -44,6 +44,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/URL.hpp>
 #include <core/http/CSRFToken.hpp>
 
 #include <core/system/ShellUtils.hpp>
@@ -562,16 +563,93 @@ core::Error touchFile(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
-void handleFilesRequest(const http::Request& request, 
+void handleFilesRequest(const http::Request& request,
                         http::Response* pResponse)
-{   
+{
    Options& options = session::options();
    if (options.programMode() != kSessionProgramModeServer)
    {
       pResponse->setNotFoundError(request);
       return;
    }
-   
+
+   // Block cross-site requests to /files/. The handler serves files from
+   // the user's home directory with native MIME types (HTML as text/html),
+   // so loading one cross-origin would execute attacker-controlled content
+   // in the RStudio session origin.
+   //
+   // AsyncServerImpl's pre-handler Origin/Referer check is gated on the
+   // www-enable-origin-check option, which defaults to false. In a
+   // default open-source deployment the upstream check is inactive, so
+   // this handler is the primary cross-origin defense for /files/. Posit
+   // Workbench typically enables www-enable-origin-check, in which case
+   // the upstream layer provides a redundant outer check.
+   //
+   // Sec-Fetch-Site is a browser-controlled Fetch Metadata header that
+   // can't be set or stripped from page-level JavaScript or referrer
+   // policy, so it remains a reliable signal even when Referer is gone.
+   // We allow only the spec-defined "trusted" values (same-origin,
+   // same-site, none); any other non-empty value -- including future
+   // spec additions or non-canonical casings -- is treated as cross-site
+   // and rejected. "same-site" is allowed deliberately so that Posit
+   // Workbench front-ends iframe-embedding RStudio across sibling
+   // subdomains keep functioning; "none" covers user-typed URLs and
+   // bookmarks.
+   //
+   // For older browsers that don't send Sec-Fetch-Site, fall back to a
+   // same-origin Referer check. The "everything missing" case (no
+   // Sec-Fetch-Site, no Referer) is intentionally allowed to preserve
+   // direct URL navigation in older browsers; that residual window is
+   // the documented trade-off.
+   //
+   // Addresses rstudio-pro#10980.
+   std::string secFetchSite = request.headerValue("Sec-Fetch-Site");
+   if (!secFetchSite.empty())
+   {
+      if (secFetchSite != "same-origin" &&
+          secFetchSite != "same-site" &&
+          secFetchSite != "none")
+      {
+         WLOGF("Rejecting cross-site /files/ request (Sec-Fetch-Site: '{}') "
+               "for URI {}",
+               secFetchSite, request.uri());
+         pResponse->setError(http::status::BadRequest,
+                             "Cross-site request not allowed");
+         return;
+      }
+   }
+   else
+   {
+      std::string referer = request.headerValue("Referer");
+      if (!referer.empty())
+      {
+         // Compare scheme + host + effective port so that http vs https on
+         // the same host don't get treated as same-origin, and so that
+         // implicit default ports (e.g. "example.com" vs "example.com:80")
+         // canonicalize to the same value. Fail closed if either URL
+         // fails to parse so a malformed Referer (e.g. "javascript:..."
+         // or garbage) can't slip through by collapsing both sides to
+         // empty strings.
+         http::URL refererUrl(referer);
+         http::URL requestUrl(request.proxiedUri());
+         if (!refererUrl.isValid() ||
+             !requestUrl.isValid() ||
+             refererUrl.protocol() != requestUrl.protocol() ||
+             refererUrl.hostWithPort() != requestUrl.hostWithPort())
+         {
+            WLOGF("Rejecting /files/ request with mismatched Referer "
+                  "(no Sec-Fetch-Site; Referer origin '{}://{}' vs "
+                  "request origin '{}://{}') for URI {}",
+                  refererUrl.protocol(), refererUrl.hostWithPort(),
+                  requestUrl.protocol(), requestUrl.hostWithPort(),
+                  request.uri());
+            pResponse->setError(http::status::BadRequest,
+                                "Cross-origin request not allowed");
+            return;
+         }
+      }
+   }
+
    // get prefix and uri (strip query string)
    std::string prefix = "/files/";
    std::string uri = request.uri();
