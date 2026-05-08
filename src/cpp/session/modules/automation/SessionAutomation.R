@@ -960,7 +960,11 @@
    invisible(.rs.api.executeCommand("consoleClear"))
    writeLines(c("", "==> Running RStudio automation tests", ""))
    
-   # Run tests.
+   # Run tests. RSTUDIO_AUTOMATION_FILTER is set on this rsession by
+   # rserver in sessionProcessConfig() (ServerSessionManager.cpp), sourced
+   # from --automation-filter or rserver's inherited env. The rsession
+   # environment is built explicitly, so exporting this var in the shell
+   # without going through rserver has no effect here.
    filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
    testthat::test_dir(
       path = "testthat",

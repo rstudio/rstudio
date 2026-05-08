@@ -256,12 +256,22 @@ core::system::ProcessConfig sessionProcessConfig(
       if (!projectRoot.empty())
          environment.push_back({ "RSTUDIO_AUTOMATION_ROOT", projectRoot });
       
-      // forward filter and markers if available
+      // Forward filter and markers if available. The CLI options take
+      // precedence; otherwise fall back to RSTUDIO_AUTOMATION_FILTER /
+      // RSTUDIO_AUTOMATION_MARKERS in rserver's own environment so a
+      // caller can scope a run via `RSTUDIO_AUTOMATION_FILTER=... \
+      // ./rserver-dev --run-automation` without having to plumb
+      // --automation-filter explicitly. The rsession environment is
+      // built from this list; nothing else propagates by inheritance.
       std::string filter = server::options().automationFilter();
+      if (filter.empty())
+         filter = core::system::getenv("RSTUDIO_AUTOMATION_FILTER");
       if (!filter.empty())
          environment.push_back({ "RSTUDIO_AUTOMATION_FILTER", filter });
-      
+
       std::string markers = server::options().automationMarkers();
+      if (markers.empty())
+         markers = core::system::getenv("RSTUDIO_AUTOMATION_MARKERS");
       if (!markers.empty())
          environment.push_back({ "RSTUDIO_AUTOMATION_MARKERS", markers });
    }
