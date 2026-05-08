@@ -665,7 +665,7 @@
          return()
       
       name <- as.character(key)
-      access <- sprintf("#[\"%s\"]", name)
+      access <- sprintf("#[%s]", encodeString(name, quote = "\""))
       tags <- character()
       childContext <- .rs.explorer.createChildContext(context, name, access, tags)
       
@@ -793,7 +793,7 @@
          else
          {
             name <- names[[i]]
-            access <- sprintf("#[[\"%s\"]]", name)
+            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
             tags <- character()
          }
          
@@ -828,7 +828,7 @@
          else
          {
             value <- object[[key]]
-            access <- sprintf("#[[\"%s\"]]", key)
+            access <- sprintf("#[[%s]]", encodeString(key, quote = "\""))
          }
          
          name <- key
@@ -920,7 +920,7 @@
          else
          {
             name <- names[[i]]
-            access <- sprintf("#[[\"%s\"]]", name)
+            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
             tags <- character()
          }
          
