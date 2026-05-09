@@ -28,6 +28,7 @@ set(SERVER_SOURCE_FILES
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerEnvVars.cpp
+   ServerFormatUtils.cpp
    ServerInit.cpp
    ServerLoginPages.cpp
    ServerLogVars.cpp
@@ -297,7 +298,8 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   set(SERVER_TEST_FILES
      DBActiveSessionStorageTests.cpp
-     ServerEnvVarsTests.cpp)
+     ServerEnvVarsTests.cpp
+     ServerFormatUtilsTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 

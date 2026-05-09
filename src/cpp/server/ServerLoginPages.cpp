@@ -29,6 +29,8 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerAuthHandlerOverlay.hpp>
 
+#include "ServerFormatUtils.hpp"
+
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
 const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
@@ -67,7 +69,7 @@ void fillLoginFields(const core::http::Request& request,
    variables[kStaySignedInDisplay] = auth::handler::overlay::canStaySignedIn() ? "block" : "none";
    int timeoutMinutes = server::options().authTimeoutMinutes();
    variables[kAuthTimeoutMinutesDisplay] = timeoutMinutes > 0 ? "block" : "none";
-   variables[kAuthTimeoutMinutes] = core::safe_convert::numberToString(timeoutMinutes);
+   variables[kAuthTimeoutMinutes] = formatLoginTimeoutDuration(timeoutMinutes);
 
    // fill error
    std::string error = request.queryParamValue(kErrorParam);
