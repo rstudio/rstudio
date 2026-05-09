@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -239,10 +239,10 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       public void interruptAndReap(final String handle)
       {
          interrupt(handle,
-               new SimpleRequestCallback<Void>()
+               new SimpleRequestCallback<VoidResponse>()
                {
                   @Override
-                  public void onResponseReceived(Void response)
+                  public void onResponseReceived(VoidResponse response)
                   {
                     reap(handle, new VoidServerRequestCallback());
                   }
@@ -260,7 +260,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
        * @param handle process to interrupt
        * @param requestCallback callback to invoke when done
        */
-      public void interrupt(final String handle, ServerRequestCallback<Void> requestCallback)
+      public void interrupt(final String handle, ServerRequestCallback<VoidResponse> requestCallback)
       {
          server_.processInterrupt(handle, requestCallback);
       }
@@ -270,7 +270,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
        * @param handle process to reap
        * @param requestCallback callback to invoke when done
        */
-      public void reap(final String handle, ServerRequestCallback<Void> requestCallback)
+      public void reap(final String handle, ServerRequestCallback<VoidResponse> requestCallback)
       {
          server_.processReap(handle, requestCallback);
       }
@@ -342,18 +342,18 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       return procInfo_.getChannelMode();
    }
 
-   public void start(ServerRequestCallback<Void> requestCallback)
+   public void start(ServerRequestCallback<VoidResponse> requestCallback)
    {
       server_.processStart(procInfo_.getHandle(), requestCallback);
    }
 
    public void writeStandardInput(ShellInput input,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       server_.processWriteStdin(procInfo_.getHandle(), input, requestCallback);
    }
 
-   public void resizeTerminal(int cols, int rows, ServerRequestCallback<Void> requestCallback)
+   public void resizeTerminal(int cols, int rows, ServerRequestCallback<VoidResponse> requestCallback)
    {
       server_.processSetShellSize(procInfo_.getHandle(), cols, rows, requestCallback);
    }
@@ -368,18 +368,18 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processGetBuffer(procInfo_.getHandle(), stripAnsiCodes, requestCallback);
    }
 
-   public void useRpcMode(ServerRequestCallback<Void> requestCallback)
+   public void useRpcMode(ServerRequestCallback<VoidResponse> requestCallback)
    {
       forceRpc_ = true;
       server_.processUseRpc(procInfo_.getHandle(), requestCallback);
    }
 
-   public void interrupt(ServerRequestCallback<Void> requestCallback)
+   public void interrupt(ServerRequestCallback<VoidResponse> requestCallback)
    {
       server_.processInterrupt(procInfo_.getHandle(), requestCallback);
    }
 
-   public void reap(ServerRequestCallback<Void> requestCallback)
+   public void reap(ServerRequestCallback<VoidResponse> requestCallback)
    {
       server_.processReap(procInfo_.getHandle(), requestCallback);
    }

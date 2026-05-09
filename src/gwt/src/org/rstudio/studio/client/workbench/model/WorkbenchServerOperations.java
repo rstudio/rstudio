@@ -32,7 +32,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.views.PythonServerOperations;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
@@ -102,20 +102,26 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void disconnect();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
    
    void updateClientState(JavaScriptObject temporary,
                           JavaScriptObject persistent,
                           JavaScriptObject projectPersistent,
-                          ServerRequestCallback<Void> requestCallback);
+                          ServerRequestCallback<VoidResponse> requestCallback);
    
     
    void userPromptCompleted(int response, 
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
    
-   void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback);
-   
-   void openFileDialogCompleted(String path, ServerRequestCallback<Void> requestCallback);
+   void adminNotificationAcknowledged(String id, ServerRequestCallback<VoidResponse> requestCallback);
+
+   void grantTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback);
+
+   void revokeTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback);
+
+   void resetTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback);
+
+   void openFileDialogCompleted(String path, ServerRequestCallback<VoidResponse> requestCallback);
    
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
@@ -139,5 +145,5 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void startTerminal(ConsoleProcessInfo cpi,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
-   void executeCode(String code, ServerRequestCallback<Void> requestCallback);
+   void executeCode(String code, ServerRequestCallback<VoidResponse> requestCallback);
 }

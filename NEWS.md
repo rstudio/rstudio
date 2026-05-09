@@ -1,48 +1,50 @@
-## RStudio 2026.04.0 "Globemaster Allium" Release Notes
+## RStudio 2026.05.0 "Golden Wattle" Release Notes
 
 ### New
-- ([#17070](https://github.com/rstudio/rstudio/issues/17070)): Added support for the ANSI Erase in Line (EL / CSI K) escape sequence in the console, improving rendering of progress bars and status updates from CLI tools
-- ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors
-- ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
-- (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
-- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): Deleting files from Files pane on Linux Desktop now sends files to the Trash
-- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
-- ([#16903](https://github.com/rstudio/rstudio/issues/16903)): Changed the default location of the Sidebar pane to be on the left side of the window
-- ([#16942](https://github.com/rstudio/rstudio/issues/16942)): Enforce a minimum width for the Sidebar pane
-- ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): The data viewer is now faster and supports pinnable columns, a Summary sidebar with type-aware stats and sparkline histograms, keyboard navigation, and clipboard copy.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Added the `data_viewer_show_summary` user preference, which controls the default visibility of the data viewer's Summary sidebar.
+- ([#17539](https://github.com/rstudio/rstudio/issues/17539)): Raised the default value of `data_viewer_max_columns` from 50 to 200.
+- ([#17477](https://github.com/rstudio/rstudio/issues/17477)): Posit Assistant: the `ui/openDocument` JSON-RPC method now accepts an optional 1-based `line` parameter, and RStudio advertises the `ui/openDocument/line` capability so the assistant can open documents at a specific line.
+- ([#17478](https://github.com/rstudio/rstudio/issues/17478)): Posit Assistant: added the `ui/revealInFilesPane` JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.
+- ([#17479](https://github.com/rstudio/rstudio/issues/17479)): Posit Assistant: added the `ui/previewUrl` JSON-RPC method, which navigates the Viewer pane to an `http(s)` URL (e.g., a local Shiny app); supports an optional `height` parameter that mirrors `rstudioapi::viewer()` (`-1` for maximize, `0` for no change, positive for pixels).
+- ([#17514](https://github.com/rstudio/rstudio/issues/17514)): Added the `allow-package-source-recording` session option (default `true`); when set to `false`, RStudio will not annotate DESCRIPTION files of packages installed via `install.packages()` with the remote repository they came from.
+- ([#5809](https://github.com/rstudio/rstudio/issues/5809)): Roxygen tag autocompletion (e.g. `@param`, `@return`) now works on `#'` lines inside R code chunks of R Markdown and Quarto documents, matching the behavior in plain `.R` files.
 
 ### Fixed
-- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
-- ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
-- ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
-- ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
-- ([#16733](https://github.com/rstudio/rstudio/issues/16733)): Fixed an issue where a Presentation tab would be added to TabSet2 when it was assigned to the Sidebar
-- ([#16771](https://github.com/rstudio/rstudio/issues/16771)): Clarified in documentation that additional source columns are added to the left
-- ([#8531](https://github.com/rstudio/rstudio/issues/8531)): Fixed an issue where table chunk outputs did not use all available space when printing
-- ([#16740](https://github.com/rstudio/rstudio/issues/16740)): Fixed an issue with opening files from operating system file manager when RStudio had a secondary window open
-- ([#16688](https://github.com/rstudio/rstudio/issues/16688)): Fixed an issue with pane layout when exiting RStudio with a zoomed column region
-- ([#16798](https://github.com/rstudio/rstudio/issues/16798)): Fixed an issue where whole-word search and replace would not correctly match search terms containing dots
-- ([#16814](https://github.com/rstudio/rstudio/issues/16814)): Fixed an issue where apostrophes in file names were displayed as HTML entities in the Files pane
-- ([#16834](https://github.com/rstudio/rstudio/issues/16834)): Fixed an issue where an error message was shown on Windows when using "Write Diagnostics File"
-- ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
-- ([#16845](https://github.com/rstudio/rstudio/issues/16845)): Fixed issue where adding source columns or changing Sidebar visibility in Pane Layout options caused Console column to fill entire window
-- ([#16885](https://github.com/rstudio/rstudio/issues/16885)): Fixed an issue where console warning annotation boxes could include excess content
-- ([#16842](https://github.com/rstudio/rstudio/issues/16842)): Fixed issue where Packages pane checkboxes did not display the correct state for renv projects using a shared cache
-- ([#16985](https://github.com/rstudio/rstudio/issues/16985)): Fixed an issue where the Environment pane would drop the first list element when a user-defined `str` method existed in the global environment
-- ([#16995](https://github.com/rstudio/rstudio/issues/16995)): Fixed an issue where the chunk toolbar could be duplicated when pressing Enter after a chunk header at the end of a document
-- ([#17026](https://github.com/rstudio/rstudio/pull/17026)): Fixed an issue where roxygen parentheses interfered with Ctrl+Enter execution
-- ([#14626](https://github.com/rstudio/rstudio/issues/14626)): Fixed an issue where RStudio-specific file type icons (e.g. .Rmd, .qmd, .Rpres) were not shown in file managers on Linux
-- ([#15609](https://github.com/rstudio/rstudio/issues/15609)): Fixed an issue where RStudio startup on Windows was delayed by several seconds on systems with endpoint security software
-- ([#15863](https://github.com/rstudio/rstudio/issues/15863)): Fixed an issue where "Use Selection for Find" (Cmd+E) incorrectly jumped to the next match instead of only populating the find bar
-- ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
-- ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
-- ([#17115](https://github.com/rstudio/rstudio/issues/17115)): Fixed an issue on macOS Desktop where the "Close" keyboard shortcut in secondary windows (e.g. Shiny app, Help pop-out) were also processed by the main window
-- ([#14882](https://github.com/rstudio/rstudio/issues/14882)): Fixed an issue where YAML comments in R Markdown documents were dropped or displaced when the front matter was modified (e.g. when toggling "Chunk Output in Console")
+- ([#17589](https://github.com/rstudio/rstudio/issues/17589)): The diagnostics report now includes `positai.log` alongside `rdesktop.log` and the user's `rsession-*.log`.
+- ([#17581](https://github.com/rstudio/rstudio/issues/17581)): Diagnostic gutter tooltips no longer show literal `<SPAN>` markup around the message; lint annotations now keep the original text alongside any rendered HTML so the tooltip renders cleanly while the diagnostics popup continues to support ANSI-colored content.
+- ([#17556](https://github.com/rstudio/rstudio/issues/17556)): `difftime` objects (e.g. the result of subtracting two `Sys.time()` values) now show their formatted value in the Environment pane instead of an empty cell.
+- ([#17568](https://github.com/rstudio/rstudio/issues/17568)): Source-mode spell check now flags misspelled words inside Markdown, R Markdown, and Quarto headings; previously only paragraph text was checked.
+- ([#17481](https://github.com/rstudio/rstudio/issues/17481)): Fixed two debugger regressions: top-level breakpoints (e.g. via `debugSource()`) no longer fail to show the debug highlight or call stack, and multi-line input at the `Browse[N]>` prompt no longer clears the captured browser context.
+- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): The Files pane delete confirmation now reflects whether the file will be moved to the system Trash/Recycle Bin or permanently deleted, based on the "Delete files to Trash/Recycle Bin" preference.
+- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): When sending a file to the system Trash/Recycle Bin fails, the Files pane now reports the error and leaves the file on disk; previously it would silently fall back to permanently deleting the file.
+- ([#12235](https://github.com/rstudio/rstudio/issues/12235)): RStudio Desktop's Session > New Session now opens noticeably faster.
+- ([#15614](https://github.com/rstudio/rstudio/issues/15614)): The splash screen can again be dismissed with a mouse click or key press.
+- ([#15711](https://github.com/rstudio/rstudio/issues/15711)): Source-mode spell check no longer disappears on Quarto and R Markdown documents when the bundled YAML diagnostics worker fails to respond; spell-check lint is now applied independently of YAML lint.
+- ([#16067](https://github.com/rstudio/rstudio/issues/16067)): Raise the open file descriptor soft limit at session startup to avoid "Too many open files" errors during project file monitoring on Linux.
+- ([#16541](https://github.com/rstudio/rstudio/issues/16541)): Section headers now fold hierarchically based on heading level, matching Positron's default behavior.
+- ([#16966](https://github.com/rstudio/rstudio/issues/16966)): Restored the desktop terminal bell on Linux, now that the underlying Electron crash has been fixed.
+- ([#17084](https://github.com/rstudio/rstudio/issues/17084)): The Shiny test commands (Record Test, Run Tests, Compare Results) now use the `shinytest2` package; `shinytest` has been deprecated.
+- ([#17128](https://github.com/rstudio/rstudio/issues/17128)): The Windows installer's File Version now matches its Product Version; previously the installer concatenated the major and minor version components into a single value that exceeded NSIS's 16-bit-per-component limit and was truncated to an unrelated number.
+- ([#17176](https://github.com/rstudio/rstudio/issues/17176)): Fixed a startup hang when opening a Quarto project containing large directories (e.g. `_targets/`).
+- ([#17322](https://github.com/rstudio/rstudio/issues/17322)): Posit Assistant: invoking Uninstall Posit Assistant when it is not installed now shows the message "Posit Assistant is not installed." and skips the restart, instead of silently restarting RStudio.
+- ([#17417](https://github.com/rstudio/rstudio/issues/17417)): Added missing French translations for newer commands and preferences, removed an orphaned French key, deduplicated stale entries in the French application strings, and normalized line endings in five English string files.
+- ([#17440](https://github.com/rstudio/rstudio/issues/17440)): Fixed an issue where triggering tab completion inside `[` on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory.
+- ([#17450](https://github.com/rstudio/rstudio/issues/17450)): Fixed a crash on Windows when `Rprofile.site` (or `.Rprofile`) called `download.file()`, `update.packages()`, or other code that emitted console output while RStudio's R runtime dispatch layer was not yet initialized.
+- ([#17506](https://github.com/rstudio/rstudio/issues/17506)): Source-marker messages in the Build, Markers, and Compile PDF panes are now rendered as plain text by default; only messages that the server explicitly marks as HTML (e.g. C++ Find Usages highlighting) are rendered via `innerHTML`.
+- ([#17508](https://github.com/rstudio/rstudio/issues/17508)): Enabled the MathJax `Safe` extension in the IDE, the HTML preview, the presentation preview, and the rendered R Markdown viewer.
+- ([#17510](https://github.com/rstudio/rstudio/issues/17510)): Data Import: column names, character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code.
+- ([#17530](https://github.com/rstudio/rstudio/issues/17530)): The spell-check context menu now shows the full set of correction suggestions; previously a stray loop increment caused every other suggestion to be skipped, capping the menu at 3 items instead of 5.
+- ([#17534](https://github.com/rstudio/rstudio/issues/17534)): Fix uninformative error in `rstudio::sourceMarkers()` when `marker$type` is not a length-one vector.
+- ([#4402](https://github.com/rstudio/rstudio/issues/4402)): Reindenting C/C++ code with a brace-less control-flow statement (e.g. a `for` whose body is a single braced `if`) no longer over-indents the line that follows the body.
+- ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
+- ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Reduced filesystem work performed by the `install.packages()` hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.
+- ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like `updates <-` or `installed.packages()`.
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.425.0
-- Electron 39.7.0
-- Node.js 22.22.0 (copilot, Posit AI)
-- Quarto 1.8.26
+- Copilot Language Server 1.480.0
+- Electron 41.5.0
+- Node.js 22.22.2 (copilot, Posit AI)
+- Quarto 1.9.37
 - xterm.js 6.0.0

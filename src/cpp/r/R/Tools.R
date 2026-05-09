@@ -1613,6 +1613,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("tryOr", function(default, expr)
+{
+   tryCatch(expr, error = function(cnd) default)
+})
+
 .rs.addFunction("emptyCoalesce", function(...)
 {
    for (i in seq_len(...length()))
@@ -2079,13 +2084,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    ""
 })
 
-.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL)
+.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL, db = NULL)
 {
-   # Request available packages.
-   db <- if (is.null(pkgSrc)) as.data.frame(
-      utils::available.packages(),
-      stringsAsFactors = FALSE
-   )
+   # Request available packages when not using an explicit source and no db was provided.
+   if (is.null(pkgSrc) && is.null(db))
+   {
+      db <- as.data.frame(
+         utils::available.packages(),
+         stringsAsFactors = FALSE
+      )
+   }
 
    # Record sources for each package.
    for (pkgPath in pkgPaths)
@@ -2097,13 +2105,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
 
-   # Read the package's DESCRIPTION file.
-   pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
+   # Read the DESCRIPTION file directly. The skip-if-tagged check below
+   # must read from the same source we write to; packageDescription()
+   # prefers Meta/package.rds, which can be out of sync with DESCRIPTION
+   # (e.g. after a manual rebuild) and would let us silently append a
+   # duplicate set of Remote* lines.
+   descPath <- file.path(pkgPath, "DESCRIPTION")
+   descMatrix <- tryCatch(read.dcf(descPath), error = function(e) NULL)
+   if (is.null(descMatrix) || nrow(descMatrix) == 0L)
+      return()
 
    # If the package already has some remote fields recorded, then skip.
    # Currently, this is relevant for packages installed from R-universe.
-   remotes <- grep("^Remote", names(pkgDesc), value = TRUE)
-   if (length(remotes))
+   if (length(grep("^Remote", colnames(descMatrix))))
       return()
 
    remoteFields <- if (!is.null(pkgSrc))
@@ -2122,7 +2136,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          return()
 
       # Grab the package version.
-      pkgVersion <- pkgDesc[["Version"]]
+      pkgVersion <- if ("Version" %in% colnames(descMatrix))
+         descMatrix[1L, "Version"]
+      else
+         NA_character_
 
       # Normalize the repository path, removing source / binary suffixes.
       pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
@@ -2147,7 +2164,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
    # Update the DESCRIPTION file. We read and write the DESCRIPTION file
    # just to avoid issues with potential trailing lines.
-   descPath <- file.path(pkgPath, "DESCRIPTION")
    descContents <- readLines(descPath, warn = FALSE)
    descContents <- descContents[nzchar(descContents)]
    descContents <- c(descContents, remoteText)
@@ -2187,13 +2203,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       object
 })
 
-.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths())
+.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths(), paths = NULL)
 {
-   pkgPaths <- list.files(lib, full.names = TRUE)
-   descPaths <- file.path(pkgPaths, "DESCRIPTION")
-   pkgInfo <- file.info(pkgPaths, extra_cols = FALSE)
+   if (is.null(paths))
+      paths <- list.files(lib, full.names = TRUE)
+   pkgInfo <- file.info(paths, extra_cols = FALSE)
    pkgInfo$path <- row.names(pkgInfo)
    pkgInfo
+})
+
+.rs.addFunction("installPackagesWhichDeps", function(userDeps)
+{
+   # Maps the user's 'dependencies' argument onto the dependency types
+   # tools::package_dependencies should query. Returns a list with
+   # 'direct' (types to expand for the requested pkgs) and 'transitive'
+   # (types to recurse through for added dependencies) so we can mirror
+   # install.packages's getDependencies(): when dependencies = TRUE, the
+   # requested pkgs pull in Suggests but their dependencies do not.
+   strong <- c("Depends", "Imports", "LinkingTo")
+   userDeps <- if (is.character(userDeps)) userDeps[!is.na(userDeps)] else userDeps
+   if (isTRUE(userDeps))
+      list(direct = c(strong, "Suggests"), transitive = strong)
+   else if (isFALSE(userDeps))
+      list(direct = character(), transitive = character())
+   else if (is.character(userDeps))
+      list(direct = userDeps, transitive = userDeps)
+   else
+      list(direct = strong, transitive = strong)
 })
 
 .rs.addFunction("installedPackagesFileInfoDiff", function(before, after)
@@ -2373,223 +2409,4 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    NULL
 })
 
-# Hooks -------------------------------------------------------------------
-
-assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
-
-.rs.defineGlobalHook(
-   package = "utils",
-   binding = "download.file",
-   when    = getRversion() < "4.6.0" && "headers" %in% names(formals(utils::download.file)),
-   function(url, destfile, method)
-   {
-      ""
-      "This is an RStudio hook."
-      "Use `.rs.downloadFile` to bypass this hook if necessary."
-      ""
-
-      # Note that R also supports downloading multiple files in parallel,
-      # so the 'url' parameter may be a vector of URLs.
-      #
-      # Unfortunately, it doesn't support the use of URL-specific headers,
-      # so we try to handle this appropriately here.
-      if (missing(method))
-         method <- getOption("download.file.method", default = "auto")
-
-      # Silence diagnostic warnings.
-      headers <- get("headers", envir = environment(), inherits = FALSE)
-
-      # Handle the simpler length-one URL case up front.
-      if (length(url) == 1L)
-      {
-         # Build relevant headers for the call.
-         callHeaders <- headers
-         authHeader <- .rs.computeAuthorizationHeader(url)
-         if (length(authHeader) && nzchar(authHeader))
-            callHeaders <- c(callHeaders, Authorization = authHeader)
-
-         # Build a call to invoke the base R downloader.
-         call <- match.call(expand.dots = TRUE)
-         call[[1L]] <- quote(.rs.downloadFile)
-         if (length(callHeaders))
-            call["headers"] <- list(callHeaders)
-         status <- eval(call, envir = parent.frame())
-         return(invisible(status))
-      }
-
-      # Otherwise, do some more work to map headers to URLs as appropriate.
-      retvals <- vector("integer", length = length(url))
-      authHeaders <- .rs.mapChr(url, .rs.computeAuthorizationHeader)
-      for (authHeader in unique(authHeaders))
-      {
-         # Figure out which URLs are associated with the current header.
-         idx <- which(authHeaders == authHeader)
-
-         # Build relevant headers for the call.
-         callHeaders <- headers
-         if (length(authHeader) && nzchar(authHeader))
-            callHeaders <- c(callHeaders, Authorization = authHeader)
-
-         # Build a call to download these files all in one go.
-         call <- match.call(expand.dots = TRUE)
-         call[[1L]] <- quote(.rs.downloadFile)
-         call["url"] <- list(url[idx])
-         call["destfile"] <- list(destfile[idx])
-         if (length(callHeaders))
-            call["headers"] <- list(callHeaders)
-         retvals[idx] <- eval(call, envir = parent.frame())
-      }
-
-      # Note that even if multiple files are downloaded, R only reports
-      # a single status code, with 0 implying that all downloads succeeded.
-      status <- if (all(retvals == 0L)) 0L else 1L
-      if (getRversion() >= "4.5.0")
-         attr(status, "retvals") <- retvals
-      invisible(status)
-
-   })
-
-.rs.defineHook(
-   package = "utils",
-   binding = "install.packages",
-   function(pkgs, lib, repos)
-   {
-      ""
-      "This is an RStudio hook."
-      "Use `utils::install.packages()` to bypass this hook if necessary."
-      ""
-
-      if (interactive())
-      {
-         # Check if package installation was disabled in this version of RStudio.
-         canInstallPackages <- .Call("rs_canInstallPackages", PACKAGE = "(embedding)")
-         if (!canInstallPackages)
-         {
-            msg <- "Package installation is disabled in this version of RStudio."
-            stop(msg, call. = FALSE)
-         }
-
-         # Notify if we're about to update an already-loaded package.
-         # Skip this within renv and packrat projects.
-         if (.rs.installPackagesRequiresRestart(pkgs))
-         {
-            response <- .rs.askForRestart("install.packages")
-            if (identical(response, TRUE))
-            {
-               call <- do.call(substitute, list(match.call(), parent.frame()))
-               call[[1L]] <- quote(install.packages)
-               names(call)[[2L]] <- ""
-               command <- paste(.rs.deparseCall(call), collapse = " ")
-               
-               .rs.enqueLoadedPackageUpdates(command)
-               invokeRestart("abort")
-            }
-            else if (identical(response, FALSE))
-            {
-               # fall-through
-            }
-            else
-            {
-               invokeRestart("abort")
-            }
-         }
-
-         # Make sure Rtools is on the PATH for Windows.
-         .rs.addRToolsToPath()
-         on.exit(.rs.restorePreviousPath(), add = TRUE)
-      }
-
-      # Resolve library path.
-      if (missing(lib) || is.null(lib))
-         lib <- .libPaths()[1L]
-
-      # Check if we're installing a package from the filesystem,
-      # versus installing a package from CRAN.
-      isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
-
-      if (isLocal)
-      {
-         # Invoke the original function.
-         call <- sys.call()
-         call[[1L]] <- quote(utils::install.packages)
-         result <- eval(call, envir = parent.frame())
-
-         # Record the package source. Note that we need to resolve the path
-         # to the newly-installed package post-hoc from the provided path.
-         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
-         if (shouldRecord)
-         {
-            pkgDesc <- tryCatch(
-               .rs.readPackageDescription(pkgs),
-               error = function(cnd) NULL
-            )
-            
-            if (length(pkgDesc))
-            {
-               pkgPath <- file.path(lib, pkgDesc[["Package"]])
-               if (file.exists(pkgPath))
-               {
-                  tryCatch(
-                     .rs.recordPackageSource(pkgPath, pkgs),
-                     error = .rs.logWarningMessage
-                  )
-               }
-            }
-         }
-      }
-      else
-      {
-         # Get paths to DESCRIPTION files, so we can see what packages
-         # were updated before and after installation.
-         before <- .rs.installedPackagesFileInfo(lib)
-
-         # Invoke the original function.
-         call <- sys.call()
-         call[[1L]] <- quote(utils::install.packages)
-         result <- eval(call, envir = parent.frame())
-
-         # Check and see what packages were updated.
-         after <- .rs.installedPackagesFileInfo(lib)
-
-         # Figure out which packages were changed.
-         rows <- .rs.installedPackagesFileInfoDiff(before, after)
-
-         # For any packages which appear to have been updated,
-         # tag their DESCRIPTION file with their installation source.
-         .rs.recordPackageSource(rows$path)
-      }
-
-      # Notify the front-end that we've made some updates.
-      if (interactive())
-      {
-         .rs.updatePackageEvents()
-         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
-      }
-
-      # Return installation result, invisibly.
-      invisible(result)
-   })
-
-.rs.defineHook(
-   package = "utils",
-   binding = "remove.packages",
-   function(pkgs, lib)
-   {
-      ""
-      "This is an RStudio hook."
-      "Use `utils::remove.packages()` to bypass this hook if necessary."
-      ""
-
-      # Invoke original.
-      result <- utils::remove.packages(pkgs, lib)
-
-      # Notify front-end that the package library was mutated.
-      if (interactive())
-      {
-         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
-      }
-
-      # Return original result.
-      invisible(result)
-   })
 

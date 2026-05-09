@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -24,6 +24,6 @@ public interface JobsServerOperations
    void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                         ServerRequestCallback<JsArray<JobOutput> > output);
    void startJob(JobLaunchSpec spec, ServerRequestCallback<String> callback);
-   void clearBackgroundJobs(ServerRequestCallback<Void> callback);
-   void executeJobAction(String id, String action, ServerRequestCallback<Void> callback);
+   void clearBackgroundJobs(ServerRequestCallback<VoidResponse> callback);
+   void executeJobAction(String id, String action, ServerRequestCallback<VoidResponse> callback);
 }

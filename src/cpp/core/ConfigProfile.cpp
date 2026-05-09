@@ -163,12 +163,16 @@ Error ConfigProfile::parseString(const std::string& profileStr)
       compoundLevels.push_back({{matchingLevel.get().first, levelValue}, compoundValues});
    }
 
-   // stable sort the levels in ascending level number
+   // stable sort both levels vectors in ascending level number
    // this will preserve the order of same-level section overrides
    std::stable_sort(
             levels.begin(),
             levels.end(),
             [](const LevelValues& a, const LevelValues& b) { return a.first.first < b.first.first; });
+   std::stable_sort(
+            compoundLevels.begin(),
+            compoundLevels.end(),
+            [](const LevelCompoundValues& a, const LevelCompoundValues& b) { return a.first.first < b.first.first; });
 
    // assign the temporary variable levels to the class member
    // this assures that we can safely call this method multiple times, preserving the last

@@ -986,6 +986,19 @@ core::Error UserPrefValues::setFoldStyle(std::string val)
 }
 
 /**
+ * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+ */
+bool UserPrefValues::hierarchicalSectionFolding()
+{
+   return readPref<bool>("hierarchical_section_folding");
+}
+
+core::Error UserPrefValues::setHierarchicalSectionFolding(bool val)
+{
+   return writePref("hierarchical_section_folding", val);
+}
+
+/**
  * Whether to automatically save scripts before executing them.
  */
 bool UserPrefValues::saveBeforeSourcing()
@@ -2247,6 +2260,19 @@ core::Error UserPrefValues::setGlobalTheme(std::string val)
 }
 
 /**
+ * Whether modal dialogs should use dark styling when a dark editor theme is active.
+ */
+bool UserPrefValues::useDarkThemeModalDialogs()
+{
+   return readPref<bool>("use_dark_theme_modal_dialogs");
+}
+
+core::Error UserPrefValues::setUseDarkThemeModalDialogs(bool val)
+{
+   return writePref("use_dark_theme_modal_dialogs", val);
+}
+
+/**
  * Whether to ignore whitespace when generating diffs of version controlled files.
  */
 bool UserPrefValues::gitDiffIgnoreWhitespace()
@@ -2699,6 +2725,19 @@ int UserPrefValues::dataViewerMaxCellSize()
 core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
 {
    return writePref("data_viewer_max_cell_size", val);
+}
+
+/**
+ * Whether the Summary side panel is shown by default when opening the data viewer.
+ */
+bool UserPrefValues::dataViewerShowSummary()
+{
+   return readPref<bool>("data_viewer_show_summary");
+}
+
+core::Error UserPrefValues::setDataViewerShowSummary(bool val)
+{
+   return writePref("data_viewer_show_summary", val);
 }
 
 /**
@@ -3274,7 +3313,7 @@ core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool va
 }
 
 /**
- * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
  */
 bool UserPrefValues::checkNullExternalPointers()
 {
@@ -3482,7 +3521,7 @@ core::Error UserPrefValues::setAssistantNesAutoshow(bool val)
 }
 
 /**
- * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+ * When enabled, RStudio will show messages from the Posit Assistant in a message box.
  */
 bool UserPrefValues::assistantShowMessages()
 {
@@ -3492,6 +3531,19 @@ bool UserPrefValues::assistantShowMessages()
 core::Error UserPrefValues::setAssistantShowMessages(bool val)
 {
    return writePref("assistant_show_messages", val);
+}
+
+/**
+ * When enabled, the Posit Assistant button is displayed in the main toolbar.
+ */
+bool UserPrefValues::assistantToolbarButtonVisible()
+{
+   return readPref<bool>("assistant_toolbar_button_visible");
+}
+
+core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
+{
+   return writePref("assistant_toolbar_button_visible", val);
 }
 
 /**
@@ -3805,6 +3857,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSoftWrapRmdFiles,
       kFocusConsoleAfterExec,
       kFoldStyle,
+      kHierarchicalSectionFolding,
       kSaveBeforeSourcing,
       kConsoleSoftWrap,
       kSyntaxColorConsole,
@@ -3902,6 +3955,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
       kGlobalTheme,
+      kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
       kGitSignedCommits,
       kConsoleDoubleClickSelect,
@@ -3937,6 +3991,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,
+      kDataViewerShowSummary,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,
@@ -3998,6 +4053,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
       kAssistantShowMessages,
+      kAssistantToolbarButtonVisible,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

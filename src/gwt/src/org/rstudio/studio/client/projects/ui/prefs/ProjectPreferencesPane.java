@@ -16,7 +16,9 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -90,6 +92,16 @@ public abstract class ProjectPreferencesPane
          true);
    }
    
+   @Override
+   public void setTabPanelSize(DialogTabLayoutPanel panel)
+   {
+      int width = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
+      int height = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_HEIGHT;
+      panel.setSize(width + "px", height + "px");
+   }
+
    protected static final ProjectPreferencesDialogResources RESOURCES =
                            ProjectPreferencesDialogResources.INSTANCE;
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);

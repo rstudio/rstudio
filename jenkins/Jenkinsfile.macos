@@ -40,6 +40,7 @@ pipeline {
       steps {
         script {
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
+          utils.ensureFullCommitHistory()
         }
       }
     }
@@ -48,7 +49,7 @@ pipeline {
       // https://issues.jenkins.io/browse/JENKINS-62249?focusedId=408066&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-408066
       steps {
         sh '''
-          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https
+          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https || true
         '''
       }
     }
@@ -71,6 +72,8 @@ pipeline {
     stage('Versioning') {
       steps {
         script {
+          utils.ensureFullCommitHistory()
+
           (RSTUDIO_VERSION,
             RSTUDIO_VERSION_MAJOR,
             RSTUDIO_VERSION_MINOR,
@@ -164,7 +167,8 @@ pipeline {
 
     stage('Test') {
       environment {
-        PATH = "${env.HOME}/opt/bin:${env.PATH}"
+        PATH   = "${env.HOME}/opt/bin:${env.PATH}"
+        LC_ALL = "en_US.UTF-8"
       }
       steps {
         dir("package/osx/build/src/cpp") {

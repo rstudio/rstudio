@@ -533,8 +533,11 @@ public abstract class
    public abstract AppCommand showAboutDialog();
    public abstract AppCommand showSplashScreen();
    public abstract AppCommand copyRStudioVersion();
+   public abstract AppCommand showTrustRequestDialog();
    public abstract AppCommand showLicenseDialog();
    public abstract AppCommand checkForUpdates();
+   public abstract AppCommand showReleaseNotes();
+   public abstract AppCommand whatsNewRStudio();
    public abstract AppCommand helpUsingRStudio();
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();
@@ -760,6 +763,7 @@ public abstract class
    public abstract AppCommand assistantStatus();
    public abstract AppCommand assistantRequestCompletions();
    public abstract AppCommand assistantRequestSuggestions();
+   public abstract AppCommand assistantPaneToggle();
    public abstract AppCommand assistantAcceptNextWord();
    public abstract AppCommand assistantToggleAutomaticCompletions();
    public abstract AppCommand assistantAcceptNextEditSuggestion();
@@ -771,6 +775,8 @@ public abstract class
    // Chat satellite window
    public abstract AppCommand popOutChat();
    public abstract AppCommand returnChatToMain();
+   public abstract AppCommand uninstallPositAssistant();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();

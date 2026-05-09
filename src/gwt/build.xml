@@ -87,8 +87,18 @@
    <!-- For automatically re-generating acesupport on change -->
    <property name="acesupport.watcher.dir" value="${tools.dir}/acesupport-watcher"/>
 
+   <!-- Detect git worktree and resolve main repo root for shared dependencies -->
+   <exec executable="git" outputproperty="git.common.dir"
+         failonerror="false" errorproperty="git.common.dir.error">
+      <arg value="rev-parse"/>
+      <arg value="--path-format=absolute"/>
+      <arg value="--git-common-dir"/>
+   </exec>
+   <dirname property="git.main.worktree" file="${git.common.dir}"/>
+
    <!-- Path to GWT libraries -->
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
+   <set-if-exists property="lib.dir" value="${git.main.worktree}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="C:/rstudio-tools/dependencies/common/gwtproject"/>
 
@@ -155,11 +165,13 @@
 
    <!-- acesupport file watcher for development -->
    <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
-      <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
-         <arg value="install"/>
-         <arg value="--network-timeout"/>
-         <arg value="240000"/>
-      </exec>
+      <retry retrycount="3">
+         <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="install"/>
+            <arg value="--network-timeout"/>
+            <arg value="240000"/>
+         </exec>
+      </retry>
    </target>
 
    <target name="acesupport-watch-check">
@@ -221,8 +233,11 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="22.13.1"/>
-   <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
+   <property name="node.version" value="22.22.2"/>
+   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
    <!-- use yarn from system but will prefer yarn from dependencies if available -->
@@ -252,11 +267,13 @@
       <echo message="panmirror minify: ${panmirror.minify}"/>
 
       <mkdir dir="${panmirror.build.dir}"/>
-      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
-         <arg value="install"/>
-         <arg value="--network-timeout"/>
-         <arg value="240000"/>
-      </exec>
+      <retry retrycount="3">
+         <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="install"/>
+            <arg value="--network-timeout"/>
+            <arg value="240000"/>
+         </exec>
+      </retry>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="build"/>
          <arg value="--minify"/>
@@ -490,7 +507,7 @@
       <delete dir="${extras.dir}" failonerror="false" />
    </target>
 
-   <target name="build-unittests" description="Builds JUnit unit tests">
+   <target name="build-unittests" depends="acesupport,javac" description="Builds JUnit unit tests">
       <java-compile srcdir="test" includes="org/rstudio/**/client/**">
          <classpath refid="unittest.class.path"/>
          <classpath refid="project.class.path"/>
@@ -510,7 +527,36 @@
      </java>
    </target>
 
-   <target name="test" depends="unittest">
+   <!-- Headless runner for the standalone HTML test pages under test/.
+        Exercises the acesupport autoindent / highlight harnesses in a real
+        browser (Playwright's bundled chromium), catching regressions in
+        acesupport. Pulls in playwright via `npm ci`, then shells out to
+        runner.mjs which serves src/gwt/ over a local HTTP server and
+        aggregates per-page pass/fail counts. -->
+
+   <property name="testpage.runner.dir" value="test/runner"/>
+
+   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
+   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
+   <set-if-unset  property="npm.bin" value="npm"/>
+
+   <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
+   <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
+   <set-if-unset  property="node.bin" value="node"/>
+
+   <target name="testpage" depends="acesupport"
+           description="Runs the standalone HTML test pages under test/ in headless chromium">
+      <retry retrycount="3">
+         <exec executable="${npm.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+            <arg value="ci"/>
+         </exec>
+      </retry>
+      <exec executable="${node.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="runner.mjs"/>
+      </exec>
+   </target>
+
+   <target name="test" depends="unittest,testpage">
    </target>
 
 </project>

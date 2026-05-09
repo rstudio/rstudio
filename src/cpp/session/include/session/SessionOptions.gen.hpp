@@ -59,6 +59,7 @@ protected:
                 boost::program_options::options_description* pUser,
                 boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pPai,
+                boost::program_options::options_description* pTrust,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
                 int* wwwSameSite,
@@ -134,7 +135,10 @@ protected:
       "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.")
       (kWwwResusePorts,
       value<bool>(&wwwReusePorts_)->default_value(false),
-      "Whether or not to reuse last used bound ports when restarting a Launcher session.");
+      "Whether or not to reuse last used bound ports when restarting a Launcher session.")
+      (kDisableNewCSRFChecks,
+      value<bool>(&disableNewCSRFChecks_)->default_value(false),
+      "Certain rpc calls were missing checks for the CSRF token to prevent misuse of these api in a context with lax SameSite cookie policies. Use this option temporarily to override these new checks if you have integrations that rely on the old behavior.");
 
    pSession->add_options()
       ("session-connections-block-suspend",
@@ -218,6 +222,9 @@ protected:
       (kSameSiteSessionOption,
       value<int>(wwwSameSite)->default_value(0),
       "The value of the SameSite attribute used in cookie issued by the session.")
+      (kWwwFrameOriginSessionOption,
+      value<std::string>(&wwwFrameOrigin_)->default_value(""),
+      "The www-frame-origin value forwarded from rserver, used for CSP frame-ancestors directives.")
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
@@ -271,6 +278,9 @@ protected:
       ("allow-package-installation",
       value<bool>(&allowPackageInstallation_)->default_value(true),
       "Indicates whether or not to allow installation of packages from the packages pane.")
+      ("allow-package-source-recording",
+      value<bool>(&allowPackageSourceRecording_)->default_value(true),
+      "Indicates whether or not to annotate the DESCRIPTION file of packages installed via install.packages() with their repository source (RemoteType, RemoteRepos, etc).")
       ("allow-shell",
       value<bool>(&allowShell_)->default_value(true),
       "Indicates whether or not to allow access to the shell dialog.")
@@ -315,7 +325,7 @@ protected:
       "Indicates whether or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
       value<bool>(&allowPositAssistant_)->default_value(false),
-      "Indicates whether or not to allow use of the Posit AI assistant feature.");
+      "Indicates whether or not to allow use of Posit Assistant features.");
 
    pR->add_options()
       ("r-core-source",
@@ -365,7 +375,10 @@ protected:
       "If set, overrides the user/project restore workspace setting. Can be 0 (No), 1 (Yes), or 2 (Default).")
       ("r-run-rprofile",
       value<int>(&rRunRprofile_)->default_value(kRunRprofileDefault),
-      "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default).");
+      "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default).")
+      ("r-max-connections",
+      value<int>(&rMaxConnections_)->default_value(0),
+      "Sets the maximum number of connections that R will support. Valid values are 128 to 4096. When set, the value is applied to the R startup parameters. If set to 0 (the default), the R default (128) will be used. Requires R >= 4.4.0.");
 
    pLimits->add_options()
       ("limit-file-upload-size-mb",
@@ -482,7 +495,7 @@ protected:
    pPai->add_options()
       ("posit-assistant-enabled",
       value<bool>(&positAssistantEnabled_)->default_value(true),
-      "Indicates whether or not Posit AI integration can be enabled.")
+      "Indicates whether or not Posit Assistant integration can be enabled.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")
@@ -491,7 +504,12 @@ protected:
       "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server.")
       ("posit-assistant-test-manifest",
       value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
-      "Use the test manifest URL for Posit AI package updates.");
+      "Use the test manifest URL for Posit Assistant package updates.");
+
+   pTrust->add_options()
+      ("project-trust-dialogs",
+      value<int>(&projectTrustDialogs_)->default_value(-1),
+      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.");
 
    pMisc->add_options();
 
@@ -519,6 +537,7 @@ public:
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
    bool wwwReusePorts() const { return wwwReusePorts_; }
+   bool disableNewCSRFChecks() const { return disableNewCSRFChecks_; }
    bool sessionConnectionsBlockSuspend() const { return sessionConnectionsBlockSuspend_; }
    bool sessionExternalPointersBlockSuspend() const { return sessionExternalPointersBlockSuspend_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
@@ -546,6 +565,7 @@ public:
    std::string rootPath() const { return rootPath_; }
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
+   std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewAllowList() const { return directoryViewAllowList_; }
    boost::optional<std::tuple<int,int>> sessionPortRange() const { return sessionPortRange_; }
@@ -563,6 +583,7 @@ public:
    bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
    bool allowVcs() const { return allowVcs_ || allowOverlay(); }
    bool allowPackageInstallation() const { return allowPackageInstallation_ || allowOverlay(); }
+   bool allowPackageSourceRecording() const { return allowPackageSourceRecording_ || allowOverlay(); }
    bool allowShell() const { return allowShell_ || allowOverlay(); }
    bool allowTerminalWebsockets() const { return allowTerminalWebsockets_ || allowOverlay(); }
    bool allowFileDownloads() const { return allowFileDownloads_ || allowOverlay(); }
@@ -594,6 +615,7 @@ public:
    std::string rDocDirOverride() const { return rDocDirOverride_; }
    int rRestoreWorkspace() const { return rRestoreWorkspace_; }
    int rRunRprofile() const { return rRunRprofile_; }
+   int rMaxConnections() const { return rMaxConnections_; }
    int limitFileUploadSizeMb() const { return limitFileUploadSizeMb_; }
    int limitCpuTimeMinutes() const { return limitCpuTimeMinutes_; }
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
@@ -630,6 +652,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
+   int projectTrustDialogs() const { return projectTrustDialogs_; }
 
 
 protected:
@@ -650,6 +673,7 @@ protected:
    bool standalone_;
    bool verifySignatures_;
    bool wwwReusePorts_;
+   bool disableNewCSRFChecks_;
    bool sessionConnectionsBlockSuspend_;
    bool sessionExternalPointersBlockSuspend_;
    int timeoutMinutes_;
@@ -677,6 +701,7 @@ protected:
    std::string rootPath_;
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
+   std::string wwwFrameOrigin_;
    bool restrictDirectoryView_;
    std::string directoryViewAllowList_;
    boost::optional<std::tuple<int,int>> sessionPortRange_;
@@ -694,6 +719,7 @@ protected:
    bool allowCRANReposEdit_;
    bool allowVcs_;
    bool allowPackageInstallation_;
+   bool allowPackageSourceRecording_;
    bool allowShell_;
    bool allowTerminalWebsockets_;
    bool allowFileDownloads_;
@@ -725,6 +751,7 @@ protected:
    std::string rDocDirOverride_;
    int rRestoreWorkspace_;
    int rRunRprofile_;
+   int rMaxConnections_;
    int limitFileUploadSizeMb_;
    int limitCpuTimeMinutes_;
    bool limitXfsDiskQuota_;
@@ -763,6 +790,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
+   int projectTrustDialogs_;
    virtual bool allowOverlay() const { return false; };
 };
 

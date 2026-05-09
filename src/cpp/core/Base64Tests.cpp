@@ -101,6 +101,70 @@ TEST(Base64Test, ContentsArePreservedInEncodeDecodeProcess)
       EXPECT_EQ(random, decoded);
    }
 }
+
+TEST(Base64Test, UrlEncodeOmitsPaddingAndUsesUrlChars)
+{
+   // "subjects?_d" in standard base64 is "c3ViamVjdHM/X2Q=" (contains / and =)
+   std::string encoded;
+   Error err = encodeUrl("subjects?_d", &encoded);
+   EXPECT_FALSE(err);
+   // Should use - instead of +, _ instead of /, and no padding
+   EXPECT_EQ(std::string::npos, encoded.find('+'));
+   EXPECT_EQ(std::string::npos, encoded.find('/'));
+   EXPECT_EQ(std::string::npos, encoded.find('='));
+}
+
+TEST(Base64Test, UrlDecodeHandlesMissingPadding)
+{
+   // "a" encodes to "YQ" in base64url (no padding)
+   std::string decoded;
+   Error err = decodeUrl("YQ", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("a", decoded);
+
+   err = decodeUrl("YWI", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("ab", decoded);
+
+   err = decodeUrl("YWJj", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("abc", decoded);
+}
+
+TEST(Base64Test, UrlRoundTrip)
+{
+   Error error;
+   ::srand(42);
+   for (std::size_t i = 0; i < 100; ++i)
+   {
+      std::string random =
+            string_utils::makeRandomByteString(::rand() % 1024);
+
+      std::string encoded;
+      error = encodeUrl(random, &encoded);
+      EXPECT_FALSE(error);
+
+      // Verify no standard base64 characters leak through
+      EXPECT_EQ(std::string::npos, encoded.find('+'));
+      EXPECT_EQ(std::string::npos, encoded.find('/'));
+      EXPECT_EQ(std::string::npos, encoded.find('='));
+
+      std::string decoded;
+      error = decodeUrl(encoded, &decoded);
+      EXPECT_FALSE(error);
+
+      EXPECT_EQ(random, decoded);
+   }
+}
+
+TEST(Base64Test, UrlDecodeInvalidLength)
+{
+   std::string decoded;
+   // Length 1 mod 4 is invalid
+   Error err = decodeUrl("A", &decoded);
+   EXPECT_TRUE(err);
+}
+
 } // end namespace base64
 } // end namespace core
 } // end namespace rstudio

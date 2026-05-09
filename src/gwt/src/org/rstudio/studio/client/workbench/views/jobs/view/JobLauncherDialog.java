@@ -50,6 +50,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
                             OperationWithInput<JobLaunchSpec> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
 
       controls_ = new JobLauncherControls();
 

@@ -229,11 +229,20 @@ These sections describe how to build RStudio from the command line.
 
 ### Frontend
 
-To build the front-end, you can use:
+To quickly verify that Java changes compile correctly:
 
     cd src/gwt && ant javac
 
-This will be necessary if you've modified any scripts in the `src/gwt` directory. Note that if you modify any JavaScript components, e.g. in `src/gwt/acesupport`, you will also need to run:
+This only runs the Java compiler — it does NOT produce runnable JavaScript.
+
+To produce runnable code (GWT transpile to JavaScript, draft/debug mode):
+
+    cd src/gwt && ant draft
+
+Use `ant draft` after making changes you need to test in the browser. Use `ant javac` as a fast
+check when iterating on Java code.
+
+If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
     cd src/gwt && ant acesupport
 
@@ -288,13 +297,36 @@ where `<scope>` is one of `core`, `rserver`, `rsession`, or `r`.
 
     cd src/gwt && ant unittest
 
+The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight)
+are exercised in headless chromium via:
 
-### Desktop (Electron) Tests
+    cd src/gwt && ant testpage
 
-    cd src/node/desktop && npm test
+`ant test` runs both `unittest` and `testpage`.
+
+
+### Desktop (Electron) Verification
+
+    cd src/node/desktop && npm test          # Unit tests
+    cd src/node/desktop && npm run lint      # ESLint
+    cd src/node/desktop && npm run typecheck # TypeScript type checking (tsc --noEmit)
+
+Run all three before committing changes to `src/node/desktop/`. Note that `npm run lint` only runs
+ESLint — it does not catch type errors that the webpack build will reject.
 
 
 ## Code Style
+
+### Non-ASCII Characters
+
+Avoid using non-ASCII characters (e.g. `·`, `—`, smart quotes) in source files,
+including comments. Use ASCII equivalents instead (e.g. `-`, `--`, `"`, `'`).
+Non-ASCII characters can cause portability issues across platforms, and the
+test in `src/cpp/tests/testthat/test-linter.R` will fail if any `.R` file
+under `src/cpp` contains them.
+
+The exception is localization `.properties` files (e.g. `*_fr.properties`),
+which may contain actual accented characters.
 
 ### R
 
@@ -393,6 +425,19 @@ And then the constructor should have the form:
 possibly with other injected parameters.
 
 
+## NEWS.md
+
+When fixing a bug or adding a new feature, add an entry to the appropriate section (`### New`,
+`### Fixed`, etc.) of `NEWS.md`. Follow the existing format:
+
+    - ([#NNNN](https://github.com/rstudio/rstudio/issues/NNNN)): Brief description of the change
+
+Exceptions — do NOT add a NEWS.md entry for:
+- Fixes to unreleased features still under active development
+- Fixes to bugs introduced since the last release (i.e., bugs no official-release user has encountered)
+- Open-source companion PRs for rstudio-pro changes (typically identified by a link to a pro-repo PR/issue or wording like "open-source companion") -- these are tracked in a separate NEWS file in the pro repository
+
+
 ## Pull Requests
 
 When generating a pull request that fixes a known issue, please ensure the pull request body includes:
@@ -415,6 +460,7 @@ For branch naming:
 - Use the 'bugfix/' prefix for code changes which fix an existing issue.
 - Use the 'feature/' prefix for code changes that add or extend existing functionality.
 - Use the 'developer/' prefix for code changes that are primarily for developer ergonomics.
+- Use the 'test/' prefix for code changes that are focused on automated tests.
 
 ## Issues
 

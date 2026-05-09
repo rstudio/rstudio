@@ -148,8 +148,7 @@ withr::defer(.rs.automation.deleteRemote())
 {
    path <- tempfile("test-file-", tmpdir = dirname(tempdir()))
    file.create(path)
-   on.exit(unlink(path))
-   
+   withr::defer(unlink(path))
    .rs.guardrails.expectError(unlink(!!path))
 })
 

@@ -14,6 +14,36 @@
 #
 
 context("rstudioapi")
+test_that("invalid marker type generates informative error", {
+   NULL_type <- list(type = NULL,
+                     # 'file' would have to point to an actual R script to
+                     # prevent the error 'The system cannot find the path
+                     # specified' in normalizePath() in case of a valid 'type'.
+                     file = file.path(".", "R", "fake_script.R"),
+                     line = 1L,
+                     column = 1L,
+                     message = "Some message")
+   char0_type <- NULL_type
+   char0_type[["type"]] <- character(0)
+   vector_type <- NULL_type
+   vector_type[["type"]] <- c("warning", "error")
+   
+   expect_error(
+      .rs.api.sourceMarkers(name = "with_NULL_type", markers = list(NULL_type)),
+      regexp = "Invalid marker type", fixed = TRUE
+   )
+   
+   expect_error(
+      .rs.api.sourceMarkers(name = "with_char0_type", markers = list(char0_type)),
+      regexp = "Invalid marker type", fixed = TRUE
+   )
+   
+   expect_error(
+      .rs.api.sourceMarkers(name = "with_vector_type", markers = list(vector_type)),
+      regexp = "Invalid marker type", fixed = TRUE
+   )
+})
+
 # Tests comments out until https://github.com/rstudio/rstudio/issues/12275 is resolved
 # test_that("command callbacks are invoked", {
 # 

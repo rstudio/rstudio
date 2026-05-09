@@ -66,6 +66,7 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
+#include <boost/asio/ip/address.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
@@ -2083,6 +2084,104 @@ Error ipAddresses(std::vector<posix::IpAddress>* pAddresses,
     return posix::getIpAddresses(*pAddresses, includeIPv6);
 }
 
+namespace detail {
+
+std::string stripIpv6ScopeId(const std::string& address)
+{
+   if (address.find(':') == std::string::npos)
+      return address;
+
+   const size_t scopePos = address.find('%');
+   return scopePos == std::string::npos ? address : address.substr(0, scopePos);
+}
+
+std::string resolveBindAddressForAddresses(
+      const std::string& address,
+      const std::vector<posix::IpAddress>& addrs)
+{
+   if (address == "0.0.0.0")
+   {
+      bool hasNonLocalIpv4 = false;
+      bool hasNonLocalIpv6 = false;
+      bool hasIpv4 = false;
+      bool hasIpv6 = false;
+
+      for (const posix::IpAddress& ip : addrs)
+      {
+         const bool hasScopeId = ip.Address.find('%') != std::string::npos;
+         boost::system::error_code ec;
+         boost::asio::ip::address addr =
+            boost::asio::ip::make_address(stripIpv6ScopeId(ip.Address), ec);
+         if (ec)
+            continue;
+
+         if (addr.is_v4())
+         {
+            hasIpv4 = true;
+            if (!addr.is_loopback())
+               hasNonLocalIpv4 = true;
+         }
+         else if (addr.is_v6())
+         {
+            hasIpv6 = true;
+            if (!addr.is_loopback() && !hasScopeId &&
+                !addr.to_v6().is_link_local())
+               hasNonLocalIpv6 = true;
+         }
+      }
+
+      if ((!hasNonLocalIpv4 && hasNonLocalIpv6) ||
+          (!hasIpv4 && hasIpv6))
+      {
+         return "::";
+      }
+   }
+   else if (address == "::")
+   {
+      bool hasIpv6 = false;
+      for (const posix::IpAddress& ip : addrs)
+      {
+         boost::system::error_code ec;
+         boost::asio::ip::address addr =
+            boost::asio::ip::make_address(stripIpv6ScopeId(ip.Address), ec);
+         if (ec)
+            continue;
+
+         if (addr.is_v6())
+         {
+            hasIpv6 = true;
+            break;
+         }
+      }
+
+      if (!hasIpv6)
+      {
+         return "0.0.0.0";
+      }
+   }
+
+   return address;
+}
+
+} // namespace detail
+
+std::string resolveBindAddress(const std::string& address)
+{
+   if (address != "0.0.0.0" && address != "::")
+      return address;
+
+   std::vector<posix::IpAddress> addrs;
+   Error error = ipAddresses(&addrs, true);
+   if (error)
+   {
+      LOG_DEBUG_MESSAGE(
+            "Falling back to configured bind address '" + address +
+            "' because interface discovery failed: " + error.asString());
+      return address;
+   }
+
+   return detail::resolveBindAddressForAddresses(address, addrs);
+}
 
 Error restrictCoreDumps()
 {

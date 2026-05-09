@@ -1554,7 +1554,7 @@ def _rstudio_html_generator_():
       item
 })
 
-#    > str(.rs.describeObject(globalenv(), "a"))
+#    > str(.rs.describeObject("a", globalenv()))
 # List of 10
 #  $ name             : 'rs.scalar' chr "a"
 #  $ type             : 'rs.scalar' chr "numeric"

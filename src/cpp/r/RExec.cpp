@@ -23,10 +23,10 @@
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
+#include <r/session/RSession.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
-#include <r/RCntxt.hpp>
 #include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
@@ -396,9 +396,9 @@ Error evaluateString(const std::string& str,
    return Success();
 }
    
-bool atTopLevelContext() 
+bool atTopLevelContext()
 {
-   return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
+   return session::isAtTopLevel();
 }
 
 RFunction::RFunction(SEXP functionSEXP)
@@ -410,7 +410,21 @@ RFunction::RFunction(SEXP functionSEXP)
 RFunction::~RFunction()
 {
 }
-   
+
+RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
+{
+   return addQuotedParam(std::string(), paramSEXP);
+}
+
+RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
+{
+   static SEXP s_quote = Rf_install("quote");
+   SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
+   preserver_.add(quotedSEXP);
+   params_.push_back(Param(name, quotedSEXP));
+   return *this;
+}
+
 void RFunction::commonInit(const std::string& functionName)
 {
    // refresh source if necessary (no-op in production)
@@ -422,7 +436,7 @@ void RFunction::commonInit(const std::string& functionName)
    // handle empty function names up front
    if (functionName.empty())
    {
-      functionSEXP_ = R_UnboundValue;
+      functionSEXP_ = nullptr;
       return;
    }
    
@@ -474,18 +488,18 @@ Error RFunction::call(SEXP evalNS,
    CodeExecutingScope executingScope;
    
    // check that the function exists
-   if (functionSEXP_ != R_UnboundValue)
+   if (functionSEXP_ != nullptr)
    {
       Error existsError = safely ?
                evaluateExpressions(functionSEXP_, evalNS, pResultSEXP, pProtect) :
                evaluateExpressionsUnsafe(functionSEXP_, evalNS, pResultSEXP, pProtect, EvalTry);
       
       if (existsError)
-         functionSEXP_ = R_UnboundValue;
+         functionSEXP_ = nullptr;
    }
    
    // verify the function
-   if (functionSEXP_ == R_UnboundValue)
+   if (functionSEXP_ == nullptr)
    {
       Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       if (!functionName_.empty())
@@ -669,12 +683,12 @@ DisableDebugScope::DisableDebugScope(SEXP env)
       return;
    
    // check to see whether there's a debug flag set on this environment
-   rdebug_ = RDEBUG(env);
+   rdebug_ = r::sexp::sxpinfo::getDebug(env);
 
    // if there is, turn it off and save the old flag for restoration
-   if (rdebug_ != 0) 
+   if (rdebug_ != 0)
    {
-      SET_RDEBUG(env, 0);
+      r::sexp::sxpinfo::setDebug(env, 0);
       env_ = env;
    } 
 }
@@ -685,7 +699,7 @@ DisableDebugScope::~DisableDebugScope()
    // evaluation, restore debugging
    if (env_ != nullptr && !atTopLevelContext()) 
    {
-      SET_RDEBUG(env_, rdebug_);
+      r::sexp::sxpinfo::setDebug(env_, rdebug_);
    }
 }
 

@@ -56,6 +56,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
       NewConnectionInfo newConnectionInfo)
    {
       super(constants_.advancedOptionsCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       initialConfig_ = config;
       newConnectionInfo_ = newConnectionInfo;
 

@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -639,12 +640,18 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      String message = constants_.permanentDeleteMessage();
       if (selectedFiles.size() == 0)
       {
          return;
       }
-      else if (selectedFiles.size() == 1)
+
+      boolean useTrash = Desktop.isDesktop() && pPrefs_.get().deleteToTrash().getValue();
+
+      String message = useTrash
+            ? constants_.moveToTrashMessage()
+            : constants_.permanentDeleteMessage();
+      message += " ";
+      if (selectedFiles.size() == 1)
       {
          message += selectedFiles.get(0).getName();
       }
@@ -652,7 +659,9 @@ public class Files
       {
          message += constants_.selectedFilesMessage(selectedFiles.size());
       }
-      message += constants_.cannotBeUndoneMessage();
+      message += useTrash
+            ? " " + constants_.moveToTrashSuffix()
+            : constants_.cannotBeUndoneMessage();
 
 
       // validation -- not prohibited move of public folder
@@ -673,7 +682,23 @@ public class Files
 
                               server_.deleteFiles(
                                     selectedFiles,
-                                    new VoidServerRequestCallback(progress));
+                                    new VoidServerRequestCallback(progress) {
+                                       @Override
+                                       public void onError(ServerError error)
+                                       {
+                                          if (!useTrash)
+                                          {
+                                             super.onError(error);
+                                             return;
+                                          }
+                                          String prefix = selectedFiles.size() == 1
+                                                ? constants_.deleteToTrashFailedSingleMessage(
+                                                      selectedFiles.get(0).getName())
+                                                : constants_.deleteToTrashFailedMultipleMessage();
+                                          progress.onError(prefix + "\n\n" + error.getUserMessage());
+                                          progress.onCompleted();
+                                       }
+                                    });
                            }
                         },
                        true);
@@ -947,7 +972,7 @@ public class Files
 
    public void onOpenFileInBrowser(OpenFileInBrowserEvent event)
    {
-      showFileInBrowser(event.getFile());
+      showFileInBrowser(event.getFile(), event.isDownload());
    }
 
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
@@ -1072,10 +1097,23 @@ public class Files
 
    private void showFileInBrowser(FileSystemItem file)
    {
+      showFileInBrowser(file, false);
+   }
+
+   private void showFileInBrowser(FileSystemItem file, boolean asDownload)
+   {
       // show the file in a new window if we can get a file url for it
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
       {
+         // for server URLs initiated as a download (e.g. user clicked a
+         // binary file in the Files pane), tag the URL so the server can
+         // audit it without also auditing view-style navigations (HTML
+         // "Show in Browser", source-code link clicks) or internal /files/
+         // traffic (HTML sub-resources, file.show(), browseURL previews).
+         // Desktop URLs are file:// and don't go through the session.
+         if (asDownload && !fileURL.startsWith("file:"))
+            fileURL += (fileURL.contains("?") ? "&" : "?") + "download=1";
          globalDisplay_.openWindow(fileURL);
       }
    }

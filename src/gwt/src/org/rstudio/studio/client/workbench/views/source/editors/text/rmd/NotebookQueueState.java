@@ -34,7 +34,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
@@ -636,10 +636,10 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       // check whether queue required Python to execute
       withQueueDependencies(() ->
       {
-         server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
+         server_.executeNotebookChunks(queue_, new ServerRequestCallback<VoidResponse>()
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                renderQueueState(false);
             }

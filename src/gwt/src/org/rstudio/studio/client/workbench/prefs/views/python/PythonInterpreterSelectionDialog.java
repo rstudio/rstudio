@@ -46,6 +46,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
                                            final OperationWithInput<PythonInterpreter> operation)
    {
       super(constants_.pythonInterpreterPlural(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       setOkButtonCaption(constants_.select());
       
       // initialize widget list boxes

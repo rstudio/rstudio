@@ -236,6 +236,12 @@ Error initialize()
    if (error)
       return error;
 
+   // install R hooks (depends only on helpers in Tools.R)
+   FilePath hooksFilePath = utils::rSourcePath().completePath("Hooks.R");
+   error = r::sourceManager().sourceTools(hooksFilePath);
+   if (error)
+      return error;
+
    // install RStudio API
    FilePath apiFilePath = utils::rSourcePath().completePath("Api.R");
    error = r::sourceManager().sourceTools(apiFilePath);
@@ -334,11 +340,11 @@ Error initialize()
    if (wasResumed)
       rCallbacks().resumed();
    
-   // now that all initialization code has had a chance to run we 
+   // now that all initialization code has had a chance to run we
    // can register all external routines which were added to r::routines
    // during the init sequence
    r::routines::registerAll();
-   
+
    // set default repository if requested
    if (!utils::rCRANUrl().empty() || !utils::rCRANSecondary().empty())
    {

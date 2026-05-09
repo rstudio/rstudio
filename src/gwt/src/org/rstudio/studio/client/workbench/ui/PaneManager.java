@@ -57,6 +57,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -474,6 +476,7 @@ public class PaneManager
          commands_.openSourceDocNewColumn().setVisible(visible);
 
          manageLayoutCommands();
+         manageChatCommands();
       });
 
       eventBus_.addHandler(ZoomPaneEvent.TYPE, event ->
@@ -584,10 +587,23 @@ public class PaneManager
          activeWindow.showWindowFocusIndicator(true);
       });
 
+      // Re-evaluate chat command visibility when the chat provider changes
+      userPrefs.chatProvider().addValueChangeHandler(event -> manageChatCommands());
+      eventBus.addHandler(ProjectOptionsChangedEvent.TYPE, event ->
+      {
+         paiUtil_.updateProjectOptions(event.getData().getAssistantOptions());
+         manageChatCommands();
+      });
+
       manageLayoutCommands();
       manageChatCommands();
 
       new ZoomedTabStateValue();
+
+      // Fire initial chat pane state so the toolbar button latches correctly
+      // on startup. Deferred so all event handlers are registered first.
+      Scheduler.get().scheduleDeferred(() ->
+            eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar())));
    }
 
    LogicalWindow getLogicalWindow(WindowFrame frame)
@@ -1008,7 +1024,7 @@ public class PaneManager
       optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
    
-   private void setSidebarPref(boolean showSidebar)
+   public void setSidebarPref(boolean showSidebar)
    {
       PaneConfig paneConfig = getCurrentConfig();
 
@@ -1106,6 +1122,9 @@ public class PaneManager
       }
 
       commands_.toggleSidebar().setChecked(showSidebar);
+
+      if (isChatInSidebar())
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    /**
@@ -1244,6 +1263,7 @@ public class PaneManager
       maximizedWindow_ = window;
 
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       panel_.setSplitterEnabled(false);
 
       // Check if sidebar is visible and get its location (needed for correct size saving)
@@ -1530,6 +1550,7 @@ public class PaneManager
       leftWidgetSizePriorToZoom_.clear();
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
+      eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
    private void restorePaneLayout()
@@ -1779,7 +1800,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            if (tab == Tab.Chat && !paiUtil_.isPaiEnabled())
+            if (tab == Tab.Chat && !paiUtil_.isPositAssistantEnabled())
                continue;
             tabList.add(tab);
          }
@@ -1860,7 +1881,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (paiUtil_.isPaiEnabled())
+      if (paiUtil_.isPositAssistantEnabled())
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -1892,6 +1913,10 @@ public class PaneManager
             panel = tabSet2TabPanel_;
             moveHiddenTabToTabSet2(tab, tabs2_);
          }
+
+         // Refresh chat command visibility now that the tab is no longer hidden
+         if (tab == Tab.Chat)
+            manageChatCommands();
       }
 
       // Ensure that the pane is visible (otherwise tab selection will fail)
@@ -2233,6 +2258,53 @@ public class PaneManager
       return tabToPanel_.get(tab);
    }
 
+   public boolean isChatInSidebar()
+   {
+      PaneConfig config = getCurrentConfig();
+      JsArrayString sidebarTabs = config.getSidebar();
+      if (sidebarTabs == null)
+         return false;
+      for (int i = 0; i < sidebarTabs.length(); i++)
+      {
+         if (sidebarTabs.get(i).equals(Tab.Chat.name()))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Returns true when the Chat pane is visible in the sidebar and is the
+    * selected tab -- i.e., when a second click on the Assistant toolbar
+    * button would dismiss it. Chat in a quadrant panel is not considered
+    * "active" for this purpose because the button cannot dismiss it.
+    */
+   public boolean isChatActivatedInSidebar()
+   {
+      if (!isChatInSidebar())
+         return false;
+
+      if (sidebar_ == null)
+         return false;
+
+      if (!tabToIndex_.containsKey(Tab.Chat))
+         return false;
+
+      WorkbenchTabPanel panel = tabToPanel_.get(Tab.Chat);
+      if (panel == null)
+         return false;
+
+      // If another window is maximized over the sidebar, Chat is not visible
+      if (maximizedWindow_ != null)
+      {
+         LogicalWindow chatParent = panel.getParentWindow();
+         if (chatParent != null && !chatParent.equals(maximizedWindow_))
+            return false;
+      }
+
+      int chatIndex = tabToIndex_.get(Tab.Chat);
+      return panel.getSelectedIndex() == chatIndex;
+   }
+
    public LogicalWindow getSourceLogicalWindow()
    {
       return sourceLogicalWindows_.get(0);
@@ -2427,18 +2499,19 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      // For sidebar, show maximize (for zoom) and close buttons; other tabsets show maximize and minimize
       boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
       boolean showMaximizeButton = true;  // All tabsets get maximize button
       boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton, isSidebar);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      // Wire sidebar maximize button to layoutZoomSidebar command
+      // Wire sidebar button handlers
       if (isSidebar)
       {
          frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
+         frame.setCloseClickHandler(() -> setSidebarPref(false));
       }
 
       // Only pass commands to sidebar for the empty state feature
@@ -2468,6 +2541,7 @@ public class PaneManager
          WorkbenchTab selected = tabPanel.getTab(index);
          lastSelectedTab_ = workbenchTabToTab(selected);
          session_.persistClientState();
+         eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       });
 
       if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
@@ -2674,9 +2748,22 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = paiUtil_.isPaiSelected();
+      boolean showPaiUi = paiUtil_.isPositAssistantEnabled() && !isTabHidden(Tab.Chat);
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
+      commands_.assistantPaneToggle().setVisible(
+            showPaiUi && paiUtil_.isChatProviderPosit());
+   }
+
+   private boolean isTabHidden(Tab tab)
+   {
+      WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+      if (panel == null)
+         return true;
+      LogicalWindow parent = panel.getParentWindow();
+      if (parent == null)
+         return true;
+      return parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
    }
 
    private List<AppCommand> getLayoutCommands()
@@ -2698,7 +2785,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      if (paiUtil_.isPaiSelected())
+      if (paiUtil_.isPositAssistantEnabled())
          commands.add(commands_.layoutZoomChat());
 
       return commands;

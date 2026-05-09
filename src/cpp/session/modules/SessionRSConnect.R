@@ -236,44 +236,58 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
+   if (rsconnect:::isPositConnectCloudServer(server))
+      return(list())
    .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
-  
+
   # retrieve application associated with these parameters
-  app <- tryCatch(
-    rsconnect:::getAppById(id, account, server, hostUrl),
-    error = identity
-  )
-  
+  if (rsconnect:::isPositConnectCloudServer(server)) {
+    app <- tryCatch(
+      .rs.rsconnect.getConnectCloudContent(id, account, server),
+      error = identity
+    )
+  } else {
+    app <- tryCatch(
+      rsconnect:::getAppById(id, account, server, hostUrl),
+      error = identity
+    )
+  }
+
   # check for and return errors
   if (inherits(app, "error")) {
     message <- paste(conditionMessage(app), collapse = "\n")
     return(list(app = NULL, error = .rs.scalar(message)))
   }
-  
+
   # if no such application is available, just return an empty list
   if (length(app) == 0L) {
     return(list(app = NULL, error = NULL))
   }
-  
+
   # infer the configuration URL for this application
-  app$config_url <- if (rsconnect:::isConnectServer(server)) {
+  app$config_url <- if (rsconnect:::isPositConnectCloudServer(server)) {
+    paste(rsconnect:::connectCloudUrls()$ui, account, "content", app$id, sep = "/")
+  } else if (rsconnect:::isConnectServer(server)) {
     prefix <- sub("/__api__", "", hostUrl)
     paste(prefix, "connect/#/apps", app$id, sep = "/")
   } else {
     prefix <- "https://www.shinyapps.io/admin/#/applications"
     paste(prefix, app$id, sep = "/")
   }
-  
+
   # try and get environment variables for this deployment (if available)
-  app$envVars <- .rs.rsconnect.getApplicationEnvVars(
-    server  = server,
-    account = account,
-    guid    = app$guid
-  )
-  
+  # (not yet supported for Connect Cloud)
+  if (!rsconnect:::isPositConnectCloudServer(server)) {
+    app$envVars <- .rs.rsconnect.getApplicationEnvVars(
+      server  = server,
+      account = account,
+      guid    = app$guid
+    )
+  }
+
   list(
     app = .rs.scalarListFromList(app),
     error = NULL
@@ -444,11 +458,18 @@
   # R Markdown documents)
   file_list <- unique(file_list)
 
+  # resolve full paths and keep only files that exist on disk; Quarto v1.9
+  # returns project metadata for standalone files, causing _quarto.yml to be
+  # added to the file list even when no project file exists
+  full_paths <- file.path(dirname(target), file_list)
+  exists <- file.exists(full_paths)
+  file_list <- file_list[exists]
+  full_paths <- full_paths[exists]
+
   # compose the result
   list(
     contents = file_list,
-    totalSize = sum(
-       file.info(file.path(dirname(target), file_list))$size))
+    totalSize = sum(file.info(full_paths)$size, na.rm = TRUE))
 })
 
 .rs.addFunction("makeDeploymentList", function(target, asMultipleDoc,
@@ -558,6 +579,35 @@
    eval(cmd, envir = globalenv())
 })
 
+# Drop-in replacement for rsconnect:::cli_menu that routes the selection
+# through a GWT dialog instead of prompting on the R console. Signature
+# matches rsconnect:::cli_menu(header, prompt, choices, quit = NULL, ...).
+.rs.addFunction("cliMenu", function(header, prompt, choices, quit = NULL, ...) {
+   selected <- .rs.api.showMenu(
+      title = header,
+      message = prompt,
+      choices = choices
+   )
+   if (is.null(selected))
+      stop("Account selection cancelled.", call. = FALSE)
+   selected
+})
+
+# Connect a Posit Connect Cloud account via OAuth device flow. The R session
+# is blocked while waiting for the browser authentication to complete. The
+# override of rsconnect:::cli_menu below keeps the multi-account prompt out
+# of the R console (where a modal glass panel would block it) and into a
+# GWT dialog instead (see issue #17441).
+.rs.addJsonRpcHandler("connect_cloud_user", function() {
+   original <- .rs.tryCatch(
+      .rs.replaceBinding("cli_menu", "rsconnect", .rs.cliMenu)
+   )
+   if (!inherits(original, "error"))
+      on.exit(.rs.replaceBinding("cli_menu", "rsconnect", original), add = TRUE)
+
+   rsconnect::connectCloudUser()
+})
+
 
 .rs.addFunction("getRmdPublishDetails", function(target, encoding) {
 
@@ -663,6 +713,13 @@
   list(name  = .rs.scalar(name),
        valid = .rs.scalar(valid),
        error = .rs.scalar(error))
+})
+
+.rs.addFunction("rsconnect.getConnectCloudContent", function(id, account, server)
+{
+  accountDetails <- rsconnect::accountInfo(account, server)
+  client <- rsconnect:::clientForAccount(accountDetails)
+  client$getContent(id)
 })
 
 .rs.addFunction("rsconnect.getApplicationEnvVars", function(server, account, guid)

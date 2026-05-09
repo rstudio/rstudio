@@ -72,8 +72,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -130,7 +128,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
@@ -229,7 +227,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
@@ -2125,9 +2122,9 @@ public class TextEditingTarget implements
          dirtyState_.markDirty(false);
       else
          dirtyState_.markClean();
-      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
       {
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             dirtyState_.markDirty(true);
             docDisplay_.clearSelectionHistory();
@@ -3788,7 +3785,10 @@ public class TextEditingTarget implements
          autoSaveTimer_.cancel();
       
       if (bgIdleMonitor_ != null)
-         bgIdleMonitor_.endMonitoring();
+         bgIdleMonitor_.onDetach();
+
+      if (mathjax_ != null)
+         mathjax_.detachHandlers();
 
       if (assistant_ != null)
          assistant_.onDismiss();
@@ -7288,9 +7288,9 @@ public class TextEditingTarget implements
             server_.saveActiveDocument(code,
                                        sweave,
                                        compilePdfHelper_.getActiveRnwWeaveName(),
-                                       new SimpleRequestCallback<Void>() {
+                                       new SimpleRequestCallback<VoidResponse>() {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   consoleDispatcher_.executeSourceCommand(
                         "~/.active-rstudio-document",
@@ -7635,6 +7635,22 @@ public class TextEditingTarget implements
 
    void renderRmd(final String format, final String paramsFile)
    {
+      // if a notebook render is in progress, wait for it to finish before
+      // previewing so the user sees the latest content
+      if (isRmdNotebook() && notebook_ != null && notebook_.isRendering())
+      {
+         view_.getStatusBar().showStatus(
+            StatusBarIconType.TYPE_LOADING,
+            constants_.notebookRenderWaiting());
+
+         notebook_.addRenderCompleteHandler(() ->
+         {
+            view_.getStatusBar().hideStatus();
+            renderRmd(format, paramsFile);
+         });
+         return;
+      }
+
       if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
          events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
 
@@ -8598,6 +8614,7 @@ public class TextEditingTarget implements
                   previewFromR();
                }
                else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_RMARKDOWN_NOTEBOOK ||
                         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
                {
                   renderRmd();
@@ -9346,37 +9363,6 @@ public class TextEditingTarget implements
       view_.showReadOnlyWarning(alternatives);
    }
 
-   void installShinyTestDependencies(final Command success) {
-      server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
-         @Override
-         public void onResponseReceived(ConsoleProcess process)
-         {
-            final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
-            dialog.showModal();
-
-            process.addProcessExitHandler(new ProcessExitEvent.Handler()
-            {
-               @Override
-               public void onProcessExit(ProcessExitEvent event)
-               {
-                  if (event.getExitCode() == 0)
-                  {
-                     success.execute();
-                     dialog.closeDialog();
-                  }
-               }
-            });
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            globalDisplay_.showErrorMessage(constants_.installShinyTestDependenciesError(), error.getUserMessage());
-         }
-      });
-   }
-
    void checkTestPackageDependencies(final Command success, boolean isTestThat) {
       dependencyManager_.withTestPackage(
          new Command()
@@ -9384,40 +9370,7 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               if (isTestThat)
-                  success.execute();
-               else {
-                  server_.hasShinyTestDependenciesInstalled(new ServerRequestCallback<Boolean>() {
-                     @Override
-                     public void onResponseReceived(Boolean hasPackageDependencies)
-                     {
-                        if (hasPackageDependencies)
-                           success.execute();
-                        else {
-                           globalDisplay_.showYesNoMessage(
-                              GlobalDisplay.MSG_WARNING,
-                              constants_.checkTestPackageDependenciesCaption(),
-                              constants_.checkTestPackageDependenciesMessage(),
-                              new Operation()
-                              {
-                                 public void execute()
-                                 {
-                                    installShinyTestDependencies(success);
-                                 }
-                              },
-                              false);
-                        }
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                        globalDisplay_.showErrorMessage(constants_.checkTestPackageDependenciesError()
-                                , error.getMessage());
-                     }
-                  });
-               }
+               success.execute();
             }
          },
          isTestThat
@@ -9516,7 +9469,7 @@ public class TextEditingTarget implements
                   shinyAppPath = docUpdateSentinel_.getPath();
                }
 
-               String code = "shinytest::recordTest(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
+               String code = "shinytest2::record_test(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },
@@ -9573,9 +9526,9 @@ public class TextEditingTarget implements
             {
                checkTestPackageDependencies(() ->
                {
-                  String testName = FilePathUtils.fileNameSansExtension(testFile);
-                  String code = "shinytest::viewTestDiff(\"" +
-                        results.appDir + "\", \"" + testName + "\")";
+                  String snapsPath = results.appDir + "/tests/testthat";
+                  String code = "testthat::snapshot_review(path = \"" +
+                        snapsPath.replace("\"", "\\\"") + "\")";
                   events_.fireEvent(new SendToConsoleEvent(code, true));
                }, false);
             }

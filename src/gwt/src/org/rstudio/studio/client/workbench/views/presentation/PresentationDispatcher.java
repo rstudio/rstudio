@@ -142,9 +142,9 @@ public class PresentationDispatcher
          String param2)
    {
       if (cmdName == "help-doc")
-         performHelpDocCommand(param1, param2);
+         performHelpDocCommand(param1);
       else if (cmdName == "help-topic")
-         performHelpTopicCommand(param1, param2);
+         performHelpTopicCommand(param1);
       else if (cmdName == "console")
          performConsoleCommand(params);
       else if (cmdName == "console-input")
@@ -167,32 +167,33 @@ public class PresentationDispatcher
    }
 
 
-   private void performHelpDocCommand(String param1, String param2)
+   private void performHelpDocCommand(String docPath)
    {
-      if (param1 != null)
+      if (docPath != null)
       {
-         String docFile = getPresentationPath(param1);
-         String url = "help/presentation/?file=" + URL.encodeQueryString(docFile);
-         eventBus_.fireEvent(new ShowHelpEvent(url));  
+         // Send the path as a presentation-relative reference; the
+         // server resolves it against the active presentation directory.
+         String url = "help/presentation/?doc=" + URL.encodeQueryString(docPath);
+         eventBus_.fireEvent(new ShowHelpEvent(url));
       }
    }
 
-   private void performHelpTopicCommand(String param1, String param2)
+   private void performHelpTopicCommand(String topicSpec)
    {
-      // split on :: if it's there
-      if (param1 != null)
-      {
-         String topic = param1;
-         String packageName = null;
-         int delimLoc = param1.indexOf("::");
-         if (delimLoc != -1)
-         {
-            packageName = StringUtil.substring(param1, 0, delimLoc);
-            topic = StringUtil.substring(param1, delimLoc+2);
-         }
+      if (topicSpec == null)
+         return;
 
-         server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);
+      // split on :: if present (e.g. "package::topic")
+      String topic = topicSpec;
+      String packageName = null;
+      int delimLoc = topicSpec.indexOf("::");
+      if (delimLoc != -1)
+      {
+         packageName = StringUtil.substring(topicSpec, 0, delimLoc);
+         topic = StringUtil.substring(topicSpec, delimLoc + 2);
       }
+
+      server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);
    }
 
    private void performConsoleCommand(String params)

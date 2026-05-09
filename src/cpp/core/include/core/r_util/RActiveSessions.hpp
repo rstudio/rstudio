@@ -675,6 +675,7 @@ public:
    {
       SortConditions() :
          executing_(false),
+         running_(false),
          lastUsed_(0)
       {
          

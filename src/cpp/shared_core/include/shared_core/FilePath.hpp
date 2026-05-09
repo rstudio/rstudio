@@ -226,6 +226,21 @@ public:
    static FilePath resolveAliasedPath(const std::string& in_aliasedPath, const FilePath& in_userHomePath);
 
    /**
+    * @brief Resolves any '~' alias and $USER / $HOME environment variables within the path.
+    *
+    * @param in_aliasedPath     The aliased path to resolve.
+    * @param in_userHomePath    The user's home path, which will replace ~ and $HOME
+    * @param in_userName        The user's username, which will replace $USER
+    *
+    * @return The resolved path.
+    */
+   static FilePath resolveAliasedPath(
+      const std::string& in_aliasedPath,
+      const FilePath& in_userHomePath,
+      const std::string& in_userName
+   );
+
+   /**
     * @brief Checks whether the current working directory exists. If it does not, moves the current working directory to
     *        the specified path.
     *
@@ -392,7 +407,7 @@ public:
     *
     * @return Success if the file could be created or it exists already; Error otherwise.
     */
-   Error ensureFile() const;
+   Error ensureFile(bool ensureParentDirectory = false) const;
 
    /**
     * @brief Checks whether this file path exists in the file system.
@@ -481,7 +496,7 @@ public:
     * @return Success if the file mode could be retrieved; Error otherwise.
     */
    Error getFileMode(FileMode& out_fileMode) const;
-   
+
    /**
    * @brief Retrieves the owner of the file.
    *
@@ -537,7 +552,7 @@ public:
     * @brief Gets the lexically normal representation of this file path, with . and ..
     *    components resolved and/or removed.
     *
-    * @return The lexically normal representation of this file path. 
+    * @return The lexically normal representation of this file path.
     */
    std::string getLexicallyNormalPath() const;
 
@@ -989,5 +1004,15 @@ bool isNotFoundError(const Error& in_error);
 
 } // namespace core
 } // namespace rstudio
+
+// Allow for FilePath to be used as a key in data structures such as std::unordered_map
+template<>
+struct std::hash<rstudio::core::FilePath>
+{
+    std::size_t operator()(const rstudio::core::FilePath& path) const noexcept
+    {
+        return std::hash<std::string>{}(path.getAbsolutePath());
+    }
+};
 
 #endif

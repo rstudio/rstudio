@@ -29,6 +29,7 @@ public class MemoryUsageSummaryDialog extends ModalDialogBase
    public MemoryUsageSummaryDialog(MemoryUsageReport report)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       summary_ = new MemoryUsageSummary(report);
       setText(constants_.memoryUsageReport(report.getSystemUsage().getPercentUsed()));
       addOkButton(new ThemedButton(constants_.okCapitalized(), new ClickHandler()

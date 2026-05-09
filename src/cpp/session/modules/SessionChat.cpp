@@ -21,6 +21,7 @@
 #include "chat/ChatTypes.hpp"
 #include "chat/ChatLogging.hpp"
 #include "chat/ChatInstallation.hpp"
+#include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
 
 #include <algorithm>
@@ -52,14 +53,13 @@
 #include <core/system/Xdg.hpp>
 #include <core/Version.hpp>
 
-#include <r/RCntxt.hpp>
-#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RBusy.hpp>
+#include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
@@ -113,6 +113,7 @@ void clearChatBackendPort()
    s_chatBackendPort = constants::kChatBackendPortNone;
    staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
    s_chatBackendAuthToken.clear();
+   staticfiles::setChatBackendAuthToken(std::string());
 }
 
 // Track whether session is closing (vs suspending/restarting)
@@ -189,12 +190,9 @@ bool peerHasCapability(const std::string& method)
 // ============================================================================
 // Feature availability helper
 // ============================================================================
-// Returns true if the Posit AI feature is enabled. This requires:
-// 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
-// 2. The posit-assistant-enabled session option
-bool isPaiEnabled()
+bool isPositAssistantEnabledByAdmin()
 {
-   return options().allowPositAssistant() && options().positAssistantEnabled();
+   return module_context::isPositAssistantEnabledByAdmin();
 }
 
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
@@ -217,16 +215,16 @@ std::string getConfiguredChatProvider()
    return prefs::userPrefs().chatProvider();
 }
 
-// Returns true if chat provider is set to Posit AI (for Chat pane)
+// Returns true if chat provider is set to Posit Assistant (for Chat pane)
 // Checks project-level setting first, then falls back to global preference
 bool isChatProviderPosit()
 {
    return getConfiguredChatProvider() == kChatProviderPosit;
 }
 
-// Returns true if the user wants Posit AI for either chat or completions
+// Returns true if the user wants Posit Assistant for either chat or completions
 // Used to determine if install/update operations should be allowed
-bool isPositAiWanted()
+bool isPositAssistantWanted()
 {
    return isChatProviderPosit() || isPaiSelected();
 }
@@ -246,6 +244,7 @@ using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
 using chat_constants::kPositAiDirName;
+using chat_constants::kPositAiBackupDirName;
 using chat_constants::kServerScriptPath;
 
 // Types used throughout
@@ -261,7 +260,7 @@ using chat_logging::shouldLogBackendMessage;
 using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
-using chat_installation::locatePositAiInstallation;
+using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -275,31 +274,6 @@ using chat_staticfiles::handleAIChatRequest;
 // R interface
 // ============================================================================
 
-SEXP rs_chatCallStackFunctions()
-{
-   r::sexp::Protect protect;
-   std::vector<SEXP> functions;
-
-   for (auto ctxt = r::context::RCntxt::begin();
-        ctxt != r::context::RCntxt::end();
-        ctxt++)
-   {
-      if (ctxt->callflag() & CTXT_FUNCTION)
-      {
-         SEXP fn = ctxt->callfun();
-         if (fn != R_NilValue)
-            functions.push_back(fn);
-      }
-   }
-
-   SEXP resultSEXP = Rf_allocVector(VECSXP, functions.size());
-   protect.add(resultSEXP);
-
-   for (std::size_t i = 0; i < functions.size(); i++)
-      SET_VECTOR_ELT(resultSEXP, i, functions[i]);
-
-   return resultSEXP;
-}
 
 SEXP rs_chatNormalizePath(SEXP pathSEXP)
 {
@@ -925,56 +899,68 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
       // already protected by the environment itself. rProtect is available
       // for any intermediate R operations.
       Protect rProtect;
-      std::vector<Variable> vars;
+      std::vector<std::string> names;
 
       // List ALL variables (including hidden) to get accurate total count
       listEnvironment(R_GlobalEnv,
                       true,   // includeAll - get everything first
                       false,  // includeLastDotValue - we'll filter manually
-                      &vars);
+                      &names);
 
-      totalVariableCount = vars.size();
+      totalVariableCount = names.size();
 
       // Smart filtering: exclude functions and hidden variables
-      std::vector<Variable> filteredVars;
-      filteredVars.reserve(vars.size());
+      std::vector<std::string> filteredNames;
+      filteredNames.reserve(names.size());
 
-      for (const Variable& var : vars)
+      for (const std::string& name : names)
       {
-         const std::string& name = var.first;
-         SEXP varSEXP = var.second;
-
          // Skip hidden variables (starting with '.')
          if (!name.empty() && name[0] == '.')
             continue;
 
-         // Skip functions (CLOSXP = user functions, SPECIALSXP/BUILTINSXP = built-ins)
+         // Skip promises, active bindings, and functions; use getBindingType
+         // to avoid forcing promises or triggering active bindings
+         BindingType bt = getBindingType(name, R_GlobalEnv);
+         if (bt == BindingType::Promise ||
+             bt == BindingType::ActiveBinding ||
+             bt == BindingType::Missing ||
+             bt == BindingType::Unbound)
+         {
+            continue;
+         }
+
+         // For normal bindings, skip functions
+         SEXP varSEXP = getBindingIdentity(name, R_GlobalEnv, bt);
          int objType = TYPEOF(varSEXP);
          if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
             continue;
 
-         filteredVars.push_back(var);
+         filteredNames.push_back(name);
       }
 
       // OPTIMIZATION: Extract sizes WITHOUT full JSON conversion
       // This is much faster than calling varToJson() on all variables
       struct VarWithSize {
-         Variable var;
+         std::string name;
          int64_t size;
       };
 
       std::vector<VarWithSize> varsWithSize;
-      varsWithSize.reserve(filteredVars.size());
+      varsWithSize.reserve(filteredNames.size());
 
-      for (const Variable& var : filteredVars)
+      for (const std::string& name : filteredNames)
       {
          // Use .rs.estimatedObjectSize() which is optimized for:
          // - ALTREP objects (doesn't materialize)
          // - Large objects (returns estimate quickly)
          // - Edge cases (null pointers, etc.)
+         // filteredNames only contains Normal bindings, so this is safe
+         SEXP varSEXP = getBindingIdentity(name, R_GlobalEnv, BindingType::Normal);
+
          SEXP sizeSEXP;
          Error error = r::exec::RFunction(".rs.estimatedObjectSize")
-            .addParam(var.second)
+            .addParam(varSEXP)
             .call(&sizeSEXP, &rProtect);
 
          int64_t size = 0;
@@ -997,7 +983,7 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             }
          }
 
-         varsWithSize.push_back(VarWithSize{var, size});
+         varsWithSize.push_back(VarWithSize{name, size});
       }
 
       // Sort by size (largest first)
@@ -1017,13 +1003,13 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
       for (size_t i = 0; i < numToInclude; i++)
       {
-         json::Value jsonVal = environment::varToJson(R_GlobalEnv, varsWithSize[i].var);
+         json::Value jsonVal = environment::varToJson(varsWithSize[i].name, R_GlobalEnv);
 
          // Skip variables that fail conversion (though this is rare)
          if (jsonVal.isNull() || !jsonVal.isObject())
          {
             DLOG("Failed to convert variable '{}' to JSON, skipping",
-                 varsWithSize[i].var.first);
+                 varsWithSize[i].name);
             continue;
          }
 
@@ -1032,12 +1018,12 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
          json::Object varObj = jsonVal.getObject();
          json::Object simplifiedVar;
 
-         // Extract name (required) - fallback to variable name from pair if missing
+         // Extract name (required)
          std::string name;
          if (varObj.hasMember("name") && varObj["name"].isString())
             name = varObj["name"].getString();
          else
-            name = varsWithSize[i].var.first;
+            name = varsWithSize[i].name;
          simplifiedVar["name"] = name;
 
          // Extract type (required) - fallback to "unknown" if missing
@@ -1078,12 +1064,12 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
       }
 
       // Log filtering results
-      if (filteredVars.size() > MAX_VARIABLES)
+      if (filteredNames.size() > MAX_VARIABLES)
       {
          DLOG("Variable context: showing {} of {} variables (filtered from {} total)",
-              variablesArray.getSize(), filteredVars.size(), totalVariableCount);
+              variablesArray.getSize(), filteredNames.size(), totalVariableCount);
       }
-      else if (filteredVars.size() < totalVariableCount)
+      else if (filteredNames.size() < totalVariableCount)
       {
          DLOG("Variable context: showing {} variables (filtered from {} total)",
               variablesArray.getSize(), totalVariableCount);
@@ -1294,6 +1280,13 @@ void processPendingExecution()
          console_input::updateSessionExecuting();
          ClientEvent busyEvent(client_events::kBusy, false);
          module_context::enqueClientEvent(busyEvent);
+
+         // Restore the top-level prompt flag before reissuing. Code executed
+         // by the chat backend may have called readline(), which sets
+         // atTopLevelPrompt to false (hist == 0 in RReadConsole). Without
+         // this reset, the reissued prompt carries busy=true and the chat
+         // pane's "waiting for input" notification is never dismissed.
+         r::session::setAtTopLevelPrompt(true);
          console_input::reissueLastConsolePrompt();
       }
    }
@@ -1542,15 +1535,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          //   - A condition object (inherits "interrupt" or "error")
          //   - A list with $value and $visible (successful evaluation)
          //
-         // IMPORTANT: Wrap the expression in quote() to prevent R from evaluating it
-         // during argument passing. Without this, R evaluates exprSEXP before passing
-         // it to the function, which breaks visibility detection (all results become visible).
+         // IMPORTANT: Use addQuotedParam to prevent R from evaluating the
+         // expression during argument passing. Without this, R evaluates exprSEXP
+         // before passing it to the function, which breaks visibility detection
+         // (all results become visible).
          // https://github.com/rstudio/rstudio/issues/17044
-         SEXP quotedExpr = Rf_lang2(Rf_install("quote"), exprSEXP);
-         protect.add(quotedExpr);
-
          Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addParam(quotedExpr)
+            .addQuotedParam(exprSEXP)
             .call(&evalResultSEXP, &protect);
 
          // This should only fail if there's a problem calling the wrapper itself
@@ -2942,17 +2933,155 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Resolve aliased paths (e.g., ~/file.R)
+   // Resolve aliased paths (e.g., ~/file.R). We intentionally do not check for
+   // existence here -- callers may legitimately ask to open a path that does
+   // not yet exist (the editor will create a new buffer).
    FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
 
-   // Open the file in the editor
-   module_context::editFile(resolvedPath);
+   // Optional 1-based line number; default of -1 disables line positioning
+   int line = -1;
+   auto lineIt = params.find("line");
+   if (lineIt != params.end())
+   {
+      const json::Value& lineValue = (*lineIt).getValue();
+      if (!lineValue.isInt() || lineValue.getInt() < 1)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: line must be a positive integer");
+         return;
+      }
+      line = lineValue.getInt();
+   }
+
+   // Open the file in the editor (editFile expects a 1-based line number; any
+   // negative value skips line positioning)
+   module_context::editFile(resolvedPath, line);
 
    // Return success
    json::Object result;
    result["success"] = true;
 
-   DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   if (line > 0)
+      DLOG("Opened document: {} (line={})", resolvedPath.getAbsolutePath(), line);
+   else
+      DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRevealInFilesPane(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling ui/revealInFilesPane request");
+
+   // Extract path parameter
+   std::string path;
+   Error error = json::readObject(params, "path", path);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
+      return;
+   }
+
+   // Convert URI to path if needed (handles file:// URIs)
+   std::string filePath = uriToPath(path);
+
+   if (filePath.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
+      return;
+   }
+
+   // Resolve aliased paths (e.g., ~/folder). Unlike ui/openDocument, reveal
+   // requires an existing target -- we cannot navigate the Files pane to a
+   // path that is not on disk.
+   FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
+
+   if (!resolvedPath.exists())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Path does not exist: " + path);
+      return;
+   }
+
+   // If the path points to a file, reveal its parent directory in the Files pane
+   FilePath dirPath = resolvedPath.isDirectory() ? resolvedPath : resolvedPath.getParent();
+
+   // Fire a directory_navigate client event with activate=true to bring the
+   // Files pane to the front
+   json::Object eventData;
+   eventData["directory"] = module_context::createAliasedPath(dirPath);
+   eventData["activate"] = true;
+   ClientEvent event(client_events::kDirectoryNavigate, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Revealed in Files pane: {}", dirPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handlePreviewUrl(core::system::ProcessOperations& ops,
+                      const json::Value& requestId,
+                      const json::Object& params)
+{
+   DLOG("Handling ui/previewUrl request");
+
+   // Extract url parameter
+   std::string url;
+   Error error = json::readObject(params, "url", url);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: url required");
+      return;
+   }
+
+   if (!chat::constants::isValidPreviewUrlScheme(url))
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid url: only http and https schemes are supported");
+      return;
+   }
+
+   // Optional height parameter: 0 = no change, -1 = maximize, positive = pixels.
+   int height = 0;
+   auto heightIt = params.find("height");
+   if (heightIt != params.end())
+   {
+      const json::Value& heightValue = (*heightIt).getValue();
+      if (!heightValue.isInt())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be an integer");
+         return;
+      }
+      if (!chat::constants::isValidPreviewUrlHeight(heightValue.getInt()))
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "Invalid params: height must be -1, 0, or a positive integer");
+         return;
+      }
+      height = heightValue.getInt();
+   }
+
+   // Navigate the Viewer pane. module_context::viewer() handles server-mode
+   // port mapping and fires kViewerNavigate.
+   module_context::viewer(url, height);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   // Log the URL with query/fragment redacted -- URLs from assistant tool
+   // calls can include access tokens or other secrets in the query string.
+   auto queryPos = url.find_first_of("?#");
+   std::string urlForLog = (queryPos == std::string::npos)
+                              ? url
+                              : url.substr(0, queryPos) + "...";
+   DLOG("Previewing url in viewer pane: {} (height={})", urlForLog, height);
    sendJsonRpcResponse(ops, requestId, result);
 }
 
@@ -3096,6 +3225,14 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/openDocument")
    {
       handleOpenDocument(ops, requestId, params);
+   }
+   else if (method == "ui/revealInFilesPane")
+   {
+      handleRevealInFilesPane(ops, requestId, params);
+   }
+   else if (method == "ui/previewUrl")
+   {
+      handlePreviewUrl(ops, requestId, params);
    }
    else
    {
@@ -3328,6 +3465,7 @@ struct UpdateState
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
+   std::string expectedSha256;
    std::string errorMessage;
 
    // Installation status tracking
@@ -3356,113 +3494,6 @@ struct UpdateState
 // Global update state
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
-
-// Check if we should skip the update check due to throttling
-// Returns true if we should skip (recently checked with same RStudio version)
-//
-// NOTE: During development this delay is causing confusion. For now we will record
-// the update check time but skip the throttling so updates are checked every time.
-bool shouldSkipUpdateCheck()
-{
-   json::Object positAssistantState = prefs::userState().positAssistant();
-
-   // Check if RStudio version has changed since last check
-   auto versionIt = positAssistantState.find(kPositAssistantRstudioVersionChecked);
-   if (versionIt == positAssistantState.end())
-   {
-      DLOG("No previous RStudio version recorded, will check for updates");
-      return false;
-   }
-
-   std::string lastVersion = (*versionIt).getValue().getString();
-   if (lastVersion.empty() || lastVersion != std::string(RSTUDIO_VERSION))
-   {
-      DLOG("RStudio version changed ({} -> {}), will check for updates",
-           lastVersion, RSTUDIO_VERSION);
-      return false;
-   }
-
-   // Check timestamp of last update check
-   auto timestampIt = positAssistantState.find(kPositAssistantLastUpdateCheck);
-   if (timestampIt == positAssistantState.end())
-   {
-      DLOG("No previous update check timestamp, will check for updates");
-      return false;
-   }
-
-   std::string lastCheckStr = (*timestampIt).getValue().getString();
-   if (lastCheckStr.empty())
-   {
-      DLOG("Empty update check timestamp, will check for updates");
-      return false;
-   }
-
-   return false;  // Temporarily disable throttling during development
-
-   // FUTURE: Re-enable throttling after testing
-   // Parse the timestamp and check if an hour has passed
-   // try
-   // {
-   //    boost::posix_time::ptime lastCheck =
-   //       boost::posix_time::from_iso_string(lastCheckStr);
-   //    boost::posix_time::ptime now =
-   //       boost::posix_time::second_clock::universal_time();
-
-   //    boost::posix_time::time_duration elapsed = now - lastCheck;
-
-   //    // Handle clock skew: if elapsed time is negative, the stored timestamp
-   //    // is in the future. Don't skip in this case.
-   //    if (elapsed.is_negative())
-   //    {
-   //       DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
-   //       return false;
-   //    }
-
-   //    // Skip if less than 10 minutes has passed
-   //    if (elapsed.total_seconds() < 600)
-   //    {
-   //       DLOG("Update check throttled: only {} minutes since last check",
-   //            elapsed.total_seconds() / 60);
-   //       return true;
-   //    }
-
-   //    DLOG("Over 10 minutes since last update check, will check for updates");
-   //    return false;
-   // }
-   // catch (const std::exception& e)
-   // {
-   //    WLOG("Failed to parse update check timestamp '{}': {}",
-   //         lastCheckStr, e.what());
-   //    return false;
-   // }
-}
-
-// Save the update check state (timestamp and RStudio version)
-void saveUpdateCheckState()
-{
-   json::Object positAssistantState = prefs::userState().positAssistant();
-
-   // Store current UTC time as ISO string
-   boost::posix_time::ptime now =
-      boost::posix_time::second_clock::universal_time();
-   positAssistantState[kPositAssistantLastUpdateCheck] =
-      boost::posix_time::to_iso_string(now);
-
-   // Store current RStudio version
-   positAssistantState[kPositAssistantRstudioVersionChecked] =
-      std::string(RSTUDIO_VERSION);
-
-   Error error = prefs::userState().setPositAssistant(positAssistantState);
-   if (error)
-   {
-      WLOG("Failed to save update check state: {}", error.getMessage());
-   }
-   else
-   {
-      DLOG("Saved update check state: timestamp={}, version={}",
-           boost::posix_time::to_iso_string(now), RSTUDIO_VERSION);
-   }
-}
 
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
@@ -3533,10 +3564,10 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI via redirector; use test manifest when opted in
+   // Get download URI; use test manifest when opted in
    std::string downloadUri = options().positAssistantTestManifest()
-      ? "https://www.rstudio.org/links/posit-assistant-manifest-test"
-      : "https://www.rstudio.org/links/posit-assistant-manifest";
+      ? "https://cdn.posit.co/posit-ai/manifest-test.json"
+      : "https://cdn.posit.co/posit-ai/manifest.json";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
@@ -3593,126 +3624,6 @@ Error downloadManifest(json::Object* pManifest)
    return Success();
 }
 
-// Parse manifest to get package info for current protocol version
-// Selects the highest minor version that matches the major version
-Error getPackageInfoFromManifest(
-    const json::Object& manifest,
-    const std::string& protocolVersion,
-    std::string* pPackageVersion,
-    std::string* pDownloadUrl)
-{
-   if (!pPackageVersion || !pDownloadUrl)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   // Get "versions" object
-   json::Object versions;
-   Error error = json::readObject(manifest, "versions", versions);
-   if (error)
-   {
-      WLOG("Manifest missing 'versions' field");
-      return error;
-   }
-
-   // Parse RStudio's protocol version to get major version
-   SemanticVersion rstudioProtocol;
-   if (!rstudioProtocol.parse(protocolVersion))
-   {
-      WLOG("Failed to parse RStudio protocol version: {}", protocolVersion);
-      return systemError(boost::system::errc::invalid_argument,
-                        "Invalid protocol version format",
-                        ERROR_LOCATION);
-   }
-
-   DLOG("Looking for compatible protocols with major version {}", rstudioProtocol.major);
-
-   // Find all compatible protocol versions (matching major version)
-   // and select the highest minor version
-   SemanticVersion bestProtocol;
-   std::string bestPackageVersion;
-   std::string bestDownloadUrl;
-   bool foundCompatible = false;
-
-   for (const auto& entry : versions)
-   {
-      std::string manifestProtocol = entry.getName();
-
-      // Parse this manifest protocol version
-      SemanticVersion manifestProtocolVer;
-      if (!manifestProtocolVer.parse(manifestProtocol))
-      {
-         WLOG("Skipping manifest entry with invalid protocol version: {}", manifestProtocol);
-         continue;
-      }
-
-      // Check if major version matches
-      if (manifestProtocolVer.major != rstudioProtocol.major)
-      {
-         DLOG("Skipping protocol {} (major version mismatch)", manifestProtocol);
-         continue;
-      }
-
-      // Extract version info for this protocol
-      json::Value versionValue = entry.getValue();
-      if (!versionValue.isObject())
-      {
-         WLOG("Skipping protocol {} (value is not an object)", manifestProtocol);
-         continue;
-      }
-
-      json::Object versionInfo = versionValue.getObject();
-
-      std::string packageVersion;
-      std::string downloadUrl;
-
-      error = json::readObject(versionInfo, "version", packageVersion);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'version' field)", manifestProtocol);
-         continue;
-      }
-
-      error = json::readObject(versionInfo, "url", downloadUrl);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'url' field)", manifestProtocol);
-         continue;
-      }
-
-      // Validate download URL is HTTPS
-      if (!isHttpsUrl(downloadUrl))
-      {
-         WLOG("Skipping protocol {} (non-HTTPS URL: {})", manifestProtocol, downloadUrl);
-         continue;
-      }
-
-      // Check if this is the best (highest) protocol version so far
-      if (!foundCompatible || manifestProtocolVer > bestProtocol)
-      {
-         bestProtocol = manifestProtocolVer;
-         bestPackageVersion = packageVersion;
-         bestDownloadUrl = downloadUrl;
-         foundCompatible = true;
-         DLOG("Found compatible protocol {}.{} with package version {}",
-              manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
-      }
-   }
-
-   if (!foundCompatible)
-   {
-      WLOG("No compatible protocol found in manifest for major version {}", rstudioProtocol.major);
-      return systemError(boost::system::errc::protocol_not_supported,
-                        "No compatible protocol version found in manifest",
-                        ERROR_LOCATION);
-   }
-
-   *pPackageVersion = bestPackageVersion;
-   *pDownloadUrl = bestDownloadUrl;
-
-   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}",
-        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl);
-
-   return Success();
-}
 
 // Extract recommended RStudio version from manifest
 // Returns Success() and populates output params if field is present and valid
@@ -4024,12 +3935,14 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    return Success();
 }
 
+
+
 // Install package (backup, extract, cleanup)
 Error installPackage(const FilePath& packagePath)
 {
    FilePath userDataDir = xdg::userDataDir();
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
    DLOG("Installing package from: {}", packagePath.getAbsolutePath());
 
@@ -4173,6 +4086,7 @@ void doUpdateCheck()
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
       s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
 
    // Download manifest
@@ -4184,6 +4098,7 @@ void doUpdateCheck()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return;
@@ -4195,11 +4110,12 @@ void doUpdateCheck()
    if (error)
    {
       // Malformed unsupported info — fail closed to be safe
-      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+      WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
            error.getMessage());
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return;
@@ -4220,8 +4136,8 @@ void doUpdateCheck()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
-   if (isPositAiUnsupported())
+   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAssistantUnsupported())
    {
       assistant::stopAgentForUpdate();
    }
@@ -4229,7 +4145,8 @@ void doUpdateCheck()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4267,6 +4184,7 @@ void doUpdateCheck()
          s_updateState.updateAvailable = true;
          s_updateState.newVersion = packageVersion;
          s_updateState.downloadUrl = downloadUrl;
+         s_updateState.expectedSha256 = sha256;
       }
    }
    else
@@ -4279,7 +4197,7 @@ void doUpdateCheck()
 // Called during session initialization to check for updates
 Error checkForUpdatesOnStartup()
 {
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       DLOG("Update check skipped: posit not selected for chat or assistant");
       return Success();
@@ -4295,24 +4213,17 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
-
-   // Check if we should skip due to throttling
-   // Skip check if:
-   // - Posit Assistant IS installed (version != "0.0.0")
-   // - AND RStudio version hasn't changed
-   // - AND less than 10 minutes since last check
-   if (installedVersion != "0.0.0" && shouldSkipUpdateCheck())
-   {
-      DLOG("Update check skipped: throttled (checked within last 10 minutes)");
-      return Success();
-   }
-
-   // Record that we attempted an update check (prevents hammering server on failures)
-   saveUpdateCheckState();
 
    // Download manifest
    json::Object manifest;
@@ -4323,6 +4234,7 @@ Error checkForUpdatesOnStartup()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return Success();
@@ -4332,6 +4244,7 @@ Error checkForUpdatesOnStartup()
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
 
    // Check for unsupported versions/protocols
@@ -4340,11 +4253,12 @@ Error checkForUpdatesOnStartup()
    if (error)
    {
       // Malformed unsupported info — fail closed to be safe
-      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+      WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
            error.getMessage());
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return Success();
@@ -4365,8 +4279,8 @@ Error checkForUpdatesOnStartup()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
-   if (isPositAiUnsupported())
+   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAssistantUnsupported())
    {
       assistant::stopAgentForUpdate();
    }
@@ -4374,7 +4288,8 @@ Error checkForUpdatesOnStartup()
    // Get package info for our protocol version
    std::string packageVersion;
    std::string downloadUrl;
-   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   std::string sha256;
+   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4441,6 +4356,7 @@ Error checkForUpdatesOnStartup()
             s_updateState.updateAvailable = true;
             s_updateState.newVersion = packageVersion;
             s_updateState.downloadUrl = downloadUrl;
+            s_updateState.expectedSha256 = sha256;
          }
       }
    }
@@ -4534,8 +4450,8 @@ Error allocatePort(int* pPort)
 // ============================================================================
 
 // Returns either:
-// - Server mode: path with session prefix (e.g., "/s/{id}/p/58fab3e4/ai-chat")
-//   or without prefix in single-session mode (e.g., "/p/58fab3e4/ai-chat")
+// - Server mode: path with optional root path and session prefix
+//   (e.g., "/rstudio/s/{id}/p/58fab3e4/ai-chat" or "/p/58fab3e4/ai-chat")
 // - Desktop mode: absolute URL (e.g., "ws://127.0.0.1:1234/ai-chat")
 std::string buildWebSocketUrl(int port)
 {
@@ -4551,24 +4467,19 @@ std::string buildWebSocketUrl(int port)
       // Transform to portmapped path (returns relative path like "p/58fab3e4" or "/p/58fab3e4")
       std::string portmappedPath = url_ports::mapUrlPorts(localhostUrl);
 
-      // Ensure portmapped path starts with /
-      if (!portmappedPath.empty() && portmappedPath[0] != '/')
-         portmappedPath = "/" + portmappedPath;
-
-      // Remove trailing slash from portmapped path if present
-      if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
-         portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
-
-      // Prepend session URL prefix (e.g., "/s/{session-id}") so the browser
-      // sends the port-token cookie with the WebSocket upgrade request. The
-      // cookie is scoped to the session path in Workbench; without the prefix,
-      // the browser won't include it and port descrambling fails.
-      // In open-source (single-session) mode, RS_SESSION_URL is empty.
+      // Assemble the full WebSocket path from:
+      // - rootPath: subpath prefix from session-root-path option
+      //   (set by the server from www-root-path, e.g., "/rstudio")
+      // - sessionUrl: Workbench session prefix (e.g., "/s/{id}"), empty in OSS
+      // - portmappedPath: scrambled port path (e.g., "/p/58fab3e4")
+      // All three prefixes are needed so the browser sends the port-token
+      // cookie with the WebSocket upgrade request. The cookie is scoped to
+      // the session path; without the correct prefix the browser omits it
+      // and port descrambling fails on the server.
+      std::string rootPath = options().rootPath();
       std::string sessionUrl = core::system::getenv(kSessionUrlEnvVar);
-      if (!sessionUrl.empty() && sessionUrl.back() == '/')
-         sessionUrl.pop_back();
-
-      std::string wsPath = sessionUrl + portmappedPath + "/ai-chat";
+      std::string wsPath = chat_constants::assembleWebSocketPath(
+         rootPath, sessionUrl, portmappedPath);
       DLOG("Server WebSocket path: {}", wsPath);
       return wsPath;
    }
@@ -4731,13 +4642,13 @@ Error startChatBackend(bool resumeConversation)
       return Success();
 
    // Locate installation
-   FilePath positAiPath = locatePositAiInstallation();
+   FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
       std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
       std::string systemPath = xdg::systemConfigDir().completePath(kPositAiDirName).getAbsolutePath();
       std::string errorMsg = fmt::format(
-         "Posit AI installation not found. Install to: {} (user) or {} (system)",
+         "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
          userPath, systemPath);
       return systemError(boost::system::errc::no_such_file_or_directory,
                         errorMsg,
@@ -4769,6 +4680,7 @@ Error startChatBackend(bool resumeConversation)
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
    s_chatBackendAuthToken = core::system::generateUuid(false);
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -4951,7 +4863,7 @@ Error chatDocFocused(const json::JsonRpcRequest& request,
 Error chatVerifyInstalled(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   FilePath installation = locatePositAiInstallation();
+   FilePath installation = locatePositAssistantInstallation();
    bool installed = !installation.isEmpty();
 
    json::Object result;
@@ -5088,11 +5000,11 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
 {
    json::Object result;
 
-   FilePath installation = locatePositAiInstallation();
+   FilePath installation = locatePositAssistantInstallation();
    if (installation.isEmpty())
    {
       result["status"] = "not_installed";
-      result["error"] = "Posit AI not installed.";
+      result["error"] = "Posit Assistant not installed.";
    }
    else if (s_chatBackendPid == -1)
    {
@@ -5138,15 +5050,25 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   // Perform on-demand update check if state hasn't been populated yet.
-   // This happens when user selects Posit AI in Preferences before the pref is saved.
-   // We allow the check regardless of isPositAiWanted() since checking for available
+   // Check if a forced recheck was requested (e.g. user clicked Retry)
+   bool forceRecheck = false;
+   if (request.params.getSize() > 0)
+   {
+      Error error = json::readParam(request.params, 0, &forceRecheck);
+      if (error)
+         return error;
+   }
+
+   // Perform on-demand update check if state hasn't been populated yet,
+   // or if the caller explicitly requested a recheck.
+   // This happens when user selects Posit Assistant in Preferences before the pref is saved.
+   // We allow the check regardless of isPositAssistantWanted() since checking for available
    // updates doesn't require the preference - only actual installation does.
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
-      if (s_updateState.currentVersion.empty())
+      if (s_updateState.currentVersion.empty() || forceRecheck)
       {
-         DLOG("Update state not populated, performing on-demand check");
+         DLOG("Update state not populated or recheck forced, performing on-demand check");
          lock.unlock();
          doUpdateCheck();
       }
@@ -5161,6 +5083,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
    result["manifestUnavailable"] = s_updateState.manifestUnavailable;
+   result["errorMessage"] = s_updateState.errorMessage;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
@@ -5179,15 +5102,15 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 Error chatInstallUpdate(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       return systemError(boost::system::errc::operation_not_permitted,
-                        "Posit AI not selected for chat or assistant",
+                        "Posit not selected for chat or assistant",
                         ERROR_LOCATION);
    }
 
    // Check if we need to perform an update check first
-   // This happens when the user selects Posit AI after session startup
+   // This happens when the user selects Posit Assistant after session startup
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       if (s_updateState.currentVersion.empty())
@@ -5226,6 +5149,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    // reset s_updateState while we're downloading
    std::string downloadUrl = s_updateState.downloadUrl;
    std::string newVersion = s_updateState.newVersion;
+   std::string expectedSha256 = s_updateState.expectedSha256;
 
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
@@ -5264,6 +5188,44 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   // Verify SHA-256 integrity of the downloaded package
+   if (expectedSha256.empty())
+   {
+      ELOG("Manifest does not include a SHA-256 hash for this package; "
+           "refusing to install unverified package");
+
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (no SHA-256 hash in manifest).";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after missing hash: {}",
+              cleanupError.getMessage());
+
+      pResponse->setResult(json::Value());
+      return Success();
+   }
+
+   error = integrity::verifyPackageSha256(tempPackage, expectedSha256);
+   if (error)
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "Package integrity check failed (SHA-256 mismatch). "
+         "The download may be corrupted or tampered with.";
+
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after integrity failure: {}",
+              cleanupError.getMessage());
 
       pResponse->setResult(json::Value());
       return Success();
@@ -5308,7 +5270,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       // so we don't need to call restoreFromBackup() here again.
       // Just verify backup was restored and clean up if needed.
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
       // Defensive cleanup: remove orphaned backup if it exists
       if (aiPrevDir.exists())
@@ -5328,7 +5290,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       // Defensive cleanup: ensure ai.prev is removed
       FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
       if (aiPrevDir.exists())
       {
          WLOG("Backup directory still exists after successful install, cleaning up");
@@ -5353,7 +5315,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPositAiWanted())
+   if (!isPositAssistantWanted())
    {
       // Return idle status - posit not selected for chat or assistant
       json::Object result;
@@ -5391,6 +5353,166 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    }
 
    pResponse->setResult(result);
+   return Success();
+}
+
+// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
+// disabled Posit Assistant but still wants to clean up installed files.
+Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   FilePath userDataDir = xdg::userDataDir();
+   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
+
+   // No user-data install paths exist. Distinguish env/system/none to give
+   // the user a targeted message. Each branch delivers its message via
+   // client_info on the JSON-RPC error so the frontend can show it verbatim
+   // (Error::getSummary() would otherwise wrap the system errno text and
+   // obscure our description).
+   if (!aiDir.exists() && !aiPrevDir.exists())
+   {
+      std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+      if (!envPath.empty() && FilePath(envPath).exists())
+      {
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
+               "environment variable and cannot be uninstalled "
+               "from RStudio."));
+         return Success();
+      }
+
+      FilePath systemPath =
+         xdg::systemConfigDir().completePath(kPositAiDirName);
+      if (systemPath.exists())
+      {
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               "Posit Assistant is installed at the system level by an "
+               "administrator and cannot be uninstalled from RStudio."));
+         return Success();
+      }
+
+      DLOG("Posit Assistant is not installed; nothing to remove");
+      // Clear cached state in case the directory was removed out-of-band
+      // while the session still thinks Posit Assistant is available.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is not installed."));
+      return Success();
+   }
+
+   // Stop chat backend
+   if (s_chatBackendPid != -1)
+   {
+      auto backendOps = s_chatBackendOps;
+      if (backendOps)
+      {
+         s_expectedShutdown = true;
+         requestBackendShutdown(*backendOps, "uninstall", 1000);
+         const int POLL_INTERVAL_MS = 50;
+         int elapsed = 0;
+         while (s_chatBackendPid != -1 && elapsed < 1000)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+         }
+      }
+      s_chatBackendOps.reset();
+
+      // Force-terminate if still running after grace period, then wait
+      // for the process to actually exit so file handles are released
+      // before we delete the installation directory.
+      if (s_chatBackendPid != -1)
+      {
+         DLOG("Backend did not exit within grace period, force terminating");
+         Error error = core::system::terminateProcess(s_chatBackendPid);
+         if (error)
+            LOG_ERROR(error);
+
+         const int TERM_POLL_MS = 50;
+         const int TERM_TIMEOUT_MS = 2000;
+         int termElapsed = 0;
+         while (s_chatBackendPid != -1 && termElapsed < TERM_TIMEOUT_MS)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(
+               boost::posix_time::milliseconds(TERM_POLL_MS));
+            termElapsed += TERM_POLL_MS;
+         }
+
+         if (s_chatBackendPid != -1)
+            WLOG("Chat backend did not exit after terminate; "
+                 "proceeding with uninstall");
+      }
+
+      s_chatBackendPid = -1;
+      clearChatBackendPort();
+      s_chatBusy = false;
+      s_backendOutputBuffer.clear();
+   }
+
+   // Stop assistant agent (NES language server).
+   // stopAgentForUpdate() is synchronous — it waits for the agent
+   // process to exit before returning, so file handles are released.
+   bool agentStopped = assistant::stopAgentForUpdate();
+   if (!agentStopped)
+      WLOG("Timeout waiting for assistant agent to stop during uninstall");
+
+   // Delete installation.
+   // If the agent timed out it may still hold file handles open
+   // (especially on Windows), so warn when deletion fails after a
+   // timeout and suggest restarting.
+   Error error = aiDir.removeIfExists();
+   if (error)
+   {
+      // Processes are already stopped but files remain on disk.
+      // Reset cached state so the session doesn't think PAI is usable,
+      // and tell the user to restart.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      std::string message =
+         "Failed to remove Posit Assistant installation: " + error.getMessage();
+      if (!agentStopped)
+         message += " (a background process may still be running)";
+      message += ". Please restart RStudio and try again.";
+
+      return systemError(
+         boost::system::errc::io_error, message, ERROR_LOCATION);
+   }
+
+   // Clean up orphaned backup from failed install/update
+   Error prevError = aiPrevDir.removeIfExists();
+   if (prevError)
+      WLOG("Failed to remove backup directory: {}", prevError.getMessage());
+
+   // Reset cached update state so the session correctly detects the
+   // missing installation if the user cancels the subsequent restart.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState = UpdateState();
+   }
+   s_positAssistantVersion.clear();
+   s_expectedShutdown = false;
+
+   DLOG("Posit Assistant uninstalled successfully");
+   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -5586,7 +5708,7 @@ bool isSuspendable()
    return !s_chatBusy;
 }
 
-bool isPositAiUnsupported()
+bool isPositAssistantUnsupported()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    return s_updateState.unsupportedInstalledVersion ||
@@ -5637,21 +5759,20 @@ Error initialize()
    }
 
    // Validate assistant preference consistency
-   // If user has Posit AI selected but PAI is no longer available, reset to "none"
-   if (isPaiSelected() && !isPaiEnabled())
+   // If user has Posit AI selected but Posit Assistant is no longer available, reset to "none"
+   if (isPaiSelected() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    // Validate chat provider preference consistency
    // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPaiEnabled())
+   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
-   RS_REGISTER_CALL_METHOD(rs_chatCallStackFunctions);
    RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers
@@ -5689,6 +5810,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
+      (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

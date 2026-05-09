@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.StatusBarIconType;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -44,7 +45,8 @@ import com.google.gwt.user.client.Timer;
 public class NotebookHtmlRenderer
              implements SaveFileEvent.Handler,
                         RmdRenderPendingEvent.Handler,
-                        RenderRmdEvent.Handler
+                        RenderRmdEvent.Handler,
+                        NotebookRenderFinishedEvent.Handler
 {
    public NotebookHtmlRenderer(DocDisplay display, TextEditingTarget target,
          TextEditingTarget.Display editingDisplay,
@@ -61,8 +63,21 @@ public class NotebookHtmlRenderer
 
       registrations_ = new HandlerRegistrations(
          events_.addHandler(RmdRenderPendingEvent.TYPE, this),
-         events_.addHandler(RenderRmdEvent.TYPE, this)
+         events_.addHandler(RenderRmdEvent.TYPE, this),
+         events_.addHandler(NotebookRenderFinishedEvent.TYPE, this)
       );
+   }
+
+   public boolean isRendering()
+   {
+      return isRunning_;
+   }
+
+   public void addRenderCompleteHandler(Command callback)
+   {
+      // only the most recent caller's continuation matters; earlier ones
+      // correspond to stale preview requests that were superseded
+      renderCompleteHandler_ = callback;
    }
 
    public void onDismiss()
@@ -72,6 +87,16 @@ public class NotebookHtmlRenderer
       {
          renderTimer_.cancel();
          renderTimer_ = null;
+      }
+      if (isRunning_)
+      {
+         // cancel the C++ render process and clear state without invoking
+         // renderCompleteHandler_ -- the editing target is being torn down
+         // so callbacks are invalid
+         cancelRender();
+         isRunning_ = false;
+         renderCompleteHandler_ = null;
+         clearStatus();
       }
    }
 
@@ -109,13 +134,40 @@ public class NotebookHtmlRenderer
    }
 
    @Override
-   public void onSaveFile(SaveFileEvent event)
+   public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
    {
-      // bail if save handler already running (avoid accumulating
-      // multiple notebook creation requests)
-      if (isRunning_)
+      // only handle events for our document
+      if (!sentinel_.getId().equals(event.getDocId()))
          return;
 
+      // only handle if we initiated the render
+      if (!isRunning_)
+         return;
+
+      if (!event.succeeded())
+      {
+         // the C++ backend guarantees a non-empty error_message on failure,
+         // so the empty-message branch here should not be reachable
+         String errorMessage = event.getErrorMessage();
+         if (errorMessage != null && !errorMessage.isEmpty())
+         {
+            // show error in status bar instead of clearing it
+            cancelStatusMessage();
+            editingDisplay_.getStatusBar().showStatus(
+               StatusBarIconType.TYPE_ERROR,
+               constants_.errorCreatingNotebookPrefix() + errorMessage);
+
+            finishRender(false);
+            return;
+         }
+      }
+
+      finishRender();
+   }
+
+   @Override
+   public void onSaveFile(SaveFileEvent event)
+   {
       // bail if this was an autosave
       if (event.isAutosave())
          return;
@@ -139,6 +191,14 @@ public class NotebookHtmlRenderer
             FilePathUtils.filePathSansExtension(rmdPath) +
             RmdOutput.NOTEBOOK_EXT;
 
+      // if a render is already in progress, the C++ side will cancel it and
+      // start a new one; reset our local state so we track the new render
+      if (isRunning_)
+      {
+         isRunning_ = false;
+         clearStatus();
+      }
+
       // create the command to render the notebook
       Command renderCommand = new Command()
       {
@@ -146,6 +206,7 @@ public class NotebookHtmlRenderer
          public void execute()
          {
             isRunning_ = true;
+            scheduleStatusMessage();
             createNotebookDeferred(rmdPath, outputPath);
          }
       };
@@ -165,6 +226,97 @@ public class NotebookHtmlRenderer
    }
 
    // Private methods ---------------------------------------------------------
+
+   private void scheduleStatusMessage()
+   {
+      cancelStatusMessage();
+      statusTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (isRunning_)
+            {
+               editingDisplay_.getStatusBar().showStatus(
+                  StatusBarIconType.TYPE_LOADING,
+                  constants_.notebookRenderingClickToCancel(),
+                  event -> cancelRender());
+            }
+         }
+      };
+      statusTimer_.schedule(1000);
+   }
+
+   private void cancelStatusMessage()
+   {
+      if (statusTimer_ != null)
+      {
+         statusTimer_.cancel();
+         statusTimer_ = null;
+      }
+   }
+
+   private void cancelRender()
+   {
+      if (!isRunning_)
+         return;
+
+      server_.cancelNotebookCacheRender(
+         sentinel_.getPath(),
+         new ServerRequestCallback<Boolean>()
+         {
+            @Override
+            public void onResponseReceived(Boolean cancelled)
+            {
+               // the C++ side will not fire NotebookRenderFinishedEvent for
+               // cancelled renders, so clean up directly; when cancelled is
+               // false the renderer was already gone, but we still reset
+               // state to keep the UI consistent
+               finishRender(false);
+               clearStatus();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+               finishRender(false);
+               clearStatus();
+            }
+         });
+   }
+
+   private void clearStatus()
+   {
+      cancelStatusMessage();
+      editingDisplay_.getStatusBar().hideStatus();
+   }
+
+   private void finishRender()
+   {
+      finishRender(true);
+   }
+
+   private void finishRender(boolean succeeded)
+   {
+      isRunning_ = false;
+
+      if (succeeded)
+         clearStatus();
+
+      // invoke and clear any pending completion callback (only on success --
+      // on failure, the error is already shown in the status bar)
+      if (succeeded && renderCompleteHandler_ != null)
+      {
+         Command callback = renderCompleteHandler_;
+         renderCompleteHandler_ = null;
+         callback.execute();
+      }
+      else
+      {
+         renderCompleteHandler_ = null;
+      }
+   }
 
    private void createNotebookDeferred(final String rmdPath,
                                        final String outputPath)
@@ -195,13 +347,13 @@ public class NotebookHtmlRenderer
                   }
 
                   editingDisplay_.showWarningBar(message);
-                  isRunning_ = false;
+                  finishRender();
                }
 
                @Override
                public void onError(ServerError error)
                {
-                  isRunning_ = false;
+                  finishRender();
                   Debug.logError(error);
                }
             }
@@ -222,6 +374,7 @@ public class NotebookHtmlRenderer
             if (!metDependencies)
             {
                isRunning_ = false;
+               clearStatus();
                return;
             }
 
@@ -233,19 +386,15 @@ public class NotebookHtmlRenderer
                      @Override
                      public void onResponseReceived(NotebookCreateResult result)
                      {
-                        if (result.succeeded())
+                        if (!result.started())
                         {
-                           events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 sentinel_.getId(),
-                                 sentinel_.getPath()));
+                           // render was not started (output already up to
+                           // date) -- clear state
+                           isRunning_ = false;
+                           clearStatus();
                         }
-                        else
-                        {
-                           editingDisplay_.showWarningBar(warningPrefix +
-                                 result.getErrorMessage());
-                        }
-
-                        isRunning_ = false;
+                        // if started == true, the async process is running;
+                        // onNotebookRenderFinished will handle completion
                      }
 
                      @Override
@@ -254,6 +403,7 @@ public class NotebookHtmlRenderer
                         editingDisplay_.showWarningBar(warningPrefix +
                               error.getMessage());
                         isRunning_ = false;
+                        clearStatus();
                      }
                   });
          }
@@ -265,7 +415,9 @@ public class NotebookHtmlRenderer
 
    private boolean isRunning_;
    private Timer renderTimer_;
+   private Timer statusTimer_;
    private Command renderCommand_;
+   private Command renderCompleteHandler_;
 
    private final HandlerRegistrations registrations_;
    private final DocDisplay display_;

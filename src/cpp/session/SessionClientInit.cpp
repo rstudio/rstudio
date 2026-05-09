@@ -48,6 +48,7 @@
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
+#include "modules/SessionTrust.hpp"
 
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
@@ -63,6 +64,7 @@
 #include <core/http/CSRFToken.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Locale.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionClientEventService.hpp>
@@ -87,7 +89,6 @@
 
 using namespace rstudio::core;
 
-extern "C" const char *locale2charset(const char *);
 
 namespace rstudio {
 namespace session {
@@ -256,7 +257,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["restore_workspace"] = options.rRestoreWorkspace();
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
-   
+
+   sessionInfo["startup_files_suppressed"] =
+      modules::trust::shouldSuppressStartupFiles();
+   sessionInfo["trust_request"] = modules::trust::trustRequestData();
+
    sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
 
@@ -315,6 +320,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // resumed
    sessionInfo["resumed"] = resumed;
+
+   // whether R's deferred init hook has already completed for the current R
+   // session -- false during fresh start or suspend/resume (event still to
+   // fire), true on re-join (event already fired)
+   sessionInfo["deferred_init_completed"] = init::isDeferredInitCompleted();
    if (resumed)
    {
       // console actions
@@ -348,6 +358,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
 
    std::string sessionVersion = std::string(RSTUDIO_VERSION);
+
+   // Allow overriding the version reported to the client for testing
+   // features that depend on the version string (e.g. release notes).
+   // Set RSTUDIO_IMPERSONATE_VERSION in ~/.Renviron to use this.
+   std::string versionOverride = core::system::getenv("RSTUDIO_IMPERSONATE_VERSION");
+   if (!versionOverride.empty())
+      sessionVersion = versionOverride;
+
    sessionInfo["rstudio_version"] = sessionVersion;
 
    // check to ensure the version of this rsession process matches the version
@@ -355,9 +373,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // it is not persisted across session suspends
    std::string version = core::system::getenv(kRStudioVersion);
    core::system::unsetenv(kRStudioVersion);
-   if (!version.empty() && version != sessionVersion)
+   if (!version.empty() && version != std::string(RSTUDIO_VERSION))
    {
-      module_context::consoleWriteError("Session version " + sessionVersion +
+      module_context::consoleWriteError("Session version " + std::string(RSTUDIO_VERSION) +
                                         " does not match server version " + version + " - "
                                         "this is an unsupported configuration, and you may "
                                         "experience unexpected issues as a result.\n\n");
@@ -407,7 +425,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_user_data_directory"] = json::Value();
    }
 
-   sessionInfo["system_encoding"] = std::string(::locale2charset(nullptr));
+   sessionInfo["system_encoding"] = core::system::currentCharset(true);
 
    std::vector<std::string> vcsAvailable;
    if (modules::source_control::isGitInstalled())
@@ -519,7 +537,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();
-   sessionInfo["posit_assistant_enabled"] = options.positAssistantEnabled() && options.allowPositAssistant();
+   sessionInfo["posit_assistant_enabled"] = options.positAssistantEnabled() &&
+      options.allowPositAssistant() &&
+      core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 

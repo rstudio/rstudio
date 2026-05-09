@@ -87,6 +87,7 @@
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
 #define kWwwResusePorts                   "www-reuse-ports"
+#define kDisableNewCSRFChecks             "disable-new-csrf-checks"
 #define kSessionSslCertOption             "cert"
 #define kSessionSslCertKeyOption          "cert-key"
 #define kTerminalPortOption               "terminal-port"
@@ -109,6 +110,7 @@
 #define kRootPathSessionOption            "session-root-path"
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
 #define kSameSiteSessionOption            "session-same-site"
+#define kWwwFrameOriginSessionOption      "session-www-frame-origin"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

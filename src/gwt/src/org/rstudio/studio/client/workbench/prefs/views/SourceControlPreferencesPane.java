@@ -155,6 +155,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitExePathChooser_.setEnabled(false);
       svnExePathChooser_.setEnabled(false);
       terminalPathChooser_.setEnabled(false);
+
+      wrapWithPanel("source_control_prefs");
    }
 
    @Override

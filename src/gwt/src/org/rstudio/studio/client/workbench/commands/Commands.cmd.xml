@@ -550,6 +550,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="showAboutDialog"/>
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
+         <cmd refid="showReleaseNotes"/>
+         <cmd refid="whatsNewRStudio"/>
          <separator/>
          <menu label="_Accessibility">
             <cmd refid="toggleScreenReaderSupport"/>
@@ -609,6 +611,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="clearUserPrefs"/>
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
+            <separator/>
+            <cmd refid="uninstallPositAssistant"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -2141,6 +2145,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Assistant: Request Suggestions"
         menuLabel="Request Suggestions"
         desc="Request assistant suggestions at the cursor position."/>
+
+   <cmd id="assistantPaneToggle"
+        label="Toggle Posit Assistant"
+        desc="Toggle the visibility of the Posit Assistant pane."/>
 
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
@@ -3801,10 +3809,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Run tests using the testthat package"/>
 
    <cmd id="testShinytestFile"
-        label="Run shinytest Test"
+        label="Run shinytest2 Test"
         menuLabel="Run test for file"
         buttonLabel="Run Test"
-        desc="Run test using the shinytest package"/>
+        desc="Run test using the shinytest2 package"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
@@ -4398,6 +4406,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
 
+   <cmd id="showTrustRequestDialog"
+        label="Show Trust Dialog"
+        rebindable="false"
+        visible="false" />
+  
    <cmd id="popOutChat"
         label="Show Posit Assistant in Separate Window"
         buttonLabel=""
@@ -4407,5 +4420,21 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Return Posit Assistant to Main Window"
         buttonLabel=""
         desc="Return to main window"/>
+
+   <cmd id="uninstallPositAssistant"
+        label="Uninstall Posit Assistant"
+        menuLabel="Uninsta_ll Posit Assistant..."
+        rebindable="false"
+        windowMode="main"/>
+
+   <cmd id="showReleaseNotes"
+        menuLabel="R_elease Notes"
+        context="help"
+        windowMode="main"/>
+
+   <cmd id="whatsNewRStudio"
+        menuLabel="What's _New"
+        rebindable="false"
+        windowMode="main"/>
 
 </commands>

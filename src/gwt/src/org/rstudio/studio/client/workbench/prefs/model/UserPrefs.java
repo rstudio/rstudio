@@ -36,7 +36,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -112,10 +112,10 @@ public class UserPrefs extends UserPrefsComputed
       updatePrefs(session_.getSessionInfo().getPrefs());
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
-         new ServerRequestCallback<Void>()
+         new ServerRequestCallback<VoidResponse>()
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
                      session_.getSessionInfo().getUserPrefLayer());

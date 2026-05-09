@@ -70,6 +70,8 @@
 
 #ifdef _WIN32
 # include <core/system/Win32RuntimeLibrary.hpp>
+#else
+# include <core/system/PosixSystem.hpp>
 #endif
 
 #include <core/system/FileMonitor.hpp>
@@ -85,6 +87,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
@@ -159,6 +162,7 @@
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
+#include "modules/SessionTrust.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
@@ -567,6 +571,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // save state we need to reference later
    suspend::setSessionResumed(rInitInfo.resumed);
 
+   // a fresh R session is starting (or restarting) -- the deferred init hook
+   // has not yet run for this R session
+   init::setDeferredInitCompleted(false);
+
    // record built-in waitForMethod handlers
    module_context::registerWaitForMethod(kLocatorCompleted);
    module_context::registerWaitForMethod(kEditCompleted);
@@ -589,6 +597,23 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          LOG_ERROR(error);
    }
 #endif
+
+   // check if R version exceeds the maximum supported version
+   {
+      Version rVersion = rstudio::r::version();
+      Version maxVersion(RSTUDIO_R_VERSION_MAXIMUM);
+      if (rVersion > maxVersion)
+      {
+         std::string rVersionStr = rVersion;
+         std::string maxVersionStr = maxVersion;
+         LOG_WARNING_MESSAGE(
+            "R version " + rVersionStr +
+            " is newer than the maximum version of R tested with this "
+            "version of RStudio (" + maxVersionStr + "). "
+            "If you experience issues, please try updating RStudio to "
+            "a newer version.");
+      }
+   }
 
    // execute core initialization functions
    using boost::bind;
@@ -750,6 +775,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lsp::initialize)
       (modules::assistant::initialize)
       (modules::chat::initialize)
+      (modules::trust::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)
 
@@ -948,6 +974,15 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_enabled"] = isPpmMetadataColumnEnabled();
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
+
+   dataJson["startup_files_suppressed"] =
+      modules::trust::shouldSuppressStartupFiles();
+   dataJson["trust_request"] = modules::trust::trustRequestData();
+
+   // record that deferred init has completed for this R session, so that a
+   // client connecting after this point (a re-join) can distinguish itself
+   // from a client connecting before deferred init has fired
+   init::setDeferredInitCompleted(true);
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
@@ -1700,31 +1735,7 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
-   // check options for session-specific override
-   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
-      return false;
-   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
-      return true;
-
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().restoreWorkspace)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   // no project override
-   return prefs::userPrefs().loadWorkspace() ||
-          !rsession::options().initialEnvironmentFileOverride().isEmpty();
+   return module_context::restoreWorkspaceEnabled();
 }
 
 bool alwaysSaveHistoryOption()
@@ -2277,6 +2288,16 @@ int main(int argc, char * const argv[])
          return 0;
       }
 
+      // warn if --run-tests was invoked without the rstudio-tests helper, which
+      // sets up R_HOME / R_DOC_DIR / R_LIB_DIR and other environment needed for tests
+      if (options.runTests() && core::system::getenv("RSTUDIO_TESTS_HELPER").empty())
+      {
+         std::cerr << "WARNING: 'rsession --run-tests' was invoked directly. "
+                   << "Prefer the 'rstudio-tests' helper script, which configures "
+                   << "the environment variables (R_HOME, R_DOC_DIR, R_LIB_DIR) "
+                   << "and arguments needed for the test harness." << std::endl;
+      }
+
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;
@@ -2415,6 +2436,42 @@ int main(int argc, char * const argv[])
       }
 #endif
 
+      // ensure we have enough file descriptors for the file monitor and
+      // other session operations (R packages, sockets, etc.). the default
+      // soft limit (often 1024) can be too low on some systems, causing
+      // inotify_init() to fail with EMFILE ("Too many open files").
+      // rserver already does this (ServerMain.cpp); rsession needs it too.
+#ifndef _WIN32
+      {
+         RLimitType soft, hard;
+         Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+         if (error)
+         {
+            LOG_WARNING_MESSAGE("Error trying to get system open files limits - using system defaults: " + error.asString());
+         }
+         else
+         {
+            constexpr RLimitType kDesiredOpenFiles = 4096;
+            if (soft < kDesiredOpenFiles && hard > soft)
+            {
+               // preserve the existing hard limit -- rsession runs as a non-root
+               // process and could not re-raise the hard limit if we lowered it.
+               RLimitType newLimit = std::min(kDesiredOpenFiles, hard);
+               error = core::system::setResourceLimit(core::system::FilesLimit, newLimit, hard);
+               if (error)
+               {
+                  LOG_WARNING_MESSAGE("Unable to raise open file limit: " + error.asString());
+               }
+               else
+               {
+                  LOG_DEBUG_MESSAGE("Raised open file limit from " +
+                     std::to_string(soft) + " to " + std::to_string(newLimit));
+               }
+            }
+         }
+      }
+#endif
+
       // start the file monitor
       core::system::file_monitor::initialize();
 
@@ -2518,7 +2575,10 @@ int main(int argc, char * const argv[])
       // it is created with the default value of ~, so if our session options
       // have specified that a different directory should be used, we should
       // persist the value to the session state as soon as possible
-      module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
+      module_context::activeSession().setWorkingDir(module_context::createAliasedPath(workingDir));
+
+      // initialize directory trust state before R initialization
+      modules::trust::initializeTrustState();
 
       // start http connection listener
       error = waitWithTimeout(
@@ -2677,6 +2737,19 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+      rOptions.rMaxConnections = options.rMaxConnections();
+
+      // apply trust overrides for untrusted or unknown directories
+      if (modules::trust::shouldSuppressStartupFiles())
+      {
+         rOptions.disableRProfileOnStart = true;
+         core::system::setenv("R_ENVIRON_USER", "");
+      }
+
+      if (modules::trust::shouldSuppressWorkspaceRestore())
+      {
+         rOptions.restoreWorkspace = false;
+      }
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

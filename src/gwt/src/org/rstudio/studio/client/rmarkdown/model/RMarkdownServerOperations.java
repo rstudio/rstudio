@@ -18,7 +18,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -42,7 +42,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                          ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(boolean normal, 
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
    
    void rmdOutputFormat(String file, 
                         String encoding, 
@@ -84,8 +84,11 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                         int pixelWidth, int characterWidth, 
                         ServerRequestCallback<RmdChunkOptions> requestCallback);
    
-   void createNotebookFromCache(String rmdPath, String outputPath, 
+   void createNotebookFromCache(String rmdPath, String outputPath,
          ServerRequestCallback<NotebookCreateResult> requestCallback);
+
+   void cancelNotebookCacheRender(String docPath,
+         ServerRequestCallback<Boolean> requestCallback);
    
    void replayNotebookPlots(String docId, String initialChunkId, int pixelWidth, 
          int pixelHeight, ServerRequestCallback<String> requestCallback);
@@ -94,13 +97,13 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
          int pixelHeight, ServerRequestCallback<String> requestCallback);
 
    void cleanReplayNotebookChunkPlots(String docId, String chunkId, 
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    void executeNotebookChunks(NotebookDocQueue queue, 
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
-         String beforeChunkId, ServerRequestCallback<Void> requestCallback);
+         String beforeChunkId, ServerRequestCallback<VoidResponse> requestCallback);
    
    void executeAlternateEngineChunk(String docId,
                                     String chunkId,
@@ -112,7 +115,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void interruptChunk(String docId,
                        String chunkId,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
    
    
    void rmdImportImages(JsArrayString images,

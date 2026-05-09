@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
 
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -21,10 +21,10 @@ public interface TutorialServerOperations
    void tutorialStarted(String tutorialName,
                         String tutorialPackage,
                         String tutorialUrl,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    void tutorialStop(String tutorialUrl,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
    
    void tutorialMetadata(String tutorialUrl,
                          ServerRequestCallback<JsObject> requestCallback);

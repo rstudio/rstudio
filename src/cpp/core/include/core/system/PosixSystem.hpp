@@ -122,6 +122,13 @@ std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
 core::Error ipAddresses(std::vector<posix::IpAddress>* pAddresses, bool includeIPv6 = false);
 
+// Resolves a wildcard bind address for IPv4/IPv6 compatibility.
+// If "0.0.0.0" but the system has no routable IPv4 (only loopback) and has
+// routable IPv6, returns "::".
+// If "::" but the system has no IPv6 interfaces, returns "0.0.0.0".
+// Non-wildcard addresses are returned unchanged.
+std::string resolveBindAddress(const std::string& address);
+
 // core dump restriction
 core::Error restrictCoreDumps();
 core::Error enableCoreDumps();

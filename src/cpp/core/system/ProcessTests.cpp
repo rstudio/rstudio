@@ -444,6 +444,15 @@ TEST(ProcessTest, KillChildProcesses)
    bool success = supervisor.wait(boost::posix_time::seconds(15));
    EXPECT_TRUE(success);
 
+   // supervisor.wait() can return before every user-supplied onExit
+   // callback has finished running: AsioProcessSupervisor erases each
+   // child from its tracked set BEFORE invoking the user callback, so
+   // a thread completing the LAST exit can notify the waiter while
+   // earlier threads are still between erase and user callback. Give
+   // those stragglers a chance to land before checking the count.
+   for (int extraTries = 0; numExited < 10 && extraTries < 5; ++extraTries)
+      sleep(1);
+
    // check to make sure all processes really exited
    EXPECT_EQ(10, numExited);
 }

@@ -55,13 +55,14 @@ public class RmdTemplateOptionsDialog
               onSaved,
               onCancelled
       );
+      setThemeAware(true);
       setWidth("425px");
-      setHeight("430px");
+      setHeight("470px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);
       templateOptions_.setSelectedFormat(initialFormat);
-      templateOptions_.setHeight("350px");
+      templateOptions_.setHeight("390px");
       templateOptions_.setWidth("450px");
    }
 

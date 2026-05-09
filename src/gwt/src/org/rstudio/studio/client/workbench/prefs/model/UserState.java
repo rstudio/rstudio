@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
 
@@ -61,10 +61,10 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
       updatePrefs(session_.getSessionInfo().getUserState());
       server_.setUserState(
          session_.getSessionInfo().getUserStateLayer().getValues(),
-         new ServerRequestCallback<Void>() 
+         new ServerRequestCallback<VoidResponse>() 
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                UserStateChangedEvent event = new UserStateChangedEvent(
                               session_.getSessionInfo().getUserStateLayer());

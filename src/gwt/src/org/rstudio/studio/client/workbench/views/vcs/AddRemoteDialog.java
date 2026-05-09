@@ -64,6 +64,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                           OperationWithInput<Input> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       setOkButtonCaption(constants_.addCapitalized());
 
       container_ = new VerticalPanel();

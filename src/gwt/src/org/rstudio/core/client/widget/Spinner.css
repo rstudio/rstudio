@@ -1,0 +1,25 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@-webkit-keyframes spinner-spin {
+   to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@keyframes spinner-spin {
+   to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+
+.spinner {
+   width: 14px;
+   height: 14px;
+   border: 2px solid #c0c0c0;
+   border-top-color: #666;
+   border-radius: 50%;
+   -webkit-animation: spinner-spin 0.8s linear infinite;
+   animation: spinner-spin 0.8s linear infinite;
+   display: inline-block;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .spinner {
+   border-color: rgba(255, 255, 255, 0.2);
+   border-top-color: #ccc;
+}

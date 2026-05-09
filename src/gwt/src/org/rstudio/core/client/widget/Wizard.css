@@ -99,6 +99,57 @@
    gwt-image: 'wizardPageBackground';
 }
 
+.wizardDisclosureArrow {
+}
+
 .helpLink {
    margin-top: 6px;
+}
+
+/* Dark theme overrides (only active for wizards that opt in via setThemeAware) */
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .subcaptionLabel {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageSelectorItem,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageSelectorItemFirst,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageSelectorItemLast {
+   background-image: none;
+   background-color: THEME_DARKGREY_INACTIVE;
+   border-bottom: 1px solid THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageSelectorItem:hover {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+@sprite .rstudio-themes-dark.rstudio-theme-aware-dialog .wizardBackButton {
+   gwt-image: 'wizardBackButtonDark2x';
+   background-size: 79px 30px;
+   color: #eee;
+   filter: none;
+   padding-top: 8px;
+}
+
+@sprite .rstudio-themes-dark.rstudio-theme-aware-dialog .wizardBackButton:focus {
+   gwt-image: 'wizardBackButtonDarkFocus2x';
+   background-size: 79px 30px;
+   color: #eee;
+   filter: none;
+   padding-top: 8px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageSelectorItemRightArrow,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardDisclosureArrow {
+   filter: invert(1);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageBackground {
+   background-image: none;
 }

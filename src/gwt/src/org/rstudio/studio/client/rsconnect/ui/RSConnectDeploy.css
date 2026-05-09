@@ -218,7 +218,54 @@
    margin-right: 5px;
 }
 
+.wizardMainWidget
+{
+   width: 582px;
+   height: 300px;
+}
+
 .wizardDeployPage
 {
-   width: 583px;
+   width: 610px;
+   height: 244px;
+   margin-left: -14px;
+   margin-right: -14px;
+}
+
+/* Dark theme overrides (only active for dialogs that opt in via setThemeAware) */
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .sourceDestLabels {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .normalStatus {
+   color: #66bb6a;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .otherStatus {
+   color: #e57373;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .fileList {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .accountEntry {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .appDetailsPanel {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .appErrorPanel {
+   background-color: rgba(255, 193, 7, 0.15);
+   border-color: THEME_DARKGREY_BORDER;
 }

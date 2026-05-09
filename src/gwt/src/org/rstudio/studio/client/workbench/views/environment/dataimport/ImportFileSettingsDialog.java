@@ -81,6 +81,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
          GlobalDisplay globalDisplay)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       server_ = server;
       sourceServer_ = sourceServer;
       dataFile_ = dataFile;

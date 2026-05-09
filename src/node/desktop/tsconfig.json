@@ -5,15 +5,11 @@
     "target": "es2022",
     "sourceMap": true,
     "removeComments": true,
-    "baseUrl": ".",
+    "rootDir": "../..",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
-    "paths": {
-      "*": ["node_modules/*"],
-      "@/*": ["./*"]
-    },
     "lib": ["es2022", "DOM"],
     "resolveJsonModule": true
   },

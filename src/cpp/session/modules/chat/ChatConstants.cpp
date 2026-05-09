@@ -15,6 +15,8 @@
 
 #include "ChatConstants.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -23,6 +25,7 @@ namespace constants {
 
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
+const char* const kPositAiBackupDirName = "ai.prev";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
@@ -46,8 +49,50 @@ const std::vector<std::string>& rstudioCapabilities()
       "workspace/insertIntoNewFile",
       "workspace/insertAtCursor",
       "ui/openDocument",
+      "ui/openDocument/line",
+      "ui/revealInFilesPane",
+      "ui/previewUrl",
    };
    return s_capabilities;
+}
+
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath)
+{
+   // Normalize root path: "/" (default) becomes empty
+   std::string root = rootPath;
+   if (root == "/")
+      root.clear();
+   if (!root.empty() && root.back() == '/')
+      root.pop_back();
+
+   // Normalize session URL: strip trailing slash
+   std::string session = sessionUrl;
+   if (!session.empty() && session.back() == '/')
+      session.pop_back();
+
+   // Normalize portmapped path: ensure leading slash, strip trailing slash
+   std::string mapped = portmappedPath;
+   if (!mapped.empty() && mapped[0] != '/')
+      mapped = "/" + mapped;
+   if (!mapped.empty() && mapped.back() == '/')
+      mapped.pop_back();
+
+   return root + session + mapped + "/ai-chat";
+}
+
+bool isValidPreviewUrlScheme(const std::string& url)
+{
+   // Case-sensitive on purpose -- see header comment.
+   return boost::algorithm::starts_with(url, "http://") ||
+          boost::algorithm::starts_with(url, "https://");
+}
+
+bool isValidPreviewUrlHeight(int height)
+{
+   return height >= -1;
 }
 
 } // namespace constants

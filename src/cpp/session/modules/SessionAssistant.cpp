@@ -96,9 +96,7 @@ bool isCopilotAllowedByAdmin()
 
 bool isPositAssistantAllowedByAdmin()
 {
-   return
-      session::options().allowPositAssistant() &&
-      session::options().positAssistantEnabled();
+   return module_context::isPositAssistantEnabledByAdmin();
 }
 
 struct AssistantRequest
@@ -324,7 +322,7 @@ json::Array getVariablesContext(const std::vector<std::string>& variablesInScope
    if (variablesInScope.empty())
    {
       // No specific variables in scope - examine all recursive objects
-      variablesInScopeSEXP = Rf_ScalarLogical(TRUE);
+      variablesInScopeSEXP = r::sexp::create(true, &protect);
    }
    else
    {
@@ -440,7 +438,7 @@ FilePath paiLanguageServerPath()
    }
    
    if (RS_ONCE())
-      WLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+      DLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
    return FilePath();
 }
 
@@ -580,8 +578,8 @@ bool isAssistantEnabled(const std::string& assistantType = "")
       return false;
    }
 
-   // For Posit AI, block if version/protocol is unsupported or manifest unavailable
-   if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
+   // For Posit Assistant, block if version/protocol is unsupported or manifest unavailable
+   if (assistant == kAssistantPosit && chat::isPositAssistantUnsupported())
    {
       s_agentNotRunningReason = AgentNotRunningReason::Unsupported;
       return false;
@@ -858,7 +856,7 @@ json::Array getVariablesWithAction(const std::string& action)
    Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
          .addParam(R_GlobalEnv)              // envir
          .addParam(R_NilValue)               // names (NULL = all variables)
-         .addParam(Rf_ScalarLogical(TRUE))   // variablesInScope
+         .addParam(true)                     // variablesInScope
          .addParam(kAssistantMaxVariables)   // maxVariables
          .addParam(kAssistantMaxChildren)    // maxChildren
          .addUtf8Param(action)               // action
@@ -1136,10 +1134,10 @@ void onError(ProcessOperations& operations, const Error& error)
 
 void onExit(int status)
 {
-   if (status != 0)
+   if (status != 0 && !s_isSessionShuttingDown)
       WLOG("Agent process exited with status {}.", status);
    else
-      DLOG("Agent process exited normally.");
+      DLOG("Agent process exited with status {}.", status);
 
    s_agentPid = -1;
    s_runningAgentType.clear();

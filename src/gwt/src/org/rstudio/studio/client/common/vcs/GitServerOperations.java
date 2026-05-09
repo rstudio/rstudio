@@ -14,16 +14,17 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.core.client.JsArray;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.JsArray;
 
 public interface GitServerOperations extends VCSServerOperations
 {
@@ -46,17 +47,17 @@ public interface GitServerOperations extends VCSServerOperations
    }
 
    void gitAdd(ArrayList<String> paths,
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<VoidResponse> requestCallback);
    void gitRemove(ArrayList<String> paths,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<VoidResponse> requestCallback);
    void gitDiscard(ArrayList<String> paths,
-                   ServerRequestCallback<Void> requestCallback);
+                   ServerRequestCallback<VoidResponse> requestCallback);
    void gitRevert(ArrayList<String> paths,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<VoidResponse> requestCallback);
    void gitStage(ArrayList<String> paths,
-                 ServerRequestCallback<Void> requestCallback);
+                 ServerRequestCallback<VoidResponse> requestCallback);
    void gitUnstage(ArrayList<String> paths,
-                   ServerRequestCallback<Void> requestCallback);
+                   ServerRequestCallback<VoidResponse> requestCallback);
 
    void gitAllStatus(boolean minimal,
                      ServerRequestCallback<AllStatus> requestCallback);
@@ -103,7 +104,7 @@ public interface GitServerOperations extends VCSServerOperations
     * @param requestCallback
     */
    void gitApplyPatch(String patch, PatchMode mode, String sourceEncoding,
-                      ServerRequestCallback<Void> requestCallback);
+                      ServerRequestCallback<VoidResponse> requestCallback);
 
    void gitHistoryCount(String spec,
                         FileSystemItem fileFilter,
@@ -131,7 +132,7 @@ public interface GitServerOperations extends VCSServerOperations
    void gitExportFile(String rev,
                       String filename,
                       String targetPath,
-                      ServerRequestCallback<Void> requestCallback);
+                      ServerRequestCallback<VoidResponse> requestCallback);
 
    void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback);
 
@@ -150,7 +151,7 @@ public interface GitServerOperations extends VCSServerOperations
                    ServerRequestCallback<Boolean> requestCallback);
 
    void gitInitRepo(String directory,
-                    ServerRequestCallback<Void> requestCallback);
+                    ServerRequestCallback<VoidResponse> requestCallback);
 
    void gitGetIgnores(String path,
                       ServerRequestCallback<ProcessResult> requestCallback);

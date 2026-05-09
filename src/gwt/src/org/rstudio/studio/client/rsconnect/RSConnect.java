@@ -578,6 +578,26 @@ public class RSConnect implements SessionInitEvent.Handler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
+      // if deploying to Connect Cloud, ensure rsconnect >= 1.8.0 is installed
+      if (CONNECT_CLOUD_SERVICE_NAME.equalsIgnoreCase(
+            event.getRecord().getServer()))
+      {
+         dependencyManager_.withConnectCloudDependencies(
+            constants_.publishingContentLabel(),
+            (succeeded) ->
+            {
+               if (succeeded)
+                  lintAndDeploy(event);
+            });
+      }
+      else
+      {
+         lintAndDeploy(event);
+      }
+   }
+
+   private void lintAndDeploy(final RSConnectDeployInitiatedEvent event)
+   {
       // shortcut: when deploying static content we don't need to do any linting
       if (event.getSettings().getAsStatic())
       {
@@ -734,6 +754,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          @Override
          protected Widget createMainWidget()
          {
+            setThemeAware(true);
             setText(constants_.publishFailed());
             addOkButton(new ThemedButton(constants_.okCapitalized(), new ClickHandler()
             {
@@ -1321,6 +1342,7 @@ public class RSConnect implements SessionInitEvent.Handler,
    private boolean dirStateDirty_ = false;
 
    public final static String SHINY_APPS_SERVICE_NAME = "ShinyApps.io";
+   public final static String CONNECT_CLOUD_SERVICE_NAME = "connect.posit.cloud";
 
    // No/unknown content type
    public final static int CONTENT_TYPE_NONE           = 0;

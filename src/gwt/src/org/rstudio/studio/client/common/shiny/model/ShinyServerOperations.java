@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.common.shiny.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 
 public interface ShinyServerOperations
@@ -28,7 +28,7 @@ public interface ShinyServerOperations
    
    void setShinyViewerType(
                String viewerType, 
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<VoidResponse> requestCallback);
    
    void getShinyRunCmd(
                String shinyFile,
@@ -42,5 +42,5 @@ public interface ShinyServerOperations
    
    void stopShinyApp(
                String id,
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<VoidResponse> requestCallback);
 }

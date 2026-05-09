@@ -25,3 +25,11 @@
 .wizardPageWarningImage {
 
 }
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageWarningPanel {
+   background: THEME_DARKGREY_INACTIVE;
+}

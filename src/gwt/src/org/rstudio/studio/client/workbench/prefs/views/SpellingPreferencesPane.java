@@ -85,7 +85,9 @@ public class SpellingPreferencesPane extends PreferencesPane
       {
          realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue());
       });
-   }   
+
+      wrapWithPanel("spelling_prefs");
+   }
    
    private void addUserDictionariesEditor(WorkbenchListManager workbenchListManager)
    {

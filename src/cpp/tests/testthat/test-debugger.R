@@ -35,7 +35,7 @@ test_that("deparsing large calls is not overly expensive", {
    # call including large data.frame should be described quickly
    big <- mtcars[rep.int(1, 1E5)]
    bigcall <- call("dummy", x = big)
-   time <- system.time(.rs.describeObject(environment(), "bigcall"))
+   time <- system.time(.rs.describeObject("bigcall", environment()))
    expect_true(time[1] < 1)
    
 })

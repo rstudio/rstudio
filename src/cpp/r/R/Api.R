@@ -254,8 +254,8 @@
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style", "usage")
-         if (is.null(marker$type) || (!marker$type %in% markerTypes))
-            stop("Invalid marker type (", marker$type, ")", call. = FALSE)
+         if (length(marker$type) != 1L || (!marker$type %in% markerTypes))
+            stop("Invalid marker type (", toString(marker$type), ")", call. = FALSE)
          if (!is.character(marker$file))
             stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
          if (!is.numeric(marker$line))
@@ -524,6 +524,19 @@
       ok = "OK",
       cancel = "Cancel",
       url = "",
+      PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("showMenu", function(title, message, choices) {
+
+   choices <- as.character(choices)
+   if (length(choices) == 0L)
+      return(NULL)
+
+   .Call("rs_showMenu",
+      title = as.character(title)[[1L]],
+      message = as.character(message)[[1L]],
+      choices = choices,
       PACKAGE = "(embedding)")
 })
 

@@ -14,8 +14,14 @@
          margin-bottom: 10px;  
       }
       
+      .panel label {
+         display: inline-block;
+         padding-bottom: 2px;
+      }
+
       .fillWidth {
          width: 100%;
+         box-sizing: border-box;
       }
    </ui:style>
 
@@ -24,7 +30,7 @@
          <widget:FormTextBox elementId="{ElementIds.getNewRdName}" ui:field="txtName_" styleName="{style.fillWidth}"/> <br/>
          
          <widget:FormLabel for="{ElementIds.getNewRdTemplate}" text="Rd template:"><ui:attribute name="text" key="templateText"/></widget:FormLabel>
-         <widget:FormListBox elementId="{ElementIds.getNewRdTemplate}" ui:field="listDocType_" styleName="{style.fillWidth}">
+         <widget:FormListBox elementId="{ElementIds.getNewRdTemplate}" ui:field="listDocType_" addStyleNames="{style.fillWidth}">
             <g:item value="function"><ui:msg key="function">Function</ui:msg></g:item>
             <g:item value="data"><ui:msg key="dataset">Dataset</ui:msg></g:item>
             <g:item value="none"><ui:msg key="emptyTopic">(Empty Topic)</ui:msg></g:item>

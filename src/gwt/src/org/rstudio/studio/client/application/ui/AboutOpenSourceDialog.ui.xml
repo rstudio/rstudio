@@ -22,6 +22,18 @@
       .noticeScroll {
          border: 1px solid #BBB;
       }
+
+      @external rstudio-themes-dark;
+      @external rstudio-theme-aware-dialog;
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .noticeBox {
+         background-color: rgb(47, 57, 65);
+         color: #eee;
+      }
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .noticeScroll {
+         border-color: rgb(12, 31, 48);
+      }
    </ui:style>
    <g:ScrollPanel ui:field="noticeScroll_" styleName="{style.noticeScroll}" width="100%" height="100%">
       <g:HTML ui:field="noticeHTML_" styleName="{style.noticeBox}" text="View Open Source Components"><ui:attribute

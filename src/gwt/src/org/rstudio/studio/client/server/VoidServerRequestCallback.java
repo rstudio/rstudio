@@ -17,7 +17,7 @@ package org.rstudio.studio.client.server;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
-public class VoidServerRequestCallback extends ServerRequestCallback<Void>
+public class VoidServerRequestCallback extends ServerRequestCallback<VoidResponse>
 {
    public VoidServerRequestCallback()
    {
@@ -29,7 +29,7 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
       progress_ = progress;
    }
    
-   public void onResponseReceived(Void response)
+   public void onResponseReceived(VoidResponse response)
    {
       if (progress_ != null)
          progress_.onCompleted();

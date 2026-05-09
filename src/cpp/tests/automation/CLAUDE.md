@@ -292,6 +292,19 @@ Waits for a condition to become true:
 })
 ```
 
+Signature: `.rs.waitUntil(reason, predicate, swallowErrors = FALSE, retryCount = 30L, waitTimeSecs = 1)`
+
+- `retryCount` — number of attempts before timing out (default 30)
+- `waitTimeSecs` — seconds between attempts (default 1)
+- Total timeout = `retryCount * waitTimeSecs` seconds (default 30s)
+
+```r
+# Wait up to 60 seconds for a slow operation
+.rs.waitUntil("backend ready", function() {
+   remote$dom.elementExists("#backend-ready-indicator")
+}, retryCount = 60L)
+```
+
 ### `.rs.trimWhitespace()`
 
 Removes leading/trailing whitespace:
@@ -310,17 +323,37 @@ output <- remote$console.getOutput()
 expect_contains(output, "expected text")
 ```
 
+## Test Environment
+
+BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit Assistant) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward.
+
 ## Best Practices
 
 ### Clean Up with `withr::defer()`
 
+`.rs.test()` wraps each test body in `local()`, so `withr::defer()` is scoped to the individual test. Deferred actions run when the test exits — including on errors and expectation failures. Register cleanup early, right after creating the resource:
+
+```r
+.rs.test("example with sidebar", {
+   # Register cleanup before test logic — runs even on failure
+   withr::defer({
+      if (remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+         remote$commands.execute("toggleSidebar")
+         .rs.waitUntil("sidebar hidden", function() {
+            !remote$dom.elementExists("#rstudio_Sidebar_pane")
+         })
+      }
+   })
+
+   # ... test logic ...
+})
+```
+
+File-level cleanup (e.g. deleting the remote) still uses `withr::defer()` at the top of the file:
+
 ```r
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
-
-# Create temporary files/directories with cleanup
-tempDir <- remote$files.createDirectory()
-withr::defer(remote$files.remove(tempDir))
 ```
 
 ### Use Explicit Waits, Not `Sys.sleep()`

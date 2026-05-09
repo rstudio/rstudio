@@ -30,6 +30,7 @@ namespace constants {
 // Installation paths
 // ============================================================================
 extern const char* const kPositAiDirName;
+extern const char* const kPositAiBackupDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
@@ -72,6 +73,35 @@ const std::vector<std::string>& rstudioCapabilities();
 // Restart limits
 // ============================================================================
 constexpr int kMaxRestartAttempts = 1;
+
+// ============================================================================
+// WebSocket URL assembly
+// ============================================================================
+
+// Assembles a server-mode WebSocket path from its components. Each component
+// is normalized (trailing slashes removed, leading slash ensured on
+// portmappedPath) and the default root path "/" is treated as empty.
+// Appends the fixed "/ai-chat" endpoint suffix.
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath);
+
+// ============================================================================
+// ui/previewUrl validators
+// ============================================================================
+
+// Returns true when `url` begins with lowercase "http://" or "https://".
+// Validation is case-sensitive on purpose: module_context::viewer() uses
+// case-sensitive starts_with(url, "http") to distinguish URLs from file
+// paths, so an uppercase scheme would silently route the URL to the
+// file-path branch.
+bool isValidPreviewUrlScheme(const std::string& url);
+
+// Returns true when `height` is a valid value for ui/previewUrl:
+// -1 (maximize), 0 (no change), or any positive integer (pixel height).
+// Anything < -1 is rejected.
+bool isValidPreviewUrlHeight(int height);
 
 } // namespace constants
 } // namespace chat

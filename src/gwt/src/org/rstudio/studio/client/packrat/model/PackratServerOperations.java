@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.packrat.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 
@@ -37,7 +37,7 @@ public interface PackratServerOperations extends BuildServerOperations
    
    void packratBootstrap(String dir,
                          boolean enter,
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
    
    void getPendingActions(String action, 
                           String dir,

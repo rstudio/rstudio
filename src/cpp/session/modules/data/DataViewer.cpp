@@ -339,7 +339,7 @@ SEXP findInNamedEnvir(const std::string& environmentName,
          
    // find the SEXP directly in the environment; return null if unbound
    SEXP objectSEXP = r::sexp::findVar(objectName, envirSEXP);
-   if (objectSEXP == R_UnboundValue)
+   if (objectSEXP == nullptr)
       return nullptr;
    
    return objectSEXP;
@@ -368,10 +368,12 @@ json::Object makeDataItem(SEXP dataSEXP,
    dataItem["object"] = objName;
    dataItem["environment"] = envName;
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
-      http::util::urlEncode(envName, true) + "&obj=" + 
+      http::util::urlEncode(envName, true) + "&obj=" +
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
-      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" +
+      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns()) +
+      "&show_summary=" +
+      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0");
    dataItem["preview"] = preview;
 
    return dataItem;
@@ -912,8 +914,7 @@ Error getGridData(const http::Request& request,
       }
 
       // can we find it _anywhere_ ?!
-      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
-          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      if (dataSEXP == nullptr || Rf_isNull(dataSEXP))
       {
          error = r::exec::RFunction(".rs.getAnywhere", objName).call(&dataSEXP, &protect);
          if (error) 
@@ -923,8 +924,7 @@ Error getGridData(const http::Request& request,
       }
 
       // couldn't find the original object
-      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
-          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      if (dataSEXP == nullptr || Rf_isNull(dataSEXP))
       {
          json::Object err;
          err["error"] = "The object no longer exists.";
@@ -935,9 +935,9 @@ Error getGridData(const http::Request& request,
       {
          // if the data is a promise (happens for built-in data), the value is
          // what we're looking for
-         if (TYPEOF(dataSEXP) == PROMSXP) 
+         if (TYPEOF(dataSEXP) == PROMSXP)
          {
-            dataSEXP = PRVALUE(dataSEXP);
+            dataSEXP = r::sexp::forcePromise(dataSEXP);
          }
          if (show == "cols")
          {
@@ -953,6 +953,40 @@ Error getGridData(const http::Request& request,
          else if (show == "data")
          {
             result = getData(dataSEXP, maxRows, maxCols, fields);
+         }
+         else if (show == "column_summary")
+         {
+            int column = http::util::fieldValue<int>(fields, "column", 0);
+            SEXP summarySEXP = R_NilValue;
+            r::sexp::Protect protect;
+            Error error = r::exec::RFunction(".rs.summarizeColumn")
+                  .addParam(dataSEXP)
+                  .addParam(column)
+                  .call(&summarySEXP, &protect);
+            if (error)
+            {
+               // Surface the failure rather than returning a null body --
+               // otherwise the sidebar spinner stops on a blank panel with
+               // no user-visible indication of what went wrong.
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to compute column summary.";
+               result = err;
+            }
+            else
+            {
+               // Mirror the error branch above -- a successful R call followed
+               // by a failed SEXP -> JSON conversion would otherwise return
+               // 200 OK with a stale or default-constructed result body.
+               Error convertError = r::json::jsonValueFromObject(summarySEXP, &result);
+               if (convertError)
+               {
+                  LOG_ERROR(convertError);
+                  json::Object err;
+                  err["error"] = "Failed to encode column summary.";
+                  result = err;
+               }
+            }
          }
       }
    }
@@ -1095,8 +1129,9 @@ void onDetectChanges(module_context::ChangeSource source)
       bool typeChanged = false;
       if (observedSEXP != nullptr)
       {
-         SEXP oldClass = Rf_getAttrib(observedSEXP, R_ClassSymbol);
-         SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
+         static SEXP s_class = Rf_install("class");
+         SEXP oldClass = Rf_getAttrib(observedSEXP, s_class);
+         SEXP newClass = Rf_getAttrib(sexp, s_class);
          typeChanged = !R_compute_identical(oldClass, newClass, 0);
       }
 

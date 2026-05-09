@@ -18,6 +18,11 @@ import com.google.gwt.i18n.client.Constants;
 public interface DataViewerConstants extends Constants {
     String colsLabel();
     String filterButtonText();
+    String sidebarButtonText();
     String searchWidgetLabel();
     String toolbarLabel();
+    String refreshButtonTitle();
+    String optionsButtonTitle();
+    String optionsResetView();
+    String optionsShowSummaryDefault();
 }

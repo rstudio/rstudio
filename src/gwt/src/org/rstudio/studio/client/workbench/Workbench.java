@@ -156,7 +156,8 @@ public class Workbench implements BusyEvent.Handler,
                     RmdOutput rmdOutput,                        // force gin to create
                     ProjectTemplateRegistryProvider provider,   // force gin to create
                     WorkbenchServerOperations serverOperations, // force gin to create
-                    AskSecretManager askSecret)                 // force gin to create
+                    AskSecretManager askSecret,                 // force gin to create
+                    TrustPresenter trustPresenter)              // force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -249,6 +250,7 @@ public class Workbench implements BusyEvent.Handler,
       {
          Desktop.getFrame().setAutohideMenubar(pPrefs_.get().autohideMenubar().getValue());
       }
+
    }
 
    public void onTutorialLaunch(final TutorialLaunchEvent event)

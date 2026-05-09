@@ -239,6 +239,66 @@ withr::defer(.rs.automation.deleteRemote())
    
 })
 
+# https://github.com/rstudio/rstudio/issues/5809
+.rs.test("roxygen tag completions are provided in .R files", {
+
+   contents <- .rs.heredoc("
+      #' @
+      identity2 <- function(x) x
+   ")
+
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+      editor$gotoLine(1, 5)
+      completions <- remote$completions.request()
+      expect_true("@param" %in% trimws(completions))
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/5809
+.rs.test("roxygen tag completions are provided inside R chunks of Rmd files", {
+
+   contents <- .rs.heredoc("
+      ---
+      title: Test
+      ---
+
+      ```{r}
+      #' @
+      identity2 <- function(x) x
+      ```
+   ")
+
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6, 5)
+      completions <- remote$completions.request()
+      expect_true("@param" %in% trimws(completions))
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/5809
+.rs.test("roxygen tag completions are provided inside R chunks of qmd files", {
+
+   contents <- .rs.heredoc("
+      ---
+      title: Test
+      ---
+
+      ```{r}
+      #' @
+      identity2 <- function(x) x
+      ```
+   ")
+
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
+      editor$gotoLine(6, 5)
+      completions <- remote$completions.request()
+      expect_true("@param" %in% trimws(completions))
+   })
+
+})
+
 .rs.test("completions from the pipe placeholder are provided", {
    
    # completions without identifier following pipebind operator

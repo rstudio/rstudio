@@ -28,6 +28,7 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -366,6 +367,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ShellWidget shellWidget);
    void injectMembers(ConsoleError consoleError);
    void injectMembers(PositAiInstallManager installManager);
+   void injectMembers(ModalDialogBase dialog);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

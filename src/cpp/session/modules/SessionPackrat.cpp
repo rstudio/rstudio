@@ -831,9 +831,9 @@ SEXP rs_onPackratAction(SEXP projectSEXP, SEXP actionSEXP, SEXP runningSEXP)
 
 void detectReposChanges()
 {
-   static SEXP s_lastReposSEXP = R_UnboundValue;
+   static SEXP s_lastReposSEXP = nullptr;
    SEXP reposSEXP = r::options::getOption("repos");
-   if (s_lastReposSEXP == R_UnboundValue)
+   if (s_lastReposSEXP == nullptr)
    {
       s_lastReposSEXP = reposSEXP;
    }

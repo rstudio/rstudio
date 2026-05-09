@@ -62,7 +62,7 @@ test_that("download hooks don't set an empty authorization header", {
    on.exit(untrace(.rs.downloadFile))
    
    tryCatch(
-      download.file(url, tempfile()),
+      download.file(url, tempfile(), quiet = TRUE),
       error = function(cnd) NULL
    )
    
@@ -73,18 +73,20 @@ test_that("we can download packages from repositories", {
    info <- download.packages(
       pkgs    = "rlang",
       destdir = tempdir(),
-      repos   = "https://cloud.r-project.org"
+      repos   = "https://cloud.r-project.org",
+      quiet   = TRUE
    )
-   
+
    path <- info[1, 2]
    expect_true(file.exists(path))
    files <- untar(path, list = TRUE)
    expect_true("rlang/DESCRIPTION" %in% files)
-   
+
    info <- download.packages(
       pkgs    = "rlang",
       destdir = tempdir(),
-      repos   = "https://packagemanager.posit.co/cran/latest"
+      repos   = "https://packagemanager.posit.co/cran/latest",
+      quiet   = TRUE
    )
    
    path <- info[1, 2]

@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.application.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
 public interface ApplicationServerOperations extends PrefsServerOperations
@@ -38,16 +38,16 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    // abort the current session
    void abort(String nextSessionProject,
-              ServerRequestCallback<Void> requestCallback);
+              ServerRequestCallback<VoidResponse> requestCallback);
 
    // suspend the current session
    void suspendSession(boolean force,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
 
    // handle unsaved changes completed
    void handleUnsavedChangesCompleted(
                         boolean handled,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    // quit the current session
    void quitSession(boolean saveWorkspace, 
@@ -69,8 +69,8 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    String getFileUrl(FileSystemItem file);
    
    void suspendForRestart(SuspendOptions options,
-                          ServerRequestCallback<Void> requestCallback);
-   void ping(ServerRequestCallback<Void> requestCallback);
+                          ServerRequestCallback<VoidResponse> requestCallback);
+   void ping(ServerRequestCallback<VoidResponse> requestCallback);
 
    void checkForUpdates(
          boolean manual,
@@ -104,10 +104,10 @@ public interface ApplicationServerOperations extends PrefsServerOperations
          ServerRequestCallback<String> callback);
    
    void setSessionLabel(String label,
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    void deleteSessionDir(String sessionId,
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
    
    void findProjectInFolder(String folder,
          ServerRequestCallback<String> requestCallback);

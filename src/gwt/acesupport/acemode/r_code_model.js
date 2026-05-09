@@ -21,6 +21,7 @@ var RTokenCursor = require("mode/token_cursor").RTokenCursor;
 var Utils = require("mode/utils");
 
 var $verticallyAlignFunctionArgs = false;
+var $hierarchicalSectionFolding = true;
 
 function comparePoints(pos1, pos2)
 {
@@ -1420,6 +1421,13 @@ var RCodeModel = function(session, tokenizer,
          // Find the position of the section 'tail'.
          var line = session.getLine(row);
 
+         // Helper: infer heading depth from the count of leading '#'
+         // e.g. "# ... ----" => 1, "### ... ----" => 3
+         var sectionDepth = function(sectionLine) {
+            var matchDepth = /^\s*(#+)/.exec(sectionLine);
+            return matchDepth ? matchDepth[1].length : 1;
+         };
+
          // For unnamed sections, use the end of the line.
          // Otherwise, consume the '----' tail of the section
          // header as well.
@@ -1436,8 +1444,11 @@ var RCodeModel = function(session, tokenizer,
          // Use this index as the column for our opening fold.
          pos.column = index;
 
-         // Use a token iterator and find the next section head.
-         // We fold up to that section head.
+         var useHierarchy = $hierarchicalSectionFolding;
+         var currentDepth = useHierarchy ? sectionDepth(line) : 1;
+
+         // Use a token iterator and find the next section head that
+         // terminates this one, respecting fold hierarchy when enabled.
          var it = new TokenIterator(session, row + 1);
 
          // This has the effect of ensuring that the next call to
@@ -1445,16 +1456,29 @@ var RCodeModel = function(session, tokenizer,
          // on this row.
          it.$tokenIndex = -1;
 
-         while (token = it.stepForward())
+         var token;
+         while ((token = it.stepForward()))
          {
-            // Check to see if we've found something that can close
-            // our section head. If so, we're done.
-             if (token.value === "}" ||
-                /\bsectionhead\b/.test(token.type) ||
-                /\bcode(?:begin|end)/.test(token.type))
-             {
-                break;
-             }
+            // Close the fold for structural terminators.
+            if (token.value === "}" || /\bcode(?:begin|end)\b/.test(token.type)) {
+               break;
+            }
+
+            if (/\bsectionhead\b/.test(token.type)) {
+               if (!useHierarchy) {
+                  break;
+               }
+
+               var otherRow = it.getCurrentTokenRow();
+               var otherLine = session.getLine(otherRow);
+               var otherDepth = sectionDepth(otherLine);
+               if (otherDepth <= currentDepth) {
+                  break;
+               }
+
+               // Child section; keep scanning forward.
+               continue;
+            }
 
              // Walk over matching braces -- this allows us to
              // e.g. skip function definitions (and hence, any
@@ -2435,6 +2459,14 @@ exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
 
 exports.getVerticallyAlignFunctionArgs = function() {
    return $verticallyAlignFunctionArgs;
+};
+
+exports.setHierarchicalSectionFolding = function(enable) {
+   $hierarchicalSectionFolding = enable;
+};
+
+exports.getHierarchicalSectionFolding = function() {
+   return $hierarchicalSectionFolding;
 };
 
 });

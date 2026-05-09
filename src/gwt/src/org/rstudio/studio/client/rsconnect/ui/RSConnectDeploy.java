@@ -17,6 +17,8 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -129,6 +131,7 @@ public class RSConnectDeploy extends Composite
       String urlAnchor();
       String wizard();
       String wizardDeployPage();
+      String wizardMainWidget();
    }
    
    public interface DeployResources extends ClientBundle
@@ -136,17 +139,32 @@ public class RSConnectDeploy extends Composite
       @Source("publishShinyIllustration_2x.png")
       ImageResource publishShinyIllustration2x();
 
+      @Source("publishShinyIllustrationDark_2x.png")
+      ImageResource publishShinyIllustrationDark2x();
+
       @Source("publishRmdIllustration_2x.png")
       ImageResource publishRmdIllustration2x();
+
+      @Source("publishRmdIllustrationDark_2x.png")
+      ImageResource publishRmdIllustrationDark2x();
 
       @Source("publishPlotIllustration_2x.png")
       ImageResource publishPlotIllustration2x();
 
+      @Source("publishPlotIllustrationDark_2x.png")
+      ImageResource publishPlotIllustrationDark2x();
+
       @Source("publishPresentationIllustration_2x.png")
       ImageResource publishPresentationIllustration2x();
 
+      @Source("publishPresentationIllustrationDark_2x.png")
+      ImageResource publishPresentationIllustrationDark2x();
+
       @Source("publishHTMLIllustration_2x.png")
       ImageResource publishHTMLIllustration2x();
+
+      @Source("publishHTMLIllustrationDark_2x.png")
+      ImageResource publishHTMLIllustrationDark2x();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -156,6 +174,7 @@ public class RSConnectDeploy extends Composite
 
    public enum ServerType {
       RSCONNECT,
+      CONNECT_CLOUD,
       RSPUBS,
       POSITCLOUD_DEPRECATED,
       SHINYAPPS
@@ -173,7 +192,8 @@ public class RSConnectDeploy extends Composite
                Roles.getDialogRole(),
                onClosed,
                onCancel);
-         
+         setThemeAware(true);
+
          HelpLink publishLink = HelpLink.createExternal(
                constants_.environmentVariablesHelpLinkLabel(),
                "https://docs.posit.co/connect/admin/process-management/index.html#environment-variables");
@@ -310,17 +330,25 @@ public class RSConnectDeploy extends Composite
       {
          addAccountAnchor_.setClickHandler(() ->
          {
-            boolean withCloudOption =
-                  contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
-            
-            connector_.showAccountWizard(false, withCloudOption, (successful) ->
+            OperationWithInput<Boolean> onCompleted = (successful) ->
             {
                if (successful)
                {
                   accountList_.refreshAccountList();
                }
-            });
+            };
+
+            if (serverType_ != null)
+            {
+               connector_.showAccountWizard(false, serverType_, onCompleted);
+            }
+            else
+            {
+               boolean withCloudOption =
+                     contentType == RSConnect.CONTENT_TYPE_APP ||
+                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
+               connector_.showAccountWizard(false, withCloudOption, onCompleted);
+            }
          });
       }
       else
@@ -490,10 +518,11 @@ public class RSConnectDeploy extends Composite
             }
             else
             {
-               // re-validate app name as different accounts have different 
+               // re-validate app name as different accounts have different
                // name restrictions
                appName_.validateAppName();
             }
+            updateEnvVarsUI();
          }
       });
    }
@@ -589,23 +618,38 @@ public class RSConnectDeploy extends Composite
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
+      serverType_ = serverType;
 
       boolean rsConnectEnabled =
          userState_.enableRsconnectPublishUi().getGlobalValue() &&
             (serverType == ServerType.RSCONNECT || serverType == null);
 
+      boolean connectCloudEnabled =
+         serverType == ServerType.CONNECT_CLOUD || serverType == null;
+
+      boolean needsRefresh = false;
+
       if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
          accountList_.setShowConnectAccounts(rsConnectEnabled);
-         accountList_.refreshAccountList();
+         needsRefresh = true;
+      }
+
+      if (connectCloudEnabled != accountList_.getShowConnectCloudAccounts())
+      {
+         accountList_.setShowConnectCloudAccounts(connectCloudEnabled);
+         needsRefresh = true;
       }
 
       // we want to show ShinyApps.io accounts only for Shiny content
       if (source.isShiny() != accountList_.getShowShinyAppsAccounts())
       {
          accountList_.setShowShinyAppsAccounts(source.isShiny());
-         accountList_.refreshAccountList();
+         needsRefresh = true;
       }
+
+      if (needsRefresh)
+         accountList_.refreshAccountList();
       
       asStatic_ = asStatic;
 
@@ -856,13 +900,15 @@ public class RSConnectDeploy extends Composite
                      public void onResponseReceived(
                            RSConnectApplicationResult info)
                      {
-                        // create a single-entry array with the app ID 
-                        JsArray<RSConnectApplicationInfo> infos = 
-                              JsArray.createArray().cast();
+                        appProgressPanel_.setVisible(false);
                         if (info.getApp() != null)
                         {
-                           infos.push(info.getApp());
-                           onAppsReceived_.onResponseReceived(infos);
+                           // we found the app by ID; show its info directly
+                           // without requiring a name match (the app's name on
+                           // the server may differ from the local record, e.g.
+                           // on Connect Cloud where the API doesn't return a
+                           // name field)
+                           showAppInfo(info.getApp());
                         }
                         else if (!StringUtil.isNullOrEmpty(info.getError()))
                         {
@@ -941,6 +987,7 @@ public class RSConnectDeploy extends Composite
             accountList_.setAccountList(serverList);
          }
          setPreviousInfo();
+         updateEnvVarsUI();
          return;
       }
 
@@ -954,21 +1001,31 @@ public class RSConnectDeploy extends Composite
       // since none are currently connected
       if (numAccounts == 0 && !isRetry)
       {
-         connector_.showAccountWizard(accounts.length() == 0, 
-               source_.isShiny(),
-               new OperationWithInput<Boolean>() 
+         OperationWithInput<Boolean> onCompleted = new OperationWithInput<Boolean>()
          {
             @Override
             public void execute(Boolean input)
             {
                populateAccountList(indicator, true);
             }
-         });
+         };
+
+         if (serverType_ != null)
+         {
+            connector_.showAccountWizard(accounts.length() == 0,
+                  serverType_, onCompleted);
+         }
+         else
+         {
+            connector_.showAccountWizard(accounts.length() == 0,
+                  source_.isShiny(), onCompleted);
+         }
       }
       else
       {
          setPreviousInfo();
       }
+      updateEnvVarsUI();
    }
    
    private void populateAccountList(final ProgressIndicator indicator,
@@ -1267,22 +1324,37 @@ public class RSConnectDeploy extends Composite
          }
       }
       
+      boolean dark = useDarkDialogTheme();
       ImageResource illustration = null;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP || contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
-         illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishShinyIllustrationDark2x() : RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
-         illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishPlotIllustrationDark2x() : RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
-         illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishRmdIllustrationDark2x() : RESOURCES.publishRmdIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
                contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
-         illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishHTMLIllustrationDark2x() : RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
-         illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());
+         illustration = new ImageResource2x(dark ?
+               RESOURCES.publishPresentationIllustrationDark2x() : RESOURCES.publishPresentationIllustration2x());
       if (illustration != null)
          deployIllustration_.setResource(illustration);
    }
    
+   private static boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    private boolean isUpdate()
    {
       return fromPrevious_ != null;
@@ -1455,6 +1527,22 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setTitle(error);
    }
    
+   private void updateEnvVarsUI()
+   {
+      RSConnectAccount account = getSelectedAccount();
+      boolean supportsEnvVars = account != null &&
+            !account.isConnectCloudAccount();
+      envVarsButton_.setVisible(supportsEnvVars);
+      if (!supportsEnvVars)
+      {
+         envVarsLabel_.setVisible(false);
+      }
+      else
+      {
+         updateEnvVarsLabel();
+      }
+   }
+
    private void updateEnvVarsLabel()
    {
       if (appEnvVars_.isEmpty())
@@ -1541,6 +1629,7 @@ public class RSConnectDeploy extends Composite
    private boolean asMultipleRmd_;
    private boolean asStatic_;
    private int contentType_;
+   private ServerType serverType_;
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
    private RSConnectDeploymentRecord fromPrevious_;

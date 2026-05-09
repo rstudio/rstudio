@@ -222,7 +222,7 @@ public:
       initialProjectPath_.clear();
    }
 
-   int limitRpcClientUid() const
+   int64_t limitRpcClientUid() const
    {
       return limitRpcClientUid_;
    }
@@ -279,7 +279,7 @@ private:
    core::FilePath resourcePath_;
 
    unsigned int authMinimumUserId_;
-   int limitRpcClientUid_;
+   int64_t limitRpcClientUid_;
 
    // in-session generated RSA keys
    std::string sessionRsaPublicKey_;

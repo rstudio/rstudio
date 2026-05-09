@@ -43,7 +43,7 @@ namespace installation {
 bool verifyPositAiInstallation(const core::FilePath& positAiPath);
 
 /**
- * Locate the Posit AI installation directory.
+ * Locate the Posit Assistant installation directory.
  *
  * Search order:
  * 1. RSTUDIO_POSIT_AI_PATH environment variable (for development/testing)
@@ -57,17 +57,17 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath);
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */
-core::FilePath locatePositAiInstallation();
+core::FilePath locatePositAssistantInstallation();
 
 /**
- * Get the installed version of Posit AI from package.json.
+ * Get the installed version of Posit Assistant from package.json.
  *
  * @return Version string (e.g., "1.2.3"), or empty string if not found or invalid
  */
 std::string getInstalledVersion();
 
 /**
- * Get the protocol version the installed Posit AI package was built for.
+ * Get the protocol version the installed Posit Assistant package was built for.
  *
  * Reads the protocol.json file written at install time. Legacy installs
  * (before this file existed) return an empty string.

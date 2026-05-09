@@ -24,7 +24,7 @@ import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -85,14 +85,14 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
+
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
-public interface DocDisplay extends HasValueChangeHandlers<Void>,
+public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
                                     HasFoldChangeHandlers,
                                     HasLineWidgetsChangedHandlers,
                                     IsWidget,
@@ -266,7 +266,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
-   HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
    HandlerRegistration addEditorBlurHandler(BlurHandler handler);
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);

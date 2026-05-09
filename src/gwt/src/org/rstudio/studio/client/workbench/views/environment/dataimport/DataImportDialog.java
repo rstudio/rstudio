@@ -35,7 +35,8 @@ public class DataImportDialog extends ModalDialog<String>
                            OperationWithInput<String> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
-      
+      setThemeAware(true);
+
       dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false), path);
       RStudioGinjector.INSTANCE.injectMembers(this);
       

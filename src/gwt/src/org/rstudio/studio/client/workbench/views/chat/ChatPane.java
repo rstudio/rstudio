@@ -23,8 +23,10 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
@@ -36,24 +38,19 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ChatPane
       extends WorkbenchPane
       implements ChatPresenter.Display
 {
-   private enum ContentType
-   {
-      HTML,
-      URL
-   }
-
    private enum NotificationType
    {
       NONE,
@@ -61,17 +58,20 @@ public class ChatPane
       UPDATE_COMPLETE,
       UPDATE_ERROR,
       UPDATE_CHECK_FAILURE,
-      READLINE
+      READLINE,
+      CONNECTION_LOST
    }
 
    @Inject
    protected ChatPane(EventBus events,
-                      Commands commands)
+                      Commands commands,
+                      Provider<ProductEditionInfo> pEdition)
    {
       super(constants_.chatTitle(), events);
 
       events_ = events;
       commands_ = commands;
+      pEdition_ = pEdition;
 
       ensureWidget();
 
@@ -278,15 +278,18 @@ public class ChatPane
    }
 
    /**
-    * Updates the iframe content and stores it for later refresh.
+    * Replaces the iframe content with the given HTML.
     *
     * @param html The HTML content to display
     */
    private void updateFrameContent(String html)
    {
-      contentType_ = ContentType.HTML;
-      currentContent_ = html;
-      currentUrl_ = null;
+      // Remove suspended overlay if present — new content needs to be
+      // visible and interactive (e.g., error messages with retry buttons).
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(suspendedOverlay_);
+      }
 
       // Force a complete iframe reload by navigating to about:blank first
       // This kills the existing JavaScript context (stops WebSocket reconnection attempts)
@@ -316,10 +319,6 @@ public class ChatPane
    @Override
    public void loadUrl(String url)
    {
-      contentType_ = ContentType.URL;
-      currentUrl_ = url;
-      currentContent_ = null;
-
       if (suspendedOverlay_.getParent() == mainPanel_)
       {
          loadUrlFromSuspended(url);
@@ -475,15 +474,6 @@ public class ChatPane
    }-*/;
 
    @Override
-   public void updateCachedUrl(String url)
-   {
-      if (contentType_ == ContentType.URL)
-      {
-         currentUrl_ = url;
-      }
-   }
-
-   @Override
    public void setObserver(ChatPresenter.Display.Observer observer)
    {
       observer_ = observer;
@@ -571,6 +561,45 @@ public class ChatPane
    }
 
    @Override
+   public void showConnectionLostNotification(String message)
+   {
+      // Don't overwrite higher-priority update notifications
+      if (currentNotificationType_ == NotificationType.UPDATING ||
+          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         return;
+      }
+
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
+      updateMessageLabel_.setHTML(SafeHtmlUtils.htmlEscape(message));
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
+         .addButton(constants_.chatRestartButton(), () -> {
+            if (observer_ != null)
+            {
+               observer_.onRestartBackend();
+            }
+         })
+         .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
+
+      currentNotificationType_ = NotificationType.CONNECTION_LOST;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideConnectionLostNotification()
+   {
+      if (currentNotificationType_ == NotificationType.CONNECTION_LOST)
+      {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
    public void showReadlineNotification()
    {
       // Don't overwrite higher-priority update notifications
@@ -640,9 +669,10 @@ public class ChatPane
    }
 
    @Override
-   public void showManifestUnavailable()
+   public void showManifestUnavailable(String errorMessage)
    {
-      showMessage(constants_.chatManifestUnavailableMessage());
+      String html = generateManifestUnavailableHTML(errorMessage);
+      updateFrameContent(html);
    }
 
    @Override
@@ -665,13 +695,24 @@ public class ChatPane
       updateFrameContent(html);
    }
 
+   private boolean isWorkbench()
+   {
+      return pEdition_.get() != null &&
+             pEdition_.get().proLicense() &&
+             !Desktop.isDesktop();
+   }
+
    private String generateNotInstalledWithInstallHTML(String newVersion)
    {
+      String description = isWorkbench() ?
+         constants_.chatNotInstalledDescriptionWorkbench() :
+         constants_.chatNotInstalledDescription();
+
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
-         "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
+         "<p class='detail'>" + description + "</p>" +
          "<p class='detail'>" +
          "<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>" +
          constants_.chatLearnMore() + "</a></p>" +
@@ -758,7 +799,6 @@ public class ChatPane
    @Override
    public void setStatus(ChatPresenter.Display.Status status)
    {
-      currentStatus_ = status;
       switch (status)
       {
          case STARTING:
@@ -956,7 +996,7 @@ public class ChatPane
 
       // Trigger observer to start initialization flow.
       // The ChatPresenter handles preference checks and update checks,
-      // showing appropriate UI based on whether Posit AI is enabled/installed.
+      // showing appropriate UI based on whether Posit Assistant is enabled/installed.
       if (observer_ != null)
       {
          observer_.onPaneReady();
@@ -966,10 +1006,11 @@ public class ChatPane
    private native void setupMessageListener() /*-{
       var self = this;
 
-      // Listen for button clicks via postMessage from our iframe only
+      // Listen for postMessage from our iframe only (source + origin check)
       $wnd.addEventListener('message', function(event) {
          var frame = self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::getFrameElement()();
          if (!frame || event.source !== frame.contentWindow) return;
+         if (event.origin !== $wnd.location.origin) return;
 
          if (event.data === 'restart-backend') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
@@ -989,6 +1030,18 @@ public class ChatPane
          else if (event.data === 'return-chat-to-main') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleReturnToMainRequest()();
          }
+         else if (event.data === 'retry-manifest') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRetryManifestRequest()();
+         }
+         else if (event.data && event.data.type === 'assistant-error') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeError(Ljava/lang/String;)(event.data.message || '');
+         }
+         else if (event.data && event.data.type === 'assistant-warning') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeWarning(Ljava/lang/String;)(event.data.message || '');
+         }
+         else if (event.data && event.data.type === 'assistant-connected') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleIframeConnected()();
+         }
       });
    }-*/;
 
@@ -1002,6 +1055,14 @@ public class ChatPane
       if (observer_ != null)
       {
          observer_.onRestartBackend();
+      }
+   }
+
+   private void handleRetryManifestRequest()
+   {
+      if (observer_ != null)
+      {
+         observer_.onRetryManifest();
       }
    }
 
@@ -1039,6 +1100,30 @@ public class ChatPane
       if (observer_ != null)
       {
          observer_.onReturnChatToMain();
+      }
+   }
+
+   private void handleIframeError(String message)
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeError(message);
+      }
+   }
+
+   private void handleIframeWarning(String message)
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeWarning(message);
+      }
+   }
+
+   private void handleIframeConnected()
+   {
+      if (observer_ != null)
+      {
+         observer_.onIframeConnected();
       }
    }
 
@@ -1090,10 +1175,9 @@ public class ChatPane
    }
 
    @Override
-   public String getManifestUnavailableHTML()
+   public String getManifestUnavailableHTML(String errorMessage)
    {
-      return generateMessageHTML(
-         constants_.chatManifestUnavailableMessage());
+      return generateManifestUnavailableHTML(errorMessage);
    }
 
    @Override
@@ -1127,20 +1211,79 @@ public class ChatPane
       return wrapInThemedHtml(body, script, true, true, null);
    }
 
+   private String generateManifestUnavailableHTML(String errorMessage)
+   {
+      String safeTitle = SafeHtmlUtils.htmlEscape(
+         constants_.chatManifestUnavailableTitle());
+      String safeMessage = SafeHtmlUtils.htmlEscape(
+         constants_.chatManifestUnavailableMessage());
+
+      String errorDetail = "";
+      String copyScript = "";
+      if (errorMessage != null && !errorMessage.isEmpty())
+      {
+         String safeError = SafeHtmlUtils.htmlEscape(errorMessage);
+         String safeCopyLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopyError());
+         String safeCopiedLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopiedError());
+         String safeFailedLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopyFailed());
+         errorDetail =
+            "<div style='text-align: center; margin: 12px 0 4px 0;'>" +
+            "<button id='copy-error-btn' data-copy-label='" +
+            safeCopyLabel + "' data-copied-label='" +
+            safeCopiedLabel + "' data-failed-label='" +
+            safeFailedLabel + "' style='padding: 4px 12px; " +
+            "font-size: 12px; cursor: pointer; border: 1px solid " +
+            "var(--rstudio-panel-border, #ccc); border-radius: 3px; " +
+            "background: var(--rstudio-editorWidget-background, #fff); " +
+            "color: var(--rstudio-editor-foreground, #333);'>" +
+            safeCopyLabel + "</button>" +
+            "</div>" +
+            "<pre id='error-detail' style='margin: 0 0 12px 0; padding: 8px; " +
+            "background: var(--rstudio-editorWidget-background, #f4f8f9); " +
+            "color: var(--rstudio-editor-foreground, #333); " +
+            "border-radius: 4px; font-size: 12px; " +
+            "white-space: pre-wrap; word-break: break-word;'>" +
+            safeError + "</pre>";
+         copyScript =
+            "document.getElementById('copy-error-btn')" +
+            ".addEventListener('click', function() {" +
+            "  var text = document.getElementById('error-detail').textContent;" +
+            "  var btn = document.getElementById('copy-error-btn');" +
+            "  navigator.clipboard.writeText(text).then(function() {" +
+            "    btn.textContent = btn.dataset.copiedLabel;" +
+            "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
+            "  }).catch(function() {" +
+            "    btn.textContent = btn.dataset.failedLabel;" +
+            "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
+            "  });" +
+            "});";
+      }
+
+      String body =
+         "<h2>" + safeTitle + "</h2>" +
+         "<p>" + safeMessage + "</p>" +
+         errorDetail +
+         "<button id='retry-manifest-btn' class='chatIframeButton'>" +
+         constants_.chatRetry() + "</button>";
+
+      String script =
+         "document.getElementById('retry-manifest-btn')" +
+         ".addEventListener('click', function() {" +
+         "  this.disabled = true;" +
+         "  window.parent.postMessage('retry-manifest', '*');" +
+         "});" +
+         copyScript;
+
+      return wrapInThemedHtml(body, script, true, true, null);
+   }
+
    @Override
    public void onSelected()
    {
       super.onSelected();
-      // Only refresh URL content (actual chat UI) when pane becomes visible
-      // HTML status messages are already displayed and don't need refresh
-      // Refreshing HTML content can cause timing issues with pending load handlers
-      if (currentStatus_ == ChatPresenter.Display.Status.READY &&
-          contentType_ == ContentType.URL &&
-          currentUrl_ != null &&
-          pendingFrame_ == null)
-      {
-         frame_.setUrl(currentUrl_);
-      }
    }
 
    // Resources ----
@@ -1175,12 +1318,9 @@ public class ChatPane
    private ToolbarButton popOutButton_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
-   private ContentType contentType_ = ContentType.HTML;
-   private String currentContent_ = null;
-   private String currentUrl_ = null;
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
-   private ChatPresenter.Display.Status currentStatus_ = null;
+
    private NotificationType currentNotificationType_ = NotificationType.NONE;
 
    // Update notification UI components
@@ -1193,6 +1333,7 @@ public class ChatPane
    // Injected ----
    private final EventBus events_;
    private final Commands commands_;
+   private final Provider<ProductEditionInfo> pEdition_;
 
    private static final int FRAME_SWAP_DELAY_MS = 350;
    private static final int FRAME_LOAD_TIMEOUT_MS = 15000;

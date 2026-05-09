@@ -69,14 +69,35 @@ public class PublishDocServicePage
                   false, true, ServerType.RSCONNECT);
          }
       }
-      WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
-            new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
-
-      if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
-         pages.add(rpubsPage);
       if (input.isConnectUIEnabled())
          pages.add(connectPage);
-      
+      if (input.isExternalUIEnabled())
+      {
+         WizardPage<RSConnectPublishInput, RSConnectPublishResult> connectCloudPage;
+         if (input.isStaticDocInput())
+         {
+            connectCloudPage = new PublishFilesPage(
+                  constants_.positConnectCloud(),
+                  constants_.positConnectCloudSubTitle(),
+                  new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()),
+                  input, false, true, ServerType.CONNECT_CLOUD);
+         }
+         else
+         {
+            connectCloudPage = new PublishReportSourcePage(
+                  constants_.positConnectCloud(),
+                  constants_.positConnectCloudSubTitle(),
+                  constants_.positConnectCloudCaption(),
+                  new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()),
+                  input, false, true, ServerType.CONNECT_CLOUD);
+         }
+         pages.add(connectCloudPage);
+      }
+      if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
+      {
+         pages.add(new PublishRPubsPage("RPubs", constants_.rPubsSubtitle()));
+      }
+
       return pages;
    }
    private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);

@@ -25,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -34,6 +33,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.Spinner;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -59,12 +59,12 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstant
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
-import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.FontStyle;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -78,7 +78,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -135,7 +134,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       installManager_ = new PositAiInstallManager();
 
       // Create assistant selector - conditionally include Posit AI option
-      boolean paiEnabled = paiUtil_.isPaiEnabled();
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)
@@ -177,7 +176,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblAssistantStatus_ = new Label();
       lblAssistantStatus_.addStyleName(RES.styles().assistantStatusLabel());
 
-      imgRefreshSpinner_ = new Image(CoreResources.INSTANCE.progress_gray());
+      imgRefreshSpinner_ = new Spinner();
       imgRefreshSpinner_.addStyleName(RES.styles().refreshSpinner());
       imgRefreshSpinner_.setVisible(false);
 
@@ -201,7 +200,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
 
-      btnInstall_ = new SmallButton(constants_.positAiInstallButton());
+      btnInstall_ = new SmallButton(constants_.positAssistantInstallButton());
       btnInstall_.addStyleName(RES.styles().button());
       statusButtons_.add(btnInstall_);
 
@@ -222,6 +221,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblProjectOverride_.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
 
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
+      cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -266,7 +266,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantNesCollapse_.setValue(!prefs_.assistantNesAutoshow().getGlobalValue());
       cbAssistantNesCollapse_.setTitle(constants_.assistantNesCollapseDescription());
 
-      // Create chat provider selector - conditionally include Posit AI option
+      // Create chat provider selector - conditionally include Posit Assistant option
       String[] chatProviderLabels;
       String[] chatProviderValues;
       if (paiEnabled)
@@ -339,16 +339,18 @@ public class AssistantPreferencesPane extends PreferencesPane
       add(headerLabel(constants_.assistantChatTab()));
       add(selChatProvider_);
 
-      // Add change handler for chat provider to check for Posit AI installation
+      // Add change handler for chat provider to check for Posit Assistant installation
       selChatProvider_.addChangeHandler((event) ->
       {
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
             // Check for install/update/unsupported status
-            checkPositAiInstallation(/* forAssistant= */ false);
+            checkPositAssistantInstallation(/* forAssistant= */ false);
          }
       });
+
+      add(cbAssistantToolbarButtonVisible_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -388,9 +390,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Create Copilot Terms of Service panel at the bottom (absolute positioning)
       copilotTosPanel_ = new VerticalPanel();
-      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
-      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spaced(spacedBefore(lblCopilotTos_)));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
@@ -421,12 +421,12 @@ public class AssistantPreferencesPane extends PreferencesPane
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
 
-               // Refresh Posit AI status when panel is shown
+               // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
                {
                   positAiRefreshed_ = true;
 
-                  // Check if Posit AI is installed
+                  // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
                      UserPrefsAccessor.ASSISTANT_POSIT,
                      new ServerRequestCallback<Boolean>()
@@ -443,7 +443,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                            {
                               // User changed the selection — check for
                               // install, update, or unsupported status
-                              checkPositAiInstallation(/* forAssistant= */ true);
+                              checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
                         }
 
@@ -515,6 +515,8 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      wrapWithPanel("assistant_prefs");
    }
 
    private VerticalPanel createNonePanel()
@@ -728,7 +730,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            checkPositAiInstallation(/* forAssistant= */ true);
+            checkPositAssistantInstallation(/* forAssistant= */ true);
          }
       });
    }
@@ -778,7 +780,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
 
-                  // Show Install button for Posit AI when not installed
+                  // Show Install button for Posit Assistant when not installed
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
                       assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
                   {
@@ -852,12 +854,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
-    * Checks if Posit AI needs to be installed and prompts the user to install it.
+    * Checks if Posit Assistant needs to be installed and prompts the user to install it.
     *
     * @param forAssistant True if this check is for the assistant (completions) preference,
     *                     false if it's for the chat provider preference.
     */
-   private void checkPositAiInstallation(boolean forAssistant)
+   private void checkPositAssistantInstallation(boolean forAssistant)
    {
       // Remember the previous value so we can revert if user declines
       final String previousAssistantValue = forAssistant ?
@@ -870,7 +872,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onNoUpdateAvailable()
          {
-            // Posit AI is already installed and up-to-date
+            // Posit Assistant is already installed and up-to-date
             if (forAssistant)
             {
                refresh(UserPrefsAccessor.ASSISTANT_POSIT);
@@ -889,8 +891,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // No compatible version available - show error and revert
             globalDisplay_.showErrorMessage(
-               constants_.positAiIncompatibleTitle(),
-               constants_.positAiIncompatibleMessage(),
+               constants_.positAssistantIncompatibleTitle(),
+               constants_.positAssistantIncompatibleMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -910,8 +912,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Unsupported version with no update - show error and revert
             globalDisplay_.showErrorMessage(
-               constants_.positAiUnsupportedVersionTitle(),
-               constants_.positAiUnsupportedVersionMessage(),
+               constants_.positAssistantUnsupportedVersionTitle(),
+               constants_.positAssistantUnsupportedVersionMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -922,20 +924,20 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Protocol unsupported - RStudio itself needs updating
             globalDisplay_.showErrorMessage(
-               constants_.positAiUnsupportedProtocolTitle(),
-               constants_.positAiUnsupportedProtocolMessage(),
+               constants_.positAssistantUnsupportedProtocolTitle(),
+               constants_.positAssistantUnsupportedProtocolMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
          }
 
          @Override
-         public void onManifestUnavailable()
+         public void onManifestUnavailable(String errorMessage)
          {
             // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(
-               constants_.positAiManifestUnavailableTitle(),
-               constants_.positAiManifestUnavailableMessage(),
+               constants_.positAssistantManifestUnavailableTitle(),
+               constants_.positAssistantManifestUnavailableMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -945,9 +947,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onCheckFailed(String errorMessage)
          {
             // Check failed - this often happens when calling from Preferences pane
-            // before the preference is saved. Since we know Posit AI isn't installed
+            // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
-            // just selected Posit AI), offer to install without version info.
+            // just selected Posit Assistant), offer to install without version info.
             showInstallUpdatePrompt(null, true, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
@@ -963,16 +965,16 @@ public class AssistantPreferencesPane extends PreferencesPane
                                         String previousChatProviderValue)
    {
       String title = isInitialInstall ?
-         constants_.positAiInstallTitle() :
-         constants_.positAiUpdateTitle();
+         constants_.positAssistantInstallTitle() :
+         constants_.positAssistantUpdateTitle();
       String message = isInitialInstall ?
          (newVersion != null ?
-            constants_.positAiInstallMessage(newVersion) :
-            constants_.positAiInstallMessageNoVersion()) :
-         constants_.positAiUpdateMessage(newVersion);
+            constants_.positAssistantInstallMessage(newVersion) :
+            constants_.positAssistantInstallMessageNoVersion()) :
+         constants_.positAssistantUpdateMessage(newVersion);
       String yesLabel = isInitialInstall ?
-         constants_.positAiInstallButton() :
-         constants_.positAiUpdateButton();
+         constants_.positAssistantInstallButton() :
+         constants_.positAssistantUpdateButton();
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
@@ -981,7 +983,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          false,  // includeCancel
          (Operation) () -> {
             // User chose to install/update
-            performPositAiInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+            performPositAssistantInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
          },
          (Operation) () -> {
             // User declined - revert the preference
@@ -989,14 +991,14 @@ public class AssistantPreferencesPane extends PreferencesPane
          },
          null,  // cancelOperation - not used since includeCancel is false
          yesLabel,
-         constants_.positAiCancelButton(),
+         constants_.positAssistantCancelButton(),
          true);  // yesIsDefault
    }
 
    /**
-    * Performs the Posit AI installation with progress dialog.
+    * Performs the Posit Assistant installation with progress dialog.
     */
-   private void performPositAiInstall(boolean forAssistant,
+   private void performPositAssistantInstall(boolean forAssistant,
                                       String previousAssistantValue,
                                       String previousChatProviderValue)
    {
@@ -1025,7 +1027,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                           String previousChatProviderValue)
    {
       final com.google.gwt.user.client.Command dismissProgress =
-         globalDisplay_.showProgress(constants_.positAiInstallingMessage());
+         globalDisplay_.showProgress(constants_.positAssistantInstallingMessage());
 
       installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
       {
@@ -1047,8 +1049,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             dismissProgress.execute();
             globalDisplay_.showMessage(
                GlobalDisplay.MSG_INFO,
-               constants_.positAiInstallCompleteTitle(),
-               constants_.positAiInstallCompleteMessage(),
+               constants_.positAssistantInstallCompleteTitle(),
+               constants_.positAssistantInstallCompleteMessage(),
                (Operation) () -> {
                   // Refresh the assistant status if this was for the completions pref
                   if (forAssistant)
@@ -1065,8 +1067,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             dismissProgress.execute();
 
             globalDisplay_.showErrorMessage(
-               constants_.positAiInstallFailedTitle(),
-               constants_.positAiInstallFailedMessage(errorMessage),
+               constants_.positAssistantInstallFailedTitle(),
+               constants_.positAssistantInstallFailedMessage(errorMessage),
                (Operation) () -> {
                   // Revert the preference since installation failed
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
@@ -1129,6 +1131,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
+      if (useDarkDialogTheme())
+         return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistantDark2x());
       return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
@@ -1150,9 +1154,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
-      // Reset to "none" if user has Posit AI selected but PAI is no longer enabled
+      // Reset to "none" if user has Posit AI selected but Posit Assistant is no longer enabled
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
-          !paiUtil_.isPaiEnabled())
+          !paiUtil_.isPositAssistantEnabled())
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
@@ -1327,7 +1331,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
-   private boolean positAiRefreshed_ = false; // has Posit AI status been refreshed for this pane instance?
+   private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 
@@ -1346,8 +1350,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
-   private final Image imgRefreshSpinner_;
+   private final Spinner imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
+   private final CheckBox cbAssistantToolbarButtonVisible_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesCollapse_;
    private final List<SmallButton> statusButtons_;
@@ -1380,7 +1385,15 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final ChatServerOperations chatServer_;
    private final PositAiInstallManager installManager_;
    
+   private boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return prefs_.useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
-   
+
 }

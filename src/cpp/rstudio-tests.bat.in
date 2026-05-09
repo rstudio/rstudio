@@ -41,6 +41,9 @@ if "%RUN_ALL%"=="1" (
 
 set "PATH=@LIBR_BIN_DIR@;%PATH%"
 
+REM marker for rsession to detect that --run-tests was launched via this helper
+set RSTUDIO_TESTS_HELPER=1
+
 if "%RUN_CORE%"=="1" (
     echo Running 'core' tests...
     "@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"

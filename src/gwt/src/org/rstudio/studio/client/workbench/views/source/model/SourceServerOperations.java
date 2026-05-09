@@ -26,7 +26,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -184,25 +184,25 @@ public interface SourceServerOperations extends FilesServerOperations,
          ServerRequestCallback<CheckForExternalEditResult> requestCallback);
 
    void ignoreExternalEdit(String id,
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     * Removes an item from the working list.
     */
-   void closeDocument(String id, ServerRequestCallback<Void> requestCallback);
+   void closeDocument(String id, ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     * Clears the working list.
     */
-   void closeAllDocuments(ServerRequestCallback<Void> requestCallback);
+   void closeAllDocuments(ServerRequestCallback<VoidResponse> requestCallback);
 
    void setSourceDocumentOnSave(String id, boolean shouldSourceOnSave,
-                                ServerRequestCallback<Void> requestCallback);
+                                ServerRequestCallback<VoidResponse> requestCallback);
 
    void saveActiveDocument(String contents,
                            boolean sweave,
                            String rnwWeave,
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     * Applies the values in the given HashMap to the document's property bag.
@@ -218,7 +218,7 @@ public interface SourceServerOperations extends FilesServerOperations,
     * with a different file if another file with the same path is created.
     */
    void modifyDocumentProperties(String id, HashMap<String, String> properties,
-                                 ServerRequestCallback<Void> requestCallback);
+                                 ServerRequestCallback<VoidResponse> requestCallback);
    
    void getDocumentProperties(String path, 
                               ServerRequestCallback<JsObject> requestCallback);
@@ -233,7 +233,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                        ServerRequestCallback<SourceDocument> requestCallback);
 
    void removeContentUrl(String contentUrl,
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
 
    void detectFreeVars(String code,
                        ServerRequestCallback<JsArrayString> requestCallback);
@@ -264,10 +264,10 @@ public interface SourceServerOperations extends FilesServerOperations,
                              ServerRequestCallback<String> requestCallback);
    
    void setDocOrder(
-         List<String> order, ServerRequestCallback<Void> requestCallback); 
+         List<String> order, ServerRequestCallback<VoidResponse> requestCallback); 
    
    void removeCachedData(String cacheKey, 
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
    
    void ensureFileExists(String path,
                          ServerRequestCallback<Boolean> requestCallback);
@@ -291,10 +291,10 @@ public interface SourceServerOperations extends FilesServerOperations,
                               ServerRequestCallback<JsArrayString> requestCallback);
    
    public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
-                                         ServerRequestCallback<Void> requestCallback);
+                                         ServerRequestCallback<VoidResponse> requestCallback);
    
    public void setSourceDocumentDirty(String docId, boolean dirty,
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    public void extractRmdFromNotebook(String inputPath,
          ServerRequestCallback<SourceDocumentResult> requestCallback);
@@ -302,12 +302,12 @@ public interface SourceServerOperations extends FilesServerOperations,
    public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback);
    
    public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
-                                            ServerRequestCallback<Void> requestCallback);
+                                            ServerRequestCallback<VoidResponse> requestCallback);
    
    public void requestDocumentCloseCompleted(boolean isSuccessfulClose, 
-                                             ServerRequestCallback<Void> requestCallback);                                    
+                                             ServerRequestCallback<VoidResponse> requestCallback);                                    
    
-   public void adaptToLanguage(String language, ServerRequestCallback<Void> requestCallback);
+   public void adaptToLanguage(String language, ServerRequestCallback<VoidResponse> requestCallback);
 
    public void createPlumberAPI(String apiName,
                                 String apiDir,
@@ -323,6 +323,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                                     ServerRequestCallback<String> requestCallback);
    
    public void rstudioApiResponse(JavaScriptObject response,
-                                  ServerRequestCallback<Void> requestCallback);
+                                  ServerRequestCallback<VoidResponse> requestCallback);
    
 }

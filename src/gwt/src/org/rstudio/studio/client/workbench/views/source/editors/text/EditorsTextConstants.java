@@ -27,10 +27,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String onShinyCompareTestError();
     String onShinyCompareTestResponseCaption();
     String onShinyCompareTestResponseMessage();
-    String checkTestPackageDependenciesError();
-    String checkTestPackageDependenciesMessage();
-    String checkTestPackageDependenciesCaption();
-    String installShinyTestDependenciesError();
     String checkForExternalEditFileChangedMessage(String fileName);
     String checkForExternalEditFileChangedCaption();
     String checkForExternalEditFileDeletedMessage(String pathName);
@@ -243,6 +239,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String renderingR();
     String specifyingKnit();
     String creatingRMarkdown();
+    String notebookRenderWaiting();
     String assistantWaiting(String prefix);
     String assistantNoCompletions(String prefix);
     String assistantResponseReceived(String prefix);

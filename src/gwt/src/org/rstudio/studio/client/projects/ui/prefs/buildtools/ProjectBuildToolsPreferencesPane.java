@@ -66,6 +66,8 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
 
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_CUSTOM,
                             new BuildToolsCustomPanel());
+
+      wrapWithPanel("project_build_tools_prefs");
    }
 
    @Override

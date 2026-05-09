@@ -70,6 +70,7 @@ public class ClassIds
    // WindowFrameButton (combined with unique suffix for each panel)
    public final static String PANEL_MIN_BTN = "panel_min_btn";
    public final static String PANEL_MAX_BTN = "panel_max_btn";
+   public final static String PANEL_CLOSE_BTN = "panel_close_btn";
 
    // Chunk Context (combined with unique suffix for each panel)
    public final static String CHUNK = "chunk";
@@ -104,6 +105,9 @@ public class ClassIds
 
    // Data Table filter button
    public final static String DATA_TABLE_FILTER_TOGGLE = "dt_filter_toggle";
+
+   // Data Table sidebar toggle button
+   public final static String DATA_TABLE_SIDEBAR_TOGGLE = "dt_sidebar_toggle";
 
    // Document outline toggle button
    public final static String VISUAL_OUTLINE_TOGGLE = "visual_md_outline_toggle";

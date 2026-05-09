@@ -21,6 +21,11 @@ const config = {
             config: 'vite.choose-r-preload.config.ts',
             target: 'preload',
           },
+          {
+            entry: 'src/ui/whats-new/whats-new-preload.ts',
+            config: 'vite.whats-new-preload.config.ts',
+            target: 'preload',
+          },
         ],
         renderer: [
           {

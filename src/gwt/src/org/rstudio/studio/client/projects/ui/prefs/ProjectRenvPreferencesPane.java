@@ -95,6 +95,8 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
       helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
       nudgeRight(helpLink);
       add(helpLink);
+
+      wrapWithPanel("project_renv_prefs");
    }
 
    private void manageUI(boolean enabled)

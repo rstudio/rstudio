@@ -231,7 +231,7 @@ SEXP rs_clearUserPref(SEXP prefNameSEXP)
    Error error = userPrefs().clearValue(prefName);
    userPrefs().notifyClient(kUserPrefsUserLayer, prefName);
    module_context::events().onPreferencesSaved();
-   return error ? R_FalseValue : R_TrueValue;
+   return error ? Rf_ScalarLogical(FALSE) : Rf_ScalarLogical(TRUE);
 }
 
 SEXP rs_readApiPref(SEXP prefName)

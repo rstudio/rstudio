@@ -541,6 +541,39 @@ withr::defer(.rs.automation.deleteRemote())
    
 })
 
+# https://github.com/rstudio/rstudio/issues/17350
+.rs.test("multiline expressions in chunks execute without hanging", {
+
+   contents <- .rs.heredoc('
+      ---
+      title: Multiline Chunks
+      ---
+
+      ```{r}
+      1 +
+      2
+      ```
+
+      ```{r}
+      sum(1,
+      2)
+      ```
+   ')
+
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      output <- remote$console.getOutput()
+      expect_true("[1] 3" %in% output)
+
+      editor$gotoLine(10L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      output <- remote$console.getOutput()
+      expect_true("[1] 3" %in% output)
+   })
+
+})
+
 # https://github.com/rstudio/rstudio/issues/16006
 .rs.test("command line history can be recalled after error", {
   
@@ -658,17 +691,65 @@ withr::defer(.rs.automation.deleteRemote())
       ---
       title: Paged Table; Explicit Printing
       ---
-      
+
       ```{r}
       print(mtcars)
       ```
    ')
-   
+
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
       editor$gotoLine(6)
       remote$commands.execute(.rs.appCommands$executeCurrentChunk)
       Sys.sleep(1)
       expect_error(remote$dom.querySelector(".pagedtable"))
    })
-   
+
+})
+
+.rs.test("saving an R Notebook creates an nb.html file", {
+
+   contents <- .rs.heredoc('
+      ---
+      title: "Notebook Test"
+      output: html_notebook
+      ---
+
+      ```{r}
+      print("hello from notebook")
+      ```
+   ')
+
+   # Write the notebook to a known path so we can check for the .nb.html
+   documentPath <- tempfile("notebook-", fileext = ".Rmd")
+   writeLines(contents, con = documentPath)
+   nbHtmlPath <- sub("\\.Rmd$", ".nb.html", documentPath)
+
+   withr::defer({
+      unlink(documentPath)
+      unlink(nbHtmlPath)
+   })
+
+   remote$editor.openDocument(documentPath)
+   editor <- remote$editor.getInstance()
+
+   # Execute the chunk to generate output
+   editor$gotoLine(7)
+   remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+   Sys.sleep(1)
+
+   # Save the document, which should trigger nb.html rendering
+   remote$commands.execute("saveSourceDoc")
+
+   # Wait for the nb.html file to appear
+   .rs.waitUntil("nb.html is created", function() {
+      file.exists(nbHtmlPath)
+   })
+
+   expect_true(file.exists(nbHtmlPath))
+
+   # Verify the rendered file contains expected content
+   nbHtml <- readLines(nbHtmlPath, warn = FALSE)
+   nbHtmlText <- paste(nbHtml, collapse = "\n")
+   expect_true(grepl("hello from notebook", nbHtmlText))
+
 })

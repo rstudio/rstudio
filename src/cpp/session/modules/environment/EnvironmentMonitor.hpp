@@ -34,13 +34,45 @@ public:
    SEXP getMonitoredEnvironment();
    bool hasEnvironment();
    void checkForChanges();
-private:
-   void listEnv(std::vector<r::sexp::Variable>* pEnvironment);
-   void enqueRemovedEvent(const r::sexp::Variable& variable);
-   void enqueAssignedEvent(const r::sexp::Variable& variable);
 
-   std::vector<r::sexp::Variable> lastEnv_;
-   std::vector<r::sexp::Variable> unevaledPromises_;
+   // opaque snapshot of a binding for change detection
+   struct BindingSnapshot
+   {
+      std::string name;
+      r::sexp::BindingType type;
+      SEXP identityToken; // opaque pointer for change detection; never dereferenced
+
+      bool operator<(const BindingSnapshot& other) const
+      {
+         if (name != other.name)
+            return name < other.name;
+         if (type != other.type)
+            return type < other.type;
+         return std::less<SEXP>()(identityToken, other.identityToken);
+      }
+
+      bool operator==(const BindingSnapshot& other) const
+      {
+         return name == other.name &&
+                type == other.type &&
+                identityToken == other.identityToken;
+      }
+
+      bool operator!=(const BindingSnapshot& other) const
+      {
+         return !(*this == other);
+      }
+   };
+
+   void listEnv(std::vector<std::string>* pNames);
+   void snapshotBindings(SEXP env,
+                         const std::vector<std::string>& names,
+                         std::vector<BindingSnapshot>* pSnapshot);
+   void enqueRemovedEvent(const std::string& name);
+   void enqueAssignedEvent(const std::string& name);
+
+   std::vector<BindingSnapshot> lastEnv_;
+   std::vector<std::string> unevaledPromises_;
    r::sexp::PreservedSEXP environment_;
    bool initialized_;
    bool refreshOnInit_;

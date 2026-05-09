@@ -115,7 +115,6 @@ public class FileBrowserWidget extends Composite
 
    public void cd(String path)
    {
-      directory_.clearContents();
       directory_.showProgress(true);
       context_.cd(path);
    }

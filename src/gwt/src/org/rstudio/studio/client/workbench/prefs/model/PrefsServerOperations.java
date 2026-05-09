@@ -15,21 +15,21 @@
 package org.rstudio.studio.client.workbench.prefs.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
 public interface PrefsServerOperations
 {
    void setUserPrefs(JavaScriptObject userPrefs,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
    
    void setUserState(JavaScriptObject userState,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
 
-   void editPreferences(ServerRequestCallback<Void> requestCallback);
+   void editPreferences(ServerRequestCallback<VoidResponse> requestCallback);
 
    void clearPreferences(ServerRequestCallback<String> requestCallback);
    
-   void viewPreferences(ServerRequestCallback<Void> requestCallback);
+   void viewPreferences(ServerRequestCallback<VoidResponse> requestCallback);
 }

@@ -59,6 +59,7 @@ public interface ThemeStyles extends CssResource
    String noLabel();
    String popupButton();
    String toolbarButtonPushed();
+   String restrictedModeIcon();
    String emptyProjectMenu();
    String menuSubheader();
    String menuItemSubtitle();
@@ -85,6 +86,7 @@ public interface ThemeStyles extends CssResource
 
    String toolbarButtonLatched();
    String toolbarButtonLatchable();
+   String assistantToggleButton();
 
    String windowFrameToolbarButton();
 
@@ -92,6 +94,7 @@ public interface ThemeStyles extends CssResource
 
    String maximize();
    String minimize();
+   String close();
 
    String left();
    String right();
@@ -166,6 +169,7 @@ public interface ThemeStyles extends CssResource
    String notResizable();
 
    String dialogTabPanel();
+   String dialogTabPanelNoTabs();
 
    String handCursor();
 

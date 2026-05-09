@@ -44,9 +44,7 @@ public class AceEditorPreview extends DynamicIFrame
       super(constants_.editorThemePreview());
       code_ = code;
       Style style = getStyleElement().getStyle();
-      style.setBorderColor("#CCC");
-      style.setBorderWidth(1, Unit.PX);
-      style.setBorderStyle(BorderStyle.SOLID);
+      style.setBorderStyle(BorderStyle.NONE);
    }
 
    @Override
@@ -99,7 +97,7 @@ public class AceEditorPreview extends DynamicIFrame
                         doc.getHead().getParentElement().setLang("en"); // accessibility requirement
 
                         body.getStyle().setMargin(0, Unit.PX);
-                        body.getStyle().setBackgroundColor("white");
+                        body.getStyle().setBackgroundColor("transparent");
 
                         StyleElement style = doc.createStyleElement();
                         style.setType("text/css");

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.events.TrustRequestEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -152,6 +153,15 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getResumed() /*-{
       return this.resumed;
+   }-*/;
+
+   public final native boolean getDeferredInitCompleted() /*-{
+      // default to true if the field is missing or non-boolean -- worst case
+      // is one redundant fetch (the pre-flag behavior); the alternative is a
+      // silent failure where the Packages pane never populates
+      return typeof this.deferred_init_completed === "boolean"
+         ? this.deferred_init_completed
+         : true;
    }-*/;
 
    public final native String getDefaultPrompt() /*-{
@@ -641,6 +651,14 @@ public class SessionInfo extends JavaScriptObject
 
    public final native SessionInitOptions getInitOptions() /*-{
       return this.init_options;
+   }-*/;
+
+   public final native TrustRequestEvent.Data getTrustRequest() /*-{
+      return this.trust_request;
+   }-*/;
+
+   public final native boolean getStartupFilesSuppressed() /*-{
+      return this.startup_files_suppressed || false;
    }-*/;
 
    /**

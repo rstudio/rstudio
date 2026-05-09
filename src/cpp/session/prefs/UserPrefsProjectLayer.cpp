@@ -126,7 +126,7 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
 
       bool existsInNew = itNew != cacheNew.end();
       bool isNew = itOld == cacheOld.end();
-      bool isChanged = !isNew && !((*itOld).getValue() == (*itNew).getValue());
+      bool isChanged = !isNew && existsInNew && !((*itOld).getValue() == (*itNew).getValue());
 
       if (existsInNew && (isNew || isChanged))
       {

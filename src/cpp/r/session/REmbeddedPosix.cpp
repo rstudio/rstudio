@@ -13,6 +13,11 @@
  *
  */
 
+#include <cstring>
+
+#include <core/Log.hpp>
+
+#include <r/RRuntime.hpp>
 #include <r/session/REventLoop.hpp>
 
 #include <Rembedded.h>
@@ -41,17 +46,53 @@ extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 
 extern int R_running_as_main_program;  // from unix/system.c
 
+extern "C" {
+void run_Rmainloop(void);
+} // extern "C"
+
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
 namespace session {
 
+// Local copy of R's structRstart, always including the 'nconnections'
+// field added in R 4.4.0. This allows runtime detection of nconnections
+// support regardless of which R headers were used at compile time.
+// The struct is zero-initialized before R_DefParams; R >= 4.4.0
+// populates nconnections = 128, older R leaves it as 0 (from memset).
+typedef struct
+{
+   int R_Quiet;
+   int R_NoEcho;
+   int R_Interactive;
+   int R_Verbose;
+   int LoadSiteFile;
+   int LoadInitFile;
+   int DebugInitFile;
+   SA_TYPE RestoreAction;
+   SA_TYPE SaveAction;
+   R_SIZE_T vsize;
+   R_SIZE_T nsize;
+   R_SIZE_T max_vsize;
+   R_SIZE_T max_nsize;
+   R_SIZE_T ppsize;
+   int NoRenviron : 16;
+   int RstartVersion : 16;
+   int nconnections;
+
+   // Padding, to allow for extensions in newer versions of R,
+   // in case newer versions of R expect a struct with extra
+   // memory available.
+   char padding[128];
+} RStartup;
+
 void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
                   const core::FilePath& /*userHome*/, // ignored on posix
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal)
 {
@@ -101,20 +142,34 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //      .Rprofile rather than simply saved into the global environment
    //      of the default workspace
    //
-   structRstart rp;
-   Rstart Rp = &rp;
-   R_DefParams(Rp);
-#if R_VERSION < R_Version(4, 0, 0)
-   Rp->R_Slave = FALSE;
-#else
+   RStartup rp;
+   memset(&rp, 0, sizeof(rp));
+   RStartup* Rp = &rp;
+   R_DefParams((Rstart) Rp);
    Rp->R_NoEcho = FALSE;
-#endif
    Rp->R_Quiet = quiet ? TRUE : FALSE;
    Rp->R_Interactive = TRUE;
    Rp->SaveAction = defaultSaveAction;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
    Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
-   R_SetParams(Rp);
+
+   // set max connections if requested (requires R >= 4.4.0)
+   // R >= 4.4.0 sets Rp->nconnections = 128 in R_DefParams;
+   // the field remains 0 (from memset) on older R versions.
+   nconnections = validateMaxConnections(nconnections);
+   if (nconnections > 0)
+   {
+      if (Rp->nconnections > 0)
+      {
+         Rp->nconnections = nconnections;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("r-max-connections requires R >= 4.4.0");
+      }
+   }
+
+   R_SetParams((Rstart) Rp);
 
    // redirect console
    R_Interactive = TRUE; // should have also been set by call to Rf_initialize_R
@@ -152,8 +207,27 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //    ptr_R_FlushConsole
    //    ptr_R_ClearerrConsole
 
-   // run main loop (does not return)
-   Rf_mainloop();
+   // Initialize runtime dispatch before setup_Rmainloop so any code reached
+   // from .Rprofile / Rprofile.site can safely call through r::runtime /
+   // r::sexp. libR is already loaded into the process; we only resolve
+   // symbol addresses here -- value-dependent reads use lazy pointer
+   // dereferencing (see s_pUnboundValue / s_pSaveAction in RRuntime.cpp).
+   //
+   // Use R_Suicide rather than Rf_error on the failure branch: Rf_error
+   // longjmps to R_ToplevelContext, which is not set up until
+   // setup_Rmainloop runs.
+   Error error = r::runtime::initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      R_Suicide("RStudio failed to initialize R runtime dispatch");
+   }
+
+   // initialize the main loop
+   setup_Rmainloop();
+
+   // run the main loop
+   run_Rmainloop();
 }
 
 Error completeEmbeddedRInitialization()

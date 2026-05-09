@@ -29,7 +29,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -163,7 +163,7 @@ public class NewConnectionInstallOdbcHost extends Composite
       addHandlerRegistration(consoleProcess.addConsoleOutputHandler(this));
       addHandlerRegistration(consoleProcess.addProcessExitHandler(this));
 
-      consoleProcess.start(new SimpleRequestCallback<Void>()
+      consoleProcess.start(new SimpleRequestCallback<VoidResponse>()
       {
          @Override
          public void onError(ServerError error)

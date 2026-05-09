@@ -1,0 +1,202 @@
+name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      rstudio_installer_url:
+        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
+        type: string
+        default: "desktop"
+      grep:
+        description: "Optional Playwright --grep pattern to filter tests."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
+        type: string
+        default: ""
+  workflow_call:
+    inputs:
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "desktop"
+      grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+      rstudio_extra_args:
+        type: string
+        default: ""
+
+jobs:
+  e2e-desktop-macos:
+    runs-on: macos-26
+    timeout-minutes: 120
+    env:
+      R_LIBS_USER: ${{ github.workspace }}/R-libs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install rig
+        run: |
+          curl -fLs -o rig.pkg https://github.com/r-lib/rig/releases/download/latest/rig-latest-macOS-arm64.pkg
+          sudo installer -pkg rig.pkg -target /
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          rig add "$R_VERSION"
+          # rig names installs with arch/major.minor on macOS (e.g. "4.4-arm64"),
+          # not the requested patch or alias. Query rig for the just-installed
+          # name so `rig default` works regardless of input form.
+          INSTALLED_NAME=$(rig list --json | jq -r '.[-1].name')
+          rig default "$INSTALLED_NAME"
+          rig ls
+          mkdir -p "$R_LIBS_USER"
+
+      - name: Resolve RStudio .dmg URL
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+        run: |
+          URL="$INSTALLER_URL"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
+            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.link')
+            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.filename')
+            echo "Auto-resolved latest macos daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "$URL")
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+      - name: Download RStudio .dmg
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "${{ steps.resolve.outputs.filename }}" \
+            "${{ steps.resolve.outputs.url }}"
+
+      - name: Verify SHA-256
+        if: steps.resolve.outputs.sha256 != ''
+        run: |
+          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
+            | shasum -a 256 -c -
+
+      - name: Install RStudio
+        run: |
+          MOUNT=$(hdiutil attach -nobrowse -readonly "${{ steps.resolve.outputs.filename }}" | grep -oE '/Volumes/.*' | tail -1)
+          if [ -z "$MOUNT" ]; then
+            echo "ERROR: failed to resolve mount path from hdiutil" >&2
+            exit 1
+          fi
+          echo "Mounted at: $MOUNT"
+          sudo cp -R "$MOUNT/RStudio.app" /Applications/
+          hdiutil detach "$MOUNT"
+          sudo xattr -cr /Applications/RStudio.app
+          ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
+
+      - name: Restore R library cache
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        id: r-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-r-${{ inputs.r_version }}-
+
+      - name: Install R packages from DESCRIPTION
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        run: |
+          Rscript -e '
+            options(repos = c(P3M = "https://packagemanager.posit.co/cran/latest"))
+            if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
+            pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
+          '
+
+      - name: Save R library cache
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != '' && steps.r-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+
+      - name: Install npm dependencies
+        working-directory: e2e/rstudio
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e/rstudio
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: desktop
+          PW_PROJECT_NAME: ${{ inputs.project }}
+          PW_GREP: ${{ inputs.grep }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+        run: |
+          ARGS=()
+          if [ -n "$PW_TEST_SELECTOR" ]; then
+            set -f
+            ARGS+=($PW_TEST_SELECTOR)
+            set +f
+          fi
+          ARGS+=(--project "$PW_PROJECT_NAME")
+          if [ -n "$PW_GREP" ]; then
+            ARGS+=(--grep "$PW_GREP")
+          fi
+          npx playwright test "${ARGS[@]}"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore

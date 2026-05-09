@@ -28,9 +28,9 @@
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRuntime.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
-#include <r/RCntxtUtils.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -50,9 +50,6 @@
 
 #include <Rembedded.h>
 
-extern "C" {
-RS_IMPORT SA_TYPE SaveAction;
-}
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -139,7 +136,7 @@ SA_TYPE saveAsk()
    }
    catch(JumpToTopException)
    {
-      Rf_jump_to_toplevel();
+      Rf_onintr();
    }
 
    // keep compiler happy
@@ -171,9 +168,9 @@ bool consoleInputHook(const std::string& prompt,
       return true;
 
    // check for user quit invocation
-    boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
-    boost::smatch match;
-    if (regex_utils::match(input, match, re))
+   boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
+   boost::smatch match;
+   if (regex_utils::match(input, match, re))
    {
       if (!s_callbacks.handleUnsavedChanges())
       {
@@ -274,6 +271,71 @@ int RReadConsole(const char *pmt,
       // capture the prompt for later manipulation
       std::string prompt(pmt);
 
+      // track browser state based on the prompt (Browse[N]> ).
+      // only update on REPL prompts (hist == 1); sub-prompts from
+      // readline(), scan(), etc. (hist == 0) should not clear
+      // browser state while the debugger is still on the stack.
+      static const boost::regex reBrowsePrompt("Browse\\[\\d+\\]> ");
+      bool browsing = regex_utils::match(prompt, reBrowsePrompt);
+
+      // track whether we're at the top-level REPL prompt.
+      // cleared before returning input to R (see below).
+      // only REPL prompts use hist == 1; readline(), scan(), etc. use 0.
+      // continuation prompts (typically "+ ") also use hist == 1, but they
+      // indicate that R is mid-parse on a previous expression -- the
+      // underlying REPL (browser or top-level) has not changed, so the
+      // browser-active flag must be preserved across them. In particular,
+      // calling setBrowserActive(false) on a continuation prompt while
+      // inside a browser would clear the captured browser environment and
+      // cause subsequent debugger introspection to fail.
+      //
+      // atTopLevelPrompt, on the other hand, must still be updated: R is
+      // at a REPL prompt waiting for input. Downstream components rely on
+      // this to distinguish REPL-idle state from mid-expression state;
+      // see isAtTopLevel() and its callers. We key it off the cached
+      // browser state since the continuation prompt itself doesn't
+      // reveal whether we're in a browser.
+      if (hist == 1)
+      {
+         std::string continuePrompt = r::options::getOption<std::string>("continue");
+         bool isContinuation = !continuePrompt.empty() && (prompt == continuePrompt);
+         if (isContinuation)
+         {
+            setAtTopLevelPrompt(!browserContextActive());
+         }
+         else
+         {
+            setAtTopLevelPrompt(!browsing);
+            setBrowserActive(browsing);
+         }
+      }
+      else
+      {
+         setAtTopLevelPrompt(false);
+      }
+
+      // When entering a browse prompt, inject a call to capture the
+      // current environment. This is evaluated by R's browser REPL
+      // in the browser's rho, so parent.frame() correctly returns
+      // the environment being debugged (even during promise forcing).
+      //
+      // On the first browse prompt we inject the capture call and
+      // return immediately (the client never sees this prompt).
+      // R evaluates the capture, then re-issues the browse prompt;
+      // s_captureInjected is still true so we skip injection and
+      // proceed normally. The next new browse prompt (after stepping)
+      // injects again.
+      static bool s_captureInjected = false;
+      if (browsing && !s_captureInjected)
+      {
+         s_captureInjected = true;
+         std::string cmd = ".rs.captureCurrentEnvironment()\n";
+         cmd.copy((char*)buf, cmd.size());
+         buf[cmd.size()] = '\0';
+         return 1;
+      }
+      s_captureInjected = false;
+
       // invoke one time initialization
       if (!s_initialized)
       {
@@ -335,9 +397,12 @@ int RReadConsole(const char *pmt,
          // handle EOF. note that we only want to return 0 here if we
          // know that the session is waiting for input; otherwise we'll
          // end up quitting R altogether! this effectively implies that
-         // EOF is a no-op at the top level, which seems to be fine
-         else if (consoleInput.isEof() &&
-                  r::context::globalContext().evaldepth() != 0)
+         // EOF is a no-op at the top level, which seems to be fine.
+         //
+         // note: the old check was 'evaldepth() != 0', which is equivalent
+         // here -- any time RReadConsole is called from a nested eval,
+         // the context stack will be non-toplevel.
+         else if (consoleInput.isEof() && !isAtTopLevel())
          {
             return 0;
          }
@@ -382,6 +447,8 @@ int RReadConsole(const char *pmt,
             buf[inputLen + 1] = '\0';
          }
 
+         // R is about to execute the input -- no longer at the prompt
+         setAtTopLevelPrompt(false);
          return 1;
       }
       else
@@ -691,13 +758,15 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
    {
       // set to default if requested
       if (saveact == SA_DEFAULT)
-         saveact = SaveAction;
+      {
+         saveact = r::runtime::getSaveAction();
+      }
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
       {
          if (imageIsDirty() || !utils::alwaysSaveHistory())
-            saveact = saveAsk(); // can Rf_jump_to_toplevel()
+            saveact = saveAsk(); // can Rf_onintr()
          else
             saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
       }
@@ -781,14 +850,14 @@ void setSaveAction(int saveAction)
    switch (saveAction)
    {
    case kSaveActionNoSave:
-      SaveAction = SA_NOSAVE;
+      r::runtime::setSaveAction(SA_NOSAVE);
       break;
    case kSaveActionSave:
-      SaveAction = SA_SAVE;
+      r::runtime::setSaveAction(SA_SAVE);
       break;
    case kSaveActionAsk:
    default:
-      SaveAction = SA_SAVEASK;
+      r::runtime::setSaveAction(SA_SAVEASK);
       break;
    }
 }

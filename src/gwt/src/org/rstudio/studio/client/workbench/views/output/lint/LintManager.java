@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -134,10 +134,10 @@ public class LintManager
       };
 
       // Background linting
-      releaseOnDismiss.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             if (!userPrefs_.backgroundDiagnostics().getValue())
                return;
@@ -316,21 +316,29 @@ public class LintManager
                   // lint yaml for rmd files and R chunks within rmd files
                   boolean isRmd = docDisplay_.getFileType().isRmd();
                   boolean isRmdRChunk = docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded) &&
-                        docDisplay_.getFileType().isR();                  
+                        docDisplay_.getFileType().isR();
+                  // Show R lint + spell check immediately so that a hung or failed
+                  // yaml-lint provider can't suppress source-mode spell check.
+                  showLint(context, lint);
+
                   if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
                   {
                      yamlLinter_.getLint(context.explicit, yamlLint -> {
+                        if (context.token.isInvalid())
+                           return;
+                        // The immediate showLint above already rendered R-lint
+                        // + spell and cleared any prior yaml render. Skipping
+                        // a second showLint here is required so we don't bump
+                        // showLintGeneration_ and drop that pass.
+                        if (yamlLint.length() == 0)
+                           return;
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
                         for (int i = 0; i < lint.length(); i++)
                            allLint.push(lint.get(i));
                         for (int i = 0; i < yamlLint.length(); i++)
                            allLint.push(yamlLint.get(i));
                         showLint(context, allLint);
-                     });               
-                  }
-                  else
-                  {
-                     showLint(context, lint);
+                     });
                   }
                }
 
@@ -359,20 +367,27 @@ public class LintManager
       if (docDisplay_.isPopupVisible())
          return;
 
-      JsArray<LintItem> finalLint;
+      // A single lint cycle can call showLint more than once (e.g. an
+      // immediate R-lint pass followed by a merged R + yaml-lint pass). Each
+      // pass kicks off an async spell-check request, so a stale callback
+      // could otherwise overwrite the latest render. Capture the generation
+      // here and drop the spell-check render if a newer pass has run.
+      final int generation = ++showLintGeneration_;
 
-      // Filter out items at the last cursor position, if the cursor hasn't moved.
-      if (context.excludeCurrentStatement && docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
+      // Always copy into a fresh array. The spell-check callback below
+      // appends to finalLint, and aliasing the caller's lint array would
+      // leak those spell items back into a subsequent yaml-merge pass and
+      // duplicate them on the next render.
+      JsArray<LintItem> finalLint = JsArray.createArray().cast();
+      boolean filterCursor = context.excludeCurrentStatement &&
+            docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition);
+      Position pos = context.cursorPosition;
+      for (int i = 0; i < lint.length(); i++)
       {
-         finalLint = JsArray.createArray().cast();
-         Position pos = context.cursorPosition;
-         for (int i = 0; i < lint.length(); i++)
-            if (!lint.get(i).asRange().contains(pos))
-               finalLint.push(lint.get(i));
-      }
-      else
-      {
-         finalLint = lint;
+         LintItem item = lint.get(i);
+         if (filterCursor && item.asRange().contains(pos))
+            continue;
+         finalLint.push(item);
       }
 
       if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
@@ -382,6 +397,11 @@ public class LintManager
             @Override
             public void onResponseReceived(JsArray<LintItem> response)
             {
+               if (context.token.isInvalid())
+                  return;
+               if (generation != showLintGeneration_)
+                  return;
+
                for (int i = 0; i < response.length(); i++)
                   finalLint.push(response.get(i));
 
@@ -467,6 +487,7 @@ public class LintManager
    private boolean explicit_;
    private boolean showMarkers_;
    private boolean excludeCurrentStatement_;
+   private int showLintGeneration_ = 0;
    
    private LintServerOperations server_;
    private UserPrefs userPrefs_;

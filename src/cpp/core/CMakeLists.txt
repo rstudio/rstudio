@@ -37,6 +37,7 @@ set(CORE_SOURCE_FILES
    FileUtils.cpp
    GitGraph.cpp
    HtmlUtils.cpp
+   Jwt.cpp
    Log.cpp
    LogOptions.cpp
    OneShotCommand.cpp
@@ -117,6 +118,7 @@ set(CORE_SOURCE_FILES
    system/ChildProcessSubprocPoll.cpp
    system/Crypto.cpp
    system/Environment.cpp
+   system/Locale.cpp
    system/Process.cpp
    system/ShellUtils.cpp
    system/System.cpp

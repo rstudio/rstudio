@@ -1500,9 +1500,51 @@ std::vector<FilePath> getLibPaths()
    return libPaths;
 }
 
+bool restoreWorkspaceEnabled()
+{
+   // session-level override (e.g. from rsession.conf or command line)
+   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
+      return false;
+   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
+      return true;
+
+   // project-level setting
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch (projContext.config().restoreWorkspace)
+      {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         break;
+      }
+   }
+
+   // fall back to user pref or environment file override
+   return prefs::userPrefs().loadWorkspace() ||
+          !options().initialEnvironmentFileOverride().isEmpty();
+}
+
 bool disablePackages()
 {
    return !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+}
+
+bool isPositAssistantEnabledByAdmin()
+{
+   return session::options().allowPositAssistant() &&
+          session::options().positAssistantEnabled() &&
+          core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+}
+
+bool isPositAssistantEnabled()
+{
+   return isPositAssistantEnabledByAdmin() &&
+          (prefs::userPrefs().assistant() != kAssistantNone ||
+           prefs::userPrefs().chatProvider() != kChatProviderNone);
 }
 
 // check if a package is installed
@@ -2847,6 +2889,7 @@ json::Value sourceMarkerJson(const SourceMarker& sourceMarker)
    obj["line"] = sourceMarker.line;
    obj["column"] = sourceMarker.column;
    obj["message"] = sourceMarker.message.text();
+   obj["message_is_html"] = sourceMarker.messageIsHtml;
    obj["log_path"] = "";
    obj["log_line"] = -1;
    obj["show_error_list"] = sourceMarker.showErrorList;

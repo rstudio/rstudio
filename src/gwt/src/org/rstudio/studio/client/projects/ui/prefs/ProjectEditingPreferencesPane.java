@@ -68,7 +68,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       numSpacesForTab_ = new NumericValueWidget(constants_.tabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH);
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
-      numSpacesForTab_.setWidth("36px");
+      numSpacesForTab_.setWidth("48px");
       numSpacesForTab_.getElement().getStyle().setMarginLeft(20, Unit.PX);
       add(numSpacesForTab_);
       
@@ -147,6 +147,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       add(encoding_);
 
+      wrapWithPanel("project_editing_prefs");
    }
 
    @Override

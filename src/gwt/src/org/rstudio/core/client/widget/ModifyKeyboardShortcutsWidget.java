@@ -230,6 +230,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public ModifyKeyboardShortcutsWidget(String filterText)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initialFilterText_ = filterText;

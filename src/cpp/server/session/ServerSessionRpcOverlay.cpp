@@ -29,7 +29,8 @@ namespace overlay {
 typedef boost::function<void(
    const auth::SecureAsyncUriHandlerFunction&,
    http::AsyncUriHandlerFunction,
-   bool,
+   bool /*fallbackAllowed*/,
+   bool /*requireAdminAuth*/,
    boost::shared_ptr<core::http::AsyncConnection>)> ValidationHandler;
 
 ValidationHandler s_validationHandler;

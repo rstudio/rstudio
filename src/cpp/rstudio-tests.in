@@ -181,10 +181,23 @@ else
     RSTUDIO_SESSION_BIN="rsession"
 fi
 
-# set R environment variables needed by rsession tests
-export R_HOME=$(R RHOME)
-export R_DOC_DIR=$(R --vanilla -s -e "cat(paste(R.home('doc'), sep=':'))")
-export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
+# marker for rsession to detect that --run-tests was launched via this helper
+export RSTUDIO_TESTS_HELPER=1
+
+# set R environment variables needed by rsession tests (from CMake configuration)
+export R_HOME="@LIBR_HOME@"
+export R_DOC_DIR="@LIBR_DOC_DIR@"
+export R_LIB_DIR="@LIBR_LIB_DIR@"
+
+# ensure the configured R is found first in PATH
+export PATH="@LIBR_BIN_DIR@:${PATH}"
+
+# ensure R shared libraries can be found at runtime
+if [ "$(uname)" = "Darwin" ]; then
+   export DYLD_FALLBACK_LIBRARY_PATH="${R_LIB_DIR}:${DYLD_FALLBACK_LIBRARY_PATH}"
+else
+   export LD_LIBRARY_PATH="${R_LIB_DIR}:${LD_LIBRARY_PATH}"
+fi
 
 # Hack: on RHEL9 (docker), the reported R_DOC_DIR doesn't exist which triggers
 # test failures; create the folder if missing
@@ -202,10 +215,10 @@ if has-scope "core"; then
    # Run only the tests that don't require root 
    runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN}" 
    
-   # Invoke the *DropPrivTests separately because they must run as root 
-   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs 
-   # Skip these tests in CI for MacOS builds 
-   if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then 
+   # Invoke the *DropPrivTests separately because they must run as root
+   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs
+   # Only run these when already running as root (skip on local dev machines to avoid sudo prompts)
+   if [ "$(id -u)" = "0" ]; then
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesPrimaryGroup' --gtest_also_run_disabled_tests"
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesAlternateGroup' --gtest_also_run_disabled_tests"
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivChecksGroupMembership' --gtest_also_run_disabled_tests"

@@ -656,6 +656,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String foldStyleEnum_begin_and_end();
 
    /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   @DefaultStringValue("Hierarchical section folding")
+   String hierarchicalSectionFoldingTitle();
+   @DefaultStringValue("Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).")
+   String hierarchicalSectionFoldingDescription();
+
+   /**
     * Whether to automatically save scripts before executing them.
     */
    @DefaultStringValue("Save R scripts before sourcing")
@@ -1448,6 +1456,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String globalThemeDescription();
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   @DefaultStringValue("Use dark theme modal dialogs")
+   String useDarkThemeModalDialogsTitle();
+   @DefaultStringValue("Whether modal dialogs should use dark styling when a dark editor theme is active.")
+   String useDarkThemeModalDialogsDescription();
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    @DefaultStringValue("Ignore whitespace in VCS diffs")
@@ -1730,6 +1746,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxCellSizeTitle();
    @DefaultStringValue("The maximum number of characters to show in a data viewer cell.")
    String dataViewerMaxCellSizeDescription();
+
+   /**
+    * Whether the Summary side panel is shown by default when opening the data viewer.
+    */
+   @DefaultStringValue("Show data viewer summary panel by default")
+   String dataViewerShowSummaryTitle();
+   @DefaultStringValue("Whether the Summary side panel is shown by default when opening the data viewer.")
+   String dataViewerShowSummaryDescription();
 
    /**
     * Support accessibility aids such as screen readers.
@@ -2090,11 +2114,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String pythonProjectEnvironmentAutomaticActivateDescription();
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    @DefaultStringValue("Check values in the Environment pane for null external pointers")
    String checkNullExternalPointersTitle();
-   @DefaultStringValue("When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.")
+   @DefaultStringValue("(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.")
    String checkNullExternalPointersDescription();
 
    /**
@@ -2236,12 +2260,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantNesAutoshowDescription();
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
-   @DefaultStringValue("Display account and billing messages from AI assistant")
+   @DefaultStringValue("Display account and billing messages from Posit Assistant")
    String assistantShowMessagesTitle();
-   @DefaultStringValue("When enabled, RStudio will show messages from the Posit AI assistant in a message box.")
+   @DefaultStringValue("When enabled, RStudio will show messages from the Posit Assistant in a message box.")
    String assistantShowMessagesDescription();
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   @DefaultStringValue("Show Posit Assistant button in toolbar")
+   String assistantToolbarButtonVisibleTitle();
+   @DefaultStringValue("When enabled, the Posit Assistant button is displayed in the main toolbar.")
+   String assistantToolbarButtonVisibleDescription();
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

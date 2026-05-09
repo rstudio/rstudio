@@ -568,6 +568,12 @@
             "title": "Fold style in editor",
             "description": "The style of folding to use."
         },
+        "hierarchical_section_folding": {
+            "type": "boolean",
+            "default": true,
+            "title": "Hierarchical section folding",
+            "description": "Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections)."
+        },
         "save_before_sourcing": {
             "type": "boolean",
             "default": true,
@@ -1196,6 +1202,12 @@
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
+        "use_dark_theme_modal_dialogs": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use dark theme modal dialogs",
+            "description": "Whether modal dialogs should use dark styling when a dark editor theme is active."
+        },
         "git_diff_ignore_whitespace": {
             "type": "boolean",
             "default": false,
@@ -1411,7 +1423,7 @@
         },
         "data_viewer_max_columns": {
             "type": "integer",
-            "default": 50,
+            "default": 200,
             "title": "Maximum number of columns in data viewer",
             "description": "The maximum number of columns to show at once in the data viewer."
         },
@@ -1420,6 +1432,12 @@
             "default": 50,
             "title": "Maximum number of character in data viewer cells",
             "description": "The maximum number of characters to show in a data viewer cell."
+        },
+        "data_viewer_show_summary": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show data viewer summary panel by default",
+            "description": "Whether the Summary side panel is shown by default when opening the data viewer."
         },
         "enable_screen_reader": {
             "type": "boolean",
@@ -1728,7 +1746,7 @@
             "default": true
         },
         "check_null_external_pointers": {
-            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "description": "(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.",
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
@@ -1842,8 +1860,14 @@
         "assistant_show_messages": {
             "type": "boolean",
             "default": true,
-            "title": "Display account and billing messages from AI assistant",
-            "description": "When enabled, RStudio will show messages from the Posit AI assistant in a message box."
+            "title": "Display account and billing messages from Posit Assistant",
+            "description": "When enabled, RStudio will show messages from the Posit Assistant in a message box."
+        },
+        "assistant_toolbar_button_visible": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show Posit Assistant button in toolbar",
+            "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
         },
         "copilot_enabled": {
             "type": "boolean",

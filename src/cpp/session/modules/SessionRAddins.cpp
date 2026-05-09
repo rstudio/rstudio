@@ -502,7 +502,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    }
    
    SEXP fnSEXP = r::sexp::findFunction(cmdName, pkgName);
-   if (fnSEXP == R_UnboundValue)
+   if (fnSEXP == nullptr)
    {
       std::string message =
             "no function '" + cmdName + "' found in package '" + pkgName + "'";

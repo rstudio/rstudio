@@ -159,6 +159,7 @@ namespace prefs {
 #define kFoldStyle "fold_style"
 #define kFoldStyleBeginOnly "begin-only"
 #define kFoldStyleBeginAndEnd "begin-and-end"
+#define kHierarchicalSectionFolding "hierarchical_section_folding"
 #define kSaveBeforeSourcing "save_before_sourcing"
 #define kConsoleSoftWrap "console_soft_wrap"
 #define kSyntaxColorConsole "syntax_color_console"
@@ -308,6 +309,7 @@ namespace prefs {
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
+#define kUseDarkThemeModalDialogs "use_dark_theme_modal_dialogs"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
@@ -352,6 +354,7 @@ namespace prefs {
 #define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kDataViewerMaxCellSize "data_viewer_max_cell_size"
+#define kDataViewerShowSummary "data_viewer_show_summary"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -459,6 +462,7 @@ namespace prefs {
 #define kAssistantNesEnabled "assistant_nes_enabled"
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
+#define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -939,6 +943,12 @@ public:
     */
    std::string foldStyle();
    core::Error setFoldStyle(std::string val);
+
+   /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   bool hierarchicalSectionFolding();
+   core::Error setHierarchicalSectionFolding(bool val);
 
    /**
     * Whether to automatically save scripts before executing them.
@@ -1523,6 +1533,12 @@ public:
    core::Error setGlobalTheme(std::string val);
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   bool useDarkThemeModalDialogs();
+   core::Error setUseDarkThemeModalDialogs(bool val);
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    bool gitDiffIgnoreWhitespace();
@@ -1731,6 +1747,12 @@ public:
     */
    int dataViewerMaxCellSize();
    core::Error setDataViewerMaxCellSize(int val);
+
+   /**
+    * Whether the Summary side panel is shown by default when opening the data viewer.
+    */
+   bool dataViewerShowSummary();
+   core::Error setDataViewerShowSummary(bool val);
 
    /**
     * Support accessibility aids such as screen readers.
@@ -1997,7 +2019,7 @@ public:
    core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    bool checkNullExternalPointers();
    core::Error setCheckNullExternalPointers(bool val);
@@ -2093,10 +2115,16 @@ public:
    core::Error setAssistantNesAutoshow(bool val);
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
    bool assistantShowMessages();
    core::Error setAssistantShowMessages(bool val);
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   bool assistantToolbarButtonVisible();
+   core::Error setAssistantToolbarButtonVisible(bool val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

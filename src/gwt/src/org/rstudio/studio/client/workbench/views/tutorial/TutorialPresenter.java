@@ -23,7 +23,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
@@ -303,10 +303,10 @@ public class TutorialPresenter
    
    private void tutorialStop(String url)
    {
-      server_.tutorialStop(url, new ServerRequestCallback<Void>()
+      server_.tutorialStop(url, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             onTutorialStopped();
          }

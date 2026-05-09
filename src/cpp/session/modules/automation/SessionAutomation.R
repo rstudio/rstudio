@@ -57,8 +57,8 @@
 {
    packages <- c(
       "devtools", "dplyr", "here", "httr", "later", "processx",
-      "ps", "reticulate", "styler", "testthat", "usethis",
-      "websocket", "withr", "xml2"
+      "ps", "reticulate", "rstudioapi", "stringr", "styler",
+      "testthat", "usethis", "websocket", "withr", "xml2"
    )
    
    if (!requireNamespace("renv", quietly = TRUE))
@@ -73,8 +73,8 @@
    available <- available.packages()[, "Version"]
 
    outdated <- vapply(packages, function(pkg) {
-      ours   <- package_version(.rs.nullCoalesce(installed[pkg], "0.0.0"))
-      theirs <- package_version(.rs.nullCoalesce(available[pkg], "0.0.0"))
+      ours   <- package_version(if (is.na(installed[pkg])) "0.0.0" else installed[pkg])
+      theirs <- package_version(if (is.na(available[pkg])) "0.0.0" else available[pkg])
       ours < theirs
    }, logical(1))
 
@@ -227,6 +227,54 @@
    
 })
 
+.rs.addFunction("automation.initializeX11", function(envVars)
+{
+   # Ensure DISPLAY is set. Only override if not already present.
+   if (is.null(envVars[["DISPLAY"]]) || !nzchar(envVars[["DISPLAY"]]))
+   {
+      displays <- list.files("/tmp/.X11-unix")
+      if (length(displays))
+      {
+         display <- chartr("X", ":", displays[[1L]])
+         envVars[["DISPLAY"]] <- display
+      }
+   }
+
+   # Ensure XAUTHORITY is set for X11 authentication.
+   if (is.null(envVars[["XAUTHORITY"]]) || !nzchar(envVars[["XAUTHORITY"]]))
+   {
+      xauth <- Sys.getenv("XAUTHORITY", unset = "")
+
+      # If not in environment, search common locations
+      if (!nzchar(xauth))
+      {
+         # Check ~/.Xauthority
+         homeXauth <- path.expand("~/.Xauthority")
+         if (file.exists(homeXauth))
+         {
+            xauth <- homeXauth
+         }
+         else
+         {
+            # Check for Mutter/Xwayland auth files (GNOME on Wayland)
+            uid <- system("id -u", intern = TRUE)
+            runUserDir <- file.path("/run/user", uid)
+            if (dir.exists(runUserDir))
+            {
+               mutterFiles <- list.files(runUserDir, pattern = "mutter-Xwaylandauth", full.names = TRUE, all.files = TRUE)
+               if (length(mutterFiles) > 0)
+                  xauth <- mutterFiles[[1L]]
+            }
+         }
+      }
+
+      if (nzchar(xauth) && file.exists(xauth))
+         envVars[["XAUTHORITY"]] <- xauth
+   }
+
+   envVars
+})
+
 .rs.addFunction("automation.applicationPathServer", function()
 {
    # Hard-coded path for macOS.
@@ -236,7 +284,7 @@
    # Hard-coded path for Windows.
    if (.rs.platform.isWindows)
       return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
-   
+
    # Otherwise, look for compatible browsers on the PATH.
    browsers <- c("chromium-browser", "chromium", "google-chrome")
    for (browser in browsers)
@@ -279,31 +327,62 @@
       proc <- procs[i, ]
       if (identical(proc$status, "zombie"))
          next
-      
-      conns <- ps::ps_connections(proc$ps_handle[[1L]])
-      if (8788L %in% conns$lport)
+
+      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
+      if (!isTRUE(8788L %in% conns$lport))
+         next
+
+      handle <- ps::ps_handle(pid = proc$pid)
+
+      # ps_kill() on Unix sends SIGTERM, waits up to `grace` ms, then
+      # escalates to SIGKILL. Use a generous grace period so rserver
+      # has a chance to do its own cleanup. After ps_kill returns we
+      # still need to wait for the kernel to reap the process so the
+      # listening socket on port 8788 is released before the caller
+      # binds a new rserver to the same port.
+      #
+      # Tolerate the benign race where the process exits between
+      # discovery and kill: older `ps` versions raise no_such_process
+      # in that case. Real failures (e.g., EPERM) still propagate so
+      # we don't silently let the caller race a still-live rserver.
+      tryCatch(
+         ps::ps_kill(handle, grace = 2000),
+         no_such_process = function(cnd) invisible(NULL)
+      )
+
+      deadline <- Sys.time() + 5
+      while (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))) &&
+             Sys.time() < deadline)
       {
-         handle <- ps::ps_handle(pid = proc$pid)
-         return(ps::ps_kill(handle))
+         Sys.sleep(0.1)
       }
+
+      # Fail closed if the process didn't actually exit. Reporting
+      # success here would let the caller race a still-listening
+      # rserver and mask whatever kept it alive.
+      if (isTRUE(.rs.tryCatch(ps::ps_is_running(handle))))
+      {
+         stop(sprintf(
+            "Failed to terminate existing rserver (pid %d) on port 8788 within 5s.",
+            proc$pid
+         ))
+      }
+
+      return(invisible(TRUE))
    }
+   invisible(FALSE)
 })
 
 .rs.addFunction("automation.ensureRunningServerInstance", function(serverDataDir)
 {
-   # Check and see if we already have an rserver instance listening.
-   procs <- subset(ps::ps(), name == "rserver")
-   for (i in seq_len(nrow(procs)))
-   {
-      proc <- procs[i, ]
-      if (identical(proc$status, "zombie"))
-         next
-      
-      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
-      if (8788L %in% conns$lport)
-         return(TRUE)
-   }
-   
+   # Always kill any existing automation rserver listening on 8788 and
+   # start a fresh one. Reusing an existing instance silently masks code
+   # changes (so tests run against a stale binary) and stale instances
+   # accumulate across runs when the cleanup finalizer doesn't fire
+   # (Ctrl+C, crashes, terminal closes). The kill is a no-op if nothing
+   # is listening.
+   .rs.automation.killAutomationServer()
+
    # Get the path to the rserver executable.
    parentHandle <- ps::ps_parent()
    parentEnv <- ps::ps_environ(parentHandle)
@@ -480,7 +559,7 @@
       # recommended flags for automation in Docker environments
       if (.rs.platform.isLinux) c(
          "--disable-dev-shm-usage",
-         "--renderer-process-limit=1"
+         "--no-sandbox"
       ),
 
       if (mode == "desktop") c(
@@ -498,26 +577,26 @@
 
    )
    
-   # On Linux, try to make sure we're using an existing display.
+   # On Linux, ensure DISPLAY and XAUTHORITY are set for X11 access.
    if (.rs.platform.isLinux)
-   {
-      displays <- list.files("/tmp/.X11-unix")
-      if (length(displays))
-      {
-         display <- chartr("X", ":", displays[[1L]])
-         envVars[["DISPLAY"]] <- display
-      }
-   }
-   
+      envVars <- .rs.automation.initializeX11(envVars)
+
+   # Convert envVars to named character vector for processx
+   # Remove NULL entries and convert to character
+   envVars <- envVars[!vapply(envVars, is.null, logical(1))]
+   envVarsVec <- unlist(lapply(envVars, as.character))
+
    # Start up RStudio (or Chrome in "server" mode).
-   process <- withr::with_envvar(envVars, {
-      .rs.alog('
-         Launching new automation host.
-         - appPath: %s
-         - args:    %s
-      ', appPath, paste(args, collapse = " "))
-      processx::process$new(appPath, args, stdout = "|", stderr = "|")
-   })
+   .rs.alog('
+      Launching new automation host.
+      - appPath: %s
+      - args:    %s
+      - DISPLAY: %s
+      - XAUTHORITY: %s
+   ', appPath, paste(args, collapse = " "),
+      envVarsVec["DISPLAY"], envVarsVec["XAUTHORITY"])
+
+   process <- processx::process$new(appPath, args, env = envVarsVec, stdout = "|", stderr = "|")
    
    .rs.alog("Waiting for application to start.")
    while (TRUE)
@@ -527,12 +606,23 @@
       if (status %in% c("running", "sleeping"))
          break
       
-      # Check for an unexpected exit.  
+      # Check for an unexpected exit.
       status <- process$get_exit_status()
       if (!is.null(status))
       {
+         # Capture stderr/stdout to help diagnose the failure
+         stderr <- process$read_error()
+         stdout <- process$read_output()
+
          fmt <- "RStudio agent exited unexpectedly [error code %i]"
-         stop(sprintf(fmt, status))
+         msg <- sprintf(fmt, status)
+
+         if (nzchar(stderr))
+            msg <- paste0(msg, "\nstderr: ", stderr)
+         if (nzchar(stdout))
+            msg <- paste0(msg, "\nstdout: ", stdout)
+
+         stop(msg)
       }
       
       Sys.sleep(0.1)
@@ -540,9 +630,25 @@
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
+   processExited <- FALSE
    .rs.alog("Waiting for Chromium debug server to start.")
    .rs.waitUntil("Chromium debug server available", function()
    {
+      # Check if the browser process exited (common with snap wrapper scripts)
+      if (!processExited && !process$is_alive())
+      {
+         processExited <<- TRUE
+         exitStatus <- process$get_exit_status()
+         stderr <- process$read_error()
+         stdout <- process$read_output()
+
+         .rs.alog("Browser launcher process exited (exit code: %s)", exitStatus)
+         if (nzchar(stderr))
+            .rs.alog("stderr: %s", stderr)
+         if (nzchar(stdout))
+            .rs.alog("stdout: %s", stdout)
+      }
+
       response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
    })
@@ -642,10 +748,24 @@
    if (inherits(targets, "error"))
       return(NULL)
    
-   # Check for the RStudio window.
-   currentTarget <- Find(function(target) target$title == "RStudio", targets$targetInfos)
-   if (is.null(currentTarget))
+   # Find a page target. The title is typically "RStudio" but is prefixed
+   # when a project is open (e.g. "myproject - RStudio").
+   pageTargets <- Filter(function(target) {
+      identical(target$type, "page")
+   }, targets$targetInfos)
+   
+   if (length(pageTargets) == 0L)
       return(NULL)
+   
+   currentTarget <- Find(function(target) {
+      grepl("RStudio", target$title, fixed = TRUE)
+   }, pageTargets)
+   
+   if (is.null(currentTarget))
+      currentTarget <- pageTargets[[1L]]
+   
+   fmt <- "Attaching to target [title=%s, url=%s]."
+   .rs.alog(fmt, currentTarget$title, currentTarget$url)
    
    # Attach to this target.
    currentTargetId <- currentTarget$targetId
@@ -678,13 +798,24 @@
          return(NULL)
    }
    
-   # Find a page.
-   currentTarget <- Find(function(target) {
-      target$type == "page" && target$title == "RStudio Server"
+   # Find a page target. The title is typically "RStudio Server" but is
+   # prefixed when a project is open (e.g. "myproject - RStudio Server").
+   pageTargets <- Filter(function(target) {
+      identical(target$type, "page")
    }, targets$targetInfos)
    
-   if (is.null(currentTarget))
+   if (length(pageTargets) == 0L)
       return(NULL)
+   
+   currentTarget <- Find(function(target) {
+      grepl("RStudio Server", target$title, fixed = TRUE)
+   }, pageTargets)
+   
+   if (is.null(currentTarget))
+      currentTarget <- pageTargets[[1L]]
+   
+   fmt <- "Attaching to target [title=%s, url=%s]."
+   .rs.alog(fmt, currentTarget$title, currentTarget$url)
    
    # Attach to this target.
    currentTargetId <- currentTarget$targetId
@@ -741,17 +872,34 @@
       RSTUDIO_AUTOMATION_REUSE_REMOTE = "TRUE"
    )
    
-   # Figure out where we're writing our test results.
-   reportFile <- .rs.nullCoalesce(reportFile, {
-      tempfile("junit-", fileext = ".xml")
-   })
-   
+   # Figure out where we're writing our test results. Default to a fixed
+   # path under the OS temp directory so the report is discoverable
+   # without having to grep per-session tempdirs. Override via
+   # RSTUDIO_AUTOMATION_REPORT_DIR or the --automation-report-file option.
+   defaultReportDir <- if (.rs.platform.isWindows)
+   {
+      file.path(Sys.getenv("TEMP", unset = Sys.getenv("TMP", unset = "C:/Temp")),
+                "rstudio-automation")
+   }
+   else
+   {
+      "/tmp/rstudio-automation"
+   }
+   reportDir <- Sys.getenv("RSTUDIO_AUTOMATION_REPORT_DIR",
+                           unset = defaultReportDir)
+   reportFile <- .rs.nullCoalesce(reportFile, file.path(reportDir, "results.xml"))
+   # Place the failure log next to the resolved report file so the two
+   # are always discovered together, even when --automation-report-file
+   # points outside the default report directory.
+   failuresFile <- file.path(dirname(reportFile), "failures.log")
+   .rs.ensureDirectory(dirname(reportFile))
+
    # Create a junit-style reporter, for Jenkins.
    junitReporter <- testthat::JunitReporter$new(file = reportFile)
-   
+
    # Create a regular progress reporter.
    progressReporter <- testthat::ProgressReporter$new()
-   
+
    # Use a custom reporter for screenshot handling.
    ScreenshotReporter <- R6::R6Class(
       classname = "RStudioScreenshotReporter",
@@ -763,15 +911,62 @@
          }
       )
    )
-   
+
    screenshotReporter <- ScreenshotReporter$new()
-   
+
+   # Reporter that writes test failures to a plain-text log file via
+   # file(). The standard reporters use cat() which goes to R's console
+   # and is captured by rsession (so the lines never reach the terminal
+   # or a redirectable file descriptor); writing through file() bypasses
+   # that capture so the failures end up on disk for inspection after
+   # the run.
+   FailureLogReporter <- R6::R6Class(
+      classname = "RStudioFailureLogReporter",
+      inherit = testthat::Reporter,
+      public = list(
+         con = NULL,
+         currentContext = NULL,
+         currentTest = NULL,
+         initialize = function(file) {
+            self$con <- base::file(file, open = "w")
+         },
+         start_context = function(context) {
+            self$currentContext <- context
+         },
+         start_test = function(context, test) {
+            self$currentTest <- test
+         },
+         add_result = function(context, test, result) {
+            if (inherits(result, c("expectation_failure", "expectation_error")))
+            {
+               ref <- if (!is.null(result$srcref))
+                  paste(format(result$srcref), collapse = " ")
+               else
+                  "<unknown>"
+               writeLines(c(
+                  sprintf("[FAIL] %s :: %s", self$currentContext, self$currentTest),
+                  sprintf("  at %s", ref),
+                  paste0("  ", strsplit(format(result), "\n", fixed = TRUE)[[1]]),
+                  ""
+               ), con = self$con)
+               flush(self$con)
+            }
+         },
+         end_reporter = function() {
+            close(self$con)
+         }
+      )
+   )
+
+   failureLogReporter <- FailureLogReporter$new(file = failuresFile)
+
    # Combine with the default reporter.
    multiReporter <- testthat::MultiReporter$new(
       reporters = list(
          progressReporter,
          junitReporter,
-         screenshotReporter
+         screenshotReporter,
+         failureLogReporter
       )
    )
    
@@ -784,7 +979,11 @@
    invisible(.rs.api.executeCommand("consoleClear"))
    writeLines(c("", "==> Running RStudio automation tests", ""))
    
-   # Run tests.
+   # Run tests. RSTUDIO_AUTOMATION_FILTER is set on this rsession by
+   # rserver in sessionProcessConfig() (ServerSessionManager.cpp), sourced
+   # from --automation-filter or rserver's inherited env. The rsession
+   # environment is built explicitly, so exporting this var in the shell
+   # without going through rserver has no effect here.
    filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
    testthat::test_dir(
       path = "testthat",
@@ -805,7 +1004,13 @@
       writeLines(stripped, con = reportFile)
    }
 
-   writeLines(c("", "==> Finishing running RStudio automation", ""))
+   writeLines(c(
+      "",
+      "==> Finishing running RStudio automation",
+      sprintf("    JUnit report:  %s", reportFile),
+      sprintf("    Failure log:   %s", failuresFile),
+      ""
+   ))
 
    # Quit when we're done.
    quit(save = "no", status = 0L)

@@ -31,7 +31,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -467,7 +467,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    {
       if (locator_.isActive())
       {
-         server_.locatorCompleted(null, new SimpleRequestCallback<Void>() {
+         server_.locatorCompleted(null, new SimpleRequestCallback<VoidResponse>() {
             @Override
             public void onError(ServerError error)
             {
@@ -489,7 +489,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
          view_.setProgress(true);
    }
 
-   private class PlotRequestCallback extends ServerRequestCallback<Void>
+   private class PlotRequestCallback extends ServerRequestCallback<VoidResponse>
    {
       public PlotRequestCallback()
       {
@@ -502,7 +502,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       }
 
       @Override
-      public void onResponseReceived(Void response)
+      public void onResponseReceived(VoidResponse response)
       {
          // we don't clear the progress until the GraphicsOutput
          // event is received (enables us to wait for rendering
@@ -560,7 +560,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
          return view_.getPlotFrameSize();
    }
 
-   private class ManipulatorRequestCallback extends ServerRequestCallback<Void>
+   private class ManipulatorRequestCallback extends ServerRequestCallback<VoidResponse>
    {
       public ManipulatorRequestCallback()
       {
@@ -568,7 +568,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       }
 
       @Override
-      public void onResponseReceived(Void response)
+      public void onResponseReceived(VoidResponse response)
       {
          // we don't clear the progress until the GraphicsOutput
          // event is received (enables us to wait for rendering

@@ -5,6 +5,9 @@
              ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
              ui:generateLocales="default">
     <ui:style type="org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummary.Style">
+        @external rstudio-themes-dark;
+        @external rstudio-theme-aware-dialog;
+
         .pieLabel {
             font-size: 14pt;
             font-weight: bold;
@@ -64,6 +67,14 @@
 
         .pieLegendBox {
             width: 100%;
+        }
+
+        .rstudio-themes-dark.rstudio-theme-aware-dialog .stats thead th {
+            border-bottom-color: rgb(78, 92, 104);
+        }
+
+        .rstudio-themes-dark.rstudio-theme-aware-dialog .swatch {
+            border-color: rgb(78, 92, 104);
         }
     </ui:style>
     <g:HorizontalPanel>

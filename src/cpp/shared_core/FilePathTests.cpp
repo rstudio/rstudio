@@ -454,6 +454,30 @@ TEST(SharedCoreTest, ResolveAliasedPath)
    EXPECT_EQ(resolved1, resolved2);
 }
 
+TEST(SharedCoreTest, ResolveAliasedPathWithEnv)
+{
+   std::string userName = "testuser";
+   FilePath userHome("/mnt/home/testuser");
+
+   FilePath resolved = FilePath::resolveAliasedPath("$HOME", userHome, userName);
+   EXPECT_EQ(userHome, resolved);
+
+   resolved = FilePath::resolveAliasedPath("${HOME}", userHome, userName);
+   EXPECT_EQ(userHome, resolved);
+
+   resolved = FilePath::resolveAliasedPath("$HOME/projects", userHome, userName);
+   EXPECT_EQ(userHome.completeChildPath("projects"), resolved);
+
+   resolved = FilePath::resolveAliasedPath("${HOME}/projects", userHome, userName);
+   EXPECT_EQ(userHome.completeChildPath("projects"), resolved);
+
+   resolved = FilePath::resolveAliasedPath("/data/$USER/projects", userHome, userName);
+   EXPECT_EQ(FilePath("/data/testuser/projects"), resolved);
+
+   resolved = FilePath::resolveAliasedPath("/data/${USER}/projects", userHome, userName);
+   EXPECT_EQ(FilePath("/data/testuser/projects"), resolved);
+}
+
 TEST(SharedCoreTest, CreateAliasedPath)
 {
    FilePath userHome = createPath("/home/testuser");

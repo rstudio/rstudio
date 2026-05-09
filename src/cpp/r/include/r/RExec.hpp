@@ -140,7 +140,7 @@ public:
    
    template <typename... T>
    explicit RFunction(const std::string& name, const T&... params)
-      : functionSEXP_(R_UnboundValue)
+      : functionSEXP_(nullptr)
    {
       commonInit(name);
       initParams(params...);
@@ -157,6 +157,10 @@ public:
       addParam(std::string(), paramSEXP);
       return *this;
    }
+
+   // wraps paramSEXP in quote() to prevent evaluation during argument passing
+   RFunction& addQuotedParam(SEXP paramSEXP);
+   RFunction& addQuotedParam(const std::string& name, SEXP paramSEXP);
    
    template <typename T>
    RFunction& addParam(const T& param)

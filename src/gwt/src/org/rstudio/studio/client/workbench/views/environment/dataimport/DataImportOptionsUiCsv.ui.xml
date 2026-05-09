@@ -7,6 +7,11 @@
     <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
+        @external rstudio-themes-dark;
+        @external rstudio-theme-aware-dialog;
+        @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+        @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
         .mainPanel {
             display: -ms-flexbox;
             display: -webkit-flex;
@@ -93,6 +98,11 @@
             text-align: right;
             padding-left: 5px;
             padding-right: 5px;
+        }
+
+        .rstudio-themes-dark.rstudio-theme-aware-dialog .optionsBlock {
+            border-color: THEME_DARKGREY_BORDER;
+            background-color: THEME_DARKGREY_INACTIVE;
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">

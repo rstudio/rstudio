@@ -117,68 +117,7 @@ void initializeHttpConnectionListener()
    {
       if (session::options().standalone())
       {
-         std::string wwwAddress = options.wwwAddress();
-
-         // if we are supposed to bind to the all address but there are no IPv4 addresses,
-         // simply bind to all ipv6 interfaces. we prefer non-loopback ipv4 or non-link local ipv6
-         if (wwwAddress == "0.0.0.0")
-         {
-            std::vector<core::system::posix::IpAddress> addrs;
-            Error error = core::system::ipAddresses(&addrs, true);
-            if (!error)
-            {
-               bool hasNonLocalIpv4 = false;
-               bool hasNonLocalIpv6 = false;
-               bool hasIpv4 = false;
-               bool hasIpv6 = false;
-
-               for (const core::system::posix::IpAddress& ip : addrs)
-               {
-                  auto addr = boost::asio::ip::make_address(ip.Address);
-                  if (addr.is_v4())
-                  {
-                     hasIpv4 = true;
-                     if (!addr.is_loopback())
-                        hasNonLocalIpv4 =  true;
-                  }
-                  else if (addr.is_v6())
-                  {
-                     hasIpv6 = true;
-                     if (!addr.is_loopback() && ip.Address.find("%") == std::string::npos)
-                        hasNonLocalIpv6 = true;
-                  }
-               }
-
-               if ((!hasNonLocalIpv4 && hasNonLocalIpv6) ||
-                   (!hasIpv4 && hasIpv6))
-               {
-                  wwwAddress = "::";
-               }
-            }
-         }
-         else if (wwwAddress == "::")
-         {
-            std::vector<core::system::posix::IpAddress> addrs;
-            Error error = core::system::ipAddresses(&addrs, true);
-            if (!error)
-            {
-               bool hasIpv6 = false;
-               for (const core::system::posix::IpAddress& ip : addrs)
-               {
-                  auto addr = boost::asio::ip::make_address(ip.Address);
-                  if (addr.is_v6())
-                  {
-                     hasIpv6 = true;
-                     break;
-                  }
-               }
-
-               if (!hasIpv6)
-               {
-                  wwwAddress = "0.0.0.0";
-               }
-            }
-         }
+         std::string wwwAddress = core::system::resolveBindAddress(options.wwwAddress());
 
          // reuse the port we were bound to before restart if specified - this is done
          // to enable smooth session restarts for launcher sessions

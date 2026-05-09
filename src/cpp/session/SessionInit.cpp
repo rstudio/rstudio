@@ -35,6 +35,11 @@ namespace {
 // tweak their behavior when the process is first starting
 std::atomic<bool> s_sessionInitialized(false);
 
+// has R's deferred init hook completed for the current R session? used by
+// clientInit so the frontend can distinguish a re-join (deferred init already
+// completed) from a fresh start or suspend/resume (event still to fire)
+std::atomic<bool> s_deferredInitCompleted(false);
+
 } // anonymous namespace
 
 bool ensureSessionInitializedImpl()
@@ -83,6 +88,16 @@ bool isSessionInitialized()
 bool isSessionInitializedAndRestored()
 {
    return isSessionInitialized() && rstudio::r::session::isSessionRestored();
+}
+
+void setDeferredInitCompleted(bool completed)
+{
+   s_deferredInitCompleted = completed;
+}
+
+bool isDeferredInitCompleted()
+{
+   return s_deferredInitCompleted;
 }
 
 } // namespace init

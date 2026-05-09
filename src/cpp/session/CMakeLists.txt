@@ -187,6 +187,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
+   modules/chat/ChatIntegrity.cpp
    modules/chat/ChatStaticFiles.cpp
    modules/SessionAssistant.cpp
    modules/SessionCodeSearch.cpp
@@ -257,6 +258,8 @@ set(SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
+   modules/SessionTrust.cpp
+   modules/SessionTrustOverlay.cpp
    modules/SessionUserPrefs.cpp
    modules/SessionUserPrefsMigration.cpp
    modules/build/SessionBuild.cpp
@@ -317,6 +320,7 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
    modules/rmarkdown/NotebookAlternateEngines.cpp
    modules/rmarkdown/NotebookCache.cpp
+   modules/rmarkdown/NotebookCacheRenderer.cpp
    modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
    modules/rmarkdown/NotebookChunkOptions.cpp

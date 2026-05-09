@@ -44,6 +44,7 @@ public class IgnoreDialog extends ModalDialogBase
    public IgnoreDialog()
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       dirChooser_ = new DirectoryChooserTextBox(constants_.directoryLabel(),
                                                 "",
                                                 ElementIds.TextBoxButtonId.VCS_IGNORE,

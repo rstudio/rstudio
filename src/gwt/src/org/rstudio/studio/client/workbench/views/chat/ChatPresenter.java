@@ -15,44 +15,54 @@ package org.rstudio.studio.client.workbench.views.chat;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
+import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
    implements ConsolePromptEvent.Handler,
+              ConsoleReadCompletedEvent.Handler,
               SatelliteClosedEvent.Handler,
               ChatReturnToMainEvent.Handler,
               ChatSatelliteActionEvent.Handler
@@ -77,8 +87,12 @@ public class ChatPresenter extends BasePresenter
       {
          void onPaneReady();
          void onRestartBackend();
+         void onRetryManifest();
          void onActivateChat();
          void onReturnChatToMain();
+         void onIframeError(String message);
+         void onIframeWarning(String message);
+         void onIframeConnected();
       }
 
       interface UpdateObserver
@@ -107,10 +121,12 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
-      void showManifestUnavailable();
+      void showManifestUnavailable(String errorMessage);
+      void showConnectionLostNotification(String message);
+      void hideConnectionLostNotification();
       void showReadlineNotification();
       void hideReadlineNotification();
-      void updateCachedUrl(String url);
+
       void showPoppedOutPlaceholder();
       void hidePoppedOutPlaceholder();
 
@@ -123,7 +139,7 @@ public class ChatPresenter extends BasePresenter
          String currentVersion, String newVersion);
       String getUnsupportedVersionNoUpdateHTML(String currentVersion);
       String getUnsupportedProtocolHTML();
-      String getManifestUnavailableHTML();
+      String getManifestUnavailableHTML(String errorMessage);
       String getErrorHTML(String errorMessage);
    }
 
@@ -145,7 +161,9 @@ public class ChatPresenter extends BasePresenter
       UserPrefs prefs,
       SatelliteManager satelliteManager,
       PaneManager paneManager,
-      Session session)
+      Session session,
+      GlobalDisplay globalDisplay,
+      ApplicationQuit applicationQuit)
    {
       super(display);
       binder.bind(commands, this);
@@ -156,8 +174,12 @@ public class ChatPresenter extends BasePresenter
       paiUtil_ = paiUtil;
       prefs_ = prefs;
       installManager_ = new PositAiInstallManager();
+      lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
+      session_ = session;
+      globalDisplay_ = globalDisplay;
+      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -188,6 +210,15 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
+         public void onRetryManifest()
+         {
+            if (initializing_)
+               return;
+            initializing_ = true;
+            checkForUpdates(true);
+         }
+
+         @Override
          public void onActivateChat()
          {
             ChatPresenter.this.onActivateChat();
@@ -197,6 +228,25 @@ public class ChatPresenter extends BasePresenter
          public void onReturnChatToMain()
          {
             returnChatToMain();
+         }
+
+         @Override
+         public void onIframeError(String message)
+         {
+            Debug.log("Chat iframe error: " + message);
+            display_.showConnectionLostNotification(message);
+         }
+
+         @Override
+         public void onIframeWarning(String message)
+         {
+            Debug.log("Chat iframe warning: " + message);
+         }
+
+         @Override
+         public void onIframeConnected()
+         {
+            display_.hideConnectionLostNotification();
          }
       });
 
@@ -227,6 +277,9 @@ public class ChatPresenter extends BasePresenter
       // Listen for console prompt events (to detect when R is waiting for input)
       events_.addHandler(ConsolePromptEvent.TYPE, this);
 
+      // Listen for console read completion (to dismiss notification after readline)
+      events_.addHandler(ConsoleReadCompletedEvent.TYPE, this);
+
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
       {
@@ -256,6 +309,7 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               backendPollGeneration_++; // invalidate existing poll callbacks
                display_.hideReadlineNotification();
                if (poppedOut_)
                {
@@ -263,27 +317,47 @@ public class ChatPresenter extends BasePresenter
                   // suspend overlay via SessionSerializationEvent forwarding
                   updateSavedGeometry();
                }
-               display_.showSuspendedMessage();
+               // Only dim the chat UI if it was actually loaded and running.
+               // If chat was never initialized (e.g., sidebar hidden at startup),
+               // there's nothing meaningful to dim.
+               if (cachedUrl_ != null)
+               {
+                  display_.showSuspendedMessage();
+               }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
-               // Prevent concurrent initialization
-               if (initializing_)
+               backendPollGeneration_++; // new lifecycle generation
+
+               // Any pre-suspend initialization is stale — the server process
+               // restarted, so all in-flight RPCs are dead. Reset the guard.
+               boolean wasInitializing = initializing_;
+               initializing_ = false;
+
+               if (cachedUrl_ == null)
                {
+                  // If startup was in progress pre-suspend (URL not cached
+                  // yet), the generation bump killed the old poll chain.
+                  // Re-trigger full initialization so the user isn't stuck
+                  // on a "Starting..." screen. If chat was never started
+                  // (e.g. sidebar hidden), wasInitializing is false and
+                  // normal onPaneReady initialization handles first startup.
+                  if (wasInitializing)
+                  {
+                     initializeChat();
+                  }
                   return;
                }
 
-               // Don't poll for backend if Posit AI isn't selected as chat provider
+               // Don't poll for backend if Posit Assistant isn't selected as chat provider
                if (!paiUtil_.isChatProviderPosit())
                {
                   display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
                   return;
                }
 
-               // Backend will be restarted by onResume() handler in SessionChat.cpp
-               // Just need to wait for it to become available
                initializing_ = true;
-               pollForBackendUrl(0);
+               pollForBackendUrl();
             }
          }
       });
@@ -311,9 +385,12 @@ public class ChatPresenter extends BasePresenter
          onChatProviderChanged();
       });
 
-      // Listen for project options changes (project-level setting)
+      // Listen for project options changes (project-level setting).
+      // Explicitly update PaiUtil's cache before reading the provider so
+      // we don't depend on EventBus handler registration order.
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
+         paiUtil_.updateProjectOptions(event.getData().getAssistantOptions());
          onChatProviderChanged();
       });
 
@@ -391,20 +468,45 @@ public class ChatPresenter extends BasePresenter
          display_.hideReadlineNotification();
    }
 
+   // When console input is received for a sub-prompt (readline, scan, etc.),
+   // dismiss the notification immediately rather than waiting for R to return
+   // to the top-level REPL. Browser prompts are not handled here because they
+   // add to history; they are dismissed by onConsolePrompt() instead.
+   @Override
+   public void onConsoleReadCompleted(ConsoleReadCompletedEvent event)
+   {
+      if (!event.getHistory())
+         display_.hideReadlineNotification();
+   }
+
    @Override
    public void onSatelliteClosed(SatelliteClosedEvent event)
    {
       if (!ChatSatellite.NAME.equals(event.getName()) || !poppedOut_)
          return;
 
-      // When Cmd+Q is pressed from the satellite window, SatelliteClosedEvent
-      // arrives before LastChanceSaveEvent sets windowsClosing_. Deferring by
-      // one tick lets the quit flow's LastChanceSaveEvent fire first.
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         if (!windowsClosing_)
-            returnChatToMain();
-      });
+      // On Chrome, the satellite window is reloaded via window.open(url,
+      // name) (see WebWindowOpener.doOpenWindow) instead of reactivated
+      // in-place. The old content's unload handler fires a spurious
+      // SatelliteClosedEvent even though the window is still open. Use
+      // WindowCloseMonitor to poll the window and distinguish a real close
+      // from a reload — the same pattern used by SourceWindowManager,
+      // ShinyApplication, and PlumberAPI.
+      //
+      // The windowsClosing_ guard is still necessary: during Cmd+Q the
+      // satellite closes for real and the callback fires, but
+      // returnChatToMain() must be suppressed because the application is
+      // shutting down (LastChanceSaveEvent sets windowsClosing_ early in
+      // the quit flow).
+      WindowCloseMonitor.monitorSatelliteClosure(
+         ChatSatellite.NAME,
+         () -> {
+            if (!windowsClosing_)
+               returnChatToMain();
+            else
+               events_.fireEvent(new ChatPaneActiveEvent(false));
+         },
+         null);
    }
 
    @Override
@@ -432,6 +534,12 @@ public class ChatPresenter extends BasePresenter
          case "open-global-options":
             commands_.showAssistantOptions().execute();
             break;
+         case "retry-manifest":
+            if (initializing_)
+               break;
+            initializing_ = true;
+            checkForUpdates(true);
+            break;
          default:
             Debug.log("Unrecognized chat satellite action: " + action);
             break;
@@ -450,6 +558,7 @@ public class ChatPresenter extends BasePresenter
       stateDirty_ = true;
       commands_.popOutChat().setEnabled(false);
       display_.showPoppedOutPlaceholder();
+      events_.fireEvent(new ChatPaneActiveEvent(true));
 
       if (cachedUrl_ != null)
       {
@@ -485,6 +594,52 @@ public class ChatPresenter extends BasePresenter
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded.
+   void onUninstallPositAssistant()
+   {
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         constants_.uninstallPositAssistantCaption(),
+         constants_.uninstallPositAssistantMessage(),
+         () -> performUninstall(),
+         false);
+   }
+
+   private void performUninstall()
+   {
+      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
+      {
+         @Override
+         public void onResponseReceived(VoidResponse response)
+         {
+            // doRestart() is cancelable (user can decline to save unsaved
+            // changes). If canceled, PAI files are already deleted but the
+            // session continues unrestarted — an acceptable edge case
+            // consistent with other RStudio restart flows.
+            applicationQuit_.doRestart(session_);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // Backend delivers user-facing text via client_info; fall back
+            // to the generic user message when no client_info is provided.
+            String message = error.getUserMessage();
+            JSONValue clientInfo = error.getClientInfo();
+            if (clientInfo != null)
+            {
+               JSONString clientInfoStr = clientInfo.isString();
+               if (clientInfoStr != null)
+                  message = clientInfoStr.stringValue();
+            }
+            globalDisplay_.showErrorMessage(
+               constants_.uninstallPositAssistantCaption(),
+               message);
+         }
+      });
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
    // presenter is delay-loaded (e.g. sidebar hidden at startup).
    void onActivateChat()
    {
@@ -494,6 +649,30 @@ public class ChatPresenter extends BasePresenter
       }
       else
       {
+         paneManager_.activateTab(PaneManager.Tab.Chat);
+      }
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded.
+   void onAssistantPaneToggle()
+   {
+      if (poppedOut_)
+      {
+         satelliteManager_.activateSatelliteWindow(ChatSatellite.NAME);
+      }
+      else if (paneManager_.isChatActivatedInSidebar())
+      {
+         // Chat is visible and selected in the sidebar — dismiss it.
+         // Call PaneManager directly rather than executing the toggleSidebar
+         // command, to avoid GWT $entry() re-entrancy when this method runs
+         // inside a delay-load callback (causes Firefox assertion errors).
+         paneManager_.setSidebarPref(false);
+      }
+      else
+      {
+         // Chat is not active — activate/focus it (works for sidebar,
+         // quadrant, and hidden tab set cases).
          paneManager_.activateTab(PaneManager.Tab.Chat);
       }
    }
@@ -637,6 +816,8 @@ public class ChatPresenter extends BasePresenter
       // Ensure the chat pane is visible — handles both sidebar and
       // quadrant configurations correctly
       onActivateChat();
+
+      events_.fireEvent(new ChatPaneActiveEvent(paneManager_.isChatActivatedInSidebar()));
    }
 
    /**
@@ -645,6 +826,11 @@ public class ChatPresenter extends BasePresenter
     */
    private void onChatProviderChanged()
    {
+      String currentProvider = paiUtil_.getConfiguredChatProvider();
+      if (StringUtil.equals(currentProvider, lastEffectiveChatProvider_))
+         return;
+      lastEffectiveChatProvider_ = currentProvider;
+
       if (paiUtil_.isChatProviderPosit())
       {
          // Prevent concurrent initialization
@@ -653,7 +839,7 @@ public class ChatPresenter extends BasePresenter
             return;
          }
 
-         // Posit AI is the effective chat provider, initialize chat
+         // Posit Assistant is the effective chat provider, initialize chat
          initializing_ = true;
          checkForUpdates();
       }
@@ -669,7 +855,7 @@ public class ChatPresenter extends BasePresenter
             display_.hidePoppedOutPlaceholder();
          }
 
-         // Posit AI is not the effective chat provider, stop backend and show not-selected message
+         // Posit Assistant is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
          display_.hideReadlineNotification();
@@ -695,7 +881,7 @@ public class ChatPresenter extends BasePresenter
          return;
       }
 
-      // Check if Posit AI is selected as chat provider before initializing
+      // Check if Posit Assistant is selected as chat provider before initializing
       if (!paiUtil_.isChatProviderPosit())
       {
          cancelPopOut();
@@ -752,7 +938,12 @@ public class ChatPresenter extends BasePresenter
 
    private void checkForUpdates()
    {
-      installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
+      checkForUpdates(false);
+   }
+
+   private void checkForUpdates(boolean forceRecheck)
+   {
+      installManager_.checkForUpdates(forceRecheck, new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
          public void onNoUpdateAvailable()
@@ -819,11 +1010,11 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onManifestUnavailable()
+         public void onManifestUnavailable(String errorMessage)
          {
             showInDisplayOrSatellite(
-               display_.getManifestUnavailableHTML(),
-               () -> display_.showManifestUnavailable());
+               display_.getManifestUnavailableHTML(errorMessage),
+               () -> display_.showManifestUnavailable(errorMessage));
          }
 
          @Override
@@ -901,11 +1092,14 @@ public class ChatPresenter extends BasePresenter
 
    private void pollForBackendUrl()
    {
-      pollForBackendUrl(0);
+      pollForBackendUrl(0, backendPollGeneration_);
    }
 
-   private void pollForBackendUrl(final int attemptCount)
+   private void pollForBackendUrl(final int attemptCount, final int pollGen)
    {
+      if (pollGen != backendPollGeneration_)
+         return; // stale callback from prior lifecycle
+
       if (attemptCount > 30) // 30 seconds timeout
       {
          showErrorMessage(constants_.chatBackendStartTimeout());
@@ -917,6 +1111,9 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onResponseReceived(JsObject response)
          {
+            if (pollGen != backendPollGeneration_)
+               return; // stale callback from prior lifecycle
+
             String status = response.getString("status");
 
             if (status.equals("ready"))
@@ -939,7 +1136,7 @@ public class ChatPresenter extends BasePresenter
                   @Override
                   public boolean execute()
                   {
-                     pollForBackendUrl(attemptCount + 1);
+                     pollForBackendUrl(attemptCount + 1, pollGen);
                      return false;
                   }
                }, 1000);
@@ -949,6 +1146,9 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            if (pollGen != backendPollGeneration_)
+               return; // stale callback from prior lifecycle
+
             showErrorMessage(
                constants_.chatBackendStatusCheckFailed(error.getMessage()));
          }
@@ -964,6 +1164,7 @@ public class ChatPresenter extends BasePresenter
       }
 
       initializing_ = true;
+      display_.hideConnectionLostNotification();
       display_.setStatus(Display.Status.RESTARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
@@ -974,7 +1175,7 @@ public class ChatPresenter extends BasePresenter
             if (response.getBoolean("success"))
             {
                // Backend started - begin polling for URL
-               pollForBackendUrl(0);
+               pollForBackendUrl();
             }
             else
             {
@@ -1025,10 +1226,15 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL, auth token, and timestamp as query parameters to bust cache
+      // Append WebSocket URL and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
-      if (authToken != null && !authToken.isEmpty())
+
+      // In Desktop mode, pass the auth token as a URL parameter since the
+      // WebSocket connects to localhost directly. In Server mode, the token
+      // is delivered via an HTTP-only cookie set by the static file handler,
+      // avoiding exposure in browser history, logs, and the Referer header.
+      if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
       {
          params += "&authToken=" + URL.encodeQueryString(authToken);
       }
@@ -1061,11 +1267,10 @@ public class ChatPresenter extends BasePresenter
       // Mark the backend so subsequent status responses include resume_chat=true
       server_.chatNotifyUILoaded(new VoidServerRequestCallback());
 
-      // Always include &resume in the cached URL so that tab-switch reloads
-      // (via onSelected) signal resume, even if the initial load was fresh
-      String cachedResumeUrl = baseUrl + params + "&resume";
-      display_.updateCachedUrl(cachedResumeUrl);
-      cachedUrl_ = cachedResumeUrl;
+      // Always include &resume in the cached URL so that satellite windows
+      // and session-resume reloads signal resume, even if the initial load
+      // was fresh
+      cachedUrl_ = baseUrl + params + "&resume";
 
       // Reset initialization flag - we're done
       initializing_ = false;
@@ -1094,12 +1299,21 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
+   private final Session session_;
+   private final GlobalDisplay globalDisplay_;
+   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
 
    // Guard against concurrent initialization (multiple polling loops)
    private boolean initializing_ = false;
+
+   // Monotonic counter invalidating stale pollForBackendUrl callbacks
+   private int backendPollGeneration_ = 0;
+
+   // Last effective chat provider, used to suppress spurious change events
+   private String lastEffectiveChatProvider_;
 
    // Satellite pop-out state
    private boolean windowsClosing_ = false;

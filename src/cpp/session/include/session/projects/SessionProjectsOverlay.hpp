@@ -38,6 +38,8 @@ void onProjectStartup(const ProjectContext& context, const core::r_util::Project
 
 void onCreateProject(const core::FilePath& directory);
 
+core::Error ensureProjectIdForPath(const core::FilePath& directory);
+
 } // namespace overlay
 } // namespace rstudio::session::projects
 

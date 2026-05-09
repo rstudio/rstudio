@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -163,10 +163,10 @@ public class Addins
                      
                      if (BrowseCap.isMacintoshDesktopMojave())
                      {
-                        server_.prepareForAddin(new ServerRequestCallback<Void>()
+                        server_.prepareForAddin(new ServerRequestCallback<VoidResponse>()
                         {
                            @Override
-                           public void onResponseReceived(Void response)
+                           public void onResponseReceived(VoidResponse response)
                            {
                               SendToConsoleEvent event = new SendToConsoleEvent(code, true, false, false);
                               events_.fireEvent(event);

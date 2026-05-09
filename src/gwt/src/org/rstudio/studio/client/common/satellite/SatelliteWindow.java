@@ -68,14 +68,24 @@ public abstract class SatelliteWindow extends Composite
       ElementIds.assignElementId(mainPanel_.getElement(), ElementIds.SATELLITE_PANEL);
 
       // Register an event handler for themes so it will be triggered after a
-      // UIPrefsChangedEvent updates the theme. Do this after SessionInit (if we
+      // UserPrefsChangedEvent updates the theme. Do this after SessionInit (if we
       // do it beforehand we'll trigger the event before the SessionInfo object
       // arrives with the theme settings)
       pEventBus.get().addHandler(SessionInitEvent.TYPE, (evt) ->
       {
          UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
-         userPrefs.editorTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
          userPrefs.globalTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+
+         // Use UserState.theme() as the authoritative trigger for editor
+         // theme changes rather than UserPrefs.editorTheme(). The
+         // preferences dialog dispatches UserPrefsChangedEvent before
+         // the setUserPrefs callback invokes state_.writeState()
+         // (PreferencesDialog.doSaveChanges),
+         // so an editorTheme() binding would fire ThemeChangedEvent while
+         // UserState.theme() still holds the previous value, causing
+         // RStudioThemes.initializeThemes() to read stale state.
+         RStudioGinjector.INSTANCE.getUserState().theme().bind(
+            theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
       });
 
       // aria-live status announcements

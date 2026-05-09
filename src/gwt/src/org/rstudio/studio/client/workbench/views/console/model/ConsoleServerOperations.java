@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.model;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 
 public interface ConsoleServerOperations extends CodeToolsServerOperations,
@@ -25,7 +25,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
 {
    // adapt to the language of code being sent to console
    void adaptToLanguage(String language,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    // interrupt the current session
    void interrupt(ServerRequestCallback<Boolean> requestCallback);
@@ -34,31 +34,31 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void consoleInput(String consoleInput, 
                      String consoleId,
                      int flags,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
    
-   void resetConsoleActions(ServerRequestCallback<Void> requestCallback);
+   void resetConsoleActions(ServerRequestCallback<VoidResponse> requestCallback);
 
    void processStart(String handle,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
 
    void processInterrupt(String handle,
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
    
    void processReap(String handle,
-                    ServerRequestCallback<Void> requestCallback);
+                    ServerRequestCallback<VoidResponse> requestCallback);
 
    void processWriteStdin(String handle,
                           ShellInput input,
-                          ServerRequestCallback<Void> requestCallback);
+                          ServerRequestCallback<VoidResponse> requestCallback);
    
    void processSetShellSize(String handle,
                             int width,
                             int height,
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
 
    void processEraseBuffer(String handle,
                            boolean lastLineOnly,
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<VoidResponse> requestCallback);
 
    void processGetBufferChunk(String handle,
                               int chunk,
@@ -75,7 +75,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     * @param requestCallback
     */
    void processUseRpc(String handle,
-                      ServerRequestCallback<Void> requestCallback);
+                      ServerRequestCallback<VoidResponse> requestCallback);
    
    /**
     * Test if server knows about a given process handle. Doesn't mean process
@@ -93,7 +93,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     * @param requestCallback
     */
    public void processNotifyVisible(String handle,
-                                    ServerRequestCallback<Void> requestCallback);
+                                    ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     * Set/update the caption of given process.
@@ -113,7 +113,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     */
    void processSetTitle(String handle,
                         String title,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
 
    /**
     * Send SIGINT to child process of the terminal shell.
@@ -121,5 +121,5 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     * @param requestCallback
     */
    void processInterruptChild(String handle,
-                              ServerRequestCallback<Void> requestCallback);
+                              ServerRequestCallback<VoidResponse> requestCallback);
 }

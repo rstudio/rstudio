@@ -22,9 +22,11 @@
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
@@ -292,6 +294,13 @@ SEXP rs_canInstallPackages()
                           &rProtect);
 }
 
+SEXP rs_shouldRecordPackageSources()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(session::options().allowPackageSourceRecording(),
+                          &rProtect);
+}
+
 SEXP rs_packageLibraryMutated()
 {
    // broadcast event to server
@@ -336,6 +345,53 @@ void onConsoleInput(const std::string& input)
    s_reposSEXP.set(reposSEXP);
 }
 
+// Builds the regex used to detect package-management function calls in
+// console input. Identifiers are matched as a prefix, optionally followed
+// by '.' or '_' and more identifier characters (so 'install' catches
+// 'install.packages', 'install_github', etc.).
+//
+// Two separate gates keep false positives out:
+//
+//   * The trailing '\(' rejects keyword-prefixed expressions that aren't
+//     function calls -- e.g. 'updates <- c(1, 2)' has 'update' followed
+//     by 's <-', not '('.
+//
+//   * The required '[._]' at the start of the optional suffix keeps the
+//     keyword from extending across plain word characters to reach a '('
+//     later in the line -- without it, '[\w.]*' could consume 'ed.packages'
+//     in 'installed.packages()' and the trailing '\(' would then match.
+//
+// Underscore-prefixed entries (pkg_*, p_*, local_*) are listed explicitly
+// since '\b' cannot span a '_' word boundary.
+boost::regex buildPackageCallRegex()
+{
+   const std::vector<std::string> keywords = {
+      // base R and devtools/remotes entry points
+      "install",
+      "update",
+      "remove",
+      "restore",
+      "rebuild",
+      "load_all",
+      // pak
+      "pkg_install",
+      "pkg_update",
+      "pkg_remove",
+      "pkg_load",
+      "local_install",
+      // pacman
+      "p_install",
+      "p_load",
+      "p_remove",
+      "p_unload",
+   };
+
+   const std::string pattern =
+      "\\b(?:" + core::algorithm::join(keywords, "|") + ")(?:[._][\\w.]*)?\\s*\\(";
+
+   return boost::regex(pattern);
+}
+
 void onConsolePrompt(const std::string&)
 {
    // skip if we're being invoked within a readline call
@@ -347,36 +403,14 @@ void onConsolePrompt(const std::string&)
    if (isReadingUserInput)
       return;
 
-   // if the user ran a command that is likely to have installed
-   // or updated packages, then notify the client. note that this
-   // is intentionally non-specific, to help detect a variety of
-   // different package tools which might perform package install
-   static auto installCommands = {
-
-      // common terms used in package installation functions
-      "install",
-      "update",
-      "rebuild",
-      "restore",
-      "remove",
-
-      // also capture devtools::load_all()
-      "load_all",
-   };
-
    // consume last input
    std::string lastInput = s_lastInput;
    s_lastInput.clear();
 
-   // if it looks like the user ran a command that could mutate
-   // the package library, then respond
-   for (auto&& installCommand : installCommands)
+   if (isPackageManagementCall(lastInput))
    {
-      if (boost::algorithm::contains(lastInput, installCommand))
-      {
-         rs_packageLibraryMutated();
-         return;
-      }
+      rs_packageLibraryMutated();
+      return;
    }
 
    // check and see if the 'repos' option has been mutated
@@ -436,6 +470,12 @@ Error getPackageState(const json::JsonRpcRequest& ,
 
 } // anonymous namespace
 
+bool isPackageManagementCall(const std::string& input)
+{
+   static const boost::regex s_pattern = buildPackageCallRegex();
+   return boost::regex_search(input, s_pattern);
+}
+
 void enquePackageStateChanged()
 {
    json::Object pkgState;
@@ -460,6 +500,7 @@ Error initialize()
    // register routines
    RS_REGISTER_CALL_METHOD(rs_enqueLoadedPackageUpdates);
    RS_REGISTER_CALL_METHOD(rs_canInstallPackages);
+   RS_REGISTER_CALL_METHOD(rs_shouldRecordPackageSources);
    RS_REGISTER_CALL_METHOD(rs_packageLibraryMutated);
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);

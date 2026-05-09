@@ -343,7 +343,10 @@ options(help_type = "html")
       return()
    
    envir <- .rs.getActiveFrame()
-   out <- .rs.getHelpRpcImpl(what, from, type, envir)
+   out <- tryCatch(
+      .rs.getHelpRpcImpl(what, from, type, envir),
+      error = function(e) NULL
+   )
    if (is.null(out))
       return()
    
@@ -486,7 +489,7 @@ options(help_type = "html")
    if (is.null(data))
       return(NULL)
    
-   described <- .rs.describeObject(data, name)
+   described <- .rs.describeObject(name, data)
    description <- described$description
    type <- described$type
    size <- described$length
@@ -569,8 +572,8 @@ options(help_type = "html")
    # object in the place it's defined.
    
    # Limit the number of columns to the first `maxDisplayColumns`
-   # number of columns. E.g. if data_viewer_max_columns=50, then
-   # we'll only load and show the first 50 columns of the data frame
+   # number of columns. E.g. if data_viewer_max_columns=200, then
+   # we'll only load and show the first 200 columns of the data frame
    # in the help preview.
    maxDisplayColumns <- .rs.readUiPref("data_viewer_max_columns")
 

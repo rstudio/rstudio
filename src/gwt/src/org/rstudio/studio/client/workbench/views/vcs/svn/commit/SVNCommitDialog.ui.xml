@@ -31,6 +31,20 @@
          -ms-box-sizing: border-box;
          resize: none;
       }
+
+      @external rstudio-themes-dark;
+      @external rstudio-theme-aware-dialog;
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .changelistTableBackground {
+         background-color: rgb(47, 57, 65);
+         border-color: rgb(78, 92, 104);
+      }
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .commitMessage {
+         background-color: rgb(47, 57, 65);
+         border-color: rgb(78, 92, 104);
+         color: #eee;
+      }
    </ui:style>
 
    <g:DockLayoutPanel>

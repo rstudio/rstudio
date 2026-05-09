@@ -50,8 +50,8 @@ import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -118,7 +118,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       paiUtil_ = paiUtil;
 
       // Create assistant selector - conditionally include Posit AI option
-      boolean paiEnabled = paiUtil_.isPaiEnabled();
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)
@@ -286,11 +286,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Add container for dynamic content
       add(assistantDetailsPanel_);
 
-      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      // Add Copilot Terms of Service panel at the bottom
       copilotTosPanel_ = new VerticalPanel();
-      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
-      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spaced(spacedBefore(lblCopilotTos_)));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
@@ -323,12 +321,12 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                copilotTosPanel_.setVisible(false);
                copilotRefreshed_ = false;
 
-               // Refresh Posit AI status when panel is shown
+               // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
                {
                   positAiRefreshed_ = true;
 
-                  // Check if Posit AI is installed
+                  // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
                      UserPrefsAccessor.ASSISTANT_POSIT,
                      new ServerRequestCallback<Boolean>()
@@ -403,6 +401,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      wrapWithPanel("project_assistant_prefs");
    }
 
    private VerticalPanel createDefaultPanel()
@@ -653,6 +653,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
+      if (useDarkDialogTheme())
+         return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistantDark2x());
       return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
@@ -718,6 +720,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final ProjectsServerOperations projectServer_;
    private final PaiUtil paiUtil_;
    
+   private boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return prefs_.useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    private static final AssistantPreferencesPane.Resources RES = AssistantPreferencesPane.RES;
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);

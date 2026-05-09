@@ -35,6 +35,6 @@ public interface LintServerOperations
    
    void saveSnippets(
          JsArray<SnippetData> snippets,
-         ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
+         ServerRequestCallback<org.rstudio.studio.client.server.VoidResponse> callback);
    
 }

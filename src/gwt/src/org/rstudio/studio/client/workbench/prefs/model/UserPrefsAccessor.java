@@ -118,6 +118,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SOFT_WRAP_RMD_FILES = "soft_wrap_rmd_files";
    public static final String FOCUS_CONSOLE_AFTER_EXEC = "focus_console_after_exec";
    public static final String FOLD_STYLE = "fold_style";
+   public static final String HIERARCHICAL_SECTION_FOLDING = "hierarchical_section_folding";
    public static final String SAVE_BEFORE_SOURCING = "save_before_sourcing";
    public static final String CONSOLE_SOFT_WRAP = "console_soft_wrap";
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
@@ -215,6 +216,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
    public static final String GLOBAL_THEME = "global_theme";
+   public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
    public static final String GIT_DIFF_IGNORE_WHITESPACE = "git_diff_ignore_whitespace";
    public static final String GIT_SIGNED_COMMITS = "git_signed_commits";
    public static final String CONSOLE_DOUBLE_CLICK_SELECT = "console_double_click_select";
@@ -250,6 +252,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DEFAULT_R_VERSION = "default_r_version";
    public static final String DATA_VIEWER_MAX_COLUMNS = "data_viewer_max_columns";
    public static final String DATA_VIEWER_MAX_CELL_SIZE = "data_viewer_max_cell_size";
+   public static final String DATA_VIEWER_SHOW_SUMMARY = "data_viewer_show_summary";
    public static final String ENABLE_SCREEN_READER = "enable_screen_reader";
    public static final String TYPING_STATUS_DELAY_MS = "typing_status_delay_ms";
    public static final String REDUCED_MOTION = "reduced_motion";
@@ -311,6 +314,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_ENABLED = "assistant_nes_enabled";
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
+   public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -1444,6 +1448,18 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
    public final static String FOLD_STYLE_BEGIN_AND_END = "begin-and-end";
+
+   /**
+    * Whether section headers create nested folds based on their heading level (e.g. ## folds inside # sections).
+    */
+   public PrefValue<Boolean> hierarchicalSectionFolding()
+   {
+      return bool(
+         "hierarchical_section_folding",
+         _constants.hierarchicalSectionFoldingTitle(), 
+         _constants.hierarchicalSectionFoldingDescription(), 
+         true);
+   }
 
    /**
     * Whether to automatically save scripts before executing them.
@@ -2779,6 +2795,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   public PrefValue<Boolean> useDarkThemeModalDialogs()
+   {
+      return bool(
+         "use_dark_theme_modal_dialogs",
+         _constants.useDarkThemeModalDialogsTitle(), 
+         _constants.useDarkThemeModalDialogsDescription(), 
+         true);
+   }
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    public PrefValue<Boolean> gitDiffIgnoreWhitespace()
@@ -3225,7 +3253,7 @@ public class UserPrefsAccessor extends Prefs
          "data_viewer_max_columns",
          _constants.dataViewerMaxColumnsTitle(), 
          _constants.dataViewerMaxColumnsDescription(), 
-         50);
+         200);
    }
 
    /**
@@ -3238,6 +3266,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.dataViewerMaxCellSizeTitle(), 
          _constants.dataViewerMaxCellSizeDescription(), 
          50);
+   }
+
+   /**
+    * Whether the Summary side panel is shown by default when opening the data viewer.
+    */
+   public PrefValue<Boolean> dataViewerShowSummary()
+   {
+      return bool(
+         "data_viewer_show_summary",
+         _constants.dataViewerShowSummaryTitle(), 
+         _constants.dataViewerShowSummaryDescription(), 
+         true);
    }
 
    /**
@@ -3867,7 +3907,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    public PrefValue<Boolean> checkNullExternalPointers()
    {
@@ -4120,7 +4160,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
     */
    public PrefValue<Boolean> assistantShowMessages()
    {
@@ -4128,6 +4168,18 @@ public class UserPrefsAccessor extends Prefs
          "assistant_show_messages",
          _constants.assistantShowMessagesTitle(), 
          _constants.assistantShowMessagesDescription(), 
+         true);
+   }
+
+   /**
+    * When enabled, the Posit Assistant button is displayed in the main toolbar.
+    */
+   public PrefValue<Boolean> assistantToolbarButtonVisible()
+   {
+      return bool(
+         "assistant_toolbar_button_visible",
+         _constants.assistantToolbarButtonVisibleTitle(), 
+         _constants.assistantToolbarButtonVisibleDescription(), 
          true);
    }
 
@@ -4561,6 +4613,8 @@ public class UserPrefsAccessor extends Prefs
          focusConsoleAfterExec().setValue(layer, source.getBool("focus_console_after_exec"));
       if (source.hasKey("fold_style"))
          foldStyle().setValue(layer, source.getString("fold_style"));
+      if (source.hasKey("hierarchical_section_folding"))
+         hierarchicalSectionFolding().setValue(layer, source.getBool("hierarchical_section_folding"));
       if (source.hasKey("save_before_sourcing"))
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
       if (source.hasKey("console_soft_wrap"))
@@ -4755,6 +4809,8 @@ public class UserPrefsAccessor extends Prefs
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
       if (source.hasKey("global_theme"))
          globalTheme().setValue(layer, source.getString("global_theme"));
+      if (source.hasKey("use_dark_theme_modal_dialogs"))
+         useDarkThemeModalDialogs().setValue(layer, source.getBool("use_dark_theme_modal_dialogs"));
       if (source.hasKey("git_diff_ignore_whitespace"))
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
       if (source.hasKey("git_signed_commits"))
@@ -4825,6 +4881,8 @@ public class UserPrefsAccessor extends Prefs
          dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
       if (source.hasKey("data_viewer_max_cell_size"))
          dataViewerMaxCellSize().setValue(layer, source.getInteger("data_viewer_max_cell_size"));
+      if (source.hasKey("data_viewer_show_summary"))
+         dataViewerShowSummary().setValue(layer, source.getBool("data_viewer_show_summary"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -4947,6 +5005,8 @@ public class UserPrefsAccessor extends Prefs
          assistantNesAutoshow().setValue(layer, source.getBool("assistant_nes_autoshow"));
       if (source.hasKey("assistant_show_messages"))
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
+      if (source.hasKey("assistant_toolbar_button_visible"))
+         assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5061,6 +5121,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(softWrapRmdFiles());
       prefs.add(focusConsoleAfterExec());
       prefs.add(foldStyle());
+      prefs.add(hierarchicalSectionFolding());
       prefs.add(saveBeforeSourcing());
       prefs.add(consoleSoftWrap());
       prefs.add(syntaxColorConsole());
@@ -5158,6 +5219,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
       prefs.add(globalTheme());
+      prefs.add(useDarkThemeModalDialogs());
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(gitSignedCommits());
       prefs.add(consoleDoubleClickSelect());
@@ -5193,6 +5255,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
       prefs.add(dataViewerMaxCellSize());
+      prefs.add(dataViewerShowSummary());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
@@ -5254,6 +5317,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesEnabled());
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
+      prefs.add(assistantToolbarButtonVisible());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());

@@ -103,12 +103,12 @@ namespace {
 
 SEXP rs_ppmIntegrationEnabled()
 {
-   return isPpmIntegrationEnabled() ? R_TrueValue : R_FalseValue;
+   return isPpmIntegrationEnabled() ? Rf_ScalarLogical(TRUE) : Rf_ScalarLogical(FALSE);
 }
 
 SEXP rs_ppmMetadataColumnEnabled()
 {
-   return isPpmMetadataColumnEnabled() ? R_TrueValue : R_FalseValue;
+   return isPpmMetadataColumnEnabled() ? Rf_ScalarLogical(TRUE) : Rf_ScalarLogical(FALSE);
 }
 
 SEXP rs_ppmMetadataKey()

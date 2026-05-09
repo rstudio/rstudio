@@ -43,7 +43,7 @@ import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -342,10 +342,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       server_.consoleInput(event.getInput(),
                            event.getConsole(),
                            event.getFlags(),
-                           new ServerRequestCallback<Void>()
+                           new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
          }
 
@@ -584,10 +584,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
       errorManager_.setDebugSessionHandlerType(
             UserState.ERROR_HANDLER_TYPE_BREAK,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(VoidResponse v)
                {
                   eventBus_.fireEvent(new SendToConsoleEvent(
                         event.getCommand(), true));

@@ -18,6 +18,7 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
     String heightText();
     String maintainAspectRatioText();
     String updatePreviewTitle();
+    String updateTitle();
     String savePlotAsImageText();
     String saveTitle();
     String viewAfterSaveCheckBoxTitle();

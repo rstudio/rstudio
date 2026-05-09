@@ -2,7 +2,7 @@ package org.rstudio.studio.client.application.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -12,19 +12,19 @@ public class DummyApplicationServerOperations implements ApplicationServerOperat
 {
 
     @Override
-    public void setUserPrefs(JavaScriptObject userPrefs, ServerRequestCallback<Void> requestCallback) {}
+    public void setUserPrefs(JavaScriptObject userPrefs, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void setUserState(JavaScriptObject userState, ServerRequestCallback<Void> requestCallback) {}
+    public void setUserState(JavaScriptObject userState, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void editPreferences(ServerRequestCallback<Void> requestCallback) {}
+    public void editPreferences(ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
     public void clearPreferences(ServerRequestCallback<String> requestCallback) {}
 
     @Override
-    public void viewPreferences(ServerRequestCallback<Void> requestCallback) {}
+    public void viewPreferences(ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
     public void clientInit(String baseURL, SessionInitOptions options,
@@ -37,13 +37,13 @@ public class DummyApplicationServerOperations implements ApplicationServerOperat
     public void interrupt(ServerRequestCallback<Boolean> requestCallback) {}
 
     @Override
-    public void abort(String nextSessionProject, ServerRequestCallback<Void> requestCallback) {}
+    public void abort(String nextSessionProject, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void suspendSession(boolean force, ServerRequestCallback<Void> requestCallback) {}
+    public void suspendSession(boolean force, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void handleUnsavedChangesCompleted(boolean handled, ServerRequestCallback<Void> requestCallback) {}
+    public void handleUnsavedChangesCompleted(boolean handled, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
     public void quitSession(boolean saveWorkspace, String switchToProjectPath, RVersionSpec switchToRVersion,
@@ -69,10 +69,10 @@ public class DummyApplicationServerOperations implements ApplicationServerOperat
     }
 
     @Override
-    public void suspendForRestart(SuspendOptions options, ServerRequestCallback<Void> requestCallback) {}
+    public void suspendForRestart(SuspendOptions options, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void ping(ServerRequestCallback<Void> requestCallback) {}
+    public void ping(ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
     public void checkForUpdates(boolean manual, ServerRequestCallback<UpdateCheckResult> requestCallback) {}
@@ -100,10 +100,10 @@ public class DummyApplicationServerOperations implements ApplicationServerOperat
     public void getProjectFilePath(String projectId, ServerRequestCallback<String> callback) {}
 
     @Override
-    public void setSessionLabel(String label, ServerRequestCallback<Void> requestCallback) {}
+    public void setSessionLabel(String label, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
-    public void deleteSessionDir(String sessionId, ServerRequestCallback<Void> requestCallback) {}
+    public void deleteSessionDir(String sessionId, ServerRequestCallback<VoidResponse> requestCallback) {}
 
     @Override
     public void findProjectInFolder(String folder, ServerRequestCallback<String> requestCallback) {}

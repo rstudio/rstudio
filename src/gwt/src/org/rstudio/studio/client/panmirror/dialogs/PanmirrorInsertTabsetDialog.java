@@ -47,7 +47,8 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
          // cancel returns null
          operation.execute(null);
       });
-      
+      setThemeAware(true);
+
       // tabs tab
       VerticalTabPanel tabsTab = new VerticalTabPanel(ElementIds.VISUAL_MD_INSERT_TABSET_TABS);
       tabsTab.addStyleName(RES.styles().dialog());

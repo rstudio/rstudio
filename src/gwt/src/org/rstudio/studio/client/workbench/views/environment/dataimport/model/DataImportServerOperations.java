@@ -16,7 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 
 public interface DataImportServerOperations
@@ -36,7 +36,7 @@ public interface DataImportServerOperations
    
    void interrupt(ServerRequestCallback<Boolean> requestCallback);
    
-   void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback);
+   void previewDataImportAsyncAbort(ServerRequestCallback<VoidResponse> requestCallback);
    
-   void previewDataImportClean(DataImportOptions dataImportOptions, ServerRequestCallback<Void> requestCallback);
+   void previewDataImportClean(DataImportOptions dataImportOptions, ServerRequestCallback<VoidResponse> requestCallback);
 }

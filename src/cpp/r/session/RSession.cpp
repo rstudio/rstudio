@@ -34,9 +34,9 @@
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 
-#include <r/RCntxt.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
@@ -69,7 +69,6 @@
 
 #include <gsl/gsl-lite.hpp>
 
-#define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
 #undef TRUE
@@ -424,6 +423,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
                             quiet,
                             loadInitFile,
                             s_options.saveWorkspace,
+                            s_options.rMaxConnections,
                             cb,
                             stdInternalCallbacks());
 
@@ -503,20 +503,108 @@ bool isSuspendable(const std::string& currentPrompt)
 }
 
 
+namespace {
+
+volatile bool s_atTopLevelPrompt = false;
+bool s_browserActive = false;
+r::sexp::PreservedSEXP s_browserEnv;
+
+} // anonymous namespace
+
+void setAtTopLevelPrompt(bool atPrompt)
+{
+   s_atTopLevelPrompt = atPrompt;
+}
+
+bool atTopLevelPrompt()
+{
+   return s_atTopLevelPrompt;
+}
+
+void setBrowserActive(bool active)
+{
+   s_browserActive = active;
+   if (!active)
+      s_browserEnv.set(R_NilValue);
+}
+
 bool browserContextActive()
 {
-   using namespace r::context;
-   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-   {
-      if (it->callflag() & CTXT_BROWSER)
-      {
-         return true;
-      }
-   }
-   
-   return false;
+   return s_browserActive;
 }
-   
+
+void setBrowserEnv(SEXP env)
+{
+   s_browserEnv.set(env);
+}
+
+SEXP browserEnv()
+{
+   return s_browserEnv.get();
+}
+
+bool isAtTopLevel()
+{
+   return atTopLevelPrompt() && !r::exec::isExecuting();
+}
+
+bool isBrowseActive()
+{
+   // browserContextActive() reflects whether we last saw a Browse[N]> prompt;
+   // browserEnv() is set via rs_setCapturedBrowserEnv (called from
+   // .rs.captureCurrentEnvironment()) to the environment being debugged.
+   // We require a non-nil captured env to distinguish "in a browser, env
+   // captured" from the brief window where setBrowserActive(true) has run
+   // but the capture has not yet completed. That window spans from when
+   // setBrowserActive(true) is called in RReadConsole to when
+   // .rs.captureCurrentEnvironment() runs and rs_setCapturedBrowserEnv
+   // installs a non-nil value.
+   //
+   // Note: R_GlobalEnv is a *valid* captured env for top-level debugging
+   // (e.g. debugSource() of a script with breakpoints), so we must not
+   // exclude it here.
+   return browserContextActive() &&
+          browserEnv() != R_NilValue;
+}
+
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
+{
+   SEXP benv = browsing ? browserEnv() : R_NilValue;
+
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.getFunctionContext")
+      .addParam(depth)
+      .addParam(benv)
+      .call(&resultSEXP, &protect);
+
+   if (error)
+      return false;
+
+   if (TYPEOF(resultSEXP) != VECSXP || Rf_length(resultSEXP) < 2)
+      return false;
+
+   int foundDepth = r::sexp::asInteger(VECTOR_ELT(resultSEXP, 0));
+   SEXP foundEnv = VECTOR_ELT(resultSEXP, 1);
+
+   if (pDepth)
+      *pDepth = foundDepth;
+   if (pEnv)
+      *pEnv = foundEnv;
+
+   return foundDepth > 0;
+}
+
+bool inDebugHiddenContext()
+{
+   bool result = false;
+   Error error = r::exec::RFunction(".rs.inDebugHiddenContext")
+      .call(&result);
+   if (error)
+      LOG_ERROR(error);
+   return result;
+}
+
 namespace utils {
    
 bool isPackratModeOn()

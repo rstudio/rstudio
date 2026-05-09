@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <core/Log.hpp>
+
 typedef struct SEXPREC *SEXP;
 
 #include <R_ext/Boolean.h>
@@ -65,11 +67,45 @@ struct InternalCallbacks
    void (*cleanUp)(SA_TYPE, int, int);
 };
 
+constexpr int rMaxConnectionsMinimum = 128;
+constexpr int rMaxConnectionsMaximum = 4096;
+
+// Validate and clamp an r-max-connections value.
+// Returns the clamped value, or 0 if the input should be ignored.
+inline int validateMaxConnections(int nconnections)
+{
+   if (nconnections < 0)
+   {
+      WLOGF("r-max-connections ({}) is negative; ignoring", nconnections);
+      return 0;
+   }
+
+   if (nconnections == 0)
+   {
+      return 0;
+   }
+
+   if (nconnections < rMaxConnectionsMinimum)
+   {
+      WLOGF("r-max-connections ({}) must be at least {}; using {}", nconnections, rMaxConnectionsMinimum, rMaxConnectionsMinimum);
+      return rMaxConnectionsMinimum;
+   }
+
+   if (nconnections > rMaxConnectionsMaximum)
+   {
+      WLOGF("r-max-connections ({}) must be at most {}; using {}", nconnections, rMaxConnectionsMaximum, rMaxConnectionsMaximum);
+      return rMaxConnectionsMaximum;
+   }
+
+   return nconnections;
+}
+
 void runEmbeddedR(const core::FilePath& rHome,
                   const core::FilePath& userHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
+                  int nconnections,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal);
 

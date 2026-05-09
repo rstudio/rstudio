@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.aria.client.Id;
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.KeyCombination;
@@ -25,7 +23,10 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -34,13 +35,13 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class ShowPublicKeyDialog extends ModalDialogBase
 {
    public ShowPublicKeyDialog(String caption, String publicKey)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       publicKey_ = publicKey;
       
       setText(caption);
@@ -58,7 +59,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;
-      String cmdText = new KeyCombination("c", 'C', mod).toString(true);
+      String cmdText = new KeyCombination("C", 'C', mod).toString(true);
       HTML label = new HTML(constants_.pressLabel(cmdText));
       label.addStyleName(RES.styles().viewPublicKeyLabel());
       panel.add(label);

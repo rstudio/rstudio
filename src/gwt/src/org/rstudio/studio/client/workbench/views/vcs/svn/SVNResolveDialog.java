@@ -42,6 +42,7 @@ public class SVNResolveDialog extends ModalDialog<String>
                            OperationWithInput<String> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       fileCount_ = fileCount;
    }
 

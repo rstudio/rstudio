@@ -18,9 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
@@ -49,7 +46,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -67,11 +64,15 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
+import org.rstudio.studio.client.workbench.views.environment.view.MemUsageWidget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -80,7 +81,6 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.views.environment.view.MemUsageWidget;
 
 public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
@@ -654,10 +654,10 @@ public class EnvironmentPane extends WorkbenchPane
    // Called to load a new environment into the environment pane.
    private void loadEnvironmentFrame(final EnvironmentFrame frame)
    {
-      ServerRequestCallback<Void> callback = new ServerRequestCallback<Void>()
+      ServerRequestCallback<VoidResponse> callback = new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             setEnvironmentName(frame.getName(), frame.isLocal());
          }
@@ -808,10 +808,10 @@ public class EnvironmentPane extends WorkbenchPane
       @Override
       public void onInvoked()
       {
-         server_.setEnvironmentMonitoring(monitoredValue_, new ServerRequestCallback<Void>()
+         server_.setEnvironmentMonitoring(monitoredValue_, new ServerRequestCallback<VoidResponse>()
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                environmentMonitoring_.setValue(monitoredValue_, true);
             }
@@ -854,7 +854,7 @@ public class EnvironmentPane extends WorkbenchPane
             new VoidServerRequestCallback()
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   setActiveLanguageImpl(language);
                }

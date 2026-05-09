@@ -42,6 +42,7 @@ public interface WizardResources extends ClientBundle
       String wizardPageSelectorItemSize();
       String wizardPageBackground();
       String wizardBackButton();
+      String wizardDisclosureArrow();
    }
    
    @Source("Wizard.css")
@@ -52,6 +53,12 @@ public interface WizardResources extends ClientBundle
 
    @Source("wizardBackButtonFocus_2x.png")
    ImageResource wizardBackButtonFocus2x();
+
+   @Source("wizardBackButtonDark_2x.png")
+   ImageResource wizardBackButtonDark2x();
+
+   @Source("wizardBackButtonDarkFocus_2x.png")
+   ImageResource wizardBackButtonDarkFocus2x();
 
    @Source("wizardDisclosureArrow_2x.png")
    ImageResource wizardDisclosureArrow2x();

@@ -704,6 +704,16 @@
    clear = function() { .rs.clearUserPref("fold_style") }
 )
 
+# Hierarchical section folding
+#
+# Whether section headers create nested folds based on their heading level (e.g.
+# ## folds inside # sections).
+.rs.uiPrefs$hierarchicalSectionFolding <- list(
+   get = function() { .rs.getUserPref("hierarchical_section_folding") },
+   set = function(value) { .rs.setUserPref("hierarchical_section_folding", value) },
+   clear = function() { .rs.clearUserPref("hierarchical_section_folding") }
+)
+
 # Save R scripts before sourcing
 #
 # Whether to automatically save scripts before executing them.
@@ -1604,6 +1614,16 @@
    clear = function() { .rs.clearUserPref("global_theme") }
 )
 
+# Use dark theme modal dialogs
+#
+# Whether modal dialogs should use dark styling when a dark editor theme is
+# active.
+.rs.uiPrefs$useDarkThemeModalDialogs <- list(
+   get = function() { .rs.getUserPref("use_dark_theme_modal_dialogs") },
+   set = function(value) { .rs.setUserPref("use_dark_theme_modal_dialogs", value) },
+   clear = function() { .rs.clearUserPref("use_dark_theme_modal_dialogs") }
+)
+
 # Ignore whitespace in VCS diffs
 #
 # Whether to ignore whitespace when generating diffs of version controlled files.
@@ -1922,6 +1942,16 @@
    get = function() { .rs.getUserPref("data_viewer_max_cell_size") },
    set = function(value) { .rs.setUserPref("data_viewer_max_cell_size", value) },
    clear = function() { .rs.clearUserPref("data_viewer_max_cell_size") }
+)
+
+# Show data viewer summary panel by default
+#
+# Whether the Summary side panel is shown by default when opening the data
+# viewer.
+.rs.uiPrefs$dataViewerShowSummary <- list(
+   get = function() { .rs.getUserPref("data_viewer_show_summary") },
+   set = function(value) { .rs.setUserPref("data_viewer_show_summary", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_show_summary") }
 )
 
 # Enable support for screen readers
@@ -2331,9 +2361,9 @@
 
 # Check values in the Environment pane for null external pointers
 #
-# When enabled, RStudio will detect R objects containing null external pointers
-# when building the Environment pane, and avoid introspecting their contents
-# further.
+# (Deprecated) When enabled, RStudio will detect R objects containing null
+# external pointers when building the Environment pane, and avoid introspecting
+# their contents further. This preference is no longer used.
 .rs.uiPrefs$checkNullExternalPointers <- list(
    get = function() { .rs.getUserPref("check_null_external_pointers") },
    set = function(value) { .rs.setUserPref("check_null_external_pointers", value) },
@@ -2482,14 +2512,23 @@
    clear = function() { .rs.clearUserPref("assistant_nes_autoshow") }
 )
 
-# Display account and billing messages from AI assistant
+# Display account and billing messages from Posit Assistant
 #
-# When enabled, RStudio will show messages from the Posit AI assistant in a
-# message box.
+# When enabled, RStudio will show messages from the Posit Assistant in a message
+# box.
 .rs.uiPrefs$assistantShowMessages <- list(
    get = function() { .rs.getUserPref("assistant_show_messages") },
    set = function(value) { .rs.setUserPref("assistant_show_messages", value) },
    clear = function() { .rs.clearUserPref("assistant_show_messages") }
+)
+
+# Show Posit Assistant button in toolbar
+#
+# When enabled, the Posit Assistant button is displayed in the main toolbar.
+.rs.uiPrefs$assistantToolbarButtonVisible <- list(
+   get = function() { .rs.getUserPref("assistant_toolbar_button_visible") },
+   set = function(value) { .rs.setUserPref("assistant_toolbar_button_visible", value) },
+   clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
 )
 
 # Enable GitHub Copilot

@@ -31,6 +31,14 @@ namespace system {
 
 OSInfo parseOsReleaseContent(const std::string&);
 
+namespace detail {
+
+std::string resolveBindAddressForAddresses(
+      const std::string& address,
+      const std::vector<posix::IpAddress>& addrs);
+
+} // namespace detail
+
 namespace tests {
 
 #ifdef __linux__
@@ -55,6 +63,15 @@ static std::string getNoGroupName()
 }
 
 #endif
+
+static posix::IpAddress ipAddress(const std::string& name,
+                                  const std::string& address)
+{
+   posix::IpAddress ip;
+   ip.Name = name;
+   ip.Address = address;
+   return ip;
+}
 
 TEST(PosixTests, FindProgramFindsWhich)
 {
@@ -101,7 +118,9 @@ TEST(PosixTests, FindSubprocessNameViaPgrep)
    }
    else
    {
-      // we now have a subprocess
+      // we now have a subprocess, need a slight pause to allow the child
+      // process to complete exec before pgrep can find it
+      ::sleep(1);
       std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
       EXPECT_TRUE(children.size() >= 1u);
       if (children.size() >= 1u)
