@@ -2441,12 +2441,19 @@ bool shouldAuditFileDownload(const core::http::Request& request,
    // to disk, so it isn't a download from the user's perspective. Note
    // this means a real "right-click -> Save As" on a rendered PDF will
    // not produce an audit row; that's an accepted trade-off for not
-   // logging the much more common inline-view case. Files with an
-   // unknown / missing extension currently default to "text/plain" via
-   // FilePath::getMimeContentType, so an extensionless binary also
-   // skips audit - this is a known rename-bypass surface, separately
-   // addressed.
-   const std::string mimeType = filePath.getMimeContentType();
+   // logging the much more common inline-view case.
+   //
+   // For the audit decision we pass "application/octet-stream" as the
+   // default Content-Type for unknown extensions, even though the
+   // setFile()/setCacheableFile() response path falls back to
+   // "text/plain". The divergence is intentional: it closes a rename-
+   // bypass (renaming secret.zip to "secret" would otherwise resolve
+   // to text/plain and silently skip the audit) at the cost of also
+   // logging legitimate fetches of extensionless text files
+   // (LICENSE, README, Makefile, etc.). Over-logging is the safer
+   // default for an audit record.
+   const std::string mimeType =
+      filePath.getMimeContentType("application/octet-stream");
    if (mimeType.rfind("text/", 0) == 0     ||
        mimeType.rfind("image/", 0) == 0    ||
        mimeType.rfind("audio/", 0) == 0    ||

@@ -158,16 +158,6 @@ TEST(ShouldAuditFileDownloadTest, JsonMimeSkips)
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
-TEST(ShouldAuditFileDownloadTest, NoExtensionDefaultsToTextAndSkips)
-{
-   // FilePath::getMimeContentType defaults to "text/plain" for files with
-   // an unknown / missing extension. The browser will render those inline.
-   core::http::Request request;
-   initRequest(request, "/files/README");
-   core::FilePath file("README");
-   EXPECT_FALSE(shouldAuditFileDownload(request, file));
-}
-
 // --- Returns true: audited downloads ---------------------------------------
 
 TEST(ShouldAuditFileDownloadTest, ZipAudits)
@@ -195,6 +185,19 @@ TEST(ShouldAuditFileDownloadTest, OctetStreamAudits)
    core::http::Request request;
    initRequest(request, "/files/installer.exe");
    core::FilePath file("installer.exe");
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+TEST(ShouldAuditFileDownloadTest, NoExtensionAuditsAsOctetStream)
+{
+   // The helper passes "application/octet-stream" as the explicit
+   // default to getMimeContentType, so files with unknown / missing
+   // extensions audit. Closes the rename-bypass surface (e.g. renaming
+   // secret.zip to "secret") at the cost of also auditing legitimate
+   // extensionless text-file fetches (README, LICENSE, etc.).
+   core::http::Request request;
+   initRequest(request, "/files/README");
+   core::FilePath file("README");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
 
