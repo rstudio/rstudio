@@ -463,6 +463,7 @@ namespace prefs {
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
+#define kPositAssistantTestManifest "posit_assistant_test_manifest"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2125,6 +2126,12 @@ public:
     */
    bool assistantToolbarButtonVisible();
    core::Error setAssistantToolbarButtonVisible(bool val);
+
+   /**
+    * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
+    */
+   bool positAssistantTestManifest();
+   core::Error setPositAssistantTestManifest(bool val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

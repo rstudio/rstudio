@@ -3564,8 +3564,11 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI; use test manifest when opted in
-   std::string downloadUri = options().positAssistantTestManifest()
+   // Get download URI; use test manifest when opted in via either the
+   // command-line/session option or the user preference.
+   bool useTestManifest = options().positAssistantTestManifest() ||
+                          prefs::userPrefs().positAssistantTestManifest();
+   std::string downloadUri = useTestManifest
       ? "https://cdn.posit.co/posit-ai/manifest-test.json"
       : "https://cdn.posit.co/posit-ai/manifest.json";
 
@@ -3686,6 +3689,27 @@ void showRStudioVersionWarning(
       string_utils::htmlEscape(downloadUrl, true));
    ClientEvent event(client_events::kShowWarningBar, msgJson);
    module_context::enqueClientEvent(event);
+}
+
+// Show warning bar when Posit Assistant is using the test manifest.
+void showTestManifestWarning()
+{
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   msgJson["message"] =
+      "Posit Assistant is using the pre-release (test) manifest. "
+      "Do not use for production work.";
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
+}
+
+void onDeferredInit(bool)
+{
+   if (options().positAssistantTestManifest() ||
+       prefs::userPrefs().positAssistantTestManifest())
+   {
+      showTestManifestWarning();
+   }
 }
 
 // Constraints from the manifest's "unsupported" object. Versions below
@@ -5785,6 +5809,7 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
+   events().onDeferredInit.connect(onDeferredInit);
 
    // Register handler to detect session close (vs suspend/restart)
    events().onQuit.connect([]() {

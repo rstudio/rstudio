@@ -315,6 +315,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
+   public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -4184,6 +4185,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
+    */
+   public PrefValue<Boolean> positAssistantTestManifest()
+   {
+      return bool(
+         "posit_assistant_test_manifest",
+         _constants.positAssistantTestManifestTitle(), 
+         _constants.positAssistantTestManifestDescription(), 
+         false);
+   }
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -5007,6 +5020,8 @@ public class UserPrefsAccessor extends Prefs
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
+      if (source.hasKey("posit_assistant_test_manifest"))
+         positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5318,6 +5333,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
+      prefs.add(positAssistantTestManifest());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());
