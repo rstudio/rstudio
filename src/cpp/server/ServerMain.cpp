@@ -537,12 +537,14 @@ Error waitForSignals()
          overlay::shutdown();
 
          // If this SIGTERM was self-sent because the automation host
-         // rsession exited (i.e., test run completed), exit cleanly with
-         // status 0. Re-raising the signal below would terminate us with
-         // exit 143 (128 + SIGTERM), which external test harnesses can't
-         // distinguish from an aborted run. Externally-delivered
-         // termination signals still re-raise and exit with the
-         // conventional 128+signal status.
+         // rsession exited *cleanly* (status 0), exit with status 0.
+         // Re-raising the signal below would terminate us with exit 143
+         // (128 + SIGTERM), which external test harnesses can't
+         // distinguish from an aborted run. A non-clean host exit (crash,
+         // failed startup, test failures) leaves isShuttingDownForAutomation()
+         // false, so we fall through to the conventional re-raise path
+         // and exit with 128+SIGTERM -- signaling failure to the harness.
+         // Externally-delivered termination signals also re-raise.
          if (sig == SIGTERM && server::isShuttingDownForAutomation())
          {
             LOG_INFO_MESSAGE("Automation shutdown complete; exiting with status 0.");

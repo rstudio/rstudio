@@ -68,11 +68,16 @@ static std::string s_launcherToken;
 // than blocking forever in waitForSignals(). Zero means "no host yet".
 static std::atomic<PidType> s_automationHostPid{0};
 
-// Set just before we self-send SIGTERM in onProcessExit. The main signal-
-// wait loop checks isShuttingDownForAutomation() at the end of its SIGTERM
-// branch and std::exit(0)s instead of re-raising the signal -- otherwise
-// the process exits 143 (128 + SIGTERM), and external test harnesses can't
-// distinguish a clean automation completion from an aborted run.
+// Set just before we self-send SIGTERM in onProcessExit, but only when
+// the automation host rsession exited cleanly (status 0). The main
+// signal-wait loop checks isShuttingDownForAutomation() at the end of
+// its SIGTERM branch and std::exit(0)s instead of re-raising the signal
+// -- otherwise the process exits 143 (128 + SIGTERM), and external test
+// harnesses can't distinguish a clean automation completion from an
+// aborted run. If the host exited non-zero (crashed, failed to start,
+// or test framework reported failures), this stays false so we fall
+// through to the conventional re-raise path -- giving the harness a
+// non-zero exit it can detect.
 static std::atomic<bool> s_shuttingDownForAutomation{false};
 
 void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
@@ -291,7 +296,7 @@ core::system::ProcessConfig sessionProcessConfig(
    return config;
 }
 
-void onProcessExit(const std::string& username, PidType pid)
+void onProcessExit(const std::string& username, PidType pid, int exitStatus)
 {
    PidType automationHost = s_automationHostPid.load();
    if (automationHost != 0 && pid == automationHost)
@@ -299,12 +304,17 @@ void onProcessExit(const std::string& username, PidType pid)
       LOG_INFO_MESSAGE(
             "Automation host rsession (pid " +
             safe_convert::numberToString(pid) +
-            ") exited; signaling rserver shutdown.");
+            ") exited with status " +
+            safe_convert::numberToString(exitStatus) +
+            "; signaling rserver shutdown.");
       s_automationHostPid.store(0);
-      // Mark this as the automation shutdown path before sending the
-      // signal so the sigwait loop in ServerMain can distinguish it
-      // from an externally-delivered SIGTERM.
-      s_shuttingDownForAutomation.store(true);
+      // Only mark this as a clean automation shutdown when the host
+      // actually exited cleanly. ChildProcessTracker passes 0 here for
+      // a normal exit(0); any other value means the host exited non-zero
+      // or was killed by a signal -- in which case we want rserver to
+      // surface a non-zero status to the external harness rather than
+      // masking the failure as a clean run.
+      s_shuttingDownForAutomation.store(exitStatus == 0);
       ::kill(::getpid(), SIGTERM);
    }
 }
@@ -507,10 +517,13 @@ Error SessionManager::launchAndTrackSession(
       }
    }
 
-   // track it for subsequent reaping
+   // track it for subsequent reaping. _2 forwards the exit status from
+   // ChildProcessTracker so onProcessExit can distinguish a clean
+   // (status 0) automation host exit from a failure.
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
                                                profile.context.username,
-                                               pid));
+                                               pid,
+                                               _2));
 
    // return success
    return Success();
