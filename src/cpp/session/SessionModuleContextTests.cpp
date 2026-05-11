@@ -15,6 +15,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <string>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include <core/http/Request.hpp>
@@ -100,6 +103,27 @@ TEST(ShouldAuditFileDownloadTest, FetchDestImageSkipsEvenForBinaryExtension)
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
+TEST(ShouldAuditFileDownloadTest, AllSubResourceFetchDestsSkip)
+{
+   // Pins the contract that every value the helper recognizes as a
+   // sub-resource actually skips. Uses a non-renderable file type so a
+   // bug that drops the sub-resource branch would surface as a failure
+   // (and not be masked by the renderable-Content-Type branch).
+   const std::vector<std::string> subResourceDests = {
+      "style", "script", "image", "font", "audio", "video",
+      "track", "object", "embed", "manifest", "xslt", "report",
+      "worker", "serviceworker", "audioworklet", "paintworklet"
+   };
+   for (const auto& dest : subResourceDests)
+   {
+      core::http::Request request;
+      initRequest(request, "/files/asset.zip", dest);
+      core::FilePath file("asset.zip");
+      EXPECT_FALSE(shouldAuditFileDownload(request, file))
+         << "Sec-Fetch-Dest=" << dest << " should skip audit";
+   }
+}
+
 // --- Returns false: renderable Content-Type --------------------------------
 
 TEST(ShouldAuditFileDownloadTest, PdfMimeSkips)
@@ -161,6 +185,16 @@ TEST(ShouldAuditFileDownloadTest, OfficeDocxAudits)
    core::http::Request request;
    initRequest(request, "/files/report.docx");
    core::FilePath file("report.docx");
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+TEST(ShouldAuditFileDownloadTest, OctetStreamAudits)
+{
+   // The canonical "binary, save to disk" Content-Type. Most installer-
+   // style files (.exe, .iso, .dmg, .deb, .dll) resolve to this MIME.
+   core::http::Request request;
+   initRequest(request, "/files/installer.exe");
+   core::FilePath file("installer.exe");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
 

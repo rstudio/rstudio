@@ -2405,16 +2405,22 @@ bool shouldAuditFileDownload(const core::http::Request& request,
 {
    // Skip when the URL was constructed by an internal preview/show flow
    // (?show=1 marker, set by createFileUrl above and by Files.java's
-   // showFileInBrowser for view-style navigations).
+   // companion showFileInBrowser for view-style navigations).
    if (request.queryParamValue("show") == "1")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (?show=1 marker): " +
+                        filePath.getAbsolutePath());
       return false;
+   }
 
    // Skip HTML sub-resource fetches. Browsers signal these via
    // Sec-Fetch-Dest. Top-level navigations send "document" (or omit the
    // header on older browsers); embedded resources send their resource
    // type. Treat anything in the explicit sub-resource set as not-a-
    // download so a single HTML preview doesn't generate an audit row
-   // per asset.
+   // per asset. "iframe" and "frame" are deliberately NOT in this set:
+   // an iframe loading a binary is effectively exfiltration, so let
+   // the Content-Type check below decide.
    const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
    if (fetchDest == "style"        || fetchDest == "script"        ||
        fetchDest == "image"        || fetchDest == "font"          ||
@@ -2424,14 +2430,22 @@ bool shouldAuditFileDownload(const core::http::Request& request,
        fetchDest == "xslt"         || fetchDest == "report"        ||
        fetchDest == "worker"       || fetchDest == "serviceworker" ||
        fetchDest == "audioworklet" || fetchDest == "paintworklet")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (Sec-Fetch-Dest=" + fetchDest +
+                        " sub-resource): " + filePath.getAbsolutePath());
       return false;
+   }
 
    // Skip when the response will be served as a browser-renderable
    // Content-Type. The bytes are being viewed inline rather than saved
    // to disk, so it isn't a download from the user's perspective. Note
    // this means a real "right-click -> Save As" on a rendered PDF will
    // not produce an audit row; that's an accepted trade-off for not
-   // logging the much more common inline-view case.
+   // logging the much more common inline-view case. Files with an
+   // unknown / missing extension currently default to "text/plain" via
+   // FilePath::getMimeContentType, so an extensionless binary also
+   // skips audit - this is a known rename-bypass surface, separately
+   // addressed.
    const std::string mimeType = filePath.getMimeContentType();
    if (mimeType.rfind("text/", 0) == 0     ||
        mimeType.rfind("image/", 0) == 0    ||
@@ -2442,7 +2456,11 @@ bool shouldAuditFileDownload(const core::http::Request& request,
        mimeType == "application/xml"       ||
        mimeType == "application/javascript"||
        mimeType == "application/xhtml+xml")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (renderable Content-Type=" +
+                        mimeType + "): " + filePath.getAbsolutePath());
       return false;
+   }
 
    return true;
 }

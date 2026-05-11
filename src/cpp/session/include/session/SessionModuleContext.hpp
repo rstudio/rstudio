@@ -88,7 +88,7 @@ enum PackageCompatStatus
    COMPAT_UNKNOWN = 4
 };
     
-// paths
+// paths 
 core::FilePath userHomePath();
 std::string createAliasedPath(const core::FileInfo& fileInfo);
 std::string createAliasedPath(const core::FilePath& path);
@@ -96,12 +96,14 @@ std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 
 // Returns true if a /files/ or /file_show request for filePath should
-// produce a session_file_download audit event. Returns false when the
-// request is a server-initiated preview/show (URL has ?show=1), an HTML
-// sub-resource fetch (Sec-Fetch-Dest is style/script/image/etc.), or
-// when the response will be served as a browser-renderable Content-Type
-// (text/*, image/*, audio/*, video/*, application/pdf, etc.) and the
-// bytes will be viewed inline rather than saved.
+// produce a session_file_download audit event. Returns false when:
+//   (1) the URL carries ?show=1 (server-initiated preview/show flow),
+//   (2) Sec-Fetch-Dest indicates a sub-resource (style/script/image/
+//       font/audio/video/track/object/embed/manifest/xslt/report/
+//       worker/serviceworker/audioworklet/paintworklet), or
+//   (3) the file's Content-Type is browser-renderable: text/*, image/*,
+//       audio/*, video/*, application/pdf, application/json,
+//       application/xml, application/javascript, application/xhtml+xml.
 bool shouldAuditFileDownload(const core::http::Request& request,
                              const core::FilePath& filePath);
 core::FilePath userScratchPath();
