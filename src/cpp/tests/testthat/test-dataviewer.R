@@ -102,6 +102,11 @@ test_that(".rs.describeColSlice() emits a fingerprint stable across pagination",
    slice_b <- .rs.describeColSlice(tbl, 6, 10)
    slice_c <- .rs.describeColSlice(tbl, 16, 20)
 
+   # The rownames slot is always the first column and is where the
+   # fingerprint is attached. Anchor that here so a refactor that moves
+   # the slot doesn't make the rest of the test silently pass on NULLs.
+   expect_equal(slice_a[[1]]$col_type, .rs.scalar("rownames"))
+
    # Same underlying frame -> identical fingerprint regardless of slice.
    expect_identical(slice_a[[1]]$cols_fingerprint, slice_b[[1]]$cols_fingerprint)
    expect_identical(slice_a[[1]]$cols_fingerprint, slice_c[[1]]$cols_fingerprint)
@@ -128,6 +133,32 @@ test_that(".rs.describeCols() fingerprint distinguishes hyphen-collisions", {
    fp1 <- .rs.describeCols(x1)[[1]]$cols_fingerprint
    fp2 <- .rs.describeCols(x2)[[1]]$cols_fingerprint
    expect_false(identical(fp1, fp2))
+})
+
+test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
+   # The client treats a null/missing fingerprint as always-mismatch and
+   # discards any saved per-object state -- there's no anchor to align
+   # positional indices against, so applying them would be unsafe.
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(data.frame())))
+
+   noNames <- data.frame(1:3, 4:6)
+   names(noNames) <- NULL
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(noNames)))
+
+   # Empty character vector (the zero-length-names case the client guards
+   # against) must hash to NA, not to digest("")
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(structure(list(), names = character()))))
+})
+
+test_that(".rs.digest() distinguishes character vectors that concat-collide", {
+   # Without length-prefix / unit-separator framing, c("a","b") and
+   # c("ab") would hash identically -- a regression here would silently
+   # weaken the data viewer fingerprint.
+   expect_false(identical(.rs.digest(c("a", "b")), .rs.digest("ab")))
+   expect_false(identical(.rs.digest(c("a-b", "c")), .rs.digest(c("a", "b-c"))))
+
+   # Stable across calls.
+   expect_identical(.rs.digest(c("x", "y")), .rs.digest(c("x", "y")))
 })
 
 # Helper: strip the rs.scalar class wrapper so tests can compare against

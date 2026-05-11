@@ -139,34 +139,51 @@ has-scope () {
    [ -z "${TEST_SCOPE}" ] || [ "${TEST_SCOPE}" = "$1" ]
 }
 
-case "$1" in
+while [ $# -gt 0 ]; do
+   case "$1" in
 
-"--scope")
+   "--scope")
 
-   if [ -z "$2" ]; then
-      echo "Usage: ./rstudio-tests --scope [core|rserver|rsession|r]"
+      if [ -z "$2" ]; then
+         echo "Usage: ./rstudio-tests --scope [core|rserver|rsession|r]"
+         exit 1
+      fi
+
+      TEST_SCOPE="$2"
+      shift 2
+
+   ;;
+
+   "--filter")
+
+      # used for filtering to a subset of R testthat tests; previously
+      # implied --scope r, but only when --filter came first. Now scope
+      # is taken from --scope if given (so `--scope r --filter foo` works
+      # in either order), and we still default to r when --filter is the
+      # only narrowing option.
+      TEST_FILTER="$2"
+      if [ -z "${TEST_SCOPE}" ]; then
+         TEST_SCOPE="r"
+      fi
+      shift 2
+
+   ;;
+
+   "--help")
+      echo "${USAGE}"
+      exit 0
+
+   ;;
+
+   *)
+      echo "Unknown argument: $1"
+      echo "${USAGE}"
       exit 1
-   fi
 
-   TEST_SCOPE="$2"
-   shift 2
+   ;;
 
-;;
-
-"--filter")
-
-   # used for filtering to a subset of R testthat tests
-   TEST_SCOPE="r"
-   TEST_FILTER="$2"
-   shift 2
-
-;;
-
-"--help")
-   echo "${USAGE}"
-   exit 0
-
-esac
+   esac
+done
 
 # try to find libSegFault if available
 findLibSegFault

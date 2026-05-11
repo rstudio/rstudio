@@ -134,6 +134,22 @@
    as.character(col)
 })
 
+# Compact, collision-resistant hash of a frame's column names. Used as a
+# fingerprint to detect object reassignment between data viewer loads.
+#
+# Returns NA_character_ for empty / NULL names so the client can treat
+# "no anchor" as always-mismatch; without anchors there's no way to align
+# saved positional state with the current frame, so we want it discarded.
+.rs.addFunction("dataViewer.colsFingerprint", function(x)
+{
+   nms <- names(x)
+   n <- length(nms)
+   if (n == 0L)
+      return(NA_character_)
+
+   paste0(n, ":", .rs.digest(nms))
+})
+
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,
@@ -141,18 +157,16 @@
                                          totalCols = -1,
                                          colsFingerprint = NULL)
 {
-   # Capture a fingerprint of the full set of column names before any
-   # subsetting -- the client uses this to detect object reassignment
-   # (e.g. df <- iris after df <- mtcars). Callers that have already
-   # subset x (e.g. describeColSlice) must compute and pass this
-   # themselves so the fingerprint reflects the underlying frame, not
-   # the visible slice. Prefix with the name count and separate names
-   # with the ASCII Unit Separator so names containing a hyphen (common
-   # in real datasets) can't collide -- e.g. c("a-b", "c") vs
-   # c("a", "b-c") would otherwise share a fingerprint.
+   # The client compares this fingerprint against the one stored alongside
+   # saved per-object UI state (pins, widths, sort, filters, sidebar
+   # visibility). A mismatch invalidates the saved state -- without it,
+   # positional indices saved against one frame can land on an unrelated
+   # frame after reassignment (df <- iris; df <- mtcars). Callers that have
+   # already subset x (e.g. describeColSlice) must compute the fingerprint
+   # from the underlying frame and pass it in, otherwise pagination would
+   # silently invalidate state on every column-frame change.
    if (is.null(colsFingerprint))
-      colsFingerprint <- paste0(length(names(x)), ":",
-                                paste(names(x), collapse = "\x1F"))
+      colsFingerprint <- .rs.dataViewer.colsFingerprint(x)
 
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
@@ -456,14 +470,11 @@
    }
       
    
-   # Compute the fingerprint from the full frame's names (not colSlice's
-   # subset) so it stays stable across pagination -- otherwise saved UI
-   # state, including a dismissed summary sidebar, would be invalidated
-   # on every column-frame change. Format must match describeCols().
-   colsFingerprint <- paste0(length(names(x)), ":",
-                             paste(names(x), collapse = "\x1F"))
-
-   .rs.describeCols(colSlice, -1, -1, 64, totalCols, colsFingerprint)
+   # Pass the fingerprint of the full frame so pagination doesn't fold
+   # each page into a distinct fingerprint -- doing so would invalidate
+   # saved UI state on every page change.
+   .rs.describeCols(colSlice, -1, -1, 64, totalCols,
+                    .rs.dataViewer.colsFingerprint(x))
 })
 
 .rs.addFunction("summarizeColumn", function(x, columnIndex)
