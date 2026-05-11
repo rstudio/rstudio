@@ -23,11 +23,11 @@ remote$console.executeExpr({
 })
 
 .rs.test("styler: documents can be reformatted on save", {
-   
+
    skip_on_ci()
    if (!remote$package.isInstalled("styler"))
       skip("styler is not installed")
-   
+
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(TRUE)
       .rs.uiPrefs$codeFormatter$set("styler")
@@ -35,7 +35,7 @@ remote$console.executeExpr({
 
    name <- basename(tempfile("script-", fileext = ".R"))
    remote$editor.openDocument(name)
-   
+
    editor <- remote$editor.getInstance()
    editor$insert("1+1; 2+2")
    remote$keyboard.insertText("<Ctrl + S>")
@@ -47,11 +47,48 @@ remote$console.executeExpr({
    })
    expect_equal(contents, "1 + 1\n2 + 2\n")
    remote$editor.closeDocument()
-   
+
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(FALSE)
       .rs.uiPrefs$codeFormatter$set("none")
    })
+})
+
+# https://github.com/rstudio/rstudio/issues/17471
+.rs.test("styler: Reformat Document does not add extra newlines", {
+
+   skip_on_ci()
+   if (!remote$package.isInstalled("styler"))
+      skip("styler is not installed")
+
+   remote$console.executeExpr({
+      .rs.uiPrefs$codeFormatter$set("styler")
+   })
+   withr::defer(remote$console.executeExpr({
+      .rs.uiPrefs$codeFormatter$set("none")
+   }))
+
+   # Two lines of code followed by a blank line. styler's writeLines on
+   # Windows would write CRLF; without the line-ending normalization fix,
+   # the diff against the LF-normalized document inserts \r characters
+   # that Ace turns into extra blank lines between the two statements.
+   initial <- "print(\"test\")\nprint(\"test\")\n\n"
+   remote$editor.executeWithContents(".R", initial, function(editor) {
+      remote$commands.execute(.rs.appCommands$reformatDocument)
+      contents <- .rs.waitUntil("document is reformatted", function() {
+         contents <- editor$getValue()
+         if (contents != initial)
+            return(contents)
+         return(FALSE)
+      })
+      expect_equal(contents, "print(\"test\")\nprint(\"test\")\n")
+
+      # Reformatting again should leave the document unchanged.
+      remote$commands.execute(.rs.appCommands$reformatDocument)
+      Sys.sleep(1)
+      expect_equal(editor$getValue(), "print(\"test\")\nprint(\"test\")\n")
+   })
+
 })
 
 .rs.test("air: documents can be reformatted on save", {

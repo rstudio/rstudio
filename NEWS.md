@@ -11,6 +11,7 @@
 - ([#5809](https://github.com/rstudio/rstudio/issues/5809)): Roxygen tag autocompletion (e.g. `@param`, `@return`) now works on `#'` lines inside R code chunks of R Markdown and Quarto documents, matching the behavior in plain `.R` files.
 
 ### Fixed
+- ([#17471](https://github.com/rstudio/rstudio/issues/17471)): Reformat Document with the styler formatter no longer inserts extra blank lines on Windows. The temporary file written by styler uses platform-native line endings (CRLF on Windows), and RStudio now normalizes those to LF when computing the edits to apply, so the diff against the LF-normalized in-memory document doesn't produce spurious `\r` insertions that Ace would convert into blank lines.
 - ([#17363](https://github.com/rstudio/rstudio/issues/17363)): Posit Assistant: pressing Escape to dismiss a ghost-text Next Edit Suggestion now also clears the NES gutter icon; previously the gutter icon remained visible after dismissal.
 - ([#17589](https://github.com/rstudio/rstudio/issues/17589)): The diagnostics report now includes `positai.log` alongside `rdesktop.log` and the user's `rsession-*.log`.
 - ([#17581](https://github.com/rstudio/rstudio/issues/17581)): Diagnostic gutter tooltips no longer show literal `<SPAN>` markup around the message; lint annotations now keep the original text alongside any rendered HTML so the tooltip renders cleanly while the diagnostics popup continues to support ANSI-colored content.

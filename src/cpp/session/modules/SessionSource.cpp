@@ -956,9 +956,12 @@ Error formatDocument(
       Error error;
       json::JsonRpcResponse response;
 
-      // Read the newly-formatted document
+      // Read the newly-formatted document, normalizing line endings so that
+      // line-ending differences between the in-memory document (LF) and the
+      // formatter output (potentially CRLF on Windows) don't produce spurious
+      // edits.
       std::string formatted;
-      error = core::readStringFromFile(codePath, &formatted);
+      error = core::readStringFromFile(codePath, &formatted, string_utils::LineEndingPosix);
       if (error)
          LOG_ERROR(error);
 
@@ -1021,16 +1024,16 @@ Error formatCode(
    FilePath codeDir = data.codeDir;
    return formatDocumentImpl(codePath, continuation, [=]()
    {
-      // read from the tempfile we wrote
+      // read from the tempfile we wrote, normalizing line endings so that
+      // CRLF written by some formatters on Windows doesn't produce spurious
+      // edits when diffed against the LF-normalized document contents
       std::string code;
-      Error error = readStringFromFile(codePath, &code);
+      Error error = readStringFromFile(codePath, &code, string_utils::LineEndingPosix);
       if (error)
          LOG_ERROR(error);
 
       // trim a final newline in the formatted selection
-      if (boost::algorithm::ends_with(code, "\r\n"))
-         code = code.substr(0, code.length() - 2);
-      else if (boost::algorithm::ends_with(code, "\n"))
+      if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
 
       // add back in the indent we computed (only if air formatter was used)
