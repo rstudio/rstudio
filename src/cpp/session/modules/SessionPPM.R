@@ -56,8 +56,8 @@
       return(empty)
 
    # build a curl handle for the request
-   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")
-   handle <- curl::new_handle(verbose = if (verbose) TRUE else FALSE)
+   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
+   handle <- curl::new_handle(verbose = verbose)
 
    headers <- list("Content-Type" = "application/json")
    curl::handle_setheaders(handle, .list = headers)
@@ -137,15 +137,35 @@
       vulns[[name]] <- c(vulns[[name]], pkgVulns)
    }
 
-   # dedupe vulns by id within each package, since the same vuln may apply
-   # to multiple versions of a package
+   # dedupe vulns by id within each package, merging the per-record
+   # 'versions' maps so the UI's per-version check still finds every
+   # affected installed version. PPM may report a different versions
+   # subset alongside each (package, version) record.
    for (name in names(vulns))
    {
       pkgVulns <- vulns[[name]]
-      ids <- character(length(pkgVulns))
+      merged <- list()
+      indices <- list()
       for (i in seq_along(pkgVulns))
-         ids[[i]] <- .rs.nullCoalesce(pkgVulns[[i]][["id"]], "")
-      vulns[[name]] <- pkgVulns[!duplicated(ids)]
+      {
+         vuln <- pkgVulns[[i]]
+         id <- .rs.nullCoalesce(vuln[["id"]], "")
+         slot <- indices[[id]]
+         if (is.null(slot))
+         {
+            slot <- length(merged) + 1L
+            indices[[id]] <- slot
+            merged[[slot]] <- vuln
+         }
+         else
+         {
+            existing <- merged[[slot]]
+            combined <- c(existing[["versions"]], vuln[["versions"]])
+            existing[["versions"]] <- combined[!duplicated(names(combined))]
+            merged[[slot]] <- existing
+         }
+      }
+      vulns[[name]] <- merged
    }
 
    .rs.markScalars(vulns)
@@ -233,8 +253,8 @@
       return(cache)
    
    # begin building a curl handle
-   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")
-   handle <- curl::new_handle(verbose = if (verbose) TRUE else FALSE)
+   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
+   handle <- curl::new_handle(verbose = verbose)
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")

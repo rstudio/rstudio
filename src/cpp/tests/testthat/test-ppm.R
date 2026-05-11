@@ -134,6 +134,22 @@ test_that("parseVulnerabilityResponse tolerates blank lines between records", {
    ))
 })
 
+test_that("parseVulnerabilityResponse merges versions maps when deduping by id", {
+   contents <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","versions":{"1.0.0":true}}]}',
+      '{"name":"pkgA","version":"1.1.0","vulns":[{"id":"V1","versions":{"1.1.0":true}}]}',
+      '{"name":"pkgA","version":"1.2.0","vulns":[{"id":"V1","versions":{"1.0.0":true,"1.2.0":true}}]}',
+      sep = "\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      pkgA = list(list(
+         id = "V1",
+         versions = list(`1.0.0` = TRUE, `1.1.0` = TRUE, `1.2.0` = TRUE)
+      ))
+   ))
+})
+
 test_that("parseVulnerabilityResponse preserves nested vuln fields", {
    contents <- paste0(
       '{"name":"pkgA","version":"1.0.0","vulns":[',
