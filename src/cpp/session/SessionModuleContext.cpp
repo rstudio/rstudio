@@ -2454,15 +2454,12 @@ bool shouldAuditFileDownload(const core::http::Request& request,
    // default for an audit record.
    const std::string mimeType =
       filePath.getMimeContentType("application/octet-stream");
-   if (mimeType.rfind("text/", 0) == 0     ||
-       mimeType.rfind("image/", 0) == 0    ||
-       mimeType.rfind("audio/", 0) == 0    ||
-       mimeType.rfind("video/", 0) == 0    ||
-       mimeType == "application/pdf"       ||
-       mimeType == "application/json"      ||
-       mimeType == "application/xml"       ||
-       mimeType == "application/javascript"||
-       mimeType == "application/xhtml+xml")
+   if (mimeType.rfind("text/", 0) == 0  ||
+       mimeType.rfind("image/", 0) == 0 ||
+       mimeType.rfind("audio/", 0) == 0 ||
+       mimeType.rfind("video/", 0) == 0 ||
+       mimeType == "application/pdf"    ||
+       mimeType == "application/json")
    {
       LOG_DEBUG_MESSAGE("Audit skipped (renderable Content-Type=" +
                         mimeType + "): " + filePath.getAbsolutePath());

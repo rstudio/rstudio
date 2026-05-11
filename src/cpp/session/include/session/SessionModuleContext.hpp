@@ -102,8 +102,7 @@ core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 //       font/audio/video/track/object/embed/manifest/xslt/report/
 //       worker/serviceworker/audioworklet/paintworklet), or
 //   (3) the file's Content-Type is browser-renderable: text/*, image/*,
-//       audio/*, video/*, application/pdf, application/json,
-//       application/xml, application/javascript, application/xhtml+xml.
+//       audio/*, video/*, application/pdf, application/json.
 bool shouldAuditFileDownload(const core::http::Request& request,
                              const core::FilePath& filePath);
 core::FilePath userScratchPath();
