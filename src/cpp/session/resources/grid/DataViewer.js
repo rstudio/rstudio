@@ -3169,14 +3169,19 @@ var initGrid = function(resCols, data) {
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
-   // Apply the data_viewer_show_summary preference as the default for
-   // objects the user hasn't already customized. When saved state has a
-   // sidebar choice, applySavedState below restores it -- skipping this
-   // overwrite keeps a dismissed summary dismissed across re-bootstraps
-   // from column pagination, where the in-memory sidebarVisible already
-   // reflects the user's choice.
+   // Apply the data_viewer_show_summary preference as the default. When
+   // applySavedState will actually restore a saved sidebar choice (its
+   // fingerprint matches the current frame), skip this overwrite -- that's
+   // what keeps a dismissed sidebar dismissed across re-bootstraps from
+   // column pagination. On a fingerprint mismatch (e.g. object reassigned
+   // to a different column set) applySavedState drops the saved state
+   // without applying its sidebar choice, so the URL default is still
+   // needed.
    var savedState = loadSavedState();
-   if (!savedState || typeof savedState.sidebarVisible !== "boolean") {
+   var willRestoreSidebar = savedState &&
+      typeof savedState.sidebarVisible === "boolean" &&
+      savedState.columns === columnFingerprint();
+   if (!willRestoreSidebar) {
       sidebarVisible = loc.showSummary;
    }
 

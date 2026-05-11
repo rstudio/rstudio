@@ -146,9 +146,13 @@
    # (e.g. df <- iris after df <- mtcars). Callers that have already
    # subset x (e.g. describeColSlice) must compute and pass this
    # themselves so the fingerprint reflects the underlying frame, not
-   # the visible slice.
+   # the visible slice. Prefix with the name count and separate names
+   # with the ASCII Unit Separator so names containing a hyphen (common
+   # in real datasets) can't collide -- e.g. c("a-b", "c") vs
+   # c("a", "b-c") would otherwise share a fingerprint.
    if (is.null(colsFingerprint))
-      colsFingerprint <- paste(names(x), collapse = "-")
+      colsFingerprint <- paste0(length(names(x)), ":",
+                                paste(names(x), collapse = "\x1F"))
 
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
@@ -455,8 +459,9 @@
    # Compute the fingerprint from the full frame's names (not colSlice's
    # subset) so it stays stable across pagination -- otherwise saved UI
    # state, including a dismissed summary sidebar, would be invalidated
-   # on every column-frame change.
-   colsFingerprint <- paste(names(x), collapse = "-")
+   # on every column-frame change. Format must match describeCols().
+   colsFingerprint <- paste0(length(names(x)), ":",
+                             paste(names(x), collapse = "\x1F"))
 
    .rs.describeCols(colSlice, -1, -1, 64, totalCols, colsFingerprint)
 })

@@ -119,6 +119,17 @@ test_that(".rs.describeColSlice() emits a fingerprint stable across pagination",
                     slice_a[[1]]$cols_fingerprint)
 })
 
+test_that(".rs.describeCols() fingerprint distinguishes hyphen-collisions", {
+   # Reassignments like c("a-b", "c") vs c("a", "b-c") must not produce
+   # identical fingerprints, otherwise the per-object state check intended
+   # to detect object reassignment would silently apply mismatched indices.
+   x1 <- setNames(data.frame(1:3, 4:6), c("a-b", "c"))
+   x2 <- setNames(data.frame(1:3, 4:6), c("a", "b-c"))
+   fp1 <- .rs.describeCols(x1)[[1]]$cols_fingerprint
+   fp2 <- .rs.describeCols(x2)[[1]]$cols_fingerprint
+   expect_false(identical(fp1, fp2))
+})
+
 # Helper: strip the rs.scalar class wrapper so tests can compare against
 # bare R values without forcing every expect_equal to know the wrapping.
 .rs.summarize.bare <- function(x) {
