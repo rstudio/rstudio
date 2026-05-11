@@ -3691,6 +3691,27 @@ void showRStudioVersionWarning(
    module_context::enqueClientEvent(event);
 }
 
+// Show warning bar when Posit Assistant is using the test manifest.
+void showTestManifestWarning()
+{
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   msgJson["message"] =
+      "Posit Assistant is using the pre-release (test) manifest. "
+      "Do not use for production work.";
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
+}
+
+void onDeferredInit(bool)
+{
+   if (options().positAssistantTestManifest() ||
+       prefs::userPrefs().positAssistantTestManifest())
+   {
+      showTestManifestWarning();
+   }
+}
+
 // Constraints from the manifest's "unsupported" object. Versions below
 // minimumPackageVersion or listed in packageVersions are blocked, as are
 // listed protocol versions.
@@ -5788,6 +5809,7 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
+   events().onDeferredInit.connect(onDeferredInit);
 
    // Register handler to detect session close (vs suspend/restart)
    events().onQuit.connect([]() {
