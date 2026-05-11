@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <grp.h>
+#include <boost/asio/ip/address_v4.hpp>
 #include <gtest/gtest.h>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
@@ -32,6 +33,8 @@ namespace system {
 OSInfo parseOsReleaseContent(const std::string&);
 
 namespace detail {
+
+bool isLinkLocalIpv4(const boost::asio::ip::address_v4& addr);
 
 std::string resolveBindAddressForAddresses(
       const std::string& address,
@@ -425,6 +428,118 @@ TEST(PosixTests, WorkingDirProcFs)
       ::kill(pid, SIGKILL);
       ::waitpid(pid, nullptr, 0);
    }
+}
+
+TEST(PosixTests, ResolveBindAddressHandlesIpv4Wildcard)
+{
+   std::string result = resolveBindAddress("0.0.0.0");
+   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+}
+
+TEST(PosixTests, ResolveBindAddressHandlesIpv6Wildcard)
+{
+   std::string result = resolveBindAddress("::");
+   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+}
+
+TEST(PosixTests, ResolveBindAddressPrefersIpv6WhenOnlyIpv6Available)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "::1"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
+}
+
+TEST(PosixTests, ResolveBindAddressKeepsIpv4OnDualStackHosts)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+}
+
+TEST(PosixTests, ResolveBindAddressIgnoresScopedIpv6ForIpv4Wildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "fe80::1%eth0")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+}
+
+TEST(PosixTests, ResolveBindAddressIgnoresLinkLocalIpv6ForIpv4Wildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "fe80::1")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+}
+
+TEST(PosixTests, IsLinkLocalIpv4IdentifiesLinkLocalAddresses)
+{
+   EXPECT_TRUE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.254.0.0")));
+   EXPECT_TRUE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.254.0.1")));
+   EXPECT_TRUE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.254.255.255")));
+   EXPECT_TRUE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.254.1.100")));
+}
+
+TEST(PosixTests, IsLinkLocalIpv4RejectsNonLinkLocalAddresses)
+{
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("127.0.0.1")));
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("192.168.1.1")));
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("10.0.0.1")));
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.253.0.1")));
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("169.255.0.1")));
+   EXPECT_FALSE(detail::isLinkLocalIpv4(
+      boost::asio::ip::make_address_v4("0.0.0.0")));
+}
+
+TEST(PosixTests, ResolveBindAddressIgnoresLinkLocalIpv4ForIpv4Wildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "169.254.1.100"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
+}
+
+TEST(PosixTests, ResolveBindAddressSkipsUnparseableAddresses)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("bad0", "not-an-address"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
+}
+
+TEST(PosixTests, ResolveBindAddressFallsBackToIpv4WithoutIpv6)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("::", addrs), std::string("0.0.0.0"));
 }
 
 #endif // !__APPLE__
