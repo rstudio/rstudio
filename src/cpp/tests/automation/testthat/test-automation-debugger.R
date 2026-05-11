@@ -320,3 +320,172 @@ withr::defer(.rs.automation.deleteRemote())
    })
    remote$keyboard.insertText("<Ctrl + L>")
 })
+
+# https://github.com/rstudio/rstudio/issues/9450
+# Clicking a gutter cell that already has a breakpoint should remove both
+# the in-memory entry and the visual marker. Reports of "sticky" breakpoints
+# in the original issue describe markers that survive the second click.
+.rs.test("clicking a top-level breakpoint marker toggles it off", {
+
+   contents <- .rs.heredoc('
+      x <- 1
+      y <- 2
+      z <- x + y
+   ')
+
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+
+      # children[[1L]] is the second gutter cell -- 0-based indexing through
+      # the BRAT R wrapper, so this targets line 2 ("y <- 2"). Top-level
+      # breakpoints land in STATE_ACTIVE immediately, surfacing as the
+      # "ace_breakpoint" class with no STATE_PROCESSING / pending flicker.
+      gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
+      gutterCell <- gutterLayer$children[[1L]]
+      remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
+
+      .rs.waitUntil("breakpoint marker appears", function() {
+         remote$dom.elementExists(".ace_breakpoint")
+      })
+      breakpointEls <- remote$js.querySelectorAll(".ace_breakpoint")
+      expect_equal(length(breakpointEls), 1L)
+
+      # Click the same gutter cell to toggle the breakpoint off.
+      gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
+      gutterCell <- gutterLayer$children[[1L]]
+      remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
+
+      # Marker (in any of its visual states) should be gone.
+      .rs.waitUntil("breakpoint marker is removed", function() {
+         !remote$dom.elementExists(".ace_breakpoint") &&
+            !remote$dom.elementExists(".ace_pending-breakpoint") &&
+            !remote$dom.elementExists(".ace_inactive-breakpoint")
+      })
+      expect_false(remote$dom.elementExists(".ace_breakpoint"))
+      expect_false(remote$dom.elementExists(".ace_pending-breakpoint"))
+      expect_false(remote$dom.elementExists(".ace_inactive-breakpoint"))
+   })
+})
+
+# https://github.com/rstudio/rstudio/issues/9450
+# "Clear All Breakpoints" should remove every marker on every line. The
+# original issue reports cases where some markers survived the command.
+.rs.test("Clear All Breakpoints removes every breakpoint marker", {
+
+   contents <- .rs.heredoc('
+      x <- 1
+      y <- 2
+      z <- x + y
+   ')
+
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+
+      # Place a top-level breakpoint on each of the three lines.
+      for (idx in 0:2)
+      {
+         gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
+         gutterCell <- gutterLayer$children[[idx]]
+         remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
+      }
+
+      .rs.waitUntil("three breakpoint markers present", function() {
+         breakpointEls <- remote$js.querySelectorAll(".ace_breakpoint")
+         length(breakpointEls) == 3L
+      })
+      breakpointEls <- remote$js.querySelectorAll(".ace_breakpoint")
+      expect_equal(length(breakpointEls), 3L)
+
+      # Invoke Clear All Breakpoints; this fires a Yes/No confirmation
+      # before BreakpointManager.clearAllBreakpoints() runs.
+      remote$commands.execute("debugClearBreakpoints")
+      remote$dom.waitForElement("#rstudio_dlg_yes")
+      remote$dom.clickElement("#rstudio_dlg_yes")
+
+      .rs.waitUntil("all breakpoint markers removed", function() {
+         !remote$dom.elementExists(".ace_breakpoint") &&
+            !remote$dom.elementExists(".ace_pending-breakpoint") &&
+            !remote$dom.elementExists(".ace_inactive-breakpoint")
+      })
+      expect_false(remote$dom.elementExists(".ace_breakpoint"))
+      expect_false(remote$dom.elementExists(".ace_pending-breakpoint"))
+      expect_false(remote$dom.elementExists(".ace_inactive-breakpoint"))
+   })
+})
+
+# https://github.com/rstudio/rstudio/issues/9450
+# Pisca46's report: a package breakpoint that has been clicked off should
+# stay off across a package rebuild. PackageLoadedEvent triggers
+# BreakpointManager.updatePackageBreakpoints(); with the breakpoint already
+# removed from breakpoints_, no marker should reappear.
+.rs.test("cleared package breakpoints stay cleared across rebuild", {
+
+   remote$project.create(projectName = "rstudio.automation", type = "package")
+   withr::defer({
+      remote$editor.closeDocument()
+      Sys.sleep(1)
+      remote$project.close()
+   })
+
+   # Close any open documents from the project template.
+   remote$console.executeExpr(
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   )
+
+   # Add a source document with a function we can set a breakpoint inside.
+   remote$console.executeExpr(file.edit("R/example.R"))
+   remote$commands.execute("activateSource")
+
+   code <- .rs.heredoc('
+      example <- function() {
+         1 + 1
+         2 + 2
+         3 + 3
+      }
+   ')
+
+   editor <- remote$editor.getInstance()
+   editor$insert(code)
+   Sys.sleep(0.1)
+
+   remote$commands.execute("saveSourceDoc")
+   remote$commands.execute("buildAll")
+   .rs.waitUntil("build has completed", function() {
+      output <- remote$console.getOutput()
+      any(output == "> library(rstudio.automation)")
+   }, swallowErrors = TRUE)
+   remote$console.clear()
+
+   # Place a function breakpoint on line 3 ("2 + 2") -- this exercises the
+   # TYPE_FUNCTION / package path that goes through trace() in R, as opposed
+   # to the simpler TYPE_TOPLEVEL flow in the earlier tests. We use the same
+   # gutterEls index ([[3]]) and offset as test-automation-debugger.R's
+   # "package functions can be debugged after build and reload" test.
+   gutterEls <- remote$js.querySelectorAll(".ace_gutter-cell")
+   remote$dom.clickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
+   .rs.waitUntil("breakpoint marker appears", function() {
+      remote$dom.elementExists(".ace_breakpoint")
+   })
+
+   # Click the same gutter cell again to remove the breakpoint.
+   gutterEls <- remote$js.querySelectorAll(".ace_gutter-cell")
+   remote$dom.clickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
+   .rs.waitUntil("breakpoint marker is removed", function() {
+      !remote$dom.elementExists(".ace_breakpoint") &&
+         !remote$dom.elementExists(".ace_pending-breakpoint") &&
+         !remote$dom.elementExists(".ace_inactive-breakpoint")
+   })
+
+   # Rebuild the package. PackageLoadedEvent fires on completion and runs
+   # BreakpointManager.updatePackageBreakpoints("rstudio.automation", true);
+   # with breakpoints_ empty, this should be a no-op.
+   remote$console.clear()
+   remote$commands.execute("buildAll")
+   .rs.waitUntil("rebuild has completed", function() {
+      output <- remote$console.getOutput()
+      any(output == "> library(rstudio.automation)")
+   }, swallowErrors = TRUE)
+
+   # No marker of any kind should have reappeared.
+   expect_false(remote$dom.elementExists(".ace_breakpoint"))
+   expect_false(remote$dom.elementExists(".ace_pending-breakpoint"))
+   expect_false(remote$dom.elementExists(".ace_inactive-breakpoint"))
+})

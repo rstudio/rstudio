@@ -31,6 +31,7 @@
 #include <vector>
 #include <cstdlib>
 #include <csignal>
+#include <fstream>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -1121,6 +1122,36 @@ void rConsoleWrite(const std::string& output, int otype)
 #ifndef RSTUDIO_PACKAGE_BUILD
    console_output::simulateLatency();
 #endif
+
+   // When running automation tests, tee R's console output to both a
+   // log file (for post-run inspection) and the rsession's inherited
+   // stderr (so a controlling terminal like rserver-dev sees it live).
+   // Normally these writes go only to the IDE event queue below, so
+   // there's no other way for a headless test runner to observe them.
+   if (rsession::options().runAutomation())
+   {
+      // Function-local static: opened once on first call (C++11 guarantees
+      // thread-safe initialization), reused thereafter, closed at process
+      // exit. Truncates on open so each test run starts with a clean log.
+      static std::ofstream& automationLog = []() -> std::ofstream& {
+         static std::ofstream stream;
+         FilePath logDir("/tmp/rstudio-automation");
+         Error error = logDir.ensureDirectory();
+         if (error)
+            LOG_ERROR(error);
+         else
+            stream.open(logDir.completePath("console.log").getAbsolutePath(),
+                        std::ios::out | std::ios::trunc);
+         return stream;
+      }();
+      if (automationLog.is_open())
+      {
+         automationLog << output;
+         automationLog.flush();
+      }
+      std::cerr << output;
+      std::cerr.flush();
+   }
 
    // notify listeners
    auto type = (otype == 1)

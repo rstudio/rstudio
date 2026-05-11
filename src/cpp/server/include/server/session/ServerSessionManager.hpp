@@ -120,6 +120,12 @@ private:
    core::system::ChildProcessTracker processTracker_;
 };
 
+// Returns true if rserver is shutting down because the automation host
+// rsession exited (i.e., the SIGTERM was self-sent from onProcessExit,
+// not delivered externally). Used by the main signal-wait loop to exit
+// with status 0 instead of re-raising SIGTERM (which would yield 143).
+bool isShuttingDownForAutomation();
+
 // set a process config filter
 void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter);
 

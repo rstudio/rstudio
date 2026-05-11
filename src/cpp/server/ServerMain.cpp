@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <cstdlib>
+
 #include <core/FileLock.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
@@ -533,6 +535,19 @@ Error waitForSignals()
 
          // the overlay shuts down monitored processes that failed to stop
          overlay::shutdown();
+
+         // If this SIGTERM was self-sent because the automation host
+         // rsession exited (i.e., test run completed), exit cleanly with
+         // status 0. Re-raising the signal below would terminate us with
+         // exit 143 (128 + SIGTERM), which external test harnesses can't
+         // distinguish from an aborted run. Externally-delivered
+         // termination signals still re-raise and exit with the
+         // conventional 128+signal status.
+         if (sig == SIGTERM && server::isShuttingDownForAutomation())
+         {
+            LOG_INFO_MESSAGE("Automation shutdown complete; exiting with status 0.");
+            std::exit(0);
+         }
 
          // clear the signal mask
          error = core::system::clearSignalMask();
