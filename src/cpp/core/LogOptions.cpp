@@ -15,6 +15,7 @@
 
 #include <core/LogOptions.hpp>
 
+#include <atomic>
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -44,6 +45,7 @@ namespace log {
 #define kDeleteDays        "delete-days"
 #define kWarnSyslog        "warn-syslog"
 #define kTraceDbEnabled    "trace-db-enabled"
+#define kTraceProxyEnabled "trace-proxy-enabled"
 #define kLogCodeLocations  "log-code-locations"
 #define kLogConfFile       "logging.conf"
 
@@ -288,6 +290,9 @@ struct LogDirVisitor : boost::static_visitor<FilePath>
 
 } // anonymous namespace
 
+// Global flag for proxy trace logging
+static std::atomic<bool> s_proxyTraceEnabled(false);
+
 
 LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
@@ -336,6 +341,7 @@ void LogOptions::initProfile()
       kLoggerType, defaultLoggerType_,
       kLogMessageFormat, defaultMessageFormatType_,
       kTraceDbEnabled, false,
+      kTraceProxyEnabled, false,
       kLogCodeLocations, false);
 
    // add logger-specific params
@@ -436,6 +442,15 @@ LogLevel LogOptions::logLevel(const std::string& loggerName) const
 LogLevel LogOptions::lowestLogLevel() const
 {
    return lowestLogLevel_;
+}
+
+bool LogOptions::traceProxyEnabled() const
+{
+   std::vector<ConfigProfile::Level> levels = {{ kBaseLevel,   std::string() },
+                                               { kBinaryLevel, executableName_ }};
+   bool enabled = false;
+   profile_.getParam(kTraceProxyEnabled, &enabled, levels);
+   return enabled;
 }
 
 LoggerType LogOptions::loggerType(const std::string& loggerName) const
@@ -572,6 +587,18 @@ bool isDbTraceEnabled()
 void setDbTraceEnabled(bool enabled)
 {
    s_dbTraceEnabled = enabled;
+}
+
+bool isProxyTraceEnabled()
+{
+   return s_proxyTraceEnabled;
+}
+
+void setProxyTraceEnabled(bool enabled)
+{
+   // No mutex needed since this will only be called in the 
+   // setup phase of logging before any threads are spawned
+   s_proxyTraceEnabled = enabled;
 }
 
 bool logCodeLocations()

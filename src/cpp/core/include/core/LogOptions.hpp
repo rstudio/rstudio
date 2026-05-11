@@ -70,6 +70,9 @@ public:
    // gets the lowest log level defined
    LogLevel lowestLogLevel() const;
 
+   // gets whether proxy trace logging is enabled
+   bool traceProxyEnabled() const;
+
    // gets the current logger type
    LoggerType loggerType(const std::string& loggerName = std::string()) const;
 
@@ -114,6 +117,13 @@ void forwardLogOptionsEnvVars(core::system::Options* pEnvironment);
 // When enabled, SQL statements with parameter values are logged at TRACE level
 bool isDbTraceEnabled();
 void setDbTraceEnabled(bool enabled);
+
+// Global proxy trace logging control
+// These are set based on the trace-proxy-enabled option in logging.conf
+// When enabled, bind address resolution details are logged at TRACE level
+// Set should only be called during logging setup before any threads are spawned
+bool isProxyTraceEnabled();
+void setProxyTraceEnabled(bool enabled);
 
 // Global control for showing code locations in TRACE, DEBUG, and INFO messages
 // When disabled (default), these log levels omit the file/line location to reduce noise
