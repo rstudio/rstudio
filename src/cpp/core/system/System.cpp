@@ -300,6 +300,9 @@ Error initLog()
    // Set database trace logging based on logging.conf option
    log::setDbTraceEnabled(s_logOptions->traceDbEnabled());
 
+   // Set proxy trace logging based on logging.conf option
+   log::setProxyTraceEnabled(s_logOptions->traceProxyEnabled());
+   
    // Set whether to show code locations for TRACE/DEBUG/INFO messages
    log::setLogCodeLocations(s_logOptions->logCodeLocations());
 
