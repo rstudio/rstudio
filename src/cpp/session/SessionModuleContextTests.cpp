@@ -27,14 +27,16 @@ namespace tests {
 
 namespace {
 
-core::http::Request makeRequest(const std::string& uri,
-                                const std::string& fetchDest = "")
+// http::Request is non-copyable (inherits from boost::noncopyable via
+// Message), so the helper writes through a caller-owned instance rather
+// than returning by value.
+void initRequest(core::http::Request& request,
+                 const std::string& uri,
+                 const std::string& fetchDest = "")
 {
-   core::http::Request request;
    request.setUri(uri);
    if (!fetchDest.empty())
       request.setHeader("Sec-Fetch-Dest", fetchDest);
-   return request;
 }
 
 } // anonymous namespace
@@ -45,7 +47,8 @@ TEST(ShouldAuditFileDownloadTest, ShowOneSkipsForNonRenderable)
 {
    // ?show=1 forces a skip even for binary types that the browser would
    // otherwise download (file.show() of a zip, etc.).
-   core::http::Request request = makeRequest("/files/archive.zip?show=1");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip?show=1");
    core::FilePath file("archive.zip");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -53,8 +56,8 @@ TEST(ShouldAuditFileDownloadTest, ShowOneSkipsForNonRenderable)
 TEST(ShouldAuditFileDownloadTest, ShowOneSkipsRegardlessOfFetchDest)
 {
    // The preview marker wins over Sec-Fetch-Dest analysis.
-   core::http::Request request = makeRequest("/files/archive.zip?show=1",
-                                             "document");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip?show=1", "document");
    core::FilePath file("archive.zip");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -62,7 +65,8 @@ TEST(ShouldAuditFileDownloadTest, ShowOneSkipsRegardlessOfFetchDest)
 TEST(ShouldAuditFileDownloadTest, ShowZeroStillAudits)
 {
    // Only the exact value "1" trips the gate; other values fall through.
-   core::http::Request request = makeRequest("/files/archive.zip?show=0");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip?show=0");
    core::FilePath file("archive.zip");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -71,14 +75,16 @@ TEST(ShouldAuditFileDownloadTest, ShowZeroStillAudits)
 
 TEST(ShouldAuditFileDownloadTest, FetchDestStyleSkips)
 {
-   core::http::Request request = makeRequest("/files/main.css", "style");
+   core::http::Request request;
+   initRequest(request, "/files/main.css", "style");
    core::FilePath file("main.css");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
 TEST(ShouldAuditFileDownloadTest, FetchDestScriptSkips)
 {
-   core::http::Request request = makeRequest("/files/bundle.js", "script");
+   core::http::Request request;
+   initRequest(request, "/files/bundle.js", "script");
    core::FilePath file("bundle.js");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -88,7 +94,8 @@ TEST(ShouldAuditFileDownloadTest, FetchDestImageSkipsEvenForBinaryExtension)
    // Sub-resource Sec-Fetch-Dest skips even when the file is a non-
    // renderable type, since the browser is fetching it as an embedded
    // asset of another page rather than as a download.
-   core::http::Request request = makeRequest("/files/embedded.zip", "image");
+   core::http::Request request;
+   initRequest(request, "/files/embedded.zip", "image");
    core::FilePath file("embedded.zip");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -97,28 +104,32 @@ TEST(ShouldAuditFileDownloadTest, FetchDestImageSkipsEvenForBinaryExtension)
 
 TEST(ShouldAuditFileDownloadTest, PdfMimeSkips)
 {
-   core::http::Request request = makeRequest("/files/report.pdf");
+   core::http::Request request;
+   initRequest(request, "/files/report.pdf");
    core::FilePath file("report.pdf");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
 TEST(ShouldAuditFileDownloadTest, HtmlMimeSkips)
 {
-   core::http::Request request = makeRequest("/files/index.html");
+   core::http::Request request;
+   initRequest(request, "/files/index.html");
    core::FilePath file("index.html");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
 TEST(ShouldAuditFileDownloadTest, ImageMimeSkips)
 {
-   core::http::Request request = makeRequest("/files/photo.png");
+   core::http::Request request;
+   initRequest(request, "/files/photo.png");
    core::FilePath file("photo.png");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
 TEST(ShouldAuditFileDownloadTest, JsonMimeSkips)
 {
-   core::http::Request request = makeRequest("/files/data.json");
+   core::http::Request request;
+   initRequest(request, "/files/data.json");
    core::FilePath file("data.json");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -127,7 +138,8 @@ TEST(ShouldAuditFileDownloadTest, NoExtensionDefaultsToTextAndSkips)
 {
    // FilePath::getMimeContentType defaults to "text/plain" for files with
    // an unknown / missing extension. The browser will render those inline.
-   core::http::Request request = makeRequest("/files/README");
+   core::http::Request request;
+   initRequest(request, "/files/README");
    core::FilePath file("README");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
@@ -136,7 +148,8 @@ TEST(ShouldAuditFileDownloadTest, NoExtensionDefaultsToTextAndSkips)
 
 TEST(ShouldAuditFileDownloadTest, ZipAudits)
 {
-   core::http::Request request = makeRequest("/files/archive.zip");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip");
    core::FilePath file("archive.zip");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -145,7 +158,8 @@ TEST(ShouldAuditFileDownloadTest, OfficeDocxAudits)
 {
    // Office formats serve as application/vnd.openxmlformats-officedocument.*
    // - not in the renderable set, so they audit.
-   core::http::Request request = makeRequest("/files/report.docx");
+   core::http::Request request;
+   initRequest(request, "/files/report.docx");
    core::FilePath file("report.docx");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -154,7 +168,8 @@ TEST(ShouldAuditFileDownloadTest, DocumentFetchDestForBinaryAudits)
 {
    // Top-level navigation to a non-renderable type is the prototypical
    // "user typed a download URL" case and must produce an audit row.
-   core::http::Request request = makeRequest("/files/archive.zip", "document");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip", "document");
    core::FilePath file("archive.zip");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -163,7 +178,8 @@ TEST(ShouldAuditFileDownloadTest, MissingFetchDestForBinaryAudits)
 {
    // Older browsers don't send Sec-Fetch-Dest; treat absence as
    // "top-level navigation" and audit when the type is non-renderable.
-   core::http::Request request = makeRequest("/files/archive.zip");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip");
    core::FilePath file("archive.zip");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -173,7 +189,8 @@ TEST(ShouldAuditFileDownloadTest, IframeFetchDestForBinaryAudits)
    // iframe is intentionally not in the sub-resource skip set - if an
    // iframe loads a binary, it's effectively exfiltration and should be
    // audited.
-   core::http::Request request = makeRequest("/files/archive.zip", "iframe");
+   core::http::Request request;
+   initRequest(request, "/files/archive.zip", "iframe");
    core::FilePath file("archive.zip");
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
@@ -182,7 +199,8 @@ TEST(ShouldAuditFileDownloadTest, IframeFetchDestForRenderableSkips)
 {
    // iframe loading a renderable type (HTML, etc.) is just sub-view
    // behavior; skip via the Content-Type branch.
-   core::http::Request request = makeRequest("/files/page.html", "iframe");
+   core::http::Request request;
+   initRequest(request, "/files/page.html", "iframe");
    core::FilePath file("page.html");
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
