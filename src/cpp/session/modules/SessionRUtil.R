@@ -231,32 +231,18 @@
 # for the small set of internal places where we need a stable, bounded
 # identity token for an in-memory value.
 #
-# Supports a deliberately limited set of inputs:
-#
-#   - character / raw          -> hashed directly (raw bytes, or each string
-#                                joined with the ASCII Unit Separator so
-#                                names containing reserved characters can't
-#                                collide).
-#   - everything else          -> serialize() then hash.
+# Raw vectors are hashed directly. Everything else (including character
+# vectors) goes through serialize() so element boundaries are encoded
+# unambiguously -- any hand-rolled framing of a character vector via a
+# delimiter can collide on strings that happen to contain that delimiter.
 #
 # Returns NA_character_ if the C++ hash call fails (e.g. crypto init issue).
 .rs.addFunction("digest", function(x)
 {
    bytes <- if (is.raw(x))
-   {
       x
-   }
-   else if (is.character(x))
-   {
-      # Length-prefix to disambiguate c("a", "b") from c("ab"), and use
-      # the Unit Separator (illegal inside any sensible string identifier)
-      # so concatenation can't smear element boundaries.
-      charToRaw(paste(c(length(x), x), collapse = "\x1F"))
-   }
    else
-   {
       serialize(x, connection = NULL, ascii = FALSE)
-   }
 
    hash <- .Call("rs_sha256", bytes, PACKAGE = "(embedding)")
    if (is.null(hash))

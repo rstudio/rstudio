@@ -161,6 +161,11 @@ while [ $# -gt 0 ]; do
       # is taken from --scope if given (so `--scope r --filter foo` works
       # in either order), and we still default to r when --filter is the
       # only narrowing option.
+      if [ -z "$2" ]; then
+         echo "Usage: ./rstudio-tests --filter <pattern>"
+         exit 1
+      fi
+
       TEST_FILTER="$2"
       if [ -z "${TEST_SCOPE}" ]; then
          TEST_SCOPE="r"
