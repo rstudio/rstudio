@@ -93,6 +93,32 @@ test_that(".rs.describeColSlice() returns NULL for empty data frames", {
    expect_equal(.rs.describeColSlice(tbl, 1, 1), NULL)
 })
 
+test_that(".rs.describeColSlice() emits a fingerprint stable across pagination", {
+   tbl <- as.data.frame(setNames(
+      replicate(20, 1:5, simplify = FALSE),
+      paste0("X", 1:20)
+   ))
+   slice_a <- .rs.describeColSlice(tbl, 1, 5)
+   slice_b <- .rs.describeColSlice(tbl, 6, 10)
+   slice_c <- .rs.describeColSlice(tbl, 16, 20)
+
+   # Same underlying frame -> identical fingerprint regardless of slice.
+   expect_identical(slice_a[[1]]$cols_fingerprint, slice_b[[1]]$cols_fingerprint)
+   expect_identical(slice_a[[1]]$cols_fingerprint, slice_c[[1]]$cols_fingerprint)
+
+   # A different frame produces a different fingerprint.
+   other <- data.frame(a = 1:5, b = 1:5, c = 1:5)
+   slice_other <- .rs.describeColSlice(other, 1, 3)
+   expect_false(identical(slice_a[[1]]$cols_fingerprint,
+                          slice_other[[1]]$cols_fingerprint))
+
+   # describeCols (the non-paginated path) also emits a fingerprint, and it
+   # matches the slice-path fingerprint for the same underlying frame.
+   direct <- .rs.describeCols(tbl)
+   expect_identical(direct[[1]]$cols_fingerprint,
+                    slice_a[[1]]$cols_fingerprint)
+})
+
 # Helper: strip the rs.scalar class wrapper so tests can compare against
 # bare R values without forcing every expect_equal to know the wrapping.
 .rs.summarize.bare <- function(x) {

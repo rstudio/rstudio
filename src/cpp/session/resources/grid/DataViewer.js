@@ -60,7 +60,7 @@ var AVG_CHAR_REF_STRING =
 // STATE_VERSION when the stored state shape changes incompatibly so old
 // payloads are dropped on next read instead of being applied with
 // mismatched indices.
-var STATE_VERSION = 1;
+var STATE_VERSION = 2;
 var STATE_KEY_PREFIX = "rstudio.dataViewer:";
 
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
@@ -3169,13 +3169,20 @@ var initGrid = function(resCols, data) {
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
-   // Apply the data_viewer_show_summary preference as the default; saved
-   // per-object state (below) overrides it when present.
-   sidebarVisible = loc.showSummary;
+   // Apply the data_viewer_show_summary preference as the default for
+   // objects the user hasn't already customized. When saved state has a
+   // sidebar choice, applySavedState below restores it -- skipping this
+   // overwrite keeps a dismissed summary dismissed across re-bootstraps
+   // from column pagination, where the in-memory sidebarVisible already
+   // reflects the user's choice.
+   var savedState = loadSavedState();
+   if (!savedState || typeof savedState.sidebarVisible !== "boolean") {
+      sidebarVisible = loc.showSummary;
+   }
 
    // Restore saved per-object UI state before headers are built (so pinning
    // order is correct) and before fetchRows (so sort/filters are sent).
-   applySavedState(loadSavedState());
+   applySavedState(savedState);
 
    // Build headers (pinned columns first, then unpinned)
    columnOrder = getColumnOrder();
@@ -3362,18 +3369,18 @@ var stateKey = function() {
       encodeURIComponent(loc.obj);
 };
 
-// Fingerprint of the current column structure -- a join of names lets
-// applySavedState ignore state saved against an incompatible object that
-// was reassigned to the same env+obj name (e.g. df <- mtcars; df <- iris).
-// Width/sort/filter indices and per-column filter values would otherwise
-// be applied silently to mismatched columns.
+// Fingerprint of the underlying frame's column structure. The server
+// computes this from the full column names (not the paginated slice) and
+// returns it on the rownames metadata, so the value stays stable as the
+// user pages through columns. applySavedState uses it to ignore state
+// saved against an incompatible object that was reassigned to the same
+// env+obj name (e.g. df <- mtcars; df <- iris) -- otherwise width/sort/
+// filter indices and per-column filter values would be applied silently
+// to mismatched columns.
 var columnFingerprint = function() {
-   if (!cols) return "";
-   var names = [];
-   for (var i = 0; i < cols.length; i++) {
-      names.push(cols[i].col_name || "");
-   }
-   return names.join(" ");
+   if (!cols || !cols[0]) return "";
+   var fp = cols[0].cols_fingerprint;
+   return typeof fp === "string" ? fp : "";
 };
 
 var saveState = function() {

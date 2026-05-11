@@ -138,8 +138,18 @@
                                          maxRows = -1,
                                          maxCols = -1,
                                          maxFactors = 64,
-                                         totalCols = -1)
+                                         totalCols = -1,
+                                         colsFingerprint = NULL)
 {
+   # Capture a fingerprint of the full set of column names before any
+   # subsetting -- the client uses this to detect object reassignment
+   # (e.g. df <- iris after df <- mtcars). Callers that have already
+   # subset x (e.g. describeColSlice) must compute and pass this
+   # themselves so the fingerprint reflects the underlying frame, not
+   # the visible slice.
+   if (is.null(colsFingerprint))
+      colsFingerprint <- paste(names(x), collapse = "-")
+
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
    
@@ -213,7 +223,8 @@
       col_type_r      = .rs.scalar(""),
       col_na_count    = .rs.scalar(0),
       total_cols      = .rs.scalar(totalCols),
-      total_rows      = .rs.scalar(nrow(x)))
+      total_rows      = .rs.scalar(nrow(x)),
+      cols_fingerprint = .rs.scalar(colsFingerprint))
 
    # Add a max-chars hint for the row names column. Use .row_names_info()
    # so we avoid materializing the full row-name vector for the common
@@ -441,7 +452,13 @@
    }
       
    
-   .rs.describeCols(colSlice, -1, -1, 64, totalCols)
+   # Compute the fingerprint from the full frame's names (not colSlice's
+   # subset) so it stays stable across pagination -- otherwise saved UI
+   # state, including a dismissed summary sidebar, would be invalidated
+   # on every column-frame change.
+   colsFingerprint <- paste(names(x), collapse = "-")
+
+   .rs.describeCols(colSlice, -1, -1, 64, totalCols, colsFingerprint)
 })
 
 .rs.addFunction("summarizeColumn", function(x, columnIndex)
