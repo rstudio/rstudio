@@ -2531,6 +2531,16 @@
    clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
 )
 
+# Use pre-release version of Posit Assistant (restart required)
+#
+# Use a pre-release version of the Posit Assistant for testing purposes. Do not
+# use for production work.
+.rs.uiPrefs$positAssistantTestManifest <- list(
+   get = function() { .rs.getUserPref("posit_assistant_test_manifest") },
+   set = function(value) { .rs.setUserPref("posit_assistant_test_manifest", value) },
+   clear = function() { .rs.clearUserPref("posit_assistant_test_manifest") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.

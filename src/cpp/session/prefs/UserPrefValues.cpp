@@ -3547,6 +3547,19 @@ core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
 }
 
 /**
+ * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
+ */
+bool UserPrefValues::positAssistantTestManifest()
+{
+   return readPref<bool>("posit_assistant_test_manifest");
+}
+
+core::Error UserPrefValues::setPositAssistantTestManifest(bool val)
+{
+   return writePref("posit_assistant_test_manifest", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -4054,6 +4067,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesAutoshow,
       kAssistantShowMessages,
       kAssistantToolbarButtonVisible,
+      kPositAssistantTestManifest,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

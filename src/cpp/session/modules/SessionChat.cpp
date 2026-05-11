@@ -3564,8 +3564,11 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI; use test manifest when opted in
-   std::string downloadUri = options().positAssistantTestManifest()
+   // Get download URI; use test manifest when opted in via either the
+   // command-line/session option or the user preference.
+   bool useTestManifest = options().positAssistantTestManifest() ||
+                          prefs::userPrefs().positAssistantTestManifest();
+   std::string downloadUri = useTestManifest
       ? "https://cdn.posit.co/posit-ai/manifest-test.json"
       : "https://cdn.posit.co/posit-ai/manifest.json";
 

@@ -2276,6 +2276,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantToolbarButtonVisibleDescription();
 
    /**
+    * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
+    */
+   @DefaultStringValue("Use pre-release version of Posit Assistant (restart required)")
+   String positAssistantTestManifestTitle();
+   @DefaultStringValue("Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.")
+   String positAssistantTestManifestDescription();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")
