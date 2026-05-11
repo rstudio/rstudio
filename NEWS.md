@@ -11,6 +11,7 @@
 - ([#5809](https://github.com/rstudio/rstudio/issues/5809)): Roxygen tag autocompletion (e.g. `@param`, `@return`) now works on `#'` lines inside R code chunks of R Markdown and Quarto documents, matching the behavior in plain `.R` files.
 
 ### Fixed
+- ([#17363](https://github.com/rstudio/rstudio/issues/17363)): Posit Assistant: pressing Escape to dismiss a ghost-text Next Edit Suggestion now also clears the NES gutter icon; previously the gutter icon remained visible after dismissal.
 - ([#17589](https://github.com/rstudio/rstudio/issues/17589)): The diagnostics report now includes `positai.log` alongside `rdesktop.log` and the user's `rsession-*.log`.
 - ([#17581](https://github.com/rstudio/rstudio/issues/17581)): Diagnostic gutter tooltips no longer show literal `<SPAN>` markup around the message; lint annotations now keep the original text alongside any rendered HTML so the tooltip renders cleanly while the diagnostics popup continues to support ANSI-colored content.
 - ([#17556](https://github.com/rstudio/rstudio/issues/17556)): `difftime` objects (e.g. the result of subtracting two `Sys.time()` values) now show their formatted value in the Environment pane instead of an empty cell.

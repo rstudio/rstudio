@@ -388,8 +388,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test('NES dismissed with Escape', async ({ rstudioPage: page }) => {
-      if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant NES gutter icon persists after Escape (https://github.com/rstudio/rstudio/issues/17363)');
-
       const fileName = `${prefix}_nes_dismiss.R`;
 
       const fileContent =
