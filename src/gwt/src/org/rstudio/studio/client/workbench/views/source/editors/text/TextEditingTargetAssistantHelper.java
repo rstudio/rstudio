@@ -1935,8 +1935,7 @@ public class TextEditingTargetAssistantHelper
                         if (!display_.hasActiveAceCompleter())
                         {
                            sendSuggestionFeedback("rejected");
-                           hideGhostText();
-                           editSuggestion_ = null;
+                           resetSuggestion();
                         }
                      }
                   }
