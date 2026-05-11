@@ -14,9 +14,9 @@
       <li><strong>Revamped Data Viewer:</strong> The data viewer is now faster and supports pinnable columns, a Summary sidebar with type-aware stats and sparkline histograms, keyboard navigation, and clipboard copy.</li>
       <li><strong>Data Viewer Summary preference:</strong> The new <code>data_viewer_show_summary</code> user preference controls the default visibility of the data viewer's Summary sidebar.</li>
       <li><strong>Roxygen autocompletion in R Markdown and Quarto:</strong> Roxygen tag autocompletion (e.g. <code>@param</code>, <code>@return</code>) now works on <code>#'</code> lines inside R code chunks, matching the behavior in plain <code>.R</code> files.</li>
-      <li><strong>Posit Assistant - open documents at a line:</strong> The <code>ui/openDocument</code> JSON-RPC method now accepts an optional 1-based <code>line</code> parameter, and RStudio advertises the <code>ui/openDocument/line</code> capability so the assistant can open documents at a specific line.</li>
-      <li><strong>Posit Assistant - reveal in Files pane:</strong> Added the <code>ui/revealInFilesPane</code> JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.</li>
-      <li><strong>Posit Assistant - preview URLs in the Viewer:</strong> Added the <code>ui/previewUrl</code> JSON-RPC method, which navigates the Viewer pane to an <code>http(s)</code> URL (e.g., a local Shiny app); supports an optional <code>height</code> parameter that mirrors <code>rstudioapi::viewer()</code>.</li>
+      <li><strong>Posit Assistant - open documents at a line:</strong> Posit Assistant can now open documents at a specific line.</li>
+      <li><strong>Posit Assistant - reveal in Files pane:</strong> Posit Assistant can now navigate the Files pane to a directory.</li>
+      <li><strong>Posit Assistant - preview URLs in the Viewer:</strong> Posit Assistant can now set the Viewer pane to an <code>http(s)</code> URL (e.g., a local Shiny app).</li>
       <li><strong>Opt out of package source recording:</strong> Added the <code>allow-package-source-recording</code> session option (default <code>true</code>); when set to <code>false</code>, RStudio will not annotate DESCRIPTION files of packages installed via <code>install.packages()</code> with the remote repository they came from.</li>
     </ul>
   </div>
