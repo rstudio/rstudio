@@ -11,14 +11,56 @@
   <div class="feature-section">
     <h2>New Features</h2>
     <ul>
-      <li>Coming Soon!</li>
+      <li><strong>Revamped Data Viewer:</strong> The data viewer is now faster and supports pinnable columns, a Summary sidebar with type-aware stats and sparkline histograms, keyboard navigation, and clipboard copy.</li>
+      <li><strong>Data Viewer Summary preference:</strong> The new <code>data_viewer_show_summary</code> user preference controls the default visibility of the data viewer's Summary sidebar.</li>
+      <li><strong>Roxygen autocompletion in R Markdown and Quarto:</strong> Roxygen tag autocompletion (e.g. <code>@param</code>, <code>@return</code>) now works on <code>#'</code> lines inside R code chunks, matching the behavior in plain <code>.R</code> files.</li>
+      <li><strong>Posit Assistant - open documents at a line:</strong> The <code>ui/openDocument</code> JSON-RPC method now accepts an optional 1-based <code>line</code> parameter, and RStudio advertises the <code>ui/openDocument/line</code> capability so the assistant can open documents at a specific line.</li>
+      <li><strong>Posit Assistant - reveal in Files pane:</strong> Added the <code>ui/revealInFilesPane</code> JSON-RPC method, which navigates the Files pane to a directory (or to a file's parent directory) and brings the pane to the front.</li>
+      <li><strong>Posit Assistant - preview URLs in the Viewer:</strong> Added the <code>ui/previewUrl</code> JSON-RPC method, which navigates the Viewer pane to an <code>http(s)</code> URL (e.g., a local Shiny app); supports an optional <code>height</code> parameter that mirrors <code>rstudioapi::viewer()</code>.</li>
+      <li><strong>Opt out of package source recording:</strong> Added the <code>allow-package-source-recording</code> session option (default <code>true</code>); when set to <code>false</code>, RStudio will not annotate DESCRIPTION files of packages installed via <code>install.packages()</code> with the remote repository they came from.</li>
     </ul>
   </div>
 
   <div class="feature-section">
-    <h2>Fixes</h2>
+    <h2>Enhancements</h2>
     <ul>
-      <li>Coming Soon!</li>
+      <li><strong>Data Viewer column limit:</strong> Raised the default value of <code>data_viewer_max_columns</code> from 50 to 200.</li>
+      <li><strong>Faster new sessions:</strong> RStudio Desktop's Session &gt; New Session now opens noticeably faster.</li>
+      <li><strong>Hierarchical section folding:</strong> Section headers now fold hierarchically based on heading level, matching Positron's default behavior.</li>
+      <li><strong>Spell check in document headings:</strong> Source-mode spell check now flags misspelled words inside Markdown, R Markdown, and Quarto headings; previously only paragraph text was checked.</li>
+      <li><strong>Shiny test integration:</strong> The Shiny test commands (Record Test, Run Tests, Compare Results) now use the <code>shinytest2</code> package; <code>shinytest</code> has been deprecated.</li>
+      <li><strong>Linux terminal bell restored:</strong> Restored the desktop terminal bell on Linux, now that the underlying Electron crash has been fixed.</li>
+      <li><strong>Higher file descriptor limit:</strong> Raise the open file descriptor soft limit at session startup to avoid "Too many open files" errors during project file monitoring on Linux.</li>
+      <li><strong>Safer source-marker rendering:</strong> Source-marker messages in the Build, Markers, and Compile PDF panes are now rendered as plain text by default; only messages that the server explicitly marks as HTML (e.g. C++ Find Usages highlighting) are rendered via <code>innerHTML</code>.</li>
+      <li><strong>MathJax Safe extension:</strong> Enabled the MathJax <code>Safe</code> extension in the IDE, the HTML preview, the presentation preview, and the rendered R Markdown viewer.</li>
+      <li><strong>Data Import code quality:</strong> Column names, character options, locale values, and import URLs are now encoded as R string literals when generating preview and import code.</li>
+      <li><strong>Diagnostics report includes positai.log:</strong> The diagnostics report now includes <code>positai.log</code> alongside <code>rdesktop.log</code> and the user's <code>rsession-*.log</code>.</li>
+      <li><strong>Server TCP keepalive:</strong> Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.</li>
+      <li><strong>Faster install.packages() hook:</strong> Reduced filesystem work performed by the <code>install.packages()</code> hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.</li>
+      <li><strong>Fewer spurious Packages pane refreshes:</strong> Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like <code>updates &lt;-</code> or <code>installed.packages()</code>.</li>
+    </ul>
+  </div>
+
+  <div class="feature-section">
+    <h2>Bug Fixes</h2>
+    <ul>
+      <li>Pressing Escape to dismiss a ghost-text Next Edit Suggestion now also clears the NES gutter icon; previously the gutter icon remained visible after dismissal.</li>
+      <li>Diagnostic gutter tooltips no longer show literal <code>&lt;SPAN&gt;</code> markup around the message; lint annotations now keep the original text alongside any rendered HTML so the tooltip renders cleanly while the diagnostics popup continues to support ANSI-colored content.</li>
+      <li><code>difftime</code> objects (e.g. the result of subtracting two <code>Sys.time()</code> values) now show their formatted value in the Environment pane instead of an empty cell.</li>
+      <li>Fixed two debugger regressions: top-level breakpoints (e.g. via <code>debugSource()</code>) no longer fail to show the debug highlight or call stack, and multi-line input at the <code>Browse[N]&gt;</code> prompt no longer clears the captured browser context.</li>
+      <li>The Files pane delete confirmation now reflects whether the file will be moved to the system Trash/Recycle Bin or permanently deleted, based on the "Delete files to Trash/Recycle Bin" preference.</li>
+      <li>When sending a file to the system Trash/Recycle Bin fails, the Files pane now reports the error and leaves the file on disk; previously it would silently fall back to permanently deleting the file.</li>
+      <li>The splash screen can again be dismissed with a mouse click or key press.</li>
+      <li>Source-mode spell check no longer disappears on Quarto and R Markdown documents when the bundled YAML diagnostics worker fails to respond; spell-check lint is now applied independently of YAML lint.</li>
+      <li>The Windows installer's File Version now matches its Product Version; previously the installer concatenated the major and minor version components into a single value that exceeded NSIS's 16-bit-per-component limit and was truncated to an unrelated number.</li>
+      <li>Fixed a startup hang when opening a Quarto project containing large directories (e.g. <code>_targets/</code>).</li>
+      <li>Posit Assistant: invoking Uninstall Posit Assistant when it is not installed now shows the message "Posit Assistant is not installed." and skips the restart, instead of silently restarting RStudio.</li>
+      <li>Added missing French translations for newer commands and preferences, removed an orphaned French key, deduplicated stale entries in the French application strings, and normalized line endings in five English string files.</li>
+      <li>Fixed an issue where triggering tab completion inside <code>[</code> on a large Matrix-package sparse matrix could hang RStudio and exhaust system memory.</li>
+      <li>Fixed a crash on Windows when <code>Rprofile.site</code> (or <code>.Rprofile</code>) called <code>download.file()</code>, <code>update.packages()</code>, or other code that emitted console output while RStudio's R runtime dispatch layer was not yet initialized.</li>
+      <li>The spell-check context menu now shows the full set of correction suggestions; previously a stray loop increment caused every other suggestion to be skipped, capping the menu at 3 items instead of 5.</li>
+      <li>Fix uninformative error in <code>rstudio::sourceMarkers()</code> when <code>marker$type</code> is not a length-one vector.</li>
+      <li>Reindenting C/C++ code with a brace-less control-flow statement (e.g. a <code>for</code> whose body is a single braced <code>if</code>) no longer over-indents the line that follows the body.</li>
     </ul>
   </div>
 </body>
