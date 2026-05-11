@@ -242,6 +242,28 @@ TEST(ShouldAuditFileDownloadTest, IframeFetchDestForRenderableSkips)
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
+// --- Producer-side: createFileUrl round-trip --------------------------------
+
+TEST(CreateFileUrlTest, HomeFileRoundTripSkipsAudit)
+{
+   // Regression test for the producer-consumer contract between
+   // createFileUrl and shouldAuditFileDownload. If a future edit drops
+   // the ?show=1 marker in the in-home branch of createFileUrl, this
+   // round trip will fail (the URL won't trigger the preview skip and
+   // - because .zip resolves to application/zip - the helper will
+   // return true instead of false).
+   core::FilePath file = userHomePath().completeChildPath("preview.zip");
+   const std::string url = createFileUrl(file);
+   ASSERT_NE(url.find("show=1"), std::string::npos)
+      << "createFileUrl output missing show=1: " << url;
+
+   core::http::Request request;
+   request.setUri("/" + url);
+   EXPECT_FALSE(shouldAuditFileDownload(request, file))
+      << "round-trip URL " << url
+      << " should skip audit via the ?show=1 marker";
+}
+
 } // namespace tests
 } // namespace module_context
 } // namespace session
