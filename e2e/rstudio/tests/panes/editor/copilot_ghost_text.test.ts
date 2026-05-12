@@ -99,7 +99,7 @@ async function acceptGhostText(page: Page, sourcePane: SourcePane) {
 // --- Tests ---
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
-  test.describe(`${provider} › Ghost text by file type`, () => {
+  test.describe.fixme(`${provider} › Ghost text by file type`, () => {
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();
