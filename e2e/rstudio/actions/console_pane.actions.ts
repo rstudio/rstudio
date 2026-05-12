@@ -154,16 +154,27 @@ export class ConsolePaneActions {
       }
     }
 
-    // Verify installation succeeded
+    // Verify installation succeeded. Poll for the marker -- after a package
+    // installs, R may still be doing post-install work (lazy-load DB, help
+    // index) when the doneMarker emitted, so the verify cat() can sit
+    // queued briefly before R gets to it.
     const verifyMarker = `__PKG_VERIFY_${Date.now()}__`;
     await this.clearConsole();
     await this.typeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
-    await sleep(1000);
 
-    const verifyOutput = await this.consolePane.consoleOutput.innerText();
-    const verifyMatch = verifyOutput.match(new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`));
+    const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
+    const verifyDeadline = Date.now() + 15000;
+    let installed = false;
+    while (Date.now() < verifyDeadline) {
+      await sleep(500);
+      const verifyOutput = await this.consolePane.consoleOutput.innerText();
+      const verifyMatch = verifyOutput.match(verifyPattern);
+      if (verifyMatch) {
+        installed = verifyMatch[1] === 'TRUE';
+        break;
+      }
+    }
 
-    const installed = verifyMatch?.[1] === 'TRUE';
     if (installed) {
       console.log(`Package ${pkg} is now available.`);
     } else {
