@@ -964,23 +964,20 @@ var applyPinnedColumns = function() {
    }
 
    // Horizontal overscroll: lets the user scroll the rightmost column to sit
-   // just past the pinned columns for side-by-side context. Only meaningful
-   // when content is wider than the viewport -- otherwise it would introduce
-   // a phantom scrollbar over empty space. We reserve room for the rightmost
-   // column so it stays visible at maximum scroll; without this reservation
-   // the user can scroll every unpinned column off-screen (issue #17612).
+   // just past the pinned columns for side-by-side context. Applied even when
+   // all columns fit in the viewport so horizontal scrolling is consistently
+   // available. We reserve room for the rightmost column so it stays visible
+   // at maximum scroll; without this reservation the user can scroll every
+   // unpinned column off-screen (issue #17612).
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var overscroll = 0;
-      if (totalTableWidth > viewport.clientWidth) {
-         var lastIdx = columnOrder.length - 1;
-         var lastTh = lastIdx >= 0 ? thead.children[lastIdx] : null;
-         var lastUnpinnedWidth = (lastTh && !isColumnPinned(columnOrder[lastIdx]))
-            ? lastTh.offsetWidth : 0;
-         overscroll = Math.max(0,
-            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
-      }
+      var lastIdx = columnOrder.length - 1;
+      var lastTh = lastIdx >= 0 ? thead.children[lastIdx] : null;
+      var lastUnpinnedWidth = (lastTh && !isColumnPinned(columnOrder[lastIdx]))
+         ? lastTh.offsetWidth : 0;
+      var overscroll = Math.max(0,
+         viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
       table.style.paddingRight = overscroll + "px";
    }
 };
@@ -2418,9 +2415,8 @@ var toggleSidebar = function() {
    // Trigger grid resize after transition
    setTimeout(function() {
       // viewport.clientWidth changes when the sidebar opens/closes, which
-      // can flip the totalTableWidth > viewport.clientWidth comparison in
-      // applyPinnedColumns -- recompute paddingRight so the horizontal
-      // overscroll matches the new viewport width.
+      // feeds into the overscroll calculation in applyPinnedColumns --
+      // recompute paddingRight so it matches the new viewport width.
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
