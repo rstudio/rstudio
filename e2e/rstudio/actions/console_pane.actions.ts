@@ -1,6 +1,62 @@
 import type { Page } from 'playwright';
+import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
+
+interface InstallTarget {
+  repos: string;
+  type: 'binary' | 'source';
+}
+
+let cachedInstallTarget: InstallTarget | null = null;
+
+// Returns the repo URL and install type to use for install.packages().
+// On Linux, prefer Posit Public Package Manager's per-distro binary repo so
+// installs don't compile from source (which can take minutes for packages
+// with heavy C/C++ deps like duckdb).
+function getInstallTarget(): InstallTarget {
+  if (cachedInstallTarget) return cachedInstallTarget;
+
+  if (process.platform === 'win32' || process.platform === 'darwin') {
+    cachedInstallTarget = { repos: 'https://cran.r-project.org', type: 'binary' };
+    return cachedInstallTarget;
+  }
+
+  const distro = detectLinuxDistro();
+  // On Linux, R has no formal "binary" type -- PPM's __linux__/<distro>/latest
+  // endpoint serves precompiled tarballs that R fetches via type="source".
+  // Passing type="binary" here causes R to look for a nonexistent format and
+  // silently skip the install.
+  cachedInstallTarget = distro
+    ? {
+        repos: `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`,
+        type: 'source',
+      }
+    : { repos: 'https://cran.r-project.org', type: 'source' };
+  return cachedInstallTarget;
+}
+
+// Returns the PPM distro slug for the current Linux host, or '' if unknown.
+// Ubuntu/Debian use VERSION_CODENAME (e.g. "noble", "jammy", "bookworm").
+// RHEL family (rhel/rocky/almalinux/centos) has no codename; PPM serves
+// them as "rhel<major>" derived from VERSION_ID.
+function detectLinuxDistro(): string {
+  const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+  const get = (key: string): string =>
+    osRelease.match(new RegExp(`^${key}=("?)([^"\\n]+)\\1`, 'm'))?.[2] ?? '';
+
+  const codename = get('VERSION_CODENAME');
+  if (codename) return codename;
+
+  const id = get('ID');
+  const idLike = get('ID_LIKE').split(/\s+/);
+  const rhelFamily = new Set(['rhel', 'rocky', 'almalinux', 'centos']);
+  if (rhelFamily.has(id) || idLike.includes('rhel')) {
+    const major = get('VERSION_ID').split('.')[0];
+    if (major) return `rhel${major}`;
+  }
+  return '';
+}
 
 export class ConsolePaneActions {
   readonly page: Page;
@@ -87,8 +143,8 @@ export class ConsolePaneActions {
     // Run install, then print marker as a separate command.
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
-    const installType = 'ifelse(.Platform$OS.type == "windows" || Sys.info()["sysname"] == "Darwin", "binary", "source")';
-    await this.typeInConsole(`install.packages("${pkg}", repos = "https://cran.r-project.org", type = ${installType})`);
+    const { repos, type } = getInstallTarget();
+    await this.typeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
     await this.typeInConsole(`cat("${doneMarker}")`);
 
 
@@ -102,16 +158,27 @@ export class ConsolePaneActions {
       }
     }
 
-    // Verify installation succeeded
+    // Verify installation succeeded. Poll for the marker -- after a package
+    // installs, R may still be doing post-install work (lazy-load DB, help
+    // index) when the doneMarker emitted, so the verify cat() can sit
+    // queued briefly before R gets to it.
     const verifyMarker = `__PKG_VERIFY_${Date.now()}__`;
     await this.clearConsole();
     await this.typeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
-    await sleep(1000);
 
-    const verifyOutput = await this.consolePane.consoleOutput.innerText();
-    const verifyMatch = verifyOutput.match(new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`));
+    const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
+    const verifyDeadline = Date.now() + 15000;
+    let installed = false;
+    while (Date.now() < verifyDeadline) {
+      await sleep(500);
+      const verifyOutput = await this.consolePane.consoleOutput.innerText();
+      const verifyMatch = verifyOutput.match(verifyPattern);
+      if (verifyMatch) {
+        installed = verifyMatch[1] === 'TRUE';
+        break;
+      }
+    }
 
-    const installed = verifyMatch?.[1] === 'TRUE';
     if (installed) {
       console.log(`Package ${pkg} is now available.`);
     } else {
