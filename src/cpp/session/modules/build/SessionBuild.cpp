@@ -243,6 +243,20 @@ bool collectForcePackageRebuild()
    }
 }
 
+std::string regexLiteralEscape(const std::string& str)
+{
+   static const std::string meta = ".\\+*?[](){}^$|";
+   std::string result;
+   result.reserve(str.size());
+   for (char c : str)
+   {
+      if (meta.find(c) != std::string::npos)
+         result.push_back('\\');
+      result.push_back(c);
+   }
+   return result;
+}
+
 
 const char * const kRoxygenizePackage = "roxygenize-package";
 const char * const kBuildSourcePackage = "build-source-package";
@@ -1205,9 +1219,9 @@ private:
 
       // check if this is a tests/testthat/test-<name>.R file in a package project;
       // if so, use devtools::test(filter = "^<name>$") instead of testthat::test_file().
-      // The filter is matched as a regex by testthat::test_dir, so anchor it with
-      // ^ and $ to avoid running other test files whose names happen to contain
-      // <name> as a substring (e.g. test-prereg.R also running test-mod-prereg.R).
+      // The filter is matched as a regex by testthat::test_dir, so escape any
+      // regex metacharacters in <name> and anchor with ^/$ so we run only the
+      // current test file (e.g. test-prereg.R must not also run test-mod-prereg.R).
       boost::smatch match;
       boost::regex reTestThat("tests/testthat/test-(.+)\\.[rR]$");
       std::string path = testPath.getAbsolutePath();
@@ -1215,7 +1229,7 @@ private:
           useDevtools() &&
           boost::regex_search(path, match, reTestThat))
       {
-         std::string filterName = singleQuotedStrEscape(match[1]);
+         std::string filterName = singleQuotedStrEscape(regexLiteralEscape(match[1]));
          command = fmt::format("devtools::test(filter = '^{}$')", filterName);
          pkgOptions.workingDir = projects::projectContext().buildTargetPath();
          enqueCommandString(command);
