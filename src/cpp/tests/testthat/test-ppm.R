@@ -73,14 +73,17 @@ test_that("parseVulnerabilityResponse groups vulns across distinct packages", {
    ))
 })
 
-test_that("parseVulnerabilityResponse returns empty when any record is an error", {
+test_that("parseVulnerabilityResponse returns NULL and warns when any record is an error", {
    contents <- paste(
       '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}',
       '{"error":"not allowed","code":"403"}',
       sep = "\n"
    )
-   result <- .rs.ppm.parseVulnerabilityResponse(contents)
-   expect_equal(result, structure(list(), names = character()))
+   expect_warning(
+      result <- .rs.ppm.parseVulnerabilityResponse(contents),
+      "error requesting package vulnerabilities.*not allowed.*403"
+   )
+   expect_null(result)
 })
 
 test_that("parseVulnerabilityResponse skips records with no vulns field", {

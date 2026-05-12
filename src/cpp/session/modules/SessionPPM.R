@@ -35,7 +35,14 @@
    {
       tryCatch(
          .rs.ppm.getVulnerabilityInformationImpl(repoUrl),
-         error = function(cnd) structure(list(), names = character())
+         error = function(cnd)
+         {
+            .rs.logErrorMessage(sprintf(
+               "error fetching PPM vulnerability info for %s: %s",
+               repoUrl, conditionMessage(cnd)
+            ))
+            structure(list(), names = character())
+         }
       )
    })
 })
@@ -80,13 +87,15 @@
       postfields = json
    )
 
-   # use netrc if available
+   # the legacy /repos/{repo}/vulns endpoint was effectively anonymous;
+   # filter/packages requires auth on locked-down PPM instances, so wire
+   # up netrc when the user has one configured
    netrcFile <- .rs.netrcPath()
    if (file.exists(netrcFile))
    {
       curl::handle_setopt(
          handle     = handle,
-         httpauth   = 1L,
+         httpauth   = 1L,         # CURLAUTH_BASIC
          netrc      = 1L,
          netrc_file = path.expand(netrcFile)
       )
@@ -95,16 +104,35 @@
    endpoint <- file.path(ppmUrl[["root"]], "__api__/filter/packages")
    response <- tryCatch(
       curl::curl_fetch_memory(endpoint, handle = handle),
-      condition = identity
+      error = identity
    )
 
    if (inherits(response, "condition"))
+   {
+      .rs.logErrorMessage(sprintf(
+         "PPM vulnerability request to %s failed: %s",
+         endpoint, conditionMessage(response)
+      ))
       return(empty)
+   }
+
+   if (response$status_code < 200L || response$status_code >= 300L)
+   {
+      .rs.logErrorMessage(sprintf(
+         "PPM vulnerability request to %s returned HTTP %d",
+         endpoint, response$status_code
+      ))
+      return(empty)
+   }
 
    contents <- enc2utf8(rawToChar(response$content))
    vulns <- .rs.ppm.parseVulnerabilityResponse(contents)
 
-   # Cache the result and return.
+   # parser returns NULL when the NDJSON stream contained an error
+   # record; in that case skip the cache so the next refresh can retry
+   if (is.null(vulns))
+      return(empty)
+
    assign(repoUrl, vulns, envir = .rs.ppm.vulns)
    vulns
 })
@@ -113,15 +141,27 @@
 {
    empty <- structure(list(), names = character())
 
+   # tolerate CRLF in case a proxy or PPM build rewrites line endings
+   contents <- gsub("\r", "", contents, fixed = TRUE)
    splat <- strsplit(contents, "\n", fixed = TRUE)[[1L]]
    splat <- splat[nzchar(splat)]
    records <- lapply(splat, .rs.fromJSON)
 
-   # bail out if the server reported an error on any line
+   # bail out if the server reported an error on any line. Returning NULL
+   # (rather than empty) lets the caller distinguish "no vulns" from
+   # "request failed" and skip the cache, so a transient failure doesn't
+   # mask vulns for the rest of the session.
    for (record in records)
    {
       if (is.character(record[["error"]]))
-         return(empty)
+      {
+         code <- .rs.nullCoalesce(record[["code"]], "unknown")
+         warning(sprintf(
+            "error requesting package vulnerabilities; %s [error code %s]",
+            record[["error"]], as.character(code)
+         ), call. = FALSE)
+         return(NULL)
+      }
    }
 
    # the endpoint returns one record per (package, version) pair; group the
