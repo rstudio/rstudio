@@ -1,11 +1,19 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import os from 'os';
+import path from 'path';
 
 // Load env vars from a dotenv file before any process.env reads below.
+// Path is anchored to this config's directory so it works regardless of cwd.
 // PW_ENV_FILE overrides the default path; existing process.env values win
-// (dotenv does not overwrite vars already set in the shell).
-dotenv.config({ path: process.env.PW_ENV_FILE ?? '.env.local' });
+// (dotenv does not overwrite vars already set in the shell). When PW_ENV_FILE
+// is set explicitly, a missing/unreadable file is a hard error to catch typos.
+const envFile = process.env.PW_ENV_FILE;
+const envFilePath = path.resolve(__dirname, envFile ?? '.env.local');
+const dotenvResult = dotenv.config({ path: envFilePath });
+if (envFile && dotenvResult.error) {
+  throw new Error(`PW_ENV_FILE="${envFile}" set but could not load ${envFilePath}: ${dotenvResult.error.message}`);
+}
 
 const platform = os.platform();
 const desktopOsExclusions: string[] = [];
