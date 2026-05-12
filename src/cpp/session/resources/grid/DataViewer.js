@@ -1715,10 +1715,16 @@ var updateInfoBar = function() {
       last = Math.max(first, Math.min(last, activeRows));
    }
 
-   var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
-      " of " + activeRows.toLocaleString() + " entries";
+   var text = "Showing rows " + first.toLocaleString() + " to " + last.toLocaleString();
    if (filteredRows < totalRows) {
-      text += " (filtered from " + totalRows.toLocaleString() + " total)";
+      text += " of " + activeRows.toLocaleString() + " rows (filtered from " +
+         totalRows.toLocaleString() + " total)";
+   } else {
+      text += " of " + activeRows.toLocaleString() + " total rows";
+   }
+   if (totalCols > 0) {
+      text += ", " + totalCols.toLocaleString() +
+         (totalCols === 1 ? " total column" : " total columns");
    }
    if (textEl) textEl.textContent = text;
 
