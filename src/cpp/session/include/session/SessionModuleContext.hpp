@@ -94,6 +94,17 @@ std::string createAliasedPath(const core::FileInfo& fileInfo);
 std::string createAliasedPath(const core::FilePath& path);
 std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
+
+// Returns true if a /files/ or /file_show request for filePath should
+// produce a session_file_download audit event. Returns false when:
+//   (1) the URL carries ?show=1 (server-initiated preview/show flow),
+//   (2) Sec-Fetch-Dest indicates a sub-resource (style/script/image/
+//       font/audio/video/track/object/embed/manifest/xslt/report/
+//       worker/serviceworker/audioworklet/paintworklet), or
+//   (3) the file's Content-Type is browser-renderable: text/*, image/*,
+//       audio/*, video/*, application/pdf, application/json.
+bool shouldAuditFileDownload(const core::http::Request& request,
+                             const core::FilePath& filePath);
 core::FilePath userScratchPath();
 core::FilePath userUploadedFilesScratchPath();
 core::FilePath scopedScratchPath();

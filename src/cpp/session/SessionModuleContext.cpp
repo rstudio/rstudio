@@ -42,6 +42,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/collection/Tree.hpp>
 
+#include <core/http/Request.hpp>
 #include <core/http/Util.hpp>
 
 #include <core/system/Process.hpp>
@@ -2399,24 +2400,96 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
 }
 
+bool shouldAuditFileDownload(const core::http::Request& request,
+                             const core::FilePath& filePath)
+{
+   // Skip when the URL was constructed by an internal preview/show flow
+   // (?show=1 marker, set by createFileUrl above and by Files.java's
+   // companion showFileInBrowser for view-style navigations).
+   if (request.queryParamValue("show") == "1")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (?show=1 marker): " +
+                        filePath.getAbsolutePath());
+      return false;
+   }
+
+   // Skip HTML sub-resource fetches. Browsers signal these via
+   // Sec-Fetch-Dest. Top-level navigations send "document" (or omit the
+   // header on older browsers); embedded resources send their resource
+   // type. Treat anything in the explicit sub-resource set as not-a-
+   // download so a single HTML preview doesn't generate an audit row
+   // per asset. "iframe" and "frame" are deliberately NOT in this set:
+   // an iframe loading a binary is effectively exfiltration, so let
+   // the Content-Type check below decide.
+   const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
+   if (fetchDest == "style"        || fetchDest == "script"        ||
+       fetchDest == "image"        || fetchDest == "font"          ||
+       fetchDest == "audio"        || fetchDest == "video"         ||
+       fetchDest == "track"        || fetchDest == "object"        ||
+       fetchDest == "embed"        || fetchDest == "manifest"      ||
+       fetchDest == "xslt"         || fetchDest == "report"        ||
+       fetchDest == "worker"       || fetchDest == "serviceworker" ||
+       fetchDest == "audioworklet" || fetchDest == "paintworklet")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (Sec-Fetch-Dest=" + fetchDest +
+                        " sub-resource): " + filePath.getAbsolutePath());
+      return false;
+   }
+
+   // Skip when the response will be served as a browser-renderable
+   // Content-Type. The bytes are being viewed inline rather than saved
+   // to disk, so it isn't a download from the user's perspective. Note
+   // this means a real "right-click -> Save As" on a rendered PDF will
+   // not produce an audit row; that's an accepted trade-off for not
+   // logging the much more common inline-view case.
+   //
+   // For the audit decision we pass "application/octet-stream" as the
+   // default Content-Type for unknown extensions, even though the
+   // setFile()/setCacheableFile() response path falls back to
+   // "text/plain". The divergence is intentional: it closes a rename-
+   // bypass (renaming secret.zip to "secret" would otherwise resolve
+   // to text/plain and silently skip the audit) at the cost of also
+   // logging legitimate fetches of extensionless text files
+   // (LICENSE, README, Makefile, etc.). Over-logging is the safer
+   // default for an audit record.
+   const std::string mimeType =
+      filePath.getMimeContentType("application/octet-stream");
+   if (mimeType.rfind("text/", 0) == 0  ||
+       mimeType.rfind("image/", 0) == 0 ||
+       mimeType.rfind("audio/", 0) == 0 ||
+       mimeType.rfind("video/", 0) == 0 ||
+       mimeType == "application/pdf"    ||
+       mimeType == "application/json")
+   {
+      LOG_DEBUG_MESSAGE("Audit skipped (renderable Content-Type=" +
+                        mimeType + "): " + filePath.getAbsolutePath());
+      return false;
+   }
+
+   return true;
+}
+
 std::string createFileUrl(const core::FilePath& filePath)
 {
-   // determine url based on whether this is in ~ or not
+   // determine url based on whether this is in ~ or not. Tag the result
+   // with show=1 so handleFilesRequest / handleFileShow can distinguish
+   // server-initiated preview/show flows from user-initiated downloads
+   // and skip audit logging for the former.
    std::string url;
    if (isVisibleUserFile(filePath))
    {
       auto home = module_context::userHomePath();
       auto path = filePath.getRelativePath(home);
-      url = "files/" + path;
+      url = "files/" + path + "?show=1";
    }
    else if (isPathViewAllowed(filePath))
    {
-      url = "show" + filePath.getAbsolutePath();
+      url = "show" + filePath.getAbsolutePath() + "?show=1";
    }
    else
    {
       auto path = core::http::util::urlEncode(filePath.getAbsolutePath(), true);
-      url = "file_show?path=" + path;
+      url = "file_show?path=" + path + "&show=1";
    }
    return url;
 }

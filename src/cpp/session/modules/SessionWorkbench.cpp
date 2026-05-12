@@ -447,11 +447,7 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   // if this request was initiated as an explicit download from the Files
-   // pane, let the monitor client know the user has downloaded this file.
-   // The Files pane appends ?download=1 only when the user clicked a file
-   // for download; bare /file_show?path=... requests are not logged.
-   if (request.queryParamValue("download") == "1")
+   if (module_context::shouldAuditFileDownload(request, filePath))
    {
       using namespace monitor;
       client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
