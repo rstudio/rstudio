@@ -1204,7 +1204,10 @@ private:
       std::string command;
 
       // check if this is a tests/testthat/test-<name>.R file in a package project;
-      // if so, use devtools::test(filter = "<name>") instead of testthat::test_file()
+      // if so, use devtools::test(filter = "^<name>$") instead of testthat::test_file().
+      // The filter is matched as a regex by testthat::test_dir, so anchor it with
+      // ^ and $ to avoid running other test files whose names happen to contain
+      // <name> as a substring (e.g. test-prereg.R also running test-mod-prereg.R).
       boost::smatch match;
       boost::regex reTestThat("tests/testthat/test-(.+)\\.[rR]$");
       std::string path = testPath.getAbsolutePath();
@@ -1213,7 +1216,7 @@ private:
           boost::regex_search(path, match, reTestThat))
       {
          std::string filterName = singleQuotedStrEscape(match[1]);
-         command = fmt::format("devtools::test(filter = '{}')", filterName);
+         command = fmt::format("devtools::test(filter = '^{}$')", filterName);
          pkgOptions.workingDir = projects::projectContext().buildTargetPath();
          enqueCommandString(command);
       }
