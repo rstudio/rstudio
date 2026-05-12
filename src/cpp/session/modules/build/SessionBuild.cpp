@@ -250,7 +250,7 @@ std::string regexLiteralEscape(const std::string& str)
       return str;
 
    std::string result;
-   result.reserve(str.size() + 4);
+   result.reserve(str.size() * 2);
    for (char c : str)
    {
       if (meta.find(c) != std::string::npos)
