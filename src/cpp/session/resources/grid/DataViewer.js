@@ -1715,16 +1715,14 @@ var updateInfoBar = function() {
       last = Math.max(first, Math.min(last, activeRows));
    }
 
-   var text = "Showing rows " + first.toLocaleString() + " to " + last.toLocaleString();
+   var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
+      " of " + activeRows.toLocaleString() + " entries";
    if (filteredRows < totalRows) {
-      text += " of " + activeRows.toLocaleString() + " rows (filtered from " +
-         totalRows.toLocaleString() + " total)";
-   } else {
-      text += " of " + activeRows.toLocaleString() + " total rows";
+      text += " (filtered from " + totalRows.toLocaleString() + " total)";
    }
    if (totalCols > 0) {
       text += ", " + totalCols.toLocaleString() +
-         (totalCols === 1 ? " total column" : " total columns");
+         (totalCols === 1 ? " column" : " columns");
    }
    if (textEl) textEl.textContent = text;
 
