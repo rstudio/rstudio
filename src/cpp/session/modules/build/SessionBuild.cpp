@@ -243,7 +243,7 @@ bool collectForcePackageRebuild()
    }
 }
 
-std::string regexLiteralEscape(const std::string& str)
+std::string regexLiteralEscape(std::string str)
 {
    static const std::string meta = ".\\+*?[](){}^$|";
    if (str.find_first_of(meta) == std::string::npos)
