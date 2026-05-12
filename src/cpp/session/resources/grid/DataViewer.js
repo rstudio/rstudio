@@ -60,8 +60,15 @@ var AVG_CHAR_REF_STRING =
 // STATE_VERSION when the stored state shape changes incompatibly so old
 // payloads are dropped on next read instead of being applied with
 // mismatched indices.
-var STATE_VERSION = 1;
+var STATE_VERSION = 2;
 var STATE_KEY_PREFIX = "rstudio.dataViewer:";
+
+// Per-load sentinel used in place of a real column fingerprint when the
+// server response omits one. Comparing two sentinels from different page
+// loads always produces a mismatch, so missing fingerprint data triggers
+// state invalidation rather than silently passing the equality check.
+var MISSING_FINGERPRINT_SENTINEL =
+   "__missing__:" + Math.random().toString(36).slice(2) + ":" + Date.now();
 
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
 var TIMING = {
@@ -3169,13 +3176,25 @@ var initGrid = function(resCols, data) {
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
-   // Apply the data_viewer_show_summary preference as the default; saved
-   // per-object state (below) overrides it when present.
-   sidebarVisible = loc.showSummary;
+   // Apply the data_viewer_show_summary preference as the default. When
+   // applySavedState will actually restore a saved sidebar choice (its
+   // fingerprint matches the current frame), skip this overwrite -- that's
+   // what keeps a dismissed sidebar dismissed across re-bootstraps from
+   // column pagination. On a fingerprint mismatch (e.g. object reassigned
+   // to a different column set) applySavedState drops the saved state
+   // without applying its sidebar choice, so the URL default is still
+   // needed.
+   var savedState = loadSavedState();
+   var willRestoreSidebar = savedState &&
+      typeof savedState.sidebarVisible === "boolean" &&
+      savedState.columns === columnFingerprint();
+   if (!willRestoreSidebar) {
+      sidebarVisible = loc.showSummary;
+   }
 
    // Restore saved per-object UI state before headers are built (so pinning
    // order is correct) and before fetchRows (so sort/filters are sent).
-   applySavedState(loadSavedState());
+   applySavedState(savedState);
 
    // Build headers (pinned columns first, then unpinned)
    columnOrder = getColumnOrder();
@@ -3362,18 +3381,24 @@ var stateKey = function() {
       encodeURIComponent(loc.obj);
 };
 
-// Fingerprint of the current column structure -- a join of names lets
-// applySavedState ignore state saved against an incompatible object that
-// was reassigned to the same env+obj name (e.g. df <- mtcars; df <- iris).
-// Width/sort/filter indices and per-column filter values would otherwise
-// be applied silently to mismatched columns.
+// Fingerprint of the underlying frame's column structure. The server
+// computes this from the full column names (not the paginated slice) and
+// returns it on the rownames metadata, so the value stays stable as the
+// user pages through columns. Anything that mutates names(x) on the
+// server (reassignment, `names(df) <- ...`, `df$new <- ...`) flips the
+// fingerprint; applySavedState uses it to ignore state saved against an
+// incompatible frame -- otherwise width/sort/filter indices and per-
+// column filter values would be applied silently to mismatched columns.
+//
+// Falls back to a per-load random sentinel when the server omits the
+// fingerprint, so missing data always mismatches saved state instead of
+// silently passing the equality check.
 var columnFingerprint = function() {
-   if (!cols) return "";
-   var names = [];
-   for (var i = 0; i < cols.length; i++) {
-      names.push(cols[i].col_name || "");
-   }
-   return names.join(" ");
+   if (!cols || !cols[0]) return MISSING_FINGERPRINT_SENTINEL;
+   var fp = cols[0].cols_fingerprint;
+   return typeof fp === "string" && fp.length > 0
+      ? fp
+      : MISSING_FINGERPRINT_SENTINEL;
 };
 
 var saveState = function() {
@@ -3416,7 +3441,12 @@ var loadSavedState = function() {
       var state = JSON.parse(raw);
       if (state.version !== STATE_VERSION) {
          // Stale schema; remove so it doesn't accumulate forever.
+         // Log once so support can correlate user reports of "my pins
+         // disappeared after upgrade" with the schema bump.
          try { localStorage.removeItem(key); } catch (_) {}
+         console.info(
+            "Data viewer: discarding saved state from older schema (v" +
+            state.version + " -> v" + STATE_VERSION + ")");
          return null;
       }
       return state;
@@ -3442,8 +3472,10 @@ var applySavedState = function(state) {
    // pinned-column indices, manual widths, and filter values are all
    // positional, so applying them to an unrelated frame would corrupt
    // the user's view (e.g. typed filter strings landing on numeric
-   // columns) with no obvious recovery.
-   if (typeof state.columns === "string" &&
+   // columns) with no obvious recovery. Fail-closed: if state.columns
+   // is missing or non-string (older format, corrupt payload), discard
+   // rather than apply blind.
+   if (typeof state.columns !== "string" ||
        state.columns !== columnFingerprint()) {
       clearSavedState();
       return;

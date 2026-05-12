@@ -134,12 +134,45 @@
    as.character(col)
 })
 
+# Compact, collision-resistant hash of a frame's column names. Used as a
+# fingerprint to detect object reassignment between data viewer loads.
+#
+# Returns NA_character_ for empty / NULL names, and also when the digest
+# helper itself fails -- in both cases the client treats "no anchor" as
+# always-mismatch and discards any saved positional state, since there
+# is no safe way to align indices against a frame we can't fingerprint.
+.rs.addFunction("dataViewer.colsFingerprint", function(x)
+{
+   nms <- names(x)
+   n <- length(nms)
+   if (n == 0L)
+      return(NA_character_)
+
+   hash <- .rs.digest(nms)
+   if (is.na(hash))
+      return(NA_character_)
+
+   paste0(n, ":", hash)
+})
+
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,
                                          maxFactors = 64,
-                                         totalCols = -1)
+                                         totalCols = -1,
+                                         colsFingerprint = NULL)
 {
+   # The client compares this fingerprint against the one stored alongside
+   # saved per-object UI state (pins, widths, sort, filters, sidebar
+   # visibility). A mismatch invalidates the saved state -- without it,
+   # positional indices saved against one frame can land on an unrelated
+   # frame after reassignment (df <- iris; df <- mtcars). Callers that have
+   # already subset x (e.g. describeColSlice) must compute the fingerprint
+   # from the underlying frame and pass it in, otherwise pagination would
+   # silently invalidate state on every column-frame change.
+   if (is.null(colsFingerprint))
+      colsFingerprint <- .rs.dataViewer.colsFingerprint(x)
+
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
    
@@ -213,7 +246,8 @@
       col_type_r      = .rs.scalar(""),
       col_na_count    = .rs.scalar(0),
       total_cols      = .rs.scalar(totalCols),
-      total_rows      = .rs.scalar(nrow(x)))
+      total_rows      = .rs.scalar(nrow(x)),
+      cols_fingerprint = .rs.scalar(colsFingerprint))
 
    # Add a max-chars hint for the row names column. Use .row_names_info()
    # so we avoid materializing the full row-name vector for the common
@@ -441,7 +475,11 @@
    }
       
    
-   .rs.describeCols(colSlice, -1, -1, 64, totalCols)
+   # Pass the fingerprint of the full frame so pagination doesn't fold
+   # each page into a distinct fingerprint -- doing so would invalidate
+   # saved UI state on every page change.
+   .rs.describeCols(colSlice, -1, -1, 64, totalCols,
+                    .rs.dataViewer.colsFingerprint(x))
 })
 
 .rs.addFunction("summarizeColumn", function(x, columnIndex)

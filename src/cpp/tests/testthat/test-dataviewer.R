@@ -93,6 +93,74 @@ test_that(".rs.describeColSlice() returns NULL for empty data frames", {
    expect_equal(.rs.describeColSlice(tbl, 1, 1), NULL)
 })
 
+test_that(".rs.describeColSlice() emits a fingerprint stable across pagination", {
+   tbl <- as.data.frame(setNames(
+      replicate(20, 1:5, simplify = FALSE),
+      paste0("X", 1:20)
+   ))
+   slice_a <- .rs.describeColSlice(tbl, 1, 5)
+   slice_b <- .rs.describeColSlice(tbl, 6, 10)
+   slice_c <- .rs.describeColSlice(tbl, 16, 20)
+
+   # The rownames slot is always the first column and is where the
+   # fingerprint is attached. Anchor that here so a refactor that moves
+   # the slot doesn't make the rest of the test silently pass on NULLs.
+   expect_equal(slice_a[[1]]$col_type, .rs.scalar("rownames"))
+
+   # Same underlying frame -> identical fingerprint regardless of slice.
+   expect_identical(slice_a[[1]]$cols_fingerprint, slice_b[[1]]$cols_fingerprint)
+   expect_identical(slice_a[[1]]$cols_fingerprint, slice_c[[1]]$cols_fingerprint)
+
+   # A different frame produces a different fingerprint.
+   other <- data.frame(a = 1:5, b = 1:5, c = 1:5)
+   slice_other <- .rs.describeColSlice(other, 1, 3)
+   expect_false(identical(slice_a[[1]]$cols_fingerprint,
+                          slice_other[[1]]$cols_fingerprint))
+
+   # describeCols (the non-paginated path) also emits a fingerprint, and it
+   # matches the slice-path fingerprint for the same underlying frame.
+   direct <- .rs.describeCols(tbl)
+   expect_identical(direct[[1]]$cols_fingerprint,
+                    slice_a[[1]]$cols_fingerprint)
+})
+
+test_that(".rs.describeCols() fingerprint distinguishes hyphen-collisions", {
+   # Reassignments like c("a-b", "c") vs c("a", "b-c") must not produce
+   # identical fingerprints, otherwise the per-object state check intended
+   # to detect object reassignment would silently apply mismatched indices.
+   x1 <- setNames(data.frame(1:3, 4:6), c("a-b", "c"))
+   x2 <- setNames(data.frame(1:3, 4:6), c("a", "b-c"))
+   fp1 <- .rs.describeCols(x1)[[1]]$cols_fingerprint
+   fp2 <- .rs.describeCols(x2)[[1]]$cols_fingerprint
+   expect_false(identical(fp1, fp2))
+})
+
+test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
+   # The client treats a null/missing fingerprint as always-mismatch and
+   # discards any saved per-object state -- there's no anchor to align
+   # positional indices against, so applying them would be unsafe.
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(data.frame())))
+
+   noNames <- data.frame(1:3, 4:6)
+   names(noNames) <- NULL
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(noNames)))
+
+   # Empty character vector (the zero-length-names case the client guards
+   # against) must hash to NA, not to digest("")
+   expect_true(is.na(.rs.dataViewer.colsFingerprint(structure(list(), names = character()))))
+})
+
+test_that(".rs.digest() distinguishes character vectors that concat-collide", {
+   # Without length-prefix / unit-separator framing, c("a","b") and
+   # c("ab") would hash identically -- a regression here would silently
+   # weaken the data viewer fingerprint.
+   expect_false(identical(.rs.digest(c("a", "b")), .rs.digest("ab")))
+   expect_false(identical(.rs.digest(c("a-b", "c")), .rs.digest(c("a", "b-c"))))
+
+   # Stable across calls.
+   expect_identical(.rs.digest(c("x", "y")), .rs.digest(c("x", "y")))
+})
+
 # Helper: strip the rs.scalar class wrapper so tests can compare against
 # bare R values without forcing every expect_equal to know the wrapping.
 .rs.summarize.bare <- function(x) {
