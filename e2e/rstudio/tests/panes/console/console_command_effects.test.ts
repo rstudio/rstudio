@@ -65,7 +65,7 @@ test.describe('Console command effects', () => {
     test.setTimeout(60000);
     const uninstalled = await consoleActions.uninstallPackage('praise');
     test.skip(!uninstalled, 'Could not uninstall praise to set up a fresh-install scenario');
-    const failed = await consoleActions.ensurePackages(['praise'], 30000);
+    const failed = await consoleActions.ensurePackages(['praise'], 60000);
     test.skip(failed.length > 0, `Could not install: ${failed.join(', ')}`);
 
     await consoleActions.clearConsole();
