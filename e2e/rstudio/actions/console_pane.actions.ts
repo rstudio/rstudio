@@ -1,6 +1,58 @@
 import type { Page } from 'playwright';
+import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
+
+interface InstallTarget {
+  repos: string;
+  type: 'binary' | 'source';
+}
+
+let cachedInstallTarget: InstallTarget | null = null;
+
+// Returns the repo URL and install type to use for install.packages().
+// On Linux, prefer Posit Public Package Manager's per-distro binary repo so
+// installs don't compile from source (which can take minutes for packages
+// with heavy C/C++ deps like duckdb).
+function getInstallTarget(): InstallTarget {
+  if (cachedInstallTarget) return cachedInstallTarget;
+
+  if (process.platform === 'win32' || process.platform === 'darwin') {
+    cachedInstallTarget = { repos: 'https://cran.r-project.org', type: 'binary' };
+    return cachedInstallTarget;
+  }
+
+  const distro = detectLinuxDistro();
+  cachedInstallTarget = distro
+    ? {
+        repos: `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`,
+        type: 'binary',
+      }
+    : { repos: 'https://cran.r-project.org', type: 'source' };
+  return cachedInstallTarget;
+}
+
+// Returns the PPM distro slug for the current Linux host, or '' if unknown.
+// Ubuntu/Debian use VERSION_CODENAME (e.g. "noble", "jammy", "bookworm").
+// RHEL family (rhel/rocky/almalinux/centos) has no codename; PPM serves
+// them as "rhel<major>" derived from VERSION_ID.
+function detectLinuxDistro(): string {
+  const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+  const get = (key: string): string =>
+    osRelease.match(new RegExp(`^${key}=("?)([^"\\n]+)\\1`, 'm'))?.[2] ?? '';
+
+  const codename = get('VERSION_CODENAME');
+  if (codename) return codename;
+
+  const id = get('ID');
+  const idLike = get('ID_LIKE').split(/\s+/);
+  const rhelFamily = new Set(['rhel', 'rocky', 'almalinux', 'centos']);
+  if (rhelFamily.has(id) || idLike.includes('rhel')) {
+    const major = get('VERSION_ID').split('.')[0];
+    if (major) return `rhel${major}`;
+  }
+  return '';
+}
 
 export class ConsolePaneActions {
   readonly page: Page;
@@ -87,8 +139,8 @@ export class ConsolePaneActions {
     // Run install, then print marker as a separate command.
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
-    const installType = 'ifelse(.Platform$OS.type == "windows" || Sys.info()["sysname"] == "Darwin", "binary", "source")';
-    await this.typeInConsole(`install.packages("${pkg}", repos = "https://cran.r-project.org", type = ${installType})`);
+    const { repos, type } = getInstallTarget();
+    await this.typeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
     await this.typeInConsole(`cat("${doneMarker}")`);
 
 

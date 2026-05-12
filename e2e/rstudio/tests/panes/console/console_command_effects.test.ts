@@ -62,14 +62,14 @@ test.describe('Console command effects', () => {
   });
 
   test('install.packages() installs a real CRAN package that library() can load', async () => {
-    test.setTimeout(300000);
-    const uninstalled = await consoleActions.uninstallPackage('starwarsdb');
-    test.skip(!uninstalled, 'Could not uninstall starwarsdb to set up a fresh-install scenario');
-    const failed = await consoleActions.ensurePackages(['starwarsdb'], 240000);
+    test.setTimeout(60000);
+    const uninstalled = await consoleActions.uninstallPackage('praise');
+    test.skip(!uninstalled, 'Could not uninstall praise to set up a fresh-install scenario');
+    const failed = await consoleActions.ensurePackages(['praise'], 30000);
     test.skip(failed.length > 0, `Could not install: ${failed.join(', ')}`);
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole("library('starwarsdb')");
+    await consoleActions.typeInConsole("library('praise')");
     await sleep(2000);
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText(
       'Error in library',
