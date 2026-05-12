@@ -77,17 +77,12 @@ void ChildProcessTracker::attemptToReapProcess(
    // reaped the child
    if (result == pid)
    {
-      // confirm this was a real exit
-      bool exited = false;
-      if (WIFEXITED(status))
-      {
-         exited = true;
-         status = WEXITSTATUS(status);
-      }
-      else if (WIFSIGNALED(status))
-      {
-         exited = true;
-      }
+      // confirm this was a real exit (as opposed to SIGSTOP / SIGCONT);
+      // we forward the raw waitpid status word to the handler so callers
+      // can distinguish a normal exit (WIFEXITED) from a signal kill
+      // (WIFSIGNALED) -- decoding here would conflate the two for some
+      // signal numbers.
+      bool exited = WIFEXITED(status) || WIFSIGNALED(status);
 
       // if it was a real exit (as opposed to a SIGSTOP or SIGCONT)
       // then remove the pid from our table and fire the event

@@ -41,6 +41,7 @@
 
 #include <atomic>
 #include <csignal>
+#include <sys/wait.h>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -67,6 +68,27 @@ static std::string s_launcherToken;
 // ourselves so rserver completes its normal shutdown sequence rather
 // than blocking forever in waitForSignals(). Zero means "no host yet".
 static std::atomic<PidType> s_automationHostPid{0};
+
+// Anchor for the SIGTERM/143 invariant -- ServerMain.cpp and the kill()
+// site in onProcessExit() reference this declaration rather than
+// repeating the rationale, so the explanation stays in one place.
+//
+// Set just before we self-send SIGTERM in onProcessExit, but only when
+// the automation host rsession exited cleanly (status 0). The main
+// signal-wait loop checks isShuttingDownForAutomation() at the end of
+// its SIGTERM branch and std::exit(0)s instead of re-raising the signal
+// -- otherwise the process exits 143 (128 + SIGTERM), and external test
+// harnesses can't distinguish a clean automation completion from an
+// aborted run. If the host exited non-zero (crashed, failed to start,
+// or test framework reported failures), this stays false so we fall
+// through to the conventional re-raise path -- giving the harness a
+// non-zero exit it can detect.
+//
+// Intentionally one-shot: not reset after the SIGTERM fires, because
+// rserver exits right after that. If the lifecycle ever changes so
+// that rserver can re-host an automation session, this flag will need
+// to be cleared at the start of each run.
+static std::atomic<bool> s_shuttingDownForAutomation{false};
 
 void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
 {
@@ -284,21 +306,42 @@ core::system::ProcessConfig sessionProcessConfig(
    return config;
 }
 
-void onProcessExit(const std::string& username, PidType pid)
+void onProcessExit(const std::string& username, PidType pid, int rawStatus)
 {
    PidType automationHost = s_automationHostPid.load();
    if (automationHost != 0 && pid == automationHost)
    {
+      // Decode the raw waitpid status word so the log distinguishes a
+      // normal exit from a signal kill. A raw status of 0 unambiguously
+      // means exit(0); any other value is treated as a non-clean exit.
+      std::string detail;
+      if (WIFEXITED(rawStatus))
+         detail = "exited with code " + safe_convert::numberToString(WEXITSTATUS(rawStatus));
+      else if (WIFSIGNALED(rawStatus))
+         detail = "killed by signal " + safe_convert::numberToString(WTERMSIG(rawStatus));
+      else
+         detail = "exited (raw waitpid status " + safe_convert::numberToString(rawStatus) + ")";
+
       LOG_INFO_MESSAGE(
             "Automation host rsession (pid " +
             safe_convert::numberToString(pid) +
-            ") exited; signaling rserver shutdown.");
+            ") " + detail +
+            "; signaling rserver shutdown.");
       s_automationHostPid.store(0);
+      // Mark as a clean automation shutdown only when the host exited
+      // cleanly -- see the s_shuttingDownForAutomation declaration above
+      // for why this gates the std::exit(0) vs SIGTERM re-raise path.
+      s_shuttingDownForAutomation.store(rawStatus == 0);
       ::kill(::getpid(), SIGTERM);
    }
 }
 
 } // anonymous namespace
+
+bool isShuttingDownForAutomation()
+{
+   return s_shuttingDownForAutomation.load();
+}
 
 SessionManager& sessionManager()
 {
@@ -491,10 +534,13 @@ Error SessionManager::launchAndTrackSession(
       }
    }
 
-   // track it for subsequent reaping
+   // track it for subsequent reaping. _2 forwards the raw waitpid
+   // status from ChildProcessTracker so onProcessExit can distinguish
+   // a clean automation host exit from a failure.
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
                                                profile.context.username,
-                                               pid));
+                                               pid,
+                                               _2));
 
    // return success
    return Success();
