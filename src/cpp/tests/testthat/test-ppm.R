@@ -177,3 +177,70 @@ test_that("parseVulnerabilityResponse preserves nested vuln fields", {
       ))
    ))
 })
+
+test_that("parseVulnerabilityResponse skips malformed JSON lines", {
+   # .rs.fromJSON returns NULL on parse failure; the parser silently
+   # skips those records. Pin the contract so a future change makes a
+   # deliberate decision rather than an accidental one.
+   contents <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}',
+      '{this is not json',
+      '{"name":"pkgB","version":"0.1.0","vulns":[{"id":"V2"}]}',
+      sep = "\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1")),
+      pkgB = list(list(id = "V2"))
+   ))
+})
+
+test_that("parseVulnerabilityResponse keeps id-less vulns separate", {
+   # Each id-less vuln coalesces to id = "", but R's list[[""]] always
+   # reads NULL while each write appends a fresh positional slot, so the
+   # dedup loop treats them as distinct. In practice PPM always emits an
+   # OSV id; this just pins the fallback behavior.
+   contents <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"summary":"one"}]}',
+      '{"name":"pkgA","version":"1.1.0","vulns":[{"summary":"two"}]}',
+      sep = "\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      pkgA = list(
+         list(summary = "one"),
+         list(summary = "two")
+      )
+   ))
+})
+
+test_that("parseVulnerabilityResponse keeps the first record on same-id dedup", {
+   # When the same vuln id appears with different summaries across versions,
+   # the first occurrence wins; only the versions map gets merged.
+   contents <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","summary":"first","versions":{"1.0.0":true}}]}',
+      '{"name":"pkgA","version":"2.0.0","vulns":[{"id":"V1","summary":"second","versions":{"2.0.0":true}}]}',
+      sep = "\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      pkgA = list(list(
+         id = "V1",
+         summary = "first",
+         versions = list(`1.0.0` = TRUE, `2.0.0` = TRUE)
+      ))
+   ))
+})
+
+test_that("parseVulnerabilityResponse tolerates CRLF line endings", {
+   contents <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}',
+      '{"name":"pkgB","version":"0.2.0","vulns":[{"id":"V2"}]}',
+      sep = "\r\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1")),
+      pkgB = list(list(id = "V2"))
+   ))
+})
