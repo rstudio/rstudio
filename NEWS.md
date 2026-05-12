@@ -42,6 +42,7 @@
 - ([rstudio/rstudio-pro#10805](https://github.com/rstudio/rstudio-pro/issues/10805)): Server: Enable TCP keepalive on accepted connections so the operating system reaps half-open sockets from disappeared clients (browser tab hibernation, NAT timeouts) instead of holding them indefinitely.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Reduced filesystem work performed by the `install.packages()` hook; the before/after scan is now scoped to the requested packages and their dependency closure rather than the entire library.
 - ([rstudio/rstudio-pro#10771](https://github.com/rstudio/rstudio-pro/issues/10771)): Tightened the heuristic used to detect package-management commands at the console prompt, reducing spurious Packages pane refreshes triggered by identifiers like `updates <-` or `installed.packages()`.
+- ([#17446](https://github.com/rstudio/rstudio/issues/17446)): The Packages pane now retrieves vulnerability information from Posit Package Manager via the `POST /filter/packages` endpoint, replacing the legacy `GET /repos/{repo}/vulns` endpoint that was temporarily unavailable in Package Manager `2026.04.0`.
 
 ### Dependencies
 - Ace 1.43.5

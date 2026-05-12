@@ -35,7 +35,14 @@
    {
       tryCatch(
          .rs.ppm.getVulnerabilityInformationImpl(repoUrl),
-         error = function(cnd) structure(list(), names = character())
+         error = function(cnd)
+         {
+            .rs.logErrorMessage(sprintf(
+               "error fetching PPM vulnerability info for %s: %s",
+               repoUrl, conditionMessage(cnd)
+            ))
+            structure(list(), names = character())
+         }
       )
    })
 })
@@ -45,31 +52,163 @@
    # If we have cached information available, use it.
    if (exists(repoUrl, envir = .rs.ppm.vulns))
       return(get(repoUrl, envir = .rs.ppm.vulns))
-   
-   # Request vulnerabilities
+
+   empty <- structure(list(), names = character())
+
    ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
    if (length(ppmUrl) == 0L)
-      return(structure(list(), names = character()))
-   
-   fmt <- "%s/__api__/repos/%s/vulns"
-   endpoint <- sprintf(fmt, ppmUrl$root, ppmUrl$repos)
-   destfile <- tempfile("ppm-vuln-")
-   
-   status <- tryCatch(
-      download.file(endpoint, destfile = destfile, quiet = TRUE),
-      condition = identity
+      return(empty)
+
+   if (!requireNamespace("curl", quietly = TRUE))
+      return(empty)
+
+   # build a curl handle for the request
+   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
+   handle <- curl::new_handle(verbose = verbose)
+
+   headers <- list("Content-Type" = "application/json")
+   curl::handle_setheaders(handle, .list = headers)
+
+   # ask PPM for every package in this repo with a known vulnerability
+   data <- list(
+      repo                 = ppmUrl[["repos"]],
+      has_vulns            = TRUE,
+      vulns                = TRUE,
+      omit_dependencies    = TRUE,
+      omit_downloads       = TRUE,
+      omit_package_details = TRUE
    )
-   
-   if (inherits(status, "condition"))
-      return(structure(list(), names = character()))
-   
-   contents <- readLines(destfile, warn = FALSE)
-   json <- .rs.fromJSON(contents)
-   vulns <- .rs.markScalars(json)
-   
-   # Cache the result and return.
+
+   json <- .rs.toJSON(data, unbox = TRUE)
+
+   curl::handle_setopt(
+      handle     = handle,
+      post       = TRUE,
+      postfields = json
+   )
+
+   # the legacy /repos/{repo}/vulns endpoint was effectively anonymous;
+   # filter/packages requires auth on locked-down PPM instances, so wire
+   # up netrc when the user has one configured
+   netrcFile <- .rs.netrcPath()
+   if (file.exists(netrcFile))
+   {
+      curl::handle_setopt(
+         handle     = handle,
+         httpauth   = 1L,         # CURLAUTH_BASIC
+         netrc      = 1L,
+         netrc_file = path.expand(netrcFile)
+      )
+   }
+
+   endpoint <- file.path(ppmUrl[["root"]], "__api__/filter/packages")
+   response <- tryCatch(
+      curl::curl_fetch_memory(endpoint, handle = handle),
+      error = identity
+   )
+
+   if (inherits(response, "condition"))
+   {
+      .rs.logErrorMessage(sprintf(
+         "PPM vulnerability request to %s failed: %s",
+         endpoint, conditionMessage(response)
+      ))
+      return(empty)
+   }
+
+   if (response$status_code < 200L || response$status_code >= 300L)
+   {
+      .rs.logErrorMessage(sprintf(
+         "PPM vulnerability request to %s returned HTTP %d",
+         endpoint, response$status_code
+      ))
+      return(empty)
+   }
+
+   contents <- enc2utf8(rawToChar(response$content))
+   vulns <- .rs.ppm.parseVulnerabilityResponse(contents)
+
+   # parser returns NULL when the NDJSON stream contained an error
+   # record; in that case skip the cache so the next refresh can retry
+   if (is.null(vulns))
+      return(empty)
+
    assign(repoUrl, vulns, envir = .rs.ppm.vulns)
    vulns
+})
+
+.rs.addFunction("ppm.parseVulnerabilityResponse", function(contents)
+{
+   empty <- structure(list(), names = character())
+
+   # tolerate CRLF in case a proxy or PPM build rewrites line endings
+   contents <- gsub("\r", "", contents, fixed = TRUE)
+   splat <- strsplit(contents, "\n", fixed = TRUE)[[1L]]
+   splat <- splat[nzchar(splat)]
+   records <- lapply(splat, .rs.fromJSON)
+
+   # bail out if the server reported an error on any line. Returning NULL
+   # (rather than empty) lets the caller distinguish "no vulns" from
+   # "request failed" and skip the cache, so a transient failure doesn't
+   # mask vulns for the rest of the session.
+   for (record in records)
+   {
+      if (is.character(record[["error"]]))
+      {
+         code <- .rs.nullCoalesce(record[["code"]], "unknown")
+         warning(sprintf(
+            "error requesting package vulnerabilities; %s [error code %s]",
+            record[["error"]], as.character(code)
+         ), call. = FALSE)
+         return(NULL)
+      }
+   }
+
+   # the endpoint returns one record per (package, version) pair; group the
+   # vulns by package name to match the shape consumers expect
+   vulns <- empty
+   for (record in records)
+   {
+      name <- record[["name"]]
+      pkgVulns <- record[["vulns"]]
+      if (is.null(name) || length(pkgVulns) == 0L)
+         next
+
+      vulns[[name]] <- c(vulns[[name]], pkgVulns)
+   }
+
+   # dedupe vulns by id within each package, merging the per-record
+   # 'versions' maps so the UI's per-version check still finds every
+   # affected installed version. PPM may report a different versions
+   # subset alongside each (package, version) record.
+   for (name in names(vulns))
+   {
+      pkgVulns <- vulns[[name]]
+      merged <- list()
+      indices <- list()
+      for (i in seq_along(pkgVulns))
+      {
+         vuln <- pkgVulns[[i]]
+         id <- .rs.nullCoalesce(vuln[["id"]], "")
+         slot <- indices[[id]]
+         if (is.null(slot))
+         {
+            slot <- length(merged) + 1L
+            indices[[id]] <- slot
+            merged[[slot]] <- vuln
+         }
+         else
+         {
+            existing <- merged[[slot]]
+            combined <- c(existing[["versions"]], vuln[["versions"]])
+            existing[["versions"]] <- combined[!duplicated(names(combined))]
+            merged[[slot]] <- existing
+         }
+      }
+      vulns[[name]] <- merged
+   }
+
+   .rs.markScalars(vulns)
 })
 
 .rs.addFunction("ppm.fromRepositoryUrl", function(url)
@@ -154,8 +293,8 @@
       return(cache)
    
    # begin building a curl handle
-   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")
-   handle <- curl::new_handle(verbose = if (verbose) TRUE else FALSE)
+   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
+   handle <- curl::new_handle(verbose = verbose)
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")
