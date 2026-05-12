@@ -959,7 +959,9 @@ Error formatDocument(
       // Read the newly-formatted document, normalizing line endings so that
       // line-ending differences between the in-memory document (LF) and the
       // formatter output (potentially CRLF on Windows) don't produce spurious
-      // edits.
+      // \r insertions in the diff. Such \r insertions would be turned into
+      // extra newlines on the client by Ace's Document.$split regex when
+      // applied via replaceRange. See issue 17471.
       std::string formatted;
       error = core::readStringFromFile(codePath, &formatted, string_utils::LineEndingPosix);
       if (error)
@@ -1025,8 +1027,10 @@ Error formatCode(
    return formatDocumentImpl(codePath, continuation, [=]()
    {
       // read from the tempfile we wrote, normalizing line endings so that
-      // CRLF written by some formatters on Windows doesn't produce spurious
-      // edits when diffed against the LF-normalized document contents
+      // CRLF written by some formatters on Windows doesn't leave stray \r
+      // characters in the result; Ace's Document.$split regex would turn
+      // those into extra newlines when the result is inserted via
+      // replaceRange. See issue 17471.
       std::string code;
       Error error = readStringFromFile(codePath, &code, string_utils::LineEndingPosix);
       if (error)

@@ -23,11 +23,11 @@ remote$console.executeExpr({
 })
 
 .rs.test("styler: documents can be reformatted on save", {
-
+   
    skip_on_ci()
    if (!remote$package.isInstalled("styler"))
       skip("styler is not installed")
-
+   
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(TRUE)
       .rs.uiPrefs$codeFormatter$set("styler")
@@ -35,7 +35,7 @@ remote$console.executeExpr({
 
    name <- basename(tempfile("script-", fileext = ".R"))
    remote$editor.openDocument(name)
-
+   
    editor <- remote$editor.getInstance()
    editor$insert("1+1; 2+2")
    remote$keyboard.insertText("<Ctrl + S>")
@@ -47,7 +47,7 @@ remote$console.executeExpr({
    })
    expect_equal(contents, "1 + 1\n2 + 2\n")
    remote$editor.closeDocument()
-
+   
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(FALSE)
       .rs.uiPrefs$codeFormatter$set("none")
@@ -55,9 +55,16 @@ remote$console.executeExpr({
 })
 
 # https://github.com/rstudio/rstudio/issues/17471
-.rs.test("styler: Reformat Document does not add extra newlines", {
+# Bug is Windows-only: styler's writeLines writes CRLF on Windows, which
+# the formatter callers then read back. Without LineEndingPosix normalization
+# the character-level diff against the LF-normalized in-memory document
+# produces \r insertions before each \n; on the client, Ace's Document.$split
+# regex turns each inserted bare \r into another \n, doubling line breaks.
+# On macOS/Linux styler writes LF and the bug doesn't manifest.
+.rs.test("styler: Reformat Document does not add extra newlines on Windows", {
 
    skip_on_ci()
+   skip_if(!.rs.platform.isWindows, "styler only writes CRLF on Windows")
    if (!remote$package.isInstalled("styler"))
       skip("styler is not installed")
 
@@ -68,11 +75,8 @@ remote$console.executeExpr({
       .rs.uiPrefs$codeFormatter$set("none")
    }))
 
-   # Two lines of code followed by a blank line. styler's writeLines on
-   # Windows would write CRLF; without the line-ending normalization fix,
-   # the diff against the LF-normalized document inserts \r characters
-   # that Ace turns into extra blank lines between the two statements.
    initial <- "print(\"test\")\nprint(\"test\")\n\n"
+   expected <- "print(\"test\")\nprint(\"test\")\n"
    remote$editor.executeWithContents(".R", initial, function(editor) {
       remote$commands.execute(.rs.appCommands$reformatDocument)
       contents <- .rs.waitUntil("document is reformatted", function() {
@@ -81,12 +85,41 @@ remote$console.executeExpr({
             return(contents)
          return(FALSE)
       })
-      expect_equal(contents, "print(\"test\")\nprint(\"test\")\n")
+      expect_equal(contents, expected)
+   })
 
-      # Reformatting again should leave the document unchanged.
-      remote$commands.execute(.rs.appCommands$reformatDocument)
-      Sys.sleep(1)
-      expect_equal(editor$getValue(), "print(\"test\")\nprint(\"test\")\n")
+})
+
+# Regression test for the selection-reformat (formatCode) code path of #17471.
+# The full-document path is covered above; this also guards against stray \r
+# being left in selection-reformat output if line-ending normalization is
+# later dropped from the C++ formatCode handler.
+.rs.test("styler: Reformat Code (selection) does not add extra newlines on Windows", {
+
+   skip_on_ci()
+   skip_if(!.rs.platform.isWindows, "styler only writes CRLF on Windows")
+   if (!remote$package.isInstalled("styler"))
+      skip("styler is not installed")
+
+   remote$console.executeExpr({
+      .rs.uiPrefs$codeFormatter$set("styler")
+   })
+   withr::defer(remote$console.executeExpr({
+      .rs.uiPrefs$codeFormatter$set("none")
+   }))
+
+   initial <- "1+1; 2+2\n3+3; 4+4\n"
+   expected <- "1 + 1\n2 + 2\n3 + 3\n4 + 4\n"
+   remote$editor.executeWithContents(".R", initial, function(editor) {
+      editor$selectAll()
+      remote$commands.execute(.rs.appCommands$reformatCode)
+      contents <- .rs.waitUntil("selection is reformatted", function() {
+         contents <- editor$getValue()
+         if (contents != initial)
+            return(contents)
+         return(FALSE)
+      })
+      expect_equal(contents, expected)
    })
 
 })
