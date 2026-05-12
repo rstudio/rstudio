@@ -23,10 +23,14 @@ function getInstallTarget(): InstallTarget {
   }
 
   const distro = detectLinuxDistro();
+  // On Linux, R has no formal "binary" type -- PPM's __linux__/<distro>/latest
+  // endpoint serves precompiled tarballs that R fetches via type="source".
+  // Passing type="binary" here causes R to look for a nonexistent format and
+  // silently skip the install.
   cachedInstallTarget = distro
     ? {
         repos: `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`,
-        type: 'binary',
+        type: 'source',
       }
     : { repos: 'https://cran.r-project.org', type: 'source' };
   return cachedInstallTarget;
