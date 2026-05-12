@@ -246,8 +246,11 @@ bool collectForcePackageRebuild()
 std::string regexLiteralEscape(const std::string& str)
 {
    static const std::string meta = ".\\+*?[](){}^$|";
+   if (str.find_first_of(meta) == std::string::npos)
+      return str;
+
    std::string result;
-   result.reserve(str.size());
+   result.reserve(str.size() + 4);
    for (char c : str)
    {
       if (meta.find(c) != std::string::npos)
