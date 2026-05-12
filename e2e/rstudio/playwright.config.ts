@@ -1,5 +1,11 @@
 import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
 import os from 'os';
+
+// Load env vars from a dotenv file before any process.env reads below.
+// PW_ENV_FILE overrides the default path; existing process.env values win
+// (dotenv does not overwrite vars already set in the shell).
+dotenv.config({ path: process.env.PW_ENV_FILE ?? '.env.local' });
 
 const platform = os.platform();
 const desktopOsExclusions: string[] = [];

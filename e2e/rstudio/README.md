@@ -297,6 +297,44 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 | `PW_SANDBOX` | Both | No | Override the sandbox root (absolute path). Unset uses `dirname(tempdir())`. |
 | `PW_SANDBOX_CREATE` | Both | No | Set to `true`/`1` to auto-create an overridden sandbox root if it's missing. Default `false` — fails loud on typos. |
 
+## Variable Helpers
+
+The examples above use shell-prefix syntax (`KEY=val cmd ...`) which works in bash/zsh but not in `cmd.exe` or PowerShell. Two helpers are wired in for cases where you want a per-run setup without permanently changing your shell or Windows user environment.
+
+### `cross-env` (inline, cross-shell)
+
+`cross-env` parses leading `KEY=VAL` tokens on any shell, so the bash-style examples above work verbatim from PowerShell or `cmd.exe`. Combine it with `--project` to pick the project in the same line:
+
+```powershell
+npx cross-env PW_RSTUDIO_EDITION=pro npx playwright test --project=desktop
+```
+
+On bash/zsh it passes through unchanged; the native `PW_RSTUDIO_EDITION=pro npx playwright test --project=desktop` already works. Its reason for existing is `cmd.exe`/PowerShell, where the prefix syntax otherwise fails.
+
+### `.env.local` (dotenv)
+
+For a saved per-target setup instead of a long command line, `playwright.config.ts` loads `dotenv` before reading any env vars. Create `e2e/rstudio/.env.local` (gitignored) with whatever you want available to the run:
+
+```
+PW_RSTUDIO_MODE=server
+PW_RSTUDIO_EDITION=pro
+PW_RSTUDIO_SERVER_URL=http://10.0.0.5
+PW_RSTUDIO_SERVER_USER=myuser
+PW_RSTUDIO_SERVER_PASSWORD=mypass
+```
+
+Then just run:
+
+```bash
+npx playwright test
+```
+
+Notes:
+- The file is loaded only when Playwright reads its config, so vars never leak into your shell.
+- Vars already set in the shell (including via `cross-env`) win over values in the file; the file provides defaults, not overrides.
+- Point at a different file with `PW_ENV_FILE=.env.staging npx playwright test`. Useful for keeping per-target files (`.env.10-0-0-5`, `.env.pro-staging`).
+- A committed `.env.example` template documents the available keys.
+
 ## Claude Skills
 
 Claude skills are available for use when working with this test suite:
