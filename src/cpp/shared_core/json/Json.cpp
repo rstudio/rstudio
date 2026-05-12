@@ -37,6 +37,7 @@
 
 
 #include <cstddef>
+#include <cstring>
 
 //
 // Ask rapidjson to use 'std::size_t' internally.
@@ -60,6 +61,8 @@ typedef std::size_t SizeType;
 #endif
 
 #include <rapidjson/document.h>
+#include <rapidjson/encodedstream.h>
+#include <rapidjson/memorystream.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/writer.h>
@@ -689,7 +692,20 @@ bool Value::isUInt64() const
 
 Error Value::parse(const char* in_jsonStr)
 {
-   rapidjson::ParseResult result = m_impl->Document->Parse(in_jsonStr);
+   return Value::parse(std::string(in_jsonStr));
+}
+
+Error Value::parse(const std::string& in_jsonStr)
+{
+   // Wrap the string to use rapidjson's UTF handling, which detects BOMs.
+   rapidjson::MemoryStream byteStream(in_jsonStr.c_str(), in_jsonStr.size());
+   rapidjson::AutoUTFInputStream<unsigned, rapidjson::MemoryStream> stream(byteStream);
+
+   // Parse the JSON permissively.
+   constexpr unsigned FLAGS = rapidjson::kParseTrailingCommasFlag |
+      rapidjson::kParseCommentsFlag |
+      rapidjson::kParseStopWhenDoneFlag;
+   rapidjson::ParseResult result = m_impl->Document->ParseStream<FLAGS, rapidjson::AutoUTF<unsigned>>(stream);
 
    if (result.IsError())
    {
@@ -698,11 +714,6 @@ Error Value::parse(const char* in_jsonStr)
    }
 
    return Success();
-}
-
-Error Value::parse(const std::string& in_jsonStr)
-{
-   return parse(in_jsonStr.c_str());
 }
 
 Error Value::parseAndValidate(const std::string& in_jsonStr, const std::string& in_schema)

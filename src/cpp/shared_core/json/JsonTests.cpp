@@ -1085,6 +1085,24 @@ TEST(SharedCoreTest, Json)
    }
 }
 
+TEST(SharedCoreTest, PermissiveParsing)
+{
+   // UTF-8 byte-order mark.
+   static const std::string kBom = "\xEF\xBB\xBF";
+
+   std::string input = kBom + "{\n"
+      "   // line comment in the template\n"
+      "   \"editor.fontSize\": 14,\n"
+      "   /* block comment */\n"
+      "   \"editor.theme\": \"dark\"\n"
+      "}\ntrailing data";
+
+   json::Object obj;
+   ASSERT_FALSE(obj.parse(input));
+   EXPECT_EQ(obj["editor.fontSize"].getInt(), 14);
+   EXPECT_EQ(obj["editor.theme"].getString(), "dark");
+}
+
 } // end namespace tests
 } // end namespace core
 } // end namespace rstudio
