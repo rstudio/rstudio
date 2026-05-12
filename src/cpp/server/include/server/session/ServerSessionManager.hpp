@@ -121,11 +121,8 @@ private:
 };
 
 // Returns true if rserver is shutting down because the automation host
-// rsession exited *cleanly* (status 0). Used by the main signal-wait
-// loop to exit with status 0 instead of re-raising SIGTERM (which would
-// yield 143). Returns false for externally-delivered SIGTERMs and for
-// non-zero automation host exits, both of which should fall through to
-// the conventional re-raise path so the harness sees a failure.
+// rsession exited cleanly. See s_shuttingDownForAutomation in
+// ServerSessionManager.cpp for the full rationale.
 bool isShuttingDownForAutomation();
 
 // set a process config filter

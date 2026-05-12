@@ -339,6 +339,9 @@ withr::defer(.rs.automation.deleteRemote())
       # the BRAT R wrapper, so this targets line 2 ("y <- 2"). Top-level
       # breakpoints land in STATE_ACTIVE immediately, surfacing as the
       # "ace_breakpoint" class with no STATE_PROCESSING / pending flicker.
+      # horizontalOffset of -6L targets the breakpoint area in the
+      # top-level (non-package) gutter; package projects render a
+      # slightly different gutter and use -4L (see the package test below).
       gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
       gutterCell <- gutterLayer$children[[1L]]
       remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
@@ -421,6 +424,10 @@ withr::defer(.rs.automation.deleteRemote())
    remote$project.create(projectName = "rstudio.automation", type = "package")
    withr::defer({
       remote$editor.closeDocument()
+      # Defensive pause: closeDocument() returns before the IDE has
+      # fully unwound the document; closing the project too eagerly
+      # races with the unsaved-changes path and the dirty-state probe
+      # of the editor instance.
       Sys.sleep(1)
       remote$project.close()
    })
@@ -444,21 +451,31 @@ withr::defer(.rs.automation.deleteRemote())
 
    editor <- remote$editor.getInstance()
    editor$insert(code)
-   Sys.sleep(0.1)
+   .rs.waitUntil("code is present in editor", function() {
+      grepl("example <- function", editor$getValue(), fixed = TRUE)
+   })
 
    remote$commands.execute("saveSourceDoc")
    remote$commands.execute("buildAll")
+   # Short-circuit with the last lines of console output if the build
+   # crashes or errors -- otherwise a generic .rs.waitUntil() timeout
+   # shows up downstream as a confusing subscript error on gutterEls[[3]].
    .rs.waitUntil("build has completed", function() {
       output <- remote$console.getOutput()
+      if (any(grepl("Execution halted|^ERROR\\b", output)))
+         stop("build failed:\n",
+              paste(utils::tail(output, 20), collapse = "\n"))
       any(output == "> library(rstudio.automation)")
-   }, swallowErrors = TRUE)
+   })
    remote$console.clear()
 
    # Place a function breakpoint on line 3 ("2 + 2") -- this exercises the
    # TYPE_FUNCTION / package path that goes through trace() in R, as opposed
-   # to the simpler TYPE_TOPLEVEL flow in the earlier tests. We use the same
-   # gutterEls index ([[3]]) and offset as test-automation-debugger.R's
-   # "package functions can be debugged after build and reload" test.
+   # to the simpler TYPE_TOPLEVEL flow in the earlier tests. The horizontal
+   # offset of -4L (vs -6L for top-level files above) targets the package
+   # gutter's breakpoint area; the value mirrors the #15201 test ("package
+   # functions can be debugged after build and reload") and is empirically
+   # calibrated -- package projects render a slightly different gutter.
    gutterEls <- remote$js.querySelectorAll(".ace_gutter-cell")
    remote$dom.clickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
    .rs.waitUntil("breakpoint marker appears", function() {
@@ -481,8 +498,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("buildAll")
    .rs.waitUntil("rebuild has completed", function() {
       output <- remote$console.getOutput()
+      if (any(grepl("Execution halted|^ERROR\\b", output)))
+         stop("rebuild failed:\n",
+              paste(utils::tail(output, 20), collapse = "\n"))
       any(output == "> library(rstudio.automation)")
-   }, swallowErrors = TRUE)
+   })
 
    # No marker of any kind should have reappeared.
    expect_false(remote$dom.elementExists(".ace_breakpoint"))

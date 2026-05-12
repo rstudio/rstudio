@@ -1123,25 +1123,38 @@ void rConsoleWrite(const std::string& output, int otype)
    console_output::simulateLatency();
 #endif
 
-   // When running automation tests, tee R's console output to both a
-   // log file (for post-run inspection) and the rsession's inherited
-   // stderr (so a controlling terminal like rserver-dev sees it live).
+#ifndef _WIN32
+   // When running automation tests, tee R's console output to a log
+   // file (for post-run inspection), and also to the rsession's
+   // inherited stderr when stderr is an interactive terminal (so a
+   // controlling terminal like rserver-dev sees it live). Without the
+   // isatty() gate the duplicate would also land in whatever pipe
+   // captured stderr -- e.g. the host RStudio's Console when the
+   // automation run was triggered from inside another RStudio.
    // Normally these writes go only to the IDE event queue below, so
    // there's no other way for a headless test runner to observe them.
+   // POSIX-only: the automation harness uses /tmp/rstudio-automation as
+   // a discoverable fixed path, matching the R-side report directory in
+   // SessionAutomation.R; the Windows automation entrypoint doesn't
+   // currently flow through here.
    if (rsession::options().runAutomation())
    {
-      // Function-local static: opened once on first call (C++11 guarantees
-      // thread-safe initialization), reused thereafter, closed at process
-      // exit. Truncates on open so each test run starts with a clean log.
-      static std::ofstream& automationLog = []() -> std::ofstream& {
-         static std::ofstream stream;
+      // Opened once on first call (C++11 guarantees thread-safe init),
+      // reused thereafter, closed at process exit. Truncates on open so
+      // each test run starts with a clean log.
+      static std::ofstream automationLog = []() -> std::ofstream {
+         std::ofstream stream;
          FilePath logDir("/tmp/rstudio-automation");
          Error error = logDir.ensureDirectory();
          if (error)
+         {
             LOG_ERROR(error);
-         else
-            stream.open(logDir.completePath("console.log").getAbsolutePath(),
-                        std::ios::out | std::ios::trunc);
+            return stream;
+         }
+         std::string logPath = logDir.completePath("console.log").getAbsolutePath();
+         stream.open(logPath, std::ios::out | std::ios::trunc);
+         if (!stream.is_open())
+            LOG_WARNING_MESSAGE("Failed to open automation console log: " + logPath);
          return stream;
       }();
       if (automationLog.is_open())
@@ -1149,9 +1162,14 @@ void rConsoleWrite(const std::string& output, int otype)
          automationLog << output;
          automationLog.flush();
       }
-      std::cerr << output;
-      std::cerr.flush();
+      static const bool stderrIsTty = ::isatty(STDERR_FILENO) != 0;
+      if (stderrIsTty)
+      {
+         std::cerr << output;
+         std::cerr.flush();
+      }
    }
+#endif
 
    // notify listeners
    auto type = (otype == 1)

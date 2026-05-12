@@ -36,6 +36,11 @@ class ChildProcessTracker : boost::noncopyable
 {
 public:
 
+  // ExitHandler is called once per reaped child. The int parameter is
+  // the raw waitpid status word -- consumers should use WIFEXITED /
+  // WEXITSTATUS to distinguish a normal exit from WIFSIGNALED /
+  // WTERMSIG (a signal kill), as the encoding differs between the two.
+  // Note that a raw status of 0 unambiguously means exit(0).
   typedef boost::function<void(PidType,int)> ExitHandler;
 
   void addProcess(PidType pid, ExitHandler exitHandler = ExitHandler());
