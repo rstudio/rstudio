@@ -968,16 +968,22 @@ var applyPinnedColumns = function() {
    // all columns fit in the viewport so horizontal scrolling is consistently
    // available. We reserve room for the rightmost column so it stays visible
    // at maximum scroll; without this reservation the user can scroll every
-   // unpinned column off-screen (issue #17612).
+   // unpinned column off-screen (issue #17612). If every column is pinned
+   // (or none exist) there is nothing to scroll past, so we skip the padding
+   // to avoid a phantom scrollbar over empty space.
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
+      var overscroll = 0;
       var lastIdx = columnOrder.length - 1;
-      var lastTh = lastIdx >= 0 ? thead.children[lastIdx] : null;
-      var lastUnpinnedWidth = (lastTh && !isColumnPinned(columnOrder[lastIdx]))
-         ? lastTh.offsetWidth : 0;
-      var overscroll = Math.max(0,
-         viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+      // columnOrder places pinned columns before unpinned, so the last entry
+      // being unpinned is sufficient to confirm an unpinned column exists.
+      if (lastIdx >= 0 && !isColumnPinned(columnOrder[lastIdx])) {
+         var lastTh = thead.children[lastIdx];
+         var lastUnpinnedWidth = lastTh ? lastTh.offsetWidth : 0;
+         overscroll = Math.max(0,
+            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+      }
       table.style.paddingRight = overscroll + "px";
    }
 };
