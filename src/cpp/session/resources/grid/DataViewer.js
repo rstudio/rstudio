@@ -966,13 +966,21 @@ var applyPinnedColumns = function() {
    // Horizontal overscroll: lets the user scroll the rightmost column to sit
    // just past the pinned columns for side-by-side context. Only meaningful
    // when content is wider than the viewport -- otherwise it would introduce
-   // a phantom scrollbar over empty space.
+   // a phantom scrollbar over empty space. We reserve room for the rightmost
+   // column so it stays visible at maximum scroll; without this reservation
+   // the user can scroll every unpinned column off-screen (issue #17612).
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var overscroll = totalTableWidth > viewport.clientWidth
-         ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
-         : 0;
+      var overscroll = 0;
+      if (totalTableWidth > viewport.clientWidth) {
+         var lastIdx = columnOrder.length - 1;
+         var lastTh = lastIdx >= 0 ? thead.children[lastIdx] : null;
+         var lastUnpinnedWidth = (lastTh && !isColumnPinned(columnOrder[lastIdx]))
+            ? lastTh.offsetWidth : 0;
+         overscroll = Math.max(0,
+            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+      }
       table.style.paddingRight = overscroll + "px";
    }
 };
@@ -1167,6 +1175,15 @@ var initResizeHandlers = function() {
       if (resizingColIdx === null) return;
       resizingColIdx = null;
       saveState();
+      // applyResizeDelta updates totalTableWidth on every mousemove but
+      // skips applyPinnedColumns/updateCustomScrollbars to avoid jank
+      // (200+ DOM writes plus layout reads per frame). Sync them once at
+      // end of drag so the overscroll padding and scrollbar thumb size
+      // match the new column widths.
+      if (didResize) {
+         applyPinnedColumns();
+         updateCustomScrollbars();
+      }
       // Reset didResize after the click event that follows mouseup has been
       // dispatched, so exactly one click is suppressed (the one synthesized
       // from this drag) and subsequent clicks sort normally.
