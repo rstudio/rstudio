@@ -112,14 +112,12 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // start). Setting the preference to "none" (a valid enum value -- NOT "")
     // triggers onChatProviderChanged() → stopBackend() on the GWT side.
     // -----------------------------------------------------------------------
-    console.log('Stopping chat backend (setting chat_provider to "none")');
     await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("chat_provider", "none")');
     await sleep(5000);
 
     // -----------------------------------------------------------------------
     // Step 2: Create a project-level skill (.positai/skills/ in workspace)
     // -----------------------------------------------------------------------
-    console.log(`Creating project skill at: ${projectSkillPath}`);
     await createSkillFile(
       consoleActions,
       projectSkillDir,
@@ -132,7 +130,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // -----------------------------------------------------------------------
     // Step 3: Create a user-level skill (~/.positai/skills/ in home dir)
     // -----------------------------------------------------------------------
-    console.log(`Creating user skill at: ${USER_SKILL_PATH}`);
     await createSkillFile(
       consoleActions,
       USER_SKILL_DIR,
@@ -149,13 +146,11 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     await consoleActions.typeInConsole(`cat(readLines("${projectSkillPath}"), sep = "\\n")`);
     await sleep(2000);
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
-    console.log(`Project skill content:\n${projectOutput}`);
 
     await consoleActions.clearConsole();
     await consoleActions.typeInConsole(`cat(readLines("${USER_SKILL_PATH}"), sep = "\\n")`);
     await sleep(2000);
     const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
-    console.log(`User skill content:\n${userOutput}`);
 
     // -----------------------------------------------------------------------
     // Step 5: Start a fresh backend by setting chat_provider back to "posit".
@@ -164,7 +159,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // The new backend process runs DatabotCore.initialize() → discoverSkills()
     // which picks up our newly created skill files.
     // -----------------------------------------------------------------------
-    console.log('Starting fresh backend via Options dialog');
     await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
 
     // -----------------------------------------------------------------------
@@ -229,7 +223,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    console.log(`Project skill response preview: ${responseText.substring(0, 500)}`);
     expect(responseText).toContain(PROJECT_MARKER);
   });
 
@@ -254,7 +247,6 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    console.log(`User skill response preview: ${responseText.substring(0, 500)}`);
     expect(responseText).toContain(USER_MARKER);
   });
 });

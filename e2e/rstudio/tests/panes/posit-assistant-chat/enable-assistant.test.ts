@@ -48,6 +48,5 @@ test.describe.serial('Enable Posit Assistant', () => {
     // Reopen options and verify the selection persisted
     const value = await assistantActions.getChatProviderValue();
     expect(value).toBe('posit');
-    console.log(`Chat provider value after re-open: "${value}"`);
   });
 });

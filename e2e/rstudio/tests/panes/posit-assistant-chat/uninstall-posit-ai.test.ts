@@ -159,9 +159,7 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial', '@
     // Install button should already be visible from test 4
     await expect(chatActions.chatPane.installBtn).toBeVisible({ timeout: 15000 });
     await chatActions.chatPane.installBtn.click();
-    console.log('Clicked Install — waiting for PAI installation...');
 
     await expect(chatActions.chatPane.chatRoot).toBeVisible({ timeout: 120000 });
-    console.log('PAI reinstalled successfully');
   });
 });

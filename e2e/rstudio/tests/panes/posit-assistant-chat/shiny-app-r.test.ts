@@ -83,7 +83,6 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
       if (!isStillProcessing && messageCount >= 2) {
         const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
         if (lastText.includes('Wacky Tip Calculator for R has started') && !lastText.includes('Create a Shiny for R')) {
-          console.log('Completion signal found: "Wacky Tip Calculator for R has started" in last message');
           return true;
         }
       }

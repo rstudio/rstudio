@@ -65,7 +65,6 @@ test.describe.serial('Chat Messaging', () => {
       await chatActions.sendChatMessage(message);
       const countAfter = await chatActions.waitForResponse(countBefore);
       expect(countAfter).toBeGreaterThan(countBefore);
-      console.log(`Turn "${message}" — messages: ${countBefore} → ${countAfter}`);
     }
 
     // Verify the assistant tracked context: x = 1, x + 22 = 23
@@ -84,7 +83,6 @@ test.describe.serial('Chat Messaging', () => {
     await chatActions.startNewConversation();
     const resetCount = await chatPane.getMessageCount();
     expect(resetCount).toBe(0);
-    console.log(`New conversation reset — messages: ${resetCount}`);
 
     // Verify the new conversation works
     const newConvCount = await chatPane.getMessageCount();
