@@ -984,6 +984,7 @@ void rSessionInitHook(bool newSession)
    // client connecting after this point (a re-join) can distinguish itself
    // from a client connecting before deferred init has fired
    init::setDeferredInitCompleted(true);
+   dataJson["deferred_init_completed"] = true;
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
