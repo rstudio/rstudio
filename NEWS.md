@@ -6,7 +6,6 @@
 ### Fixed
 -
 
-### Upgrade Instructions
-
 ### Dependencies
 -
+
