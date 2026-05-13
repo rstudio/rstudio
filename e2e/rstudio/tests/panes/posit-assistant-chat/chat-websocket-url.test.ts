@@ -39,7 +39,6 @@ test.describe('Chat WebSocket URL', () => {
         const url: string | undefined = body?.result?.url;
         if (url && url.includes('ai-chat') && !wsPath) {
           wsPath = url;
-          console.log(`Captured WebSocket path from RPC: ${wsPath}`);
         }
       } catch {
         // Not JSON or body already consumed
@@ -64,9 +63,6 @@ test.describe('Chat WebSocket URL', () => {
     // iframe's WebSocket connected successfully.
     await expect(chatPane.chatRoot).toBeVisible({ timeout: 30000 });
 
-    console.log(`WebSocket path: "${wsPath}"`);
-    console.log(`Page URL: ${page.url()}`);
-
     // Verify we captured the URL from the RPC response
     expect(wsPath, 'RPC response should contain the ai-chat WebSocket path').toContain('/ai-chat');
 
@@ -84,7 +80,6 @@ test.describe('Chat WebSocket URL', () => {
     if (pathSegments.length > 0 && !['s', 'p'].includes(pathSegments[0])) {
       const rootPrefix = '/' + pathSegments[0];
       expect(wsPath).toContain(rootPrefix);
-      console.log(`Verified WebSocket path includes root prefix: ${rootPrefix}`);
     }
 
     // Prove the WebSocket actually works -- send a message and get a response.
@@ -93,6 +88,5 @@ test.describe('Chat WebSocket URL', () => {
     await chatActions.sendChatMessage('Say hello in one word');
     const newCount = await chatActions.waitForResponse(initialCount);
     expect(newCount).toBeGreaterThan(initialCount);
-    console.log(`Chat round-trip succeeded: ${initialCount} → ${newCount} messages`);
   });
 });

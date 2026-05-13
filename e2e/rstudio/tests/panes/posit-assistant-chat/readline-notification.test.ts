@@ -53,13 +53,11 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
     // which blocks R waiting for console input.
     await chatActions.pollWithAllowDialogs(async () => {
       const visible = await chatPane.readlineNotification.isVisible().catch(() => false);
-      if (visible) console.log('Readline notification appeared');
       return visible;
     });
 
     // --- Step 4: Assert notification is visible ---
     await expect(chatPane.readlineNotification).toBeVisible({ timeout: 5000 });
-    console.log('Verified: "R is waiting for input in the Console." notification is visible');
 
     // --- Step 5: Type a message in chat and press Enter — nothing should happen ---
     const messageCountBefore = await chatPane.getMessageCount();
@@ -67,17 +65,14 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
     await sleep(200);
     await chatPane.sendBtn.click({ timeout: 2000 }).catch(() => {
       // Send button may be disabled or unresponsive — that's expected
-      console.log('Send button click did not go through (expected)');
     });
     await sleep(1000);
 
     const messageCountAfter = await chatPane.getMessageCount();
     expect(messageCountAfter).toBe(messageCountBefore);
-    console.log(`Chat message count unchanged: ${messageCountBefore} → ${messageCountAfter}`);
 
     // Notification should still be visible
     await expect(chatPane.readlineNotification).toBeVisible();
-    console.log('Verified: notification still visible after attempting to send chat message');
 
     // --- Step 6: Provide input in the Console to unblock readline ---
     await consoleActions.consolePane.consoleTab.click();
@@ -87,11 +82,9 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
     await consoleActions.consolePane.consoleInput.pressSequentially('Prospero');
     await sleep(300);
     await page.keyboard.press('Enter');
-    console.log('Typed "Prospero" in console to respond to readline');
 
     // --- Step 7: Assert notification disappears ---
     await expect(chatPane.readlineNotification).toBeHidden({ timeout: 15000 });
-    console.log('Verified: readline notification dismissed after providing console input');
 
     // --- Step 8: Verify chat resumes working after readline completes ---
     // Wait for the assistant to finish processing the readline response
@@ -106,12 +99,10 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@serial'] },
     const countBeforeQuote = await chatPane.getMessageCount();
     await chatActions.sendChatMessage('Print "We are such stuff as dreams are made on" to the R console using cat().');
     await chatActions.waitForResponse(countBeforeQuote);
-    console.log('Sent follow-up message to verify chat is functional');
 
     // Verify the quote appears in console output
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
       'We are such stuff as dreams are made on', { timeout: 15000 }
     );
-    console.log('Verified: Tempest quote printed to console — chat is fully functional after readline');
   });
 });

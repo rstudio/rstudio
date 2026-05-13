@@ -50,7 +50,6 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
     // Verify the response contains "Loki"
     const firstResponse = chatPane.messageItem.last();
     await expect(firstResponse).toContainText('Loki', { timeout: 10000 });
-    console.log(`Phase 1 complete — ${countAfterFirst} messages in main window`);
 
     // Record message count before detach
     const messagesBeforeDetach = await chatPane.getMessageCount();
@@ -65,15 +64,12 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
     await satellitePage.waitForLoadState('domcontentloaded');
     await sleep(3000);
 
-    console.log(`Satellite window opened — title: "${await satellitePage.title()}"`);
-
     // Create a ChatPane scoped to the satellite page
     const satelliteChatPane = new ChatPane(satellitePage);
 
     // Verify conversation continuity: same message count
     const satelliteMessageCount = await satelliteChatPane.getMessageCount();
     expect(satelliteMessageCount).toBe(messagesBeforeDetach);
-    console.log(`Phase 2 — satellite has ${satelliteMessageCount} messages (expected ${messagesBeforeDetach})`);
 
     // Verify the original response is still there
     const satelliteLastMessage = satelliteChatPane.messageItem.last();
@@ -89,7 +85,6 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
 
     const secondResponse = satelliteChatPane.messageItem.last();
     await expect(secondResponse).toContainText('Thor', { timeout: 10000 });
-    console.log(`Phase 3 complete — ${countAfterSecond} messages in satellite`);
 
     const messagesBeforeReturn = await satelliteChatPane.getMessageCount();
 
@@ -100,7 +95,6 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
     // Verify all messages persist in the main window
     const mainMessageCount = await chatPane.getMessageCount();
     expect(mainMessageCount).toBe(messagesBeforeReturn);
-    console.log(`Phase 4 — main window has ${mainMessageCount} messages (expected ${messagesBeforeReturn})`);
 
     // Verify both responses are present
     const allMessages = chatPane.messageItem;
@@ -112,6 +106,5 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
 
     expect(combinedText).toContain('Loki');
     expect(combinedText).toContain('Thor');
-    console.log('Conversation continuity verified across detach/reattach cycle');
   });
 });

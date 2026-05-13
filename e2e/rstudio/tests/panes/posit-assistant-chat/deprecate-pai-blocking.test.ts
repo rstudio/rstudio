@@ -110,7 +110,6 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@serial
     await chatActions.openChatPane();
     await chatActions.dismissSetupPrompts();
     await expect(chatPane.chatTextarea).toBeVisible({ timeout: 60000 });
-    console.log('Chat pane loaded normally, ready for blocking tests');
 
     // Install RPC interceptor to verify mocks are fulfilled
     await chatActions.interceptUpdateCheck();
