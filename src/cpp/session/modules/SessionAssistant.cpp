@@ -1384,10 +1384,10 @@ Error startAgent(const std::string& assistantType = "")
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
 
-      // Send assistant-specific configuration. Use the type of agent that
-      // actually started rather than the global pref, so configuration is
-      // applied correctly when a project-level override is in effect.
-      const std::string& assistant = s_runningAgentType;
+      // Send assistant-specific configuration. Use the 'assistant' captured
+      // from the enclosing scope so configuration is applied for the agent
+      // this initialize was issued against, even if a fast switch changes
+      // the running agent before this continuation fires.
       if (assistant == kAssistantCopilot)
          setCopilotConfiguration();
       else if (assistant == kAssistantPosit)
