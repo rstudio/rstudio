@@ -370,6 +370,24 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : "[`](?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
         merge : false,
         next  : "start"
+      },
+      {
+        // Multi-line backtick identifier: opening backtick without closing on same line
+        token : "identifier",
+        regex : "[`]",
+        merge : false,
+        next  : "qidentifier"
+      }
+    ];
+
+    rules["qidentifier"] = [
+      {
+        token : "identifier",
+        regex : "(?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
+        next  : "start"
+      },
+      {
+        defaultToken : "identifier"
       }
     ];
 
