@@ -77,7 +77,7 @@ test.describe('Data Viewer', () => {
     await expect(sourcePane.selectedTab).toContainText('df');
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
 
-    // Jump to last page — should show remaining columns (not a full 200)
+    // Jump to last page -- viewer slides the 200-column window to end at column 227
     await dataViewer.rightDoubleArrow.click();
     await sleep(1000);
     await expect(dataViewer.columnNumberInput).toHaveValue('28 - 227');
