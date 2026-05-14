@@ -47,7 +47,7 @@
 
 .objectGrid td.nameCol
 {
-   width: 25%;
+   width: 40%;
    text-overflow: ellipsis;
    overflow-x: hidden;
    border: 1px solid #f0f0f0;
