@@ -8,10 +8,10 @@ import { sleep, TIMEOUTS } from './constants';
  * Used by createSandbox() to mint the directory and by the two project specs
  * that detect leftover sandbox paths in the saved default-project-location pref
  * (see tests/projects/create_projects.test.ts and project_trust_dialog.test.ts).
- * Internal -- callers in test code hardcode the literal "workdir_" rather than
- * importing this constant, to avoid coupling specs to an internal export.
+ * Exported so the prefix is a single source of truth: if it changes, the specs
+ * that compare against it pick up the new value automatically.
  */
-const SANDBOX_DIR_PREFIX = 'workdir_';
+export const SANDBOX_DIR_PREFIX = 'workdir_';
 
 /**
  * Per-spec R-side sandbox directory for test artifacts.

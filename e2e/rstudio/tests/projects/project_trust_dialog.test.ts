@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
-import { useSuiteSandbox } from '@utils/sandbox';
+import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 /**
@@ -250,7 +250,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     const current = await captureResult(page,
       '.rs.api.readRStudioPreference("default_project_location")');
     const basename = current.split(/[/\\]/).pop() || '';
-    originalDefaultProjectLocation = basename.startsWith('workdir_') ? '' : current;
+    originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await typeInConsole(page,

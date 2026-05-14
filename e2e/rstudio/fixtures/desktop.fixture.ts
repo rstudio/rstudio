@@ -13,8 +13,15 @@ const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
-// before any worker spawns, so this module-level read is always populated.
-const SANDBOX = process.env.PW_SANDBOX!;
+// before any worker spawns. Fail loud if this module is imported outside the
+// Playwright runner (e.g., by a script or type-check helper) so the diagnostic
+// is clearer than a later TypeError deep inside path.join().
+if (!process.env.PW_SANDBOX) {
+  throw new Error(
+    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
+  );
+}
+const SANDBOX = process.env.PW_SANDBOX;
 const SHARED_DATA_HOME = path.join(SANDBOX, 'data-home');
 const SHARED_USER_HOME = path.join(SANDBOX, 'user-home');
 
