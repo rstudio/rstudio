@@ -552,7 +552,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     test('status bar navigates to most recent completion on click', async ({ rstudioPage: page }) => {
       if (key === 'copilot') test.fixme(true, 'Copilot clears status bar click handler after autocomplete dismiss (https://github.com/rstudio/rstudio/issues/17372)');
-      if (key === 'posit-assistant') test.fixme(true, 'Posit AI: spurious "Error Saving File" dialog raises a PopupPanel glass that intercepts the status-bar click. Needs product-side investigation of the autosave path RStudio uses for the per-suite sandbox buffer.');
       const fileName = `${prefix}_statusbar_nav.R`;
 
       // Build a long file so the editor needs to scroll
@@ -582,6 +581,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sleep(200);
       await page.keyboard.type('x <- calc');
 
+      // Dismiss Ace autocomplete popup if it pops up first. When the popup
+      // is visible it suppresses ghost text from rendering, so we have to
+      // clear it before waiting for the suggestion.
+      await sleep(500);
+      if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
+        await page.keyboard.press('Escape');
+        await sleep(500);
+        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
+      }
+
       // Wait for ghost text to confirm a real suggestion arrived
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       const ghostParts = await sourcePane.ghostText.allTextContents();
@@ -590,13 +599,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // Wait for the status bar to show "Completion response received"
       await expect(sourcePane.statusBarCompletionReceived).toBeVisible({ timeout: 5000 });
       console.log('  Status bar shows "Completion response received"');
-
-      // Dismiss Ace autocomplete popup if present, without clearing ghost text
-      if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(500);
-        console.log('  Dismissed autocomplete popup');
-      }
 
       // Scroll the viewport to the middle of the file WITHOUT moving the cursor.
       // Using keyboard shortcuts would move the cursor, triggering a new
