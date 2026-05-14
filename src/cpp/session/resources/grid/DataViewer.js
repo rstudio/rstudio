@@ -963,16 +963,19 @@ var applyPinnedColumns = function() {
       }
    }
 
-   // Horizontal overscroll: lets the user scroll the rightmost column to sit
-   // just past the pinned columns for side-by-side context. Only meaningful
-   // when content is wider than the viewport -- otherwise it would introduce
-   // a phantom scrollbar over empty space.
+   // Horizontal overscroll: allow a small amount of overscroll so the last
+   // column can be scrolled to sit comfortably within view, but not so much
+   // that all columns disappear off the left edge. Cap at the width of the
+   // last visible column so it remains fully visible at max scroll.
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var overscroll = totalTableWidth > viewport.clientWidth
-         ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
-         : 0;
+      var overscroll = 0;
+      if (totalTableWidth > viewport.clientWidth && cols && cols.length > 0) {
+         var lastColWidth = measuredWidths.length > 0
+            ? measuredWidths[measuredWidths.length - 1] : 100;
+         overscroll = Math.max(0, Math.min(lastColWidth, viewport.clientWidth - pinned.totalWidth - lastColWidth));
+      }
       table.style.paddingRight = overscroll + "px";
    }
 };
