@@ -1738,7 +1738,11 @@ var updateInfoBar = function() {
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
       " of " + activeRows.toLocaleString() + " entries";
    if (filteredRows < totalRows) {
-      text += " (filtered from " + totalRows.toLocaleString() + " total)";
+      text += " (filtered from " + totalRows.toLocaleString() + " total entries)";
+   }
+   if (totalCols > 0) {
+      text += ", " + totalCols.toLocaleString() +
+         (totalCols === 1 ? " total column" : " total columns");
    }
    if (textEl) textEl.textContent = text;
 
