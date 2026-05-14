@@ -2654,12 +2654,21 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
+   // Read project options first so the assistant type resolved below
+   // picks up any project-level override.
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readAssistantOptions(&s_assistantProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // Read default log level from environment variable.
    // RSTUDIO_ASSISTANT_LOG_LEVEL applies to all assistant types;
    // COPILOT_LOG_LEVEL and PAI_LOG_LEVEL only apply to their respective types.
    std::string assistantLogLevel;
    {
-      std::string assistant = prefs::userPrefs().assistant();
+      std::string assistant = getConfiguredAssistantType();
       if (assistant == kAssistantCopilot)
          assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
       else if (assistant == kAssistantPosit)
@@ -2672,14 +2681,6 @@ Error initialize()
    {
       s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
       rstudio::session::logging::setStderrLogLevel("assistant", s_assistantLogLevel);
-   }
-   
-   // Read project options
-   if (projects::projectContext().hasProject())
-   {
-      Error error = projects::projectContext().readAssistantOptions(&s_assistantProjectOptions);
-      if (error)
-         LOG_ERROR(error);
    }
 
    // Synchronize user + project preferences with internal caches
