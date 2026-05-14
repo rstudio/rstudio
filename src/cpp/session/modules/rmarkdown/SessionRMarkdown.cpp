@@ -1091,13 +1091,6 @@ private:
          // load the Safe extension before MathJax processes the page
          result.append(kMathjaxSafeConfigScript "\n");
 
-#if defined(_WIN32)
-         // on Windows desktop, also tweak HTML-CSS rendering (font scaling +
-         // disable web fonts) to work around QtWebEngine rendering quirks
-         if (session::options().programMode() == kSessionProgramModeDesktop)
-            result.append(kQtMathJaxConfigScript "\n");
-#endif
-
          result.append(match[0]);
       }
       else if (hasMathjax_)

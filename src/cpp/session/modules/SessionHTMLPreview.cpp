@@ -775,15 +775,6 @@ void modifyOutputForPreview(std::string* pOutput)
            *pOutput,
             boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
            "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
-
-#if defined(_WIN32)
-      // add HTML-CSS options required for correct qtwebkit rendering
-      std::string target = "<!-- MathJax scripts -->";
-      boost::algorithm::replace_first(
-               *pOutput,
-               target,
-               target + "\n" kQtMathJaxConfigScript);
-#endif
    }
 
    // serve mathjax locally from this directory

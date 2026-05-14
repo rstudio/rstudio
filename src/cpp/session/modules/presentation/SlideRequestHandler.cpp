@@ -894,10 +894,8 @@ void handlePresentationRootRequest(const std::string& path,
    revealSizeVars(slideDeck, zoom, true, &vars);
 
    // no transition in desktop mode (qtwebkit can't keep up)
-   bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-   vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
-   vars["reveal_transition_speed"] = isDesktop ? "default" :
-                                                 slideDeck.transitionSpeed();
+   vars["reveal_transition"] = slideDeck.transition();
+   vars["reveal_transition_speed"] = slideDeck.transitionSpeed();
 
    // rtl
    vars["reveal_rtl"] = slideDeck.rtl();
