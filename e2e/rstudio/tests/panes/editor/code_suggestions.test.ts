@@ -584,8 +584,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // Dismiss Ace autocomplete popup if it pops up first. When the popup
       // is visible it suppresses ghost text from rendering, so we have to
       // clear it before waiting for the suggestion.
-      await sleep(500);
-      if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
+      const popup = page.locator('#rstudio_popup_completions');
+      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+      if (await popup.isVisible().catch(() => false)) {
         await page.keyboard.press('Escape');
         await sleep(500);
         console.log('  Dismissed autocomplete popup (pre-ghost-text)');
