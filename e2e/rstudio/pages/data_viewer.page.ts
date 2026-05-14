@@ -32,7 +32,7 @@ export class DataViewerPane extends PageObject {
 
   /** Get a column header locator by column number (inside iframe). */
   columnHeader(colNumber: number): Locator {
-    return this.frame.locator(`[title^='column ${colNumber}:'][tabindex]`);
+    return this.frame.locator(`[title^='column ${colNumber}:']`);
   }
 
   /** Get all number cells in the grid (inside iframe). */

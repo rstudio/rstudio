@@ -552,6 +552,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     test('status bar navigates to most recent completion on click', async ({ rstudioPage: page }) => {
       if (key === 'copilot') test.fixme(true, 'Copilot clears status bar click handler after autocomplete dismiss (https://github.com/rstudio/rstudio/issues/17372)');
+      if (key === 'posit-assistant') test.fixme(true, 'Posit AI: spurious "Error Saving File" dialog raises a PopupPanel glass that intercepts the status-bar click. Needs product-side investigation of the autosave path RStudio uses for the per-suite sandbox buffer.');
       const fileName = `${prefix}_statusbar_nav.R`;
 
       // Build a long file so the editor needs to scroll

@@ -71,7 +71,13 @@ async function elementExists(page: Page, selector: string): Promise<boolean> {
 }
 
 // Asserts that `actual` is within `tolerance` (as a fraction) of `expected`.
+// When `expected` is 0 a ratio is undefined, so fall back to checking that
+// `actual` is also 0 (e.g., a column hidden state where both widths are 0).
 function expectWidthClose(actual: number, expected: number, tolerance: number, label: string): void {
+  if (expected === 0) {
+    expect(actual, `${label}: expected 0, got ${actual}`).toBe(0);
+    return;
+  }
   const ratio = Math.abs(actual - expected) / expected;
   expect(ratio, `${label}: expected ~${expected}, got ${actual} (delta ratio ${ratio.toFixed(3)})`).toBeLessThan(tolerance);
 }

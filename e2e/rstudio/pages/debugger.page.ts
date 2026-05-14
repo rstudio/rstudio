@@ -7,7 +7,8 @@ import { PageObject } from './page_object_base_classes';
 // editor's Ace DOM.
 const ACTIVE_EDITOR =
   "xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]" +
-  "//*[starts-with(@id,'rstudio_source_text_editor')]";
+  "//*[starts-with(@id,'rstudio_source_text_editor')" +
+  " and not(ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' loading ')])]";
 
 // The secondary console toolbar gets aria-label="Console Tab Debug" while
 // debug mode is active (ConsolePane.java:371 → consoleTabDebugLabel).

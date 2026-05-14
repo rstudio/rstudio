@@ -33,10 +33,10 @@ export class SourcePane extends PageObject {
     super(page);
     this.selectedTab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
     this.ghostText = page.locator('[class*=ace_ghost_text]');
-    this.contentPane = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[@class='ace_content']");
+    this.contentPane = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[@class='ace_content' and not(ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' ace_lineWidgetContainer ')])]");
     this.nesApply = page.locator("xpath=//*[text()='Apply']");
     this.nesSuggestionContent = page.locator('.ace_lineWidgetContainer .ace_content');
-    this.aceTextInput = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//textarea[contains(@class,'ace_text-input')]");
+    this.aceTextInput = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//textarea[contains(@class,'ace_text-input') and not(ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' ace_lineWidgetContainer ')])]");
     this.nesInsertionPreview = page.locator('.ace_insertion_preview');
     this.nesDiscard = page.locator("xpath=//*[text()='Discard']");
     this.nesDeletionMarker = page.locator('[class*=ace_next-edit-suggestion-deletion]');

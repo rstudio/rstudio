@@ -304,7 +304,10 @@ function getRStudioPids(): Set<number> {
 /**
  * Graceful shutdown: q() in console, close browser, kill process.
  */
-export async function shutdownRStudio(session: DesktopSession): Promise<void> {
+export async function shutdownRStudio(
+  session: DesktopSession,
+  options: { preserveConfig?: boolean } = {},
+): Promise<void> {
   const { page, browser, rstudioProcess, configRoot } = session;
 
   // Close all source files without prompting to save
@@ -321,10 +324,14 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
     rstudioProcess.kill();
   }
 
-  try {
-    fs.rmSync(configRoot, { recursive: true, force: true });
-  } catch {
-    // Best effort; OS will clean up the temp dir eventually
+  // Persistence-across-restart tests pass preserveConfig:true so the
+  // temp config dir survives until they tear down themselves.
+  if (!options.preserveConfig) {
+    try {
+      fs.rmSync(configRoot, { recursive: true, force: true });
+    } catch {
+      // Best effort; OS will clean up the temp dir eventually
+    }
   }
 }
 
