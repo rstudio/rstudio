@@ -5,5 +5,10 @@
   "native_file_dialogs": false,
 
   // Skip the "Save workspace?" prompt on quit so shutdown is clean.
-  "save_workspace": "never"
+  "save_workspace": "never",
+
+  // Don't restore source tabs from the previous session. Prevents one spec's
+  // open documents from leaking into a subsequent spec (Desktop-only effect;
+  // Server prefs are server-side).
+  "restore_source_documents": false
 }

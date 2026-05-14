@@ -1,0 +1,85 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
+/**
+ * Mint a per-invocation sandbox directory and export its path as PW_SANDBOX.
+ *
+ * The sandbox is the single rooted tree under which every test-side artifact
+ * lives: per-spec config trees, R workdirs, the shared data-home
+ * (RSTUDIO_DATA_HOME), and the shared user home (HOME/USERPROFILE). The
+ * companion sandbox-teardown removes the subtree once the run finishes
+ * (unless preserved by the rules in that file).
+ *
+ * Env vars (all optional):
+ *   PW_SANDBOX_ROOT          Parent dir for the sandbox subtree. Defaults to
+ *                            os.tmpdir().
+ *   PW_SANDBOX_ROOT_CREATE   "1"/"true" to mkdir PW_SANDBOX_ROOT if missing.
+ *                            Default is to fail loudly on a missing parent so
+ *                            typos surface immediately.
+ *   PW_SANDBOX_SEED_POSITAI  "1"/"true" to copy the real ~/.positai/ into the
+ *                            sandbox user-home so Posit Assistant tests start
+ *                            signed in. Default is unseeded -- tests start
+ *                            signed out and must run the in-app sign-in flow.
+ *                            Privacy note: tokens land inside the sandbox and
+ *                            persist on failed runs until the user deletes it.
+ *
+ * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
+ * subtree. Workers inherit it via the normal child-process env, and
+ * globalTeardown reads it directly from process.env.
+ */
+export default async function globalSetup() {
+  const parent = process.env.PW_SANDBOX_ROOT ?? os.tmpdir();
+  const shouldCreate = ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_ROOT_CREATE ?? '').toLowerCase(),
+  );
+  if (!fs.existsSync(parent)) {
+    if (!shouldCreate) {
+      throw new Error(
+        `PW_SANDBOX_ROOT="${parent}" does not exist; set PW_SANDBOX_ROOT_CREATE=1 to auto-create`,
+      );
+    }
+    fs.mkdirSync(parent, { recursive: true });
+  }
+
+  const sandbox = fs.mkdtempSync(path.join(parent, 'pw_sandbox_'));
+  fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
+
+  const userHome = path.join(sandbox, 'user-home');
+  fs.mkdirSync(userHome, { recursive: true });
+
+  // On Windows, redirecting USERPROFILE to a directory that doesn't contain
+  // an AppData/Roaming subdirectory makes Electron's app.getPath('appData')
+  // fail at startup ("Failed to get 'appData' path" popup), which blocks
+  // RStudio from launching at all. Pre-create the standard AppData scaffolding
+  // inside the sandboxed user-home so Electron's resolution succeeds.
+  // TODO: add macOS (~/Library/Application Support) and Linux Desktop
+  // (~/.config) equivalents when those platforms are tested against the
+  // HOME/USERPROFILE redirect.
+  if (process.platform === 'win32') {
+    fs.mkdirSync(path.join(userHome, 'AppData', 'Roaming'), { recursive: true });
+    fs.mkdirSync(path.join(userHome, 'AppData', 'Local'), { recursive: true });
+  }
+
+  const seedPositai = ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_SEED_POSITAI ?? '').toLowerCase(),
+  );
+  if (seedPositai) {
+    const realPositai = path.join(os.homedir(), '.positai');
+    if (fs.existsSync(realPositai)) {
+      fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
+      console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
+    } else {
+      console.log(
+        `[sandbox] PW_SANDBOX_SEED_POSITAI set but no real ~/.positai/ found; tests will start signed out of Posit Assistant`,
+      );
+    }
+  } else {
+    console.log(
+      `[sandbox] PW_SANDBOX_SEED_POSITAI not set; tests will start signed out of Posit Assistant`,
+    );
+  }
+
+  process.env.PW_SANDBOX = sandbox;
+  console.log(`[sandbox] root: ${sandbox}`);
+}

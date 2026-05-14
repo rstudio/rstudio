@@ -3,7 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
-import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
+import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -232,7 +232,7 @@ test.describe.serial('Create Projects in New Directory', () => {
       '.rs.api.readRStudioPreference("default_project_location")',
     );
     const basename = current.split(/[/\\]/).pop() || '';
-    originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
+    originalDefaultProjectLocation = basename.startsWith('workdir_') ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await typeInConsole(

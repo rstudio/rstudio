@@ -157,7 +157,9 @@ When project isolation is needed, use a fixed project name per test suite. The l
 
 ### Sandbox (R-side scratch directory)
 
-Any spec that creates files or directories on the R-side filesystem must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+Any spec that creates files or directories on the R-side filesystem must route those writes into a **workdir** — a unique per-spec subdirectory under the per-invocation sandbox at `$PW_SANDBOX`. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+
+The sandbox itself is created once per `playwright test` invocation by a `globalSetup` hook (`fixtures/sandbox-setup.ts`). Every test-side artifact -- per-spec config trees, R workdirs, the shared `data-home/`, and the shared `user-home/` (the redirected HOME/USERPROFILE) -- lives under it. A `globalTeardown` removes the entire subtree at end of run unless `PW_SANDBOX_SKIP_CLEANUP` is set or a test failed, in which case the path is logged for triage.
 
 **Pattern:** add to every spec that creates files/dirs:
 
@@ -171,17 +173,21 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 });
 ```
 
-`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
+`useSuiteSandbox()` registers a `beforeAll` hook that creates the workdir under `$PW_SANDBOX` and `setwd()`s into it. There is no `afterAll` cleanup -- the global teardown removes the entire `$PW_SANDBOX` subtree at end of run. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the workdir, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
 
 **Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
 
-**Env vars (optional):**
-- `PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
-- `PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
+**Env vars (all optional):**
+- `PW_SANDBOX_ROOT` — parent directory under which the per-invocation sandbox is created. Defaults to `os.tmpdir()`.
+- `PW_SANDBOX_ROOT_CREATE` — when `"true"`/`"1"`, auto-create `PW_SANDBOX_ROOT` if missing. Default `false` (fail loud on typos).
+- `PW_SANDBOX_SKIP_CLEANUP` — when `"true"`/`"1"`, preserve the sandbox at end of run regardless of pass/fail.
+- `PW_SANDBOX_SEED_POSITAI` — when `"true"`/`"1"`, copy the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in. Default unseeded (signed out). Tokens land inside the sandbox and persist on failed runs -- only set on machines using a dedicated test account.
+
+`PW_SANDBOX` is internal -- set by the `globalSetup` hook to the absolute path of the auto-created sandbox subtree. Workers, the R workdir helper, and the `globalTeardown` all read it. Don't set it manually.
 
 **Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
 
-**Low-level helpers** (`createSandbox` / `removeSandbox`) are also exported from `@utils/sandbox` if you need to manage the lifecycle manually.
+**Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to mint an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
 
 ### Cross-Platform Considerations
 

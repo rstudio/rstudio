@@ -69,6 +69,8 @@ export default defineConfig({
   timeout: 300000,
   retries: 0,
   reporter: [['html'], ['list']],
+  globalSetup: './fixtures/sandbox-setup.ts',
+  globalTeardown: './fixtures/sandbox-teardown.ts',
   use: {
     trace: 'on-first-retry',
     actionTimeout: 10000,

@@ -4,7 +4,6 @@ import type { Browser, BrowserContext } from 'playwright';
 import { spawn, execSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
@@ -12,6 +11,12 @@ import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
+
+// PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
+// before any worker spawns, so this module-level read is always populated.
+const SANDBOX = process.env.PW_SANDBOX!;
+const SHARED_DATA_HOME = path.join(SANDBOX, 'data-home');
+const SHARED_USER_HOME = path.join(SANDBOX, 'user-home');
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
   let raw: string;
@@ -53,7 +58,7 @@ interface TempConfig {
   root: string;
   configHome: string;
   configDir: string;
-  dataHome: string;
+  electronUserData: string;
 }
 
 /**
@@ -68,11 +73,11 @@ interface TempConfig {
  * for tracking parity with Server mode.
  */
 function createTempConfig(): TempConfig {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pw_rstudio_config_'));
+  const root = fs.mkdtempSync(path.join(SANDBOX, 'config_'));
   const configHome = path.join(root, 'config-home');
   const configDir = path.join(root, 'config-dir');
-  const dataHome = path.join(root, 'data-home');
-  for (const d of [configHome, configDir, dataHome]) {
+  const electronUserData = path.join(root, 'electron-userdata');
+  for (const d of [configHome, configDir, electronUserData]) {
     fs.mkdirSync(d, { recursive: true });
   }
 
@@ -86,7 +91,7 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
-  return { root, configHome, configDir, dataHome };
+  return { root, configHome, configDir, electronUserData };
 }
 
 /**
@@ -138,28 +143,35 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       root: existingConfigRoot,
       configHome: path.join(existingConfigRoot, 'config-home'),
       configDir: path.join(existingConfigRoot, 'config-dir'),
-      dataHome: path.join(existingConfigRoot, 'data-home'),
+      electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
     };
     // Defensively recreate child dirs in case anything cleared them between runs
-    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.dataHome]) {
+    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData]) {
       fs.mkdirSync(d, { recursive: true });
     }
   } else {
     tempConfig = createTempConfig();
   }
   const configRoot = tempConfig.root;
-  console.log(`RStudio config root: ${configRoot}`);
+  console.log(`[sandbox] root: ${SANDBOX}`);
+  console.log(`[sandbox] this spec's config: ${configRoot}`);
 
   // Start RStudio with remote debugging enabled
   console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
-  const args = [`--remote-debugging-port=${CDP_PORT}`, ...RSTUDIO_EXTRA_ARGS];
+  const args = [
+    `--remote-debugging-port=${CDP_PORT}`,
+    `--user-data-dir=${tempConfig.electronUserData}`,
+    ...RSTUDIO_EXTRA_ARGS,
+  ];
   const rstudioProcess = spawn(RSTUDIO_PATH, args, {
     env: {
       ...process.env,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
-      // RSTUDIO_DATA_HOME intentionally not overridden -- share local Posit Assistant install/login
+      RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
+      HOME: SHARED_USER_HOME,
+      USERPROFILE: SHARED_USER_HOME,
     },
   });
   let launchError: Error | undefined;
@@ -303,12 +315,12 @@ function getRStudioPids(): Set<number> {
 
 /**
  * Graceful shutdown: q() in console, close browser, kill process.
+ *
+ * No per-spec config-tree cleanup -- the sandbox-wide globalTeardown
+ * removes everything under PW_SANDBOX at end of run.
  */
-export async function shutdownRStudio(
-  session: DesktopSession,
-  options: { preserveConfig?: boolean } = {},
-): Promise<void> {
-  const { page, browser, rstudioProcess, configRoot } = session;
+export async function shutdownRStudio(session: DesktopSession): Promise<void> {
+  const { page, browser, rstudioProcess } = session;
 
   // Close all source files without prompting to save
   await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
@@ -322,16 +334,6 @@ export async function shutdownRStudio(
     await browser.close().catch(() => {});
     // Only force kill if graceful shutdown failed
     rstudioProcess.kill();
-  }
-
-  // Persistence-across-restart tests pass preserveConfig:true so the
-  // temp config dir survives until they tear down themselves.
-  if (!options.preserveConfig) {
-    try {
-      fs.rmSync(configRoot, { recursive: true, force: true });
-    } catch {
-      // Best effort; OS will clean up the temp dir eventually
-    }
   }
 }
 
