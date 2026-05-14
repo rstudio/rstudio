@@ -907,9 +907,20 @@ var RCodeModel = function(session, tokenizer,
          type = token.type;
          position = iterator.getCurrentTokenPosition();
 
-         // Skip roxygen comments.
+         // Roxygen comments: detect @tags for the document outline,
+         // then skip the rest of the line.
          var state = Utils.getPrimaryState(this.$session, position.row);
          if (state === "rdoc-start") {
+            if (type === "keyword" && /^@[a-zA-Z]/.test(value)) {
+               var roxyTag = value.replace(/^@/, "");
+               if (roxyTag === "section") {
+                  var lineText = this.$session.getLine(position.row);
+                  var rest = lineText.substring(position.column + value.length).trim();
+                  rest = rest.replace(/:\s*$/, "");
+                  if (rest.length > 0) roxyTag = rest;
+               }
+               this.$scopes.onSectionStart("@" + roxyTag, position);
+            }
             iterator.moveToEndOfRow();
             continue;
          }
