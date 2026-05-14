@@ -211,95 +211,40 @@ test_that("aggregateVulnsByName collects a single (name, version) into the by-na
    ))
 })
 
-test_that("aggregateVulnsByName dedupes the same vuln across multiple installed versions", {
+test_that("aggregateVulnsByName groups vulns across multiple installed versions", {
+   # PPM returns the same vuln list for every queried version of a given
+   # package, but a user with the same package in two libraries will see
+   # both versions cached. We concatenate without deduping; the rare
+   # duplicate is cosmetic only -- the frontend's per-row check uses each
+   # vuln's versions map, not list position.
    cache <- cacheEnv(
       `pkgA==1.0.0` = list(list(id = "V1", summary = "hi")),
       `pkgA==1.1.0` = list(list(id = "V1", summary = "hi"))
    )
    result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgA==1.1.0"))
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1", summary = "hi"))
+      pkgA = list(
+         list(id = "V1", summary = "hi"),
+         list(id = "V1", summary = "hi")
+      )
    ))
 })
 
-test_that("aggregateVulnsByName keeps disjoint vulns from different versions", {
+test_that("aggregateVulnsByName groups vulns across distinct packages", {
    cache <- cacheEnv(
       `pkgA==1.0.0` = list(list(id = "V1", summary = "first")),
-      `pkgA==2.0.0` = list(list(id = "V2", summary = "second"))
+      `pkgB==2.0.0` = list(list(id = "V2", summary = "second"))
    )
-   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgA==2.0.0"))
+   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgB==2.0.0"))
    expect_equal(result, expected(
-      pkgA = list(
-         list(id = "V1", summary = "first"),
-         list(id = "V2", summary = "second")
-      )
-   ))
-})
-
-test_that("aggregateVulnsByName merges versions maps when deduping by id", {
-   cache <- cacheEnv(
-      `pkgA==1.0.0` = list(list(id = "V1", versions = list(`1.0.0` = TRUE))),
-      `pkgA==1.1.0` = list(list(id = "V1", versions = list(`1.1.0` = TRUE))),
-      `pkgA==1.2.0` = list(list(
-         id = "V1",
-         versions = list(`1.0.0` = TRUE, `1.2.0` = TRUE)
-      ))
-   )
-   result <- .rs.ppm.aggregateVulnsByName(
-      cache,
-      c("pkgA==1.0.0", "pkgA==1.1.0", "pkgA==1.2.0")
-   )
-   expect_equal(result, expected(
-      pkgA = list(list(
-         id = "V1",
-         versions = list(`1.0.0` = TRUE, `1.1.0` = TRUE, `1.2.0` = TRUE)
-      ))
-   ))
-})
-
-test_that("aggregateVulnsByName keeps id-less vulns separate", {
-   # Each id-less vuln coalesces to id = "", but R's list[[""]] always
-   # reads NULL while each write appends a fresh positional slot, so the
-   # dedup loop treats them as distinct. In practice PPM always emits an
-   # OSV id; this just pins the fallback behavior.
-   cache <- cacheEnv(
-      `pkgA==1.0.0` = list(list(summary = "one")),
-      `pkgA==1.1.0` = list(list(summary = "two"))
-   )
-   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgA==1.1.0"))
-   expect_equal(result, expected(
-      pkgA = list(
-         list(summary = "one"),
-         list(summary = "two")
-      )
-   ))
-})
-
-test_that("aggregateVulnsByName keeps the first record on same-id dedup", {
-   # When the same vuln id appears with different summaries across versions,
-   # the first occurrence wins; only the versions map gets merged.
-   cache <- cacheEnv(
-      `pkgA==1.0.0` = list(list(
-         id = "V1", summary = "first", versions = list(`1.0.0` = TRUE)
-      )),
-      `pkgA==2.0.0` = list(list(
-         id = "V1", summary = "second", versions = list(`2.0.0` = TRUE)
-      ))
-   )
-   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgA==2.0.0"))
-   expect_equal(result, expected(
-      pkgA = list(list(
-         id = "V1",
-         summary = "first",
-         versions = list(`1.0.0` = TRUE, `2.0.0` = TRUE)
-      ))
+      pkgA = list(list(id = "V1", summary = "first")),
+      pkgB = list(list(id = "V2", summary = "second"))
    ))
 })
 
 test_that("aggregateVulnsByName skips cache entries that aren't currently installed", {
    # A package upgrade leaves the old (name, version) key behind in the
-   # cache. aggregateVulnsByName must filter by the currently-installed
-   # set so the orphan doesn't leak back into the UI.
+   # cache. Filtering by pkgKeys means the orphan doesn't leak back to the UI.
    cache <- cacheEnv(
       `pkgA==1.0.0` = list(list(id = "V1", summary = "stale")),
       `pkgA==2.0.0` = list()
