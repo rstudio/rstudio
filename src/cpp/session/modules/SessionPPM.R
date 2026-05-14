@@ -40,12 +40,12 @@
       installed.packages(priority = "NA"),
       stringsAsFactors = FALSE
    )
-   pkgNames <- paste(db[["Package"]], db[["Version"]], sep = "==")
+   pkgKeys <- paste(db[["Package"]], db[["Version"]], sep = "==")
 
    lapply(repos, function(repoUrl)
    {
       tryCatch(
-         .rs.ppm.getVulnerabilityInformationImpl(repoUrl, pkgNames),
+         .rs.ppm.getVulnerabilityInformationImpl(repoUrl, pkgKeys),
          error = function(cnd)
          {
             .rs.logErrorMessage(sprintf(
@@ -58,12 +58,12 @@
    })
 })
 
-.rs.addFunction("ppm.getVulnerabilityInformationImpl", function(repoUrl, pkgNames)
+.rs.addFunction("ppm.getVulnerabilityInformationImpl", function(repoUrl, pkgKeys)
 {
    empty <- structure(list(), names = character())
 
    # nothing to ask about
-   if (length(pkgNames) == 0L)
+   if (length(pkgKeys) == 0L)
       return(empty)
 
    # Per-repo cache lives in an environment keyed by "name==version" so we
@@ -78,7 +78,7 @@
 
    # only ask PPM about (name, version) pairs we haven't seen this session
    cachedKeys <- ls(envir = cache, all.names = TRUE)
-   newKeys <- setdiff(pkgNames, cachedKeys)
+   newKeys <- setdiff(pkgKeys, cachedKeys)
    if (length(newKeys) > 0L)
    {
       fetched <- .rs.ppm.fetchVulnerabilityInformation(repoUrl, newKeys)
@@ -86,7 +86,7 @@
       # NULL means the request failed; skip the cache update so the next
       # refresh can retry rather than masking vulns with empty entries
       if (is.null(fetched))
-         return(.rs.ppm.aggregateVulnsByName(cache, pkgNames))
+         return(.rs.ppm.aggregateVulnsByName(cache, pkgKeys))
 
       # record every requested key (empty list for the ones PPM didn't
       # report on) so we don't keep re-querying packages with no vulns
@@ -97,10 +97,10 @@
       }
    }
 
-   .rs.ppm.aggregateVulnsByName(cache, pkgNames)
+   .rs.ppm.aggregateVulnsByName(cache, pkgKeys)
 })
 
-.rs.addFunction("ppm.fetchVulnerabilityInformation", function(repoUrl, pkgNames)
+.rs.addFunction("ppm.fetchVulnerabilityInformation", function(repoUrl, pkgKeys)
 {
    ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
    if (length(ppmUrl) == 0L)
@@ -119,7 +119,7 @@
    # ask PPM for vulnerability info on each requested (name, version)
    data <- list(
       repo                 = ppmUrl[["repos"]],
-      names                = as.list(pkgNames),
+      names                = as.list(pkgKeys),
       has_vulns            = TRUE,
       omit_dependencies    = TRUE,
       omit_downloads       = TRUE,
@@ -221,56 +221,21 @@
    .rs.markScalars(byKey)
 })
 
-.rs.addFunction("ppm.aggregateVulnsByName", function(cache, pkgNames)
+.rs.addFunction("ppm.aggregateVulnsByName", function(cache, pkgKeys)
 {
-   empty <- structure(list(), names = character())
+   # project the cache down to the currently-installed (name, version) keys
+   # and re-label them with just the package name
+   entries <- as.list(cache)[pkgKeys]
+   names(entries) <- sub("==.*$", "", names(entries))
 
-   # collect per-(name, version) entries from the cache into the by-name
-   # shape the Packages pane expects, skipping keys that aren't currently
-   # installed (e.g. an old version left behind after an upgrade)
-   vulns <- empty
-   for (key in pkgNames)
-   {
-      pkgVulns <- cache[[key]]
-      if (length(pkgVulns) == 0L)
-         next
+   # group by package name and concatenate; a single installed version is
+   # the common case, but the same package can show up across multiple
+   # libraries, in which case the vuln lists join
+   groups <- split(entries, names(entries))
+   vulns <- lapply(groups, function(group) do.call(c, unname(group)))
 
-      name <- sub("==.*$", "", key)
-      vulns[[name]] <- c(vulns[[name]], pkgVulns)
-   }
-
-   # dedupe vulns by id within each package, merging the per-record
-   # 'versions' maps so the UI's per-version check still finds every
-   # affected installed version. PPM may report a different versions
-   # subset alongside each (package, version) record.
-   for (name in names(vulns))
-   {
-      pkgVulns <- vulns[[name]]
-      merged <- list()
-      indices <- list()
-      for (i in seq_along(pkgVulns))
-      {
-         vuln <- pkgVulns[[i]]
-         id <- .rs.nullCoalesce(vuln[["id"]], "")
-         slot <- indices[[id]]
-         if (is.null(slot))
-         {
-            slot <- length(merged) + 1L
-            indices[[id]] <- slot
-            merged[[slot]] <- vuln
-         }
-         else
-         {
-            existing <- merged[[slot]]
-            combined <- c(existing[["versions"]], vuln[["versions"]])
-            existing[["versions"]] <- combined[!duplicated(names(combined))]
-            merged[[slot]] <- existing
-         }
-      }
-      vulns[[name]] <- merged
-   }
-
-   .rs.markScalars(vulns)
+   # drop packages with no vulns
+   .rs.markScalars(vulns[lengths(vulns) > 0L])
 })
 
 .rs.addFunction("ppm.fromRepositoryUrl", function(url)
