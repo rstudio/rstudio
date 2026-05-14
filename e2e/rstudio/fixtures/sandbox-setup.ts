@@ -69,6 +69,9 @@ export default async function globalSetup() {
     if (fs.existsSync(realPositai)) {
       fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
       console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
+      console.warn(
+        `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.positai. Tokens persist if the run is preserved or teardown fails. Only use this on machines with a dedicated test account.`,
+      );
     } else {
       console.log(
         `[sandbox] PW_SANDBOX_SEED_POSITAI set but no real ~/.positai/ found; tests will start signed out of Posit Assistant`,
