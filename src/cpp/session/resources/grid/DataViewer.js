@@ -1717,6 +1717,9 @@ var updateInfoBar = function() {
 
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
       " of " + activeRows.toLocaleString() + " entries";
+   if (totalCols > 0) {
+      text += ", " + totalCols.toLocaleString() + " columns";
+   }
    if (filteredRows < totalRows) {
       text += " (filtered from " + totalRows.toLocaleString() + " total)";
    }
