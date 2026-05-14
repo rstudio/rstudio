@@ -101,3 +101,13 @@
    background-color: #A81900;
    color: white;
 }
+
+.rstudio-themes-dark .replaceTextBox {
+   background-color: #1e1e1e;
+   color: #d4d4d4;
+   border: 1px solid #3c3c3c;
+}
+
+.rstudio-themes-dark .replaceTextBox:focus {
+   border-color: #007acc;
+}

@@ -85,7 +85,7 @@ public class FindOutputPane extends WorkbenchPane
                turnOnReplaceMode();
          }
       });
-      toolbar.addRightWidget(showFindButton_);
+      toolbar.addLeftWidget(showFindButton_);
 
       showReplaceButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), false);
       showReplaceButton_.setVisible(false);
@@ -97,7 +97,7 @@ public class FindOutputPane extends WorkbenchPane
                turnOffReplaceMode();
          }
       });
-      toolbar.addRightWidget(showReplaceButton_);
+      toolbar.addLeftWidget(showReplaceButton_);
 
       return toolbar;
    }
@@ -109,6 +109,7 @@ public class FindOutputPane extends WorkbenchPane
       replaceMode_ = true;
 
       replaceTextBox_ = new TextBox();
+      replaceTextBox_.addStyleName("replaceTextBox");
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
