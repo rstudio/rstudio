@@ -964,15 +964,26 @@ var applyPinnedColumns = function() {
    }
 
    // Horizontal overscroll: lets the user scroll the rightmost column to sit
-   // just past the pinned columns for side-by-side context. Only meaningful
-   // when content is wider than the viewport -- otherwise it would introduce
-   // a phantom scrollbar over empty space.
+   // just past the pinned columns for side-by-side context. Applied even when
+   // all columns fit in the viewport so horizontal scrolling is consistently
+   // available. We reserve room for the rightmost column so it stays visible
+   // at maximum scroll; without this reservation the user can scroll every
+   // unpinned column off-screen (issue #17612). If every column is pinned
+   // (or none exist) there is nothing to scroll past, so we skip the padding
+   // to avoid a phantom scrollbar over empty space.
    var viewport = document.getElementById("gridViewport");
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
-      var overscroll = totalTableWidth > viewport.clientWidth
-         ? Math.max(0, viewport.clientWidth - pinned.totalWidth)
-         : 0;
+      var overscroll = 0;
+      var lastIdx = columnOrder.length - 1;
+      // columnOrder places pinned columns before unpinned, so the last entry
+      // being unpinned is sufficient to confirm an unpinned column exists.
+      if (lastIdx >= 0 && !isColumnPinned(columnOrder[lastIdx])) {
+         var lastTh = thead.children[lastIdx];
+         var lastUnpinnedWidth = lastTh ? lastTh.offsetWidth : 0;
+         overscroll = Math.max(0,
+            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+      }
       table.style.paddingRight = overscroll + "px";
    }
 };
@@ -1167,6 +1178,15 @@ var initResizeHandlers = function() {
       if (resizingColIdx === null) return;
       resizingColIdx = null;
       saveState();
+      // applyResizeDelta updates totalTableWidth on every mousemove but
+      // skips applyPinnedColumns/updateCustomScrollbars to avoid jank
+      // (200+ DOM writes plus layout reads per frame). Sync them once at
+      // end of drag so the overscroll padding and scrollbar thumb size
+      // match the new column widths.
+      if (didResize) {
+         applyPinnedColumns();
+         updateCustomScrollbars();
+      }
       // Reset didResize after the click event that follows mouseup has been
       // dispatched, so exactly one click is suppressed (the one synthesized
       // from this drag) and subsequent clicks sort normally.
@@ -1718,7 +1738,11 @@ var updateInfoBar = function() {
    var text = "Showing " + first.toLocaleString() + " to " + last.toLocaleString() +
       " of " + activeRows.toLocaleString() + " entries";
    if (filteredRows < totalRows) {
-      text += " (filtered from " + totalRows.toLocaleString() + " total)";
+      text += " (filtered from " + totalRows.toLocaleString() + " total entries)";
+   }
+   if (totalCols > 0) {
+      text += ", " + totalCols.toLocaleString() +
+         (totalCols === 1 ? " total column" : " total columns");
    }
    if (textEl) textEl.textContent = text;
 
@@ -2401,9 +2425,8 @@ var toggleSidebar = function() {
    // Trigger grid resize after transition
    setTimeout(function() {
       // viewport.clientWidth changes when the sidebar opens/closes, which
-      // can flip the totalTableWidth > viewport.clientWidth comparison in
-      // applyPinnedColumns -- recompute paddingRight so the horizontal
-      // overscroll matches the new viewport width.
+      // feeds into the overscroll calculation in applyPinnedColumns --
+      // recompute paddingRight so it matches the new viewport width.
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
