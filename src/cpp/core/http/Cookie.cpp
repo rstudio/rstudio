@@ -120,6 +120,7 @@ std::string Cookie::cookieHeaderValue() const
    {
       case SameSite::None:
          headerValue << "; SameSite=None";
+         headerValue << "; Partitioned";
          break;
       case SameSite::Lax:
          headerValue << "; SameSite=Lax";
