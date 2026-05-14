@@ -914,6 +914,16 @@ var RCodeModel = function(session, tokenizer,
             continue;
          }
 
+         // Detect TODO/FIXME comments for the document outline
+         if (type === "comment.keyword.operator" &&
+             /^(?:TODO|FIXME)$/.test(value))
+         {
+            var todoLine = this.$session.getLine(position.row);
+            var todoText = todoLine.substring(position.column).replace(/^\S+\s*/, "").trim();
+            var todoLabel = value + (todoText ? ": " + todoText : "");
+            this.$scopes.onSectionStart(todoLabel, position);
+         }
+
          // Figure out if we're in R mode. This is a hack since
          // unfortunately the code model is handling both R and
          // non-R modes right now -- for example, '{' should only
