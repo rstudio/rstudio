@@ -76,11 +76,6 @@ EnvironmentMonitor* s_pEnvironmentMonitor = nullptr;
 // which Python module is currently being monitored, if any?
 std::string s_monitoredPythonModule;
 
-// is the browser currently active? we store this state
-// so that we can query this from R, without 'hiding' the
-// browser state by pushing new contexts / frames on the stack
-bool s_browserActive = false;
-
 // the environment being browsed (set by onConsolePrompt when entering debug).
 // this is needed because during promise forcing, the browser's environment
 // may differ from any sys.frame() visible from R.
@@ -928,7 +923,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = R_GlobalEnv;
-   r::session::getFunctionContext(requestedDepth, s_browserActive, nullptr, &env);
+   r::session::getFunctionContext(requestedDepth, r::session::isBrowseActive(), nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1078,15 +1073,15 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
-   s_browserActive = r::session::isBrowseActive();
-   if (*pContextDepth > 0 && !s_browserActive)
+   bool browserActive = r::session::isBrowseActive();
+   if (*pContextDepth > 0 && !browserActive)
    {
       s_browserEnv.set(R_NilValue);
    }
    else
    {
       // Find the function context associated with the browser
-      r::session::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
+      r::session::getFunctionContext(0, browserActive, &depth, &environmentTop);
       s_browserEnv.set(environmentTop);
    }
    
@@ -1098,7 +1093,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // browser call somewhere on the stack. if there isn't, then we're
       // probably just waiting for user input inside a function (e.g. scan());
       // assume the user isn't interested in seeing the function's internals.
-      if (*pContextDepth == 0 && !s_browserActive)
+      if (*pContextDepth == 0 && !browserActive)
       {
          return;
       }
@@ -1146,8 +1141,7 @@ void onBeforeExecute()
    // however if R continues running then the client will properly restore
    // the state of the interruptR command
 
-   s_browserActive = r::session::isBrowseActive();
-   if (s_browserActive)
+   if (r::session::isBrowseActive())
    {
       ClientEvent event(client_events::kBusy, true);
       module_context::enqueClientEvent(event);
@@ -1469,7 +1463,7 @@ json::Value environmentStateAsJson()
 SEXP rs_isBrowserActive()
 {
    r::sexp::Protect protect;
-   return r::sexp::create(s_browserActive, &protect);
+   return r::sexp::create(r::session::isBrowseActive(), &protect);
 }
 
 SEXP rs_getBrowserEnv()
