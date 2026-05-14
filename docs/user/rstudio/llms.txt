@@ -1,0 +1,64 @@
+# RStudio IDE User Guide
+
+> RStudio is an integrated development environment (IDE) for R and Python. It includes a console, syntax-highlighting editor with direct code execution, and tools for plotting, history, debugging, and workspace management.
+
+## Getting Started
+
+- [Getting Started](https://docs.posit.co/ide/user/ide/get-started/): Installation and first steps
+
+## Code Editing
+
+- [Console](https://docs.posit.co/ide/user/ide/guide/code/console.html): R and Python console usage
+- [Code Execution](https://docs.posit.co/ide/user/ide/guide/code/execution.html): Running code from the editor
+- [Code Navigation](https://docs.posit.co/ide/user/ide/guide/code/code-navigation.html): Go to definition, find usages
+- [Code Sections](https://docs.posit.co/ide/user/ide/guide/code/code-sections.html): Organizing code with sections and folding
+- [Debugging](https://docs.posit.co/ide/user/ide/guide/code/debugging.html): Breakpoints, stepping, and the debugger
+- [Diagnostics](https://docs.posit.co/ide/user/ide/guide/code/diagnostics.html): Real-time code diagnostics
+- [Projects](https://docs.posit.co/ide/user/ide/guide/code/projects.html): RStudio Projects for workspace management
+
+## Data
+
+- [Data Viewer](https://docs.posit.co/ide/user/ide/guide/data/data-viewer.html): Viewing and filtering data frames
+- [Local Data](https://docs.posit.co/ide/user/ide/guide/data/data-local.html): Importing local data files
+- [Data Connections](https://docs.posit.co/ide/user/ide/guide/data/data-connections.html): Database connections
+- [Connection Contracts](https://docs.posit.co/ide/user/ide/guide/data/connection-contracts.html): Custom connection types
+- [Connection Snippets](https://docs.posit.co/ide/user/ide/guide/data/connection-snippets.html): Reusable connection templates
+
+## Documents
+
+- [Visual Editor](https://docs.posit.co/ide/user/ide/guide/documents/visual-editor.html): WYSIWYG editing for Quarto/R Markdown
+- [Quarto Projects](https://docs.posit.co/ide/user/ide/guide/documents/quarto-project.html): Multi-document Quarto projects
+
+## Environments
+
+- [Managing R](https://docs.posit.co/ide/user/ide/guide/environments/r/managing-r.html): R version management
+- [Packages](https://docs.posit.co/ide/user/ide/guide/environments/r/packages.html): Installing and managing R packages
+- [renv](https://docs.posit.co/ide/user/ide/guide/environments/r/renv.html): Reproducible environments with renv
+- [Python](https://docs.posit.co/ide/user/ide/guide/environments/py/python.html): Python support in RStudio
+
+## Productivity
+
+- [Text Editor](https://docs.posit.co/ide/user/ide/guide/productivity/text-editor.html): Editor features and configuration
+- [Custom Shortcuts](https://docs.posit.co/ide/user/ide/guide/productivity/custom-shortcuts.html): Keyboard shortcut customization
+- [Custom Settings](https://docs.posit.co/ide/user/ide/guide/productivity/custom-settings.html): Global and project options
+- [Snippets](https://docs.posit.co/ide/user/ide/guide/productivity/snippets.html): Code snippets
+- [Add-ins](https://docs.posit.co/ide/user/ide/guide/productivity/add-ins.html): RStudio Add-ins
+- [Project Templates](https://docs.posit.co/ide/user/ide/guide/productivity/project-templates.html): Custom project templates
+
+## Package Development
+
+- [Writing Packages](https://docs.posit.co/ide/user/ide/guide/pkg-devel/writing-packages.html): R package development workflow
+
+## Publishing
+
+- [Connecting](https://docs.posit.co/ide/user/ide/guide/publish/connecting.html): Publishing to Posit Connect, shinyapps.io
+
+## UI and Accessibility
+
+- [User Interface](https://docs.posit.co/ide/user/ide/guide/ui/): Panes, layout, and appearance
+- [Accessibility](https://docs.posit.co/ide/user/ide/guide/accessibility/accessibility.html): Accessibility features
+- [Screen Reader](https://docs.posit.co/ide/user/ide/guide/accessibility/screen-reader.html): Screen reader support
+
+## Tools
+
+- [Terminal](https://docs.posit.co/ide/user/ide/guide/tools/): System terminal integration
