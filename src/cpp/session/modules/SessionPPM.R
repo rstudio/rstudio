@@ -223,9 +223,10 @@
 
 .rs.addFunction("ppm.aggregateVulnsByName", function(cache, pkgKeys)
 {
-   # project the cache down to the currently-installed (name, version) keys
-   # and re-label them with just the package name
-   entries <- as.list(cache)[pkgKeys]
+   # pull only the cache entries for currently-installed (name, version)
+   # keys, then re-label by just the package name
+   keys <- intersect(pkgKeys, ls(envir = cache, all.names = TRUE))
+   entries <- mget(keys, envir = cache)
    names(entries) <- sub("==.*$", "", names(entries))
 
    # group by package name and concatenate; a single installed version is
