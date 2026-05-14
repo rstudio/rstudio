@@ -367,9 +367,11 @@ public:
       boost::algorithm::replace_all(dest, "src=\"/", "src=\"" + baseUrl + "/");
       boost::algorithm::replace_all(dest, "src='/", "src='" + baseUrl + "/");
       
-      // add classes to headers
-      boost::regex reHeader("<h3>Arguments</h3>");
-      std::string reFormat("<h3 class=\"r-arguments-title\">Arguments</h3>");
+      // add classes to headers; the h3 may carry an id attribute when R's
+      // dynamic help server emits a table of contents (R >= 4.6.0), so
+      // preserve any existing attributes via the capture group
+      boost::regex reHeader("<h3([^>]*)>Arguments</h3>");
+      std::string reFormat("<h3$1 class=\"r-arguments-title\">Arguments</h3>");
       boost::algorithm::replace_all_regex(dest, reHeader, reFormat);
       
       // append javascript callbacks
