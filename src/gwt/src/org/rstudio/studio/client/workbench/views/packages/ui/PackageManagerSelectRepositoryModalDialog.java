@@ -30,7 +30,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.TextOverflow;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -151,8 +150,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
       table_.selectRow(0);
 
-      table_.getElement().getStyle().setBorderWidth(1, Unit.PX);
-      table_.getElement().getStyle().setBackgroundColor("white");
+      // border and background color are set via RowTable.css (theme aware)
       tableContainer_.add(table_);
 
       showHiddenReposCb_ = new CheckBox("Show hidden repositories");
