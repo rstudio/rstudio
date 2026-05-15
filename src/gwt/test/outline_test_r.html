@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemixins/token_iterator.js"></script>
+  <script type="text/javascript">require("mixins/token_iterator");</script>
+  <style type="text/css">
+  .pass { color: green; }
+  .fail { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h2>Outline / Scope Tree Tests</h2>
+<p>Passed: <span id="passed">0</span>, Failed: <span id="failed">0</span></p>
+<div id="results"></div>
+<div id="testEditor" style="display: none;"></div>
+
+<script type="text/javascript">
+var RMode = require("mode/r").Mode;
+var passed = 0, failed = 0;
+
+function getScopeLabels(code) {
+   var editor = ace.edit("testEditor");
+   editor.setValue(code, -1);
+   var mode = new RMode(false, editor.getSession());
+   editor.getSession().setMode(mode);
+   var session = editor.getSession();
+   for (var i = 0; i < session.getLength(); i++)
+      session.getTokens(i);
+   var mgr = mode.codeModel;
+   mgr.getScopeTree();
+   var labels = [];
+   function collect(node, depth) {
+      if (node.label) labels.push({label: node.label, depth: depth});
+      var children = node.$children || [];
+      for (var i = 0; i < children.length; i++)
+         collect(children[i], depth + 1);
+   }
+   collect(mgr.$scopes.$root, 0);
+   return labels;
+}
+
+function assertSibling(description, code, label1, label2) {
+   var items = getScopeLabels(code);
+   var d1 = null, d2 = null;
+   for (var i = 0; i < items.length; i++) {
+      if (items[i].label.indexOf(label1) === 0) d1 = items[i].depth;
+      if (items[i].label.indexOf(label2) === 0) d2 = items[i].depth;
+   }
+   if (d1 !== null && d2 !== null && d1 === d2) {
+      passed++;
+      log(description, "PASS", "'" + label1 + "' and '" + label2 + "' at same depth " + d1);
+   } else {
+      failed++;
+      var detail = d1 === null ? "'" + label1 + "' not found" :
+                   d2 === null ? "'" + label2 + "' not found" :
+                   "'" + label1 + "' at depth " + d1 + ", '" + label2 + "' at depth " + d2;
+      log(description, "FAIL", detail + " in [" + items.map(function(x){return x.label+"@"+x.depth;}).join(", ") + "]");
+   }
+}
+
+function assertNotNested(description, code, childLabel, parentLabel) {
+   var items = getScopeLabels(code);
+   var dChild = null, dParent = null;
+   for (var i = 0; i < items.length; i++) {
+      if (items[i].label.indexOf(parentLabel) === 0) dParent = items[i].depth;
+      if (items[i].label.indexOf(childLabel) === 0) dChild = items[i].depth;
+   }
+   if (dChild !== null && dParent !== null && dChild <= dParent) {
+      passed++;
+      log(description, "PASS", "'" + childLabel + "' not nested under '" + parentLabel + "'");
+   } else if (dChild !== null && dParent !== null) {
+      failed++;
+      log(description, "FAIL", "'" + childLabel + "' at depth " + dChild + " nested under '" + parentLabel + "' at depth " + dParent);
+   } else {
+      failed++;
+      log(description, "FAIL", "label not found");
+   }
+}
+
+function log(description, status, detail) {
+   var div = document.createElement("div");
+   div.className = status.toLowerCase();
+   div.textContent = "[" + status + "] " + description + " -- " + detail;
+   document.getElementById("results").appendChild(div);
+}
+
+// Test: depth-1 sections inside braces should be siblings, not nested (#17182)
+// This is the exact repro from the issue: bare {} block
+assertSibling(
+   "depth-1 sections inside bare {} are siblings (issue #17182 repro)",
+   '{\n  # section 1 ----\n\n  # section 2 ----\n\n}\n',
+   "section 1", "section 2"
+);
+
+// Test: depth-1 sections inside function body
+assertSibling(
+   "depth-1 sections inside function body are siblings",
+   'f <- function() {\n# section 1 ----\nx <- 1\n# section 2 ----\ny <- 2\n}\n',
+   "section 1", "section 2"
+);
+
+// Test: depth-1 sections at top level are siblings
+assertSibling(
+   "depth-1 sections at top level are siblings",
+   '# section 1 ----\nx <- 1\n# section 2 ----\ny <- 2\n',
+   "section 1", "section 2"
+);
+
+// Test: deeper section inside braces
+assertSibling(
+   "depth-2 sections inside {} are siblings",
+   'f <- function() {\n## sub 1 ----\nx <- 1\n## sub 2 ----\ny <- 2\n}\n',
+   "sub 1", "sub 2"
+);
+
+// Test: section after brace block is not nested under section inside brace
+assertSibling(
+   "section after function is sibling to section before function",
+   '# before ----\nf <- function() {\n  1\n}\n# after ----\n2\n',
+   "before", "after"
+);
+
+// Update counts
+document.getElementById("passed").textContent = passed;
+document.getElementById("failed").textContent = failed;
+</script>
+</body>
+</html>

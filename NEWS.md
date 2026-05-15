@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17182](https://github.com/rstudio/rstudio/issues/17182)): Fix inconsistent outline section nesting within braces.
 -
 
 ### Dependencies

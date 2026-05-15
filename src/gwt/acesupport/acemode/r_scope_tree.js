@@ -443,7 +443,23 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
          var scopes = this.getActiveScopes(labelStartPos);
          if (scopes.length > 1)
-            this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], labelStartPos, depth);
+         {
+            // First try closing from the labeled parent (handles top-level sections
+            // and sections inside function bodies).
+            var parent = scopes[scopes.length - 2];
+            this.closeMarkdownHeaderScopes(parent, labelStartPos, depth);
+
+            // If the innermost active scope is itself a section at the same or
+            // deeper depth that wasn't closed above (e.g. inside a bare {} block
+            // where the parent's children are non-section brace scopes), close it.
+            var innermost = scopes[scopes.length - 1];
+            if (innermost.isSection() &&
+                innermost.attributes.depth >= depth &&
+                !innermost.end)
+            {
+               this.$root.closeScope(labelStartPos, ScopeNode.TYPE_SECTION);
+            }
+         }
 
          this.$root.addNode(new this.$ScopeNodeFactory(
             label,
