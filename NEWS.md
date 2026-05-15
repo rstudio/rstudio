@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#15765](https://github.com/rstudio/rstudio/issues/15765)): Fix imperceptible selection highlighting in Clouds Midnight theme.
 -
 
 ### Dependencies
