@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemixins/token_iterator.js"></script>
+  <script type="text/javascript">require("mixins/token_iterator");</script>
+  <style type="text/css">
+  .pass { color: green; }
+  .fail { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h2>Outline / Scope Tree Tests</h2>
+<p>Passed: <span id="passed">0</span>, Failed: <span id="failed">0</span></p>
+<div id="results"></div>
+<div id="testEditor" style="display: none;"></div>
+
+<script type="text/javascript">
+var RMode = require("mode/r").Mode;
+var passed = 0, failed = 0;
+
+function getScopeLabels(code) {
+   var editor = ace.edit("testEditor");
+   editor.setValue(code, -1);
+   var mode = new RMode(false, editor.getSession());
+   editor.getSession().setMode(mode);
+   // Force tokenization of all lines
+   var session = editor.getSession();
+   for (var i = 0; i < session.getLength(); i++)
+      session.getTokens(i);
+   // Get scope tree and collect all labels recursively
+   var mgr = mode.codeModel;
+   mgr.getScopeTree(); // builds the tree
+   var labels = [];
+   function collect(node) {
+      if (node.label) labels.push(node.label);
+      var children = node.$children || [];
+      for (var i = 0; i < children.length; i++)
+         collect(children[i]);
+   }
+   collect(mgr.$scopes.$root);
+   return labels;
+}
+
+function assertOutlineContains(description, code, expectedLabel) {
+   var labels = getScopeLabels(code);
+   var found = labels.some(function(l) { return l.indexOf(expectedLabel) === 0; });
+   if (found) {
+      passed++;
+      log(description, "PASS", "Found '" + expectedLabel + "' in [" + labels.join(", ") + "]");
+   } else {
+      failed++;
+      log(description, "FAIL", "Expected '" + expectedLabel + "' in [" + labels.join(", ") + "]");
+   }
+}
+
+function assertOutlineExcludes(description, code, excludedLabel) {
+   var labels = getScopeLabels(code);
+   var found = labels.some(function(l) { return l.indexOf(excludedLabel) === 0; });
+   if (!found) {
+      passed++;
+      log(description, "PASS", "Correctly excluded '" + excludedLabel + "' from [" + labels.join(", ") + "]");
+   } else {
+      failed++;
+      log(description, "FAIL", "Should not contain '" + excludedLabel + "' but found in [" + labels.join(", ") + "]");
+   }
+}
+
+function log(description, status, detail) {
+   var div = document.createElement("div");
+   div.className = status.toLowerCase();
+   div.textContent = "[" + status + "] " + description + " -- " + detail;
+   document.getElementById("results").appendChild(div);
+}
+
+// Test: tryCatch error handler should be hidden
+assertOutlineExcludes(
+   "tryCatch named argument is hidden",
+   'tryCatch(\n  expr,\n  error = function(e) {\n    stop(e)\n  }\n)\n',
+   "error"
+);
+
+// Test: top-level function should be visible
+assertOutlineContains(
+   "top-level function is visible",
+   'foo <- function(x) {\n  x + 1\n}\n',
+   "foo"
+);
+
+// Test: function defined inside another function body should be visible
+assertOutlineContains(
+   "nested function inside function body is visible",
+   'foo <- function() {\n  bar <- function(x) {\n    x\n  }\n}\n',
+   "bar"
+);
+
+// Test: function inside (function() { }) wrapper should be visible (failOnOpenBrace fix)
+assertOutlineContains(
+   "function inside (function(){...}) wrapper is visible",
+   'foo <- (function() {\n  bar <- function(x) {\n    x\n  }\n})\n',
+   "bar"
+);
+
+// Test: function inside if() { } block should be visible (failOnOpenBrace fix)
+assertOutlineContains(
+   "function inside if() {} block is visible",
+   'if (cond) {\n  helper <- function(x) {\n    x\n  }\n}\n',
+   "helper"
+);
+
+// Test: withCallingHandlers named argument should be hidden
+assertOutlineExcludes(
+   "withCallingHandlers named argument is hidden",
+   'withCallingHandlers(\n  expr,\n  warning = function(w) {\n    invokeRestart("muffleWarning")\n  }\n)\n',
+   "warning"
+);
+
+// Update counts
+document.getElementById("passed").textContent = passed;
+document.getElementById("failed").textContent = failed;
+</script>
+</body>
+</html>

@@ -1168,6 +1168,13 @@ var RCodeModel = function(session, tokenizer,
                var functionName = null;
                if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
                {
+                  // Skip functions that are named arguments inside a call, e.g.
+                  // tryCatch(..., error = function(e) {...})
+                  var checkCursor = localCursor.cloneCursor();
+                  var isArgument = checkCursor.findOpeningBracket("(", true);
+
+                  if (!isArgument)
+                  {
                   var functionEndCursor = localCursor.cloneCursor();
                   var functionStartCursor = localCursor.cloneCursor();
                   if (functionStartCursor.findStartOfEvaluationContext())
@@ -1203,6 +1210,7 @@ var RCodeModel = function(session, tokenizer,
                         functionEndPos.column + functionEndCursor.currentValue().length
                      ));
                   }
+                  } // end if (!isArgument)
                }
 
                startPos = localCursor.currentPosition();

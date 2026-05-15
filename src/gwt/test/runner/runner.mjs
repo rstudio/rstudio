@@ -22,6 +22,7 @@ const PAGES = [
    "test/autoindent_test_r.html",
    "test/highlight_test_cpp.html",
    "test/highlight_test_sql.html",
+   "test/outline_test_r.html",
 ];
 
 const MIME = {

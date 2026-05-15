@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#15368](https://github.com/rstudio/rstudio/issues/15368)): Hide anonymous function arguments from the document outline.
 -
 
 ### Dependencies
