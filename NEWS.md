@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17430](https://github.com/rstudio/rstudio/issues/17430)): Add `Partitioned` (CHIPS) attribute to `SameSite=None` cookies.
 -
 
 ### Dependencies
