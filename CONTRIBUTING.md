@@ -2,7 +2,7 @@
 
 If you're experiencing behavior that appears to be a bug in RStudio, you're welcome to [file an issue](https://github.com/rstudio/rstudio/issues/new). Before you do, please go through this pre-flight checklist:
 
-1. Is the source of the error or problem the RStudio IDE itself? Many errors you see inside RStudio come from R or R packages. If you're having trouble with R, read [Getting Help with R](https://www.r-project.org/help.html) for pointers.
+1. Is the RStudio IDE itself the source of the error or problem? Many errors you see inside RStudio come from R or R packages. If you're having trouble with R, read [Getting Help with R](https://www.r-project.org/help.html) for pointers.
 
 2. Is your issue a bug rather than a question? If you're having general trouble with RStudio or have questions for the RStudio community, the [RStudio Community Forum](https://forum.posit.co/c/rstudio-ide) is an excellent resource.
 
@@ -12,13 +12,13 @@ When you're ready to file an issue, see our [guide to writing good bug reports](
 
 ## Enhancements
 
-You're also welcome to submit ideas for enhancements to RStudio. When doing so, please [search the issue list](https://github.com/rstudio/rstudio/issues) to see if the enhancement has already been filed. If it has, vote for it (add a reaction to it) and optionally add a comment with your perspective on the idea. 
+You're also welcome to submit ideas for enhancements to RStudio. When doing so, please [search the issue list](https://github.com/rstudio/rstudio/issues) to see if the enhancement has already been filed. If it has, vote for it (add a reaction to it) and optionally add a comment with your perspective on the idea.
 
 See our [guide to writing feature requests](https://github.com/rstudio/rstudio/wiki/Writing-Good-Feature-Requests) for more on how to write a great feature request.
 
 ## RStudio Pro
 
-This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
+This repo contains the open-source version of RStudio and RStudio Server; its issue tracker is scoped to that version. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
 
 ## Contributing Code
 
@@ -30,7 +30,7 @@ We welcome contributions to RStudio. To submit a contribution:
 
 3. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
 
-We'll try to be as responsive as possible in reviewing and accepting pull requests. Appreciate your contributions very much!
+We'll try to be as responsive as possible in reviewing and accepting pull requests. We appreciate your contributions very much!
 
 ## Pull Request Guidelines
 
