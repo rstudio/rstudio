@@ -68,7 +68,7 @@ export default defineConfig({
   workers: 1,
   timeout: 300000,
   retries: 0,
-  reporter: [['html'], ['list']],
+  reporter: [['html'], ['list'], ['./fixtures/sandbox-reporter.ts']],
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',
   use: {

@@ -1,11 +1,15 @@
 import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Remove the per-invocation sandbox subtree created by sandbox-setup.
  *
  * Skips the rm in two cases:
- *  - Any test failed (Playwright sets process.exitCode to a non-zero value
- *    by the time globalTeardown runs).
+ *  - Any test failed. Playwright's globalTeardown signature is (config) only
+ *    -- it doesn't receive the FullResult, and process.exitCode isn't set
+ *    until after globalTeardown runs. So we rely on SandboxReporter (see
+ *    fixtures/sandbox-reporter.ts) to write a `.failed` marker file inside
+ *    the sandbox before this teardown runs.
  *  - PW_SANDBOX_SKIP_CLEANUP=1/true (explicit user opt-out).
  *
  * Both skip cases log the sandbox path so the user can inspect or delete
@@ -19,7 +23,7 @@ export default async function globalTeardown() {
   const keep = ['1', 'true'].includes(
     (process.env.PW_SANDBOX_SKIP_CLEANUP ?? '').toLowerCase(),
   );
-  const failed = (process.exitCode ?? 0) !== 0;
+  const failed = fs.existsSync(path.join(sandbox, '.failed'));
 
   if (keep || failed) {
     const reason = keep ? 'PW_SANDBOX_SKIP_CLEANUP set' : 'test failures';

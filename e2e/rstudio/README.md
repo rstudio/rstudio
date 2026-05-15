@@ -119,9 +119,9 @@ Both fixtures dismiss leftover save dialogs from previous runs.
 
 Before any worker spawns, a Playwright `globalSetup` hook (`fixtures/sandbox-setup.ts`) creates a per-invocation **sandbox** directory under `os.tmpdir()` (or under `PW_SANDBOX_ROOT` if set) and exports its absolute path as the internal `PW_SANDBOX` env var. Every test-side artifact lives inside it. A matching `globalTeardown` (`fixtures/sandbox-teardown.ts`) removes the entire subtree at end of run -- unless a test failed or `PW_SANDBOX_SKIP_CLEANUP` is set, in which case the path is logged and the contents are left in place for triage. The auto-created `pw_sandbox_<runid>` subtree is the only thing that ever gets removed; if you set `PW_SANDBOX_ROOT` yourself, that parent directory is never touched.
 
-The Desktop fixture boots RStudio against per-spec subdirs under the sandbox, plumbed via env vars and the Electron `--user-data-dir` switch. With `<sandbox>` = `$PW_SANDBOX` and `<rand>` = a random suffix:
+The Desktop fixture launches RStudio against per-spec subdirs under the sandbox, set via env vars and the Electron `--user-data-dir` switch. With `<sandbox>` = `$PW_SANDBOX` and `<rand>` = a random suffix:
 
-| Plumbing | Value |
+| Setting | Value |
 |----------|-------|
 | `RSTUDIO_CONFIG_ROOT` | `<sandbox>/config_<rand>` |
 | `RSTUDIO_CONFIG_HOME` | `<sandbox>/config_<rand>/config-home` |
@@ -136,7 +136,7 @@ Because each Desktop launch has its own `--user-data-dir`, RStudio's single-inst
 
 The shared `data-home/`, `user-home/`, `HOME`, and `USERPROFILE` are safe under the suite's `workers: 1` setting (see `playwright.config.ts`). If parallel workers are ever enabled, those would need to move back to per-spec subtrees or be partitioned per worker -- they aren't safe for concurrent writers as-is.
 
-`PW_SANDBOX` resolves to a runner-side path. Server mode today assumes the runner and rsession share a filesystem -- i.e., the server is on the same host the tests run from. Cross-filesystem Server mode (runner on Windows, rsession on a remote Linux box) isn't supported by this slice: R-side calls would try to create the workdir at a path that doesn't exist on the server.
+`PW_SANDBOX` resolves to a runner-side path. When the rsession runs on the same host as the test runner (Desktop, or Server pointed at `localhost`), the R workdir is created inside `PW_SANDBOX`, so `globalTeardown` removes it as part of the umbrella cleanup. When the rsession runs on a remote host (Server pointed at a non-`localhost` URL), `PW_SANDBOX` doesn't exist on the rsession filesystem, so the R workdir is created under R's own `dirname(tempdir())` instead. That keeps Server tests working against remote rsession, with one caveat: remote R-side workdirs aren't covered by `globalTeardown` and will accumulate on the rsession host across runs.
 
 `HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests, and Posit Assistant tests start signed out. Set `PW_SANDBOX_SEED_POSITAI=1` to opt into copying the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in -- with the privacy caveat noted in the env var table below.
 
@@ -218,7 +218,7 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 
 **Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
 
-**Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to mint an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
+**Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to create an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
 
 ### Overriding RStudio prefs
 

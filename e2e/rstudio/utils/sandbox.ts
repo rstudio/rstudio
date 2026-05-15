@@ -29,7 +29,12 @@ function rootExpr(): string {
       'PW_SANDBOX is not set; sandbox-setup.ts should have populated it before any test code runs',
     );
   }
-  return `path.expand(${JSON.stringify(sandbox)})`;
+  // Use the runner-side PW_SANDBOX path when it exists on the rsession host
+  // (Desktop, or Server pointed at localhost). Fall back to R's own tempdir
+  // parent when the rsession runs on a remote host where the runner-side
+  // path doesn't exist. The remote-host workdir isn't covered by globalTeardown.
+  const lit = JSON.stringify(sandbox);
+  return `(function() { p <- path.expand(${lit}); if (dir.exists(p)) p else dirname(tempdir()) })()`;
 }
 
 /**
