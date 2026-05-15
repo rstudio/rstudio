@@ -387,7 +387,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
-        defaultToken : "identifier"
+        token : "identifier",
+        regex : ".+",
+        merge : true
       }
     ];
 

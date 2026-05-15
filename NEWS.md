@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17458](https://github.com/rstudio/rstudio/issues/17458)): Fix incorrect code highlighting when a backtick-quoted identifier contains a newline.
 -
 
 ### Dependencies
