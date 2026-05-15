@@ -18,7 +18,7 @@ See our [guide to writing feature requests](https://github.com/rstudio/rstudio/w
 
 ## RStudio Pro
 
-This repo contains the open-source version of RStudio and RStudio Server; its issue tracker is scoped to that version. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
+This repo contains the open source version of RStudio and RStudio Server; its issue tracker is scoped to that version. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
 
 ## Contributing Code
 
@@ -34,33 +34,33 @@ We'll try to be as responsive as possible in reviewing and accepting pull reques
 
 ## Pull Request Guidelines
 
-We've recently seen an increase in low-quality, AI-generated pull requests. Reviewing PRs takes real time from a small team, so we ask that every contribution meets the bar described below. PRs that don't will be closed.
+We've seen an increase in low-quality, AI-generated pull requests. Reviewing PRs takes real time from a small team, so we ask that every contribution meets the bar described below. PRs that don't will be closed.
 
 ### Build and Test Locally
 
 Every pull request is expected to have been built and tested locally before it is opened. In the PR description, please include:
 
-- **What you tested** -- the scenarios, workflows, or behaviors you verified, including any edge cases you considered
-- **Which platforms you tested on** -- macOS, Windows, and/or Linux
+- **What you tested**: the scenarios, workflows, or behaviors you verified, including any edge cases you considered
+- **Which platforms you tested on**: macOS, Windows, or Linux
 
 If you were unable to test on a particular platform, say so explicitly. We'd much rather know up front than discover it during review or after merge.
 
 ### Limit on Open Pull Requests
 
-External contributors may have at most **two open pull requests** at a time. Additional PRs opened while two are already open will be closed without review.
+External contributors may have at most two open pull requests at a time. Additional PRs opened while two are already open will be closed without review.
 
-Once a contributor has established a track record of thoughtful, high-quality contributions, we're happy to lift this limit on a case-by-case basis -- just ask.
+Once a contributor has established a track record of thoughtful, high-quality contributions, we're happy to lift this limit on a case-by-case basis. Just ask.
 
 ### AI-Assisted Contributions
 
 Using AI tools to help write code or PR descriptions is not prohibited, but the responsibility for the contribution is yours. Before submitting, please:
 
 - Read every line of the change and make sure you understand it
-- Confirm the change actually addresses a real problem -- not a hypothetical one inferred from the code
+- Confirm the change actually addresses a real problem, not a hypothetical one inferred from the code
 - Verify the change fits the surrounding code style and conventions
 - Make sure the PR description matches what the diff actually does
 
-PRs that read as unedited AI output -- speculative refactors, fabricated issue descriptions, changes that don't match the linked issue, or generic "improvements" with no concrete motivation -- will be closed.
+PRs that read as unedited AI output will be closed. Examples include speculative refactors, fabricated issue descriptions, changes that don't match the linked issue, and generic "improvements" with no concrete motivation.
 
 ## Code of Conduct
 
