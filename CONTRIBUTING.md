@@ -2,7 +2,7 @@
 
 If you're experiencing behavior that appears to be a bug in RStudio, you're welcome to [file an issue](https://github.com/rstudio/rstudio/issues/new). Before you do, please go through this pre-flight checklist:
 
-1. Is the source of the error or problem the RStudio IDE itself? Many errors you see inside RStudio come from R or R packages. If you're having trouble with R, read [Getting Help with R](https://www.r-project.org/help.html) for pointers.
+1. Is the RStudio IDE itself the source of the error or problem? Many errors you see inside RStudio come from R or R packages. If you're having trouble with R, read [Getting Help with R](https://www.r-project.org/help.html) for pointers.
 
 2. Is your issue a bug rather than a question? If you're having general trouble with RStudio or have questions for the RStudio community, the [RStudio Community Forum](https://forum.posit.co/c/rstudio-ide) is an excellent resource.
 
@@ -12,13 +12,13 @@ When you're ready to file an issue, see our [guide to writing good bug reports](
 
 ## Enhancements
 
-You're also welcome to submit ideas for enhancements to RStudio. When doing so, please [search the issue list](https://github.com/rstudio/rstudio/issues) to see if the enhancement has already been filed. If it has, vote for it (add a reaction to it) and optionally add a comment with your perspective on the idea. 
+You're also welcome to submit ideas for enhancements to RStudio. When doing so, please [search the issue list](https://github.com/rstudio/rstudio/issues) to see if the enhancement has already been filed. If it has, vote for it (add a reaction to it) and optionally add a comment with your perspective on the idea.
 
 See our [guide to writing feature requests](https://github.com/rstudio/rstudio/wiki/Writing-Good-Feature-Requests) for more on how to write a great feature request.
 
 ## RStudio Pro
 
-This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
+This repo contains the open source version of RStudio and RStudio Server; its issue tracker is scoped to that version. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
 
 ## Contributing Code
 
@@ -30,7 +30,37 @@ We welcome contributions to RStudio. To submit a contribution:
 
 3. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
 
-We'll try to be as responsive as possible in reviewing and accepting pull requests. Appreciate your contributions very much!
+We'll try to be as responsive as possible in reviewing and accepting pull requests. We appreciate your contributions very much!
+
+## Pull Request Guidelines
+
+Reviewing pull requests (PRs) takes real time from a small team, so we ask that every contribution meets the bar described below. PRs that don't will be closed.
+
+### Build and Test Locally
+
+Every pull request is expected to have been built and tested locally before it is opened. In the PR description, please include:
+
+- **What you tested**: the scenarios, workflows, or behaviors you verified, including any edge cases you considered
+- **Which platforms you tested on**: macOS, Windows, or Linux
+
+If you were unable to test on a particular platform, say so explicitly. We'd much rather know up front than discover it during review or after merge.
+
+### Limit on Open Pull Requests
+
+We ask that external contributors keep at most two open pull requests at a time. Additional PRs opened while two are already open will be closed without review, but may be re-opened at later time.
+
+Once a contributor has established a track record of thoughtful, high-quality contributions, we're happy to lift this limit on a case-by-case basis.
+
+### AI-Assisted Contributions
+
+Using AI tools to help write code or PR descriptions is not prohibited, but the responsibility for the contribution is yours. Before submitting, please:
+
+- Read every line of the change and make sure you understand it
+- Confirm the change actually addresses a real problem, not a hypothetical one inferred from the code
+- Verify the change fits the surrounding code style and conventions
+- Make sure the PR description matches what the diff actually does
+
+PRs that read as unedited AI output will be closed. Examples include speculative refactors, fabricated issue descriptions, changes that don't match the linked issue, and generic "improvements" with no concrete motivation.
 
 ## Code of Conduct
 
