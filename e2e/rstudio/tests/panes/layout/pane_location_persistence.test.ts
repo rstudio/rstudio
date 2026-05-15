@@ -129,11 +129,12 @@ base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, 
     expect(helpBeforeRestart).toBe('sidebar');
 
     // --- Phase 2: Shutdown and relaunch ---
+    // Preserve the config dir so the relaunch loads the prefs we just wrote.
     console.log('Shutting down RStudio...');
-    await shutdownRStudio(session);
+    await shutdownRStudio(session, { preserveConfig: true });
 
-    console.log('Relaunching RStudio...');
-    session = await launchRStudio();
+    console.log('Relaunching RStudio (reusing config root for persistence)...');
+    session = await launchRStudio(session.configRoot);
     const page2 = session.page;
 
     // --- Phase 3: Verify persistence ---

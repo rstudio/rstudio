@@ -16,7 +16,7 @@ test.describe('Run Line button', () => {
 
   test('submits queued lines to the console in document order', async ({ rstudioPage: page }) => {
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('.rs.api.executeCommand("closeAllSourceDocs")');
+    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
 
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
@@ -37,6 +37,6 @@ test.describe('Run Line button', () => {
       timeout: 15000,
     });
 
-    await consoleActions.typeInConsole('.rs.api.executeCommand("closeAllSourceDocs")');
+    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
   });
 });
