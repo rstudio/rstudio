@@ -34,7 +34,7 @@ We'll try to be as responsive as possible in reviewing and accepting pull reques
 
 ## Pull Request Guidelines
 
-We've seen an increase in low-quality, AI-generated pull requests. Reviewing PRs takes real time from a small team, so we ask that every contribution meets the bar described below. PRs that don't will be closed.
+Reviewing PRs takes real time from a small team, so we ask that every contribution meets the bar described below. PRs that don't will be closed.
 
 ### Build and Test Locally
 
