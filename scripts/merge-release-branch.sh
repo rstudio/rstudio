@@ -19,12 +19,14 @@
 #      branch's content, which has any bug-fix entries that landed after
 #      the rotation.
 #
-# 3. Reset version/BUILDTYPE (and friends) to HEAD's value. Git's trivial-
-#    merge fast path would otherwise silently take the rel branch's value
-#    (e.g. flipping BUILDTYPE from "Daily" to "Release") because main has
-#    not modified the file since the merge base. The `merge=ours` driver
-#    attribute does not help here: it is only consulted when both sides
-#    have changed the file, not in the one-sided trivial-merge case.
+# 3. Reset release-only paths (version/BUILDTYPE, the whats-new assets
+#    directory, etc.) to HEAD's value. Git's trivial-merge fast path
+#    would otherwise silently take the rel branch's content (e.g.
+#    flipping BUILDTYPE from "Daily" to "Release", or pulling in
+#    release-finalized whats-new updates) because main has not modified
+#    the file since the merge base. The `merge=ours` driver attribute
+#    does not help here: it is only consulted when both sides have
+#    changed the file, not in the one-sided trivial-merge case.
 #
 # The script stages a merge commit but does not commit it. Review with
 # `git diff --staged` and then `git commit` once satisfied.
@@ -57,6 +59,13 @@ RELEASE_ONLY_FILES=(
     version/BUILDTYPE
     version/RELEASE
     version/CALENDAR_VERSION
+)
+
+# Directories whose contents should always retain main's value after a
+# rel-branch merge. Any file under these paths that the merge modified
+# (or added on the rel branch side) is reverted to HEAD.
+RELEASE_ONLY_DIRS=(
+    src/node/desktop/src/assets/whats-new
 )
 
 # Do the merge.
@@ -114,6 +123,19 @@ for f in "${RELEASE_ONLY_FILES[@]}"; do
         git checkout HEAD -- "$f"
         echo "  reset $f: '$actual' -> '$expected'"
     fi
+done
+
+for d in "${RELEASE_ONLY_DIRS[@]}"; do
+    while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        if git cat-file -e "HEAD:$f" 2>/dev/null; then
+            git checkout HEAD -- "$f"
+            echo "  reset $f"
+        else
+            git rm -f -- "$f" >/dev/null
+            echo "  removed $f (not present on main)"
+        fi
+    done < <(git diff --cached --name-only HEAD -- "$d")
 done
 
 # Summary so a human can eyeball that release-only files are correct.
