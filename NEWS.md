@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17143](https://github.com/rstudio/rstudio/issues/17143)): Call `onCompleted` when SessionOpener retry limit is exhausted.
 -
 
 ### Dependencies

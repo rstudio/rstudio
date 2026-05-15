@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
+import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
@@ -56,6 +57,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(TerminalLocalEchoTests.class);
       suite.addTestSuite(TerminalSessionSocketTests.class);
       suite.addTestSuite(JobManagerTests.class);
+      suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(URIUtilsTests.class);
       suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(DefaultChunkOptionsPopupPanelTests.class);

@@ -193,7 +193,8 @@ public class SessionOpener
       sendPing(200, 50, onCompleted);
    }
    
-   private void sendPing(int delayMs,
+   // Package-private for testing
+   void sendPing(int delayMs,
                          final int maxRetries,
                          final Command onCompleted)
    {
@@ -216,6 +217,8 @@ public class SessionOpener
             if (retries_++ > maxRetries)
             {
                Debug.logWarning("Error connecting with session.");
+               if (onCompleted != null)
+                  onCompleted.execute();
                return false;
             }
             
