@@ -20,20 +20,31 @@ context("ppm")
 # .rs.markScalars before returning).
 expected <- function(...) .rs.markScalars(list(...))
 
+# Helper: build a cache environment populated with the given keyed entries,
+# matching the layout used by .rs.ppm.getVulnerabilityInformationImpl.
+cacheEnv <- function(...)
+{
+   entries <- list(...)
+   env <- new.env(parent = emptyenv())
+   for (key in names(entries))
+      assign(key, entries[[key]], envir = env)
+   env
+}
+
 test_that("parseVulnerabilityResponse handles an empty body", {
    result <- .rs.ppm.parseVulnerabilityResponse("")
    expect_equal(result, structure(list(), names = character()))
 })
 
-test_that("parseVulnerabilityResponse parses a single record with one vuln", {
+test_that("parseVulnerabilityResponse parses a single record into a name==version key", {
    contents <- '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","summary":"hi"}]}'
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1", summary = "hi"))
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "hi"))
    ))
 })
 
-test_that("parseVulnerabilityResponse dedupes the same vuln across versions", {
+test_that("parseVulnerabilityResponse keeps each (name, version) pair in its own key", {
    contents <- paste(
       '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","summary":"hi"}]}',
       '{"name":"pkgA","version":"1.1.0","vulns":[{"id":"V1","summary":"hi"}]}',
@@ -41,26 +52,12 @@ test_that("parseVulnerabilityResponse dedupes the same vuln across versions", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1", summary = "hi"))
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "hi")),
+      `pkgA==1.1.0` = list(list(id = "V1", summary = "hi"))
    ))
 })
 
-test_that("parseVulnerabilityResponse keeps disjoint vulns from different versions", {
-   contents <- paste(
-      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","summary":"first"}]}',
-      '{"name":"pkgA","version":"2.0.0","vulns":[{"id":"V2","summary":"second"}]}',
-      sep = "\n"
-   )
-   result <- .rs.ppm.parseVulnerabilityResponse(contents)
-   expect_equal(result, expected(
-      pkgA = list(
-         list(id = "V1", summary = "first"),
-         list(id = "V2", summary = "second")
-      )
-   ))
-})
-
-test_that("parseVulnerabilityResponse groups vulns across distinct packages", {
+test_that("parseVulnerabilityResponse groups records across distinct packages", {
    contents <- paste(
       '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}',
       '{"name":"pkgB","version":"0.2.0","vulns":[{"id":"V2"}]}',
@@ -68,8 +65,8 @@ test_that("parseVulnerabilityResponse groups vulns across distinct packages", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1")),
-      pkgB = list(list(id = "V2"))
+      `pkgA==1.0.0` = list(list(id = "V1")),
+      `pkgB==0.2.0` = list(list(id = "V2"))
    ))
 })
 
@@ -94,7 +91,7 @@ test_that("parseVulnerabilityResponse skips records with no vulns field", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgB = list(list(id = "V2"))
+      `pkgB==0.1.0` = list(list(id = "V2"))
    ))
 })
 
@@ -106,7 +103,7 @@ test_that("parseVulnerabilityResponse skips records with empty vulns arrays", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgB = list(list(id = "V2"))
+      `pkgB==0.1.0` = list(list(id = "V2"))
    ))
 })
 
@@ -118,7 +115,19 @@ test_that("parseVulnerabilityResponse skips records missing the name field", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgB = list(list(id = "V2"))
+      `pkgB==0.1.0` = list(list(id = "V2"))
+   ))
+})
+
+test_that("parseVulnerabilityResponse skips records missing the version field", {
+   contents <- paste(
+      '{"name":"pkgA","vulns":[{"id":"V1"}]}',
+      '{"name":"pkgB","version":"0.1.0","vulns":[{"id":"V2"}]}',
+      sep = "\n"
+   )
+   result <- .rs.ppm.parseVulnerabilityResponse(contents)
+   expect_equal(result, expected(
+      `pkgB==0.1.0` = list(list(id = "V2"))
    ))
 })
 
@@ -132,24 +141,8 @@ test_that("parseVulnerabilityResponse tolerates blank lines between records", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1")),
-      pkgB = list(list(id = "V2"))
-   ))
-})
-
-test_that("parseVulnerabilityResponse merges versions maps when deduping by id", {
-   contents <- paste(
-      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","versions":{"1.0.0":true}}]}',
-      '{"name":"pkgA","version":"1.1.0","vulns":[{"id":"V1","versions":{"1.1.0":true}}]}',
-      '{"name":"pkgA","version":"1.2.0","vulns":[{"id":"V1","versions":{"1.0.0":true,"1.2.0":true}}]}',
-      sep = "\n"
-   )
-   result <- .rs.ppm.parseVulnerabilityResponse(contents)
-   expect_equal(result, expected(
-      pkgA = list(list(
-         id = "V1",
-         versions = list(`1.0.0` = TRUE, `1.1.0` = TRUE, `1.2.0` = TRUE)
-      ))
+      `pkgA==1.0.0` = list(list(id = "V1")),
+      `pkgB==0.2.0` = list(list(id = "V2"))
    ))
 })
 
@@ -163,7 +156,7 @@ test_that("parseVulnerabilityResponse preserves nested vuln fields", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(
+      `pkgA==1.0.0` = list(list(
          id = "V1",
          summary = "s",
          details = "d",
@@ -190,45 +183,8 @@ test_that("parseVulnerabilityResponse skips malformed JSON lines", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1")),
-      pkgB = list(list(id = "V2"))
-   ))
-})
-
-test_that("parseVulnerabilityResponse keeps id-less vulns separate", {
-   # Each id-less vuln coalesces to id = "", but R's list[[""]] always
-   # reads NULL while each write appends a fresh positional slot, so the
-   # dedup loop treats them as distinct. In practice PPM always emits an
-   # OSV id; this just pins the fallback behavior.
-   contents <- paste(
-      '{"name":"pkgA","version":"1.0.0","vulns":[{"summary":"one"}]}',
-      '{"name":"pkgA","version":"1.1.0","vulns":[{"summary":"two"}]}',
-      sep = "\n"
-   )
-   result <- .rs.ppm.parseVulnerabilityResponse(contents)
-   expect_equal(result, expected(
-      pkgA = list(
-         list(summary = "one"),
-         list(summary = "two")
-      )
-   ))
-})
-
-test_that("parseVulnerabilityResponse keeps the first record on same-id dedup", {
-   # When the same vuln id appears with different summaries across versions,
-   # the first occurrence wins; only the versions map gets merged.
-   contents <- paste(
-      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1","summary":"first","versions":{"1.0.0":true}}]}',
-      '{"name":"pkgA","version":"2.0.0","vulns":[{"id":"V1","summary":"second","versions":{"2.0.0":true}}]}',
-      sep = "\n"
-   )
-   result <- .rs.ppm.parseVulnerabilityResponse(contents)
-   expect_equal(result, expected(
-      pkgA = list(list(
-         id = "V1",
-         summary = "first",
-         versions = list(`1.0.0` = TRUE, `2.0.0` = TRUE)
-      ))
+      `pkgA==1.0.0` = list(list(id = "V1")),
+      `pkgB==0.1.0` = list(list(id = "V2"))
    ))
 })
 
@@ -240,7 +196,207 @@ test_that("parseVulnerabilityResponse tolerates CRLF line endings", {
    )
    result <- .rs.ppm.parseVulnerabilityResponse(contents)
    expect_equal(result, expected(
-      pkgA = list(list(id = "V1")),
+      `pkgA==1.0.0` = list(list(id = "V1")),
+      `pkgB==0.2.0` = list(list(id = "V2"))
+   ))
+})
+
+test_that("aggregateVulnsByName collects a single (name, version) into the by-name shape", {
+   cache <- cacheEnv(
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "hi"))
+   )
+   result <- .rs.ppm.aggregateVulnsByName(cache, "pkgA==1.0.0")
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1", summary = "hi"))
+   ))
+})
+
+test_that("aggregateVulnsByName groups vulns across multiple installed versions", {
+   # PPM returns the same vuln list for every queried version of a given
+   # package, but a user with the same package in two libraries will see
+   # both versions cached. We concatenate without deduping; the rare
+   # duplicate is cosmetic only -- the frontend's per-row check uses each
+   # vuln's versions map, not list position.
+   cache <- cacheEnv(
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "hi")),
+      `pkgA==1.1.0` = list(list(id = "V1", summary = "hi"))
+   )
+   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgA==1.1.0"))
+   expect_equal(result, expected(
+      pkgA = list(
+         list(id = "V1", summary = "hi"),
+         list(id = "V1", summary = "hi")
+      )
+   ))
+})
+
+test_that("aggregateVulnsByName groups vulns across distinct packages", {
+   cache <- cacheEnv(
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "first")),
+      `pkgB==2.0.0` = list(list(id = "V2", summary = "second"))
+   )
+   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgB==2.0.0"))
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1", summary = "first")),
+      pkgB = list(list(id = "V2", summary = "second"))
+   ))
+})
+
+test_that("aggregateVulnsByName skips cache entries that aren't currently installed", {
+   # A package upgrade leaves the old (name, version) key behind in the
+   # cache. Filtering by pkgKeys means the orphan doesn't leak back to the UI.
+   cache <- cacheEnv(
+      `pkgA==1.0.0` = list(list(id = "V1", summary = "stale")),
+      `pkgA==2.0.0` = list()
+   )
+   result <- .rs.ppm.aggregateVulnsByName(cache, "pkgA==2.0.0")
+   expect_equal(result, structure(list(), names = character()))
+})
+
+test_that("aggregateVulnsByName skips cached entries with empty vuln lists", {
+   # PPM may have nothing to say about a package, in which case the cache
+   # holds an empty list as a "queried, no vulns" marker.
+   cache <- cacheEnv(
+      `pkgA==1.0.0` = list(),
+      `pkgB==0.1.0` = list(list(id = "V2"))
+   )
+   result <- .rs.ppm.aggregateVulnsByName(cache, c("pkgA==1.0.0", "pkgB==0.1.0"))
+   expect_equal(result, expected(
       pkgB = list(list(id = "V2"))
+   ))
+})
+
+# Tests for getVulnerabilityInformationImpl swap in a mock
+# fetchVulnerabilityInformation. The helper clears the session-wide cache
+# so each test starts from a known state, then installs the mock and
+# arranges for it to be restored when the test exits.
+.rs.testPpm <- list(
+   repoUrl = "https://example.test/repo/latest"
+)
+
+# Install a mock for .rs.ppm.fetchVulnerabilityInformation that runs the
+# supplied function. Schedules restoration via withr::defer so the swap
+# only lasts for the current test_that() frame. Preserves the closure's
+# lexical environment so <<- captures back into the test scope still work.
+withMockFetch <- function(fn)
+{
+   toolsEnv <- .rs.toolsEnv()
+   original <- get(".rs.ppm.fetchVulnerabilityInformation", envir = toolsEnv)
+   assign(".rs.ppm.fetchVulnerabilityInformation", fn, envir = toolsEnv)
+   withr::defer(
+      assign(".rs.ppm.fetchVulnerabilityInformation", original, envir = toolsEnv),
+      envir = parent.frame()
+   )
+}
+
+# Reset the per-repo cache between tests so nothing leaks between them.
+clearVulnsCache <- function()
+{
+   rm(list = ls(envir = .rs.ppm.vulns, all.names = TRUE), envir = .rs.ppm.vulns)
+}
+
+test_that("getVulnerabilityInformationImpl preserves cached vulns when fetch fails", {
+   # Pre-seed the cache for one package, then ask about that package plus
+   # a new one. A fetch failure (mock returns NULL) should leave the cache
+   # alone and still surface the cached vulns at aggregation time.
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1", summary = "old")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   withMockFetch(function(repoUrl, pkgKeys) NULL)
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1", summary = "old"))
+   ))
+   # pkgB must not be marked "queried, no vulns" -- the next refresh has
+   # to be free to retry it
+   expect_false(exists("pkgB==2.0.0", envir = cache, inherits = FALSE))
+})
+
+test_that("getVulnerabilityInformationImpl asks PPM only about uncached keys", {
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   capturedKeys <- NULL
+   withMockFetch(function(repoUrl, pkgKeys) {
+      capturedKeys <<- pkgKeys
+      structure(list(), names = character())
+   })
+
+   .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(capturedKeys, "pkgB==2.0.0")
+})
+
+test_that("getVulnerabilityInformationImpl caches empty markers for keys PPM did not return", {
+   # PPM may report vulns for only a subset of requested keys. The impl
+   # caches an empty list for the missing keys so subsequent refreshes
+   # don't keep re-asking.
+   clearVulnsCache()
+
+   withMockFetch(function(repoUrl, pkgKeys) {
+      structure(
+         list(list(list(id = "V1"))),
+         names = "pkgA==1.0.0"
+      )
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1"))
+   ))
+
+   cache <- .rs.ppm.vulns[[.rs.testPpm$repoUrl]]
+   expect_equal(get("pkgA==1.0.0", envir = cache), list(list(id = "V1")))
+   expect_equal(get("pkgB==2.0.0", envir = cache), list())
+})
+
+test_that("getVulnerabilityInformationImpl returns empty without calling PPM when pkgKeys is empty", {
+   clearVulnsCache()
+
+   called <- FALSE
+   withMockFetch(function(repoUrl, pkgKeys) {
+      called <<- TRUE
+      structure(list(), names = character())
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, character())
+
+   expect_equal(result, structure(list(), names = character()))
+   expect_false(called)
+})
+
+test_that("getVulnerabilityInformationImpl skips the fetch when every key is already cached", {
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   called <- FALSE
+   withMockFetch(function(repoUrl, pkgKeys) {
+      called <<- TRUE
+      structure(list(), names = character())
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, "pkgA==1.0.0")
+
+   expect_false(called)
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1"))
    ))
 })

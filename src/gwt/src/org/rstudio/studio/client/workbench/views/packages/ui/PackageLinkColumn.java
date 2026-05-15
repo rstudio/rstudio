@@ -105,6 +105,11 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
             for (PackageVulnerability pvItem : pvList)
             {
+               // per-row filter: each vuln carries its own versions map,
+               // so we drop the ones that don't apply to this (name,
+               // version) row here. SessionPPM.R relies on this check
+               // when concatenating cached vuln lists across libraries
+               // without deduping (see ppm.aggregateVulnsByName).
                if (pvItem.versions.has(version))
                {
                   vulnText += "\n- " + pvItem.id + ": " + pvItem.summary;
