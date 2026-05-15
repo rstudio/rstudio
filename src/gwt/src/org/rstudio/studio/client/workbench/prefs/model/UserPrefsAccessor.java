@@ -2577,7 +2577,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_files",
          _constants.alwaysShownFilesTitle(), 
          _constants.alwaysShownFilesDescription(), 
-         JsArrayUtil.createStringArray(".build.yml", ".gitlab-ci.yml", ".travis.yml"));
+         JsArrayUtil.createStringArray(".air.toml", ".build.yml", ".gitlab-ci.yml", ".travis.yml", "air.toml"));
    }
 
    /**
@@ -2589,7 +2589,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**

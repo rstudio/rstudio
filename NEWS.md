@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17310](https://github.com/rstudio/rstudio/issues/17310)): Detect `.air.toml` created mid-session by adding it to `always_shown_files`.
 -
 
 ### Dependencies

@@ -1094,9 +1094,11 @@
                 "type": "string"
             },
             "default": [
+                ".air.toml",
                 ".build.yml",
                 ".gitlab-ci.yml",
-                ".travis.yml"
+                ".travis.yml",
+                "air.toml"
             ]
         },
         "always_shown_extensions": {
@@ -1107,7 +1109,6 @@
                 "type": "string"
             },
             "default": [
-                ".air.toml",
                 ".circleci",
                 ".env",
                 ".gitattributes",
