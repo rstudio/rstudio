@@ -139,6 +139,12 @@ void testNumbers()
    v.verify(L"0xcafebad");
    v.verify(L"1L");
    v.verify(L"0x10L");
+   v.verify(L"0x1.1p1");
+   v.verify(L"0x1p-2");
+   v.verify(L"0x1.8p0L");
+   v.verify(L"0x1.0p-1022");
+   v.verify(L"0xAp3");
+   v.verify(L"0x1.FFFp10i");
    v.verify(L"1000000L");
    v.verify(L"1e6L");
    v.verify(L"1.1L");

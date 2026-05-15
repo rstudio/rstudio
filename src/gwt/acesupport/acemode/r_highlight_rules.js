@@ -351,8 +351,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     rules["#number"] = [
       {
-        token : "constant.numeric", // hex
-        regex : "0[xX][0-9a-fA-F]+[Li]?",
+        token : "constant.numeric", // hex (integer and floating point)
+        regex : "0[xX][0-9a-fA-F]+(?:\\.[0-9a-fA-F]*)?(?:[pP][+-]?\\d+)?[Li]?",
         merge : false,
         next  : "start"
       },

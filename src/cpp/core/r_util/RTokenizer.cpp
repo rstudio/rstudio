@@ -55,7 +55,7 @@ private:
    friend TokenPatterns& tokenPatterns();
    TokenPatterns()
       : NUMBER(L"[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
-        HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
+        HEX_NUMBER(L"0x[0-9a-fA-F]*(\\.[0-9a-fA-F]*)?([pP][+-]?[0-9]+)?[Li]?"),
         USER_OPERATOR(L"%[^\\n%]*%"),
         WHITESPACE(L"[\\s\x00A0\x3000]+"),
         COMMENT(L"#[^\\n]*$")

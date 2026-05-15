@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#14363](https://github.com/rstudio/rstudio/issues/14363)): Recognize hex floating point literals (e.g. `0x1.1p1`) in the tokenizer and syntax highlighter.
 -
 
 ### Dependencies
