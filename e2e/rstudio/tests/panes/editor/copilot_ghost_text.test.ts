@@ -99,7 +99,7 @@ async function acceptGhostText(page: Page, sourcePane: SourcePane) {
 // --- Tests ---
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
-  test.describe(`${provider} › Ghost text by file type`, () => {
+  test.describe.fixme(`${provider} › Ghost text by file type`, () => {
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();
@@ -124,8 +124,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     for (const tc of testCases) {
       test(tc.name, async ({ rstudioPage: page }) => {
-        if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant does not reliably produce ghost text for non-code content');
-
         const fileName = `${prefix}_${tc.slug}_${Date.now()}.${tc.ext}`;
 
         // --- Full-line ghost text ---

@@ -54,6 +54,22 @@ async function executeCommand(page: Page, command: string): Promise<void> {
   await input.press('Enter');
 }
 
+// Same shape as executeCommand, but types `expr` verbatim so callers can
+// invoke .rs.api functions (which aren't registered commands) or any other
+// R expression in this pane-aware way.
+async function executeRExpr(page: Page, expr: string): Promise<void> {
+  const input = page.locator(CONSOLE_INPUT);
+  await input.click({ force: true });
+  await sleep(200);
+  await input.pressSequentially(expr);
+  await sleep(200);
+  if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await sleep(100);
+  }
+  await input.press('Enter');
+}
+
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
 }
@@ -71,7 +87,13 @@ async function elementExists(page: Page, selector: string): Promise<boolean> {
 }
 
 // Asserts that `actual` is within `tolerance` (as a fraction) of `expected`.
+// When `expected` is 0 a ratio is undefined, so fall back to checking that
+// `actual` is also 0 (e.g., a column hidden state where both widths are 0).
 function expectWidthClose(actual: number, expected: number, tolerance: number, label: string): void {
+  if (expected === 0) {
+    expect(actual, `${label}: expected 0, got ${actual}`).toBe(0);
+    return;
+  }
   const ratio = Math.abs(actual - expected) / expected;
   expect(ratio, `${label}: expected ~${expected}, got ${actual} (delta ratio ${ratio.toFixed(3)})`).toBeLessThan(tolerance);
 }
@@ -276,7 +298,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    await executeCommand(page, 'closeAllSourceDocs');
+    await executeRExpr(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
     await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });

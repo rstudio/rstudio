@@ -169,11 +169,17 @@ async function closeActiveProjectIfOpen(page: Page): Promise<void> {
 /**
  * Remove a sandbox directory. Closes any active project first so RStudio
  * releases handles inside the tree (otherwise Windows leaves files behind),
- * then moves R's cwd to `~` so `unlink` can remove the directory itself.
+ * discards any open source buffers without saving so a dirty buffer pointing
+ * into the sandbox can't race an autosave/save against the about-to-disappear
+ * directory (which yields ENOENT and a "Save File" dialog whose popup-panel
+ * glass blocks subsequent shutdown clicks), then moves R's cwd to `~` so
+ * `unlink` can remove the directory itself.
  */
 export async function removeSandbox(page: Page, dir: string): Promise<void> {
   if (!dir) return;
   await closeActiveProjectIfOpen(page);
+  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await sleep(TIMEOUTS.pollInterval);
   const escaped = dir.replace(/\\/g, '/');
   await typeInConsole(page, `setwd("~"); unlink("${escaped}", recursive = TRUE)`);
   await sleep(TIMEOUTS.pollInterval);

@@ -24,10 +24,11 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       sourceActions = new SourcePaneActions(page, consoleActions);
       sourcePane = sourceActions.sourcePane;
 
-      // Close any leftover source files and delete test files from previous runs
-      await consoleActions.typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
-      await sleep(1000);
-      await consoleActions.typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
+      // Close any leftover source buffers from previous runs WITHOUT saving --
+      // a save here would race a now-gone sandbox path from an earlier aborted
+      // run and surface an ENOENT "Save File" dialog whose popup-glass blocks
+      // every subsequent click.
+      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
       await sleep(1000);
 
       // Delete all possible test files in a single R command
@@ -521,10 +522,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.contentPane).toContainText('print(final_total)', { timeout: 5000 });
       console.log('  File A: NES accepted — order_total renamed to final_total');
 
-      // Close File A
-      await consoleActions.typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
-      await sleep(1000);
-      await consoleActions.typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
+      // Close File A without saving -- the file is in the per-suite sandbox
+      // and a save here would race that sandbox's later teardown.
+      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
       await sleep(2000);
 
       // --- File B: same original code, no edits ---
@@ -581,6 +581,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sleep(200);
       await page.keyboard.type('x <- calc');
 
+      // Dismiss Ace autocomplete popup if it pops up first. When the popup
+      // is visible it suppresses ghost text from rendering, so we have to
+      // clear it before waiting for the suggestion.
+      const popup = page.locator('#rstudio_popup_completions');
+      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+      if (await popup.isVisible().catch(() => false)) {
+        await page.keyboard.press('Escape');
+        await sleep(500);
+        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
+      }
+
       // Wait for ghost text to confirm a real suggestion arrived
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       const ghostParts = await sourcePane.ghostText.allTextContents();
@@ -589,13 +600,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // Wait for the status bar to show "Completion response received"
       await expect(sourcePane.statusBarCompletionReceived).toBeVisible({ timeout: 5000 });
       console.log('  Status bar shows "Completion response received"');
-
-      // Dismiss Ace autocomplete popup if present, without clearing ghost text
-      if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(500);
-        console.log('  Dismissed autocomplete popup');
-      }
 
       // Scroll the viewport to the middle of the file WITHOUT moving the cursor.
       // Using keyboard shortcuts would move the cursor, triggering a new
@@ -619,14 +623,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const rowBefore = await sourceActions.getFirstVisibleRow();
       console.log(`  After scrolling viewport to middle: first visible row = ${rowBefore}`);
 
-      // Verify the status bar is still clickable (cursor: pointer = handler is set)
-      const cursor = await sourcePane.footerTable.evaluate(
+      // Verify the status bar label is still clickable (cursor: pointer = handler is set).
+      // The click handler is attached to the "Completion response received" label
+      // itself, not to the surrounding footer container -- clicking the container
+      // hits dead space and the scroll handler never fires.
+      const cursor = await sourcePane.statusBarCompletionReceived.evaluate(
         el => window.getComputedStyle(el).cursor
       );
       console.log(`  Status bar cursor style: ${cursor}`);
 
-      // Click the status bar panel directly (click handler is on the panel element)
-      await sourcePane.footerTable.click({ force: true });
+      await sourcePane.statusBarCompletionReceived.click({ force: true });
       await sleep(1000);
 
       const rowAfterClick = await sourceActions.getFirstVisibleRow();
@@ -641,10 +647,11 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test.afterAll(async ({ rstudioPage: page }) => {
-      // Post-suite cleanup: close files and delete test artifacts
-      await consoleActions.typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
-      await sleep(1000);
-      await consoleActions.typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
+      // Post-suite cleanup: discard any open buffers and delete artifacts.
+      // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
+      // afterAll, so saving races the directory removal and surfaces an
+      // "Error Saving File" dialog whose popup-glass blocks the shutdown.
+      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
       await sleep(1000);
 
       const testFiles = [

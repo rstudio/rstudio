@@ -36,7 +36,7 @@ export class ConsolePane extends PageObject {
     this.findInput = this.findBar.locator('input[type="text"]');
     this.findNext = this.findBar.getByRole('button', { name: 'Next' });
     this.findClose = consolePanel.getByRole('button', { name: 'Close' }).first();
-    this.findBtn = consolePanel.locator('button[aria-label="Find in Console"]').first();
+    this.findBtn = consolePanel.locator('button[aria-label^="Find in Console"]').first();
     this.findCaseSensitive = this.findBar.getByRole('checkbox', { name: 'Case sensitive' });
   }
 
