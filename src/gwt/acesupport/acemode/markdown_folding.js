@@ -61,7 +61,7 @@ oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
 
-    this.foldingStartMarker = /^(?:[=-]+\s*$|#{1,6} |`{3})/;
+    this.foldingStartMarker = /^(?:[=-]+\s*$|#{1,6} |`{3}|:{3,}\s*\{)/;
 
     this.getFoldWidget = function(session, foldStyle, row) {
 
@@ -78,6 +78,12 @@ oop.inherits(FoldMode, BaseFoldMode);
             return Utils.getPrimaryState(session, row) === "start" ?
                 FOLD_END :
                 FOLD_START;
+        }
+
+        if (line[0] == ":")
+        {
+            // ::: {.callout-note} is a fold start, bare ::: is fold end
+            return /^:{3,}\s*\{/.test(line) ? FOLD_START : FOLD_END;
         }
 
         return FOLD_NONE;
@@ -108,6 +114,21 @@ oop.inherits(FoldMode, BaseFoldMode);
                 }
                 return new Range(row, line.length, startRow, 0);
             }
+        }
+
+        if (line[0] == ":" && /^:{3,}\s*\{/.test(line)) {
+            // Find matching closing :::
+            var depth = 1;
+            while (++row < maxRow) {
+                line = session.getLine(row);
+                if (/^:{3,}\s*\{/.test(line)) depth++;
+                else if (/^:{3,}\s*$/.test(line)) {
+                    depth--;
+                    if (depth === 0) break;
+                }
+            }
+            if (depth === 0)
+                return new Range(startRow, startColumn, row, 0);
         }
 
         var token;

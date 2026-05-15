@@ -131,6 +131,14 @@ var FOLD_WIDGET_END   = "end";
          }
       }
 
+      // Fenced divs: ::: {.class} is fold start, bare ::: is fold end
+      var line = session.getLine(row);
+      if (/^:{3,}\s*\{/.test(line)) {
+         return FOLD_WIDGET_START;
+      } else if (/^:{3,}\s*$/.test(line)) {
+         return foldStyle === FOLD_STYLE_MARKBEGINEND ? FOLD_WIDGET_END : FOLD_WIDGET_NONE;
+      }
+
       return FOLD_WIDGET_NONE;
    };
 
@@ -144,6 +152,12 @@ var FOLD_WIDGET_END   = "end";
       var match = /^\s*(`{3,})/.exec(line);
       if (match !== null) {
          var pattern = new RegExp("^\\s*(`{" + match[1].length + "})(?!`)");
+         return this.$getBracedWidgetRange(session, foldStyle, row, pattern);
+      }
+
+      // Handle fenced div folds (::: {.class} ... :::)
+      if (/^:{3,}\s*\{/.test(trimmed)) {
+         var pattern = /^:{3,}\s*$/;
          return this.$getBracedWidgetRange(session, foldStyle, row, pattern);
       }
 

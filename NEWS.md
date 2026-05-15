@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#14066](https://github.com/rstudio/rstudio/issues/14066)): Support folding of `:::` fenced divs in Quarto and R Markdown documents.
 -
 
 ### Dependencies
