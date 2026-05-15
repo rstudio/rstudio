@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#15216](https://github.com/rstudio/rstudio/issues/15216)): Broaden generated-file banner regex to recognize generators beyond roxygen2.
 -
 
 ### Dependencies
