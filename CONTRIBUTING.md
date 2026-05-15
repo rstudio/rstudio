@@ -49,7 +49,7 @@ If you were unable to test on a particular platform, say so explicitly. We'd muc
 
 We ask that external contributors keep at most two open pull requests at a time. Additional PRs opened while two are already open will be closed without review, but may be re-opened at later time.
 
-Once a contributor has established a track record of thoughtful, high-quality contributions, we're happy to lift this limit on a case-by-case basis. Just ask.
+Once a contributor has established a track record of thoughtful, high-quality contributions, we're happy to lift this limit on a case-by-case basis.
 
 ### AI-Assisted Contributions
 
