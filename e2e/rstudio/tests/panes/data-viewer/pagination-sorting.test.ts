@@ -62,7 +62,7 @@ test.describe('Data Viewer', () => {
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
 
     // Verify grid info inside iframe (visible row count depends on pane height)
-    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to \d+ of 100,000 entries/);
+    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 100,000 entries/);
   });
 
   // -----------------------------------------------------------------------
@@ -88,7 +88,7 @@ test.describe('Data Viewer', () => {
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
 
     // Verify grid info (visible row count depends on pane height)
-    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to \d+ of 1,000 entries/);
+    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 1,000 entries/);
   });
 
   // -----------------------------------------------------------------------

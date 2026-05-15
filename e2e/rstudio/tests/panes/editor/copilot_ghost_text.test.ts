@@ -124,8 +124,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
     for (const tc of testCases) {
       test(tc.name, async ({ rstudioPage: page }) => {
-        if (key === 'posit-assistant') test.fixme(true, 'Posit Assistant does not reliably produce ghost text for non-code content');
-
         const fileName = `${prefix}_${tc.slug}_${Date.now()}.${tc.ext}`;
 
         // --- Full-line ghost text ---
