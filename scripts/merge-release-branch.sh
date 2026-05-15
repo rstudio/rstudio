@@ -28,6 +28,12 @@
 #    does not help here: it is only consulted when both sides have
 #    changed the file, not in the one-sided trivial-merge case.
 #
+# The branch argument is resolved to a remote-tracking branch (e.g.
+# "rel-golden-wattle" becomes "<remote>/rel-golden-wattle") so the merge
+# always reflects what is published rather than a possibly-stale local
+# copy. Pass a qualified ref like "origin/rel-golden-wattle" to skip the
+# inference. The script also fetches the resolved branch before merging.
+#
 # The script stages a merge commit but does not commit it. Review with
 # `git diff --staged` and then `git commit` once satisfied.
 
@@ -36,7 +42,9 @@ set -euo pipefail
 if [ $# -lt 1 ]; then
     echo "usage: $0 <branch>" >&2
     echo "" >&2
-    echo "Example: $0 origin/rel-golden-wattle" >&2
+    echo "Examples:" >&2
+    echo "  $0 rel-golden-wattle           # resolves to <remote>/rel-golden-wattle" >&2
+    echo "  $0 origin/rel-golden-wattle    # use an already-qualified ref" >&2
     exit 64
 fi
 
@@ -67,6 +75,53 @@ RELEASE_ONLY_FILES=(
 RELEASE_ONLY_DIRS=(
     src/node/desktop/src/assets/whats-new
 )
+
+# Always resolve to a remote-tracking branch so the merge picks up what's
+# actually published, not a possibly-stale local copy. If the user passes
+# a qualified ref (e.g. "origin/rel-golden-wattle"), use it as-is. If they
+# pass a bare branch name, prefix it with the remote tracked by the
+# current branch (falling back to "origin", then to the first configured
+# remote).
+ORIGINAL_INPUT="$BRANCH"
+REMOTE=""
+
+if [[ "$BRANCH" != refs/* ]]; then
+    while IFS= read -r r; do
+        [ -n "$r" ] || continue
+        if [[ "$BRANCH" == "$r/"* ]]; then
+            REMOTE="$r"
+            break
+        fi
+    done < <(git remote)
+
+    if [ -z "$REMOTE" ]; then
+        if upstream="$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)" \
+            && [[ "$upstream" == */* ]] \
+            && git remote get-url "${upstream%%/*}" >/dev/null 2>&1; then
+            REMOTE="${upstream%%/*}"
+        elif git remote get-url origin >/dev/null 2>&1; then
+            REMOTE="origin"
+        else
+            REMOTE="$(git remote | head -n 1)"
+        fi
+
+        if [ -z "$REMOTE" ]; then
+            echo "error: no remotes configured; cannot resolve '$BRANCH'." >&2
+            exit 1
+        fi
+
+        BRANCH="$REMOTE/$BRANCH"
+        echo "Resolved '$ORIGINAL_INPUT' -> '$BRANCH'"
+    fi
+fi
+
+# Refresh the remote-tracking branch so the merge reflects the latest
+# published state of the rel branch.
+if [ -n "$REMOTE" ]; then
+    REMOTE_BRANCH="${BRANCH#$REMOTE/}"
+    echo "Fetching $REMOTE $REMOTE_BRANCH..."
+    git fetch "$REMOTE" "$REMOTE_BRANCH"
+fi
 
 # Do the merge.
 echo "Merging $BRANCH (-X no-renames, --no-ff, --no-commit)..."
