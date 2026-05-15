@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#17492](https://github.com/rstudio/rstudio/issues/17492)): Remove duplicated browser-active cache in `SessionEnvironment` that could desync.
 -
 
 ### Dependencies
