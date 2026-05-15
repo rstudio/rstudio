@@ -265,3 +265,138 @@ test_that("aggregateVulnsByName skips cached entries with empty vuln lists", {
       pkgB = list(list(id = "V2"))
    ))
 })
+
+# Tests for getVulnerabilityInformationImpl swap in a mock
+# fetchVulnerabilityInformation. The helper clears the session-wide cache
+# so each test starts from a known state, then installs the mock and
+# arranges for it to be restored when the test exits.
+.rs.testPpm <- list(
+   repoUrl = "https://example.test/repo/latest"
+)
+
+# Install a mock for .rs.ppm.fetchVulnerabilityInformation that runs the
+# supplied function. Schedules restoration via withr::defer so the swap
+# only lasts for the current test_that() frame. Preserves the closure's
+# lexical environment so <<- captures back into the test scope still work.
+withMockFetch <- function(fn)
+{
+   toolsEnv <- .rs.toolsEnv()
+   original <- get(".rs.ppm.fetchVulnerabilityInformation", envir = toolsEnv)
+   assign(".rs.ppm.fetchVulnerabilityInformation", fn, envir = toolsEnv)
+   withr::defer(
+      assign(".rs.ppm.fetchVulnerabilityInformation", original, envir = toolsEnv),
+      envir = parent.frame()
+   )
+}
+
+# Reset the per-repo cache between tests so nothing leaks between them.
+clearVulnsCache <- function()
+{
+   rm(list = ls(envir = .rs.ppm.vulns, all.names = TRUE), envir = .rs.ppm.vulns)
+}
+
+test_that("getVulnerabilityInformationImpl preserves cached vulns when fetch fails", {
+   # Pre-seed the cache for one package, then ask about that package plus
+   # a new one. A fetch failure (mock returns NULL) should leave the cache
+   # alone and still surface the cached vulns at aggregation time.
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1", summary = "old")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   withMockFetch(function(repoUrl, pkgKeys) NULL)
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1", summary = "old"))
+   ))
+   # pkgB must not be marked "queried, no vulns" -- the next refresh has
+   # to be free to retry it
+   expect_false(exists("pkgB==2.0.0", envir = cache, inherits = FALSE))
+})
+
+test_that("getVulnerabilityInformationImpl asks PPM only about uncached keys", {
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   capturedKeys <- NULL
+   withMockFetch(function(repoUrl, pkgKeys) {
+      capturedKeys <<- pkgKeys
+      structure(list(), names = character())
+   })
+
+   .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(capturedKeys, "pkgB==2.0.0")
+})
+
+test_that("getVulnerabilityInformationImpl caches empty markers for keys PPM did not return", {
+   # PPM may report vulns for only a subset of requested keys. The impl
+   # caches an empty list for the missing keys so subsequent refreshes
+   # don't keep re-asking.
+   clearVulnsCache()
+
+   withMockFetch(function(repoUrl, pkgKeys) {
+      structure(
+         list(list(list(id = "V1"))),
+         names = "pkgA==1.0.0"
+      )
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(
+      .rs.testPpm$repoUrl,
+      c("pkgA==1.0.0", "pkgB==2.0.0")
+   )
+
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1"))
+   ))
+
+   cache <- .rs.ppm.vulns[[.rs.testPpm$repoUrl]]
+   expect_equal(get("pkgA==1.0.0", envir = cache), list(list(id = "V1")))
+   expect_equal(get("pkgB==2.0.0", envir = cache), list())
+})
+
+test_that("getVulnerabilityInformationImpl returns empty without calling PPM when pkgKeys is empty", {
+   clearVulnsCache()
+
+   called <- FALSE
+   withMockFetch(function(repoUrl, pkgKeys) {
+      called <<- TRUE
+      structure(list(), names = character())
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, character())
+
+   expect_equal(result, structure(list(), names = character()))
+   expect_false(called)
+})
+
+test_that("getVulnerabilityInformationImpl skips the fetch when every key is already cached", {
+   clearVulnsCache()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
+
+   called <- FALSE
+   withMockFetch(function(repoUrl, pkgKeys) {
+      called <<- TRUE
+      structure(list(), names = character())
+   })
+
+   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, "pkgA==1.0.0")
+
+   expect_false(called)
+   expect_equal(result, expected(
+      pkgA = list(list(id = "V1"))
+   ))
+})

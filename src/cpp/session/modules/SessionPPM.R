@@ -16,6 +16,10 @@
 .rs.setVar("ppm.vulns", new.env(parent = emptyenv()))
 .rs.setVar("ppm.metadataCache", new.env(parent = emptyenv()))
 
+# once-per-session flags for noisy diagnostics we don't want to repeat
+# on every package-list refresh
+.rs.setVar("ppm.warnings", new.env(parent = emptyenv()))
+
 .rs.addFunction("ppm.isIntegrationEnabled", function()
 {
    .Call("rs_ppmIntegrationEnabled", PACKAGE = "(embedding)")
@@ -48,8 +52,13 @@
          .rs.ppm.getVulnerabilityInformationImpl(repoUrl, pkgKeys),
          error = function(cnd)
          {
+            # outer-catch: a fetch/parse path with a known failure mode
+            # would have logged and returned NULL already, so an exception
+            # here is unexpected. the caller receives an empty list, which
+            # is indistinguishable from "no vulns" -- the log is the only
+            # signal that something went wrong.
             .rs.logErrorMessage(sprintf(
-               "error fetching PPM vulnerability info for %s: %s",
+               "unexpected error fetching PPM vulnerability information for %s: %s",
                repoUrl, conditionMessage(cnd)
             ))
             structure(list(), names = character())
@@ -68,7 +77,8 @@
 
    # Per-repo cache lives in an environment keyed by "name==version" so we
    # can request only newly-installed (or upgraded) packages on subsequent
-   # refreshes, and stale entries from old versions don't survive an upgrade.
+   # refreshes. Stale "old==version" entries linger in the cache but are
+   # filtered out at aggregation by pkgKeys.
    cache <- .rs.ppm.vulns[[repoUrl]]
    if (is.null(cache))
    {
@@ -107,7 +117,20 @@
       return(NULL)
 
    if (!requireNamespace("curl", quietly = TRUE))
+   {
+      # Without curl every refresh will hit this path and silently return,
+      # so we'd lose vulnerability badges with no diagnostic trail. Log
+      # once per session and return NULL so callers can still use any
+      # cached entries instead of poisoning the cache with empty markers.
+      if (is.null(.rs.ppm.warnings$curlMissing))
+      {
+         .rs.logErrorMessage(
+            "cannot fetch PPM vulnerability information: the 'curl' package is not installed"
+         )
+         .rs.ppm.warnings$curlMissing <- TRUE
+      }
       return(NULL)
+   }
 
    # build a curl handle for the request
    verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
@@ -211,7 +234,23 @@
       name <- record[["name"]]
       version <- record[["version"]]
       pkgVulns <- record[["vulns"]]
-      if (is.null(name) || is.null(version) || length(pkgVulns) == 0L)
+
+      # name or version missing means PPM emitted something we can't key
+      # on -- warn once per session if it ever happens (the get-impl
+      # cache-fill below prevents us from re-querying), then move on
+      if (is.null(name) || is.null(version))
+      {
+         if (is.null(.rs.ppm.warnings$malformedRecord))
+         {
+            .rs.logWarningMessage(
+               "PPM vulnerability response included a record missing 'name' or 'version'; subsequent malformed records will be silently skipped"
+            )
+            .rs.ppm.warnings$malformedRecord <- TRUE
+         }
+         next
+      }
+
+      if (length(pkgVulns) == 0L)
          next
 
       key <- paste(name, version, sep = "==")
@@ -231,7 +270,8 @@
 
    # group by package name and concatenate; a single installed version is
    # the common case, but the same package can show up across multiple
-   # libraries, in which case the vuln lists join
+   # libraries, in which case we concatenate without deduping -- the
+   # frontend filters per row via each vuln's versions map
    groups <- split(entries, names(entries))
    vulns <- lapply(groups, function(group) do.call(c, unname(group)))
 
