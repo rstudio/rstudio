@@ -16,7 +16,7 @@
   color: #7DA5DC
 }
 .ace_marker-layer .ace_selection {
-  background: #000000
+  background: rgba(100, 133, 200, 0.3)
 }
 .ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #191919;
@@ -30,13 +30,13 @@
   border: 1px solid #BFBFBF
 }
 .ace_marker-layer .ace_active-line {
-  background: rgba(215, 215, 215, 0.031)
+  background: rgba(215, 215, 215, 0.1)
 }
 .ace_gutter-active-line {
-  background-color: rgba(215, 215, 215, 0.031)
+  background-color: rgba(215, 215, 215, 0.1)
 }
 .ace_marker-layer .ace_selected-word {
-  border: 1px solid #000000
+  border: 1px solid rgba(100, 133, 200, 0.6)
 }
 .ace_invisible {
   color: #666
