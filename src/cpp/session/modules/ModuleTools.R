@@ -33,6 +33,12 @@
 # cache of (method + message) digests already logged with once = TRUE
 assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 
+# indirection point so tests can stub the emit step without intercepting .Call
+.rs.addFunction("logMessageEmit", function(method, message)
+{
+   .Call(method, message, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("logMessageImpl", function(method, fmt, args, once)
 {
    if (inherits(fmt, "condition"))
@@ -54,7 +60,7 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
       }
    }
 
-   .Call(method, message, PACKAGE = "(embedding)")
+   .rs.logMessageEmit(method, message)
 })
 
 .rs.addFunction("logErrorMessage", function(fmt, ..., once = FALSE)
