@@ -25,6 +25,17 @@ import * as path from 'path';
  *                            into the sandbox. If the run is preserved (test
  *                            failure or PW_SANDBOX_SKIP_CLEANUP=1), the copied
  *                            tokens persist there until the sandbox is removed.
+ *   PW_SANDBOX_SEED_COPILOT  "1"/"true" to copy the real GitHub Copilot
+ *                            credentials into the sandbox user-home so
+ *                            Copilot tests start authenticated. Default is
+ *                            unseeded -- tests start unauthenticated. Source
+ *                            path is platform-specific:
+ *                              Windows: %LOCALAPPDATA%\github-copilot\
+ *                              macOS/Linux: ~/.config/github-copilot/
+ *                            Privacy note: real OAuth tokens are copied into
+ *                            the sandbox. If the run is preserved (test
+ *                            failure or PW_SANDBOX_SKIP_CLEANUP=1), the copied
+ *                            tokens persist there until the sandbox is removed.
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
  * subtree. Workers inherit it via the normal child-process env, and
@@ -94,6 +105,40 @@ export default async function globalSetup() {
   } else {
     console.log(
       `[sandbox] PW_SANDBOX_SEED_POSITAI not set; tests will start signed out of Posit Assistant`,
+    );
+  }
+
+  const seedCopilot = ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_SEED_COPILOT ?? '').toLowerCase(),
+  );
+  if (seedCopilot) {
+    const isWindows = process.platform === 'win32';
+    const realCopilot = isWindows
+      ? path.join(os.homedir(), 'AppData', 'Local', 'github-copilot')
+      : path.join(os.homedir(), '.config', 'github-copilot');
+    const destCopilot = isWindows
+      ? path.join(userHome, 'AppData', 'Local', 'github-copilot')
+      : path.join(userHome, '.config', 'github-copilot');
+    if (fs.existsSync(realCopilot)) {
+      try {
+        fs.cpSync(realCopilot, destCopilot, { recursive: true });
+      } catch (err) {
+        throw new Error(
+          `PW_SANDBOX_SEED_COPILOT: failed copying ${realCopilot} into sandbox: ${(err as Error).message}`,
+        );
+      }
+      console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
+      console.warn(
+        `[sandbox] WARNING: Real GitHub Copilot credentials were copied into the sandbox from ${realCopilot}. Tokens persist if the run is preserved or teardown fails. Only use this on machines with a dedicated test account.`,
+      );
+    } else {
+      console.log(
+        `[sandbox] PW_SANDBOX_SEED_COPILOT set but no real ${realCopilot} found; Copilot tests will start unauthenticated`,
+      );
+    }
+  } else {
+    console.log(
+      `[sandbox] PW_SANDBOX_SEED_COPILOT not set; Copilot tests will start unauthenticated`,
     );
   }
 
