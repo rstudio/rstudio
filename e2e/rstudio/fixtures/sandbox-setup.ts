@@ -102,10 +102,6 @@ export default async function globalSetup() {
         `[sandbox] PW_SANDBOX_SEED_POSITAI set but no real ~/.positai/ found; tests will start signed out of Posit Assistant`,
       );
     }
-  } else {
-    console.log(
-      `[sandbox] PW_SANDBOX_SEED_POSITAI not set; tests will start signed out of Posit Assistant`,
-    );
   }
 
   const seedCopilot = ['1', 'true'].includes(
@@ -114,7 +110,7 @@ export default async function globalSetup() {
   if (seedCopilot) {
     const isWindows = process.platform === 'win32';
     const realCopilot = isWindows
-      ? path.join(os.homedir(), 'AppData', 'Local', 'github-copilot')
+      ? path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'github-copilot')
       : path.join(os.homedir(), '.config', 'github-copilot');
     const destCopilot = isWindows
       ? path.join(userHome, 'AppData', 'Local', 'github-copilot')
@@ -136,10 +132,6 @@ export default async function globalSetup() {
         `[sandbox] PW_SANDBOX_SEED_COPILOT set but no real ${realCopilot} found; Copilot tests will start unauthenticated`,
       );
     }
-  } else {
-    console.log(
-      `[sandbox] PW_SANDBOX_SEED_COPILOT not set; Copilot tests will start unauthenticated`,
-    );
   }
 
   process.env.PW_SANDBOX = sandbox;
