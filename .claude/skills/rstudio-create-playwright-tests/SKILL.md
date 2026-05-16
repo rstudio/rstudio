@@ -182,8 +182,20 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 - `PW_SANDBOX_ROOT_CREATE` — when `"true"`/`"1"`, auto-create `PW_SANDBOX_ROOT` if missing. Default `false` (fail loud on typos).
 - `PW_SANDBOX_SKIP_CLEANUP` — when `"true"`/`"1"`, preserve the sandbox at end of run regardless of pass/fail.
 - `PW_SANDBOX_SEED_POSITAI` — when `"true"`/`"1"`, copy the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in. Default unseeded (signed out). Tokens land inside the sandbox and persist on failed runs -- only set on machines using a dedicated test account.
+- `PW_SANDBOX_SEED_COPILOT` — when `"true"`/`"1"`, copy the real GitHub Copilot credentials (`%LOCALAPPDATA%\github-copilot\` on Windows, `~/.config/github-copilot/` on macOS/Linux) into the sandbox so Copilot tests start authenticated. Default unseeded. Same persistence and account caveats as `PW_SANDBOX_SEED_POSITAI`.
 
 `PW_SANDBOX` is internal -- set by the `globalSetup` hook to the absolute path of the auto-created sandbox subtree. Workers, the R workdir helper, and the `globalTeardown` all read it. Don't set it manually.
+
+**What the sandbox redirects (and what that means for new tests):**
+
+- `HOME` / `USERPROFILE` point at `$PW_SANDBOX/user-home/` for the whole run. Anything an R script or RStudio process resolves via `~`, `path.expand("~")`, or the OS home APIs lands there, not in the real user profile.
+- On Windows, `%LOCALAPPDATA%` and `%APPDATA%` resolve under `$PW_SANDBOX/user-home/AppData/`. Credential dirs (`github-copilot`, etc.) are empty by default.
+- `RSTUDIO_DATA_HOME` points at `$PW_SANDBOX/data-home/`, so per-user RStudio state (prefs, command history, recent projects) starts empty.
+- Posit Assistant and Copilot tests therefore **start signed out / unauthenticated by default**. New tests in those areas must drive the in-app sign-in flow (or `test.skip()` when not seeded) -- never assume host credentials are visible.
+- Don't reach into the host profile (`os.homedir()`, `process.env.LOCALAPPDATA`, etc.) from test code. Use the sandbox-redirected paths or pass through R, which already sees the redirected `HOME`.
+- Don't roll your own temp dirs (`os.tmpdir()`, `fs.mkdtempSync` outside `$PW_SANDBOX`). Use `useSuiteSandbox()` / `createSandbox()` so everything lives under the umbrella and gets cleaned up consistently.
+
+**Remote-rsession (Server) paths:** when handing an R-side path that originated on the runner side, account for cross-filesystem runs -- the sandbox path may not exist on the rsession host. The existing `rootExpr()` IIFE in `utils/sandbox.ts` falls back to `dirname(tempdir())` on the rsession side when the runner path is missing; any new helper that ships a runner-side path to R needs the same fallback or it will fail in remote-rsession mode.
 
 **Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
 
