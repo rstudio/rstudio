@@ -160,7 +160,6 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     tempConfig = createTempConfig();
   }
   const configRoot = tempConfig.root;
-  console.log(`[sandbox] root: ${SANDBOX}`);
   console.log(`[sandbox] this spec's config: ${configRoot}`);
 
   // Start RStudio with remote debugging enabled

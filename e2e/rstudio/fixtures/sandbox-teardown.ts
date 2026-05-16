@@ -31,5 +31,11 @@ export default async function globalTeardown() {
     return;
   }
 
-  await fs.promises.rm(sandbox, { recursive: true, force: true });
+  try {
+    await fs.promises.rm(sandbox, { recursive: true });
+  } catch (err) {
+    console.warn(
+      `[sandbox] failed to remove ${sandbox}: ${(err as Error).message} -- left in place`,
+    );
+  }
 }

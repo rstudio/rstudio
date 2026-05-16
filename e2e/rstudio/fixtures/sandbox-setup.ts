@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 /**
- * Mint a per-invocation sandbox directory and export its path as PW_SANDBOX.
+ * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
  *
  * The sandbox is the single rooted tree under which every test-side artifact
  * lives: per-spec config trees, R workdirs, the shared data-home
@@ -21,8 +21,10 @@ import * as path from 'path';
  *                            sandbox user-home so Posit Assistant tests start
  *                            signed in. Default is unseeded -- tests start
  *                            signed out and must run the in-app sign-in flow.
- *                            Privacy note: tokens land inside the sandbox and
- *                            persist on failed runs until the user deletes it.
+ *                            Privacy note: real OAuth/API tokens are copied
+ *                            into the sandbox. If the run is preserved (test
+ *                            failure or PW_SANDBOX_SKIP_CLEANUP=1), the copied
+ *                            tokens persist there until the sandbox is removed.
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
  * subtree. Workers inherit it via the normal child-process env, and
@@ -39,7 +41,13 @@ export default async function globalSetup() {
         `PW_SANDBOX_ROOT="${parent}" does not exist; set PW_SANDBOX_ROOT_CREATE=1 to auto-create`,
       );
     }
-    fs.mkdirSync(parent, { recursive: true });
+    try {
+      fs.mkdirSync(parent, { recursive: true });
+    } catch (err) {
+      throw new Error(
+        `Failed to create PW_SANDBOX_ROOT="${parent}": ${(err as Error).message}`,
+      );
+    }
   }
 
   const sandbox = fs.mkdtempSync(path.join(parent, 'pw_sandbox_'));
@@ -67,7 +75,13 @@ export default async function globalSetup() {
   if (seedPositai) {
     const realPositai = path.join(os.homedir(), '.positai');
     if (fs.existsSync(realPositai)) {
-      fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
+      try {
+        fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
+      } catch (err) {
+        throw new Error(
+          `PW_SANDBOX_SEED_POSITAI: failed copying ${realPositai} into sandbox: ${(err as Error).message}`,
+        );
+      }
       console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
       console.warn(
         `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.positai. Tokens persist if the run is preserved or teardown fails. Only use this on machines with a dedicated test account.`,

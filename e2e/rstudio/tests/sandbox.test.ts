@@ -23,12 +23,18 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
     expect(fs.existsSync(path.join(SANDBOX!, 'user-home'))).toBe(true);
 
     // workers: 1 in playwright.config.ts means there's exactly one config_*
-    // dir per invocation. If parallel workers are ever enabled, this needs
-    // to match against the active launch's configRoot.
+    // dir per invocation. If parallel workers are ever enabled, expose
+    // session.configRoot from DesktopSession and assert against that path
+    // instead of scanning the sandbox directory.
     const configDirs = fs.readdirSync(SANDBOX!).filter(e => e.startsWith('config_'));
-    expect(configDirs.length).toBeGreaterThan(0);
+    expect(configDirs.length).toBe(1);
 
-    const electronData = path.join(SANDBOX!, configDirs[0], 'electron-userdata');
+    const configRoot = path.join(SANDBOX!, configDirs[0]);
+    expect(
+      fs.existsSync(path.join(configRoot, 'config-home', 'rstudio-prefs.json')),
+    ).toBe(true);
+
+    const electronData = path.join(configRoot, 'electron-userdata');
     expect(fs.existsSync(electronData)).toBe(true);
     // Electron writes Local State asynchronously at startup. Poll for it
     // rather than asserting readdirSync().length > 0 on a single read.

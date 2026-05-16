@@ -1,11 +1,12 @@
 import type { Page } from '@playwright/test';
+import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
 import { typeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
 
 /**
  * Prefix for per-suite R workdir subdirectories created inside the sandbox.
- * Used by createSandbox() to mint the directory and by the two project specs
+ * Used by createSandbox() to create the workdir and by the two project specs
  * that detect leftover sandbox paths in the saved default-project-location pref
  * (see tests/projects/create_projects.test.ts and project_trust_dialog.test.ts).
  * Exported so the prefix is a single source of truth: if it changes, the specs
@@ -65,6 +66,17 @@ export async function createSandbox(page: Page): Promise<string> {
     if (match) {
       const dir = match[1].trim();
       console.log(`Sandbox: ${dir}`);
+      // If the workdir's parent isn't PW_SANDBOX, the adaptive rootExpr()
+      // chose the dirname(tempdir()) fallback on the rsession host -- meaning
+      // PW_SANDBOX doesn't exist there (remote-rsession Server mode). Surface
+      // that explicitly so it's clear the workdir won't be auto-cleaned.
+      const sandbox = process.env.PW_SANDBOX;
+      const normalize = (p: string) => p.replace(/\\/g, '/');
+      if (sandbox && !normalize(dir).startsWith(normalize(sandbox) + '/')) {
+        console.warn(
+          `[sandbox] R workdir ${dir} is not under PW_SANDBOX (${sandbox}); rsession appears to be on a different host. Workdir will not be auto-cleaned.`,
+        );
+      }
       return dir;
     }
   }
