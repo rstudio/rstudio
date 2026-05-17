@@ -157,7 +157,9 @@ When project isolation is needed, use a fixed project name per test suite. The l
 
 ### Sandbox (R-side scratch directory)
 
-Any spec that creates files or directories on the R-side filesystem must route those writes into a **sandbox** — a unique per-spec subdirectory under the OS temp parent. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+Any spec that creates files or directories on the R-side filesystem must route those writes into a **workdir** — a unique per-spec subdirectory under the per-invocation sandbox at `$PW_SANDBOX`. This prevents tests from polluting `~/`, the repo tree, or wherever R's cwd happened to be at the time.
+
+The sandbox itself is created once per `playwright test` invocation by a `globalSetup` hook (`fixtures/sandbox-setup.ts`). Every test-side artifact -- per-spec config trees, R workdirs, the shared `data-home/`, and the shared `user-home/` (the redirected HOME/USERPROFILE) -- lives under it. A `globalTeardown` removes the entire subtree at end of run unless `PW_SANDBOX_SKIP_CLEANUP` is set or a test failed, in which case the path is logged for triage.
 
 **Pattern:** add to every spec that creates files/dirs:
 
@@ -171,17 +173,42 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 });
 ```
 
-`useSuiteSandbox()` registers `beforeAll`/`afterAll` hooks that create and remove the directory, and `setwd()`s into it. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the sandbox, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
+`useSuiteSandbox()` registers a `beforeAll` hook that creates the workdir under `$PW_SANDBOX` and `setwd()`s into it. There is no `afterAll` cleanup -- the global teardown removes the entire `$PW_SANDBOX` subtree at end of run. `sandbox.dir` is populated before any test runs; use it when you need an absolute path. If you only need relative paths to land in the workdir, calling `useSuiteSandbox();` and discarding the return value is enough -- cwd is already redirected.
 
 **Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it — override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
 
-**Env vars (optional):**
-- `PW_SANDBOX` — override the sandbox root. Unset uses `dirname(tempdir())`.
-- `PW_SANDBOX_CREATE` — when `"true"`/`"1"`, auto-create an overridden root if missing. Default `false` (fail loud on typos).
+**Env vars (all optional):**
+- `PW_SANDBOX_ROOT` — parent directory under which the per-invocation sandbox is created. Defaults to `os.tmpdir()`.
+- `PW_SANDBOX_ROOT_CREATE` — when `"true"`/`"1"`, auto-create `PW_SANDBOX_ROOT` if missing. Default `false` (fail loud on typos).
+- `PW_SANDBOX_SKIP_CLEANUP` — when `"true"`/`"1"`, preserve the sandbox at end of run regardless of pass/fail.
+- `PW_SANDBOX_SEED_POSITAI` — when `"true"`/`"1"`, copy the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in. Default unseeded (signed out). Tokens land inside the sandbox and persist on failed runs -- only set on machines using a dedicated test account.
+- `PW_SANDBOX_SEED_COPILOT` — when `"true"`/`"1"`, copy the real GitHub Copilot credentials (`%LOCALAPPDATA%\github-copilot\` on Windows, `~/.config/github-copilot/` on macOS/Linux) into the sandbox so Copilot tests start authenticated. Default unseeded. Same persistence and account caveats as `PW_SANDBOX_SEED_POSITAI`.
 
-**Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
+`PW_SANDBOX` is internal -- set by the `globalSetup` hook to the absolute path of the auto-created sandbox subtree. Workers, the R workdir helper, and the `globalTeardown` all read it. Don't set it manually.
 
-**Low-level helpers** (`createSandbox` / `removeSandbox`) are also exported from `@utils/sandbox` if you need to manage the lifecycle manually.
+**What the sandbox redirects (and what that means for new tests):**
+
+- `HOME` / `USERPROFILE` point at `$PW_SANDBOX/user-home/` for the whole run. Anything an R script or RStudio process resolves via `~`, `path.expand("~")`, or the OS home APIs lands there, not in the real user profile.
+- On Windows, `%LOCALAPPDATA%` and `%APPDATA%` resolve under `$PW_SANDBOX/user-home/AppData/`. Credential dirs (`github-copilot`, etc.) are empty by default.
+- `RSTUDIO_DATA_HOME` points at `$PW_SANDBOX/data-home/`, so per-user RStudio state (prefs, command history, recent projects) starts empty.
+- Posit Assistant and Copilot tests therefore **start signed out / unauthenticated by default**. New tests in those areas must drive the in-app sign-in flow (or `test.skip()` when not seeded) -- never assume host credentials are visible.
+- Don't reach into the host profile (`os.homedir()`, `process.env.LOCALAPPDATA`, etc.) from test code. Use the sandbox-redirected paths or pass through R, which already sees the redirected `HOME`.
+- Don't roll your own temp dirs (`os.tmpdir()`, `fs.mkdtempSync` outside `$PW_SANDBOX`). Use `useSuiteSandbox()` / `createSandbox()` so everything lives under the umbrella and gets cleaned up consistently.
+
+**Remote-rsession (Server) paths:** when handing an R-side path that originated on the runner side, account for cross-filesystem runs -- the sandbox path may not exist on the rsession host. The existing `rootExpr()` IIFE in `utils/sandbox.ts` falls back to `dirname(tempdir())` on the rsession side when the runner path is missing; any new helper that ships a runner-side path to R needs the same fallback or it will fail in remote-rsession mode.
+
+**Tests that exercise a user-home-relative product path** (e.g. `chat-user-skills.test.ts` exercises `~/.positai/skills/`) should resolve `~` against the sandbox's redirected user-home, not against the runner's `os.homedir()`. The rstudio child process and its descendants (Databot, etc.) inherit `HOME` / `USERPROFILE` = `$PW_SANDBOX/user-home`, so the absolute path to use is computed from `process.env.PW_SANDBOX`. Guard against the env var being unset so a setup-ordering regression fails loud rather than producing `undefined/user-home`:
+
+```ts
+const PW_SANDBOX = process.env.PW_SANDBOX;
+if (!PW_SANDBOX) throw new Error('PW_SANDBOX is not set');
+const USER_HOME = path.join(PW_SANDBOX, 'user-home');
+// ... then path.join(USER_HOME, '.positai', 'skills', ...)
+```
+
+Don't compute paths from Node's `os.homedir()` -- that returns the host home, which the rstudio child can't see.
+
+**Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to mint an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
 
 ### Cross-Platform Considerations
 

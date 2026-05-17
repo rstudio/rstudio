@@ -1,4 +1,4 @@
-import { homedir } from 'os';
+import * as path from 'path';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -20,14 +20,22 @@ const PROJECT_SKILL_NAME = 'custom-data-summary';
 const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 
 // ---------------------------------------------------------------------------
-// User-level skill (lives in ~/.positai/skills/ under the user home dir)
+// User-level skill (lives in ~/.positai/skills/ under the user home dir).
 //
-// On Windows, R's ~ expands to Documents, not the actual home directory.
-// Databot uses Node's os.homedir() for tilde expansion, so we must use
-// the same value to place the file where databot will look.
+// The Playwright sandbox redirects HOME / USERPROFILE for the rstudio child
+// process (and therefore Databot, which inherits its env) to
+// $PW_SANDBOX/user-home/. We compute the absolute path from the sandbox so
+// the file lands where Databot looks, regardless of what the runner's own
+// os.homedir() returns.
 // ---------------------------------------------------------------------------
 
-const USER_HOME = homedir().replace(/\\/g, '/');
+const PW_SANDBOX = process.env.PW_SANDBOX;
+if (!PW_SANDBOX) {
+  throw new Error(
+    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any spec is loaded',
+  );
+}
+const USER_HOME = path.join(PW_SANDBOX, 'user-home').replace(/\\/g, '/');
 const USER_SKILL_NAME = 'custom-code-review';
 const USER_SKILL_DIR = `${USER_HOME}/.positai/skills/${USER_SKILL_NAME}`;
 const USER_SKILL_PATH = `${USER_SKILL_DIR}/SKILL.md`;
@@ -226,7 +234,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     expect(responseText).toContain(PROJECT_MARKER);
   });
 
-  test('user-level skill markers appear in response', async () => {
+  test('user-level skill is selected when its description matches the prompt', async () => {
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -243,10 +251,15 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
       return !isStillProcessing && messageCount > initialCount;
     }, 120000);
 
-    // Verify the response contains the marker from our user-level skill
+    // Databot emits `skill: <name>` in the message when the model selects a
+    // registered skill. That happens iff the skill was discovered at backend
+    // init -- which iff the SKILL.md was read from $HOME/.positai/skills/,
+    // which here is sandbox-redirected to $PW_SANDBOX/user-home/.positai/skills/.
+    // We avoid asserting on the marker emitted inside the SKILL.md body because
+    // LLMs are unreliable at reproducing long opaque tokens verbatim.
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    expect(responseText).toContain(USER_MARKER);
+    expect(responseText).toContain(`skill: ${USER_SKILL_NAME}`);
   });
 });
