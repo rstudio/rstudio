@@ -25,21 +25,31 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
     // The worker-scoped fixture launches RStudio once per worker, but tests
     // that drive their own Desktop instances (e.g., the multi-Desktop tests)
     // or relaunch from scratch can add more config dirs over a full-suite
-    // run. Assert that at least one exists; the structural checks below run
-    // against any of them since the layout is identical.
+    // run. Validate the layout against *every* config dir so a partial-init
+    // sibling (e.g., from a Desktop spawn that died mid-launch) can't pass
+    // silently behind a healthy one chosen by readdir order.
     const configDirs = fs.readdirSync(SANDBOX!).filter(e => e.startsWith('config_'));
     expect(configDirs.length).toBeGreaterThanOrEqual(1);
 
-    const configRoot = path.join(SANDBOX!, configDirs[0]);
-    expect(
-      fs.existsSync(path.join(configRoot, 'config-home', 'rstudio-prefs.json')),
-    ).toBe(true);
+    for (const dir of configDirs) {
+      const configRoot = path.join(SANDBOX!, dir);
+      expect(
+        fs.existsSync(path.join(configRoot, 'config-home', 'rstudio-prefs.json')),
+        `${dir}: expected config-home/rstudio-prefs.json to exist`,
+      ).toBe(true);
 
-    const electronData = path.join(configRoot, 'electron-userdata');
-    expect(fs.existsSync(electronData)).toBe(true);
-    // Electron writes Local State asynchronously at startup. Poll for it
-    // rather than asserting readdirSync().length > 0 on a single read.
-    await expect.poll(() => fs.existsSync(path.join(electronData, 'Local State'))).toBe(true);
+      const electronData = path.join(configRoot, 'electron-userdata');
+      expect(
+        fs.existsSync(electronData),
+        `${dir}: expected electron-userdata to exist`,
+      ).toBe(true);
+      // Electron writes Local State asynchronously at startup. Poll for it
+      // rather than asserting readdirSync().length > 0 on a single read.
+      await expect.poll(
+        () => fs.existsSync(path.join(electronData, 'Local State')),
+        { message: `${dir}: expected electron-userdata/Local State to exist` },
+      ).toBe(true);
+    }
   });
 });
 

@@ -29,7 +29,13 @@ const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 // os.homedir() returns.
 // ---------------------------------------------------------------------------
 
-const USER_HOME = path.join(process.env.PW_SANDBOX!, 'user-home').replace(/\\/g, '/');
+const PW_SANDBOX = process.env.PW_SANDBOX;
+if (!PW_SANDBOX) {
+  throw new Error(
+    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any spec is loaded',
+  );
+}
+const USER_HOME = path.join(PW_SANDBOX, 'user-home').replace(/\\/g, '/');
 const USER_SKILL_NAME = 'custom-code-review';
 const USER_SKILL_DIR = `${USER_HOME}/.positai/skills/${USER_SKILL_NAME}`;
 const USER_SKILL_PATH = `${USER_SKILL_DIR}/SKILL.md`;

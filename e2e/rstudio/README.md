@@ -216,7 +216,16 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 
 **Wizard-driven tests:** the New Project Wizard's parent-directory field is read-only. `setwd()` doesn't redirect it -- override the `default_project_location` preference via `.rs.api.writeRStudioPreference()` and restore it in `afterAll`. See `create_projects.test.ts` for the pattern.
 
-**Tests that exercise a user-home-relative product path** (e.g. `chat-user-skills.test.ts` exercises `~/.positai/skills/`) should resolve `~` against the sandbox's redirected user-home, not against the runner's `os.homedir()`. The rstudio child process and its descendants (Databot, etc.) inherit `HOME` / `USERPROFILE` = `$PW_SANDBOX/user-home`, so the absolute path to use is `path.join(process.env.PW_SANDBOX!, 'user-home', '.positai', 'skills', ...)`. Don't compute paths from Node's `os.homedir()` -- that returns the host home, which the rstudio child can't see.
+**Tests that exercise a user-home-relative product path** (e.g. `chat-user-skills.test.ts` exercises `~/.positai/skills/`) should resolve `~` against the sandbox's redirected user-home, not against the runner's `os.homedir()`. The rstudio child process and its descendants (Databot, etc.) inherit `HOME` / `USERPROFILE` = `$PW_SANDBOX/user-home`, so the absolute path to use is computed from `process.env.PW_SANDBOX`. Guard against the env var being unset so a setup-ordering regression fails loud rather than producing `undefined/user-home`:
+
+```ts
+const PW_SANDBOX = process.env.PW_SANDBOX;
+if (!PW_SANDBOX) throw new Error('PW_SANDBOX is not set');
+const USER_HOME = path.join(PW_SANDBOX, 'user-home');
+// ... then path.join(USER_HOME, '.positai', 'skills', ...)
+```
+
+Don't compute paths from Node's `os.homedir()` -- that returns the host home, which the rstudio child can't see.
 
 **Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to create an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
 
