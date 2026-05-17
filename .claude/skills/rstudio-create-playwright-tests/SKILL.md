@@ -197,7 +197,7 @@ test('writes land in sandbox', async ({ rstudioPage: page }) => {
 
 **Remote-rsession (Server) paths:** when handing an R-side path that originated on the runner side, account for cross-filesystem runs -- the sandbox path may not exist on the rsession host. The existing `rootExpr()` IIFE in `utils/sandbox.ts` falls back to `dirname(tempdir())` on the rsession side when the runner path is missing; any new helper that ships a runner-side path to R needs the same fallback or it will fail in remote-rsession mode.
 
-**Exception:** tests that specifically exercise a fixed path in `~/` as part of the product behavior under test (e.g., `chat-user-skills.test.ts` exercises `~/.positai/skills/`) stay as-is. Sandbox is for redirecting incidental filesystem writes, not for rewriting product semantics.
+**Tests that exercise a user-home-relative product path** (e.g. `chat-user-skills.test.ts` exercises `~/.positai/skills/`) should resolve `~` against the sandbox's redirected user-home, not against the runner's `os.homedir()`. The rstudio child process and its descendants (Databot, etc.) inherit `HOME` / `USERPROFILE` = `$PW_SANDBOX/user-home`, so the absolute path to use is `path.join(process.env.PW_SANDBOX!, 'user-home', '.positai', 'skills', ...)`. Don't compute paths from Node's `os.homedir()` -- that returns the host home, which the rstudio child can't see.
 
 **Low-level helper:** `createSandbox` is also exported from `@utils/sandbox` if you need to mint an extra workdir under `$PW_SANDBOX` without going through `useSuiteSandbox()`.
 

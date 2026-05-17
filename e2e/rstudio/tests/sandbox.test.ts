@@ -22,12 +22,13 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
     expect(fs.existsSync(path.join(SANDBOX!, 'data-home'))).toBe(true);
     expect(fs.existsSync(path.join(SANDBOX!, 'user-home'))).toBe(true);
 
-    // workers: 1 in playwright.config.ts means there's exactly one config_*
-    // dir per invocation. If parallel workers are ever enabled, expose
-    // session.configRoot from DesktopSession and assert against that path
-    // instead of scanning the sandbox directory.
+    // The worker-scoped fixture launches RStudio once per worker, but tests
+    // that drive their own Desktop instances (e.g., the multi-Desktop tests)
+    // or relaunch from scratch can add more config dirs over a full-suite
+    // run. Assert that at least one exists; the structural checks below run
+    // against any of them since the layout is identical.
     const configDirs = fs.readdirSync(SANDBOX!).filter(e => e.startsWith('config_'));
-    expect(configDirs.length).toBe(1);
+    expect(configDirs.length).toBeGreaterThanOrEqual(1);
 
     const configRoot = path.join(SANDBOX!, configDirs[0]);
     expect(
