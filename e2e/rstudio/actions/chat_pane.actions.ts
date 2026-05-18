@@ -258,7 +258,7 @@ export class ChatPaneActions {
 
   async getPositAssistantVersion(): Promise<string> {
     try {
-      await this.chatPane.settingsBtn.click({ timeout: 5000 });
+      await this.chatPane.moreBtn.click({ timeout: 5000 });
       await sleep(500);
 
       await this.chatPane.aboutItem.first().click();

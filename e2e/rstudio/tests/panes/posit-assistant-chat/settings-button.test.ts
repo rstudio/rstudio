@@ -36,10 +36,10 @@ test.describe.serial('Settings Button', () => {
 
   test('settings menu opens with expected items and About dialog', async ({ rstudioPage: page }) => {
     // Verify settings button is visible
-    await expect(chatPane.settingsBtn).toBeVisible({ timeout: 10000 });
+    await expect(chatPane.moreBtn).toBeVisible({ timeout: 10000 });
 
     // Open the dropdown menu
-    await chatPane.settingsBtn.click();
+    await chatPane.moreBtn.click();
     await sleep(500);
 
     await expect(chatPane.settingsMenu).toBeVisible({ timeout: 5000 });

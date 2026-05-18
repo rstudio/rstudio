@@ -12,6 +12,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
   let versions: EnvironmentVersions;
+  let missingPackages: string[] = [];
 
   const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
 
@@ -23,6 +24,10 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
 
     versions = await consoleActions.getEnvironmentVersions();
     await consoleActions.clearConsole();
+
+    // The prompt forbids the assistant from installing packages, so shiny + bslib
+    // must be present in the sandbox-redirected user library before the test runs.
+    missingPackages = await consoleActions.ensurePackages(['shiny', 'bslib', 'rstudioapi'], 180000);
 
     // Force Shiny apps to open in the Viewer pane
     await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("shiny_viewer_type", "pane")');
@@ -70,6 +75,8 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   });
 
   test('Create and run R Shiny tip calculator', async ({ rstudioPage: page }) => {
+    test.skip(missingPackages.length > 0, `Missing packages: ${missingPackages.join(', ')}`);
+
     // Start a fresh conversation
     await chatActions.startNewConversation();
 
