@@ -613,7 +613,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           if (editors[i].closest('#rstudio_console_input')) continue;
           var env = editors[i].env;
           if (env && env.editor) {
-            env.editor.scrollToLine(20, false);
+            env.editor.scrollToLine(0, false);
             break;
           }
         }
@@ -621,7 +621,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sleep(1000);
 
       const rowBefore = await sourceActions.getFirstVisibleRow();
-      console.log(`  After scrolling viewport to middle: first visible row = ${rowBefore}`);
+      console.log(`  After scrolling viewport to top: first visible row = ${rowBefore}`);
 
       // Verify the status bar label is still clickable (cursor: pointer = handler is set).
       // The click handler is attached to the "Completion response received" label
