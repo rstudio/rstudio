@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 15 |
+| Files fully converted | 16 |
 | Files partially converted | 0 |
-| Files not started | 17 |
+| Files not started | 16 |
 
 ## Conversion Status
 
@@ -26,7 +26,7 @@ Target: `e2e/rstudio/tests/`
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
 | test_desktop_Package_Installation.py | 1 | — | Not started | |
 | test_desktop_PlotsPane.py | 11 | — | Not started | |
-| test_desktop_R.py | 1 | — | Not started | |
+| test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
 | test_desktop_R_Session_Restart.py | 1 | — | Not started | |
 | test_desktop_terminal.py | 4 | — | Not started | |
 | test_desktop_ViewerPane.py | 1 | panes/viewer/htmlwidgets.test.ts (1) | Complete | |
