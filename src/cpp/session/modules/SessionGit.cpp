@@ -3059,7 +3059,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    // already covered by an existing ignore rule
    bool assistantActive = module_context::isPositAssistantEnabled();
    bool positaiExists = repoRoot.completeChildPath(".positai").exists();
-   bool positaiAlreadyIgnored = git.isIgnored(".positai");
+   bool positaiAlreadyIgnored = positaiExists && git.isIgnored(".positai");
    bool wantPositai = assistantActive && positaiExists && !positaiAlreadyIgnored;
 
    // Add stuff to .gitignore
@@ -3257,23 +3257,41 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
+void reaugmentGitIgnore()
+{
+   if (s_git_.root().isEmpty())
+      return;
+
+   FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
+   Error error = augmentGitIgnore(gitIgnore);
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
+{
+   // close the window between initializeGit() and file monitor start:
+   // if .positai appeared in that interval, augmentGitIgnore wasn't aware
+   // of it. Re-run now that monitoring is live; augmentGitIgnore is
+   // idempotent.
+   reaugmentGitIgnore();
+}
+
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    if (s_git_.root().isEmpty())
       return;
 
-   FilePath positaiPath = s_git_.root().completeChildPath(".positai");
-   for (auto& event : events)
+   std::string positaiAbsPath =
+         s_git_.root().completeChildPath(".positai").getAbsolutePath();
+   for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
-      if (event.fileInfo().absolutePath() != positaiPath.getAbsolutePath())
+      if (event.fileInfo().absolutePath() != positaiAbsPath)
          continue;
 
-      FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
-      Error error = augmentGitIgnore(gitIgnore);
-      if (error)
-         LOG_ERROR(error);
+      reaugmentGitIgnore();
       break;
    }
 }
@@ -3474,6 +3492,7 @@ core::Error initialize()
    // subscribe to project file monitor so we can update .gitignore when
    // .positai appears at the repo root mid-session
    projects::FileMonitorCallbacks fileMonitorCallbacks;
+   fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
    fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Git", fileMonitorCallbacks);
 

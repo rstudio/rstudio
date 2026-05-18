@@ -543,22 +543,40 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
+void reaugmentSvnIgnore()
+{
+   if (s_workingDir.isEmpty())
+      return;
+
+   Error error = augmentSvnIgnore();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
+{
+   // close the window between initializeSvn() and file monitor start:
+   // if .positai appeared in that interval, augmentSvnIgnore wasn't aware
+   // of it. Re-run now that monitoring is live; augmentSvnIgnore is
+   // idempotent.
+   reaugmentSvnIgnore();
+}
+
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    if (s_workingDir.isEmpty())
       return;
 
-   FilePath positaiPath = s_workingDir.completeChildPath(".positai");
-   for (auto& event : events)
+   std::string positaiAbsPath =
+         s_workingDir.completeChildPath(".positai").getAbsolutePath();
+   for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
-      if (event.fileInfo().absolutePath() != positaiPath.getAbsolutePath())
+      if (event.fileInfo().absolutePath() != positaiAbsPath)
          continue;
 
-      Error error = augmentSvnIgnore();
-      if (error)
-         LOG_ERROR(error);
+      reaugmentSvnIgnore();
       break;
    }
 }
@@ -1838,8 +1856,9 @@ Error augmentSvnIgnore()
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      if (wantPositai &&
-          !regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
+      bool positaiAlreadyInIgnore =
+            regex_utils::search(svnIgnore, boost::regex("^\\.positai$"));
+      if (wantPositai && !positaiAlreadyInIgnore)
          additions += ".positai\n";
 
       if (additions.empty())
@@ -1872,6 +1891,7 @@ Error initialize()
    // subscribe to project file monitor so we can update svn:ignore when
    // .positai appears at the working dir root mid-session
    projects::FileMonitorCallbacks fileMonitorCallbacks;
+   fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
    fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;
    projects::projectContext().subscribeToFileMonitor("SVN", fileMonitorCallbacks);
 

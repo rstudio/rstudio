@@ -15,6 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <cstring>
 #include <sys/stat.h>
 
 #include <boost/format.hpp>
@@ -672,6 +673,13 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // ... but allow e.g. .github
       "/.git/",
 
+      // ignore contents of AI tool state directories. The trailing slash is
+      // important: it excludes children but lets the directory entry itself
+      // ("/proj/.positai") pass through so the allowlist in fileMonitorFilter
+      // can react to its creation.
+      "/.positai/",
+      "/.claude/",
+
       // ignore some directories within the revdep folder
       "/revdep/checks/",
       "/revdep/library/",
@@ -791,6 +799,11 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
+   // re-augment .Rbuildignore to pick up any .positai/.claude that were
+   // created between project init and file monitor start (small but real
+   // window). augmentRbuildignore is idempotent.
+   augmentRbuildignore();
+
    // notify subscribers
    onMonitoringEnabled_(files);
 }
@@ -806,7 +819,7 @@ void ProjectContext::fileMonitorFilesChanged(
 
    // if .positai or .claude was added at the project root, augment
    // .Rbuildignore now (we don't add these entries until the file exists)
-   for (auto& event : events)
+   for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
@@ -880,9 +893,9 @@ bool ProjectContext::fileMonitorFilter(
    // monitored directory recursively (irrespective of the filter)
    // and so we need the filter to apply to files which are 'ignored'
    // and yet still monitored in ignored sub-directories
-   std::string path = fileInfo.absolutePath();
+   const std::string& absPath = fileInfo.absolutePath();
    for (auto&& component : context.ignoredComponents)
-      if (boost::algorithm::icontains(path, component))
+      if (boost::algorithm::icontains(absPath, component))
          return false;
 
    // Allow .positai/.claude at the project root through the filter so we
@@ -891,11 +904,17 @@ bool ProjectContext::fileMonitorFilter(
    // or parent gitignore that already covers .positai/.claude would
    // otherwise drop the FileAdded event and prevent mid-session
    // augmentation. fileListingFilter would also drop them as hidden.
-   FilePath filePath(path);
-   if (filePath.getParent() == directory())
+   //
+   // Use a cheap string-suffix check before constructing FilePath so we
+   // don't pay the allocation cost for the ~all files that don't match.
+   std::size_t slashPos = absPath.find_last_of('/');
+   const char* filename = (slashPos == std::string::npos)
+         ? absPath.c_str()
+         : absPath.c_str() + slashPos + 1;
+   if (std::strcmp(filename, ".positai") == 0 ||
+       std::strcmp(filename, ".claude") == 0)
    {
-      std::string filename = filePath.getFilename();
-      if (filename == ".positai" || filename == ".claude")
+      if (FilePath(absPath).getParent() == directory())
          return true;
    }
 
@@ -909,7 +928,7 @@ bool ProjectContext::fileMonitorFilter(
       // Pass the absolute path directly; libgit2's git_ignore_path_is_ignored
       // accepts absolute paths and internally computes the workdir-relative
       // path. This correctly handles projects nested inside a larger git repo.
-      if (context.pGit->isIgnored(path))
+      if (context.pGit->isIgnored(absPath))
          return false;
    }
 
