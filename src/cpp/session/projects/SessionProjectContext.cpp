@@ -382,6 +382,18 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // initialize members
    file_ = projectFile;
    directory_ = file_.getParent();
+
+   // Canonicalize the project directory so it matches what the file
+   // monitor will see (FSEvents on macOS reports canonical paths -- e.g.
+   // /private/tmp/foo rather than /tmp/foo). Without this, paths from
+   // file change events won't compare equal to directory() and any
+   // root-anchored matches downstream silently miss.
+   if (directory_.exists())
+   {
+      std::string canonical = directory_.getCanonicalPath();
+      if (!canonical.empty())
+         directory_ = FilePath(canonical);
+   }
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;
