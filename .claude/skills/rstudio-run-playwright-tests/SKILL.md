@@ -91,7 +91,7 @@ Every invocation gets a per-run sandbox directory (created by `fixtures/sandbox-
 |----------|-------------|
 | `PW_ENV_FILE` | Path to a dotenv file loaded by `playwright.config.ts` at startup. Variables already set in the shell win over file values. |
 | `PW_CDP_PORT` | Override the Chrome DevTools Protocol port used for Desktop mode. Defaults to a random port in 9231-9299. |
-| `PW_PROJECT` | **Deprecated.** Prints a warning and is ignored. Use `--project=desktop|server` or `PW_RSTUDIO_MODE`. |
+| `PW_PROJECT` | **Deprecated.** Prints a warning and is ignored. Use `--project=desktop` or `--project=server`, or `PW_RSTUDIO_MODE`. |
 
 ## Common Options
 
