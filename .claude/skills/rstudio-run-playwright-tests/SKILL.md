@@ -70,6 +70,29 @@ PW_RSTUDIO_EDITION=pro PW_RSTUDIO_SERVER_URL=http://<ip> PW_RSTUDIO_SERVER_USER=
 - Always ask the user for the username and password -- never assume credentials
 - `PW_RSTUDIO_MODE=desktop|server` is a fallback when `--project` isn't passed; if both are set, `--project` wins
 
+## Sandbox
+
+Every invocation gets a per-run sandbox directory (created by `fixtures/sandbox-setup.ts`). The sandbox holds a temporary `user-home`, isolating tests from the user's real config.
+
+| Variable | Description |
+|----------|-------------|
+| `PW_SANDBOX` | Set internally by `sandbox-setup.ts` to the absolute path of the sandbox. Tests read it; you normally do not set it. |
+| `PW_SANDBOX_ROOT` | Parent dir under which the sandbox subtree is created. Defaults to `os.tmpdir()`. |
+| `PW_SANDBOX_ROOT_CREATE` | `1`/`true` to `mkdir` `PW_SANDBOX_ROOT` if it doesn't exist (otherwise sandbox-setup errors out). |
+| `PW_SANDBOX_SKIP_CLEANUP` | `1`/`true` to preserve the sandbox after the run (also preserved automatically on test failure). |
+| `PW_SANDBOX_SEED_POSITAI` | `1`/`true` to copy the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in. Default is unseeded. |
+| `PW_SANDBOX_SEED_COPILOT` | `1`/`true` to copy the real GitHub Copilot config (`~/.config/github-copilot/` on macOS/Linux, `%LOCALAPPDATA%\github-copilot\` on Windows) into the sandbox so Copilot tests start authenticated. Default is unseeded. |
+
+**Security note:** the seed flags copy real tokens into the sandbox. Tokens persist if the run is preserved or teardown fails. Only use on machines with a dedicated test account.
+
+## Other Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PW_ENV_FILE` | Path to a dotenv file loaded by `playwright.config.ts` at startup. Variables already set in the shell win over file values. |
+| `PW_CDP_PORT` | Override the Chrome DevTools Protocol port used for Desktop mode. Defaults to a random port in 9231-9299. |
+| `PW_PROJECT` | **Deprecated.** Prints a warning and is ignored. Use `--project=desktop` or `--project=server`, or `PW_RSTUDIO_MODE`. |
+
 ## Common Options
 
 - **Run a specific test by name:** `npx playwright test -g "test name here"`
