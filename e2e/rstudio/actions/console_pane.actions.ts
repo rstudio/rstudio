@@ -1,7 +1,8 @@
 import type { Page } from 'playwright';
+import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
-import { sleep } from '../utils/constants';
+import { sleep, TIMEOUTS } from '../utils/constants';
 
 interface InstallTarget {
   repos: string;
@@ -198,6 +199,29 @@ export class ConsolePaneActions {
       if (!ok) failed.push(pkg);
     }
     return failed;
+  }
+
+  /**
+   * Restart the R session and wait for the new session to be ready.
+   * Passes a timestamped marker expression as the post-restart command so
+   * the readiness signal is unambiguous -- the marker only appears after
+   * the restart finishes and the new R session executes it.
+   *
+   * @param options.clean - true: clear workspace and unload packages;
+   *                        false: preserve workspace and loaded packages.
+   *                        Omit to use .rs.api.restartSession() defaults.
+   */
+  async restartSession(options?: { clean?: boolean }): Promise<void> {
+    await this.clearConsole();
+    const marker = `__RESTART_${Date.now()}__`;
+    const args: string[] = [`'cat("${marker}")'`];
+    if (options?.clean !== undefined) {
+      args.push(`clean = ${options.clean ? 'TRUE' : 'FALSE'}`);
+    }
+    await this.typeInConsole(`.rs.api.restartSession(${args.join(', ')})`);
+    await expect(this.consolePane.consoleOutput).toContainText(marker, {
+      timeout: TIMEOUTS.sessionRestart,
+    });
   }
 
   /**
