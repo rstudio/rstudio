@@ -234,10 +234,25 @@ Handle registerMonitor(const FilePath& filePath,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
 {
+   // FSEvents reports event paths in canonical form (e.g. /private/tmp/foo
+   // even when we registered /tmp/foo, because /tmp is a symlink on macOS).
+   // Canonicalize up front so the rootPath, the file tree we build during
+   // the initial scan, and the paths reported in change events all agree.
+   // Without this, the tree lookup in discoverAndProcessFileChanges fails
+   // and no FileChangeEvents are dispatched for projects opened via a
+   // symlinked path.
+   FilePath rootPath = filePath;
+   if (filePath.exists())
+   {
+      std::string canonical = filePath.getCanonicalPath();
+      if (!canonical.empty())
+         rootPath = FilePath(canonical);
+   }
+
    // allocate file path
    CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
-                                       filePath.getAbsolutePath().c_str(),
+                                       rootPath.getAbsolutePath().c_str(),
                                        kCFStringEncodingUTF8);
    if (filePathRef == nullptr)
    {
@@ -264,7 +279,7 @@ Handle registerMonitor(const FilePath& filePath,
 
    // create and allocate FileEventContext (create auto-ptr in case we
    // return early, we'll call release later before returning)
-   FileEventContext* pContext = new FileEventContext(filePath);
+   FileEventContext* pContext = new FileEventContext(rootPath);
    pContext->recursive = recursive;
    pContext->filter = filter;
    std::unique_ptr<FileEventContext> autoPtrContext(pContext);
@@ -314,7 +329,7 @@ Handle registerMonitor(const FilePath& filePath,
    options.recursive = recursive;
    options.yield = true;
    options.filter = filter;
-   Error error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
+   Error error = scanFiles(FileInfo(rootPath), options, &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release
