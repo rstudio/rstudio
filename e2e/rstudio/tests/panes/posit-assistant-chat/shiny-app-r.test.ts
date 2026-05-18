@@ -55,6 +55,10 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@aut
     await chatActions.dismissSetupPrompts();
   });
 
+  test.beforeEach(() => {
+    test.skip(!isPositAiAuthenticated(), 'Posit AI authentication not detected in sandbox');
+  });
+
   test.afterAll(async ({ rstudioPage: page }) => {
     // Stop any running Shiny app via the Viewer pane's stop button
     const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
@@ -77,7 +81,9 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@aut
         } else {
           await interruptBtn.click();
         }
-        await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+        await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
+          console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
+        });
       }
     }
 
@@ -85,16 +91,14 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@aut
     const terminateDialog = page.locator('[role="alertdialog"]:has-text("Terminate R")');
     if (await terminateDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
       await terminateDialog.locator('button:has-text("Yes")').click();
-      await page.locator("[id^='rstudio_tb_interruptr']").waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+      await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
+        console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
+      });
     }
 
     // Clean up created file(s)
     await consoleActions.typeInConsole('unlink("app.R")');
     await sleep(1000);
-  });
-
-  test.beforeEach(() => {
-    test.skip(!isPositAiAuthenticated(), 'Posit AI not authenticated; set PW_SANDBOX_POSITAI_AUTH to run @auth tests');
   });
 
   test.beforeEach(async () => {
