@@ -21,7 +21,7 @@ export class ChatPane extends FramePageObject {
   public installBtn: Locator;
   public updateBtn: Locator;
   public ignoreBtn: Locator;
-  public settingsBtn: Locator;
+  public moreBtn: Locator;
   public settingsMenu: Locator;
   public configurePositAiItem: Locator;
   public aboutItem: Locator;
@@ -53,12 +53,12 @@ export class ChatPane extends FramePageObject {
     this.installBtn = this.frame.locator("button:has-text('Install')");
     this.updateBtn = this.frame.locator("button:has-text('Update')");
     this.ignoreBtn = this.frame.locator("button:has-text('Ignore')");
-    this.settingsBtn = this.frame.locator("xpath=//span[contains(text(), 'Settings')]/ancestor::button");
+    this.moreBtn = this.frame.getByRole('button', { name: 'More' });
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
     this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]");
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
-    this.newConversationBtn = this.frame.locator("button:has(svg.lucide-plus)");
-    this.historyBtn = this.frame.locator("button:has(svg.lucide-history)");
+    this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });
+    this.historyBtn = this.frame.getByRole('button', { name: 'Conversation history' });
     this.conversationList = this.frame.locator("[class*='conversation']");
 
     // Blocking state elements

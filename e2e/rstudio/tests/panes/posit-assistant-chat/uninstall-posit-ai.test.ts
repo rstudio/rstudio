@@ -39,10 +39,10 @@ const PALETTE_LIST = '#rstudio_command_palette_list';
  */
 async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')");
-  await sleep(1000);
 
-  await page.keyboard.type('Uninstall Posit Assistant');
-  await sleep(500);
+  const search = page.locator('#rstudio_command_palette_search');
+  await expect(search).toBeVisible({ timeout: 5000 });
+  await search.pressSequentially('Uninstall Posit Assistant');
 
   const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit Assistant`);
   await expect(paletteItem).toBeVisible({ timeout: 5000 });
@@ -82,17 +82,19 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial', '@
   // -----------------------------------------------------------------------
   base('Uninstall Posit Assistant visible in command palette', async () => {
     await page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')");
-    await sleep(1000);
 
-    await page.keyboard.type('Uninstall Posit Assistant');
-    await sleep(500);
+    const search = page.locator('#rstudio_command_palette_search');
+    await expect(search).toBeVisible({ timeout: 5000 });
+    await search.pressSequentially('Uninstall Posit Assistant');
 
     const paletteItem = page.locator(`${PALETTE_LIST} >> text=Uninstall Posit Assistant`);
     await expect(paletteItem).toBeVisible({ timeout: 5000 });
 
-    // Close palette without invoking
-    await page.keyboard.press('Escape');
-    await sleep(500);
+    // Close palette via the canonical toggle so the launcher's state machine
+    // returns to Hidden. Escape dismisses the DOM but does not always update
+    // the state, leaving the next showCommandPalette toggling the wrong way.
+    await page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')");
+    await expect(search).not.toBeVisible({ timeout: 5000 });
   });
 
   // -----------------------------------------------------------------------
