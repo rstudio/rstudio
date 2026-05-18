@@ -532,15 +532,6 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    {
       initSvnBin();
    }
-   else if (pref == kAssistant || pref == kChatProvider)
-   {
-      if (!s_workingDir.isEmpty())
-      {
-         Error error = augmentSvnIgnore();
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
 }
 
 void reaugmentSvnIgnore()
@@ -1816,11 +1807,11 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
-   // only add AI-related ignores when the assistant is active AND the
-   // corresponding file/directory actually exists in the working dir
-   bool assistantActive = module_context::isPositAssistantEnabled();
-   bool positaiExists = s_workingDir.completeChildPath(".positai").exists();
-   bool wantPositai = assistantActive && positaiExists;
+   // only add the .positai entry when the directory exists in the working
+   // dir. The existence check decouples this from the assistant
+   // preference: .positai belongs to a separate tool that may write it
+   // independent of RStudio's own AI integration state.
+   bool wantPositai = s_workingDir.completeChildPath(".positai").exists();
 
    // check for existing svn:ignore
    core::system::ProcessResult result;

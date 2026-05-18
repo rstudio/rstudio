@@ -424,13 +424,13 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePositai = R"(^\.positai$)";
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
-      // only add AI-related ignores when the assistant is active AND the
-      // corresponding file/directory actually exists in the project
-      bool assistantActive = module_context::isPositAssistantEnabled();
-      bool positaiExists = directory().completeChildPath(".positai").exists();
-      bool claudeExists = directory().completeChildPath(".claude").exists();
-      bool wantPositai = assistantActive && positaiExists;
-      bool wantClaude = assistantActive && claudeExists;
+      // only add AI tool-state ignores when those directories actually
+      // exist in the project. Decoupled from the assistant preference:
+      // the directories belong to tools (Posit Assistant, Claude Code,
+      // etc.) that may write them whether or not RStudio's own AI
+      // integration is enabled.
+      bool wantPositai = directory().completeChildPath(".positai").exists();
+      bool wantClaude = directory().completeChildPath(".claude").exists();
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
@@ -541,13 +541,6 @@ void ProjectContext::augmentRbuildignore()
    }
 }
 
-void ProjectContext::onUserPrefsChanged(const std::string& layer,
-                                        const std::string& pref)
-{
-   if (pref == kAssistant || pref == kChatProvider)
-      augmentRbuildignore();
-}
-
 SEXP rs_getProjectDirectory()
 {
    SEXP absolutePathSEXP = R_NilValue;
@@ -625,10 +618,6 @@ Error ProjectContext::initialize()
 
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
-
-      // re-augment .Rbuildignore when assistant prefs change
-      prefs::userPrefs().onChanged.connect(
-                   boost::bind(&ProjectContext::onUserPrefsChanged, this, _1, _2));
 
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)

@@ -3054,13 +3054,14 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    FilePath repoRoot = gitIgnoreFile.getParent();
    libgit2::Git git(repoRoot);
 
-   // only add AI-related ignores when the assistant is active AND the
-   // corresponding file/directory exists at the repo root AND it's not
-   // already covered by an existing ignore rule
-   bool assistantActive = module_context::isPositAssistantEnabled();
+   // only add the .positai entry when the directory exists at the repo
+   // root AND isn't already covered by an existing ignore rule. The
+   // existence check decouples this from the assistant preference: .positai
+   // belongs to a separate tool that may write it independent of RStudio's
+   // own AI integration state.
    bool positaiExists = repoRoot.completeChildPath(".positai").exists();
    bool positaiAlreadyIgnored = positaiExists && git.isIgnored(".positai");
-   bool wantPositai = assistantActive && positaiExists && !positaiAlreadyIgnored;
+   bool wantPositai = positaiExists && !positaiAlreadyIgnored;
 
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
@@ -3243,16 +3244,6 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 #else
          s_gitExePath = "";
 #endif
-      }
-   }
-   else if (pref == kAssistant || pref == kChatProvider)
-   {
-      if (!s_git_.root().isEmpty())
-      {
-         FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
-         Error error = augmentGitIgnore(gitIgnore);
-         if (error)
-            LOG_ERROR(error);
       }
    }
 }

@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <csignal>
 #include <fstream>
+#include <mutex>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -1843,6 +1844,46 @@ void controlledExit(int status)
 }
 
 namespace module_context {
+
+#ifndef _WIN32
+static std::ofstream openAutomationLog()
+{
+   std::ofstream stream;
+   FilePath logDir("/tmp/rstudio-automation");
+   Error error = logDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return stream;
+   }
+   std::string logPath =
+         logDir.completePath("automation.log").getAbsolutePath();
+   stream.open(logPath, std::ios::out | std::ios::trunc);
+   if (!stream.is_open())
+      LOG_WARNING_MESSAGE("Failed to open automation log: " + logPath);
+   return stream;
+}
+#endif
+
+void automationLog(const std::string& message)
+{
+#ifndef _WIN32
+   if (!rsession::options().runAutomation())
+      return;
+
+   static std::mutex automationLogMutex;
+   static std::ofstream automationLogStream = openAutomationLog();
+
+   std::lock_guard<std::mutex> lock(automationLogMutex);
+   if (automationLogStream.is_open())
+   {
+      automationLogStream << message;
+      if (message.empty() || message.back() != '\n')
+         automationLogStream << '\n';
+      automationLogStream.flush();
+   }
+#endif
+}
 
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
