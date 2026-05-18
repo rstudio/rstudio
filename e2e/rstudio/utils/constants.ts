@@ -11,6 +11,7 @@ export const TIMEOUTS = {
   nesApply: 30000,
   displayOutput: 2000,
   layoutSettle: 300,
+  packageInstall: 120000,
 };
 
 export async function sleep(ms: number): Promise<void> {
