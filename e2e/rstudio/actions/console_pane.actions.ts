@@ -266,8 +266,10 @@ export class ConsolePaneActions {
    */
   async restartSession(options?: { clean?: boolean }): Promise<void> {
     await this.clearConsole();
-    const marker = `__RESTART_${Date.now()}__`;
-    const args: string[] = [`'cat("${marker}")'`];
+    const token = `RESTART_${Date.now()}`;
+    const marker = `__${token}__DONE`;
+    const rExpr = `cat(paste0("__", "${token}", "__DONE"))`;
+    const args: string[] = [`'${rExpr}'`];
     if (options?.clean !== undefined) {
       args.push(`clean = ${options.clean ? 'TRUE' : 'FALSE'}`);
     }

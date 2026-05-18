@@ -17,7 +17,7 @@ test.describe.serial('R session restart', { tag: ['@serial'] }, () => {
       test.skip(missing.length > 0, 'magrittr could not be installed');
 
       // Start from a known clean state
-      await consoleActions.restartSession();
+      await consoleActions.restartSession({ clean: true });
 
       // Load magrittr and set a variable
       await consoleActions.typeInConsole('library(magrittr, logical.return = TRUE)');
