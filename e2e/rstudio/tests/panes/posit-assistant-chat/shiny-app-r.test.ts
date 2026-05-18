@@ -6,8 +6,9 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { VIEWER_FRAME } from '@pages/viewer_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { isPositAiAuthenticated } from '@utils/auth';
 
-test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
+test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@auth'] }, () => {
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
@@ -54,12 +55,45 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
     await chatActions.dismissSetupPrompts();
   });
 
+  test.beforeEach(() => {
+    test.skip(!isPositAiAuthenticated(), 'Posit AI authentication not detected in sandbox');
+  });
+
   test.afterAll(async ({ rstudioPage: page }) => {
     // Stop any running Shiny app via the Viewer pane's stop button
     const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
+    const interruptBtn = page.locator("[id^='rstudio_tb_interruptr']");
+
     if (await viewerStopBtn.isVisible().catch(() => false)) {
       await viewerStopBtn.click();
-      await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
+
+      const stoppedCleanly = await interruptBtn
+        .waitFor({ state: 'hidden', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+
+      if (!stoppedCleanly) {
+        // R is still busy -- confirm "Terminate R" dialog if present,
+        // otherwise click the Interrupt R button directly.
+        const terminateDialog = page.locator('[role="alertdialog"]:has-text("Terminate R")');
+        if (await terminateDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await terminateDialog.locator('button:has-text("Yes")').click();
+        } else {
+          await interruptBtn.click();
+        }
+        await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
+          console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
+        });
+      }
+    }
+
+    // Dismiss any remaining "Terminate R" dialog before touching the console.
+    const terminateDialog = page.locator('[role="alertdialog"]:has-text("Terminate R")');
+    if (await terminateDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await terminateDialog.locator('button:has-text("Yes")').click();
+      await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
+        console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
+      });
     }
 
     // Clean up created file(s)
