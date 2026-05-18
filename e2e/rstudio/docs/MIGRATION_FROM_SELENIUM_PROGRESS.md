@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 17 |
+| Files fully converted | 18 |
 | Files partially converted | 0 |
-| Files not started | 15 |
+| Files not started | 14 |
 
 ## Conversion Status
 
@@ -24,7 +24,7 @@ Target: `e2e/rstudio/tests/`
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | — | Not started | |
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
-| test_desktop_Package_Installation.py | 1 | — | Not started | |
+| test_desktop_Package_Installation.py | 1 | panes/console/package_installation.test.ts (1) | Complete | |
 | test_desktop_PlotsPane.py | 11 | — | Not started | |
 | test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
 | test_desktop_R_Session_Restart.py | 1 | panes/console/r_session_restart.test.ts (1) | Complete | |
