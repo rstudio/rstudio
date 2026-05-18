@@ -3045,8 +3045,22 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
 
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
-   // only add AI-related ignores when the assistant is active
+   // Use libgit2 to check if paths are already covered by existing
+   // gitignore rules (including global gitignore, parent directories,
+   // wildcard rules, etc.)
+   // NOTE: assumes gitIgnoreFile is at the repo root.
+   // If the repo fails to open, isIgnored() returns false for all paths,
+   // so all entries get appended as a safe fallback.
+   FilePath repoRoot = gitIgnoreFile.getParent();
+   libgit2::Git git(repoRoot);
+
+   // only add AI-related ignores when the assistant is active AND the
+   // corresponding file/directory exists at the repo root AND it's not
+   // already covered by an existing ignore rule
    bool assistantActive = module_context::isPositAssistantEnabled();
+   bool positaiExists = repoRoot.completeChildPath(".positai").exists();
+   bool positaiAlreadyIgnored = git.isIgnored(".positai");
+   bool wantPositai = assistantActive && positaiExists && !positaiAlreadyIgnored;
 
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
@@ -3060,26 +3074,25 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
 
-      if (assistantActive)
+      if (wantPositai)
          filesToIgnore.push_back(".positai");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
-      FilePath gitIgnoreParent = gitIgnoreFile.getParent();
-      if (gitIgnoreParent.completeChildPath("DESCRIPTION").exists())
+      if (repoRoot.completeChildPath("DESCRIPTION").exists())
       {
-         if (gitIgnoreParent.completeChildPath("src").exists())
+         if (repoRoot.completeChildPath("src").exists())
          {
             filesToIgnore.push_back("src/*.o");
             filesToIgnore.push_back("src/*.so");
             filesToIgnore.push_back("src/*.dll");
          }
-         
+
          // if option set to output package check/build files into the
          // project directory, ignore them
          if (session::options().packageOutputInPackageFolder())
          {
-            std::string packageName = r_util::packageNameFromDirectory(gitIgnoreParent);
+            std::string packageName = r_util::packageNameFromDirectory(repoRoot);
             if (!packageName.empty())
             {
                filesToIgnore.push_back(packageName + ".Rcheck/");
@@ -3093,21 +3106,10 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    }
    else
    {
-      // Use libgit2 to check if paths are already covered by existing
-      // gitignore rules (including global gitignore, parent directories,
-      // wildcard rules, etc.)
-      // NOTE: assumes gitIgnoreFile is at the repo root.
-      // If the repo fails to open, isIgnored() returns false for all paths,
-      // so all entries get appended as a safe fallback.
-      FilePath repoRoot = gitIgnoreFile.getParent();
-      libgit2::Git git(repoRoot);
-
-      std::vector<std::string> filesToIgnore;
-
       if (!git.isIgnored(".Rproj.user"))
          filesToIgnore.push_back(".Rproj.user");
 
-      if (assistantActive && !git.isIgnored(".positai"))
+      if (wantPositai)
          filesToIgnore.push_back(".positai");
 
       if (session::options().packageOutputInPackageFolder())
@@ -3252,6 +3254,27 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
          if (error)
             LOG_ERROR(error);
       }
+   }
+}
+
+void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_git_.root().isEmpty())
+      return;
+
+   FilePath positaiPath = s_git_.root().completeChildPath(".positai");
+   for (auto& event : events)
+   {
+      if (event.type() != core::system::FileChangeEvent::FileAdded)
+         continue;
+      if (event.fileInfo().absolutePath() != positaiPath.getAbsolutePath())
+         continue;
+
+      FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
+      Error error = augmentGitIgnore(gitIgnore);
+      if (error)
+         LOG_ERROR(error);
+      break;
    }
 }
 
@@ -3447,6 +3470,12 @@ core::Error initialize()
 
    // add settings changed handler
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
+
+   // subscribe to project file monitor so we can update .gitignore when
+   // .positai appears at the repo root mid-session
+   projects::FileMonitorCallbacks fileMonitorCallbacks;
+   fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("Git", fileMonitorCallbacks);
 
    // install rpc methods
    using boost::bind;

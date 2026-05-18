@@ -423,17 +423,21 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePositai = R"(^\.positai$)";
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
-      // check if the AI assistant is active (admin + user level)
+      // only add AI-related ignores when the assistant is active AND the
+      // corresponding file/directory actually exists in the project
       bool assistantActive = module_context::isPositAssistantEnabled();
+      bool positaiExists = directory().completeChildPath(".positai").exists();
+      bool claudeExists = directory().completeChildPath(".claude").exists();
+      bool wantPositai = assistantActive && positaiExists;
+      bool wantClaude = assistantActive && claudeExists;
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
 
-      if (assistantActive)
-      {
+      if (wantPositai)
          ignoreLines += kIgnorePositai + newLine;
+      if (wantClaude)
          ignoreLines += kIgnoreClaude + newLine;
-      }
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -479,8 +483,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = !assistantActive || strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = !assistantActive || strIgnore.find(kIgnoreClaude) != std::string::npos;
+         bool hasPositai = !wantPositai || strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = !wantClaude || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -800,6 +804,23 @@ void ProjectContext::fileMonitorFilesChanged(
    // own handler
    onProjectFilesChanged(events);
 
+   // if .positai or .claude was added at the project root, augment
+   // .Rbuildignore now (we don't add these entries until the file exists)
+   for (auto& event : events)
+   {
+      if (event.type() != core::system::FileChangeEvent::FileAdded)
+         continue;
+      FilePath path(event.fileInfo().absolutePath());
+      if (path.getParent() != directory())
+         continue;
+      std::string filename = path.getFilename();
+      if (filename == ".positai" || filename == ".claude")
+      {
+         augmentRbuildignore();
+         break;
+      }
+   }
+
    // notify subscribers
    onFilesChanged_(events);
 }
@@ -876,6 +897,17 @@ bool ProjectContext::fileMonitorFilter(
       // path. This correctly handles projects nested inside a larger git repo.
       if (context.pGit->isIgnored(path))
          return false;
+   }
+
+   // Allow .positai/.claude at the project root through the filter so we
+   // can react to their creation and update ignore files accordingly --
+   // fileListingFilter would otherwise drop them as hidden.
+   FilePath filePath(path);
+   if (filePath.getParent() == directory())
+   {
+      std::string filename = filePath.getFilename();
+      if (filename == ".positai" || filename == ".claude")
+         return true;
    }
 
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);

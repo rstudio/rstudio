@@ -543,6 +543,26 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
+void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_workingDir.isEmpty())
+      return;
+
+   FilePath positaiPath = s_workingDir.completeChildPath(".positai");
+   for (auto& event : events)
+   {
+      if (event.type() != core::system::FileChangeEvent::FileAdded)
+         continue;
+      if (event.fileInfo().absolutePath() != positaiPath.getAbsolutePath())
+         continue;
+
+      Error error = augmentSvnIgnore();
+      if (error)
+         LOG_ERROR(error);
+      break;
+   }
+}
+
 std::string translateItemStatus(const std::string& status)
 {
    if (status == "added")
@@ -1778,8 +1798,11 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
-   // only add AI-related ignores when the assistant is active
+   // only add AI-related ignores when the assistant is active AND the
+   // corresponding file/directory actually exists in the working dir
    bool assistantActive = module_context::isPositAssistantEnabled();
+   bool positaiExists = s_workingDir.completeChildPath(".positai").exists();
+   bool wantPositai = assistantActive && positaiExists;
 
    // check for existing svn:ignore
    core::system::ProcessResult result;
@@ -1801,7 +1824,7 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      if (assistantActive)
+      if (wantPositai)
          svnIgnore += ".positai\n";
    }
    else
@@ -1815,7 +1838,7 @@ Error augmentSvnIgnore()
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      if (assistantActive &&
+      if (wantPositai &&
           !regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
          additions += ".positai\n";
 
@@ -1845,6 +1868,12 @@ Error initialize()
    s_pPasswordManager.reset(new PasswordManager(
                          boost::regex("^(.+): $"),
                          boost::bind(promptForPassword, _1, _2, _3, _4)));
+
+   // subscribe to project file monitor so we can update svn:ignore when
+   // .positai appears at the working dir root mid-session
+   projects::FileMonitorCallbacks fileMonitorCallbacks;
+   fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("SVN", fileMonitorCallbacks);
 
    // install rpc methods
    using boost::bind;
