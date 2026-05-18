@@ -885,6 +885,20 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(path, component))
          return false;
 
+   // Allow .positai/.claude at the project root through the filter so we
+   // can react to their creation and update ignore files accordingly.
+   // This must run before the gitignore directory check below -- a global
+   // or parent gitignore that already covers .positai/.claude would
+   // otherwise drop the FileAdded event and prevent mid-session
+   // augmentation. fileListingFilter would also drop them as hidden.
+   FilePath filePath(path);
+   if (filePath.getParent() == directory())
+   {
+      std::string filename = filePath.getFilename();
+      if (filename == ".positai" || filename == ".claude")
+         return true;
+   }
+
    // Check gitignore rules for directories only. The primary goal is to
    // exclude build directories (build/, node_modules/, _site/, etc.) from
    // the file monitor and code search index. Individual gitignored files
@@ -897,17 +911,6 @@ bool ProjectContext::fileMonitorFilter(
       // path. This correctly handles projects nested inside a larger git repo.
       if (context.pGit->isIgnored(path))
          return false;
-   }
-
-   // Allow .positai/.claude at the project root through the filter so we
-   // can react to their creation and update ignore files accordingly --
-   // fileListingFilter would otherwise drop them as hidden.
-   FilePath filePath(path);
-   if (filePath.getParent() == directory())
-   {
-      std::string filename = filePath.getFilename();
-      if (filename == ".positai" || filename == ".claude")
-         return true;
    }
 
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
