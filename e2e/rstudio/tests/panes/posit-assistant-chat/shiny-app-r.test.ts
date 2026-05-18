@@ -6,9 +6,8 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { VIEWER_FRAME } from '@pages/viewer_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
-import { isPositAiAuthenticated } from '@utils/auth';
 
-test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@auth'] }, () => {
+test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
@@ -53,10 +52,6 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@aut
 
     await chatActions.openChatPane();
     await chatActions.dismissSetupPrompts();
-  });
-
-  test.beforeEach(() => {
-    test.skip(!isPositAiAuthenticated(), 'Posit AI authentication not detected in sandbox');
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
