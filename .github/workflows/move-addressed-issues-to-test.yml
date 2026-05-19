@@ -1,0 +1,144 @@
+name: Move addressed issues to Test
+
+# When a PR is merged, parse its title and body for "Addresses #N" references
+# and move each referenced issue to the "Test" column of project rstudio/90.
+#
+# Requires repo or org secret PROJECTS_TOKEN with:
+#   - Classic PAT: repo + project scopes, or
+#   - Fine-grained PAT / GitHub App with Projects (org) write + Issues read.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  move-to-test:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      PROJECT_OWNER: rstudio
+      PROJECT_NUMBER: 90
+      TARGET_STATUS: "Test 👀"
+    steps:
+      - name: Extract addressed issue numbers
+        id: extract
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          {
+            printf '%s\n' "$PR_TITLE"
+            printf '%s\n' "$PR_BODY"
+          } | grep -ohiE '\baddresses[[:space:]]+(rstudio/rstudio)?#[0-9]+' \
+            | grep -oE '[0-9]+' \
+            | sort -u > issues.txt || true
+
+          if [ ! -s issues.txt ]; then
+            echo "No 'Addresses #N' references found."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found issues:"
+            cat issues.txt
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve project + Status field metadata
+        if: steps.extract.outputs.found == 'true'
+        id: meta
+        run: |
+          gh api graphql \
+            -F owner="$PROJECT_OWNER" \
+            -F number="$PROJECT_NUMBER" \
+            -f query='
+              query($owner: String!, $number: Int!) {
+                organization(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    field(name: "Status") {
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        options { id name }
+                      }
+                    }
+                  }
+                }
+              }' > meta.json
+
+          PROJECT_ID=$(jq -r '.data.organization.projectV2.id' meta.json)
+          FIELD_ID=$(jq -r '.data.organization.projectV2.field.id' meta.json)
+          OPTION_ID=$(jq -r --arg name "$TARGET_STATUS" \
+            '.data.organization.projectV2.field.options[] | select(.name == $name) | .id' meta.json)
+
+          if [ -z "$OPTION_ID" ] || [ "$OPTION_ID" = "null" ]; then
+            echo "Could not resolve Status option '$TARGET_STATUS' in project $PROJECT_NUMBER."
+            echo "Available options:"
+            jq '.data.organization.projectV2.field.options' meta.json
+            exit 1
+          fi
+
+          {
+            echo "project_id=$PROJECT_ID"
+            echo "field_id=$FIELD_ID"
+            echo "option_id=$OPTION_ID"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Move each addressed issue to Test
+        if: steps.extract.outputs.found == 'true'
+        env:
+          PROJECT_ID: ${{ steps.meta.outputs.project_id }}
+          FIELD_ID: ${{ steps.meta.outputs.field_id }}
+          OPTION_ID: ${{ steps.meta.outputs.option_id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          while IFS= read -r ISSUE_NUMBER; do
+            [ -z "$ISSUE_NUMBER" ] && continue
+            echo "::group::Issue #$ISSUE_NUMBER"
+
+            ITEM_ID=$(gh api graphql \
+              -F owner="$REPO_OWNER" \
+              -F repo="$REPO_NAME" \
+              -F number="$ISSUE_NUMBER" \
+              -f query='
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    issue(number: $number) {
+                      projectItems(first: 50) {
+                        nodes {
+                          id
+                          project { number }
+                        }
+                      }
+                    }
+                  }
+                }' \
+              | jq -r --arg pn "$PROJECT_NUMBER" \
+                  '.data.repository.issue.projectItems.nodes[]? | select(.project.number == ($pn | tonumber)) | .id')
+
+            if [ -z "$ITEM_ID" ]; then
+              echo "Issue #$ISSUE_NUMBER is not in project $PROJECT_NUMBER; skipping."
+              echo "::endgroup::"
+              continue
+            fi
+
+            gh api graphql \
+              -f project="$PROJECT_ID" \
+              -f item="$ITEM_ID" \
+              -f field="$FIELD_ID" \
+              -f option="$OPTION_ID" \
+              -f query='
+                mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project,
+                    itemId: $item,
+                    fieldId: $field,
+                    value: { singleSelectOptionId: $option }
+                  }) { projectV2Item { id } }
+                }' > /dev/null
+
+            echo "Moved issue #$ISSUE_NUMBER to '$TARGET_STATUS'."
+            echo "::endgroup::"
+          done < issues.txt
