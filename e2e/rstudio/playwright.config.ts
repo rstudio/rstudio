@@ -30,16 +30,24 @@ if (edition !== 'os' && edition !== 'pro') {
 }
 const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 
+const setupProject = {
+  name: 'setup',
+  testMatch: /tests[\\/]auth\.setup\.ts$/,
+  use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
+};
+
 const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
     grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
+    dependencies: ['setup'],
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
     grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
+    dependencies: ['setup'],
   },
 ];
 
@@ -61,6 +69,8 @@ if (projectFlagPresent) {
 } else {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
+
+projects = [setupProject, ...projects];
 
 export default defineConfig({
   testDir: './tests',
