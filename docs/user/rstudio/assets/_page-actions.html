@@ -1,0 +1,164 @@
+<style>
+.page-actions-bar {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 6px;
+  margin: 0.75rem 0 1rem 0;
+  width: fit-content;
+  overflow: hidden;
+}
+
+.page-actions-bar .page-action-btn {
+  background: none;
+  border: none;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  color: var(--bs-secondary-color, #6c757d);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
+  text-decoration: none;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.page-actions-bar .page-action-btn:hover {
+  background-color: var(--bs-tertiary-bg, #f8f9fa);
+  color: var(--bs-body-color, #212529);
+}
+
+.page-actions-bar .page-action-btn + .page-action-btn {
+  border-left: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.page-actions-bar .page-action-btn i {
+  font-size: 0.85em;
+}
+
+.page-actions-bar .page-action-btn.copied {
+  color: var(--bs-success, #198754);
+}
+
+@media (max-width: 576px) {
+  .page-actions-bar .page-action-btn .btn-label {
+    display: none;
+  }
+  .page-actions-bar .page-action-btn {
+    padding: 5px 10px;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Only add the bar on pages with a title block header
+  var titleBlock = document.getElementById('title-block-header');
+  if (!titleBlock) return;
+
+  // Pages can opt out of LLM features via front matter: body-classes: no-llms-txt
+  var noLlms = document.body.classList.contains('no-llms-txt');
+
+  // Determine the .llms.md URL for this page (Quarto 1.9 llms-txt output)
+  var mdUrl = (function () {
+    var path = window.location.pathname;
+    if (path.endsWith('/')) return path + 'index.llms.md';
+    if (path.endsWith('.html')) return path.replace(/\.html$/, '.llms.md');
+    return path + '/index.llms.md';
+  })();
+
+  // --- Build the bar ---
+  var bar = document.createElement('div');
+  bar.className = 'page-actions-bar';
+
+  // --- Copy for LLM button ---
+  if (!noLlms) {
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'page-action-btn';
+    copyBtn.type = 'button';
+    copyBtn.innerHTML = '<i class="bi bi-copy"></i> <span class="btn-label">Copy for LLM</span>';
+    copyBtn.title = 'Copy page content in a format optimized for LLMs';
+
+    copyBtn.addEventListener('click', function () {
+      fetchMdContent()
+        .then(function (text) {
+          var content = 'Source: ' + window.location.href + '\n\n' + text;
+          return navigator.clipboard.writeText(content);
+        })
+        .then(showCopied)
+        .catch(function () {
+          var text = getFallbackContent();
+          navigator.clipboard.writeText(text).then(showCopied);
+        });
+    });
+
+    bar.appendChild(copyBtn);
+  }
+
+  // --- View as Markdown button ---
+  if (!noLlms) {
+    var mdBtn = document.createElement('button');
+    mdBtn.className = 'page-action-btn';
+    mdBtn.type = 'button';
+    mdBtn.innerHTML = '<i class="bi bi-markdown"></i> <span class="btn-label">View as Markdown</span>';
+    mdBtn.title = 'View the raw markdown source of this page';
+
+    mdBtn.addEventListener('click', function () {
+      window.open(mdUrl, '_blank');
+    });
+
+    bar.appendChild(mdBtn);
+  }
+
+  // --- Insert bar after the title block header ---
+  titleBlock.parentNode.insertBefore(bar, titleBlock.nextSibling);
+
+  // --- Helper functions ---
+
+  function fetchMdContent() {
+    return fetch(mdUrl).then(function (r) {
+      if (!r.ok) throw new Error('not found');
+      return r.text();
+    });
+  }
+
+  function showCopied() {
+    var label = copyBtn.querySelector('.btn-label');
+    var icon = copyBtn.querySelector('i');
+    var prevLabel = label.textContent;
+    var prevIcon = icon.className;
+    label.textContent = 'Copied!';
+    icon.className = 'bi bi-check-lg';
+    copyBtn.classList.add('copied');
+    setTimeout(function () {
+      label.textContent = prevLabel;
+      icon.className = prevIcon;
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  }
+
+  function getFallbackContent() {
+    // Extract text from the rendered page
+    var title = document.querySelector('h1.title');
+    var content = document.getElementById('quarto-document-content');
+    if (!content) return '';
+
+    var clone = content.cloneNode(true);
+    clone.querySelectorAll(
+      'nav, .quarto-page-breadcrumbs, .page-actions-bar, script, style, .quarto-title-meta'
+    ).forEach(function (el) { el.remove(); });
+
+    var text = clone.innerText || clone.textContent || '';
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+    var header = '';
+    if (title) header = '# ' + title.textContent.trim() + '\n\n';
+    header += 'Source: ' + window.location.href + '\n\n';
+
+    return header + text;
+  }
+});
+</script>
