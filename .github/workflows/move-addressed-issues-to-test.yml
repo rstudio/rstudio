@@ -66,7 +66,7 @@ jobs:
       - name: Generate GitHub App token
         if: steps.extract.outputs.found == 'true'
         id: generate_token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
           client-id: ${{ secrets.WORKBENCH_IDE_RELEASE_APP_ID }}
           private-key: ${{ secrets.WORKBENCH_IDE_RELEASE_PEM }}
