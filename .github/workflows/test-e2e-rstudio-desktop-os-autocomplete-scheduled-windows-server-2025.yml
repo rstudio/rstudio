@@ -2,7 +2,7 @@ name: "Test: E2E Playwright RStudio Autocomplete Scheduled (Desktop, Windows Ser
 
 on:
   schedule:
-    - cron: '0,30 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
@@ -22,7 +22,7 @@ on:
         type: string
         default: ""
       test_selector:
-        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests (default runs autocomplete tests)."
         type: string
         default: "autocomplete.test.ts"
       rstudio_extra_args:
@@ -52,7 +52,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   e2e-desktop-windows:
@@ -80,6 +80,11 @@ jobs:
             -MaximumRetryCount 3 -RetryIntervalSec 5
           $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
+          $rigExe = 'C:\Program Files\rig\rig.exe'
+          if (-not (Test-Path $rigExe)) {
+            Write-Error "rig binary not found at $rigExe after install."
+            exit 1
+          }
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
       - name: Install R via rig
@@ -109,6 +114,10 @@ jobs:
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
+            if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
+              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            }
             Write-Host "Auto-resolved latest windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
