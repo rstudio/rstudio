@@ -1,11 +1,12 @@
 name: Move addressed issues to Test
 
 # When a PR is merged, parse its title and body for "Addresses #N" references
-# and move each referenced issue to the "Test" column of project rstudio/90.
+# and move each referenced issue to the "Test 👀" column of project rstudio/90.
 #
-# Requires repo or org secret PROJECTS_TOKEN with:
-#   - Classic PAT: repo + project scopes, or
-#   - Fine-grained PAT / GitHub App with Projects (org) write + Issues read.
+# Authenticates as the same GitHub App used by rstudio-pro's issue-state-sync
+# workflow. Requires the following secrets to be available to this repo:
+#   - WORKBENCH_IDE_RELEASE_APP_ID
+#   - WORKBENCH_IDE_RELEASE_PEM
 
 on:
   pull_request:
@@ -18,7 +19,6 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
       PROJECT_OWNER: rstudio
       PROJECT_NUMBER: 90
       TARGET_STATUS: "Test 👀"
@@ -45,9 +45,20 @@ jobs:
             echo "found=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate GitHub App token
+        if: steps.extract.outputs.found == 'true'
+        id: generate_token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        with:
+          client-id: ${{ secrets.WORKBENCH_IDE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.WORKBENCH_IDE_RELEASE_PEM }}
+          repositories: rstudio
+
       - name: Resolve project + Status field metadata
         if: steps.extract.outputs.found == 'true'
         id: meta
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           gh api graphql \
             -F owner="$PROJECT_OWNER" \
@@ -88,6 +99,7 @@ jobs:
       - name: Move each addressed issue to Test
         if: steps.extract.outputs.found == 'true'
         env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           PROJECT_ID: ${{ steps.meta.outputs.project_id }}
           FIELD_ID: ${{ steps.meta.outputs.field_id }}
           OPTION_ID: ${{ steps.meta.outputs.option_id }}
