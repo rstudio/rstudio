@@ -7,13 +7,23 @@ import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 
 /**
- * Encode a string as an R string literal. Normalizes backslashes to forward
- * slashes first so the result is portable, then `JSON.stringify` produces a
- * double-quoted literal with any embedded quotes / control characters
- * escaped in a form R also accepts.
+ * Encode an arbitrary string as an R double-quoted literal. Preserves
+ * backslashes -- callers passing file contents need them intact (LaTeX,
+ * regex, Windows paths, etc.). `JSON.stringify` produces a form R also
+ * accepts: quotes, backslashes, and control chars are escaped consistently
+ * across both languages.
  */
 function rStringLiteral(s: string): string {
-  return JSON.stringify(s.replace(/\\/g, '/'));
+  return JSON.stringify(s);
+}
+
+/**
+ * Encode a filesystem path as an R double-quoted literal, normalizing
+ * backslashes to forward slashes for cross-platform portability. R accepts
+ * forward slashes in paths on all platforms.
+ */
+function rPathLiteral(p: string): string {
+  return rStringLiteral(p.replace(/\\/g, '/'));
 }
 
 /**
@@ -37,7 +47,7 @@ export async function writeAndOpenFile(
   content: string,
 ): Promise<void> {
   const fullPath = path.join(sandboxDir, fileName);
-  const rFullPath = rStringLiteral(fullPath);
+  const rFullPath = rPathLiteral(fullPath);
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
@@ -77,7 +87,7 @@ export async function closeAndDeleteSandboxFiles(
     }
   } else {
     // Remote workdir -- fall back to R-side unlink with absolute paths.
-    const vec = fileNames.map((f) => rStringLiteral(path.join(sandboxDir, f))).join(', ');
+    const vec = fileNames.map((f) => rPathLiteral(path.join(sandboxDir, f))).join(', ');
     await typeInConsole(page, `unlink(c(${vec}))`);
   }
 }
