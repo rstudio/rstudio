@@ -35,7 +35,11 @@ test.describe('Build pane', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    missingPackages = await consoleActions.ensurePackages(['testthat']);
+    // Pre-install devtools so testTestthatFile does not block on the
+    // "Using testthat requires an updated version of the devtools package"
+    // modal. installDepIfPrompted below stays as a fallback for cases where
+    // the installed version is still considered outdated.
+    missingPackages = await consoleActions.ensurePackages(['testthat', 'devtools']);
   });
 
   test('testTestthatFile runs tests and prints "Test complete" with color in the Build pane', async ({ rstudioPage: page }) => {
