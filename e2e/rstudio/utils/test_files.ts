@@ -6,9 +6,14 @@ import { typeInConsole } from '../pages/console_pane.page';
 import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 
-/** Normalize a path for use inside an R string literal: forward slashes, no escaping issues. */
-function rPath(p: string): string {
-  return p.replace(/\\/g, '/');
+/**
+ * Encode a string as an R string literal. Normalizes backslashes to forward
+ * slashes first so the result is portable, then `JSON.stringify` produces a
+ * double-quoted literal with any embedded quotes / control characters
+ * escaped in a form R also accepts.
+ */
+function rStringLiteral(s: string): string {
+  return JSON.stringify(s.replace(/\\/g, '/'));
 }
 
 /**
@@ -32,17 +37,13 @@ export async function writeAndOpenFile(
   content: string,
 ): Promise<void> {
   const fullPath = path.join(sandboxDir, fileName);
-  const rFullPath = rPath(fullPath);
+  const rFullPath = rStringLiteral(fullPath);
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
-    const escaped = content
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n');
-    await typeInConsole(page, `writeLines("${escaped}", "${rFullPath}")`);
+    await typeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rFullPath})`);
   }
-  await typeInConsole(page, `file.edit('${rFullPath}')`);
+  await typeInConsole(page, `file.edit(${rFullPath})`);
   // The source tab shows the basename, not the full path.
   const tab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
   await expect(tab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
@@ -76,7 +77,7 @@ export async function closeAndDeleteSandboxFiles(
     }
   } else {
     // Remote workdir -- fall back to R-side unlink with absolute paths.
-    const vec = fileNames.map((f) => `"${rPath(path.join(sandboxDir, f))}"`).join(', ');
+    const vec = fileNames.map((f) => rStringLiteral(path.join(sandboxDir, f))).join(', ');
     await typeInConsole(page, `unlink(c(${vec}))`);
   }
 }
