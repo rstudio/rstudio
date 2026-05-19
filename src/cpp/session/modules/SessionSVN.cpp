@@ -532,14 +532,43 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    {
       initSvnBin();
    }
-   else if (pref == kAssistant || pref == kChatProvider)
+}
+
+void reaugmentSvnIgnore()
+{
+   if (s_workingDir.isEmpty())
+      return;
+
+   Error error = augmentSvnIgnore();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
+{
+   // close the window between initializeSvn() and file monitor start:
+   // if .positai appeared in that interval, augmentSvnIgnore wasn't aware
+   // of it. Re-run now that monitoring is live; augmentSvnIgnore is
+   // idempotent.
+   reaugmentSvnIgnore();
+}
+
+void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_workingDir.isEmpty())
+      return;
+
+   std::string positaiAbsPath =
+         s_workingDir.completeChildPath(".positai").getAbsolutePath();
+   for (const auto& event : events)
    {
-      if (!s_workingDir.isEmpty())
-      {
-         Error error = augmentSvnIgnore();
-         if (error)
-            LOG_ERROR(error);
-      }
+      if (event.type() != core::system::FileChangeEvent::FileAdded)
+         continue;
+      if (event.fileInfo().absolutePath() != positaiAbsPath)
+         continue;
+
+      reaugmentSvnIgnore();
+      break;
    }
 }
 
@@ -1778,8 +1807,11 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
-   // only add AI-related ignores when the assistant is active
-   bool assistantActive = module_context::isPositAssistantEnabled();
+   // only add the .positai entry when the directory exists in the working
+   // dir. The existence check decouples this from the assistant
+   // preference: .positai belongs to a separate tool that may write it
+   // independent of RStudio's own AI integration state.
+   bool wantPositai = s_workingDir.completeChildPath(".positai").exists();
 
    // check for existing svn:ignore
    core::system::ProcessResult result;
@@ -1801,7 +1833,7 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      if (assistantActive)
+      if (wantPositai)
          svnIgnore += ".positai\n";
    }
    else
@@ -1815,8 +1847,9 @@ Error augmentSvnIgnore()
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      if (assistantActive &&
-          !regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
+      bool positaiAlreadyInIgnore =
+            regex_utils::search(svnIgnore, boost::regex("^\\.positai$"));
+      if (wantPositai && !positaiAlreadyInIgnore)
          additions += ".positai\n";
 
       if (additions.empty())
@@ -1845,6 +1878,13 @@ Error initialize()
    s_pPasswordManager.reset(new PasswordManager(
                          boost::regex("^(.+): $"),
                          boost::bind(promptForPassword, _1, _2, _3, _4)));
+
+   // subscribe to project file monitor so we can update svn:ignore when
+   // .positai appears at the working dir root mid-session
+   projects::FileMonitorCallbacks fileMonitorCallbacks;
+   fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
+   fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("SVN", fileMonitorCallbacks);
 
    // install rpc methods
    using boost::bind;

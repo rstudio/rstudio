@@ -15,6 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <cstring>
 #include <sys/stat.h>
 
 #include <boost/format.hpp>
@@ -381,6 +382,18 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // initialize members
    file_ = projectFile;
    directory_ = file_.getParent();
+
+   // Canonicalize the project directory so it matches what the file
+   // monitor will see (FSEvents on macOS reports canonical paths -- e.g.
+   // /private/tmp/foo rather than /tmp/foo). Without this, paths from
+   // file change events won't compare equal to directory() and any
+   // root-anchored matches downstream silently miss.
+   if (directory_.exists())
+   {
+      std::string canonical = directory_.getCanonicalPath();
+      if (!canonical.empty())
+         directory_ = FilePath(canonical);
+   }
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;
@@ -423,17 +436,21 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePositai = R"(^\.positai$)";
       const char * const kIgnoreClaude = R"(^\.claude$)";
 
-      // check if the AI assistant is active (admin + user level)
-      bool assistantActive = module_context::isPositAssistantEnabled();
+      // only add AI tool-state ignores when those directories actually
+      // exist in the project. Decoupled from the assistant preference:
+      // the directories belong to tools (Posit Assistant, Claude Code,
+      // etc.) that may write them whether or not RStudio's own AI
+      // integration is enabled.
+      bool wantPositai = directory().completeChildPath(".positai").exists();
+      bool wantClaude = directory().completeChildPath(".claude").exists();
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
 
-      if (assistantActive)
-      {
+      if (wantPositai)
          ignoreLines += kIgnorePositai + newLine;
+      if (wantClaude)
          ignoreLines += kIgnoreClaude + newLine;
-      }
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -479,8 +496,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = !assistantActive || strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = !assistantActive || strIgnore.find(kIgnoreClaude) != std::string::npos;
+         bool hasPositai = !wantPositai || strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = !wantClaude || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -534,13 +551,6 @@ void ProjectContext::augmentRbuildignore()
             LOG_ERROR(error);
       }
    }
-}
-
-void ProjectContext::onUserPrefsChanged(const std::string& layer,
-                                        const std::string& pref)
-{
-   if (pref == kAssistant || pref == kChatProvider)
-      augmentRbuildignore();
 }
 
 SEXP rs_getProjectDirectory()
@@ -621,10 +631,6 @@ Error ProjectContext::initialize()
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
-      // re-augment .Rbuildignore when assistant prefs change
-      prefs::userPrefs().onChanged.connect(
-                   boost::bind(&ProjectContext::onUserPrefsChanged, this, _1, _2));
-
       // subscribe to deferred init (for initializing our file monitor)
       if (config().enableCodeIndexing)
       {
@@ -667,6 +673,13 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // ignore things within a .git folder
       // ... but allow e.g. .github
       "/.git/",
+
+      // ignore contents of AI tool state directories. The trailing slash is
+      // important: it excludes children but lets the directory entry itself
+      // ("/proj/.positai") pass through so the allowlist in fileMonitorFilter
+      // can react to its creation.
+      "/.positai/",
+      "/.claude/",
 
       // ignore some directories within the revdep folder
       "/revdep/checks/",
@@ -787,6 +800,11 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
+   // re-augment .Rbuildignore to pick up any .positai/.claude that were
+   // created between project init and file monitor start (small but real
+   // window). augmentRbuildignore is idempotent.
+   augmentRbuildignore();
+
    // notify subscribers
    onMonitoringEnabled_(files);
 }
@@ -799,6 +817,23 @@ void ProjectContext::fileMonitorFilesChanged(
 
    // own handler
    onProjectFilesChanged(events);
+
+   // if .positai or .claude was added at the project root, augment
+   // .Rbuildignore now (we don't add these entries until the file exists)
+   for (const auto& event : events)
+   {
+      if (event.type() != core::system::FileChangeEvent::FileAdded)
+         continue;
+      FilePath path(event.fileInfo().absolutePath());
+      if (path.getParent() != directory())
+         continue;
+      std::string filename = path.getFilename();
+      if (filename == ".positai" || filename == ".claude")
+      {
+         augmentRbuildignore();
+         break;
+      }
+   }
 
    // notify subscribers
    onFilesChanged_(events);
@@ -859,10 +894,30 @@ bool ProjectContext::fileMonitorFilter(
    // monitored directory recursively (irrespective of the filter)
    // and so we need the filter to apply to files which are 'ignored'
    // and yet still monitored in ignored sub-directories
-   std::string path = fileInfo.absolutePath();
+   const std::string& absPath = fileInfo.absolutePath();
    for (auto&& component : context.ignoredComponents)
-      if (boost::algorithm::icontains(path, component))
+      if (boost::algorithm::icontains(absPath, component))
          return false;
+
+   // Allow .positai/.claude at the project root through the filter so we
+   // can react to their creation and update ignore files accordingly.
+   // This must run before the gitignore directory check below -- a global
+   // or parent gitignore that already covers .positai/.claude would
+   // otherwise drop the FileAdded event and prevent mid-session
+   // augmentation. fileListingFilter would also drop them as hidden.
+   //
+   // Use a cheap string-suffix check before constructing FilePath so we
+   // don't pay the allocation cost for the ~all files that don't match.
+   std::size_t slashPos = absPath.find_last_of('/');
+   const char* filename = (slashPos == std::string::npos)
+         ? absPath.c_str()
+         : absPath.c_str() + slashPos + 1;
+   if (std::strcmp(filename, ".positai") == 0 ||
+       std::strcmp(filename, ".claude") == 0)
+   {
+      if (FilePath(absPath).getParent() == directory())
+         return true;
+   }
 
    // Check gitignore rules for directories only. The primary goal is to
    // exclude build directories (build/, node_modules/, _site/, etc.) from
@@ -874,7 +929,7 @@ bool ProjectContext::fileMonitorFilter(
       // Pass the absolute path directly; libgit2's git_ignore_path_is_ignored
       // accepts absolute paths and internally computes the workdir-relative
       // path. This correctly handles projects nested inside a larger git repo.
-      if (context.pGit->isIgnored(path))
+      if (context.pGit->isIgnored(absPath))
          return false;
    }
 

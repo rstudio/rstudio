@@ -266,7 +266,6 @@ private:
    void updatePackageInfo();
 
    void augmentRbuildignore();
-   void onUserPrefsChanged(const std::string& layer, const std::string& pref);
 
    // adds default open docs if specified in the project and it has
    // never been opened before
