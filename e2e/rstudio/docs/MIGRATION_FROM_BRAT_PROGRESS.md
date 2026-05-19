@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 4 |
+| Files Complete | 11 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 25 |
+| Files Not started | 18 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -63,7 +63,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-console.R | 8 | console_pane.test.ts (10), console_command_effects.test.ts (8), ansi_erase_in_line.test.ts (8), execute_from_editor.test.ts (2) | Partial | 0/2/6/0 | Biggest gaps in this slice: condition highlighting (errors/warnings/messages spans), `consoleLineLengthLimit` truncation, post-error output (#16337), multi-message annotation, Ctrl+Shift+M/Alt+- shortcuts in console input |
 | test-automation-completions.R | 17 | autocomplete.test.ts (12, runs each test in console + editor) | Partial | 5/1/11/0 | Cores covered (#13196, #13291, #12678). Long tail not covered: roxygen tag completions (.R/.Rmd/.qmd), pipebind placeholder, dollar-names types, column-name quoting, pref toggle, R6 active bindings (#14784), multi-line Tab indent. Playwright adds extras (data.table $, Unicode column names) without BRAT counterpart |
-| test-automation-restart.R | 1 | -- | Not started | 0/0/1/0 | `.rs.api.restartSession('print(x + y)')` -- exercise the equivalent via `restartR` command + post-restart assertion |
+| test-automation-restart.R | 1 | panes/misc/session_restart.test.ts (1) | Complete | 0/0/1/0 | Ported directly via `.rs.api.restartSession('print(x + y)')` from console; asserts `[1] 3` appears after restart. BRAT file deleted |
 | test-automation-debugger.R | 8 | debugger.test.ts (~15) | Partial | 3/2/3/0 | Core stepping / breakpoints covered (Playwright actually adds Step Into/Out, Continue chains, recover-on-error, env locals, traceback). Gaps: S7 method breakpoints (#16490), package-build paths (#15201 partial), `debugClearBreakpoints` (Desktop messagebox blocker), multi-line `Browse[N]>` regression |
 | test-automation-data-viewer.R | 7 | pagination-sorting.test.ts (5) | Partial | 0/2/5/0 | Complementary, not overlapping. Playwright tests pagination; BRAT tests filter/pin/state-persist/XSS-escaping. Big porting opportunity: filter toolbar, pin icon, refresh state persistence, 3-state sort cycle, HTML-special cell/column escaping |
 
@@ -79,13 +79,13 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
-| test-automation-build-pane.R | 1 | -- | Not started | 0/0/1/0 | `testTestthatFile` command + "Test complete" assertion; skipped on CI |
+| test-automation-build-pane.R | 1 | panes/misc/build_pane_testthat.test.ts (1) | Complete | 0/0/1/0 | Drives a package skeleton via `.rs.rpc.package_skeleton`, runs `testTestthatFile`, asserts "Test complete" + xtermColor. `installDepIfPrompted` handles the devtools update modal. BRAT file deleted |
 | test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
 | test-automation-packages-pane.R | 4 | -- | Not started | 0/0/4/0 | MASS attach/detach via pane checkbox; renv variant (#16842). 4th "we reset state" can fold into setup/teardown |
 | test-automation-files.R | 3 | -- | Not started | 0/0/3/0 | Virtualized Open File dialog (Server-only, 10k temp files); non-virt variant; autosave-unchanged-doc (#16329) |
 | test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
 | test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
-| test-automation-ignorefiles.R | 1 | -- | Not started | 0/0/1/0 | Regression for `89f6cef5d8`: `.positai` added to `.gitignore` only after directory exists; wizard-driven |
+| test-automation-ignorefiles.R | 1 | projects/ignorefiles.test.ts (1) | Complete | 0/0/1/0 | Wizard-driven port (palette > New Directory > New Project + git checkbox). Asserts pre/post `.positai` state via Node fs reads. BRAT file deleted |
 | test-automation-terminal.R | 2 | -- | Not started | 0/0/2/0 | Create terminal + visibility, run command + `sendTerminalToEditor` |
 | test-automation-tabs.R | 5 | panes/layout/panes.test.ts (18), panes/layout/pane_layout.test.ts (16) | Partial | 0/3/2/0 | Three partial overlaps (core tab list, sidebar-width add/remove tab, layoutZoom variants). Two need fresh ports: tab selection aria-selected, `layoutZoomEnvironment`. Uses helper-pane-layout.R |
 | test-automation-defer-scope.R | 4 | -- | Dropped | 0/0/0/4 | Tests `.rs.test()` framework + `withr::defer()` semantics. No UI. Deleted 2026-05-19 |
@@ -95,9 +95,9 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-projects.R | 3 | create_projects.test.ts (5), project_trust_dialog.test.ts (8) | Partial | 1/1/1/0 | Default-no-git path conceptually covered. Need: git-checkbox path (assert VCS tab appears), ProjectId-on-demand regression |
-| test-automation-python.R | 1 | -- | Not started | 0/0/1/0 | `reticulate::repl_python()` + Tab completion + dunder-attribute quoting (#14560); skipped on CI in BRAT |
-| test-automation-shinytest2.R | 1 | -- | Partial | 0/1/0/0 | Toolbar-button branch is straightforward; snapshot-review namespace-stub branch is brittle |
-| test-automation-refactoring.R | 1 | -- | Partial | 0/1/0/0 | renameInScope across Rmd chunks (#4961). Needs `editor.selection` shim via `page.evaluate` |
+| test-automation-python.R | 1 | panes/misc/python_completions.test.ts (1) | Complete | 0/0/1/0 | Drives `reticulate::repl_python()` from console, presses Tab on `sys.__name` and verifies the unquoted echo + `'sys'` result. `afterEach` exits the REPL even on assertion failure. BRAT file deleted |
+| test-automation-shinytest2.R | 1 | projects/shinytest2.test.ts (2) | Complete | 0/0/1/0 | Split into two tests: the toolbar-button + info-dialog branch, and the snapshot_review namespace-stub branch (skipped if shinytest2 isn't installed). BRAT file deleted |
+| test-automation-refactoring.R | 1 | panes/editor/rename_in_scope_rmd.test.ts (1) | Complete | 0/0/1/0 | Ported #4961 -- positions cursor at line 7, runs `renameInScope`, asserts the 5 expected selection ranges across sibling chunks via new `AceEditor.getSelectionRanges()`. BRAT file deleted |
 | test-automation-smoke.R | 1 | smoke/startup.test.ts (1) | Dropped | 1/0/0/0 | Smoke-tested the BRAT harness itself; Playwright `startup.test.ts` covers RStudio startup. Deleted 2026-05-19 |
 | test-automation-suspend.R | 2 | -- | Not started | 0/0/2/0 | Server-mode suspend/resume; loadedNamespaces + attached datasets preserved. Likely `@server_only` |
 
@@ -118,9 +118,9 @@ Phase 2 ordering (one PR per file per Hard Rule):
 3. ~~`defer-scope.R`~~ -- framework-internal, dropped 2026-05-19
 4. ~~`code-folding.R`, `syntax-highlighting.R`, `sweave.R`~~ -- ported 2026-05-19 via new `AceEditor` page-object wrapper (Ace internals accessible from Playwright via `page.evaluate`)
 
-### Wave 2 -- single-test files (one PR per file, ~30 min each)
+### Wave 2 -- single-test files (~~one PR per file~~ -- bundled as one PR, ~30 min each)
 
-5. ~~`history.R`~~ -- ported 2026-05-19; added to `console_pane.test.ts`. Remaining: `build-pane.R`, `ignorefiles.R`, `python.R`, `restart.R`, `refactoring.R`, `shinytest2.R`
+5. ~~`history.R`, `restart.R`, `build-pane.R`, `ignorefiles.R`, `python.R`, `refactoring.R`, `shinytest2.R`~~ -- all ported 2026-05-19. Added `utils/r.ts` (rStringLiteral, rPathLiteral), renamed `utils/test_files.ts` to `utils/files.ts`, added `AceEditor.getSelectionRanges()`
 
 ### Wave 3 -- small partial files
 
