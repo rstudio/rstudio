@@ -18,6 +18,11 @@ name: Move addressed issues to Test
 # convention is used by internal staff, so this trade-off is acceptable:
 # fork PRs that address an issue can be moved to Test manually by a
 # maintainer after merge, as is done today.
+#
+# This file is expected to be carried into the rstudio/rstudio-pro repo by
+# the periodic upstream-merge. The `github.repository` guard on the job
+# below ensures it is a no-op there -- only `rstudio/rstudio` PRs feed
+# project 90, and rstudio-pro has its own automation for its own boards.
 
 on:
   pull_request:
@@ -27,7 +32,9 @@ permissions: {}
 
 jobs:
   move-to-test:
-    if: github.event.pull_request.merged == true
+    if: >-
+      github.event.pull_request.merged == true
+      && github.repository == 'rstudio/rstudio'
     runs-on: ubuntu-latest
     env:
       PROJECT_OWNER: rstudio
