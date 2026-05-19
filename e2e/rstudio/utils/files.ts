@@ -5,26 +5,7 @@ import * as path from 'path';
 import { typeInConsole } from '../pages/console_pane.page';
 import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
-
-/**
- * Encode an arbitrary string as an R double-quoted literal. Preserves
- * backslashes -- callers passing file contents need them intact (LaTeX,
- * regex, Windows paths, etc.). `JSON.stringify` produces a form R also
- * accepts: quotes, backslashes, and control chars are escaped consistently
- * across both languages.
- */
-function rStringLiteral(s: string): string {
-  return JSON.stringify(s);
-}
-
-/**
- * Encode a filesystem path as an R double-quoted literal, normalizing
- * backslashes to forward slashes for cross-platform portability. R accepts
- * forward slashes in paths on all platforms.
- */
-function rPathLiteral(p: string): string {
-  return rStringLiteral(p.replace(/\\/g, '/'));
-}
+import { rPathLiteral, rStringLiteral } from './r';
 
 /**
  * Write `content` to `fileName` in the per-spec sandbox workdir and open it

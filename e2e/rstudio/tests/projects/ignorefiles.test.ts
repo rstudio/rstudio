@@ -3,6 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { rPathLiteral } from '@utils/r';
 import * as fs from 'fs';
 import type { Page } from 'playwright';
 
@@ -75,9 +76,8 @@ test.describe('Project ignore files', () => {
     const basename = current.split(/[/\\]/).pop() ?? '';
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
-    const escaped = sandbox.dir.replace(/\\/g, '/');
     await consoleActions.typeInConsole(
-      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`,
+      `.rs.api.writeRStudioPreference("default_project_location", ${rPathLiteral(sandbox.dir)})`,
     );
     await sleep(TIMEOUTS.pollInterval);
   });
@@ -86,7 +86,7 @@ test.describe('Project ignore files', () => {
     try {
       await closeProjectIfOpen(page);
       await consoleActions.typeInConsole(
-        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
+        `.rs.api.writeRStudioPreference("default_project_location", ${rPathLiteral(originalDefaultProjectLocation)})`,
       );
       await sleep(TIMEOUTS.pollInterval);
     } catch (err) {

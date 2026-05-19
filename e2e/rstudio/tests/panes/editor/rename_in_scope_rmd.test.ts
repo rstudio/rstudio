@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/test_files';
+import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 
 const RMD_CONTENT = `---

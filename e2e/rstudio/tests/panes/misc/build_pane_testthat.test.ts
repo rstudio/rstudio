@@ -3,6 +3,9 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { rPathLiteral, rStringLiteral } from '@utils/r';
+import * as fs from 'fs';
+import * as path from 'path';
 import type { Page } from 'playwright';
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
@@ -48,8 +51,11 @@ test.describe('Build pane', () => {
     // R package names must be letters/digits/dots (no underscores) and start
     // with a letter, so build the name from a hex stamp rather than Date.now().
     const projectName = `BuildPaneTest${Math.random().toString(16).slice(2, 10)}`;
-    const projectDir = `${sandbox.dir}/${projectName}`.replace(/\\/g, '/');
-    const testFile = `${projectDir}/tests/testthat/test-example.R`;
+    const projectDir = path.join(sandbox.dir, projectName);
+    const testFile = path.join(projectDir, 'tests', 'testthat', 'test-example.R');
+    const projectNameLit = rStringLiteral(projectName);
+    const projectDirLit = rPathLiteral(projectDir);
+    const testFileLit = rPathLiteral(testFile);
 
     test.setTimeout(180000);
 
@@ -57,23 +63,22 @@ test.describe('Build pane', () => {
     // so wait for both the project label to update and the console to be idle
     // before continuing.
     await consoleActions.typeInConsole(
-      `.rs.rpc.package_skeleton(packageName = "${projectName}", packageDirectory = "${projectDir}", sourceFiles = character(), usingRcpp = FALSE)`,
+      `.rs.rpc.package_skeleton(packageName = ${projectNameLit}, packageDirectory = ${projectDirLit}, sourceFiles = character(), usingRcpp = FALSE)`,
     );
-    await consoleActions.typeInConsole(`.rs.api.openProject("${projectDir}")`);
+    await consoleActions.typeInConsole(`.rs.api.openProject(${projectDirLit})`);
     await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
       timeout: TIMEOUTS.sessionRestart,
     });
     await waitForConsoleIdle(page);
 
-    // Write a trivial testthat test file and open it -- testTestthatFile runs
-    // the active document, so the file has to be the current source tab.
-    await consoleActions.typeInConsole(
-      `dir.create("${projectDir}/tests/testthat", recursive = TRUE)`,
+    // Write a trivial testthat test file via Node fs and open it -- testTestthatFile
+    // runs the active document, so the file has to be the current source tab.
+    fs.mkdirSync(path.dirname(testFile), { recursive: true });
+    fs.writeFileSync(
+      testFile,
+      'test_that("we can run a test", {\n  expect_equal(2 + 2, 4)\n})\n',
     );
-    await consoleActions.typeInConsole(
-      `writeLines(c('test_that("we can run a test", {', '  expect_equal(2 + 2, 4)', '})'), "${testFile}")`,
-    );
-    await consoleActions.typeInConsole(`.rs.api.documentOpen("${testFile}")`);
+    await consoleActions.typeInConsole(`.rs.api.documentOpen(${testFileLit})`);
     await sleep(1000);
 
     await consoleActions.typeInConsole(`.rs.api.executeCommand("testTestthatFile")`);
