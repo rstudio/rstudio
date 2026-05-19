@@ -2,12 +2,15 @@ import { test as setup, chromium } from '@playwright/test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import {
+  AUTH_STORAGE_KEY,
+  POSITAI_STORE_RELATIVE,
+  isStoreFileAuthenticated,
+} from '../utils/auth';
 
 const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
-const AUTH_STORAGE_KEY = 'auth:positai:oauth';
-const POSITAI_STORE_RELATIVE = path.join('.positai', 'store', 'data.json');
 
 function getCacheDir(): string {
   if (process.platform === 'win32') {
@@ -27,20 +30,6 @@ function storeFile(homeDir: string): string {
 
 function cachedStoreFile(): string {
   return path.join(getCacheDir(), 'data.json');
-}
-
-function readStore(file: string): Record<string, unknown> | null {
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf-8')) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function isTokenValid(file: string): boolean {
-  const data = readStore(file);
-  const entry = data?.[AUTH_STORAGE_KEY] as { authenticated?: boolean } | undefined;
-  return entry?.authenticated === true;
 }
 
 function copyToSandbox(src: string, sandboxUserHome: string): void {
@@ -85,9 +74,13 @@ async function fetchDeviceCode(): Promise<DeviceCodeResponse> {
   return resp.json() as Promise<DeviceCodeResponse>;
 }
 
-async function pollForToken(deviceCode: string, intervalSeconds: number): Promise<TokenResponse> {
+async function pollForToken(deviceCode: string, intervalSeconds: number, timeoutMs: number): Promise<TokenResponse> {
+  const deadline = Date.now() + timeoutMs;
   let waitMs = intervalSeconds * 1000;
   for (;;) {
+    if (Date.now() > deadline) {
+      throw new Error('timed out waiting for device code authorization');
+    }
     await new Promise(resolve => setTimeout(resolve, waitMs));
     const resp = await fetch(`https://${AUTH_HOST}/oauth/token`, {
       method: 'POST',
@@ -134,7 +127,7 @@ async function automateLogin(verificationUriComplete: string, userCode: string, 
     await page.goto(verificationUri);
     await page.locator('input[name="userCode0"]').waitFor({ state: 'visible' });
     // Type each character into its named input -- pressSequentially triggers React onChange.
-    const codeChars = userCode.replace('-', '').split('');
+    const codeChars = userCode.replace(/-/g, '').split('');
     for (let i = 0; i < codeChars.length; i++) {
       await page.locator(`input[name="userCode${i}"]`).pressSequentially(codeChars[i]);
     }
@@ -143,7 +136,6 @@ async function automateLogin(verificationUriComplete: string, userCode: string, 
     const authorizeBtn = page.getByRole('button', { name: 'Authorize' });
     await authorizeBtn.waitFor({ state: 'visible', timeout: 15000 });
     await authorizeBtn.click();
-    await page.waitForTimeout(2000);
   } finally {
     await browser.close();
   }
@@ -185,7 +177,7 @@ setup('authenticate Posit AI', async () => {
 
   if (mode === 'seed') {
     const src = storeFile(os.homedir());
-    if (!isTokenValid(src)) {
+    if (!isStoreFileAuthenticated(src)) {
       throw new Error(
         'PW_SANDBOX_POSITAI_AUTH=seed: no valid tokens at ~/.positai/store/data.json -- sign in to Posit AI first',
       );
@@ -197,7 +189,7 @@ setup('authenticate Posit AI', async () => {
 
   const cached = cachedStoreFile();
 
-  if (mode === 'cache' && isTokenValid(cached)) {
+  if (mode === 'cache' && isStoreFileAuthenticated(cached)) {
     copyToSandbox(cached, sandboxUserHome);
     console.log('[auth-setup] loaded PAI tokens from cache');
     return;
@@ -216,14 +208,9 @@ setup('authenticate Posit AI', async () => {
     const { verification_uri, verification_uri_complete, user_code, device_code, interval } = await fetchDeviceCode();
     console.log(`[auth-setup] verification_uri: ${verification_uri}`);
     console.log(`[auth-setup] user_code: ${user_code}`);
-    const tokenPromise = pollForToken(device_code, interval);
+    const tokenPromise = pollForToken(device_code, interval, 90000);
     await automateLogin(verification_uri_complete, user_code, email, password);
-    const tokenData = await Promise.race([
-      tokenPromise,
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timed out waiting for device code authorization')), 90000),
-      ),
-    ]);
+    const tokenData = await tokenPromise;
     writeTokensToSandbox(tokenData, sandboxUserHome);
     console.log('[auth-setup] device flow complete; PAI tokens written to sandbox');
     if (mode === 'cache') {
