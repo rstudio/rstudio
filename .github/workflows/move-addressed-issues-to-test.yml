@@ -7,9 +7,15 @@ name: Move addressed issues to Test
 # workflow. Requires the following secrets to be available to this repo:
 #   - WORKBENCH_IDE_RELEASE_APP_ID
 #   - WORKBENCH_IDE_RELEASE_PEM
+#
+# Uses `pull_request_target` (not `pull_request`) so the workflow runs with
+# access to repository secrets even for PRs opened from forks. Safe here
+# because the job does not check out PR code, and the only PR-controlled
+# values used (title/body) are passed through env vars rather than
+# interpolated into shell, so they cannot inject script.
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 
 permissions: {}
