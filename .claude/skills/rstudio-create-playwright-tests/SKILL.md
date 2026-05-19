@@ -53,7 +53,7 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 
 **Understand what already exists before writing anything new.**
 
-1. **Check BRAT** — `src/cpp/tests/automation/testthat/` for existing R-based tests. **Use as reference for expected values and test logic, not as blueprint** (BRAT has internal API access; Playwright must interact like a user).
+1. **Check BRAT** — `src/cpp/tests/automation/testthat/` for existing R-based tests. **Use as reference for expected values and correctness criteria, not to define what tests exist.** BRAT validates internal correctness and edge cases, but may not show all main user paths. Think independently about what users actually do, then use BRAT to verify expected outcomes within those paths. (BRAT has internal API access; Playwright must interact like a user).
 2. **Check existing Playwright tests** — `e2e/rstudio/tests/` for existing solutions
 3. **Check page objects & actions** — `e2e/rstudio/pages/` and `e2e/rstudio/actions/` for available tools
 
@@ -543,11 +543,11 @@ When intercepting rsession RPCs via `page.route()`:
 
 ---
 
-## BRAT: Deepest Source of Truth
+## BRAT: Reference for Some Paths and Expected Outcomes
 
-BRAT (`src/cpp/tests/automation/testthat/`) is the deepest source of truth for RStudio's intended behavior. These tests capture edge cases and correct output values that aren't documented anywhere else.
+BRAT (`src/cpp/tests/automation/testthat/`) covers certain user paths and correctness criteria. Consult BRAT for expected values and edge cases within the paths it covers, but don't treat it as exhaustive--think independently about all user paths that matter for the feature.
 
-**Use BRAT for the "what" — expected values, edge cases, correctness criteria. Solve the "how" in Playwright terms** — using page locators, keyboard input, `page.evaluate()` for Ace editor access, and `.rs.api.executeCommand()` via the console.
+**Workflow:** 1) Identify all meaningful user paths, 2) Check BRAT for some of those paths to see expected outcomes, 3) Use those outcomes in your Playwright tests. Solve the "how" in Playwright terms--for example, using page locators, keyboard input, `page.evaluate()` for Ace editor access, `.rs.api.executeCommand()` via the console, etc.
 
 ---
 
