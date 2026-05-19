@@ -137,4 +137,20 @@ export class AceEditor extends PageObject {
       row
     );
   }
+
+  /**
+   * Returns the editor's multi-cursor selection ranges, normalized to plain
+   * objects. Useful for verifying commands like renameInScope, which place a
+   * cursor on every matching occurrence.
+   */
+  async getSelectionRanges(): Promise<AceRange[]> {
+    return this.runOnEditor((editor) => {
+      const ranges = (editor as { selection: { rangeList: { ranges: AceRange[] } } })
+        .selection.rangeList.ranges;
+      return ranges.map((r) => ({
+        start: { row: r.start.row, column: r.start.column },
+        end: { row: r.end.row, column: r.end.column },
+      }));
+    });
+  }
 }

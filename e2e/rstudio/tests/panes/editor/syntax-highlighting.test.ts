@@ -3,7 +3,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/test_files';
+import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
 test.describe('Syntax Highlighting', () => {
   const sandbox = useSuiteSandbox();
