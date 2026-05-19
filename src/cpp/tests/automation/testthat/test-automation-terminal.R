@@ -87,10 +87,17 @@ withr::defer(.rs.automation.deleteRemote())
    }, swallowErrors = TRUE)
 
    remote$commands.execute("sendTerminalToEditor")
-   
-   editor <- remote$editor.getInstance()
-   contents <- editor$session$doc$getValue()
-   contents <- gsub("\r?\n+", "\n", contents, perl = TRUE)
+
+   # wait for the editor to reflect the sent terminal output; the editor can
+   # populate asynchronously after the command, so reading immediately races
+   # with the buffer flush
+   contents <- NULL
+   .rs.waitUntil("editor contains terminal output", function() {
+      editor <- remote$editor.getInstance()
+      contents <<- gsub("\r?\n+", "\n", editor$session$doc$getValue(), perl = TRUE)
+      grepl("expr 1 + 1\n2\n", contents, fixed = TRUE)
+   }, swallowErrors = TRUE)
+
    expect_true(grepl("expr 1 + 1\n2\n", contents, fixed = TRUE))
    
    # return focus to console
