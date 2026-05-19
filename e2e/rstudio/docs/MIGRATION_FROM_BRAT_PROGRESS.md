@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 3 |
+| Files Complete | 4 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 26 |
+| Files Not started | 25 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -84,7 +84,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | test-automation-packages-pane.R | 4 | -- | Not started | 0/0/4/0 | MASS attach/detach via pane checkbox; renv variant (#16842). 4th "we reset state" can fold into setup/teardown |
 | test-automation-files.R | 3 | -- | Not started | 0/0/3/0 | Virtualized Open File dialog (Server-only, 10k temp files); non-virt variant; autosave-unchanged-doc (#16329) |
 | test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
-| test-automation-history.R | 1 | -- | Not started | 0/0/1/0 | `timestamp()` console history recall + Up arrow |
+| test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
 | test-automation-ignorefiles.R | 1 | -- | Not started | 0/0/1/0 | Regression for `89f6cef5d8`: `.positai` added to `.gitignore` only after directory exists; wizard-driven |
 | test-automation-terminal.R | 2 | -- | Not started | 0/0/2/0 | Create terminal + visibility, run command + `sendTerminalToEditor` |
 | test-automation-tabs.R | 5 | panes/layout/panes.test.ts (18), panes/layout/pane_layout.test.ts (16) | Partial | 0/3/2/0 | Three partial overlaps (core tab list, sidebar-width add/remove tab, layoutZoom variants). Two need fresh ports: tab selection aria-selected, `layoutZoomEnvironment`. Uses helper-pane-layout.R |
@@ -120,7 +120,7 @@ Phase 2 ordering (one PR per file per Hard Rule):
 
 ### Wave 2 -- single-test files (one PR per file, ~30 min each)
 
-5. `build-pane.R`, `history.R`, `ignorefiles.R`, `python.R`, `restart.R`, `refactoring.R`, `shinytest2.R`
+5. ~~`history.R`~~ -- ported 2026-05-19; added to `console_pane.test.ts`. Remaining: `build-pane.R`, `ignorefiles.R`, `python.R`, `restart.R`, `refactoring.R`, `shinytest2.R`
 
 ### Wave 3 -- small partial files
 

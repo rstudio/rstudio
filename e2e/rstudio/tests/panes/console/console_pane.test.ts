@@ -56,6 +56,21 @@ test.describe('Console pane', () => {
     await expect.poll(readInput).toBe('');
   });
 
+  test('timestamp() adds an entry to console history', async ({ rstudioPage: page }) => {
+    await consoleActions.typeInConsole('timestamp(quiet = TRUE)');
+
+    await consoleActions.consolePane.consoleInput.click({ force: true });
+    await sleep(200);
+
+    const readInput = () => consoleActions.consolePane.consoleInputValue();
+
+    await page.keyboard.press('ArrowUp');
+    await expect.poll(readInput).toMatch(/^##.*##$/);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(readInput).toBe('');
+  });
+
   test('writeLines outputs all 10000 lines without truncation', async () => {
     test.setTimeout(90000);
     await consoleActions.typeInConsole('long <- as.character(1:1E4)');
