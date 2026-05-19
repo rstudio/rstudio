@@ -58,19 +58,19 @@ if (process.env.PW_PROJECT) {
 const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
 const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
 
-let projects;
+let selectedProjects;
 if (projectFlagPresent) {
   // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
-  projects = allProjects;
+  selectedProjects = allProjects;
 } else if (modeEnv === 'server') {
-  projects = allProjects.filter(p => p.name === 'server');
+  selectedProjects = allProjects.filter(p => p.name === 'server');
 } else if (modeEnv === 'desktop' || modeEnv === undefined) {
-  projects = allProjects.filter(p => p.name === 'desktop');
+  selectedProjects = allProjects.filter(p => p.name === 'desktop');
 } else {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
 
-projects = [setupProject, ...projects];
+const projects = [setupProject, ...selectedProjects];
 
 export default defineConfig({
   testDir: './tests',
