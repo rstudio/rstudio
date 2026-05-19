@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { sleep, TIMEOUTS } from '@utils/constants';
 import { getSelectionInfo } from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 
@@ -58,6 +58,19 @@ test.describe('Console pane', () => {
 
   test('timestamp() adds an entry to console history', async ({ rstudioPage: page }) => {
     await consoleActions.typeInConsole('timestamp(quiet = TRUE)');
+
+    // timestamp(quiet = TRUE) produces no console output, so there is no
+    // text-based gate signalling that R is idle. Wait for the busy class to
+    // clear before recalling history -- otherwise ArrowUp fires while R is
+    // still executing and the recalled entry can be stale.
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return !!el && !el.classList.contains('rstudio-console-busy');
+      },
+      null,
+      { timeout: TIMEOUTS.consoleReady, polling: 100 },
+    );
 
     await consoleActions.consolePane.consoleInput.click({ force: true });
     await sleep(200);
