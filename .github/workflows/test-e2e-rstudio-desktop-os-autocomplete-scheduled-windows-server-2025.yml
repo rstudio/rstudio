@@ -50,6 +50,10 @@ on:
         type: string
         default: ""
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   e2e-desktop-windows:
     runs-on: windows-2025
@@ -118,19 +122,25 @@ jobs:
           "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Download RStudio .exe
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
           Invoke-WebRequest `
-            -Uri '${{ steps.resolve.outputs.url }}' `
-            -OutFile '${{ steps.resolve.outputs.filename }}' `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
             -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $expected = '${{ steps.resolve.outputs.sha256 }}'.ToLower()
-          $actual = (Get-FileHash -Algorithm SHA256 '${{ steps.resolve.outputs.filename }}').Hash.ToLower()
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
           if ($expected -ne $actual) {
             Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
             exit 1
@@ -138,9 +148,11 @@ jobs:
           Write-Host "SHA-256 OK: $actual"
 
       - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $p = Start-Process -FilePath '.\${{ steps.resolve.outputs.filename }}' -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
@@ -155,9 +167,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version || 'release' }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+          key: ${{ runner.os }}-r-v1-${{ inputs.r_version || 'release' }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
           restore-keys: |
-            ${{ runner.os }}-r-${{ inputs.r_version || 'release' }}-
+            ${{ runner.os }}-r-v1-${{ inputs.r_version || 'release' }}-
 
       - name: Install R packages from DESCRIPTION
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
@@ -174,7 +186,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version || 'release' }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
+          key: ${{ runner.os }}-r-v1-${{ inputs.r_version || 'release' }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
 
       - name: Install npm dependencies
         working-directory: e2e/rstudio
@@ -188,21 +200,21 @@ jobs:
         working-directory: e2e/rstudio
         env:
           PW_RSTUDIO_MODE: desktop
+          PW_RSTUDIO_EDITION: os
           PW_PROJECT_NAME: ${{ inputs.project || 'desktop' }}
           PW_GREP: ${{ inputs.grep }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector || 'autocomplete.test.ts' }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $pwArgs = @()
-          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
-            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
-          }
-          $pwArgs += '--project'
-          $pwArgs += $env:PW_PROJECT_NAME
+          $pwArgs = @('--project', $env:PW_PROJECT_NAME)
           if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
             $pwArgs += '--grep'
             $pwArgs += $env:PW_GREP
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
+            $pwArgs += '--'
+            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
           }
           npx playwright test @pwArgs
 
