@@ -36,10 +36,11 @@ Test-level dispositions used in the per-file tables below:
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
 | Files Complete | 0 |
+| Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 32 |
+| Files Not started | 29 |
 
-Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) begins next.
+Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 ## Conversion Status
 
@@ -79,7 +80,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) begins next.
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-build-pane.R | 1 | -- | Not started | 0/0/1/0 | `testTestthatFile` command + "Test complete" assertion; skipped on CI |
-| test-automation-environment-pane.R | 0 | -- | Drop-and-replace | -- | File is 1 line / empty. Delete in cleanup PR |
+| test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
 | test-automation-packages-pane.R | 4 | -- | Not started | 0/0/4/0 | MASS attach/detach via pane checkbox; renv variant (#16842). 4th "we reset state" can fold into setup/teardown |
 | test-automation-files.R | 3 | -- | Not started | 0/0/3/0 | Virtualized Open File dialog (Server-only, 10k temp files); non-virt variant; autosave-unchanged-doc (#16329) |
 | test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
@@ -87,7 +88,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) begins next.
 | test-automation-ignorefiles.R | 1 | -- | Not started | 0/0/1/0 | Regression for `89f6cef5d8`: `.positai` added to `.gitignore` only after directory exists; wizard-driven |
 | test-automation-terminal.R | 2 | -- | Not started | 0/0/2/0 | Create terminal + visibility, run command + `sendTerminalToEditor` |
 | test-automation-tabs.R | 5 | panes/layout/panes.test.ts (18), panes/layout/pane_layout.test.ts (16) | Partial | 0/3/2/0 | Three partial overlaps (core tab list, sidebar-width add/remove tab, layoutZoom variants). Two need fresh ports: tab selection aria-selected, `layoutZoomEnvironment`. Uses helper-pane-layout.R |
-| test-automation-defer-scope.R | 4 | -- | Drop-and-replace | 0/0/0/4 | Tests `.rs.test()` framework + `withr::defer()` semantics. No UI. Moot once BRAT is removed |
+| test-automation-defer-scope.R | 4 | -- | Dropped | 0/0/0/4 | Tests `.rs.test()` framework + `withr::defer()` semantics. No UI. Deleted 2026-05-19 |
 
 ### Projects, runtimes, lifecycle (5 files, 8 tests)
 
@@ -97,7 +98,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) begins next.
 | test-automation-python.R | 1 | -- | Not started | 0/0/1/0 | `reticulate::repl_python()` + Tab completion + dunder-attribute quoting (#14560); skipped on CI in BRAT |
 | test-automation-shinytest2.R | 1 | -- | Partial | 0/1/0/0 | Toolbar-button branch is straightforward; snapshot-review namespace-stub branch is brittle |
 | test-automation-refactoring.R | 1 | -- | Partial | 0/1/0/0 | renameInScope across Rmd chunks (#4961). Needs `editor.selection` shim via `page.evaluate` |
-| test-automation-smoke.R | 1 | smoke/startup.test.ts (2) | Drop | 1/0/0/0 | Smoke-tests the BRAT harness itself; redundant once BRAT is gone |
+| test-automation-smoke.R | 1 | smoke/startup.test.ts (1) | Dropped | 1/0/0/0 | Smoke-tested the BRAT harness itself; Playwright `startup.test.ts` covers RStudio startup. Deleted 2026-05-19 |
 | test-automation-suspend.R | 2 | -- | Not started | 0/0/2/0 | Server-mode suspend/resume; loadedNamespaces + attached datasets preserved. Likely `@server_only` |
 
 ### Non-test helper files
@@ -112,9 +113,9 @@ Phase 2 ordering (one PR per file per Hard Rule):
 
 ### Wave 1 -- removals and trivial files (low risk, fast)
 
-1. `environment-pane.R` -- empty file, delete in cleanup PR
-2. `smoke.R` -- covered by `smoke/startup.test.ts`; delete
-3. `defer-scope.R` -- framework-internal, drop as part of BRAT removal
+1. ~~`environment-pane.R`~~ -- empty file, dropped 2026-05-19
+2. ~~`smoke.R`~~ -- covered by `smoke/startup.test.ts`, dropped 2026-05-19
+3. ~~`defer-scope.R`~~ -- framework-internal, dropped 2026-05-19
 4. `code-folding.R`, `syntax-highlighting.R`, `sweave.R` -- Drop-and-replace candidates; confirm with user, then write JS-unit replacements or accept reduced coverage
 
 ### Wave 2 -- single-test files (one PR per file, ~30 min each)
@@ -167,7 +168,12 @@ BRAT tests intentionally not ported. Requires user approval per the migration sk
 
 | BRAT File | Test Name | Disposition | Rationale |
 |-----------|-----------|-------------|-----------|
-| -- | -- | -- | None tracked yet |
+| test-automation-environment-pane.R | (file empty) | Drop | File contained no tests |
+| test-automation-smoke.R | automation harness smoke test | Drop | `expect_true(TRUE)` smoke-tested the BRAT harness, not RStudio. `e2e/rstudio/tests/smoke/startup.test.ts` covers RStudio startup |
+| test-automation-defer-scope.R | per-test defer: register on success | Drop | Tests `.rs.test()`/`withr::defer()` framework semantics. No user-visible behavior |
+| test-automation-defer-scope.R | per-test defer: verify fired after success | Drop | Same as above |
+| test-automation-defer-scope.R | per-test defer: fires alongside expectation failure | Drop | Same as above |
+| test-automation-defer-scope.R | per-test defer: fires when error exits local scope | Drop | Same as above |
 
 ## Decommissioning checklist (Phase 3)
 
