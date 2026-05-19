@@ -4,7 +4,7 @@
 -
 
 ### Fixed
--
+- ([#14202](https://github.com/rstudio/rstudio/issues/14202)): RStudio Desktop could hang on startup when offline or on a flaky network by deferring the Posit Assistant manifest fetch off the synchronous session init path.
 
 ### Dependencies
 - Ace 1.43.5
