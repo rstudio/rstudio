@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 0 |
+| Files Complete | 3 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 29 |
+| Files Not started | 26 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -49,12 +49,12 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-editor.R | 4 | -- | Not started | 0/0/4/0 | Whitespace-on-save, whole-word replace, Ace shortcuts in console, findFromSelection |
-| test-automation-code-folding.R | 2 | -- | Drop-and-replace | 0/0/0/2 | Both tests assert `getFoldWidget()` ranges -- Ace internals. Better as JS unit tests in `src/gwt/acesupport/` |
+| test-automation-code-folding.R | 2 | code-folding.test.ts (2) | Complete | 0/0/2/0 | Ported via Playwright -- `AceEditor` wrapper exposes `getFoldWidget`/`getFoldWidgetRange` via `page.evaluate`. BRAT file deleted |
 | test-automation-edit-suggestions.R | 5 | code_suggestions.test.ts, copilot_ghost_text.test.ts | Partial | 0/2/3/0 | Accept/persist cases overlap; 3 token-introspection tests need fresh UI-level ports. BRAT injects via internal `.rs.api.showEditSuggestion`; consider preserving that deterministic mechanism via `executeCommand` in Playwright |
-| test-automation-syntax-highlighting.R | 11 | syntax-highlighting.test.ts (1) | Drop-and-replace | 1/5/0/5 | 10 of 11 assert Ace token types; not user-observable. Hex/named-color tests partially portable via computed `background-color` on rendered spans |
+| test-automation-syntax-highlighting.R | 11 | syntax-highlighting.test.ts (11) | Complete | 0/0/11/0 | All ported via `AceEditor` wrapper (`getTokens`, `getTokenAt`, `getState`, `getFoldWidget`). Color tests assert `bg` on `string.color` tokens directly. BRAT file deleted |
 | test-automation-rmarkdown.R | 18 | rmarkdown.test.ts (7), multiline_chunk_execution.test.ts (1), notebook_save_during_execution.test.ts (1) | Partial | 1/1/16/0 | Biggest single porting opportunity: chunk-options popup UI (~6 tests, all DOM-driven), visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` |
 | test-automation-quarto.R | 12 | quarto.test.ts (1), multiline_chunk_execution.test.ts (1) | Partial | 0/1/8/3 | Mirrors Rmd chunk-options gap (`.qmd` variants). Raw HTML/LaTeX block preservation via visual mode is portable. 3 token/fold-widget tests are unportable. 7 of 12 are `skip_on_ci()` |
-| test-automation-sweave.R | 2 | -- | Drop-and-replace | 0/0/0/2 | Both assert token/marker internals. Existing Selenium-ported `sweave.test.ts` (not yet in this checkout) covers creation + PDF compile, not highlighting |
+| test-automation-sweave.R | 2 | sweave.test.ts (2) | Complete | 0/0/2/0 | Ported via `AceEditor.getTokens`/`getMarkers`. BRAT file deleted |
 | test-automation-reformat.R | 6 | air_formatting.test.ts (10) | Partial | 2/1/3/0 | Air-formatter cases well covered. Styler tests (3) and Windows-specific newline regression (#17471) need porting. Note BRAT sets prefs via `.rs.uiPrefs$*$set()`; Playwright drives the Options dialog (the real user path) |
 
 ### Console, completions, debugger, data viewer (5 files, 41 tests)
@@ -116,7 +116,7 @@ Phase 2 ordering (one PR per file per Hard Rule):
 1. ~~`environment-pane.R`~~ -- empty file, dropped 2026-05-19
 2. ~~`smoke.R`~~ -- covered by `smoke/startup.test.ts`, dropped 2026-05-19
 3. ~~`defer-scope.R`~~ -- framework-internal, dropped 2026-05-19
-4. `code-folding.R`, `syntax-highlighting.R`, `sweave.R` -- Drop-and-replace candidates; confirm with user, then write JS-unit replacements or accept reduced coverage
+4. ~~`code-folding.R`, `syntax-highlighting.R`, `sweave.R`~~ -- ported 2026-05-19 via new `AceEditor` page-object wrapper (Ace internals accessible from Playwright via `page.evaluate`)
 
 ### Wave 2 -- single-test files (one PR per file, ~30 min each)
 

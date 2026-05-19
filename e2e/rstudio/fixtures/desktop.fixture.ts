@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { chromium } from 'playwright';
-import type { Browser, BrowserContext } from 'playwright';
+import type { Browser } from 'playwright';
 import { spawn, execSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 import * as fs from 'fs';
@@ -172,11 +172,12 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   const rstudioProcess = spawn(RSTUDIO_PATH, args, {
     env: {
       ...process.env,
-      RSTUDIO_CONFIG_ROOT: tempConfig.root,
-      RSTUDIO_CONFIG_HOME: tempConfig.configHome,
-      RSTUDIO_CONFIG_DIR: tempConfig.configDir,
-      RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
       HOME: SHARED_USER_HOME,
+      RSTUDIO_CONFIG_DIR: tempConfig.configDir,
+      RSTUDIO_CONFIG_HOME: tempConfig.configHome,
+      RSTUDIO_CONFIG_ROOT: tempConfig.root,
+      RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
+      RSTUDIO_DISABLE_WHATS_NEW: '1',
       USERPROFILE: SHARED_USER_HOME,
     },
   });
@@ -186,24 +187,59 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   });
   console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
 
-  // Wait for RStudio to start
-  await sleep(TIMEOUTS.rstudioStartup);
-  if (launchError) throw launchError;
-
-  // Connect to CDP and set up the session.
-  // If anything fails after spawn, kill the process to avoid orphaning RStudio.
+  // Poll for CDP availability instead of a fixed sleep. RStudio Desktop
+  // typically has CDP up in 3-5s on a developer machine; capping at
+  // TIMEOUTS.rstudioStartup keeps the overall safety margin.
   let browser: Browser | undefined;
+  const cdpDeadline = Date.now() + TIMEOUTS.rstudioStartup;
+  let lastConnectErr: unknown;
+  while (Date.now() < cdpDeadline) {
+    if (launchError) throw launchError;
+    try {
+      browser = await chromium.connectOverCDP(CDP_URL, { timeout: 1000 });
+      break;
+    } catch (err) {
+      lastConnectErr = err;
+      await sleep(250);
+    }
+  }
+  if (!browser) {
+    rstudioProcess.kill();
+    throw new Error(
+      `Failed to connect to CDP at ${CDP_URL} within ${TIMEOUTS.rstudioStartup}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+    );
+  }
+
+  // If anything fails after CDP connect, kill the process to avoid orphaning RStudio.
   try {
-    browser = await chromium.connectOverCDP(CDP_URL);
-    const contexts: BrowserContext[] = browser.contexts();
-    if (contexts.length === 0) {
-      throw new Error('CDP connected but no browser contexts available — RStudio window may not be ready');
+    // The splash screen briefly holds its own page that gets replaced by the
+    // main GWT window. Poll until we find a live page whose window has
+    // desktopHooks installed -- that is the main app.
+    const pageDeadline = Date.now() + 30000;
+    let page: Page | undefined;
+    while (Date.now() < pageDeadline && !page) {
+      for (const ctx of browser.contexts()) {
+        for (const candidate of ctx.pages()) {
+          if (candidate.isClosed()) continue;
+          try {
+            const hasHooks = await candidate.evaluate(
+              'typeof window.desktopHooks?.invokeCommand === "function"',
+            );
+            if (hasHooks === true) {
+              page = candidate;
+              break;
+            }
+          } catch {
+            // Page may be navigating or closing during splash -> main transition.
+          }
+        }
+        if (page) break;
+      }
+      if (!page) await sleep(250);
     }
-    const pages = contexts[0].pages();
-    if (pages.length === 0) {
-      throw new Error('CDP context has no pages — RStudio window may not be ready');
+    if (!page) {
+      throw new Error('GWT app did not finish loading within 30s (no page with window.desktopHooks)');
     }
-    const page: Page = pages[0];
 
     // Dismiss any "save changes" modal from a previous interrupted run
     try {
@@ -227,15 +263,22 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       // No overlay
     }
 
-    // Wait for RStudio's GWT app to fully initialize
-    await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
-
     // Activate console (makes it visible without zooming)
     await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
-    await sleep(2000);
 
-    // Wait for console to be ready
+    // Wait for the console input to be visible AND R to be idle (no
+    // rstudio-console-busy class on #rstudio_console_input). The latter is
+    // what GWT sets while R is executing -- visibility alone can occur a
+    // beat before R is ready to accept input.
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return !!el && !el.classList.contains('rstudio-console-busy');
+      },
+      null,
+      { timeout: TIMEOUTS.consoleReady, polling: 100 },
+    );
     console.log('RStudio console is ready');
 
     return { page, browser, rstudioProcess, configRoot };
