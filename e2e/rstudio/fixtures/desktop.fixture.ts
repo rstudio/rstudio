@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
-import { spawn, execSync } from 'child_process';
-import type { ChildProcess } from 'child_process';
+import { spawn, spawnSync, execSync } from 'child_process';
+import type { ChildProcess, SpawnOptions } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
@@ -56,6 +56,47 @@ export const RSTUDIO_PATH = process.platform === 'win32'
     : '/usr/bin/rstudio';
 export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
+
+// PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
+// (electron-forge) in src/node/desktop, instead of the installed RStudio
+// binary at RSTUDIO_PATH. Assumes the dev build is already compiled --
+// see e2e/rstudio/README.md.
+const DEV_MODE = (() => {
+  const v = process.env.PW_RSTUDIO_DEV?.toLowerCase();
+  return v === '1' || v === 'true';
+})();
+const DEV_DESKTOP_DIR = path.resolve(__dirname, '../../../src/node/desktop');
+// First-run webpack compile can take a couple of minutes; subsequent
+// starts are much faster but still slower than launching the installed
+// binary, so give dev-mode startup more headroom than installed mode.
+const DEV_STARTUP_TIMEOUT_MS = 180000;
+
+/**
+ * Kill the rstudio child process and (in dev mode) its descendants.
+ *
+ * Default mode spawns the RStudio binary directly, so `proc.kill()` is
+ * enough. In dev mode, `proc` is the npm/cmd.exe wrapper -- SIGTERM to it
+ * doesn't reliably reach electron-forge, webpack-dev-server, or Electron,
+ * so we tear down the whole tree: by process group on POSIX (set up via
+ * `detached: true` at spawn time) and via `taskkill /F /T` on Windows.
+ */
+function killProcessTree(proc: ChildProcess): void {
+  const pid = proc.pid;
+  if (pid === undefined) return;
+  try {
+    if (DEV_MODE) {
+      if (process.platform === 'win32') {
+        spawnSync('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'pipe' });
+      } else {
+        process.kill(-pid, 'SIGTERM');
+      }
+    } else {
+      proc.kill();
+    }
+  } catch {
+    // Process tree may already be gone
+  }
+}
 
 export interface DesktopSession {
   page: Page;
@@ -170,14 +211,32 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   // ApplicationAutomation to expose `window.rstudioCallbacks` -- the
   // command-execution and command-state helpers our tests drive instead of
   // typing commands through the console.
-  console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
-  const args = [
+  const rstudioArgs = [
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${tempConfig.electronUserData}`,
     '--automation-agent',
     ...RSTUDIO_EXTRA_ARGS,
   ];
-  const rstudioProcess = spawn(RSTUDIO_PATH, args, {
+  // In dev mode, run `npm run start` in src/node/desktop. The package.json
+  // script command is `electron-forge start -- --no-sandbox`, and `npm run
+  // start -- <args>` appends our args to the script command, producing
+  // `electron-forge start -- --no-sandbox <args>`. electron-forge forwards
+  // everything after its own `--` to Electron, so our flags arrive alongside
+  // `--no-sandbox`.
+  //
+  // We deliberately avoid `shell: true`: it would re-parse each argv value
+  // through the shell, breaking paths that contain spaces (e.g. when
+  // PW_SANDBOX_ROOT points somewhere with whitespace) and changing the
+  // semantics of PW_RSTUDIO_EXTRA_ARGS from literal argv to shell text.
+  // On Windows, npm is npm.cmd, which Node refuses to spawn directly
+  // without shell: true -- go through cmd.exe /c instead. Node's normal
+  // arg quoting then preserves whitespace and most punctuation, but cmd
+  // metacharacters (`&` `|` `<` `>` `^` `%`) still go through cmd's own
+  // parser, so paths or PW_RSTUDIO_EXTRA_ARGS values containing those
+  // characters are not supported on the Windows dev path.
+  let spawnCmd: string;
+  let spawnArgs: string[];
+  const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
       HOME: sharedUserHome(),
@@ -192,21 +251,66 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       RS_NO_SPLASH: '1',
       USERPROFILE: sharedUserHome(),
     },
-  });
+  };
+  if (DEV_MODE) {
+    spawnOptions.cwd = DEV_DESKTOP_DIR;
+    // Surface webpack / electron-forge output so a compile failure isn't
+    // hidden behind a 180s opaque CDP timeout.
+    spawnOptions.stdio = 'inherit';
+    // POSIX: put the child in its own process group so killProcessTree
+    // can take down electron-forge + webpack-dev-server + Electron via
+    // a single negative-PID signal. Windows uses taskkill /F /T instead.
+    if (process.platform !== 'win32') {
+      spawnOptions.detached = true;
+    }
+    if (process.platform === 'win32') {
+      spawnCmd = 'cmd.exe';
+      spawnArgs = ['/c', 'npm', 'run', 'start', '--', ...rstudioArgs];
+    } else {
+      spawnCmd = 'npm';
+      spawnArgs = ['run', 'start', '--', ...rstudioArgs];
+    }
+    console.log(`Starting RStudio dev build via "npm run start" in ${DEV_DESKTOP_DIR} (CDP port ${CDP_PORT})...`);
+  } else {
+    spawnCmd = RSTUDIO_PATH;
+    spawnArgs = rstudioArgs;
+    console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
+  }
+  const rstudioProcess = spawn(spawnCmd, spawnArgs, spawnOptions);
+  const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
-    launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
+    launchError = new Error(`Failed to launch RStudio (${launchTarget}): ${err.message}`);
+  });
+  // `'error'` only fires on spawn-level failures (ENOENT). An exit with a
+  // non-zero code -- missing npm script, webpack abort, electron-forge
+  // crash -- would otherwise sit unnoticed for the full CDP-wait timeout.
+  // We only treat code !== 0 as an error; code === null means the process
+  // was killed by signal (typically our own killProcessTree during
+  // teardown), which isn't a launch failure.
+  rstudioProcess.on('exit', (code, signal) => {
+    if (code !== null && code !== 0) {
+      launchError = new Error(
+        `RStudio process (${launchTarget}) exited prematurely with code ${code}${signal ? ` (signal ${signal})` : ''}`,
+      );
+    }
   });
   console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
 
   // Poll for CDP availability instead of a fixed sleep. RStudio Desktop
   // typically has CDP up in 3-5s on a developer machine; capping at
-  // TIMEOUTS.rstudioStartup keeps the overall safety margin.
+  // TIMEOUTS.rstudioStartup keeps the overall safety margin. Dev mode is
+  // slower because electron-forge has to run a webpack build before
+  // Electron starts, so we extend the deadline only on that path.
   let browser: Browser | undefined;
-  const cdpDeadline = Date.now() + TIMEOUTS.rstudioStartup;
+  const startupTimeout = DEV_MODE ? DEV_STARTUP_TIMEOUT_MS : TIMEOUTS.rstudioStartup;
+  const cdpDeadline = Date.now() + startupTimeout;
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
-    if (launchError) throw launchError;
+    if (launchError) {
+      killProcessTree(rstudioProcess);
+      throw launchError;
+    }
     try {
       browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
       break;
@@ -216,9 +320,9 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     }
   }
   if (!browser) {
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
     throw new Error(
-      `Failed to connect to CDP at ${CDP_URL} within ${TIMEOUTS.rstudioStartup}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
     );
   }
 
@@ -296,7 +400,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     return { page, browser, rstudioProcess, configRoot };
   } catch (err) {
     await browser?.close().catch(() => {});
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
     throw err;
   }
 }
@@ -322,7 +426,7 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
   }
   if (rstudioProcess.exitCode === null) {
     console.log('WARNING: old process did not exit within 30s');
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
   }
   console.log(`Old RStudio exited (code ${rstudioProcess.exitCode})`);
   await browser.close().catch(() => {});
@@ -394,7 +498,7 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   } catch {
     await browser.close().catch(() => {});
     // Only force kill if graceful shutdown failed
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
   }
 }
 

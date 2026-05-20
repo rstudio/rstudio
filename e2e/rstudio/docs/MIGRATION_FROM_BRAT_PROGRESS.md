@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 20 |
+| Files Complete | 21 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 9 |
+| Files Not started | 8 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -50,18 +50,18 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-editor.R | 4 | editor.test.ts (4) | Complete | 0/0/4/0 | All ported. Whitespace-on-save + whole-word replace (#16798) + Ace shortcuts (#16973) + findFromSelection (#15863). Added `AceEditor.find/getCursorPosition/insert/navigateLineEnd/focus` and a new `@utils/commands` helper that drives `window.rstudioCallbacks` (Desktop fixture now passes `--automation-agent`). BRAT file deleted |
 | test-automation-code-folding.R | 2 | code-folding.test.ts (2) | Complete | 0/0/2/0 | Ported via Playwright -- `AceEditor` wrapper exposes `getFoldWidget`/`getFoldWidgetRange` via `page.evaluate`. BRAT file deleted |
-| test-automation-edit-suggestions.R | 5 | code_suggestions.test.ts, copilot_ghost_text.test.ts | Partial | 0/2/3/0 | Accept/persist cases overlap; 3 token-introspection tests need fresh UI-level ports. BRAT injects via internal `.rs.api.showEditSuggestion`; consider preserving that deterministic mechanism via `executeCommand` in Playwright |
+| test-automation-edit-suggestions.R | 5 | edit_suggestions.test.ts (4 + 1 fixme) | Fixme | 0/0/4/0 (+1 fixme) | Ported 4 of 5 via `.rs.api.showEditSuggestion` injected through `typeInConsole`. The fifth ("survive document mutations") `test.fixme`d -- after typing the first char into an editor with an active ghost-text suggestion, subsequent chars route to the console. Cause not pinned down (NES status-bar refresh? Ace blur? worth filing as a focus bug). BRAT counterpart for that one case retained until unblocked |
 | test-automation-syntax-highlighting.R | 11 | syntax-highlighting.test.ts (11) | Complete | 0/0/11/0 | All ported via `AceEditor` wrapper (`getTokens`, `getTokenAt`, `getState`, `getFoldWidget`). Color tests assert `bg` on `string.color` tokens directly. BRAT file deleted |
 | test-automation-rmarkdown.R | 18 | rmarkdown.test.ts (7), multiline_chunk_execution.test.ts (1), notebook_save_during_execution.test.ts (1) | Partial | 1/1/16/0 | Biggest single porting opportunity: chunk-options popup UI (~6 tests, all DOM-driven), visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` |
 | test-automation-quarto.R | 12 | quarto.test.ts (1), multiline_chunk_execution.test.ts (1) | Partial | 0/1/8/3 | Mirrors Rmd chunk-options gap (`.qmd` variants). Raw HTML/LaTeX block preservation via visual mode is portable. 3 token/fold-widget tests are unportable. 7 of 12 are `skip_on_ci()` |
 | test-automation-sweave.R | 2 | sweave.test.ts (2) | Complete | 0/0/2/0 | Ported via `AceEditor.getTokens`/`getMarkers`. BRAT file deleted |
-| test-automation-reformat.R | 6 | air_formatting.test.ts (10) | Partial | 2/1/3/0 | Air-formatter cases well covered. Styler tests (3) and Windows-specific newline regression (#17471) need porting. Note BRAT sets prefs via `.rs.uiPrefs$*$set()`; Playwright drives the Options dialog (the real user path) |
+| test-automation-reformat.R | 6 | air_formatting.test.ts (+1), reformat.test.ts (4) | Complete | 0/0/6/0 | All ported. Added "5: checked, air.toml present, save uses Air" to air_formatting.test.ts. New reformat.test.ts covers #5425 (built-in formatter preserves end-of-line comments), styler reformat on save, and the two `@windows_only` #17471 newline-regression tests. Styler tests use `consoleActions.ensurePackages(['styler'])` and `test.skip` when missing. The on-save test opens a project via `createAndOpenProject` so `TextEditingTarget.maybeFormatOnUserInitiatedSave` doesn't bail. Added `closeProjectIfOpen` + `waitForConsoleIdle` to `@utils/project`. Canonicalized the sandbox root in `fixtures/sandbox-setup.ts` so JS-side paths match the canonical form rstudioapi reports (fixes the project-prefix check on macOS where `/var` symlinks to `/private/var`). BRAT file deleted |
 
 ### Console, completions, debugger, data viewer (5 files, 41 tests)
 
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
-| test-automation-console.R | 8 | console_pane.test.ts (10), console_command_effects.test.ts (8), ansi_erase_in_line.test.ts (8), execute_from_editor.test.ts (2) | Partial | 0/2/6/0 | Biggest gaps in this slice: condition highlighting (errors/warnings/messages spans), `consoleLineLengthLimit` truncation, post-error output (#16337), multi-message annotation, Ctrl+Shift+M/Alt+- shortcuts in console input |
+| test-automation-console.R | 8 | console_output.test.ts (8) | Complete | 0/0/8/0 | All ported as `console_output.test.ts`. Covers `\r` overwriting console output, condition highlighting (errors/warnings/messages spans with `consoleHighlightConditions`), `options(warn = 2)` treating warnings as errors (#16031), CR + annotation (#16038), `consoleLineLengthLimit` truncation, post-`try()` error output (#16337), and Ctrl+Shift+M / Alt+- on the console input (#16973). Shortcuts test uses `activateConsole` via the JS bridge to focus the console input deterministically. BRAT file deleted |
 | test-automation-completions.R | 17 | autocomplete.test.ts (12, runs each test in console + editor) | Partial | 5/1/11/0 | Cores covered (#13196, #13291, #12678). Long tail not covered: roxygen tag completions (.R/.Rmd/.qmd), pipebind placeholder, dollar-names types, column-name quoting, pref toggle, R6 active bindings (#14784), multi-line Tab indent. Playwright adds extras (data.table $, Unicode column names) without BRAT counterpart |
 | test-automation-restart.R | 1 | panes/misc/session_restart.test.ts (1) | Complete | 0/0/1/0 | Ported directly via `.rs.api.restartSession('print(x + y)')` from console; asserts `[1] 3` appears after restart. BRAT file deleted |
 | test-automation-debugger.R | 8 | debugger.test.ts (~15), debugger_extras.test.ts (4) | Partial | 6/0/0/0 (2 BRAT-only) | The four migration-plan gaps ported in `debugger_extras.test.ts`: multi-line input at Browse[N]> preserves browser state, gutter-click breakpoint toggle (#9450), `Clear All Breakpoints` (#9450, `@server_only` -- Desktop opens a native Electron messagebox), S7 method breakpoints (#16490, S7 installed via `ensurePackages`). The two package-build tests (#15201 and the #9450 package-rebuild half) stay in BRAT -- they require a full devtools build cycle (~minutes) that doesn't fit the Playwright fixture model |
@@ -83,7 +83,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
 | test-automation-packages-pane.R | 4 | packages_pane.test.ts (2) | Complete | 0/0/2/2 | MASS attach/detach and stats-already-attached ported. renv variant (#16842) dropped here -- skip_on_ci in BRAT and depends on renv install timing; the non-renv path covers the load/unload regression. "We reset state" cleanup dropped (Playwright fixture handles teardown). BRAT file deleted |
 | test-automation-files.R | 3 | files.test.ts (3) | Complete | 0/0/3/0 | All ported. The two virtualized Open File dialog tests are `@server_only` and click the listbox first so `typeSlowly` reaches RowTable's prefix-search handler instead of the path text input. Autosave-unchanged-doc (#16329) verifies mtime-equality before edit and inequality after. Added `typeSlowly` helper in `@utils/constants`. BRAT file deleted |
-| test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
+| test-automation-files-endpoint.R | 1 | files_endpoint.test.ts (1) | Complete | 0/0/1/0 | Ported via `page.request` -- the test drives raw HTTP `GET /files/...` with custom `Sec-Fetch-Site` / `Referer` headers and asserts response status. `@server_only` (endpoint only registered in server mode). All 14 assertions kept. BRAT file deleted |
 | test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
 | test-automation-ignorefiles.R | 1 | projects/ignorefiles.test.ts (1) | Complete | 0/0/1/0 | Wizard-driven port (palette > New Directory > New Project + git checkbox). Asserts pre/post `.positai` state via Node fs reads. BRAT file deleted |
 | test-automation-terminal.R | 2 | panes/terminal/terminal.test.ts (2) | Complete | 0/0/2/0 | Both ported via `rstudioapi::terminalCreate()` from console, xterm bounding-box assertion, and `terminalBuffer()` polling for command output. BRAT file deleted |
@@ -127,7 +127,7 @@ Phase 2 ordering (one PR per file per Hard Rule):
 8. ~~`chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R`~~ -- ported 2026-05-19. Server fixture updated to support `--auth-none`; `createProjectInNewDir` extended with `withGit` flag
 9. ~~`files.R`, `packages-pane.R`, `tabs.R`, `editor.R`~~ -- ported 2026-05-20. Desktop fixture passes `--automation-agent` so tests can drive `window.rstudioCallbacks`; added `typeSlowly`, `AceEditor.find`/`focus`/`insert`/`navigateLineEnd`/`getCursorPosition`, and a `@utils/commands` helper
 10. `files-endpoint.R` (1) -- still pending; treat as backend integration test
-11. `edit-suggestions.R` (5), `reformat.R` (6), `console.R` (8)
+11. ~~`edit-suggestions.R` (5)~~ -- ported 2026-05-20 as `edit_suggestions.test.ts`; 4 pass and 1 is `test.fixme` (focus bug, see Fixme table). `reformat.R` was completed on its own branch. `console.R` (8) still pending
 
 ### Wave 4 -- large delta migrations
 
@@ -161,7 +161,7 @@ Playwright tests that exist but can't pass against current RStudio (e.g. open bu
 
 | Playwright File | Test Name | Blocker | Notes |
 |-----------------|-----------|---------|-------|
-| -- | -- | -- | None tracked yet |
+| tests/panes/editor/edit_suggestions.test.ts | ghost text suggestions survive document mutations | Focus bug while ghost text is active | After typing the first char into an editor with an active ghost-text suggestion, subsequent chars route to the console. `typeSlowly` (200ms inter-char delay) and per-char `editor.focus()` re-claim don't help. `editor.insert()` (Ace API) bypasses the focus issue but leaves NES anchor stuck at the original document position, so the gutter-click accept overwrites our typed chars. Worth filing as a real focus bug |
 
 ## Dropped / Unportable Tests
 
