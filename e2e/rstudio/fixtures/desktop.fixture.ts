@@ -194,8 +194,13 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   // script already invokes `electron-forge start -- --no-sandbox`, and `npm
   // run start -- <args>` appends our args to the script's existing `--`
   // passthrough, so they reach Electron alongside `--no-sandbox`.
-  // `shell: true` is needed on Windows so npm.cmd is resolved; it's harmless
-  // on POSIX.
+  // We deliberately avoid `shell: true`: it would re-parse each argv value
+  // through the shell, breaking paths that contain spaces (e.g. when
+  // PW_SANDBOX_ROOT points somewhere with whitespace) and changing the
+  // semantics of PW_RSTUDIO_EXTRA_ARGS from literal argv to shell text.
+  // On Windows, npm is npm.cmd, which Node refuses to spawn directly
+  // without shell: true -- go through cmd.exe /c so Node's normal arg
+  // quoting still preserves each value literally.
   let spawnCmd: string;
   let spawnArgs: string[];
   const spawnOptions: SpawnOptions = {
@@ -215,10 +220,14 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     },
   };
   if (DEV_MODE) {
-    spawnCmd = 'npm';
-    spawnArgs = ['run', 'start', '--', ...rstudioArgs];
     spawnOptions.cwd = DEV_DESKTOP_DIR;
-    spawnOptions.shell = true;
+    if (process.platform === 'win32') {
+      spawnCmd = 'cmd.exe';
+      spawnArgs = ['/c', 'npm', 'run', 'start', '--', ...rstudioArgs];
+    } else {
+      spawnCmd = 'npm';
+      spawnArgs = ['run', 'start', '--', ...rstudioArgs];
+    }
     console.log(`Starting RStudio dev build via "npm run start" in ${DEV_DESKTOP_DIR} (CDP port ${CDP_PORT})...`);
   } else {
     spawnCmd = RSTUDIO_PATH;
