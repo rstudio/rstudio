@@ -42,6 +42,15 @@
             "type": "string",
             "description": "One or more test markers, indicating which tests should be run. Markers can be separated by spaces.",
             "isHidden": true
+         },
+         {
+            "name": "automation-agent",
+            "memberName": "automationAgent_",
+            "type": "bool",
+            "defaultValue": false,
+            "implicitValue": true,
+            "isHidden": true,
+            "description": "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright). Independent of --run-automation, which spawns BRAT."
          }
       ],
       "verify": [

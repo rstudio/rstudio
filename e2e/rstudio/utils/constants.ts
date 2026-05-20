@@ -11,10 +11,28 @@ export const TIMEOUTS = {
   nesApply: 30000,
   displayOutput: 2000,
   layoutSettle: 300,
+  // Per-character delay (ms) for typeSlowly. Long enough that GWT widgets
+  // with typeahead/incremental-search handlers can finish reacting to one
+  // keystroke before the next arrives.
+  slowKeystroke: 200,
 };
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Send keystrokes one at a time with a delay between each. Use when typing
+ * into a widget whose handler reacts on every keystroke (e.g. GWT type-ahead
+ * lists in the Open File dialog), where the default `keyboard.type` speed
+ * outraces the UI and characters get dropped or coalesced.
+ */
+export async function typeSlowly(
+  page: import('@playwright/test').Page,
+  text: string,
+  delayMs: number = TIMEOUTS.slowKeystroke,
+): Promise<void> {
+  await page.keyboard.type(text, { delay: delayMs });
 }
 
 export const RSTUDIO_EXTRA_ARGS: string[] = process.env.PW_RSTUDIO_EXTRA_ARGS

@@ -153,4 +153,40 @@ export class AceEditor extends PageObject {
       }));
     });
   }
+
+  async getCursorPosition(): Promise<AcePosition> {
+    return this.runOnEditor((editor) => {
+      const pos = (editor as { getCursorPosition(): AcePosition }).getCursorPosition();
+      return { row: pos.row, column: pos.column };
+    });
+  }
+
+  /** Equivalent to Ace's editor.find(needle): selects the first match and scrolls to it. */
+  async find(needle: string): Promise<void> {
+    await this.runOnEditor(
+      (editor, n: string) => (editor as { find(n: string): void }).find(n),
+      needle
+    );
+  }
+
+  /**
+   * Insert text at the current cursor position (Ace's editor.insert).
+   * Useful when typed-key delivery is hard to time (e.g. right after a save).
+   */
+  async insert(text: string): Promise<void> {
+    await this.runOnEditor(
+      (editor, t: string) => (editor as { insert(t: string): void }).insert(t),
+      text
+    );
+  }
+
+  /** Move cursor to the end of the current line (Ace's editor.navigateLineEnd). */
+  async navigateLineEnd(): Promise<void> {
+    await this.runOnEditor((editor) => (editor as { navigateLineEnd(): void }).navigateLineEnd());
+  }
+
+  /** Move focus to the editor textarea so subsequent page.keyboard input routes here. */
+  async focus(): Promise<void> {
+    await this.runOnEditor((editor) => (editor as { focus(): void }).focus());
+  }
 }

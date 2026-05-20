@@ -254,6 +254,14 @@ core::system::ProcessConfig sessionProcessConfig(
    environment.push_back({kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath()});
    environment.push_back({kServerRpcSecretEnvVar, core::socket_rpc::secret()});
    
+   // Forward --automation-agent so the rsession exposes window.rstudioCallbacks
+   // (the bridge that external drivers like the Playwright test suite use to
+   // invoke AppCommands). Independent of --run-automation -- the BRAT host
+   // launches its own agent via that flag, but external test runners just
+   // need the bridge.
+   if (server::options().automationAgent())
+      args.push_back(std::make_pair("--" kAutomationAgentSessionOption, std::string("1")));
+
    // if we're running automation, forward the flag
    if (server::options().runAutomation())
    {
