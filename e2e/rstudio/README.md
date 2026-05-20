@@ -34,6 +34,9 @@ npx playwright test
 # Specific test file
 npx playwright test tests/panes/misc/autocomplete.test.ts
 
+# All tests in a folder (recursive)
+npx playwright test tests/panes/posit-assistant-chat/
+
 # Specific test by name
 npx playwright test -g "test name here"
 npx playwright test -g "base function: cat("
@@ -57,6 +60,13 @@ PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
   PW_RSTUDIO_SERVER_USER=myuser \
   PW_RSTUDIO_SERVER_PASSWORD=mypass \
   npx playwright test --project=server
+
+# All tests in a folder (recursive)
+PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
+  PW_RSTUDIO_SERVER_PORT=80 \
+  PW_RSTUDIO_SERVER_USER=myuser \
+  PW_RSTUDIO_SERVER_PASSWORD=mypass \
+  npx playwright test tests/panes/posit-assistant-chat/ --project=server
 
 # Pro edition
 PW_RSTUDIO_EDITION=pro \
