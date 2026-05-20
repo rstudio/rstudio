@@ -2,6 +2,7 @@ import type { Page } from 'playwright';
 import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
+import { documentCloseAllNoSave } from '../utils/commands';
 
 interface InstallTarget {
   repos: string;
@@ -89,8 +90,11 @@ export class ConsolePaneActions {
   }
 
   async closeAllBuffersWithoutSaving(): Promise<void> {
-    await this.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
-    await sleep(1000);
+    // Use the rstudioCallbacks bridge instead of typing `.rs.api.close...`
+    // into the console: the R session isn't busy while the close fires, so
+    // RStudio's "session is busy" confirmation dialog can't intervene.
+    await documentCloseAllNoSave(this.page);
+    await sleep(500);
   }
 
   async getEnvironmentVersions(): Promise<EnvironmentVersions> {
