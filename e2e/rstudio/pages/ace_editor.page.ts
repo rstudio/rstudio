@@ -16,6 +16,9 @@ export interface AceToken {
   value: string;
   column?: number;
   bg?: string;
+  // True when the token is rendered by RStudio's edit-suggestion machinery
+  // (ghost text, insertion preview) rather than the document's own contents.
+  synthetic?: boolean;
 }
 
 export interface AceMarker {
@@ -96,6 +99,14 @@ export class AceEditor extends PageObject {
         end: { row: range.end.row, column: range.end.column },
       };
     }, row);
+  }
+
+  /** Returns the raw text of `row` (0-indexed), excluding the trailing newline. */
+  async getLine(row: number): Promise<string> {
+    return this.runOnEditor(
+      (editor, r: number) => (editor as { session: { getLine(r: number): string } }).session.getLine(r),
+      row
+    );
   }
 
   async getTokens(row: number): Promise<AceToken[]> {
