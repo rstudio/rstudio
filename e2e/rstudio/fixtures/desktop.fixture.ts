@@ -307,7 +307,10 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   const cdpDeadline = Date.now() + startupTimeout;
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
-    if (launchError) throw launchError;
+    if (launchError) {
+      killProcessTree(rstudioProcess);
+      throw launchError;
+    }
     try {
       browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
       break;
