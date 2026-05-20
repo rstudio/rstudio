@@ -90,6 +90,7 @@ $installArgs = @(
     '--installPath', '"C:/Program Files/Microsoft Visual Studio/2022/BuildTools"',
     '--add', 'Microsoft.VisualStudio.Workload.VCTools',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+    '--add', 'Microsoft.VisualStudio.Component.VC.Tools.ARM64',
     '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.26100'
 )
 $vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
