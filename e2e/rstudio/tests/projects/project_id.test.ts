@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
-import { createAndOpenProject, waitForSessionRestart } from '@utils/project';
+import { createAndOpenProject, restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
@@ -22,11 +22,6 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
     if (match) return match[1].trim();
   }
   throw new Error(`captureResult: markers not found for "${rExpression}"`);
-}
-
-async function restartSession(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.restartSession()');
-  await waitForSessionRestart(page);
 }
 
 async function closeProject(page: Page): Promise<void> {
@@ -86,7 +81,7 @@ test.describe.serial('ProjectId in .Rproj', () => {
       `.rs.api.writeRStudioPreference("project_user_data_directory", normalizePath(${dataDirLit}))`,
     );
     await sleep(TIMEOUTS.pollInterval);
-    await restartSession(page);
+    await restartSessionWithSentinel(page);
 
     // ProjectId should now be present in .Rproj.
     hasProjectId = await captureResult(
@@ -107,7 +102,7 @@ test.describe.serial('ProjectId in .Rproj', () => {
       `.rs.api.writeRStudioPreference("project_user_data_directory", "")`,
     );
     await sleep(TIMEOUTS.pollInterval);
-    await restartSession(page);
+    await restartSessionWithSentinel(page);
 
     const projectIdLineAfter = await captureResult(
       page,

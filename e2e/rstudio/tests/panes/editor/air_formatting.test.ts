@@ -266,16 +266,6 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     expectAirFormatted(content);
   });
 
-  test('5: checked, air.toml present, reformat on save uses Air', async () => {
-    test.skip(true, 'Air reformat-on-save does not trigger via save');
-    await setAirPrefs(page, consoleActions, true, true);
-    await createAirConfig(consoleActions);
-    await openTestFile(consoleActions, sourceActions);
-    await saveFile(page, sourceActions);
-    const content = await sourceActions.getEditorContent();
-    expectAirFormatted(content);
-  });
-
   test('6: checked, no config, manual reformat uses built-in formatter', async () => {
     await setAirPrefs(page, consoleActions, true, false);
     await removeAirConfig(consoleActions);
@@ -305,23 +295,4 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     expectUnchanged(content);
   });
 
-  test('9: checked, .air.toml present, manual reformat uses Air', async () => {
-    test.skip(true, '.air.toml created mid-session is not detected (rstudio/rstudio#17310)');
-    await setAirPrefs(page, consoleActions, true, false);
-    await createAirConfig(consoleActions, DOT_AIR_TOML_FILE);
-    await openTestFile(consoleActions, sourceActions);
-    await reformatCode(page, sourceActions);
-    const content = await sourceActions.getEditorContent();
-    expectAirFormatted(content);
-  });
-
-  test('10: checked, .air.toml present, reformat on save uses Air', async () => {
-    test.skip(true, '.air.toml created mid-session is not detected (rstudio/rstudio#17310)');
-    await setAirPrefs(page, consoleActions, true, true);
-    await createAirConfig(consoleActions, DOT_AIR_TOML_FILE);
-    await openTestFile(consoleActions, sourceActions);
-    await saveFile(page, sourceActions);
-    const content = await sourceActions.getEditorContent();
-    expectAirFormatted(content);
-  });
 });

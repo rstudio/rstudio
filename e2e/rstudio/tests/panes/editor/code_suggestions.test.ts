@@ -7,7 +7,7 @@ import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
-  test.describe(provider, () => {
+  test.describe(provider, { tag: ['@ai'] }, () => {
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();

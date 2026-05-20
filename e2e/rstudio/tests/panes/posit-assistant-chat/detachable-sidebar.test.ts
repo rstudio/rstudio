@@ -1,41 +1,27 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import type { Page } from 'playwright';
+import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 
 // Return button in satellite window (has explicit ElementIds assignment)
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
-test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_only'] }, () => {
+test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@ai', '@desktop_only'] }, () => {
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
-
-    versions = await consoleActions.getEnvironmentVersions();
-    await consoleActions.clearConsole();
-
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
-
-    await chatActions.openChatPane();
-    await chatActions.dismissSetupPrompts();
+    ({ chatActions, chatPane, consoleActions, versions } = await setupPositAssistantChat(page));
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('conversation continuity across detach and reattach', async ({ rstudioPage: page }) => {

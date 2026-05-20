@@ -274,6 +274,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@server_only` | Test only applies to RStudio Server |
 | `@pro_only` | Test requires RStudio Pro |
 | `@os_only` | Test only applies to open-source RStudio |
+| `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
 
 ### Filtering by Tag
 
@@ -303,6 +304,9 @@ npx playwright test --grep-invert @pro_only
 
 # Exclude multiple tags
 npx playwright test --grep-invert "@pro_only|@server_only"
+
+# Skip AI-dependent tests (Copilot/NES + Posit Assistant chat)
+npx playwright test --grep-invert @ai
 ```
 
 ## Environment Variables

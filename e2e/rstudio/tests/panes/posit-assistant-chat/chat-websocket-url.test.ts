@@ -1,13 +1,13 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import type { Response } from 'playwright';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe('Chat WebSocket URL', () => {
+test.describe('Chat WebSocket URL', { tag: ['@ai'] }, () => {
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;
@@ -17,10 +17,10 @@ test.describe('Chat WebSocket URL', () => {
   let wsPath = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    const actions = createChatActions(page);
+    consoleActions = actions.consoleActions;
+    chatActions = actions.chatActions;
+    chatPane = actions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
     await consoleActions.clearConsole();
@@ -45,14 +45,11 @@ test.describe('Chat WebSocket URL', () => {
       }
     });
 
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+    await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('WebSocket URL includes correct path prefix', async ({ rstudioPage: page }) => {

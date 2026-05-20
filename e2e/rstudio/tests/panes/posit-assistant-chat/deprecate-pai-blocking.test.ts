@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { annotateVersions } from './_chat-setup';
 
 /**
  * Deprecate old Posit AI builds -- rstudio/rstudio#17145
@@ -93,7 +94,7 @@ function unsupportedVersionNoUpdateHTML(currentVersion: string): string {
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@serial'] }, () => {
+test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '@serial'] }, () => {
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;
@@ -117,10 +118,7 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@serial
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {

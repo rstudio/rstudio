@@ -8,6 +8,7 @@ import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { createAndOpenProject } from '@utils/project';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
 // Project-level skill (lives in <project>/.positai/skills/ under a sandbox
@@ -29,17 +30,22 @@ const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 // os.homedir() returns.
 // ---------------------------------------------------------------------------
 
-const PW_SANDBOX = process.env.PW_SANDBOX;
-if (!PW_SANDBOX) {
-  throw new Error(
-    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any spec is loaded',
-  );
-}
-const USER_HOME = path.join(PW_SANDBOX, 'user-home').replace(/\\/g, '/');
 const USER_SKILL_NAME = 'custom-code-review';
-const USER_SKILL_DIR = `${USER_HOME}/.positai/skills/${USER_SKILL_NAME}`;
-const USER_SKILL_PATH = `${USER_SKILL_DIR}/SKILL.md`;
 const USER_MARKER = 'USER_SKILL_REVIEW_QA8853';
+
+// Resolve lazily so the spec can be loaded for --list / type-checks without
+// PW_SANDBOX being set; the assertion fires at test-run time instead.
+function userHome(): string {
+  const s = process.env.PW_SANDBOX;
+  if (!s) {
+    throw new Error(
+      'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any spec is loaded',
+    );
+  }
+  return path.join(s, 'user-home').replace(/\\/g, '/');
+}
+const userSkillDir = () => `${userHome()}/.positai/skills/${USER_SKILL_NAME}`;
+const userSkillPath = () => `${userSkillDir()}/SKILL.md`;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,7 +81,7 @@ async function createSkillFile(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
+test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
   const sandbox = useSuiteSandbox();
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
@@ -86,10 +92,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
   let projectSkillPath = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    ({ consoleActions, assistantActions, chatActions, chatPane } = createChatActions(page));
 
     await consoleActions.clearConsole();
 
@@ -104,10 +107,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     projectSkillPath = `${projectSkillDir}/SKILL.md`;
 
     // Re-create actions after session restart
-    consoleActions = new ConsolePaneActions(page);
-    assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    ({ consoleActions, assistantActions, chatActions, chatPane } = createChatActions(page));
     await consoleActions.clearConsole();
     versions = await consoleActions.getEnvironmentVersions();
 
@@ -140,8 +140,8 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // -----------------------------------------------------------------------
     await createSkillFile(
       consoleActions,
-      USER_SKILL_DIR,
-      USER_SKILL_PATH,
+      userSkillDir(),
+      userSkillPath(),
       USER_SKILL_NAME,
       'Review or critique a code snippet.',
       USER_MARKER,
@@ -156,7 +156,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(`cat(readLines("${USER_SKILL_PATH}"), sep = "\\n")`);
+    await consoleActions.typeInConsole(`cat(readLines("${userSkillPath()}"), sep = "\\n")`);
     await sleep(2000);
     const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
@@ -177,10 +177,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test.afterAll(async () => {
@@ -189,7 +186,7 @@ test.describe.serial('User-Added Skills', { tag: ['@serial'] }, () => {
     // tree, so no explicit cleanup is needed for it here.
 
     // Clean up only the specific user-level skill we created (leave ~/.positai/ intact)
-    await consoleActions.typeInConsole(`unlink("${USER_SKILL_DIR}", recursive = TRUE)`);
+    await consoleActions.typeInConsole(`unlink("${userSkillDir()}", recursive = TRUE)`);
     await sleep(1000);
   });
 

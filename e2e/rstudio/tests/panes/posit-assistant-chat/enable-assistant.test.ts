@@ -4,16 +4,16 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { AssistantOptions } from '@pages/assistant_options.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Enable Posit Assistant', () => {
+test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
   let consoleActions: ConsolePaneActions;
   let assistantActions: AssistantOptionsActions;
   let assistantOptions: AssistantOptions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    assistantActions = new AssistantOptionsActions(page, consoleActions);
+    ({ consoleActions, assistantActions } = createChatActions(page));
     assistantOptions = assistantActions.assistantOptions;
 
     versions = await consoleActions.getEnvironmentVersions();
@@ -21,10 +21,7 @@ test.describe.serial('Enable Posit Assistant', () => {
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('enable Posit Assistant and verify persistence', async ({ rstudioPage: page }) => {
