@@ -71,7 +71,10 @@ protected:
       "A regular expression (ERE), indicating which automation test file(s) should be run.")
       ("automation-markers",
       value<std::string>(&automationMarkers_)->default_value(std::string()),
-      "One or more test markers, indicating which tests should be run. Markers can be separated by spaces.");
+      "One or more test markers, indicating which tests should be run. Markers can be separated by spaces.")
+      ("automation-agent",
+      value<bool>(&automationAgent_)->default_value(false)->implicit_value(true),
+      "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright). Independent of --run-automation, which spawns BRAT.");
 
    pVerify->add_options()
       ("verify-installation",
@@ -259,6 +262,7 @@ public:
    bool runAutomation() const { return runAutomation_; }
    std::string automationFilter() const { return automationFilter_; }
    std::string automationMarkers() const { return automationMarkers_; }
+   bool automationAgent() const { return automationAgent_; }
    bool verifyInstallation() const { return verifyInstallation_; }
    std::string serverWorkingDir() const { return serverWorkingDir_; }
    std::string serverUser() const { return serverUser_; }
@@ -311,6 +315,7 @@ protected:
    bool runAutomation_;
    std::string automationFilter_;
    std::string automationMarkers_;
+   bool automationAgent_;
    bool verifyInstallation_;
    std::string serverWorkingDir_;
    std::string serverUser_;

@@ -116,6 +116,11 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     `--server-data-dir=${dataDir}`,
     `--secure-cookie-key-file=${secureCookieKey}`,
     `--config-file=${rserverConf}`,
+    // Forward --automation-agent to every rsession this server spawns so
+    // window.rstudioCallbacks is exposed to the Playwright command bridge in
+    // @utils/commands. Matches what desktop.fixture.ts does directly to its
+    // single rsession.
+    `--automation-agent=1`,
   ];
 
   console.log(`[server] spawning ${path.basename(rserverBin)} on port ${port}`);

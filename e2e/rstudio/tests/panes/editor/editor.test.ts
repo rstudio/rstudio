@@ -72,7 +72,10 @@ test.describe('Editor', () => {
     await expect.poll(() => editor.getValue()).toContain('.hello');
 
     // Invoke findReplace through the automation bridge -- the command targets
-    // the active source editor without needing keyboard focus there.
+    // the active source editor without needing keyboard focus there. Add a
+    // brief settle delay first: on Server, the editor needs a beat after
+    // load before it registers as the active find-replace target.
+    await sleep(TIMEOUTS.settleDelay);
     await executeCommand(page, 'findReplace');
     await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
 
