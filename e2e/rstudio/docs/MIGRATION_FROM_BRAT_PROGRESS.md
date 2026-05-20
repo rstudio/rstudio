@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 20 |
+| Files Complete | 21 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 9 |
+| Files Not started | 8 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -55,7 +55,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | test-automation-rmarkdown.R | 18 | rmarkdown.test.ts (7), multiline_chunk_execution.test.ts (1), notebook_save_during_execution.test.ts (1) | Partial | 1/1/16/0 | Biggest single porting opportunity: chunk-options popup UI (~6 tests, all DOM-driven), visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` |
 | test-automation-quarto.R | 12 | quarto.test.ts (1), multiline_chunk_execution.test.ts (1) | Partial | 0/1/8/3 | Mirrors Rmd chunk-options gap (`.qmd` variants). Raw HTML/LaTeX block preservation via visual mode is portable. 3 token/fold-widget tests are unportable. 7 of 12 are `skip_on_ci()` |
 | test-automation-sweave.R | 2 | sweave.test.ts (2) | Complete | 0/0/2/0 | Ported via `AceEditor.getTokens`/`getMarkers`. BRAT file deleted |
-| test-automation-reformat.R | 6 | air_formatting.test.ts (10) | Partial | 2/1/3/0 | Air-formatter cases well covered. Styler tests (3) and Windows-specific newline regression (#17471) need porting. Note BRAT sets prefs via `.rs.uiPrefs$*$set()`; Playwright drives the Options dialog (the real user path) |
+| test-automation-reformat.R | 6 | air_formatting.test.ts (+1), reformat.test.ts (4) | Complete | 0/0/6/0 | All ported. Added "5: checked, air.toml present, save uses Air" to air_formatting.test.ts. New reformat.test.ts covers #5425 (built-in formatter preserves end-of-line comments), styler reformat on save, and the two `@windows_only` #17471 newline-regression tests. Styler tests use `consoleActions.ensurePackages(['styler'])` and `test.skip` when missing. The on-save test opens a project via `createAndOpenProject` so `TextEditingTarget.maybeFormatOnUserInitiatedSave` doesn't bail. Added `closeProjectIfOpen` + `waitForConsoleIdle` to `@utils/project`. Canonicalized the sandbox root in `fixtures/sandbox-setup.ts` so JS-side paths match the canonical form rstudioapi reports (fixes the project-prefix check on macOS where `/var` symlinks to `/private/var`). BRAT file deleted |
 
 ### Console, completions, debugger, data viewer (5 files, 41 tests)
 
@@ -83,7 +83,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
 | test-automation-packages-pane.R | 4 | packages_pane.test.ts (2) | Complete | 0/0/2/2 | MASS attach/detach and stats-already-attached ported. renv variant (#16842) dropped here -- skip_on_ci in BRAT and depends on renv install timing; the non-renv path covers the load/unload regression. "We reset state" cleanup dropped (Playwright fixture handles teardown). BRAT file deleted |
 | test-automation-files.R | 3 | files.test.ts (3) | Complete | 0/0/3/0 | All ported. The two virtualized Open File dialog tests are `@server_only` and click the listbox first so `typeSlowly` reaches RowTable's prefix-search handler instead of the path text input. Autosave-unchanged-doc (#16329) verifies mtime-equality before edit and inequality after. Added `typeSlowly` helper in `@utils/constants`. BRAT file deleted |
-| test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
+| test-automation-files-endpoint.R | 1 | files_endpoint.test.ts (1) | Complete | 0/0/1/0 | Ported via `page.request` -- the test drives raw HTTP `GET /files/...` with custom `Sec-Fetch-Site` / `Referer` headers and asserts response status. `@server_only` (endpoint only registered in server mode). All 14 assertions kept. BRAT file deleted |
 | test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
 | test-automation-ignorefiles.R | 1 | projects/ignorefiles.test.ts (1) | Complete | 0/0/1/0 | Wizard-driven port (palette > New Directory > New Project + git checkbox). Asserts pre/post `.positai` state via Node fs reads. BRAT file deleted |
 | test-automation-terminal.R | 2 | panes/terminal/terminal.test.ts (2) | Complete | 0/0/2/0 | Both ported via `rstudioapi::terminalCreate()` from console, xterm bounding-box assertion, and `terminalBuffer()` polling for command output. BRAT file deleted |

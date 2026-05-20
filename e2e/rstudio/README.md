@@ -66,6 +66,17 @@ PW_RSTUDIO_EDITION=pro npx playwright test
 
 The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
+#### Against the in-tree dev build
+
+Set `PW_RSTUDIO_DEV=1` to launch the dev build via `npm run start` in `src/node/desktop` instead of the installed RStudio binary. The fixture resolves `src/node/desktop` from this directory using the standard repo layout, so no path needs to be provided.
+
+```bash
+PW_RSTUDIO_DEV=1 npx playwright test
+PW_RSTUDIO_DEV=1 npx playwright test tests/panes/misc/autocomplete.test.ts
+```
+
+Assumes the rest of the product (gwt, the C++ session, etc.) is already built such that `npm run start` in `src/node/desktop` would launch a working IDE. The CDP-wait deadline is extended to 3 minutes on this path to accommodate the first-run webpack compile; subsequent starts are faster. Tests that exercise the doRestart() flow (e.g. uninstall Posit Assistant) aren't fully supported in dev mode because the Electron relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
+
 ### Server Mode
 
 Pass `--project=server`. By default the fixture spawns a private in-tree `rserver-dev` per worker (using `build/src/cpp/server/rserver` and `build/src/cpp/conf/rserver-dev.conf`), launches a headed Chromium, and connects to it -- credentials aren't needed because the spawned server uses `--auth-none`. Build the server first with `cmake --build build`. Override the binary and conf paths with `PW_RSERVER_BIN` / `PW_RSERVER_CONF` if needed.
@@ -338,6 +349,28 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 npx playwright test --grep-invert @ai
 ```
 
+You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
+
+```bash
+# Exclude a single file
+PW_TEST_IGNORE="**/code_suggestions.test.ts" npx playwright test
+
+# Exclude an entire directory
+PW_TEST_IGNORE="**/posit-assistant-chat/**" npx playwright test
+
+# Combine both
+PW_TEST_IGNORE="**/code_suggestions.test.ts **/posit-assistant-chat/**" npx playwright test
+```
+
+#### Summary: four ways to filter
+
+|               | Include                                              | Exclude                                                    |
+|---------------|------------------------------------------------------|------------------------------------------------------------|
+| By file path  | `npx playwright test foo.test.ts` (positional arg)   | `PW_TEST_IGNORE="**/foo.test.ts" npx playwright test`      |
+| By test title | `npx playwright test --grep "pattern"`               | `npx playwright test --grep-invert "pattern"`              |
+
+Include sets the candidate pool; exclude trims it. When both apply, exclude wins.
+
 ## Environment Variables
 
 | Variable | Mode | Required | Description |
@@ -345,6 +378,7 @@ npx playwright test --grep-invert @ai
 | `PW_RSTUDIO_MODE` | Both | No | Fallback for `--project` (`desktop` or `server`); `--project` wins if both set. Default: `desktop`. |
 | `PW_RSTUDIO_EDITION` | Both | No | `os` (default) or `pro`. Filters out `@pro_only` or `@os_only` tagged tests. |
 | `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
+| `PW_RSTUDIO_DEV` | Desktop | No | Set to `1`/`true` to launch the in-tree dev build via `npm run start` in `src/node/desktop` instead of the installed RStudio binary. Assumes the rest of the product is already built. |
 | `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787`. If unset, a private in-tree `rserver-dev` is spawned per worker. |
 | `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
 | `PW_RSTUDIO_SERVER_USER` | Server | Conditional | Login username. Required only when the external server presents a login form; ignored for the in-tree spawn (`--auth-none`). |

@@ -1,6 +1,9 @@
 import type { Page } from 'playwright';
 import { typeInConsole, CONSOLE_TAB, CONSOLE_INPUT, CONSOLE_OUTPUT } from '../pages/console_pane.page';
-import { sleep } from './constants';
+import { sleep, TIMEOUTS } from './constants';
+
+const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
+const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 
 /**
  * Wait for the page to settle after a session restart: page load, console
@@ -137,4 +140,47 @@ export async function createAndOpenProject(
   await pollForMarker(page, marker, 60000);
 
   return projectDir;
+}
+
+/**
+ * Wait for the console input to clear its "busy" class. Use after explicit
+ * session restarts and project opens to make sure the next R-side action
+ * isn't enqueued behind a long-running startup command.
+ */
+export async function waitForConsoleIdle(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && !el.classList.contains('rstudio-console-busy');
+    },
+    null,
+    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
+  );
+}
+
+/**
+ * Close the currently open project, if any, via the project toolbar menu.
+ *
+ * Drives the close through the UI (toolbar menu click) rather than R-side
+ * (`.rs.api.executeCommand('closeProject')` typed into the console). The
+ * R-side path leaves the session marked busy while the close runs, which
+ * triggers RStudio's "R session is currently busy. Are you sure you want to
+ * quit?" confirmation dialog and hangs the test.
+ *
+ * No-op when no project is open (the toolbar label is "Project: (None)" or
+ * the button isn't rendered).
+ */
+export async function closeProjectIfOpen(page: Page): Promise<void> {
+  const menu = page.locator(PROJECT_MENU);
+  const label = (await menu.innerText().catch(() => '')).trim();
+  if (label.includes('(None)') || label === '') return;
+
+  await menu.click();
+  await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
+  await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
+  await page.waitForSelector(CONSOLE_INPUT, {
+    state: 'visible',
+    timeout: TIMEOUTS.sessionRestart,
+  });
+  await waitForConsoleIdle(page);
 }
