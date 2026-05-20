@@ -21,12 +21,6 @@ export async function launchServer(): Promise<ServerSession> {
   const username = process.env.PW_RSTUDIO_SERVER_USER || '';
   const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
 
-  if (!username || !password) {
-    throw new Error(
-      'PW_RSTUDIO_SERVER_USER and PW_RSTUDIO_SERVER_PASSWORD environment variables are required for server mode'
-    );
-  }
-
   console.log(`Connecting to RStudio Server at ${serverUrl}...`);
 
   const browser = await chromium.launch({
@@ -39,12 +33,23 @@ export async function launchServer(): Promise<ServerSession> {
   // Navigate to RStudio Server
   await page.goto(serverUrl, { waitUntil: 'domcontentloaded' });
 
-  // Log in
-  await page.locator('#username').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.locator('#username').fill(username);
-  await page.locator('#password').fill(password);
-  await page.locator('#signinbutton').click();
-  console.log(`Logged in as ${username}`);
+  // Log in if a login form is presented. Servers running with --auth-none
+  // (e.g. local rserver-dev) skip straight to the IDE and have no form,
+  // so credentials are only required when the form appears.
+  const usernameField = page.locator('#username');
+  if (await usernameField.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (!username || !password) {
+      throw new Error(
+        'Server presented a login form but PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD are not set',
+      );
+    }
+    await usernameField.fill(username);
+    await page.locator('#password').fill(password);
+    await page.locator('#signinbutton').click();
+    console.log(`Logged in as ${username}`);
+  } else {
+    console.log('No login form detected (auth-none mode)');
+  }
 
   // Wait for console to be ready
   const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
