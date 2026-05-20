@@ -199,7 +199,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   while (Date.now() < cdpDeadline) {
     if (launchError) throw launchError;
     try {
-      browser = await chromium.connectOverCDP(CDP_URL, { timeout: 1000 });
+      browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
       break;
     } catch (err) {
       lastConnectErr = err;
