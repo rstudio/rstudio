@@ -81,21 +81,23 @@ export class AutocompleteActions {
 
   /**
    * Get completions in the editor.
-   * Executes setupCode in console, creates a temp .R file with fileContent,
-   * positions cursor at cursorLine/cursorCol (or end of content), presses Ctrl+Space.
+   * Executes setupCode in console, creates a temp file (default extension `R`)
+   * with fileContent, positions cursor at cursorLine/cursorCol (or end of
+   * content), presses Ctrl+Space.
    */
   async getCompletionsInEditor(
     setupCode: string[],
     fileContent: string,
     cursorLine?: number,
     cursorCol?: number,
+    extension: string = 'R',
   ): Promise<string[]> {
     for (const code of setupCode) {
       await this.consoleActions.typeInConsole(code);
       await sleep(1000);
     }
 
-    const fileName = `ac_test_${Date.now()}.R`;
+    const fileName = `ac_test_${Date.now()}.${extension}`;
     await this.sourceActions.createAndOpenFile(fileName, fileContent);
     await sleep(1000);
 
