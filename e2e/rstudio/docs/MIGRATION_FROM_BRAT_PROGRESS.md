@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 20 |
+| Files Complete | 21 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 9 |
+| Files Not started | 8 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -61,7 +61,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
-| test-automation-console.R | 8 | console_pane.test.ts (10), console_command_effects.test.ts (8), ansi_erase_in_line.test.ts (8), execute_from_editor.test.ts (2) | Partial | 0/2/6/0 | Biggest gaps in this slice: condition highlighting (errors/warnings/messages spans), `consoleLineLengthLimit` truncation, post-error output (#16337), multi-message annotation, Ctrl+Shift+M/Alt+- shortcuts in console input |
+| test-automation-console.R | 8 | console_output.test.ts (8) | Complete | 0/0/8/0 | All ported as `console_output.test.ts`. Covers `\r` overwriting console output, condition highlighting (errors/warnings/messages spans with `consoleHighlightConditions`), `options(warn = 2)` treating warnings as errors (#16031), CR + annotation (#16038), `consoleLineLengthLimit` truncation, post-`try()` error output (#16337), and Ctrl+Shift+M / Alt+- on the console input (#16973). Shortcuts test uses `activateConsole` via the JS bridge to focus the console input deterministically. BRAT file deleted |
 | test-automation-completions.R | 17 | autocomplete.test.ts (12, runs each test in console + editor) | Partial | 5/1/11/0 | Cores covered (#13196, #13291, #12678). Long tail not covered: roxygen tag completions (.R/.Rmd/.qmd), pipebind placeholder, dollar-names types, column-name quoting, pref toggle, R6 active bindings (#14784), multi-line Tab indent. Playwright adds extras (data.table $, Unicode column names) without BRAT counterpart |
 | test-automation-restart.R | 1 | panes/misc/session_restart.test.ts (1) | Complete | 0/0/1/0 | Ported directly via `.rs.api.restartSession('print(x + y)')` from console; asserts `[1] 3` appears after restart. BRAT file deleted |
 | test-automation-debugger.R | 8 | debugger.test.ts (~15) | Partial | 3/2/3/0 | Core stepping / breakpoints covered (Playwright actually adds Step Into/Out, Continue chains, recover-on-error, env locals, traceback). Gaps: S7 method breakpoints (#16490), package-build paths (#15201 partial), `debugClearBreakpoints` (Desktop messagebox blocker), multi-line `Browse[N]>` regression |
