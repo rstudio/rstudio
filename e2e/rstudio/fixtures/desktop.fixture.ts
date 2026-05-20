@@ -165,11 +165,16 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   const configRoot = tempConfig.root;
   console.log(`[sandbox] this spec's config: ${configRoot}`);
 
-  // Start RStudio with remote debugging enabled
+  // Start RStudio with remote debugging enabled. --automation-agent is
+  // forwarded to rsession (see session-launcher.ts), which causes
+  // ApplicationAutomation to expose `window.rstudioCallbacks` -- the
+  // command-execution and command-state helpers our tests drive instead of
+  // typing commands through the console.
   console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
   const args = [
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${tempConfig.electronUserData}`,
+    '--automation-agent',
     ...RSTUDIO_EXTRA_ARGS,
   ];
   const rstudioProcess = spawn(RSTUDIO_PATH, args, {
@@ -181,6 +186,10 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
       RSTUDIO_DATA_HOME: sharedDataHome(),
       RSTUDIO_DISABLE_WHATS_NEW: '1',
+      // Suppress the Electron splash screen during automation; otherwise CDP
+      // can grab the splash window before the main app loads (see the
+      // desktopHooks-poll loop below).
+      RS_NO_SPLASH: '1',
       USERPROFILE: sharedUserHome(),
     },
   });

@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 16 |
+| Files Complete | 20 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 13 |
+| Files Not started | 9 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -48,7 +48,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
-| test-automation-editor.R | 4 | -- | Not started | 0/0/4/0 | Whitespace-on-save, whole-word replace, Ace shortcuts in console, findFromSelection |
+| test-automation-editor.R | 4 | editor.test.ts (4) | Complete | 0/0/4/0 | All ported. Whitespace-on-save + whole-word replace (#16798) + Ace shortcuts (#16973) + findFromSelection (#15863). Added `AceEditor.find/getCursorPosition/insert/navigateLineEnd/focus` and a new `@utils/commands` helper that drives `window.rstudioCallbacks` (Desktop fixture now passes `--automation-agent`). BRAT file deleted |
 | test-automation-code-folding.R | 2 | code-folding.test.ts (2) | Complete | 0/0/2/0 | Ported via Playwright -- `AceEditor` wrapper exposes `getFoldWidget`/`getFoldWidgetRange` via `page.evaluate`. BRAT file deleted |
 | test-automation-edit-suggestions.R | 5 | code_suggestions.test.ts, copilot_ghost_text.test.ts | Partial | 0/2/3/0 | Accept/persist cases overlap; 3 token-introspection tests need fresh UI-level ports. BRAT injects via internal `.rs.api.showEditSuggestion`; consider preserving that deterministic mechanism via `executeCommand` in Playwright |
 | test-automation-syntax-highlighting.R | 11 | syntax-highlighting.test.ts (11) | Complete | 0/0/11/0 | All ported via `AceEditor` wrapper (`getTokens`, `getTokenAt`, `getState`, `getFoldWidget`). Color tests assert `bg` on `string.color` tokens directly. BRAT file deleted |
@@ -81,13 +81,13 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-build-pane.R | 1 | panes/misc/build_pane_testthat.test.ts (1) | Complete | 0/0/1/0 | Drives a package skeleton via `.rs.rpc.package_skeleton`, runs `testTestthatFile`, asserts "Test complete" + xtermColor. `installDepIfPrompted` handles the devtools update modal. BRAT file deleted |
 | test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
-| test-automation-packages-pane.R | 4 | -- | Not started | 0/0/4/0 | MASS attach/detach via pane checkbox; renv variant (#16842). 4th "we reset state" can fold into setup/teardown |
-| test-automation-files.R | 3 | -- | Not started | 0/0/3/0 | Virtualized Open File dialog (Server-only, 10k temp files); non-virt variant; autosave-unchanged-doc (#16329) |
+| test-automation-packages-pane.R | 4 | packages_pane.test.ts (2) | Complete | 0/0/2/2 | MASS attach/detach and stats-already-attached ported. renv variant (#16842) dropped here -- skip_on_ci in BRAT and depends on renv install timing; the non-renv path covers the load/unload regression. "We reset state" cleanup dropped (Playwright fixture handles teardown). BRAT file deleted |
+| test-automation-files.R | 3 | files.test.ts (3) | Complete | 0/0/3/0 | All ported. The two virtualized Open File dialog tests are `@server_only` and click the listbox first so `typeSlowly` reaches RowTable's prefix-search handler instead of the path text input. Autosave-unchanged-doc (#16329) verifies mtime-equality before edit and inequality after. Added `typeSlowly` helper in `@utils/constants`. BRAT file deleted |
 | test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
 | test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
 | test-automation-ignorefiles.R | 1 | projects/ignorefiles.test.ts (1) | Complete | 0/0/1/0 | Wizard-driven port (palette > New Directory > New Project + git checkbox). Asserts pre/post `.positai` state via Node fs reads. BRAT file deleted |
 | test-automation-terminal.R | 2 | panes/terminal/terminal.test.ts (2) | Complete | 0/0/2/0 | Both ported via `rstudioapi::terminalCreate()` from console, xterm bounding-box assertion, and `terminalBuffer()` polling for command output. BRAT file deleted |
-| test-automation-tabs.R | 5 | panes/layout/panes.test.ts (18), panes/layout/pane_layout.test.ts (16) | Partial | 0/3/2/0 | Three partial overlaps (core tab list, sidebar-width add/remove tab, layoutZoom variants). Two need fresh ports: tab selection aria-selected, `layoutZoomEnvironment`. Uses helper-pane-layout.R |
+| test-automation-tabs.R | 5 | tabs.test.ts (3), panes/layout/panes.test.ts (18), panes/layout/pane_layout.test.ts (16) | Complete | 0/3/2/0 | Three fresh tests in `tabs.test.ts` -- core 12-tab existence, aria-selected on click, and `layoutZoomEnvironment` toggle (uses `isCommandChecked` from `@utils/commands`). Two sidebar-width-with-pane-layout tests dropped: skip_on_ci in BRAT, and the width-preservation regression they cover is already exercised end-to-end in panes.test.ts (#16676 cycle). BRAT file deleted |
 | test-automation-defer-scope.R | 4 | -- | Dropped | 0/0/0/4 | Tests `.rs.test()` framework + `withr::defer()` semantics. No UI. Deleted 2026-05-19 |
 
 ### Projects, runtimes, lifecycle (5 files, 8 tests)
@@ -125,8 +125,9 @@ Phase 2 ordering (one PR per file per Hard Rule):
 ### Wave 3 -- small partial files
 
 8. ~~`chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R`~~ -- ported 2026-05-19. Server fixture updated to support `--auth-none`; `createProjectInNewDir` extended with `withGit` flag
-9. `files.R` (3), `files-endpoint.R` (1), `packages-pane.R` (4), `tabs.R` (5), `editor.R` (4)
-10. `edit-suggestions.R` (5), `reformat.R` (6), `console.R` (8)
+9. ~~`files.R`, `packages-pane.R`, `tabs.R`, `editor.R`~~ -- ported 2026-05-20. Desktop fixture passes `--automation-agent` so tests can drive `window.rstudioCallbacks`; added `typeSlowly`, `AceEditor.find`/`focus`/`insert`/`navigateLineEnd`/`getCursorPosition`, and a `@utils/commands` helper
+10. `files-endpoint.R` (1) -- still pending; treat as backend integration test
+11. `edit-suggestions.R` (5), `reformat.R` (6), `console.R` (8)
 
 ### Wave 4 -- large delta migrations
 
