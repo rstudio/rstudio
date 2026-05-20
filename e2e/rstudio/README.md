@@ -1,6 +1,6 @@
 # RStudio Playwright Test Suite
 
-End-to-end tests for [RStudio](https://github.com/rstudio/rstudio) using [Playwright](https://playwright.dev/). Tests are designed to run against **RStudio Desktop** (via Chrome DevTools Protocol) on Windows, macOS, and Linux, and **RStudio Server** (via browser login) on Linux. Development and testing have primarily been done on Desktop so far. Server mode is supported but less exercised.
+End-to-end tests for [RStudio](https://github.com/rstudio/rstudio) using [Playwright](https://playwright.dev/). Tests are designed to run against **RStudio Desktop** (via Chrome DevTools Protocol) on Windows, macOS, and Linux, and **RStudio Server** (via a private in-tree `rserver-dev`, or against an external server) on Linux. Development and testing have primarily been done on Desktop so far. Server mode is supported but less exercised.
 
 ## Setup
 
@@ -14,7 +14,7 @@ npx playwright install
 ### Prerequisites
 
 - **Desktop mode**: RStudio Desktop installed at the default path for your OS
-- **Server mode**: A running RStudio Server instance with valid credentials
+- **Server mode**: By default, an in-tree `rserver-dev` built at `build/src/cpp/server/rserver` (run `cmake --build build` first). To target an external server instead, set `PW_RSTUDIO_SERVER_URL`; credentials are needed only if that server presents a login form.
 - **Authentication**: The test suite does not currently automate sign-in to external services. Tests that require authentication (e.g., Posit Assistant, GitHub Copilot) assume the running RStudio instance is already signed in.
 
 ## Running Tests
@@ -34,6 +34,9 @@ npx playwright test
 # Specific test file
 npx playwright test tests/panes/misc/autocomplete.test.ts
 
+# All tests in a folder (recursive)
+npx playwright test tests/panes/posit-assistant-chat/
+
 # Specific test by name
 npx playwright test -g "test name here"
 npx playwright test -g "base function: cat("
@@ -49,7 +52,17 @@ The desktop fixture automatically launches RStudio with CDP enabled on a random 
 
 ### Server Mode
 
-Pass `--project=server` and provide credentials. `PW_RSTUDIO_SERVER_URL` defaults to `http://localhost:8787`; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set (no default--if unset, the port comes from the URL).
+Pass `--project=server`. By default the fixture spawns a private in-tree `rserver-dev` per worker (using `build/src/cpp/server/rserver` and `build/src/cpp/conf/rserver-dev.conf`), launches a headed Chromium, and connects to it -- credentials aren't needed because the spawned server uses `--auth-none`. Build the server first with `cmake --build build`. Override the binary and conf paths with `PW_RSERVER_BIN` / `PW_RSERVER_CONF` if needed.
+
+```bash
+# Spawn in-tree rserver-dev (default)
+npx playwright test --project=server
+
+# All tests in a folder (recursive)
+npx playwright test tests/panes/posit-assistant-chat/ --project=server
+```
+
+To skip the spawn and target an external server (e.g. CI, or a remote box), set `PW_RSTUDIO_SERVER_URL`. Credentials are required only when the external server presents a login form; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set.
 
 ```bash
 PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
@@ -113,7 +126,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
 - **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
-- **Server**: Launches a headed Chromium browser, navigates to the server URL, fills in credentials, waits for the IDE to load.
+- **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
 
 Both fixtures dismiss leftover save dialogs from previous runs.
 
@@ -316,11 +329,13 @@ npx playwright test --grep-invert @ai
 | `PW_RSTUDIO_MODE` | Both | No | Fallback for `--project` (`desktop` or `server`); `--project` wins if both set. Default: `desktop`. |
 | `PW_RSTUDIO_EDITION` | Both | No | `os` (default) or `pro`. Filters out `@pro_only` or `@os_only` tagged tests. |
 | `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
-| `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787` (default: `http://localhost:8787`) |
+| `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787`. If unset, a private in-tree `rserver-dev` is spawned per worker. |
 | `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
-| `PW_RSTUDIO_SERVER_USER` | Server | Yes | Login username |
-| `PW_RSTUDIO_SERVER_PASSWORD` | Server | Yes | Login password |
+| `PW_RSTUDIO_SERVER_USER` | Server | Conditional | Login username. Required only when the external server presents a login form; ignored for the in-tree spawn (`--auth-none`). |
+| `PW_RSTUDIO_SERVER_PASSWORD` | Server | Conditional | Login password. Same conditional rule as `PW_RSTUDIO_SERVER_USER`. |
 | `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | Server | No | Post-login wait for the IDE console, in ms (default: 60000) |
+| `PW_RSERVER_BIN` | Server | No | Path to the `rserver` binary used by the in-tree spawn (default: `build/src/cpp/server/rserver` in the repo). |
+| `PW_RSERVER_CONF` | Server | No | Path to the `rserver-dev.conf` used by the in-tree spawn (default: `build/src/cpp/conf/rserver-dev.conf` in the repo). |
 | `PW_RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
 | `PW_RSTUDIO_PREFS_OVERRIDE` | Desktop | No | Path to a JSON/JSONC file whose keys override `fixtures/base-prefs.jsonc` per-key. |
 | `PW_TEST_IGNORE` | Both | No | Space-separated globs of test paths to exclude (e.g., `**/foo.test.ts **/posit-assistant-chat/**`). Fills the gap that Playwright has no CLI option for path-based exclusion -- file inclusion uses positional CLI arguments, and title filtering uses `--grep`/`--grep-invert`. |
