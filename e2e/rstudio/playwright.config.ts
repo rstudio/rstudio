@@ -47,20 +47,17 @@ if (process.env.PW_PROJECT) {
   console.warn('PW_PROJECT is no longer used; switch to --project=desktop|server or PW_RSTUDIO_MODE=desktop|server');
 }
 
-const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
+// Always expose both projects so worker processes (which re-load this config without
+// --project in their argv) can resolve whichever project the run selected. Playwright's
+// CLI narrows --project=NAME post-load; PW_RSTUDIO_MODE acts as a default when no flag.
 const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
-
-let projects;
-if (projectFlagPresent) {
-  // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
-  projects = allProjects;
-} else if (modeEnv === 'server') {
-  projects = allProjects.filter(p => p.name === 'server');
-} else if (modeEnv === 'desktop' || modeEnv === undefined) {
-  projects = allProjects.filter(p => p.name === 'desktop');
-} else {
+if (modeEnv && modeEnv !== 'desktop' && modeEnv !== 'server') {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
+const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
+const projects = projectFlagPresent
+  ? allProjects
+  : allProjects.filter(p => p.name === (modeEnv ?? 'desktop'));
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
