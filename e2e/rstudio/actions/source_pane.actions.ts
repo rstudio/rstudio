@@ -4,6 +4,7 @@ import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
+import { rStringLiteral } from '../utils/r';
 
 export class SourcePaneActions {
   readonly page: Page;
@@ -16,11 +17,21 @@ export class SourcePaneActions {
     this.consolePaneActions = consolePaneActions;
   }
 
+  /**
+   * Write `fileContent` to `fileName` in R's current working directory and
+   * open it in the editor. Pass real newlines and unescaped quotes -- the
+   * helper routes the content through `rStringLiteral` (JSON-stringify) so
+   * R receives it intact. Earlier callers had to pre-escape `\n` to `\\n`
+   * because the previous implementation interpolated the content into a
+   * plain `writeLines("...", ...)` template; that gotcha is gone.
+   */
   async createAndOpenFile(fileName: string, fileContent: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(`writeLines("${fileContent}", "${fileName}")`);
+    await this.consolePaneActions.typeInConsole(
+      `writeLines(${rStringLiteral(fileContent)}, ${rStringLiteral(fileName)})`,
+    );
     await sleep(1000);
 
-    await this.consolePaneActions.typeInConsole(`file.edit('${fileName}')`);
+    await this.consolePaneActions.typeInConsole(`file.edit(${rStringLiteral(fileName)})`);
 
     await expect(this.sourcePane.selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
   }

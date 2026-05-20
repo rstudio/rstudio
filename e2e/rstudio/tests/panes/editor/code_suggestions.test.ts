@@ -58,12 +58,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_text_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -93,13 +93,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_trigger_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -119,13 +119,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_distant_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'total_price <- calculate_total(100, 0.08)\\n' +
-        'print(total_price)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'total_price <- calculate_total(100, 0.08)\n' +
+        'print(total_price)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -155,15 +155,15 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_gap_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -187,17 +187,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_multi_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'score <- calculate_total(100, 0.08)\\n' +
-        'print(score)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'cat(score)\\n' +
-        'summary(score)\\n' +
-        'message(score)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'score <- calculate_total(100, 0.08)\n' +
+        'print(score)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'cat(score)\n' +
+        'summary(score)\n' +
+        'message(score)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -239,12 +239,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Parameter used across multiple consecutive lines in body
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -298,12 +298,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Same code as Discard test, different replacement name
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -339,7 +339,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
         // Verify the suggestion was applied — body should now use 'measurements'
         const content = await sourceActions.getEditorContent();
-        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\\n'));
+        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\n'));
         expect(content).toContain('measurements');
         expect(content).not.toContain('nums');
         console.log('  Apply confirmed — suggestion applied to editor');
@@ -356,12 +356,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -392,13 +392,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -443,16 +443,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_persist.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        '# placeholder line\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        '# placeholder line\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -503,10 +503,10 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileNameB = `${prefix}_nes_leak_b.R`;
 
       const originalCode =
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       // --- File A: trigger and accept NES ---
       await sourceActions.createAndOpenFile(fileNameA, originalCode);
@@ -569,7 +569,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       lines.push('result <- calculate_total(100, 0.08)');
       lines.push('');
 
-      const fileContent = lines.join('\\n');
+      const fileContent = lines.join('\n');
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);

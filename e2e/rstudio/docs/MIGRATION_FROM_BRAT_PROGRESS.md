@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 20 |
+| Files Complete | 21 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 9 |
+| Files Not started | 8 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -62,7 +62,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-console.R | 8 | console_pane.test.ts (10), console_command_effects.test.ts (8), ansi_erase_in_line.test.ts (8), execute_from_editor.test.ts (2) | Partial | 0/2/6/0 | Biggest gaps in this slice: condition highlighting (errors/warnings/messages spans), `consoleLineLengthLimit` truncation, post-error output (#16337), multi-message annotation, Ctrl+Shift+M/Alt+- shortcuts in console input |
-| test-automation-completions.R | 17 | autocomplete.test.ts (12, runs each test in console + editor) | Partial | 5/1/11/0 | Cores covered (#13196, #13291, #12678). Long tail not covered: roxygen tag completions (.R/.Rmd/.qmd), pipebind placeholder, dollar-names types, column-name quoting, pref toggle, R6 active bindings (#14784), multi-line Tab indent. Playwright adds extras (data.table $, Unicode column names) without BRAT counterpart |
+| test-automation-completions.R | 17 | autocomplete.test.ts (12, console + editor), autocomplete_extras.test.ts (11) | Complete | 5/0/11/0 (1 dropped) | The 11 long-tail tests ported in `autocomplete_extras.test.ts`: new local vars, R6 active bindings (#14784), pipe-expression completions at doc start (#13611), .DollarNames (#15115), `code_completion_include_already_used` pref (#13065), dplyr backtick-quoted column names (#15161), column quoting via Tab-accept (#13290), roxygen tags in .R / .Rmd / .qmd (#5809), pipe placeholder `_$` and `_$<prefix>`. `Tab indents multi-line selections` (#15046) intentionally dropped here -- it's an editor-shortcut test, not a completions test; better placed in `editor.test.ts` if added later. Refactored `createAndOpenFile` to use `rStringLiteral` so multi-line content with real `\n` works through the same path (updated 99 call sites in `code_suggestions.test.ts` and `rmarkdown.test.ts` to drop their pre-escaping workaround). BRAT file deleted |
 | test-automation-restart.R | 1 | panes/misc/session_restart.test.ts (1) | Complete | 0/0/1/0 | Ported directly via `.rs.api.restartSession('print(x + y)')` from console; asserts `[1] 3` appears after restart. BRAT file deleted |
 | test-automation-debugger.R | 8 | debugger.test.ts (~15) | Partial | 3/2/3/0 | Core stepping / breakpoints covered (Playwright actually adds Step Into/Out, Continue chains, recover-on-error, env locals, traceback). Gaps: S7 method breakpoints (#16490), package-build paths (#15201 partial), `debugClearBreakpoints` (Desktop messagebox blocker), multi-line `Browse[N]>` regression |
 | test-automation-data-viewer.R | 7 | pagination-sorting.test.ts (5) | Partial | 0/2/5/0 | Complementary, not overlapping. Playwright tests pagination; BRAT tests filter/pin/state-persist/XSS-escaping. Big porting opportunity: filter toolbar, pin icon, refresh state persistence, 3-state sort cycle, HTML-special cell/column escaping |

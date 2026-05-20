@@ -75,7 +75,7 @@ test.describe('RMarkdown', () => {
 
     // Create an rmd file with a chunk
     const fileName = `rmarkdown_novariables_${Date.now()}.rmd`;
-    await sourceActions.createAndOpenFile(fileName, "```{r}\\nprint('full of sound and fury, signifying nothing')\\n```");
+    await sourceActions.createAndOpenFile(fileName, "```{r}\nprint('full of sound and fury, signifying nothing')\n```");
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file
@@ -151,7 +151,7 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_spellcheck_in_editor_and_visual_mode (part 1)
     const fileName = `rmarkdown_spelling_src_${Date.now()}.Rmd`;
 
-    const rmarkdownSource = '---\\ntitle: RMarkdown Spelling\\noutput: html_document\\neditor:\\n  mode: source\\n---\\n\\nThis is missssssspelled.\\nThis is spelled correctly.';
+    const rmarkdownSource = '---\ntitle: RMarkdown Spelling\noutput: html_document\neditor:\n  mode: source\n---\n\nThis is missssssspelled.\nThis is spelled correctly.';
     await sourceActions.createAndOpenFile(fileName, rmarkdownSource);
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
@@ -175,7 +175,7 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_spellcheck_in_editor_and_visual_mode (part 2)
     const fileName = `rmarkdown_spelling_vis_${Date.now()}.Rmd`;
 
-    const rmarkdownSource = '---\\ntitle: RMarkdown Spelling\\noutput: html_document\\neditor:\\n  mode: source\\n---\\n\\nThis is missssssspelled.\\nThis is spelled correctly.';
+    const rmarkdownSource = '---\ntitle: RMarkdown Spelling\noutput: html_document\neditor:\n  mode: source\n---\n\nThis is missssssspelled.\nThis is spelled correctly.';
     await sourceActions.createAndOpenFile(fileName, rmarkdownSource);
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
