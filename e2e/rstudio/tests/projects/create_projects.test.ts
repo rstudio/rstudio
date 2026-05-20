@@ -134,7 +134,11 @@ async function openNewProjectWizard(page: Page): Promise<void> {
   await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
 }
 
-async function createProjectInNewDir(page: Page, type: ProjectType): Promise<void> {
+async function createProjectInNewDir(
+  page: Page,
+  type: ProjectType,
+  options: { withGit?: boolean } = {},
+): Promise<void> {
   await openNewProjectWizard(page);
 
   const dialog = page.locator(WIZARD_DIALOG);
@@ -156,6 +160,17 @@ async function createProjectInNewDir(page: Page, type: ProjectType): Promise<voi
   // that enable the Create Project button.
   await dirInput.pressSequentially(type.name);
   await sleep(500);
+
+  if (options.withGit !== undefined) {
+    const gitCheckbox = dialog.locator('#rstudio_new_project_git_repo input');
+    await expect(gitCheckbox).toBeVisible({ timeout: 5000 });
+    if (options.withGit) {
+      await gitCheckbox.check();
+    } else {
+      await gitCheckbox.uncheck();
+    }
+    await sleep(300);
+  }
 
   const createBtn = page.locator(CREATE_PROJECT_BTN);
   await expect(createBtn).toBeVisible({ timeout: 5000 });
@@ -296,4 +311,24 @@ test.describe.serial('Create Projects in New Directory', () => {
       currentProjectDir = '';
     });
   }
+
+  // Git-enabled new project: assumes git is installed on the test host so
+  // the VCS tab appears. Mirrors the BRAT regression coverage.
+  test('create new project with git enabled', async ({ rstudioPage: page }) => {
+    const type = { ...NEW_PROJECT, name: 'git_enabled_test_project' };
+    await createProjectInNewDir(page, type, { withGit: true });
+
+    currentProjectDir = await captureResult(page, 'getwd()');
+
+    const rprojExists = await captureResult(page,
+      `file.exists("${currentProjectDir}/${type.name}.Rproj")`);
+    expect(rprojExists, `.Rproj missing at ${currentProjectDir}`).toBe('TRUE');
+
+    await expect(page.locator(PROJECT_MENU)).toContainText(type.name, { timeout: 15000 });
+    await expect(page.locator('#rstudio_workbench_tab_git')).toBeVisible({ timeout: 15000 });
+
+    await closeCurrentProject(page);
+    await cleanupProject(page, currentProjectDir);
+    currentProjectDir = '';
+  });
 });
