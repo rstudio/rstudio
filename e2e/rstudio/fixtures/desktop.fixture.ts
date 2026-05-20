@@ -199,8 +199,11 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   // PW_SANDBOX_ROOT points somewhere with whitespace) and changing the
   // semantics of PW_RSTUDIO_EXTRA_ARGS from literal argv to shell text.
   // On Windows, npm is npm.cmd, which Node refuses to spawn directly
-  // without shell: true -- go through cmd.exe /c so Node's normal arg
-  // quoting still preserves each value literally.
+  // without shell: true -- go through cmd.exe /c instead. Node's normal
+  // arg quoting then preserves whitespace and most punctuation, but cmd
+  // metacharacters (`&` `|` `<` `>` `^` `%`) still go through cmd's own
+  // parser, so paths or PW_RSTUDIO_EXTRA_ARGS values containing those
+  // characters are not supported on the Windows dev path.
   let spawnCmd: string;
   let spawnArgs: string[];
   const spawnOptions: SpawnOptions = {
