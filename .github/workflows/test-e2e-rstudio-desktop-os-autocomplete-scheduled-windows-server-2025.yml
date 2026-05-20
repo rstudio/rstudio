@@ -18,13 +18,21 @@ on:
         type: string
         default: "desktop"
       grep:
-        description: "Optional Playwright --grep pattern to filter tests."
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
         type: string
         default: ""
       test_selector:
         description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests (default runs autocomplete tests)."
         type: string
         default: "autocomplete.test.ts"
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title."
+        type: string
+        default: ""
       rstudio_extra_args:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
@@ -46,6 +54,12 @@ on:
       test_selector:
         type: string
         default: "autocomplete.test.ts"
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
+        type: string
+        default: ""
       rstudio_extra_args:
         type: string
         default: ""
@@ -212,7 +226,9 @@ jobs:
           PW_RSTUDIO_EDITION: os
           PW_PROJECT_NAME: ${{ inputs.project || 'desktop' }}
           PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector || 'autocomplete.test.ts' }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -220,6 +236,10 @@ jobs:
           if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
             $pwArgs += '--grep'
             $pwArgs += $env:PW_GREP
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP_INVERT)) {
+            $pwArgs += '--grep-invert'
+            $pwArgs += $env:PW_GREP_INVERT
           }
           if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
             $pwArgs += '--'

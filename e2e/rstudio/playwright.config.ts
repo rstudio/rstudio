@@ -62,8 +62,13 @@ if (projectFlagPresent) {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
 
+const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
+  .split(/\s+/)
+  .filter(Boolean);
+
 export default defineConfig({
   testDir: './tests',
+  testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
   fullyParallel: false,
   workers: 1,
   timeout: 300000,
