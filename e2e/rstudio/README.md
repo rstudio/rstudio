@@ -338,6 +338,28 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 npx playwright test --grep-invert @ai
 ```
 
+You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
+
+```bash
+# Exclude a single file
+PW_TEST_IGNORE="**/code_suggestions.test.ts" npx playwright test
+
+# Exclude an entire directory
+PW_TEST_IGNORE="**/posit-assistant-chat/**" npx playwright test
+
+# Combine both
+PW_TEST_IGNORE="**/code_suggestions.test.ts **/posit-assistant-chat/**" npx playwright test
+```
+
+#### Summary: four ways to filter
+
+|               | Include                                              | Exclude                                                    |
+|---------------|------------------------------------------------------|------------------------------------------------------------|
+| By file path  | `npx playwright test foo.test.ts` (positional arg)   | `PW_TEST_IGNORE="**/foo.test.ts" npx playwright test`      |
+| By test title | `npx playwright test --grep "pattern"`               | `npx playwright test --grep-invert "pattern"`              |
+
+Include sets the candidate pool; exclude trims it. When both apply, exclude wins.
+
 ## Environment Variables
 
 | Variable | Mode | Required | Description |
