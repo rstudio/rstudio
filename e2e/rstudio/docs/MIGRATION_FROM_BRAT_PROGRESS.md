@@ -35,10 +35,10 @@ Test-level dispositions used in the per-file tables below:
 | Tests Partial (small delta porting) | ~30 |
 | Tests Not covered (full port) | ~98 |
 | Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 20 |
+| Files Complete | 21 |
 | Files Dropped | 3 |
 | Files In progress | 0 |
-| Files Not started | 9 |
+| Files Not started | 8 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
@@ -83,7 +83,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 | test-automation-environment-pane.R | 0 | -- | Dropped | -- | Empty file. Deleted 2026-05-19 |
 | test-automation-packages-pane.R | 4 | packages_pane.test.ts (2) | Complete | 0/0/2/2 | MASS attach/detach and stats-already-attached ported. renv variant (#16842) dropped here -- skip_on_ci in BRAT and depends on renv install timing; the non-renv path covers the load/unload regression. "We reset state" cleanup dropped (Playwright fixture handles teardown). BRAT file deleted |
 | test-automation-files.R | 3 | files.test.ts (3) | Complete | 0/0/3/0 | All ported. The two virtualized Open File dialog tests are `@server_only` and click the listbox first so `typeSlowly` reaches RowTable's prefix-search handler instead of the path text input. Autosave-unchanged-doc (#16329) verifies mtime-equality before edit and inequality after. Added `typeSlowly` helper in `@utils/constants`. BRAT file deleted |
-| test-automation-files-endpoint.R | 1 | -- | Partial / Unportable-as-UI | 0/1/0/0 | Protocol-level `/files/` cross-site test. Server-only. Better as backend integration test, or use Playwright's `request.fetch()` |
+| test-automation-files-endpoint.R | 1 | files_endpoint.test.ts (1) | Complete | 0/0/1/0 | Ported via `page.request` -- the test drives raw HTTP `GET /files/...` with custom `Sec-Fetch-Site` / `Referer` headers and asserts response status. `@server_only` (endpoint only registered in server mode). All 14 assertions kept. BRAT file deleted |
 | test-automation-history.R | 1 | console_pane.test.ts (+1) | Complete | 0/0/1/0 | Ported as new "timestamp() adds an entry to console history" case in the existing Console pane describe block. BRAT file deleted |
 | test-automation-ignorefiles.R | 1 | projects/ignorefiles.test.ts (1) | Complete | 0/0/1/0 | Wizard-driven port (palette > New Directory > New Project + git checkbox). Asserts pre/post `.positai` state via Node fs reads. BRAT file deleted |
 | test-automation-terminal.R | 2 | panes/terminal/terminal.test.ts (2) | Complete | 0/0/2/0 | Both ported via `rstudioapi::terminalCreate()` from console, xterm bounding-box assertion, and `terminalBuffer()` polling for command output. BRAT file deleted |
@@ -126,7 +126,7 @@ Phase 2 ordering (one PR per file per Hard Rule):
 
 8. ~~`chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R`~~ -- ported 2026-05-19. Server fixture updated to support `--auth-none`; `createProjectInNewDir` extended with `withGit` flag
 9. ~~`files.R`, `packages-pane.R`, `tabs.R`, `editor.R`~~ -- ported 2026-05-20. Desktop fixture passes `--automation-agent` so tests can drive `window.rstudioCallbacks`; added `typeSlowly`, `AceEditor.find`/`focus`/`insert`/`navigateLineEnd`/`getCursorPosition`, and a `@utils/commands` helper
-10. `files-endpoint.R` (1) -- still pending; treat as backend integration test
+10. ~~`files-endpoint.R` (1)~~ -- ported 2026-05-20 as `files_endpoint.test.ts`. Drives raw `GET /files/...` via `page.request` with custom Sec-Fetch-Site / Referer headers; `@server_only`
 11. `edit-suggestions.R` (5), `reformat.R` (6), `console.R` (8)
 
 ### Wave 4 -- large delta migrations
