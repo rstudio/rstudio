@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
 import { spawn, execSync } from 'child_process';
-import type { ChildProcess } from 'child_process';
+import type { ChildProcess, SpawnOptions } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
@@ -56,6 +56,20 @@ export const RSTUDIO_PATH = process.platform === 'win32'
     : '/usr/bin/rstudio';
 export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
+
+// PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
+// (electron-forge) in src/node/desktop, instead of the installed RStudio
+// binary at RSTUDIO_PATH. Assumes the dev build is already compiled --
+// see e2e/rstudio/README.md.
+const DEV_MODE = (() => {
+  const v = process.env.PW_RSTUDIO_DEV?.toLowerCase();
+  return v === '1' || v === 'true';
+})();
+const DEV_DESKTOP_DIR = path.resolve(__dirname, '../../../src/node/desktop');
+// First-run webpack compile can take a couple of minutes; subsequent
+// starts are much faster but still slower than launching the installed
+// binary, so give dev-mode startup more headroom than installed mode.
+const DEV_STARTUP_TIMEOUT_MS = 180000;
 
 export interface DesktopSession {
   page: Page;
@@ -170,14 +184,21 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   // ApplicationAutomation to expose `window.rstudioCallbacks` -- the
   // command-execution and command-state helpers our tests drive instead of
   // typing commands through the console.
-  console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
-  const args = [
+  const rstudioArgs = [
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${tempConfig.electronUserData}`,
     '--automation-agent',
     ...RSTUDIO_EXTRA_ARGS,
   ];
-  const rstudioProcess = spawn(RSTUDIO_PATH, args, {
+  // In dev mode, run `npm run start` in src/node/desktop. The package.json
+  // script already invokes `electron-forge start -- --no-sandbox`, and `npm
+  // run start -- <args>` appends our args to the script's existing `--`
+  // passthrough, so they reach Electron alongside `--no-sandbox`.
+  // `shell: true` is needed on Windows so npm.cmd is resolved; it's harmless
+  // on POSIX.
+  let spawnCmd: string;
+  let spawnArgs: string[];
+  const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
       HOME: sharedUserHome(),
@@ -192,18 +213,34 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       RS_NO_SPLASH: '1',
       USERPROFILE: sharedUserHome(),
     },
-  });
+  };
+  if (DEV_MODE) {
+    spawnCmd = 'npm';
+    spawnArgs = ['run', 'start', '--', ...rstudioArgs];
+    spawnOptions.cwd = DEV_DESKTOP_DIR;
+    spawnOptions.shell = true;
+    console.log(`Starting RStudio dev build via "npm run start" in ${DEV_DESKTOP_DIR} (CDP port ${CDP_PORT})...`);
+  } else {
+    spawnCmd = RSTUDIO_PATH;
+    spawnArgs = rstudioArgs;
+    console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
+  }
+  const rstudioProcess = spawn(spawnCmd, spawnArgs, spawnOptions);
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
-    launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
+    const target = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
+    launchError = new Error(`Failed to launch RStudio (${target}): ${err.message}`);
   });
   console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
 
   // Poll for CDP availability instead of a fixed sleep. RStudio Desktop
   // typically has CDP up in 3-5s on a developer machine; capping at
-  // TIMEOUTS.rstudioStartup keeps the overall safety margin.
+  // TIMEOUTS.rstudioStartup keeps the overall safety margin. Dev mode is
+  // slower because electron-forge has to run a webpack build before
+  // Electron starts, so we extend the deadline only on that path.
   let browser: Browser | undefined;
-  const cdpDeadline = Date.now() + TIMEOUTS.rstudioStartup;
+  const startupTimeout = DEV_MODE ? DEV_STARTUP_TIMEOUT_MS : TIMEOUTS.rstudioStartup;
+  const cdpDeadline = Date.now() + startupTimeout;
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
     if (launchError) throw launchError;
@@ -218,7 +255,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   if (!browser) {
     rstudioProcess.kill();
     throw new Error(
-      `Failed to connect to CDP at ${CDP_URL} within ${TIMEOUTS.rstudioStartup}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
     );
   }
 
