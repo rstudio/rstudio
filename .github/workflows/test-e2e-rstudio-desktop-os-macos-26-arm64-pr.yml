@@ -1,0 +1,60 @@
+name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source, PR-triggered)"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/**"
+      - "e2e/rstudio/**"
+      - ".github/pw-test-map.yml"
+      - ".github/scripts/pw-pr-select.py"
+      - ".github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
+      - ".github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+
+concurrency:
+  group: pw-pr-macos-26-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      selector: ${{ steps.compute.outputs.selector }}
+      skip:     ${{ steps.compute.outputs.skip }}
+      full:     ${{ steps.compute.outputs.full }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PyYAML
+        run: pip install --user pyyaml
+
+      - name: List changed files
+        id: changed
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          echo "Changed files:"
+          cat changed.txt
+
+      - name: Compute selector
+        id: compute
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          python3 .github/scripts/pw-pr-select.py \
+            --map .github/pw-test-map.yml \
+            --title "$PR_TITLE" < changed.txt
+
+  run-macos-26:
+    needs: select
+    if: needs.select.outputs.skip != 'true'
+    uses: ./.github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    with:
+      test_selector: ${{ needs.select.outputs.selector }}
+      project: desktop
+      r_version: "4.5.3"

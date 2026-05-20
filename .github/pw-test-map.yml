@@ -1,0 +1,114 @@
+# Source-to-test mapping for PR-triggered Playwright runs.
+#
+# Read by .github/scripts/pw-pr-select.py during the `select` job of the
+# PR-triggered Playwright workflows (e.g. test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml).
+#
+# Each rule maps a set of source-path glob patterns to a set of Playwright
+# test paths. When any changed file in the PR matches a rule's `paths`,
+# the rule's `tests` are added to the run selector.
+#
+# Glob syntax: `*` matches a single path segment, `**` matches any number
+# of path segments. Patterns are matched against repository-relative paths.
+
+# If every changed file in the PR matches at least one of these patterns,
+# the workflow is skipped entirely. Useful for docs- or release-notes-only
+# PRs.
+skip_if_only:
+  - "**/*.md"
+  - "NEWS.md"
+  - "docs/**"
+
+# When no rule matches but the PR is not docs-only, run this minimum
+# signal set.
+fallback:
+  - "tests/smoke/"
+
+rules:
+  - name: posit-assistant
+    paths:
+      - "src/cpp/session/modules/SessionChat*"
+      - "src/cpp/session/modules/**/posit_assistant/**"
+      - "src/gwt/**/views/chat/**"
+    tests:
+      - "tests/panes/posit-assistant-chat/"
+
+  - name: console
+    paths:
+      - "src/cpp/session/modules/SessionConsole*"
+      - "src/gwt/**/views/console/**"
+    tests:
+      - "tests/panes/console/"
+
+  - name: data-viewer
+    paths:
+      - "src/cpp/session/modules/SessionData*"
+      - "src/cpp/session/modules/SessionViewer*"
+      - "src/gwt/**/views/data/**"
+      - "src/gwt/**/views/viewer/**"
+    tests:
+      - "tests/panes/data-viewer/"
+
+  - name: debugger
+    paths:
+      - "src/cpp/session/modules/SessionBreakpoints*"
+      - "src/cpp/session/modules/SessionEnvironment*"
+      - "src/gwt/**/views/environment/**"
+    tests:
+      - "tests/panes/debugger/"
+
+  - name: editor
+    paths:
+      - "src/cpp/session/modules/SessionSource*"
+      - "src/gwt/**/views/source/**"
+      - "src/gwt/acesupport/**"
+    tests:
+      - "tests/panes/editor/"
+
+  - name: terminal
+    paths:
+      - "src/cpp/session/modules/SessionTerminal*"
+      - "src/gwt/**/views/terminal/**"
+    tests:
+      - "tests/panes/terminal/"
+
+  - name: projects
+    paths:
+      - "src/cpp/session/modules/SessionProjects*"
+      - "src/cpp/session/modules/SessionFiles*"
+    tests:
+      - "tests/projects/"
+
+  - name: help
+    paths:
+      - "src/cpp/session/modules/SessionHelp*"
+      - "src/gwt/**/views/help/**"
+    tests:
+      - "tests/menus/help/"
+
+  - name: layout
+    paths:
+      - "src/gwt/**/workbench/ui/**"
+    tests:
+      - "tests/panes/layout/"
+
+  - name: desktop-host
+    paths:
+      - "src/node/desktop/**"
+    tests:
+      - "tests/smoke/"
+      - "tests/panes/layout/"
+
+  - name: core
+    paths:
+      - "src/cpp/r/R/**"
+      - "src/cpp/session/SessionMain.cpp"
+      - "src/cpp/core/**"
+      - "src/cpp/shared_core/**"
+    tests:
+      - "tests/smoke/"
+
+  - name: user-prefs-schema
+    paths:
+      - "src/cpp/session/resources/schema/user-prefs-schema.json"
+    tests:
+      - "tests/smoke/"
