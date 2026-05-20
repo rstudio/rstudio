@@ -182,13 +182,13 @@ jobs:
 
       - name: Install R packages from DESCRIPTION
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          Rscript -e @'
+          Rscript -e '
             options(repos = c(P3M = "https://packagemanager.posit.co/cran/latest"))
             if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
             pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
-          '@
+          '
 
       - name: Save R library cache
         if: hashFiles('e2e/rstudio/DESCRIPTION') != '' && steps.r-cache.outputs.cache-hit != 'true'
