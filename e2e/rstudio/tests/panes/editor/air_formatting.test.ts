@@ -266,6 +266,15 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     expectAirFormatted(content);
   });
 
+  test('5: checked, air.toml present, save uses Air', async () => {
+    await setAirPrefs(page, consoleActions, true, true);
+    await createAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions);
+    await saveFile(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirFormatted(content);
+  });
+
   test('6: checked, no config, manual reformat uses built-in formatter', async () => {
     await setAirPrefs(page, consoleActions, true, false);
     await removeAirConfig(consoleActions);

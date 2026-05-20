@@ -61,7 +61,14 @@ export default async function globalSetup() {
     }
   }
 
-  const sandbox = fs.mkdtempSync(path.join(parent, 'pw_sandbox_'));
+  // Resolve symlinks in the sandbox path so every downstream consumer sees the
+  // same canonical form. On macOS, os.tmpdir() returns the non-canonical
+  // /var/folders/... prefix while /var is a symlink to /private/var; rstudioapi
+  // and R-side tempdir() normalize to /private/var/..., so paths the test
+  // computes JS-side and paths reported by RStudio would differ otherwise.
+  // TextEditingTarget's project-prefix check on save (#16721 / styler reformat
+  // on save) is one place that breaks under a path-form mismatch.
+  const sandbox = fs.realpathSync(fs.mkdtempSync(path.join(parent, 'pw_sandbox_')));
   fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
 
   const userHome = path.join(sandbox, 'user-home');
