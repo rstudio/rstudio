@@ -29,18 +29,16 @@ Test-level dispositions used in the per-file tables below:
 
 | Metric | Count |
 |--------|------:|
-| Total BRAT test files | 32 (+ 1 helper file) |
-| Total `.rs.test()` blocks | ~169 |
-| Tests Covered (eligible for BRAT removal after spot-check) | ~17 |
-| Tests Partial (small delta porting) | ~30 |
-| Tests Not covered (full port) | ~98 |
-| Tests Unportable (drop or convert to unit test) | ~20 |
-| Files Complete | 21 |
+| Total BRAT test files (original) | 32 (+ 1 helper file) |
+| BRAT files remaining on disk | 5 (+ 1 helper file) |
+| Files Complete | 24 |
 | Files Dropped | 3 |
-| Files In progress | 0 |
-| Files Not started | 8 |
+| Files Partial | 4 |
+| Files Fixme | 1 |
 
-Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
+Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway --
+guardrails, quarto, and rmarkdown remain; debugger (2) and edit-suggestions (1)
+have intentionally retained BRAT tests (build-cycle and focus-bug respectively).
 
 ## Conversion Status
 
@@ -61,11 +59,11 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 | BRAT Source | Tests | Counterpart(s) | Status | Per-test (C/P/N/U) | Notes |
 |-------------|------:|---------------|--------|-------------------:|-------|
-| test-automation-console.R | 8 | console_pane.test.ts (10), console_command_effects.test.ts (8), ansi_erase_in_line.test.ts (8), execute_from_editor.test.ts (2) | Partial | 0/2/6/0 | Biggest gaps in this slice: condition highlighting (errors/warnings/messages spans), `consoleLineLengthLimit` truncation, post-error output (#16337), multi-message annotation, Ctrl+Shift+M/Alt+- shortcuts in console input |
+| test-automation-console.R | 8 | console_output.test.ts (8) | Complete | 0/0/8/0 | All ported as `console_output.test.ts`. Covers `\r` overwriting console output, condition highlighting (errors/warnings/messages spans with `consoleHighlightConditions`), `options(warn = 2)` treating warnings as errors (#16031), CR + annotation (#16038), `consoleLineLengthLimit` truncation, post-`try()` error output (#16337), and Ctrl+Shift+M / Alt+- on the console input (#16973). Shortcuts test uses `activateConsole` via the JS bridge to focus the console input deterministically. BRAT file deleted |
 | test-automation-completions.R | 17 | autocomplete.test.ts (12, console + editor), autocomplete_extras.test.ts (11) | Complete | 5/0/11/0 (1 dropped) | The 11 long-tail tests ported in `autocomplete_extras.test.ts`: new local vars, R6 active bindings (#14784), pipe-expression completions at doc start (#13611), .DollarNames (#15115), `code_completion_include_already_used` pref (#13065), dplyr backtick-quoted column names (#15161), column quoting via Tab-accept (#13290), roxygen tags in .R / .Rmd / .qmd (#5809), pipe placeholder `_$` and `_$<prefix>`. `Tab indents multi-line selections` (#15046) intentionally dropped here -- it's an editor-shortcut test, not a completions test; better placed in `editor.test.ts` if added later. Refactored `createAndOpenFile` to use `rStringLiteral` so multi-line content with real `\n` works through the same path (updated 99 call sites in `code_suggestions.test.ts` and `rmarkdown.test.ts` to drop their pre-escaping workaround). BRAT file deleted |
 | test-automation-restart.R | 1 | panes/misc/session_restart.test.ts (1) | Complete | 0/0/1/0 | Ported directly via `.rs.api.restartSession('print(x + y)')` from console; asserts `[1] 3` appears after restart. BRAT file deleted |
 | test-automation-debugger.R | 8 | debugger.test.ts (~15), debugger_extras.test.ts (4) | Partial | 6/0/0/0 (2 BRAT-only) | The four migration-plan gaps ported in `debugger_extras.test.ts`: multi-line input at Browse[N]> preserves browser state, gutter-click breakpoint toggle (#9450), `Clear All Breakpoints` (#9450, `@server_only` -- Desktop opens a native Electron messagebox), S7 method breakpoints (#16490, S7 installed via `ensurePackages`). The two package-build tests (#15201 and the #9450 package-rebuild half) stay in BRAT -- they require a full devtools build cycle (~minutes) that doesn't fit the Playwright fixture model |
-| test-automation-data-viewer.R | 7 | pagination-sorting.test.ts (5) | Partial | 0/2/5/0 | Complementary, not overlapping. Playwright tests pagination; BRAT tests filter/pin/state-persist/XSS-escaping. Big porting opportunity: filter toolbar, pin icon, refresh state persistence, 3-state sort cycle, HTML-special cell/column escaping |
+| test-automation-data-viewer.R | 7 | pagination-sorting.test.ts (5), data_viewer.test.ts (7) | Complete | 0/0/7/0 | All ported as `data_viewer.test.ts`. Covers temporary-expression iframe (#14657), search filter + viewerLink cell-explorer hop, three-state sort cycle, pin-icon column reorder, per-object state persistence across `frame.contentWindow.refreshData()`, and HTML-special-character escaping in both cell values and column names. Search input found via `page.getByLabel('Search data table')` (BRAT's `.search` class no longer exists). BRAT file deleted |
 
 ### Chat / Posit Assistant (3 files, 36 tests)
 
@@ -73,7 +71,7 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 |-------------|------:|---------------|--------|-------------------:|-------|
 | test-automation-chat.R | 2 | chat-pane-persistence.test.ts (2) | Complete | 0/0/2/0 | Both ported -- no-refresh on Options dismiss + restart-survival (asserts iframe body is non-empty after `.rs.api.restartSession()`). BRAT file deleted |
 | test-automation-chat-satellite.R | 3 | chat-satellite-commands.test.ts (1), detachable-sidebar.test.ts (1, desktop_only) | Complete | 1/1/0/1 | Ported `popOutChat`/`returnChatToMain` command variant; DOM-click case covered by existing detachable-sidebar test; Chrome reload/WindowCloseMonitor test dropped (no user gesture, see dropped tests below). BRAT file deleted |
-| test-automation-guardrails.R | 31 | chat-guardrails.test.ts (11) | Partial | 3/7/17/4 | Largest delta. Port missing read paths (`~/.aws/credentials`, `~/.ssh/config`, `~/.netrc`, `id_rsa`, `.env.local`); missing write paths (`~/.ssh`, `file.create`, `file.remove`, `unlink`, `file.copy`); /etc/passwd, /etc/shadow, /etc/passwd write; path-traversal; structural error message; SSH public-key allow case. 4 binding-lifecycle tests (`injectBindings`/`restoreBindings`/`safeEval`/double-inject) are Unportable -- consider R-level testthat |
+| test-automation-guardrails.R | 31 | chat-guardrails.test.ts (11), chat-guardrails-paths.test.ts (27) | Partial | 27/0/0/4 (4 BRAT-only) | All 27 path-based tests ported to `chat-guardrails-paths.test.ts` (read denials, write denials, connection denials, error-message structure, system-file denials, path traversal, plus SSH-public-key and normal-file read-allows). Drives `.rs.chat.injectBindings()` / `.rs.chat.restoreBindings()` directly from the console via a one-shot `.rs.test.guardrails(quote(<expr>))` helper installed in `beforeAll`. Each test runs `pre; .rs.test.guardrails(quote(<expr>)); post` as one console submission to batch plant+guard+cleanup, and polls for an R-runtime-generated marker (won't match the input echo) instead of sleeping. The 4 binding-lifecycle tests (`safeEval` auto-restore, `safeEval` blocks writes, double-inject reentrancy guard, `safeEval` restores on error) stay in BRAT -- `.rs.chat.safeEval` returns errors as conditions rather than printing them, so the Playwright "blocked in console" pattern doesn't apply. Also dropped the 2s blind wait in `rstudio.fixture.ts:beforeEach` (`click({ timeout: 2000 })` -> `isVisible()` + `waitFor({ state: 'hidden' })`) which was adding ~2s to every test |
 
 ### Workbench panes / misc (10 files, ~22 tests)
 
@@ -109,35 +107,18 @@ Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway.
 
 ## Recommended migration order
 
-Phase 2 ordering (one PR per file per Hard Rule):
+### Done (waves 1-4)
 
-### Wave 1 -- removals and trivial files (low risk, fast)
+- Wave 1 (2026-05-19): `environment-pane.R`, `smoke.R`, `defer-scope.R` dropped; `code-folding.R`, `syntax-highlighting.R`, `sweave.R` ported via the new `AceEditor` page-object wrapper
+- Wave 2 (2026-05-19): `history.R`, `restart.R`, `build-pane.R`, `ignorefiles.R`, `python.R`, `refactoring.R`, `shinytest2.R`. Added `utils/r.ts` (rStringLiteral, rPathLiteral), renamed `utils/test_files.ts` to `utils/files.ts`, added `AceEditor.getSelectionRanges()`
+- Wave 3 (2026-05-19/2026-05-20): `chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R` (Server fixture updated for `--auth-none`); `files.R`, `packages-pane.R`, `tabs.R`, `editor.R` (Desktop fixture passes `--automation-agent`; `typeSlowly`, multiple `AceEditor` additions, `@utils/commands` helper); `files-endpoint.R`; `edit-suggestions.R` (4 of 5; one `test.fixme` for a focus bug); `reformat.R`
+- Wave 4 (2026-05-20): `console.R` -> `console_output.test.ts`; `data-viewer.R` -> `data_viewer.test.ts`; `debugger.R` -> `debugger_extras.test.ts` (4 ported, 2 package-build tests retained); `completions.R` -> `autocomplete_extras.test.ts`
 
-1. ~~`environment-pane.R`~~ -- empty file, dropped 2026-05-19
-2. ~~`smoke.R`~~ -- covered by `smoke/startup.test.ts`, dropped 2026-05-19
-3. ~~`defer-scope.R`~~ -- framework-internal, dropped 2026-05-19
-4. ~~`code-folding.R`, `syntax-highlighting.R`, `sweave.R`~~ -- ported 2026-05-19 via new `AceEditor` page-object wrapper (Ace internals accessible from Playwright via `page.evaluate`)
+### Remaining (wave 5)
 
-### Wave 2 -- single-test files (~~one PR per file~~ -- bundled as one PR, ~30 min each)
-
-5. ~~`history.R`, `restart.R`, `build-pane.R`, `ignorefiles.R`, `python.R`, `refactoring.R`, `shinytest2.R`~~ -- all ported 2026-05-19. Added `utils/r.ts` (rStringLiteral, rPathLiteral), renamed `utils/test_files.ts` to `utils/files.ts`, added `AceEditor.getSelectionRanges()`
-
-### Wave 3 -- small partial files
-
-8. ~~`chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R`~~ -- ported 2026-05-19. Server fixture updated to support `--auth-none`; `createProjectInNewDir` extended with `withGit` flag
-9. ~~`files.R`, `packages-pane.R`, `tabs.R`, `editor.R`~~ -- ported 2026-05-20. Desktop fixture passes `--automation-agent` so tests can drive `window.rstudioCallbacks`; added `typeSlowly`, `AceEditor.find`/`focus`/`insert`/`navigateLineEnd`/`getCursorPosition`, and a `@utils/commands` helper
-10. `files-endpoint.R` (1) -- still pending; treat as backend integration test
-11. ~~`edit-suggestions.R` (5)~~ -- ported 2026-05-20 as `edit_suggestions.test.ts`; 4 pass and 1 is `test.fixme` (focus bug, see Fixme table). `reformat.R` was completed on its own branch. `console.R` (8) still pending
-
-### Wave 4 -- large delta migrations
-
-11. `data-viewer.R` (7), `debugger.R` (8)
-12. `completions.R` (17)
-13. `quarto.R` (12), `rmarkdown.R` (18) -- chunk-options popup work likely a shared `actions/` helper
-
-### Wave 5 -- largest
-
-14. `guardrails.R` (31) -- consider splitting into multiple PRs by category (read denials, write denials, system files, path traversal, error messages, binding lifecycle)
+- `guardrails.R` (31): in progress. Most read/write/system path tests are deterministic mechanism tests that don't need the AI in the loop; `chat-guardrails-paths.test.ts` drives them via `.rs.chat.injectBindings()` / `restoreBindings()` directly
+- `rmarkdown.R` (18): chunk-options popup UI is the biggest single porting opportunity; visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` in BRAT
+- `quarto.R` (12): mirrors the Rmd chunk-options gap; raw HTML/LaTeX block round-trips via visual mode; 3 token/fold-widget tests likely unportable; 7 of 12 are `skip_on_ci()`
 
 ### Wave 6 -- BRAT decommissioning (single final PR)
 
