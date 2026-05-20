@@ -20,7 +20,7 @@
       return(version)
    
    url <- "https://api.github.com/repos/posit-dev/air/releases/latest"
-   destfile <- tempfile(fileext = ".html")
+   destfile <- tempfile(fileext = ".json")
    download.file(url, destfile = destfile, quiet = TRUE)
    
    contents <- readLines(destfile, warn = FALSE)
