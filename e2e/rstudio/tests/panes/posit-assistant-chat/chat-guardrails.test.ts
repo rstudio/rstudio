@@ -26,11 +26,11 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { createAndOpenProject } from '@utils/project';
+import { createChatActions } from './_chat-setup';
 
 const TS = Date.now();
 const PROJECT_NAME = 'guardrail_test_project';
@@ -40,7 +40,7 @@ const OUTSIDE_FILE = `guardrail_outside_${TS}.txt`;
 const RENAME_SRC = `guardrail_rename_${TS}.txt`;
 const READ_FILE = `guardrail_read_${TS}.R`;
 
-test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () => {
+test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial'] }, () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
@@ -49,10 +49,11 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
   let sandboxR = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    const initial = createChatActions(page);
+    consoleActions = initial.consoleActions;
+    chatActions = initial.chatActions;
+    chatPane = initial.chatPane;
+    const assistantActions = initial.assistantActions;
 
     sandboxR = sandbox.dir.replace(/\\/g, '/');
 
@@ -60,9 +61,7 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@serial'] }, () 
     await createAndOpenProject(page, sandboxR, PROJECT_NAME);
 
     // Re-create actions after session restart
-    consoleActions = new ConsolePaneActions(page);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    ({ consoleActions, chatActions, chatPane } = createChatActions(page));
 
     await consoleActions.clearConsole();
     await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);

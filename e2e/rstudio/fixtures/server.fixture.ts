@@ -9,14 +9,21 @@ import * as path from 'path';
 import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 
-if (!process.env.PW_SANDBOX) {
-  throw new Error(
-    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
-  );
+// PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
+// before any worker spawns. Resolve lazily so importing this module (for
+// --list, type-checking, etc.) doesn't require the env var -- the assertion
+// fires only when a test actually launches a session.
+function sandboxRoot(): string {
+  const s = process.env.PW_SANDBOX;
+  if (!s) {
+    throw new Error(
+      'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
+    );
+  }
+  return s;
 }
-const SANDBOX = process.env.PW_SANDBOX;
-const SHARED_USER_HOME = path.join(SANDBOX, 'user-home');
-const SHARED_DATA_HOME = path.join(SANDBOX, 'data-home');
+const sharedUserHome = () => path.join(sandboxRoot(), 'user-home');
+const sharedDataHome = () => path.join(sandboxRoot(), 'data-home');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const DEFAULT_RSERVER_BIN = path.join(REPO_ROOT, 'build', 'src', 'cpp', 'server', 'rserver');
@@ -70,7 +77,9 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   }
 
   const port = await pickFreePort();
-  const serverRoot = fs.mkdtempSync(path.join(SANDBOX, 'rserver_'));
+  const userHome = sharedUserHome();
+  const dataHome = sharedDataHome();
+  const serverRoot = fs.mkdtempSync(path.join(sandboxRoot(), 'rserver_'));
   // rserver creates Unix-domain sockets and IPC files under server-data-dir.
   // macOS caps sockaddr_un.sun_path at ~104 chars, and Playwright's sandbox
   // root inside /var/folders/.../T/ is already ~70 chars on its own. Anchor
@@ -79,7 +88,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rsd-'));
   const secureCookieKey = path.join(serverRoot, 'secure-cookie-key');
   const configHome = path.join(serverRoot, 'config-home');
-  for (const d of [configHome, SHARED_USER_HOME, SHARED_DATA_HOME]) {
+  for (const d of [configHome, userHome, dataHome]) {
     fs.mkdirSync(d, { recursive: true });
   }
 
@@ -91,12 +100,12 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
 
   const env = {
     ...process.env,
-    HOME: SHARED_USER_HOME,
-    USERPROFILE: SHARED_USER_HOME,
+    HOME: userHome,
+    USERPROFILE: userHome,
     RS_DB_MIGRATIONS_PATH: process.env.RS_DB_MIGRATIONS_PATH || DEFAULT_DB_MIGRATIONS,
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
     RSTUDIO_CONFIG_HOME: configHome,
-    RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
+    RSTUDIO_DATA_HOME: dataHome,
   };
 
   const args = [
@@ -111,7 +120,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
 
   console.log(`[server] spawning ${path.basename(rserverBin)} on port ${port}`);
   console.log(`[server] data dir: ${dataDir}`);
-  console.log(`[server] HOME: ${SHARED_USER_HOME}`);
+  console.log(`[server] HOME: ${userHome}`);
 
   const proc = spawn(rserverBin, args, {
     env,

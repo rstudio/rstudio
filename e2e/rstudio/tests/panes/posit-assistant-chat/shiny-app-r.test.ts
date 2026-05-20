@@ -1,13 +1,13 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { VIEWER_FRAME } from '@pages/viewer_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
+test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'] }, () => {
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
@@ -17,10 +17,10 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    const actions = createChatActions(page);
+    consoleActions = actions.consoleActions;
+    chatActions = actions.chatActions;
+    chatPane = actions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
     await consoleActions.clearConsole();
@@ -48,7 +48,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
       await sleep(500);
     }
 
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+    await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
 
     await chatActions.openChatPane();
     await chatActions.dismissSetupPrompts();
@@ -97,10 +97,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', () => {
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('Create and run R Shiny tip calculator', async ({ rstudioPage: page }) => {

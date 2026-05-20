@@ -1,9 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
-import type { Page } from 'playwright';
+import { createChatActions } from './_chat-setup';
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
@@ -11,17 +10,17 @@ const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 // Satellite pop-out on Server hits the Chrome window.open() reload path,
 // which is a separate concern from the command wiring this test covers.
 // detachable-sidebar.test.ts is @desktop_only for the same reason.
-test.describe.serial('Chat satellite -- commands', { tag: ['@desktop_only'] }, () => {
+test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only'] }, () => {
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
+    const actions = createChatActions(page);
+    consoleActions = actions.consoleActions;
+    chatActions = actions.chatActions;
 
     await consoleActions.clearConsole();
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+    await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
 
     await chatActions.openChatPane();
     // Wait for iframe; don't dismiss setup prompts -- command wiring works

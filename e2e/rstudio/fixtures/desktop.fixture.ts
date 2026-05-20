@@ -13,17 +13,20 @@ const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
-// before any worker spawns. Fail loud if this module is imported outside the
-// Playwright runner (e.g., by a script or type-check helper) so the diagnostic
-// is clearer than a later TypeError deep inside path.join().
-if (!process.env.PW_SANDBOX) {
-  throw new Error(
-    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
-  );
+// before any worker spawns. Resolve lazily so importing this module (for
+// --list, type-checking, etc.) doesn't require the env var -- the assertion
+// fires only when a test actually launches a session.
+function sandboxRoot(): string {
+  const s = process.env.PW_SANDBOX;
+  if (!s) {
+    throw new Error(
+      'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
+    );
+  }
+  return s;
 }
-const SANDBOX = process.env.PW_SANDBOX;
-const SHARED_DATA_HOME = path.join(SANDBOX, 'data-home');
-const SHARED_USER_HOME = path.join(SANDBOX, 'user-home');
+const sharedDataHome = () => path.join(sandboxRoot(), 'data-home');
+const sharedUserHome = () => path.join(sandboxRoot(), 'user-home');
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
   let raw: string;
@@ -80,7 +83,7 @@ interface TempConfig {
  * for tracking parity with Server mode.
  */
 function createTempConfig(): TempConfig {
-  const root = fs.mkdtempSync(path.join(SANDBOX, 'config_'));
+  const root = fs.mkdtempSync(path.join(sandboxRoot(), 'config_'));
   const configHome = path.join(root, 'config-home');
   const configDir = path.join(root, 'config-dir');
   const electronUserData = path.join(root, 'electron-userdata');
@@ -172,13 +175,13 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
   const rstudioProcess = spawn(RSTUDIO_PATH, args, {
     env: {
       ...process.env,
-      HOME: SHARED_USER_HOME,
+      HOME: sharedUserHome(),
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
-      RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
+      RSTUDIO_DATA_HOME: sharedDataHome(),
       RSTUDIO_DISABLE_WHATS_NEW: '1',
-      USERPROFILE: SHARED_USER_HOME,
+      USERPROFILE: sharedUserHome(),
     },
   });
   let launchError: Error | undefined;

@@ -1,10 +1,10 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
-import { waitForSessionRestart } from '@utils/project';
+import { restartSessionWithSentinel } from '@utils/project';
 import type { Page } from 'playwright';
+import { createChatActions } from './_chat-setup';
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
 const PREFS_OK_BTN = '#rstudio_preferences_confirm';
@@ -25,17 +25,17 @@ async function ensureChatPaneVisible(page: Page, chatActions: ChatPaneActions): 
   await sleep(2000);
 }
 
-test.describe.serial('Chat pane persistence', () => {
+test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
+    const actions = createChatActions(page);
+    consoleActions = actions.consoleActions;
+    chatActions = actions.chatActions;
 
     await consoleActions.clearConsole();
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+    await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
   });
 
   // Regression test for rstudio/rstudio#17223: dismissing Global Options
@@ -86,9 +86,8 @@ test.describe.serial('Chat pane persistence', () => {
   test('chat pane content survives R session restart', async ({ rstudioPage: page }) => {
     await ensureChatPaneVisible(page, chatActions);
 
-    // Restart the R session
-    await consoleActions.typeInConsole('.rs.api.restartSession()');
-    await waitForSessionRestart(page);
+    // Restart the R session (sentinel-confirmed)
+    await restartSessionWithSentinel(page);
 
     // Re-open the chat pane (toggleSidebar may have hidden it during restart)
     await ensureChatPaneVisible(page, chatActions);
