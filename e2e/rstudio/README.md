@@ -11,6 +11,22 @@ npm install
 npx playwright install
 ```
 
+### Ubuntu 26.04 LTS
+
+Playwright doesn't yet ship a browser build or system-deps list for Ubuntu 26.04 (the release renamed SONAME-versioned libraries: `libicu74` -> `libicu78`, `libxml2` -> `libxml2-16`, etc.). Until Playwright catches up, point the installer at the Ubuntu 24.04 browser build and install the renamed system libraries by hand:
+
+```bash
+# Intel/AMD64
+PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 npx playwright install
+
+# ARM64
+PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-arm64 npx playwright install
+
+sudo apt-get install libicu78 libxml2-16 libmanette-0.2-0
+```
+
+Remove the override once Playwright publishes an Ubuntu 26.04 build.
+
 ### Prerequisites
 
 - **Desktop mode**: RStudio Desktop installed at the default path for your OS

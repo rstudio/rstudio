@@ -47,20 +47,31 @@ if (process.env.PW_PROJECT) {
   console.warn('PW_PROJECT is no longer used; switch to --project=desktop|server or PW_RSTUDIO_MODE=desktop|server');
 }
 
-const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
-const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
+// Worker processes re-load this config without --project in their argv, so we can't
+// rely on argv to pick the project there. Parse --project once in the main process and
+// forward it via PW_RSTUDIO_MODE; workers inherit process.env at fork time and end up
+// filtering to the same project the main process picked.
+function parseProjectFromArgv(): string | undefined {
+  const argv = process.argv;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--project' && i + 1 < argv.length) return argv[i + 1];
+    const prefix = '--project=';
+    if (argv[i].startsWith(prefix)) return argv[i].slice(prefix.length);
+  }
+  return undefined;
+}
 
-let projects;
-if (projectFlagPresent) {
-  // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
-  projects = allProjects;
-} else if (modeEnv === 'server') {
-  projects = allProjects.filter(p => p.name === 'server');
-} else if (modeEnv === 'desktop' || modeEnv === undefined) {
-  projects = allProjects.filter(p => p.name === 'desktop');
-} else {
+const argvProject = parseProjectFromArgv()?.toLowerCase();
+if (argvProject) {
+  // --project wins over a pre-existing PW_RSTUDIO_MODE (README documents this).
+  process.env.PW_RSTUDIO_MODE = argvProject;
+}
+
+const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase() ?? 'desktop';
+if (modeEnv !== 'desktop' && modeEnv !== 'server') {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
+const projects = allProjects.filter(p => p.name === modeEnv);
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
