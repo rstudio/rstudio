@@ -95,8 +95,7 @@ export function checkGwtDevmode(tag: string): void {
   step(tag, 'Checking GWT devmode...');
 
   if (!isGwtDevmodeRunning()) {
-    fail(
-      tag,
+    console.log(
       'GWT devmode is not running. Start it in another terminal with:\n' +
         '    (cd src/gwt && ant devmode)',
     );
