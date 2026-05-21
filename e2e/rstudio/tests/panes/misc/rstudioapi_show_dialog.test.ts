@@ -49,20 +49,36 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
 
   // If a test fails with the dialog still up, R stays blocked on
   // showDialogCompleted -- fixture shutdown then triggers the "R session is
-  // busy" quit prompt. Drain every visible dismiss button (not just the
-  // first) in case multiple modals stacked up, then fall back to Escape so
-  // a dialog with unexpected selectors still gets dismissed.
+  // busy" quit prompt. Drain modals one at a time from the topmost
+  // (last() in DOM order, since GWT appends new modals). Scope dismiss
+  // buttons to each dialog so we never click a covered button on an older
+  // one. If no known selector matches a given dialog, press Escape for
+  // that dialog before moving on. Bounded by MAX_DIALOG_CLEANUP to avoid
+  // hanging if a modal refuses to dismiss.
+  const MAX_DIALOG_CLEANUP = 5;
   test.afterEach(async ({ rstudioPage: page }) => {
-    let dismissed = false;
-    for (const sel of DISMISS_SELECTORS) {
-      const btn = page.locator(`.gwt-DialogBox ${sel}`).first();
-      while (await btn.isVisible().catch(() => false)) {
-        await btn.click();
-        dismissed = true;
+    const dialogs = page.locator('.gwt-DialogBox');
+    for (let i = 0; i < MAX_DIALOG_CLEANUP; i++) {
+      const count = await dialogs.count();
+      if (count === 0) break;
+
+      const top = dialogs.nth(count - 1);
+      let clicked = false;
+      for (const sel of DISMISS_SELECTORS) {
+        const btn = top.locator(sel).first();
+        if (await btn.isVisible().catch(() => false)) {
+          await btn.click();
+          clicked = true;
+          break;
+        }
       }
-    }
-    if (!dismissed && await page.locator('.gwt-DialogBox').first().isVisible().catch(() => false)) {
-      await page.keyboard.press('Escape');
+      if (!clicked) {
+        await page.keyboard.press('Escape');
+      }
+
+      // Wait for the count to drop before processing the next dialog.
+      // Swallow timeouts so the loop bound (not an exception) caps total wait.
+      await expect(dialogs).toHaveCount(count - 1, { timeout: 5000 }).catch(() => {});
     }
   });
 
