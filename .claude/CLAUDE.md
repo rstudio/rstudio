@@ -63,7 +63,6 @@ R code lives in several places and serves different purposes:
 
 - `src/cpp/r/R/` -- core R functions shipped with RStudio (Api.R, Tools.R, etc.)
 - `src/cpp/session/modules/*.R` -- R-side logic for session modules (e.g. SessionChat.R)
-- `src/cpp/tests/automation/testthat/` -- BRAT automation tests
 - `scripts/` -- build and code generation scripts
 
 
@@ -269,17 +268,13 @@ To build the Electron application / desktop components, you can use:
 
 ## Writing Automated Tests
 
-RStudio uses its own infrastructure for automated testing, nicknamed "BRAT". Essentially, one is able to test and automate a separate instance of RStudio from RStudio, via the Chrome Debugging Protocol (CDP).
+End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`.
+The rsession is started with `--automation-agent` so that `window.rstudioCallbacks`
+is exposed for the Playwright command bridge in `e2e/rstudio/utils/commands.ts`.
 
-Automated tests live in:
-
-    src/cpp/tests/automation/testthat
-
-The tools that help facilitate automation (that is, communication with the automated instance of RStudio) live in
-
-    src/cpp/session/modules/automation
-
-See `src/cpp/tests/automation/CLAUDE.md` for detailed guidance on writing BRAT tests.
+See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance
+on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md`
+for how to run them.
 
 
 ## Testing

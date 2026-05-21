@@ -63,18 +63,9 @@ protected:
    using namespace boost::program_options;
 
    pAutomation->add_options()
-      ("run-automation",
-      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
-      "Run RStudio's built-in automation tests. Requires a Google Chrome installation.")
-      ("automation-filter",
-      value<std::string>(&automationFilter_)->default_value(std::string()),
-      "A regular expression (ERE), indicating which automation test file(s) should be run.")
-      ("automation-markers",
-      value<std::string>(&automationMarkers_)->default_value(std::string()),
-      "One or more test markers, indicating which tests should be run. Markers can be separated by spaces.")
       ("automation-agent",
       value<bool>(&automationAgent_)->default_value(false)->implicit_value(true),
-      "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright). Independent of --run-automation, which spawns BRAT.");
+      "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright).");
 
    pVerify->add_options()
       ("verify-installation",
@@ -259,9 +250,6 @@ protected:
 }
 
 public:
-   bool runAutomation() const { return runAutomation_; }
-   std::string automationFilter() const { return automationFilter_; }
-   std::string automationMarkers() const { return automationMarkers_; }
    bool automationAgent() const { return automationAgent_; }
    bool verifyInstallation() const { return verifyInstallation_; }
    std::string serverWorkingDir() const { return serverWorkingDir_; }
@@ -312,9 +300,6 @@ public:
 
 
 protected:
-   bool runAutomation_;
-   std::string automationFilter_;
-   std::string automationMarkers_;
    bool automationAgent_;
    bool verifyInstallation_;
    std::string serverWorkingDir_;

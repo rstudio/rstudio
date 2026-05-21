@@ -32,7 +32,6 @@ import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RVersionsChangedEvent;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
-import org.rstudio.studio.client.application.events.RunAutomationEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SessionAbendWarningEvent;
 import org.rstudio.studio.client.application.events.SessionCountChangedEvent;
@@ -1196,10 +1195,6 @@ public class ClientEventDispatcher
          {
             DeploymentRecordsUpdatedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new DeploymentRecordsUpdatedEvent(data));
-         }
-         else if (type == ClientEvent.RunAutomation)
-         {
-            eventBus_.dispatchEvent(new RunAutomationEvent());
          }
          else if (type == ClientEvent.CopilotStatusChanged)
          {

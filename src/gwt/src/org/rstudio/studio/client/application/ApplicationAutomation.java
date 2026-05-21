@@ -57,18 +57,9 @@ public class ApplicationAutomation
       userPrefs_ = userPrefs;
    }
 
-   public final boolean isAutomationHost()
-   {
-      return isAutomationHost_;
-   }
    public final boolean isAutomationAgent()
    {
       return isAutomationAgent_;
-   }
-
-   public final void initializeHost()
-   {
-      isAutomationHost_ = true;
    }
 
    public final void initializeAgent()
@@ -240,6 +231,5 @@ public class ApplicationAutomation
    private final Commands commands_;
    private final EventBus eventBus_;
    private final UserPrefs userPrefs_;
-   private boolean isAutomationHost_ = false;
    private boolean isAutomationAgent_ = false;
 }

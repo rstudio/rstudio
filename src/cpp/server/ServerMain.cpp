@@ -84,13 +84,6 @@
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
 
-#if defined(__linux__)
-# define kOpenProgram "xdg-open"
-#elif defined(__APPLE__)
-# define kOpenProgram "/usr/bin/open"
-#elif defined(_WIN32)
-# define kOpenProgram "start"
-#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -535,18 +528,6 @@ Error waitForSignals()
 
          // the overlay shuts down monitored processes that failed to stop
          overlay::shutdown();
-
-         // Short-circuit the re-raise below for the self-sent SIGTERM
-         // that follows a clean automation host exit; see
-         // s_shuttingDownForAutomation in ServerSessionManager.cpp for
-         // the full rationale (avoids 143-vs-0 ambiguity for external
-         // test harnesses). Externally-delivered SIGTERMs and non-clean
-         // automation exits fall through to the re-raise.
-         if (sig == SIGTERM && server::isShuttingDownForAutomation())
-         {
-            LOG_INFO_MESSAGE("Automation shutdown complete; exiting with status 0.");
-            std::exit(0);
-         }
 
          // clear the signal mask
          error = core::system::clearSignalMask();
@@ -1103,51 +1084,6 @@ int main(int argc, char * const argv[])
       error = s_pHttpServer->run(options.wwwThreadPoolSize());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
-
-      // if we're running automation, open a browser instance and
-      // navigate to the RStudio Server instance URL to initiate
-      // the automated tests
-      if (options.runAutomation())
-      {
-         std::string address = options.wwwAddress();
-         if (address == "0.0.0.0")
-         {
-            address = "localhost";
-         }
-
-         std::string port = options.wwwPort();
-         if (port.empty())
-         {
-            Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
-            LOG_ERROR(error);
-            return EXIT_FAILURE;
-         }
-
-         FilePath openProgramPath(kOpenProgram);
-
-#ifndef _WIN32
-         if (openProgramPath.isRelative())
-         {
-            Error findError = core::system::findProgramOnPath(kOpenProgram, &openProgramPath);
-            if (findError)
-            {
-               LOG_ERROR(findError);
-               return EXIT_FAILURE;
-            }
-         }
-#endif
-
-         std::string url = http::URL::formatAddress("http", address, port);
-         core::system::ProcessOptions options;
-         core::system::ProcessCallbacks callbacks;
-         Error error = server::process_supervisor::runProgram(
-                  openProgramPath.getAbsolutePath(),
-                  { url },
-                  options,
-                  callbacks);
-         if (error)
-            LOG_ERROR(error);
-      }
 
       // wait for signals
       error = waitForSignals();

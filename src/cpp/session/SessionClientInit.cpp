@@ -679,7 +679,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #endif
    
    // automation
-   sessionInfo["is_automation_host"] = options.runAutomation();
    sessionInfo["is_automation_agent"] = options.isAutomationAgent();
    
    // assistant running?

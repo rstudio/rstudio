@@ -703,10 +703,6 @@ public class SessionInfo extends JavaScriptObject
       return this.copilot_enabled || false;
    }-*/;
    
-   public final native boolean isAutomationHost() /*-{
-      return this.is_automation_host;
-   }-*/;
-   
    public final native boolean isAutomationAgent() /*-{
       return this.is_automation_agent;
    }-*/;
