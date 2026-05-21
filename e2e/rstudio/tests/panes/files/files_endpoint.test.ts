@@ -1,7 +1,5 @@
 // /files/ HTTP endpoint cross-site protections (rstudio-pro#10980).
 //
-// Ported from src/cpp/tests/automation/testthat/test-automation-files-endpoint.R.
-//
 // The /files/ endpoint serves user-controlled files with native MIME types
 // and must reject cross-site requests so attacker pages can't redirect
 // victims into loading attacker HTML in the RStudio session origin.
