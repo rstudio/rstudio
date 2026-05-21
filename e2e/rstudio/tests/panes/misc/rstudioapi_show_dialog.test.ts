@@ -5,13 +5,12 @@
 // `white-space: pre-line` to the GWT widgets so caller-supplied "\n"
 // characters render as line breaks.
 //
-// Only the GWT-rendered paths are covered here:
-//   - showDialog    -- GWT MessageDialog on both Desktop and Server
-//   - showPrompt    -- GWT TextEntryModalDialog on Electron Desktop and Server
-//   - showQuestion  -- GWT MessageDialog on Server only (Desktop uses Electron's
-//                      native dialog, which is outside Playwright's reach). This
-//                      path wasn't broken in #17701, but the @server_only test
-//                      guards against future regressions.
+// All three calls render through GWT dialogs in the test suite. Desktop
+// would normally use Electron's native showMessageBox for showQuestion,
+// but fixtures/base-prefs.jsonc sets native_file_dialogs=false so message
+// dialogs are GWT too (Playwright can't reach native dialogs). The
+// showQuestion case wasn't broken in #17701; the test guards against
+// future regressions in the MultiLineLabel rendering path.
 //
 // The R-side calls block until the dialog is dismissed, so each test must
 // click OK/Cancel before issuing the next console command.
@@ -92,7 +91,7 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 
-  test('showQuestion preserves "\\n" as a line break', { tag: ['@server_only'] }, async ({ rstudioPage: page }) => {
+  test('showQuestion preserves "\\n" as a line break', async ({ rstudioPage: page }) => {
     const title = `showQuestion_17701_${Date.now()}`;
 
     await consoleActions.executeInConsole(
