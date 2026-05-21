@@ -61,11 +61,7 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
     await expect(chatPane.readlineNotification).toBeVisible();
 
     // --- Step 6: Provide input in the Console to unblock readline ---
-    await consoleActions.consolePane.consoleTab.click();
-    await sleep(500);
-    await consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(500);
-    await consoleActions.consolePane.consoleInput.pressSequentially('Prospero');
+    await consoleActions.typeInConsole('Prospero');
     await sleep(300);
     await page.keyboard.press('Enter');
 

@@ -68,17 +68,47 @@ export class ConsolePaneActions {
     this.consolePane = new ConsolePane(page);
   }
 
-  async typeInConsole(command: string): Promise<void> {
+  /**
+   * Submit an R expression to the console. Writes the text directly into the
+   * console's Ace editor and presses Enter -- no per-key typing -- so it
+   * doesn't race with autocomplete popups or other live-edit UI that can
+   * swallow characters. Prefer this when you just need code to run; use
+   * `typeInConsole` only when a test is exercising actual typing behavior.
+   */
+  async executeInConsole(command: string): Promise<void> {
     await this.consolePane.consoleTab.click();
-    await this.consolePane.consoleInput.click({ force: true });
-    await sleep(500);
-    await this.consolePane.consoleInput.pressSequentially(command);
-    await sleep(200);
+    await this.page.evaluate((text) => {
+      const el = document.getElementById('rstudio_console_input') as
+        | (HTMLElement & {
+            env?: { editor?: { setValue(s: string, cursorPos?: number): void; focus(): void } };
+          })
+        | null;
+      const editor = el?.env?.editor;
+      if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+      editor.setValue(text, 1); // 1 = move cursor to end
+      editor.focus();
+    }, command);
     if (await this.page.locator('#rstudio_popup_completions').isVisible()) {
       await this.page.keyboard.press('Escape');
-      await sleep(100);
     }
-    await this.consolePane.consoleInput.press('Enter');
+    await this.page.keyboard.press('Enter');
+  }
+
+  /**
+   * Simulate user typing one keystroke at a time into the console input. Does
+   * NOT press Enter -- the caller controls submission. Use only when a test
+   * needs to exercise live-edit behavior that `executeInConsole`'s programmatic
+   * write doesn't trigger (e.g. autocomplete popups).
+   *
+   * `delayMs` is the per-keystroke delay; default 50ms is close to typical
+   * human typing speed and gives the editor time to dispatch input events and
+   * fire completers between chars.
+   */
+  async typeInConsole(text: string, delayMs: number = 50): Promise<void> {
+    await this.consolePane.consoleTab.click();
+    await this.consolePane.consoleInput.click({ force: true });
+    await sleep(300);
+    await this.consolePane.consoleInput.pressSequentially(text, { delay: delayMs });
   }
 
   async clearConsole(): Promise<void> {

@@ -31,14 +31,14 @@ test.describe('/files/ HTTP endpoint cross-site protections', { tag: ['@server_o
     // Drop a small file in the user home directory so the handler reaches
     // the Sec-Fetch-Site check before any not-found logic. The leading '.'
     // keeps it out of the visible Files pane.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `writeLines('test content', file.path('~', '${TEST_FILE}'))`,
     );
     await sleep(TIMEOUTS.settleDelay);
   });
 
   test.afterAll(async () => {
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `unlink(file.path('~', '${TEST_FILE}'))`,
     );
   });

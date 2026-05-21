@@ -59,7 +59,7 @@ Goodbye, world!
 :::
 `;
 
-    await consoleActions.typeInConsole('.rs.writeUserPref("rainbow_fenced_divs", TRUE)');
+    await consoleActions.executeInConsole('.rs.writeUserPref("rainbow_fenced_divs", TRUE)');
     try {
       await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.Rmd', content);
 
@@ -86,7 +86,7 @@ Goodbye, world!
 
       expect(await editor.getState(5)).toBe('start');
     } finally {
-      await consoleActions.typeInConsole('.rs.writeUserPref("rainbow_fenced_divs", FALSE)');
+      await consoleActions.executeInConsole('.rs.writeUserPref("rainbow_fenced_divs", FALSE)');
     }
   });
 

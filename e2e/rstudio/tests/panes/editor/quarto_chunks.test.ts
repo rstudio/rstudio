@@ -40,17 +40,17 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     ].join('\n');
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('options(warn = 0); cat("WARN_BEFORE=", getOption("warn"), "\\n", sep = "")');
+    await consoleActions.executeInConsole('options(warn = 0); cat("WARN_BEFORE=", getOption("warn"), "\\n", sep = "")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_BEFORE=0');
 
     await sourceActions.createAndOpenFile(fileName, content);
     await sourceActions.navigateToChunkByLabel('warning_chunk');
     await executeCommand(page, 'executeCurrentChunk');
     // R queue is FIFO; `WARN_AFTER=2` won't appear until `options(warn = 2)` runs.
-    await consoleActions.typeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
+    await consoleActions.executeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_AFTER=2', { timeout: 30000 });
 
-    await consoleActions.typeInConsole('options(warn = 0)');
+    await consoleActions.executeInConsole('options(warn = 0)');
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });
 

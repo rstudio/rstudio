@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { waitForSessionRestart } from '@utils/project';
 import { rStringLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
@@ -8,7 +8,7 @@ import type { Page } from 'playwright';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__SUSP_${Date.now()}__`;
-  await typeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
   const start = Date.now();
@@ -30,7 +30,7 @@ async function suspendAndResume(page: Page): Promise<void> {
 // equivalent flow, so these tests are tagged @server_only.
 test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => {
   test('loaded packages are preserved on suspend + resume', async ({ rstudioPage: page }) => {
-    await typeInConsole(page, 'library(tools)');
+    await executeInConsole(page, 'library(tools)');
     await sleep(TIMEOUTS.pollInterval);
 
     await suspendAndResume(page);
@@ -40,7 +40,7 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
   });
 
   test('attached datasets are preserved on suspend + resume', async ({ rstudioPage: page }) => {
-    await typeInConsole(
+    await executeInConsole(
       page,
       'attach(list(apple = 1, banana = 2, cherry = 3), name = "my-attached-dataset")',
     );
@@ -58,7 +58,7 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
       const sum = await captureResult(page, 'apple + banana + cherry');
       expect(sum, 'attached values should still resolve').toBe('6');
     } finally {
-      await typeInConsole(page, 'try(detach("my-attached-dataset"), silent = TRUE)');
+      await executeInConsole(page, 'try(detach("my-attached-dataset"), silent = TRUE)');
       await sleep(TIMEOUTS.pollInterval);
     }
   });

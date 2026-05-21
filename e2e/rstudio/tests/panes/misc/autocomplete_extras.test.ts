@@ -39,7 +39,7 @@ test.describe('Autocomplete extras', () => {
     const sourceActions = new SourcePaneActions(page, consoleActions);
     autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
     await consoleActions.closeAllBuffersWithoutSaving();
-    await consoleActions.typeInConsole('rm(list = ls())');
+    await consoleActions.executeInConsole('rm(list = ls())');
     await sleep(500);
   });
 
@@ -69,7 +69,7 @@ test.describe('Autocomplete extras', () => {
       'nms <- .rs.getNames(n)',
     ];
     for (const code of setup) {
-      await consoleActions.typeInConsole(code);
+      await consoleActions.executeInConsole(code);
       await sleep(500);
     }
 
@@ -78,9 +78,7 @@ test.describe('Autocomplete extras', () => {
     expect(before).not.toMatch(/\[1\]\s*"active"/);
 
     // Triggering completions on `n` (Tab) must also not evaluate it.
-    await consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(200);
-    await consoleActions.consolePane.consoleInput.pressSequentially('n');
+    await consoleActions.typeInConsole('n');
     await page.keyboard.press('Tab');
     await sleep(500);
     await page.keyboard.press('Escape');
@@ -153,12 +151,10 @@ test.describe('Autocomplete extras', () => {
 
   // https://github.com/rstudio/rstudio/issues/13290
   test('column names with special chars are properly quoted on accept', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('cols_q <- list(apple = "apple", "2024" = "2024")');
+    await consoleActions.executeInConsole('cols_q <- list(apple = "apple", "2024" = "2024")');
     await sleep(500);
 
-    await consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(200);
-    await consoleActions.consolePane.consoleInput.pressSequentially('cols_q$');
+    await consoleActions.typeInConsole('cols_q$');
     await page.keyboard.press('Tab');
     await sleep(500);
 

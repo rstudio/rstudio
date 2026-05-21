@@ -27,12 +27,12 @@ export class SourcePaneActions {
    * plain `writeLines("...", ...)` template; that gotcha is gone.
    */
   async createAndOpenFile(fileName: string, fileContent: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(
+    await this.consolePaneActions.executeInConsole(
       `writeLines(${rStringLiteral(fileContent)}, ${rStringLiteral(fileName)})`,
     );
     await sleep(1000);
 
-    await this.consolePaneActions.typeInConsole(`file.edit(${rStringLiteral(fileName)})`);
+    await this.consolePaneActions.executeInConsole(`file.edit(${rStringLiteral(fileName)})`);
 
     await expect(this.sourcePane.selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
   }
@@ -46,7 +46,7 @@ export class SourcePaneActions {
     await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
     await sleep(500);
 
-    await this.consolePaneActions.typeInConsole(`unlink("${fileName}")`);
+    await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`);
     await sleep(500);
   }
 

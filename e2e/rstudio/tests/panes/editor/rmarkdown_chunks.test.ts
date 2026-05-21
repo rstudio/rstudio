@@ -55,7 +55,7 @@ async function runChunkByLabelAndWaitForMarker(
 ): Promise<void> {
   await sourceActions.navigateToChunkByLabel(label);
   await executeCommand(page, 'executeCurrentChunk');
-  await consoleActions.typeInConsole(
+  await consoleActions.executeInConsole(
     `cat(paste0("__CHUNKDONE_", proc.time()[3], "_", sample.int(1e9, 1L), "__"), "\\n")`
   );
   await expect(consoleActions.consolePane.consoleOutput).toContainText(
@@ -96,7 +96,7 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     // appears in the cat *output*, not the (unescaped) input echo --
     // the input has `WARN_BEFORE="` followed by a comma.
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('options(warn = 0); cat("WARN_BEFORE=", getOption("warn"), "\\n", sep = "")');
+    await consoleActions.executeInConsole('options(warn = 0); cat("WARN_BEFORE=", getOption("warn"), "\\n", sep = "")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_BEFORE=0');
 
     await sourceActions.createAndOpenFile(fileName, content);
@@ -107,11 +107,11 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     // needed; the assertion implicitly serializes.
     await sourceActions.navigateToChunkByLabel('warning_chunk');
     await executeCommand(page, 'executeCurrentChunk');
-    await consoleActions.typeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
+    await consoleActions.executeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_AFTER=2', { timeout: 30000 });
 
     // Reset warn before closing
-    await consoleActions.typeInConsole('options(warn = 0)');
+    await consoleActions.executeInConsole('options(warn = 0)');
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });
 

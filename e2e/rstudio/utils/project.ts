@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { typeInConsole, CONSOLE_TAB, CONSOLE_INPUT, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import { executeInConsole, CONSOLE_TAB, CONSOLE_INPUT, CONSOLE_OUTPUT } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
@@ -63,7 +63,7 @@ export async function restartSessionWithSentinel(page: Page): Promise<void> {
   // "pause" between restart and marker reflects real package-restore work --
   // we accept it as the price of a reliable readiness signal. See
   // src/cpp/r/session/RSessionState.cpp:920-956 for the dispatch logic.
-  await typeInConsole(page, `.rs.api.restartSession(command = "cat('${marker}')")`);
+  await executeInConsole(page, `.rs.api.restartSession(command = "cat('${marker}')")`);
   await pollForMarker(page, marker, 30000);
 }
 
@@ -124,17 +124,17 @@ export async function createAndOpenProject(
   const projectDir = `${parentDirR}/${name}`;
   const marker = `__READY_${Date.now()}__`;
 
-  await typeInConsole(page, `dir.create("${projectDir}")`);
+  await executeInConsole(page, `dir.create("${projectDir}")`);
   await sleep(500);
-  await typeInConsole(
+  await executeInConsole(
     page,
     `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), "${projectDir}/${name}.Rproj")`
   );
   await sleep(500);
-  await typeInConsole(page, `writeLines("cat('${marker}')", "${projectDir}/.Rprofile")`);
+  await executeInConsole(page, `writeLines("cat('${marker}')", "${projectDir}/.Rprofile")`);
   await sleep(500);
 
-  await typeInConsole(page, `.rs.api.openProject("${projectDir}/${name}.Rproj")`);
+  await executeInConsole(page, `.rs.api.openProject("${projectDir}/${name}.Rproj")`);
   // The page may navigate on Server mode; let it settle before polling.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
   await pollForMarker(page, marker, 60000);

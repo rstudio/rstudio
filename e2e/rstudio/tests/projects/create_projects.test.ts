@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
@@ -73,7 +73,7 @@ const ALL_TYPES = [NEW_PROJECT, R_PACKAGE, SHINY_APP, QUARTO_PROJECT, QUARTO_WEB
 // helpers are ever reused with uncontrolled input, add proper escaping.
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__CP_${Date.now()}__`;
-  await typeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
+  await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
   const start = Date.now();
@@ -103,7 +103,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const marker = `__READY_${Date.now()}__`;
-      await typeInConsole(page, `cat("${marker}")`);
+      await executeInConsole(page, `cat("${marker}")`);
       await sleep(1500);
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
@@ -202,7 +202,7 @@ async function closeCurrentProject(page: Page): Promise<void> {
 async function cleanupProject(page: Page, projectDir: string): Promise<void> {
   if (!projectDir) return;
   const escaped = projectDir.replace(/\\/g, '/');
-  await typeInConsole(page, `unlink("${escaped}", recursive = TRUE)`);
+  await executeInConsole(page, `unlink("${escaped}", recursive = TRUE)`);
   await sleep(500);
 }
 

@@ -21,10 +21,10 @@ test.describe('Run Line button', () => {
 
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${filePath}")`,
     );
-    await consoleActions.typeInConsole(`file.edit("${filePath}")`);
+    await consoleActions.executeInConsole(`file.edit("${filePath}")`);
     await sleep(1500);
 
     await sourceActions.goToTop();

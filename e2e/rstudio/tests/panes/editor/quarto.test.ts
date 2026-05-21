@@ -89,7 +89,7 @@ test.describe('Quarto', () => {
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    await consoleActions.typeInConsole(`unlink("${fileName.replace('.qmd', '.html')}")`);
+    await consoleActions.executeInConsole(`unlink("${fileName.replace('.qmd', '.html')}")`);
     await sleep(500);
   });
 });

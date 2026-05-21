@@ -17,7 +17,7 @@
 import { test as base, expect } from '@playwright/test';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
-import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { YES_BTN } from '@pages/modals.page';
 import { executeCommand, setPref } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -28,7 +28,7 @@ const OBJ_NAME = 's4_test_object';
 async function captureResult(page: Page, rExpr: string): Promise<string> {
   const marker = `__S4_${Date.now()}__`;
   await clearConsole(page);
-  await typeInConsole(page, `cat("${marker}", ${rExpr}, "${marker}")`);
+  await executeInConsole(page, `cat("${marker}", ${rExpr}, "${marker}")`);
   await sleep(2000);
 
   const output = await page.locator(CONSOLE_OUTPUT).innerText();
@@ -43,21 +43,21 @@ async function captureResult(page: Page, rExpr: string): Promise<string> {
  */
 async function setupWorkspace(page: Page): Promise<void> {
   // Install DBI (binary, fast -- only dependency is methods which is always loaded)
-  await typeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
+  await executeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
   await sleep(15000);
 
   // Create an S4 object from DBI
-  await typeInConsole(page, 'library(DBI)');
+  await executeInConsole(page, 'library(DBI)');
   await sleep(1000);
-  await typeInConsole(page, `${OBJ_NAME} <- DBI::SQL("SELECT 1")`);
+  await executeInConsole(page, `${OBJ_NAME} <- DBI::SQL("SELECT 1")`);
   await sleep(500);
 
   // Plain objects as controls
-  await typeInConsole(page, 'x <- 1');
+  await executeInConsole(page, 'x <- 1');
   await sleep(500);
-  await typeInConsole(page, 'y <- 22');
+  await executeInConsole(page, 'y <- 22');
   await sleep(500);
-  await typeInConsole(page, `z <- "I'll so offend, to make offense a skill"`);
+  await executeInConsole(page, `z <- "I'll so offend, to make offense a skill"`);
   await sleep(500);
 
   // Enable workspace persistence
@@ -67,12 +67,12 @@ async function setupWorkspace(page: Page): Promise<void> {
   await sleep(500);
 
   // Save workspace
-  await typeInConsole(page, 'save.image()');
+  await executeInConsole(page, 'save.image()');
   await sleep(1000);
 
   // Remove DBI so it won't be loadable after restart.
   // This may trigger a "loaded packages" dialog -- click Yes if it appears.
-  await typeInConsole(page, 'remove.packages("DBI")');
+  await executeInConsole(page, 'remove.packages("DBI")');
   await sleep(1000);
   try {
     await page.locator(YES_BTN).click({ timeout: 3000 });
@@ -90,14 +90,14 @@ async function setupWorkspace(page: Page): Promise<void> {
 
 /** Remove test objects, delete .RData, restore preferences, reinstall DBI. */
 async function cleanup(page: Page): Promise<void> {
-  await typeInConsole(page, `suppressWarnings(rm("${OBJ_NAME}", "x", "y", "z", envir = .GlobalEnv))`);
+  await executeInConsole(page, `suppressWarnings(rm("${OBJ_NAME}", "x", "y", "z", envir = .GlobalEnv))`);
   await sleep(500);
-  await typeInConsole(page, 'unlink(".RData")');
+  await executeInConsole(page, 'unlink(".RData")');
   await sleep(500);
   await setPref(page, 'save_workspace', 'never');
   await sleep(500);
   // Reinstall DBI so we leave things as we found them
-  await typeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
+  await executeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
   await sleep(15000);
 }
 
@@ -106,7 +106,7 @@ async function verifySessionSurvived(page: Page): Promise<void> {
   // Session is alive
   const aliveMarker = `__ALIVE_${Date.now()}__`;
   await clearConsole(page);
-  await typeInConsole(page, `cat("${aliveMarker}")`);
+  await executeInConsole(page, `cat("${aliveMarker}")`);
   await sleep(2000);
   const output = await page.locator(CONSOLE_OUTPUT).innerText();
   expect(output).toContain(aliveMarker);

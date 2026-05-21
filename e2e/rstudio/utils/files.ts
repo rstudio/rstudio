@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { typeInConsole } from '../pages/console_pane.page';
+import { executeInConsole } from '../pages/console_pane.page';
 import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 import { rPathLiteral, rStringLiteral } from './r';
@@ -33,9 +33,9 @@ export async function writeAndOpenFile(
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
-    await typeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rFullPath})`);
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rFullPath})`);
   }
-  await typeInConsole(page, `file.edit(${rFullPath})`);
+  await executeInConsole(page, `file.edit(${rFullPath})`);
   // The source tab shows the basename, not the full path.
   const tab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
   await expect(tab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
@@ -70,6 +70,6 @@ export async function closeAndDeleteSandboxFiles(
   } else {
     // Remote workdir -- fall back to R-side unlink with absolute paths.
     const vec = fileNames.map((f) => rPathLiteral(path.join(sandboxDir, f))).join(', ');
-    await typeInConsole(page, `unlink(c(${vec}))`);
+    await executeInConsole(page, `unlink(c(${vec}))`);
   }
 }

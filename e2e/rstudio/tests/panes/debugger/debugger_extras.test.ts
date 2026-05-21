@@ -40,7 +40,7 @@ async function resetAfterTest(): Promise<void> {
 }
 
 // Insert multi-line text into the console input as one raw insert and
-// press Enter to submit. typeInConsole turns each \n into an Enter
+// press Enter to submit. executeInConsole turns each \n into an Enter
 // keystroke (Ace's keyboard handler treats it as commit-this-line), which
 // would commit prematurely. keyboard.insertText sends the entire text via
 // CDP's Input.insertText so R's parser sees it as one input and emits the
@@ -106,7 +106,7 @@ test.describe('R debugger extras', () => {
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
 
-      await consoleActions.typeInConsole('multiline_fn()');
+      await consoleActions.executeInConsole('multiline_fn()');
       await debuggerActions.waitForDebugMode();
       await expect(debuggerActions.debuggerPage.activeDebugLine.first())
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
@@ -245,7 +245,7 @@ test.describe('R debugger extras', () => {
       await sleep(TIMEOUTS.settleDelay);
 
       // Dispatch through the S3 generic into the S7 method.
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         '{ object <- structure(1:10, class = "s7mean"); mean(object) }',
       );
 

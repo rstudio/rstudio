@@ -40,7 +40,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
 
   test('ghost text suggestions can be prefix-matched', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILES.prefix, '');
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.api.showEditSuggestion(c(1, 1, 1, 1), "hello")',
     );
 
@@ -76,7 +76,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   // accept, and inline insertion-preview.
   test.fixme('ghost text suggestions survive document mutations', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILES.mutate, '# abc def');
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.api.showEditSuggestion(c(1, 3, 1, 6), "ABC")',
     );
     const editor = new AceEditor(page, 'abc def');
@@ -92,7 +92,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   test('ghost text moves on document edit', async ({ rstudioPage: page }) => {
     // Six newlines map to seven rows once Ace counts the trailing empty line.
     await writeAndOpenFile(page, sandbox.dir, FILES.move, '\n\n\n\n\n\n');
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.api.showEditSuggestion(c(3, 1, 3, 1), "Hello world!")',
     );
 
@@ -119,7 +119,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
 
   test('ghost text is cleared from old row when newline inserted above', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILES.clearOldRow, '\n\n\n\n\n\n');
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.api.showEditSuggestion(c(3, 1, 3, 1), "Hello world!")',
     );
 
@@ -149,7 +149,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   test('edit suggestions render inline when appropriate', async ({ rstudioPage: page }) => {
     const contents = '# Create a 3D point.\npoint <- function(x, y, z) {}\n';
     await writeAndOpenFile(page, sandbox.dir, FILES.inline, contents);
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.api.showEditSuggestion(c(1, 12, 1, 14), "4D")',
     );
 
