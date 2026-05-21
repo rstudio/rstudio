@@ -57,7 +57,7 @@ Prerequisites for `PW_RSTUDIO_DEV=1` (run from the **repo root**, not `e2e/rstud
 
 1. C++ session built — `cmake --build build` (one-time, plus after C++ edits)
 2. GWT transpiled to JS — `(cd src/gwt && ant draft)` (re-run after Java edits; takes 2-5 min)
-3. Electron deps installed — `(cd src/node/desktop && npm ci)` (one-time; first `npm run start` will do this if needed)
+3. Electron deps installed — `(cd src/node/desktop && npm ci)` (one-time)
 
 The first `npm run start` also runs a webpack compile (~2 min). The fixture extends its CDP-connect deadline to 3 minutes on this path. Subsequent starts are faster.
 
