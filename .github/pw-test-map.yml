@@ -12,16 +12,21 @@
 
 # If every changed file in the PR matches at least one of these patterns,
 # the workflow is skipped entirely. Useful for docs- or release-notes-only
-# PRs.
+# PRs. PR-title overrides (`[full-pw]`, `[skip-pw]`) are evaluated first
+# and take precedence over this list.
 skip_if_only:
   - "**/*.md"
   - "docs/**"
 
-# When no rule matches but the PR is not docs-only, run this minimum
-# signal set.
+# When no map rule matches AND no Playwright test file was edited directly,
+# run this minimum signal set. (A changed `.test.ts` file under
+# `e2e/rstudio/tests/` counts as a match and suppresses this fallback.)
 fallback:
   - "tests/smoke/"
 
+# Coverage below is intentionally partial -- new areas can be added as the
+# Playwright suite grows. Areas not listed (e.g. plots, packages, vcs,
+# connections, jobs) currently land on `fallback`.
 rules:
   - name: posit-assistant
     paths:

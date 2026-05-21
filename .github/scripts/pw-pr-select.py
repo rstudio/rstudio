@@ -16,18 +16,34 @@ Outputs:
     selector  Space-separated Playwright test paths (empty when full=true).
     skip      "true" if the workflow should be skipped entirely.
     full      "true" if the full suite should run (selector is empty).
+
+Selection logic (first match wins):
+    1. PR title contains `[skip-pw]`  -> skip.
+    2. PR title contains `[full-pw]`  -> full suite.
+    3. Empty diff                     -> skip with a stderr warning.
+    4. All changed files match `skip_if_only` patterns -> skip.
+    5. Union of: each YAML rule whose `paths` match any changed file
+       contributes its `tests`, AND each changed `.test.ts` file under
+       `e2e/rstudio/tests/` contributes itself.
+    6. If the union from step 5 is empty, use `fallback`.
 """
 
 from __future__ import annotations
 
 import argparse
-import functools
 import os
 import re
 import sys
 from pathlib import Path
 
 import yaml
+
+
+E2E_TESTS_PREFIX = "e2e/rstudio/tests/"
+
+
+class GlobError(ValueError):
+    """Raised when a glob pattern is malformed."""
 
 
 def glob_to_regex(pattern: str) -> re.Pattern[str]:
@@ -40,31 +56,37 @@ def glob_to_regex(pattern: str) -> re.Pattern[str]:
     - `*`    matches anything except `/`.
     - `?`    matches a single character except `/`.
     All other characters are matched literally.
+
+    A `**` outside the three positions above (e.g. `src/**foo`) is
+    malformed and raises GlobError -- catching typos early is more
+    valuable than guessing the author's intent.
     """
     out: list[str] = []
     i = 0
     n = len(pattern)
 
-    # Leading `**/`: zero or more segments at the start.
     if pattern.startswith("**/"):
         out.append("(?:.*/)?")
         i = 3
 
     while i < n:
         c = pattern[i]
-        if c == "*" and i + 1 < n and pattern[i + 1] == "*":
-            # `**` only valid as `/**/` between segments or `/**` at end.
-            # The leading-`/` should already be in `out`; we replace it.
-            if out and out[-1] == "/" and i + 2 < n and pattern[i + 2] == "/":
-                out[-1] = "(?:/.*)?/"
-                i += 3
-            elif out and out[-1] == "/" and i + 2 == n:
-                out[-1] = "(?:/.*)?"
-                i += 2
+        if c == "/" and pattern[i + 1:i + 3] == "**":
+            # `/**` at end of pattern, or `/**/` between segments.
+            if i + 3 == n:
+                out.append("(?:/.*)?")
+                i = n
+            elif pattern[i + 3] == "/":
+                out.append("(?:/.*)?/")
+                i += 4
             else:
-                # Treat a bare or malformed `**` as `.*` (rare).
-                out.append(".*")
-                i += 2
+                raise GlobError(
+                    f"`**` must stand alone as a path segment in {pattern!r}"
+                )
+        elif c == "*" and i + 1 < n and pattern[i + 1] == "*":
+            raise GlobError(
+                f"`**` must stand alone as a path segment in {pattern!r}"
+            )
         elif c == "*":
             out.append("[^/]*")
             i += 1
@@ -80,13 +102,8 @@ def glob_to_regex(pattern: str) -> re.Pattern[str]:
     return re.compile("^" + "".join(out) + "$")
 
 
-@functools.lru_cache(maxsize=None)
-def _compile(pattern: str) -> re.Pattern[str]:
-    return glob_to_regex(pattern)
-
-
-def matches_any(path: str, patterns: list[str]) -> bool:
-    return any(_compile(p).match(path) for p in patterns)
+def matches_any(path: str, compiled: list[re.Pattern[str]]) -> bool:
+    return any(p.match(path) for p in compiled)
 
 
 def emit(name: str, value: str) -> None:
@@ -98,17 +115,23 @@ def emit(name: str, value: str) -> None:
     print(line)
 
 
-E2E_TESTS_PREFIX = "e2e/rstudio/tests/"
+def list_field(d: dict, key: str) -> list:
+    """Return d[key] as a list, treating missing or None as []."""
+    return d.get(key) or []
 
 
 def e2e_test_selector(path: str) -> str | None:
-    """If `path` is a Playwright test file under e2e/rstudio/tests/, return
-    the selector to run it. Otherwise return None.
+    """If `path` is a Playwright `.test.ts` file under e2e/rstudio/tests/,
+    return the selector to run it (relative to e2e/rstudio/). Otherwise
+    return None.
 
-    Selectors are returned relative to e2e/rstudio/ (Playwright's working
-    directory). Only `.test.ts` files are mapped; other files under
-    tests/ (fixtures, helpers) are ignored here and may match map rules
-    or fall through to the fallback.
+    This sits outside the YAML rules because the mapping is identity
+    (a changed test file maps to itself); encoding it as data would
+    require a self-referential rule per directory.
+
+    Non-`.test.ts` files under tests/ (fixtures, helpers) are not
+    selected by this function and currently fall through to the
+    fallback set.
     """
     if not path.startswith(E2E_TESTS_PREFIX):
         return None
@@ -117,8 +140,13 @@ def e2e_test_selector(path: str) -> str | None:
     return path[len("e2e/rstudio/"):]
 
 
+def annotate_error(file: str, message: str) -> None:
+    """Emit a GitHub Actions error annotation tied to a file."""
+    print(f"::error file={file}::{message}", file=sys.stderr)
+
+
 def run_self_test() -> int:
-    cases = [
+    glob_cases = [
         # (pattern, path, expected_match)
         ("src/**", "src/foo.cpp", True),
         ("src/**", "src/a/b/c.cpp", True),
@@ -135,29 +163,44 @@ def run_self_test() -> int:
         ("src/cpp/session/modules/SessionChat*", "src/cpp/session/modules/SessionChat.cpp", True),
         ("src/cpp/session/modules/SessionChat*", "src/cpp/session/modules/SessionConsole.cpp", False),
     ]
-    failed = 0
-    for pat, path, expected in cases:
-        got = bool(glob_to_regex(pat).match(path))
-        if got != expected:
-            failed += 1
-            print(f"FAIL: pattern={pat!r} path={path!r} expected={expected} got={got}", file=sys.stderr)
     e2e_cases = [
         ("e2e/rstudio/tests/panes/console/foo.test.ts", "tests/panes/console/foo.test.ts"),
         ("e2e/rstudio/tests/sandbox.test.ts", "tests/sandbox.test.ts"),
         ("e2e/rstudio/tests/projects/create_projects.test.ts", "tests/projects/create_projects.test.ts"),
-        ("e2e/rstudio/tests/panes/console/helpers.ts", None),  # not a .test.ts
+        ("e2e/rstudio/tests/panes/console/helpers.ts", None),
         ("e2e/rstudio/playwright.config.ts", None),
         ("src/cpp/foo.cpp", None),
     ]
+    malformed_patterns = [
+        "src/**foo",       # `**` not segment-aligned
+        "foo**bar",        # `**` mid-segment
+        "src/**foo/bar",   # `**` glued to following text
+    ]
+
+    failed = 0
+    for pat, path, expected in glob_cases:
+        got = bool(glob_to_regex(pat).match(path))
+        if got != expected:
+            failed += 1
+            print(f"FAIL: pattern={pat!r} path={path!r} expected={expected} got={got}", file=sys.stderr)
     for path, expected in e2e_cases:
         got = e2e_test_selector(path)
         if got != expected:
             failed += 1
             print(f"FAIL: e2e_test_selector({path!r}) expected={expected!r} got={got!r}", file=sys.stderr)
+    for pat in malformed_patterns:
+        try:
+            glob_to_regex(pat)
+        except GlobError:
+            continue
+        failed += 1
+        print(f"FAIL: expected GlobError for malformed pattern {pat!r}", file=sys.stderr)
+
+    total = len(glob_cases) + len(e2e_cases) + len(malformed_patterns)
     if failed:
-        print(f"{failed} self-test case(s) failed", file=sys.stderr)
+        print(f"{failed} of {total} self-test case(s) failed", file=sys.stderr)
         return 1
-    print(f"All {len(cases) + len(e2e_cases)} self-test cases passed")
+    print(f"All {total} self-test cases passed")
     return 0
 
 
@@ -188,15 +231,36 @@ def main() -> int:
         emit("selector", "")
         return 0
 
-    config = yaml.safe_load(args.map.read_text(encoding="utf-8")) or {}
-    skip_if_only = config.get("skip_if_only", []) or []
-    fallback = config.get("fallback", []) or []
-    rules = config.get("rules", []) or []
+    map_path = str(args.map)
+    try:
+        config = yaml.safe_load(args.map.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        annotate_error(map_path, f"Failed to parse YAML: {e}")
+        return 1
+    if not isinstance(config, dict):
+        annotate_error(map_path, "Top-level YAML must be a mapping")
+        return 1
+
+    try:
+        skip_if_only = [glob_to_regex(p) for p in list_field(config, "skip_if_only")]
+        compiled_rules = [
+            (
+                [glob_to_regex(p) for p in list_field(rule, "paths")],
+                list_field(rule, "tests"),
+            )
+            for rule in list_field(config, "rules")
+        ]
+    except GlobError as e:
+        annotate_error(map_path, str(e))
+        return 1
+    fallback = list_field(config, "fallback")
 
     changed = [line.strip() for line in sys.stdin if line.strip()]
 
     if not changed:
-        # No diff = nothing to test. Skip to avoid burning runner minutes.
+        # PR with zero changed files is unusual (GitHub generally won't open
+        # one); log loudly so the cause is visible if it ever happens.
+        print("WARNING: no changed files in diff; skipping Playwright run", file=sys.stderr)
         emit("skip", "true")
         emit("full", "false")
         emit("selector", "")
@@ -209,26 +273,15 @@ def main() -> int:
         return 0
 
     selected: list[str] = []
-    seen: set[str] = set()
-
-    def add(t: str) -> None:
-        if t not in seen:
-            seen.add(t)
-            selected.append(t)
-
-    for rule in rules:
-        patterns = rule.get("paths", []) or []
-        tests = rule.get("tests", []) or []
+    for patterns, tests in compiled_rules:
         if any(matches_any(f, patterns) for f in changed):
-            for t in tests:
-                add(t)
-
-    # Implicit rule: a changed Playwright test file maps to its own area.
-    # Keeps the scope tight when only test code is edited.
+            selected.extend(tests)
     for f in changed:
         sel = e2e_test_selector(f)
         if sel is not None:
-            add(sel)
+            selected.append(sel)
+
+    selected = list(dict.fromkeys(selected))  # order-preserving dedupe
 
     if not selected:
         selected = list(fallback)
