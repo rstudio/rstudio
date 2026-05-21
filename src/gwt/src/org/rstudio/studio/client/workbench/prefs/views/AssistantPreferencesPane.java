@@ -880,8 +880,11 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade)
          {
+            // isDowngrade is consumed by the chat pane prompt only; the preferences
+            // dialog keeps its existing wording for now (see issue #17729).
             showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }

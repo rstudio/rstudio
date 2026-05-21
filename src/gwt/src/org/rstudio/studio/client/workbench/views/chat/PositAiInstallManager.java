@@ -52,8 +52,11 @@ public class PositAiInstallManager
        * @param currentVersion The currently installed version ("0.0.0" if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
+       * @param isDowngrade True if the available version is older than the installed version
+       *                    (only meaningful when isInitialInstall is false)
        */
-      void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall);
+      void onUpdateAvailable(String currentVersion, String newVersion,
+                             boolean isInitialInstall, boolean isDowngrade);
 
       /**
        * Called when no compatible version of Posit Assistant is available for this RStudio version.
@@ -208,7 +211,9 @@ public class PositAiInstallManager
             {
                String currentVersion = result.getString("currentVersion");
                String newVersion = result.getString("newVersion");
-               callback.onUpdateAvailable(currentVersion, newVersion, isInitialInstall);
+               boolean isDowngrade = result.getBoolean("isDowngrade");
+               callback.onUpdateAvailable(currentVersion, newVersion,
+                                          isInitialInstall, isDowngrade);
             }
             else
             {
