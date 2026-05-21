@@ -15,7 +15,6 @@
 # PRs.
 skip_if_only:
   - "**/*.md"
-  - "NEWS.md"
   - "docs/**"
 
 # When no rule matches but the PR is not docs-only, run this minimum
@@ -27,7 +26,7 @@ rules:
   - name: posit-assistant
     paths:
       - "src/cpp/session/modules/SessionChat*"
-      - "src/cpp/session/modules/**/posit_assistant/**"
+      - "src/cpp/session/modules/posit_assistant/**"
       - "src/gwt/**/views/chat/**"
     tests:
       - "tests/panes/posit-assistant-chat/"

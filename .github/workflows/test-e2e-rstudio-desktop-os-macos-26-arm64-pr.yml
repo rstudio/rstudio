@@ -2,7 +2,7 @@ name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source, PR-tr
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
     paths:
       - "src/**"
       - "e2e/rstudio/**"
@@ -36,7 +36,6 @@ jobs:
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          git fetch --no-tags --depth=1 origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
           echo "Changed files:"
           cat changed.txt
