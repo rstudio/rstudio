@@ -21,6 +21,14 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 const DIALOG_OK = '#rstudio_dlg_ok';
 const DIALOG_CANCEL = '#rstudio_dlg_cancel';
+// showQuestion uses showYesNoMessage, which assigns the yes/no element IDs
+// regardless of the caller-supplied labels ("OK"/"Cancel").
+const DIALOG_NO = '#rstudio_dlg_no';
+
+// Ordered from least-destructive (Cancel/No) to most (OK), used by the
+// afterEach cleanup so a stuck dialog can be dismissed without committing
+// the action.
+const DISMISS_SELECTORS = [DIALOG_CANCEL, DIALOG_NO, DIALOG_OK];
 
 test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_safe'] }, () => {
   let consoleActions: ConsolePaneActions;
@@ -34,12 +42,12 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
   // showDialogCompleted -- fixture shutdown then triggers the "R session is
   // busy" quit prompt. Force the dialog closed so cleanup is reliable.
   test.afterEach(async ({ rstudioPage: page }) => {
-    const cancel = page.locator(`.gwt-DialogBox ${DIALOG_CANCEL}`);
-    const ok = page.locator(`.gwt-DialogBox ${DIALOG_OK}`);
-    if (await cancel.first().isVisible().catch(() => false)) {
-      await cancel.first().click();
-    } else if (await ok.first().isVisible().catch(() => false)) {
-      await ok.first().click();
+    for (const sel of DISMISS_SELECTORS) {
+      const btn = page.locator(`.gwt-DialogBox ${sel}`).first();
+      if (await btn.isVisible().catch(() => false)) {
+        await btn.click();
+        break;
+      }
     }
   });
 
@@ -95,12 +103,17 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     // MessageDialog renders the message through MultiLineLabel, which uses
-    // DomUtils.textToHtml to convert "\n" into <br/> tags. innerText then
-    // reports the rendered newline.
-    const messageText = await dialog.locator('.gwt-Label').first().innerText();
+    // DomUtils.textToHtml to convert "\n" into <br/> tags. The label's CSS
+    // class is GWT-obfuscated (setStylePrimaryName replaces gwt-Label with
+    // the themeStyles.dialogMessage() class), so target via the whole-dialog
+    // innerText -- the buttons ("OK", "Cancel") don't contain the marker
+    // string, so the pattern uniquely matches the rendered message.
+    const messageText = await dialog.innerText();
     expect(messageText).toMatch(/line one\s*\n\s*line two/);
 
-    await dialog.locator(DIALOG_CANCEL).click();
+    // showYesNoMessage assigns dlg_no to the noLabel button (here labeled
+    // "Cancel"); dlg_cancel does not exist on this dialog.
+    await dialog.locator(DIALOG_NO).click();
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 });

@@ -65,19 +65,35 @@ Note: tests that exercise the `doRestart()` flow (e.g. uninstall Posit Assistant
 
 ## Server Mode
 
-Pass `--project=server` and provide credentials.
+### Default: in-tree `rserver-dev`
+
+`--project=server` with no env vars spawns a private `rserver-dev` per worker, using the binary at `build/src/cpp/server/rserver` and the config at `build/src/cpp/conf/rserver-dev.conf`. The spawned server runs with `--auth-none`, so no credentials are needed.
+
+```bash
+# All tests against in-tree rserver-dev
+npx playwright test --project=server
+
+# Specific test file
+npx playwright test tests/path/to/test.test.ts --project=server
+```
+
+Prerequisite: build the server first from the **repo root** with `cmake --build build`. Override the binary or config paths with `PW_RSERVER_BIN` / `PW_RSERVER_CONF` if you need to point at a different build.
+
+### Targeting an external server
+
+To skip the spawn and connect to an external server (CI, a remote VM, etc.), set `PW_RSTUDIO_SERVER_URL`. Credentials are needed only when the external server presents a login form.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PW_RSTUDIO_SERVER_URL` | No | Full URL including port if needed, e.g. `http://10.12.227.184:8787` or `https://dev.example.com/s/abc123/` (default: `http://localhost:8787`) |
-| `PW_RSTUDIO_SERVER_PORT` | No | Override the port in the URL (no default -- only set if you need to override what's in the URL) |
-| `PW_RSTUDIO_SERVER_USER` | Yes | Login username |
-| `PW_RSTUDIO_SERVER_PASSWORD` | Yes | Login password |
+| `PW_RSTUDIO_SERVER_URL` | When targeting an external server | Full URL including port if needed, e.g. `http://10.12.227.184:8787` or `https://dev.example.com/s/abc123/` |
+| `PW_RSTUDIO_SERVER_PORT` | No | Override the port in the URL (only set if you need to override what's in the URL) |
+| `PW_RSTUDIO_SERVER_USER` | When login is required | Login username |
+| `PW_RSTUDIO_SERVER_PASSWORD` | When login is required | Login password |
 | `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | No | Post-login wait for the IDE console, in ms (default: 60000). Increase for slow servers. |
 | `PW_RSTUDIO_EDITION` | No | `os` (default) or `pro`. Filters edition-specific tests. |
 
 ```bash
-# All tests
+# External server with login
 PW_RSTUDIO_SERVER_URL=http://<ip> PW_RSTUDIO_SERVER_USER=<user> PW_RSTUDIO_SERVER_PASSWORD=<pass> npx playwright test --project=server
 
 # Specific test file
