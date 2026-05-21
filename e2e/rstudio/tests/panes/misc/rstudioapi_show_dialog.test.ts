@@ -29,6 +29,19 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     await consoleActions.clearConsole();
   });
 
+  // If a test fails with the dialog still up, R stays blocked on
+  // showDialogCompleted -- fixture shutdown then triggers the "R session is
+  // busy" quit prompt. Force the dialog closed so cleanup is reliable.
+  test.afterEach(async ({ rstudioPage: page }) => {
+    const cancel = page.locator(`.gwt-DialogBox ${DIALOG_CANCEL}`);
+    const ok = page.locator(`.gwt-DialogBox ${DIALOG_OK}`);
+    if (await cancel.first().isVisible().catch(() => false)) {
+      await cancel.first().click();
+    } else if (await ok.first().isVisible().catch(() => false)) {
+      await ok.first().click();
+    }
+  });
+
   test('showDialog preserves "\\n" as a line break', async ({ rstudioPage: page }) => {
     const title = `showDialog_17701_${Date.now()}`;
 
