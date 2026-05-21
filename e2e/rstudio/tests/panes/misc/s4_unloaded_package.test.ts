@@ -19,6 +19,7 @@ import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/d
 import { sleep } from '@utils/constants';
 import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { YES_BTN } from '@pages/modals.page';
+import { executeCommand, setPref } from '@utils/commands';
 import type { Page } from 'playwright';
 
 const OBJ_NAME = 's4_test_object';
@@ -60,9 +61,9 @@ async function setupWorkspace(page: Page): Promise<void> {
   await sleep(500);
 
   // Enable workspace persistence
-  await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "always")');
+  await setPref(page, 'save_workspace', 'always');
   await sleep(500);
-  await typeInConsole(page, '.rs.api.writeRStudioPreference("load_workspace", TRUE)');
+  await setPref(page, 'load_workspace', true);
   await sleep(500);
 
   // Save workspace
@@ -93,7 +94,7 @@ async function cleanup(page: Page): Promise<void> {
   await sleep(500);
   await typeInConsole(page, 'unlink(".RData")');
   await sleep(500);
-  await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
+  await setPref(page, 'save_workspace', 'never');
   await sleep(500);
   // Reinstall DBI so we leave things as we found them
   await typeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
@@ -133,9 +134,9 @@ async function verifySessionSurvived(page: Page): Promise<void> {
 
 /** Check that the Environment pane renders the "not loaded" label. */
 async function verifyEnvironmentPane(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('activateEnvironment')");
+  await executeCommand(page, 'activateEnvironment');
   await sleep(1000);
-  await typeInConsole(page, ".rs.api.executeCommand('refreshEnvironment')");
+  await executeCommand(page, 'refreshEnvironment');
   await sleep(3000);
 
   const envPanel = page.locator('#rstudio_workbench_panel_environment');
@@ -161,7 +162,7 @@ base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag:
     await setupWorkspace(page);
 
     // Restart R session
-    await typeInConsole(page, ".rs.api.executeCommand('restartR')");
+    await executeCommand(page, 'restartR');
     await sleep(5000);
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
     await sleep(2000);

@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe('Open Chat Pane', { tag: ['@ai'] }, () => {
@@ -33,7 +34,7 @@ test.describe('Open Chat Pane', { tag: ['@ai'] }, () => {
 
     // Close the sidebar if it's open to ensure the chat pane is not visible
     if (await chatIframe.isVisible().catch(() => false)) {
-      await consoleActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
+      await executeCommand(page, 'toggleSidebar');
       await sleep(2000);
     }
 
@@ -53,7 +54,7 @@ test.describe('Open Chat Pane', { tag: ['@ai'] }, () => {
 
     // Close the sidebar if it's open to ensure the chat pane is not visible
     if (await chatIframe.isVisible().catch(() => false)) {
-      await consoleActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
+      await executeCommand(page, 'toggleSidebar');
       await sleep(2000);
     }
 

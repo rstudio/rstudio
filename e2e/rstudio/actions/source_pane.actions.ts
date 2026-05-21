@@ -5,6 +5,7 @@ import { ConsolePaneActions } from './console_pane.actions';
 import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
+import { executeCommand } from '../utils/commands';
 
 export class SourcePaneActions {
   readonly page: Page;
@@ -37,9 +38,9 @@ export class SourcePaneActions {
   }
 
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
+    await executeCommand(this.page, 'saveAllSourceDocs');
     await sleep(1000);
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
+    await executeCommand(this.page, 'closeAllSourceDocs');
     await sleep(1000);
 
     await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
@@ -144,7 +145,7 @@ export class SourcePaneActions {
   async navigateToChunkByIndex(chunkNumber: number): Promise<void> {
     await this.goToTop();
     for (let i = 0; i < chunkNumber; i++) {
-      await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
+      await executeCommand(this.page, 'goToNextChunk');
       await sleep(500);
     }
   }

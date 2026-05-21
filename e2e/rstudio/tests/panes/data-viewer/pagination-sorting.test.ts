@@ -3,6 +3,7 @@ import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
+import { executeCommand } from '@utils/commands';
 
 // Tests from: electron-tests/EditorPane/test_desktop_DataViewer.py
 // Issues: https://github.com/rstudio/rstudio/issues/13220
@@ -22,7 +23,7 @@ test.describe('Data Viewer', () => {
 
   test.afterEach(async ({ rstudioPage: page }) => {
     // Close the data viewer tab after each test
-    await consoleActions.typeInConsole(".rs.api.executeCommand('closeSourceDoc')");
+    await executeCommand(page, 'closeSourceDoc');
     await sleep(1000);
   });
 

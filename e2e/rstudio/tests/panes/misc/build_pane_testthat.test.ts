@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
+import { executeCommand } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -81,7 +82,7 @@ test.describe('Build pane', () => {
     await consoleActions.typeInConsole(`.rs.api.documentOpen(${testFileLit})`);
     await sleep(1000);
 
-    await consoleActions.typeInConsole(`.rs.api.executeCommand("testTestthatFile")`);
+    await executeCommand(page, 'testTestthatFile');
 
     // testTestthatFile checks devtools is current and prompts to install if
     // not; click Yes (no-op if no prompt appears).

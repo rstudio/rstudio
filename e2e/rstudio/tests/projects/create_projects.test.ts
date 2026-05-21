@@ -4,6 +4,7 @@ import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pan
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
+import { setPref, documentCloseAllNoSave } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -116,7 +117,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
 
 async function openNewProjectWizard(page: Page): Promise<void> {
   // Close any open source docs first to avoid "unsaved changes" dialogs
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   await sleep(1000);
 
   // executeCommand("newProject") blocks the R thread with an "R session is busy"
@@ -250,19 +251,13 @@ test.describe.serial('Create Projects in New Directory', () => {
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
-    await typeInConsole(
-      page,
-      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`,
-    );
+    await setPref(page, 'default_project_location', escaped);
     await sleep(TIMEOUTS.pollInterval);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
-      await typeInConsole(
-        page,
-        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`,
-      );
+      await setPref(page, 'default_project_location', originalDefaultProjectLocation);
       await sleep(TIMEOUTS.pollInterval);
     } catch (err) {
       console.warn('default_project_location restore failed:', err);

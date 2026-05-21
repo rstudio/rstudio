@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
+import { setPref } from '@utils/commands';
 import * as fs from 'fs';
 import type { Page } from 'playwright';
 
@@ -76,18 +77,14 @@ test.describe('Project ignore files', () => {
     const basename = current.split(/[/\\]/).pop() ?? '';
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
-    await consoleActions.typeInConsole(
-      `.rs.api.writeRStudioPreference("default_project_location", ${rPathLiteral(sandbox.dir)})`,
-    );
+    await setPref(page, 'default_project_location', sandbox.dir);
     await sleep(TIMEOUTS.pollInterval);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
       await closeProjectIfOpen(page);
-      await consoleActions.typeInConsole(
-        `.rs.api.writeRStudioPreference("default_project_location", ${rPathLiteral(originalDefaultProjectLocation)})`,
-      );
+      await setPref(page, 'default_project_location', originalDefaultProjectLocation);
       await sleep(TIMEOUTS.pollInterval);
     } catch (err) {
       console.warn('ignorefiles afterAll cleanup failed:', err);

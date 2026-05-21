@@ -5,6 +5,7 @@ import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
+import { executeCommand } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -111,7 +112,7 @@ test.describe('shinytest2 integration', () => {
     // TestsShinyTest -- exercises the AppDriver$new-before-test_that detection.
     await expect(page.locator(SHINYTEST_BUTTON)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
-    await consoleActions.typeInConsole('.rs.api.executeCommand("shinyCompareTest")');
+    await executeCommand(page, 'shinyCompareTest');
 
     const okBtn = page.locator(CONFIRM_BTN);
     await expect(okBtn).toBeVisible({ timeout: TIMEOUTS.fileOpen });
@@ -148,7 +149,7 @@ test.describe('shinytest2 integration', () => {
     await consoleActions.typeInConsole(stubInstall);
 
     try {
-      await consoleActions.typeInConsole('.rs.api.executeCommand("shinyCompareTest")');
+      await executeCommand(page, 'shinyCompareTest');
 
       await expect
         .poll(

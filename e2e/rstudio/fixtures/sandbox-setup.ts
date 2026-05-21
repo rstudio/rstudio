@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { prepareRLibs } from './r-libs-setup';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -143,4 +144,12 @@ export default async function globalSetup() {
 
   process.env.PW_SANDBOX = sandbox;
   console.log(`[sandbox] root: ${sandbox}`);
+
+  // Stable per-host R library, lives outside PW_SANDBOX so it survives across
+  // runs. Without this the redirected HOME (set by Desktop/Server fixtures)
+  // points R at an empty default user library, and the first thing rmarkdown
+  // does on save is open a "stringr needs updating" dialog that hangs the
+  // test. Pre-populating here is idempotent -- a warm cache is a fast
+  // installed.packages() check with no install call.
+  await prepareRLibs();
 }

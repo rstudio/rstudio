@@ -25,6 +25,7 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AutocompleteActions } from '@actions/autocomplete.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { sleep } from '@utils/constants';
+import { setPref, clearPref } from '@utils/commands';
 
 test.describe('Autocomplete extras', () => {
   // setwd into a per-spec sandbox so the relative filenames used by
@@ -131,16 +132,12 @@ test.describe('Autocomplete extras', () => {
     const before = await autocomplete.getCompletionsInEditor([], content, 1, 16);
     expect(before.slice(0, 4)).toEqual(['file =', 'ncolumns =', 'append =', 'sep =']);
 
-    await consoleActions.typeInConsole(
-      '.rs.uiPrefs$codeCompletionIncludeAlreadyUsed$set(TRUE)',
-    );
+    await setPref(consoleActions.page, 'code_completion_include_already_used', true);
     try {
       const after = await autocomplete.getCompletionsInEditor([], content, 1, 16);
       expect(after.slice(0, 5)).toEqual(['x =', 'file =', 'ncolumns =', 'append =', 'sep =']);
     } finally {
-      await consoleActions.typeInConsole(
-        '.rs.uiPrefs$codeCompletionIncludeAlreadyUsed$clear()',
-      );
+      await clearPref(consoleActions.page, 'code_completion_include_already_used');
     }
   });
 

@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
+import { executeCommand } from '@utils/commands';
 import { createChatActions } from './_chat-setup';
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
@@ -35,7 +36,7 @@ test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only
 
     // Pop out the chat pane via the command.
     const satellitePromise = context.waitForEvent('page', { timeout: 30000 });
-    await consoleActions.typeInConsole(".rs.api.executeCommand('popOutChat')");
+    await executeCommand(page, 'popOutChat');
     const satellitePage = await satellitePromise;
     await satellitePage.waitForLoadState('domcontentloaded');
     await sleep(2000);
@@ -47,7 +48,7 @@ test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only
 
     // Return chat to the main window via the command.
     const closePromise = satellitePage.waitForEvent('close', { timeout: 30000 });
-    await consoleActions.typeInConsole(".rs.api.executeCommand('returnChatToMain')");
+    await executeCommand(page, 'returnChatToMain');
     await closePromise;
 
     // After return, the iframe should be back in the main window.

@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { AssistantOptions } from '@pages/assistant_options.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
@@ -26,7 +27,7 @@ test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
 
   test('enable Posit Assistant and verify persistence', async ({ rstudioPage: page }) => {
     // First, set to "(None)" to ensure we're starting clean
-    await consoleActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(page, 'showOptions');
     await page.waitForSelector('#rstudio_preferences_confirm', { timeout: 15000 });
 
     await expect(assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });

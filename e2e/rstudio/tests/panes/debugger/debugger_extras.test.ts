@@ -18,6 +18,7 @@ import { DebuggerActions } from '@actions/debugger.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile } from '@utils/files';
 import { TIMEOUTS, sleep } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
 
 const sandbox = useSuiteSandbox();
 
@@ -102,7 +103,7 @@ test.describe('R debugger extras', () => {
       ].join('\n');
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
 
       await consoleActions.typeInConsole('multiline_fn()');
@@ -199,7 +200,7 @@ test.describe('R debugger extras', () => {
       ).toBe(3);
 
       // Invoke Clear All Breakpoints and confirm the Yes/No dialog.
-      await consoleActions.typeInConsole(".rs.api.executeCommand('debugClearBreakpoints')");
+      await executeCommand(consoleActions.page, 'debugClearBreakpoints');
       const yesBtn = page.locator('#rstudio_dlg_yes');
       await expect(yesBtn).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await yesBtn.click();
@@ -240,7 +241,7 @@ test.describe('R debugger extras', () => {
 
       // Breakpoint on the body of the S7 method (line 3 = the print() call).
       await debuggerActions.setBreakpoint(3);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
 
       // Dispatch through the S3 generic into the S7 method.

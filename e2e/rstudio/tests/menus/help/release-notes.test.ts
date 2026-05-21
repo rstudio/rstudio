@@ -12,6 +12,7 @@ import { expect } from '@playwright/test';
 import { test } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
 
 const BASE_URL = 'https://www.rstudio.org/links/release_notes';
 
@@ -27,7 +28,7 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
     // Desktop opens the URL via shell.openExternal() — Playwright cannot
     // intercept it, so we just verify the command doesn't throw.
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
+    await executeCommand(page, 'showReleaseNotes');
     await sleep(2000);
 
     const output = await page.locator('#rstudio_console_output').innerText();
@@ -38,7 +39,7 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
     const context = page.context();
     const newPagePromise = context.waitForEvent('page', { timeout: 15000 });
 
-    await consoleActions.typeInConsole(".rs.api.executeCommand('showReleaseNotes')");
+    await executeCommand(page, 'showReleaseNotes');
 
     const newPage = await newPagePromise;
     const initialUrl = newPage.url();

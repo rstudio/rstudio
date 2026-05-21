@@ -3,6 +3,7 @@ import { sleep, CHAT_PROVIDERS, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { restartSessionWithSentinel } from '@utils/project';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 import { createChatActions } from './_chat-setup';
 
@@ -59,7 +60,7 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
     }, CHAT_IFRAME);
 
     // Open Global Options
-    await consoleActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(page, 'showOptions');
     const okBtn = page.locator(PREFS_OK_BTN);
     await expect(okBtn).toBeVisible({ timeout: 15000 });
     await sleep(500); // let dialog finish opening

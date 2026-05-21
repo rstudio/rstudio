@@ -4,6 +4,7 @@ import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { createAndOpenProject, restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
+import { setPref } from '@utils/commands';
 import type { Page } from 'playwright';
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
@@ -50,10 +51,7 @@ test.describe.serial('ProjectId in .Rproj', () => {
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
-      await typeInConsole(
-        page,
-        `.rs.api.writeRStudioPreference("project_user_data_directory", "")`,
-      );
+      await setPref(page, 'project_user_data_directory', '');
       await sleep(TIMEOUTS.pollInterval);
       await closeProject(page);
     } catch (err) {
@@ -97,10 +95,7 @@ test.describe.serial('ProjectId in .Rproj', () => {
     expect(projectIdLine.length, 'ProjectId line should be non-empty').toBeGreaterThan(0);
 
     // Clear the pref and restart again. The ProjectId must persist.
-    await typeInConsole(
-      page,
-      `.rs.api.writeRStudioPreference("project_user_data_directory", "")`,
-    );
+    await setPref(page, 'project_user_data_directory', '');
     await sleep(TIMEOUTS.pollInterval);
     await restartSessionWithSentinel(page);
 

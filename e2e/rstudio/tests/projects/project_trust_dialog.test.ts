@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
 import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
+import { executeCommand, setPref, documentCloseAllNoSave } from '@utils/commands';
 import type { Page } from 'playwright';
 
 /**
@@ -94,7 +95,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
 
 /** Restart R and wait for the console to be ready. */
 async function restartR(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.executeCommand("restartR")');
+  await executeCommand(page, 'restartR');
   await waitForSessionRestart(page);
 }
 
@@ -104,7 +105,7 @@ async function restartR(page: Page): Promise<void> {
  * blocks console access.
  */
 async function restartRExpectingDialog(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.executeCommand("restartR")');
+  await executeCommand(page, 'restartR');
   await sleep(3000);
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
   await sleep(2000);
@@ -161,7 +162,7 @@ async function getWorkingDir(page: Page): Promise<string> {
  */
 async function createProjectViaUI(page: Page, name: string): Promise<void> {
   // Close any open source docs to prevent "unsaved changes" dialogs during project switch
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   await sleep(1000);
 
   // Open command palette and invoke "Create a New Project..."
@@ -253,8 +254,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
-    await typeInConsole(page,
-      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`);
+    await setPref(page, 'default_project_location', escaped);
     await sleep(500);
   });
 
@@ -268,11 +268,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       }
 
       // Restore preferences
-      await typeInConsole(page,
-        `.rs.api.writeRStudioPreference("load_workspace", ${originalLoadWorkspace})`);
+      await setPref(page, 'load_workspace', originalLoadWorkspace === 'TRUE');
       await sleep(500);
-      await typeInConsole(page,
-        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`);
+      await setPref(page, 'default_project_location', originalDefaultProjectLocation);
       await sleep(500);
     } catch (err) {
       console.warn('project_trust_dialog afterAll cleanup failed:', err);
@@ -492,7 +490,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     await resetTrust(page, projectDir);
 
     // Enable workspace restore
-    await typeInConsole(page, '.rs.api.writeRStudioPreference("load_workspace", TRUE)');
+    await setPref(page, 'load_workspace', true);
     await sleep(500);
 
     // Create an .RData file (empty workspace save)
@@ -527,7 +525,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     await resetTrust(page, projectDir);
 
     // Disable workspace restore
-    await typeInConsole(page, '.rs.api.writeRStudioPreference("load_workspace", FALSE)');
+    await setPref(page, 'load_workspace', false);
     await sleep(500);
 
     // .RData still exists from test 7, renv .Rprofile from test 6

@@ -5,6 +5,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
+import { executeCommand, documentCloseAllNoSave } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,6 @@ const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const CUSTOMIZE_PANES_BUTTON = '#rstudio_customize_panes';
 const SIDEBAR_CLOSE_BTN = '.rstudio_panel_close_btn_sidebar';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
-const CONSOLE_INPUT = '#rstudio_console_input .ace_text-input';
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
@@ -37,38 +37,6 @@ const RESIZE_MIN_DELTA_PX = 20;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-// Type a command into the Ace console input directly. We force-click the input
-// instead of going through the console tab because zoomed-out panes can leave
-// the tab too narrow to receive a normal click.
-async function executeCommand(page: Page, command: string): Promise<void> {
-  const input = page.locator(CONSOLE_INPUT);
-  await input.click({ force: true });
-  await sleep(200);
-  await input.pressSequentially(`.rs.api.executeCommand('${command}')`);
-  await sleep(200);
-  if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await sleep(100);
-  }
-  await input.press('Enter');
-}
-
-// Same shape as executeCommand, but types `expr` verbatim so callers can
-// invoke .rs.api functions (which aren't registered commands) or any other
-// R expression in this pane-aware way.
-async function executeRExpr(page: Page, expr: string): Promise<void> {
-  const input = page.locator(CONSOLE_INPUT);
-  await input.click({ force: true });
-  await sleep(200);
-  await input.pressSequentially(expr);
-  await sleep(200);
-  if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await sleep(100);
-  }
-  await input.press('Enter');
-}
 
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
@@ -298,7 +266,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    await executeRExpr(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await documentCloseAllNoSave(page);
     await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });

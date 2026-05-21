@@ -341,11 +341,7 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await sourceActions.closeSourceAndDeleteFile(fileNamePrint);
   });
 
-  // FIXME: saveSourceDoc via the executeCommand bridge doesn't appear to
-  // trigger nb.html generation in this flow (the file never appears in the
-  // sandbox dir). Needs investigation of whether the bridge path is missing
-  // a step that the console-driven Save path performs.
-  test.skip('saving an R Notebook creates an nb.html file', async ({ rstudioPage: page }) => {
+  test('saving an R Notebook creates an nb.html file', async ({ rstudioPage: page }) => {
     const fileName = `rmarkdown_nbhtml_${Date.now()}.Rmd`;
     const nbHtmlPath = path.join(sandbox.dir, fileName.replace(/\.Rmd$/, '.nb.html'));
     const content = [
@@ -363,7 +359,14 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await runChunkByLabelAndWaitForConsoleSignal(
       page, consoleActions, sourceActions, 'nb', 'hello from notebook',
     );
-    await executeCommand(page, 'saveSourceDoc');
+
+    // The saveSourceDoc command is disabled when the doc is clean
+    // (createAndOpenFile leaves the editor matching disk, and running a chunk
+    // doesn't dirty it). Add a trailing newline so Ctrl+S actually saves --
+    // without this the keypress is a silent no-op and nb.html never renders.
+    await sourceActions.goToEnd();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('ControlOrMeta+s');
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);

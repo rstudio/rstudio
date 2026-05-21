@@ -8,6 +8,7 @@ import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { createAndOpenProject } from '@utils/project';
+import { setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
@@ -120,7 +121,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // start). Setting the preference to "none" (a valid enum value -- NOT "")
     // triggers onChatProviderChanged() → stopBackend() on the GWT side.
     // -----------------------------------------------------------------------
-    await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("chat_provider", "none")');
+    await setPref(page, 'chat_provider', 'none');
     await sleep(5000);
 
     // -----------------------------------------------------------------------

@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
+import { executeCommand } from '../utils/commands';
 
 /** Fields returned by the chatCheckForUpdates RPC. */
 export interface UpdateCheckResult {
@@ -87,7 +88,7 @@ export class ChatPaneActions {
   }
 
   async openChatPane(): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('activateChat')");
+    await executeCommand(this.page, 'activateChat');
     await sleep(2000);
   }
 
