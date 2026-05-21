@@ -152,7 +152,7 @@ jobs:
           # conflicts with the pkg-config package install-dependencies-jammy
           # requests.
           sudo apt-get remove -y pkgconf 2>/dev/null || true
-          sudo ./install-dependencies-jammy
+          sudo USE_BUNDLED_LIBUV=1 ./install-dependencies-jammy
           sudo apt-get install -y libuv1-dev xvfb
 
       - name: Install rig
