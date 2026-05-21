@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
 
+type ProjectOptions = { mode: 'desktop' | 'server' };
+
 // Load env vars from a dotenv file before any process.env reads below.
 // Path is anchored to this config's directory so it works regardless of cwd.
 // PW_ENV_FILE overrides the default path; existing process.env values win
@@ -77,7 +79,7 @@ const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
   .filter(Boolean);
 
-export default defineConfig({
+export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
   fullyParallel: false,

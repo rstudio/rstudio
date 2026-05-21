@@ -5,6 +5,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { documentCloseAllNoSave } from '@utils/commands';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(provider, { tag: ['@ai'] }, () => {
@@ -28,7 +29,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // a save here would race a now-gone sandbox path from an earlier aborted
       // run and surface an ENOENT "Save File" dialog whose popup-glass blocks
       // every subsequent click.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(1000);
 
       // Delete all possible test files in a single R command
@@ -524,7 +525,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Close File A without saving -- the file is in the per-suite sandbox
       // and a save here would race that sandbox's later teardown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(2000);
 
       // --- File B: same original code, no edits ---
@@ -651,7 +652,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
       // afterAll, so saving races the directory removal and surfaces an
       // "Error Saving File" dialog whose popup-glass blocks the shutdown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(1000);
 
       const testFiles = [

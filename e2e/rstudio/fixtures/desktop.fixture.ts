@@ -8,6 +8,8 @@ import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+import { documentCloseAllNoSave } from '../utils/commands';
+import { rLibsUserTemplate } from './r-libs-setup';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
@@ -240,6 +242,11 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     env: {
       ...process.env,
       HOME: sharedUserHome(),
+      // R expands %p / %v at startup; the resolved path is the same one
+      // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
+      // this explicitly is necessary because HOME is redirected -- without it,
+      // R derives an empty default library inside the per-run sandbox.
+      R_LIBS_USER: rLibsUserTemplate(),
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
@@ -488,7 +495,7 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   const { page, browser, rstudioProcess } = session;
 
   // Close all source files without prompting to save
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   await sleep(1000);
 
   try {

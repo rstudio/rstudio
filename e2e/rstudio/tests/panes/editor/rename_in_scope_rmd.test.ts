@@ -1,9 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand } from '@utils/commands';
 
 const RMD_CONTENT = `---
 title: Refactoring
@@ -32,11 +32,6 @@ example <- function(variable) {
 test.describe('Rename in scope across Rmd chunks', () => {
   const sandbox = useSuiteSandbox();
   const FILE = 'rename_in_scope.Rmd';
-  let consoleActions: ConsolePaneActions;
-
-  test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-  });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE]);
@@ -53,7 +48,7 @@ test.describe('Rename in scope across Rmd chunks', () => {
     await editor.gotoLine(7, 0);
     await sleep(200);
 
-    await consoleActions.typeInConsole(`.rs.api.executeCommand("renameInScope")`);
+    await executeCommand(page, 'renameInScope');
 
     await expect.poll(() => editor.getSelectionRanges().then((r) => r.length), {
       timeout: TIMEOUTS.fileEditSettle,

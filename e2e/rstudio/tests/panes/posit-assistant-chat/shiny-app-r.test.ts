@@ -5,6 +5,7 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { VIEWER_FRAME } from '@pages/viewer_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { executeCommand, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'] }, () => {
@@ -30,7 +31,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     missingPackages = await consoleActions.ensurePackages(['shiny', 'bslib', 'rstudioapi'], 180000);
 
     // Force Shiny apps to open in the Viewer pane
-    await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("shiny_viewer_type", "pane")');
+    await setPref(page, 'shiny_viewer_type', 'pane');
     await sleep(1000);
 
     // Clean up any leftover files from previous runs
@@ -38,7 +39,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     await sleep(1000);
 
     // Clear the Viewer pane so we don't get false positives from previous content
-    await consoleActions.typeInConsole(".rs.api.executeCommand('viewerClearAll')");
+    await executeCommand(page, 'viewerClearAll');
     await sleep(1000);
 
     // Dismiss the "Clear Viewer" confirmation dialog if it appears

@@ -6,6 +6,7 @@ import { typeInConsole } from '../pages/console_pane.page';
 import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 import { rPathLiteral, rStringLiteral } from './r';
+import { documentCloseAllNoSave } from './commands';
 
 /**
  * Write `content` to `fileName` in the per-spec sandbox workdir and open it
@@ -55,7 +56,7 @@ export async function closeAndDeleteSandboxFiles(
   sandboxDir: string,
   fileNames: string[],
 ): Promise<void> {
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   const sourcePane = new SourcePane(page);
   await expect(sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
   if (fs.existsSync(sandboxDir)) {

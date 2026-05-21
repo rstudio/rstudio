@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // Ported from src/cpp/tests/automation/testthat/test-automation-pane-layout.R.
@@ -43,7 +44,7 @@ const ALL_TAB_NAMES = [
 // ---------------------------------------------------------------------------
 
 async function openPaneLayoutOptions(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('paneLayout')");
+  await executeCommand(page, 'paneLayout');
   await page.waitForSelector(DIALOG_BOX, { timeout: TIMEOUTS.consoleReady });
   await page.waitForSelector(PL_PANEL, { timeout: 5000 });
   await sleep(500);
@@ -68,7 +69,7 @@ async function dismissDialogIfOpen(page: Page): Promise<void> {
 async function resetUILayout(page: Page): Promise<void> {
   const sentinel = `__pl_reset_${Date.now()}_${Math.random()}`;
   await page.evaluate((s) => { (window as unknown as Record<string, true>)[s] = true; }, sentinel);
-  await typeInConsole(page, ".rs.api.executeCommand('restoreDefaultPaneAndTabLayoutNoPrompt')");
+  await executeCommand(page, 'restoreDefaultPaneAndTabLayoutNoPrompt');
   await page.waitForFunction(
     (s) => !(s in (window as unknown as Record<string, unknown>)),
     sentinel,
@@ -543,7 +544,7 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await resetUILayout(page);
 
     // Show the sidebar (left is the default)
-    await typeInConsole(page, ".rs.api.executeCommand('toggleSidebar')");
+    await executeCommand(page, 'toggleSidebar');
     await page.waitForSelector(SIDEBAR_PANE, { timeout: 15000 });
 
     await openPaneLayoutOptions(page);
@@ -600,7 +601,7 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await resetUILayout(page);
 
     if ((await page.locator(SIDEBAR_PANE).count()) > 0) {
-      await typeInConsole(page, ".rs.api.executeCommand('toggleSidebar')");
+      await executeCommand(page, 'toggleSidebar');
       await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 10000 });
     }
 

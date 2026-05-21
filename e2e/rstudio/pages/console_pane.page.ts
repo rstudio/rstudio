@@ -1,6 +1,7 @@
 import type { Page, Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { sleep } from '../utils/constants';
+import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -90,7 +91,7 @@ export async function clearConsole(page: Page): Promise<void> {
 }
 
 export async function closeAllBuffersWithoutSaving(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   await sleep(1000);
 }
 
@@ -109,7 +110,7 @@ export async function getEnvironmentVersions(page: Page): Promise<EnvironmentVer
 }
 
 export async function goToLine(page: Page, line: number): Promise<void> {
-  await typeInConsole(page, `.rs.api.executeCommand('goToLine')`);
+  await executeCommand(page, 'goToLine');
   await sleep(500);
   await page.keyboard.type(String(line));
   await page.keyboard.press('Enter');

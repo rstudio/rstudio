@@ -4,6 +4,7 @@ import { DebuggerActions } from '@actions/debugger.actions';
 import { EnvironmentPane } from '@pages/environment_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS, sleep } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
 
 const sandbox = useSuiteSandbox();
 
@@ -87,7 +88,7 @@ test.describe('R debugger', () => {
 
       await debuggerActions.setBreakpoint(2);
 
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
 
       await debuggerActions.waitForDebugMode();
       await expect.poll(
@@ -113,7 +114,7 @@ test.describe('R debugger', () => {
       // Source first so the function is in scope — that way the gutter
       // click produces an ACTIVE (.ace_breakpoint) marker rather than a
       // pending / inactive one that wouldn't satisfy our locator.
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
 
       // Set breakpoint on the brace-expression line (line 3).
@@ -147,7 +148,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       // Source so the toggled breakpoint becomes ACTIVE rather than INACTIVE.
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
 
       // Place the cursor on line 2 via the goToLine command.
@@ -196,7 +197,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.typeInConsole('step_next_fn()');
@@ -224,7 +225,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       // Breakpoint on the line that calls inner() (line 5).
       await debuggerActions.setBreakpoint(5);
@@ -267,7 +268,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.typeInConsole('step_finish_fn()');
@@ -294,7 +295,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
       await debuggerActions.setBreakpoint(5);
@@ -323,7 +324,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.typeInConsole('step_stop_fn()');
@@ -349,7 +350,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       for (const line of [2, 3, 4, 5, 6, 7]) {
         await debuggerActions.setBreakpoint(line);
@@ -408,7 +409,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('browser_entry_fn()');
 
@@ -432,7 +433,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('browser_continue_fn()');
 
@@ -459,7 +460,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('rerun_fn()');
 
@@ -497,7 +498,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('env_locals_fn()');
 
@@ -519,7 +520,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('tb_f()');
 
@@ -556,7 +557,7 @@ test.describe('R debugger', () => {
       ].join('\n');
 
       await writeAndOpen(fileName, content);
-      await consoleActions.typeInConsole('.rs.api.executeCommand("sourceActiveDocument")');
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await consoleActions.typeInConsole('fr_f()');
 

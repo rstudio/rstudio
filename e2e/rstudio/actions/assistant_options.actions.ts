@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import { AssistantOptions } from '../pages/assistant_options.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
+import { executeCommand } from '../utils/commands';
 
 export class AssistantOptionsActions {
   readonly page: Page;
@@ -35,7 +36,7 @@ export class AssistantOptionsActions {
   }
 
   async setupAssistantOptions(provider: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(this.page, 'showOptions');
     await this.page.waitForSelector('#rstudio_preferences_confirm', { timeout: 15000 });
 
     await expect(this.assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });
@@ -74,7 +75,7 @@ export class AssistantOptionsActions {
   }
 
   async setChatProvider(provider: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(this.page, 'showOptions');
     await this.page.waitForSelector('#rstudio_preferences_confirm', { timeout: 15000 });
 
     await expect(this.assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });
@@ -94,15 +95,15 @@ export class AssistantOptionsActions {
     }
 
     // Toggle sidebar twice to refresh a potentially stale chat pane
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
+    await executeCommand(this.page, 'toggleSidebar');
     await sleep(1000);
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
+    await executeCommand(this.page, 'toggleSidebar');
     await sleep(1000);
     await this.consolePaneActions.clearConsole();
   }
 
   async getChatProviderValue(): Promise<string> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(this.page, 'showOptions');
     await this.page.waitForSelector('#rstudio_preferences_confirm', { timeout: 15000 });
 
     await expect(this.assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });

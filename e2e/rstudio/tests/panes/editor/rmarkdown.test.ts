@@ -10,6 +10,7 @@ import {
 import { clearWorkspace } from '@pages/environment_pane.page';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand, setPref } from '@utils/commands';
 
 test.describe('RMarkdown', () => {
   // Sets cwd to a per-spec sandbox; all relative file paths used by
@@ -69,7 +70,7 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_empty_chunk_does_not_define_variables
 
     // Clear workspace
-    await consoleActions.typeInConsole(".rs.api.executeCommand('activateEnvironment')");
+    await executeCommand(page, 'activateEnvironment');
     await sleep(2000);
     await clearWorkspace(page);
 
@@ -79,11 +80,11 @@ test.describe('RMarkdown', () => {
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file
-    await consoleActions.typeInConsole(".rs.api.executeCommand('saveSourceDoc')");
+    await executeCommand(page, 'saveSourceDoc');
     await sleep(1000);
 
     // Run all chunks via restart R
-    await consoleActions.typeInConsole(".rs.api.executeCommand('restartRRunAllChunks')");
+    await executeCommand(page, 'restartRRunAllChunks');
     await sleep(5000);
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 30000 });
 
@@ -108,7 +109,7 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_continue_comment_newline_preference
 
     // Enable the preference
-    await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("continue_comments_on_newline", TRUE)');
+    await setPref(page, 'continue_comments_on_newline', true);
     await sleep(1000);
 
     // Create an RMarkdown file, verify no comment is inserted on newline
@@ -158,7 +159,7 @@ test.describe('RMarkdown', () => {
     // Navigate to file and run spellcheck
     await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
     await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('checkSpelling')");
+    await executeCommand(page, 'checkSpelling');
     await sleep(5000);
 
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toBeVisible({ timeout: 30000 });
@@ -185,7 +186,7 @@ test.describe('RMarkdown', () => {
     await sourceActions.ensureVisualMode();
 
     // Run spellcheck in visual mode
-    await consoleActions.typeInConsole(".rs.api.executeCommand('checkSpelling')");
+    await executeCommand(page, 'checkSpelling');
     await sleep(5000);
 
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toBeVisible({ timeout: 30000 });
@@ -202,7 +203,7 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_templates_displays
 
     // Open New R Markdown dialog
-    await consoleActions.typeInConsole(".rs.api.executeCommand('newRMarkdownDoc')");
+    await executeCommand(page, 'newRMarkdownDoc');
     await installDepIfPrompted(page);
 
     // Check templates
@@ -229,7 +230,7 @@ test.describe('RMarkdown', () => {
     // Skipped: https://github.com/rstudio/rstudio/issues/13271
 
     // Create rmarkdown file via command
-    await consoleActions.typeInConsole(".rs.api.executeCommand('newRMarkdownDoc')");
+    await executeCommand(page, 'newRMarkdownDoc');
     await installDepIfPrompted(page);
     await clickConfirmIfVisible(page);
     await expect(sourceActions.sourcePane.selectedTab).toContainText('Untitled', { timeout: 10000 });
@@ -245,20 +246,20 @@ test.describe('RMarkdown', () => {
     await sleep(3000);
 
     // Go to next chunk 3 times to reach plot(pressure) chunk
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
+    await executeCommand(page, 'goToNextChunk');
     await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
+    await executeCommand(page, 'goToNextChunk');
     await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
+    await executeCommand(page, 'goToNextChunk');
     await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await executeCommand(page, 'executeCurrentChunk');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('plot(pressure)', { timeout: 10000 });
 
     // Go to previous chunk and verify summary(cars) runs but NOT plot(pressure)
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToPrevChunk')");
+    await executeCommand(page, 'goToPrevChunk');
     await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await executeCommand(page, 'executeCurrentChunk');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText('summary(cars)', { timeout: 10000 });
     await expect(consoleOutput).toContainText('speed');

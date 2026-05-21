@@ -3,6 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { waitForSessionRestart } from '@utils/project';
 import { rStringLiteral } from '@utils/r';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
@@ -21,7 +22,7 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 }
 
 async function suspendAndResume(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('suspendSession')");
+  await executeCommand(page, 'suspendSession');
   await waitForSessionRestart(page);
 }
 

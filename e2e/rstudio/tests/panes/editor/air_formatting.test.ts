@@ -34,6 +34,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { sleep } from '@utils/constants';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand } from '@utils/commands';
 
 // --- Test data (from issue #16721) ---
 
@@ -58,8 +59,8 @@ const OPTIONS_OK = '#rstudio_preferences_confirm';
 // --- Helpers ---
 
 /** Open Global Options and navigate to Code > Formatting. */
-async function openCodeOptions(page: Page, consoleActions: ConsolePaneActions): Promise<void> {
-  await consoleActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+async function openCodeOptions(page: Page): Promise<void> {
+  await executeCommand(page, 'showOptions');
   await page.waitForSelector(OPTIONS_OK, { timeout: 15000 });
   await sleep(500);
 
@@ -97,11 +98,10 @@ async function closeOptions(page: Page): Promise<void> {
  */
 async function setAirPrefs(
   page: Page,
-  consoleActions: ConsolePaneActions,
   useAir: boolean,
   reformatOnSave: boolean
 ): Promise<void> {
-  await openCodeOptions(page, consoleActions);
+  await openCodeOptions(page);
 
   // "Use Air" must be set first — "Reformat on save" is only visible when Air is checked
   await setCheckbox(page, AIR_CHECKBOX_LABEL, useAir);
@@ -240,7 +240,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('2: unchecked, air.toml present, manual reformat uses built-in formatter', async () => {
-    await setAirPrefs(page, consoleActions, false, false);
+    await setAirPrefs(page, false, false);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
     await reformatCode(page, sourceActions);
@@ -249,7 +249,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('3: unchecked, air.toml present, reformat on save leaves code unchanged', async () => {
-    await setAirPrefs(page, consoleActions, false, false);
+    await setAirPrefs(page, false, false);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
     await saveFile(page, sourceActions);
@@ -258,7 +258,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('4: checked, air.toml present, manual reformat uses Air', async () => {
-    await setAirPrefs(page, consoleActions, true, false);
+    await setAirPrefs(page, true, false);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
     await reformatCode(page, sourceActions);
@@ -267,7 +267,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('5: checked, air.toml present, save uses Air', async () => {
-    await setAirPrefs(page, consoleActions, true, true);
+    await setAirPrefs(page, true, true);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
     await saveFile(page, sourceActions);
@@ -276,7 +276,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('6: checked, no config, manual reformat uses built-in formatter', async () => {
-    await setAirPrefs(page, consoleActions, true, false);
+    await setAirPrefs(page, true, false);
     await removeAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
     await reformatCode(page, sourceActions);
@@ -287,7 +287,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   // --- .air.toml (hidden variant) tests ---
 
   test('7: unchecked, .air.toml present, manual reformat uses built-in formatter', async () => {
-    await setAirPrefs(page, consoleActions, false, false);
+    await setAirPrefs(page, false, false);
     await createAirConfig(consoleActions, DOT_AIR_TOML_FILE);
     await openTestFile(consoleActions, sourceActions);
     await reformatCode(page, sourceActions);
@@ -296,7 +296,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('8: unchecked, .air.toml present, reformat on save leaves code unchanged', async () => {
-    await setAirPrefs(page, consoleActions, false, false);
+    await setAirPrefs(page, false, false);
     await createAirConfig(consoleActions, DOT_AIR_TOML_FILE);
     await openTestFile(consoleActions, sourceActions);
     await saveFile(page, sourceActions);

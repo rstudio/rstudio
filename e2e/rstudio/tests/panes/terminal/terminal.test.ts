@@ -4,6 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { rStringLiteral } from '@utils/r';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 
 const TERMINAL_TAB = '#rstudio_workbench_tab_terminal';
@@ -46,7 +47,7 @@ test.describe.serial('Terminal pane', () => {
 
   test.afterEach(async ({ rstudioPage: page }) => {
     await killAllTerminals(page).catch(() => {});
-    await consoleActions.typeInConsole(".rs.api.executeCommand('activateConsole')").catch(() => {});
+    await executeCommand(page, 'activateConsole').catch(() => {});
   });
 
   test('a terminal can be created and is visible', async ({ rstudioPage: page }) => {
@@ -85,7 +86,7 @@ test.describe.serial('Terminal pane', () => {
     expect(bufferHasResult, 'terminal buffer should contain the result "2"').toBe('TRUE');
 
     // Send the terminal contents to a new editor tab.
-    await consoleActions.typeInConsole(".rs.api.executeCommand('sendTerminalToEditor')");
+    await executeCommand(page, 'sendTerminalToEditor');
 
     // Find the new editor by its marker and assert it contains the expected
     // command + output sequence.

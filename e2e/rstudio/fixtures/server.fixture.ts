@@ -8,6 +8,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
+import { setPref, documentCloseAllNoSave } from '../utils/commands';
+import { rLibsUserTemplate } from './r-libs-setup';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
@@ -102,6 +104,10 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     ...process.env,
     HOME: userHome,
     USERPROFILE: userHome,
+    // Mirror the Desktop fixture -- under the redirected HOME, R would
+    // otherwise compute an empty default user library. globalSetup
+    // pre-creates and pre-populates this same path.
+    R_LIBS_USER: rLibsUserTemplate(),
     RS_DB_MIGRATIONS_PATH: process.env.RS_DB_MIGRATIONS_PATH || DEFAULT_DB_MIGRATIONS,
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
     RSTUDIO_CONFIG_HOME: configHome,
@@ -253,7 +259,7 @@ export async function launchServer(): Promise<ServerSession> {
   await page.waitForSelector('#rstudio_mb_files_touch_file', { state: 'visible', timeout: 120_000 });
   console.log('Files pane toolbar is ready');
 
-  await typeInConsole(page, '.rs.api.writeRStudioPreference("save_workspace", "never")');
+  await setPref(page, 'save_workspace', 'never');
   await sleep(1000);
 
   await page.locator(CONSOLE_INPUT).click({ force: true });
@@ -273,7 +279,7 @@ export async function shutdownServer(session: ServerSession): Promise<void> {
   const { page, browser, rserverProcess } = session;
 
   try {
-    await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await documentCloseAllNoSave(page);
     await sleep(1000);
     await typeInConsole(page, 'q("no")');
     await sleep(2000);

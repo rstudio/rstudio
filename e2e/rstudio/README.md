@@ -279,6 +279,10 @@ PW_RSTUDIO_PREFS_OVERRIDE=/path/to/my-prefs.json npx playwright test ...
 
 ### Package Dependencies
 
+`globalSetup` pre-installs a baseline manifest of CRAN packages into the shared `R_LIBS_USER` cache (see *R package pre-population* under Environment Variables). For tests using a package that's already in `REQUIRED_PACKAGES`, no extra setup is required.
+
+For tests using a package outside the manifest, add it via `ensurePackages` in `beforeAll`. The helper installs into the same cache, so subsequent runs are no-ops:
+
 ```typescript
 test.describe('Tests needing packages', () => {
   let missingPackages: string[] = [];
@@ -291,6 +295,8 @@ test.describe('Tests needing packages', () => {
   });
 });
 ```
+
+If you find yourself adding the same package to many tests, promote it into `REQUIRED_PACKAGES` so it gets pre-installed once at setup time.
 
 ## Tags
 
@@ -394,8 +400,14 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_SANDBOX_SKIP_CLEANUP` | Both | No | Set to `true`/`1` to preserve the sandbox at end of run regardless of pass/fail. |
 | `PW_SANDBOX_SEED_POSITAI` | Both | No | Set to `true`/`1` to copy the real `~/.positai/` into the sandbox so Posit Assistant tests start signed in. Default unseeded (signed out). Privacy: tokens land inside the sandbox and persist on failed runs until you delete it -- only set this on machines using a dedicated test account. |
 | `PW_SANDBOX_SEED_COPILOT` | Both | No | Set to `true`/`1` to copy the real GitHub Copilot credentials into the sandbox (`%LOCALAPPDATA%\github-copilot\` on Windows, `~/.config/github-copilot/` on macOS/Linux) so Copilot tests start authenticated. Default unseeded (unauthenticated). Privacy: tokens land inside the sandbox and persist on failed runs until you delete it -- only set this on machines using a dedicated test account. |
+| `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. |
+| `PW_RSTUDIO_R_LIBS_SKIP_PREP` | Both | No | Set to `true`/`1` to skip globalSetup's pre-population of the user library. Useful when running against an R install that already has everything, or to reproduce the empty-library popup behavior on purpose. |
 
 `PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually.
+
+### R package pre-population
+
+Because the Desktop and Server fixtures redirect `HOME` / `USERPROFILE` into the per-run sandbox, R computes an empty default user library and won't see the host user's installed packages. `globalSetup` works around this by pointing `R_LIBS_USER` at a stable per-host cache (see `PW_RSTUDIO_R_LIBS_USER` above) and pre-installing a manifest of packages that tests use -- the list lives in `REQUIRED_PACKAGES` inside `fixtures/r-libs-setup.ts`. The check is idempotent (`installed.packages()` then `setdiff`), so a warm cache adds almost no startup time; the first run installs ~23 packages from CRAN (or PPM on Linux) and may take a few minutes.
 
 ## Variable Helpers
 

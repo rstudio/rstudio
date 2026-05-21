@@ -8,6 +8,7 @@ import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand } from '@utils/commands';
 
 test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () => {
   // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
@@ -58,7 +59,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file first so it's on disk
-    await consoleActions.typeInConsole(".rs.api.executeCommand('saveSourceDoc')");
+    await executeCommand(page, 'saveSourceDoc');
     await sleep(1000);
 
     // Make an edit so the file has unsaved changes — Ctrl+S during execution
@@ -73,7 +74,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
 
     // Navigate to chunk 1 and execute it
     await sourceActions.navigateToChunkByLabel('slow_plot');
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await executeCommand(page, 'executeCurrentChunk');
 
     // While the slow plot is rendering, save the document
     // This is the trigger for the bug — saving during execution corrupts the notebook cache
@@ -93,7 +94,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     // Execute chunk 2 to verify chunks are still runnable
     await consoleActions.clearConsole();
     await sourceActions.navigateToChunkByLabel('verify_runnable');
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await executeCommand(page, 'executeCurrentChunk');
     await sleep(5000);
 
     // Verify chunk 2 output appeared — proves chunks still work after save-during-execution

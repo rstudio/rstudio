@@ -2,7 +2,7 @@ import type { Page } from 'playwright';
 import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
 
 interface InstallTarget {
   repos: string;
@@ -112,7 +112,7 @@ export class ConsolePaneActions {
   }
 
   async goToLine(line: number): Promise<void> {
-    await this.typeInConsole(`.rs.api.executeCommand('goToLine')`);
+    await executeCommand(this.page, 'goToLine');
     await sleep(500);
     await this.page.keyboard.type(String(line));
     await this.page.keyboard.press('Enter');

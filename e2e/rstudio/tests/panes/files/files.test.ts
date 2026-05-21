@@ -11,6 +11,7 @@ import { SourcePane } from '@pages/source_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { sleep, TIMEOUTS, typeSlowly } from '@utils/constants';
+import { executeCommand, documentCloseAllNoSave, setPref, clearPref } from '@utils/commands';
 
 const MODAL_DIALOG = '.rstudio_modal_dialog';
 // The Open File dialog renders a virtualized file list as a `<table
@@ -32,7 +33,7 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
 
   test.afterEach(async ({ rstudioPage: page }) => {
     // Clean up any stub files and close opened source docs.
-    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await documentCloseAllNoSave(page);
     await consoleActions.typeInConsole(`unlink(list.files(${JSON.stringify(sandbox.dir)}, pattern = "\\\\.R$", full.names = TRUE))`);
   });
 
@@ -44,7 +45,7 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
     );
     await sleep(TIMEOUTS.consoleReady);
 
-    await consoleActions.typeInConsole(".rs.api.executeCommand('openSourceDoc')");
+    await executeCommand(page, 'openSourceDoc');
     await expect(page.locator(MODAL_DIALOG)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
     await sleep(TIMEOUTS.settleDelay);
 
@@ -68,7 +69,7 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
     );
     await sleep(TIMEOUTS.consoleReady);
 
-    await consoleActions.typeInConsole(".rs.api.executeCommand('openSourceDoc')");
+    await executeCommand(page, 'openSourceDoc');
     await expect(page.locator(MODAL_DIALOG)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
     await sleep(TIMEOUTS.settleDelay);
 
@@ -95,7 +96,7 @@ test.describe('Autosave on blur', () => {
 
   // https://github.com/rstudio/rstudio/issues/16329
   test('unchanged document is not rewritten when focus leaves the source pane', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$autoSaveOnBlur$set(TRUE)');
+    await setPref(page, 'auto_save_on_blur', true);
     try {
       // Create a file on disk inside the sandbox and open it via file.edit().
       const setupExpr = [
@@ -111,9 +112,9 @@ test.describe('Autosave on blur', () => {
       await consoleActions.typeInConsole(
         '{ .rs_autosave_old <- file.info(.rs_autosave_path)$mtime }',
       );
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateConsole')");
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateSource')");
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateConsole')");
+      await executeCommand(page, 'activateConsole');
+      await executeCommand(page, 'activateSource');
+      await executeCommand(page, 'activateConsole');
 
       const unchangedMarker = `__AUTOSAVE_UNCHANGED_${Date.now()}__`;
       await consoleActions.typeInConsole(
@@ -125,11 +126,11 @@ test.describe('Autosave on blur', () => {
       );
 
       // Edit the source doc via the Ace API, blur, and assert the file was rewritten.
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateSource')");
+      await executeCommand(page, 'activateSource');
       const editor = new AceEditor(page, '# hello world');
       await editor.gotoLine(2);
       await editor.insert('# this is some text');
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateConsole')");
+      await executeCommand(page, 'activateConsole');
       // mtime granularity is one second on some filesystems; let the autosave
       // settle before re-stating the file.
       await sleep(1500);
@@ -143,8 +144,8 @@ test.describe('Autosave on blur', () => {
         { timeout: TIMEOUTS.consoleReady },
       );
     } finally {
-      await consoleActions.typeInConsole('.rs.uiPrefs$autoSaveOnBlur$clear()');
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await clearPref(page, 'auto_save_on_blur');
+      await documentCloseAllNoSave(page);
       await consoleActions.typeInConsole(
         `{ unlink(file.path(${JSON.stringify(sandbox.dir)}, "autosave.R")); rm(list = ls(pattern = "^\\\\.rs_autosave", envir = globalenv()), envir = globalenv()) }`,
       );

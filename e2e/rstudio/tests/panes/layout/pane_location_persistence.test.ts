@@ -1,7 +1,7 @@
 import { test as base, expect } from '@playwright/test';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
-import { typeInConsole } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // Pane Layout preferences dialog selectors
@@ -23,7 +23,7 @@ const TABSET2_PANE = '#rstudio_TabSet2_pane';
  * Open Global Options and navigate to the Pane Layout tab.
  */
 async function openPaneLayoutOptions(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('showOptions')");
+  await executeCommand(page, 'showOptions');
   await page.waitForSelector(OPTIONS_OK, { timeout: 15000 });
   await page.locator(PANE_LAYOUT_TAB).click();
   await expect(page.locator(PANE_LAYOUT_PANEL)).toBeVisible({ timeout: 5000 });
