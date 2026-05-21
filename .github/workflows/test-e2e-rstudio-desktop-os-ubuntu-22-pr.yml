@@ -1,0 +1,223 @@
+name: "Test: E2E Playwright RStudio (Desktop, Ubuntu 22, Open Source, PR-triggered, build-from-source)"
+
+on:
+  pull_request:
+    # `edited` is included so toggling `[full-pw]` or `[skip-pw]` in the PR
+    # title (after the PR is open) re-fires the workflow. The concurrency
+    # block below cancels any older in-flight run.
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - "src/**"
+      - "e2e/rstudio/**"
+      - ".github/pw-test-map.yml"
+      - ".github/scripts/pw-pr-select.py"
+      - ".github/workflows/test-e2e-rstudio-desktop-os-ubuntu-22-pr.yml"
+      - "dependencies/linux/install-dependencies-jammy"
+
+concurrency:
+  group: pw-pr-ubuntu-22-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  # Paths excluded until test/ron/playwright-auth-setup merges.
+  # When that lands, remove this and the "Filter excluded paths" step.
+  EXCLUDED_PATHS: |
+    tests/panes/posit-assistant-chat/
+    tests/panes/editor/code_suggestions.test.ts
+    tests/panes/editor/edit_suggestions.test.ts
+
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      selector: ${{ steps.filter.outputs.selector }}
+      skip:     ${{ steps.filter.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PyYAML
+        run: python3 -m pip install --user 'pyyaml==6.0.2'
+
+      - name: Verify selector self-test
+        run: python3 .github/scripts/pw-pr-select.py --self-test
+
+      - name: Compute selector
+        id: compute
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Changed files:"
+          git diff --name-only "origin/$BASE_REF...HEAD" | tee /dev/stderr \
+            | python3 .github/scripts/pw-pr-select.py \
+                --map .github/pw-test-map.yml \
+                --title "$PR_TITLE" \
+            | tee -a "$GITHUB_OUTPUT"
+
+      - name: Filter excluded paths from selector
+        id: filter
+        working-directory: e2e/rstudio
+        env:
+          RAW_SELECTOR: ${{ steps.compute.outputs.selector }}
+          FULL:         ${{ steps.compute.outputs.full }}
+          SKIP_IN:      ${{ steps.compute.outputs.skip }}
+        run: |
+          mapfile -t EXCLUDED < <(printf '%s\n' "${EXCLUDED_PATHS:-}" \
+            | sed 's|^[[:space:]]*||;s|[[:space:]]*$||' | sed '/^$/d')
+
+          excluded_match() {
+            local p="$1" pref
+            for pref in "${EXCLUDED[@]}"; do
+              case "$p" in "$pref"*) return 0 ;; esac
+            done
+            return 1
+          }
+
+          if [ "$SKIP_IN" = "true" ]; then
+            echo "selector=" >> "$GITHUB_OUTPUT"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$FULL" = "true" ] || [ -z "$RAW_SELECTOR" ]; then
+            CANDIDATES=$(find tests -name '*.test.ts' -type f | sort)
+          else
+            CANDIDATES=$(printf '%s\n' $RAW_SELECTOR)
+          fi
+
+          KEPT=(); DROPPED=()
+          while IFS= read -r p; do
+            [ -z "$p" ] && continue
+            if excluded_match "$p"; then DROPPED+=("$p"); else KEPT+=("$p"); fi
+          done <<< "$CANDIDATES"
+
+          if [ ${#DROPPED[@]} -gt 0 ]; then
+            {
+              echo "### Excluded tests (require auth)"
+              printf -- '- %s\n' "${DROPPED[@]}"
+              echo ""
+              echo "_Will run once test/ron/playwright-auth-setup merges._"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ ${#KEPT[@]} -eq 0 ]; then
+            echo "selector=" >> "$GITHUB_OUTPUT"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "selector=${KEPT[*]}" >> "$GITHUB_OUTPUT"
+            echo "skip=false"          >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write selection decision to step summary
+        if: always()
+        env:
+          SKIP:     ${{ steps.filter.outputs.skip }}
+          SELECTOR: ${{ steps.filter.outputs.selector }}
+        run: |
+          {
+            echo "### Playwright selection"
+            echo ""
+            echo "- skip: \`${SKIP:-<unset>}\`"
+            echo "- selector: \`${SELECTOR:-<empty>}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build_and_test:
+    needs: select
+    if: needs.select.outputs.skip != 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      R_LIBS_USER:        ${{ github.workspace }}/R-libs
+      PW_RSTUDIO_EDITION: os
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install build dependencies (jammy)
+        run: |
+          sudo ./dependencies/linux/install-dependencies-jammy
+          sudo apt-get install -y xvfb
+
+      - name: Install rig
+        run: |
+          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-latest.tar.gz \
+            | sudo tar xz -C /usr/local
+
+      - name: Install R via rig
+        run: |
+          rig add 4.5.3
+          rig default 4.5.3
+          mkdir -p "$R_LIBS_USER"
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
+
+      - name: Build C++ (rsession, rserver, core)
+        working-directory: build
+        run: cmake --build . --target all -j"$(nproc)"
+
+      - name: Build GWT (draft)
+        working-directory: src/gwt
+        run: ant draft
+
+      - name: Install Electron desktop npm dependencies
+        working-directory: src/node/desktop
+        run: npm ci
+
+      - name: Install R packages from DESCRIPTION
+        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        run: |
+          Rscript -e '
+            options(repos = c(P3M = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))
+            if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
+            pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
+          '
+
+      - name: Install Playwright npm dependencies
+        working-directory: e2e/rstudio
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e/rstudio
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests against dev build
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE:  desktop
+          PW_RSTUDIO_DEV:   "1"
+          PW_TEST_SELECTOR: ${{ needs.select.outputs.selector }}
+        run: |
+          echo "Selector: $PW_TEST_SELECTOR"
+          read -ra FILES <<< "$PW_TEST_SELECTOR"
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            npx playwright test "${FILES[@]}" --project desktop
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
