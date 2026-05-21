@@ -91,18 +91,32 @@ export function isGwtDevmodeRunning(): boolean {
   return result.status === 0;
 }
 
-export function checkGwtDevmode(tag: string): void {
-  step(tag, 'Checking GWT devmode...');
+// True if a precompiled GWT bootstrap exists on disk. `ant draft` writes
+// this; presence is enough to know the dev build can serve a working IDE
+// without devmode. We don't bother comparing source mtimes -- if the user
+// edits Java without re-running `ant draft`, that's on them.
+function hasPrecompiledGwt(): boolean {
+  return fs.existsSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js'));
+}
 
-  if (!isGwtDevmodeRunning()) {
-    fail(
-      tag,
-      'GWT devmode is not running. Start it in another terminal with:\n' +
-        '    (cd src/gwt && ant devmode)',
-    );
+export function checkGwtBuildReady(tag: string): void {
+  step(tag, 'Checking GWT build state...');
+
+  if (isGwtDevmodeRunning()) {
+    console.log(`[${tag}] GWT devmode is running.`);
+    return;
   }
 
-  console.log(`[${tag}] GWT devmode is running.`);
+  if (hasPrecompiledGwt()) {
+    console.log(`[${tag}] Precompiled GWT bootstrap present (devmode not running).`);
+    return;
+  }
+
+  console.log(
+    `[${tag}] WARNING: no GWT build available. Tests will likely fail until you run one of:\n` +
+      '    (cd src/gwt && ant devmode)   # active development\n' +
+      '    (cd src/gwt && ant draft)     # one-shot precompile',
+  );
 }
 
 // Spawn `npx playwright test ...` with the supplied args appended and the

@@ -8,7 +8,7 @@ import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
-import { documentCloseAllNoSave } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
@@ -107,6 +107,57 @@ export interface DesktopSession {
   configRoot: string;
 }
 
+// Gated diagnostic: when PW_DEBUG_LAUNCH=1 is set, attach listeners to every
+// existing and future page in every context, so we can see the navigation /
+// load / console / error sequence that produces the renderer's "double load"
+// behavior during startup. Output is prefixed `[debug-launch]` with relative
+// timestamps. Leave the flag unset for normal runs.
+function attachLaunchDebug(browser: Browser): void {
+  if (process.env.PW_DEBUG_LAUNCH !== '1' && process.env.PW_DEBUG_LAUNCH !== 'true') {
+    return;
+  }
+
+  const t0 = Date.now();
+  const stamp = () => `+${(Date.now() - t0).toString().padStart(5, ' ')}ms`;
+  let pageSeq = 0;
+
+  const attach = (p: Page): void => {
+    const label = `p${pageSeq++}`;
+    console.log(`[debug-launch] ${stamp()} ${label}: page created, url=${p.url()}`);
+
+    p.on('framenavigated', (frame) => {
+      if (frame === p.mainFrame()) {
+        console.log(`[debug-launch] ${stamp()} ${label}: navigated -> ${frame.url()}`);
+      }
+    });
+    p.on('load', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: load (url=${p.url()})`);
+    });
+    p.on('domcontentloaded', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: domcontentloaded (url=${p.url()})`);
+    });
+    p.on('console', (msg) => {
+      const t = msg.type();
+      if (t === 'error' || t === 'warning' || t === 'info') {
+        console.log(`[debug-launch] ${stamp()} ${label}: console.${t}: ${msg.text()}`);
+      }
+    });
+    p.on('pageerror', (err) => {
+      console.log(`[debug-launch] ${stamp()} ${label}: pageerror: ${err.message}`);
+    });
+    p.on('close', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: closed`);
+    });
+  };
+
+  for (const ctx of browser.contexts()) {
+    ctx.on('page', attach);
+    for (const existing of ctx.pages()) {
+      attach(existing);
+    }
+  }
+}
+
 interface TempConfig {
   root: string;
   configHome: string;
@@ -154,7 +205,9 @@ function createTempConfig(): TempConfig {
  * directory across a quit-and-restart so prefs/state persist.
  */
 export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
-  // Clean up any existing RStudio on our specific CDP port
+  // Clean up any existing RStudio on our specific CDP port. The port is
+  // random per worker (9231-9299), so a collision is rare -- only happens
+  // when an orphaned process from a prior interrupted run is still bound.
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
@@ -166,13 +219,14 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     } else {
       execSync(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
     }
-    await sleep(5000); // Give RStudio time to shut down gracefully
   } catch {
     // No process on that port, that's fine
   }
-  await sleep(TIMEOUTS.processCleanup);
 
-  // Wait for port to be released (up to 15 seconds)
+  // Wait for the port to be free. When nothing was ever bound, the first
+  // probe throws immediately and we break out in microseconds. When we
+  // just killed something, the OS usually releases the port within a few
+  // hundred ms; the 15s ceiling is purely a safety net.
   const portDeadline = Date.now() + 15000;
   while (Date.now() < portDeadline) {
     try {
@@ -181,12 +235,12 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
         if (!result.trim()) break;
       } else {
         execSync(`lsof -i :${CDP_PORT} -t`, { encoding: 'utf-8' });
-        // If lsof succeeds, port is still in use — keep waiting
+        // If lsof succeeds, port is still in use -- keep waiting
       }
     } catch {
       break; // No connections on the port
     }
-    await sleep(1000);
+    await sleep(100);
   }
 
   // Set up the isolated config directory (or reuse one across a restart)
@@ -254,7 +308,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       RSTUDIO_DISABLE_WHATS_NEW: '1',
       // Suppress the Electron splash screen during automation; otherwise CDP
       // can grab the splash window before the main app loads (see the
-      // desktopHooks-poll loop below).
+      // automation-bridge poll loop below).
       RS_NO_SPLASH: '1',
       USERPROFILE: sharedUserHome(),
     },
@@ -333,35 +387,58 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     );
   }
 
+  attachLaunchDebug(browser);
+
   // If anything fails after CDP connect, kill the process to avoid orphaning RStudio.
   try {
     // The splash screen briefly holds its own page that gets replaced by the
-    // main GWT window. Poll until we find a live page whose window has
-    // desktopHooks installed -- that is the main app.
+    // main GWT window. In GWT super dev mode there is also a transient
+    // "Compiling RStudio" page that briefly exposes window.rstudio just
+    // before the codeserver redirects to the compiled app. To avoid
+    // latching onto either of those, poll for a page whose automation
+    // bridge stays installed on the *same* page across consecutive polls.
     const pageDeadline = Date.now() + 30000;
+    const requiredStableMs = 1000;
     let page: Page | undefined;
+    let stablePage: Page | undefined;
+    let stableSince = 0;
+
     while (Date.now() < pageDeadline && !page) {
+      let foundPage: Page | undefined;
       for (const ctx of browser.contexts()) {
         for (const candidate of ctx.pages()) {
           if (candidate.isClosed()) continue;
           try {
-            const hasHooks = await candidate.evaluate(
-              'typeof window.desktopHooks?.invokeCommand === "function"',
+            const hasBridge = await candidate.evaluate(
+              'typeof window.rstudio?.commands?.activateConsole === "function"',
             );
-            if (hasHooks === true) {
-              page = candidate;
+            if (hasBridge === true) {
+              foundPage = candidate;
               break;
             }
           } catch {
             // Page may be navigating or closing during splash -> main transition.
           }
         }
-        if (page) break;
+        if (foundPage) break;
       }
-      if (!page) await sleep(250);
+
+      if (foundPage && foundPage === stablePage) {
+        if (Date.now() - stableSince >= requiredStableMs) {
+          page = stablePage;
+          break;
+        }
+      } else {
+        // Either no page has the bridge right now, or a different page does
+        // than the one we were tracking. Restart the stability window.
+        stablePage = foundPage;
+        stableSince = foundPage ? Date.now() : 0;
+      }
+
+      await sleep(250);
     }
     if (!page) {
-      throw new Error('GWT app did not finish loading within 30s (no page with window.desktopHooks)');
+      throw new Error('GWT app did not finish loading within 30s (no stable page with window.rstudio bridge)');
     }
 
     // Dismiss any "save changes" modal from a previous interrupted run
@@ -387,7 +464,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     }
 
     // Activate console (makes it visible without zooming)
-    await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
+    await executeCommand(page, 'activateConsole');
 
     // Wait for the console input to be visible AND R to be idle (no
     // rstudio-console-busy class on #rstudio_console_input). The latter is

@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -53,6 +53,30 @@ let reloadCount = 0;
 
 // amount of time to wait before each reload, in milliseconds
 const reloadWaitDuration = 200;
+
+// When launched with --automation-agent we pre-seed the WEBDIALOG cookie so
+// that the GWT bootstrap loads the web-dialogs permutation on the very first
+// load. base-prefs.jsonc (used by Playwright tests) sets
+// native_file_dialogs: false; without the cookie pre-seed, GWT initially
+// boots the native-dialogs permutation, Application.initializeWorkbench()
+// detects the pref/cookie mismatch, and fires a ReloadEvent that costs ~4s
+// per test launch. The expiry mirrors WebDialogCookie.java in GWT.
+async function preSeedAutomationCookies(targetUrl: string): Promise<void> {
+  if (!app.commandLine.hasSwitch('automation-agent')) {
+    return;
+  }
+
+  try {
+    await session.defaultSession.cookies.set({
+      url: targetUrl,
+      name: 'WEBDIALOG',
+      value: '1',
+      expirationDate: new Date(Date.UTC(5000, 11, 31)).getTime() / 1000,
+    });
+  } catch (err) {
+    logger().logError(err as Error);
+  }
+}
 
 export class MainWindow extends GwtWindow {
   static FIRST_WORKBENCH_INITIALIZED = 'main-window-first_workbench_initialized';
@@ -234,6 +258,8 @@ export class MainWindow extends GwtWindow {
       logger().logDebug(`Setting base URL: ${url}`);
       this.options.baseUrl = url;
     }
+
+    await preSeedAutomationCookies(url);
 
     this.window.loadURL(url).catch((reason) => {
       logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
