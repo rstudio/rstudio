@@ -252,15 +252,9 @@ public class Application implements ApplicationEventHandlers
                   Desktop.getFrame().setProjectDirectory(projectDir.getPath());
             }
             
-            if (sessionInfo.isAutomationAgent())
-            {
-               ApplicationAutomation automation = pAutomation_.get();
-               automation.initializeAgent();
-            }
-            
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
-            
+
             // set up drag-drop handlers
             if (Desktop.isDesktop())
             {
@@ -276,11 +270,18 @@ public class Application implements ApplicationEventHandlers
 
             // initialize workbench
             // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
-            // in desktop mode, though unsure why)
+            // in desktop mode, though unsure why). The automation agent must be initialized
+            // after this refresh -- registerPrefs() iterates userPrefs_.allPrefs(), and in desktop
+            // mode that returns an incomplete set until the pref refresh has run.
             userState_.get().writeState(boolArg ->
             {
                userPrefs_.get().writeUserPrefs(boolArg1 ->
                {
+                  if (sessionInfo.isAutomationAgent())
+                  {
+                     ApplicationAutomation automation = pAutomation_.get();
+                     automation.initializeAgent();
+                  }
                   initializeWorkbench();
                });
             });
