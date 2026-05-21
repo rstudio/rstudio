@@ -34,13 +34,13 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
   test.afterEach(async ({ rstudioPage: page }) => {
     // Clean up any stub files and close opened source docs.
     await documentCloseAllNoSave(page);
-    await consoleActions.typeInConsole(`unlink(list.files(${JSON.stringify(sandbox.dir)}, pattern = "\\\\.R$", full.names = TRUE))`);
+    await consoleActions.executeInConsole(`unlink(list.files(${JSON.stringify(sandbox.dir)}, pattern = "\\\\.R$", full.names = TRUE))`);
   });
 
   test('handles a large flat directory (>500 files)', async ({ rstudioPage: page }) => {
     // Create 10000 stub .R files in the suite sandbox -- enough to force the
     // virtualized list path.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `{ setwd(${JSON.stringify(sandbox.dir)}); files <- sprintf("%04i.R", 0:9999); invisible(file.create(files)) }`,
     );
     await sleep(TIMEOUTS.consoleReady);
@@ -64,7 +64,7 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
   test('handles a moderate flat directory (<500 files)', async ({ rstudioPage: page }) => {
     // 451 stub files keeps us below the virtualization threshold; the dialog
     // should still resolve a typed prefix to the only matching file.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `{ setwd(${JSON.stringify(sandbox.dir)}); files <- sprintf("%03i.R", 0:450); invisible(file.create(files)) }`,
     );
     await sleep(TIMEOUTS.consoleReady);
@@ -105,11 +105,11 @@ test.describe('Autosave on blur', () => {
         'assign(".rs_autosave_path", con, envir = globalenv())',
         'file.edit(con) }',
       ].join('; ');
-      await consoleActions.typeInConsole(setupExpr);
+      await consoleActions.executeInConsole(setupExpr);
       await sleep(TIMEOUTS.fileEditSettle);
 
       // Record mtime, blur the source pane, and assert it didn't change.
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         '{ .rs_autosave_old <- file.info(.rs_autosave_path)$mtime }',
       );
       await executeCommand(page, 'activateConsole');
@@ -117,7 +117,7 @@ test.describe('Autosave on blur', () => {
       await executeCommand(page, 'activateConsole');
 
       const unchangedMarker = `__AUTOSAVE_UNCHANGED_${Date.now()}__`;
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         `{ .rs_autosave_new <- file.info(.rs_autosave_path)$mtime; cat("${unchangedMarker}", isTRUE(.rs_autosave_old == .rs_autosave_new), "${unchangedMarker}") }`,
       );
       await expect(consoleActions.consolePane.consoleOutput).toContainText(
@@ -136,7 +136,7 @@ test.describe('Autosave on blur', () => {
       await sleep(1500);
 
       const changedMarker = `__AUTOSAVE_CHANGED_${Date.now()}__`;
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         `{ .rs_autosave_after <- file.info(.rs_autosave_path)$mtime; cat("${changedMarker}", isTRUE(.rs_autosave_old == .rs_autosave_after), "${changedMarker}") }`,
       );
       await expect(consoleActions.consolePane.consoleOutput).toContainText(
@@ -146,7 +146,7 @@ test.describe('Autosave on blur', () => {
     } finally {
       await clearPref(page, 'auto_save_on_blur');
       await documentCloseAllNoSave(page);
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         `{ unlink(file.path(${JSON.stringify(sandbox.dir)}, "autosave.R")); rm(list = ls(pattern = "^\\\\.rs_autosave", envir = globalenv()), envir = globalenv()) }`,
       );
     }

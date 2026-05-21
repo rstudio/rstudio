@@ -31,9 +31,9 @@ test.describe('Data Viewer', () => {
   // Issue 13220 — Large data frame navigation
   // -----------------------------------------------------------------------
   test('large data frame - navigation arrows and column pagination', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))');
+    await consoleActions.executeInConsole('df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))');
     await sleep(2000);
-    await consoleActions.typeInConsole('View(df)');
+    await consoleActions.executeInConsole('View(df)');
     await sleep(3000);
 
     await expect(sourcePane.selectedTab).toContainText('df');
@@ -70,9 +70,9 @@ test.describe('Data Viewer', () => {
   // Odd-numbered columns (edge case for pagination)
   // -----------------------------------------------------------------------
   test('odd-numbered column count - pagination edge case', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('df <- data.frame(matrix(1:1000000, nrow=1000, ncol=227))');
+    await consoleActions.executeInConsole('df <- data.frame(matrix(1:1000000, nrow=1000, ncol=227))');
     await sleep(2000);
-    await consoleActions.typeInConsole('View(df)');
+    await consoleActions.executeInConsole('View(df)');
     await sleep(3000);
 
     await expect(sourcePane.selectedTab).toContainText('df');
@@ -96,9 +96,9 @@ test.describe('Data Viewer', () => {
   // Sorting
   // -----------------------------------------------------------------------
   test('column sorting - descending order', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))');
+    await consoleActions.executeInConsole('df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))');
     await sleep(2000);
-    await consoleActions.typeInConsole('View(df)');
+    await consoleActions.executeInConsole('View(df)');
     await sleep(3000);
 
     await expect(sourcePane.selectedTab).toContainText('df');
@@ -123,15 +123,15 @@ test.describe('Data Viewer', () => {
   // -----------------------------------------------------------------------
   test('sorting after navigating to later columns (#13328)', async ({ rstudioPage: page }) => {
     // Create a 10-row x 400-column data frame with shifted values
-    await consoleActions.typeInConsole('data <- replicate(400, 0:9, simplify = FALSE)');
+    await consoleActions.executeInConsole('data <- replicate(400, 0:9, simplify = FALSE)');
     await sleep(1000);
-    await consoleActions.typeInConsole('for (i in seq_along(data)) { data[[i]] <- (data[[i]] + i) %% 10 }');
+    await consoleActions.executeInConsole('for (i in seq_along(data)) { data[[i]] <- (data[[i]] + i) %% 10 }');
     await sleep(1000);
-    await consoleActions.typeInConsole('names(data) <- paste0("V", 1:400)');
+    await consoleActions.executeInConsole('names(data) <- paste0("V", 1:400)');
     await sleep(500);
-    await consoleActions.typeInConsole('df <- as.data.frame(data)');
+    await consoleActions.executeInConsole('df <- as.data.frame(data)');
     await sleep(500);
-    await consoleActions.typeInConsole('View(df)');
+    await consoleActions.executeInConsole('View(df)');
     await sleep(3000);
 
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');

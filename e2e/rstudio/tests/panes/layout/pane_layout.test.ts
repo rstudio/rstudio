@@ -1,10 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
-
-// Ported from src/cpp/tests/automation/testthat/test-automation-pane-layout.R.
 
 // Pane layout dialog: quadrant containers
 const PL_LEFT_TOP = '#rstudio_pane_layout_left_top';

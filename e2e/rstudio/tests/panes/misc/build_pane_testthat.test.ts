@@ -63,10 +63,10 @@ test.describe('Build pane', () => {
     // Create the package skeleton and open the project. openProject restarts R,
     // so wait for both the project label to update and the console to be idle
     // before continuing.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `.rs.rpc.package_skeleton(packageName = ${projectNameLit}, packageDirectory = ${projectDirLit}, sourceFiles = character(), usingRcpp = FALSE)`,
     );
-    await consoleActions.typeInConsole(`.rs.api.openProject(${projectDirLit})`);
+    await consoleActions.executeInConsole(`.rs.api.openProject(${projectDirLit})`);
     await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
       timeout: TIMEOUTS.sessionRestart,
     });
@@ -79,7 +79,7 @@ test.describe('Build pane', () => {
       testFile,
       'test_that("we can run a test", {\n  expect_equal(2 + 2, 4)\n})\n',
     );
-    await consoleActions.typeInConsole(`.rs.api.documentOpen(${testFileLit})`);
+    await consoleActions.executeInConsole(`.rs.api.documentOpen(${testFileLit})`);
     await sleep(1000);
 
     await executeCommand(page, 'testTestthatFile');

@@ -6,7 +6,7 @@ import { createServer } from 'net';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
@@ -281,7 +281,7 @@ export async function shutdownServer(session: ServerSession): Promise<void> {
   try {
     await documentCloseAllNoSave(page);
     await sleep(1000);
-    await typeInConsole(page, 'q("no")');
+    await executeInConsole(page, 'q("no")');
     await sleep(2000);
   } catch {
     // Page may already be closed

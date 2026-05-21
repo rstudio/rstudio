@@ -1,6 +1,4 @@
 // Tests related to pane and column management.
-//
-// Ported from src/cpp/tests/automation/testthat/test-automation-panes.R.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';

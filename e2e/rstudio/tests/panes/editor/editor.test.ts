@@ -42,7 +42,7 @@ test.describe('Editor', () => {
   });
 
   test('trailing whitespace is trimmed on save when pref is enabled', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$stripTrailingWhitespace$set(TRUE)');
+    await consoleActions.executeInConsole('.rs.uiPrefs$stripTrailingWhitespace$set(TRUE)');
     try {
       const content = '# comment 1  \n# comment 2 \n# comment 3   \n';
       await writeAndOpenFile(page, sandbox.dir, 'editor_whitespace.R', content);
@@ -59,7 +59,7 @@ test.describe('Editor', () => {
         return (await editor.getValue()).trim();
       }).toBe('# comment 1\n# comment 2\n# comment 3\n# comment 4');
     } finally {
-      await consoleActions.typeInConsole('.rs.uiPrefs$stripTrailingWhitespace$clear()');
+      await consoleActions.executeInConsole('.rs.uiPrefs$stripTrailingWhitespace$clear()');
     }
   });
 

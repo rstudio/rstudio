@@ -1,7 +1,5 @@
 // /files/ HTTP endpoint cross-site protections (rstudio-pro#10980).
 //
-// Ported from src/cpp/tests/automation/testthat/test-automation-files-endpoint.R.
-//
 // The /files/ endpoint serves user-controlled files with native MIME types
 // and must reject cross-site requests so attacker pages can't redirect
 // victims into loading attacker HTML in the RStudio session origin.
@@ -33,14 +31,14 @@ test.describe('/files/ HTTP endpoint cross-site protections', { tag: ['@server_o
     // Drop a small file in the user home directory so the handler reaches
     // the Sec-Fetch-Site check before any not-found logic. The leading '.'
     // keeps it out of the visible Files pane.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `writeLines('test content', file.path('~', '${TEST_FILE}'))`,
     );
     await sleep(TIMEOUTS.settleDelay);
   });
 
   test.afterAll(async () => {
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `unlink(file.path('~', '${TEST_FILE}'))`,
     );
   });

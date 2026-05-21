@@ -49,7 +49,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_statusbar_nav.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
 
       await assistantActions.setupAssistantOptions(provider);
@@ -547,7 +547,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       expect(leaked).toBe(false);
 
       await sourceActions.closeSourceAndDeleteFile(fileNameB);
-      await consoleActions.typeInConsole(`unlink("${fileNameA}")`);
+      await consoleActions.executeInConsole(`unlink("${fileNameA}")`);
       await sleep(500);
     });
 
@@ -671,7 +671,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_statusbar_nav.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
     });
   });

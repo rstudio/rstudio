@@ -11,8 +11,8 @@ test.describe('Session restart', () => {
   });
 
   test('variables defined before restart are visible to the after-restart command', async () => {
-    await consoleActions.typeInConsole('x <- 1; y <- 2');
-    await consoleActions.typeInConsole(".rs.api.restartSession('print(x + y)')");
+    await consoleActions.executeInConsole('x <- 1; y <- 2');
+    await consoleActions.executeInConsole(".rs.api.restartSession('print(x + y)')");
 
     await expect(consoleActions.consolePane.consoleOutput).toContainText('[1] 3', {
       timeout: TIMEOUTS.sessionRestart,

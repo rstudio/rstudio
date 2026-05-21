@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
-import { typeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
 
 /**
@@ -45,7 +45,7 @@ function rootExpr(): string {
 export async function createSandbox(page: Page): Promise<string> {
   const marker = `__SANDBOX_${Date.now()}__`;
 
-  // Build the R expression on a single line so typeInConsole's single
+  // Build the R expression on a single line so executeInConsole's single
   // press('Enter') executes it atomically.
   const rCode = [
     `{ root <- ${rootExpr()}`,
@@ -55,7 +55,7 @@ export async function createSandbox(page: Page): Promise<string> {
     `cat("${marker}", d, "${marker}") }`,
   ].join('; ');
 
-  await typeInConsole(page, rCode);
+  await executeInConsole(page, rCode);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
   const start = Date.now();
@@ -105,7 +105,7 @@ export async function createSandbox(page: Page): Promise<string> {
  * Usage:
  *   const sandbox = useSuiteSandbox();
  *   test('...', async ({ rstudioPage }) => {
- *     await typeInConsole(rstudioPage, `writeLines("x", "${sandbox.dir}/foo.txt")`);
+ *     await executeInConsole(rstudioPage, `writeLines("x", "${sandbox.dir}/foo.txt")`);
  *   });
  */
 export function useSuiteSandbox(): { dir: string } {

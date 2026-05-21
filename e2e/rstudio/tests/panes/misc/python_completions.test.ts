@@ -21,7 +21,7 @@ async function exitPythonReplIfActive(
   const text = await consoleActions.consolePane.consoleOutput.innerText();
   // Trailing >>> indicates the Python REPL is still the active prompt.
   if (!text.trimEnd().endsWith('>>>')) return;
-  await consoleActions.typeInConsole('exit');
+  await consoleActions.executeInConsole('exit');
   await waitForConsoleIdle(page);
 }
 
@@ -45,16 +45,14 @@ test.describe('Python REPL completions', () => {
   test('Tab-completion of __dunder__ attributes does not add quotes', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
 
-    await consoleActions.typeInConsole('reticulate::repl_python()');
+    await consoleActions.executeInConsole('reticulate::repl_python()');
     await waitForConsoleIdle(page);
-    await consoleActions.typeInConsole('import sys');
+    await consoleActions.executeInConsole('import sys');
     await waitForConsoleIdle(page);
 
     // Type the partial attribute, give the completion engine time to respond,
     // then accept with Tab and execute with Enter.
-    await consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(300);
-    await consoleActions.consolePane.consoleInput.pressSequentially('sys.__name');
+    await consoleActions.typeInConsole('sys.__name');
     await sleep(3000);
 
     await page.keyboard.press('Tab');

@@ -72,7 +72,7 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
     consoleActions = new ConsolePaneActions(page);
 
     // Install the .rs.test.guardrails helper once for the suite.
-    await consoleActions.typeInConsole(GUARDRAILS_HELPER_DEF);
+    await consoleActions.executeInConsole(GUARDRAILS_HELPER_DEF);
     await consoleActions.clearConsole();
   });
 
@@ -93,7 +93,7 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
       opts.post,
     ].filter(Boolean) as string[];
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(segments.join('; '));
+    await consoleActions.executeInConsole(segments.join('; '));
     // The DONE marker is printed AFTER the guarded call finishes. Polling
     // for it via Playwright's auto-retry replaces the previous blind sleep.
     // (Any `post` cleanup runs after the marker is printed but before R
@@ -335,8 +335,8 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
   test.fixme('bindings are restored after safeEval', async () => {
     // Sketch: .rs.chat.safeEval(quote(1 + 1)), then a write+unlink inside
     // tempdir should NOT produce a "blocked" message. Try:
-    //   await consoleActions.typeInConsole('.rs.chat.safeEval(quote(1 + 1))');
-    //   await consoleActions.typeInConsole(
+    //   await consoleActions.executeInConsole('.rs.chat.safeEval(quote(1 + 1))');
+    //   await consoleActions.executeInConsole(
     //     'p <- file.path(tempdir(), "lifecycle.txt"); writeLines("x", p); unlink(p)'
     //   );
     //   // wait for a runtime marker, then assert no "blocked" in console

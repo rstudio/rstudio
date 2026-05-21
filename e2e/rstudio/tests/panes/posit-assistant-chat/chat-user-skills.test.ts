@@ -68,13 +68,13 @@ async function createSkillFile(
   description: string,
   marker: string,
 ): Promise<void> {
-  await consoleActions.typeInConsole(`dir.create("${dir}", recursive = TRUE)`);
+  await consoleActions.executeInConsole(`dir.create("${dir}", recursive = TRUE)`);
   await sleep(1000);
 
   // Keep content minimal to stay under ~300 chars for pressSequentially reliability
   const cmd =
     `writeLines(c("---", "name: ${name}", "description: ${description}", "---", "", "Start with: ${marker}", "Markers are MANDATORY."), "${filePath}")`;
-  await consoleActions.typeInConsole(cmd);
+  await consoleActions.executeInConsole(cmd);
   await sleep(1000);
 }
 
@@ -152,12 +152,12 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // Step 4: Verify both files exist and have correct content
     // -----------------------------------------------------------------------
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(`cat(readLines("${projectSkillPath}"), sep = "\\n")`);
+    await consoleActions.executeInConsole(`cat(readLines("${projectSkillPath}"), sep = "\\n")`);
     await sleep(2000);
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(`cat(readLines("${userSkillPath()}"), sep = "\\n")`);
+    await consoleActions.executeInConsole(`cat(readLines("${userSkillPath()}"), sep = "\\n")`);
     await sleep(2000);
     const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
@@ -187,7 +187,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // tree, so no explicit cleanup is needed for it here.
 
     // Clean up only the specific user-level skill we created (leave ~/.positai/ intact)
-    await consoleActions.typeInConsole(`unlink("${userSkillDir()}", recursive = TRUE)`);
+    await consoleActions.executeInConsole(`unlink("${userSkillDir()}", recursive = TRUE)`);
     await sleep(1000);
   });
 

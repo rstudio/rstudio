@@ -14,12 +14,12 @@ test.describe('Console command effects', () => {
   });
 
   test("packageVersion('base') auto-prints the version", async () => {
-    await consoleActions.typeInConsole("packageVersion('base')");
+    await consoleActions.executeInConsole("packageVersion('base')");
     await expect(consoleActions.consolePane.consoleOutput).toContainText('[1]');
   });
 
   test('help.start() loads the R help index into the Help pane', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('help.start()');
+    await consoleActions.executeInConsole('help.start()');
     const helpFrame = page.frameLocator('#rstudio_help_frame');
     await expect(helpFrame.locator('body')).toContainText('Statistical Data Analysis', {
       timeout: 30000,
@@ -27,7 +27,7 @@ test.describe('Console command effects', () => {
   });
 
   test('help(package = "base") loads package help into the Help pane', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole("help(package = 'base')");
+    await consoleActions.executeInConsole("help(package = 'base')");
     const helpFrame = page.frameLocator('#rstudio_help_frame');
     await expect(helpFrame.locator('body')).toContainText('The R Base Package', {
       timeout: 15000,
@@ -35,15 +35,15 @@ test.describe('Console command effects', () => {
   });
 
   test('plot(x, y) renders a plot in the Plots pane', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('x <- 1');
-    await consoleActions.typeInConsole('y <- 1');
-    await consoleActions.typeInConsole('plot(x, y)');
+    await consoleActions.executeInConsole('x <- 1');
+    await consoleActions.executeInConsole('y <- 1');
+    await consoleActions.executeInConsole('plot(x, y)');
     await expect(page.locator('#rstudio_plot_image_frame')).toBeVisible({ timeout: 15000 });
   });
 
   test('rstudioDiagnosticsReport() writes a diagnostics report', async () => {
     test.setTimeout(120000);
-    await consoleActions.typeInConsole('rstudioDiagnosticsReport()');
+    await consoleActions.executeInConsole('rstudioDiagnosticsReport()');
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
       'Diagnostics report written',
       { timeout: 90000 },
@@ -52,7 +52,7 @@ test.describe('Console command effects', () => {
 
   test('install.packages() reports not-available for a non-existent package', async () => {
     test.setTimeout(60000);
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       "install.packages('fake_package', repos = 'https://cran.r-project.org')",
     );
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
@@ -69,7 +69,7 @@ test.describe('Console command effects', () => {
     test.skip(failed.length > 0, `Could not install: ${failed.join(', ')}`);
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole("library('praise')");
+    await consoleActions.executeInConsole("library('praise')");
     await sleep(2000);
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText(
       'Error in library',
