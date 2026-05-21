@@ -160,6 +160,9 @@ jobs:
           sudo USE_BUNDLED_LIBUV=1 ./install-dependencies-jammy
           sudo apt-get install -y libuv1-dev xvfb
 
+      - name: Restore workspace ownership after sudo install
+        run: sudo chown -R "$USER:$USER" .
+
       - name: Install rig
         run: |
           curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-latest.tar.gz \
