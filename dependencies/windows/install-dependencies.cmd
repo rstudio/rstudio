@@ -129,11 +129,6 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
-set HUNSPELL_URL=hunspell/hunspell-v1.7.2.7z
-set HUNSPELL_FOLDER=hunspell-v1.7.2
-set HUNSPELL_OUTPUT=
-
-
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
 set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
 set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
@@ -227,7 +222,6 @@ call install-packages.cmd
 :: Install the rest of our dependencies in the 'windows' folder.
 cd ..\windows
 
-%RUN% install HUNSPELL
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA
