@@ -185,6 +185,8 @@ jobs:
 
       - name: Install R packages from DESCRIPTION
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
+        env:
+          USE_BUNDLED_LIBUV: "1"
         run: |
           Rscript -e '
             options(
