@@ -267,4 +267,39 @@ test.describe('R debugger extras', () => {
       );
     });
   });
+
+  // --- Package build/reload cycle (TODOs) ---------------------------------
+  //
+  // Two debugger tests that need a full `devtools::build()` + reload cycle
+  // before debugging can be exercised. The build typically takes a minute
+  // or more, which doesn't fit the Playwright fixture model. The BRAT
+  // counterparts were retained for a while; they're left as `test.fixme`
+  // here so the migration is recorded in code rather than scattered.
+  // A future port would need: a long timeout, a way to install devtools
+  // into the per-spec sandbox without retriggering it across tests, and
+  // a project teardown that survives the build cache.
+
+  test.describe.serial('Package debugging across build cycles', { tag: ['@serial'] }, () => {
+    test.fixme('package functions can be debugged after build and reload (#15201)', async () => {
+      // BRAT flow:
+      //   1. project.create(type = "package")
+      //   2. closeAllSourceBuffersWithoutSaving; open R/example.R
+      //   3. write a function with several lines, save, buildAll
+      //   4. wait for "> library(rstudio.automation)" in console
+      //   5. click gutter to set breakpoints on lines 3 and 4
+      //   6. assert .rs.isFunctionInSync("example", "R/example.R", pkg) is TRUE
+      //   7. example() -> should pause at line 3, continue, pause at line 4
+      //   8. close project
+    });
+
+    test.fixme('cleared package breakpoints stay cleared across rebuild (#9450)', async () => {
+      // BRAT flow:
+      //   1. project.create(type = "package"); add a function in R/
+      //   2. buildAll, set breakpoint, then click the breakpoint marker to clear it
+      //   3. buildAll again -- the PackageLoadedEvent triggers
+      //      BreakpointManager.updatePackageBreakpoints; with the breakpoint
+      //      already removed, no marker should reappear
+      //   4. assert .ace_breakpoint count is 0 after the second build
+    });
+  });
 });
