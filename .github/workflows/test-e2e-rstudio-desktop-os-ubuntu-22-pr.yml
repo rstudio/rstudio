@@ -152,7 +152,7 @@ jobs:
           # requests.
           sudo apt-get remove -y pkgconf 2>/dev/null || true
           sudo ./install-dependencies-jammy
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y libuv1-dev xvfb
 
       - name: Install rig
         run: |
@@ -187,7 +187,10 @@ jobs:
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
         run: |
           Rscript -e '
-            options(repos = c(P3M = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))
+            options(
+              repos = c(P3M = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
+              HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(), paste(getRversion(), R.version$platform, R.version$arch, R.version$os))
+            )
             if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
             pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
           '
