@@ -145,6 +145,11 @@ jobs:
 
       - name: Install build dependencies (jammy)
         run: |
+          sudo apt-get update
+          # ubuntu-22.04 runners ship with pkgconf preinstalled, which
+          # conflicts with the pkg-config package install-dependencies-jammy
+          # requests.
+          sudo apt-get remove -y pkgconf 2>/dev/null || true
           sudo ./dependencies/linux/install-dependencies-jammy
           sudo apt-get install -y xvfb
 
