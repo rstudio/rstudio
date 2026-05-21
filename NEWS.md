@@ -4,7 +4,7 @@
 -
 
 ### Fixed
--
+- ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
 
 ### Dependencies
 - Ace 1.43.5
