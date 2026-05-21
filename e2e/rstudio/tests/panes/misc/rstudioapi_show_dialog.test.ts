@@ -6,11 +6,12 @@
 // characters render as line breaks.
 //
 // Only the GWT-rendered paths are covered here:
-//   - showDialog  -- GWT MessageDialog on both Desktop and Server
-//   - showPrompt  -- GWT TextEntryModalDialog on Electron Desktop and Server
-// showQuestion uses a native Electron dialog on Desktop (not reachable from
-// Playwright); on Server it goes through MultiLineLabel which already handled
-// newlines, so it isn't part of this regression.
+//   - showDialog    -- GWT MessageDialog on both Desktop and Server
+//   - showPrompt    -- GWT TextEntryModalDialog on Electron Desktop and Server
+//   - showQuestion  -- GWT MessageDialog on Server only (Desktop uses Electron's
+//                      native dialog, which is outside Playwright's reach). This
+//                      path wasn't broken in #17701, but the @server_only test
+//                      guards against future regressions.
 //
 // The R-side calls block until the dialog is dismissed, so each test must
 // click OK/Cancel before issuing the next console command.
@@ -79,6 +80,26 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     expect(messageText).toMatch(/line one\s*\n\s*line two/);
 
     // Cancel so R's showPrompt returns NULL and the session goes idle.
+    await dialog.locator(DIALOG_CANCEL).click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('showQuestion preserves "\\n" as a line break', { tag: ['@server_only'] }, async ({ rstudioPage: page }) => {
+    const title = `showQuestion_17701_${Date.now()}`;
+
+    await consoleActions.executeInConsole(
+      `.rs.api.showQuestion("${title}", "line one\\nline two")`,
+    );
+
+    const dialog = page.locator(`.gwt-DialogBox[aria-label="${title}"]`);
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+
+    // MessageDialog renders the message through MultiLineLabel, which uses
+    // DomUtils.textToHtml to convert "\n" into <br/> tags. innerText then
+    // reports the rendered newline.
+    const messageText = await dialog.locator('.gwt-Label').first().innerText();
+    expect(messageText).toMatch(/line one\s*\n\s*line two/);
+
     await dialog.locator(DIALOG_CANCEL).click();
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
