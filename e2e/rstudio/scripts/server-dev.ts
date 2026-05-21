@@ -5,10 +5,10 @@
 // against the server project. The server.fixture handles spawning the
 // in-tree rserver-dev binary and config.
 
-import { checkGwtDevmode, runCmakeBuild, runPlaywright } from './dev-common';
+import { checkGwtBuildReady, runCmakeBuild, runPlaywright } from './dev-common';
 
 const TAG = 'server-dev';
 
 runCmakeBuild(TAG);
-checkGwtDevmode(TAG);
+checkGwtBuildReady(TAG);
 runPlaywright(TAG, ['--project=server', ...process.argv.slice(2)]);
