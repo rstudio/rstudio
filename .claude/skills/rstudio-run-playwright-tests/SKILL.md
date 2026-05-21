@@ -42,6 +42,27 @@ PW_RSTUDIO_EDITION=pro npx playwright test
 - `PW_RSTUDIO_EXTRA_ARGS` passes space-separated CLI flags to the RStudio process at launch
 - `PW_RSTUDIO_PREFS_OVERRIDE` points at a JSON/JSONC file whose keys override the suite-wide RStudio prefs (`fixtures/base-prefs.jsonc`) per-key
 
+### Testing in-tree changes (dev build)
+
+By default the desktop fixture launches the **installed** RStudio at the OS-default path (e.g. `/Applications/RStudio.app` on macOS). That binary won't reflect uncommitted edits to GWT/Java, C++ session code, or the Electron shell.
+
+To exercise local changes, set `PW_RSTUDIO_DEV=1` -- the fixture then launches the in-tree dev build via `npm run start` (electron-forge) inside `src/node/desktop`:
+
+```bash
+# Run against the in-tree dev build with uncommitted changes
+PW_RSTUDIO_DEV=1 npx playwright test tests/path/to/test.test.ts
+```
+
+Prerequisites for `PW_RSTUDIO_DEV=1`:
+
+1. The C++ session is built — `cmake --build build` (one-time, plus after C++ edits)
+2. GWT is transpiled to JS — `cd src/gwt && ant draft` (re-run after Java edits; takes 2-5 min)
+3. Electron deps are installed — `cd src/node/desktop && npm ci` (one-time; first `npm run start` will do this if needed)
+
+The first `npm run start` also runs a webpack compile (~2 min). The fixture extends its CDP-connect deadline to 3 minutes on this path. Subsequent starts are faster.
+
+Note: tests that exercise the `doRestart()` flow (e.g. uninstall Posit Assistant) aren't fully supported under `PW_RSTUDIO_DEV=1` because Electron's relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
+
 ## Server Mode
 
 Pass `--project=server` and provide credentials.
