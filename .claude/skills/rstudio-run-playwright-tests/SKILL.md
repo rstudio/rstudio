@@ -53,11 +53,11 @@ To exercise local changes, set `PW_RSTUDIO_DEV=1` -- the fixture then launches t
 PW_RSTUDIO_DEV=1 npx playwright test tests/path/to/test.test.ts
 ```
 
-Prerequisites for `PW_RSTUDIO_DEV=1`:
+Prerequisites for `PW_RSTUDIO_DEV=1` (run from the **repo root**, not `e2e/rstudio`):
 
-1. The C++ session is built — `cmake --build build` (one-time, plus after C++ edits)
-2. GWT is transpiled to JS — `cd src/gwt && ant draft` (re-run after Java edits; takes 2-5 min)
-3. Electron deps are installed — `cd src/node/desktop && npm ci` (one-time; first `npm run start` will do this if needed)
+1. C++ session built — `cmake --build build` (one-time, plus after C++ edits)
+2. GWT transpiled to JS — `(cd src/gwt && ant draft)` (re-run after Java edits; takes 2-5 min)
+3. Electron deps installed — `(cd src/node/desktop && npm ci)` (one-time; first `npm run start` will do this if needed)
 
 The first `npm run start` also runs a webpack compile (~2 min). The fixture extends its CDP-connect deadline to 3 minutes on this path. Subsequent starts are faster.
 
