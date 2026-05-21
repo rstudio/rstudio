@@ -30,7 +30,7 @@ Test-level dispositions used in the per-file tables below:
 | Metric | Count |
 |--------|------:|
 | Total BRAT test files (original) | 32 (+ 1 helper file) |
-| BRAT files remaining on disk | 3 (+ 1 helper file) |
+| BRAT files remaining on disk | 3 (helper file removed) |
 | Files Complete | 26 |
 | Files Dropped | 3 |
 | Files Partial | 2 |
@@ -105,7 +105,7 @@ visual-mode/chunk-options popup tests dropped along with the files).
 
 | File | Role | Disposition |
 |------|------|-------------|
-| helper-pane-layout.R | testthat helper sourced by `test-automation-tabs.R` and `test-automation-chat-satellite.R` | Keep until both files are migrated/removed. Playwright equivalents (`findTabCheckbox`, `isTabChecked`, `toggleTab`, etc.) already exist as private helpers in `panes/layout/panes.test.ts` and `panes/layout/pane_layout.test.ts` -- reuse those, no new shared utility needed |
+| helper-pane-layout.R | testthat helper sourced by `test-automation-tabs.R` and `test-automation-chat-satellite.R` | Removed -- both source files were migrated/deleted, leaving the helper orphaned. The Playwright equivalents (`findTabCheckbox`, `isTabChecked`, `toggleTab`, etc.) live as private helpers in `panes/layout/panes.test.ts` and `panes/layout/pane_layout.test.ts` |
 
 ## Recommended migration order
 
