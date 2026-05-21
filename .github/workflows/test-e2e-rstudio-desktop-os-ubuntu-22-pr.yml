@@ -144,6 +144,11 @@ jobs:
         with:
           node-version: 24
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - name: Install build dependencies (jammy)
         working-directory: dependencies/linux
         run: |
