@@ -3,7 +3,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
 import * as fs from 'fs';
@@ -70,17 +70,17 @@ async function scaffoldShinytest2Project(
   const appPathLit = rPathLiteral(`${projectDir}/app.R`);
   const testPathLit = rPathLiteral(testFilePath);
 
-  await consoleActions.typeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
-  await consoleActions.typeInConsole(`.rs.api.openProject(${projectDirLit})`);
+  await consoleActions.executeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
+  await consoleActions.executeInConsole(`.rs.api.openProject(${projectDirLit})`);
   await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
     timeout: TIMEOUTS.sessionRestart,
   });
   await waitForConsoleIdle(page);
 
-  await consoleActions.typeInConsole(
+  await consoleActions.executeInConsole(
     `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,
   );
-  await consoleActions.typeInConsole(`.rs.api.documentOpen(${testPathLit})`);
+  await consoleActions.executeInConsole(`.rs.api.documentOpen(${testPathLit})`);
   await sleep(1000);
 }
 
@@ -134,10 +134,10 @@ test.describe('shinytest2 integration', () => {
     // instead of actually launching diffviewer.
     const snapDirLit = rPathLiteral(`${projectDir}/tests/testthat/_snaps/hello`);
     const snapFileLit = rPathLiteral(`${projectDir}/tests/testthat/_snaps/hello/snapshot.new.png`);
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `dir.create(${snapDirLit}, recursive = TRUE, showWarnings = FALSE)`,
     );
-    await consoleActions.typeInConsole(`file.create(${snapFileLit})`);
+    await consoleActions.executeInConsole(`file.create(${snapFileLit})`);
 
     const stubInstall = [
       'ns <- asNamespace("testthat")',
@@ -146,7 +146,7 @@ test.describe('shinytest2 integration', () => {
       'ns$snapshot_review <- function(files = NULL, path = "tests/testthat", ...) { cat("CAPTURED snapshot_review path=", path, "\\n", sep = "") }',
       'lockBinding("snapshot_review", ns)',
     ].join('; ');
-    await consoleActions.typeInConsole(stubInstall);
+    await consoleActions.executeInConsole(stubInstall);
 
     try {
       await executeCommand(page, 'shinyCompareTest');
@@ -164,7 +164,7 @@ test.describe('shinytest2 integration', () => {
         'ns$snapshot_review <- .rs.original.snapshot_review',
         'lockBinding("snapshot_review", ns)',
       ].join('; ');
-      await typeInConsole(page, restore).catch(() => {});
+      await executeInConsole(page, restore).catch(() => {});
     }
   });
 });

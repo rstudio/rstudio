@@ -17,13 +17,13 @@ test.describe('Code folding', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$clear()');
+    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$clear()');
     await closeAndDeleteSandboxFiles(page, sandbox.dir, ['code_folding.R']);
   });
 
   // https://github.com/rstudio/rstudio/issues/16541
   test('hierarchical section folding respects heading depth', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(TRUE)');
+    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(TRUE)');
 
     const content = `# Section 1 ----
 code_1 <- 1
@@ -65,7 +65,7 @@ code_2 <- 4
 
   // https://github.com/rstudio/rstudio/issues/16541
   test('flat section folding stops at any section header', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(FALSE)');
+    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(FALSE)');
 
     const content = `# Section 1 ----
 code_1 <- 1

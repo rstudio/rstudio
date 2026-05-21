@@ -62,7 +62,7 @@ test.describe('RMarkdown', () => {
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    await consoleActions.typeInConsole(`unlink("${fileName.replace('.rmd', '.html')}")`);
+    await consoleActions.executeInConsole(`unlink("${fileName.replace('.rmd', '.html')}")`);
     await sleep(500);
   });
 
@@ -97,7 +97,7 @@ test.describe('RMarkdown', () => {
 
     // Verify no variables in global env
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('ls(envir = globalenv())');
+    await consoleActions.executeInConsole('ls(envir = globalenv())');
     await sleep(2000);
     await expect(consoleOutput).toContainText('character(0)', { timeout: 10000 });
 
@@ -114,9 +114,9 @@ test.describe('RMarkdown', () => {
 
     // Create an RMarkdown file, verify no comment is inserted on newline
     const rmdFileName = `rmarkdown_commentnewline_${Date.now()}.rmd`;
-    await consoleActions.typeInConsole(`file.create("${rmdFileName}")`);
+    await consoleActions.executeInConsole(`file.create("${rmdFileName}")`);
     await sleep(1000);
-    await consoleActions.typeInConsole(`file.edit("${rmdFileName}")`);
+    await consoleActions.executeInConsole(`file.edit("${rmdFileName}")`);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(rmdFileName, { timeout: 20000 });
 
     await sourceActions.sendText('# Section');
@@ -126,14 +126,14 @@ test.describe('RMarkdown', () => {
     await expect(sourceActions.sourcePane.contentPane).toHaveText('# Section');
 
     await consoleActions.closeAllBuffersWithoutSaving();
-    await consoleActions.typeInConsole(`unlink("${rmdFileName}")`);
+    await consoleActions.executeInConsole(`unlink("${rmdFileName}")`);
     await sleep(500);
 
     // Check that an R file DOES insert a comment on newline
     const rFileName = `rmarkdown_commentnewline_${Date.now()}.r`;
-    await consoleActions.typeInConsole(`file.create("${rFileName}")`);
+    await consoleActions.executeInConsole(`file.create("${rFileName}")`);
     await sleep(1000);
-    await consoleActions.typeInConsole(`file.edit("${rFileName}")`);
+    await consoleActions.executeInConsole(`file.edit("${rFileName}")`);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(rFileName, { timeout: 20000 });
 
     await sourceActions.sendText('# This is a Comment');
@@ -157,7 +157,7 @@ test.describe('RMarkdown', () => {
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
     // Navigate to file and run spellcheck
-    await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
+    await consoleActions.executeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
     await sleep(2000);
     await executeCommand(page, 'checkSpelling');
     await sleep(5000);
@@ -181,7 +181,7 @@ test.describe('RMarkdown', () => {
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
     // Switch to visual mode
-    await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
+    await consoleActions.executeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
     await sleep(1000);
     await sourceActions.ensureVisualMode();
 

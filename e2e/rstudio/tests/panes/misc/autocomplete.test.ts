@@ -18,7 +18,7 @@ for (const context of contexts) {
       sourceActions = new SourcePaneActions(page, consoleActions);
       autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
       await consoleActions.closeAllBuffersWithoutSaving();
-      await consoleActions.typeInConsole('rm(list = ls())');
+      await consoleActions.executeInConsole('rm(list = ls())');
       await sleep(500);
     });
 

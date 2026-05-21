@@ -35,7 +35,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     await sleep(1000);
 
     // Clean up any leftover files from previous runs
-    await consoleActions.typeInConsole('unlink("app.R")');
+    await consoleActions.executeInConsole('unlink("app.R")');
     await sleep(1000);
 
     // Clear the Viewer pane so we don't get false positives from previous content
@@ -93,7 +93,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     }
 
     // Clean up created file(s)
-    await consoleActions.typeInConsole('unlink("app.R")');
+    await consoleActions.executeInConsole('unlink("app.R")');
     await sleep(1000);
   });
 

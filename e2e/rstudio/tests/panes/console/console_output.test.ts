@@ -59,7 +59,7 @@ test.describe('Console output and annotation', () => {
       '"\\u2714 xxx \\u001b[31myyy\\u001b[39m zzz"',
       '"\\n"',
     ].join(', ');
-    await consoleActions.typeInConsole(`cat(${literal})`);
+    await consoleActions.executeInConsole(`cat(${literal})`);
 
     await expect.poll(async () => {
       const text = await consoleActions.consolePane.consoleOutput.innerText();
@@ -73,11 +73,11 @@ test.describe('Console output and annotation', () => {
   });
 
   test('errors are highlighted when consoleHighlightConditions is set', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.uiPrefs$consoleHighlightConditions$set("errors_warnings_messages")',
     );
     try {
-      await consoleActions.typeInConsole('stop("This is an error.")');
+      await consoleActions.executeInConsole('stop("This is an error.")');
       await expect(consoleActions.consolePane.consoleOutput)
         .toContainText('Error: This is an error.');
 
@@ -87,31 +87,31 @@ test.describe('Console output and annotation', () => {
       await expect.poll(() => consoleSpanTexts(page))
         .toEqual(expect.arrayContaining(['Error']));
     } finally {
-      await consoleActions.typeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
+      await consoleActions.executeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
     }
   });
 
   test('warnings are highlighted with options(warn = 0) and options(warn = 1)', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '.rs.uiPrefs$consoleHighlightConditions$set("errors_warnings_messages")',
     );
     try {
       // warn = 0 defers warnings -- the prefix is "Warning message" once R
       // surfaces them at the prompt.
-      await consoleActions.typeInConsole('{ options(warn = 0); warning("This is a warning.") }');
+      await consoleActions.executeInConsole('{ options(warn = 0); warning("This is a warning.") }');
       await expect.poll(() => consoleSpanTexts(page))
         .toEqual(expect.arrayContaining(['Warning message']));
 
       // warn = 1 surfaces warnings immediately; the prefix is "Warning".
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('{ options(warn = 1); warning("This is a warning.") }');
+      await consoleActions.executeInConsole('{ options(warn = 1); warning("This is a warning.") }');
       await expect(consoleActions.consolePane.consoleOutput)
         .toContainText('Warning: This is a warning.');
       await expect.poll(() => consoleSpanTexts(page))
         .toEqual(expect.arrayContaining(['Warning']));
     } finally {
-      await consoleActions.typeInConsole('options(warn = 0)');
-      await consoleActions.typeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
+      await consoleActions.executeInConsole('options(warn = 0)');
+      await consoleActions.executeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
     }
   });
 
@@ -123,7 +123,7 @@ test.describe('Console output and annotation', () => {
       'options(warn = 0)',
       'inherits(x, "error")',
     ].join('; ');
-    await consoleActions.typeInConsole(`{ ${expr} }`);
+    await consoleActions.executeInConsole(`{ ${expr} }`);
 
     await expect(consoleActions.consolePane.consoleOutput)
       .toContainText('[1] TRUE');
@@ -131,7 +131,7 @@ test.describe('Console output and annotation', () => {
 
   // https://github.com/rstudio/rstudio/issues/16038
   test('carriage returns do not break output annotation', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('{ message("M1"); cat("O1\\r"); message("M2") }');
+    await consoleActions.executeInConsole('{ message("M1"); cat("O1\\r"); message("M2") }');
 
     // The output should annotate M1 and M2; O1 was overwritten by the
     // carriage return so its span must not exist. The DOM nests spans
@@ -142,14 +142,14 @@ test.describe('Console output and annotation', () => {
       return unique.filter((t) => t === 'M1' || t === 'M2' || t === 'O1');
     }).toEqual(['M1', 'M2']);
 
-    await consoleActions.typeInConsole('writeLines("This is some more output.")');
+    await consoleActions.executeInConsole('writeLines("This is some more output.")');
     await expect(consoleActions.consolePane.consoleOutput)
       .toContainText('This is some more output.');
 
     // Backspace via message() should likewise not survive into the final
     // rendered output -- the result is "M2" not "M1\b2".
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '{ message("M1", appendLF = FALSE); message("\\b", appendLF = FALSE); message("2") }',
     );
     await expect.poll(async () => {
@@ -162,16 +162,16 @@ test.describe('Console output and annotation', () => {
   });
 
   test('long lines are truncated when consoleLineLengthLimit is reduced', async () => {
-    await consoleActions.typeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(10L)');
+    await consoleActions.executeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(10L)');
     try {
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         'cat(paste(rep.int("a", 1E4), collapse = ""), sep = "\\n")',
       );
       await expect(consoleActions.consolePane.consoleOutput)
         .toContainText('aaaaaaaaaa ... <truncated>');
     } finally {
       // Restore the default so the pref doesn't bleed into later tests.
-      await consoleActions.typeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(2000L)');
+      await consoleActions.executeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(2000L)');
     }
   });
 });
@@ -210,7 +210,7 @@ test.describe('Error output after caught try()', () => {
     await sleep(TIMEOUTS.settleDelay);
 
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('foo()');
+    await consoleActions.executeInConsole('foo()');
 
     await expect(consoleActions.consolePane.consoleOutput)
       .toContainText('Some output.');

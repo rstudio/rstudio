@@ -65,7 +65,7 @@ test.describe('Data Viewer', () => {
 
   // https://github.com/rstudio/rstudio/pull/14657
   test('viewer opens for a temporary R expression', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole('View(subset(mtcars, mpg >= 30))');
+    await consoleActions.executeInConsole('View(subset(mtcars, mpg >= 30))');
     await expect(page.locator(VIEWER_FRAME))
       .toHaveAttribute('src', /gridviewer\.html/, { timeout: TIMEOUTS.fileOpen });
   });
@@ -73,7 +73,7 @@ test.describe('Data Viewer', () => {
   test('search filter + viewerLink opens an explorer tab for the cell', async ({ rstudioPage: page }) => {
     // data.frame with a list column: the data viewer renders each list
     // entry as a clickable viewerLink that opens the cell explorer.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '{ d <- data.frame(x = letters); d$y <- lapply(letters, as.list); row.names(d) <- LETTERS; View(d) }',
     );
     await waitForViewer(dataViewer);
@@ -103,7 +103,7 @@ test.describe('Data Viewer', () => {
   });
 
   test('sort headers cycle through asc, desc, and unsorted', async () => {
-    await consoleActions.typeInConsole('View(mtcars)');
+    await consoleActions.executeInConsole('View(mtcars)');
     await waitForViewer(dataViewer);
 
     const header = dataViewer.frame.locator('th[data-col-idx="1"]');
@@ -130,7 +130,7 @@ test.describe('Data Viewer', () => {
   });
 
   test('pin icon moves a column to the pinned prefix', async () => {
-    await consoleActions.typeInConsole('View(mtcars)');
+    await consoleActions.executeInConsole('View(mtcars)');
     await waitForViewer(dataViewer);
 
     // Initial layout: rownames column (0), then mtcars columns 1..n in order.
@@ -157,7 +157,7 @@ test.describe('Data Viewer', () => {
   test('per-object state survives a refresh', async ({ rstudioPage: page }) => {
     // Use a uniquely-named object so localStorage for this viewer can't be
     // contaminated by a previous test that happened to View(mtcars).
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '{ .rs.persist_test_df <- mtcars; View(.rs.persist_test_df) }',
     );
     try {
@@ -190,7 +190,7 @@ test.describe('Data Viewer', () => {
         return /sorting_desc/.test(c1) && /\bpinned\b/.test(c3);
       }).toBe(true);
     } finally {
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         'rm(".rs.persist_test_df", envir = .GlobalEnv)',
       );
     }
@@ -201,7 +201,7 @@ test.describe('Data Viewer', () => {
     // The security property is that nothing user-supplied becomes a real
     // DOM element.
     const setup = `{ .rs.escape_test_df <- data.frame(a = c("<script>x</script>", "tom & jerry", "\\"quoted\\"", "it's"), stringsAsFactors = FALSE); View(.rs.escape_test_df) }`;
-    await consoleActions.typeInConsole(setup);
+    await consoleActions.executeInConsole(setup);
     try {
       await waitForViewer(dataViewer);
 
@@ -224,14 +224,14 @@ test.describe('Data Viewer', () => {
       expect(cellHtml).toContain('&lt;script&gt;');
       expect(cellHtml).toContain('tom &amp; jerry');
     } finally {
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         'rm(".rs.escape_test_df", envir = .GlobalEnv)',
       );
     }
   });
 
   test('HTML-special column names render as text, not markup', async () => {
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       '{ .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE); names(.rs.escape_hdr_df) <- "<b>&\\"\'"; View(.rs.escape_hdr_df) }',
     );
     try {
@@ -253,7 +253,7 @@ test.describe('Data Viewer', () => {
       expect(html).toContain('&amp;');
       expect(html).not.toContain('<b>');
     } finally {
-      await consoleActions.typeInConsole(
+      await consoleActions.executeInConsole(
         'rm(".rs.escape_hdr_df", envir = .GlobalEnv)',
       );
     }

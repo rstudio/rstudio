@@ -49,7 +49,7 @@ test.describe('Packages pane', () => {
     test.skip(!installed, 'MASS is not installed');
 
     // Ensure MASS is not currently attached -- defensive against earlier specs.
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       'if ("package:MASS" %in% search()) detach("package:MASS", character.only = TRUE)',
     );
     await sleep(TIMEOUTS.layoutSettle);
@@ -66,7 +66,7 @@ test.describe('Packages pane', () => {
 
     // Verify package is actually attached via search().
     const attachedMarker = `__ATTACH_${Date.now()}__`;
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `cat("${attachedMarker}", "package:MASS" %in% search(), "${attachedMarker}")`,
     );
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
@@ -79,7 +79,7 @@ test.describe('Packages pane', () => {
     await expect(checkbox).not.toBeChecked({ timeout: TIMEOUTS.consoleReady });
 
     const detachedMarker = `__DETACH_${Date.now()}__`;
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `cat("${detachedMarker}", "package:MASS" %in% search(), "${detachedMarker}")`,
     );
     await expect(consoleActions.consolePane.consoleOutput).toContainText(

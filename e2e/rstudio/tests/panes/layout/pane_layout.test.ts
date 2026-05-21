@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 

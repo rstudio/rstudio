@@ -69,17 +69,50 @@ export const CONSOLE_TAB = '#rstudio_workbench_tab_console';
 export const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
 export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 
-export async function typeInConsole(page: Page, command: string): Promise<void> {
+/**
+ * Submit an R expression to the console. Writes the text directly into the
+ * console's Ace editor and presses Enter -- no per-key typing -- so it doesn't
+ * race with autocomplete popups, tooltip handlers, or other live-edit UI that
+ * can swallow characters or steal focus. Prefer this when you just need code
+ * to run; use `typeInConsole` only when a test is exercising actual typing
+ * behavior (e.g. autocomplete triggering).
+ */
+export async function executeInConsole(page: Page, command: string): Promise<void> {
   await page.locator(CONSOLE_TAB).click();
-  await page.locator(CONSOLE_INPUT).click({ force: true });
-  await sleep(500);
-  await page.locator(CONSOLE_INPUT).pressSequentially(command);
-  await sleep(200);
+  await page.evaluate((text) => {
+    const el = document.getElementById('rstudio_console_input') as
+      | (HTMLElement & {
+          env?: { editor?: { setValue(s: string, cursorPos?: number): void; focus(): void } };
+        })
+      | null;
+    const editor = el?.env?.editor;
+    if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+    editor.setValue(text, 1); // 1 = move cursor to end
+    editor.focus();
+  }, command);
+  // Defensive: a popup may have been left open by previous interaction.
   if (await page.locator('#rstudio_popup_completions').isVisible()) {
     await page.keyboard.press('Escape');
-    await sleep(100);
   }
-  await page.locator(CONSOLE_INPUT).press('Enter');
+  await page.keyboard.press('Enter');
+}
+
+/**
+ * Simulate user typing one keystroke at a time into the console input. Does
+ * NOT press Enter -- the caller controls submission. Use this only when a
+ * test needs to exercise live-edit behavior that `executeInConsole`'s
+ * programmatic write doesn't trigger (e.g. autocomplete popups, parameter
+ * tooltips).
+ *
+ * `delayMs` is the per-keystroke delay; default 50ms is close to typical
+ * human typing speed and gives the editor time to dispatch input events and
+ * fire completers between chars.
+ */
+export async function typeInConsole(page: Page, text: string, delayMs: number = 50): Promise<void> {
+  await page.locator(CONSOLE_TAB).click();
+  await page.locator(CONSOLE_INPUT).click({ force: true });
+  await sleep(300);
+  await page.locator(CONSOLE_INPUT).pressSequentially(text, { delay: delayMs });
 }
 
 export async function clearConsole(page: Page): Promise<void> {

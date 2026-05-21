@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { rStringLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
@@ -12,7 +12,7 @@ const XTERM_SELECTOR = '.xterm';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__TERM_${Date.now()}__`;
-  await typeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
   const start = Date.now();
@@ -26,12 +26,12 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 }
 
 async function killAllTerminals(page: Page): Promise<void> {
-  await typeInConsole(page, 'rstudioapi::terminalKill(rstudioapi::terminalList())');
+  await executeInConsole(page, 'rstudioapi::terminalKill(rstudioapi::terminalList())');
   await sleep(TIMEOUTS.pollInterval);
 }
 
 async function openTerminal(page: Page): Promise<void> {
-  await typeInConsole(page, 'rstudioapi::terminalCreate(show = TRUE)');
+  await executeInConsole(page, 'rstudioapi::terminalCreate(show = TRUE)');
   await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
   await expect(page.locator(TERMINAL_TAB)).toHaveAttribute('aria-selected', 'true', {
     timeout: TIMEOUTS.consoleReady,

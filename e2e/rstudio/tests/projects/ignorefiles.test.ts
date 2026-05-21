@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { typeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
 import { setPref } from '@utils/commands';
 import * as fs from 'fs';
@@ -31,7 +31,7 @@ async function waitForConsoleIdle(page: Page): Promise<void> {
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__IG_${Date.now()}__`;
-  await typeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
+  await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
   const deadline = Date.now() + TIMEOUTS.consoleReady;
   while (Date.now() < deadline) {
@@ -137,7 +137,7 @@ test.describe('Project ignore files', () => {
     expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain('.positai');
 
     // Create .positai via rsession so the file monitor picks it up.
-    await consoleActions.typeInConsole(`dir.create("${projectDir}/.positai")`);
+    await consoleActions.executeInConsole(`dir.create("${projectDir}/.positai")`);
 
     await expect
       .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes('.positai'), {

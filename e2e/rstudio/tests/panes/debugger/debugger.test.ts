@@ -26,9 +26,9 @@ async function writeAndOpen(fileName: string, content: string): Promise<void> {
   // string-escape rules (\\, \", \n, \t, \uXXXX) match R's, so JSON.stringify
   // each line and join with commas to produce a valid R argument list.
   const lines = content.split('\n').map(l => JSON.stringify(l)).join(', ');
-  await consoleActions.typeInConsole(`writeLines(c(${lines}), "${fullPath}")`);
+  await consoleActions.executeInConsole(`writeLines(c(${lines}), "${fullPath}")`);
   await sleep(TIMEOUTS.settleDelay);
-  await consoleActions.typeInConsole(`file.edit("${fullPath}")`);
+  await consoleActions.executeInConsole(`file.edit("${fullPath}")`);
   await sleep(TIMEOUTS.fileEditSettle);
 }
 
@@ -120,7 +120,7 @@ test.describe('R debugger', () => {
       // Set breakpoint on the brace-expression line (line 3).
       await debuggerActions.setBreakpoint(3);
 
-      await consoleActions.typeInConsole('brace_fn()');
+      await consoleActions.executeInConsole('brace_fn()');
 
       await debuggerActions.waitForDebugMode();
 
@@ -200,7 +200,7 @@ test.describe('R debugger', () => {
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
-      await consoleActions.typeInConsole('step_next_fn()');
+      await consoleActions.executeInConsole('step_next_fn()');
 
       await debuggerActions.waitForDebugMode();
       const startRow = await debuggerActions.getActiveDebugLineRow();
@@ -229,7 +229,7 @@ test.describe('R debugger', () => {
       await sleep(TIMEOUTS.settleDelay);
       // Breakpoint on the line that calls inner() (line 5).
       await debuggerActions.setBreakpoint(5);
-      await consoleActions.typeInConsole('outer()');
+      await consoleActions.executeInConsole('outer()');
 
       await debuggerActions.waitForDebugMode();
 
@@ -271,7 +271,7 @@ test.describe('R debugger', () => {
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
-      await consoleActions.typeInConsole('step_finish_fn()');
+      await consoleActions.executeInConsole('step_finish_fn()');
 
       await debuggerActions.waitForDebugMode();
       await debuggerActions.stepOut();
@@ -299,7 +299,7 @@ test.describe('R debugger', () => {
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
       await debuggerActions.setBreakpoint(5);
-      await consoleActions.typeInConsole('step_continue_fn()');
+      await consoleActions.executeInConsole('step_continue_fn()');
 
       await debuggerActions.waitForDebugMode();
       await expect.poll(
@@ -327,7 +327,7 @@ test.describe('R debugger', () => {
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
       await debuggerActions.setBreakpoint(2);
-      await consoleActions.typeInConsole('step_stop_fn()');
+      await consoleActions.executeInConsole('step_stop_fn()');
 
       await debuggerActions.waitForDebugMode();
       await debuggerActions.stopDebug();
@@ -355,7 +355,7 @@ test.describe('R debugger', () => {
       for (const line of [2, 3, 4, 5, 6, 7]) {
         await debuggerActions.setBreakpoint(line);
       }
-      await consoleActions.typeInConsole('five_continues_fn()');
+      await consoleActions.executeInConsole('five_continues_fn()');
 
       await debuggerActions.waitForDebugMode();
       await expect.poll(
@@ -411,7 +411,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('browser_entry_fn()');
+      await consoleActions.executeInConsole('browser_entry_fn()');
 
       await debuggerActions.waitForDebugMode();
       // After browser() on line 2, R pauses on the browser() call itself
@@ -435,7 +435,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('browser_continue_fn()');
+      await consoleActions.executeInConsole('browser_continue_fn()');
 
       await debuggerActions.waitForDebugMode();
       await debuggerActions.continueDebug();
@@ -462,7 +462,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('rerun_fn()');
+      await consoleActions.executeInConsole('rerun_fn()');
 
       // The error widget — and the "Rerun with Debug" link inside it —
       // should appear in the console after the error fires.
@@ -500,7 +500,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('env_locals_fn()');
+      await consoleActions.executeInConsole('env_locals_fn()');
 
       await debuggerActions.waitForDebugMode();
 
@@ -522,7 +522,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('tb_f()');
+      await consoleActions.executeInConsole('tb_f()');
 
       await debuggerActions.waitForDebugMode();
 
@@ -559,7 +559,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
       await sleep(TIMEOUTS.settleDelay);
-      await consoleActions.typeInConsole('fr_f()');
+      await consoleActions.executeInConsole('fr_f()');
 
       await debuggerActions.waitForDebugMode();
 

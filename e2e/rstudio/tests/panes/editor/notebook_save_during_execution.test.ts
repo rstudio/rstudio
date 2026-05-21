@@ -53,7 +53,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
       "print('The quality of mercy is not strained')",
       "print('Chunks still work.')",
       '```',
-    ].join('\\n');
+    ].join('\n');
 
     await sourceActions.createAndOpenFile(fileName, rmdContent);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });

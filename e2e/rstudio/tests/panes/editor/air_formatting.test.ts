@@ -117,13 +117,13 @@ async function setAirPrefs(
 
 /** Reset Air-related preferences programmatically (for setup/cleanup, not the test itself). */
 async function resetAirPrefs(consoleActions: ConsolePaneActions): Promise<void> {
-  await consoleActions.typeInConsole('{ .rs.uiPrefs$codeFormatter$set("none"); .rs.uiPrefs$useAirFormatter$set(FALSE); .rs.uiPrefs$reformatOnSave$set(FALSE) }');
+  await consoleActions.executeInConsole('{ .rs.uiPrefs$codeFormatter$set("none"); .rs.uiPrefs$useAirFormatter$set(FALSE); .rs.uiPrefs$reformatOnSave$set(FALSE) }');
   await sleep(1000);
 }
 
 /** Create an Air config file in the working directory. */
 async function createAirConfig(consoleActions: ConsolePaneActions, fileName: string = AIR_TOML_FILE): Promise<void> {
-  await consoleActions.typeInConsole(
+  await consoleActions.executeInConsole(
     `writeLines(c("[format]", "line-width = 20", "indent-width = 12", 'indent-style = "space"', "persistent-line-breaks = true", 'exclude = ["tmp/", ".git/", "renv/"]', "default-exclude = true"), "${fileName}")`
   );
   await sleep(500);
@@ -131,7 +131,7 @@ async function createAirConfig(consoleActions: ConsolePaneActions, fileName: str
 
 /** Remove both air.toml and .air.toml if they exist. */
 async function removeAirConfig(consoleActions: ConsolePaneActions): Promise<void> {
-  await consoleActions.typeInConsole(`{ unlink("${AIR_TOML_FILE}"); unlink("${DOT_AIR_TOML_FILE}") }`);
+  await consoleActions.executeInConsole(`{ unlink("${AIR_TOML_FILE}"); unlink("${DOT_AIR_TOML_FILE}") }`);
   await sleep(500);
 }
 
@@ -140,11 +140,11 @@ async function openTestFile(
   consoleActions: ConsolePaneActions,
   sourceActions: SourcePaneActions
 ): Promise<void> {
-  await consoleActions.typeInConsole(
+  await consoleActions.executeInConsole(
     `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`
   );
   await sleep(500);
-  await consoleActions.typeInConsole(`file.edit("${TEST_FILE}")`);
+  await consoleActions.executeInConsole(`file.edit("${TEST_FILE}")`);
   await expect(sourceActions.sourcePane.selectedTab).toContainText(TEST_FILE, { timeout: 10000 });
   await sleep(1000);
 }

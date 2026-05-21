@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { createAndOpenProject, restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
@@ -12,7 +12,7 @@ const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__PI_${Date.now()}__`;
-  await typeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
   const start = Date.now();
@@ -72,9 +72,9 @@ test.describe.serial('ProjectId in .Rproj', () => {
     expect(hasProjectId, 'fresh .Rproj should not contain ProjectId').toBe('FALSE');
 
     // Set the project user-data directory pref, then restart.
-    await typeInConsole(page, `dir.create(${dataDirLit})`);
+    await executeInConsole(page, `dir.create(${dataDirLit})`);
     await sleep(TIMEOUTS.pollInterval);
-    await typeInConsole(
+    await executeInConsole(
       page,
       `.rs.api.writeRStudioPreference("project_user_data_directory", normalizePath(${dataDirLit}))`,
     );

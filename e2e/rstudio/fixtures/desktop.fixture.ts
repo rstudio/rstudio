@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
-import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { documentCloseAllNoSave } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
 
@@ -486,7 +486,15 @@ function getRStudioPids(): Set<number> {
 }
 
 /**
- * Graceful shutdown: q() in console, close browser, kill process.
+ * Graceful shutdown: q() in console, close browser, kill process if it
+ * hasn't exited on its own.
+ *
+ * `browser.close()` over a CDP connection only disconnects the CDP session
+ * -- it does not terminate the underlying Electron process. And `q()`
+ * cascading to a full Electron quit is best-effort (a pending modal, a
+ * hung renderer, etc. can leave Electron alive after rsession exits). So
+ * after attempting graceful shutdown we always verify the process tree
+ * actually exited, and force-kill if not.
  *
  * No per-spec config-tree cleanup -- the sandbox-wide globalTeardown
  * removes everything under PW_SANDBOX at end of run.
@@ -499,12 +507,19 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   await sleep(1000);
 
   try {
-    await typeInConsole(page, 'q(save = "no")');
-    await sleep(5000); // Give RStudio time to shut down and release port
-    await browser.close();
+    await executeInConsole(page, 'q(save = "no")');
   } catch {
-    await browser.close().catch(() => {});
-    // Only force kill if graceful shutdown failed
+    // Console may already be unresponsive; we still force-kill below.
+  }
+  await browser.close().catch(() => {});
+
+  // Wait briefly for Electron to exit on its own, then force-kill if it
+  // hasn't. Polling avoids a fixed sleep when the graceful path works.
+  const exitDeadline = Date.now() + 5000;
+  while (Date.now() < exitDeadline && rstudioProcess.exitCode === null && rstudioProcess.signalCode === null) {
+    await sleep(100);
+  }
+  if (rstudioProcess.exitCode === null && rstudioProcess.signalCode === null) {
     killProcessTree(rstudioProcess);
   }
 }

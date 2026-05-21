@@ -42,7 +42,7 @@ test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
       'sum(22,',
       '23)',
       '```',
-    ].join('\\n');
+    ].join('\n');
 
     await sourceActions.createAndOpenFile(fileName, rmdContent);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });

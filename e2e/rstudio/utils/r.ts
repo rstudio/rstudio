@@ -3,7 +3,7 @@
  * interpolated into R commands fed through the console.
  *
  * RStudio Playwright tests routinely build R expressions via template
- * literals -- typeInConsole(`.rs.api.openProject("${path}")`) and similar.
+ * literals -- executeInConsole(`.rs.api.openProject("${path}")`) and similar.
  * Naive interpolation is fragile: any embedded `"`, `\`, or control char in
  * the value can break R parsing or, worse, silently change semantics.
  * Centralizing the encoding here keeps each test honest and lets us harden

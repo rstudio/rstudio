@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep } from '@utils/constants';
-import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { executeCommand, setPref, documentCloseAllNoSave } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -47,7 +47,7 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
   // not be fully connected yet and the first attempt can silently fail.
   for (let attempt = 0; attempt < 3; attempt++) {
     await clearConsole(page);
-    await typeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
+    await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
     await sleep(1500);
     const output = await page.locator(CONSOLE_OUTPUT).innerText();
     const re = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
@@ -82,12 +82,12 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const marker = `__READY_${Date.now()}__`;
-      await typeInConsole(page, `cat("${marker}")`);
+      await executeInConsole(page, `cat("${marker}")`);
       await sleep(1500);
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
     } catch {
-      // typeInConsole may fail if console isn't ready
+      // executeInConsole may fail if console isn't ready
     }
     await sleep(2000);
   }
@@ -125,9 +125,9 @@ async function isTrustDialogVisible(page: Page, timeout = 10000): Promise<boolea
 async function resetTrust(page: Page, dir?: string): Promise<void> {
   if (dir) {
     const escaped = dir.replace(/\\/g, '/');
-    await typeInConsole(page, `.rs.trust.reset("${escaped}")`);
+    await executeInConsole(page, `.rs.trust.reset("${escaped}")`);
   } else {
-    await typeInConsole(page, '.rs.trust.reset()');
+    await executeInConsole(page, '.rs.trust.reset()');
   }
   await sleep(500);
 }
@@ -136,9 +136,9 @@ async function resetTrust(page: Page, dir?: string): Promise<void> {
 async function revokeTrust(page: Page, dir?: string): Promise<void> {
   if (dir) {
     const escaped = dir.replace(/\\/g, '/');
-    await typeInConsole(page, `.rs.trust.revoke("${escaped}")`);
+    await executeInConsole(page, `.rs.trust.revoke("${escaped}")`);
   } else {
-    await typeInConsole(page, '.rs.trust.revoke()');
+    await executeInConsole(page, '.rs.trust.revoke()');
   }
   await sleep(500);
 }
@@ -146,7 +146,7 @@ async function revokeTrust(page: Page, dir?: string): Promise<void> {
 /** Write a .Rprofile in the given directory. */
 async function writeRprofile(page: Page, dir: string, content: string): Promise<void> {
   const escaped = dir.replace(/\\/g, '/');
-  await typeInConsole(page, `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`);
+  await executeInConsole(page, `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`);
   await sleep(500);
 }
 
@@ -464,9 +464,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // so it doesn't error when sourced (no risky files → trust not required → .Rprofile runs)
     await writeRprofile(page, projectDir, 'source("renv/activate.R")');
     const escaped = projectDir.replace(/\\/g, '/');
-    await typeInConsole(page, `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`);
+    await executeInConsole(page, `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`);
     await sleep(300);
-    await typeInConsole(page, `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`);
+    await executeInConsole(page, `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`);
     await sleep(300);
 
     // Restart R
@@ -495,7 +495,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Create an .RData file (empty workspace save)
     const escaped = projectDir.replace(/\\/g, '/');
-    await typeInConsole(page, `save(list = character(0), file = file.path("${escaped}", ".RData"))`);
+    await executeInConsole(page, `save(list = character(0), file = file.path("${escaped}", ".RData"))`);
     await sleep(500);
 
     // Restart — dialog expected for .RData
