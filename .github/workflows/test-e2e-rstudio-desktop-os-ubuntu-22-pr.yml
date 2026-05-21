@@ -136,6 +136,7 @@ jobs:
     env:
       R_LIBS_USER:        ${{ github.workspace }}/R-libs
       PW_RSTUDIO_EDITION: os
+      USE_BUNDLED_LIBUV:  "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -185,8 +186,6 @@ jobs:
 
       - name: Install R packages from DESCRIPTION
         if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
-        env:
-          USE_BUNDLED_LIBUV: "1"
         run: |
           Rscript -e '
             options(
