@@ -32,6 +32,9 @@ env:
 
 jobs:
   select:
+    # Restrict to PRs filed from branches in this repo (i.e. Posit folks).
+    # Fork PRs from external contributors don't trigger this workflow.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -130,7 +133,9 @@ jobs:
 
   build_and_test:
     needs: select
-    if: needs.select.outputs.skip != 'true'
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && needs.select.outputs.skip != 'true'
     runs-on: ubuntu-22.04
     timeout-minutes: 180
     env:
