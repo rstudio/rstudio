@@ -278,7 +278,7 @@ test.describe('R debugger extras', () => {
       //   1. project.create(type = "package")
       //   2. closeAllSourceBuffersWithoutSaving; open R/example.R
       //   3. write a function with several lines, save, buildAll
-      //   4. wait for "> library(rstudio.automation)" in console
+      //   4. wait for the package's library() line to appear in the console
       //   5. click gutter to set breakpoints on lines 3 and 4
       //   6. assert .rs.isFunctionInSync("example", "R/example.R", pkg) is TRUE
       //   7. example() -> should pause at line 3, continue, pause at line 4
