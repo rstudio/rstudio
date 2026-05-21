@@ -2,6 +2,7 @@
  * SessionPlots.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
+ * [pw-trigger-fallback: throwaway change to test fallback selector behavior]
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
