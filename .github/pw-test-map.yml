@@ -25,9 +25,19 @@ fallback:
   - "tests/smoke/"
 
 # Coverage below is intentionally partial -- new areas can be added as the
-# Playwright suite grows. Areas not listed (e.g. plots, packages, vcs,
-# connections, jobs) currently land on `fallback`.
+# Playwright suite grows. Areas with no Playwright tests yet (e.g. plots,
+# vcs, connections, jobs) currently land on `fallback`.
 rules:
+  - name: completions
+    paths:
+      - "src/cpp/session/modules/SessionRCompletions*"
+      - "src/cpp/session/modules/SessionReticulate*"
+      - "src/gwt/**/shell/assist/**"
+      - "src/gwt/**/common/codetools/**"
+    tests:
+      - "tests/panes/misc/autocomplete.test.ts"
+      - "tests/panes/misc/python_completions.test.ts"
+
   - name: posit-assistant
     paths:
       - "src/cpp/session/modules/SessionChat*"
@@ -60,6 +70,14 @@ rules:
     tests:
       - "tests/panes/debugger/"
 
+  - name: environment
+    paths:
+      - "src/cpp/session/modules/SessionEnvironment*"
+      - "src/gwt/**/views/environment/**"
+    tests:
+      - "tests/panes/misc/s4_unloaded_package.test.ts"
+      - "tests/panes/misc/rs_value_contents.test.ts"
+
   - name: editor
     paths:
       - "src/cpp/session/modules/SessionSource*"
@@ -75,10 +93,31 @@ rules:
     tests:
       - "tests/panes/terminal/"
 
+  - name: files
+    paths:
+      - "src/cpp/session/modules/SessionFiles*"
+      - "src/gwt/**/views/files/**"
+    tests:
+      - "tests/panes/files/"
+
+  - name: packages
+    paths:
+      - "src/cpp/session/modules/SessionPackages*"
+      - "src/gwt/**/views/packages/**"
+    tests:
+      - "tests/panes/packages/"
+
+  - name: build
+    paths:
+      - "src/cpp/session/modules/build/**"
+      - "src/cpp/session/modules/SessionBuild*"
+      - "src/gwt/**/views/buildtools/**"
+    tests:
+      - "tests/panes/misc/build_pane_testthat.test.ts"
+
   - name: projects
     paths:
       - "src/cpp/session/modules/SessionProjects*"
-      - "src/cpp/session/modules/SessionFiles*"
     tests:
       - "tests/projects/"
 
@@ -110,6 +149,16 @@ rules:
       - "src/cpp/shared_core/**"
     tests:
       - "tests/smoke/"
+
+  - name: session-lifecycle
+    paths:
+      - "src/cpp/session/SessionMain.cpp"
+      - "src/cpp/r/session/RSession*"
+      - "src/cpp/r/session/RSuspend*"
+      - "src/cpp/r/session/RRestartContext*"
+    tests:
+      - "tests/panes/misc/session_restart.test.ts"
+      - "tests/panes/misc/session_suspend.test.ts"
 
   - name: user-prefs-schema
     paths:
