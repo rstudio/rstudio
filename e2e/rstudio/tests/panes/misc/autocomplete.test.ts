@@ -4,8 +4,6 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AutocompleteActions } from '@actions/autocomplete.actions';
 
-// Ground truth from: src/cpp/tests/automation/testthat/test-automation-completions.R (BRAT)
-
 const contexts = ['console', 'editor'] as const;
 type Context = (typeof contexts)[number];
 

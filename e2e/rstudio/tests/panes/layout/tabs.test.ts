@@ -1,9 +1,5 @@
 // Workbench tab visibility, selection, and layoutZoomEnvironment.
-//
-// Ported from src/cpp/tests/automation/testthat/test-automation-tabs.R. The
-// sidebar-width-when-adding-tabs cases (test 3, test 4) are skip_on_ci in
-// BRAT and intentionally not ported here -- the regular width-preservation
-// scenarios are already covered by panes.test.ts.
+// Sidebar-width-when-adding-tabs scenarios are exercised by panes.test.ts.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';

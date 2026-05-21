@@ -1,16 +1,9 @@
 /**
- * Quarto chunk and editor behavior
- *
- * Ports the portable non-visual-mode, non-chunk-options-popup tests
- * from test-automation-quarto.R: the `warn` option round-trip on chunk
- * run, chunk-widget visibility, variable-width nested-chunk folding
- * (#15191), and the empty-quarto-block highlight regression (#16463).
- *
- * The visual-mode, chunk-options-popup, and document-outline tests
- * from BRAT were dropped along with the BRAT file -- they were
- * skip_on_ci in BRAT and require deeper UI scaffolding (Visual mode
- * round-trips, chunk-options modal driving). Multiline chunk execution
- * (#17350) is already covered by `multiline_chunk_execution.test.ts`.
+ * Quarto chunk and editor behavior: the `warn` option round-trip on
+ * chunk run, chunk-widget visibility, variable-width nested-chunk
+ * folding (#15191), and the empty-quarto-block highlight regression
+ * (#16463). Multiline chunk execution (#17350) is covered by
+ * `multiline_chunk_execution.test.ts`.
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';

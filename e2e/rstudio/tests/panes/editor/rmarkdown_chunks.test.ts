@@ -1,17 +1,13 @@
 /**
- * R Markdown chunk-execution behavior
- *
- * Covers the non-visual-mode, non-chunk-options-popup tests from
- * test-automation-rmarkdown.R: chunk widgets visibility, the `warn`
- * option round-trip when running a chunk, error halts (#16006-adjacent),
- * console-history recall after an errored chunk (#16006), patchwork-
- * style auto-printing (#13470), paged-table representation (#16483),
- * and nb.html generation on save.
+ * R Markdown chunk-execution behavior: chunk widgets visibility, the
+ * `warn` option round-trip when running a chunk, error halts
+ * (#16006-adjacent), console-history recall after an errored chunk
+ * (#16006), patchwork-style auto-printing (#13470), paged-table
+ * representation (#16483), and nb.html generation on save.
  *
  * Multiline chunk execution (#17350) is covered by
  * `multiline_chunk_execution.test.ts`; notebook-save-during-execution
- * (#6260) is in `notebook_save_during_execution.test.ts`. The visual-
- * mode and chunk-options-popup BRAT tests live in their own specs.
+ * (#6260) is in `notebook_save_during_execution.test.ts`.
  */
 
 import * as fs from 'fs';
@@ -292,9 +288,8 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     // element appears -- fall back to the marker helper.
     await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'setup');
 
-    // Buggy chunk: also invisible (assignment). Run twice -- the BRAT
-    // test exercises a re-run because the first invocation might not
-    // surface a stale chunk-output buffer.
+    // Buggy chunk: also invisible (assignment). Run twice -- the
+    // first invocation might not surface a stale chunk-output buffer.
     await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'buggy');
     await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'buggy');
 
@@ -348,9 +343,8 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
   // FIXME: saveSourceDoc via the executeCommand bridge doesn't appear to
   // trigger nb.html generation in this flow (the file never appears in the
-  // sandbox dir). The BRAT counterpart works -- needs investigation of
-  // whether the bridge path is missing some step the console path goes
-  // through. The BRAT test is retained until this is sorted out.
+  // sandbox dir). Needs investigation of whether the bridge path is missing
+  // a step that the console-driven Save path performs.
   test.skip('saving an R Notebook creates an nb.html file', async ({ rstudioPage: page }) => {
     const fileName = `rmarkdown_nbhtml_${Date.now()}.Rmd`;
     const nbHtmlPath = path.join(sandbox.dir, fileName.replace(/\.Rmd$/, '.nb.html'));

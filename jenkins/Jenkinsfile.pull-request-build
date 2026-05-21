@@ -88,11 +88,6 @@ pipeline {
             utils.postReviewCheck(title: "Homepage Tests")
           }
 
-          // Automation currently only open source desktop
-          if (FLAVOR == 'Electron' && !IS_PRO) {
-            utils.postReviewCheck(title: "Automated Tests")
-          }
-
         }
       }
     }
@@ -268,31 +263,6 @@ pipeline {
                   }
                 }
               }
-            }
-
-            stage('Run Automated Tests') {
-
-              when { expression { return FLAVOR == 'Electron' && !IS_PRO } }
-
-              environment {
-                STAGE_NODE_URL = utils.getStageUrl(STAGE_NAME)
-              }
-
-              steps {
-                catchError(buildResult: null, stageResult: 'UNSTABLE') {
-                  dir ("src/node/desktop") {
-                    script {
-                      try {
-                        utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
-                      } finally {
-                        junit(allowEmptyResults: true, testResults: '*.xml')
-                        archiveArtifacts(artifacts: 'screenshots/*.png,*.webm,*.xml', fingerprint: true)
-                      }
-                    }
-                  }
-                }
-              }
-
             }
           }
         }

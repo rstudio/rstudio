@@ -1,10 +1,5 @@
-// Additional debugger tests ported from
-// src/cpp/tests/automation/testthat/test-automation-debugger.R.
-//
-// The existing debugger.test.ts already covers the braced-expression
-// breakpoint (#15072), the top-level breakpoint UI (#17481), stepping,
-// browser() entry, recover-on-error, and environment + traceback. This
-// file fills in the gaps the migration plan called out:
+// Additional debugger tests covering scenarios not exercised by
+// debugger.test.ts:
 //
 //   - multi-line input at the Browse[N]> prompt preserves browser state
 //   - clicking a top-level breakpoint marker toggles it off (#9450)
@@ -12,9 +7,9 @@
 //     on Desktop the confirm dialog is a native Electron messagebox)
 //   - breakpoints fire inside S7 method definitions for S3 generics (#16490)
 //
-// The package-rebuild paths (#15201, #9450 package half) intentionally
-// stay in BRAT for now -- they need a full devtools build cycle that
-// fits poorly in Playwright's fixture model.
+// The package-rebuild paths (#15201, #9450 package half) are tracked as
+// `test.fixme` placeholders below -- they need a full devtools build
+// cycle that fits poorly in Playwright's fixture model.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
@@ -272,16 +267,14 @@ test.describe('R debugger extras', () => {
   //
   // Two debugger tests that need a full `devtools::build()` + reload cycle
   // before debugging can be exercised. The build typically takes a minute
-  // or more, which doesn't fit the Playwright fixture model. The BRAT
-  // counterparts were retained for a while; they're left as `test.fixme`
-  // here so the migration is recorded in code rather than scattered.
-  // A future port would need: a long timeout, a way to install devtools
-  // into the per-spec sandbox without retriggering it across tests, and
-  // a project teardown that survives the build cache.
+  // or more, which doesn't fit the Playwright fixture model. A future port
+  // would need: a long timeout, a way to install devtools into the per-spec
+  // sandbox without retriggering it across tests, and a project teardown
+  // that survives the build cache.
 
   test.describe.serial('Package debugging across build cycles', { tag: ['@serial'] }, () => {
     test.fixme('package functions can be debugged after build and reload (#15201)', async () => {
-      // BRAT flow:
+      // Sketch:
       //   1. project.create(type = "package")
       //   2. closeAllSourceBuffersWithoutSaving; open R/example.R
       //   3. write a function with several lines, save, buildAll
@@ -293,7 +286,7 @@ test.describe('R debugger extras', () => {
     });
 
     test.fixme('cleared package breakpoints stay cleared across rebuild (#9450)', async () => {
-      // BRAT flow:
+      // Sketch:
       //   1. project.create(type = "package"); add a function in R/
       //   2. buildAll, set breakpoint, then click the breakpoint marker to clear it
       //   3. buildAll again -- the PackageLoadedEvent triggers

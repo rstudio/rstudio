@@ -73,8 +73,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   //
   // The other four tests in this file cover ghost-text rendering, anchor
   // shifting on programmatic insert (see the next test), prefix-match
-  // accept, and inline insertion-preview. The BRAT counterpart will stay
-  // until this is unblocked.
+  // accept, and inline insertion-preview.
   test.fixme('ghost text suggestions survive document mutations', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILES.mutate, '# abc def');
     await consoleActions.typeInConsole(
@@ -91,9 +90,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   });
 
   test('ghost text moves on document edit', async ({ rstudioPage: page }) => {
-    // Six newlines map to seven rows once Ace counts the trailing empty line,
-    // matching BRAT's writeLines("\n\n\n\n\n") output (which adds its own
-    // trailing newline).
+    // Six newlines map to seven rows once Ace counts the trailing empty line.
     await writeAndOpenFile(page, sandbox.dir, FILES.move, '\n\n\n\n\n\n');
     await consoleActions.typeInConsole(
       '.rs.api.showEditSuggestion(c(3, 1, 3, 1), "Hello world!")',
@@ -109,7 +106,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
     }).toBe('Hello world!');
 
     // Inserting two newlines at row 0 shifts everything below down by 2 rows;
-    // the suggestion's anchor (BRAT row 3 / Ace row 2) should land on row 4.
+    // the suggestion's anchor (Ace row 2) should land on row 4.
     await editor.gotoLine(1);
     await editor.insert('\n');
     await editor.insert('\n');
@@ -128,7 +125,7 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
 
     const editor = new AceEditor(page, '');
 
-    // Suggestion is on Ace row 2 (BRAT row 3).
+    // Suggestion is on Ace row 2.
     await expect.poll(async () => {
       const tokens = await editor.getTokens(2);
       return tokens[0]?.value;

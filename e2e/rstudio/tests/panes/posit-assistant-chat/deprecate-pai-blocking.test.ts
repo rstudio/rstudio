@@ -23,8 +23,8 @@ import { annotateVersions } from './_chat-setup';
  * This validates the Playwright selectors and page objects against simplified
  * HTML that preserves the element IDs, text content, and button structure
  * from ChatPane.java's generate*HTML() methods (without the full theming
- * CSS). The GWT callback-to-rendering path is better tested at the BRAT
- * level where the backend can be controlled directly.
+ * CSS). The GWT callback-to-rendering path is better tested at a layer
+ * where the backend can be controlled directly.
  *
  * Scenarios:
  *   1. Manifest unavailable -- "Connection Error" with Retry button

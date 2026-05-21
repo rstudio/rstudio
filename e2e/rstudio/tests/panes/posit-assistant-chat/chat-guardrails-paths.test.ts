@@ -333,8 +333,8 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
   // next person can verify them end-to-end before un-fixme-ing.
 
   test.fixme('bindings are restored after safeEval', async () => {
-    // BRAT: .rs.chat.safeEval(quote(1 + 1)); then a write+unlink inside
-    // tempdir should NOT produce a "blocked" message. Port idea:
+    // Sketch: .rs.chat.safeEval(quote(1 + 1)), then a write+unlink inside
+    // tempdir should NOT produce a "blocked" message. Try:
     //   await consoleActions.typeInConsole('.rs.chat.safeEval(quote(1 + 1))');
     //   await consoleActions.typeInConsole(
     //     'p <- file.path(tempdir(), "lifecycle.txt"); writeLines("x", p); unlink(p)'
@@ -343,20 +343,20 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
   });
 
   test.fixme('safeEval blocks writes outside project directory', async () => {
-    // BRAT: .rs.chat.safeEval(quote(writeLines("x", dirname(tempdir())/...)))
-    // then verify the file was NOT created. safeEval swallows the error, so
+    // Sketch: .rs.chat.safeEval(quote(writeLines("x", dirname(tempdir())/...)))
+    // and verify the file was NOT created. safeEval swallows the error, so
     // the assertion is on file.exists(), not on console output.
   });
 
   test.fixme('double injection is safe (reentrancy guard)', async () => {
-    // BRAT: call .rs.chat.injectBindings() twice, then restoreBindings()
+    // Sketch: call .rs.chat.injectBindings() twice, then restoreBindings()
     // once. A normal write in tempdir afterwards should NOT be blocked --
     // verifies that the second inject is a no-op and the bindings come
     // back cleanly.
   });
 
   test.fixme('safeEval restores bindings when user code errors', async () => {
-    // BRAT: .rs.chat.safeEval(quote(stop("user error"))) then verify a
+    // Sketch: .rs.chat.safeEval(quote(stop("user error"))), then verify a
     // normal write in tempdir works (i.e. bindings were restored even
     // though the user code stop()ed inside safeEval).
   });

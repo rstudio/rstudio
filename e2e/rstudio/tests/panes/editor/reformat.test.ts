@@ -1,8 +1,5 @@
-// Code reformatting (built-in + styler) ported from
-// src/cpp/tests/automation/testthat/test-automation-reformat.R.
-//
-// The reformat.R BRAT file also covers the Air formatter; those cases are
-// exercised in air_formatting.test.ts.
+// Code reformatting (built-in + styler). Air formatter cases live in
+// air_formatting.test.ts.
 
 import * as fs from 'fs';
 import type { Page } from 'playwright';
@@ -51,11 +48,6 @@ test.describe('Built-in code reformat', () => {
   // https://github.com/rstudio/rstudio/issues/5425
   test('preserves end-of-line comment when reformatting', async ({ rstudioPage: page }) => {
     const initial = 'c(1 #2\n)';
-    // No trailing newline -- writeAndOpenFile uses fs.writeFileSync (Node)
-    // which writes exactly `initial`. BRAT's executeWithContents uses
-    // writeLines() which adds a trailing newline, so its expected value is
-    // 'c(\n  1 #2\n)\n'. The reformat behavior under test (comment
-    // preservation) is the same either way.
     const expected = 'c(\n  1 #2\n)';
     await writeAndOpenFile(page, sandbox.dir, FILE_5425, initial);
 
