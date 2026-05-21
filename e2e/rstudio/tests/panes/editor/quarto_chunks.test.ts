@@ -1,0 +1,199 @@
+/**
+ * Quarto chunk and editor behavior
+ *
+ * Ports the portable non-visual-mode, non-chunk-options-popup tests
+ * from test-automation-quarto.R: the `warn` option round-trip on chunk
+ * run, chunk-widget visibility, variable-width nested-chunk folding
+ * (#15191), and the empty-quarto-block highlight regression (#16463).
+ *
+ * The visual-mode, chunk-options-popup, and document-outline tests
+ * from BRAT were dropped along with the BRAT file -- they were
+ * skip_on_ci in BRAT and require deeper UI scaffolding (Visual mode
+ * round-trips, chunk-options modal driving). Multiline chunk execution
+ * (#17350) is already covered by `multiline_chunk_execution.test.ts`.
+ */
+
+import { test, expect } from '@fixtures/rstudio.fixture';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { SourcePaneActions } from '@actions/source_pane.actions';
+import { AceEditor } from '@pages/ace_editor.page';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand } from '@utils/commands';
+
+test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
+  useSuiteSandbox();
+  let consoleActions: ConsolePaneActions;
+  let sourceActions: SourcePaneActions;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    consoleActions = new ConsolePaneActions(page);
+    sourceActions = new SourcePaneActions(page, consoleActions);
+    await consoleActions.clearConsole();
+  });
+
+  test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_warn_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: Chunk Warnings',
+      '---',
+      '',
+      '```{r warning_chunk, warning=TRUE}',
+      '# check current option',
+      'getOption("warn")',
+      '# setting a global option',
+      'options(warn = 2)',
+      '```',
+    ].join('\n');
+
+    await consoleActions.clearConsole();
+    await consoleActions.typeInConsole('options(warn = 0); cat("WARN_BEFORE=", getOption("warn"), "\\n", sep = "")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_BEFORE=0');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    await sourceActions.navigateToChunkByLabel('warning_chunk');
+    await executeCommand(page, 'executeCurrentChunk');
+    // R queue is FIFO; `WARN_AFTER=2` won't appear until `options(warn = 2)` runs.
+    await consoleActions.typeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_AFTER=2', { timeout: 30000 });
+
+    await consoleActions.typeInConsole('options(warn = 0)');
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  test('the expected chunk widgets show for multiple chunks (#11745)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_widgets_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: "Chunk widgets"',
+      '---',
+      '',
+      '```{r setup, include=FALSE}',
+      'knitr::opts_chunk$set(echo = TRUE)',
+      '```',
+      '',
+      '## Quarto',
+      '',
+      'This is a Quarto document.',
+      '',
+      '```{r cars}',
+      'summary(cars)',
+      '```',
+      '',
+      '## Including Plots',
+      '',
+      'You can also embed plots, for example:',
+      '',
+      '```{r pressure, echo=FALSE}',
+      'plot(pressure)',
+      '```',
+      '',
+      'The end.',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+
+    const optionWidgets = page.locator('.rstudio_modify_chunk');
+    const previewWidgets = page.locator('.rstudio_preview_chunk');
+    const runWidgets = page.locator('.rstudio_run_chunk');
+
+    await expect(optionWidgets).toHaveCount(3);
+    await expect(previewWidgets).toHaveCount(3);
+    await expect(runWidgets).toHaveCount(3);
+
+    // The setup chunk's preview widget is hidden.
+    await expect(previewWidgets.nth(0)).toHaveAttribute('aria-hidden', 'true');
+    await expect(previewWidgets.nth(0)).toHaveCSS('display', 'none');
+
+    // Other chunk widgets are visible.
+    for (const locator of [previewWidgets.nth(1), previewWidgets.nth(2)]) {
+      const ariaHidden = await locator.getAttribute('aria-hidden');
+      expect(ariaHidden === null || ariaHidden === 'false').toBe(true);
+      await expect(locator).not.toHaveCSS('display', 'none');
+    }
+    for (let i = 0; i < 3; i++) {
+      for (const locator of [optionWidgets.nth(i), runWidgets.nth(i)]) {
+        const ariaHidden = await locator.getAttribute('aria-hidden');
+        expect(ariaHidden === null || ariaHidden === 'false').toBe(true);
+        await expect(locator).not.toHaveCSS('display', 'none');
+      }
+    }
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  test('variable-width nested chunks can be folded (#15191)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_folding_${Date.now()}.qmd`;
+    // A verbatim block opened with five backticks, containing a nested
+    // three-backtick `{r nested}` chunk. The fold widget should span
+    // the whole outer block.
+    const content = [
+      '---',
+      'title: Folding',
+      '---',
+      '',
+      '`````{verbatim}',
+      '',
+      'This is some text.',
+      '',
+      '```{r nested}',
+      'print(1 + 1)',
+      '```',
+      '',
+      '`````',
+      '',
+      '# Header',
+      '',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+
+    const editor = new AceEditor(page, 'verbatim');
+    expect(await editor.getFoldWidget(4)).toBe('start');
+    expect(await editor.getFoldWidget(8)).toBe('');
+    expect(await editor.getFoldWidget(10)).toBe('');
+    expect(await editor.getFoldWidget(12)).toBe('end');
+
+    const expectedRange = {
+      start: { row: 4, column: 15 },
+      end: { row: 12, column: 0 },
+    };
+    expect(await editor.getFoldWidgetRange(4)).toEqual(expectedRange);
+    expect(await editor.getFoldWidgetRange(12)).toEqual(expectedRange);
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  test(`empty quarto blocks don't break highlight in chunk (#16463)`, async ({ rstudioPage: page }) => {
+    const fileName = `quarto_highlight_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: Chunk Syntax Highlighting',
+      '---',
+      '',
+      '```{r}',
+      '#| echo: true',
+      '2 * 2',
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+
+    const editor = new AceEditor(page, '#| echo: true');
+    // Place cursor at end of "#| echo: true" (row 6 in 1-indexed) and
+    // insert two newlines. This pushes "2 * 2" down to row 8 (0-indexed)
+    // -- the regression breaks chunk tokenization when an empty body
+    // line precedes a code line within the chunk.
+    await editor.gotoLine(6, 13);
+    await editor.insert('\n\n');
+
+    const tokens = await editor.getTokens(8);
+    expect(tokens[0].value).toBe('2');
+    expect(tokens[1].value).toBe(' ');
+    expect(tokens[2].value).toBe('*');
+    expect(tokens[3].value).toBe(' ');
+    expect(tokens[4].value).toBe('2');
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+});

@@ -30,15 +30,17 @@ Test-level dispositions used in the per-file tables below:
 | Metric | Count |
 |--------|------:|
 | Total BRAT test files (original) | 32 (+ 1 helper file) |
-| BRAT files remaining on disk | 5 (+ 1 helper file) |
-| Files Complete | 24 |
+| BRAT files remaining on disk | 3 (+ 1 helper file) |
+| Files Complete | 26 |
 | Files Dropped | 3 |
-| Files Partial | 4 |
+| Files Partial | 2 |
 | Files Fixme | 1 |
 
 Phase 1 audit complete (2026-05-19). Phase 2 (per-file migration) underway --
-guardrails, quarto, and rmarkdown remain; debugger (2) and edit-suggestions (1)
-have intentionally retained BRAT tests (build-cycle and focus-bug respectively).
+guardrails has 4 binding-lifecycle tests retained in BRAT; debugger has 2
+package-build tests retained; edit-suggestions has 1 focus-bug `test.fixme`.
+quarto and rmarkdown BRAT files are deleted (portable tests ported, skip_on_ci
+visual-mode/chunk-options popup tests dropped along with the files).
 
 ## Conversion Status
 
@@ -50,8 +52,8 @@ have intentionally retained BRAT tests (build-cycle and focus-bug respectively).
 | test-automation-code-folding.R | 2 | code-folding.test.ts (2) | Complete | 0/0/2/0 | Ported via Playwright -- `AceEditor` wrapper exposes `getFoldWidget`/`getFoldWidgetRange` via `page.evaluate`. BRAT file deleted |
 | test-automation-edit-suggestions.R | 5 | edit_suggestions.test.ts (4 + 1 fixme) | Fixme | 0/0/4/0 (+1 fixme) | Ported 4 of 5 via `.rs.api.showEditSuggestion` injected through `typeInConsole`. The fifth ("survive document mutations") `test.fixme`d -- after typing the first char into an editor with an active ghost-text suggestion, subsequent chars route to the console. Cause not pinned down (NES status-bar refresh? Ace blur? worth filing as a focus bug). BRAT counterpart for that one case retained until unblocked |
 | test-automation-syntax-highlighting.R | 11 | syntax-highlighting.test.ts (11) | Complete | 0/0/11/0 | All ported via `AceEditor` wrapper (`getTokens`, `getTokenAt`, `getState`, `getFoldWidget`). Color tests assert `bg` on `string.color` tokens directly. BRAT file deleted |
-| test-automation-rmarkdown.R | 18 | rmarkdown.test.ts (7), multiline_chunk_execution.test.ts (1), notebook_save_during_execution.test.ts (1) | Partial | 1/1/16/0 | Biggest single porting opportunity: chunk-options popup UI (~6 tests, all DOM-driven), visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` |
-| test-automation-quarto.R | 12 | quarto.test.ts (1), multiline_chunk_execution.test.ts (1) | Partial | 0/1/8/3 | Mirrors Rmd chunk-options gap (`.qmd` variants). Raw HTML/LaTeX block preservation via visual mode is portable. 3 token/fold-widget tests are unportable. 7 of 12 are `skip_on_ci()` |
+| test-automation-rmarkdown.R | 18 | rmarkdown.test.ts (7), rmarkdown_chunks.test.ts (6 + 1 skip), multiline_chunk_execution.test.ts (1), notebook_save_during_execution.test.ts (1) | Complete | 6/0/0/12 (incl. 10 dropped skip_on_ci + 1 skip + 1 unported nb.html) | The 6 non-skipped-in-BRAT tests ported as `rmarkdown_chunks.test.ts`: warn-option round-trip, chunk-widget visibility, error-halt, command-history-after-error (#16006), patchwork S3 method (#13470), paged-table auto vs explicit (#16483). nb.html-on-save (`test.skip` -- `saveSourceDoc` via the executeCommand bridge doesn't trigger nb.html generation; needs investigation). 10 of 18 BRAT tests were `skip_on_ci` covering visual-mode round-trips and chunk-options popup UI -- dropped along with the BRAT file (would need a chunk-options modal helper + visual-mode round-trip helper to port). BRAT file deleted |
+| test-automation-quarto.R | 12 | quarto.test.ts (1), quarto_chunks.test.ts (4), multiline_chunk_execution.test.ts (1) | Complete | 4/0/0/7 (incl. 7 dropped skip_on_ci) | Portable tests ported as `quarto_chunks.test.ts`: warn-option round-trip on `.qmd`, chunk-widget visibility (#11745), variable-width nested-chunk folding (#15191) via `AceEditor.getFoldWidget`/`getFoldWidgetRange`, empty-quarto-block highlight regression (#16463) via `AceEditor.getTokens` + `insert("\n\n")`. 7 of 12 BRAT tests were `skip_on_ci` (visual-mode + chunk-options popup + doc outline) -- dropped along with the BRAT file. BRAT file deleted |
 | test-automation-sweave.R | 2 | sweave.test.ts (2) | Complete | 0/0/2/0 | Ported via `AceEditor.getTokens`/`getMarkers`. BRAT file deleted |
 | test-automation-reformat.R | 6 | air_formatting.test.ts (+1), reformat.test.ts (4) | Complete | 0/0/6/0 | All ported. Added "5: checked, air.toml present, save uses Air" to air_formatting.test.ts. New reformat.test.ts covers #5425 (built-in formatter preserves end-of-line comments), styler reformat on save, and the two `@windows_only` #17471 newline-regression tests. Styler tests use `consoleActions.ensurePackages(['styler'])` and `test.skip` when missing. The on-save test opens a project via `createAndOpenProject` so `TextEditingTarget.maybeFormatOnUserInitiatedSave` doesn't bail. Added `closeProjectIfOpen` + `waitForConsoleIdle` to `@utils/project`. Canonicalized the sandbox root in `fixtures/sandbox-setup.ts` so JS-side paths match the canonical form rstudioapi reports (fixes the project-prefix check on macOS where `/var` symlinks to `/private/var`). BRAT file deleted |
 
@@ -114,11 +116,13 @@ have intentionally retained BRAT tests (build-cycle and focus-bug respectively).
 - Wave 3 (2026-05-19/2026-05-20): `chat.R`, `chat-satellite.R`, `projects.R`, `terminal.R`, `suspend.R` (Server fixture updated for `--auth-none`); `files.R`, `packages-pane.R`, `tabs.R`, `editor.R` (Desktop fixture passes `--automation-agent`; `typeSlowly`, multiple `AceEditor` additions, `@utils/commands` helper); `files-endpoint.R`; `edit-suggestions.R` (4 of 5; one `test.fixme` for a focus bug); `reformat.R`
 - Wave 4 (2026-05-20): `console.R` -> `console_output.test.ts`; `data-viewer.R` -> `data_viewer.test.ts`; `debugger.R` -> `debugger_extras.test.ts` (4 ported, 2 package-build tests retained); `completions.R` -> `autocomplete_extras.test.ts`
 
-### Remaining (wave 5)
+### Remaining
 
-- `guardrails.R` (31): in progress. Most read/write/system path tests are deterministic mechanism tests that don't need the AI in the loop; `chat-guardrails-paths.test.ts` drives them via `.rs.chat.injectBindings()` / `restoreBindings()` directly
-- `rmarkdown.R` (18): chunk-options popup UI is the biggest single porting opportunity; visual-mode round-trips, chunk-widget visibility, error-halt, history-recall, paged-table, patchwork. 9 of 18 are `skip_on_ci()` in BRAT
-- `quarto.R` (12): mirrors the Rmd chunk-options gap; raw HTML/LaTeX block round-trips via visual mode; 3 token/fold-widget tests likely unportable; 7 of 12 are `skip_on_ci()`
+- `guardrails.R`: 4 binding-lifecycle tests retained (`.rs.chat.safeEval` returns errors as conditions rather than printing -- the Playwright "check console output for blocked" pattern doesn't apply). 27 path-based tests ported to `chat-guardrails-paths.test.ts`
+- `debugger.R`: 2 package-build tests retained (require a full devtools build cycle that doesn't fit the Playwright fixture model). 6 tests ported to `debugger.test.ts` + `debugger_extras.test.ts`
+- `edit-suggestions.R`: 1 `test.fixme`d focus-bug test retained (`ghost text suggestions survive document mutations` -- typing after a ghost suggestion routes first char to editor, rest to console; needs investigation as a real focus bug)
+- `rmarkdown.R`: BRAT file deleted. 1 Playwright `test.skip` (nb.html-on-save via `executeCommand` bridge -- needs investigation), 10 BRAT tests dropped (skip_on_ci visual-mode + chunk-options popup)
+- `quarto.R`: BRAT file deleted. 7 BRAT tests dropped (skip_on_ci visual-mode + chunk-options popup + doc outline)
 
 ### Wave 6 -- BRAT decommissioning (single final PR)
 
