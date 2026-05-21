@@ -2,6 +2,7 @@
  * SessionConsole.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
+ * [pw-trigger-smoke: throwaway change to test PR-triggered Playwright workflow]
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
