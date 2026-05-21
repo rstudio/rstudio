@@ -53,9 +53,8 @@ description: Complete guide for creating RStudio Playwright tests in TypeScript.
 
 **Understand what already exists before writing anything new.**
 
-1. **Check BRAT** — `src/cpp/tests/automation/testthat/` for existing R-based tests. **Use as reference for expected values and test logic, not as blueprint** (BRAT has internal API access; Playwright must interact like a user).
-2. **Check existing Playwright tests** — `e2e/rstudio/tests/` for existing solutions
-3. **Check page objects & actions** — `e2e/rstudio/pages/` and `e2e/rstudio/actions/` for available tools
+1. **Check existing Playwright tests** — `e2e/rstudio/tests/` for existing solutions
+2. **Check page objects & actions** — `e2e/rstudio/pages/` and `e2e/rstudio/actions/` for available tools
 
 ---
 
@@ -540,14 +539,6 @@ When intercepting rsession RPCs via `page.route()`:
   ```typescript
   await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("chat_provider", "posit")');
   ```
-
----
-
-## BRAT: Deepest Source of Truth
-
-BRAT (`src/cpp/tests/automation/testthat/`) is the deepest source of truth for RStudio's intended behavior. These tests capture edge cases and correct output values that aren't documented anywhere else.
-
-**Use BRAT for the "what" — expected values, edge cases, correctness criteria. Solve the "how" in Playwright terms** — using page locators, keyboard input, `page.evaluate()` for Ace editor access, and `.rs.api.executeCommand()` via the console.
 
 ---
 

@@ -213,7 +213,6 @@ const int kPresentationPreview = 195;
 const int kSuspendBlocked = 196;
 const int kClipboardAction = 197;
 const int kDeploymentRecordsUpdated = 198;
-const int kRunAutomation = 199;
 const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
 const int kAssistantStatusChanged = 202;
@@ -606,8 +605,6 @@ std::string ClientEvent::typeName() const
          return "clipboard_action";
       case client_events::kDeploymentRecordsUpdated:
          return "deployment_records_updated";
-      case client_events::kRunAutomation:
-         return "run_automation";
       case client_events::kConsoleWritePendingError:
          return "console_write_pending_error";
       case client_events::kConsoleWritePendingWarning:

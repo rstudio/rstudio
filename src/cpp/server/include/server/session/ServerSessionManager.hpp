@@ -120,11 +120,6 @@ private:
    core::system::ChildProcessTracker processTracker_;
 };
 
-// Returns true if rserver is shutting down because the automation host
-// rsession exited cleanly. See s_shuttingDownForAutomation in
-// ServerSessionManager.cpp for the full rationale.
-bool isShuttingDownForAutomation();
-
 // set a process config filter
 void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter);
 

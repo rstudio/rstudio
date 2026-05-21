@@ -15,7 +15,7 @@
 
 import { ChildProcess, execSync, spawn } from 'child_process';
 import { app, BrowserWindow } from 'electron';
-import fs, { existsSync, rmSync } from 'fs';
+import fs, { rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
 import { Err, safeError, success } from '../core/err';
@@ -37,7 +37,7 @@ import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, userLogPath } from './utils';
+import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { showWhatsNewWindow } from './whats-new-window';
@@ -403,20 +403,6 @@ export class SessionLauncher {
       return;
     }
 
-    // if this was an automation run then just quit
-    if (app.commandLine.hasSwitch('run-automation')) {
-      this.mainWindow?.quit();
-
-      const reportFile = app.commandLine.getSwitchValue('automation-report-file');
-      if (existsSync(reportFile)) {
-        console.log(`-- Automation results available at ${reportFile}.`);
-      } else {
-        console.log('-- An unexpected error occurred: no automation results are available.');
-      }
-
-      return;
-    }
-
     const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
 
     // if there was no pending quit set then this is a crash
@@ -646,37 +632,6 @@ export class SessionLauncher {
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {
         logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
-      }
-    }
-
-    // if we're running automation tests, set that up now
-    if (app.commandLine.hasSwitch('run-automation')) {
-      argList.push('--run-automation');
-
-      // forward 'automation-report-file' to session
-      let reportFile = app.commandLine.getSwitchValue('automation-report-file');
-      if (reportFile.length === 0) {
-        reportFile = path.join(process.cwd(), 'rstudio-automation-results.xml');
-        app.commandLine.appendSwitch('automation-report-file', reportFile);
-      }
-      argList.push(`--automation-report-file=${reportFile}`);
-
-      // forward filters, markers if specified
-      if (app.commandLine.hasSwitch('automation-filter')) {
-        const filter = app.commandLine.getSwitchValue('automation-filter');
-        setenv('RSTUDIO_AUTOMATION_FILTER', filter);
-      }
-
-      if (app.commandLine.hasSwitch('automation-markers')) {
-        const markers = app.commandLine.getSwitchValue('automation-markers');
-        setenv('RSTUDIO_AUTOMATION_MARKERS', markers);
-      }
-
-      // set up environment variables to help find automation tests
-      if (!app.isPackaged) {
-        const projectRoot = findRepoRoot();
-        setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
-        setenv('RSTUDIO_AUTOMATION_ARGS', process.cwd());
       }
     }
 

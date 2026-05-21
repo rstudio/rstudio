@@ -17,8 +17,7 @@ The user provides one or more targets:
 ## Hard Rules
 
 1. **Load skills first** — Always load `rstudio-create-playwright-tests` before doing any conversion work.
-2. **Check BRAT for ground truth** — Before writing assertions, check `rstudio/src/cpp/tests/automation/testthat/` for existing R-based tests that cover the same functionality. They contain expected values and test patterns.
-3. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
+2. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
 4. **Tests must work on Desktop and Server** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only patterns.
 5. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
 6. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
@@ -34,7 +33,6 @@ The user provides one or more targets:
 ### Step 2: Read reference materials
 
 - Load `rstudio-create-playwright-tests` skill
-- Check BRAT (`rstudio/src/cpp/tests/automation/testthat/`) for related R-based test automation
 - Check `rstudio-ide-automation/rstudio_server_pro/electron-tests/` for other Selenium/Selene electron tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-ide-automation/rstudio_server_pro/tests/` for Selenium/Selene server tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable

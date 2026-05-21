@@ -39,10 +39,6 @@
 #include "../ServerMetrics.hpp"
 #include "server-config.h"
 
-#include <atomic>
-#include <csignal>
-#include <sys/wait.h>
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -62,33 +58,6 @@ namespace server {
 namespace {
 
 static std::string s_launcherToken;
-
-// PID of the rsession launched as the automation host (the one we passed
-// --run-automation=1 to). When that process exits we raise SIGTERM on
-// ourselves so rserver completes its normal shutdown sequence rather
-// than blocking forever in waitForSignals(). Zero means "no host yet".
-static std::atomic<PidType> s_automationHostPid{0};
-
-// Anchor for the SIGTERM/143 invariant -- ServerMain.cpp and the kill()
-// site in onProcessExit() reference this declaration rather than
-// repeating the rationale, so the explanation stays in one place.
-//
-// Set just before we self-send SIGTERM in onProcessExit, but only when
-// the automation host rsession exited cleanly (status 0). The main
-// signal-wait loop checks isShuttingDownForAutomation() at the end of
-// its SIGTERM branch and std::exit(0)s instead of re-raising the signal
-// -- otherwise the process exits 143 (128 + SIGTERM), and external test
-// harnesses can't distinguish a clean automation completion from an
-// aborted run. If the host exited non-zero (crashed, failed to start,
-// or test framework reported failures), this stays false so we fall
-// through to the conventional re-raise path -- giving the harness a
-// non-zero exit it can detect.
-//
-// Intentionally one-shot: not reset after the SIGTERM fires, because
-// rserver exits right after that. If the lifecycle ever changes so
-// that rserver can re-host an automation session, this flag will need
-// to be cleared at the start of each run.
-static std::atomic<bool> s_shuttingDownForAutomation{false};
 
 void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
 {
@@ -256,55 +225,9 @@ core::system::ProcessConfig sessionProcessConfig(
    
    // Forward --automation-agent so the rsession exposes window.rstudioCallbacks
    // (the bridge that external drivers like the Playwright test suite use to
-   // invoke AppCommands). Independent of --run-automation -- the BRAT host
-   // launches its own agent via that flag, but external test runners just
-   // need the bridge.
+   // invoke AppCommands).
    if (server::options().automationAgent())
       args.push_back(std::make_pair("--" kAutomationAgentSessionOption, std::string("1")));
-
-   // if we're running automation, forward the flag
-   if (server::options().runAutomation())
-   {
-      // only trigger the automation run with the first rsession that's launched
-      static bool s_runAutomation = true;
-      args.push_back(std::make_pair("--run-automation", s_runAutomation ? "1" : "0"));
-      s_runAutomation = false;
-      
-      // make sure automation tests run with unique blank slate for prefs
-      std::string uniqueId = core::system::generateUuid();
-      FilePath rootPath = FilePath("/tmp/rstudio-automation").completePath(uniqueId);
-      Error error = rootPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-      
-      environment.push_back({ "RSTUDIO_CONFIG_HOME", rootPath.completeChildPath("config-home").getAbsolutePath() });
-      environment.push_back({ "RSTUDIO_CONFIG_DIR",  rootPath.completeChildPath("config-dir").getAbsolutePath()  });
-      environment.push_back({ "RSTUDIO_DATA_HOME",   rootPath.completeChildPath("data-home").getAbsolutePath()   });
-      
-      // forward project root, so development automation tests can be discovered
-      std::string projectRoot = core::system::getenv("RSTUDIO_PROJECT_ROOT");
-      if (!projectRoot.empty())
-         environment.push_back({ "RSTUDIO_AUTOMATION_ROOT", projectRoot });
-      
-      // Forward filter and markers if available. The CLI options take
-      // precedence; otherwise fall back to RSTUDIO_AUTOMATION_FILTER /
-      // RSTUDIO_AUTOMATION_MARKERS in rserver's own environment so a
-      // caller can scope a run via `RSTUDIO_AUTOMATION_FILTER=... \
-      // ./rserver-dev --run-automation` without having to plumb
-      // --automation-filter explicitly. The rsession environment is
-      // built from this list; nothing else propagates by inheritance.
-      std::string filter = server::options().automationFilter();
-      if (filter.empty())
-         filter = core::system::getenv("RSTUDIO_AUTOMATION_FILTER");
-      if (!filter.empty())
-         environment.push_back({ "RSTUDIO_AUTOMATION_FILTER", filter });
-
-      std::string markers = server::options().automationMarkers();
-      if (markers.empty())
-         markers = core::system::getenv("RSTUDIO_AUTOMATION_MARKERS");
-      if (!markers.empty())
-         environment.push_back({ "RSTUDIO_AUTOMATION_MARKERS", markers });
-   }
 
    // build the config object and return it
    core::system::ProcessConfig config;
@@ -314,42 +237,7 @@ core::system::ProcessConfig sessionProcessConfig(
    return config;
 }
 
-void onProcessExit(const std::string& username, PidType pid, int rawStatus)
-{
-   PidType automationHost = s_automationHostPid.load();
-   if (automationHost != 0 && pid == automationHost)
-   {
-      // Decode the raw waitpid status word so the log distinguishes a
-      // normal exit from a signal kill. A raw status of 0 unambiguously
-      // means exit(0); any other value is treated as a non-clean exit.
-      std::string detail;
-      if (WIFEXITED(rawStatus))
-         detail = "exited with code " + safe_convert::numberToString(WEXITSTATUS(rawStatus));
-      else if (WIFSIGNALED(rawStatus))
-         detail = "killed by signal " + safe_convert::numberToString(WTERMSIG(rawStatus));
-      else
-         detail = "exited (raw waitpid status " + safe_convert::numberToString(rawStatus) + ")";
-
-      LOG_INFO_MESSAGE(
-            "Automation host rsession (pid " +
-            safe_convert::numberToString(pid) +
-            ") " + detail +
-            "; signaling rserver shutdown.");
-      s_automationHostPid.store(0);
-      // Mark as a clean automation shutdown only when the host exited
-      // cleanly -- see the s_shuttingDownForAutomation declaration above
-      // for why this gates the std::exit(0) vs SIGTERM re-raise path.
-      s_shuttingDownForAutomation.store(rawStatus == 0);
-      ::kill(::getpid(), SIGTERM);
-   }
-}
-
 } // anonymous namespace
-
-bool isShuttingDownForAutomation()
-{
-   return s_shuttingDownForAutomation.load();
-}
 
 SessionManager& sessionManager()
 {
@@ -526,29 +414,8 @@ Error SessionManager::launchAndTrackSession(
                      " pid: " + safe_convert::numberToString(pid));
    metrics::sessionLaunch(metrics::kEditorRStudio);
 
-   // If this rsession was launched as the automation host (i.e., the
-   // first session under --run-automation, the one that was passed
-   // --run-automation=1 in createSessionLaunchProfile), remember its
-   // pid so onProcessExit can shut rserver down when it exits.
-   if (server::options().runAutomation())
-   {
-      for (const auto& arg : config.args)
-      {
-         if (arg.first == "--run-automation" && arg.second == "1")
-         {
-            s_automationHostPid.store(pid);
-            break;
-         }
-      }
-   }
-
-   // track it for subsequent reaping. _2 forwards the raw waitpid
-   // status from ChildProcessTracker so onProcessExit can distinguish
-   // a clean automation host exit from a failure.
-   processTracker_.addProcess(pid, boost::bind(onProcessExit,
-                                               profile.context.username,
-                                               pid,
-                                               _2));
+   // track it for subsequent reaping
+   processTracker_.addProcess(pid);
 
    // return success
    return Success();

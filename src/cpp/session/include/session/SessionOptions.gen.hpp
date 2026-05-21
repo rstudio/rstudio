@@ -69,15 +69,9 @@ protected:
    using namespace boost::program_options;
 
    pAutomation->add_options()
-      (kRunAutomationSessionOption,
-      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
-      "Run automation tests and exit.")
       (kAutomationAgentSessionOption,
       value<bool>(&isAutomationAgent_)->default_value(false)->implicit_value(true),
-      "Run RStudio as an automation agent.")
-      ("automation-report-file",
-      value<std::string>(&automationReportFile_)->default_value(std::string()),
-      "The file where automation test results should be written.");
+      "Run RStudio as an automation agent.");
 
    pTests->add_options()
       (kRunTestsSessionOption,
@@ -520,9 +514,7 @@ protected:
 }
 
 public:
-   bool runAutomation() const { return runAutomation_; }
    bool isAutomationAgent() const { return isAutomationAgent_; }
-   core::FilePath automationReportFile() const { return core::FilePath(automationReportFile_); }
    bool runTests() const { return runTests_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
@@ -656,9 +648,7 @@ public:
 
 
 protected:
-   bool runAutomation_;
    bool isAutomationAgent_;
-   std::string automationReportFile_;
    bool runTests_;
    std::string runScript_;
    bool verifyInstallation_;

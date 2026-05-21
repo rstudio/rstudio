@@ -62,10 +62,6 @@ public:
       {
          return wwwPort_;
       }
-      else if (runAutomation_)
-      {
-         return "8989";
-      }
       else if (secure)
       {
          return "443";
