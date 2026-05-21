@@ -88,9 +88,9 @@ test.describe('Editor', () => {
     await page.locator(REPLACE_INPUT).pressSequentially('.goodbye');
 
     // "Replace" replaces the current match and advances. With find-as-you-type
-    // the first match is already current after typing the search term, so the
-    // explicit Find Next click that BRAT does isn't needed here -- it would
-    // skip past the first match before any replacement happens.
+    // the first match is already current after typing the search term, so no
+    // explicit Find Next click is needed -- it would skip past the first match
+    // before any replacement happens.
     await page.locator(REPLACE_BUTTON).click();
     await page.locator(REPLACE_BUTTON).click();
     await sleep(TIMEOUTS.layoutSettle);
@@ -100,9 +100,6 @@ test.describe('Editor', () => {
     await page.locator(CLOSE_FIND_BAR).click();
     await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
 
-    // The BRAT reference test wrote content via writeLines (which adds a
-    // trailing newline); we write via fs.writeFileSync, so the final value
-    // mirrors the literal content without that newline.
     await expect.poll(() => editor.getValue()).toBe('.goodbye\n.goodbye\n.hello');
   });
 

@@ -49,8 +49,7 @@ test.describe('Rename in scope across Rmd chunks', () => {
     // other "variable" text in the rest of the suite).
     const editor = new AceEditor(page, '# These should all get selected.');
 
-    // BRAT positions the cursor at line 7, column 0 (the `variable <- 42`
-    // line). Ace's `gotoLine` is 1-based, so row 7 here matches.
+    // Position the cursor on the `variable <- 42` line. `gotoLine` is 1-based.
     await editor.gotoLine(7, 0);
     await sleep(200);
 

@@ -79,13 +79,10 @@ test.describe('Data Viewer', () => {
     await waitForViewer(dataViewer);
 
     // The SearchWidget on the data-editing toolbar exposes its <input> via a
-    // hidden <label> with text "Search data table" (the SearchWidget label).
-    // getByLabel reaches the right element regardless of the obfuscated GWT
-    // class names that BRAT's now-gone `.search` selector used to target.
+    // hidden <label> with text "Search data table". getByLabel reaches the
+    // right element regardless of the obfuscated GWT class names.
     const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
     await search.click();
-    // BRAT sent "K" + "<Space>"; the space isn't load-bearing for DataTables
-    // search and dropping it keeps the filter prefix simpler.
     await page.keyboard.type('K');
 
     // The filter is what reduces the list-column to a single viewerLink for

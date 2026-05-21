@@ -176,8 +176,8 @@ async function toggleTab(page: Page, quadrant: string, tab: string): Promise<voi
   await sleep(500);
 }
 
-// BRAT semantic: expected tabs are a subset of the dropdown text. RStudio Pro
-// adds extra tabs (e.g. "Databricks") that should not cause failures.
+// Expected tabs are a subset of the dropdown text -- RStudio Pro adds
+// extra tabs (e.g. "Databricks") that should not cause failures.
 async function verifyQuadrantTabs(page: Page, quadrant: string, expected: string[]): Promise<void> {
   const text = await getQuadrantDropdownText(page, quadrant);
   const actual = text.split(', ');

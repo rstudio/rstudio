@@ -26,7 +26,7 @@ async function suspendAndResume(page: Page): Promise<void> {
 }
 
 // Suspend/resume relies on the Server reconnection path. Desktop has no
-// equivalent flow, so these tests are tagged @server_only to match BRAT.
+// equivalent flow, so these tests are tagged @server_only.
 test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => {
   test('loaded packages are preserved on suspend + resume', async ({ rstudioPage: page }) => {
     await typeInConsole(page, 'library(tools)');

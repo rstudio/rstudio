@@ -313,7 +313,7 @@ test.describe.serial('Create Projects in New Directory', () => {
   }
 
   // Git-enabled new project: assumes git is installed on the test host so
-  // the VCS tab appears. Mirrors the BRAT regression coverage.
+  // the VCS tab appears.
   test('create new project with git enabled', async ({ rstudioPage: page }) => {
     const type = { ...NEW_PROJECT, name: 'git_enabled_test_project' };
     await createProjectInNewDir(page, type, { withGit: true });

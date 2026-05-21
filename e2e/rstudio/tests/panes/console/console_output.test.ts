@@ -229,7 +229,7 @@ test.describe('Console input AceEditorCommandDispatcher shortcuts', () => {
 
   test('Ctrl+Shift+M inserts the pipe and Alt+- inserts the assignment operator', async ({ rstudioPage: page }) => {
     // Focus the console input via the activateConsole command (same effect
-    // as the BRAT test's "Ctrl + 2").
+    // as the Ctrl+2 keyboard shortcut).
     await consoleActions.clearConsole();
     await executeCommand(page, 'activateConsole');
     await sleep(TIMEOUTS.layoutSettle);
