@@ -13,6 +13,8 @@
  *
  */
 
+// Throwaway: trigger completions-rule tests in PR CI (will revert)
+
 #include "SessionRCompletions.hpp"
 
 #include <gsl/gsl-lite.hpp>
