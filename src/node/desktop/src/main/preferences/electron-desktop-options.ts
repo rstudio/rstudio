@@ -117,8 +117,26 @@ export class DesktopOptionsImpl implements DesktopOptions {
     }
   }
 
+  // electron-store persists via write-temp + renameSync. That rename can race
+  // against external cleanup of the user-data-dir (e.g. Playwright sandbox
+  // teardown), surfacing as an ENOENT thrown synchronously out of config.set().
+  // Because every call here happens on the main process, an unhandled throw
+  // pops Electron's "JavaScript error in main process" modal. Settings are
+  // best-effort persistence -- the read path falls back to defaults if the
+  // value is missing -- so swallow the error and log instead.
+  private safeSet(key: string, value: any): void {
+    try {
+      this.config.set(key, value);
+    } catch (e: unknown) {
+      logger().logErrorAtLevel(
+        'debug',
+        `Failed to persist desktop option '${key}': ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  }
+
   public setProportionalFont(font?: string): void {
-    this.config.set(kProportionalFont, font ?? '');
+    this.safeSet(kProportionalFont, font ?? '');
   }
 
   public proportionalFont(): string {
@@ -126,7 +144,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setFixedWidthFont(fixedWidthFont: string): void {
-    this.config.set(kFixedWidthFont, fixedWidthFont);
+    this.safeSet(kFixedWidthFont, fixedWidthFont);
   }
 
   public fixedWidthFont(): string | undefined {
@@ -134,7 +152,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
     if (!fontName) {
       fontName = this.legacyOptions.fixedWidthFont() ?? '';
-      this.config.set(kFixedWidthFont, fontName);
+      this.safeSet(kFixedWidthFont, fontName);
     }
 
     return fontName;
@@ -146,7 +164,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (zoom < min || zoom > max) {
       throw new Error(`Invalid zoom level: Must be between ${min} and ${max}`);
     }
-    this.config.set(kZoomLevel, zoom);
+    this.safeSet(kZoomLevel, zoom);
   }
 
   public zoomLevel(): number {
@@ -159,14 +177,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
       if (zoomLevel < min || zoomLevel > max) {
         zoomLevel = properties.view.default.zoomLevel;
       }
-      this.config.set(kZoomLevel, zoomLevel);
+      this.safeSet(kZoomLevel, zoomLevel);
     }
 
     return zoomLevel;
   }
 
   public saveWindowBounds(bounds: WindowBounds): void {
-    this.config.set(kWindowBounds, bounds);
+    this.safeSet(kWindowBounds, bounds);
   }
 
   public windowBounds(): WindowBounds {
@@ -198,7 +216,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setAccessibility(accessibility: boolean): void {
-    this.config.set(kAccessibility, accessibility);
+    this.safeSet(kAccessibility, accessibility);
   }
 
   public accessibility(): boolean {
@@ -206,7 +224,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setEnableSplashScreen(enabled: boolean): void {
-    this.config.set(kEnableSplashScreen, enabled);
+    this.safeSet(kEnableSplashScreen, enabled);
   }
 
   public enableSplashScreen(): boolean {
@@ -214,7 +232,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setDisableRendererAccessibility(accessibility: boolean): void {
-    this.config.set(kDisableRendererAccessibility, accessibility);
+    this.safeSet(kDisableRendererAccessibility, accessibility);
   }
 
   public disableRendererAccessibility(): boolean {
@@ -222,7 +240,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setIgnoredUpdateVersions(ignoredUpdateVersions: string[]): void {
-    this.config.set(kIgnoredUpdateVersions, ignoredUpdateVersions);
+    this.safeSet(kIgnoredUpdateVersions, ignoredUpdateVersions);
   }
 
   public ignoredUpdateVersions(): string[] {
@@ -230,7 +248,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setRenderingEngine(renderingEngine: string): void {
-    this.config.set(kRendererEngine, renderingEngine);
+    this.safeSet(kRendererEngine, renderingEngine);
   }
 
   public renderingEngine(): string {
@@ -238,7 +256,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setUseGpuExclusionList(value: boolean) {
-    this.config.set(kRendererUseGpuExclusionList, value);
+    this.safeSet(kRendererUseGpuExclusionList, value);
   }
 
   public useGpuExclusionList(): boolean {
@@ -246,7 +264,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setUseGpuDriverBugWorkarounds(value: boolean) {
-    this.config.set(kRendererUseGpuDriverBugWorkarounds, value);
+    this.safeSet(kRendererUseGpuDriverBugWorkarounds, value);
   }
 
   public useGpuDriverBugWorkarounds(): boolean {
@@ -259,7 +277,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (!isAppleSilicon) {
       return;
     }
-    this.config.set(kCheckForRosetta, value);
+    this.safeSet(kCheckForRosetta, value);
   }
 
   // MacOS Apple Silicon-only option
@@ -294,7 +312,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setUseDefault32BitR(useDefault: boolean) {
-    this.config.set(kUseDefault32BitR, useDefault);
+    this.safeSet(kUseDefault32BitR, useDefault);
   }
 
   // Windows-only option
@@ -303,7 +321,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setUseDefault64BitR(useDefault: boolean) {
-    this.config.set(kUseDefault64BitR, useDefault);
+    this.safeSet(kUseDefault64BitR, useDefault);
   }
 
   // Windows-only option
@@ -312,7 +330,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return;
     }
 
-    this.config.set(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
+    this.safeSet(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
   }
 
   // Windows-only option
@@ -345,7 +363,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kPreferR64, peferR64);
+    this.safeSet(kPreferR64, peferR64);
   }
 
   // Windows-only option

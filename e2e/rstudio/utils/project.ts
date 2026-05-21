@@ -167,13 +167,22 @@ export async function waitForConsoleIdle(page: Page): Promise<void> {
  * triggers RStudio's "R session is currently busy. Are you sure you want to
  * quit?" confirmation dialog and hangs the test.
  *
+ * "Close project" is effectively a workbench rebuild -- the same Electron
+ * window swaps out the project-bound page for a fresh no-project page. So we
+ * wait not just for the console to come back, but for the new
+ * `window.rstudio` automation bridge to finish installing and any modal
+ * error from a too-early Files pane query ("Error navigating to ~") to have
+ * surfaced and been dismissed. Without this, the caller's next action can
+ * land while the new workbench is still mid-init.
+ *
  * No-op when no project is open (the toolbar label is "Project: (None)" or
  * the button isn't rendered).
  */
 export async function closeProjectIfOpen(page: Page): Promise<void> {
   const menu = page.locator(PROJECT_MENU);
   const label = (await menu.innerText().catch(() => '')).trim();
-  if (label.includes('(None)') || label === '') return;
+  if (label.includes('(None)') || label === '')
+    return;
 
   await menu.click();
   await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
@@ -183,4 +192,23 @@ export async function closeProjectIfOpen(page: Page): Promise<void> {
     timeout: TIMEOUTS.sessionRestart,
   });
   await waitForConsoleIdle(page);
+
+  // Wait for the new no-project session to finish installing its automation
+  // bridge AND report no active project. The bridge re-installs when the
+  // workbench rebuilds; `project.isActive()` returns false only once the new
+  // SessionInfo has propagated. Polling on both signals catches the case
+  // where the bridge is from the previous (project-bound) session.
+  await page.waitForFunction(
+    () => window.rstudio?.project?.isActive() === false,
+    null,
+    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
+  );
+
+  // Dismiss any modal error dialog that surfaced while the new workbench
+  // was initializing -- e.g. a Files-pane refresh racing the rsession's
+  // home-dir hand-off can show "Error navigating to ~". Click whatever
+  // OK button is on top; absence is fine.
+  const okButton = page.locator('button:has-text("OK")').first();
+  if (await okButton.isVisible({ timeout: 500 }).catch(() => false))
+    await okButton.click();
 }

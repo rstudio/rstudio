@@ -1,54 +1,97 @@
 import type { Page } from '@playwright/test';
 
-// `window.rstudioCallbacks` is registered when rsession runs with
-// `--automation-agent` (the Desktop fixture forwards that flag). The bridge
-// lets tests trigger and inspect AppCommands without typing through the
-// console -- avoiding the focus-shift and pane-collapse pitfalls that the
-// console path runs into.
+// `window.rstudio` is registered when rsession runs with --automation-agent
+// (the Desktop fixture forwards that flag). The bridge lets tests trigger and
+// inspect AppCommands, read/write preferences, and dispatch a few document
+// actions without going through the R console -- avoiding focus-shift and
+// pane-collapse pitfalls that the console path runs into.
+//
+// See ApplicationAutomation.java for the Java side. The shape is enumerated
+// up front: every command and every preference is registered at agent init,
+// so a missing-by-name lookup is a real "doesn't exist" (not just "not yet
+// touched by GWT code").
 
 type PrefValue = boolean | number | string;
 
-type RStudioCallbacks = {
-  commandExecute(id: string): void;
-  commandIsChecked(id: string): boolean;
-  commandIsEnabled(id: string): boolean;
-  commandList(): string[];
-  documentCloseAllNoSave(): void;
-  prefGet(name: string): PrefValue | null;
-  prefSet(name: string, value: PrefValue): void;
-  prefClear(name: string): void;
+type CommandEntry = {
+  (): void;
+  isChecked(): boolean;
+  isEnabled(): boolean;
+};
+
+type PrefEntry = {
+  get(): PrefValue | null;
+  set(value: PrefValue): void;
+  clear(): void;
+};
+
+type ProjectInfo = {
+  /** Active project file path (absolute), or null if no project is open. */
+  path(): string | null;
+  /** Active project display name, or null if no project is open. */
+  name(): string | null;
+  isActive(): boolean;
+};
+
+type RStudioBridge = {
+  commands: { [id: string]: CommandEntry } & { list: string[] };
+  prefs: { [name: string]: PrefEntry };
+  documents: { closeAllNoSave(): void };
+  project: ProjectInfo;
 };
 
 declare global {
   interface Window {
-    rstudioCallbacks?: RStudioCallbacks;
+    rstudio?: RStudioBridge;
   }
+}
+
+const MISSING_BRIDGE = 'window.rstudio is not defined; launch RStudio with --automation-agent';
+
+// Convert snake_case to camelCase. Preference names are snake_case in the
+// schema (matching rstudio-prefs.json), but the Java bridge registers them
+// camelCased to read better as JS object keys. Keeping the TS wrapper APIs
+// snake_case lets callers continue to use the canonical pref name.
+function snakeToCamel(s: string): string {
+  return s.replace(/_([a-z])/g, (_match, c: string) => c.toUpperCase());
 }
 
 /** Run an AppCommand by id (no console roundtrip). */
 export async function executeCommand(page: Page, commandId: string): Promise<void> {
   await page.evaluate((id) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    cb.commandExecute(id);
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const cmd = r.commands[id];
+    if (!cmd)
+      throw new Error(`Unknown command: ${id}`);
+    cmd();
   }, commandId);
 }
 
 /** True when the named AppCommand reports `isChecked` (e.g. an active layout zoom). */
 export async function isCommandChecked(page: Page, commandId: string): Promise<boolean> {
   return page.evaluate((id) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    return cb.commandIsChecked(id);
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const cmd = r.commands[id];
+    if (!cmd)
+      throw new Error(`Unknown command: ${id}`);
+    return cmd.isChecked();
   }, commandId);
 }
 
 /** True when the named AppCommand is currently enabled. */
 export async function isCommandEnabled(page: Page, commandId: string): Promise<boolean> {
   return page.evaluate((id) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    return cb.commandIsEnabled(id);
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const cmd = r.commands[id];
+    if (!cmd)
+      throw new Error(`Unknown command: ${id}`);
+    return cmd.isEnabled();
   }, commandId);
 }
 
@@ -59,9 +102,10 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
  */
 export async function documentCloseAllNoSave(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    cb.documentCloseAllNoSave();
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    r.documents.closeAllNoSave();
   });
 }
 
@@ -70,11 +114,14 @@ export async function documentCloseAllNoSave(page: Page): Promise<void> {
  * unknown.
  */
 export async function getPref(page: Page, name: string): Promise<PrefValue | null> {
+  const camel = snakeToCamel(name);
   return page.evaluate((prefName) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    return cb.prefGet(prefName);
-  }, name);
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const entry = r.prefs[prefName];
+    return entry ? entry.get() : null;
+  }, camel);
 }
 
 /**
@@ -85,11 +132,16 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
  * prefs, a string for string/enum prefs.
  */
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
+  const camel = snakeToCamel(name);
   await page.evaluate(({ prefName, prefValue }) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    cb.prefSet(prefName, prefValue);
-  }, { prefName: name, prefValue: value });
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const entry = r.prefs[prefName];
+    if (!entry)
+      throw new Error(`Unknown user preference: ${prefName}`);
+    entry.set(prefValue);
+  }, { prefName: camel, prefValue: value });
 }
 
 /**
@@ -97,9 +149,14 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
  * to `.rs.uiPrefs$<name>$clear()`.
  */
 export async function clearPref(page: Page, name: string): Promise<void> {
+  const camel = snakeToCamel(name);
   await page.evaluate((prefName) => {
-    const cb = window.rstudioCallbacks;
-    if (!cb) throw new Error('window.rstudioCallbacks is not defined; launch RStudio with --automation-agent');
-    cb.prefClear(prefName);
-  }, name);
+    const r = window.rstudio;
+    if (!r)
+      throw new Error(MISSING_BRIDGE);
+    const entry = r.prefs[prefName];
+    if (!entry)
+      throw new Error(`Unknown user preference: ${prefName}`);
+    entry.clear();
+  }, camel);
 }

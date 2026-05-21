@@ -123,7 +123,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     `--secure-cookie-key-file=${secureCookieKey}`,
     `--config-file=${rserverConf}`,
     // Forward --automation-agent to every rsession this server spawns so
-    // window.rstudioCallbacks is exposed to the Playwright command bridge in
+    // window.rstudio is exposed to the Playwright command bridge in
     // @utils/commands. Matches what desktop.fixture.ts does directly to its
     // single rsession.
     `--automation-agent=1`,

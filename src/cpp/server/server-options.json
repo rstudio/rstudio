@@ -27,7 +27,7 @@
             "defaultValue": false,
             "implicitValue": true,
             "isHidden": true,
-            "description": "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright)."
+            "description": "Forward --automation-agent to every spawned rsession so window.rstudio is exposed to external test drivers (e.g. Playwright)."
          }
       ],
       "verify": [
