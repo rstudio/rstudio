@@ -3,16 +3,18 @@
 
 Reads .github/pw-test-map.yml and a list of changed paths from stdin
 (one per line). Considers PR title overrides ([full-pw], [skip-pw]).
-Emits GITHUB_OUTPUT lines for `selector`, `skip`, and `full`.
+Prints `key=value` lines to stdout; the calling workflow tees stdout
+into `$GITHUB_OUTPUT` to set step outputs.
 
 Usage (inside a GitHub Actions step):
 
     git diff --name-only "origin/$GITHUB_BASE_REF...HEAD" \\
         | python3 .github/scripts/pw-pr-select.py \\
             --map .github/pw-test-map.yml \\
-            --title "$PR_TITLE"
+            --title "$PR_TITLE" \\
+        | tee -a "$GITHUB_OUTPUT"
 
-Outputs:
+Outputs (printed as `key=value` on stdout):
     selector  Space-separated Playwright test paths (empty when full=true).
     skip      "true" if the workflow should be skipped entirely.
     full      "true" if the full suite should run (selector is empty).
@@ -31,7 +33,6 @@ Selection logic (first match wins):
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import sys
 from pathlib import Path
@@ -107,12 +108,12 @@ def matches_any(path: str, compiled: list[re.Pattern[str]]) -> bool:
 
 
 def emit(name: str, value: str) -> None:
-    output_path = os.environ.get("GITHUB_OUTPUT")
-    line = f"{name}={value}"
-    if output_path:
-        with open(output_path, "a", encoding="utf-8") as fh:
-            fh.write(line + "\n")
-    print(line)
+    # Print key=value to stdout. The caller (GitHub Actions workflow)
+    # is responsible for routing stdout into $GITHUB_OUTPUT. Keeping
+    # the env-var read out of Python avoids a tainted-path warning
+    # from static analyzers and makes the script easier to test
+    # standalone.
+    print(f"{name}={value}")
 
 
 def list_field(d: dict, key: str) -> list:

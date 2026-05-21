@@ -47,7 +47,8 @@ jobs:
           git diff --name-only "origin/$BASE_REF...HEAD" | tee /dev/stderr \
             | python3 .github/scripts/pw-pr-select.py \
                 --map .github/pw-test-map.yml \
-                --title "$PR_TITLE"
+                --title "$PR_TITLE" \
+            | tee -a "$GITHUB_OUTPUT"
 
       - name: Write selection decision to step summary
         if: always()
