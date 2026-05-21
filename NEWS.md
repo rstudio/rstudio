@@ -5,6 +5,7 @@
 
 ### Fixed
 - ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
+- ([#17729](https://github.com/rstudio/rstudio/issues/17729)): Show distinct copy in the Posit Assistant chat pane and preferences install prompt when the recommended Posit Assistant version is older than the installed one.
 
 ### Dependencies
 - Ace 1.43.5

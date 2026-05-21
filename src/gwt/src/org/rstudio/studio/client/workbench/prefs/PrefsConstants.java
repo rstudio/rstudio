@@ -647,11 +647,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String restoreDefaultPaneAndTabLayoutMessage();
     String positAssistantInstallTitle();
     String positAssistantUpdateTitle();
+    String positAssistantDowngradeTitle();
     String positAssistantInstallMessage(String version);
     String positAssistantInstallMessageNoVersion();
     String positAssistantUpdateMessage(String version);
+    String positAssistantDowngradeMessage(String version);
     String positAssistantInstallButton();
     String positAssistantUpdateButton();
+    String positAssistantInstallVersionButton(String version);
     String positAssistantCancelButton();
     String positAssistantIncompatibleTitle();
     String positAssistantIncompatibleMessage();

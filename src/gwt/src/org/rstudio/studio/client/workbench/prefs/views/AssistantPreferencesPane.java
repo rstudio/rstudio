@@ -883,10 +883,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onUpdateAvailable(String currentVersion, String newVersion,
                                        boolean isInitialInstall, boolean isDowngrade)
          {
-            // isDowngrade is consumed by the chat pane prompt only; the preferences
-            // dialog keeps its existing wording for now (see issue #17729).
-            showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
-               previousAssistantValue, previousChatProviderValue);
+            showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
+               forAssistant, previousAssistantValue, previousChatProviderValue);
          }
 
          @Override
@@ -905,8 +903,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onUnsupportedVersionUpgradeRequired(
              String currentVersion, String newVersion)
          {
-            // Unsupported version with update available - treat as mandatory update
-            showInstallUpdatePrompt(newVersion, false, forAssistant,
+            // Unsupported version with update available - treat as mandatory update.
+            // A required upgrade from an unsupported version is never a downgrade.
+            showInstallUpdatePrompt(newVersion, false, false, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
 
@@ -953,7 +952,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
             // just selected Posit Assistant), offer to install without version info.
-            showInstallUpdatePrompt(null, true, forAssistant,
+            showInstallUpdatePrompt(null, true, false, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
       });
@@ -963,21 +962,34 @@ public class AssistantPreferencesPane extends PreferencesPane
     * Shows the install/update prompt dialog.
     */
    private void showInstallUpdatePrompt(String newVersion, boolean isInitialInstall,
+                                        boolean isDowngrade,
                                         boolean forAssistant,
                                         String previousAssistantValue,
                                         String previousChatProviderValue)
    {
-      String title = isInitialInstall ?
-         constants_.positAssistantInstallTitle() :
-         constants_.positAssistantUpdateTitle();
-      String message = isInitialInstall ?
-         (newVersion != null ?
+      String title;
+      String message;
+      String yesLabel;
+      if (isInitialInstall)
+      {
+         title = constants_.positAssistantInstallTitle();
+         message = (newVersion != null) ?
             constants_.positAssistantInstallMessage(newVersion) :
-            constants_.positAssistantInstallMessageNoVersion()) :
-         constants_.positAssistantUpdateMessage(newVersion);
-      String yesLabel = isInitialInstall ?
-         constants_.positAssistantInstallButton() :
-         constants_.positAssistantUpdateButton();
+            constants_.positAssistantInstallMessageNoVersion();
+         yesLabel = constants_.positAssistantInstallButton();
+      }
+      else if (isDowngrade)
+      {
+         title = constants_.positAssistantDowngradeTitle();
+         message = constants_.positAssistantDowngradeMessage(newVersion);
+         yesLabel = constants_.positAssistantInstallVersionButton(newVersion);
+      }
+      else
+      {
+         title = constants_.positAssistantUpdateTitle();
+         message = constants_.positAssistantUpdateMessage(newVersion);
+         yesLabel = constants_.positAssistantUpdateButton();
+      }
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
