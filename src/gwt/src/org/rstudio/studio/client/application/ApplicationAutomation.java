@@ -15,45 +15,65 @@
 package org.rstudio.studio.client.application;
 
 import java.util.Map;
-import java.util.Set;
 
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+/**
+ * Exposes a JS-facing automation surface at <code>window.rstudio</code> when
+ * rsession is launched with <code>--automation-agent</code>. The surface is
+ * read by external test drivers (Playwright tests under <code>e2e/rstudio</code>)
+ * to drive commands, read/write preferences, and dispatch a few document
+ * actions without going through the R console.
+ *
+ * <h2>Shape</h2>
+ *
+ * <pre>
+ *   window.rstudio.commands.&lt;commandId&gt;()           // execute
+ *   window.rstudio.commands.&lt;commandId&gt;.isChecked()
+ *   window.rstudio.commands.&lt;commandId&gt;.isEnabled()
+ *   window.rstudio.commands.list                       // string[] of all command ids
+ *
+ *   window.rstudio.prefs.&lt;camelCaseName&gt;.get()
+ *   window.rstudio.prefs.&lt;camelCaseName&gt;.set(value)
+ *   window.rstudio.prefs.&lt;camelCaseName&gt;.clear()
+ *
+ *   window.rstudio.documents.closeAllNoSave()
+ *
+ *   window.rstudio.project.path()       // active project file path, or null
+ *   window.rstudio.project.name()       // active project display name, or null
+ *   window.rstudio.project.isActive()   // boolean
+ * </pre>
+ *
+ * <h2>Why enumerate everything up front</h2>
+ *
+ * Commands and preferences are both populated lazily in their respective
+ * caches (Commands and Prefs.values_). If a caller looks up a pref that no
+ * GWT code has accessed yet, the lookup returns null and the old flat-callback
+ * bridge would silently no-op. Enumerating <code>commands_.getCommands()</code>
+ * and <code>userPrefs_.allPrefs()</code> at startup populates both caches so
+ * the bridge surface is complete from the first call.
+ */
 @Singleton
 public class ApplicationAutomation
 {
-   static interface NullaryCallback<R>
-   {
-      public R execute();
-   }
-
-   static interface UnaryCallback<R, T>
-   {
-      public R execute(T value);
-   }
-
-   static interface BinaryCallback<R, T1, T2>
-   {
-      public R execute(T1 value1, T2 value2);
-   }
-
    @Inject
    public ApplicationAutomation(Commands commands,
                                 EventBus eventBus,
+                                Session session,
                                 UserPrefs userPrefs)
    {
       commands_ = commands;
       eventBus_ = eventBus;
+      session_ = session;
       userPrefs_ = userPrefs;
    }
 
@@ -65,126 +85,111 @@ public class ApplicationAutomation
    public final void initializeAgent()
    {
       isAutomationAgent_ = true;
+      initializeRoot();
+      registerCommands();
+      registerPrefs();
+      registerDocuments();
+      registerProject();
+   }
 
-      initializeCallbacks();
-
-      exportCallback("commandExecute", new UnaryCallback<Void, String>()
+   private void registerCommands()
+   {
+      Map<String, AppCommand> commands = commands_.getCommands();
+      String[] commandIds = new String[commands.size()];
+      int i = 0;
+      for (Map.Entry<String, AppCommand> entry : commands.entrySet())
       {
-         @Override
-         public Void execute(String commandId)
-         {
-            AppCommand command = commands_.getCommandById(commandId);
-            command.execute();
-            return null;
-         }
-      });
+         String id = entry.getKey();
+         registerCommand(id, entry.getValue());
+         commandIds[i++] = id;
+      }
+      registerCommandList(commandIds);
+   }
 
-      exportCallback("commandList", new NullaryCallback<JsArrayString>()
+   private void registerPrefs()
+   {
+      // allPrefs() invokes each pref's factory method (defaultProjectLocation(),
+      // saveWorkspace(), ...), which constructs the PrefValue and registers it
+      // in Prefs.values_ as a side effect. Without this warm-up, prefs that
+      // haven't been accessed yet would be undiscoverable by name -- the bug
+      // tracked in #17724.
+      for (Prefs.PrefValue<?> pref : userPrefs_.allPrefs())
       {
-         @Override
-         public JsArrayString execute()
-         {
-            Map<String, AppCommand> allCommands = commands_.getCommands();
-            Set<String> commandIds = allCommands.keySet();
-            return JsUtil.toJsArrayString(commandIds);
-         }
-      });
+         registerPref(snakeToCamel(pref.getId()), pref);
+      }
+   }
 
-      exportCallback("commandIsChecked", new UnaryCallback<Boolean, String>()
-      {
-         @Override
-         public Boolean execute(String commandId)
-         {
-            AppCommand command = commands_.getCommandById(commandId);
-            return command.isChecked();
-         }
-      });
+   private void registerDocuments()
+   {
+      registerDocumentsObject();
+   }
 
-      exportCallback("commandIsEnabled", new UnaryCallback<Boolean, String>()
-      {
-         @Override
-         public Boolean execute(String commandId)
-         {
-            AppCommand command = commands_.getCommandById(commandId);
-            return command.isEnabled();
-         }
-      });
+   private void registerProject()
+   {
+      registerProjectObject();
+   }
 
-      // Close every open source document, discarding unsaved changes. The
-      // .rs.api.closeAllSourceBuffersWithoutSaving R API fires the same
-      // DocumentCloseAllNoSave client event via a server roundtrip; this
-      // callback lets tests skip that round trip so the R session isn't busy
-      // executing R code while the close runs (which would surface the
-      // "session is busy, are you sure?" confirmation dialog and hang).
-      exportCallback("documentCloseAllNoSave", new NullaryCallback<Void>()
+   /** Convert a snake_case identifier to camelCase. */
+   private static String snakeToCamel(String s)
+   {
+      StringBuilder sb = new StringBuilder(s.length());
+      boolean upperNext = false;
+      for (int i = 0; i < s.length(); i++)
       {
-         @Override
-         public Void execute()
+         char c = s.charAt(i);
+         if (c == '_')
          {
-            eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
-            return null;
+            upperNext = true;
          }
-      });
+         else if (upperNext)
+         {
+            sb.append(Character.toUpperCase(c));
+            upperNext = false;
+         }
+         else
+         {
+            sb.append(c);
+         }
+      }
+      return sb.toString();
+   }
 
-      // Read a user preference by name. Returns the live (project-then-user-
-      // then-default) value as a JS-marshalable Object: Boolean, String,
-      // Integer/Double, or null when the pref is unknown.
-      exportCallback("prefGet", new UnaryCallback<Object, String>()
-      {
-         @Override
-         public Object execute(String name)
-         {
-            Prefs.PrefValue<?> pref = userPrefs_.getPrefValue(name);
-            return pref == null ? null : pref.getValue();
-         }
-      });
+   // --- Helpers called from JSNI -------------------------------------------
+   //
+   // JSNI marshals JS primitives into Java boxed types: JS boolean ->
+   // java.lang.Boolean, JS number -> java.lang.Double, JS string ->
+   // java.lang.String. setPrefValue() dispatches by the pref's declared type,
+   // narrowing the Number for int prefs.
 
-      // Set a user preference and persist via the same RPC the Options dialog
-      // uses. Dispatches by the pref's declared type rather than the JS value's
-      // type so a JS number passed for a Boolean pref is a hard error, not a
-      // silent coercion.
-      exportCallback("prefSet", new BinaryCallback<Void, String, Object>()
-      {
-         @Override
-         public Void execute(String name, Object value)
-         {
-            setPref(name, value);
-            userPrefs_.writeUserPrefs();
-            return null;
-         }
-      });
+   private void executeCommand(AppCommand command)
+   {
+      command.execute();
+   }
 
-      // Remove a user-layer preference value, falling back to the default.
-      // Mirrors .rs.uiPrefs$<name>$clear().
-      exportCallback("prefClear", new UnaryCallback<Void, String>()
-      {
-         @Override
-         public Void execute(String name)
-         {
-            Prefs.PrefValue<?> pref = userPrefs_.getPrefValue(name);
-            if (pref == null)
-               throw new RuntimeException("Unknown user preference: " + name);
-            pref.removeGlobalValue(true);
-            userPrefs_.writeUserPrefs();
-            return null;
-         }
-      });
+   private boolean isCommandChecked(AppCommand command)
+   {
+      return command.isChecked();
+   }
+
+   private boolean isCommandEnabled(AppCommand command)
+   {
+      return command.isEnabled();
+   }
+
+   private Object getPrefValue(Prefs.PrefValue<?> pref)
+   {
+      return pref.getValue();
    }
 
    @SuppressWarnings("unchecked")
-   private void setPref(String name, Object value)
+   private void setPrefValue(Prefs.PrefValue<?> pref, Object value)
    {
-      Prefs.PrefValue<?> pref = userPrefs_.getPrefValue(name);
-      if (pref == null)
-         throw new RuntimeException("Unknown user preference: " + name);
-
       if (pref instanceof Prefs.BooleanValue)
       {
          ((Prefs.PrefValue<Boolean>) pref).setGlobalValue((Boolean) value);
       }
       else if (pref instanceof Prefs.IntValue)
       {
-         // JS numbers arrive as java.lang.Double; narrow before assigning.
          ((Prefs.PrefValue<Integer>) pref).setGlobalValue(((Number) value).intValue());
       }
       else if (pref instanceof Prefs.DoubleValue)
@@ -198,38 +203,110 @@ public class ApplicationAutomation
       else
       {
          throw new RuntimeException(
-            "Unsupported preference type for " + name + ": " + pref.getClass().getSimpleName());
+            "Unsupported preference type for " + pref.getId() + ": " + pref.getClass().getSimpleName());
       }
+      userPrefs_.writeUserPrefs();
    }
 
-   private native final void initializeCallbacks()
-   /*-{
-      $wnd.rstudioCallbacks = $wnd.rstudioCallbacks || {};
+   private void clearPrefValue(Prefs.PrefValue<?> pref)
+   {
+      pref.removeGlobalValue(true);
+      userPrefs_.writeUserPrefs();
+   }
+
+   private void dispatchCloseAllNoSave()
+   {
+      eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
+   }
+
+   // Always read through session_.getSessionInfo() rather than capturing a
+   // reference at install time -- a session restart (e.g. close-project)
+   // replaces the SessionInfo JSO, and we want callers to see the live state.
+   private String getActiveProjectPath()
+   {
+      return session_.getSessionInfo().getActiveProjectFile();
+   }
+
+   private String getActiveProjectName()
+   {
+      return session_.getSessionInfo().getActiveProjectName();
+   }
+
+   private boolean isProjectActive()
+   {
+      return getActiveProjectPath() != null;
+   }
+
+   // --- JSNI surface installation ------------------------------------------
+
+   private native final void initializeRoot() /*-{
+      $wnd.rstudio = $wnd.rstudio || {};
+      $wnd.rstudio.commands = $wnd.rstudio.commands || {};
+      $wnd.rstudio.prefs = $wnd.rstudio.prefs || {};
+      $wnd.rstudio.documents = $wnd.rstudio.documents || {};
    }-*/;
 
-   private native final <R> void exportCallback(String name, NullaryCallback<R> callback)
-   /*-{
-      $wnd.rstudioCallbacks[name] = $entry(function() {
-         return callback.@org.rstudio.studio.client.application.ApplicationAutomation.NullaryCallback::execute(*)();
+   private native final void registerCommand(String id, AppCommand command) /*-{
+      var self = this;
+      var fn = $entry(function() {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::executeCommand(*)(command);
+      });
+      fn.isChecked = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandChecked(*)(command);
+      });
+      fn.isEnabled = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandEnabled(*)(command);
+      });
+      $wnd.rstudio.commands[id] = fn;
+   }-*/;
+
+   private native final void registerCommandList(String[] ids) /*-{
+      var list = [];
+      for (var i = 0; i < ids.length; i++) {
+         list.push(ids[i]);
+      }
+      $wnd.rstudio.commands.list = list;
+   }-*/;
+
+   private native final void registerPref(String name, Prefs.PrefValue<?> pref) /*-{
+      var self = this;
+      $wnd.rstudio.prefs[name] = {
+         get: $entry(function() {
+            return self.@org.rstudio.studio.client.application.ApplicationAutomation::getPrefValue(*)(pref);
+         }),
+         set: $entry(function(value) {
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value);
+         }),
+         clear: $entry(function() {
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref);
+         })
+      };
+   }-*/;
+
+   private native final void registerDocumentsObject() /*-{
+      var self = this;
+      $wnd.rstudio.documents.closeAllNoSave = $entry(function() {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchCloseAllNoSave()();
       });
    }-*/;
 
-   private native final <R, T> void exportCallback(String name, UnaryCallback<R, T> callback)
-   /*-{
-      $wnd.rstudioCallbacks[name] = $entry(function(value) {
-         return callback.@org.rstudio.studio.client.application.ApplicationAutomation.UnaryCallback::execute(*)(value);
+   private native final void registerProjectObject() /*-{
+      var self = this;
+      $wnd.rstudio.project = $wnd.rstudio.project || {};
+      $wnd.rstudio.project.path = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveProjectPath()();
       });
-   }-*/;
-
-   private native final <R, T1, T2> void exportCallback(String name, BinaryCallback<R, T1, T2> callback)
-   /*-{
-      $wnd.rstudioCallbacks[name] = $entry(function(value1, value2) {
-         return callback.@org.rstudio.studio.client.application.ApplicationAutomation.BinaryCallback::execute(*)(value1, value2);
+      $wnd.rstudio.project.name = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveProjectName()();
+      });
+      $wnd.rstudio.project.isActive = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
       });
    }-*/;
 
    private final Commands commands_;
    private final EventBus eventBus_;
+   private final Session session_;
    private final UserPrefs userPrefs_;
    private boolean isAutomationAgent_ = false;
 }

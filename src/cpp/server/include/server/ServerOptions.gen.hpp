@@ -65,7 +65,7 @@ protected:
    pAutomation->add_options()
       ("automation-agent",
       value<bool>(&automationAgent_)->default_value(false)->implicit_value(true),
-      "Forward --automation-agent to every spawned rsession so window.rstudioCallbacks is exposed to external test drivers (e.g. Playwright).");
+      "Forward --automation-agent to every spawned rsession so window.rstudio is exposed to external test drivers (e.g. Playwright).");
 
    pVerify->add_options()
       ("verify-installation",

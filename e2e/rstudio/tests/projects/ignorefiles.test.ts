@@ -2,9 +2,10 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
 import { setPref } from '@utils/commands';
+import { closeProjectIfOpen, waitForConsoleIdle } from '@utils/project';
 import * as fs from 'fs';
 import type { Page } from 'playwright';
 
@@ -16,18 +17,6 @@ const PROJECT_NAME_INPUT = '#rstudio_new_project_directory_name';
 const GIT_CHECKBOX = '#rstudio_new_project_git_repo input';
 const CREATE_PROJECT_BTN = '#rstudio_label_create_project_wizard_confirm';
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
-const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
-
-async function waitForConsoleIdle(page: Page): Promise<void> {
-  await page.waitForFunction(
-    () => {
-      const el = document.getElementById('rstudio_console_input');
-      return !!el && !el.classList.contains('rstudio-console-busy');
-    },
-    null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
-  );
-}
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__IG_${Date.now()}__`;
@@ -41,20 +30,6 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
     if (match) return match[1].trim();
   }
   throw new Error(`captureResult: markers not found for "${rExpression}"`);
-}
-
-async function closeProjectIfOpen(page: Page): Promise<void> {
-  const hasProject = await captureResult(page, '!is.null(rstudioapi::getActiveProject())');
-  if (hasProject !== 'TRUE') return;
-
-  await page.locator(PROJECT_MENU).click();
-  await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
-  await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
-  await page.waitForSelector(CONSOLE_INPUT, {
-    state: 'visible',
-    timeout: TIMEOUTS.sessionRestart,
-  });
-  await waitForConsoleIdle(page);
 }
 
 test.describe('Project ignore files', () => {

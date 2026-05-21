@@ -210,9 +210,9 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
 
   // Start RStudio with remote debugging enabled. --automation-agent is
   // forwarded to rsession (see session-launcher.ts), which causes
-  // ApplicationAutomation to expose `window.rstudioCallbacks` -- the
-  // command-execution and command-state helpers our tests drive instead of
-  // typing commands through the console.
+  // ApplicationAutomation to expose `window.rstudio` -- the command,
+  // preference, and document helpers our tests drive instead of typing
+  // commands through the console.
   const rstudioArgs = [
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${tempConfig.electronUserData}`,
@@ -502,9 +502,16 @@ function getRStudioPids(): Set<number> {
 export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   const { page, browser, rstudioProcess } = session;
 
-  // Close all source files without prompting to save
-  await documentCloseAllNoSave(page);
-  await sleep(1000);
+  // Close all source files without prompting to save. If a test left the page
+  // in the middle of a navigation (e.g. opening a project triggers a session
+  // restart), `page.evaluate` will reject with "context was destroyed" --
+  // we don't care, we're shutting down anyway.
+  try {
+    await documentCloseAllNoSave(page);
+    await sleep(1000);
+  } catch {
+    // Page context may already be gone; we still force-kill below.
+  }
 
   try {
     await executeInConsole(page, 'q(save = "no")');

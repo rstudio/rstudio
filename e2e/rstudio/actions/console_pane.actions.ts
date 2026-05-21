@@ -124,7 +124,7 @@ export class ConsolePaneActions {
   }
 
   async closeAllBuffersWithoutSaving(): Promise<void> {
-    // Use the rstudioCallbacks bridge instead of typing `.rs.api.close...`
+    // Use the window.rstudio bridge instead of typing `.rs.api.close...`
     // into the console: the R session isn't busy while the close fires, so
     // RStudio's "session is busy" confirmation dialog can't intervene.
     await documentCloseAllNoSave(this.page);
