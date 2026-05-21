@@ -94,7 +94,11 @@ export async function executeInConsole(page: Page, command: string): Promise<voi
   if (await page.locator('#rstudio_popup_completions').isVisible()) {
     await page.keyboard.press('Escape');
   }
-  await page.keyboard.press('Enter');
+  // Press Enter on the console-input textarea explicitly. `page.keyboard.press`
+  // delivers to the focused element; relying on editor.focus() above is racy --
+  // focus can shift between the evaluate() returning and the key press, leaving
+  // the text in the buffer but never submitted.
+  await page.locator(CONSOLE_INPUT).press('Enter');
 }
 
 /**
@@ -129,7 +133,7 @@ export async function closeAllBuffersWithoutSaving(page: Page): Promise<void> {
 }
 
 export async function getEnvironmentVersions(page: Page): Promise<EnvironmentVersions> {
-  await typeInConsole(page, 'cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
+  await executeInConsole(page, 'cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
   await sleep(2000);
 
   const output = await page.locator(CONSOLE_OUTPUT).innerText();
