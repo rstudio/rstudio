@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "npx playwright test",
+    "test": "npm run test:desktop",
+    "test:desktop": "npx playwright test --project=desktop",
+    "test:desktop-dev": "cross-env PW_RSTUDIO_DEV=1 npx playwright test --project=desktop",
+    "test:server": "cross-env PW_RSERVER_BIN=/usr/lib/rstudio-server/bin/rserver PW_RSERVER_CONF=/etc/rstudio/rserver.conf npx playwright test --project=server",
+    "test:server-dev": "npx playwright test --project=server",
     "test:autocomplete": "npx playwright test autocomplete",
-    "test:dev": "cross-env PW_RSTUDIO_DEV=1 npx playwright test",
-    "test:server": "npx playwright test --project=server",
     "test:report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
   },

@@ -19,69 +19,75 @@ npm install
 npx playwright install
 ```
 
-## Desktop Mode (Default)
+## The Four Run Modes
 
-No flag needed -- `desktop` is the default project.
+Tests can run against four different RStudio targets. Each has a dedicated npm script.
+
+| Mode | Command | Platforms |
+|------|---------|-----------|
+| Installed desktop | `npm run test:desktop` | macOS, Linux, Windows |
+| Development desktop build | `npm run test:desktop-dev` | macOS, Linux, Windows |
+| Installed server | `npm run test:server` | Linux only |
+| Development server build | `npm run test:server-dev` | macOS, Linux (not Windows) |
+
+**Before running tests, always ask the user which of these four modes they want** (use `AskUserQuestion` if available; filter out modes that aren't supported on the host platform). The first three steps of the test protocol below cover this.
+
+You can append a specific test path or any Playwright flag after the script name:
 
 ```bash
-# All tests
-npx playwright test
-
 # Specific test file
-npx playwright test tests/path/to/test.test.ts
+npm run test:desktop -- tests/path/to/test.test.ts
 
-# With extra RStudio CLI args
-PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
+# Match by name
+npm run test:server-dev -- -g "test name here"
 
 # Pro edition
-PW_RSTUDIO_EDITION=pro npx playwright test
+PW_RSTUDIO_EDITION=pro npm run test:desktop
+
+# Extra RStudio CLI args (desktop modes only)
+PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npm run test:desktop
 ```
 
-- Connects to RStudio Desktop via CDP on port 9222
-- The fixture handles launching and shutting down RStudio Desktop automatically
-- `PW_RSTUDIO_EXTRA_ARGS` passes space-separated CLI flags to the RStudio process at launch
-- `PW_RSTUDIO_PREFS_OVERRIDE` points at a JSON/JSONC file whose keys override the suite-wide RStudio prefs (`fixtures/base-prefs.jsonc`) per-key
+### Installed desktop (`npm run test:desktop`)
 
-### Testing in-tree changes (dev build)
+Launches the installed RStudio Desktop at the OS-default path:
+- macOS: `/Applications/RStudio.app/Contents/MacOS/RStudio`
+- Linux: `/usr/bin/rstudio`
+- Windows: `C:\Program Files\RStudio\rstudio.exe`
 
-By default the desktop fixture launches the **installed** RStudio at the OS-default path (e.g. `/Applications/RStudio.app` on macOS). That binary won't reflect uncommitted edits to GWT/Java, C++ session code, or the Electron shell.
+Connects via CDP. The fixture handles launching and teardown automatically. The installed binary won't reflect uncommitted edits to GWT/Java, C++ session, or Electron code -- use the dev build for that.
 
-To exercise local changes, set `PW_RSTUDIO_DEV=1` -- the fixture then launches the in-tree dev build via `npm run start` (electron-forge) inside `src/node/desktop`:
+### Development desktop build (`npm run test:desktop-dev`)
 
-```bash
-# Run against the in-tree dev build with uncommitted changes
-PW_RSTUDIO_DEV=1 npx playwright test tests/path/to/test.test.ts
-```
+Sets `PW_RSTUDIO_DEV=1` and launches the in-tree dev build via `npm run start` (electron-forge) inside `src/node/desktop`, so the test sees your uncommitted changes.
 
-Prerequisites for `PW_RSTUDIO_DEV=1` (run from the **repo root**, not `e2e/rstudio`):
+Prerequisites (run from the **repo root**, not `e2e/rstudio`):
 
-1. C++ session built — `cmake --build build` (one-time, plus after C++ edits)
-2. GWT transpiled to JS — `(cd src/gwt && ant draft)` (re-run after Java edits; takes 2-5 min)
-3. Electron deps installed — `(cd src/node/desktop && npm ci)` (one-time)
+1. C++ session built -- `cmake --build build` (one-time, plus after C++ edits)
+2. GWT transpiled to JS -- `(cd src/gwt && ant draft)` (re-run after Java edits; takes 2-5 min)
+3. Electron deps installed -- `(cd src/node/desktop && npm ci)` (one-time)
 
 The first `npm run start` also runs a webpack compile (~2 min). The fixture extends its CDP-connect deadline to 3 minutes on this path. Subsequent starts are faster.
 
-Note: tests that exercise the `doRestart()` flow (e.g. uninstall Posit Assistant) aren't fully supported under `PW_RSTUDIO_DEV=1` because Electron's relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
+Note: tests that exercise the `doRestart()` flow (e.g. uninstall Posit Assistant) aren't fully supported in this mode because Electron's relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
 
-## Server Mode
+### Installed server (`npm run test:server`)
 
-### Default: in-tree `rserver-dev`
+**Linux only.** Spawns a private instance of the installed `rserver` binary at `/usr/lib/rstudio-server/bin/rserver` using `/etc/rstudio/rserver.conf`. The fixture still passes `--auth-none=1` and isolated dirs, so it doesn't collide with a systemd-managed instance.
 
-`--project=server` with no env vars spawns a private `rserver-dev` per worker, using the binary at `build/src/cpp/server/rserver` and the config at `build/src/cpp/conf/rserver-dev.conf`. The spawned server runs with `--auth-none`, so no credentials are needed.
+Prerequisite: `rstudio-server` package installed (e.g. via `.deb` / `.rpm`).
 
-```bash
-# All tests against in-tree rserver-dev
-npx playwright test --project=server
+If you instead want to connect to an already-running server (CI, remote VM, or a real systemd instance with auth enabled), see [Targeting an external server](#targeting-an-external-server) below.
 
-# Specific test file
-npx playwright test tests/path/to/test.test.ts --project=server
-```
+### Development server build (`npm run test:server-dev`)
+
+**Not on Windows.** Spawns a private `rserver-dev` per worker, using the binary at `build/src/cpp/server/rserver` and the config at `build/src/cpp/conf/rserver-dev.conf`. Runs with `--auth-none`, so no credentials are needed.
 
 Prerequisite: build the server first from the **repo root** with `cmake --build build`. Override the binary or config paths with `PW_RSERVER_BIN` / `PW_RSERVER_CONF` if you need to point at a different build.
 
-### Targeting an external server
+## Targeting an external server
 
-To skip the spawn and connect to an external server (CI, a remote VM, etc.), set `PW_RSTUDIO_SERVER_URL`. Credentials are needed only when the external server presents a login form.
+To skip the spawn and connect to an external server (CI, a remote VM, a real systemd `rstudio-server` instance, etc.), set `PW_RSTUDIO_SERVER_URL`. Credentials are needed only when the external server presents a login form.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -178,7 +184,10 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 ## Test Running Protocol
 
 Before executing:
-1. Say a variant of "Ready to test!" (vary the phrasing)
-2. Show the command
-3. Note if it's the same as a previous run or different — **in bold and italics**
-4. Wait for user approval before running
+1. **Pick a run mode.** Unless the user has already named one, ask which of the four they want (`test:desktop`, `test:desktop-dev`, `test:server`, `test:server-dev`). Filter out modes unsupported by the host platform (server modes off Windows; `test:server` off macOS). Use `AskUserQuestion` if available.
+2. Say a variant of "Ready to test!" (vary the phrasing)
+3. Show the command -- prefer the `npm run` form (e.g. `npm run test:desktop-dev -- tests/path/to/test.test.ts`) over raw `npx playwright test`.
+4. Note if it's the same as a previous run or different -- **in bold and italics**
+5. Wait for user approval before running
+
+After the first run in a conversation, don't ask for approval again to re-run the same file in the same mode -- just go. Switching modes or files warrants a fresh confirmation.
