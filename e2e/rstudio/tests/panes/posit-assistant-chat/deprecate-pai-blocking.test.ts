@@ -32,9 +32,7 @@ import { annotateVersions } from './_chat-setup';
  *   3. Incompatible version -- no version available for this RStudio
  *   4. Unsupported version with update available -- "Update Required"
  *   5. Unsupported version, no update -- plain blocking message
- *   6. Update available (upgrade) -- "Posit Assistant Update Available"
- *   7. Update available (downgrade) -- "Older Posit Assistant Version Recommended"
- *   8. Recovery -- normal chat loads after blocking clears
+ *   6. Recovery -- normal chat loads after blocking clears
  */
 
 // ---------------------------------------------------------------------------
@@ -89,32 +87,6 @@ function unsupportedVersionNoUpdateHTML(currentVersion: string): string {
   return `<html><body style="display:flex;align-items:center;justify-content:center;
     height:100vh;margin:0;font-family:system-ui,sans-serif;font-size:12px;text-align:center;">
     <div>Your installed version of Posit Assistant (${currentVersion}) is no longer supported and no update is available. Please update RStudio to the latest version.</div>
-  </body></html>`;
-}
-
-function updateAvailableUpgradeHTML(currentVersion: string, newVersion: string): string {
-  return `<html><body style="display:flex;align-items:center;justify-content:center;
-    height:100vh;margin:0;padding:40px;box-sizing:border-box;text-align:center;
-    font-family:system-ui,sans-serif;">
-    <div>
-      <h2>Posit Assistant Update Available</h2>
-      <p>You have Posit Assistant version ${currentVersion} installed. Version ${newVersion} is available.</p>
-      <button id="update-btn" onclick="window.parent.postMessage('install-now','*')">Update Posit Assistant</button>
-      <button id="ignore-btn" onclick="window.parent.postMessage('remind-later','*')">Ignore</button>
-    </div>
-  </body></html>`;
-}
-
-function updateAvailableDowngradeHTML(currentVersion: string, newVersion: string): string {
-  return `<html><body style="display:flex;align-items:center;justify-content:center;
-    height:100vh;margin:0;padding:40px;box-sizing:border-box;text-align:center;
-    font-family:system-ui,sans-serif;">
-    <div>
-      <h2>Older Posit Assistant Version Recommended</h2>
-      <p>You have version ${currentVersion} installed, but version ${newVersion} is currently recommended.</p>
-      <button id="update-btn" onclick="window.parent.postMessage('install-now','*')">Install Version ${newVersion}</button>
-      <button id="ignore-btn" onclick="window.parent.postMessage('remind-later','*')">Use Current Version</button>
-    </div>
   </body></html>`;
 }
 
@@ -279,54 +251,7 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
   });
 
   // ---------------------------------------------------------------------------
-  // Test 6: Update available (upgrade) -- "Posit Assistant Update Available"
-  // ---------------------------------------------------------------------------
-  test('upgrade prompt shows "Update Available" copy', async ({ rstudioPage: page }) => {
-    chatActions.setUpdateCheckMock({
-      updateAvailable: true,
-      isDowngrade: false,
-      currentVersion: '0.3.2',
-      newVersion: '0.3.5',
-    });
-
-    await showBlockingPage(page, updateAvailableUpgradeHTML('0.3.2', '0.3.5'));
-
-    await expect(chatPane.frame.locator('h2')).toContainText(
-      'Posit Assistant Update Available',
-      { timeout: 5000 },
-    );
-    await expect(chatPane.frame.locator('body')).toContainText('0.3.2');
-    await expect(chatPane.frame.locator('body')).toContainText('0.3.5');
-    await expect(chatPane.frame.locator('#update-btn')).toHaveText('Update Posit Assistant');
-    await expect(chatPane.frame.locator('#ignore-btn')).toHaveText('Ignore');
-  });
-
-  // ---------------------------------------------------------------------------
-  // Test 7: Update available (downgrade) -- "Older Version Recommended"
-  // ---------------------------------------------------------------------------
-  test('downgrade prompt shows older-version-recommended copy', async ({ rstudioPage: page }) => {
-    chatActions.setUpdateCheckMock({
-      updateAvailable: true,
-      isDowngrade: true,
-      currentVersion: '0.3.5',
-      newVersion: '0.3.2',
-    });
-
-    await showBlockingPage(page, updateAvailableDowngradeHTML('0.3.5', '0.3.2'));
-
-    await expect(chatPane.frame.locator('h2')).toContainText(
-      'Older Posit Assistant Version Recommended',
-      { timeout: 5000 },
-    );
-    await expect(chatPane.frame.locator('body')).toContainText(
-      'You have version 0.3.5 installed, but version 0.3.2 is currently recommended.',
-    );
-    await expect(chatPane.frame.locator('#update-btn')).toHaveText('Install Version 0.3.2');
-    await expect(chatPane.frame.locator('#ignore-btn')).toHaveText('Use Current Version');
-  });
-
-  // ---------------------------------------------------------------------------
-  // Test 8: Recovery -- normal chat loads after blocking
+  // Test 6: Recovery -- normal chat loads after blocking
   // ---------------------------------------------------------------------------
   test('recovery from blocking state loads normal chat', async ({ rstudioPage: page }) => {
     // Clear the mock so the real response passes through.

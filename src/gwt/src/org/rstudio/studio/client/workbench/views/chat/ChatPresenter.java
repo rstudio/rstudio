@@ -986,8 +986,12 @@ public class ChatPresenter extends BasePresenter
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
+            // The chat pane's "Update Required" page is shared between upgrade and
+            // downgrade variants. isDowngrade is accepted for signature consistency
+            // but not currently reflected in the chat pane copy; the preferences
+            // dialog (AssistantPreferencesPane) is where this distinction is shown.
             showInDisplayOrSatellite(
                display_.getUnsupportedVersionUpgradeHTML(
                   currentVersion, newVersion),

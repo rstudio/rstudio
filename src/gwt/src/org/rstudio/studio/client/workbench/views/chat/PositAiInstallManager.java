@@ -68,9 +68,12 @@ public class PositAiInstallManager
        *
        * @param currentVersion The currently installed (unsupported) version
        * @param newVersion The version to upgrade to
+       * @param isDowngrade True if the available version is older than the installed
+       *                    version (e.g. installed copy became unsupported via a protocol
+       *                    mismatch and the recommended package is older)
        */
       void onUnsupportedVersionUpgradeRequired(
-          String currentVersion, String newVersion);
+          String currentVersion, String newVersion, boolean isDowngrade);
 
       /**
        * Called when the installed version is unsupported and no upgrade is available.
@@ -188,6 +191,7 @@ public class PositAiInstallManager
             boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
+            boolean isDowngrade = result.getBoolean("isDowngrade");
 
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
@@ -198,7 +202,7 @@ public class PositAiInstallManager
                {
                   String newVersion = result.getString("newVersion");
                   callback.onUnsupportedVersionUpgradeRequired(
-                      currentVersion, newVersion);
+                      currentVersion, newVersion, isDowngrade);
                }
                else
                {
@@ -211,7 +215,6 @@ public class PositAiInstallManager
             {
                String currentVersion = result.getString("currentVersion");
                String newVersion = result.getString("newVersion");
-               boolean isDowngrade = result.getBoolean("isDowngrade");
                callback.onUpdateAvailable(currentVersion, newVersion,
                                           isInitialInstall, isDowngrade);
             }

@@ -901,11 +901,12 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
-            // Unsupported version with update available - treat as mandatory update.
-            // A required upgrade from an unsupported version is never a downgrade.
-            showInstallUpdatePrompt(newVersion, false, false, forAssistant,
+            // Unsupported version with a required install. Can still be a downgrade
+            // if the installed copy is unsupported (e.g. protocol mismatch) and the
+            // recommended package is older than what's installed.
+            showInstallUpdatePrompt(newVersion, false, isDowngrade, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
 
