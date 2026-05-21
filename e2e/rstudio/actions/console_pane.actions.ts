@@ -91,7 +91,11 @@ export class ConsolePaneActions {
     if (await this.page.locator('#rstudio_popup_completions').isVisible()) {
       await this.page.keyboard.press('Escape');
     }
-    await this.page.keyboard.press('Enter');
+    // Press Enter on the console-input textarea explicitly. `page.keyboard.press`
+    // delivers to the focused element; relying on editor.focus() above is racy --
+    // focus can shift between the evaluate() returning and the key press,
+    // leaving the text in the buffer but never submitted.
+    await this.consolePane.consoleInput.press('Enter');
   }
 
   /**
@@ -128,7 +132,7 @@ export class ConsolePaneActions {
   }
 
   async getEnvironmentVersions(): Promise<EnvironmentVersions> {
-    await this.typeInConsole('cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
+    await this.executeInConsole('cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
     await sleep(2000);
 
     const output = await this.consolePane.consoleOutput.innerText();
@@ -160,7 +164,7 @@ export class ConsolePaneActions {
     const marker = `__PKG_${Date.now()}__`;
 
     await this.clearConsole();
-    await this.typeInConsole(`cat("${marker}", requireNamespace("${pkg}", quietly = TRUE), "${marker}")`);
+    await this.executeInConsole(`cat("${marker}", requireNamespace("${pkg}", quietly = TRUE), "${marker}")`);
     await sleep(1000);
 
     const output = await this.consolePane.consoleOutput.innerText();
@@ -178,8 +182,8 @@ export class ConsolePaneActions {
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
     const { repos, type } = getInstallTarget();
-    await this.typeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
-    await this.typeInConsole(`cat("${doneMarker}")`);
+    await this.executeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
+    await this.executeInConsole(`cat("${doneMarker}")`);
 
 
     // Wait for the done marker to appear (indicates install finished)
@@ -198,7 +202,7 @@ export class ConsolePaneActions {
     // queued briefly before R gets to it.
     const verifyMarker = `__PKG_VERIFY_${Date.now()}__`;
     await this.clearConsole();
-    await this.typeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
+    await this.executeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
 
     const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
     const verifyDeadline = Date.now() + 15000;
@@ -251,13 +255,13 @@ export class ConsolePaneActions {
     await this.clearConsole();
     const doneMarker = `__UNINSTALL_DONE_${Date.now()}__`;
 
-    await this.typeInConsole(
+    await this.executeInConsole(
       `if ("${pkg}" %in% loadedNamespaces()) { try(detach(paste0("package:", "${pkg}"), character.only = TRUE, unload = TRUE), silent = TRUE); try(unloadNamespace("${pkg}"), silent = TRUE) }`,
     );
-    await this.typeInConsole(
+    await this.executeInConsole(
       `if ("${pkg}" %in% rownames(installed.packages())) remove.packages("${pkg}")`,
     );
-    await this.typeInConsole(`cat("${doneMarker}")`);
+    await this.executeInConsole(`cat("${doneMarker}")`);
 
     const startTime = Date.now();
     let doneMarkerSeen = false;
@@ -273,7 +277,7 @@ export class ConsolePaneActions {
 
     const verifyMarker = `__UNINSTALL_VERIFY_${Date.now()}__`;
     await this.clearConsole();
-    await this.typeInConsole(
+    await this.executeInConsole(
       `cat("${verifyMarker}", "${pkg}" %in% rownames(installed.packages()), "${verifyMarker}")`,
     );
 
