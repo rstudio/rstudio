@@ -3,21 +3,21 @@
  *
  * Companion to chat-guardrails.test.ts. That file drives the guardrails
  * via natural-language prompts to the Posit Assistant; here we call
- * .rs.chat.injectBindings() / .rs.chat.restoreBindings() directly from
- * the console so every sensitive read/write path can be covered
- * deterministically. The R-side mechanism is the same; this just
- * removes the assistant from the loop.
+ * .rs.chat.withGuardrails directly from the console so every sensitive
+ * read/write path can be covered deterministically. The R-side mechanism
+ * is the same; this just removes the assistant from the loop.
  *
  * Tests are grouped by category (read denials, read allows, write
  * denials, write allows, connection denials, error message structure,
  * system file denials, path traversal).
  *
- * Each test calls `.rs.test.guardrails(quote(<expr>))` -- a helper installed
- * in beforeAll that injects the guardrail bindings, evaluates the
- * expression, prints any error message, and finally cats a unique
- * "DONE" marker. The marker is computed at runtime so the JS poll
- * can distinguish R's output from the input echo of the very same
- * command. on.exit restores bindings even when the guarded call stop()s.
+ * Each test wraps `.rs.chat.withGuardrails(quote(<expr>))` in an inline
+ * tryCatch that prints a runtime-generated "DONE" marker. The marker is
+ * computed at runtime so the JS poll can distinguish R's output from the
+ * input echo of the very same command. We inline the whole thing instead
+ * of installing a helper in beforeAll because the install can race with
+ * R startup -- and a missed install would surface as
+ * `could not find function ".rs.test.guardrails"` on the first test.
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -27,30 +27,28 @@ import { createAndOpenProject } from '@utils/project';
 
 const PROJECT_NAME = 'guardrail_paths_project';
 
-// The helper definition installs `.rs.test.guardrails` in the global
-// env. The marker is generated at runtime (proc.time() + sample.int),
-// so the JS-side regex never matches the input echo of the call --
-// only the cat() output that runs after the guarded expression
-// completes.
-const GUARDRAILS_HELPER_DEF =
-  `.rs.test.guardrails <- function(expr) { ` +
-    `on.exit(.rs.chat.restoreBindings(), add = TRUE); ` +
-    `.rs.chat.injectBindings(); ` +
+// Build the R one-liner that runs `rCode` under the chat guardrails. The
+// marker is generated at runtime (proc.time() + sample.int) so the
+// JS-side regex never matches the input echo of the call -- only the
+// cat() output that runs after the guarded expression completes.
+function buildGuardrailsCall(rCode: string): string {
+  return `local({ ` +
     `m <- paste0("__GUARDRAILS_", proc.time()[3], "_", sample.int(1e9, 1L), "__"); ` +
     `tryCatch({ ` +
-      `eval(expr, envir = parent.frame()); ` +
+      `.rs.chat.withGuardrails(quote(${rCode})); ` +
       `cat("__OK__", m, "\\n") ` +
     `}, error = function(e) { ` +
       `cat(conditionMessage(e), "\\n"); ` +
       `cat("__ERR__", m, "\\n") ` +
     `}) ` +
-  `}`;
+  `})`;
+}
 
 // Matches the runtime-generated marker (proc.time() seconds.fraction +
-// integer). Used to poll for "R is done with the helper call".
+// integer). Used to poll for "R is done with the guarded call".
 const GUARDRAILS_MARKER_RE = /__GUARDRAILS_[\d.]+_\d+__/;
 
-// Whether the helper's tryCatch caught an error (i.e., the guarded call
+// Whether the inline tryCatch caught an error (i.e., the guarded call
 // stop()ed). Sentinel is printed by the error branch.
 const GUARDRAILS_ERR_RE = /__ERR__\s+__GUARDRAILS_[\d.]+_\d+__/;
 
@@ -70,9 +68,6 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
 
     // The session restart invalidates the previous actions wrapper.
     consoleActions = new ConsolePaneActions(page);
-
-    // Install the .rs.test.guardrails helper once for the suite.
-    await consoleActions.executeInConsole(GUARDRAILS_HELPER_DEF);
     await consoleActions.clearConsole();
   });
 
@@ -89,7 +84,7 @@ test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial']
     const consoleOutput = consoleActions.page.locator('#rstudio_console_output');
     const segments = [
       opts.pre,
-      `.rs.test.guardrails(quote(${rCode}))`,
+      buildGuardrailsCall(rCode),
       opts.post,
     ].filter(Boolean) as string[];
     await consoleActions.clearConsole();

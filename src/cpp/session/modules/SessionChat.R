@@ -794,6 +794,26 @@
 })
 
 
+# Run an expression with the chat guardrail bindings active, restoring the
+# originals on exit (even if `expr` errors). Errors propagate to the caller;
+# this is the building block for safeEval (which swallows them) and for
+# Playwright tests that want to drive each path deterministically without
+# installing a per-suite test helper that races with R startup.
+.rs.addFunction("chat.withGuardrails", function(expr, envir = parent.frame())
+{
+   on.exit({
+      tryCatch(
+         .rs.chat.restoreBindings(),
+         error = function(e) {
+            warning("failed to restore bindings: ", conditionMessage(e))
+         }
+      )
+   }, add = TRUE)
+   .rs.chat.injectBindings()
+   eval(expr, envir = envir)
+})
+
+
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
