@@ -10,6 +10,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { executeCommand } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
@@ -28,9 +29,7 @@ async function consoleSpanTexts(page: Page): Promise<string[]> {
 
 async function readConsoleInput(page: Page): Promise<string> {
   return page.evaluate(() => {
-    const el = document.getElementById('rstudio_console_input') as
-      | (HTMLElement & { env?: { editor?: { getValue(): string } } })
-      | null;
+    const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
     return el?.env?.editor?.getValue() ?? '';
   });
 }

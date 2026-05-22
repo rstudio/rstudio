@@ -2,6 +2,7 @@ import type { Page, Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { sleep } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { AceEditorElement } from '../utils/ace';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -43,9 +44,7 @@ export class ConsolePane extends PageObject {
 
   async consoleInputValue(): Promise<string> {
     return this.page.evaluate(() => {
-      const el = document.getElementById('rstudio_console_input') as
-        | (HTMLElement & { env?: { editor?: { getValue(): string } } })
-        | null;
+      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
       return el?.env?.editor?.getValue() ?? '';
     });
   }
@@ -80,11 +79,7 @@ export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 export async function executeInConsole(page: Page, command: string): Promise<void> {
   await page.locator(CONSOLE_TAB).click();
   await page.evaluate((text) => {
-    const el = document.getElementById('rstudio_console_input') as
-      | (HTMLElement & {
-          env?: { editor?: { setValue(s: string, cursorPos?: number): void; focus(): void } };
-        })
-      | null;
+    const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
     const editor = el?.env?.editor;
     if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
     editor.setValue(text, 1); // 1 = move cursor to end

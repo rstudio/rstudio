@@ -1,15 +1,6 @@
 import type { Page } from 'playwright';
 import { PageObject } from './page_object_base_classes';
-
-export interface AcePosition {
-  row: number;
-  column: number;
-}
-
-export interface AceRange {
-  start: AcePosition;
-  end: AcePosition;
-}
+import { Ace, AceEditorElement } from '../utils/ace';
 
 export interface AceToken {
   type: string;
@@ -22,7 +13,7 @@ export interface AceToken {
 }
 
 export interface AceMarker {
-  range: AceRange | null;
+  range: Ace.Range | null;
   type: string;
   clazz: string;
 }
@@ -48,7 +39,7 @@ export class AceEditor extends PageObject {
    * structured-clone serializable.
    */
   private async runOnEditor<TArgs extends unknown[], TResult>(
-    fn: (editor: unknown, ...args: TArgs) => TResult,
+    fn: (editor: Ace.Editor, ...args: TArgs) => TResult,
     ...args: TArgs
   ): Promise<TResult> {
     return this.page.evaluate(
@@ -56,11 +47,11 @@ export class AceEditor extends PageObject {
         const editors = document.querySelectorAll('.ace_editor');
         for (let i = 0; i < editors.length; i++) {
           if (editors[i].closest('#rstudio_console_input')) continue;
-          const env = (editors[i] as unknown as { env?: { editor?: { getValue(): string } } }).env;
+          const env = (editors[i] as unknown as AceEditorElement).env;
           if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
             // Reconstruct the function passed by the test from its source.
             // Input is trusted: it comes from our own .toString() in the caller.
-            const op = (0, eval)('(' + fnSource + ')') as (editor: unknown, ...args: unknown[]) => unknown;
+            const op = (0, eval)('(' + fnSource + ')') as (editor: Ace.Editor, ...args: unknown[]) => unknown;
             return op(env.editor, ...args);
           }
         }
@@ -71,28 +62,24 @@ export class AceEditor extends PageObject {
   }
 
   async getValue(): Promise<string> {
-    return this.runOnEditor((editor) => (editor as { getValue(): string }).getValue());
+    return this.runOnEditor((editor) => editor.getValue());
   }
 
   async gotoLine(line: number, column = 0): Promise<void> {
     await this.runOnEditor(
-      (editor, l: number, c: number) => (editor as { gotoLine(l: number, c: number): void }).gotoLine(l, c),
+      (editor, l: number, c: number) => editor.gotoLine(l, c),
       line, column
     );
   }
 
   /** Returns "start", "end", or "" depending on whether the row has a fold widget. */
   async getFoldWidget(row: number): Promise<string> {
-    return this.runOnEditor(
-      (editor, r: number) => (editor as { session: { getFoldWidget(r: number): string } }).session.getFoldWidget(r),
-      row
-    );
+    return this.runOnEditor((editor, r: number) => editor.session.getFoldWidget(r), row);
   }
 
-  async getFoldWidgetRange(row: number): Promise<AceRange | null> {
+  async getFoldWidgetRange(row: number): Promise<Ace.Range | null> {
     return this.runOnEditor((editor, r: number) => {
-      const range = (editor as { session: { getFoldWidgetRange(r: number): AceRange | null } })
-        .session.getFoldWidgetRange(r);
+      const range = editor.session.getFoldWidgetRange(r);
       if (!range) return null;
       return {
         start: { row: range.start.row, column: range.start.column },
@@ -103,23 +90,19 @@ export class AceEditor extends PageObject {
 
   /** Returns the raw text of `row` (0-indexed), excluding the trailing newline. */
   async getLine(row: number): Promise<string> {
-    return this.runOnEditor(
-      (editor, r: number) => (editor as { session: { getLine(r: number): string } }).session.getLine(r),
-      row
-    );
+    return this.runOnEditor((editor, r: number) => editor.session.getLine(r), row);
   }
 
   async getTokens(row: number): Promise<AceToken[]> {
     return this.runOnEditor(
-      (editor, r: number) => (editor as { session: { getTokens(r: number): AceToken[] } }).session.getTokens(r),
+      (editor, r: number) => editor.session.getTokens(r) as AceToken[],
       row
     );
   }
 
   async getTokenAt(row: number, column: number): Promise<AceToken | null> {
     return this.runOnEditor(
-      (editor, r: number, c: number) =>
-        (editor as { session: { getTokenAt(r: number, c: number): AceToken | null } }).session.getTokenAt(r, c),
+      (editor, r: number, c: number) => editor.session.getTokenAt(r, c) as AceToken | null,
       row, column
     );
   }
@@ -127,8 +110,7 @@ export class AceEditor extends PageObject {
   /** Returns all Ace markers on the session, normalized to plain objects. */
   async getMarkers(): Promise<AceMarker[]> {
     return this.runOnEditor((editor) => {
-      const session = (editor as { session: { getMarkers(): Record<string, AceMarker> } }).session;
-      const markers = session.getMarkers();
+      const markers = editor.session.getMarkers() as Record<string, AceMarker>;
       return Object.values(markers).map((m) => ({
         range: m.range
           ? {
@@ -143,10 +125,7 @@ export class AceEditor extends PageObject {
   }
 
   async getState(row: number): Promise<string> {
-    return this.runOnEditor(
-      (editor, r: number) => (editor as { session: { getState(r: number): string } }).session.getState(r),
-      row
-    );
+    return this.runOnEditor((editor, r: number) => editor.session.getState(r), row);
   }
 
   /**
@@ -154,10 +133,9 @@ export class AceEditor extends PageObject {
    * objects. Useful for verifying commands like renameInScope, which place a
    * cursor on every matching occurrence.
    */
-  async getSelectionRanges(): Promise<AceRange[]> {
+  async getSelectionRanges(): Promise<Ace.Range[]> {
     return this.runOnEditor((editor) => {
-      const ranges = (editor as { selection: { rangeList: { ranges: AceRange[] } } })
-        .selection.rangeList.ranges;
+      const ranges = editor.selection.rangeList.ranges;
       return ranges.map((r) => ({
         start: { row: r.start.row, column: r.start.column },
         end: { row: r.end.row, column: r.end.column },
@@ -165,19 +143,16 @@ export class AceEditor extends PageObject {
     });
   }
 
-  async getCursorPosition(): Promise<AcePosition> {
+  async getCursorPosition(): Promise<Ace.Position> {
     return this.runOnEditor((editor) => {
-      const pos = (editor as { getCursorPosition(): AcePosition }).getCursorPosition();
+      const pos = editor.getCursorPosition();
       return { row: pos.row, column: pos.column };
     });
   }
 
   /** Equivalent to Ace's editor.find(needle): selects the first match and scrolls to it. */
   async find(needle: string): Promise<void> {
-    await this.runOnEditor(
-      (editor, n: string) => (editor as { find(n: string): void }).find(n),
-      needle
-    );
+    await this.runOnEditor((editor, n: string) => editor.find(n), needle);
   }
 
   /**
@@ -185,19 +160,16 @@ export class AceEditor extends PageObject {
    * Useful when typed-key delivery is hard to time (e.g. right after a save).
    */
   async insert(text: string): Promise<void> {
-    await this.runOnEditor(
-      (editor, t: string) => (editor as { insert(t: string): void }).insert(t),
-      text
-    );
+    await this.runOnEditor((editor, t: string) => editor.insert(t), text);
   }
 
   /** Move cursor to the end of the current line (Ace's editor.navigateLineEnd). */
   async navigateLineEnd(): Promise<void> {
-    await this.runOnEditor((editor) => (editor as { navigateLineEnd(): void }).navigateLineEnd());
+    await this.runOnEditor((editor) => editor.navigateLineEnd());
   }
 
   /** Move focus to the editor textarea so subsequent page.keyboard input routes here. */
   async focus(): Promise<void> {
-    await this.runOnEditor((editor) => (editor as { focus(): void }).focus());
+    await this.runOnEditor((editor) => editor.focus());
   }
 }
