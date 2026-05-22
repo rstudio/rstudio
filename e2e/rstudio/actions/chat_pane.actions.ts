@@ -89,7 +89,13 @@ export class ChatPaneActions {
 
   async openChatPane(): Promise<void> {
     await executeCommand(this.page, 'activateChat');
-    await sleep(2000);
+    // Wait for the chat iframe to be present rather than blind-sleeping.
+    // The iframe element appears as soon as the pane is activated, even
+    // before its contents have loaded -- which is what dismissSetupPrompts
+    // and other callers actually need to begin polling for their own
+    // signals (install button, chatRoot, etc.).
+    await expect(this.page.locator("iframe[title='Posit Assistant']"))
+      .toBeVisible({ timeout: 15000 });
   }
 
   async dismissSetupPrompts(): Promise<void> {
@@ -119,7 +125,6 @@ export class ChatPaneActions {
       const trustBtn = this.chatPane.frame.locator("button:has-text('Trust'), button:has-text('trust')");
       await trustBtn.first().click({ timeout: 1500 });
       console.log('Dismissed directory trust prompt');
-      await sleep(1000);
     } catch {
       // No trust prompt
     }
@@ -128,10 +133,10 @@ export class ChatPaneActions {
 
   async clickAllowOnceIfPresent(): Promise<void> {
     try {
-      await sleep(1000);
+      // click() already polls for actionability within its own timeout, so
+      // there's no need to pre-sleep waiting for the dialog to appear.
       await this.chatPane.allowBtn.click({ timeout: 3000 });
       console.log('Clicked "Allow" permission button');
-      await sleep(1000);
     } catch {
       // No permission dialog
     }
@@ -140,17 +145,15 @@ export class ChatPaneActions {
   async allowExecuteCodeForSession(): Promise<void> {
     // Wait for the Allow dialog to appear (dropdown trigger next to Allow button)
     await expect(this.chatPane.allowDropdownTrigger).toBeVisible({ timeout: 60000 });
-    await sleep(500);
 
-    // Click the chevron to open the dropdown menu
+    // Click the chevron to open the dropdown menu; the toBeVisible below
+    // polls for the menu item, replacing a blind post-click sleep.
     await this.chatPane.allowDropdownTrigger.click();
-    await sleep(500);
 
     // Click "Allow for this session"
     await expect(this.chatPane.allowForSessionItem).toBeVisible({ timeout: 5000 });
     await this.chatPane.allowForSessionItem.click();
     console.log('Granted "Allow for this session" permission');
-    await sleep(1000);
   }
 
   /**
@@ -203,11 +206,9 @@ export class ChatPaneActions {
     await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 15000 });
     await expect(this.chatPane.chatTextarea).toBeEnabled({ timeout: 15000 });
     await this.chatPane.chatTextarea.fill(text);
-    await sleep(200);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();
-    await sleep(1000);
   }
 
   async waitForResponse(initialCount: number, timeout: number = 60000): Promise<number> {
@@ -260,16 +261,14 @@ export class ChatPaneActions {
   async getPositAssistantVersion(): Promise<string> {
     try {
       await this.chatPane.moreBtn.click({ timeout: 5000 });
-      await sleep(500);
-
+      // .first().click() polls for the menu item, replacing the
+      // previous post-click sleep.
       await this.chatPane.aboutItem.first().click();
-      await sleep(1000);
 
       await this.chatPane.dialogOverlay.waitFor({ state: 'visible', timeout: 5000 });
       const dialogText = await this.chatPane.dialogOverlay.innerText();
 
       await this.page.keyboard.press('Escape');
-      await sleep(500);
 
       const versionMatch = dialogText.match(/(\d+\.\d+\.\d+)/);
       return versionMatch?.[1] ?? 'unknown';
@@ -284,7 +283,9 @@ export class ChatPaneActions {
       return; // Already in a fresh conversation
     }
     await this.chatPane.newConversationBtn.click({ timeout: 10000 });
-    await sleep(2000);
+    // Poll for the conversation to reset (message list emptied) instead
+    // of blind-sleeping after the click.
+    await expect.poll(() => this.chatPane.getMessageCount(), { timeout: 10000 }).toBe(0);
   }
 
   /**
@@ -292,17 +293,18 @@ export class ChatPaneActions {
    * @param name The new name for the conversation
    */
   async renameConversation(name: string): Promise<void> {
-    // Open history panel to access conversation list
+    // Open history panel to access conversation list. toggleConversationHistory
+    // polls for the list to appear, so no post-call sleep is needed here.
     await this.toggleConversationHistory();
-    await sleep(1000);
 
-    // Get the first (current/active) conversation item
+    // Get the first (current/active) conversation item. Each toBeVisible
+    // below polls, replacing what used to be a chain of blind sleeps
+    // between hover, click, menu-item click, and input fill.
     const activeConvItem = this.chatPane.conversationList.first();
     await expect(activeConvItem).toBeVisible({ timeout: 5000 });
 
     // Hover over the conversation item to reveal the menu button
     await activeConvItem.hover();
-    await sleep(500);
 
     // Look for the menu button (three dots) within the conversation item
     const menuBtn = activeConvItem.locator('button, [role="button"]').first();
@@ -310,13 +312,11 @@ export class ChatPaneActions {
     // force: true because GWT console DOM elements report overlapping coordinates
     // even though the panes are visually separate
     await menuBtn.click({ force: true });
-    await sleep(300);
 
     // Click the Rename option from the context menu
     const renameItem = this.chatPane.getRenameMenuItem();
     await expect(renameItem).toBeVisible({ timeout: 5000 });
     await renameItem.click();
-    await sleep(300);
 
     // The input field should now be visible and editable
     const nameInput = this.chatPane.getConversationNameInput();
@@ -326,17 +326,16 @@ export class ChatPaneActions {
     // Clear the current name and type the new name
     await nameInput.clear();
     await nameInput.fill(name);
-    await sleep(200);
 
     // Press Enter to confirm the rename
     await nameInput.press('Enter');
-    await sleep(500);
 
     console.log(`Renamed conversation to "${name}"`);
   }
 
   async toggleConversationHistory(): Promise<void> {
     await this.chatPane.historyBtn.click({ timeout: 10000 });
-    await sleep(1000);
+    // Poll for the conversation list panel to appear (replaces post-click sleep).
+    await expect(this.chatPane.conversationList.first()).toBeVisible({ timeout: 10000 });
   }
 }

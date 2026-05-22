@@ -1,6 +1,11 @@
 import type { Page } from 'playwright';
 import * as fs from 'fs';
-import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
+import {
+  ConsolePane,
+  waitForConsoleIdle,
+  type EnvironmentVersions,
+  type ExecuteInConsoleOptions,
+} from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
@@ -94,7 +99,7 @@ export class ConsolePaneActions {
     );
   }
 
-  async executeInConsole(command: string): Promise<void> {
+  async executeInConsole(command: string, opts: ExecuteInConsoleOptions = {}): Promise<void> {
     // Focus the console via the activateConsole command rather than
     // clicking the console tab. The tab-click path was clicking the
     // same element repeatedly across executeInConsole + clearConsole
@@ -117,6 +122,9 @@ export class ConsolePaneActions {
     // focus can shift between the evaluate() returning and the key press,
     // leaving the text in the buffer but never submitted.
     await this.consolePane.consoleInput.press('Enter');
+    if (opts.wait) {
+      await waitForConsoleIdle(this.page, opts.timeout);
+    }
   }
 
   /**

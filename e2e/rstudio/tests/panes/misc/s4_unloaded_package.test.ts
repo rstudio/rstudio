@@ -17,7 +17,14 @@
 import { test as base, expect } from '@playwright/test';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
-import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import {
+  executeInConsole,
+  clearConsole,
+  ensurePackageInstalled,
+  waitForConsoleIdle,
+  CONSOLE_INPUT,
+  CONSOLE_OUTPUT,
+} from '@pages/console_pane.page';
 import { YES_BTN } from '@pages/modals.page';
 import { executeCommand, setPref } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -28,8 +35,7 @@ const OBJ_NAME = 's4_test_object';
 async function captureResult(page: Page, rExpr: string): Promise<string> {
   const marker = `__S4_${Date.now()}__`;
   await clearConsole(page);
-  await executeInConsole(page, `cat("${marker}", ${rExpr}, "${marker}")`);
-  await sleep(2000);
+  await executeInConsole(page, `cat("${marker}", ${rExpr}, "${marker}")`, { wait: true });
 
   const output = await page.locator(CONSOLE_OUTPUT).innerText();
   const match = output.match(new RegExp(`${marker}\\s+([\\s\\S]*?)\\s+${marker}`));
@@ -42,45 +48,39 @@ async function captureResult(page: Page, rExpr: string): Promise<string> {
  * Also creates plain objects as controls for the Environment pane.
  */
 async function setupWorkspace(page: Page): Promise<void> {
-  // Install DBI (binary, fast -- only dependency is methods which is always loaded)
-  await executeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
-  await sleep(15000);
+  // Install DBI if not already present (binary, fast -- only dep is methods,
+  // which is always loaded). ensurePackageInstalled skips the download when
+  // DBI was left behind by a prior run.
+  await ensurePackageInstalled(page, 'DBI');
 
   // Create an S4 object from DBI
-  await executeInConsole(page, 'library(DBI)');
-  await sleep(1000);
-  await executeInConsole(page, `${OBJ_NAME} <- DBI::SQL("SELECT 1")`);
-  await sleep(500);
+  await executeInConsole(page, 'library(DBI)', { wait: true });
+  await executeInConsole(page, `${OBJ_NAME} <- DBI::SQL("SELECT 1")`, { wait: true });
 
   // Plain objects as controls
-  await executeInConsole(page, 'x <- 1');
-  await sleep(500);
-  await executeInConsole(page, 'y <- 22');
-  await sleep(500);
-  await executeInConsole(page, `z <- "I'll so offend, to make offense a skill"`);
-  await sleep(500);
+  await executeInConsole(page, 'x <- 1', { wait: true });
+  await executeInConsole(page, 'y <- 22', { wait: true });
+  await executeInConsole(page, `z <- "I'll so offend, to make offense a skill"`, { wait: true });
 
-  // Enable workspace persistence
+  // Enable workspace persistence (setPref is a JS-side bridge call -- no R round-trip)
   await setPref(page, 'save_workspace', 'always');
-  await sleep(500);
   await setPref(page, 'load_workspace', true);
-  await sleep(500);
 
   // Save workspace
-  await executeInConsole(page, 'save.image()');
-  await sleep(1000);
+  await executeInConsole(page, 'save.image()', { wait: true });
 
-  // Remove DBI so it won't be loadable after restart.
-  // This may trigger a "loaded packages" dialog -- click Yes if it appears.
+  // Remove DBI so it won't be loadable after restart. This may trigger a
+  // "loaded packages" dialog -- click Yes if it appears. Can't pass
+  // { wait: true } here: if the dialog blocks R, the busy class would never
+  // clear. Fire-and-forget, click the dialog if present, then wait for idle.
   await executeInConsole(page, 'remove.packages("DBI")');
-  await sleep(1000);
   try {
     await page.locator(YES_BTN).click({ timeout: 3000 });
     console.log('Clicked Yes on loaded-packages dialog');
   } catch {
     // No dialog appeared
   }
-  await sleep(3000);
+  await waitForConsoleIdle(page);
 
   // Verify removal succeeded by checking the disk (not requireNamespace, which
   // returns TRUE for already-loaded namespaces even after the files are deleted)
@@ -90,15 +90,16 @@ async function setupWorkspace(page: Page): Promise<void> {
 
 /** Remove test objects, delete .RData, restore preferences, reinstall DBI. */
 async function cleanup(page: Page): Promise<void> {
-  await executeInConsole(page, `suppressWarnings(rm("${OBJ_NAME}", "x", "y", "z", envir = .GlobalEnv))`);
-  await sleep(500);
-  await executeInConsole(page, 'unlink(".RData")');
-  await sleep(500);
+  await executeInConsole(
+    page,
+    `suppressWarnings(rm("${OBJ_NAME}", "x", "y", "z", envir = .GlobalEnv))`,
+    { wait: true },
+  );
+  await executeInConsole(page, 'unlink(".RData")', { wait: true });
   await setPref(page, 'save_workspace', 'never');
-  await sleep(500);
-  // Reinstall DBI so we leave things as we found them
-  await executeInConsole(page, 'install.packages("DBI", repos = "https://cran.r-project.org")');
-  await sleep(15000);
+  // Reinstall DBI so we leave things as we found them. The test just removed
+  // it, so ensurePackageInstalled will see the gap and do a real install.
+  await ensurePackageInstalled(page, 'DBI');
 }
 
 /** Verify the session survived and the S4 object is handled safely. */
@@ -106,8 +107,7 @@ async function verifySessionSurvived(page: Page): Promise<void> {
   // Session is alive
   const aliveMarker = `__ALIVE_${Date.now()}__`;
   await clearConsole(page);
-  await executeInConsole(page, `cat("${aliveMarker}")`);
-  await sleep(2000);
+  await executeInConsole(page, `cat("${aliveMarker}")`, { wait: true });
   const output = await page.locator(CONSOLE_OUTPUT).innerText();
   expect(output).toContain(aliveMarker);
 
@@ -135,13 +135,12 @@ async function verifySessionSurvived(page: Page): Promise<void> {
 /** Check that the Environment pane renders the "not loaded" label. */
 async function verifyEnvironmentPane(page: Page): Promise<void> {
   await executeCommand(page, 'activateEnvironment');
-  await sleep(1000);
   await executeCommand(page, 'refreshEnvironment');
-  await sleep(3000);
 
   const envPanel = page.locator('#rstudio_workbench_panel_environment');
 
-  // Control objects should be visible (confirms the pane is populated)
+  // Control objects should be visible (confirms the pane is populated).
+  // The toContainText polls so we don't need to sleep after refreshEnvironment.
   await expect(envPanel).toContainText('22', { timeout: 10000 });
 
   // S4 object should show the "not loaded" description
@@ -161,11 +160,14 @@ base.describe.serial('S4 unloaded package -- R session restart (#17353)', { tag:
 
     await setupWorkspace(page);
 
-    // Restart R session
+    // Restart R session. The 5s lead-in is a guard against restartR being
+    // dispatched before the prior commands have fully drained -- waitForConsoleIdle
+    // can otherwise see a momentarily-idle busy class. Replace later once the
+    // restartR command has a confirmable post-condition.
     await executeCommand(page, 'restartR');
     await sleep(5000);
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
-    await sleep(2000);
+    await waitForConsoleIdle(page);
 
     await verifySessionSurvived(page);
   });
@@ -197,7 +199,7 @@ base.describe.serial('S4 unloaded package -- RStudio restart (#17353)', { tag: [
     console.log('Relaunching RStudio...');
     session = await launchRStudio();
     page = session.page;
-    await sleep(2000);
+    await waitForConsoleIdle(page);
 
     await verifySessionSurvived(page);
   });

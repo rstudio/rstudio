@@ -28,10 +28,12 @@ export class SourcePaneActions {
    * plain `writeLines("...", ...)` template; that gotcha is gone.
    */
   async createAndOpenFile(fileName: string, fileContent: string): Promise<void> {
+    // wait: true ensures the writeLines completes before file.edit() reads
+    // the file we just wrote (polls the busy class, no blind sleep).
     await this.consolePaneActions.executeInConsole(
       `writeLines(${rStringLiteral(fileContent)}, ${rStringLiteral(fileName)})`,
+      { wait: true },
     );
-    await sleep(1000);
 
     await this.consolePaneActions.executeInConsole(`file.edit(${rStringLiteral(fileName)})`);
 
@@ -42,27 +44,27 @@ export class SourcePaneActions {
     await executeCommand(this.page, 'saveAllSourceDocs');
     await sleep(1000);
     await executeCommand(this.page, 'closeAllSourceDocs');
-    await sleep(1000);
 
+    // Wait for the source pane to be fully empty -- both no editor mounted
+    // and no tab strip entry. The tab-strip check (selectedTab.count == 0)
+    // is the stronger signal: an immediately-following file.edit can race
+    // GWT's close cleanup and end up not opening the new tab if we only
+    // wait on aceTextInput.
     await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
-    await sleep(500);
+    await expect(this.sourcePane.selectedTab).toHaveCount(0, { timeout: 5000 }).catch(() => {});
 
-    await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`);
-    await sleep(500);
+    await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`, { wait: true });
   }
 
   async sendText(text: string): Promise<void> {
     await this.sourcePane.contentPane.click();
-    await sleep(300);
     await this.page.keyboard.type(text);
-    await sleep(300);
   }
 
   async acceptNesRename(): Promise<string> {
     const { nesApply, ghostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
 
     await expect(nesApply.or(ghostText).or(nesInsertionPreview).or(nesGutter).first()).toBeVisible({ timeout: TIMEOUTS.nesApply });
-    await sleep(2000);
 
     if (await nesApply.first().isVisible()) {
       const nesSuggestion = nesSuggestionContent.first();
@@ -72,45 +74,37 @@ export class SourcePaneActions {
       console.log('  NES Apply suggestion (text): ' + nesSuggestionText);
       console.log('  NES Apply suggestion (html): ' + nesSuggestionHtml);
       await nesApply.first().click();
-      await sleep(2000);
       return 'apply';
     } else if (await nesInsertionPreview.first().isVisible()) {
       const insertionText = await nesInsertionPreview.first().textContent();
       const count = await nesInsertionPreview.count();
       console.log(`  NES inline diff: "${insertionText}" (${count} suggestion(s) visible)`);
       await this.page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
       return 'inline-diff';
     } else if (await ghostText.first().isVisible()) {
       const ghostTextParts = await ghostText.allTextContents();
       console.log('  NES ghost text: "' + ghostTextParts.join('') + '"');
       await this.page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
       return 'ghost-text';
     } else {
       console.log('  NES gutter icon detected — clicking to reveal suggestion...');
       await nesGutter.first().click();
-      await sleep(2000);
 
       try {
         await expect(nesApply.or(ghostText).or(nesInsertionPreview).first()).toBeVisible({ timeout: 15000 });
-        await sleep(2000);
 
         if (await nesApply.first().isVisible()) {
           const nesSuggestionText = await nesSuggestionContent.first().textContent();
           console.log('  NES Apply suggestion (after gutter click): ' + nesSuggestionText);
           await nesApply.first().click();
-          await sleep(2000);
         } else if (await nesInsertionPreview.first().isVisible()) {
           const insertionText = await nesInsertionPreview.first().textContent();
           console.log('  NES inline diff (after gutter click): "' + insertionText + '"');
           await this.page.keyboard.press('ControlOrMeta+;');
-          await sleep(2000);
         } else {
           const ghostParts = await ghostText.allTextContents();
           console.log('  NES ghost text (after gutter click): "' + ghostParts.join('') + '"');
           await this.page.keyboard.press('ControlOrMeta+;');
-          await sleep(2000);
         }
         return 'gutter-clicked';
       } catch {
@@ -123,19 +117,15 @@ export class SourcePaneActions {
   /** Move cursor to end of document (cross-platform). */
   async goToEnd(): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     const goToEnd = process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End';
     await this.page.keyboard.press(goToEnd);
-    await sleep(300);
   }
 
   /** Move cursor to top of document (cross-platform). */
   async goToTop(): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     const goToTop = process.platform === 'darwin' ? 'Meta+ArrowUp' : 'Control+Home';
     await this.page.keyboard.press(goToTop);
-    await sleep(300);
   }
 
   /**
@@ -157,7 +147,6 @@ export class SourcePaneActions {
    */
   async navigateToChunkByLabel(label: string): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     await this.page.evaluate((lbl) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
@@ -174,7 +163,6 @@ export class SourcePaneActions {
         }
       }
     }, label);
-    await sleep(300);
   }
 
   /**
