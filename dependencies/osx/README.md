@@ -56,6 +56,14 @@ Additional dependencies can be satisfied by running the following script:
 Note that this script includes download, extraction, and compilation of
 boost so can take some time to complete.
 
+To skip specific Homebrew formulae -- for example, when R is already
+installed from the CRAN `.pkg` -- set `RSTUDIO_SKIP_FORMULAS` to a
+space-separated list of formula names before running the script:
+
+```bash
+RSTUDIO_SKIP_FORMULAS="r" ./install-dependencies-osx
+```
+
 Building the RStudio Distribution
 =============================================================================
 
