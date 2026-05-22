@@ -79,6 +79,14 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `rmarkdown_warn_${Date.now()}.Rmd`;
+    // Sentinel printed as the last line of the chunk so the test can
+    // wait for "chunk finished" before checking the global warn value
+    // in a *separate* console execution. The cat is independent of the
+    // chunk so warn=2 persisting across the chunk boundary is the
+    // assertion being tested. executeCurrentChunk dispatches via a
+    // different path than executeInConsole, so without an explicit wait
+    // a following console command can land before the chunk completes.
+    const sentinel = `__CHUNK_DONE_${Date.now()}__`;
     const content = [
       '---',
       'title: Chunk Warnings',
@@ -89,6 +97,7 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
       'getOption("warn")',
       '# setting a global option',
       'options(warn = 2)',
+      `cat("${sentinel}\\n")`,
       '```',
     ].join('\n');
 
@@ -101,12 +110,18 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
     await sourceActions.createAndOpenFile(fileName, content);
 
-    // Fire the chunk, then immediately queue the cat -- R processes its
-    // input queue in order, so the `WARN_AFTER=2` line will only appear
-    // after `options(warn = 2)` has run. No separate chunk-finish wait
-    // needed; the assertion implicitly serializes.
+    // Clear before running the chunk so the sentinel wait below cannot
+    // match against the writeLines echo from createAndOpenFile (which
+    // contains the sentinel string verbatim as part of the chunk body).
+    // Use the consoleClear command rather than clearConsole() so we keep
+    // source-pane focus -- navigateToChunkByLabel below clicks into the
+    // source editor, which fails if focus has shifted to the console.
+    await executeCommand(page, 'consoleClear');
+
     await sourceActions.navigateToChunkByLabel('warning_chunk');
     await executeCommand(page, 'executeCurrentChunk');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText(sentinel, { timeout: 30000 });
+
     await consoleActions.executeInConsole('cat("WARN_AFTER=", getOption("warn"), "\\n", sep = "")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('WARN_AFTER=2', { timeout: 30000 });
 
