@@ -45,13 +45,8 @@ export class SourcePaneActions {
     await sleep(1000);
     await executeCommand(this.page, 'closeAllSourceDocs');
 
-    // Wait for the source pane to be fully empty -- both no editor mounted
-    // and no tab strip entry. The tab-strip check (selectedTab.count == 0)
-    // is the stronger signal: an immediately-following file.edit can race
-    // GWT's close cleanup and end up not opening the new tab if we only
-    // wait on aceTextInput.
+    // Wait for the editor to detach before unlinking the file.
     await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
-    await expect(this.sourcePane.selectedTab).toHaveCount(0, { timeout: 5000 }).catch(() => {});
 
     await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`, { wait: true });
   }
