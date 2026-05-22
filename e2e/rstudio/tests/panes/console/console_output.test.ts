@@ -14,6 +14,7 @@ import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { executeCommand } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
+import { heredoc } from '@utils/heredoc';
 
 const CONSOLE_OUTPUT = '#rstudio_console_output';
 
@@ -194,15 +195,14 @@ test.describe('Error output after caught try()', () => {
   });
 
   test('output after a caught error is not dropped', async ({ rstudioPage: page }) => {
-    const contents = [
-      'foo <- function() {',
-      '  writeLines("Some output.")',
-      '  try(stop("try(silent = FALSE)"), silent = FALSE)',
-      '  writeLines("Some more output.")',
-      '  stop("Error.")',
-      '}',
-      '',
-    ].join('\n');
+    const contents = heredoc`
+      foo <- function() {
+        writeLines("Some output.")
+        try(stop("try(silent = FALSE)"), silent = FALSE)
+        writeLines("Some more output.")
+        stop("Error.")
+      }
+    ` + '\n';
     await writeAndOpenFile(page, sandbox.dir, FILE, contents);
 
     await executeCommand(page, 'sourceActiveDocument');

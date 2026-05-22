@@ -5,6 +5,7 @@ import { EnvironmentPane } from '@pages/environment_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS, sleep } from '@utils/constants';
 import { executeCommand } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
 
 const sandbox = useSuiteSandbox();
 
@@ -82,11 +83,11 @@ test.describe('R debugger', () => {
       // function. setTopLevelBreakpoint sets STATE_ACTIVE immediately, no
       // function lookup. Sourcing the file fires it on the breakpoint line.
       const fileName = `bp_toplevel_${Date.now()}.R`;
-      const content = [
-        'x <- 1',
-        'y <- 22',
-        'z <- x + y',
-      ].join('\n');
+      const content = heredoc`
+        x <- 1
+        y <- 22
+        z <- x + y
+      `;
 
       await writeAndOpen(fileName, content);
 
@@ -104,14 +105,14 @@ test.describe('R debugger', () => {
     test('single gutter breakpoint highlights correct row', async () => {
       // Regression coverage for rstudio/rstudio#15072.
       const fileName = `bp_brace_${Date.now()}.R`;
-      const content = [
-        'brace_fn <- function() {',
-        '   1 + 1',
-        '   {',
-        '      2 + 2',
-        '   }',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        brace_fn <- function() {
+           1 + 1
+           {
+              2 + 2
+           }
+        }
+      `;
 
       await writeAndOpen(fileName, content);
 
@@ -142,13 +143,13 @@ test.describe('R debugger', () => {
 
     test('Shift+F9 toggles a breakpoint at the cursor', async () => {
       const fileName = `bp_toggle_${Date.now()}.R`;
-      const content = [
-        'toggle_fn <- function() {',
-        '   a <- 1',
-        '   b <- 2',
-        '   a + b',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        toggle_fn <- function() {
+           a <- 1
+           b <- 2
+           a + b
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       // Source so the toggled breakpoint becomes ACTIVE rather than INACTIVE.
@@ -191,14 +192,14 @@ test.describe('R debugger', () => {
 
     test('Step Next advances to the following line', async () => {
       const fileName = `step_next_${Date.now()}.R`;
-      const content = [
-        'step_next_fn <- function() {',
-        '   a <- 1',
-        '   b <- 2',
-        '   c <- 3',
-        '   a + b + c',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        step_next_fn <- function() {
+           a <- 1
+           b <- 2
+           c <- 3
+           a + b + c
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -219,14 +220,14 @@ test.describe('R debugger', () => {
 
     test('Step Into descends into a nested function call', async () => {
       const fileName = `step_into_${Date.now()}.R`;
-      const content = [
-        'inner <- function() {',
-        '   1 + 1',
-        '}',
-        'outer <- function() {',
-        '   inner()',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        inner <- function() {
+           1 + 1
+        }
+        outer <- function() {
+           inner()
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -262,14 +263,14 @@ test.describe('R debugger', () => {
 
     test('Finish executes the remainder of the current function', async () => {
       const fileName = `step_finish_${Date.now()}.R`;
-      const content = [
-        'step_finish_fn <- function() {',
-        '   a <- 1',
-        '   a + 1',
-        '   a + 2',
-        '   a + 3',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        step_finish_fn <- function() {
+           a <- 1
+           a + 1
+           a + 2
+           a + 3
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -288,15 +289,15 @@ test.describe('R debugger', () => {
       // Continue-stepping coverage for rstudio/rstudio#15201 without the
       // package-build setup.
       const fileName = `step_continue_${Date.now()}.R`;
-      const content = [
-        'step_continue_fn <- function() {',
-        '   a <- 1',
-        '   b <- 2',
-        '   c <- 3',
-        '   d <- 4',
-        '   a + b + c + d',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        step_continue_fn <- function() {
+           a <- 1
+           b <- 2
+           c <- 3
+           d <- 4
+           a + b + c + d
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -320,12 +321,12 @@ test.describe('R debugger', () => {
 
     test('Stop button cleanly exits debug', async () => {
       const fileName = `step_stop_${Date.now()}.R`;
-      const content = [
-        'step_stop_fn <- function() {',
-        '   a <- 1',
-        '   a + 1',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        step_stop_fn <- function() {
+           a <- 1
+           a + 1
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -342,16 +343,16 @@ test.describe('R debugger', () => {
 
     test('Continue chains through six breakpoints', async () => {
       const fileName = `continue_chain_${Date.now()}.R`;
-      const content = [
-        'five_continues_fn <- function() {',
-        '   a <- 1',
-        '   b <- 2',
-        '   c <- 3',
-        '   d <- 4',
-        '   e <- 5',
-        '   f <- 6',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        five_continues_fn <- function() {
+           a <- 1
+           b <- 2
+           c <- 3
+           d <- 4
+           e <- 5
+           f <- 6
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -404,13 +405,13 @@ test.describe('R debugger', () => {
 
     test('browser() in a function enters debug mode', async () => {
       const fileName = `browser_entry_${Date.now()}.R`;
-      const content = [
-        'browser_entry_fn <- function() {',
-        '   browser()',
-        '   x <- 1',
-        '   x + 1',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        browser_entry_fn <- function() {
+           browser()
+           x <- 1
+           x + 1
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -429,12 +430,12 @@ test.describe('R debugger', () => {
 
     test('Continue past browser() exits debug', async () => {
       const fileName = `browser_continue_${Date.now()}.R`;
-      const content = [
-        'browser_continue_fn <- function() {',
-        '   browser()',
-        '   "done"',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        browser_continue_fn <- function() {
+           browser()
+           "done"
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -457,11 +458,11 @@ test.describe('R debugger', () => {
 
     test('Rerun with Debug link reopens the failing call in the debugger', async () => {
       const fileName = `rerun_${Date.now()}.R`;
-      const content = [
-        'rerun_fn <- function() {',
-        '   stop("intentional")',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        rerun_fn <- function() {
+           stop("intentional")
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -493,13 +494,13 @@ test.describe('R debugger', () => {
 
     test('Environment pane shows local frame variables', async () => {
       const fileName = `env_locals_${Date.now()}.R`;
-      const content = [
-        'env_locals_fn <- function() {',
-        '   localx <- 42',
-        '   browser()',
-        '   localx',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        env_locals_fn <- function() {
+           localx <- 42
+           browser()
+           localx
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -517,11 +518,11 @@ test.describe('R debugger', () => {
 
     test('Traceback pane lists the call stack', async () => {
       const fileName = `tb_stack_${Date.now()}.R`;
-      const content = [
-        'tb_h <- function() browser()',
-        'tb_g <- function() tb_h()',
-        'tb_f <- function() tb_g()',
-      ].join('\n');
+      const content = heredoc`
+        tb_h <- function() browser()
+        tb_g <- function() tb_h()
+        tb_f <- function() tb_g()
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -544,21 +545,21 @@ test.describe('R debugger', () => {
 
     test('Clicking a call frame switches Environment context', async () => {
       const fileName = `tb_click_${Date.now()}.R`;
-      const content = [
-        'fr_h <- function() {',
-        '   marker_h <- "in_h"',
-        '   browser()',
-        '   marker_h',
-        '}',
-        'fr_g <- function() {',
-        '   marker_g <- "in_g"',
-        '   fr_h()',
-        '}',
-        'fr_f <- function() {',
-        '   marker_f <- "in_f"',
-        '   fr_g()',
-        '}',
-      ].join('\n');
+      const content = heredoc`
+        fr_h <- function() {
+           marker_h <- "in_h"
+           browser()
+           marker_h
+        }
+        fr_g <- function() {
+           marker_g <- "in_g"
+           fr_h()
+        }
+        fr_f <- function() {
+           marker_f <- "in_f"
+           fr_g()
+        }
+      `;
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');

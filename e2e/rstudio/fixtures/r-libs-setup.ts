@@ -3,6 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 
+import { heredoc } from '../utils/heredoc';
+
 /**
  * Stable per-R-version package library used by every Playwright run, shared
  * across runs so the same set of CRAN packages doesn't get reinstalled every
@@ -116,19 +118,19 @@ function runRscript(code: string, env: NodeJS.ProcessEnv = process.env): Rscript
  */
 function expandRLibsUserTemplate(template: string): string | null {
   const env = { ...process.env, R_LIBS_USER: template };
-  const code = [
-    'tryCatch({',
-    '  cat(tools:::.expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))',
-    '}, error = function(e) {',
-    '  t <- Sys.getenv("R_LIBS_USER")',
-    '  t <- gsub("%V", paste0(R.version$major, ".", R.version$minor), t, fixed = TRUE)',
-    '  t <- gsub("%v", paste0(R.version$major, ".", strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1]), t, fixed = TRUE)',
-    '  t <- gsub("%p", R.version$platform, t, fixed = TRUE)',
-    '  t <- gsub("%o", R.version$os, t, fixed = TRUE)',
-    '  t <- gsub("%a", R.version$arch, t, fixed = TRUE)',
-    '  cat(t)',
-    '})',
-  ].join('\n');
+  const code = heredoc`
+    tryCatch({
+      cat(tools:::.expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))
+    }, error = function(e) {
+      t <- Sys.getenv("R_LIBS_USER")
+      t <- gsub("%V", paste0(R.version$major, ".", R.version$minor), t, fixed = TRUE)
+      t <- gsub("%v", paste0(R.version$major, ".", strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1]), t, fixed = TRUE)
+      t <- gsub("%p", R.version$platform, t, fixed = TRUE)
+      t <- gsub("%o", R.version$os, t, fixed = TRUE)
+      t <- gsub("%a", R.version$arch, t, fixed = TRUE)
+      cat(t)
+    })
+  `;
 
   const res = runRscript(code, env);
   if (res.status !== 0) return null;
@@ -169,30 +171,34 @@ export async function prepareRLibs(): Promise<void> {
   const repos = process.platform === 'linux'
     ? 'https://packagemanager.posit.co/cran/__linux__/jammy/latest'
     : 'https://cran.r-project.org';
-  const installType = process.platform === 'linux' ? 'source' : 'binary';
 
   // Single Rscript invocation: check installed.packages() in the resolved
   // library, then install any missing entries from the manifest in one batch.
   // Faster than the per-package check loop ensurePackages uses, and we don't
   // need its progress markers because there's no console UI here.
+  //
+  // installType is chosen at runtime via .Platform$pkgType so source-only R
+  // builds (e.g. some macOS configurations where CRAN has no matching binary)
+  // don't fall over on a forced type = "binary".
   const pkgsLiteral = REQUIRED_PACKAGES.map((p) => `"${p}"`).join(', ');
-  const installCode = [
-    `lib <- ${JSON.stringify(expanded)}`,
-    '.libPaths(c(lib, .libPaths()))',
-    `required <- c(${pkgsLiteral})`,
-    'have <- rownames(installed.packages(lib.loc = lib))',
-    'missing <- setdiff(required, have)',
-    'if (length(missing) == 0L) {',
-    '  cat("[r-libs] all packages present\\n")',
-    '} else {',
-    '  cat("[r-libs] installing:", paste(missing, collapse = ", "), "\\n")',
-    `  install.packages(missing, lib = lib, repos = ${JSON.stringify(repos)}, type = ${JSON.stringify(installType)})`,
-    '  still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))',
-    '  if (length(still) > 0L) {',
-    '    cat("[r-libs] WARNING: failed to install:", paste(still, collapse = ", "), "\\n")',
-    '  }',
-    '}',
-  ].join('\n');
+  const installCode = heredoc`
+    lib <- ${JSON.stringify(expanded)}
+    .libPaths(c(lib, .libPaths()))
+    required <- c(${pkgsLiteral})
+    have <- rownames(installed.packages(lib.loc = lib))
+    missing <- setdiff(required, have)
+    if (length(missing) == 0L) {
+      cat("[r-libs] all packages present\n")
+    } else {
+      cat("[r-libs] installing:", paste(missing, collapse = ", "), "\n")
+      installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
+      install.packages(missing, lib = lib, repos = ${JSON.stringify(repos)}, type = installType)
+      still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+      if (length(still) > 0L) {
+        cat("[r-libs] WARNING: failed to install:", paste(still, collapse = ", "), "\n")
+      }
+    }
+  `;
 
   const env = { ...process.env, R_LIBS_USER: template };
   const res = runRscript(installCode, env);

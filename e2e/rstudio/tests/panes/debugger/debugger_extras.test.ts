@@ -19,6 +19,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile } from '@utils/files';
 import { TIMEOUTS, sleep } from '@utils/constants';
 import { executeCommand } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
 
 const sandbox = useSuiteSandbox();
 
@@ -93,14 +94,13 @@ test.describe('R debugger extras', () => {
 
     test('multi-line input at Browse[N]> preserves browser state', async ({ rstudioPage: page }) => {
       const fileName = `browser_multiline_${Date.now()}.R`;
-      const content = [
-        'multiline_fn <- function() {',
-        '   x <- 1',
-        '   browser()',
-        '   x + 1',
-        '}',
-        '',
-      ].join('\n');
+      const content = heredoc`
+        multiline_fn <- function() {
+           x <- 1
+           browser()
+           x + 1
+        }
+      ` + '\n';
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
@@ -115,16 +115,16 @@ test.describe('R debugger extras', () => {
       // to parse line-by-line, issuing continuation prompts ("+ ") between
       // lines; pre-fix those continuations cleared the captured browser
       // environment mid-eval.
-      const multiline = [
-        '{',
-        '   status <- .rs.isBrowserActive()',
-        '   envIsGlobal <- identical(',
-        '      .Call("rs_getBrowserEnv", PACKAGE = "(embedding)"),',
-        '      globalenv()',
-        '   )',
-        '   cat("DBG isBrowserActive:", status, "envIsGlobal:", envIsGlobal, "\\n")',
-        '}',
-      ].join('\n');
+      const multiline = heredoc`
+        {
+           status <- .rs.isBrowserActive()
+           envIsGlobal <- identical(
+              .Call("rs_getBrowserEnv", PACKAGE = "(embedding)"),
+              globalenv()
+           )
+           cat("DBG isBrowserActive:", status, "envIsGlobal:", envIsGlobal, "\n")
+        }
+      `;
       await consoleSubmitMultiline(page, multiline);
 
       // R may step into a nested debug invocation while parsing the block
@@ -152,12 +152,11 @@ test.describe('R debugger extras', () => {
 
     test('clicking a top-level breakpoint marker toggles it off', async ({ rstudioPage: page }) => {
       const fileName = `bp_gutter_toggle_${Date.now()}.R`;
-      const content = [
-        'x <- 1',
-        'y <- 2',
-        'z <- x + y',
-        '',
-      ].join('\n');
+      const content = heredoc`
+        x <- 1
+        y <- 2
+        z <- x + y
+      ` + '\n';
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
       // Set a breakpoint on line 2.
@@ -187,7 +186,11 @@ test.describe('R debugger extras', () => {
 
     test('removes every breakpoint marker', async ({ rstudioPage: page }) => {
       const fileName = `bp_clear_all_${Date.now()}.R`;
-      const content = ['x <- 1', 'y <- 2', 'z <- x + y', ''].join('\n');
+      const content = heredoc`
+        x <- 1
+        y <- 2
+        z <- x + y
+      ` + '\n';
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
       // Place a top-level breakpoint on each of the three lines.
@@ -230,13 +233,12 @@ test.describe('R debugger extras', () => {
       test.skip(s7Missing.length > 0, `S7 not available: ${s7Missing.join(', ')}`);
 
       const fileName = `s7_breakpoint_${Date.now()}.R`;
-      const content = [
-        's7mean <- S7::new_class("s7mean")',
-        'S7::method(mean, s7mean) <- function(x, ...) {',
-        '   print("This is my S7 method.")',
-        '}',
-        '',
-      ].join('\n');
+      const content = heredoc`
+        s7mean <- S7::new_class("s7mean")
+        S7::method(mean, s7mean) <- function(x, ...) {
+           print("This is my S7 method.")
+        }
+      ` + '\n';
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
       // Breakpoint on the body of the S7 method (line 3 = the print() call).
