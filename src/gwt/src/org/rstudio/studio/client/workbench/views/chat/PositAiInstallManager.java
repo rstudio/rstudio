@@ -191,7 +191,10 @@ public class PositAiInstallManager
             boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
-            boolean isDowngrade = result.getBoolean("isDowngrade");
+            // Default to false if the server omits isDowngrade -- newer than the
+            // other fields, so likelier to be missing from an older rsession.
+            Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
+            boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
 
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
