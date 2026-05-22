@@ -15,7 +15,11 @@ const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 // The project menu button also has a title containing the project path, so a
 // loose `title*='shinytest2'` selector hits it when the project name contains
 // the word. Match the toolbar button's exact title text instead.
-const SHINYTEST_BUTTON = "button[title='Run test using the shinytest2 package']";
+// The Shiny-test toolbar button is rendered in every editor's toolbar and
+// hidden via aria-hidden when the file isn't a shinytest2 file. Match only
+// the visible instance so strict-mode locator resolution doesn't trip
+// across multiple editors (e.g. an Untitled1 left over from prior tests).
+const SHINYTEST_BUTTON = "button[title='Run test using the shinytest2 package']:visible";
 
 async function waitForConsoleIdle(page: Page): Promise<void> {
   await page.waitForFunction(
