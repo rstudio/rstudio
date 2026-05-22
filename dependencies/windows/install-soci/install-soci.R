@@ -37,10 +37,6 @@ sqlite_header_zip_url <- "https://sqlite.org/2020/sqlite-amalgamation-3310100.zi
 sqlite_header_zip <- file.path(sqlite_dir, "sqlite-header.zip")
 sqlite_header_dir <- file.path(sqlite_dir, "sqlite-amalgamation-3310100")
 
-postgresql_dir <- file.path(owd, "postgresql")
-postgresql_zip <- file.path(owd, "win-postgresql.zip")
-postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
-
 downloadAndUnzip <- function(outputFile, extractDir, url) {
 
    # download zip if we don't already have it
@@ -75,10 +71,6 @@ downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
 # build SQLite static library
 run("build-sqlite.cmd")
-
-# download and install postgresql includes/libraries
-# we prebuild these because the postgresql build process is non-trivial
-downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
 
 # clone repository if we dont already have it
 if (!file.exists(soci_base_name)) {
@@ -117,10 +109,6 @@ build <- function(arch, config) {
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
 
-   postgresql_include_dir <- file.path(postgresql_dir, "include")
-   postgresql_library_name <- sprintf("lib/%s/%s/libpq.lib", arch, config)
-   postgresql_library_path <- file.path(postgresql_dir, "lib/x86/Debug/libpq.lib")
-
    # put together intro big string
    args <- interpolate('
       -G "{CMAKE_GENERATOR}"
@@ -136,12 +124,10 @@ build <- function(arch, config) {
       -DBoost_USE_STATIC_LIBS=ON
       -DSOCI_TESTS=OFF
       -DSOCI_SHARED=OFF
-      -DWITH_POSTGRESQL=ON
+      -DWITH_POSTGRESQL=OFF
       -DWITH_SQLITE3=ON
       -DSQLITE3_INCLUDE_DIR="{sqlite_header_dir}"
       -DSQLITE3_LIBRARY="{sqlite_library_path}"
-      -DPOSTGRESQL_INCLUDE_DIR="{postgresql_include_dir}"
-      -DPOSTGRESQL_LIBRARY="{postgresql_library_path}"
       ../..
    ')
 
