@@ -43,7 +43,7 @@ type VersionInfo = {
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
-  documents: { closeAllNoSave(): void };
+  documents: { closeAllNoSave(): void; resetToUntitled(): void };
   project: ProjectInfo;
   version: VersionInfo;
   /**
@@ -126,6 +126,23 @@ export async function documentCloseAllNoSave(page: Page): Promise<void> {
     if (!r)
       throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     r.documents.closeAllNoSave();
+  });
+}
+
+/**
+ * Reset the source pane to a single untitled document, discarding any unsaved
+ * changes in other tabs. If an untitled tab is already open it is kept;
+ * otherwise a fresh one is created before the others close, so the pane
+ * never transitions through the zero-tab HIDE state -- the gap that races a
+ * subsequent file.edit (#17738). Prefer this over documentCloseAllNoSave for
+ * cross-test resets where a following file.edit / newDoc is imminent.
+ */
+export async function resetSourcePaneState(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const r = window.rstudio;
+    if (!r)
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+    r.documents.resetToUntitled();
   });
 }
 

@@ -22,6 +22,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
+import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
@@ -50,6 +51,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.prefs.&lt;camelCaseName&gt;.clear()
  *
  *   window.rstudio.documents.closeAllNoSave()
+ *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
  *
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
@@ -272,6 +274,11 @@ public class ApplicationAutomation
       eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
    }
 
+   private void dispatchResetToUntitled()
+   {
+      eventBus_.dispatchEvent(new DocumentResetToUntitledEvent());
+   }
+
    // Always read through session_.getSessionInfo() rather than capturing a
    // reference at install time -- a session restart (e.g. close-project)
    // replaces the SessionInfo JSO, and we want callers to see the live state.
@@ -352,6 +359,9 @@ public class ApplicationAutomation
       var self = this;
       $wnd.rstudio.documents.closeAllNoSave = $entry(function() {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchCloseAllNoSave()();
+      });
+      $wnd.rstudio.documents.resetToUntitled = $entry(function() {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchResetToUntitled()();
       });
    }-*/;
 

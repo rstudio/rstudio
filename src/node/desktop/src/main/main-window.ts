@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { app, BrowserWindow, dialog, session, shell } from 'electron';
+import { BrowserWindow, dialog, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -31,7 +31,7 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { waitForUrlWithTimeout } from './url-utils';
-import { registerWebContentsDebugHandlers } from './utils';
+import { isAutomated, registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -62,7 +62,7 @@ const reloadWaitDuration = 200;
 // detects the pref/cookie mismatch, and fires a ReloadEvent that costs ~4s
 // per test launch. The expiry mirrors WebDialogCookie.java in GWT.
 async function preSeedAutomationCookies(targetUrl: string): Promise<void> {
-  if (!app.commandLine.hasSwitch('automation-agent')) {
+  if (!isAutomated()) {
     return;
   }
 

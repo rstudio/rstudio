@@ -22,7 +22,7 @@ import { Application } from './application';
 import { initI18n } from './i18n-manager';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
-import { createStandaloneErrorDialog } from './utils';
+import { createStandaloneErrorDialog, isAutomated } from './utils';
 import { Xdg } from '../core/xdg';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
@@ -127,6 +127,15 @@ class RStudioMain {
     setApplication(rstudio);
 
     this.initializeAppConfig();
+
+    // In automation mode the app should not pull focus from whatever the
+    // user (or test runner) is doing. showInactive() handles the per-window
+    // side of this, but on macOS the OS also activates the app on launch.
+    // 'accessory' keeps the dock icon and menu bar present but tells the OS
+    // not to auto-activate, so the test driver's terminal keeps focus.
+    if (process.platform === 'darwin' && isAutomated()) {
+      app.setActivationPolicy('accessory');
+    }
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;

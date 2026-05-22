@@ -62,8 +62,12 @@ test.describe('R debugger', () => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
     envPane = new EnvironmentPane(page);
-    // Defensive: clear any leftover open buffers from a prior crashed run.
-    await consoleActions.closeAllBuffersWithoutSaving();
+    // Defensive: drop any leftover open buffers from a prior crashed run.
+    // resetSourcePane (rather than closeAllBuffersWithoutSaving) keeps the
+    // source pane in its NORMAL state across the test-file handoff so the
+    // first file.edit doesn't race the LastSourceDocClosedEvent HIDE
+    // animation (#17738).
+    await consoleActions.resetSourcePane();
   });
 
   // -------------------------------------------------------------------------

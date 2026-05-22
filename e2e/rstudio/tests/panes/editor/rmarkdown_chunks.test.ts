@@ -17,7 +17,7 @@ import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
 
 /**
  * Run a labeled chunk and wait for `signal` to appear in the console
@@ -377,11 +377,15 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
     // The saveSourceDoc command is disabled when the doc is clean
     // (createAndOpenFile leaves the editor matching disk, and running a chunk
-    // doesn't dirty it). Add a trailing newline so Ctrl+S actually saves --
-    // without this the keypress is a silent no-op and nb.html never renders.
+    // doesn't dirty it). Add a trailing newline to dirty the doc, then poll
+    // until saveSourceDoc is enabled before firing it via the bridge. Going
+    // through Ctrl+S here is flaky -- focus may not be on the editor, and
+    // the command's enabled flag is recomputed asynchronously after the
+    // dirty-state change, so a same-tick keystroke can silently no-op.
     await sourceActions.goToEnd();
     await page.keyboard.press('Enter');
-    await page.keyboard.press('ControlOrMeta+s');
+    await expect.poll(() => isCommandEnabled(page, 'saveSourceDoc'), { timeout: 5000 }).toBe(true);
+    await executeCommand(page, 'saveSourceDoc');
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);

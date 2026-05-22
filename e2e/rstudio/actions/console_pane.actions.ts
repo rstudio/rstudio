@@ -7,7 +7,7 @@ import {
   type ExecuteInConsoleOptions,
 } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
 interface InstallTarget {
@@ -155,6 +155,18 @@ export class ConsolePaneActions {
     // into the console: the R session isn't busy while the close fires, so
     // RStudio's "session is busy" confirmation dialog can't intervene.
     await documentCloseAllNoSave(this.page);
+    await sleep(500);
+  }
+
+  /**
+   * Reset the source pane to a single untitled tab. Prefer this over
+   * closeAllBuffersWithoutSaving in test setup where a following file.edit
+   * or newDoc is imminent: closing every tab triggers a HIDE animation on
+   * the source pane that races the next open (#17738), while resetToUntitled
+   * keeps the pane in its NORMAL state throughout.
+   */
+  async resetSourcePane(): Promise<void> {
+    await resetSourcePaneState(this.page);
     await sleep(500);
   }
 
