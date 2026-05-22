@@ -5,3 +5,6 @@ playwright-report/
 .env
 .env.*
 !.env.example
+
+# Local-only notes, scratchpads, audit lists, etc.
+*.local.md

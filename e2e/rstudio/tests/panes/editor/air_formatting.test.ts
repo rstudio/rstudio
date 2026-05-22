@@ -34,7 +34,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { sleep } from '@utils/constants';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, setPref } from '@utils/commands';
 import { createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
@@ -118,8 +118,9 @@ async function setAirPrefs(
 
 /** Reset Air-related preferences programmatically (for setup/cleanup, not the test itself). */
 async function resetAirPrefs(consoleActions: ConsolePaneActions): Promise<void> {
-  await consoleActions.executeInConsole('{ .rs.uiPrefs$codeFormatter$set("none"); .rs.uiPrefs$useAirFormatter$set(FALSE); .rs.uiPrefs$reformatOnSave$set(FALSE) }');
-  await sleep(1000);
+  await setPref(consoleActions.page, 'code_formatter', 'none');
+  await setPref(consoleActions.page, 'use_air_formatter', false);
+  await setPref(consoleActions.page, 'reformat_on_save', false);
 }
 
 /** Create an Air config file in the working directory. */

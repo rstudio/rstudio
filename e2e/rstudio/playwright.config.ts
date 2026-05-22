@@ -36,12 +36,12 @@ const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', '@smoke', ...desktopOsExclusions, ...editionExclusions].join('|')),
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', '@smoke', ...serverOsExclusions, ...editionExclusions].join('|')),
   },
 ];
 

@@ -628,6 +628,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return null;
    }
 
+   public boolean isActiveDocDirty()
+   {
+      if (!hasActiveEditor())
+         return false;
+      Boolean dirty = activeColumn_.getActiveEditor().dirtyState().getValue();
+      return dirty != null && dirty;
+   }
+
    /**
     * Get selections from the active editor as a JSON array.
     * Format: [{ "startLine": n, "startCharacter": n, "endLine": n, "endCharacter": n, "text": "..." }, ...]

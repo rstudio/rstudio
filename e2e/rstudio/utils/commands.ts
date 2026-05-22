@@ -40,10 +40,25 @@ type VersionInfo = {
   r: string;
 };
 
+type ActiveDocument = {
+  id: string;
+  /** Absolute file path, or null for an untitled document. */
+  path: string | null;
+  /** True when the document has unsaved changes in the editor model. */
+  dirty: boolean;
+};
+
+type Documents = {
+  closeAllNoSave(): void;
+  resetToUntitled(): void;
+  /** Info on the focused source document, or null when no editor is active. */
+  active(): ActiveDocument | null;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
-  documents: { closeAllNoSave(): void; resetToUntitled(): void };
+  documents: Documents;
   project: ProjectInfo;
   version: VersionInfo;
   /**
@@ -113,6 +128,28 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
       throw new Error(`Unknown command: ${id}`);
     return cmd.isEnabled();
   }, commandId);
+}
+
+/**
+ * Save the active source document and wait for it to be marked clean.
+ *
+ * Polls `window.rstudio.documents.active().dirty` -- the pure dirty bit
+ * from the editing target's model, distinct from `saveSourceDoc.isEnabled()`
+ * which stays true for source-on-save / reformat-on-save / untitled docs
+ * regardless of dirty state. Pre-save transforms (trim-trailing-whitespace,
+ * styler, Air) update the model before the dirty bit clears, so reading the
+ * editor's value after this returns reflects the final on-disk content.
+ */
+export async function saveDocument(page: Page, timeout = 5000): Promise<void> {
+  await executeCommand(page, 'saveSourceDoc');
+  await page.waitForFunction(
+    () => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      return doc !== null && !doc.dirty;
+    },
+    null,
+    { timeout, polling: 100 },
+  );
 }
 
 /**

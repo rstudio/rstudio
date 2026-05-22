@@ -101,46 +101,37 @@ export class ChatPaneActions {
   }
 
   async dismissSetupPrompts(): Promise<void> {
-    // Short timeouts: if these prompts exist, they're visible almost immediately.
-    // Using 1500ms instead of 5000ms saves ~10s when no prompts are present.
-    try {
-      await this.chatPane.installBtn.click({ timeout: 1500 });
-      console.log('Clicked Install button — waiting for installation...');
+    // These prompts are visible immediately when present; absence is the common
+    // case. Gate each click on isVisible() (snapshot) so we don't burn the full
+    // click({ timeout }) auto-wait when the button is missing.
+    if (await this.chatPane.installBtn.isVisible()) {
+      await this.chatPane.installBtn.click();
+      console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
       await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
       return;
-    } catch {
-      // No Install button
     }
 
-    try {
-      await this.chatPane.updateBtn.click({ timeout: 1500 });
-      console.log('Clicked Update on update prompt — updating Posit Assistant');
+    if (await this.chatPane.updateBtn.isVisible()) {
+      await this.chatPane.updateBtn.click();
+      console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
       return;
-    } catch {
-      // No update prompt, or pane is stale after update via Options
     }
 
-    // Dismiss "Trust this directory?" prompt if present
-    try {
-      const trustBtn = this.chatPane.frame.locator("button:has-text('Trust'), button:has-text('trust')");
-      await trustBtn.first().click({ timeout: 1500 });
+    const trustBtn = this.chatPane.frame
+      .locator("button:has-text('Trust'), button:has-text('trust')")
+      .first();
+    if (await trustBtn.isVisible()) {
+      await trustBtn.click();
       console.log('Dismissed directory trust prompt');
-    } catch {
-      // No trust prompt
     }
-
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
-    try {
-      // click() already polls for actionability within its own timeout, so
-      // there's no need to pre-sleep waiting for the dialog to appear.
-      await this.chatPane.allowBtn.click({ timeout: 3000 });
+    if (await this.chatPane.allowBtn.isVisible()) {
+      await this.chatPane.allowBtn.click();
       console.log('Clicked "Allow" permission button');
-    } catch {
-      // No permission dialog
     }
   }
 
@@ -261,10 +252,11 @@ export class ChatPaneActions {
   }
 
   async getPositAssistantVersion(): Promise<string> {
+    if (!(await this.chatPane.moreBtn.isVisible())) {
+      return 'unknown';
+    }
     try {
-      await this.chatPane.moreBtn.click({ timeout: 5000 });
-      // .first().click() polls for the menu item, replacing the
-      // previous post-click sleep.
+      await this.chatPane.moreBtn.click();
       await this.chatPane.aboutItem.first().click();
 
       await this.chatPane.dialogOverlay.waitFor({ state: 'visible', timeout: 5000 });

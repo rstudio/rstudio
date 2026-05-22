@@ -12,7 +12,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { executeCommand } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
 
@@ -73,9 +73,7 @@ test.describe('Console output and annotation', () => {
   });
 
   test('errors are highlighted when consoleHighlightConditions is set', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole(
-      '.rs.uiPrefs$consoleHighlightConditions$set("errors_warnings_messages")',
-    );
+    await setPref(page, 'console_highlight_conditions', 'errors_warnings_messages');
     try {
       await consoleActions.executeInConsole('stop("This is an error.")');
       await expect(consoleActions.consolePane.consoleOutput)
@@ -87,14 +85,12 @@ test.describe('Console output and annotation', () => {
       await expect.poll(() => consoleSpanTexts(page))
         .toEqual(expect.arrayContaining(['Error']));
     } finally {
-      await consoleActions.executeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
+      await clearPref(page, 'console_highlight_conditions');
     }
   });
 
   test('warnings are highlighted with options(warn = 0) and options(warn = 1)', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole(
-      '.rs.uiPrefs$consoleHighlightConditions$set("errors_warnings_messages")',
-    );
+    await setPref(page, 'console_highlight_conditions', 'errors_warnings_messages');
     try {
       // warn = 0 defers warnings -- the prefix is "Warning message" once R
       // surfaces them at the prompt.
@@ -111,7 +107,7 @@ test.describe('Console output and annotation', () => {
         .toEqual(expect.arrayContaining(['Warning']));
     } finally {
       await consoleActions.executeInConsole('options(warn = 0)');
-      await consoleActions.executeInConsole('.rs.uiPrefs$consoleHighlightConditions$clear()');
+      await clearPref(page, 'console_highlight_conditions');
     }
   });
 
@@ -161,8 +157,8 @@ test.describe('Console output and annotation', () => {
     }).toBe('M2');
   });
 
-  test('long lines are truncated when consoleLineLengthLimit is reduced', async () => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(10L)');
+  test('long lines are truncated when consoleLineLengthLimit is reduced', async ({ rstudioPage: page }) => {
+    await setPref(page, 'console_line_length_limit', 10);
     try {
       await consoleActions.executeInConsole(
         'cat(paste(rep.int("a", 1E4), collapse = ""), sep = "\\n")',
@@ -170,8 +166,9 @@ test.describe('Console output and annotation', () => {
       await expect(consoleActions.consolePane.consoleOutput)
         .toContainText('aaaaaaaaaa ... <truncated>');
     } finally {
-      // Restore the default so the pref doesn't bleed into later tests.
-      await consoleActions.executeInConsole('.rs.uiPrefs$consoleLineLengthLimit$set(2000L)');
+      // Restore the default (schema default is 2000) so the pref doesn't
+      // bleed into later tests.
+      await clearPref(page, 'console_line_length_limit');
     }
   });
 });
