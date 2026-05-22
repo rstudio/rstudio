@@ -10,7 +10,7 @@ import {
 import { clearWorkspace } from '@pages/environment_pane.page';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, setPref } from '@utils/commands';
+import { executeCommand, saveDocument, setPref } from '@utils/commands';
 
 test.describe('RMarkdown', () => {
   // Sets cwd to a per-spec sandbox; all relative file paths used by
@@ -75,7 +75,7 @@ test.describe('RMarkdown', () => {
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file
-    await executeCommand(page, 'saveSourceDoc');
+    await saveDocument(page);
 
     // Run all chunks via restart R. The 5s lead-in guards against the
     // not.toBeVisible check below succeeding before the interrupt button has

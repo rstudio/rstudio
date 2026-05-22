@@ -8,7 +8,7 @@ import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, saveDocument } from '@utils/commands';
 
 test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () => {
   // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
@@ -59,8 +59,7 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file first so it's on disk
-    await executeCommand(page, 'saveSourceDoc');
-    await sleep(1000);
+    await saveDocument(page);
 
     // Make an edit so the file has unsaved changes — Ctrl+S during execution
     // must actually trigger a save for the bug to manifest

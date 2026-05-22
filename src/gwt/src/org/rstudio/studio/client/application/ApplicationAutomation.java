@@ -27,7 +27,9 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -52,6 +54,7 @@ import com.google.inject.Singleton;
  *
  *   window.rstudio.documents.closeAllNoSave()
  *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
+ *   window.rstudio.documents.active()          // { id, path, dirty } for the focused doc, or null
  *
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
@@ -74,12 +77,14 @@ public class ApplicationAutomation
    public ApplicationAutomation(Commands commands,
                                 EventBus eventBus,
                                 Session session,
-                                UserPrefs userPrefs)
+                                UserPrefs userPrefs,
+                                SourceColumnManager sourceColumnManager)
    {
       commands_ = commands;
       eventBus_ = eventBus;
       session_ = session;
       userPrefs_ = userPrefs;
+      sourceColumnManager_ = sourceColumnManager;
    }
 
    public final boolean isAutomationAgent()
@@ -279,6 +284,22 @@ public class ApplicationAutomation
       eventBus_.dispatchEvent(new DocumentResetToUntitledEvent());
    }
 
+   // Returns null when no editor is active so callers can distinguish "no doc"
+   // from "doc exists but is clean".
+   private JavaScriptObject getActiveDocument()
+   {
+      if (!sourceColumnManager_.hasActiveEditor())
+         return null;
+      return makeActiveDocumentJso(
+         sourceColumnManager_.getActiveDocId(),
+         sourceColumnManager_.getActiveDocPath(),
+         sourceColumnManager_.isActiveDocDirty());
+   }
+
+   private native JavaScriptObject makeActiveDocumentJso(String id, String path, boolean dirty) /*-{
+      return { id: id, path: path, dirty: dirty };
+   }-*/;
+
    // Always read through session_.getSessionInfo() rather than capturing a
    // reference at install time -- a session restart (e.g. close-project)
    // replaces the SessionInfo JSO, and we want callers to see the live state.
@@ -363,6 +384,9 @@ public class ApplicationAutomation
       $wnd.rstudio.documents.resetToUntitled = $entry(function() {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchResetToUntitled()();
       });
+      $wnd.rstudio.documents.active = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveDocument()();
+      });
    }-*/;
 
    private native final void registerProjectObject() /*-{
@@ -392,6 +416,7 @@ public class ApplicationAutomation
    private final EventBus eventBus_;
    private final Session session_;
    private final UserPrefs userPrefs_;
+   private final SourceColumnManager sourceColumnManager_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
 }

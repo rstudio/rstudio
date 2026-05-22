@@ -5,7 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, saveDocument } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
 
 // Both the console and the active editor mount a FindReplaceBar that shares
@@ -53,11 +53,9 @@ test.describe('Editor', () => {
       await editor.gotoLine(4);
       await editor.insert('# comment 4   ');
 
-      await executeCommand(page, 'saveSourceDoc');
+      await saveDocument(page);
 
-      await expect.poll(async () => {
-        return (await editor.getValue()).trim();
-      }).toBe('# comment 1\n# comment 2\n# comment 3\n# comment 4');
+      expect((await editor.getValue()).trim()).toBe('# comment 1\n# comment 2\n# comment 3\n# comment 4');
     } finally {
       await consoleActions.executeInConsole('.rs.uiPrefs$stripTrailingWhitespace$clear()');
     }

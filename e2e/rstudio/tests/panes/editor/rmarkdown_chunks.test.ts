@@ -17,7 +17,7 @@ import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, isCommandEnabled } from '@utils/commands';
+import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
 
 /**
  * Run a labeled chunk and wait for `signal` to appear in the console
@@ -385,7 +385,7 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await sourceActions.goToEnd();
     await page.keyboard.press('Enter');
     await expect.poll(() => isCommandEnabled(page, 'saveSourceDoc'), { timeout: 5000 }).toBe(true);
-    await executeCommand(page, 'saveSourceDoc');
+    await saveDocument(page);
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);
