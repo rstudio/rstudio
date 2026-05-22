@@ -3458,6 +3458,7 @@ void onBackgroundProcessing(bool isIdle)
 struct UpdateState
 {
    bool updateAvailable;
+   bool isDowngrade;
    bool noCompatibleVersion;
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
@@ -3482,6 +3483,7 @@ struct UpdateState
 
    UpdateState()
       : updateAvailable(false),
+        isDowngrade(false),
         noCompatibleVersion(false),
         unsupportedInstalledVersion(false),
         unsupportedProtocol(false),
@@ -3918,6 +3920,24 @@ bool shouldInstallVersion(
    return available != installed;
 }
 
+// Returns true if the available version is older than the installed version.
+// Callers should only invoke this after shouldInstallVersion() has confirmed
+// the versions differ and parse cleanly; on parse failure this returns false
+// so the caller falls back to the standard "update available" wording.
+bool isVersionDowngrade(
+    const std::string& installedVersion,
+    const std::string& availableVersion)
+{
+   SemanticVersion installed, available;
+   if (!installed.parse(installedVersion) || !available.parse(availableVersion))
+   {
+      WLOG("Version parse failed in isVersionDowngrade: {} -> {}",
+           installedVersion, availableVersion);
+      return false;
+   }
+   return available < installed;
+}
+
 // Download package to temp directory
 Error downloadPackage(const std::string& url, const FilePath& destPath)
 {
@@ -4106,6 +4126,7 @@ void doUpdateCheck()
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
       s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
       s_updateState.noCompatibleVersion = false;
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
@@ -4204,8 +4225,12 @@ void doUpdateCheck()
       }
       else
       {
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         bool isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
          s_updateState.updateAvailable = true;
+         s_updateState.isDowngrade = isDowngrade;
          s_updateState.newVersion = packageVersion;
          s_updateState.downloadUrl = downloadUrl;
          s_updateState.expectedSha256 = sha256;
@@ -4242,6 +4267,7 @@ Error checkForUpdatesOnStartup()
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
       s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
       s_updateState.noCompatibleVersion = false;
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
@@ -4355,29 +4381,15 @@ Error checkForUpdatesOnStartup()
       }
       else
       {
-         // Determine if this is an upgrade or downgrade
-         SemanticVersion installed, available;
-         bool isDowngrade = false;
-
-         // These parses should always succeed since shouldInstallVersion validated them
-         if (installed.parse(installedVersion) && available.parse(packageVersion))
-         {
-            isDowngrade = (available < installed);
-            DLOG("{} available: {} -> {}",
-                 isDowngrade ? "Downgrade" : "Update",
-                 installedVersion, packageVersion);
-         }
-         else
-         {
-            // Defensive: this shouldn't happen, but handle gracefully
-            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-                 installedVersion, packageVersion);
-            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-         }
+         bool isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
 
          {
             boost::mutex::scoped_lock lock(s_updateStateMutex);
             s_updateState.updateAvailable = true;
+            s_updateState.isDowngrade = isDowngrade;
             s_updateState.newVersion = packageVersion;
             s_updateState.downloadUrl = downloadUrl;
             s_updateState.expectedSha256 = sha256;
@@ -5103,6 +5115,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // Return cached/computed check result
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
+   result["isDowngrade"] = s_updateState.isDowngrade;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
    result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;

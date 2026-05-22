@@ -689,9 +689,10 @@ public class ChatPane
    }
 
    @Override
-   public void showUpdateAvailableWithVersions(String currentVersion, String newVersion)
+   public void showUpdateAvailableWithVersions(String currentVersion, String newVersion,
+                                                boolean isDowngrade)
    {
-      String html = generateUpdateAvailableHTML(currentVersion, newVersion);
+      String html = generateUpdateAvailableHTML(currentVersion, newVersion, isDowngrade);
       updateFrameContent(html);
    }
 
@@ -734,15 +735,29 @@ public class ChatPane
       return wrapInThemedHtml(body, script, true, true, extraCss);
    }
 
-   private String generateUpdateAvailableHTML(String currentVersion, String newVersion)
+   private String generateUpdateAvailableHTML(String currentVersion, String newVersion,
+                                               boolean isDowngrade)
    {
+      String title = isDowngrade
+         ? constants_.chatDowngradeAvailableTitle()
+         : constants_.chatUpdateAvailableTitle();
+      String message = isDowngrade
+         ? constants_.chatDowngradeAvailableMessage(currentVersion, newVersion)
+         : constants_.chatUpdateAvailableWithVersionsMessage(currentVersion, newVersion);
+      String installLabel = isDowngrade
+         ? constants_.chatInstallVersionButton(newVersion)
+         : constants_.chatUpdateButton();
+      String dismissLabel = isDowngrade
+         ? constants_.chatUseCurrentVersionButton()
+         : constants_.chatIgnore();
+
       String body =
-         "<h2>" + constants_.chatUpdateAvailableTitle() + "</h2>" +
-         "<p>" + constants_.chatUpdateAvailableWithVersionsMessage(currentVersion, newVersion) + "</p>" +
+         "<h2>" + title + "</h2>" +
+         "<p>" + message + "</p>" +
          "<button id='update-btn' class='chatIframeButton'>" +
-         constants_.chatUpdateButton() + "</button>" +
+         installLabel + "</button>" +
          "<button id='ignore-btn' class='chatIframeButton'>" +
-         constants_.chatIgnore() + "</button>";
+         dismissLabel + "</button>";
 
       String script =
          "document.getElementById('update-btn').addEventListener('click', function() {" +
@@ -1135,9 +1150,9 @@ public class ChatPane
 
    @Override
    public String getUpdateAvailableWithVersionsHTML(
-      String currentVersion, String newVersion)
+      String currentVersion, String newVersion, boolean isDowngrade)
    {
-      return generateUpdateAvailableHTML(currentVersion, newVersion);
+      return generateUpdateAvailableHTML(currentVersion, newVersion, isDowngrade);
    }
 
    @Override

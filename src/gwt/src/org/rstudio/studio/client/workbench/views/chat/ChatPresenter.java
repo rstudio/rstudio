@@ -108,7 +108,8 @@ public class ChatPresenter extends BasePresenter
       void showError(String errorMessage);
       void loadUrl(String url);
       void showNotInstalledWithInstall(String newVersion);
-      void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
+      void showUpdateAvailableWithVersions(String currentVersion, String newVersion,
+                                            boolean isDowngrade);
       void showUpdatingStatus();
       void showUpdateComplete();
       void showUpdateError(String errorMessage);
@@ -132,7 +133,7 @@ public class ChatPresenter extends BasePresenter
 
       String getNotInstalledWithInstallHTML(String newVersion);
       String getUpdateAvailableWithVersionsHTML(
-         String currentVersion, String newVersion);
+         String currentVersion, String newVersion, boolean isDowngrade);
       String getMessageHTML(String message);
       String getIncompatibleVersionHTML();
       String getUnsupportedVersionUpgradeHTML(
@@ -953,7 +954,8 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade)
          {
             // Pausing for user action — do NOT start backend.
             // Backend starts after user clicks "Update/Install Now" and it
@@ -968,9 +970,9 @@ public class ChatPresenter extends BasePresenter
             {
                showInDisplayOrSatellite(
                   display_.getUpdateAvailableWithVersionsHTML(
-                     currentVersion, newVersion),
+                     currentVersion, newVersion, isDowngrade),
                   () -> display_.showUpdateAvailableWithVersions(
-                     currentVersion, newVersion));
+                     currentVersion, newVersion, isDowngrade));
             }
          }
 
@@ -984,8 +986,12 @@ public class ChatPresenter extends BasePresenter
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
+            // The chat pane's "Update Required" page is shared between upgrade and
+            // downgrade variants. isDowngrade is accepted for signature consistency
+            // but not currently reflected in the chat pane copy; the preferences
+            // dialog (AssistantPreferencesPane) is where this distinction is shown.
             showInDisplayOrSatellite(
                display_.getUnsupportedVersionUpgradeHTML(
                   currentVersion, newVersion),

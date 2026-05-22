@@ -8,6 +8,7 @@ import { executeCommand } from '../utils/commands';
 /** Fields returned by the chatCheckForUpdates RPC. */
 export interface UpdateCheckResult {
   updateAvailable: boolean;
+  isDowngrade: boolean;
   noCompatibleVersion: boolean;
   unsupportedInstalledVersion: boolean;
   unsupportedProtocol: boolean;
@@ -37,6 +38,7 @@ export class ChatPaneActions {
   static defaultUpdateCheckResult(): UpdateCheckResult {
     return {
       updateAvailable: false,
+      isDowngrade: false,
       noCompatibleVersion: false,
       unsupportedInstalledVersion: false,
       unsupportedProtocol: false,
