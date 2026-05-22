@@ -81,7 +81,7 @@ test.describe('R debugger extras', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   // Multi-line input at the Browse[N]> prompt previously triggered

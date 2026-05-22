@@ -5,9 +5,9 @@
   "scripts": {
     "test": "npm run test:desktop",
     "test:desktop": "npx playwright test --project=desktop",
-    "test:desktop-dev": "cross-env PW_RSTUDIO_DEV=1 npx playwright test --project=desktop",
+    "test:desktop-dev": "tsx scripts/desktop-dev.ts",
     "test:server": "cross-env PW_RSERVER_BIN=/usr/lib/rstudio-server/bin/rserver PW_RSERVER_CONF=/etc/rstudio/rserver.conf npx playwright test --project=server",
-    "test:server-dev": "npx playwright test --project=server",
+    "test:server-dev": "tsx scripts/server-dev.ts",
     "test:autocomplete": "npx playwright test autocomplete",
     "test:report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "cross-env": "^10.1.0",
+    "tsx": "^4.20.3",
     "typescript": "^6.0.3"
   }
 }

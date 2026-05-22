@@ -1,7 +1,9 @@
-import type { Page, Locator } from 'playwright';
+import type { Page } from 'playwright';
+import type { Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
-import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { sleep, TIMEOUTS } from '../utils/constants';
+import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
+import { AceEditorElement } from '../utils/ace';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -43,9 +45,7 @@ export class ConsolePane extends PageObject {
 
   async consoleInputValue(): Promise<string> {
     return this.page.evaluate(() => {
-      const el = document.getElementById('rstudio_console_input') as
-        | (HTMLElement & { env?: { editor?: { getValue(): string } } })
-        | null;
+      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
       return el?.env?.editor?.getValue() ?? '';
     });
   }
@@ -70,21 +70,63 @@ export const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
 export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 
 /**
+ * Wait for the console input to clear its "busy" class -- i.e. for R to
+ * finish processing whatever it's running. Polls the DOM at 100ms intervals.
+ * Default timeout is generous (TIMEOUTS.sessionRestart) so it covers project
+ * opens and session restarts; pass a smaller value for snappier per-command
+ * waits, or a larger one for long-running calls like `install.packages`.
+ */
+export async function waitForConsoleIdle(
+  page: Page,
+  timeout: number = TIMEOUTS.sessionRestart,
+): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && !el.classList.contains('rstudio-console-busy');
+    },
+    null,
+    { timeout, polling: 100 },
+  );
+}
+
+/** Options accepted by `executeInConsole`. */
+export interface ExecuteInConsoleOptions {
+  /**
+   * If true, wait for R to finish processing the command before returning
+   * (via `waitForConsoleIdle`). Defaults to false to preserve the
+   * fire-and-forget semantics callers may rely on (e.g. queuing an install
+   * then a marker command). Use `wait: true` when the next step depends on
+   * R having completed -- it's faster and more reliable than a blind sleep.
+   */
+  wait?: boolean;
+  /**
+   * Timeout for the `wait: true` poll, in ms. Defaults to
+   * `TIMEOUTS.sessionRestart`. Raise this for slow commands like
+   * `install.packages`.
+   */
+  timeout?: number;
+}
+
+/**
  * Submit an R expression to the console. Writes the text directly into the
  * console's Ace editor and presses Enter -- no per-key typing -- so it doesn't
  * race with autocomplete popups, tooltip handlers, or other live-edit UI that
  * can swallow characters or steal focus. Prefer this when you just need code
  * to run; use `typeInConsole` only when a test is exercising actual typing
  * behavior (e.g. autocomplete triggering).
+ *
+ * Pass `{ wait: true }` when the next step depends on R having finished the
+ * command -- it polls the console-busy class instead of sleeping.
  */
-export async function executeInConsole(page: Page, command: string): Promise<void> {
+export async function executeInConsole(
+  page: Page,
+  command: string,
+  opts: ExecuteInConsoleOptions = {},
+): Promise<void> {
   await page.locator(CONSOLE_TAB).click();
   await page.evaluate((text) => {
-    const el = document.getElementById('rstudio_console_input') as
-      | (HTMLElement & {
-          env?: { editor?: { setValue(s: string, cursorPos?: number): void; focus(): void } };
-        })
-      | null;
+    const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
     const editor = el?.env?.editor;
     if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
     editor.setValue(text, 1); // 1 = move cursor to end
@@ -99,6 +141,9 @@ export async function executeInConsole(page: Page, command: string): Promise<voi
   // focus can shift between the evaluate() returning and the key press, leaving
   // the text in the buffer but never submitted.
   await page.locator(CONSOLE_INPUT).press('Enter');
+  if (opts.wait) {
+    await waitForConsoleIdle(page, opts.timeout);
+  }
 }
 
 /**
@@ -112,6 +157,50 @@ export async function executeInConsole(page: Page, command: string): Promise<voi
  * human typing speed and gives the editor time to dispatch input events and
  * fire completers between chars.
  */
+/** Default CRAN mirror for `ensurePackageInstalled`. */
+export const DEFAULT_CRAN_REPOS = 'https://cran.r-project.org';
+
+/** Options accepted by `ensurePackageInstalled`. */
+export interface EnsurePackageInstalledOptions {
+  /** Repos URL; defaults to `DEFAULT_CRAN_REPOS`. */
+  repos?: string;
+  /** Install type ("binary" / "source"); defaults to `getOption("pkgType")`. */
+  type?: string;
+  /** Total timeout for the install, ms. Defaults to 120000 (2 min). */
+  timeout?: number;
+}
+
+/**
+ * Install an R package only if it isn't already on disk. Wraps the R-side
+ * `.rs.ensurePackageInstalled` helper, which checks the library before
+ * downloading -- much faster than a blind `install.packages` when the package
+ * is already present, which is the common case on repeated test runs.
+ *
+ * `repos` defaults to CRAN. Override it (e.g. with Posit Public Package
+ * Manager's per-distro endpoint) for faster Linux installs.
+ *
+ * Don't use this in tests that are exercising `install.packages` behavior
+ * itself -- call `executeInConsole(page, 'install.packages(...)', { wait: true })`
+ * directly there.
+ */
+export async function ensurePackageInstalled(
+  page: Page,
+  packageName: string,
+  opts: EnsurePackageInstalledOptions = {},
+): Promise<void> {
+  const repos = opts.repos ?? DEFAULT_CRAN_REPOS;
+  const args: string[] = [
+    JSON.stringify(packageName),
+    `repos = ${JSON.stringify(repos)}`,
+  ];
+  if (opts.type !== undefined) args.push(`type = ${JSON.stringify(opts.type)}`);
+  await executeInConsole(
+    page,
+    `.rs.ensurePackageInstalled(${args.join(', ')})`,
+    { wait: true, timeout: opts.timeout ?? 120000 },
+  );
+}
+
 export async function typeInConsole(page: Page, text: string, delayMs: number = 50): Promise<void> {
   await page.locator(CONSOLE_TAB).click();
   await page.locator(CONSOLE_INPUT).click({ force: true });
@@ -133,17 +222,7 @@ export async function closeAllBuffersWithoutSaving(page: Page): Promise<void> {
 }
 
 export async function getEnvironmentVersions(page: Page): Promise<EnvironmentVersions> {
-  await executeInConsole(page, 'cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-  await sleep(2000);
-
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-  const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-  return {
-    r: rMatch?.[1] ?? 'unknown',
-    rstudio: rstudioMatch?.[1] ?? 'unknown',
-  };
+  return getVersion(page);
 }
 
 export async function goToLine(page: Page, line: number): Promise<void> {

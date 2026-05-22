@@ -65,7 +65,6 @@ export async function createSandbox(page: Page): Promise<string> {
     const match = output.match(pattern);
     if (match) {
       const dir = match[1].trim();
-      console.log(`Sandbox: ${dir}`);
       // If the workdir's parent isn't PW_SANDBOX, the adaptive rootExpr()
       // chose the dirname(tempdir()) fallback on the rsession host -- meaning
       // PW_SANDBOX doesn't exist there (remote-rsession Server mode). Surface

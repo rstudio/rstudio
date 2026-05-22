@@ -1,6 +1,16 @@
 import type { Page } from 'playwright';
-import { executeInConsole, CONSOLE_TAB, CONSOLE_INPUT, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import {
+  executeInConsole,
+  waitForConsoleIdle,
+  CONSOLE_TAB,
+  CONSOLE_INPUT,
+  CONSOLE_OUTPUT,
+} from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
+
+// Re-exported from pages/console_pane.page.ts; preserved here so existing
+// `import { waitForConsoleIdle } from '@utils/project'` call sites keep working.
+export { waitForConsoleIdle };
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
 const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
@@ -134,28 +144,34 @@ export async function createAndOpenProject(
   await executeInConsole(page, `writeLines("cat('${marker}')", "${projectDir}/.Rprofile")`);
   await sleep(500);
 
+  // Reset the readiness flag synchronously before openProject. GWT-side
+  // QuitEvent / RestartStatusEvent handlers will also reset it when the
+  // server-emitted events arrive, but resetting here is deterministic and
+  // closes any window between "we sent .rs.api.openProject" and "GWT has
+  // received and dispatched kQuit". Without it, the wait below could see
+  // the prior session's stale true and exit before the workbench finishes
+  // re-initializing.
+  await page.evaluate(() => {
+    if (window.rstudio) window.rstudio.ready = false;
+  });
+
   await executeInConsole(page, `.rs.api.openProject("${projectDir}/${name}.Rproj")`);
   // The page may navigate on Server mode; let it settle before polling.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
   await pollForMarker(page, marker, 60000);
 
-  return projectDir;
-}
-
-/**
- * Wait for the console input to clear its "busy" class. Use after explicit
- * session restarts and project opens to make sure the next R-side action
- * isn't enqueued behind a long-running startup command.
- */
-export async function waitForConsoleIdle(page: Page): Promise<void> {
+  // The .Rprofile marker proves R is at the prompt, but the GWT workbench
+  // may still be mid-init -- show-file client events from R's hooked
+  // file.edit and other R-to-GWT roundtrips can race with workbench init.
+  // window.rstudio.ready is the canonical "automation can start" flag,
+  // flipped on DeferredInitCompletedEvent (see ApplicationAutomation.java).
   await page.waitForFunction(
-    () => {
-      const el = document.getElementById('rstudio_console_input');
-      return !!el && !el.classList.contains('rstudio-console-busy');
-    },
+    () => window.rstudio?.ready === true,
     null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
+    { timeout: 30000, polling: 50 },
   );
+
+  return projectDir;
 }
 
 /**

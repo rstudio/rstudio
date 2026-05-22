@@ -37,7 +37,7 @@ import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, userLogPath } from './utils';
+import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { showWhatsNewWindow } from './whats-new-window';
@@ -244,7 +244,14 @@ export class SessionLauncher {
           await setTimeoutPromise(appState().startupDelayMs);
         }
         this.showSplash = false;
-        this.mainWindow?.window.show();
+        // In automation mode, surface the window without pulling focus from
+        // the test driver. See main.ts for the matching macOS activation
+        // policy that suppresses OS-level app activation.
+        if (isAutomated()) {
+          this.mainWindow?.window.showInactive();
+        } else {
+          this.mainWindow?.window.show();
+        }
 
         // if the splash screen displayed, keep it visible for another brief period to
         // reduce cases where it flashes and hides without being readable
@@ -563,7 +570,11 @@ export class SessionLauncher {
         .then(() => {
           if (this.showSplash) {
             this.splash = createSplashScreen();
-            this.splash.show();
+            if (isAutomated()) {
+              this.splash.showInactive();
+            } else {
+              this.splash.show();
+            }
           }
         })
         .catch((err) => logger().logError(err));
@@ -636,7 +647,7 @@ export class SessionLauncher {
     }
 
     // if we're an automation agent, forward that to the R session
-    if (app.commandLine.hasSwitch('automation-agent')) {
+    if (isAutomated()) {
       argList.push('--automation-agent');
     }
 

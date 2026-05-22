@@ -38,6 +38,16 @@ export function getAppPath(): string {
   return appPath;
 }
 
+/**
+ * True when rsession is launched with --automation-agent (the flag the
+ * Playwright fixture passes). Use this to gate test-only behaviors such as
+ * `showInactive` over `show` and the macOS 'accessory' activation policy --
+ * the goal is to keep the app from stealing focus from the test driver.
+ */
+export function isAutomated(): boolean {
+  return app.commandLine.hasSwitch('automation-agent');
+}
+
 export function initializeSharedSecret(): void {
   const sharedSecret = randomUUID();
   setenv('RS_SHARED_SECRET', sharedSecret);

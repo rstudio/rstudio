@@ -17,8 +17,12 @@ package org.rstudio.studio.client.application;
 import java.util.Map;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.QuitEvent;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
+import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
@@ -47,6 +51,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.prefs.&lt;camelCaseName&gt;.clear()
  *
  *   window.rstudio.documents.closeAllNoSave()
+ *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
  *
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
@@ -90,6 +95,45 @@ public class ApplicationAutomation
       registerPrefs();
       registerDocuments();
       registerProject();
+      registerVersion();
+      registerReadinessHandlers();
+   }
+
+   // window.rstudio.ready is the canonical "automation can start" signal,
+   // flipped to true once R's deferred init has run for the current session.
+   // We also reset it back to false synchronously when any session-ending
+   // transition starts -- otherwise the prior session's "true" persists across
+   // a Restart-R or project open/close, and an automation client polling for
+   // the new session's readiness would see the stale value and exit early.
+   //
+   // Coverage by event:
+   //   - QuitEvent: kQuit emitted by SessionMain when R is quitting, including
+   //     project open/close/switch (switch_projects flag) and full quit.
+   //   - RestartStatusEvent.RESTART_INITIATED: fired by ApplicationQuit before
+   //     the actual suspend-for-restart, covering .rs.restartR / restartR
+   //     command (kSuspendAndRestart on the server side).
+   //   - DeferredInitCompletedEvent: fires once R's deferred init has run for
+   //     each session, signalling that R-to-GWT roundtrips are safe.
+   //
+   // doRestart-style flows (Electron relaunch on PAI uninstall etc.) reload
+   // the GWT page entirely, so initializeRoot() handles their reset.
+   //
+   // Handlers are registered once per GWT page lifetime: initializeAgent runs
+   // again on every session restart (via the writeUserPrefs callback that hosts
+   // it), so the registered-flag guards against handler leaks across sessions.
+   private void registerReadinessHandlers()
+   {
+      if (readinessHandlersRegistered_)
+         return;
+
+      eventBus_.addHandler(DeferredInitCompletedEvent.TYPE, event -> setReadyFlag(true));
+      eventBus_.addHandler(QuitEvent.TYPE, event -> setReadyFlag(false));
+      eventBus_.addHandler(RestartStatusEvent.TYPE, event -> {
+         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+            setReadyFlag(false);
+      });
+
+      readinessHandlersRegistered_ = true;
    }
 
    private void registerCommands()
@@ -127,6 +171,17 @@ public class ApplicationAutomation
    private void registerProject()
    {
       registerProjectObject();
+   }
+
+   private void registerVersion()
+   {
+      // SessionInfo is set by Application.onResponseReceived before the agent
+      // is initialized (see Application.java); the version strings are stable
+      // for the life of the session.
+      registerVersionObject(
+         session_.getSessionInfo().getRstudioVersion(),
+         session_.getSessionInfo().getRVersionsInfo().getRVersion()
+      );
    }
 
    /** Convert a snake_case identifier to camelCase. */
@@ -219,6 +274,11 @@ public class ApplicationAutomation
       eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
    }
 
+   private void dispatchResetToUntitled()
+   {
+      eventBus_.dispatchEvent(new DocumentResetToUntitledEvent());
+   }
+
    // Always read through session_.getSessionInfo() rather than capturing a
    // reference at install time -- a session restart (e.g. close-project)
    // replaces the SessionInfo JSO, and we want callers to see the live state.
@@ -244,6 +304,18 @@ public class ApplicationAutomation
       $wnd.rstudio.commands = $wnd.rstudio.commands || {};
       $wnd.rstudio.prefs = $wnd.rstudio.prefs || {};
       $wnd.rstudio.documents = $wnd.rstudio.documents || {};
+      // Set false on initial bootstrap; flipped by setReadyFlag() in response
+      // to lifecycle events (see registerReadinessHandlers).
+      $wnd.rstudio.ready = false;
+   }-*/;
+
+   // Guarded against the case where the agent was never initialized (an
+   // automation session that ends before initializeRoot runs would still get
+   // handler-fire attempts on full quit).
+   private native final void setReadyFlag(boolean ready) /*-{
+      if ($wnd.rstudio) {
+         $wnd.rstudio.ready = ready;
+      }
    }-*/;
 
    private native final void registerCommand(String id, AppCommand command) /*-{
@@ -288,6 +360,9 @@ public class ApplicationAutomation
       $wnd.rstudio.documents.closeAllNoSave = $entry(function() {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchCloseAllNoSave()();
       });
+      $wnd.rstudio.documents.resetToUntitled = $entry(function() {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchResetToUntitled()();
+      });
    }-*/;
 
    private native final void registerProjectObject() /*-{
@@ -304,9 +379,19 @@ public class ApplicationAutomation
       });
    }-*/;
 
+   // Versions are stable for the life of the session, so install a plain
+   // object rather than getter functions. Read via window.rstudio.version.
+   private native final void registerVersionObject(String rstudio, String r) /*-{
+      $wnd.rstudio.version = {
+         rstudio: rstudio,
+         r: r,
+      };
+   }-*/;
+
    private final Commands commands_;
    private final EventBus eventBus_;
    private final Session session_;
    private final UserPrefs userPrefs_;
    private boolean isAutomationAgent_ = false;
+   private boolean readinessHandlersRegistered_ = false;
 }
