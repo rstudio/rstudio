@@ -222,20 +222,15 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog/overlay from a prior failed run.
-    // Try Escape multiple times to handle trust dialogs, save prompts, etc.
+    // Dismiss any leftover dialog/overlay from a prior failed run. The
+    // sleep(1000) below settles after each Escape, so a snapshot isVisible()
+    // is enough -- a timeout here would just waste 2s per loop when no
+    // dialog is left.
     for (let i = 0; i < 3; i++) {
-      try {
-        const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]');
-        if (await overlay.first().isVisible({ timeout: 2000 })) {
-          await page.keyboard.press('Escape');
-          await sleep(1000);
-        } else {
-          break;
-        }
-      } catch {
-        break;
-      }
+      const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await sleep(1000);
     }
 
     // Capture original load_workspace preference for restoration

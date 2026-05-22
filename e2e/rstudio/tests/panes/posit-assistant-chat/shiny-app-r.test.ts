@@ -42,9 +42,12 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     await executeCommand(page, 'viewerClearAll');
     await sleep(1000);
 
-    // Dismiss the "Clear Viewer" confirmation dialog if it appears
+    // Dismiss the "Clear Viewer" confirmation dialog if it appears. The
+    // sleep(1000) after viewerClearAll above settles the dialog state, so a
+    // snapshot isVisible() is sufficient -- no need to burn 2s polling for
+    // absence in the common case.
     const clearViewerYes = page.locator('role=alertdialog >> button:has-text("Yes")');
-    if (await clearViewerYes.isVisible({ timeout: 2000 }).catch(() => false)) {
+    if (await clearViewerYes.isVisible()) {
       await clearViewerYes.click();
       await sleep(500);
     }

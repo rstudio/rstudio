@@ -221,15 +221,14 @@ test.describe.serial('Create Projects in New Directory', () => {
   });
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog from a prior failed run
+    // Dismiss any leftover dialog from a prior failed run. The sleep(1000)
+    // below settles after each Escape, so a snapshot isVisible() is enough --
+    // a timeout here would just waste 2s per loop when no dialog is left.
     for (let i = 0; i < 3; i++) {
-      const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]');
-      if (await overlay.first().isVisible({ timeout: 2000 }).catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(1000);
-      } else {
-        break;
-      }
+      const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await sleep(1000);
     }
 
     // Close any open project from a prior run
