@@ -46,8 +46,6 @@ declare global {
   }
 }
 
-const MISSING_BRIDGE = 'window.rstudio is not defined; launch RStudio with --automation-agent';
-
 // Convert snake_case to camelCase. Preference names are snake_case in the
 // schema (matching rstudio-prefs.json), but the Java bridge registers them
 // camelCased to read better as JS object keys. Keeping the TS wrapper APIs
@@ -58,13 +56,19 @@ function snakeToCamel(s: string): string {
 
 /** Run an AppCommand by id (no console roundtrip). */
 export async function executeCommand(page: Page, commandId: string): Promise<void> {
+  // The bridge is transiently absent during session restarts (project open
+  // /close, Restart R). Wait for the specific command to land before
+  // dispatching so callers don't have to manage that themselves. When the
+  // bridge is already up, the condition is true on the first poll, so this
+  // adds no measurable latency to the steady-state path.
+  await page.waitForFunction(
+    (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
+    commandId,
+    { timeout: 10000, polling: 50 },
+  );
   await page.evaluate((id) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error(MISSING_BRIDGE);
+    const r = window.rstudio!;
     const cmd = r.commands[id];
-    if (!cmd)
-      throw new Error(`Unknown command: ${id}`);
     cmd();
   }, commandId);
 }
@@ -74,7 +78,7 @@ export async function isCommandChecked(page: Page, commandId: string): Promise<b
   return page.evaluate((id) => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     const cmd = r.commands[id];
     if (!cmd)
       throw new Error(`Unknown command: ${id}`);
@@ -87,7 +91,7 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
   return page.evaluate((id) => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     const cmd = r.commands[id];
     if (!cmd)
       throw new Error(`Unknown command: ${id}`);
@@ -104,7 +108,7 @@ export async function documentCloseAllNoSave(page: Page): Promise<void> {
   await page.evaluate(() => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     r.documents.closeAllNoSave();
   });
 }
@@ -118,7 +122,7 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
   return page.evaluate((prefName) => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     const entry = r.prefs[prefName];
     return entry ? entry.get() : null;
   }, camel);
@@ -136,7 +140,7 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
   await page.evaluate(({ prefName, prefValue }) => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     const entry = r.prefs[prefName];
     if (!entry)
       throw new Error(`Unknown user preference: ${prefName}`);
@@ -153,7 +157,7 @@ export async function clearPref(page: Page, name: string): Promise<void> {
   await page.evaluate((prefName) => {
     const r = window.rstudio;
     if (!r)
-      throw new Error(MISSING_BRIDGE);
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
     const entry = r.prefs[prefName];
     if (!entry)
       throw new Error(`Unknown user preference: ${prefName}`);
