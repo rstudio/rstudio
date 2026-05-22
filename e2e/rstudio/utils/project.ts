@@ -134,11 +134,13 @@ export async function createAndOpenProject(
   await executeInConsole(page, `writeLines("cat('${marker}')", "${projectDir}/.Rprofile")`);
   await sleep(500);
 
-  // Reset the readiness flag manually before openProject -- the flag was
-  // true from the prior session's initializeAgent, and a fresh openProject
-  // wouldn't flip it back to false until partway through the new session's
-  // GWT bootstrap. Without this, the wait below would see the stale true
-  // and exit before the workbench is actually re-initialized.
+  // Reset the readiness flag synchronously before openProject. GWT-side
+  // QuitEvent / RestartStatusEvent handlers will also reset it when the
+  // server-emitted events arrive, but resetting here is deterministic and
+  // closes any window between "we sent .rs.api.openProject" and "GWT has
+  // received and dispatched kQuit". Without it, the wait below could see
+  // the prior session's stale true and exit before the workbench finishes
+  // re-initializing.
   await page.evaluate(() => {
     if (window.rstudio) window.rstudio.ready = false;
   });
