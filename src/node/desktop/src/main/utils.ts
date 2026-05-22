@@ -41,8 +41,9 @@ export function getAppPath(): string {
 /**
  * True when rsession is launched with --automation-agent (the flag the
  * Playwright fixture passes). Use this to gate test-only behaviors such as
- * `showInactive` over `show` and the macOS 'accessory' activation policy --
- * the goal is to keep the app from stealing focus from the test driver.
+ * `showInactive` over `show` -- the goal is to keep windows from leaping to
+ * the front while leaving the app visible in the dock / Cmd+Tab so the user
+ * can still find and focus it manually.
  */
 export function isAutomated(): boolean {
   return app.commandLine.hasSwitch('automation-agent');

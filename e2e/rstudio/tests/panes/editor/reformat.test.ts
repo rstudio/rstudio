@@ -9,7 +9,7 @@ import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { executeCommand } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 import {
   createAndOpenProject,
   closeProjectIfOpen,
@@ -78,13 +78,13 @@ test.describe.serial('styler reformat on save', () => {
     projectDir = await createAndOpenProject(page, sandbox.dir, 'reformat-styler-project');
     await waitForConsoleIdle(page);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$reformatOnSave$set(TRUE)');
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'reformat_on_save', true);
+    await setPref(page, 'code_formatter', 'styler');
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$reformatOnSave$clear()');
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$clear()');
+    await clearPref(page, 'reformat_on_save');
+    await clearPref(page, 'code_formatter');
     await consoleActions.closeAllBuffersWithoutSaving();
     await waitForConsoleIdle(page);
     await closeProjectIfOpen(page);
@@ -140,14 +140,14 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$clear()');
+    await clearPref(page, 'code_formatter');
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE_STYLER_DOC, FILE_STYLER_SEL]);
   });
 
   test('Reformat Document does not add extra newlines', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `styler not available: ${missingPackages.join(', ')}`);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'code_formatter', 'styler');
 
     const initial = 'print("test")\nprint("test")\n\n';
     const expected = 'print("test")\nprint("test")\n';
@@ -163,7 +163,7 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
   test('Reformat Code (selection) does not add extra newlines', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `styler not available: ${missingPackages.join(', ')}`);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'code_formatter', 'styler');
 
     const initial = '1+1; 2+2\n3+3; 4+4\n';
     const expected = '1 + 1\n2 + 2\n3 + 3\n4 + 4\n';
