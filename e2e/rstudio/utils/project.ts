@@ -1,6 +1,16 @@
 import type { Page } from 'playwright';
-import { executeInConsole, CONSOLE_TAB, CONSOLE_INPUT, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import {
+  executeInConsole,
+  waitForConsoleIdle,
+  CONSOLE_TAB,
+  CONSOLE_INPUT,
+  CONSOLE_OUTPUT,
+} from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
+
+// Re-exported from pages/console_pane.page.ts; preserved here so existing
+// `import { waitForConsoleIdle } from '@utils/project'` call sites keep working.
+export { waitForConsoleIdle };
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
 const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
@@ -162,22 +172,6 @@ export async function createAndOpenProject(
   );
 
   return projectDir;
-}
-
-/**
- * Wait for the console input to clear its "busy" class. Use after explicit
- * session restarts and project opens to make sure the next R-side action
- * isn't enqueued behind a long-running startup command.
- */
-export async function waitForConsoleIdle(page: Page): Promise<void> {
-  await page.waitForFunction(
-    () => {
-      const el = document.getElementById('rstudio_console_input');
-      return !!el && !el.classList.contains('rstudio-console-busy');
-    },
-    null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
-  );
 }
 
 /**

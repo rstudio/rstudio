@@ -368,6 +368,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    detach(pos = match(pkg, search()))
 })
 
+# Install a package only if it isn't already installed. Checks the on-disk
+# library for the package directory rather than calling requireNamespace(),
+# so the package's namespace is not loaded as a side effect. Useful for test
+# setup and other contexts that need a package present but don't want the
+# cost of a redundant download + reinstall when it's already there.
+.rs.addFunction("ensurePackageInstalled", function(packageName,
+                                                   repos = getOption("repos"),
+                                                   type = getOption("pkgType"))
+{
+   if (!nzchar(system.file(package = packageName)))
+      install.packages(packageName, repos = repos, type = type)
+})
+
 .rs.addFunction("getPackageVersion", function(packageName)
 {
    v <- suppressWarnings(utils:::packageDescription(packageName,
