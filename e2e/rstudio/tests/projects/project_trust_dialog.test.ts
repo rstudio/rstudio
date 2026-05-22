@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { executeCommand, setPref, documentCloseAllNoSave } from '@utils/commands';
@@ -43,19 +42,25 @@ const PALETTE_LIST = '#rstudio_command_palette_list';
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__TRUST_${Date.now()}__`;
 
-  // Retry up to 3 times — after Server page navigation, the console may
+  // Retry up to 3 times -- after Server page navigation, the console may
   // not be fully connected yet and the first attempt can silently fail.
+  // { wait: true } gates on R reporting idle inside each attempt, so we
+  // only retry when the markers genuinely never wrote.
   for (let attempt = 0; attempt < 3; attempt++) {
-    await clearConsole(page);
-    await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
-    await sleep(1500);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const re = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-    const match = output.match(re);
-    if (match) return match[1].trim();
-
-    // Didn't find markers — wait and retry
-    await sleep(2000);
+    try {
+      await clearConsole(page);
+      await executeInConsole(
+        page,
+        `cat("${marker}", ${rExpression}, "${marker}")`,
+        { wait: true },
+      );
+      const output = await page.locator(CONSOLE_OUTPUT).innerText();
+      const re = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
+      const match = output.match(re);
+      if (match) return match[1].trim();
+    } catch {
+      // console may not be ready yet -- retry
+    }
   }
   console.warn(`captureResult: markers not found after 3 attempts for: ${rExpression}`);
   return '';
@@ -66,30 +71,29 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   // On Server, project switches navigate to a new session URL.
   // Wait for navigation to settle before checking for the console.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
-  await sleep(3000);
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 60000 });
-  await sleep(2000);
 
-  // Wait for GWT to fully initialize (not just the console DOM element)
+  // Wait for the automation bridge to be installed before driving any
+  // R-to-GWT round trip. The bridge is registered post workbench init, so
+  // it's a deterministic post-condition for "GWT is fully wired up".
   await page.waitForFunction(
-    'typeof window.rstudioapi !== "undefined" || typeof window.$RStudio !== "undefined"',
+    () => window.rstudio?.ready === true,
     null,
-    { timeout: 15000 }
+    { timeout: 30000 },
   ).catch(() => {});
-  await sleep(1000);
 
-  // Confirm R is actually idle by running a trivial command with retries
+  // Confirm R is actually idle by running a trivial command with retries.
+  // { wait: true } gates each attempt on the console-busy class clearing,
+  // so we only loop when console plumbing itself is still coming up.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const marker = `__READY_${Date.now()}__`;
-      await executeInConsole(page, `cat("${marker}")`);
-      await sleep(1500);
+      await executeInConsole(page, `cat("${marker}")`, { wait: true });
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
     } catch {
       // executeInConsole may fail if console isn't ready
     }
-    await sleep(2000);
   }
 }
 
@@ -102,13 +106,15 @@ async function restartR(page: Page): Promise<void> {
 /**
  * Restart R when a trust dialog is expected afterward.
  * Skips the idle check in waitForSessionRestart since the dialog
- * blocks console access.
+ * blocks console access. Wait for either the trust dialog or the console
+ * input to surface as the post-condition.
  */
 async function restartRExpectingDialog(page: Page): Promise<void> {
   await executeCommand(page, 'restartR');
-  await sleep(3000);
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
-  await sleep(2000);
+  await Promise.race([
+    page.locator(TRUST_DIALOG).waitFor({ state: 'visible', timeout: 30000 }),
+    page.locator(CONSOLE_INPUT).waitFor({ state: 'visible', timeout: 30000 }),
+  ]).catch(() => {});
 }
 
 /** Check if the trust dialog is visible within the given timeout. */
@@ -123,31 +129,28 @@ async function isTrustDialogVisible(page: Page, timeout = 10000): Promise<boolea
 
 /** Reset trust state for a directory (or current project). */
 async function resetTrust(page: Page, dir?: string): Promise<void> {
-  if (dir) {
-    const escaped = dir.replace(/\\/g, '/');
-    await executeInConsole(page, `.rs.trust.reset("${escaped}")`);
-  } else {
-    await executeInConsole(page, '.rs.trust.reset()');
-  }
-  await sleep(500);
+  const cmd = dir
+    ? `.rs.trust.reset("${dir.replace(/\\/g, '/')}")`
+    : '.rs.trust.reset()';
+  await executeInConsole(page, cmd, { wait: true });
 }
 
 /** Revoke trust for a directory (mark as untrusted). */
 async function revokeTrust(page: Page, dir?: string): Promise<void> {
-  if (dir) {
-    const escaped = dir.replace(/\\/g, '/');
-    await executeInConsole(page, `.rs.trust.revoke("${escaped}")`);
-  } else {
-    await executeInConsole(page, '.rs.trust.revoke()');
-  }
-  await sleep(500);
+  const cmd = dir
+    ? `.rs.trust.revoke("${dir.replace(/\\/g, '/')}")`
+    : '.rs.trust.revoke()';
+  await executeInConsole(page, cmd, { wait: true });
 }
 
 /** Write a .Rprofile in the given directory. */
 async function writeRprofile(page: Page, dir: string, content: string): Promise<void> {
   const escaped = dir.replace(/\\/g, '/');
-  await executeInConsole(page, `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`);
-  await sleep(500);
+  await executeInConsole(
+    page,
+    `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`,
+    { wait: true },
+  );
 }
 
 /** Get the current working directory from R. */
@@ -163,44 +166,42 @@ async function getWorkingDir(page: Page): Promise<string> {
 async function createProjectViaUI(page: Page, name: string): Promise<void> {
   // Close any open source docs to prevent "unsaved changes" dialogs during project switch
   await documentCloseAllNoSave(page);
-  await sleep(1000);
 
-  // Open command palette and invoke "Create a New Project..."
+  // Open command palette and invoke "Create a New Project...". Wait for the
+  // palette list to render before typing -- keystrokes are dropped if the
+  // palette hasn't mounted yet.
   await page.keyboard.press('ControlOrMeta+Shift+p');
-  await sleep(1000);
-
+  await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
   await page.keyboard.type('Create a New Project');
-  await sleep(500);
 
   const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
   await expect(paletteItem).toBeVisible({ timeout: 5000 });
   await paletteItem.click();
-  await sleep(2000);
 
   // Wait for wizard dialog
   const dialog = page.locator('.gwt-DialogBox');
   await expect(dialog).toBeVisible({ timeout: 15000 });
 
-  // Step 1: Click "New Directory"
+  // Step 1: Click "New Directory" (each expect-visible is the wait gate for
+  // the next panel to mount before its click fires).
   const newDirItem = dialog.locator('#rstudio_label_new_directory_wizard_page');
   await expect(newDirItem).toBeVisible({ timeout: 5000 });
   await newDirItem.click();
-  await sleep(1000);
 
   // Step 2: Click "New Project" in the project type list
   // Each wizard item gets an ID from its title: rstudio_label_{title}_wizard_page
   const newProjItem = dialog.locator('#rstudio_label_new_project_wizard_page');
   await expect(newProjItem).toBeVisible({ timeout: 5000 });
   await newProjItem.click();
-  await sleep(1000);
 
-  // Step 3: Enter directory name — use click + pressSequentially so GWT
-  // detects keystrokes and enables the OK button
+  // Step 3: Enter directory name -- use click + pressSequentially so GWT
+  // detects keystrokes and enables the OK button. Wait for the input to
+  // actually hold the typed text before clicking Create.
   const dirInput = dialog.locator('input.gwt-TextBox').first();
   await expect(dirInput).toBeVisible({ timeout: 5000 });
   await dirInput.click();
   await dirInput.pressSequentially(name);
-  await sleep(500);
+  await expect(dirInput).toHaveValue(name, { timeout: 2000 });
 
   // Step 4: Click "Create Project"
   // Wizard overrides the OK button ID: rstudio_label_{caption}_wizard_confirm
@@ -222,15 +223,15 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog/overlay from a prior failed run. The
-    // sleep(1000) below settles after each Escape, so a snapshot isVisible()
-    // is enough -- a timeout here would just waste 2s per loop when no
-    // dialog is left.
+    // Dismiss any leftover dialog/overlay from a prior failed run. Wait for
+    // the overlay to actually detach after each Escape instead of a fixed
+    // sleep -- much faster in the common no-dialog case, and only retries
+    // as many times as actually needed.
+    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
     for (let i = 0; i < 3; i++) {
-      const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
       if (!(await overlay.isVisible())) break;
       await page.keyboard.press('Escape');
-      await sleep(1000);
+      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
     }
 
     // Capture original load_workspace preference for restoration
@@ -250,7 +251,6 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await setPref(page, 'default_project_location', escaped);
-    await sleep(500);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
@@ -264,9 +264,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
       // Restore preferences
       await setPref(page, 'load_workspace', originalLoadWorkspace === 'TRUE');
-      await sleep(500);
       await setPref(page, 'default_project_location', originalDefaultProjectLocation);
-      await sleep(500);
     } catch (err) {
       console.warn('project_trust_dialog afterAll cleanup failed:', err);
     }
@@ -282,9 +280,8 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     if (hasProject === 'TRUE') {
       await page.keyboard.press('ControlOrMeta+Shift+p');
-      await sleep(1000);
+      await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
       await page.keyboard.type('Close Current Project');
-      await sleep(500);
       const closeItem = page.locator(`${PALETTE_LIST} >> text=Close Current Project`);
       await expect(closeItem).toBeVisible({ timeout: 5000 });
       await closeItem.click();
@@ -345,7 +342,10 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Click "No, I do not trust this project"
     await page.locator(DONT_TRUST_BTN).click();
-    await sleep(2000);
+    // Wait for the dialog to dismiss before checking the lock icon (lockIcon
+    // assertion auto-waits, but the dialog->dismiss transition has to land
+    // first or the captureResult call below sees a closed-and-busy console).
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Verify restricted mode: lock icon visible
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -378,7 +378,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Click "Keep restricted"
     await page.locator(KEEP_RESTRICTED_BTN).click();
-    await sleep(1000);
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Lock icon still visible
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -403,10 +403,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Press Escape to dismiss
     await page.keyboard.press('Escape');
-    await sleep(1000);
 
-    // Dialog dismissed
-    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible();
+    // Dialog dismissed (expect auto-waits for the transition).
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Restricted mode active: lock icon visible, .Rprofile not sourced
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -459,10 +458,16 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // so it doesn't error when sourced (no risky files → trust not required → .Rprofile runs)
     await writeRprofile(page, projectDir, 'source("renv/activate.R")');
     const escaped = projectDir.replace(/\\/g, '/');
-    await executeInConsole(page, `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`);
-    await sleep(300);
-    await executeInConsole(page, `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`);
-    await sleep(300);
+    await executeInConsole(
+      page,
+      `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`,
+      { wait: true },
+    );
+    await executeInConsole(
+      page,
+      `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`,
+      { wait: true },
+    );
 
     // Restart R
     await restartR(page);
@@ -486,12 +491,14 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Enable workspace restore
     await setPref(page, 'load_workspace', true);
-    await sleep(500);
 
     // Create an .RData file (empty workspace save)
     const escaped = projectDir.replace(/\\/g, '/');
-    await executeInConsole(page, `save(list = character(0), file = file.path("${escaped}", ".RData"))`);
-    await sleep(500);
+    await executeInConsole(
+      page,
+      `save(list = character(0), file = file.path("${escaped}", ".RData"))`,
+      { wait: true },
+    );
 
     // Restart — dialog expected for .RData
     await restartRExpectingDialog(page);
@@ -507,7 +514,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Dismiss with Escape
     await page.keyboard.press('Escape');
-    await sleep(1000);
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
   });
 
   // ---------------------------------------------------------------------------
@@ -521,7 +528,6 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Disable workspace restore
     await setPref(page, 'load_workspace', false);
-    await sleep(500);
 
     // .RData still exists from test 7, renv .Rprofile from test 6
     // With load_workspace=FALSE, .RData is not risky

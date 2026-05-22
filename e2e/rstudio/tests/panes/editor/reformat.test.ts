@@ -15,7 +15,7 @@ import {
   closeProjectIfOpen,
   waitForConsoleIdle,
 } from '@utils/project';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 
 const FILE_5425 = 'reformat_5425.R';
 const FILE_STYLER_DOC = 'reformat_styler_doc.R';
@@ -23,13 +23,25 @@ const FILE_STYLER_SEL = 'reformat_styler_selection.R';
 
 async function focusEditor(page: Page): Promise<void> {
   await new SourcePane(page).contentPane.click();
-  await sleep(TIMEOUTS.layoutSettle);
+  // Wait for keyboard focus to actually land on a source-pane Ace textarea
+  // (not the console). page.click() resolves before the focus event has
+  // propagated; without this gate, subsequent keystrokes can fire while
+  // focus is still mid-flight and route to the previously focused element.
+  await page.waitForFunction(
+    () => {
+      const el = document.activeElement;
+      if (!el) return false;
+      if (el.closest('#rstudio_console_input')) return false;
+      return el.classList?.contains('ace_text-input') ?? false;
+    },
+    null,
+    { timeout: 2000, polling: 50 },
+  );
 }
 
 async function selectAllInEditor(page: Page): Promise<void> {
   await focusEditor(page);
   await page.keyboard.press('ControlOrMeta+a');
-  await sleep(TIMEOUTS.layoutSettle);
 }
 
 test.describe('Built-in code reformat', () => {
@@ -107,7 +119,10 @@ test.describe.serial('styler reformat on save', () => {
     // the buffer becomes dirty, so Ctrl+S triggers reformat-on-save.
     await selectAllInEditor(page);
     await page.keyboard.type('1+1; 2+2');
-    await sleep(TIMEOUTS.layoutSettle);
+    // Wait for the editor to actually contain the typed text before saving.
+    // keyboard.type returns when keystrokes have been dispatched, not when
+    // Ace has applied them all -- a fast Ctrl+S can race the last char.
+    await expect.poll(() => editor.getValue()).toBe('1+1; 2+2');
 
     await page.keyboard.press('ControlOrMeta+s');
 

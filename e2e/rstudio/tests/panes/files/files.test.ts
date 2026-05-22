@@ -10,7 +10,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { sleep, TIMEOUTS, typeSlowly } from '@utils/constants';
+import { TIMEOUTS, typeSlowly } from '@utils/constants';
 import { executeCommand, documentCloseAllNoSave, setPref, clearPref } from '@utils/commands';
 
 const MODAL_DIALOG = '.rstudio_modal_dialog';
@@ -39,22 +39,21 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
 
   test('handles a large flat directory (>500 files)', async ({ rstudioPage: page }) => {
     // Create 10000 stub .R files in the suite sandbox -- enough to force the
-    // virtualized list path.
+    // virtualized list path. { wait: true } so the file creation has actually
+    // landed before the Open dialog enumerates the directory.
     await consoleActions.executeInConsole(
       `{ setwd(${JSON.stringify(sandbox.dir)}); files <- sprintf("%04i.R", 0:9999); invisible(file.create(files)) }`,
+      { wait: true, timeout: TIMEOUTS.consoleReady },
     );
-    await sleep(TIMEOUTS.consoleReady);
 
     await executeCommand(page, 'openSourceDoc');
     await expect(page.locator(MODAL_DIALOG)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-    await sleep(TIMEOUTS.settleDelay);
 
     // Focus the file list so the typed prefix reaches RowTable's prefix-search
     // handler (default focus is on the path text input, which would just
     // accumulate characters instead of selecting a row).
     await page.locator(DIRECTORY_CONTENTS_TABLE).click();
     await typeSlowly(page, '5159');
-    await sleep(TIMEOUTS.layoutSettle);
     await page.keyboard.press('Enter');
 
     const selectedTab = new SourcePane(page).selectedTab;
@@ -66,18 +65,16 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
     // should still resolve a typed prefix to the only matching file.
     await consoleActions.executeInConsole(
       `{ setwd(${JSON.stringify(sandbox.dir)}); files <- sprintf("%03i.R", 0:450); invisible(file.create(files)) }`,
+      { wait: true, timeout: TIMEOUTS.consoleReady },
     );
-    await sleep(TIMEOUTS.consoleReady);
 
     await executeCommand(page, 'openSourceDoc');
     await expect(page.locator(MODAL_DIALOG)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-    await sleep(TIMEOUTS.settleDelay);
 
     // No 455.R exists; the dialog selects the closest preceding file (450.R)
     // via RowTable's prefix-search. Focus the table first (see comment above).
     await page.locator(DIRECTORY_CONTENTS_TABLE).click();
     await typeSlowly(page, '455');
-    await sleep(TIMEOUTS.layoutSettle);
     await page.keyboard.press('Enter');
 
     const selectedTab = new SourcePane(page).selectedTab;
@@ -105,8 +102,7 @@ test.describe('Autosave on blur', () => {
         'assign(".rs_autosave_path", con, envir = globalenv())',
         'file.edit(con) }',
       ].join('; ');
-      await consoleActions.executeInConsole(setupExpr);
-      await sleep(TIMEOUTS.fileEditSettle);
+      await consoleActions.executeInConsole(setupExpr, { wait: true });
 
       // Record mtime, blur the source pane, and assert it didn't change.
       await consoleActions.executeInConsole(
@@ -131,9 +127,10 @@ test.describe('Autosave on blur', () => {
       await editor.gotoLine(2);
       await editor.insert('# this is some text');
       await executeCommand(page, 'activateConsole');
-      // mtime granularity is one second on some filesystems; let the autosave
-      // settle before re-stating the file.
-      await sleep(1500);
+      // mtime granularity is one second on some filesystems; wait until the
+      // wall clock has moved past the old mtime before re-stating, so a fresh
+      // write produces a different timestamp.
+      await page.waitForTimeout(1500);
 
       const changedMarker = `__AUTOSAVE_CHANGED_${Date.now()}__`;
       await consoleActions.executeInConsole(

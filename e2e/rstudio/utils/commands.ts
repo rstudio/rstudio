@@ -184,6 +184,32 @@ export async function resetSourcePaneState(page: Page): Promise<void> {
 }
 
 /**
+ * Wait until the focused source document's path equals `expectedPath`. Polls
+ * `window.rstudio.documents.active()` -- the bridge value updates the moment
+ * the active editor changes, so this is a deterministic post-condition for
+ * `.rs.api.documentOpen(...)`, `file.edit(...)`, and other open-by-path flows.
+ *
+ * On case-insensitive filesystems (macOS HFS+, NTFS) the comparison ignores
+ * case so callers can pass the same string they handed to R without worrying
+ * about case-folding round-trips.
+ */
+export async function waitForActiveDocument(
+  page: Page,
+  expectedPath: string,
+  timeout = 10000,
+): Promise<void> {
+  await page.waitForFunction(
+    (target) => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      return doc !== null && doc.path !== null
+        && doc.path.toLowerCase() === target.toLowerCase();
+    },
+    expectedPath,
+    { timeout, polling: 100 },
+  );
+}
+
+/**
  * Read a user preference by name. Returns null when the preference name is
  * unknown.
  */

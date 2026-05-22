@@ -12,7 +12,6 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { sleep, TIMEOUTS } from '@utils/constants';
 
 const TEST_FILE = '.rstudio-test-files-endpoint';
 
@@ -33,8 +32,8 @@ test.describe('/files/ HTTP endpoint cross-site protections', { tag: ['@server_o
     // keeps it out of the visible Files pane.
     await consoleActions.executeInConsole(
       `writeLines('test content', file.path('~', '${TEST_FILE}'))`,
+      { wait: true },
     );
-    await sleep(TIMEOUTS.settleDelay);
   });
 
   test.afterAll(async () => {

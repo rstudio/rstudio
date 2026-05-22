@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { createAndOpenProject, restartSessionWithSentinel, waitForSessionRestart } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -12,17 +11,19 @@ const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__PI_${Date.now()}__`;
-  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  // Gate on R reporting idle so both markers have written by the time we
+  // read the console.
+  await executeInConsole(
+    page,
+    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
+    { wait: true },
+  );
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const start = Date.now();
-  while (Date.now() - start < TIMEOUTS.consoleReady) {
-    await sleep(TIMEOUTS.pollInterval);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const match = output.match(pattern);
-    if (match) return match[1].trim();
-  }
-  throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  const output = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = output.match(pattern);
+  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  return match[1].trim();
 }
 
 async function closeProject(page: Page): Promise<void> {
@@ -52,7 +53,6 @@ test.describe.serial('ProjectId in .Rproj', () => {
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
       await setPref(page, 'project_user_data_directory', '');
-      await sleep(TIMEOUTS.pollInterval);
       await closeProject(page);
     } catch (err) {
       console.warn('project_id afterAll cleanup failed:', err);
@@ -72,13 +72,12 @@ test.describe.serial('ProjectId in .Rproj', () => {
     expect(hasProjectId, 'fresh .Rproj should not contain ProjectId').toBe('FALSE');
 
     // Set the project user-data directory pref, then restart.
-    await executeInConsole(page, `dir.create(${dataDirLit})`);
-    await sleep(TIMEOUTS.pollInterval);
+    await executeInConsole(page, `dir.create(${dataDirLit})`, { wait: true });
     await executeInConsole(
       page,
       `.rs.api.writeRStudioPreference("project_user_data_directory", normalizePath(${dataDirLit}))`,
+      { wait: true },
     );
-    await sleep(TIMEOUTS.pollInterval);
     await restartSessionWithSentinel(page);
 
     // ProjectId should now be present in .Rproj.
@@ -96,7 +95,6 @@ test.describe.serial('ProjectId in .Rproj', () => {
 
     // Clear the pref and restart again. The ProjectId must persist.
     await setPref(page, 'project_user_data_directory', '');
-    await sleep(TIMEOUTS.pollInterval);
     await restartSessionWithSentinel(page);
 
     const projectIdLineAfter = await captureResult(

@@ -5,8 +5,8 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { clearPref, executeCommand, saveDocument, setPref } from '@utils/commands';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { clearPref, executeCommand, saveDocument, setPref, waitForActiveDocument } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 
 // Both the console and the active editor mount a FindReplaceBar that shares
 // these automation classes. Scope to the source panel so the test never
@@ -73,10 +73,11 @@ test.describe('Editor', () => {
     await expect.poll(() => editor.getValue()).toContain('.hello');
 
     // Invoke findReplace through the automation bridge -- the command targets
-    // the active source editor without needing keyboard focus there. Add a
-    // brief settle delay first: on Server, the editor needs a beat after
-    // load before it registers as the active find-replace target.
-    await sleep(TIMEOUTS.settleDelay);
+    // the active source editor without needing keyboard focus there. Wait for
+    // the just-opened document to be reported as the active source target;
+    // on Server, the editor needs a beat after the tab renders before it
+    // registers as the find-replace target.
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_whole_word.R`, TIMEOUTS.fileOpen);
     await executeCommand(page, 'findReplace');
     await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
 
@@ -94,7 +95,6 @@ test.describe('Editor', () => {
     // before any replacement happens.
     await page.locator(REPLACE_BUTTON).click();
     await page.locator(REPLACE_BUTTON).click();
-    await sleep(TIMEOUTS.layoutSettle);
 
     // Restore checkbox state and close the find bar so it doesn't bleed into later tests.
     await page.locator(WHOLE_WORD_CHECKBOX).click();
@@ -119,7 +119,6 @@ test.describe('Editor', () => {
     await editor.navigateLineEnd();
     await editor.focus();
     await page.keyboard.press('ControlOrMeta+Shift+m');
-    await sleep(TIMEOUTS.layoutSettle);
 
     await expect.poll(() => editor.getValue()).toMatch(/\|>|%>%/);
 
@@ -128,7 +127,6 @@ test.describe('Editor', () => {
     await editor.navigateLineEnd();
     await editor.focus();
     await page.keyboard.press('Alt+-');
-    await sleep(TIMEOUTS.layoutSettle);
 
     await expect.poll(() => editor.getValue()).toContain('<-');
   });
@@ -148,8 +146,11 @@ test.describe('Editor', () => {
     const posBefore = await editor.getCursorPosition();
 
     // First invocation should set the search term without advancing the cursor.
+    // Wait for the find bar to open before reading the cursor -- otherwise we
+    // can sample the position before the command's selection-to-find handler
+    // has run, masking a regression where the cursor *does* advance.
     await executeCommand(page, 'findFromSelection');
-    await sleep(TIMEOUTS.layoutSettle);
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: 5000 });
 
     const posAfter = await editor.getCursorPosition();
     expect(posAfter.row).toBe(posBefore.row);

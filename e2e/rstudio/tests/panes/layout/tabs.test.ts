@@ -2,7 +2,6 @@
 // Sidebar-width-when-adding-tabs scenarios are exercised by panes.test.ts.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeCommand, isCommandChecked } from '@utils/commands';
 import type { Page } from 'playwright';
 
@@ -96,8 +95,7 @@ test.describe('Workbench tabs', () => {
       { timeout: 5000 },
     ).toBe(true);
 
-    await sleep(TIMEOUTS.layoutSettle);
-    expect(await isCommandChecked(page, 'layoutZoomEnvironment')).toBe(true);
+    await expect.poll(() => isCommandChecked(page, 'layoutZoomEnvironment')).toBe(true);
 
     const zoomedEnvHeight = await getOffsetHeight(page, ENV_PANEL);
     expect(zoomedEnvHeight).toBeGreaterThan(initialEnvHeight * 1.5);
@@ -114,8 +112,7 @@ test.describe('Workbench tabs', () => {
       { timeout: 5000 },
     ).toBe(true);
 
-    await sleep(TIMEOUTS.layoutSettle);
-    expect(await isCommandChecked(page, 'layoutZoomEnvironment')).toBe(false);
+    await expect.poll(() => isCommandChecked(page, 'layoutZoomEnvironment')).toBe(false);
 
     const tol = (actual: number, expected: number) => Math.abs(actual - expected) / expected < 0.1;
     expect(tol(await getOffsetWidth(page, ENV_PANEL), initialEnvWidth)).toBe(true);

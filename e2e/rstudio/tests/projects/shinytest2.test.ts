@@ -1,11 +1,11 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, waitForActiveDocument } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -85,7 +85,7 @@ async function scaffoldShinytest2Project(
     `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,
   );
   await consoleActions.executeInConsole(`.rs.api.documentOpen(${testPathLit})`);
-  await sleep(1000);
+  await waitForActiveDocument(page, testFilePath, TIMEOUTS.fileOpen);
 }
 
 test.describe('shinytest2 integration', () => {

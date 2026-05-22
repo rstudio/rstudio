@@ -4137,6 +4137,12 @@ public class TextEditingTarget implements
          if (useBuiltinFormatter(context))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+            // Collapse the selection so the post-reformat state is always
+            // observable, even when the formatter produced an identical
+            // output. Without this, a user (or test) running reformat on
+            // already-formatted code would see no UI signal that anything
+            // happened.
+            editor.clearSelection();
          }
          else
          {
@@ -4148,7 +4154,7 @@ public class TextEditingTarget implements
                   range.getStart().setColumn(0);
                   range.getEnd().setColumn(Integer.MAX_VALUE);
                }
-               
+
                String selection = editor.getTextForRange(range);
                server_.formatCode(
                   getId(),
@@ -4160,12 +4166,17 @@ public class TextEditingTarget implements
                   public void onResponseReceived(String response)
                   {
                      editor.replaceRange(range, response);
+                     // Same rationale as the built-in path: always collapse
+                     // the selection so the reformat completion is visible
+                     // even on a no-op rewrite.
+                     editor.clearSelection();
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
                      Debug.logError(error);
+                     editor.clearSelection();
                   }
                });
             });

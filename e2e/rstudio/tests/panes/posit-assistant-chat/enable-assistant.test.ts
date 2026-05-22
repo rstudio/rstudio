@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { AssistantOptions } from '@pages/assistant_options.page';
@@ -33,10 +33,13 @@ test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
     await expect(assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });
     await assistantOptions.assistantTab.click();
     await expect(assistantOptions.assistantPanel).toBeVisible();
-    await sleep(1000);
+    // Wait for the provider options to be populated before selecting -- panel
+    // visibility precedes option load by a tick.
+    await expect(
+      assistantOptions.chatProviderSelect.locator('option', { hasText: '(None)' }),
+    ).toBeAttached({ timeout: 5000 });
 
     await assistantOptions.chatProviderSelect.selectOption({ label: '(None)' });
-    await sleep(1000);
     await assistantOptions.optionsOkButton.click();
     await expect(assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
 

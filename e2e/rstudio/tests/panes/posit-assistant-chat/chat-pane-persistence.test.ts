@@ -59,17 +59,19 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
       });
     }, CHAT_IFRAME);
 
-    // Open Global Options
+    // Open Global Options. expect-visible auto-waits for the dialog to render,
+    // so the subsequent click() doesn't need an extra settling delay.
     await executeCommand(page, 'showOptions');
     const okBtn = page.locator(PREFS_OK_BTN);
     await expect(okBtn).toBeVisible({ timeout: 15000 });
-    await sleep(500); // let dialog finish opening
 
     // Click OK without making any changes
     await okBtn.click();
     await expect(okBtn).toBeHidden({ timeout: 15000 });
 
-    // Brief pause to allow any spurious reload to start
+    // Deliberate observation window: this is a test for the *absence* of a
+    // reload event. If a spurious load was going to fire, it would have
+    // started within this window. Don't shrink without a stronger signal.
     await sleep(1000);
 
     const reloadCount = await page.evaluate((selector) => {
