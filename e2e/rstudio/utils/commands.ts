@@ -46,6 +46,14 @@ type RStudioBridge = {
   documents: { closeAllNoSave(): void };
   project: ProjectInfo;
   version: VersionInfo;
+  /**
+   * False during workbench init; flips to true once the
+   * DeferredInitCompletedEvent fires. Wait for this in test fixtures and
+   * project-open helpers before driving any R-to-GWT roundtrip (file.edit,
+   * client-event-driven actions) -- the bridge can be installed and reading
+   * window.rstudio still races with workbench init otherwise.
+   */
+  ready: boolean;
 };
 
 declare global {

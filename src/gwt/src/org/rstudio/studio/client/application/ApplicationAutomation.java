@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application;
 import java.util.Map;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -91,6 +92,15 @@ public class ApplicationAutomation
       registerDocuments();
       registerProject();
       registerVersion();
+
+      // window.rstudio.ready is the canonical "automation can start" signal.
+      // initializeAgent runs from a writeUserPrefs callback that fires before
+      // the workbench is fully initialized -- the bridge is installed at this
+      // point, but show-file events from R's hooked file.edit and other R-to-
+      // GWT roundtrips can still race with workbench init. Wait for the
+      // DeferredInitCompletedEvent (fired after R's deferred init runs) to
+      // flip the flag.
+      eventBus_.addHandler(DeferredInitCompletedEvent.TYPE, event -> setReady());
    }
 
    private void registerCommands()
@@ -256,6 +266,12 @@ public class ApplicationAutomation
       $wnd.rstudio.commands = $wnd.rstudio.commands || {};
       $wnd.rstudio.prefs = $wnd.rstudio.prefs || {};
       $wnd.rstudio.documents = $wnd.rstudio.documents || {};
+      // Flipped to true by setReady() once DeferredInitCompletedEvent fires.
+      $wnd.rstudio.ready = false;
+   }-*/;
+
+   private native final void setReady() /*-{
+      $wnd.rstudio.ready = true;
    }-*/;
 
    private native final void registerCommand(String id, AppCommand command) /*-{

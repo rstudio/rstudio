@@ -134,10 +134,30 @@ export async function createAndOpenProject(
   await executeInConsole(page, `writeLines("cat('${marker}')", "${projectDir}/.Rprofile")`);
   await sleep(500);
 
+  // Reset the readiness flag manually before openProject -- the flag was
+  // true from the prior session's initializeAgent, and a fresh openProject
+  // wouldn't flip it back to false until partway through the new session's
+  // GWT bootstrap. Without this, the wait below would see the stale true
+  // and exit before the workbench is actually re-initialized.
+  await page.evaluate(() => {
+    if (window.rstudio) window.rstudio.ready = false;
+  });
+
   await executeInConsole(page, `.rs.api.openProject("${projectDir}/${name}.Rproj")`);
   // The page may navigate on Server mode; let it settle before polling.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
   await pollForMarker(page, marker, 60000);
+
+  // The .Rprofile marker proves R is at the prompt, but the GWT workbench
+  // may still be mid-init -- show-file client events from R's hooked
+  // file.edit and other R-to-GWT roundtrips can race with workbench init.
+  // window.rstudio.ready is the canonical "automation can start" flag,
+  // flipped on DeferredInitCompletedEvent (see ApplicationAutomation.java).
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 30000, polling: 50 },
+  );
 
   return projectDir;
 }
