@@ -35,6 +35,7 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { sleep } from '@utils/constants';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
+import { createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
 
@@ -210,13 +211,21 @@ function expectUnchanged(content: string): void {
 test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   // Sets cwd to a per-spec sandbox; the relative paths used throughout this
   // spec (TEST_FILE, air.toml, .air.toml) all resolve into that sandbox.
-  useSuiteSandbox();
+  const sandbox = useSuiteSandbox();
   let page: Page;
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 
   test.beforeAll(async ({ rstudioPage }) => {
     page = rstudioPage;
+    // The save-triggered reformat path in TextEditingTarget.maybeFormatOnUserInitiatedSave
+    // is gated on "file is inside the active project" -- without a project,
+    // reformat-on-save is skipped entirely, so cases 5/10 can't pass. Open a
+    // project inside the suite sandbox; the project open also re-`setwd`s into
+    // the project dir, so relative paths still resolve consistently and air.toml
+    // ends up alongside the file being formatted (which is what Air's ancestor
+    // walk needs to find it).
+    await createAndOpenProject(page, sandbox.dir, 'air_formatting');
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
     await consoleActions.closeAllBuffersWithoutSaving();
