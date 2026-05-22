@@ -90,6 +90,7 @@ public class ApplicationAutomation
       registerPrefs();
       registerDocuments();
       registerProject();
+      registerVersion();
    }
 
    private void registerCommands()
@@ -127,6 +128,17 @@ public class ApplicationAutomation
    private void registerProject()
    {
       registerProjectObject();
+   }
+
+   private void registerVersion()
+   {
+      // SessionInfo is set by Application.onResponseReceived before the agent
+      // is initialized (see Application.java); the version strings are stable
+      // for the life of the session.
+      registerVersionObject(
+         session_.getSessionInfo().getRstudioVersion(),
+         session_.getSessionInfo().getRVersionsInfo().getRVersion()
+      );
    }
 
    /** Convert a snake_case identifier to camelCase. */
@@ -302,6 +314,15 @@ public class ApplicationAutomation
       $wnd.rstudio.project.isActive = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
       });
+   }-*/;
+
+   // Versions are stable for the life of the session, so install a plain
+   // object rather than getter functions. Read via window.rstudio.version.
+   private native final void registerVersionObject(String rstudio, String r) /*-{
+      $wnd.rstudio.version = {
+         rstudio: rstudio,
+         r: r,
+      };
    }-*/;
 
    private final Commands commands_;

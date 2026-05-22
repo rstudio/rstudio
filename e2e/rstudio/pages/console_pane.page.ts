@@ -1,7 +1,7 @@
 import type { Page, Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
 // ---------------------------------------------------------------------------
@@ -128,17 +128,7 @@ export async function closeAllBuffersWithoutSaving(page: Page): Promise<void> {
 }
 
 export async function getEnvironmentVersions(page: Page): Promise<EnvironmentVersions> {
-  await executeInConsole(page, 'cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-  await sleep(2000);
-
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-  const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-  return {
-    r: rMatch?.[1] ?? 'unknown',
-    rstudio: rstudioMatch?.[1] ?? 'unknown',
-  };
+  return getVersion(page);
 }
 
 export async function goToLine(page: Page, line: number): Promise<void> {

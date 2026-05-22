@@ -33,11 +33,19 @@ type ProjectInfo = {
   isActive(): boolean;
 };
 
+type VersionInfo = {
+  /** RStudio long-version string, e.g. "2026.05.999". */
+  rstudio: string;
+  /** R version number, e.g. "4.5.3". */
+  r: string;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
   documents: { closeAllNoSave(): void };
   project: ProjectInfo;
+  version: VersionInfo;
 };
 
 declare global {
@@ -163,4 +171,14 @@ export async function clearPref(page: Page, name: string): Promise<void> {
       throw new Error(`Unknown user preference: ${prefName}`);
     entry.clear();
   }, camel);
+}
+
+/** Read the RStudio + R version info installed on the automation bridge. */
+export async function getVersion(page: Page): Promise<{ rstudio: string; r: string }> {
+  return page.evaluate(() => {
+    const r = window.rstudio;
+    if (!r)
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+    return { rstudio: r.version.rstudio, r: r.version.r };
+  });
 }

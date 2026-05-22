@@ -2,7 +2,7 @@ import type { Page } from 'playwright';
 import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
 interface InstallTarget {
@@ -151,17 +151,7 @@ export class ConsolePaneActions {
   }
 
   async getEnvironmentVersions(): Promise<EnvironmentVersions> {
-    await this.executeInConsole('cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-    await sleep(2000);
-
-    const output = await this.consolePane.consoleOutput.innerText();
-    const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-    const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-    return {
-      r: rMatch?.[1] ?? 'unknown',
-      rstudio: rstudioMatch?.[1] ?? 'unknown',
-    };
+    return getVersion(this.page);
   }
 
   async goToLine(line: number): Promise<void> {
