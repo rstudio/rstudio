@@ -452,7 +452,6 @@ Notes:
 Claude skills are available for use when working with this test suite:
 
 - `.claude/skills/rstudio-create-playwright-tests/SKILL.md` — guide for writing tests
-- `.claude/skills/rstudio-create-playwright-tests/logic-deep-dive.md` — architectural reasoning
 - `.claude/skills/rstudio-run-playwright-tests/SKILL.md` — test execution protocol
 
 ---
