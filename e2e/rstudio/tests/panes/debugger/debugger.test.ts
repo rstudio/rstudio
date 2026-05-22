@@ -447,6 +447,55 @@ test.describe('R debugger', () => {
       await debuggerActions.waitForDebugExit();
       await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
     });
+
+    test('captures environment for functions loaded via box::use', async () => {
+      // Regression coverage for rstudio/rstudio#17743. Box modules live in
+      // hermetic namespace:<mod> -> imports:<mod> -> ... chains that bypass
+      // the user search path, so a bare-name .rs.captureCurrentEnvironment()
+      // lookup from the browser's rho would fail with "could not find
+      // function". RStdCallbacks.cpp now resolves it explicitly through
+      // as.environment("tools:rstudio"). Without that fix, browserEnv stays
+      // NIL, the Environment pane falls back to globalenv, and `localx`
+      // would not appear.
+      const missing = await consoleActions.ensurePackages(['box']);
+      test.skip(missing.length > 0, `Missing: ${missing.join(', ')}`);
+
+      const moduleName = `boxmod${Date.now()}`;
+      const fullPath = `${rPath(sandbox.dir)}/${moduleName}.R`;
+      const moduleContent = heredoc`
+        foo <- function() {
+           localx <- 42
+           browser()
+           localx
+        }
+      `;
+      const lines = moduleContent.split('\n').map(l => JSON.stringify(l)).join(', ');
+      await consoleActions.executeInConsole(
+        `writeLines(c(${lines}), "${fullPath}")`,
+        { wait: true },
+      );
+
+      // box::use(./<name>) resolves relative to cwd in interactive R
+      // sessions, which is what an RStudio session is. setwd persists
+      // beyond the test, but the rest of this file uses absolute sandbox
+      // paths so a stale cwd is harmless.
+      await consoleActions.executeInConsole(
+        `setwd("${rPath(sandbox.dir)}")`,
+        { wait: true },
+      );
+      await consoleActions.executeInConsole(
+        `box::use(./${moduleName})`,
+        { wait: true },
+      );
+      await consoleActions.executeInConsole(`${moduleName}$foo()`);
+
+      await debuggerActions.waitForDebugMode();
+
+      await expect.poll(
+        () => envPane.hasVariable('localx', '42'),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+    });
   });
 
   // -------------------------------------------------------------------------
