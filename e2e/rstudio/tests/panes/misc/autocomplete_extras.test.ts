@@ -154,9 +154,11 @@ test.describe('Autocomplete extras', () => {
     await consoleActions.executeInConsole('cols_q <- list(apple = "apple", "2024" = "2024")');
     await sleep(500);
 
+    // Typing `$` auto-opens the autocomplete popup; an explicit Tab here
+    // would just accept the highlighted entry ("apple") before we get a
+    // chance to navigate to "2024".
     await consoleActions.typeInConsole('cols_q$');
-    await page.keyboard.press('Tab');
-    await sleep(500);
+    await expect(page.locator('#rstudio_popup_completions')).toBeVisible({ timeout: 5000 });
 
     // Second item ("2024") needs Down to highlight, then Enter to accept
     // the completion, then Enter again to submit the line.

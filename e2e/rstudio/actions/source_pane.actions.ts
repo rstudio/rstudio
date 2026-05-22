@@ -6,6 +6,7 @@ import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
+import { Ace, AceEditorElement } from '../utils/ace';
 
 export class SourcePaneActions {
   readonly page: Page;
@@ -161,15 +162,14 @@ export class SourcePaneActions {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
         if (editors[i].closest('#rstudio_console_input')) continue;
-        const env = (editors[i] as any).env;
-        if (env && env.editor) {
-          const lines = env.editor.getValue().split('\n');
-          const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
-          for (let j = 0; j < lines.length; j++) {
-            if (pattern.test(lines[j])) {
-              env.editor.gotoLine(j + 1, 0);
-              return;
-            }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (!editor) continue;
+        const lines = editor.getValue().split('\n');
+        const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
+        for (let j = 0; j < lines.length; j++) {
+          if (pattern.test(lines[j])) {
+            editor.gotoLine(j + 1, 0);
+            return;
           }
         }
       }
@@ -186,17 +186,20 @@ export class SourcePaneActions {
     await this.page.evaluate(({ marker: m, line: ln, startCol: sc, endCol: ec }) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
-        const env = (editors[i] as any).env;
-        if (env && env.editor) {
-          const editor = env.editor;
-          if (editor.getValue().indexOf(m) !== -1) {
-            editor.focus();
-            editor.gotoLine(ln, 0);
-            const Range = (window as any).ace.require('ace/range').Range;
-            editor.selection.setRange(new Range(ln - 1, sc, ln - 1, ec));
-            break;
-          }
-        }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (!editor) continue;
+        if (editor.getValue().indexOf(m) === -1) continue;
+        editor.focus();
+        editor.gotoLine(ln, 0);
+        // Ace's Range constructor lives on the global ace module loader; we
+        // grab it here rather than in utils/ace.ts because it's the only
+        // construction site and the module-loader surface isn't worth typing.
+        const aceModule = (window as unknown as {
+          ace: { require(path: string): { Range: new (sr: number, sc: number, er: number, ec: number) => Ace.Range } };
+        }).ace;
+        const Range = aceModule.require('ace/range').Range;
+        editor.selection.setRange(new Range(ln - 1, sc, ln - 1, ec));
+        return;
       }
     }, { marker, line, startCol, endCol });
     await sleep(1000);
@@ -206,26 +209,24 @@ export class SourcePaneActions {
    * Get the full text content of the active source editor via Ace API.
    */
   async getEditorContent(): Promise<string> {
-    return await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
+    return await this.page.evaluate(() => {
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
         if (editors[i].closest('#rstudio_console_input')) continue;
-        var env = editors[i].env;
-        if (env && env.editor) {
-          return env.editor.getValue();
-        }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (editor) return editor.getValue();
       }
       throw new Error('No active source editor found');
-    })()`);
+    });
   }
 
   async getSelectedText(marker: string): Promise<string> {
     return await this.page.evaluate((m) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
-        const env = (editors[i] as any).env;
-        if (env && env.editor && env.editor.getValue().indexOf(m) !== -1) {
-          return env.editor.getSelectedText();
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (editor && editor.getValue().indexOf(m) !== -1) {
+          return editor.getSelectedText();
         }
       }
       return '';
@@ -234,17 +235,15 @@ export class SourcePaneActions {
 
   /** Get the first visible row index (0-based) of the active source editor. */
   async getFirstVisibleRow(): Promise<number> {
-    return await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
+    return await this.page.evaluate(() => {
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
         if (editors[i].closest('#rstudio_console_input')) continue;
-        var env = editors[i].env;
-        if (env && env.editor) {
-          return env.editor.getFirstVisibleRow();
-        }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (editor) return editor.getFirstVisibleRow();
       }
       throw new Error('No active source editor found');
-    })()`);
+    });
   }
 
   /**

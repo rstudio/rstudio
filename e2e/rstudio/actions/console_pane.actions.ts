@@ -2,7 +2,8 @@ import type { Page } from 'playwright';
 import * as fs from 'fs';
 import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
-import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
+import { AceEditorElement } from '../utils/ace';
 
 interface InstallTarget {
   repos: string;
@@ -75,14 +76,34 @@ export class ConsolePaneActions {
    * swallow characters. Prefer this when you just need code to run; use
    * `typeInConsole` only when a test is exercising actual typing behavior.
    */
+  /**
+   * Wait until the console input's Ace editor owns the document focus.
+   * activateConsole schedules the focus shift on the next event loop tick,
+   * so callers that hand the console keystrokes immediately after the
+   * command can race with the focus change. Polling beats a blind sleep
+   * here -- the common case settles in tens of milliseconds.
+   */
+  private async waitForConsoleFocus(): Promise<void> {
+    await this.page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return el !== null && el.contains(document.activeElement);
+      },
+      null,
+      { timeout: 5000, polling: 50 },
+    );
+  }
+
   async executeInConsole(command: string): Promise<void> {
-    await this.consolePane.consoleTab.click();
+    // Focus the console via the activateConsole command rather than
+    // clicking the console tab. The tab-click path was clicking the
+    // same element repeatedly across executeInConsole + clearConsole
+    // calls; using the command keeps focus changes deterministic and
+    // avoids any tab-level click side effects.
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
     await this.page.evaluate((text) => {
-      const el = document.getElementById('rstudio_console_input') as
-        | (HTMLElement & {
-            env?: { editor?: { setValue(s: string, cursorPos?: number): void; focus(): void } };
-          })
-        | null;
+      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
       const editor = el?.env?.editor;
       if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
       editor.setValue(text, 1); // 1 = move cursor to end
@@ -109,16 +130,14 @@ export class ConsolePaneActions {
    * fire completers between chars.
    */
   async typeInConsole(text: string, delayMs: number = 50): Promise<void> {
-    await this.consolePane.consoleTab.click();
-    await this.consolePane.consoleInput.click({ force: true });
-    await sleep(300);
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
     await this.consolePane.consoleInput.pressSequentially(text, { delay: delayMs });
   }
 
   async clearConsole(): Promise<void> {
-    await this.consolePane.consoleTab.click();
-    await this.consolePane.consoleInput.click({ force: true });
-    await sleep(200);
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
     await this.page.keyboard.press('Control+l');
     await sleep(500);
   }
@@ -132,17 +151,7 @@ export class ConsolePaneActions {
   }
 
   async getEnvironmentVersions(): Promise<EnvironmentVersions> {
-    await this.executeInConsole('cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-    await sleep(2000);
-
-    const output = await this.consolePane.consoleOutput.innerText();
-    const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-    const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-    return {
-      r: rMatch?.[1] ?? 'unknown',
-      rstudio: rstudioMatch?.[1] ?? 'unknown',
-    };
+    return getVersion(this.page);
   }
 
   async goToLine(line: number): Promise<void> {
