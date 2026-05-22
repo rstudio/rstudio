@@ -106,9 +106,10 @@
    }
    
    # Copy air to the resulting binary directory.
+   exeName <- if (.rs.platform.isWindows) "air.exe" else "air"
    exePattern <- if (.rs.platform.isWindows) "^air\\.exe$" else "^air$"
    airPath <- list.files(pattern = exePattern, full.names = TRUE, recursive = TRUE)
-   file.copy(airPath, file.path(binDir, "air"), overwrite = TRUE)
+   file.copy(airPath, file.path(binDir, exeName), overwrite = TRUE)
    
    fmt <- "Air %s has been installed to %s."
    msg <- sprintf(fmt, version, binDir)
