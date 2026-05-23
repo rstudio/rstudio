@@ -101,7 +101,38 @@ async function closeOptions(page: Page): Promise<void> {
   // on an OK button that was already gone from the DOM. 15s covers the
   // RPC comfortably on a busy CI host.
   await ok.click();
-  await expect(ok).toBeHidden({ timeout: 15000 });
+  try {
+    await expect(ok).toBeHidden({ timeout: 15000 });
+  } catch (err) {
+    // The wait timed out -- the prefs dialog never closed. Distinguish the
+    // two known causes before re-raising so a recurring miss surfaces a
+    // precise reproducer rather than a generic toBeHidden error.
+    //
+    //   1. A pane's validate() returned false. attemptSaveChanges silently
+    //      no-ops in that case (the if-block in PreferencesDialogBase wraps
+    //      both the RPC AND the closeDialog onCompleted), AND the failing
+    //      pane pops up a #rstudio_dlg_ok error modal via
+    //      GlobalDisplay.showErrorMessage. The prefs dialog stays open
+    //      behind it forever.
+    //
+    //   2. Something else (slow RPC, modal stack from a prior failed test).
+    const blockingModal = page.locator('#rstudio_dlg_ok');
+    if (await blockingModal.isVisible().catch(() => false)) {
+      const modalText = await page
+        .locator('.gwt-DialogBox')
+        .last()
+        .innerText()
+        .catch(() => '(unreadable)');
+      throw new Error(
+        'closeOptions: prefs dialog stayed open behind an error modal. ' +
+        'Likely cause: a pane\'s validate() rejected a value (often a ' +
+        'NumericTextBox that initialized to a blank/invalid value).\n' +
+        '--- modal text ---\n' +
+        modalText.slice(0, 500),
+      );
+    }
+    throw err;
+  }
 }
 
 /**
