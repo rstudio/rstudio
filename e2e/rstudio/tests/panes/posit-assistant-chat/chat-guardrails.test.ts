@@ -30,6 +30,7 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { createAndOpenProject } from '@utils/project';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { createChatActions } from './_chat-setup';
 
 const TS = Date.now();
@@ -41,6 +42,8 @@ const RENAME_SRC = `guardrail_rename_${TS}.txt`;
 const READ_FILE = `guardrail_read_${TS}.R`;
 
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;

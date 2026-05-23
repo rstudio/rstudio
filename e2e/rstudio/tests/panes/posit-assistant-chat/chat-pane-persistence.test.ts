@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { sleep, CHAT_PROVIDERS, TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -27,6 +28,8 @@ async function ensureChatPaneVisible(page: Page, chatActions: ChatPaneActions): 
 }
 
 test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
 

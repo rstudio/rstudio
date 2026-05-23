@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -94,6 +95,8 @@ function unsupportedVersionNoUpdateHTML(currentVersion: string): string {
 // ---------------------------------------------------------------------------
 
 test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '@serial'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;

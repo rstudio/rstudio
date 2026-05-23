@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -10,6 +11,8 @@ import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
 test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@ai', '@desktop_only'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;

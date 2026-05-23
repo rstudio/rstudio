@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -12,6 +13,8 @@ const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 // which is a separate concern from the command wiring this test covers.
 // detachable-sidebar.test.ts is @desktop_only for the same reason.
 test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
 

@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -9,6 +10,8 @@ import { executeCommand, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
