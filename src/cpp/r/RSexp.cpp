@@ -433,12 +433,21 @@ namespace {
 // Mirrors Rf_findVar's traversal so we can classify or retrieve a binding
 // in the env that actually contains it, even when the chain doesn't end
 // in baseenv. Returns R_EmptyEnv when sym isn't reachable.
+//
+// Uses runtime::getBindingType for frame-presence checks because it's
+// non-evaluating -- a value lookup via findVarInFrame would invoke an
+// active binding's getter, which we must avoid while merely inspecting
+// where the binding lives.
 SEXP findBindingFrame(SEXP sym, SEXP env)
 {
    while (env != R_EmptyEnv)
    {
-      if (findVarInFrame(env, sym) != nullptr)
+      int bt = runtime::getBindingType(sym, env);
+      if (bt != runtime::kBindingTypeNotFound &&
+          bt != runtime::kBindingTypeUnbound)
+      {
          return env;
+      }
       env = getParentEnv(env);
    }
    return R_EmptyEnv;
