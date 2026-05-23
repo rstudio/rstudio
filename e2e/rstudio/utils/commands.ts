@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { waitForConsoleIdle } from '../pages/console_pane.page';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -311,6 +312,13 @@ export async function openProject(
     null,
     { timeout, polling: 50 },
   );
+
+  // ready=true tells us GWT's workbench is wired up, but the console-busy
+  // class can still be set briefly while the post-switch prompt transition
+  // completes (same gap restartSessionWithSentinel guards against in
+  // project.ts). Without this wait callers can issue a console action into
+  // a still-busy session.
+  await waitForConsoleIdle(page);
 }
 
 /** Read the RStudio + R version info installed on the automation bridge. */

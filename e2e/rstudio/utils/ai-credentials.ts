@@ -46,8 +46,11 @@ export function requireAiCredentials(
   provider: AIProvider,
 ): void {
   test.beforeEach(() => {
+    // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
+    // seeded. sandbox-setup.ts clears these at start of run and sets "1"
+    // only on a successful copy, so any other value is treated as unseeded.
     test.skip(
-      !process.env[PROVIDER_ENV_KEY[provider]],
+      process.env[PROVIDER_ENV_KEY[provider]] !== '1',
       `No ${PROVIDER_LABEL[provider]} credentials seeded; sign in on the host (${PROVIDER_HOST_PATH[provider]}) and re-run.`,
     );
   });

@@ -92,6 +92,14 @@ export default async function globalSetup() {
   // corresponding PW_AI_SEEDED_* flag set below; unseeded providers surface
   // as a clean skip-with-reason rather than a 5-minute mystery failure
   // waiting for a completion that will never arrive.
+  //
+  // Clear the flags up front so only values this function sets are honored
+  // -- a stray PW_AI_SEEDED_POSITAI=1 inherited from the user's shell or a
+  // prior partially-cleaned run could otherwise smuggle past
+  // requireAiCredentials() even when no credentials were actually copied.
+  delete process.env.PW_AI_SEEDED_POSITAI;
+  delete process.env.PW_AI_SEEDED_COPILOT;
+
   const skipSeeding = ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
   );

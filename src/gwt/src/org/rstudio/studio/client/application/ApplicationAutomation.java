@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
@@ -121,6 +122,12 @@ public class ApplicationAutomation
    //     command (kSuspendAndRestart on the server side).
    //   - DeferredInitCompletedEvent: fires once R's deferred init has run for
    //     each session, signalling that R-to-GWT roundtrips are safe.
+   //   - OpenProjectErrorEvent: server-emitted client event when a project
+   //     open/switch fails before reaching quit. Bridge callers preemptively
+   //     reset ready in project.open() to close the kQuit-arrival window;
+   //     without this handler that flag would stay false forever on the
+   //     failure path and openProject() would time out instead of surfacing
+   //     the real error.
    //
    // doRestart-style flows (Electron relaunch on PAI uninstall etc.) reload
    // the GWT page entirely, so initializeRoot() handles their reset.
@@ -139,6 +146,7 @@ public class ApplicationAutomation
          if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
             setReadyFlag(false);
       });
+      eventBus_.addHandler(OpenProjectErrorEvent.TYPE, event -> setReadyFlag(true));
 
       readinessHandlersRegistered_ = true;
    }
