@@ -3,7 +3,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand, documentCloseAllNoSave } from '@utils/commands';
+import { executeCommand } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -264,7 +264,12 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    await documentCloseAllNoSave(page);
+    // closeAllSourceDocs (the AppCommand) closes the empty source columns
+    // as part of its teardown; documentCloseAllNoSave (the bridge call) only
+    // closes documents and leaves the column containers behind, which is the
+    // right shape for tests that just want a clean source pane but the wrong
+    // one when we're asserting the columns themselves have gone away.
+    await executeCommand(page, 'closeAllSourceDocs');
     await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
     await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
