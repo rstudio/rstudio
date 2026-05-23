@@ -103,7 +103,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   const deadline = Date.now() + TIMEOUTS.sessionRestart * 2;
   while (Date.now() < deadline) {
     try {
-      const marker = `__READY_${Date.now()}__`;
+      const marker = `[pw:session-restart-ready ${Date.now()}]`;
       await executeInConsole(page, `cat("${marker}")`, { wait: true });
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;

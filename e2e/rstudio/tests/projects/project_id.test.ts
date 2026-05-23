@@ -11,8 +11,11 @@ const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__PI_${Date.now()}__`;
-  // Gate on R reporting idle so both markers have written by the time we
-  // read the console.
+  // Gate on R reporting idle (busy class cleared) before reading the console.
+  // Post-restart the busy class can toggle off momentarily before R has
+  // actually drained the new command, so use expect.poll on the console
+  // text rather than a single read -- the poll keeps re-reading until the
+  // markers appear (typically within tens of ms once R is truly idle).
   await executeInConsole(
     page,
     `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
@@ -20,10 +23,18 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
   );
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(pattern);
-  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
-  return match[1].trim();
+  let match: RegExpMatchArray | null = null;
+  await expect
+    .poll(
+      async () => {
+        const output = await page.locator(CONSOLE_OUTPUT).innerText();
+        match = output.match(pattern);
+        return match !== null;
+      },
+      { timeout: 15000 },
+    )
+    .toBe(true);
+  return match![1].trim();
 }
 
 async function closeProject(page: Page): Promise<void> {

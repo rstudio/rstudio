@@ -97,12 +97,19 @@ base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, 
 
     await openPaneLayoutOptions(page);
 
-    // Reset to defaults so we start from a known state. Wait for the reset
-    // to land by polling for the default sidebar-visible state before
-    // continuing -- otherwise our toggles can race the reset.
+    // Reset to defaults so we start from a known state. The post-reset
+    // sidebar-visible state isn't guaranteed (it depends on the running
+    // session's pref defaults), so explicitly toggle if needed instead of
+    // polling for a particular value.
     await page.locator('#rstudio_pane_layout_reset_link').click();
     const sidebarCheckbox = page.locator('#rstudio_pane_layout_sidebar_visible');
-    await expect.poll(() => sidebarCheckbox.isChecked(), { timeout: 5000 }).toBe(true);
+    // Wait for the reset to land before reading the checkbox state -- the
+    // reset link applies asynchronously and reading immediately can race it.
+    await expect(sidebarCheckbox).toBeVisible({ timeout: 5000 });
+    if (!(await sidebarCheckbox.isChecked())) {
+      await sidebarCheckbox.click();
+      await expect.poll(() => sidebarCheckbox.isChecked(), { timeout: 2000 }).toBe(true);
+    }
 
     // Move Posit Assistant into TabSet1 (right-top)
     await moveTab(page, 'Posit Assistant', LAYOUT_SIDEBAR, LAYOUT_RIGHT_TOP);

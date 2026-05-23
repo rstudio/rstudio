@@ -4069,24 +4069,32 @@ public class TextEditingTarget implements
    private void withFormatContext(CommandWithArg<FormatContext> command)
    {
       String path = getPath();
-      
-      // If this is a project file, we can use the cached hasProjectAirToml value
-      // to build FormatContext without an RPC call
+
+      // For project files we can usually answer from the cached air.toml
+      // path on Projects, populated by FileChangeEvent. Two cases skip the
+      // cache and fall through to an RPC for a fresh check:
+      //   (1) the cache is empty AND the user has Air enabled -- the file
+      //       monitor may not yet have surfaced an air.toml that was just
+      //       created in this session (e.g. via the editor or external
+      //       writeLines), so trust the filesystem over the cache;
+      //   (2) the file isn't inside the active project -- the cache is
+      //       project-scoped and can't speak for ancestor-directory lookups.
       FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
       if (projectDir != null && path != null)
       {
-         // Check if the file is within the project directory
          String projectPath = projectDir.getPath();
          if (path.startsWith(projectPath + "/") || path.equals(projectPath))
          {
-            // Create FormatContext locally using cached value from Projects
-            FormatContext context = createFormatContext(getAirTomlPath());
-            command.execute(context);
-            return;
+            String cachedAirTomlPath = getAirTomlPath();
+            if (cachedAirTomlPath != null || !prefs_.useAirFormatter().getValue())
+            {
+               command.execute(createFormatContext(cachedAirTomlPath));
+               return;
+            }
+            // fall through: cache miss + Air enabled -> RPC verifies.
          }
       }
-      
-      // For non-project files or when project info is unavailable, make RPC call
+
       server_.formatContext(
          getId(),
          path,

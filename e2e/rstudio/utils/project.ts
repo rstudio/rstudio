@@ -6,6 +6,7 @@ import {
   CONSOLE_INPUT,
   CONSOLE_OUTPUT,
 } from '../pages/console_pane.page';
+import { executeCommand } from './commands';
 import { sleep, TIMEOUTS } from './constants';
 
 // Re-exported from pages/console_pane.page.ts; preserved here so existing
@@ -35,23 +36,9 @@ async function waitForPostRestartReady(page: Page): Promise<void> {
 }
 
 /**
- * Restart the R session and wait for the new session to confirm idle by
- * echoing a sentinel string. The sentinel is passed as the `command` argument
- * to .rs.api.restartSession, so R itself prints it as part of startup -- no
- * post-restart typing dance, which would otherwise be subject to Ace focus
- * races.
- *
- * The sentinel appearing IS the readiness signal: no fixed pre-restart sleeps
- * are needed, and polling can be tight.
- *
- * Use this when the test owns the restart. For project-open and "restartR"
- * IDE-command paths, the restart is implicit and the sentinel can't be
- * injected; those callers use waitForSessionRestart instead.
- */
-/**
  * Poll the console output for a sentinel string, returning as soon as it
- * appears. Throws if not seen within `timeoutMs`. Used by both the explicit
- * restart helper and createAndOpenProject.
+ * appears. Throws if not seen within `timeoutMs`. Used by createAndOpenProject
+ * for the .Rprofile-delivered marker.
  */
 async function pollForMarker(page: Page, marker: string, timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs;
@@ -65,16 +52,55 @@ async function pollForMarker(page: Page, marker: string, timeoutMs: number): Pro
   throw new Error(`pollForMarker: sentinel "${marker}" not seen within ${timeoutMs}ms`);
 }
 
+/**
+ * Restart the R session and wait for the new session to be fully ready.
+ *
+ * Goes through the `restartR` AppCommand via the automation bridge -- NOT
+ * `.rs.api.restartSession` typed into the console. Earlier versions of this
+ * helper used the console route, but a follow-up `console_input` RPC could
+ * race the in-flight restart: the server would try to forward the next input
+ * to R, find R mid-shutdown, and surface as
+ *   Error: Unable to establish connection with R session when executing 'console_input'
+ * Driving through the AppCommand keeps the restart out of the console_input
+ * pipeline entirely.
+ *
+ * Readiness is signalled via `window.rstudio.ready`: the GWT bridge resets it
+ * to false on `RestartStatusEvent.RESTART_INITIATED` and back to true on the
+ * new session's `DeferredInitCompletedEvent`. We pre-reset it ourselves to
+ * close the window between executeCommand returning and GWT's own reset
+ * landing, so a stale "true" can't sneak through.
+ *
+ * Use this when the test owns the restart. For project-open and other
+ * implicit restarts (where the test can't inject readiness signalling)
+ * callers use waitForSessionRestart instead.
+ */
 export async function restartSessionWithSentinel(page: Page): Promise<void> {
-  const marker = `__READY_${Date.now()}__`;
-  // Deferred (default eager = FALSE): the sentinel fires after workspace and
-  // search-path restore complete, so when we observe the marker R is fully
-  // initialized and ready for follow-up automation commands. The visible
-  // "pause" between restart and marker reflects real package-restore work --
-  // we accept it as the price of a reliable readiness signal. See
-  // src/cpp/r/session/RSessionState.cpp:920-956 for the dispatch logic.
-  await executeInConsole(page, `.rs.api.restartSession(command = "cat('${marker}')")`);
-  await pollForMarker(page, marker, 30000);
+  // Force-reset the readiness flag so the wait below sees a clean transition.
+  // RestartStatusEvent.RESTART_INITIATED also resets it, but that fires after
+  // the AppCommand handler runs -- without this preemptive reset, a poll that
+  // fires between executeCommand returning and the event landing could see
+  // the prior session's stale "true".
+  await page.evaluate(() => {
+    if (window.rstudio) window.rstudio.ready = false;
+  });
+
+  await executeCommand(page, 'restartR');
+
+  // window.rstudio.ready flips to true on DeferredInitCompletedEvent, which
+  // is GWT's signal that the new session has finished its deferred init
+  // (workspace + search-path restore, modules sourced). 60s covers the
+  // full restart + package restore on a slow worker.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 60000, polling: 50 },
+  );
+
+  // The ready flag tells us GWT's workbench is wired up, but the console-
+  // busy class can still be set briefly while the post-restart prompt
+  // transition completes. Wait for it to clear so callers immediately
+  // following with executeInConsole / executeCommand see an idle session.
+  await waitForConsoleIdle(page);
 }
 
 /**
@@ -95,7 +121,7 @@ export async function waitForSessionRestart(page: Page): Promise<void> {
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const marker = `__READY_${Date.now()}__`;
+      const marker = `[pw:session-restart-ready ${Date.now()}]`;
       await page.locator(CONSOLE_TAB).click();
       await page.locator(CONSOLE_INPUT).click({ force: true });
       await sleep(200);
@@ -132,7 +158,7 @@ export async function createAndOpenProject(
 ): Promise<string> {
   const parentDirR = parentDir.replace(/\\/g, '/');
   const projectDir = `${parentDirR}/${name}`;
-  const marker = `__READY_${Date.now()}__`;
+  const marker = `[pw:project-opened ${Date.now()}]`;
 
   await executeInConsole(page, `dir.create("${projectDir}")`);
   await sleep(500);

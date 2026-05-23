@@ -8,7 +8,6 @@ import {
   switchToViewerFrame,
 } from '@pages/viewer_pane.page';
 import { clearWorkspace } from '@pages/environment_pane.page';
-import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, saveDocument, setPref } from '@utils/commands';
 
@@ -77,20 +76,20 @@ test.describe('RMarkdown', () => {
     // Save the file
     await saveDocument(page);
 
-    // Run all chunks via restart R. Wait for the interrupt button to appear
-    // first -- without that gate, not.toBeVisible can succeed against the
-    // pre-restart idle state before the restart actually fires.
+    // Clear the console so the chunk's print() output is the only thing in
+    // there afterwards -- waiting for that output is the deterministic
+    // readiness signal for "R restarted AND ran the chunk", which avoids
+    // having to time the restart or watch the interrupt button.
+    await consoleActions.clearConsole();
+
+    // Run all chunks via restart R. 60s covers the worst-case restart +
+    // chunk run window.
     await executeCommand(page, 'restartRRunAllChunks');
-    const interruptBtn = page.locator("[id^='rstudio_tb_interruptr']");
-    await expect(interruptBtn).toBeVisible({ timeout: 10000 });
-    await expect(interruptBtn).not.toBeVisible({ timeout: 30000 });
-
-    // Wait for R to be ready after restart
-    await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 15000 });
-
-    // Verify output
     const consoleOutput = consoleActions.consolePane.consoleOutput;
-    await expect(consoleOutput).toContainText('full of sound and fury, signifying nothing', { timeout: 20000 });
+    await expect(consoleOutput).toContainText(
+      'full of sound and fury, signifying nothing',
+      { timeout: 60000 },
+    );
 
     // Verify no variables in global env
     await consoleActions.clearConsole();

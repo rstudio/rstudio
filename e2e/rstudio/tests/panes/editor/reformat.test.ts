@@ -112,7 +112,11 @@ test.describe.serial('styler reformat on save', () => {
     await writeAndOpenFile(page, projectDir, fileName, '# placeholder');
     const filePath = `${projectDir}/${fileName}`;
 
-    const editor = new AceEditor(page, '# placeholder');
+    // Empty-marker AceEditor matches the first non-console editor. Using
+    // '# placeholder' would break after the select-all-then-type replaces
+    // the file's contents, since AceEditor.runOnEditor finds the editor by
+    // content-substring match.
+    const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getValue()).toBe('# placeholder');
 
     // Replace the placeholder by selecting all and typing the messy code;

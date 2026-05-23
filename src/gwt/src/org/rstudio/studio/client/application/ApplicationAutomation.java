@@ -242,7 +242,7 @@ public class ApplicationAutomation
    }
 
    @SuppressWarnings("unchecked")
-   private void setPrefValue(Prefs.PrefValue<?> pref, Object value)
+   private void setPrefValue(Prefs.PrefValue<?> pref, Object value, JavaScriptObject onCompleted)
    {
       if (pref instanceof Prefs.BooleanValue)
       {
@@ -265,14 +265,18 @@ public class ApplicationAutomation
          throw new RuntimeException(
             "Unsupported preference type for " + pref.getId() + ": " + pref.getClass().getSimpleName());
       }
-      userPrefs_.writeUserPrefs();
+      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
    }
 
-   private void clearPrefValue(Prefs.PrefValue<?> pref)
+   private void clearPrefValue(Prefs.PrefValue<?> pref, JavaScriptObject onCompleted)
    {
       pref.removeGlobalValue(true);
-      userPrefs_.writeUserPrefs();
+      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
    }
+
+   private native void invokeWriteCallback(JavaScriptObject cb, boolean succeeded) /*-{
+      if (cb) cb(succeeded);
+   }-*/;
 
    private void dispatchCloseAllNoSave()
    {
@@ -367,11 +371,27 @@ public class ApplicationAutomation
          get: $entry(function() {
             return self.@org.rstudio.studio.client.application.ApplicationAutomation::getPrefValue(*)(pref);
          }),
+         // set / clear return a Promise that resolves once the setUserPrefs
+         // RPC has completed, so callers (especially tests that immediately
+         // follow with another server-affecting action) can be sure the
+         // pref change is fully landed before proceeding.
          set: $entry(function(value) {
-            self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value);
+            return new $wnd.Promise(function(resolve, reject) {
+               var cb = $entry(function(succeeded) {
+                  if (succeeded) resolve();
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+               });
+               self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value, cb);
+            });
          }),
          clear: $entry(function() {
-            self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref);
+            return new $wnd.Promise(function(resolve, reject) {
+               var cb = $entry(function(succeeded) {
+                  if (succeeded) resolve();
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+               });
+               self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref, cb);
+            });
          })
       };
    }-*/;

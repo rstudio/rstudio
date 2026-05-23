@@ -87,7 +87,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   // so we only loop when console plumbing itself is still coming up.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const marker = `__READY_${Date.now()}__`;
+      const marker = `[pw:session-restart-ready ${Date.now()}]`;
       await executeInConsole(page, `cat("${marker}")`, { wait: true });
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
