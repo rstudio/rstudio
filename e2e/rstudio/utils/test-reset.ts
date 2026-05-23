@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { resetSourcePaneState } from './commands';
+import { executeCommand, resetSourcePaneState } from './commands';
 
 // Locators kept local to this helper -- inlined so resetForNextTest has no
 // transitive dependency on the debugger / source page objects (which import
@@ -64,6 +64,32 @@ export async function resetForNextTest(page: Page): Promise<void> {
     await debugToolbar.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
 
-  // 3. Collapse source pane to a single Untitled tab.
+  // 3. Collapse source pane to a single Untitled tab, then wait for the
+  //    reset to actually land before returning. resetToUntitled dispatches
+  //    a GWT event whose handler does its work async (closing tabs, possibly
+  //    creating a new Untitled); page.evaluate returns the moment the event
+  //    dispatch enqueues, NOT when the handler finishes. Polling for the
+  //    active doc to be an Untitled (no path) gates on the handler having
+  //    actually settled.
   await resetSourcePaneState(page);
+  await page.waitForFunction(
+    () => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      return doc !== null && doc.path === null;
+    },
+    null,
+    { timeout: 5000, polling: 50 },
+  ).catch(() => {
+    // Best-effort: don't fail the test if the reset didn't settle in 5s.
+    // The activateConsole below moves focus to the console either way, and
+    // any latent source-pane staleness will show up as a more precise
+    // assertion failure in the test itself.
+  });
+
+  // 4. Restore focus to the console so tests start from a deterministic
+  //    focus state. resetToUntitled's handler moves focus to the kept /
+  //    newly-created Untitled tab; without this, the first test action
+  //    that needs console focus (e.g. clearConsole, executeInConsole) has
+  //    to race the in-flight focus shift.
+  await executeCommand(page, 'activateConsole');
 }
