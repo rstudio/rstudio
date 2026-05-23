@@ -34,7 +34,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, saveDocument, setPref } from '@utils/commands';
-import { createAndOpenProject } from '@utils/project';
+import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
 
@@ -272,6 +272,17 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
 
   test.afterEach(async () => {
     await cleanup(consoleActions, sourceActions);
+  });
+
+  // Close the project in afterAll so downstream test files don't inherit a
+  // project context. TextEditingTarget.maybeFormatOnUserInitiatedSave (and
+  // similar gates) consult projConfig_.stripTrailingWhitespace() when a
+  // project is active, which silently overrides the global user pref --
+  // e.g. editor.test.ts's strip-trailing-whitespace test sets the global
+  // pref and expects it to take effect, which it can't if our project is
+  // still open with the project-level value defaulting to FALSE.
+  test.afterAll(async () => {
+    await closeProjectIfOpen(page);
   });
 
   test('1: baseline — unchecked, no air.toml, manual reformat uses built-in formatter', async () => {

@@ -76,7 +76,17 @@ test.describe('R debugger', () => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
     envPane = new EnvironmentPane(page);
-    // Defensive: drop any leftover open buffers from a prior crashed run.
+    // Defensive: a prior test file may have left R in debug mode (e.g.
+    // debugger_extras.test.ts S7 breakpoint test where the continueDebug /
+    // waitForDebugExit chain didn't fully drain). If R is still at Browse[N]>,
+    // the first call to waitForDebugMode in this file returns instantly and
+    // getActiveDebugLineRow then looks for a line that doesn't exist in our
+    // about-to-be-opened tabs.
+    if (await debuggerActions.debuggerPage.debugToolbar.isVisible().catch(() => false)) {
+      await debuggerActions.stopDebug().catch(() => {});
+      await debuggerActions.waitForDebugExit().catch(() => {});
+    }
+    // Drop any leftover open buffers from a prior crashed run.
     // resetSourcePane (rather than closeAllBuffersWithoutSaving) keeps the
     // source pane in its NORMAL state across the test-file handoff so the
     // first file.edit doesn't race the LastSourceDocClosedEvent HIDE

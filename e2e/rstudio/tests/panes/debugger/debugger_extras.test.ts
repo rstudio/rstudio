@@ -96,6 +96,13 @@ test.describe('R debugger extras', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
+    // Defensive: a prior test file may have left R in debug mode. If R is
+    // still at Browse[N]>, our first waitForDebugMode returns instantly
+    // against a stale state.
+    if (await debuggerActions.debuggerPage.debugToolbar.isVisible().catch(() => false)) {
+      await debuggerActions.stopDebug().catch(() => {});
+      await debuggerActions.waitForDebugExit().catch(() => {});
+    }
     await consoleActions.resetSourcePane();
   });
 
