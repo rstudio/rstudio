@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -59,6 +60,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
  *   window.rstudio.project.isActive()   // boolean
+ *   window.rstudio.project.open(path)   // fire SwitchToProjectEvent; resets ready
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -322,6 +324,16 @@ public class ApplicationAutomation
       return getActiveProjectPath() != null;
    }
 
+   // forceSaveAll=true matches what tests want: the bridge caller owns the
+   // document state going in, and a modal "save changes?" prompt would
+   // deadlock automation. Going through SwitchToProjectEvent directly (rather
+   // than OpenProjectFileEvent) also skips the confirm-open and "this is the
+   // current project, open options instead" branches in Projects.java.
+   private void switchToProject(String projectFilePath)
+   {
+      eventBus_.dispatchEvent(new SwitchToProjectEvent(projectFilePath, true));
+   }
+
    // --- JSNI surface installation ------------------------------------------
 
    private native final void initializeRoot() /*-{
@@ -420,6 +432,15 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.project.isActive = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
+      });
+      // Reset ready synchronously before dispatching. The QuitEvent handler
+      // will also reset it once kQuit lands, but resetting here closes the
+      // gap between this call returning and the server-emitted kQuit -- a
+      // caller polling immediately would otherwise see the prior session's
+      // stale true.
+      $wnd.rstudio.project.open = $entry(function(path) {
+         $wnd.rstudio.ready = false;
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::switchToProject(*)(path);
       });
    }-*/;
 

@@ -35,6 +35,14 @@ type ProjectInfo = {
   /** Active project display name, or null if no project is open. */
   name(): string | null;
   isActive(): boolean;
+  /**
+   * Fire SwitchToProjectEvent on the GWT side, switching the session to the
+   * project at `path`. Resets `window.rstudio.ready` to false synchronously
+   * so a caller can poll for `ready === true` to wait for the new session's
+   * DeferredInitCompletedEvent. Prefer the `openProject` helper over calling
+   * this directly -- it bundles the post-call readiness wait.
+   */
+  open(path: string): void;
 };
 
 type VersionInfo = {
@@ -267,6 +275,42 @@ export async function clearPref(page: Page, name: string): Promise<void> {
       throw new Error(`Unknown user preference: ${prefName}`);
     await entry.clear();
   }, camel);
+}
+
+/**
+ * Switch to the project at `projectFilePath` via the automation bridge.
+ *
+ * Resets `window.rstudio.ready` synchronously, fires SwitchToProjectEvent on
+ * the GWT side (forceSaveAll=true to skip any save-changes prompt), then
+ * waits for the new session's DeferredInitCompletedEvent. Replaces the
+ * `.Rprofile`-sentinel marker dance for tests that don't need a custom
+ * `.Rprofile` -- the readiness signal is the same `window.rstudio.ready`
+ * flag the rest of the bridge relies on.
+ *
+ * Callers must reconstruct any page-action wrappers held over this call; the
+ * session restart invalidates them.
+ */
+export async function openProject(
+  page: Page,
+  projectFilePath: string,
+  timeout = 60000,
+): Promise<void> {
+  await page.evaluate((p) => {
+    const r = window.rstudio;
+    if (!r)
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+    r.project.open(p);
+  }, projectFilePath);
+
+  // The Server mode page may navigate as part of the project switch; let it
+  // settle before polling the bridge. On Desktop this is a no-op.
+  await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
+
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout, polling: 50 },
+  );
 }
 
 /** Read the RStudio + R version info installed on the automation bridge. */
