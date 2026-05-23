@@ -414,7 +414,11 @@ void listEnvironment(SEXP env,
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      SEXP lastValueSEXP = findVarInFrame(env, Rf_install(".Last.value"));
+      // R stores .Last.value in the base environment (via SET_SYMVALUE
+      // on R_LastvalueSymbol after every top-level expression); it is not
+      // bound in any user environment's frame. Look it up directly in
+      // R_BaseEnv -- findVarInFrame returns SYMVALUE for the base env.
+      SEXP lastValueSEXP = findVarInFrame(R_BaseEnv, R_LastvalueSymbol);
       if (lastValueSEXP != nullptr)
          pNames->push_back(".Last.value");
    }
@@ -424,6 +428,16 @@ BindingType getBindingType(const std::string& name, SEXP env)
 {
    SEXP sym = Rf_install(name.c_str());
    int bt = runtime::getBindingType(sym, env);
+
+   // .Last.value lives in baseenv (SET_SYMVALUE), not in the queried env's
+   // frame; if the env doesn't shadow it, classify it via baseenv so callers
+   // see Normal (not Unbound) and can retrieve the value.
+   if (sym == R_LastvalueSymbol &&
+       (bt == runtime::kBindingTypeUnbound || bt == runtime::kBindingTypeNotFound))
+   {
+      bt = runtime::getBindingType(sym, R_BaseEnv);
+   }
+
    switch (bt)
    {
    case runtime::kBindingTypeActive:
@@ -448,8 +462,13 @@ SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
    {
    case BindingType::Normal:
    {
-      // value is already evaluated; safe to retrieve via public API
-      return findVarInFrame(env, sym);
+      // value is already evaluated; safe to retrieve via public API.
+      // .Last.value lives in baseenv (see getBindingType); look there
+      // if the queried env doesn't shadow it.
+      SEXP value = findVarInFrame(env, sym);
+      if (value == nullptr && sym == R_LastvalueSymbol)
+         value = findVarInFrame(R_BaseEnv, sym);
+      return value;
    }
 
    case BindingType::Promise:
