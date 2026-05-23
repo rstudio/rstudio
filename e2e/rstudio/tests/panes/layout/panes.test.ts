@@ -248,14 +248,34 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
   // -------------------------------------------------------------------------
   test('Source columns can be created and closed', async ({ rstudioPage: page }) => {
+    const dumpState = async (tag: string) => {
+      const detail = await page.locator('[id^="rstudio_Source"][id$="_pane"]').evaluateAll(
+        (els) =>
+          els.map((el) => {
+            const tabBar = el.querySelector('[role="tablist"], .gwt-TabLayoutPanelTabs');
+            const tabTitles = tabBar
+              ? Array.from(tabBar.children).map((c) => (c as HTMLElement).innerText?.trim() ?? '?')
+              : [];
+            return { id: el.id, tabCount: tabTitles.length, tabs: tabTitles };
+          }),
+      );
+      // eslint-disable-next-line no-console
+      console.log(`[panes:250 ${tag}] ${JSON.stringify(detail)}`);
+    };
+
+    await dumpState('start');
+
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-1');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE2_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-2');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE3_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-3');
 
     expect(await getOffsetWidth(page, SOURCE1_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE1_PANE)).toBeGreaterThan(0);
@@ -270,9 +290,14 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     // right shape for tests that just want a clean source pane but the wrong
     // one when we're asserting the columns themselves have gone away.
     await executeCommand(page, 'closeAllSourceDocs');
-    await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    await dumpState('after-closeAllSourceDocs-immediate');
+    try {
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    } finally {
+      await dumpState('final');
+    }
   });
 
   // -------------------------------------------------------------------------
