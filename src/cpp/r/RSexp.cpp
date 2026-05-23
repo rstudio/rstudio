@@ -414,11 +414,14 @@ void listEnvironment(SEXP env,
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      // R stores .Last.value in the base environment (via SET_SYMVALUE
-      // on R_LastvalueSymbol after every top-level expression); it is not
-      // bound in any user environment's frame. Look it up directly in
-      // R_BaseEnv -- findVarInFrame returns SYMVALUE for the base env.
-      SEXP lastValueSEXP = findVarInFrame(R_BaseEnv, R_LastvalueSymbol);
+      // R stores .Last.value in baseenv (SET_SYMVALUE on R_LastvalueSymbol).
+      // Use a chain walk so we only surface it for environments where it's
+      // actually reachable -- i.e. envs that inherit from baseenv (globalenv,
+      // package envs, function frames). Custom envs whose chain bypasses
+      // baseenv (e.g. parent = emptyenv()) intentionally don't see it.
+      // .Last.value is never a promise, so forcing in the findVar wrapper
+      // is a no-op here.
+      SEXP lastValueSEXP = findVar(R_LastvalueSymbol, env);
       if (lastValueSEXP != nullptr)
          pNames->push_back(".Last.value");
    }
@@ -429,11 +432,15 @@ BindingType getBindingType(const std::string& name, SEXP env)
    SEXP sym = Rf_install(name.c_str());
    int bt = runtime::getBindingType(sym, env);
 
-   // .Last.value lives in baseenv (SET_SYMVALUE), not in the queried env's
-   // frame; if the env doesn't shadow it, classify it via baseenv so callers
-   // see Normal (not Unbound) and can retrieve the value.
+   // .Last.value lives in baseenv (SET_SYMVALUE on R_LastvalueSymbol), not
+   // in any user env's frame. If env doesn't shadow it but it's reachable
+   // via the parent chain, classify it as the baseenv binding so callers
+   // see Normal (not Unbound) and can retrieve the value through
+   // inheritance. Envs whose chain bypasses baseenv intentionally remain
+   // Unbound.
    if (sym == R_LastvalueSymbol &&
-       (bt == runtime::kBindingTypeUnbound || bt == runtime::kBindingTypeNotFound))
+       (bt == runtime::kBindingTypeUnbound || bt == runtime::kBindingTypeNotFound) &&
+       findVar(sym, env) != nullptr)
    {
       bt = runtime::getBindingType(sym, R_BaseEnv);
    }
@@ -463,11 +470,13 @@ SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
    case BindingType::Normal:
    {
       // value is already evaluated; safe to retrieve via public API.
-      // .Last.value lives in baseenv (see getBindingType); look there
-      // if the queried env doesn't shadow it.
+      // .Last.value lives in baseenv (see getBindingType): if the queried
+      // env doesn't shadow it, fall back to the parent chain. findVar
+      // returns null when the env's chain bypasses baseenv, matching the
+      // Unbound classification we'd return from getBindingType.
       SEXP value = findVarInFrame(env, sym);
       if (value == nullptr && sym == R_LastvalueSymbol)
-         value = findVarInFrame(R_BaseEnv, sym);
+         value = findVar(sym, env);
       return value;
    }
 
