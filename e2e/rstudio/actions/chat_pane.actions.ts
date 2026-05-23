@@ -109,23 +109,86 @@ export class ChatPaneActions {
       console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
       await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
-      return;
-    }
-
-    if (await this.chatPane.updateBtn.isVisible()) {
+    } else if (await this.chatPane.updateBtn.isVisible()) {
       await this.chatPane.updateBtn.click();
       console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
-      return;
     }
 
-    const trustBtn = this.chatPane.frame
-      .locator("button:has-text('Trust'), button:has-text('trust')")
-      .first();
-    if (await trustBtn.isVisible()) {
-      await trustBtn.click();
-      console.log('Dismissed directory trust prompt');
+    // The TrustOverlay and the chat textarea both render asynchronously after
+    // the iframe loads; waitForChatReady polls for either path through the
+    // workspace-trust dialog or a clean ready textarea, so callers don't need
+    // to handle it themselves.
+    await this.waitForChatReady();
+  }
+
+  /**
+   * Wait until the chat pane is actually usable -- i.e., the message textarea
+   * is enabled. Until that point, sending a message is a guaranteed failure
+   * even when chatRoot is visible, so this is the only real "ready" signal.
+   *
+   * Polls (a) clicking through any trust dialog that appears late and (b)
+   * failing fast with an actionable message if a Sign-In button shows up,
+   * since seeded credentials are the only auth path the test harness supports.
+   * The host's Posit Assistant rotates the refresh token in ~/.positai/store,
+   * so seeded copies can be invalidated between globalSetup and test
+   * execution; surfacing that as "sign in on the host and re-run" is more
+   * useful than the cryptic "textarea disabled after 15s" downstream timeout
+   * each test would otherwise hit.
+   *
+   * The TrustOverlay component in databot renders as a role="dialog" with the
+   * primary button; the RestrictedModeBadge also has a "Trust this workspace"
+   * affordance, so we explicitly target the dialog first (it's the modal
+   * blocker) and fall back to any visible match.
+   */
+  async waitForChatReady(timeout: number = 30000): Promise<void> {
+    const deadline = Date.now() + timeout;
+    const overlayTrustBtn = this.chatPane.frame.locator(
+      "[role='dialog'] button:has-text('Trust this workspace')"
+    );
+
+    let iter = 0;
+    while (Date.now() < deadline) {
+      iter += 1;
+
+      if (await this.chatPane.chatTextarea.isEnabled().catch(() => false)) {
+        if (iter > 1) console.log(`waitForChatReady: textarea enabled after ${iter} iterations`);
+        return;
+      }
+
+      if (await overlayTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking trust overlay button');
+        await overlayTrustBtn.click({ timeout: 5000 });
+        // Let the overlay tear down before re-polling
+        await sleep(500);
+        continue;
+      }
+
+      const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
+      if (await anyTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking fallback trust button');
+        await anyTrustBtn.click({ timeout: 5000 });
+        await sleep(500);
+        continue;
+      }
+
+      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+        throw new Error(
+          'Posit Assistant requires sign-in despite seeded credentials. ' +
+          'The host\'s ~/.positai/store/data.json refresh token may have been ' +
+          'rotated since globalSetup copied it into the sandbox. Sign in on ' +
+          'the host and re-run.'
+        );
+      }
+
+      await sleep(500);
     }
+
+    throw new Error(
+      `waitForChatReady: chat textarea still disabled after ${timeout}ms ` +
+      `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
+      `have stalled.`
+    );
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
