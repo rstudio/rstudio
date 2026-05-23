@@ -92,25 +92,16 @@ async function setCheckbox(page: Page, labelText: string, checked: boolean): Pro
 /** Close Global Options by clicking OK. */
 async function closeOptions(page: Page): Promise<void> {
   const ok = page.locator(OPTIONS_OK);
-  // attemptSaveChanges in PreferencesDialogBase silently no-ops if any pane's
-  // validate() returns false, which can happen against a pane whose async
-  // loads (fonts, themes, etc.) haven't landed. Retry up to 10x at ~200ms
-  // intervals to absorb that race. Warn on the way out so a recurring miss
-  // surfaces a precise reproducer.
-  let attempts = 0;
-  for (; attempts < 10; attempts++) {
-    await ok.click();
-    try {
-      await expect(ok).toBeHidden({ timeout: 200 });
-      break;
-    } catch {
-      // Dialog still open; loop and retry.
-    }
-  }
-  if (attempts > 0) {
-    console.warn(`closeOptions: OK click succeeded only after ${attempts + 1} attempts`);
-  }
-  await expect(ok).toBeHidden({ timeout: 200 });
+  // OK -> PreferencesDialogBase.attemptSaveChanges -> setUserPrefs RPC ->
+  // onResponseReceived -> closeDialog. The dialog only detaches on the RPC
+  // callback, so toBeHidden has to outlast a server round-trip. Earlier
+  // versions of this helper retried the click on a short toBeHidden window,
+  // but the retry actually broke things: the first click DID work, the
+  // hidden check just didn't wait long enough, and subsequent clicks hung
+  // on an OK button that was already gone from the DOM. 15s covers the
+  // RPC comfortably on a busy CI host.
+  await ok.click();
+  await expect(ok).toBeHidden({ timeout: 15000 });
 }
 
 /**
