@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 test.describe('Console command effects', () => {
@@ -69,8 +68,7 @@ test.describe('Console command effects', () => {
     test.skip(failed.length > 0, `Could not install: ${failed.join(', ')}`);
 
     await consoleActions.clearConsole();
-    await consoleActions.executeInConsole("library('praise')");
-    await sleep(2000);
+    await consoleActions.executeInConsole("library('praise')", { wait: true });
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText(
       'Error in library',
     );

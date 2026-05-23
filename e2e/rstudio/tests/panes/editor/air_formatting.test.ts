@@ -32,10 +32,9 @@ import type { Page } from 'playwright';
 import { test } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
-import { sleep } from '@utils/constants';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, setPref } from '@utils/commands';
-import { createAndOpenProject } from '@utils/project';
+import { executeCommand, saveDocument, setPref } from '@utils/commands';
+import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
 
@@ -63,14 +62,11 @@ const OPTIONS_OK = '#rstudio_preferences_confirm';
 async function openCodeOptions(page: Page): Promise<void> {
   await executeCommand(page, 'showOptions');
   await page.waitForSelector(OPTIONS_OK, { timeout: 15000 });
-  await sleep(500);
-
   await page.locator(CODE_TAB).click();
-  await sleep(500);
-
-  // Click the "Formatting" sub-tab within Code options
+  // Click the "Formatting" sub-tab within Code options. setCheckbox waits for
+  // its own target label to be visible, so no separate readiness gate is
+  // needed here.
   await page.getByText('Formatting', { exact: true }).click();
-  await sleep(500);
 }
 
 /** Set a checkbox to a desired state (checked or unchecked), scoped to the Formatting tab. */
@@ -78,19 +74,65 @@ async function setCheckbox(page: Page, labelText: string, checked: boolean): Pro
   // Scope to the visible Formatting tab panel to avoid strict mode violations
   // ("Reformat documents on save" appears on both Formatting and Saving tabs)
   const formattingPanel = page.getByLabel('Formatting', { exact: true });
+  const label = formattingPanel.locator(`xpath=.//label[contains(text(),"${labelText}")]`);
+  // Wait for the label to be visible before reading or clicking. This covers
+  // two cases: (1) the Formatting sub-tab content has finished laying out
+  // after the tab switch, and (2) "Reformat documents on save" only appears
+  // as a side effect of toggling "Use Air" on, so a caller switching it
+  // immediately after needs to wait for it to surface.
+  await label.waitFor({ state: 'visible', timeout: 10000 });
   const checkbox = formattingPanel.locator(`xpath=.//label[contains(text(),"${labelText}")]/../input`);
   const isChecked = await checkbox.isChecked().catch(() => false);
   if (isChecked !== checked) {
-    await formattingPanel.locator(`xpath=.//label[contains(text(),"${labelText}")]`).click();
-    await sleep(300);
+    await label.click();
+    await expect.poll(() => checkbox.isChecked().catch(() => false), { timeout: 2000 }).toBe(checked);
   }
 }
 
 /** Close Global Options by clicking OK. */
 async function closeOptions(page: Page): Promise<void> {
-  await page.locator(OPTIONS_OK).click();
-  await expect(page.locator(OPTIONS_OK)).toBeHidden({ timeout: 15000 });
-  await sleep(500);
+  const ok = page.locator(OPTIONS_OK);
+  // OK -> PreferencesDialogBase.attemptSaveChanges -> setUserPrefs RPC ->
+  // onResponseReceived -> closeDialog. The dialog only detaches on the RPC
+  // callback, so toBeHidden has to outlast a server round-trip. Earlier
+  // versions of this helper retried the click on a short toBeHidden window,
+  // but the retry actually broke things: the first click DID work, the
+  // hidden check just didn't wait long enough, and subsequent clicks hung
+  // on an OK button that was already gone from the DOM. 15s covers the
+  // RPC comfortably on a busy CI host.
+  await ok.click();
+  try {
+    await expect(ok).toBeHidden({ timeout: 15000 });
+  } catch (err) {
+    // The wait timed out -- the prefs dialog never closed. Distinguish the
+    // two known causes before re-raising so a recurring miss surfaces a
+    // precise reproducer rather than a generic toBeHidden error.
+    //
+    //   1. A pane's validate() returned false. attemptSaveChanges silently
+    //      no-ops in that case (the if-block in PreferencesDialogBase wraps
+    //      both the RPC AND the closeDialog onCompleted), AND the failing
+    //      pane pops up a #rstudio_dlg_ok error modal via
+    //      GlobalDisplay.showErrorMessage. The prefs dialog stays open
+    //      behind it forever.
+    //
+    //   2. Something else (slow RPC, modal stack from a prior failed test).
+    const blockingModal = page.locator('#rstudio_dlg_ok');
+    if (await blockingModal.isVisible().catch(() => false)) {
+      const modalText = await page
+        .locator('.gwt-DialogBox')
+        .last()
+        .innerText()
+        .catch(() => '(unreadable)');
+      throw new Error(
+        'closeOptions: prefs dialog stayed open behind an error modal. ' +
+        'Likely cause: a pane\'s validate() rejected a value (often a ' +
+        'NumericTextBox that initialized to a blank/invalid value).\n' +
+        '--- modal text ---\n' +
+        modalText.slice(0, 500),
+      );
+    }
+    throw err;
+  }
 }
 
 /**
@@ -104,9 +146,9 @@ async function setAirPrefs(
 ): Promise<void> {
   await openCodeOptions(page);
 
-  // "Use Air" must be set first — "Reformat on save" is only visible when Air is checked
+  // "Use Air" must be set first -- "Reformat on save" is only visible when Air is checked.
+  // setCheckbox already polls for the click to land, so no extra wait needed.
   await setCheckbox(page, AIR_CHECKBOX_LABEL, useAir);
-  await sleep(300);
 
   if (useAir) {
     // Reformat on save checkbox is now visible
@@ -126,15 +168,17 @@ async function resetAirPrefs(consoleActions: ConsolePaneActions): Promise<void> 
 /** Create an Air config file in the working directory. */
 async function createAirConfig(consoleActions: ConsolePaneActions, fileName: string = AIR_TOML_FILE): Promise<void> {
   await consoleActions.executeInConsole(
-    `writeLines(c("[format]", "line-width = 20", "indent-width = 12", 'indent-style = "space"', "persistent-line-breaks = true", 'exclude = ["tmp/", ".git/", "renv/"]', "default-exclude = true"), "${fileName}")`
+    `writeLines(c("[format]", "line-width = 20", "indent-width = 12", 'indent-style = "space"', "persistent-line-breaks = true", 'exclude = ["tmp/", ".git/", "renv/"]', "default-exclude = true"), "${fileName}")`,
+    { wait: true },
   );
-  await sleep(500);
 }
 
 /** Remove both air.toml and .air.toml if they exist. */
 async function removeAirConfig(consoleActions: ConsolePaneActions): Promise<void> {
-  await consoleActions.executeInConsole(`{ unlink("${AIR_TOML_FILE}"); unlink("${DOT_AIR_TOML_FILE}") }`);
-  await sleep(500);
+  await consoleActions.executeInConsole(
+    `{ unlink("${AIR_TOML_FILE}"); unlink("${DOT_AIR_TOML_FILE}") }`,
+    { wait: true },
+  );
 }
 
 /** Create the test R file with messy code and open it in the editor. */
@@ -143,27 +187,47 @@ async function openTestFile(
   sourceActions: SourcePaneActions
 ): Promise<void> {
   await consoleActions.executeInConsole(
-    `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`
+    `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`,
+    { wait: true },
   );
-  await sleep(500);
   await consoleActions.executeInConsole(`file.edit("${TEST_FILE}")`);
   await expect(sourceActions.sourcePane.selectedTab).toContainText(TEST_FILE, { timeout: 10000 });
-  await sleep(1000);
 }
 
 /** Click the editor content area to make sure it has focus. */
 async function focusEditor(sourceActions: SourcePaneActions): Promise<void> {
   await sourceActions.sourcePane.contentPane.click();
-  await sleep(300);
+  // Wait until focus has actually landed on a source-pane Ace textarea --
+  // click() resolves before the focus event has propagated.
+  await sourceActions.page.waitForFunction(
+    () => {
+      const el = document.activeElement;
+      if (!el) return false;
+      if (el.closest('#rstudio_console_input')) return false;
+      return el.classList?.contains('ace_text-input') ?? false;
+    },
+    null,
+    { timeout: 2000, polling: 50 },
+  );
 }
 
 /** Select all code in the editor, then reformat via Cmd+Shift+A / Ctrl+Shift+A. */
 async function reformatCode(page: Page, sourceActions: SourcePaneActions): Promise<void> {
+  // Snapshot the content before the keystroke so we can poll for the diff
+  // to land. The reformat command (whether server-side Air or client-side
+  // built-in) applies its diff asynchronously and exposes no per-command
+  // signal; every caller of this helper expects the content to *change*,
+  // so a content-change poll is a precise readiness signal. Callers that
+  // need to assert "no change" should use saveFile (which polls dirty=false
+  // via saveDocument) instead.
+  const before = await sourceActions.getEditorContent();
   await focusEditor(sourceActions);
   await page.keyboard.press('ControlOrMeta+a'); // select all
-  await sleep(300);
   await page.keyboard.press('ControlOrMeta+Shift+a'); // reformat selection
-  await sleep(2000);
+  await expect.poll(
+    () => sourceActions.getEditorContent(),
+    { timeout: 10000 },
+  ).not.toBe(before);
 }
 
 /** Save the current file via Cmd+S / Ctrl+S (triggers reformat-on-save if enabled). */
@@ -172,9 +236,10 @@ async function saveFile(page: Page, sourceActions: SourcePaneActions): Promise<v
   await sourceActions.goToEnd();
   await page.keyboard.press('Enter');
   await page.keyboard.type('z<-4');
-  await sleep(300);
-  await page.keyboard.press('ControlOrMeta+s');
-  await sleep(2000);
+  // saveDocument polls documents.active().dirty until the save (and any
+  // pre-save formatter pass) has fully applied, so callers can read the
+  // editor value next without further waits.
+  await saveDocument(page);
 }
 
 /** Close the test file and clean up. */
@@ -238,6 +303,17 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
 
   test.afterEach(async () => {
     await cleanup(consoleActions, sourceActions);
+  });
+
+  // Close the project in afterAll so downstream test files don't inherit a
+  // project context. TextEditingTarget.maybeFormatOnUserInitiatedSave (and
+  // similar gates) consult projConfig_.stripTrailingWhitespace() when a
+  // project is active, which silently overrides the global user pref --
+  // e.g. editor.test.ts's strip-trailing-whitespace test sets the global
+  // pref and expects it to take effect, which it can't if our project is
+  // still open with the project-level value defaulting to FALSE.
+  test.afterAll(async () => {
+    await closeProjectIfOpen(page);
   });
 
   test('1: baseline — unchecked, no air.toml, manual reformat uses built-in formatter', async () => {

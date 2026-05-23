@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { waitForSessionRestart } from '@utils/project';
 import { rStringLiteral } from '@utils/r';
@@ -8,17 +7,19 @@ import type { Page } from 'playwright';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__SUSP_${Date.now()}__`;
-  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  // { wait: true } gates on R reporting idle, which is the deterministic
+  // post-condition for "cat() has finished writing both markers".
+  await executeInConsole(
+    page,
+    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
+    { wait: true },
+  );
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const start = Date.now();
-  while (Date.now() - start < TIMEOUTS.consoleReady) {
-    await sleep(TIMEOUTS.pollInterval);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const match = output.match(pattern);
-    if (match) return match[1].trim();
-  }
-  throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  const output = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = output.match(pattern);
+  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  return match[1].trim();
 }
 
 async function suspendAndResume(page: Page): Promise<void> {
@@ -30,8 +31,7 @@ async function suspendAndResume(page: Page): Promise<void> {
 // equivalent flow, so these tests are tagged @server_only.
 test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => {
   test('loaded packages are preserved on suspend + resume', async ({ rstudioPage: page }) => {
-    await executeInConsole(page, 'library(tools)');
-    await sleep(TIMEOUTS.pollInterval);
+    await executeInConsole(page, 'library(tools)', { wait: true });
 
     await suspendAndResume(page);
 
@@ -43,8 +43,8 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
     await executeInConsole(
       page,
       'attach(list(apple = 1, banana = 2, cherry = 3), name = "my-attached-dataset")',
+      { wait: true },
     );
-    await sleep(TIMEOUTS.pollInterval);
 
     await suspendAndResume(page);
 
@@ -58,8 +58,11 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
       const sum = await captureResult(page, 'apple + banana + cherry');
       expect(sum, 'attached values should still resolve').toBe('6');
     } finally {
-      await executeInConsole(page, 'try(detach("my-attached-dataset"), silent = TRUE)');
-      await sleep(TIMEOUTS.pollInterval);
+      await executeInConsole(
+        page,
+        'try(detach("my-attached-dataset"), silent = TRUE)',
+        { wait: true },
+      );
     }
   });
 });

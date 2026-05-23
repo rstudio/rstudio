@@ -90,6 +90,24 @@ export async function waitForConsoleIdle(
   );
 }
 
+/**
+ * Wait until the console input's Ace editor owns the document focus.
+ * `activateConsole` schedules the focus shift on the next event-loop tick,
+ * so callers that follow it with keystrokes can race the focus change.
+ * Polling beats a blind sleep -- the common case settles in tens of
+ * milliseconds.
+ */
+export async function waitForConsoleFocus(page: Page, timeout: number = 5000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return el !== null && el.contains(document.activeElement);
+    },
+    null,
+    { timeout, polling: 50 },
+  );
+}
+
 /** Options accepted by `executeInConsole`. */
 export interface ExecuteInConsoleOptions {
   /**

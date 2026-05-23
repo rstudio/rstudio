@@ -1,7 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { getSelectionInfo } from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { waitForConsoleFocus } from '@pages/console_pane.page';
 
 test.describe('Console pane', () => {
   let consoleActions: ConsolePaneActions;
@@ -35,7 +36,7 @@ test.describe('Console pane', () => {
 
     const input = consoleActions.consolePane.consoleInput;
     await input.click({ force: true });
-    await sleep(200);
+    await waitForConsoleFocus(page);
 
     const readInput = () => consoleActions.consolePane.consoleInputValue();
 
@@ -73,7 +74,7 @@ test.describe('Console pane', () => {
     );
 
     await consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(200);
+    await waitForConsoleFocus(page);
 
     const readInput = () => consoleActions.consolePane.consoleInputValue();
 

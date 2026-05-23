@@ -1,10 +1,10 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, waitForActiveDocument } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -80,7 +80,7 @@ test.describe('Build pane', () => {
       'test_that("we can run a test", {\n  expect_equal(2 + 2, 4)\n})\n',
     );
     await consoleActions.executeInConsole(`.rs.api.documentOpen(${testFileLit})`);
-    await sleep(1000);
+    await waitForActiveDocument(page, testFile, TIMEOUTS.fileOpen);
 
     await executeCommand(page, 'testTestthatFile');
 

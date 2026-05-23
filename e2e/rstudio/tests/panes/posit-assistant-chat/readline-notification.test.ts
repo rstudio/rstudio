@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -45,14 +44,17 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
     // --- Step 4: Assert notification is visible ---
     await expect(chatPane.readlineNotification).toBeVisible({ timeout: 5000 });
 
-    // --- Step 5: Type a message in chat and press Enter — nothing should happen ---
+    // --- Step 5: Type a message in chat and press Enter -- nothing should happen ---
     const messageCountBefore = await chatPane.getMessageCount();
     await chatPane.chatTextarea.fill('This should not go through');
-    await sleep(200);
     await chatPane.sendBtn.click({ timeout: 2000 }).catch(() => {
-      // Send button may be disabled or unresponsive — that's expected
+      // Send button may be disabled or unresponsive -- that's expected
     });
-    await sleep(1000);
+
+    // Deliberate observation window: if the bug were present, the send would
+    // sneak through asynchronously. There's no readiness signal we can poll
+    // for absence of an event, so we wait a beat and re-check the count.
+    await page.waitForTimeout(1000);
 
     const messageCountAfter = await chatPane.getMessageCount();
     expect(messageCountAfter).toBe(messageCountBefore);
@@ -62,19 +64,20 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
 
     // --- Step 6: Provide input in the Console to unblock readline ---
     await consoleActions.typeInConsole('Prospero');
-    await sleep(300);
+    // Wait for the typed text to actually appear in the console input before
+    // pressing Enter -- typeInConsole's per-keystroke delay can race with the
+    // Enter dispatch if the editor hasn't fully consumed the keys yet.
+    await expect.poll(() => consoleActions.consolePane.consoleInputValue())
+      .toBe('Prospero');
     await page.keyboard.press('Enter');
 
     // --- Step 7: Assert notification disappears ---
     await expect(chatPane.readlineNotification).toBeHidden({ timeout: 15000 });
 
     // --- Step 8: Verify chat resumes working after readline completes ---
-    // Wait for the assistant to finish processing the readline response
-    const readlineDeadline = Date.now() + 30000;
-    while (Date.now() < readlineDeadline) {
-      if (!(await chatPane.isStopButtonVisible())) break;
-      await sleep(500);
-    }
+    // Wait for the assistant to finish processing the readline response.
+    await expect.poll(() => chatPane.isStopButtonVisible(), { timeout: 30000 })
+      .toBe(false);
 
     // Ask the assistant to print a Tempest quote to the console
     await consoleActions.clearConsole();

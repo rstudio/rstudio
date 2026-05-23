@@ -1,9 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
-import { rPathLiteral } from '@utils/r';
 import { setPref } from '@utils/commands';
 import { closeProjectIfOpen, waitForConsoleIdle } from '@utils/project';
 import * as fs from 'fs';
@@ -20,16 +19,12 @@ const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__IG_${Date.now()}__`;
-  await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
+  await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`, { wait: true });
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-  const deadline = Date.now() + TIMEOUTS.consoleReady;
-  while (Date.now() < deadline) {
-    await sleep(300);
-    const text = await page.locator(CONSOLE_OUTPUT).innerText();
-    const match = text.match(pattern);
-    if (match) return match[1].trim();
-  }
-  throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  const text = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = text.match(pattern);
+  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  return match[1].trim();
 }
 
 test.describe('Project ignore files', () => {
@@ -53,14 +48,12 @@ test.describe('Project ignore files', () => {
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     await setPref(page, 'default_project_location', sandbox.dir);
-    await sleep(TIMEOUTS.pollInterval);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
       await closeProjectIfOpen(page);
       await setPref(page, 'default_project_location', originalDefaultProjectLocation);
-      await sleep(TIMEOUTS.pollInterval);
     } catch (err) {
       console.warn('ignorefiles afterAll cleanup failed:', err);
     }
@@ -73,26 +66,29 @@ test.describe('Project ignore files', () => {
     const gitignorePath = `${projectDir}/.gitignore`;
 
     // Open New Project wizard via the command palette (executeCommand blocks
-    // on an "R session is busy" modal on some platforms).
+    // on an "R session is busy" modal on some platforms). Wait for the
+    // palette list to render before typing -- the keystrokes get dropped if
+    // the palette hasn't mounted yet.
     await page.keyboard.press('ControlOrMeta+Shift+p');
-    await sleep(1000);
+    await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
     await page.keyboard.type('Create a New Project');
-    await sleep(500);
     const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
     await expect(paletteItem).toBeVisible({ timeout: 5000 });
     await paletteItem.click();
     await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
 
+    // Each wizard step's click auto-waits for the next panel to render before
+    // the next click is dispatched.
     await page.locator(NEW_DIRECTORY_OPTION).click();
-    await sleep(500);
     await page.locator(NEW_PROJECT_OPTION).click();
-    await sleep(500);
 
     const nameInput = page.locator(PROJECT_NAME_INPUT);
     await nameInput.click();
     // pressSequentially fires GWT key events that enable the Create button.
+    // Wait for the input to actually hold the typed text before checking the
+    // git checkbox below.
     await nameInput.pressSequentially(projectName);
-    await sleep(500);
+    await expect(nameInput).toHaveValue(projectName, { timeout: 2000 });
 
     await page.locator(GIT_CHECKBOX).check();
 

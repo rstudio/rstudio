@@ -6,7 +6,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import type { Page } from 'playwright';
 
 const PACKAGES_TAB = '#rstudio_workbench_tab_packages';
@@ -59,8 +59,8 @@ test.describe('Packages pane', () => {
     // Ensure DBI is not currently attached -- defensive against earlier specs.
     await consoleActions.executeInConsole(
       'if ("package:DBI" %in% search()) detach("package:DBI", character.only = TRUE)',
+      { wait: true },
     );
-    await sleep(TIMEOUTS.layoutSettle);
 
     await selectPackagesTab(page);
 

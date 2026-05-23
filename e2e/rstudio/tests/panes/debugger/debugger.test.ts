@@ -76,12 +76,8 @@ test.describe('R debugger', () => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
     envPane = new EnvironmentPane(page);
-    // Defensive: drop any leftover open buffers from a prior crashed run.
-    // resetSourcePane (rather than closeAllBuffersWithoutSaving) keeps the
-    // source pane in its NORMAL state across the test-file handoff so the
-    // first file.edit doesn't race the LastSourceDocClosedEvent HIDE
-    // animation (#17738).
-    await consoleActions.resetSourcePane();
+    // Per-test cleanup of leftover debug mode + source buffers happens in
+    // the shared beforeEach (utils/test-reset.ts via fixtures/rstudio.fixture.ts).
   });
 
   // -------------------------------------------------------------------------

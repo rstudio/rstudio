@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -133,21 +132,28 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
    * directly after confirming the RPC was intercepted.
    */
   async function showBlockingPage(page: import('playwright').Page, html: string): Promise<void> {
-    // Trigger the re-check to verify the RPC interception fires
-    await chatPane.frame.locator('body').evaluate(() => {
-      window.parent.postMessage('retry-manifest', '*');
-    });
-    await sleep(2000);
-
-    // Inject the blocking HTML into the iframe
     const IFRAME_SEL = "iframe[title='Posit Assistant']";
-    await page.evaluate((sel: string) => {
+
+    // Trigger the re-check and wait for the intercepted RPC to actually fire
+    // before tearing the iframe down. waitForRequest sees the request through
+    // the page.route handler the test set up in beforeAll.
+    await Promise.all([
+      page.waitForRequest('**/rpc/chat_check_for_updates', { timeout: 5000 }),
+      chatPane.frame.locator('body').evaluate(() => {
+        window.parent.postMessage('retry-manifest', '*');
+      }),
+    ]);
+
+    // Reload the iframe to about:blank and then write the test HTML in. We
+    // chain these in a single evaluate so we can await the load event
+    // deterministically; a fixed sleep races the about:blank load and the
+    // following doc.open() can write into the wrong contentDocument.
+    await page.evaluate(async ({ sel, content }: { sel: string; content: string }) => {
       const iframe = document.querySelector(sel) as HTMLIFrameElement;
       iframe.src = 'about:blank';
-    }, IFRAME_SEL);
-    await sleep(500);
-    await page.evaluate(({ sel, content }: { sel: string; content: string }) => {
-      const iframe = document.querySelector(sel) as HTMLIFrameElement;
+      await new Promise<void>((resolve) => {
+        iframe.addEventListener('load', () => resolve(), { once: true });
+      });
       const doc = iframe.contentDocument!;
       doc.open();
       doc.write(content);
@@ -259,11 +265,15 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
     // onNoUpdateAvailable → startBackend → loadChatUI
     chatActions.clearUpdateCheckMock();
 
-    // Post retry-manifest from the iframe to trigger a real re-check
-    await chatPane.frame.locator('body').evaluate(() => {
-      window.parent.postMessage('retry-manifest', '*');
-    });
-    await sleep(3000);
+    // Post retry-manifest from the iframe to trigger a real re-check. Wait
+    // for the actual RPC to land before continuing -- that's the deterministic
+    // signal that the chat backend has picked up the retry.
+    await Promise.all([
+      page.waitForRequest('**/rpc/chat_check_for_updates', { timeout: 5000 }),
+      chatPane.frame.locator('body').evaluate(() => {
+        window.parent.postMessage('retry-manifest', '*');
+      }),
+    ]);
     await chatActions.dismissSetupPrompts();
 
     await expect(chatPane.chatTextarea).toBeVisible({ timeout: 30000 });

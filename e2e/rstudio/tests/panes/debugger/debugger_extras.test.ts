@@ -19,6 +19,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile } from '@utils/files';
 import { TIMEOUTS, sleep } from '@utils/constants';
 import { executeCommand } from '@utils/commands';
+import { waitForConsoleFocus, waitForConsoleIdle } from '@pages/console_pane.page';
 import { heredoc } from '@utils/heredoc';
 
 const sandbox = useSuiteSandbox();
@@ -48,9 +49,22 @@ async function resetAfterTest(): Promise<void> {
 // continuation prompts ("+ ") the regression depends on.
 async function consoleSubmitMultiline(page: Page, text: string): Promise<void> {
   await page.locator('#rstudio_console_input .ace_text-input').click({ force: true });
-  await sleep(TIMEOUTS.layoutSettle);
+  await waitForConsoleFocus(page);
   await page.keyboard.insertText(text);
-  await sleep(TIMEOUTS.settleDelay);
+  // insertText returns once the CDP frame has been delivered, not after Ace
+  // has finished applying it. Poll the editor's value so a fast Enter can't
+  // submit a partially-ingested block.
+  await expect
+    .poll(
+      () => page.evaluate(() => {
+        const el = document.getElementById('rstudio_console_input') as
+          | { env?: { editor?: { getValue: () => string } } }
+          | null;
+        return el?.env?.editor?.getValue() ?? '';
+      }),
+      { timeout: 2000 },
+    )
+    .toBe(text);
   await page.keyboard.press('Enter');
 }
 
@@ -82,7 +96,8 @@ test.describe('R debugger extras', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
-    await consoleActions.resetSourcePane();
+    // Per-test cleanup of leftover debug mode + source buffers happens in
+    // the shared beforeEach (utils/test-reset.ts via fixtures/rstudio.fixture.ts).
   });
 
   // Multi-line input at the Browse[N]> prompt previously triggered
@@ -104,7 +119,7 @@ test.describe('R debugger extras', () => {
       await writeAndOpenFile(page, sandbox.dir, fileName, content);
 
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
 
       await consoleActions.executeInConsole('multiline_fn()');
       await debuggerActions.waitForDebugMode();
@@ -244,7 +259,7 @@ test.describe('R debugger extras', () => {
       // Breakpoint on the body of the S7 method (line 3 = the print() call).
       await debuggerActions.setBreakpoint(3);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
 
       // Dispatch through the S3 generic into the S7 method.
       await consoleActions.executeInConsole(

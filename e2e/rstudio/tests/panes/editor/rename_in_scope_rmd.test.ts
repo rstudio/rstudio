@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { AceEditor } from '@pages/ace_editor.page';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -46,7 +46,6 @@ test.describe('Rename in scope across Rmd chunks', () => {
 
     // Position the cursor on the `variable <- 42` line. `gotoLine` is 1-based.
     await editor.gotoLine(7, 0);
-    await sleep(200);
 
     await executeCommand(page, 'renameInScope');
 

@@ -4,7 +4,6 @@
 // and making subsequent chunks unrunnable.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -67,24 +66,26 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await page.keyboard.type('It droppeth as the gentle rain from heaven');
-    await sleep(500);
 
     await consoleActions.clearConsole();
 
     // Navigate to chunk 1 and execute it
     await sourceActions.navigateToChunkByLabel('slow_plot');
+    const interruptBtn = page.locator("[id^='rstudio_tb_interruptr']");
     await executeCommand(page, 'executeCurrentChunk');
 
-    // While the slow plot is rendering, save the document
-    // This is the trigger for the bug — saving during execution corrupts the notebook cache
-    await sleep(1000);
+    // Wait until R is actually busy before saving -- the bug only manifests
+    // when the save lands while a chunk is in flight (interrupt button visible
+    // means R is executing).
+    await expect(interruptBtn).toBeVisible({ timeout: 10000 });
     await page.keyboard.press('ControlOrMeta+s');
 
     // Wait for chunk execution to complete (the interrupt button disappears)
-    await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 120000 });
-    await sleep(2000);
+    await expect(interruptBtn).not.toBeVisible({ timeout: 120000 });
 
-    // Verify no gzfile / "cannot open" error in console
+    // Verify no gzfile / "cannot open" error in console. The not.toContainText
+    // calls auto-wait up to their timeout, giving any late error a window to
+    // surface before the assertion passes.
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).not.toContainText('cannot open compressed file', { timeout: 5000 });
     await expect(consoleOutput).not.toContainText('gzfile', { timeout: 5000 });
@@ -94,9 +95,8 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
     await consoleActions.clearConsole();
     await sourceActions.navigateToChunkByLabel('verify_runnable');
     await executeCommand(page, 'executeCurrentChunk');
-    await sleep(5000);
 
-    // Verify chunk 2 output appeared — proves chunks still work after save-during-execution
+    // Verify chunk 2 output appeared -- proves chunks still work after save-during-execution
     await expect(consoleOutput).toContainText('The quality of mercy is not strained', { timeout: 10000 });
     await expect(consoleOutput).toContainText('Chunks still work.', { timeout: 5000 });
 

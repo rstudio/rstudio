@@ -3,7 +3,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand, documentCloseAllNoSave } from '@utils/commands';
+import { executeCommand } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -248,14 +248,34 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
   // -------------------------------------------------------------------------
   test('Source columns can be created and closed', async ({ rstudioPage: page }) => {
+    const dumpState = async (tag: string) => {
+      const detail = await page.locator('[id^="rstudio_Source"][id$="_pane"]').evaluateAll(
+        (els) =>
+          els.map((el) => {
+            const tabBar = el.querySelector('[role="tablist"], .gwt-TabLayoutPanelTabs');
+            const tabTitles = tabBar
+              ? Array.from(tabBar.children).map((c) => (c as HTMLElement).innerText?.trim() ?? '?')
+              : [];
+            return { id: el.id, tabCount: tabTitles.length, tabs: tabTitles };
+          }),
+      );
+      // eslint-disable-next-line no-console
+      console.log(`[panes:250 ${tag}] ${JSON.stringify(detail)}`);
+    };
+
+    await dumpState('start');
+
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-1');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE2_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-2');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE3_PANE)).toBeVisible({ timeout: 10000 });
+    await dumpState('after-newSourceColumn-3');
 
     expect(await getOffsetWidth(page, SOURCE1_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE1_PANE)).toBeGreaterThan(0);
@@ -264,10 +284,20 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    await documentCloseAllNoSave(page);
-    await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    // closeAllSourceDocs (the AppCommand) closes the empty source columns
+    // as part of its teardown; documentCloseAllNoSave (the bridge call) only
+    // closes documents and leaves the column containers behind, which is the
+    // right shape for tests that just want a clean source pane but the wrong
+    // one when we're asserting the columns themselves have gone away.
+    await executeCommand(page, 'closeAllSourceDocs');
+    await dumpState('after-closeAllSourceDocs-immediate');
+    try {
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    } finally {
+      await dumpState('final');
+    }
   });
 
   // -------------------------------------------------------------------------
