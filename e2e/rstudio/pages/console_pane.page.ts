@@ -159,8 +159,24 @@ export async function executeInConsole(
   // any popup and try again.
   const MAX_ATTEMPTS = 3;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (await page.locator('#rstudio_popup_completions').isVisible()) {
+    if (attempt === 1) {
+      // First attempt: only clear a completions popup if one happens to be
+      // lingering from a prior interaction; setValue() shouldn't have
+      // triggered any new overlay.
+      if (await page.locator('#rstudio_popup_completions').isVisible()) {
+        await page.keyboard.press('Escape');
+      }
+    } else {
+      // Retry: the previous Enter didn't submit, so some overlay (popup,
+      // signature help, hover tooltip, ...) almost certainly intercepted
+      // it. Send Escape unconditionally to cover the full set of
+      // Enter-intercepting overlays, then re-focus the editor since
+      // Escape can shift focus off it.
       await page.keyboard.press('Escape');
+      await page.evaluate(() => {
+        const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+        e?.env?.editor?.focus();
+      });
     }
     // Press Enter on the console-input textarea explicitly.
     // `page.keyboard.press` delivers to the focused element; relying on
@@ -182,18 +198,18 @@ export async function executeInConsole(
       );
       break;
     } catch (err) {
+      // Only TimeoutError is a legitimate "editor still non-empty" retry
+      // case -- other errors (frame teardown, exec-context destroyed, JS
+      // evaluation failures) must propagate so root causes aren't masked
+      // by the catch-all submission-failure message below.
+      const isTimeout = err instanceof Error && err.name === 'TimeoutError';
+      if (!isTimeout) throw err;
       if (attempt === MAX_ATTEMPTS) {
         throw new Error(
           `executeInConsole: Enter did not submit "${command.slice(0, 80)}" ` +
           `after ${MAX_ATTEMPTS} attempts; editor still non-empty.`,
         );
       }
-      // Re-focus the Ace editor before retrying -- focus could have shifted
-      // (e.g. an Escape just sent to a popup may have left focus elsewhere).
-      await page.evaluate(() => {
-        const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
-        e?.env?.editor?.focus();
-      });
     }
   }
   if (opts.wait) {
