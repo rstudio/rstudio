@@ -198,7 +198,20 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
 test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    // Normalize the source pane to a single Untitled tab instead of
+    // trying to empty it. RStudio's session init creates a default
+    // Untitled tab asynchronously (not gated on DeferredInitCompletedEvent),
+    // so "0 docs at startup" is a state we can't reliably observe -- but
+    // "exactly one Untitled" is what documents.resetToUntitled() lands on
+    // deterministically, and it's the state every doc-touching test in this
+    // file is happy to start from. See SourceColumnManager
+    // onDocumentResetToUntitled -- it keeps any existing untitled and
+    // closes everything else, or creates a fresh Untitled if none exists.
+    await consoleActions.resetSourcePane();
+    await expect.poll(
+      () => page.locator(`${SOURCE_PANE} [role="tab"]`).count(),
+      { timeout: 5000 },
+    ).toBe(1);
     await resetUILayout(page);
   });
 
@@ -240,10 +253,12 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, CONSOLE_PANE)).toBeGreaterThan(0);
 
-    // Source pane exists in DOM but is not visible (no source docs open).
-    const sourceWidth = await getOffsetWidth(page, SOURCE_PANE);
-    const sourceHeight = await getOffsetHeight(page, SOURCE_PANE);
-    expect(sourceWidth === 0 || sourceHeight === 0).toBe(true);
+    // Source pane has the single Untitled tab beforeAll normalized to.
+    // The pane is visible (has dimensions); the asymmetric tab assertion
+    // pins the canonical post-reset state -- exactly one tab.
+    expect(await getOffsetWidth(page, SOURCE_PANE)).toBeGreaterThan(0);
+    expect(await getOffsetHeight(page, SOURCE_PANE)).toBeGreaterThan(0);
+    expect(await page.locator(`${SOURCE_PANE} [role="tab"]`).count()).toBe(1);
   });
 
   // -------------------------------------------------------------------------
