@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -81,13 +82,15 @@ public class ApplicationAutomation
                                 EventBus eventBus,
                                 Session session,
                                 UserPrefs userPrefs,
-                                SourceColumnManager sourceColumnManager)
+                                SourceColumnManager sourceColumnManager,
+                                ChatServerOperations chatServer)
    {
       commands_ = commands;
       eventBus_ = eventBus;
       session_ = session;
       userPrefs_ = userPrefs;
       sourceColumnManager_ = sourceColumnManager;
+      chatServer_ = chatServer;
    }
 
    public final boolean isAutomationAgent()
@@ -104,6 +107,7 @@ public class ApplicationAutomation
       registerDocuments();
       registerProject();
       registerVersion();
+      registerChat();
       registerReadinessHandlers();
    }
 
@@ -187,6 +191,35 @@ public class ApplicationAutomation
    {
       registerProjectObject();
    }
+
+   private void registerChat()
+   {
+      registerChatObject();
+   }
+
+   private void setChatUpdateCheckOverride(JavaScriptObject override,
+                                           JavaScriptObject onCompleted)
+   {
+      chatServer_.chatSetUpdateCheckOverride(override,
+         new org.rstudio.studio.client.server.ServerRequestCallback<JavaScriptObject>()
+         {
+            @Override
+            public void onResponseReceived(JavaScriptObject response)
+            {
+               invokeBoolCallback(onCompleted, true);
+            }
+
+            @Override
+            public void onError(org.rstudio.studio.client.server.ServerError error)
+            {
+               invokeBoolCallback(onCompleted, false);
+            }
+         });
+   }
+
+   private native final void invokeBoolCallback(JavaScriptObject cb, boolean ok) /*-{
+      cb(ok);
+   }-*/;
 
    private void registerVersion()
    {
@@ -461,11 +494,31 @@ public class ApplicationAutomation
       };
    }-*/;
 
+   private native final void registerChatObject() /*-{
+      var self = this;
+      $wnd.rstudio.chat = $wnd.rstudio.chat || {};
+      // Install/clear an automation-only override for the next
+      // chat_check_for_updates response. Pass an object to install (any
+      // shape the real response can take); pass null to clear. Returns a
+      // Promise that resolves once the RPC has landed in rsession.
+      $wnd.rstudio.chat.setUpdateCheckOverride = $entry(function(override) {
+         return new $wnd.Promise(function(resolve, reject) {
+            var cb = $entry(function(succeeded) {
+               if (succeeded) resolve();
+               else reject(new Error('chat_set_update_check_override RPC failed'));
+            });
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::setChatUpdateCheckOverride(*)(
+               override || null, cb);
+         });
+      });
+   }-*/;
+
    private final Commands commands_;
    private final EventBus eventBus_;
    private final Session session_;
    private final UserPrefs userPrefs_;
    private final SourceColumnManager sourceColumnManager_;
+   private final ChatServerOperations chatServer_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
 }

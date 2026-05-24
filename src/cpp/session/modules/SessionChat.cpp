@@ -36,6 +36,7 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include <boost/regex.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -3497,6 +3498,18 @@ struct UpdateState
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
 
+// Automation-only override for chatCheckForUpdates. When set (via the
+// chat_set_update_check_override RPC), the next chatCheckForUpdates returns
+// this object verbatim instead of running an actual manifest fetch + parse.
+// Lets Playwright tests deterministically exercise each blocking branch
+// (manifest unavailable, unsupported protocol, version-* etc.) without
+// faking HTTP responses -- the GWT RPC layer treats Playwright route.fulfill
+// responses as status 0 in dev-mode Electron, so an in-rsession override
+// is the only path that actually reaches ChatPresenter's blocking-state
+// callbacks.
+boost::optional<json::Object> s_updateCheckOverride;
+boost::mutex s_updateCheckOverrideMutex;
+
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
 {
@@ -5086,6 +5099,19 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
+   // Honor any automation-test override before doing real work. This is set
+   // via chat_set_update_check_override and lets Playwright tests force the
+   // response to a specific blocking shape without faking HTTP (see comment
+   // above s_updateCheckOverride for why route.fulfill isn't viable here).
+   {
+      boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+      if (s_updateCheckOverride)
+      {
+         pResponse->setResult(*s_updateCheckOverride);
+         return Success();
+      }
+   }
+
    // Check if a forced recheck was requested (e.g. user clicked Retry)
    bool forceRecheck = false;
    if (request.params.getSize() > 0)
@@ -5133,6 +5159,37 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
         s_updateState.manifestUnavailable);
 
    pResponse->setResult(result);
+   return Success();
+}
+
+// Test-only: install (or clear) a static override for chatCheckForUpdates.
+// Pass a JSON object (any shape the real response would take) to install it;
+// pass JSON null to clear. The next chatCheckForUpdates returns the override
+// verbatim. Gated only by being a registered RPC -- callable any time, but
+// only the Playwright automation tests have a reason to use it.
+Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   if (request.params.getSize() == 0)
+      return Error(json::errc::ParamMissing, ERROR_LOCATION);
+
+   const json::Value& overrideValue = request.params[0];
+
+   boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+   if (overrideValue.isNull())
+   {
+      s_updateCheckOverride.reset();
+   }
+   else if (overrideValue.isObject())
+   {
+      s_updateCheckOverride = overrideValue.getObject();
+   }
+   else
+   {
+      return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+   }
+
+   pResponse->setResult(true);
    return Success();
 }
 
@@ -5846,6 +5903,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
       (bind(registerRpcMethod, "chat_get_version", chatGetVersion))
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
+      (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
