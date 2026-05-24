@@ -1318,10 +1318,10 @@ public class ChatPresenter extends BasePresenter
     *
     * <ul>
     *   <li><b>state</b>: identifies the specific state, e.g. "ready",
-    *     "starting", "manifest-unavailable", "unsupported-protocol",
-    *     "incompatible-version", "version-update-required",
-    *     "version-no-update", "not-installed", "update-available",
-    *     "update-check-failed", "assistant-not-selected", "error",
+    *     "starting", "restarting", "manifest-unavailable",
+    *     "unsupported-protocol", "incompatible-version",
+    *     "version-update-required", "version-no-update", "not-installed",
+    *     "update-available", "assistant-not-selected", "error",
     *     "crashed".</li>
     *   <li><b>blocked</b>: true when the iframe is showing a blocking page
     *     that prevents normal interaction (the user must take a setup action

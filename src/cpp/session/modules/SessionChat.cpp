@@ -3500,7 +3500,9 @@ boost::mutex s_updateStateMutex;
 
 // Automation-only override for chatCheckForUpdates. When set (via the
 // chat_set_update_check_override RPC), the next chatCheckForUpdates returns
-// this object verbatim instead of running an actual manifest fetch + parse.
+// this object verbatim instead of running an actual manifest fetch + parse,
+// then the override is consumed (cleared) so a forgotten clear in a test's
+// afterEach doesn't bleed forced results into unrelated subsequent checks.
 // Lets Playwright tests deterministically exercise each blocking branch
 // (manifest unavailable, unsupported protocol, version-* etc.) without
 // faking HTTP responses -- the GWT RPC layer treats Playwright route.fulfill
@@ -5103,11 +5105,15 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // via chat_set_update_check_override and lets Playwright tests force the
    // response to a specific blocking shape without faking HTTP (see comment
    // above s_updateCheckOverride for why route.fulfill isn't viable here).
+   // One-shot: consume the override after returning it, so a stale override
+   // doesn't influence checks the test didn't intend to drive.
    {
       boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
       if (s_updateCheckOverride)
       {
-         pResponse->setResult(*s_updateCheckOverride);
+         json::Object override = *s_updateCheckOverride;
+         s_updateCheckOverride.reset();
+         pResponse->setResult(override);
          return Success();
       }
    }
@@ -5162,11 +5168,12 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Test-only: install (or clear) a static override for chatCheckForUpdates.
+// Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
 // Pass a JSON object (any shape the real response would take) to install it;
 // pass JSON null to clear. The next chatCheckForUpdates returns the override
-// verbatim. Gated only by being a registered RPC -- callable any time, but
-// only the Playwright automation tests have a reason to use it.
+// verbatim, then consumes it. Gated only by being a registered RPC --
+// callable any time, but only the Playwright automation tests have a reason
+// to use it.
 Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
