@@ -68,12 +68,52 @@ type Documents = {
   active(): ActiveDocument | null;
 };
 
+/**
+ * Chat-pane lifecycle state, published by ChatPresenter at each transition.
+ * `blocked` is true when the iframe is currently showing a blocking page that
+ * prevents normal interaction; `state` identifies which (or, when not blocked,
+ * which transitional / ready state the pane is in).
+ */
+type ChatBridge = {
+  state:
+    | 'ready'
+    | 'starting'
+    | 'restarting'
+    | 'manifest-unavailable'
+    | 'unsupported-protocol'
+    | 'incompatible-version'
+    | 'version-update-required'
+    | 'version-no-update'
+    | 'not-installed'
+    | 'update-available'
+    | 'assistant-not-selected'
+    | 'error'
+    | 'crashed';
+  blocked: boolean;
+  /**
+   * Ordered list of state transitions since the chat presenter initialized.
+   * Bounded to the last 50 entries by ChatPresenter to keep long sessions
+   * from growing unbounded. Useful in test diagnostics to see what actually
+   * happened before an unexpected current state.
+   */
+  history: Array<{ state: ChatBridge['state']; blocked: boolean; at: number }>;
+  /**
+   * Install (object) or clear (null) an automation-only override for the
+   * next chat_check_for_updates response. Tests use this to drive each
+   * blocking branch deterministically; the resolved Promise means rsession
+   * has acknowledged and the next retry-manifest will return the override.
+   */
+  setUpdateCheckOverride(override: Record<string, unknown> | null): Promise<void>;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
   documents: Documents;
   project: ProjectInfo;
   version: VersionInfo;
+  /** Chat-pane state surface (populated lazily by ChatPresenter). */
+  chat?: ChatBridge;
   /**
    * False during workbench init; flips to true once the
    * DeferredInitCompletedEvent fires. Wait for this in test fixtures and
@@ -291,6 +331,42 @@ export async function clearPref(page: Page, name: string): Promise<void> {
  * Callers must reconstruct any page-action wrappers held over this call; the
  * session restart invalidates them.
  */
+/**
+ * Read window.rstudio.chat.state. Returns null when the chat presenter
+ * hasn't yet published its first state (i.e., the chat pane was never
+ * activated this session).
+ */
+export async function getChatState(page: Page): Promise<ChatBridge['state'] | null> {
+  return await page.evaluate(() => window.rstudio?.chat?.state ?? null);
+}
+
+/**
+ * Read window.rstudio.chat.blocked. Returns null when the chat presenter
+ * hasn't published its first state yet.
+ */
+export async function isChatBlocked(page: Page): Promise<boolean | null> {
+  return await page.evaluate(() => window.rstudio?.chat?.blocked ?? null);
+}
+
+/**
+ * Install (or clear) an automation-only override for the next
+ * chat_check_for_updates response. Resolves once rsession has acknowledged
+ * the override.
+ */
+export async function setChatUpdateCheckOverride(
+  page: Page,
+  override: Record<string, unknown> | null,
+): Promise<void> {
+  await page.evaluate(async (o) => {
+    if (!window.rstudio?.chat?.setUpdateCheckOverride) {
+      throw new Error(
+        'window.rstudio.chat.setUpdateCheckOverride missing; launch RStudio with --automation-agent',
+      );
+    }
+    await window.rstudio.chat.setUpdateCheckOverride(o);
+  }, override);
+}
+
 export async function openProject(
   page: Page,
   projectFilePath: string,
