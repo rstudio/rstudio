@@ -263,18 +263,42 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
       console.log(`[panes:250 ${tag}] ${JSON.stringify(detail)}`);
     };
 
+    // Ensure each new source column has at least one editor tab. RStudio
+    // removes a source column only when its last tab is closed (via
+    // LastSourceDocClosedEvent firing from SourceColumn.closeTabIndex);
+    // columns that never had a tab persist through closeAllSourceDocs.
+    // newSourceColumn does auto-create an Untitled in the FIRST new column
+    // (the "always have a source doc when source view is shown" invariant),
+    // but subsequent ones come up empty. Click each pane after creating it
+    // to make it the active column, then run newSourceDoc -- now every
+    // column has something for closeAllSourceDocs to close, and every
+    // column ends up cleaned up.
+    const ensureDoc = async (paneSelector: string) => {
+      await page.locator(paneSelector).click();
+      const startedEmpty = await page.locator(`${paneSelector} .gwt-TabLayoutPanelTabs > *`).count() === 0;
+      if (startedEmpty) {
+        await executeCommand(page, 'newSourceDoc');
+        await expect(
+          page.locator(`${paneSelector} .gwt-TabLayoutPanelTabs > *`),
+        ).toHaveCount(1, { timeout: 10000 });
+      }
+    };
+
     await dumpState('start');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE1_PANE);
     await dumpState('after-newSourceColumn-1');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE2_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE2_PANE);
     await dumpState('after-newSourceColumn-2');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE3_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE3_PANE);
     await dumpState('after-newSourceColumn-3');
 
     expect(await getOffsetWidth(page, SOURCE1_PANE)).toBeGreaterThan(0);
@@ -284,11 +308,9 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    // closeAllSourceDocs (the AppCommand) closes the empty source columns
-    // as part of its teardown; documentCloseAllNoSave (the bridge call) only
-    // closes documents and leaves the column containers behind, which is the
-    // right shape for tests that just want a clean source pane but the wrong
-    // one when we're asserting the columns themselves have gone away.
+    // closeAllSourceDocs closes every editor; the LastSourceDocClosedEvent
+    // fired by each column's final tab-close then prompts WorkbenchScreen
+    // to remove the column container.
     await executeCommand(page, 'closeAllSourceDocs');
     await dumpState('after-closeAllSourceDocs-immediate');
     try {
