@@ -41,8 +41,13 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
  * credential is a setup gap, not a product bug, and the test output should
  * reflect that.
  */
+// Playwright's TestType is parameterized by per-test and per-worker fixture
+// argument types. The helper only ever calls beforeEach / skip, which don't
+// depend on the fixture shape, so {} (the constraint TestType imposes) is the
+// minimum type that accepts an extended-fixture `test`. Using `any, any` here
+// would pollute callers with the wider type; {} keeps the signature honest.
 export function requireAiCredentials(
-  test: TestType<any, any>,
+  test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
   test.beforeEach(() => {

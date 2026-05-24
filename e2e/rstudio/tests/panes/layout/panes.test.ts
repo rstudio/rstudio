@@ -273,6 +273,15 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     // to make it the active column, then run newSourceDoc -- now every
     // column has something for closeAllSourceDocs to close, and every
     // column ends up cleaned up.
+    //
+    // The click-to-activate dependency is undocumented product behavior:
+    // clicking the outer pane container happens to focus the column today
+    // (SourceColumnManager.setActive is invoked off a focus event chain we
+    // don't directly observe). If a future change to focus routing or pane
+    // hierarchy breaks this, ensureDoc will silently create the new doc in
+    // the wrong column and the toHaveCount(1) assertion below will fail
+    // even though newSourceDoc succeeded. The right long-term fix is to
+    // expose window.rstudio.source.setActiveColumn(name) and use it here.
     const ensureDoc = async (paneSelector: string) => {
       await page.locator(paneSelector).click();
       const startedEmpty = await page.locator(`${paneSelector} .gwt-TabLayoutPanelTabs > *`).count() === 0;

@@ -102,9 +102,7 @@ export class ChatPaneActions {
       if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
         throw new Error(
           'Posit Assistant requires sign-in despite seeded credentials. ' +
-          'The host\'s ~/.positai/store/data.json refresh token may have been ' +
-          'rotated since globalSetup copied it into the sandbox. Sign in on ' +
-          'the host and re-run.'
+          'Sign in on the host (~/.positai) and re-run.'
         );
       }
 

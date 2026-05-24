@@ -95,6 +95,11 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
    * published the expected state. ChatPresenter writes window.rstudio.chat
    * synchronously inside each show... callback, so polling it is race-free
    * regardless of what the live chat backend does to the iframe content.
+   *
+   * Anchors on the LAST history entry rather than the current state so a
+   * transient transition (e.g. a stale poll callback re-emitting "ready"
+   * after the blocking state fires) can't satisfy the assertion. The
+   * matching entry must also have `blocked: true`.
    */
   async function triggerRecheckAndExpectState(
     page: import('playwright').Page,
@@ -106,11 +111,13 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
         window.parent.postMessage('retry-manifest', '*');
       }),
     ]);
-    await expect.poll(() => getChatState(page), { timeout: 5000 }).toBe(expectedState);
     await expect.poll(
-      () => page.evaluate(() => window.rstudio?.chat?.blocked ?? null),
-      { timeout: 1000 },
-    ).toBe(true);
+      () => page.evaluate(() => {
+        const h = window.rstudio?.chat?.history;
+        return h && h.length > 0 ? h[h.length - 1] : null;
+      }),
+      { timeout: 5000 },
+    ).toEqual(expect.objectContaining({ state: expectedState, blocked: true }));
   }
 
   // ---------------------------------------------------------------------------
@@ -194,10 +201,15 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
     ]);
     await chatActions.dismissSetupPrompts();
 
-    await expect.poll(() => getChatState(page), { timeout: 30000 }).toBe('ready');
+    // Anchor on the last history entry so a mid-startup transient
+    // (e.g. "starting") that briefly emits the right state-name without
+    // the right blocked-flag can't satisfy the assertion.
     await expect.poll(
-      () => page.evaluate(() => window.rstudio?.chat?.blocked ?? null),
-      { timeout: 1000 },
-    ).toBe(false);
+      () => page.evaluate(() => {
+        const h = window.rstudio?.chat?.history;
+        return h && h.length > 0 ? h[h.length - 1] : null;
+      }),
+      { timeout: 30000 },
+    ).toEqual(expect.objectContaining({ state: 'ready', blocked: false }));
   });
 });

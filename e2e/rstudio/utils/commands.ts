@@ -319,19 +319,6 @@ export async function clearPref(page: Page, name: string): Promise<void> {
 }
 
 /**
- * Switch to the project at `projectFilePath` via the automation bridge.
- *
- * Resets `window.rstudio.ready` synchronously, fires SwitchToProjectEvent on
- * the GWT side (forceSaveAll=true to skip any save-changes prompt), then
- * waits for the new session's DeferredInitCompletedEvent. Replaces the
- * `.Rprofile`-sentinel marker dance for tests that don't need a custom
- * `.Rprofile` -- the readiness signal is the same `window.rstudio.ready`
- * flag the rest of the bridge relies on.
- *
- * Callers must reconstruct any page-action wrappers held over this call; the
- * session restart invalidates them.
- */
-/**
  * Read window.rstudio.chat.state. Returns null when the chat presenter
  * hasn't yet published its first state (i.e., the chat pane was never
  * activated this session).
@@ -367,6 +354,19 @@ export async function setChatUpdateCheckOverride(
   }, override);
 }
 
+/**
+ * Switch to the project at `projectFilePath` via the automation bridge.
+ *
+ * Resets `window.rstudio.ready` synchronously, fires SwitchToProjectEvent on
+ * the GWT side (forceSaveAll=true to skip any save-changes prompt), then
+ * waits for the new session's DeferredInitCompletedEvent. Replaces the
+ * `.Rprofile`-sentinel marker dance for tests that don't need a custom
+ * `.Rprofile` -- the readiness signal is the same `window.rstudio.ready`
+ * flag the rest of the bridge relies on.
+ *
+ * Callers must reconstruct any page-action wrappers held over this call; the
+ * session restart invalidates them.
+ */
 export async function openProject(
   page: Page,
   projectFilePath: string,

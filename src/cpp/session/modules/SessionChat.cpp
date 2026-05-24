@@ -5171,12 +5171,20 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 // Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
 // Pass a JSON object (any shape the real response would take) to install it;
 // pass JSON null to clear. The next chatCheckForUpdates returns the override
-// verbatim, then consumes it. Gated only by being a registered RPC --
-// callable any time, but only the Playwright automation tests have a reason
-// to use it.
+// verbatim, then consumes it. Gated on --automation-agent so production
+// sessions (where any authenticated RPC caller could otherwise suppress
+// legitimate update checks) reject the call outright.
 Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
+   if (!session::options().isAutomationAgent())
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                         "chat_set_update_check_override is only callable "
+                         "when rsession is started with --automation-agent",
+                         ERROR_LOCATION);
+   }
+
    if (request.params.getSize() == 0)
       return Error(json::errc::ParamMissing, ERROR_LOCATION);
 
