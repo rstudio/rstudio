@@ -150,15 +150,52 @@ export async function executeInConsole(
     editor.setValue(text, 1); // 1 = move cursor to end
     editor.focus();
   }, command);
-  // Defensive: a popup may have been left open by previous interaction.
-  if (await page.locator('#rstudio_popup_completions').isVisible()) {
-    await page.keyboard.press('Escape');
+  // Try the Enter dispatch a few times. Ace can briefly route the keystroke
+  // to an autocomplete / signature-help popup (selecting an entry instead of
+  // submitting), and `waitForConsoleIdle` alone can't catch that case
+  // because R was already idle -- so it returns immediately while the
+  // command sits unsubmitted in the editor. After each press we verify the
+  // editor is now empty (Ace clears the input on submit); if not, dismiss
+  // any popup and try again.
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (await page.locator('#rstudio_popup_completions').isVisible()) {
+      await page.keyboard.press('Escape');
+    }
+    // Press Enter on the console-input textarea explicitly.
+    // `page.keyboard.press` delivers to the focused element; relying on
+    // editor.focus() above is racy -- focus can shift between the evaluate()
+    // returning and the key press, leaving the text in the buffer but never
+    // submitted.
+    await page.locator(CONSOLE_INPUT).press('Enter');
+
+    // Verify the command was actually consumed by polling for an empty
+    // editor value. The await-poll completes immediately on the happy path.
+    try {
+      await page.waitForFunction(
+        () => {
+          const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+          return e?.env?.editor?.getValue() === '';
+        },
+        null,
+        { timeout: 1000, polling: 50 },
+      );
+      break;
+    } catch (err) {
+      if (attempt === MAX_ATTEMPTS) {
+        throw new Error(
+          `executeInConsole: Enter did not submit "${command.slice(0, 80)}" ` +
+          `after ${MAX_ATTEMPTS} attempts; editor still non-empty.`,
+        );
+      }
+      // Re-focus the Ace editor before retrying -- focus could have shifted
+      // (e.g. an Escape just sent to a popup may have left focus elsewhere).
+      await page.evaluate(() => {
+        const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+        e?.env?.editor?.focus();
+      });
+    }
   }
-  // Press Enter on the console-input textarea explicitly. `page.keyboard.press`
-  // delivers to the focused element; relying on editor.focus() above is racy --
-  // focus can shift between the evaluate() returning and the key press, leaving
-  // the text in the buffer but never submitted.
-  await page.locator(CONSOLE_INPUT).press('Enter');
   if (opts.wait) {
     await waitForConsoleIdle(page, opts.timeout);
   }
