@@ -40,6 +40,17 @@ public interface ChatServerOperations
 
    public void chatCheckForUpdates(boolean forceRecheck,
                                    ServerRequestCallback<JsObject> requestCallback);
+
+   /**
+    * Install (non-null object) or clear (null) an automation-only override
+    * that pins the next chat_check_for_updates response to a specific shape.
+    * Used by Playwright tests to drive each blocking branch deterministically
+    * -- Playwright route.fulfill produces status=0 in dev-mode Electron so an
+    * in-rsession override is the only path that reliably reaches
+    * ChatPresenter's blocking callbacks.
+    */
+   public void chatSetUpdateCheckOverride(JavaScriptObject override,
+                                          ServerRequestCallback<JavaScriptObject> requestCallback);
    public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback);
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
 

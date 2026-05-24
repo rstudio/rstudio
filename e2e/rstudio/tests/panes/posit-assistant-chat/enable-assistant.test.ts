@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
@@ -8,6 +9,8 @@ import { executeCommand } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let assistantActions: AssistantOptionsActions;
   let assistantOptions: AssistantOptions;

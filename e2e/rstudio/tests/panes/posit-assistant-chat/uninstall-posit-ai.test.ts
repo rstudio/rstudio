@@ -5,6 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import type { Page } from 'playwright';
 
 /**
@@ -51,6 +52,8 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
 }
 
 base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@serial', '@desktop_only'] }, () => {
+  requireAiCredentials(base, 'positai');
+
   let session: DesktopSession;
   let page: Page;
   let consoleActions: ConsolePaneActions;

@@ -6,9 +6,12 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { documentCloseAllNoSave } from '@utils/commands';
+import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(provider, { tag: ['@ai'] }, () => {
+    requireAiCredentials(test, key === 'copilot' ? 'copilot' : 'positai');
+
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();
@@ -81,11 +84,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       console.log('Ghost text before accept: ' + ghostTextContent);
 
       await page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
 
       await expect(sourcePane.contentPane).toContainText(ghostTextContent, { timeout: 5000 });
       await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
-      await sleep(2000);
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
@@ -263,7 +264,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Discard button
       if (await sourcePane.nesApply.first().isVisible()) {
@@ -274,7 +274,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         const contentBefore = await sourceActions.getEditorContent();
 
         await sourcePane.nesDiscard.first().click();
-        await sleep(2000);
 
         // Verify diff view is fully dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -324,14 +323,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: 10000 });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Apply button
       if (await sourcePane.nesApply.first().isVisible()) {
         console.log('  Multiline diff view detected — testing Apply');
 
         await sourcePane.nesApply.first().click();
-        await sleep(2000);
 
         // Verify diff view is dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -417,13 +414,11 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
 
       const contentBefore = await sourceActions.getEditorContent();
       console.log('  NES suggestion visible — pressing Escape');
 
       await page.keyboard.press('Escape');
-      await sleep(2000);
 
       // Verify all NES indicators are cleared
       await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -471,7 +466,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
       console.log('  NES suggestion visible — editing unrelated line');
 
       // Edit an unrelated line (the placeholder comment on line 6)

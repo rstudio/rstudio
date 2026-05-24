@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -10,6 +11,8 @@ import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 //   https://github.com/rstudio/rstudio/issues/16957
 
 test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@serial'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;

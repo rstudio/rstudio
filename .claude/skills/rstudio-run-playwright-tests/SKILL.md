@@ -36,16 +36,12 @@ supported in this mode.
 
 ## Test running protocol
 
-Before the first run in a conversation:
-
-1. Pick a mode -- ask the user which of the four they want (use
-   `AskUserQuestion` if available), filtering out modes unsupported by the
-   host platform.
-2. Say a variant of "Ready to test!" (vary the phrasing).
-3. Show the command (prefer `npm run ...` over raw `npx playwright test`).
-4. Note whether it's the same as the previous run or different -- ***in bold
-   and italics***.
-5. Wait for approval.
+Before the first run in a conversation, pick a mode -- ask the user which of
+the four they want (use `AskUserQuestion` if available), filtering out modes
+unsupported by the host platform. If a `build/` directory exists at the repo
+root, list `test:desktop-dev` first in the options. Then run the tests
+directly; don't prompt for approval before kicking off the run. Prefer
+`npm run ...` over raw `npx playwright test`.
 
 After the first run, don't re-ask to re-run the same file in the same mode --
-just go. Switching files or modes warrants a fresh confirmation.
+just go. Switching modes (not files) warrants a fresh mode-pick.

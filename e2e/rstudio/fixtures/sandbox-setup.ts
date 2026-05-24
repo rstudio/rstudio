@@ -13,34 +13,33 @@ import { prepareRLibs } from './r-libs-setup';
  * (unless preserved by the rules in that file).
  *
  * Env vars (all optional):
- *   PW_SANDBOX_ROOT          Parent dir for the sandbox subtree. Defaults to
- *                            os.tmpdir().
- *   PW_SANDBOX_ROOT_CREATE   "1"/"true" to mkdir PW_SANDBOX_ROOT if missing.
- *                            Default is to fail loudly on a missing parent so
- *                            typos surface immediately.
- *   PW_SANDBOX_SEED_POSITAI  "1"/"true" to copy the real ~/.positai/ into the
- *                            sandbox user-home so Posit Assistant tests start
- *                            signed in. Default is unseeded -- tests start
- *                            signed out and must run the in-app sign-in flow.
- *                            Privacy note: real OAuth/API tokens are copied
- *                            into the sandbox. If the run is preserved (test
- *                            failure or PW_SANDBOX_SKIP_CLEANUP=1), the copied
- *                            tokens persist there until the sandbox is removed.
- *   PW_SANDBOX_SEED_COPILOT  "1"/"true" to copy the real GitHub Copilot
- *                            credentials into the sandbox user-home so
- *                            Copilot tests start authenticated. Default is
- *                            unseeded -- tests start unauthenticated. Source
- *                            path is platform-specific:
- *                              Windows: %LOCALAPPDATA%\github-copilot\
- *                              macOS/Linux: ~/.config/github-copilot/
- *                            Privacy note: real OAuth tokens are copied into
- *                            the sandbox. If the run is preserved (test
- *                            failure or PW_SANDBOX_SKIP_CLEANUP=1), the copied
- *                            tokens persist there until the sandbox is removed.
+ *   PW_SANDBOX_ROOT                Parent dir for the sandbox subtree. Defaults
+ *                                  to os.tmpdir().
+ *   PW_SANDBOX_ROOT_CREATE         "1"/"true" to mkdir PW_SANDBOX_ROOT if
+ *                                  missing. Default is to fail loudly on a
+ *                                  missing parent so typos surface immediately.
+ *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" to opt out of copying real AI
+ *                                  credentials into the sandbox. By default,
+ *                                  if `~/.positai/` and/or the GitHub Copilot
+ *                                  config dir exist on the host, they're
+ *                                  copied into the sandbox user-home so the
+ *                                  matching @ai tests start authenticated.
+ *                                  AI tests skip when the corresponding
+ *                                  credentials are unseeded.
+ *                                  Privacy note: real OAuth/API tokens are
+ *                                  copied into the sandbox. If the run is
+ *                                  preserved (test failure or
+ *                                  PW_SANDBOX_SKIP_CLEANUP=1), the copied
+ *                                  tokens persist there until the sandbox is
+ *                                  removed. Set this opt-out if the host
+ *                                  isn't a dedicated test account.
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
- * subtree. Workers inherit it via the normal child-process env, and
- * globalTeardown reads it directly from process.env.
+ * subtree, and PW_AI_SEEDED_POSITAI / PW_AI_SEEDED_COPILOT to "1" for each
+ * provider whose credentials were successfully copied (consumed by
+ * requireAiCredentials in @ai test files). Workers inherit them via the
+ * normal child-process env; globalTeardown reads PW_SANDBOX directly from
+ * process.env.
  */
 export default async function globalSetup() {
   const parent = process.env.PW_SANDBOX_ROOT ?? os.tmpdir();
@@ -88,34 +87,44 @@ export default async function globalSetup() {
     fs.mkdirSync(path.join(userHome, 'AppData', 'Local'), { recursive: true });
   }
 
-  const seedPositai = ['1', 'true'].includes(
-    (process.env.PW_SANDBOX_SEED_POSITAI ?? '').toLowerCase(),
+  // Seed AI credentials by default when the host has them. The matching @ai
+  // tests run requireAiCredentials() which gates each describe on the
+  // corresponding PW_AI_SEEDED_* flag set below; unseeded providers surface
+  // as a clean skip-with-reason rather than a 5-minute mystery failure
+  // waiting for a completion that will never arrive.
+  //
+  // Clear the flags up front so only values this function sets are honored
+  // -- a stray PW_AI_SEEDED_POSITAI=1 inherited from the user's shell or a
+  // prior partially-cleaned run could otherwise smuggle past
+  // requireAiCredentials() even when no credentials were actually copied.
+  delete process.env.PW_AI_SEEDED_POSITAI;
+  delete process.env.PW_AI_SEEDED_COPILOT;
+
+  const skipSeeding = ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
   );
-  if (seedPositai) {
+
+  if (!skipSeeding) {
     const realPositai = path.join(os.homedir(), '.positai');
     if (fs.existsSync(realPositai)) {
       try {
         fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
+        process.env.PW_AI_SEEDED_POSITAI = '1';
+        console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
+        console.warn(
+          `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.positai. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
+        );
       } catch (err) {
         throw new Error(
-          `PW_SANDBOX_SEED_POSITAI: failed copying ${realPositai} into sandbox: ${(err as Error).message}`,
+          `Failed copying ${realPositai} into sandbox: ${(err as Error).message}`,
         );
       }
-      console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
-      console.warn(
-        `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.positai. Tokens persist if the run is preserved or teardown fails. Only use this on machines with a dedicated test account.`,
-      );
     } else {
       console.log(
-        `[sandbox] PW_SANDBOX_SEED_POSITAI set but no real ~/.positai/ found; tests will start signed out of Posit Assistant`,
+        `[sandbox] no ~/.positai/ on host; @ai Posit Assistant tests will skip`,
       );
     }
-  }
 
-  const seedCopilot = ['1', 'true'].includes(
-    (process.env.PW_SANDBOX_SEED_COPILOT ?? '').toLowerCase(),
-  );
-  if (seedCopilot) {
     const isWindows = process.platform === 'win32';
     const realCopilot = isWindows
       ? path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'github-copilot')
@@ -126,20 +135,23 @@ export default async function globalSetup() {
     if (fs.existsSync(realCopilot)) {
       try {
         fs.cpSync(realCopilot, destCopilot, { recursive: true });
+        process.env.PW_AI_SEEDED_COPILOT = '1';
+        console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
+        console.warn(
+          `[sandbox] WARNING: Real GitHub Copilot credentials were copied into the sandbox from ${realCopilot}. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
+        );
       } catch (err) {
         throw new Error(
-          `PW_SANDBOX_SEED_COPILOT: failed copying ${realCopilot} into sandbox: ${(err as Error).message}`,
+          `Failed copying ${realCopilot} into sandbox: ${(err as Error).message}`,
         );
       }
-      console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
-      console.warn(
-        `[sandbox] WARNING: Real GitHub Copilot credentials were copied into the sandbox from ${realCopilot}. Tokens persist if the run is preserved or teardown fails. Only use this on machines with a dedicated test account.`,
-      );
     } else {
       console.log(
-        `[sandbox] PW_SANDBOX_SEED_COPILOT set but no real ${realCopilot} found; Copilot tests will start unauthenticated`,
+        `[sandbox] no ${realCopilot} on host; @ai Copilot tests will skip`,
       );
     }
+  } else {
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; @ai tests will skip');
   }
 
   process.env.PW_SANDBOX = sandbox;

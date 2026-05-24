@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { waitForConsoleIdle } from '../pages/console_pane.page';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -35,6 +36,14 @@ type ProjectInfo = {
   /** Active project display name, or null if no project is open. */
   name(): string | null;
   isActive(): boolean;
+  /**
+   * Fire SwitchToProjectEvent on the GWT side, switching the session to the
+   * project at `path`. Resets `window.rstudio.ready` to false synchronously
+   * so a caller can poll for `ready === true` to wait for the new session's
+   * DeferredInitCompletedEvent. Prefer the `openProject` helper over calling
+   * this directly -- it bundles the post-call readiness wait.
+   */
+  open(path: string): void;
 };
 
 type VersionInfo = {
@@ -59,12 +68,52 @@ type Documents = {
   active(): ActiveDocument | null;
 };
 
+/**
+ * Chat-pane lifecycle state, published by ChatPresenter at each transition.
+ * `blocked` is true when the iframe is currently showing a blocking page that
+ * prevents normal interaction; `state` identifies which (or, when not blocked,
+ * which transitional / ready state the pane is in).
+ */
+type ChatBridge = {
+  state:
+    | 'ready'
+    | 'starting'
+    | 'restarting'
+    | 'manifest-unavailable'
+    | 'unsupported-protocol'
+    | 'incompatible-version'
+    | 'version-update-required'
+    | 'version-no-update'
+    | 'not-installed'
+    | 'update-available'
+    | 'assistant-not-selected'
+    | 'error'
+    | 'crashed';
+  blocked: boolean;
+  /**
+   * Ordered list of state transitions since the chat presenter initialized.
+   * Bounded to the last 50 entries by ChatPresenter to keep long sessions
+   * from growing unbounded. Useful in test diagnostics to see what actually
+   * happened before an unexpected current state.
+   */
+  history: Array<{ state: ChatBridge['state']; blocked: boolean; at: number }>;
+  /**
+   * Install (object) or clear (null) an automation-only override for the
+   * next chat_check_for_updates response. Tests use this to drive each
+   * blocking branch deterministically; the resolved Promise means rsession
+   * has acknowledged and the next retry-manifest will return the override.
+   */
+  setUpdateCheckOverride(override: Record<string, unknown> | null): Promise<void>;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
   documents: Documents;
   project: ProjectInfo;
   version: VersionInfo;
+  /** Chat-pane state surface (populated lazily by ChatPresenter). */
+  chat?: ChatBridge;
   /**
    * False during workbench init; flips to true once the
    * DeferredInitCompletedEvent fires. Wait for this in test fixtures and
@@ -267,6 +316,85 @@ export async function clearPref(page: Page, name: string): Promise<void> {
       throw new Error(`Unknown user preference: ${prefName}`);
     await entry.clear();
   }, camel);
+}
+
+/**
+ * Read window.rstudio.chat.state. Returns null when the chat presenter
+ * hasn't yet published its first state (i.e., the chat pane was never
+ * activated this session).
+ */
+export async function getChatState(page: Page): Promise<ChatBridge['state'] | null> {
+  return await page.evaluate(() => window.rstudio?.chat?.state ?? null);
+}
+
+/**
+ * Read window.rstudio.chat.blocked. Returns null when the chat presenter
+ * hasn't published its first state yet.
+ */
+export async function isChatBlocked(page: Page): Promise<boolean | null> {
+  return await page.evaluate(() => window.rstudio?.chat?.blocked ?? null);
+}
+
+/**
+ * Install (or clear) an automation-only override for the next
+ * chat_check_for_updates response. Resolves once rsession has acknowledged
+ * the override.
+ */
+export async function setChatUpdateCheckOverride(
+  page: Page,
+  override: Record<string, unknown> | null,
+): Promise<void> {
+  await page.evaluate(async (o) => {
+    if (!window.rstudio?.chat?.setUpdateCheckOverride) {
+      throw new Error(
+        'window.rstudio.chat.setUpdateCheckOverride missing; launch RStudio with --automation-agent',
+      );
+    }
+    await window.rstudio.chat.setUpdateCheckOverride(o);
+  }, override);
+}
+
+/**
+ * Switch to the project at `projectFilePath` via the automation bridge.
+ *
+ * Resets `window.rstudio.ready` synchronously, fires SwitchToProjectEvent on
+ * the GWT side (forceSaveAll=true to skip any save-changes prompt), then
+ * waits for the new session's DeferredInitCompletedEvent. Replaces the
+ * `.Rprofile`-sentinel marker dance for tests that don't need a custom
+ * `.Rprofile` -- the readiness signal is the same `window.rstudio.ready`
+ * flag the rest of the bridge relies on.
+ *
+ * Callers must reconstruct any page-action wrappers held over this call; the
+ * session restart invalidates them.
+ */
+export async function openProject(
+  page: Page,
+  projectFilePath: string,
+  timeout = 60000,
+): Promise<void> {
+  await page.evaluate((p) => {
+    const r = window.rstudio;
+    if (!r)
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+    r.project.open(p);
+  }, projectFilePath);
+
+  // The Server mode page may navigate as part of the project switch; let it
+  // settle before polling the bridge. On Desktop this is a no-op.
+  await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
+
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout, polling: 50 },
+  );
+
+  // ready=true tells us GWT's workbench is wired up, but the console-busy
+  // class can still be set briefly while the post-switch prompt transition
+  // completes (same gap restartSessionWithSentinel guards against in
+  // project.ts). Without this wait callers can issue a console action into
+  // a still-busy session.
+  await waitForConsoleIdle(page);
 }
 
 /** Read the RStudio + R version info installed on the automation bridge. */
