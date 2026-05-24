@@ -4,7 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
-import { executeCommand, waitForActiveDocument } from '@utils/commands';
+import { documentOpen, executeCommand, openProject } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -56,21 +56,21 @@ test.describe('Build pane', () => {
     const testFile = path.join(projectDir, 'tests', 'testthat', 'test-example.R');
     const projectNameLit = rStringLiteral(projectName);
     const projectDirLit = rPathLiteral(projectDir);
-    const testFileLit = rPathLiteral(testFile);
 
     test.setTimeout(180000);
 
     // Create the package skeleton and open the project. openProject restarts R,
     // so wait for both the project label to update and the console to be idle
     // before continuing.
+    // package_skeleton writes ${projectDir}/${projectName}.Rproj; the bridge's
+    // project.open dispatches SwitchToProjectEvent directly and needs that
+    // .Rproj path (the R-side .rs.api.openProject accepts a dir and re-derives
+    // it, but the bridge does not).
     await consoleActions.executeInConsole(
       `.rs.rpc.package_skeleton(packageName = ${projectNameLit}, packageDirectory = ${projectDirLit}, sourceFiles = character(), usingRcpp = FALSE)`,
     );
-    await consoleActions.executeInConsole(`.rs.api.openProject(${projectDirLit})`);
-    await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
-      timeout: TIMEOUTS.sessionRestart,
-    });
-    await waitForConsoleIdle(page);
+    await openProject(page, `${projectDir}/${projectName}.Rproj`);
+    await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
 
     // Write a trivial testthat test file via Node fs and open it -- testTestthatFile
     // runs the active document, so the file has to be the current source tab.
@@ -79,8 +79,7 @@ test.describe('Build pane', () => {
       testFile,
       'test_that("we can run a test", {\n  expect_equal(2 + 2, 4)\n})\n',
     );
-    await consoleActions.executeInConsole(`.rs.api.documentOpen(${testFileLit})`);
-    await waitForActiveDocument(page, testFile, TIMEOUTS.fileOpen);
+    await documentOpen(page, testFile);
 
     await executeCommand(page, 'testTestthatFile');
 

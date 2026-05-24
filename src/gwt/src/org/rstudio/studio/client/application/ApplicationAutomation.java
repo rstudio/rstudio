@@ -16,11 +16,18 @@ package org.rstudio.studio.client.application;
 
 import java.util.Map;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
@@ -58,6 +65,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.documents.closeAllNoSave()
  *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
  *   window.rstudio.documents.active()          // { id, path, dirty } for the focused doc, or null
+ *   window.rstudio.documents.open(path, opts?) // open file at path; opts: { line?, col?, moveCursor? }
  *
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
@@ -331,6 +339,23 @@ public class ApplicationAutomation
       eventBus_.dispatchEvent(new DocumentResetToUntitledEvent());
    }
 
+   // Equivalent to .rs.api.documentOpen(path, line, col, moveCursor) but skips
+   // the ensureFileExists RPC that columnManager_.editFile would do -- tests
+   // pass known-existing paths, and OpenSourceFileEvent is the same event the
+   // GWT side ultimately fires from the R-API path. line is 1-indexed; pass
+   // line < 0 to open without navigating.
+   private void dispatchDocumentOpen(String path, int line, int col, boolean moveCursor)
+   {
+      FileSystemItem file = FileSystemItem.createFile(path);
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      TextFileType fileType = registry.getTextTypeForFile(file);
+      FilePosition position = line >= 0
+         ? FilePosition.create(line, Math.max(col, 1))
+         : null;
+      eventBus_.dispatchEvent(new OpenSourceFileEvent(
+         file, position, fileType, moveCursor, NavigationMethods.DEFAULT));
+   }
+
    // Returns null when no editor is active so callers can distinguish "no doc"
    // from "doc exists but is clean".
    private JavaScriptObject getActiveDocument()
@@ -459,6 +484,17 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.documents.active = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveDocument()();
+      });
+      // opts: { line?: number (1-indexed; omit/<0 = don't navigate),
+      //         col?: number (1-indexed; defaults to 1),
+      //         moveCursor?: boolean (defaults to true) }.
+      $wnd.rstudio.documents.open = $entry(function(path, opts) {
+         opts = opts || {};
+         var line = (typeof opts.line === 'number') ? opts.line : -1;
+         var col = (typeof opts.col === 'number') ? opts.col : 1;
+         var moveCursor = (opts.moveCursor !== false);
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchDocumentOpen(*)(
+            path, line, col, moveCursor);
       });
    }-*/;
 

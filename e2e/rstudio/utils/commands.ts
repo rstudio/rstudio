@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { waitForConsoleIdle } from '../pages/console_pane.page';
+import { withBridgeLog, withBridgeLogResult } from './log';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -61,11 +62,26 @@ type ActiveDocument = {
   dirty: boolean;
 };
 
+type DocumentOpenOptions = {
+  /** 1-indexed line to navigate to after opening. Omit (or <0) to skip navigation. */
+  line?: number;
+  /** 1-indexed column. Defaults to 1 when `line` is set. */
+  col?: number;
+  /** Whether to move the cursor to the position (true) or just scroll there (false). Defaults to true. */
+  moveCursor?: boolean;
+};
+
 type Documents = {
   closeAllNoSave(): void;
   resetToUntitled(): void;
   /** Info on the focused source document, or null when no editor is active. */
   active(): ActiveDocument | null;
+  /**
+   * Open the file at `path` in the source pane. Fires OpenSourceFileEvent
+   * directly; the caller must ensure the file exists on disk (the bridge
+   * skips the ensureFileExists RPC that .rs.api.documentOpen does).
+   */
+  open(path: string, opts?: DocumentOpenOptions): void;
 };
 
 /**
@@ -140,21 +156,23 @@ function snakeToCamel(s: string): string {
 
 /** Run an AppCommand by id (no console roundtrip). */
 export async function executeCommand(page: Page, commandId: string): Promise<void> {
-  // The bridge is transiently absent during session restarts (project open
-  // /close, Restart R). Wait for the specific command to land before
-  // dispatching so callers don't have to manage that themselves. When the
-  // bridge is already up, the condition is true on the first poll, so this
-  // adds no measurable latency to the steady-state path.
-  await page.waitForFunction(
-    (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
-    commandId,
-    { timeout: 10000, polling: 50 },
-  );
-  await page.evaluate((id) => {
-    const r = window.rstudio!;
-    const cmd = r.commands[id];
-    cmd();
-  }, commandId);
+  await withBridgeLog('executeCommand', commandId, async () => {
+    // The bridge is transiently absent during session restarts (project open
+    // /close, Restart R). Wait for the specific command to land before
+    // dispatching so callers don't have to manage that themselves. When the
+    // bridge is already up, the condition is true on the first poll, so this
+    // adds no measurable latency to the steady-state path.
+    await page.waitForFunction(
+      (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
+      commandId,
+      { timeout: 10000, polling: 50 },
+    );
+    await page.evaluate((id) => {
+      const r = window.rstudio!;
+      const cmd = r.commands[id];
+      cmd();
+    }, commandId);
+  });
 }
 
 /** True when the named AppCommand reports `isChecked` (e.g. an active layout zoom). */
@@ -194,15 +212,17 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
  * editor's value after this returns reflects the final on-disk content.
  */
 export async function saveDocument(page: Page, timeout = 5000): Promise<void> {
-  await executeCommand(page, 'saveSourceDoc');
-  await page.waitForFunction(
-    () => {
-      const doc = window.rstudio?.documents.active() ?? null;
-      return doc !== null && !doc.dirty;
-    },
-    null,
-    { timeout, polling: 100 },
-  );
+  await withBridgeLog('saveDocument', '', async () => {
+    await executeCommand(page, 'saveSourceDoc');
+    await page.waitForFunction(
+      () => {
+        const doc = window.rstudio?.documents.active() ?? null;
+        return doc !== null && !doc.dirty;
+      },
+      null,
+      { timeout, polling: 100 },
+    );
+  });
 }
 
 /**
@@ -211,11 +231,44 @@ export async function saveDocument(page: Page, timeout = 5000): Promise<void> {
  * round trip (and therefore the "session is busy" dialog risk).
  */
 export async function documentCloseAllNoSave(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    r.documents.closeAllNoSave();
+  await withBridgeLog('documentCloseAllNoSave', '', async () => {
+    await page.evaluate(() => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      r.documents.closeAllNoSave();
+    });
+  });
+}
+
+/**
+ * Open the file at `path` in the source pane via the automation bridge, and
+ * wait until it is the active document.
+ *
+ * Mirrors `.rs.api.documentOpen(path, line, col, moveCursor)` but skips the
+ * R round-trip and the ensureFileExists RPC; the caller is responsible for
+ * ensuring the file exists on disk.
+ *
+ * The event dispatch is synchronous; the actual open is async (file load,
+ * editor create), so this also polls `documents.active()` until the path
+ * matches -- equivalent to following the open with `waitForActiveDocument`.
+ *
+ * `line` is 1-indexed; omit (or pass <0) to open without navigating.
+ */
+export async function documentOpen(
+  page: Page,
+  path: string,
+  opts: DocumentOpenOptions = {},
+  timeout = 20000,
+): Promise<void> {
+  await withBridgeLog('documentOpen', path, async () => {
+    await page.evaluate(({ docPath, options }) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      r.documents.open(docPath, options);
+    }, { docPath: path, options: opts });
+    await waitForActiveDocument(page, path, timeout);
   });
 }
 
@@ -228,11 +281,13 @@ export async function documentCloseAllNoSave(page: Page): Promise<void> {
  * cross-test resets where a following file.edit / newDoc is imminent.
  */
 export async function resetSourcePaneState(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    r.documents.resetToUntitled();
+  await withBridgeLog('resetSourcePaneState', '', async () => {
+    await page.evaluate(() => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      r.documents.resetToUntitled();
+    });
   });
 }
 
@@ -267,14 +322,20 @@ export async function waitForActiveDocument(
  * unknown.
  */
 export async function getPref(page: Page, name: string): Promise<PrefValue | null> {
-  const camel = snakeToCamel(name);
-  return page.evaluate((prefName) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    const entry = r.prefs[prefName];
-    return entry ? entry.get() : null;
-  }, camel);
+  return withBridgeLogResult(
+    'getPref',
+    (result) => `${name}=${JSON.stringify(result)}`,
+    async () => {
+      const camel = snakeToCamel(name);
+      return page.evaluate((prefName) => {
+        const r = window.rstudio;
+        if (!r)
+          throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+        const entry = r.prefs[prefName];
+        return entry ? entry.get() : null;
+      }, camel);
+    },
+  );
 }
 
 /**
@@ -288,16 +349,18 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
  * pref change is observable in R / the session-side cache when this resolves.
  */
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
-  const camel = snakeToCamel(name);
-  await page.evaluate(async ({ prefName, prefValue }) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    const entry = r.prefs[prefName];
-    if (!entry)
-      throw new Error(`Unknown user preference: ${prefName}`);
-    await entry.set(prefValue);
-  }, { prefName: camel, prefValue: value });
+  await withBridgeLog('setPref', `${name}=${JSON.stringify(value)}`, async () => {
+    const camel = snakeToCamel(name);
+    await page.evaluate(async ({ prefName, prefValue }) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      const entry = r.prefs[prefName];
+      if (!entry)
+        throw new Error(`Unknown user preference: ${prefName}`);
+      await entry.set(prefValue);
+    }, { prefName: camel, prefValue: value });
+  });
 }
 
 /**
@@ -306,16 +369,18 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
  * server-side before returning.
  */
 export async function clearPref(page: Page, name: string): Promise<void> {
-  const camel = snakeToCamel(name);
-  await page.evaluate(async (prefName) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    const entry = r.prefs[prefName];
-    if (!entry)
-      throw new Error(`Unknown user preference: ${prefName}`);
-    await entry.clear();
-  }, camel);
+  await withBridgeLog('clearPref', name, async () => {
+    const camel = snakeToCamel(name);
+    await page.evaluate(async (prefName) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      const entry = r.prefs[prefName];
+      if (!entry)
+        throw new Error(`Unknown user preference: ${prefName}`);
+      await entry.clear();
+    }, camel);
+  });
 }
 
 /**
@@ -344,14 +409,20 @@ export async function setChatUpdateCheckOverride(
   page: Page,
   override: Record<string, unknown> | null,
 ): Promise<void> {
-  await page.evaluate(async (o) => {
-    if (!window.rstudio?.chat?.setUpdateCheckOverride) {
-      throw new Error(
-        'window.rstudio.chat.setUpdateCheckOverride missing; launch RStudio with --automation-agent',
-      );
-    }
-    await window.rstudio.chat.setUpdateCheckOverride(o);
-  }, override);
+  await withBridgeLog(
+    'setChatUpdateCheckOverride',
+    override === null ? 'null' : JSON.stringify(override),
+    async () => {
+      await page.evaluate(async (o) => {
+        if (!window.rstudio?.chat?.setUpdateCheckOverride) {
+          throw new Error(
+            'window.rstudio.chat.setUpdateCheckOverride missing; launch RStudio with --automation-agent',
+          );
+        }
+        await window.rstudio.chat.setUpdateCheckOverride(o);
+      }, override);
+    },
+  );
 }
 
 /**
@@ -372,29 +443,45 @@ export async function openProject(
   projectFilePath: string,
   timeout = 60000,
 ): Promise<void> {
-  await page.evaluate((p) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    r.project.open(p);
-  }, projectFilePath);
+  await withBridgeLog('openProject', projectFilePath, async () => {
+    await page.evaluate((p) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      r.project.open(p);
+    }, projectFilePath);
 
-  // The Server mode page may navigate as part of the project switch; let it
-  // settle before polling the bridge. On Desktop this is a no-op.
-  await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
+    // The Server mode page may navigate as part of the project switch; let it
+    // settle before polling the bridge. On Desktop this is a no-op.
+    await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
 
-  await page.waitForFunction(
-    () => window.rstudio?.ready === true,
-    null,
-    { timeout, polling: 50 },
-  );
+    await page.waitForFunction(
+      () => window.rstudio?.ready === true,
+      null,
+      { timeout, polling: 50 },
+    );
 
-  // ready=true tells us GWT's workbench is wired up, but the console-busy
-  // class can still be set briefly while the post-switch prompt transition
-  // completes (same gap restartSessionWithSentinel guards against in
-  // project.ts). Without this wait callers can issue a console action into
-  // a still-busy session.
-  await waitForConsoleIdle(page);
+    // ready=true tells us the workbench is wired up, but SessionInfo can
+    // still report the previous project's path for a beat -- and the project
+    // menu UI lags that. Poll project.path() against the requested file so
+    // the helper's post-condition is "the bridge agrees this project is
+    // active" rather than "ready flipped true." Case-insensitive to match
+    // waitForActiveDocument's handling of HFS+ / NTFS.
+    await page.waitForFunction(
+      (target) => {
+        const path = window.rstudio?.project.path() ?? null;
+        return path !== null && path.toLowerCase() === target.toLowerCase();
+      },
+      projectFilePath,
+      { timeout, polling: 100 },
+    );
+
+    // The console-busy class can still be set briefly while the post-switch
+    // prompt transition completes (same gap restartSessionWithSentinel
+    // guards against in project.ts). Without this wait callers can issue a
+    // console action into a still-busy session.
+    await waitForConsoleIdle(page);
+  });
 }
 
 /** Read the RStudio + R version info installed on the automation bridge. */
