@@ -5,7 +5,7 @@ import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
-import { executeCommand, waitForActiveDocument } from '@utils/commands';
+import { documentOpen, executeCommand, openProject } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -72,20 +72,28 @@ async function scaffoldShinytest2Project(
 
   const projectDirLit = rPathLiteral(projectDir);
   const appPathLit = rPathLiteral(`${projectDir}/app.R`);
-  const testPathLit = rPathLiteral(testFilePath);
 
+  // initializeProject writes ${dir}/${basename(dir)}.Rproj; no bridge
+  // equivalent for project init yet, so stays in console. The bridge's
+  // project.open then dispatches SwitchToProjectEvent directly and needs
+  // that .Rproj path (the R-side .rs.api.openProject accepts a dir and
+  // re-derives it, but the bridge does not). projectName mirrors
+  // basename(projectDir) here, so we can build the .Rproj path locally
+  // without a second R round-trip.
   await consoleActions.executeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
-  await consoleActions.executeInConsole(`.rs.api.openProject(${projectDirLit})`);
+  await openProject(page, `${projectDir}/${projectName}.Rproj`);
+  // openProject waits on window.rstudio.ready, but the GWT project-menu label
+  // can lag that signal between two open-in-a-row tests (the local
+  // closeProjectIfOpen doesn't wait for the no-project session's bridge to
+  // re-settle). Keep the long timeout so the assertion also acts as the wait.
   await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
     timeout: TIMEOUTS.sessionRestart,
   });
-  await waitForConsoleIdle(page);
 
   await consoleActions.executeInConsole(
     `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,
   );
-  await consoleActions.executeInConsole(`.rs.api.documentOpen(${testPathLit})`);
-  await waitForActiveDocument(page, testFilePath, TIMEOUTS.fileOpen);
+  await documentOpen(page, testFilePath);
 }
 
 test.describe('shinytest2 integration', () => {

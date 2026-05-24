@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { executeCommand, setPref, documentCloseAllNoSave } from '@utils/commands';
+import { executeCommand, getPref, setPref, documentCloseAllNoSave } from '@utils/commands';
 import type { Page } from 'playwright';
 
 /**
@@ -219,7 +219,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   const sandbox = useSuiteSandbox();
   let projectDir = '';
   let trustEnabled = true;
-  let originalLoadWorkspace = 'FALSE';
+  let originalLoadWorkspace = false;
   let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
@@ -235,8 +235,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     }
 
     // Capture original load_workspace preference for restoration
-    originalLoadWorkspace = await captureResult(page,
-      '.rs.api.readRStudioPreference("load_workspace")');
+    originalLoadWorkspace = await getPref(page, 'load_workspace') as boolean;
     console.log(`Original load_workspace: ${originalLoadWorkspace}`);
 
     // Redirect the New Project Wizard's parent-directory field into the
@@ -244,8 +243,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // field itself is read-only, so setting the pref is the only way.
     // If a prior crashed run left our sandbox path in the pref, treat it
     // as leftover state and restore to the schema default on afterAll.
-    const current = await captureResult(page,
-      '.rs.api.readRStudioPreference("default_project_location")');
+    const current = await getPref(page, 'default_project_location') as string;
     const basename = current.split(/[/\\]/).pop() || '';
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
@@ -263,7 +261,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       }
 
       // Restore preferences
-      await setPref(page, 'load_workspace', originalLoadWorkspace === 'TRUE');
+      await setPref(page, 'load_workspace', originalLoadWorkspace);
       await setPref(page, 'default_project_location', originalDefaultProjectLocation);
     } catch (err) {
       console.warn('project_trust_dialog afterAll cleanup failed:', err);

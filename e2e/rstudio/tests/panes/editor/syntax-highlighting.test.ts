@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
+import { setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
@@ -59,7 +60,7 @@ Goodbye, world!
 :::
 `;
 
-    await consoleActions.executeInConsole('.rs.writeUserPref("rainbow_fenced_divs", TRUE)');
+    await setPref(page, 'rainbow_fenced_divs', true);
     try {
       await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.Rmd', content);
 
@@ -86,7 +87,7 @@ Goodbye, world!
 
       expect(await editor.getState(5)).toBe('start');
     } finally {
-      await consoleActions.executeInConsole('.rs.writeUserPref("rainbow_fenced_divs", FALSE)');
+      await setPref(page, 'rainbow_fenced_divs', false);
     }
   });
 
