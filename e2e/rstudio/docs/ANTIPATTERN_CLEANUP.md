@@ -207,21 +207,45 @@ template ("GWT console DOM elements report overlapping coordinates").
       -- `page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')")`
       should be `executeCommand(page, 'showCommandPalette')`
 
+### Remove the `TIMEOUTS` object; wait on observable state
+
+`utils/constants.ts` exports `TIMEOUTS` (`sessionRestart: 30000`,
+`fileOpen: 20000`, `consoleReady: 15000`, `settleDelay: 1000`, etc.). Its
+existence implies that long blind timeouts on assertions are an acceptable
+substitute for waiting on observable state -- they aren't. The right
+pattern is to poll a bridge-state predicate
+(`window.rstudio.project.path()`, `documents.active()`, the `console-busy`
+class, etc.) and let the assertion run at Playwright's default short
+timeout. Each `TIMEOUTS` entry callers reach for is a missing or
+under-exposed bridge signal.
+
+PR #17761 demonstrates the pattern: `openProject` polls
+`window.rstudio.project.path()` against the requested .Rproj, so the
+follow-up `expect(PROJECT_MENU).toContainText(...)` runs at the default
+5s timeout instead of the previous 30s `TIMEOUTS.sessionRestart` blind
+wait.
+
+Goal: shrink `TIMEOUTS` to only the legitimate non-wait constants
+(`pollInterval`, `slowKeystroke`) and remove the rest.
+
+- [ ] Audit each `TIMEOUTS.*` use site and identify the observable
+      post-condition it's papering over (e.g. `consoleReady` ->
+      `#rstudio_console_input` visible + not `.rstudio-console-busy`).
+- [ ] Surface the underlying signal in the automation bridge if not
+      already exposed.
+- [ ] Convert each call site to poll the signal; the assertion that
+      follows can run at Playwright's default.
+- [ ] Delete the entry from `TIMEOUTS` once all sites are gone.
+
+Volume to chase: 371 inline `timeout: NNNN` occurrences in test code; 50
+of them are the 30000 / 60000 cases. Worst files: `panes.test.ts` (47),
+`project_trust_dialog.test.ts` (26), `rmarkdown.test.ts` (25),
+`code_suggestions.test.ts` (24), `chat_pane.actions.ts` (21),
+`create_projects.test.ts` (17), `pane_layout.test.ts` (15).
+
 ---
 
 ## Nice -- stylistic polish
-
-### Replace inline `timeout: NNNN` with named constants
-
-371 occurrences; 50 are exactly `30000` or `60000` and map to existing
-`TIMEOUTS.*` entries (`rstudioStartup`, `sessionRestart`, etc.). The two
-`timeout: 120000` cases need a new constant.
-
-- [ ] Add a long-operation timeout constant (e.g. `TIMEOUTS.longOperation`)
-- [ ] Sweep call sites; worst files: `panes.test.ts` (47),
-      `project_trust_dialog.test.ts` (26), `rmarkdown.test.ts` (25),
-      `code_suggestions.test.ts` (24), `chat_pane.actions.ts` (21),
-      `create_projects.test.ts` (17), `pane_layout.test.ts` (15)
 
 ### Prefer auto-retrying matchers over `toBe(true|false)` on locator booleans
 
