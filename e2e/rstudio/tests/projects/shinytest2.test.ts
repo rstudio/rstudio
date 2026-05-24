@@ -82,13 +82,7 @@ async function scaffoldShinytest2Project(
   // without a second R round-trip.
   await consoleActions.executeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
   await openProject(page, `${projectDir}/${projectName}.Rproj`);
-  // openProject waits on window.rstudio.ready, but the GWT project-menu label
-  // can lag that signal between two open-in-a-row tests (the local
-  // closeProjectIfOpen doesn't wait for the no-project session's bridge to
-  // re-settle). Keep the long timeout so the assertion also acts as the wait.
-  await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
-    timeout: TIMEOUTS.sessionRestart,
-  });
+  await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
 
   await consoleActions.executeInConsole(
     `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,

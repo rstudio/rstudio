@@ -461,11 +461,25 @@ export async function openProject(
       { timeout, polling: 50 },
     );
 
-    // ready=true tells us GWT's workbench is wired up, but the console-busy
-    // class can still be set briefly while the post-switch prompt transition
-    // completes (same gap restartSessionWithSentinel guards against in
-    // project.ts). Without this wait callers can issue a console action into
-    // a still-busy session.
+    // ready=true tells us the workbench is wired up, but SessionInfo can
+    // still report the previous project's path for a beat -- and the project
+    // menu UI lags that. Poll project.path() against the requested file so
+    // the helper's post-condition is "the bridge agrees this project is
+    // active" rather than "ready flipped true." Case-insensitive to match
+    // waitForActiveDocument's handling of HFS+ / NTFS.
+    await page.waitForFunction(
+      (target) => {
+        const path = window.rstudio?.project.path() ?? null;
+        return path !== null && path.toLowerCase() === target.toLowerCase();
+      },
+      projectFilePath,
+      { timeout, polling: 100 },
+    );
+
+    // The console-busy class can still be set briefly while the post-switch
+    // prompt transition completes (same gap restartSessionWithSentinel
+    // guards against in project.ts). Without this wait callers can issue a
+    // console action into a still-busy session.
     await waitForConsoleIdle(page);
   });
 }

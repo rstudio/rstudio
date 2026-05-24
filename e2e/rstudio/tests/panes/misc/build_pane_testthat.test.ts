@@ -70,11 +70,7 @@ test.describe('Build pane', () => {
       `.rs.rpc.package_skeleton(packageName = ${projectNameLit}, packageDirectory = ${projectDirLit}, sourceFiles = character(), usingRcpp = FALSE)`,
     );
     await openProject(page, `${projectDir}/${projectName}.Rproj`);
-    // Match the long timeout shinytest2's port uses -- openProject's
-    // ready-flag wait can land before the project-menu label updates.
-    await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
-      timeout: TIMEOUTS.sessionRestart,
-    });
+    await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
 
     // Write a trivial testthat test file via Node fs and open it -- testTestthatFile
     // runs the active document, so the file has to be the current source tab.
