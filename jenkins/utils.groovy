@@ -1,5 +1,7 @@
 // Utility methods for Jenkins pipelines
 
+import groovy.transform.Field
+
 /**
   * Returns true if branch has changes in the specified path with the target branch.
   * If invertMatch is true, returns true if branch has changes that do not match the specified path.
@@ -443,7 +445,8 @@ def checkRunsRequestWithRetry(String method, String payload = "", String url = p
   return lastResponse
 }
 
-checks = [:]
+@Field
+def checks = [:]
 
 /**
   * Posts a review check to the GitHub /check-runs API with the specified args.
