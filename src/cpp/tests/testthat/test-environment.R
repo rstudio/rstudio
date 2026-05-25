@@ -120,14 +120,19 @@ test_that("ancestor-shadowed .Last.value is classified at the shadowing env", {
    on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue), add = TRUE)
    .rs.api.writeRStudioPreference("show_last_dot_value", TRUE)
 
+   # Attach an empty env first, then add the active binding directly to the
+   # env on the search path. attach(env) on R < 4.6 copies contents via get(),
+   # which would fire the active binding during the copy and demote it to a
+   # regular value -- defeating the test.
+   attach(NULL, name = "rstudio-17737-shadow", warn.conflicts = FALSE)
+   on.exit(detach("rstudio-17737-shadow"), add = TRUE)
+   shadow <- as.environment("rstudio-17737-shadow")
+
    counter <- 0L
-   shadow <- new.env()
    makeActiveBinding(".Last.value", function() {
       counter <<- counter + 1L
       42L
    }, env = shadow)
-   attach(shadow, name = "rstudio-17737-shadow", warn.conflicts = FALSE)
-   on.exit(detach("rstudio-17737-shadow"), add = TRUE)
 
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
    contents <- .rs.invokeRpc("list_environment")
