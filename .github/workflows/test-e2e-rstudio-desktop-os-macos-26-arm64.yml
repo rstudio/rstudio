@@ -68,6 +68,12 @@ jobs:
     timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
+      # Pin the sandbox parent so the upload-artifact step below knows where
+      # rsession logs / preserved per-spec config trees end up after a failed
+      # run. globalSetup honors this and auto-creates the directory
+      # (PW_SANDBOX_ROOT_CREATE=1).
+      PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +81,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
 
       - name: Install rig
         run: |
@@ -174,6 +182,14 @@ jobs:
         working-directory: e2e/rstudio
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/ms-playwright
+          key: ${{ runner.os }}-pw-${{ hashFiles('e2e/rstudio/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-pw-
+
       - name: Install Playwright browsers
         working-directory: e2e/rstudio
         run: npx playwright install --with-deps chromium
@@ -188,6 +204,10 @@ jobs:
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Print the GWT launch timeline so the next launch failure shows
+          # which phase exceeded the deadline (CDP-connect vs. bridge-installed
+          # vs. ready-flag vs. console-visible).
+          PW_DEBUG_LAUNCH: '1'
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
@@ -218,4 +238,28 @@ jobs:
         with:
           name: test-results
           path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
+
+      # Preserved per-spec sandbox tree on failure -- includes rsession logs,
+      # the spec's RStudio config / data home, and per-test working dirs.
+      # globalTeardown leaves this in place when any test failed; if every
+      # test passed the directory is gone and `if-no-files-found: ignore`
+      # silently skips upload.
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox
+          path: ${{ github.workspace }}/pw-sandbox/
+          if-no-files-found: ignore
+
+      # macOS writes Electron / rsession crash reports here; useful when a
+      # launch fails because the renderer or session process aborted before
+      # the GWT-ready handshake.
+      - name: Upload macOS diagnostic reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-diagnostic-reports
+          path: ~/Library/Logs/DiagnosticReports/
           if-no-files-found: ignore
