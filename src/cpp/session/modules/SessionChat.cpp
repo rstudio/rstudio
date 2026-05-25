@@ -5935,13 +5935,20 @@ Error initialize()
       return error;
    }
 
-   // Check for updates on startup (async, won't block initialization)
-   error = checkForUpdatesOnStartup();
-   if (error)
-   {
-      // Log but don't fail initialization
-      WLOG("Update check failed: {}", error.getMessage());
-   }
+   // Defer the update check off the synchronous init path. downloadManifest()
+   // blocks on R's download.file(), whose transfer timeout doesn't bound DNS
+   // resolution -- offline or flaky networks can stall it long enough to
+   // prevent rsession's HTTP listener from starting, leaving the GWT client
+   // stuck on the splash with empty menus. See rstudio/rstudio#14202.
+   module_context::scheduleDelayedWork(
+      boost::posix_time::seconds(1),
+      []()
+      {
+         Error error = checkForUpdatesOnStartup();
+         if (error)
+            WLOG("Update check failed: {}", error.getMessage());
+      },
+      true);  // idleOnly: run after R becomes idle (post client attach)
 
    DLOG("SessionChat module initialized successfully, URI handler registered for /ai-chat");
    return Success();
