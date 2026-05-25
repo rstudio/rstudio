@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { executeCommand } from '@utils/commands';
@@ -12,6 +13,8 @@ const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 // which is a separate concern from the command wiring this test covers.
 // detachable-sidebar.test.ts is @desktop_only for the same reason.
 test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
 
@@ -39,9 +42,9 @@ test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only
     await executeCommand(page, 'popOutChat');
     const satellitePage = await satellitePromise;
     await satellitePage.waitForLoadState('domcontentloaded');
-    await sleep(2000);
 
-    // Verify the satellite carries the return-to-main button.
+    // Verify the satellite carries the return-to-main button. The 15s
+    // expect-visible covers the chat React app's mount time.
     await expect(satellitePage.locator(RETURN_TO_MAIN_BTN)).toBeVisible({
       timeout: 15000,
     });

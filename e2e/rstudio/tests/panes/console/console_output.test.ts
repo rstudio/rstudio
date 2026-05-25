@@ -13,7 +13,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { AceEditorElement } from '@utils/ace';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { waitForConsoleFocus, waitForConsoleIdle } from '@pages/console_pane.page';
 import { heredoc } from '@utils/heredoc';
 
 const CONSOLE_OUTPUT = '#rstudio_console_output';
@@ -203,7 +203,7 @@ test.describe('Error output after caught try()', () => {
     await writeAndOpenFile(page, sandbox.dir, FILE, contents);
 
     await executeCommand(page, 'sourceActiveDocument');
-    await sleep(TIMEOUTS.settleDelay);
+    await waitForConsoleIdle(page);
 
     await consoleActions.clearConsole();
     await consoleActions.executeInConsole('foo()');
@@ -228,7 +228,7 @@ test.describe('Console input AceEditorCommandDispatcher shortcuts', () => {
     // as the Ctrl+2 keyboard shortcut).
     await consoleActions.clearConsole();
     await executeCommand(page, 'activateConsole');
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForConsoleFocus(page);
 
     await page.keyboard.press('ControlOrMeta+Shift+m');
     await expect.poll(() => readConsoleInput(page)).toMatch(/\|>|%>%/);

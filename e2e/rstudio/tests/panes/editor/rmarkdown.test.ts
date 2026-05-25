@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { AceEditor } from '@pages/ace_editor.page';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { installDepIfPrompted, clickConfirmIfVisible, RMARKDOWN_MODAL, TEMPLATE_OPTION, TEMPLATE_LIST, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
@@ -8,7 +8,6 @@ import {
   switchToViewerFrame,
 } from '@pages/viewer_pane.page';
 import { clearWorkspace } from '@pages/environment_pane.page';
-import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, saveDocument, setPref } from '@utils/commands';
 
@@ -77,19 +76,20 @@ test.describe('RMarkdown', () => {
     // Save the file
     await saveDocument(page);
 
-    // Run all chunks via restart R. The 5s lead-in guards against the
-    // not.toBeVisible check below succeeding before the interrupt button has
-    // had a chance to appear (i.e. before the restart actually fires).
+    // Clear the console so the chunk's print() output is the only thing in
+    // there afterwards -- waiting for that output is the deterministic
+    // readiness signal for "R restarted AND ran the chunk", which avoids
+    // having to time the restart or watch the interrupt button.
+    await consoleActions.clearConsole();
+
+    // Run all chunks via restart R. 60s covers the worst-case restart +
+    // chunk run window.
     await executeCommand(page, 'restartRRunAllChunks');
-    await sleep(5000);
-    await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 30000 });
-
-    // Wait for R to be ready after restart
-    await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 15000 });
-
-    // Verify output
     const consoleOutput = consoleActions.consolePane.consoleOutput;
-    await expect(consoleOutput).toContainText('full of sound and fury, signifying nothing', { timeout: 20000 });
+    await expect(consoleOutput).toContainText(
+      'full of sound and fury, signifying nothing',
+      { timeout: 60000 },
+    );
 
     // Verify no variables in global env
     await consoleActions.clearConsole();
@@ -225,22 +225,29 @@ test.describe('RMarkdown', () => {
     // Wait for visual toolbar
     await expect(sourceActions.sourcePane.secondaryToolbar).toBeVisible({ timeout: 10000 });
     await consoleActions.clearConsole();
-    await sleep(3000);
+
+    // Navigate from chunk-to-chunk via goToNextChunk. The command schedules
+    // the cursor move asynchronously, so poll the cursor row after each call
+    // to make sure we've actually advanced before the next navigation fires.
+    const editor = new AceEditor(page, '');
+    async function advanceChunk(direction: 'next' | 'prev'): Promise<void> {
+      const before = (await editor.getCursorPosition()).row;
+      await executeCommand(page, direction === 'next' ? 'goToNextChunk' : 'goToPrevChunk');
+      await expect
+        .poll(async () => (await editor.getCursorPosition()).row, { timeout: 5000 })
+        .not.toBe(before);
+    }
 
     // Go to next chunk 3 times to reach plot(pressure) chunk
-    await executeCommand(page, 'goToNextChunk');
-    await sleep(2000);
-    await executeCommand(page, 'goToNextChunk');
-    await sleep(2000);
-    await executeCommand(page, 'goToNextChunk');
-    await sleep(2000);
+    await advanceChunk('next');
+    await advanceChunk('next');
+    await advanceChunk('next');
     await executeCommand(page, 'executeCurrentChunk');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('plot(pressure)', { timeout: 10000 });
 
     // Go to previous chunk and verify summary(cars) runs but NOT plot(pressure)
     await consoleActions.clearConsole();
-    await executeCommand(page, 'goToPrevChunk');
-    await sleep(2000);
+    await advanceChunk('prev');
     await executeCommand(page, 'executeCurrentChunk');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText('summary(cars)', { timeout: 10000 });

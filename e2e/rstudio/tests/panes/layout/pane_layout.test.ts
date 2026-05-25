@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { executeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
@@ -45,7 +45,6 @@ async function openPaneLayoutOptions(page: Page): Promise<void> {
   await executeCommand(page, 'paneLayout');
   await page.waitForSelector(DIALOG_BOX, { timeout: TIMEOUTS.consoleReady });
   await page.waitForSelector(PL_PANEL, { timeout: 5000 });
-  await sleep(500);
 }
 
 async function closePaneLayoutOptions(page: Page): Promise<void> {
@@ -100,7 +99,6 @@ async function selectDropdownOption(page: Page, quadrant: string, optionText: st
     },
     optionText,
   );
-  await sleep(1000);
 }
 
 async function getDropdownOptionTexts(page: Page, selector: string): Promise<string[]> {
@@ -169,10 +167,14 @@ async function getTabCheckedState(page: Page, quadrant: string, tabs: string[]):
 async function toggleTab(page: Page, quadrant: string, tab: string): Promise<void> {
   const id = await findTabCheckboxId(page, quadrant, tab);
   if (!id) throw new Error(`Tab '${tab}' not found in quadrant '${quadrant}'`);
-  await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-  await sleep(100);
-  await page.locator(`#${id}`).click();
-  await sleep(500);
+  const checkbox = page.locator(`#${id}`);
+  await checkbox.scrollIntoViewIfNeeded();
+  const wasChecked = await checkbox.isChecked();
+  await checkbox.click();
+  // Wait for the toggle to land before returning -- the caller typically
+  // asserts the post-toggle state, and reading without polling can race the
+  // GWT click handler.
+  await expect.poll(() => checkbox.isChecked(), { timeout: 2000 }).toBe(!wasChecked);
 }
 
 // Expected tabs are a subset of the dropdown text -- RStudio Pro adds
@@ -480,7 +482,6 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
 
     await expect(page.locator(PL_RESET_LINK)).toBeAttached();
     await page.locator(PL_RESET_LINK).click();
-    await sleep(800);
 
     await expect(page.locator(PL_SIDEBAR_VISIBLE)).not.toBeChecked();
     expect(await getQuadrantDropdownText(page, PL_SIDEBAR)).toBe('Sidebar on Left');
@@ -547,10 +548,8 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
 
     await openPaneLayoutOptions(page);
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
 
@@ -574,10 +573,8 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await page.locator(PL_SIDEBAR_VISIBLE).click();
     await selectDropdownOption(page, PL_SIDEBAR, 'Sidebar on Right');
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SIDEBAR_PANE, { timeout: 15000 });
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
@@ -605,10 +602,8 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
 
     await openPaneLayoutOptions(page);
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
 

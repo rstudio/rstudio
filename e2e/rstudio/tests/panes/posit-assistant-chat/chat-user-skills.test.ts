@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -68,14 +69,12 @@ async function createSkillFile(
   description: string,
   marker: string,
 ): Promise<void> {
-  await consoleActions.executeInConsole(`dir.create("${dir}", recursive = TRUE)`);
-  await sleep(1000);
+  await consoleActions.executeInConsole(`dir.create("${dir}", recursive = TRUE)`, { wait: true });
 
   // Keep content minimal to stay under ~300 chars for pressSequentially reliability
   const cmd =
     `writeLines(c("---", "name: ${name}", "description: ${description}", "---", "", "Start with: ${marker}", "Markers are MANDATORY."), "${filePath}")`;
-  await consoleActions.executeInConsole(cmd);
-  await sleep(1000);
+  await consoleActions.executeInConsole(cmd, { wait: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +82,8 @@ async function createSkillFile(
 // ---------------------------------------------------------------------------
 
 test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   const sandbox = useSuiteSandbox();
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
@@ -122,7 +123,11 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // triggers onChatProviderChanged() → stopBackend() on the GWT side.
     // -----------------------------------------------------------------------
     await setPref(page, 'chat_provider', 'none');
-    await sleep(5000);
+    // Deliberate wait: setPref triggers stopBackend() asynchronously on the
+    // GWT side. There's no bridge-exposed signal for "backend has fully shut
+    // down", so we settle for an observation window long enough for the
+    // child process to terminate before we recreate skill files below.
+    await page.waitForTimeout(5000);
 
     // -----------------------------------------------------------------------
     // Step 2: Create a project-level skill (.positai/skills/ in workspace)
@@ -152,13 +157,17 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // Step 4: Verify both files exist and have correct content
     // -----------------------------------------------------------------------
     await consoleActions.clearConsole();
-    await consoleActions.executeInConsole(`cat(readLines("${projectSkillPath}"), sep = "\\n")`);
-    await sleep(2000);
+    await consoleActions.executeInConsole(
+      `cat(readLines("${projectSkillPath}"), sep = "\\n")`,
+      { wait: true },
+    );
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
     await consoleActions.clearConsole();
-    await consoleActions.executeInConsole(`cat(readLines("${userSkillPath()}"), sep = "\\n")`);
-    await sleep(2000);
+    await consoleActions.executeInConsole(
+      `cat(readLines("${userSkillPath()}"), sep = "\\n")`,
+      { wait: true },
+    );
     const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
     // -----------------------------------------------------------------------
@@ -187,8 +196,10 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // tree, so no explicit cleanup is needed for it here.
 
     // Clean up only the specific user-level skill we created (leave ~/.positai/ intact)
-    await consoleActions.executeInConsole(`unlink("${userSkillDir()}", recursive = TRUE)`);
-    await sleep(1000);
+    await consoleActions.executeInConsole(
+      `unlink("${userSkillDir()}", recursive = TRUE)`,
+      { wait: true },
+    );
   });
 
   test('both custom skills are discovered by assistant', async () => {

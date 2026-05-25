@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
@@ -9,6 +10,8 @@ import { executeCommand, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
@@ -30,26 +33,21 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // must be present in the sandbox-redirected user library before the test runs.
     missingPackages = await consoleActions.ensurePackages(['shiny', 'bslib', 'rstudioapi'], 180000);
 
-    // Force Shiny apps to open in the Viewer pane
+    // Force Shiny apps to open in the Viewer pane (setPref is synchronous on
+    // the bridge -- no settling needed).
     await setPref(page, 'shiny_viewer_type', 'pane');
-    await sleep(1000);
 
     // Clean up any leftover files from previous runs
-    await consoleActions.executeInConsole('unlink("app.R")');
-    await sleep(1000);
+    await consoleActions.executeInConsole('unlink("app.R")', { wait: true });
 
-    // Clear the Viewer pane so we don't get false positives from previous content
+    // Clear the Viewer pane so we don't get false positives from previous content.
+    // viewerClearAll may show a confirmation dialog; wait for it to either
+    // surface or settle.
     await executeCommand(page, 'viewerClearAll');
-    await sleep(1000);
-
-    // Dismiss the "Clear Viewer" confirmation dialog if it appears. The
-    // sleep(1000) after viewerClearAll above settles the dialog state, so a
-    // snapshot isVisible() is sufficient -- no need to burn 2s polling for
-    // absence in the common case.
     const clearViewerYes = page.locator('role=alertdialog >> button:has-text("Yes")');
-    if (await clearViewerYes.isVisible()) {
+    if (await clearViewerYes.isVisible({ timeout: 2000 }).catch(() => false)) {
       await clearViewerYes.click();
-      await sleep(500);
+      await expect(clearViewerYes).not.toBeVisible({ timeout: 5000 });
     }
 
     await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
@@ -96,8 +94,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     }
 
     // Clean up created file(s)
-    await consoleActions.executeInConsole('unlink("app.R")');
-    await sleep(1000);
+    await consoleActions.executeInConsole('unlink("app.R")', { wait: true });
   });
 
   test.beforeEach(async () => {
@@ -128,10 +125,9 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
 
 
 
-    // Brief settle time
-    await sleep(2000);
-
-    // Verify the Viewer pane iframe is visible
+    // Verify the Viewer pane iframe is visible (expect auto-waits up to 30s
+    // -- the iframe may take a beat to mount after the assistant signals
+    // completion).
     const viewerIframe = page.locator(VIEWER_FRAME);
     await expect(viewerIframe).toBeVisible({ timeout: 30000 });
 

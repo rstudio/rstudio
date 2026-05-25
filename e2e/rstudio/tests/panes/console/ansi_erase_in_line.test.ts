@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { getOutputLines } from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 
@@ -67,9 +66,10 @@ test.describe('ANSI Erase in Line (CSI K) - #17070', () => {
   });
 
   test('EL on empty line - no errors', async () => {
-    // Pure side-effect check (no positive marker to wait on).
-    await consoleActions.executeInConsole('cat("\\033[K\\n")');
-    await sleep(1000);
+    // Pure side-effect check (no positive marker to wait on). `{ wait: true }`
+    // gates on the console-busy class clearing, which is the deterministic
+    // equivalent of "R finished processing the cat()".
+    await consoleActions.executeInConsole('cat("\\033[K\\n")', { wait: true });
 
     const output = getOutputLines(
       await consoleActions.consolePane.consoleOutput.innerText(),

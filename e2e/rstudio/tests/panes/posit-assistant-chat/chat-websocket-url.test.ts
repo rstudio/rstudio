@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -8,6 +9,8 @@ import type { Response } from 'playwright';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 test.describe('Chat WebSocket URL', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;

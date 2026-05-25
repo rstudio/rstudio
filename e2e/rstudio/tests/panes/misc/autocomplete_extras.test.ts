@@ -24,7 +24,6 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AutocompleteActions } from '@actions/autocomplete.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { sleep } from '@utils/constants';
 import { setPref, clearPref } from '@utils/commands';
 
 test.describe('Autocomplete extras', () => {
@@ -39,16 +38,13 @@ test.describe('Autocomplete extras', () => {
     const sourceActions = new SourcePaneActions(page, consoleActions);
     autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
     await consoleActions.closeAllBuffersWithoutSaving();
-    await consoleActions.executeInConsole('rm(list = ls())');
-    await sleep(500);
+    await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
     // Dismiss lingering popups / partial console input.
     await page.keyboard.press('Escape');
-    await sleep(200);
     await page.keyboard.press('Escape');
-    await sleep(200);
     await consoleActions.closeAllBuffersWithoutSaving();
   });
 
@@ -69,21 +65,23 @@ test.describe('Autocomplete extras', () => {
       'nms <- .rs.getNames(n)',
     ];
     for (const code of setup) {
-      await consoleActions.executeInConsole(code);
-      await sleep(500);
+      await consoleActions.executeInConsole(code, { wait: true });
     }
 
     // .rs.getNames itself must not have evaluated the active binding.
     const before = await consoleActions.consolePane.consoleOutput.innerText();
     expect(before).not.toMatch(/\[1\]\s*"active"/);
 
-    // Triggering completions on `n` (Tab) must also not evaluate it.
+    // Triggering completions on `n` (Tab) must also not evaluate it. Wait for
+    // the completion popup to appear (proof that Tab triggered completion)
+    // before dismissing; that's the precondition the test is about.
     await consoleActions.typeInConsole('n');
     await page.keyboard.press('Tab');
-    await sleep(500);
+    const popup = page.locator('#rstudio_popup_completions');
+    await expect(popup).toBeVisible({ timeout: 5000 });
     await page.keyboard.press('Escape');
+    await expect(popup).not.toBeVisible({ timeout: 2000 });
     await page.keyboard.press('Backspace');
-    await sleep(300);
 
     const after = await consoleActions.consolePane.consoleOutput.innerText();
     expect(after).not.toMatch(/\[1\]\s*"active"/);
@@ -151,8 +149,10 @@ test.describe('Autocomplete extras', () => {
 
   // https://github.com/rstudio/rstudio/issues/13290
   test('column names with special chars are properly quoted on accept', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('cols_q <- list(apple = "apple", "2024" = "2024")');
-    await sleep(500);
+    await consoleActions.executeInConsole(
+      'cols_q <- list(apple = "apple", "2024" = "2024")',
+      { wait: true },
+    );
 
     // Typing `$` auto-opens the autocomplete popup; an explicit Tab here
     // would just accept the highlighted entry ("apple") before we get a

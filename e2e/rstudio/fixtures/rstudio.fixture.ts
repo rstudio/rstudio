@@ -2,8 +2,7 @@ import { test as base, type Page } from '@playwright/test';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { launchServer, shutdownServer } from './server.fixture';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
-
-const DONT_SAVE_BTN = "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no";
+import { resetForNextTest } from '../utils/test-reset';
 
 type Mode = 'desktop' | 'server';
 
@@ -37,20 +36,11 @@ export const test = base.extend<{}, { mode: Mode; rstudioPage: Page }>({
   }, { scope: 'worker' }],
 });
 
-// Dismiss any leftover save dialogs before each test. A dialog left
-// open by a previous test is already visible by the time we get here,
-// so isVisible() (which does NOT wait) is enough -- a click with a
-// 2-second timeout would poll for the full 2s in the (overwhelmingly
-// common) no-dialog case, adding ~2s of dead wait to every test.
-// After clicking, wait for the dialog to actually disappear rather
-// than sleeping a fixed amount.
+// Reset the IDE to a clean per-test starting state. See utils/test-reset.ts
+// for what's covered and what's deliberately not. Each step short-circuits
+// when its trigger isn't present, so on a clean session this is cheap.
 test.beforeEach(async ({ rstudioPage: page }) => {
-  const dialog = page.locator(DONT_SAVE_BTN);
-  if (await dialog.isVisible().catch(() => false)) {
-    await dialog.click();
-    await dialog.waitFor({ state: 'hidden', timeout: 5000 });
-    console.log('Dismissed save dialog before test');
-  }
+  await resetForNextTest(page);
 });
 
 export { expect } from '@playwright/test';

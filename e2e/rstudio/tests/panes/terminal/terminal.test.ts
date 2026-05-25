@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
@@ -12,22 +12,27 @@ const XTERM_SELECTOR = '.xterm';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__TERM_${Date.now()}__`;
-  await executeInConsole(page, `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`);
+  // Gate on R reporting idle so the marker pair has fully written by the time
+  // we read the console.
+  await executeInConsole(
+    page,
+    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
+    { wait: true },
+  );
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const start = Date.now();
-  while (Date.now() - start < TIMEOUTS.consoleReady) {
-    await sleep(TIMEOUTS.pollInterval);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const match = output.match(pattern);
-    if (match) return match[1].trim();
-  }
-  throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  const output = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = output.match(pattern);
+  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
+  return match[1].trim();
 }
 
 async function killAllTerminals(page: Page): Promise<void> {
-  await executeInConsole(page, 'rstudioapi::terminalKill(rstudioapi::terminalList())');
-  await sleep(TIMEOUTS.pollInterval);
+  await executeInConsole(
+    page,
+    'rstudioapi::terminalKill(rstudioapi::terminalList())',
+    { wait: true },
+  );
 }
 
 async function openTerminal(page: Page): Promise<void> {
@@ -72,18 +77,14 @@ test.describe.serial('Terminal pane', () => {
 
     // Wait for the terminal buffer to include the result line. Poll via
     // rstudioapi::terminalBuffer -- the xterm canvas isn't directly readable.
-    const deadline = Date.now() + TIMEOUTS.consoleReady;
-    let bufferHasResult = 'FALSE';
-    while (Date.now() < deadline) {
-      bufferHasResult = await captureResult(
+    await expect.poll(
+      () => captureResult(
         page,
         '{ ids <- rstudioapi::terminalList(); ' +
         'length(ids) > 0 && any(grepl("^2$", rstudioapi::terminalBuffer(ids[[1]]))) }',
-      );
-      if (bufferHasResult === 'TRUE') break;
-      await sleep(TIMEOUTS.pollInterval);
-    }
-    expect(bufferHasResult, 'terminal buffer should contain the result "2"').toBe('TRUE');
+      ),
+      { timeout: TIMEOUTS.consoleReady },
+    ).toBe('TRUE');
 
     // Send the terminal contents to a new editor tab.
     await executeCommand(page, 'sendTerminalToEditor');
@@ -91,17 +92,15 @@ test.describe.serial('Terminal pane', () => {
     // Find the new editor by its marker and assert it contains the expected
     // command + output sequence.
     const editor = new AceEditor(page, 'expr 1 + 1');
-    const deadlineEdit = Date.now() + TIMEOUTS.fileOpen;
-    let contents = '';
-    while (Date.now() < deadlineEdit) {
-      try {
-        contents = (await editor.getValue()).replace(/\r?\n+/g, '\n');
-        if (contents.includes('expr 1 + 1\n2\n')) break;
-      } catch {
-        // editor not ready yet
-      }
-      await sleep(TIMEOUTS.pollInterval);
-    }
-    expect(contents, 'editor should contain command + result').toContain('expr 1 + 1\n2\n');
+    await expect.poll(
+      async () => {
+        try {
+          return (await editor.getValue()).replace(/\r?\n+/g, '\n');
+        } catch {
+          return '';
+        }
+      },
+      { timeout: TIMEOUTS.fileOpen },
+    ).toContain('expr 1 + 1\n2\n');
   });
 });
