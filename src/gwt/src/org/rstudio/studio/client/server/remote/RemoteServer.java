@@ -7080,6 +7080,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void chatSetUpdateCheckOverride(JavaScriptObject override,
+                                          ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, override == null ? JSONNull.getInstance() : new JSONObject(override));
+      sendRequest(RPC_SCOPE, "chat_set_update_check_override", params, requestCallback);
+   }
+
+   @Override
    public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);

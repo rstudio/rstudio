@@ -1,36 +1,23 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
-import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Conversation History', () => {
+test.describe.serial('Conversation History', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    const consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
-
-    versions = await consoleActions.getEnvironmentVersions();
-    await consoleActions.clearConsole();
-
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
-
-    await chatActions.openChatPane();
-    await chatActions.dismissSetupPrompts();
+    ({ chatActions, chatPane, versions } = await setupPositAssistantChat(page));
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('conversation history preserves and restores conversations', async ({ rstudioPage: page }) => {

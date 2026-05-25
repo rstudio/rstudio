@@ -1,7 +1,6 @@
 import { test as base, expect } from '@playwright/test';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from '@fixtures/desktop.fixture';
-import { sleep } from '@utils/constants';
-import { typeInConsole } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // Pane Layout preferences dialog selectors
@@ -23,11 +22,10 @@ const TABSET2_PANE = '#rstudio_TabSet2_pane';
  * Open Global Options and navigate to the Pane Layout tab.
  */
 async function openPaneLayoutOptions(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('showOptions')");
+  await executeCommand(page, 'showOptions');
   await page.waitForSelector(OPTIONS_OK, { timeout: 15000 });
   await page.locator(PANE_LAYOUT_TAB).click();
   await expect(page.locator(PANE_LAYOUT_PANEL)).toBeVisible({ timeout: 5000 });
-  await sleep(1000);
 }
 
 /**
@@ -42,7 +40,6 @@ async function toggleTabInContainer(page: Page, containerSelector: string, tabLa
   } else {
     await label.click();
   }
-  await sleep(500);
 }
 
 /**
@@ -100,15 +97,18 @@ base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, 
 
     await openPaneLayoutOptions(page);
 
-    // Reset to defaults so we start from a known state
+    // Reset to defaults so we start from a known state. The post-reset
+    // sidebar-visible state isn't guaranteed (it depends on the running
+    // session's pref defaults), so explicitly toggle if needed instead of
+    // polling for a particular value.
     await page.locator('#rstudio_pane_layout_reset_link').click();
-    await sleep(1000);
-
-    // Ensure sidebar is visible
     const sidebarCheckbox = page.locator('#rstudio_pane_layout_sidebar_visible');
+    // Wait for the reset to land before reading the checkbox state -- the
+    // reset link applies asynchronously and reading immediately can race it.
+    await expect(sidebarCheckbox).toBeVisible({ timeout: 5000 });
     if (!(await sidebarCheckbox.isChecked())) {
       await sidebarCheckbox.click();
-      await sleep(500);
+      await expect.poll(() => sidebarCheckbox.isChecked(), { timeout: 2000 }).toBe(true);
     }
 
     // Move Posit Assistant into TabSet1 (right-top)
@@ -119,14 +119,18 @@ base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, 
 
     await page.locator(OPTIONS_OK).click();
     await expect(page.locator(OPTIONS_OK)).toBeHidden({ timeout: 15000 });
-    await sleep(2000);
 
-    // Verify both moved correctly before restart
-    const chatBeforeRestart = await findTabLocation(page, '#rstudio_workbench_tab_posit_assistant');
-    const helpBeforeRestart = await findTabLocation(page, '#rstudio_workbench_tab_help');
-    console.log(`Before restart — Posit Assistant: ${chatBeforeRestart}, Help: ${helpBeforeRestart}`);
-    expect(chatBeforeRestart).toBe('tabSet1');
-    expect(helpBeforeRestart).toBe('sidebar');
+    // Verify both moved correctly before restart. Poll because the workbench
+    // re-layout runs asynchronously after the OK dispatches.
+    await expect.poll(
+      () => findTabLocation(page, '#rstudio_workbench_tab_posit_assistant'),
+      { timeout: 10000 },
+    ).toBe('tabSet1');
+    await expect.poll(
+      () => findTabLocation(page, '#rstudio_workbench_tab_help'),
+      { timeout: 10000 },
+    ).toBe('sidebar');
+    console.log('Before restart -- Posit Assistant: tabSet1, Help: sidebar');
 
     // --- Phase 2: Shutdown and relaunch ---
     // The per-spec config dir survives shutdown (cleanup is sandbox-wide in
@@ -152,7 +156,6 @@ base.describe('Pane location persistence - #17177', { tag: ['@desktop_only'] }, 
 
     await page2.locator(OPTIONS_OK).click();
     await expect(page2.locator(OPTIONS_OK)).toBeHidden({ timeout: 15000 });
-    await sleep(1000);
 
     await shutdownRStudio(session);
   });

@@ -5,9 +5,13 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { documentCloseAllNoSave } from '@utils/commands';
+import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
-  test.describe(provider, () => {
+  test.describe(provider, { tag: ['@ai'] }, () => {
+    requireAiCredentials(test, key === 'copilot' ? 'copilot' : 'positai');
+
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();
@@ -28,7 +32,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // a save here would race a now-gone sandbox path from an earlier aborted
       // run and surface an ENOENT "Save File" dialog whose popup-glass blocks
       // every subsequent click.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(1000);
 
       // Delete all possible test files in a single R command
@@ -48,7 +52,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_statusbar_nav.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
 
       await assistantActions.setupAssistantOptions(provider);
@@ -58,12 +62,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_text_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -80,11 +84,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       console.log('Ghost text before accept: ' + ghostTextContent);
 
       await page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
 
       await expect(sourcePane.contentPane).toContainText(ghostTextContent, { timeout: 5000 });
       await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
-      await sleep(2000);
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
@@ -93,13 +95,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_trigger_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -119,13 +121,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_distant_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'total_price <- calculate_total(100, 0.08)\\n' +
-        'print(total_price)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'total_price <- calculate_total(100, 0.08)\n' +
+        'print(total_price)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -155,15 +157,15 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_gap_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -187,17 +189,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_multi_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'score <- calculate_total(100, 0.08)\\n' +
-        'print(score)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'cat(score)\\n' +
-        'summary(score)\\n' +
-        'message(score)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'score <- calculate_total(100, 0.08)\n' +
+        'print(score)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'cat(score)\n' +
+        'summary(score)\n' +
+        'message(score)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -239,12 +241,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Parameter used across multiple consecutive lines in body
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -262,7 +264,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Discard button
       if (await sourcePane.nesApply.first().isVisible()) {
@@ -273,7 +274,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         const contentBefore = await sourceActions.getEditorContent();
 
         await sourcePane.nesDiscard.first().click();
-        await sleep(2000);
 
         // Verify diff view is fully dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -298,12 +298,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Same code as Discard test, different replacement name
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -323,14 +323,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: 10000 });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Apply button
       if (await sourcePane.nesApply.first().isVisible()) {
         console.log('  Multiline diff view detected — testing Apply');
 
         await sourcePane.nesApply.first().click();
-        await sleep(2000);
 
         // Verify diff view is dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -339,7 +337,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
         // Verify the suggestion was applied — body should now use 'measurements'
         const content = await sourceActions.getEditorContent();
-        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\\n'));
+        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\n'));
         expect(content).toContain('measurements');
         expect(content).not.toContain('nums');
         console.log('  Apply confirmed — suggestion applied to editor');
@@ -356,12 +354,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -392,13 +390,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -416,13 +414,11 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
 
       const contentBefore = await sourceActions.getEditorContent();
       console.log('  NES suggestion visible — pressing Escape');
 
       await page.keyboard.press('Escape');
-      await sleep(2000);
 
       // Verify all NES indicators are cleared
       await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -443,16 +439,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_persist.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        '# placeholder line\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        '# placeholder line\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -470,7 +466,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
       console.log('  NES suggestion visible — editing unrelated line');
 
       // Edit an unrelated line (the placeholder comment on line 6)
@@ -503,10 +498,10 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileNameB = `${prefix}_nes_leak_b.R`;
 
       const originalCode =
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       // --- File A: trigger and accept NES ---
       await sourceActions.createAndOpenFile(fileNameA, originalCode);
@@ -524,7 +519,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Close File A without saving -- the file is in the per-suite sandbox
       // and a save here would race that sandbox's later teardown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(2000);
 
       // --- File B: same original code, no edits ---
@@ -546,7 +541,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       expect(leaked).toBe(false);
 
       await sourceActions.closeSourceAndDeleteFile(fileNameB);
-      await consoleActions.typeInConsole(`unlink("${fileNameA}")`);
+      await consoleActions.executeInConsole(`unlink("${fileNameA}")`);
       await sleep(500);
     });
 
@@ -569,7 +564,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       lines.push('result <- calculate_total(100, 0.08)');
       lines.push('');
 
-      const fileContent = lines.join('\\n');
+      const fileContent = lines.join('\n');
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -651,7 +646,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
       // afterAll, so saving races the directory removal and surfaces an
       // "Error Saving File" dialog whose popup-glass blocks the shutdown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await documentCloseAllNoSave(page);
       await sleep(1000);
 
       const testFiles = [
@@ -670,7 +665,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_statusbar_nav.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
     });
   });

@@ -46,10 +46,12 @@ FORMULAS=(
    krb5
    libpq
    libtool
+   libuv
    openjdk@17
    openssl
    ninja
    pidof
+   pkgconf
    postgresql@14
    r
 )
@@ -61,9 +63,16 @@ if ! is-jenkins; then
   fi
 fi
 
+# Formulae listed in RSTUDIO_SKIP_FORMULAS (space-separated) are skipped --
+# useful when a dependency is already provided outside Homebrew, e.g. R
+# installed from the CRAN .pkg under /Library/Frameworks/R.framework.
+read -r -a SKIP_FORMULAS <<< "${RSTUDIO_SKIP_FORMULAS:-}"
+
 HOMEBREW_PREFIX=$(brew --prefix)
 for FORMULA in "${FORMULAS[@]}"; do
-   if [ -d "${HOMEBREW_PREFIX}/opt/${FORMULA}" ]; then
+   if [[ " ${SKIP_FORMULAS[*]} " == *" ${FORMULA} "* ]]; then
+      info "${FORMULA} skipped (listed in RSTUDIO_SKIP_FORMULAS)."
+   elif [ -d "${HOMEBREW_PREFIX}/opt/${FORMULA}" ]; then
       info "${FORMULA} already installed."
    else
       brew install "${FORMULA}" || true

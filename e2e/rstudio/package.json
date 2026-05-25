@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "npx playwright test",
+    "test": "npm run test:desktop",
+    "test:desktop": "npx playwright test --project=desktop",
+    "test:desktop-dev": "tsx scripts/desktop-dev.ts",
+    "test:server": "cross-env PW_RSERVER_BIN=/usr/lib/rstudio-server/bin/rserver PW_RSERVER_CONF=/etc/rstudio/rserver.conf npx playwright test --project=server",
+    "test:server-dev": "tsx scripts/server-dev.ts",
     "test:autocomplete": "npx playwright test autocomplete",
-    "test:report": "npx playwright show-report"
+    "test:report": "npx playwright show-report",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@playwright/test": "1.59.1",
@@ -14,6 +19,9 @@
     "strip-json-comments": "^3.1.1"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0"
+    "@types/node": "^25.9.1",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.20.3",
+    "typescript": "^6.0.3"
   }
 }

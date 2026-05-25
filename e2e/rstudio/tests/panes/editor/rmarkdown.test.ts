@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { AceEditor } from '@pages/ace_editor.page';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { installDepIfPrompted, clickConfirmIfVisible, RMARKDOWN_MODAL, TEMPLATE_OPTION, TEMPLATE_LIST, CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
@@ -8,8 +8,8 @@ import {
   switchToViewerFrame,
 } from '@pages/viewer_pane.page';
 import { clearWorkspace } from '@pages/environment_pane.page';
-import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand, saveDocument, setPref } from '@utils/commands';
 
 test.describe('RMarkdown', () => {
   // Sets cwd to a per-spec sandbox; all relative file paths used by
@@ -39,13 +39,10 @@ test.describe('RMarkdown', () => {
 
     // Set preview to Viewer pane
     await sourceActions.sourcePane.formatOptions.click();
-    await sleep(500);
     await sourceActions.sourcePane.viewerPaneOption.click();
-    await sleep(500);
 
     // Knit to HTML
     await sourceActions.sourcePane.knitOptions.click();
-    await sleep(500);
     await sourceActions.sourcePane.knitHtml.click();
     await installDepIfPrompted(page);
 
@@ -61,43 +58,42 @@ test.describe('RMarkdown', () => {
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    await consoleActions.typeInConsole(`unlink("${fileName.replace('.rmd', '.html')}")`);
-    await sleep(500);
+    await consoleActions.executeInConsole(`unlink("${fileName.replace('.rmd', '.html')}")`);
   });
 
   test('empty chunk does not define variables', async ({ rstudioPage: page }) => {
     // Original: test_desktop_RMarkdown.py::test_empty_chunk_does_not_define_variables
 
     // Clear workspace
-    await consoleActions.typeInConsole(".rs.api.executeCommand('activateEnvironment')");
-    await sleep(2000);
+    await executeCommand(page, 'activateEnvironment');
     await clearWorkspace(page);
 
     // Create an rmd file with a chunk
     const fileName = `rmarkdown_novariables_${Date.now()}.rmd`;
-    await sourceActions.createAndOpenFile(fileName, "```{r}\\nprint('full of sound and fury, signifying nothing')\\n```");
+    await sourceActions.createAndOpenFile(fileName, "```{r}\nprint('full of sound and fury, signifying nothing')\n```");
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save the file
-    await consoleActions.typeInConsole(".rs.api.executeCommand('saveSourceDoc')");
-    await sleep(1000);
+    await saveDocument(page);
 
-    // Run all chunks via restart R
-    await consoleActions.typeInConsole(".rs.api.executeCommand('restartRRunAllChunks')");
-    await sleep(5000);
-    await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 30000 });
+    // Clear the console so the chunk's print() output is the only thing in
+    // there afterwards -- waiting for that output is the deterministic
+    // readiness signal for "R restarted AND ran the chunk", which avoids
+    // having to time the restart or watch the interrupt button.
+    await consoleActions.clearConsole();
 
-    // Wait for R to be ready after restart
-    await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 15000 });
-
-    // Verify output
+    // Run all chunks via restart R. 60s covers the worst-case restart +
+    // chunk run window.
+    await executeCommand(page, 'restartRRunAllChunks');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
-    await expect(consoleOutput).toContainText('full of sound and fury, signifying nothing', { timeout: 20000 });
+    await expect(consoleOutput).toContainText(
+      'full of sound and fury, signifying nothing',
+      { timeout: 60000 },
+    );
 
     // Verify no variables in global env
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('ls(envir = globalenv())');
-    await sleep(2000);
+    await consoleActions.executeInConsole('ls(envir = globalenv())', { wait: true });
     await expect(consoleOutput).toContainText('character(0)', { timeout: 10000 });
 
     // Cleanup
@@ -107,41 +103,34 @@ test.describe('RMarkdown', () => {
   test('continue comment newline preference', async ({ rstudioPage: page }) => {
     // Original: test_desktop_RMarkdown.py::test_continue_comment_newline_preference
 
-    // Enable the preference
-    await consoleActions.typeInConsole('.rs.api.writeRStudioPreference("continue_comments_on_newline", TRUE)');
-    await sleep(1000);
+    // Enable the preference (setPref is a JS-side bridge call, no R round-trip)
+    await setPref(page, 'continue_comments_on_newline', true);
 
     // Create an RMarkdown file, verify no comment is inserted on newline
     const rmdFileName = `rmarkdown_commentnewline_${Date.now()}.rmd`;
-    await consoleActions.typeInConsole(`file.create("${rmdFileName}")`);
-    await sleep(1000);
-    await consoleActions.typeInConsole(`file.edit("${rmdFileName}")`);
+    await consoleActions.executeInConsole(`file.create("${rmdFileName}")`, { wait: true });
+    await consoleActions.executeInConsole(`file.edit("${rmdFileName}")`);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(rmdFileName, { timeout: 20000 });
 
     await sourceActions.sendText('# Section');
-    await sleep(1000);
     await page.keyboard.press('Enter');
-    await sleep(1000);
     await expect(sourceActions.sourcePane.contentPane).toHaveText('# Section');
 
     await consoleActions.closeAllBuffersWithoutSaving();
-    await consoleActions.typeInConsole(`unlink("${rmdFileName}")`);
-    await sleep(500);
+    await consoleActions.executeInConsole(`unlink("${rmdFileName}")`, { wait: true });
 
     // Check that an R file DOES insert a comment on newline
     const rFileName = `rmarkdown_commentnewline_${Date.now()}.r`;
-    await consoleActions.typeInConsole(`file.create("${rFileName}")`);
-    await sleep(1000);
-    await consoleActions.typeInConsole(`file.edit("${rFileName}")`);
+    await consoleActions.executeInConsole(`file.create("${rFileName}")`, { wait: true });
+    await consoleActions.executeInConsole(`file.edit("${rFileName}")`);
     await expect(sourceActions.sourcePane.selectedTab).toContainText(rFileName, { timeout: 20000 });
 
     await sourceActions.sendText('# This is a Comment');
-    await sleep(1000);
     await page.keyboard.press('Enter');
-    await sleep(1000);
-    const editorText = await sourceActions.sourcePane.contentPane.innerText();
-    expect(editorText).toContain('# This is a Comment');
-    expect(editorText).toMatch(/# This is a Comment[\s\S]*# /);
+    // Ace inserts a "# " continuation after the newline when the
+    // continue_comments_on_newline pref is set. innerText collapses the
+    // newline, so the polled text reads as "# This is a Comment# ".
+    await expect(sourceActions.sourcePane.contentPane).toContainText(/# This is a Comment.*# /);
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(rFileName);
@@ -151,21 +140,20 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_spellcheck_in_editor_and_visual_mode (part 1)
     const fileName = `rmarkdown_spelling_src_${Date.now()}.Rmd`;
 
-    const rmarkdownSource = '---\\ntitle: RMarkdown Spelling\\noutput: html_document\\neditor:\\n  mode: source\\n---\\n\\nThis is missssssspelled.\\nThis is spelled correctly.';
+    const rmarkdownSource = '---\ntitle: RMarkdown Spelling\noutput: html_document\neditor:\n  mode: source\n---\n\nThis is missssssspelled.\nThis is spelled correctly.';
     await sourceActions.createAndOpenFile(fileName, rmarkdownSource);
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
-    // Navigate to file and run spellcheck
-    await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
-    await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('checkSpelling')");
-    await sleep(5000);
+    // Navigate to file and run spellcheck. The toBeVisible/toHaveValue below
+    // already poll, so the prior sleeps after navigate/checkSpelling were
+    // redundant slack.
+    await consoleActions.executeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`, { wait: true });
+    await executeCommand(page, 'checkSpelling');
 
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toHaveValue('missssssspelled');
     await expect(page.locator('select[aria-label="Suggestions"] option[value="misspelling"]')).toBeVisible({ timeout: 30000 });
     await page.locator(CANCEL_BTN).click();
-    await sleep(1000);
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
@@ -175,24 +163,21 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_spellcheck_in_editor_and_visual_mode (part 2)
     const fileName = `rmarkdown_spelling_vis_${Date.now()}.Rmd`;
 
-    const rmarkdownSource = '---\\ntitle: RMarkdown Spelling\\noutput: html_document\\neditor:\\n  mode: source\\n---\\n\\nThis is missssssspelled.\\nThis is spelled correctly.';
+    const rmarkdownSource = '---\ntitle: RMarkdown Spelling\noutput: html_document\neditor:\n  mode: source\n---\n\nThis is missssssspelled.\nThis is spelled correctly.';
     await sourceActions.createAndOpenFile(fileName, rmarkdownSource);
     await expect(sourceActions.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
 
     // Switch to visual mode
-    await consoleActions.typeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`);
-    await sleep(1000);
+    await consoleActions.executeInConsole(`rstudioapi::navigateToFile("${fileName}", line=1L)`, { wait: true });
     await sourceActions.ensureVisualMode();
 
     // Run spellcheck in visual mode
-    await consoleActions.typeInConsole(".rs.api.executeCommand('checkSpelling')");
-    await sleep(5000);
+    await executeCommand(page, 'checkSpelling');
 
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#rstudio_spelling_not_in_dict')).toHaveValue('missssssspelled');
     await expect(page.locator('select[aria-label="Suggestions"] option[value="misspelling"]')).toBeVisible({ timeout: 30000 });
     await page.locator(CANCEL_BTN).click();
-    await sleep(1000);
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
@@ -202,14 +187,13 @@ test.describe('RMarkdown', () => {
     // Original: test_desktop_RMarkdown.py::test_rmd_templates_displays
 
     // Open New R Markdown dialog
-    await consoleActions.typeInConsole(".rs.api.executeCommand('newRMarkdownDoc')");
+    await executeCommand(page, 'newRMarkdownDoc');
     await installDepIfPrompted(page);
 
     // Check templates
     const rmdModal = page.locator(RMARKDOWN_MODAL);
     await expect(rmdModal).toBeVisible({ timeout: 10000 });
     await page.locator(`xpath=${TEMPLATE_OPTION}`).click();
-    await sleep(1000);
 
     const templateList = page.locator(TEMPLATE_LIST);
     await expect(templateList).toBeVisible({ timeout: 5000 });
@@ -217,7 +201,6 @@ test.describe('RMarkdown', () => {
 
     // Confirm to create the file
     await page.locator(CONFIRM_BTN).click();
-    await sleep(2000);
     await sourceActions.ensureVisualMode();
     await expect(page.locator('.ProseMirror')).toContainText('Theming with bslib and thematic', { timeout: 10000 });
 
@@ -229,7 +212,7 @@ test.describe('RMarkdown', () => {
     // Skipped: https://github.com/rstudio/rstudio/issues/13271
 
     // Create rmarkdown file via command
-    await consoleActions.typeInConsole(".rs.api.executeCommand('newRMarkdownDoc')");
+    await executeCommand(page, 'newRMarkdownDoc');
     await installDepIfPrompted(page);
     await clickConfirmIfVisible(page);
     await expect(sourceActions.sourcePane.selectedTab).toContainText('Untitled', { timeout: 10000 });
@@ -242,23 +225,30 @@ test.describe('RMarkdown', () => {
     // Wait for visual toolbar
     await expect(sourceActions.sourcePane.secondaryToolbar).toBeVisible({ timeout: 10000 });
     await consoleActions.clearConsole();
-    await sleep(3000);
+
+    // Navigate from chunk-to-chunk via goToNextChunk. The command schedules
+    // the cursor move asynchronously, so poll the cursor row after each call
+    // to make sure we've actually advanced before the next navigation fires.
+    const editor = new AceEditor(page, '');
+    async function advanceChunk(direction: 'next' | 'prev'): Promise<void> {
+      const before = (await editor.getCursorPosition()).row;
+      await executeCommand(page, direction === 'next' ? 'goToNextChunk' : 'goToPrevChunk');
+      await expect
+        .poll(async () => (await editor.getCursorPosition()).row, { timeout: 5000 })
+        .not.toBe(before);
+    }
 
     // Go to next chunk 3 times to reach plot(pressure) chunk
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
-    await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
-    await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
-    await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await advanceChunk('next');
+    await advanceChunk('next');
+    await advanceChunk('next');
+    await executeCommand(page, 'executeCurrentChunk');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('plot(pressure)', { timeout: 10000 });
 
     // Go to previous chunk and verify summary(cars) runs but NOT plot(pressure)
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(".rs.api.executeCommand('goToPrevChunk')");
-    await sleep(2000);
-    await consoleActions.typeInConsole(".rs.api.executeCommand('executeCurrentChunk')");
+    await advanceChunk('prev');
+    await executeCommand(page, 'executeCurrentChunk');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText('summary(cars)', { timeout: 10000 });
     await expect(consoleOutput).toContainText('speed');

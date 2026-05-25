@@ -1,8 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { documentCloseAllNoSave, waitForActiveDocument } from '@utils/commands';
 
 test.describe('Run Line button', () => {
   const sandbox = useSuiteSandbox();
@@ -16,15 +17,16 @@ test.describe('Run Line button', () => {
 
   test('submits queued lines to the console in document order', async ({ rstudioPage: page }) => {
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await documentCloseAllNoSave(page);
 
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${filePath}")`,
+      { wait: true },
     );
-    await consoleActions.typeInConsole(`file.edit("${filePath}")`);
-    await sleep(1500);
+    await consoleActions.executeInConsole(`file.edit("${filePath}")`);
+    await waitForActiveDocument(page, filePath, TIMEOUTS.fileOpen);
 
     await sourceActions.goToTop();
 
@@ -37,6 +39,6 @@ test.describe('Run Line button', () => {
       timeout: 15000,
     });
 
-    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await documentCloseAllNoSave(page);
   });
 });

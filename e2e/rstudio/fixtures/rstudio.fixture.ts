@@ -1,10 +1,8 @@
 import { test as base, type Page } from '@playwright/test';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { launchServer, shutdownServer } from './server.fixture';
-import { sleep } from '../utils/constants';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
-
-const DONT_SAVE_BTN = "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no";
+import { resetForNextTest } from '../utils/test-reset';
 
 type Mode = 'desktop' | 'server';
 
@@ -38,15 +36,11 @@ export const test = base.extend<{}, { mode: Mode; rstudioPage: Page }>({
   }, { scope: 'worker' }],
 });
 
-// Dismiss any leftover save dialogs before each test
+// Reset the IDE to a clean per-test starting state. See utils/test-reset.ts
+// for what's covered and what's deliberately not. Each step short-circuits
+// when its trigger isn't present, so on a clean session this is cheap.
 test.beforeEach(async ({ rstudioPage: page }) => {
-  try {
-    await page.locator(DONT_SAVE_BTN).click({ timeout: 2000 });
-    console.log('Dismissed save dialog before test');
-    await sleep(500);
-  } catch {
-    // No dialog present
-  }
+  await resetForNextTest(page);
 });
 
 export { expect } from '@playwright/test';

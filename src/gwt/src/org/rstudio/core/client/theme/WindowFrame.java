@@ -400,10 +400,25 @@ public class WindowFrame extends Composite
 
    public void onEnsureVisible(EnsureVisibleEvent event)
    {
-      if (!isVisible())
+      // Check logicalState_ in addition to isVisible() because, during the
+      // HIDE animation kicked off by closeAllSourceDocs (LastSourceDocClosedEvent
+      // -> PaneManager.closeSourceWindow), the widget is still in the DOM and
+      // isVisible() returns true even though the logical state is already HIDE.
+      // Without this, a file-open arriving during that window silently lands in
+      // a pane that finishes hiding.
+      if (!isVisible() ||
+          logicalState_ == WindowState.HIDE ||
+          logicalState_ == WindowState.MINIMIZE)
+      {
          fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
 
       events_.fireEvent(new WindowEnsureVisibleEvent(this));
+   }
+
+   public void setLogicalState(WindowState state)
+   {
+      logicalState_ = state;
    }
 
    @Override
@@ -459,6 +474,7 @@ public class WindowFrame extends Composite
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
    private final FlowPanel buttonsArea_;
+   private WindowState logicalState_ = WindowState.NORMAL;
 
    private static final int TOP_SHADOW_WIDTH = 3,
                             LEFT_SHADOW_WIDTH = 3,

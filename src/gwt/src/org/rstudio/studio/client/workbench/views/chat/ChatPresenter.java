@@ -108,7 +108,8 @@ public class ChatPresenter extends BasePresenter
       void showError(String errorMessage);
       void loadUrl(String url);
       void showNotInstalledWithInstall(String newVersion);
-      void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
+      void showUpdateAvailableWithVersions(String currentVersion, String newVersion,
+                                            boolean isDowngrade);
       void showUpdatingStatus();
       void showUpdateComplete();
       void showUpdateError(String errorMessage);
@@ -132,7 +133,7 @@ public class ChatPresenter extends BasePresenter
 
       String getNotInstalledWithInstallHTML(String newVersion);
       String getUpdateAvailableWithVersionsHTML(
-         String currentVersion, String newVersion);
+         String currentVersion, String newVersion, boolean isDowngrade);
       String getMessageHTML(String message);
       String getIncompatibleVersionHTML();
       String getUnsupportedVersionUpgradeHTML(
@@ -296,6 +297,7 @@ public class ChatPresenter extends BasePresenter
                   satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
                }
                display_.showCrashedMessage(event.getExitCode());
+               setAutomationChatState("crashed", true);
             }
          }
       });
@@ -724,6 +726,7 @@ public class ChatPresenter extends BasePresenter
          display_.setStatus(Display.Status.ERROR);
          display_.showError(errorMessage);
       }
+      setAutomationChatState("error", true);
    }
 
    /**
@@ -902,11 +905,13 @@ public class ChatPresenter extends BasePresenter
          initializing_ = false;
          cancelPopOut();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+         setAutomationChatState("assistant-not-selected", true);
          return;
       }
 
       // Show loading state
       display_.setStatus(Display.Status.STARTING);
+      setAutomationChatState("starting", false);
 
       // Start backend
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
@@ -953,7 +958,8 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade)
          {
             // Pausing for user action — do NOT start backend.
             // Backend starts after user clicks "Update/Install Now" and it
@@ -963,14 +969,16 @@ public class ChatPresenter extends BasePresenter
                showInDisplayOrSatellite(
                   display_.getNotInstalledWithInstallHTML(newVersion),
                   () -> display_.showNotInstalledWithInstall(newVersion));
+               setAutomationChatState("not-installed", true);
             }
             else
             {
                showInDisplayOrSatellite(
                   display_.getUpdateAvailableWithVersionsHTML(
-                     currentVersion, newVersion),
+                     currentVersion, newVersion, isDowngrade),
                   () -> display_.showUpdateAvailableWithVersions(
-                     currentVersion, newVersion));
+                     currentVersion, newVersion, isDowngrade));
+               setAutomationChatState("update-available", true);
             }
          }
 
@@ -980,17 +988,23 @@ public class ChatPresenter extends BasePresenter
             showInDisplayOrSatellite(
                display_.getIncompatibleVersionHTML(),
                () -> display_.showIncompatibleVersion());
+            setAutomationChatState("incompatible-version", true);
          }
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
+            // The chat pane's "Update Required" page is shared between upgrade and
+            // downgrade variants. isDowngrade is accepted for signature consistency
+            // but not currently reflected in the chat pane copy; the preferences
+            // dialog (AssistantPreferencesPane) is where this distinction is shown.
             showInDisplayOrSatellite(
                display_.getUnsupportedVersionUpgradeHTML(
                   currentVersion, newVersion),
                () -> display_.showUnsupportedVersionUpgradeRequired(
                   currentVersion, newVersion));
+            setAutomationChatState("version-update-required", true);
          }
 
          @Override
@@ -999,6 +1013,7 @@ public class ChatPresenter extends BasePresenter
             showInDisplayOrSatellite(
                display_.getUnsupportedVersionNoUpdateHTML(currentVersion),
                () -> display_.showUnsupportedVersionNoUpdate(currentVersion));
+            setAutomationChatState("version-no-update", true);
          }
 
          @Override
@@ -1007,6 +1022,7 @@ public class ChatPresenter extends BasePresenter
             showInDisplayOrSatellite(
                display_.getUnsupportedProtocolHTML(),
                () -> display_.showUnsupportedProtocol());
+            setAutomationChatState("unsupported-protocol", true);
          }
 
          @Override
@@ -1015,6 +1031,7 @@ public class ChatPresenter extends BasePresenter
             showInDisplayOrSatellite(
                display_.getManifestUnavailableHTML(errorMessage),
                () -> display_.showManifestUnavailable(errorMessage));
+            setAutomationChatState("manifest-unavailable", true);
          }
 
          @Override
@@ -1166,6 +1183,7 @@ public class ChatPresenter extends BasePresenter
       initializing_ = true;
       display_.hideConnectionLostNotification();
       display_.setStatus(Display.Status.RESTARTING);
+      setAutomationChatState("restarting", false);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
       {
@@ -1219,6 +1237,7 @@ public class ChatPresenter extends BasePresenter
          initializing_ = false;
          cancelPopOut();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+         setAutomationChatState("assistant-not-selected", true);
          return;
       }
 
@@ -1288,7 +1307,43 @@ public class ChatPresenter extends BasePresenter
          // Keep "Update available" notifications visible so user can update later
          display_.hideErrorNotification();
       }
+
+      setAutomationChatState("ready", false);
    }
+
+   /**
+    * Push the current chat-pane lifecycle state into window.rstudio.chat for
+    * automation tests to poll. No-op when window.rstudio is absent (i.e.,
+    * outside --automation-agent mode), so production builds pay nothing.
+    *
+    * <ul>
+    *   <li><b>state</b>: identifies the specific state, e.g. "ready",
+    *     "starting", "restarting", "manifest-unavailable",
+    *     "unsupported-protocol", "incompatible-version",
+    *     "version-update-required", "version-no-update", "not-installed",
+    *     "update-available", "assistant-not-selected", "error",
+    *     "crashed".</li>
+    *   <li><b>blocked</b>: true when the iframe is showing a blocking page
+    *     that prevents normal interaction (the user must take a setup action
+    *     or RStudio cannot continue). Tests poll this when they only care
+    *     whether the chat is unusable; the state field tells them why.</li>
+    * </ul>
+    */
+   private native final void setAutomationChatState(String state, boolean blocked) /*-{
+      if ($wnd.rstudio) {
+         $wnd.rstudio.chat = $wnd.rstudio.chat || {};
+         $wnd.rstudio.chat.state = state;
+         $wnd.rstudio.chat.blocked = blocked;
+         // History is bounded so a long-running session doesn't grow unbounded;
+         // 50 transitions is plenty for any test, and lets us answer "what
+         // states did the chat go through" after a failure.
+         $wnd.rstudio.chat.history = $wnd.rstudio.chat.history || [];
+         $wnd.rstudio.chat.history.push({ state: state, blocked: blocked, at: Date.now() });
+         if ($wnd.rstudio.chat.history.length > 50) {
+            $wnd.rstudio.chat.history.shift();
+         }
+      }
+   }-*/;
 
    private final Display display_;
    private final EventBus events_;

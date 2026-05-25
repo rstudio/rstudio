@@ -36,6 +36,7 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include <boost/regex.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -3458,6 +3459,7 @@ void onBackgroundProcessing(bool isIdle)
 struct UpdateState
 {
    bool updateAvailable;
+   bool isDowngrade;
    bool noCompatibleVersion;
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
@@ -3482,6 +3484,7 @@ struct UpdateState
 
    UpdateState()
       : updateAvailable(false),
+        isDowngrade(false),
         noCompatibleVersion(false),
         unsupportedInstalledVersion(false),
         unsupportedProtocol(false),
@@ -3494,6 +3497,20 @@ struct UpdateState
 // Global update state
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
+
+// Automation-only override for chatCheckForUpdates. When set (via the
+// chat_set_update_check_override RPC), the next chatCheckForUpdates returns
+// this object verbatim instead of running an actual manifest fetch + parse,
+// then the override is consumed (cleared) so a forgotten clear in a test's
+// afterEach doesn't bleed forced results into unrelated subsequent checks.
+// Lets Playwright tests deterministically exercise each blocking branch
+// (manifest unavailable, unsupported protocol, version-* etc.) without
+// faking HTTP responses -- the GWT RPC layer treats Playwright route.fulfill
+// responses as status 0 in dev-mode Electron, so an in-rsession override
+// is the only path that actually reaches ChatPresenter's blocking-state
+// callbacks.
+boost::optional<json::Object> s_updateCheckOverride;
+boost::mutex s_updateCheckOverrideMutex;
 
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
@@ -3918,6 +3935,24 @@ bool shouldInstallVersion(
    return available != installed;
 }
 
+// Returns true if the available version is older than the installed version.
+// Callers should only invoke this after shouldInstallVersion() has confirmed
+// the versions differ and parse cleanly; on parse failure this returns false
+// so the caller falls back to the standard "update available" wording.
+bool isVersionDowngrade(
+    const std::string& installedVersion,
+    const std::string& availableVersion)
+{
+   SemanticVersion installed, available;
+   if (!installed.parse(installedVersion) || !available.parse(availableVersion))
+   {
+      WLOG("Version parse failed in isVersionDowngrade: {} -> {}",
+           installedVersion, availableVersion);
+      return false;
+   }
+   return available < installed;
+}
+
 // Download package to temp directory
 Error downloadPackage(const std::string& url, const FilePath& destPath)
 {
@@ -4106,6 +4141,7 @@ void doUpdateCheck()
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
       s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
       s_updateState.noCompatibleVersion = false;
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
@@ -4204,8 +4240,12 @@ void doUpdateCheck()
       }
       else
       {
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         bool isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
          s_updateState.updateAvailable = true;
+         s_updateState.isDowngrade = isDowngrade;
          s_updateState.newVersion = packageVersion;
          s_updateState.downloadUrl = downloadUrl;
          s_updateState.expectedSha256 = sha256;
@@ -4242,6 +4282,7 @@ Error checkForUpdatesOnStartup()
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
       s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
       s_updateState.noCompatibleVersion = false;
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
@@ -4355,29 +4396,15 @@ Error checkForUpdatesOnStartup()
       }
       else
       {
-         // Determine if this is an upgrade or downgrade
-         SemanticVersion installed, available;
-         bool isDowngrade = false;
-
-         // These parses should always succeed since shouldInstallVersion validated them
-         if (installed.parse(installedVersion) && available.parse(packageVersion))
-         {
-            isDowngrade = (available < installed);
-            DLOG("{} available: {} -> {}",
-                 isDowngrade ? "Downgrade" : "Update",
-                 installedVersion, packageVersion);
-         }
-         else
-         {
-            // Defensive: this shouldn't happen, but handle gracefully
-            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-                 installedVersion, packageVersion);
-            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-         }
+         bool isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
 
          {
             boost::mutex::scoped_lock lock(s_updateStateMutex);
             s_updateState.updateAvailable = true;
+            s_updateState.isDowngrade = isDowngrade;
             s_updateState.newVersion = packageVersion;
             s_updateState.downloadUrl = downloadUrl;
             s_updateState.expectedSha256 = sha256;
@@ -5074,6 +5101,23 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
+   // Honor any automation-test override before doing real work. This is set
+   // via chat_set_update_check_override and lets Playwright tests force the
+   // response to a specific blocking shape without faking HTTP (see comment
+   // above s_updateCheckOverride for why route.fulfill isn't viable here).
+   // One-shot: consume the override after returning it, so a stale override
+   // doesn't influence checks the test didn't intend to drive.
+   {
+      boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+      if (s_updateCheckOverride)
+      {
+         json::Object override = *s_updateCheckOverride;
+         s_updateCheckOverride.reset();
+         pResponse->setResult(override);
+         return Success();
+      }
+   }
+
    // Check if a forced recheck was requested (e.g. user clicked Retry)
    bool forceRecheck = false;
    if (request.params.getSize() > 0)
@@ -5103,6 +5147,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // Return cached/computed check result
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
+   result["isDowngrade"] = s_updateState.isDowngrade;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
    result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
@@ -5120,6 +5165,46 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
         s_updateState.manifestUnavailable);
 
    pResponse->setResult(result);
+   return Success();
+}
+
+// Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
+// Pass a JSON object (any shape the real response would take) to install it;
+// pass JSON null to clear. The next chatCheckForUpdates returns the override
+// verbatim, then consumes it. Gated on --automation-agent so production
+// sessions (where any authenticated RPC caller could otherwise suppress
+// legitimate update checks) reject the call outright.
+Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   if (!session::options().isAutomationAgent())
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                         "chat_set_update_check_override is only callable "
+                         "when rsession is started with --automation-agent",
+                         ERROR_LOCATION);
+   }
+
+   if (request.params.getSize() == 0)
+      return Error(json::errc::ParamMissing, ERROR_LOCATION);
+
+   const json::Value& overrideValue = request.params[0];
+
+   boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+   if (overrideValue.isNull())
+   {
+      s_updateCheckOverride.reset();
+   }
+   else if (overrideValue.isObject())
+   {
+      s_updateCheckOverride = overrideValue.getObject();
+   }
+   else
+   {
+      return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+   }
+
+   pResponse->setResult(true);
    return Success();
 }
 
@@ -5833,6 +5918,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
       (bind(registerRpcMethod, "chat_get_version", chatGetVersion))
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
+      (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))

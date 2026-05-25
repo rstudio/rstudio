@@ -754,7 +754,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          initialEditorFontSize_ = helpFontSize;
       }
 
-      if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
+      // themeList_ is populated asynchronously from setThemes(); if the user
+      // clicks OK before that lands, the dropdown is empty and the user can't
+      // have made a selection -- so there's nothing to apply.
+      if (themeList_ != null &&
+          !StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);

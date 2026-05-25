@@ -1,22 +1,9 @@
-import type { Page, Route } from 'playwright';
+import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
-
-/** Fields returned by the chatCheckForUpdates RPC. */
-export interface UpdateCheckResult {
-  updateAvailable: boolean;
-  noCompatibleVersion: boolean;
-  unsupportedInstalledVersion: boolean;
-  unsupportedProtocol: boolean;
-  manifestUnavailable: boolean;
-  errorMessage: string;
-  currentVersion: string;
-  newVersion: string;
-  downloadUrl: string;
-  isInitialInstall: boolean;
-}
+import { executeCommand } from '../utils/commands';
 
 export class ChatPaneActions {
   readonly page: Page;
@@ -29,127 +16,125 @@ export class ChatPaneActions {
     this.consolePaneActions = consolePaneActions;
   }
 
-  /** The mock result returned by the intercepted RPC. Null = no interception. */
-  private updateCheckMock: UpdateCheckResult | null = null;
-
-  /** Default (non-blocking) update check result. */
-  static defaultUpdateCheckResult(): UpdateCheckResult {
-    return {
-      updateAvailable: false,
-      noCompatibleVersion: false,
-      unsupportedInstalledVersion: false,
-      unsupportedProtocol: false,
-      manifestUnavailable: false,
-      errorMessage: '',
-      currentVersion: '1.0.0',
-      newVersion: '',
-      downloadUrl: '',
-      isInitialInstall: false,
-    };
-  }
-
-  /**
-   * Install a Playwright route handler that intercepts `chatCheckForUpdates`
-   * RPC responses and replaces the result with `this.updateCheckMock`.
-   * Call once per page; subsequent calls to `setUpdateCheckMock()` swap the
-   * payload without re-registering the route.
-   */
-  async interceptUpdateCheck(): Promise<void> {
-    // Use regex so query strings don't break matching
-    await this.page.route(/\/rpc\/chat_check_for_updates/, async (route: Route) => {
-      if (!this.updateCheckMock) {
-        console.log('[interceptUpdateCheck] no mock, passing through');
-        await route.continue();
-        return;
-      }
-      console.log('[interceptUpdateCheck] fulfilling with mock');
-      // Fulfill directly with our mock -- don't call route.fetch() because
-      // rsession returns empty bodies when requests overlap via CDP.
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ result: this.updateCheckMock }),
-      });
-    });
-  }
-
-  /** Set the mock payload for subsequent intercepted RPC calls. */
-  setUpdateCheckMock(overrides: Partial<UpdateCheckResult>): void {
-    this.updateCheckMock = {
-      ...ChatPaneActions.defaultUpdateCheckResult(),
-      ...overrides,
-    };
-  }
-
-  /** Disable interception so the real backend response flows through. */
-  clearUpdateCheckMock(): void {
-    this.updateCheckMock = null;
-  }
-
   async openChatPane(): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('activateChat')");
-    await sleep(2000);
+    await executeCommand(this.page, 'activateChat');
+    // Wait for the chat iframe to be present rather than blind-sleeping.
+    // The iframe element appears as soon as the pane is activated, even
+    // before its contents have loaded -- which is what dismissSetupPrompts
+    // and other callers actually need to begin polling for their own
+    // signals (install button, chatRoot, etc.).
+    await expect(this.page.locator("iframe[title='Posit Assistant']"))
+      .toBeVisible({ timeout: 15000 });
   }
 
   async dismissSetupPrompts(): Promise<void> {
-    // Short timeouts: if these prompts exist, they're visible almost immediately.
-    // Using 1500ms instead of 5000ms saves ~10s when no prompts are present.
-    try {
-      await this.chatPane.installBtn.click({ timeout: 1500 });
-      console.log('Clicked Install button — waiting for installation...');
+    // These prompts are visible immediately when present; absence is the common
+    // case. Gate each click on isVisible() (snapshot) so we don't burn the full
+    // click({ timeout }) auto-wait when the button is missing.
+    if (await this.chatPane.installBtn.isVisible()) {
+      await this.chatPane.installBtn.click();
+      console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
       await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
-      return;
-    } catch {
-      // No Install button
-    }
-
-    try {
-      await this.chatPane.updateBtn.click({ timeout: 1500 });
-      console.log('Clicked Update on update prompt — updating Posit Assistant');
+    } else if (await this.chatPane.updateBtn.isVisible()) {
+      await this.chatPane.updateBtn.click();
+      console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
-      return;
-    } catch {
-      // No update prompt, or pane is stale after update via Options
     }
 
-    // Dismiss "Trust this directory?" prompt if present
-    try {
-      const trustBtn = this.chatPane.frame.locator("button:has-text('Trust'), button:has-text('trust')");
-      await trustBtn.first().click({ timeout: 1500 });
-      console.log('Dismissed directory trust prompt');
-      await sleep(1000);
-    } catch {
-      // No trust prompt
+    // The TrustOverlay and the chat textarea both render asynchronously after
+    // the iframe loads; waitForChatReady polls for either path through the
+    // workspace-trust dialog or a clean ready textarea, so callers don't need
+    // to handle it themselves.
+    await this.waitForChatReady();
+  }
+
+  /**
+   * Wait until the chat pane is actually usable -- i.e., the message textarea
+   * is enabled. Until that point, sending a message is a guaranteed failure
+   * even when chatRoot is visible, so this is the only real "ready" signal.
+   *
+   * Polls (a) clicking through any trust dialog that appears late and (b)
+   * failing fast with an actionable message if a Sign-In button shows up,
+   * since seeded credentials are the only auth path the test harness supports.
+   * The host's Posit Assistant rotates the refresh token in ~/.positai/store,
+   * so seeded copies can be invalidated between globalSetup and test
+   * execution; surfacing that as "sign in on the host and re-run" is more
+   * useful than the cryptic "textarea disabled after 15s" downstream timeout
+   * each test would otherwise hit.
+   *
+   * The TrustOverlay component in databot renders as a role="dialog" with the
+   * primary button; the RestrictedModeBadge also has a "Trust this workspace"
+   * affordance, so we explicitly target the dialog first (it's the modal
+   * blocker) and fall back to any visible match.
+   */
+  async waitForChatReady(timeout: number = 30000): Promise<void> {
+    const deadline = Date.now() + timeout;
+    const overlayTrustBtn = this.chatPane.frame.locator(
+      "[role='dialog'] button:has-text('Trust this workspace')"
+    );
+
+    let iter = 0;
+    while (Date.now() < deadline) {
+      iter += 1;
+
+      if (await this.chatPane.chatTextarea.isEnabled().catch(() => false)) {
+        if (iter > 1) console.log(`waitForChatReady: textarea enabled after ${iter} iterations`);
+        return;
+      }
+
+      if (await overlayTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking trust overlay button');
+        await overlayTrustBtn.click({ timeout: 5000 });
+        // Let the overlay tear down before re-polling
+        await sleep(500);
+        continue;
+      }
+
+      const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
+      if (await anyTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking fallback trust button');
+        await anyTrustBtn.click({ timeout: 5000 });
+        await sleep(500);
+        continue;
+      }
+
+      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+        throw new Error(
+          'Posit Assistant requires sign-in despite seeded credentials. ' +
+          'Sign in on the host (~/.positai) and re-run.'
+        );
+      }
+
+      await sleep(500);
     }
 
+    throw new Error(
+      `waitForChatReady: chat textarea still disabled after ${timeout}ms ` +
+      `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
+      `have stalled.`
+    );
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
-    try {
-      await sleep(1000);
-      await this.chatPane.allowBtn.click({ timeout: 3000 });
+    if (await this.chatPane.allowBtn.isVisible()) {
+      await this.chatPane.allowBtn.click();
       console.log('Clicked "Allow" permission button');
-      await sleep(1000);
-    } catch {
-      // No permission dialog
     }
   }
 
   async allowExecuteCodeForSession(): Promise<void> {
     // Wait for the Allow dialog to appear (dropdown trigger next to Allow button)
     await expect(this.chatPane.allowDropdownTrigger).toBeVisible({ timeout: 60000 });
-    await sleep(500);
 
-    // Click the chevron to open the dropdown menu
+    // Click the chevron to open the dropdown menu; the toBeVisible below
+    // polls for the menu item, replacing a blind post-click sleep.
     await this.chatPane.allowDropdownTrigger.click();
-    await sleep(500);
 
     // Click "Allow for this session"
     await expect(this.chatPane.allowForSessionItem).toBeVisible({ timeout: 5000 });
     await this.chatPane.allowForSessionItem.click();
     console.log('Granted "Allow for this session" permission');
-    await sleep(1000);
   }
 
   /**
@@ -202,11 +187,9 @@ export class ChatPaneActions {
     await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 15000 });
     await expect(this.chatPane.chatTextarea).toBeEnabled({ timeout: 15000 });
     await this.chatPane.chatTextarea.fill(text);
-    await sleep(200);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();
-    await sleep(1000);
   }
 
   async waitForResponse(initialCount: number, timeout: number = 60000): Promise<number> {
@@ -257,18 +240,17 @@ export class ChatPaneActions {
   }
 
   async getPositAssistantVersion(): Promise<string> {
+    if (!(await this.chatPane.moreBtn.isVisible())) {
+      return 'unknown';
+    }
     try {
-      await this.chatPane.moreBtn.click({ timeout: 5000 });
-      await sleep(500);
-
+      await this.chatPane.moreBtn.click();
       await this.chatPane.aboutItem.first().click();
-      await sleep(1000);
 
       await this.chatPane.dialogOverlay.waitFor({ state: 'visible', timeout: 5000 });
       const dialogText = await this.chatPane.dialogOverlay.innerText();
 
       await this.page.keyboard.press('Escape');
-      await sleep(500);
 
       const versionMatch = dialogText.match(/(\d+\.\d+\.\d+)/);
       return versionMatch?.[1] ?? 'unknown';
@@ -283,7 +265,9 @@ export class ChatPaneActions {
       return; // Already in a fresh conversation
     }
     await this.chatPane.newConversationBtn.click({ timeout: 10000 });
-    await sleep(2000);
+    // Poll for the conversation to reset (message list emptied) instead
+    // of blind-sleeping after the click.
+    await expect.poll(() => this.chatPane.getMessageCount(), { timeout: 10000 }).toBe(0);
   }
 
   /**
@@ -291,17 +275,18 @@ export class ChatPaneActions {
    * @param name The new name for the conversation
    */
   async renameConversation(name: string): Promise<void> {
-    // Open history panel to access conversation list
+    // Open history panel to access conversation list. toggleConversationHistory
+    // polls for the list to appear, so no post-call sleep is needed here.
     await this.toggleConversationHistory();
-    await sleep(1000);
 
-    // Get the first (current/active) conversation item
+    // Get the first (current/active) conversation item. Each toBeVisible
+    // below polls, replacing what used to be a chain of blind sleeps
+    // between hover, click, menu-item click, and input fill.
     const activeConvItem = this.chatPane.conversationList.first();
     await expect(activeConvItem).toBeVisible({ timeout: 5000 });
 
     // Hover over the conversation item to reveal the menu button
     await activeConvItem.hover();
-    await sleep(500);
 
     // Look for the menu button (three dots) within the conversation item
     const menuBtn = activeConvItem.locator('button, [role="button"]').first();
@@ -309,13 +294,11 @@ export class ChatPaneActions {
     // force: true because GWT console DOM elements report overlapping coordinates
     // even though the panes are visually separate
     await menuBtn.click({ force: true });
-    await sleep(300);
 
     // Click the Rename option from the context menu
     const renameItem = this.chatPane.getRenameMenuItem();
     await expect(renameItem).toBeVisible({ timeout: 5000 });
     await renameItem.click();
-    await sleep(300);
 
     // The input field should now be visible and editable
     const nameInput = this.chatPane.getConversationNameInput();
@@ -325,17 +308,16 @@ export class ChatPaneActions {
     // Clear the current name and type the new name
     await nameInput.clear();
     await nameInput.fill(name);
-    await sleep(200);
 
     // Press Enter to confirm the rename
     await nameInput.press('Enter');
-    await sleep(500);
 
     console.log(`Renamed conversation to "${name}"`);
   }
 
   async toggleConversationHistory(): Promise<void> {
     await this.chatPane.historyBtn.click({ timeout: 10000 });
-    await sleep(1000);
+    // Poll for the conversation list panel to appear (replaces post-click sleep).
+    await expect(this.chatPane.conversationList.first()).toBeVisible({ timeout: 10000 });
   }
 }

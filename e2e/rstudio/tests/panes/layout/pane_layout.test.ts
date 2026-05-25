@@ -1,9 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
-import { typeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
+import { TIMEOUTS } from '@utils/constants';
+import { executeInConsole, CONSOLE_INPUT } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
 import type { Page } from 'playwright';
-
-// Ported from src/cpp/tests/automation/testthat/test-automation-pane-layout.R.
 
 // Pane layout dialog: quadrant containers
 const PL_LEFT_TOP = '#rstudio_pane_layout_left_top';
@@ -43,10 +42,9 @@ const ALL_TAB_NAMES = [
 // ---------------------------------------------------------------------------
 
 async function openPaneLayoutOptions(page: Page): Promise<void> {
-  await typeInConsole(page, ".rs.api.executeCommand('paneLayout')");
+  await executeCommand(page, 'paneLayout');
   await page.waitForSelector(DIALOG_BOX, { timeout: TIMEOUTS.consoleReady });
   await page.waitForSelector(PL_PANEL, { timeout: 5000 });
-  await sleep(500);
 }
 
 async function closePaneLayoutOptions(page: Page): Promise<void> {
@@ -68,7 +66,7 @@ async function dismissDialogIfOpen(page: Page): Promise<void> {
 async function resetUILayout(page: Page): Promise<void> {
   const sentinel = `__pl_reset_${Date.now()}_${Math.random()}`;
   await page.evaluate((s) => { (window as unknown as Record<string, true>)[s] = true; }, sentinel);
-  await typeInConsole(page, ".rs.api.executeCommand('restoreDefaultPaneAndTabLayoutNoPrompt')");
+  await executeCommand(page, 'restoreDefaultPaneAndTabLayoutNoPrompt');
   await page.waitForFunction(
     (s) => !(s in (window as unknown as Record<string, unknown>)),
     sentinel,
@@ -101,7 +99,6 @@ async function selectDropdownOption(page: Page, quadrant: string, optionText: st
     },
     optionText,
   );
-  await sleep(1000);
 }
 
 async function getDropdownOptionTexts(page: Page, selector: string): Promise<string[]> {
@@ -170,14 +167,18 @@ async function getTabCheckedState(page: Page, quadrant: string, tabs: string[]):
 async function toggleTab(page: Page, quadrant: string, tab: string): Promise<void> {
   const id = await findTabCheckboxId(page, quadrant, tab);
   if (!id) throw new Error(`Tab '${tab}' not found in quadrant '${quadrant}'`);
-  await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-  await sleep(100);
-  await page.locator(`#${id}`).click();
-  await sleep(500);
+  const checkbox = page.locator(`#${id}`);
+  await checkbox.scrollIntoViewIfNeeded();
+  const wasChecked = await checkbox.isChecked();
+  await checkbox.click();
+  // Wait for the toggle to land before returning -- the caller typically
+  // asserts the post-toggle state, and reading without polling can race the
+  // GWT click handler.
+  await expect.poll(() => checkbox.isChecked(), { timeout: 2000 }).toBe(!wasChecked);
 }
 
-// BRAT semantic: expected tabs are a subset of the dropdown text. RStudio Pro
-// adds extra tabs (e.g. "Databricks") that should not cause failures.
+// Expected tabs are a subset of the dropdown text -- RStudio Pro adds
+// extra tabs (e.g. "Databricks") that should not cause failures.
 async function verifyQuadrantTabs(page: Page, quadrant: string, expected: string[]): Promise<void> {
   const text = await getQuadrantDropdownText(page, quadrant);
   const actual = text.split(', ');
@@ -481,7 +482,6 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
 
     await expect(page.locator(PL_RESET_LINK)).toBeAttached();
     await page.locator(PL_RESET_LINK).click();
-    await sleep(800);
 
     await expect(page.locator(PL_SIDEBAR_VISIBLE)).not.toBeChecked();
     expect(await getQuadrantDropdownText(page, PL_SIDEBAR)).toBe('Sidebar on Left');
@@ -543,15 +543,13 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await resetUILayout(page);
 
     // Show the sidebar (left is the default)
-    await typeInConsole(page, ".rs.api.executeCommand('toggleSidebar')");
+    await executeCommand(page, 'toggleSidebar');
     await page.waitForSelector(SIDEBAR_PANE, { timeout: 15000 });
 
     await openPaneLayoutOptions(page);
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
 
@@ -575,10 +573,8 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await page.locator(PL_SIDEBAR_VISIBLE).click();
     await selectDropdownOption(page, PL_SIDEBAR, 'Sidebar on Right');
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SIDEBAR_PANE, { timeout: 15000 });
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
@@ -600,16 +596,14 @@ test.describe.serial('Pane Layout dialog (#test-automation-pane-layout)', { tag:
     await resetUILayout(page);
 
     if ((await page.locator(SIDEBAR_PANE).count()) > 0) {
-      await typeInConsole(page, ".rs.api.executeCommand('toggleSidebar')");
+      await executeCommand(page, 'toggleSidebar');
       await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 10000 });
     }
 
     await openPaneLayoutOptions(page);
     await page.locator(PL_ADD_COLUMN_BUTTON).click();
-    await sleep(300);
     await page.locator(PL_OK).click();
     await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 15000 });
-    await sleep(300);
 
     await page.waitForSelector(SOURCE1_PANE, { timeout: 15000 });
 

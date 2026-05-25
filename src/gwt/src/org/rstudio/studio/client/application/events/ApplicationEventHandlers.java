@@ -38,7 +38,6 @@ public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
                                                   FileUploadEvent.Handler,
                                                   AriaLiveStatusEvent.Handler,
                                                   ClipboardActionEvent.Handler,
-                                                  RunAutomationEvent.Handler,
                                                   MemoryUsageChangedEvent.Handler
 {
 }

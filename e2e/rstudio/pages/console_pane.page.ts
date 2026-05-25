@@ -1,6 +1,9 @@
-import type { Page, Locator } from 'playwright';
+import type { Page } from 'playwright';
+import type { Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
-import { sleep } from '../utils/constants';
+import { sleep, TIMEOUTS } from '../utils/constants';
+import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
+import { AceEditorElement } from '../utils/ace';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -42,9 +45,7 @@ export class ConsolePane extends PageObject {
 
   async consoleInputValue(): Promise<string> {
     return this.page.evaluate(() => {
-      const el = document.getElementById('rstudio_console_input') as
-        | (HTMLElement & { env?: { editor?: { getValue(): string } } })
-        | null;
+      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
       return el?.env?.editor?.getValue() ?? '';
     });
   }
@@ -68,17 +69,214 @@ export const CONSOLE_TAB = '#rstudio_workbench_tab_console';
 export const CONSOLE_OUTPUT = '#rstudio_workbench_panel_console';
 export const INTERRUPT_R_BTN = "[id^='rstudio_tb_interruptr']";
 
-export async function typeInConsole(page: Page, command: string): Promise<void> {
+/**
+ * Wait for the console input to clear its "busy" class -- i.e. for R to
+ * finish processing whatever it's running. Polls the DOM at 100ms intervals.
+ * Default timeout is generous (TIMEOUTS.sessionRestart) so it covers project
+ * opens and session restarts; pass a smaller value for snappier per-command
+ * waits, or a larger one for long-running calls like `install.packages`.
+ */
+export async function waitForConsoleIdle(
+  page: Page,
+  timeout: number = TIMEOUTS.sessionRestart,
+): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && !el.classList.contains('rstudio-console-busy');
+    },
+    null,
+    { timeout, polling: 100 },
+  );
+}
+
+/**
+ * Wait until the console input's Ace editor owns the document focus.
+ * `activateConsole` schedules the focus shift on the next event-loop tick,
+ * so callers that follow it with keystrokes can race the focus change.
+ * Polling beats a blind sleep -- the common case settles in tens of
+ * milliseconds.
+ */
+export async function waitForConsoleFocus(page: Page, timeout: number = 5000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return el !== null && el.contains(document.activeElement);
+    },
+    null,
+    { timeout, polling: 50 },
+  );
+}
+
+/** Options accepted by `executeInConsole`. */
+export interface ExecuteInConsoleOptions {
+  /**
+   * If true, wait for R to finish processing the command before returning
+   * (via `waitForConsoleIdle`). Defaults to false to preserve the
+   * fire-and-forget semantics callers may rely on (e.g. queuing an install
+   * then a marker command). Use `wait: true` when the next step depends on
+   * R having completed -- it's faster and more reliable than a blind sleep.
+   */
+  wait?: boolean;
+  /**
+   * Timeout for the `wait: true` poll, in ms. Defaults to
+   * `TIMEOUTS.sessionRestart`. Raise this for slow commands like
+   * `install.packages`.
+   */
+  timeout?: number;
+}
+
+/**
+ * Submit an R expression to the console. Writes the text directly into the
+ * console's Ace editor and presses Enter -- no per-key typing -- so it doesn't
+ * race with autocomplete popups, tooltip handlers, or other live-edit UI that
+ * can swallow characters or steal focus. Prefer this when you just need code
+ * to run; use `typeInConsole` only when a test is exercising actual typing
+ * behavior (e.g. autocomplete triggering).
+ *
+ * Pass `{ wait: true }` when the next step depends on R having finished the
+ * command -- it polls the console-busy class instead of sleeping.
+ */
+export async function executeInConsole(
+  page: Page,
+  command: string,
+  opts: ExecuteInConsoleOptions = {},
+): Promise<void> {
+  await page.locator(CONSOLE_TAB).click();
+  await page.evaluate((text) => {
+    const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+    const editor = el?.env?.editor;
+    if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+    editor.setValue(text, 1); // 1 = move cursor to end
+    editor.focus();
+  }, command);
+  // Try the Enter dispatch a few times. Ace can briefly route the keystroke
+  // to an autocomplete / signature-help popup (selecting an entry instead of
+  // submitting), and `waitForConsoleIdle` alone can't catch that case
+  // because R was already idle -- so it returns immediately while the
+  // command sits unsubmitted in the editor. After each press we verify the
+  // editor is now empty (Ace clears the input on submit); if not, dismiss
+  // any popup and try again.
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (attempt === 1) {
+      // First attempt: only clear a completions popup if one happens to be
+      // lingering from a prior interaction; setValue() shouldn't have
+      // triggered any new overlay.
+      if (await page.locator('#rstudio_popup_completions').isVisible()) {
+        await page.keyboard.press('Escape');
+      }
+    } else {
+      // Retry: the previous Enter didn't submit, so some overlay (popup,
+      // signature help, hover tooltip, ...) almost certainly intercepted
+      // it. Send Escape unconditionally to cover the full set of
+      // Enter-intercepting overlays, then re-focus the editor since
+      // Escape can shift focus off it.
+      await page.keyboard.press('Escape');
+      await page.evaluate(() => {
+        const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+        e?.env?.editor?.focus();
+      });
+    }
+    // Press Enter on the console-input textarea explicitly.
+    // `page.keyboard.press` delivers to the focused element; relying on
+    // editor.focus() above is racy -- focus can shift between the evaluate()
+    // returning and the key press, leaving the text in the buffer but never
+    // submitted.
+    await page.locator(CONSOLE_INPUT).press('Enter');
+
+    // Verify the command was actually consumed by polling for an empty
+    // editor value. The await-poll completes immediately on the happy path.
+    try {
+      await page.waitForFunction(
+        () => {
+          const e = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+          return e?.env?.editor?.getValue() === '';
+        },
+        null,
+        { timeout: 1000, polling: 50 },
+      );
+      break;
+    } catch (err) {
+      // Only TimeoutError is a legitimate "editor still non-empty" retry
+      // case -- other errors (frame teardown, exec-context destroyed, JS
+      // evaluation failures) must propagate so root causes aren't masked
+      // by the catch-all submission-failure message below.
+      const isTimeout = err instanceof Error && err.name === 'TimeoutError';
+      if (!isTimeout) throw err;
+      if (attempt === MAX_ATTEMPTS) {
+        throw new Error(
+          `executeInConsole: Enter did not submit "${command.slice(0, 80)}" ` +
+          `after ${MAX_ATTEMPTS} attempts; editor still non-empty.`,
+        );
+      }
+    }
+  }
+  if (opts.wait) {
+    await waitForConsoleIdle(page, opts.timeout);
+  }
+}
+
+/**
+ * Simulate user typing one keystroke at a time into the console input. Does
+ * NOT press Enter -- the caller controls submission. Use this only when a
+ * test needs to exercise live-edit behavior that `executeInConsole`'s
+ * programmatic write doesn't trigger (e.g. autocomplete popups, parameter
+ * tooltips).
+ *
+ * `delayMs` is the per-keystroke delay; default 50ms is close to typical
+ * human typing speed and gives the editor time to dispatch input events and
+ * fire completers between chars.
+ */
+/** Default CRAN mirror for `ensurePackageInstalled`. */
+export const DEFAULT_CRAN_REPOS = 'https://cran.r-project.org';
+
+/** Options accepted by `ensurePackageInstalled`. */
+export interface EnsurePackageInstalledOptions {
+  /** Repos URL; defaults to `DEFAULT_CRAN_REPOS`. */
+  repos?: string;
+  /** Install type ("binary" / "source"); defaults to `getOption("pkgType")`. */
+  type?: string;
+  /** Total timeout for the install, ms. Defaults to 120000 (2 min). */
+  timeout?: number;
+}
+
+/**
+ * Install an R package only if it isn't already on disk. Wraps the R-side
+ * `.rs.ensurePackageInstalled` helper, which checks the library before
+ * downloading -- much faster than a blind `install.packages` when the package
+ * is already present, which is the common case on repeated test runs.
+ *
+ * `repos` defaults to CRAN. Override it (e.g. with Posit Public Package
+ * Manager's per-distro endpoint) for faster Linux installs.
+ *
+ * Don't use this in tests that are exercising `install.packages` behavior
+ * itself -- call `executeInConsole(page, 'install.packages(...)', { wait: true })`
+ * directly there.
+ */
+export async function ensurePackageInstalled(
+  page: Page,
+  packageName: string,
+  opts: EnsurePackageInstalledOptions = {},
+): Promise<void> {
+  const repos = opts.repos ?? DEFAULT_CRAN_REPOS;
+  const args: string[] = [
+    JSON.stringify(packageName),
+    `repos = ${JSON.stringify(repos)}`,
+  ];
+  if (opts.type !== undefined) args.push(`type = ${JSON.stringify(opts.type)}`);
+  await executeInConsole(
+    page,
+    `.rs.ensurePackageInstalled(${args.join(', ')})`,
+    { wait: true, timeout: opts.timeout ?? 120000 },
+  );
+}
+
+export async function typeInConsole(page: Page, text: string, delayMs: number = 50): Promise<void> {
   await page.locator(CONSOLE_TAB).click();
   await page.locator(CONSOLE_INPUT).click({ force: true });
-  await sleep(500);
-  await page.locator(CONSOLE_INPUT).pressSequentially(command);
-  await sleep(200);
-  if (await page.locator('#rstudio_popup_completions').isVisible()) {
-    await page.keyboard.press('Escape');
-    await sleep(100);
-  }
-  await page.locator(CONSOLE_INPUT).press('Enter');
+  await sleep(300);
+  await page.locator(CONSOLE_INPUT).pressSequentially(text, { delay: delayMs });
 }
 
 export async function clearConsole(page: Page): Promise<void> {
@@ -90,26 +288,16 @@ export async function clearConsole(page: Page): Promise<void> {
 }
 
 export async function closeAllBuffersWithoutSaving(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
+  await documentCloseAllNoSave(page);
   await sleep(1000);
 }
 
 export async function getEnvironmentVersions(page: Page): Promise<EnvironmentVersions> {
-  await typeInConsole(page, 'cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-  await sleep(2000);
-
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-  const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-  return {
-    r: rMatch?.[1] ?? 'unknown',
-    rstudio: rstudioMatch?.[1] ?? 'unknown',
-  };
+  return getVersion(page);
 }
 
 export async function goToLine(page: Page, line: number): Promise<void> {
-  await typeInConsole(page, `.rs.api.executeCommand('goToLine')`);
+  await executeCommand(page, 'goToLine');
   await sleep(500);
   await page.keyboard.type(String(line));
   await page.keyboard.press('Enter');

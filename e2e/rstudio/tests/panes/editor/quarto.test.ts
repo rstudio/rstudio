@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
@@ -53,16 +52,13 @@ test.describe('Quarto', () => {
     await page.keyboard.press('Enter');
     await page.keyboard.type('Tomorrow and tomorrow and tomorrow\n\n```{r}\n1 + 1\n```');
     await page.keyboard.press('Enter');
-    await sleep(1000);
 
     // Switch to Visual mode
     await sourceActions.ensureVisualMode();
 
-    // Set preview to Viewer pane
+    // Set preview to Viewer pane (each click auto-waits for actionability).
     await sourceActions.sourcePane.formatOptions.click();
-    await sleep(500);
     await sourceActions.sourcePane.viewerPaneOption.click();
-    await sleep(500);
 
     // Render via Cmd+Shift+K / Ctrl+Shift+K
     await page.keyboard.press('ControlOrMeta+Shift+k');
@@ -89,7 +85,9 @@ test.describe('Quarto', () => {
 
     // Cleanup
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    await consoleActions.typeInConsole(`unlink("${fileName.replace('.qmd', '.html')}")`);
-    await sleep(500);
+    await consoleActions.executeInConsole(
+      `unlink("${fileName.replace('.qmd', '.html')}")`,
+      { wait: true },
+    );
   });
 });

@@ -52,8 +52,11 @@ public class PositAiInstallManager
        * @param currentVersion The currently installed version ("0.0.0" if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
+       * @param isDowngrade True if the available version is older than the installed version
+       *                    (only meaningful when isInitialInstall is false)
        */
-      void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall);
+      void onUpdateAvailable(String currentVersion, String newVersion,
+                             boolean isInitialInstall, boolean isDowngrade);
 
       /**
        * Called when no compatible version of Posit Assistant is available for this RStudio version.
@@ -65,9 +68,12 @@ public class PositAiInstallManager
        *
        * @param currentVersion The currently installed (unsupported) version
        * @param newVersion The version to upgrade to
+       * @param isDowngrade True if the available version is older than the installed
+       *                    version (e.g. installed copy became unsupported via a protocol
+       *                    mismatch and the recommended package is older)
        */
       void onUnsupportedVersionUpgradeRequired(
-          String currentVersion, String newVersion);
+          String currentVersion, String newVersion, boolean isDowngrade);
 
       /**
        * Called when the installed version is unsupported and no upgrade is available.
@@ -185,6 +191,10 @@ public class PositAiInstallManager
             boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
+            // Default to false if the server omits isDowngrade -- newer than the
+            // other fields, so likelier to be missing from an older rsession.
+            Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
+            boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
 
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
@@ -195,7 +205,7 @@ public class PositAiInstallManager
                {
                   String newVersion = result.getString("newVersion");
                   callback.onUnsupportedVersionUpgradeRequired(
-                      currentVersion, newVersion);
+                      currentVersion, newVersion, isDowngrade);
                }
                else
                {
@@ -208,7 +218,8 @@ public class PositAiInstallManager
             {
                String currentVersion = result.getString("currentVersion");
                String newVersion = result.getString("newVersion");
-               callback.onUpdateAvailable(currentVersion, newVersion, isInitialInstall);
+               callback.onUpdateAvailable(currentVersion, newVersion,
+                                          isInitialInstall, isDowngrade);
             }
             else
             {

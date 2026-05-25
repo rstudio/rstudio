@@ -1,7 +1,14 @@
 import type { Page } from 'playwright';
 import * as fs from 'fs';
-import { ConsolePane, type EnvironmentVersions } from '../pages/console_pane.page';
+import {
+  ConsolePane,
+  waitForConsoleIdle,
+  type EnvironmentVersions,
+  type ExecuteInConsoleOptions,
+} from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
+import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
+import { AceEditorElement } from '../utils/ace';
 
 interface InstallTarget {
   repos: string;
@@ -67,48 +74,108 @@ export class ConsolePaneActions {
     this.consolePane = new ConsolePane(page);
   }
 
-  async typeInConsole(command: string): Promise<void> {
-    await this.consolePane.consoleTab.click();
-    await this.consolePane.consoleInput.click({ force: true });
-    await sleep(500);
-    await this.consolePane.consoleInput.pressSequentially(command);
-    await sleep(200);
+  /**
+   * Submit an R expression to the console. Writes the text directly into the
+   * console's Ace editor and presses Enter -- no per-key typing -- so it
+   * doesn't race with autocomplete popups or other live-edit UI that can
+   * swallow characters. Prefer this when you just need code to run; use
+   * `typeInConsole` only when a test is exercising actual typing behavior.
+   */
+  /**
+   * Wait until the console input's Ace editor owns the document focus.
+   * activateConsole schedules the focus shift on the next event loop tick,
+   * so callers that hand the console keystrokes immediately after the
+   * command can race with the focus change. Polling beats a blind sleep
+   * here -- the common case settles in tens of milliseconds.
+   */
+  private async waitForConsoleFocus(): Promise<void> {
+    await this.page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return el !== null && el.contains(document.activeElement);
+      },
+      null,
+      { timeout: 5000, polling: 50 },
+    );
+  }
+
+  async executeInConsole(command: string, opts: ExecuteInConsoleOptions = {}): Promise<void> {
+    // Focus the console via the activateConsole command rather than
+    // clicking the console tab. The tab-click path was clicking the
+    // same element repeatedly across executeInConsole + clearConsole
+    // calls; using the command keeps focus changes deterministic and
+    // avoids any tab-level click side effects.
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
+    await this.page.evaluate((text) => {
+      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
+      const editor = el?.env?.editor;
+      if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+      editor.setValue(text, 1); // 1 = move cursor to end
+      editor.focus();
+    }, command);
     if (await this.page.locator('#rstudio_popup_completions').isVisible()) {
       await this.page.keyboard.press('Escape');
-      await sleep(100);
     }
+    // Press Enter on the console-input textarea explicitly. `page.keyboard.press`
+    // delivers to the focused element; relying on editor.focus() above is racy --
+    // focus can shift between the evaluate() returning and the key press,
+    // leaving the text in the buffer but never submitted.
     await this.consolePane.consoleInput.press('Enter');
+    if (opts.wait) {
+      await waitForConsoleIdle(this.page, opts.timeout);
+    }
+  }
+
+  /**
+   * Simulate user typing one keystroke at a time into the console input. Does
+   * NOT press Enter -- the caller controls submission. Use only when a test
+   * needs to exercise live-edit behavior that `executeInConsole`'s programmatic
+   * write doesn't trigger (e.g. autocomplete popups).
+   *
+   * `delayMs` is the per-keystroke delay; default 50ms is close to typical
+   * human typing speed and gives the editor time to dispatch input events and
+   * fire completers between chars.
+   */
+  async typeInConsole(text: string, delayMs: number = 50): Promise<void> {
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
+    await this.consolePane.consoleInput.pressSequentially(text, { delay: delayMs });
   }
 
   async clearConsole(): Promise<void> {
-    await this.consolePane.consoleTab.click();
-    await this.consolePane.consoleInput.click({ force: true });
-    await sleep(200);
+    await executeCommand(this.page, 'activateConsole');
+    await this.waitForConsoleFocus();
     await this.page.keyboard.press('Control+l');
     await sleep(500);
   }
 
   async closeAllBuffersWithoutSaving(): Promise<void> {
-    await this.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
-    await sleep(1000);
+    // Use the window.rstudio bridge instead of typing `.rs.api.close...`
+    // into the console: the R session isn't busy while the close fires, so
+    // RStudio's "session is busy" confirmation dialog can't intervene.
+    await documentCloseAllNoSave(this.page);
+    await sleep(500);
+  }
+
+  /**
+   * Reset the source pane to a single untitled tab. Prefer this over
+   * closeAllBuffersWithoutSaving in test setup where a following file.edit
+   * or newDoc is imminent: closing every tab triggers a HIDE animation on
+   * the source pane that races the next open (#17738), while resetToUntitled
+   * keeps the pane in its NORMAL state throughout.
+   */
+  async resetSourcePane(): Promise<void> {
+    await resetSourcePaneState(this.page);
+    await sleep(500);
   }
 
   async getEnvironmentVersions(): Promise<EnvironmentVersions> {
-    await this.typeInConsole('cat("R:", R.version.string, "\\nRStudio:", RStudio.Version()$long_version)');
-    await sleep(2000);
-
-    const output = await this.consolePane.consoleOutput.innerText();
-    const rMatch = output.match(/R:\s*(R version [\d.]+[^\n]*)/);
-    const rstudioMatch = output.match(/RStudio:\s*([\d.+]+)/);
-
-    return {
-      r: rMatch?.[1] ?? 'unknown',
-      rstudio: rstudioMatch?.[1] ?? 'unknown',
-    };
+    return getVersion(this.page);
   }
 
   async goToLine(line: number): Promise<void> {
-    await this.typeInConsole(`.rs.api.executeCommand('goToLine')`);
+    await executeCommand(this.page, 'goToLine');
     await sleep(500);
     await this.page.keyboard.type(String(line));
     await this.page.keyboard.press('Enter');
@@ -126,7 +193,7 @@ export class ConsolePaneActions {
     const marker = `__PKG_${Date.now()}__`;
 
     await this.clearConsole();
-    await this.typeInConsole(`cat("${marker}", requireNamespace("${pkg}", quietly = TRUE), "${marker}")`);
+    await this.executeInConsole(`cat("${marker}", requireNamespace("${pkg}", quietly = TRUE), "${marker}")`);
     await sleep(1000);
 
     const output = await this.consolePane.consoleOutput.innerText();
@@ -144,8 +211,8 @@ export class ConsolePaneActions {
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
     const { repos, type } = getInstallTarget();
-    await this.typeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
-    await this.typeInConsole(`cat("${doneMarker}")`);
+    await this.executeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
+    await this.executeInConsole(`cat("${doneMarker}")`);
 
 
     // Wait for the done marker to appear (indicates install finished)
@@ -164,7 +231,7 @@ export class ConsolePaneActions {
     // queued briefly before R gets to it.
     const verifyMarker = `__PKG_VERIFY_${Date.now()}__`;
     await this.clearConsole();
-    await this.typeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
+    await this.executeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
 
     const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
     const verifyDeadline = Date.now() + 15000;
@@ -217,13 +284,13 @@ export class ConsolePaneActions {
     await this.clearConsole();
     const doneMarker = `__UNINSTALL_DONE_${Date.now()}__`;
 
-    await this.typeInConsole(
+    await this.executeInConsole(
       `if ("${pkg}" %in% loadedNamespaces()) { try(detach(paste0("package:", "${pkg}"), character.only = TRUE, unload = TRUE), silent = TRUE); try(unloadNamespace("${pkg}"), silent = TRUE) }`,
     );
-    await this.typeInConsole(
+    await this.executeInConsole(
       `if ("${pkg}" %in% rownames(installed.packages())) remove.packages("${pkg}")`,
     );
-    await this.typeInConsole(`cat("${doneMarker}")`);
+    await this.executeInConsole(`cat("${doneMarker}")`);
 
     const startTime = Date.now();
     let doneMarkerSeen = false;
@@ -239,7 +306,7 @@ export class ConsolePaneActions {
 
     const verifyMarker = `__UNINSTALL_VERIFY_${Date.now()}__`;
     await this.clearConsole();
-    await this.typeInConsole(
+    await this.executeInConsole(
       `cat("${verifyMarker}", "${pkg}" %in% rownames(installed.packages()), "${verifyMarker}")`,
     );
 

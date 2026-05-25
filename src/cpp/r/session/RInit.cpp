@@ -403,10 +403,6 @@ void ensureDeserialized()
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
-
-      // run automation tests if configured to do so
-      if (rCallbacks().runAutomation)
-         rCallbacks().runAutomation();
    }
 
    // mark session as deserialized

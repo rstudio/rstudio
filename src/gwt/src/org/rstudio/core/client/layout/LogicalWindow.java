@@ -122,6 +122,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    {
       normal_.setMaximizedDependentState(newState);
       normal_.setExclusiveDependentState(newState);
+      normal_.setLogicalState(newState);
       state_ = newState;
 
       if (getActiveWidget() == normal_)

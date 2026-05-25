@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperati
 import org.rstudio.studio.client.common.satellite.Satellite;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -92,6 +93,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler,
       SafeHtml safeMsg = DialogHtmlSanitizer.sanitizeHtml(message);
       HTML msg = new HTML(safeMsg.asString());
       msg.setWidth("100%");
+      // Preserve "\n" in caller-supplied messages while still honoring
+      // sanitized HTML tags; without this, CSS collapses literal newlines.
+      msg.getElement().getStyle().setWhiteSpace(Style.WhiteSpace.PRE_LINE);
       verticalPanel.add(msg);
       
       if (!StringUtil.isNullOrEmpty(url))

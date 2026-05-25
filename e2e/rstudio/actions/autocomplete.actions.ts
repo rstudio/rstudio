@@ -53,14 +53,12 @@ export class AutocompleteActions {
    */
   async getCompletionsInConsole(setupCode: string[], triggerText: string): Promise<string[]> {
     for (const code of setupCode) {
-      await this.consoleActions.typeInConsole(code);
+      await this.consoleActions.executeInConsole(code);
       await sleep(1000);
     }
 
-    // Type trigger text without executing
-    await this.consoleActions.consolePane.consoleInput.click({ force: true });
-    await sleep(300);
-    await this.consoleActions.consolePane.consoleInput.pressSequentially(triggerText);
+    // Type trigger text without executing -- needs per-key events to fire the completer.
+    await this.consoleActions.typeInConsole(triggerText);
     await sleep(500);
 
     // If autocomplete already appeared (e.g. after typing $ or (), use it;
@@ -81,21 +79,23 @@ export class AutocompleteActions {
 
   /**
    * Get completions in the editor.
-   * Executes setupCode in console, creates a temp .R file with fileContent,
-   * positions cursor at cursorLine/cursorCol (or end of content), presses Ctrl+Space.
+   * Executes setupCode in console, creates a temp file (default extension `R`)
+   * with fileContent, positions cursor at cursorLine/cursorCol (or end of
+   * content), presses Ctrl+Space.
    */
   async getCompletionsInEditor(
     setupCode: string[],
     fileContent: string,
     cursorLine?: number,
     cursorCol?: number,
+    extension: string = 'R',
   ): Promise<string[]> {
     for (const code of setupCode) {
-      await this.consoleActions.typeInConsole(code);
+      await this.consoleActions.executeInConsole(code);
       await sleep(1000);
     }
 
-    const fileName = `ac_test_${Date.now()}.R`;
+    const fileName = `ac_test_${Date.now()}.${extension}`;
     await this.sourceActions.createAndOpenFile(fileName, fileContent);
     await sleep(1000);
 

@@ -1,10 +1,9 @@
 // Tests related to pane and column management.
-//
-// Ported from src/cpp/tests/automation/testthat/test-automation-panes.R.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
+import { executeCommand } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -21,7 +20,6 @@ const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const CUSTOMIZE_PANES_BUTTON = '#rstudio_customize_panes';
 const SIDEBAR_CLOSE_BTN = '.rstudio_panel_close_btn_sidebar';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
-const CONSOLE_INPUT = '#rstudio_console_input .ace_text-input';
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
@@ -37,38 +35,6 @@ const RESIZE_MIN_DELTA_PX = 20;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-// Type a command into the Ace console input directly. We force-click the input
-// instead of going through the console tab because zoomed-out panes can leave
-// the tab too narrow to receive a normal click.
-async function executeCommand(page: Page, command: string): Promise<void> {
-  const input = page.locator(CONSOLE_INPUT);
-  await input.click({ force: true });
-  await sleep(200);
-  await input.pressSequentially(`.rs.api.executeCommand('${command}')`);
-  await sleep(200);
-  if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await sleep(100);
-  }
-  await input.press('Enter');
-}
-
-// Same shape as executeCommand, but types `expr` verbatim so callers can
-// invoke .rs.api functions (which aren't registered commands) or any other
-// R expression in this pane-aware way.
-async function executeRExpr(page: Page, expr: string): Promise<void> {
-  const input = page.locator(CONSOLE_INPUT);
-  await input.click({ force: true });
-  await sleep(200);
-  await input.pressSequentially(expr);
-  await sleep(200);
-  if (await page.locator('#rstudio_popup_completions').isVisible().catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await sleep(100);
-  }
-  await input.press('Enter');
-}
 
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
@@ -232,7 +198,20 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
 test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    // Normalize the source pane to a single Untitled tab instead of
+    // trying to empty it. RStudio's session init creates a default
+    // Untitled tab asynchronously (not gated on DeferredInitCompletedEvent),
+    // so "0 docs at startup" is a state we can't reliably observe -- but
+    // "exactly one Untitled" is what documents.resetToUntitled() lands on
+    // deterministically, and it's the state every doc-touching test in this
+    // file is happy to start from. See SourceColumnManager
+    // onDocumentResetToUntitled -- it keeps any existing untitled and
+    // closes everything else, or creates a fresh Untitled if none exists.
+    await consoleActions.resetSourcePane();
+    await expect.poll(
+      () => page.locator(`${SOURCE_PANE} [role="tab"]`).count(),
+      { timeout: 5000 },
+    ).toBe(1);
     await resetUILayout(page);
   });
 
@@ -274,22 +253,77 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, CONSOLE_PANE)).toBeGreaterThan(0);
 
-    // Source pane exists in DOM but is not visible (no source docs open).
-    const sourceWidth = await getOffsetWidth(page, SOURCE_PANE);
-    const sourceHeight = await getOffsetHeight(page, SOURCE_PANE);
-    expect(sourceWidth === 0 || sourceHeight === 0).toBe(true);
+    // Source pane has the single Untitled tab beforeAll normalized to.
+    // The pane is visible (has dimensions); the asymmetric tab assertion
+    // pins the canonical post-reset state -- exactly one tab.
+    expect(await getOffsetWidth(page, SOURCE_PANE)).toBeGreaterThan(0);
+    expect(await getOffsetHeight(page, SOURCE_PANE)).toBeGreaterThan(0);
+    expect(await page.locator(`${SOURCE_PANE} [role="tab"]`).count()).toBe(1);
   });
 
   // -------------------------------------------------------------------------
   test('Source columns can be created and closed', async ({ rstudioPage: page }) => {
+    const dumpState = async (tag: string) => {
+      const detail = await page.locator('[id^="rstudio_Source"][id$="_pane"]').evaluateAll(
+        (els) =>
+          els.map((el) => {
+            const tabBar = el.querySelector('[role="tablist"], .gwt-TabLayoutPanelTabs');
+            const tabTitles = tabBar
+              ? Array.from(tabBar.children).map((c) => (c as HTMLElement).innerText?.trim() ?? '?')
+              : [];
+            return { id: el.id, tabCount: tabTitles.length, tabs: tabTitles };
+          }),
+      );
+      // eslint-disable-next-line no-console
+      console.log(`[panes:250 ${tag}] ${JSON.stringify(detail)}`);
+    };
+
+    // Ensure each new source column has at least one editor tab. RStudio
+    // removes a source column only when its last tab is closed (via
+    // LastSourceDocClosedEvent firing from SourceColumn.closeTabIndex);
+    // columns that never had a tab persist through closeAllSourceDocs.
+    // newSourceColumn does auto-create an Untitled in the FIRST new column
+    // (the "always have a source doc when source view is shown" invariant),
+    // but subsequent ones come up empty. Click each pane after creating it
+    // to make it the active column, then run newSourceDoc -- now every
+    // column has something for closeAllSourceDocs to close, and every
+    // column ends up cleaned up.
+    //
+    // The click-to-activate dependency is undocumented product behavior:
+    // clicking the outer pane container happens to focus the column today
+    // (SourceColumnManager.setActive is invoked off a focus event chain we
+    // don't directly observe). If a future change to focus routing or pane
+    // hierarchy breaks this, ensureDoc will silently create the new doc in
+    // the wrong column and the toHaveCount(1) assertion below will fail
+    // even though newSourceDoc succeeded. The right long-term fix is to
+    // expose window.rstudio.source.setActiveColumn(name) and use it here.
+    const ensureDoc = async (paneSelector: string) => {
+      await page.locator(paneSelector).click();
+      const startedEmpty = await page.locator(`${paneSelector} .gwt-TabLayoutPanelTabs > *`).count() === 0;
+      if (startedEmpty) {
+        await executeCommand(page, 'newSourceDoc');
+        await expect(
+          page.locator(`${paneSelector} .gwt-TabLayoutPanelTabs > *`),
+        ).toHaveCount(1, { timeout: 10000 });
+      }
+    };
+
+    await dumpState('start');
+
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE1_PANE);
+    await dumpState('after-newSourceColumn-1');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE2_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE2_PANE);
+    await dumpState('after-newSourceColumn-2');
 
     await executeCommand(page, 'newSourceColumn');
     await expect(page.locator(SOURCE3_PANE)).toBeVisible({ timeout: 10000 });
+    await ensureDoc(SOURCE3_PANE);
+    await dumpState('after-newSourceColumn-3');
 
     expect(await getOffsetWidth(page, SOURCE1_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE1_PANE)).toBeGreaterThan(0);
@@ -298,10 +332,18 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SOURCE3_PANE)).toBeGreaterThan(0);
     expect(await getOffsetHeight(page, SOURCE3_PANE)).toBeGreaterThan(0);
 
-    await executeRExpr(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
-    await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    // closeAllSourceDocs closes every editor; the LastSourceDocClosedEvent
+    // fired by each column's final tab-close then prompts WorkbenchScreen
+    // to remove the column container.
+    await executeCommand(page, 'closeAllSourceDocs');
+    await dumpState('after-closeAllSourceDocs-immediate');
+    try {
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE2_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(SOURCE3_PANE)).toHaveCount(0, { timeout: 10000 });
+    } finally {
+      await dumpState('final');
+    }
   });
 
   // -------------------------------------------------------------------------

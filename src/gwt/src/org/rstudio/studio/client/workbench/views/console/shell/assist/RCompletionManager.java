@@ -720,10 +720,23 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       suggestTimer_.cancel();
-      
+
       if (isDisabled())
          return false;
-      
+
+      // '(' is a function-call boundary, not a continuation of any in-progress
+      // identifier completion. If the popup is open from a prior context
+      // (typically namespace-mode completion opened by '::'), dismiss it so
+      // the no-popup branch below handles '(' fresh -- showing the signature
+      // tooltip and, for library/require/data, an argument-name popup. This
+      // also matters for Tab-triggered argument completion afterward: with a
+      // stale namespace-mode popup hanging around, Tab applies the popup's
+      // selected entry instead of re-classifying the context.
+      if (c == '(' && popup_.isShowing())
+      {
+         popup_.hide();
+      }
+
       if (popup_.isShowing())
       {
          // If insertion of this character completes an available suggestion,

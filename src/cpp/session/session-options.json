@@ -21,15 +21,6 @@
    "options": {
       "automation": [
          {
-            "name": {"constant": "kRunAutomationSessionOption", "value": "run-automation"},
-            "isHidden": true,
-            "memberName": "runAutomation_",
-            "type": "bool",
-            "defaultValue": false,
-            "implicitValue": true,
-            "description": "Run automation tests and exit."
-         },
-         {
             "name": {"constant": "kAutomationAgentSessionOption", "value": "automation-agent"},
             "isHidden": true,
             "memberName": "isAutomationAgent_",
@@ -37,13 +28,6 @@
             "defaultValue": false,
             "implicitValue": true,
             "description": "Run RStudio as an automation agent."
-         },
-         {
-            "name": "automation-report-file",
-            "memberName": "automationReportFile_",
-            "type": "core::FilePath",
-            "description": "The file where automation test results should be written.",
-            "isHidden": true
          }
       ],
       "tests": [

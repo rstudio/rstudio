@@ -31,8 +31,6 @@
 #include <vector>
 #include <cstdlib>
 #include <csignal>
-#include <fstream>
-#include <mutex>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -191,7 +189,6 @@
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/SessionUserPrefs.hpp"
-#include "modules/automation/SessionAutomation.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -778,7 +775,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::assistant::initialize)
       (modules::chat::initialize)
       (modules::trust::initialize)
-      (modules::automation::initialize)
       (modules::air::initialize)
 
       // workers
@@ -902,10 +898,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   bool isTesting =
-         rsession::options().runTests() ||
-         rsession::options().runAutomation();
-   
+   bool isTesting = rsession::options().runTests();
+
    if (!isTesting)
    {
       rsession::persistentState().setAbend(true);
@@ -1123,54 +1117,6 @@ void rConsoleWrite(const std::string& output, int otype)
    // simulate latency for development builds
 #ifndef RSTUDIO_PACKAGE_BUILD
    console_output::simulateLatency();
-#endif
-
-#ifndef _WIN32
-   // When running automation tests, tee R's console output to a log
-   // file (for post-run inspection), and also to the rsession's
-   // inherited stderr when stderr is an interactive terminal (so a
-   // controlling terminal like rserver-dev sees it live). Without the
-   // isatty() gate the duplicate would also land in whatever pipe
-   // captured stderr -- e.g. the host RStudio's Console when the
-   // automation run was triggered from inside another RStudio.
-   // Normally these writes go only to the IDE event queue below, so
-   // there's no other way for a headless test runner to observe them.
-   // POSIX-only: the automation harness uses /tmp/rstudio-automation as
-   // a discoverable fixed path, matching the R-side report directory in
-   // SessionAutomation.R; the Windows automation entrypoint doesn't
-   // currently flow through here.
-   if (rsession::options().runAutomation())
-   {
-      // Opened once on first call (C++11 guarantees thread-safe init),
-      // reused thereafter, closed at process exit. Truncates on open so
-      // each test run starts with a clean log.
-      static std::ofstream automationLog = []() -> std::ofstream {
-         std::ofstream stream;
-         FilePath logDir("/tmp/rstudio-automation");
-         Error error = logDir.ensureDirectory();
-         if (error)
-         {
-            LOG_ERROR(error);
-            return stream;
-         }
-         std::string logPath = logDir.completePath("console.log").getAbsolutePath();
-         stream.open(logPath, std::ios::out | std::ios::trunc);
-         if (!stream.is_open())
-            LOG_WARNING_MESSAGE("Failed to open automation console log: " + logPath);
-         return stream;
-      }();
-      if (automationLog.is_open())
-      {
-         automationLog << output;
-         automationLog.flush();
-      }
-      static const bool stderrIsTty = ::isatty(STDERR_FILENO) != 0;
-      if (stderrIsTty)
-      {
-         std::cerr << output;
-         std::cerr.flush();
-      }
-   }
 #endif
 
    // notify listeners
@@ -1621,24 +1567,6 @@ void rRunTests()
    exitEarly(status);
 }
 
-void rRunAutomationImpl()
-{
-   ClientEvent event(client_events::kRunAutomation);
-   module_context::enqueClientEvent(event);
-}
-
-void rRunAutomation()
-{
-   // it seems like automation runs can fail to start if the
-   // RunAutomation client event is received too soon after
-   // startup, so we use a 3 second delay just to give the
-   // client more time to fully finish initialization
-   module_context::scheduleDelayedWork(
-            boost::posix_time::seconds(3),
-            rRunAutomationImpl,
-            false);
-}
-
 void ensureRProfile()
 {
    // check if we need to create the profile (bail if we don't)
@@ -1844,46 +1772,6 @@ void controlledExit(int status)
 }
 
 namespace module_context {
-
-#ifndef _WIN32
-static std::ofstream openAutomationLog()
-{
-   std::ofstream stream;
-   FilePath logDir("/tmp/rstudio-automation");
-   Error error = logDir.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return stream;
-   }
-   std::string logPath =
-         logDir.completePath("automation.log").getAbsolutePath();
-   stream.open(logPath, std::ios::out | std::ios::trunc);
-   if (!stream.is_open())
-      LOG_WARNING_MESSAGE("Failed to open automation log: " + logPath);
-   return stream;
-}
-#endif
-
-void automationLog(const std::string& message)
-{
-#ifndef _WIN32
-   if (!rsession::options().runAutomation())
-      return;
-
-   static std::mutex automationLogMutex;
-   static std::ofstream automationLogStream = openAutomationLog();
-
-   std::lock_guard<std::mutex> lock(automationLogMutex);
-   if (automationLogStream.is_open())
-   {
-      automationLogStream << message;
-      if (message.empty() || message.back() != '\n')
-         automationLogStream << '\n';
-      automationLogStream.flush();
-   }
-#endif
-}
 
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
@@ -2873,10 +2761,6 @@ int main(int argc, char * const argv[])
       {
          rCallbacks.runTests = rRunTests;
       }
-     
-      // set automation callback if enabled
-      if (options.runAutomation())
-         rCallbacks.runAutomation = rRunAutomation;
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

@@ -880,10 +880,11 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade)
          {
-            showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
-               previousAssistantValue, previousChatProviderValue);
+            showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
+               forAssistant, previousAssistantValue, previousChatProviderValue);
          }
 
          @Override
@@ -900,10 +901,12 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
-            // Unsupported version with update available - treat as mandatory update
-            showInstallUpdatePrompt(newVersion, false, forAssistant,
+            // Unsupported version with a required install. Can still be a downgrade
+            // if the installed copy is unsupported (e.g. protocol mismatch) and the
+            // recommended package is older than what's installed.
+            showInstallUpdatePrompt(newVersion, false, isDowngrade, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
 
@@ -950,7 +953,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
             // just selected Posit Assistant), offer to install without version info.
-            showInstallUpdatePrompt(null, true, forAssistant,
+            showInstallUpdatePrompt(null, true, false, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
       });
@@ -960,21 +963,34 @@ public class AssistantPreferencesPane extends PreferencesPane
     * Shows the install/update prompt dialog.
     */
    private void showInstallUpdatePrompt(String newVersion, boolean isInitialInstall,
+                                        boolean isDowngrade,
                                         boolean forAssistant,
                                         String previousAssistantValue,
                                         String previousChatProviderValue)
    {
-      String title = isInitialInstall ?
-         constants_.positAssistantInstallTitle() :
-         constants_.positAssistantUpdateTitle();
-      String message = isInitialInstall ?
-         (newVersion != null ?
+      String title;
+      String message;
+      String yesLabel;
+      if (isInitialInstall)
+      {
+         title = constants_.positAssistantInstallTitle();
+         message = (newVersion != null) ?
             constants_.positAssistantInstallMessage(newVersion) :
-            constants_.positAssistantInstallMessageNoVersion()) :
-         constants_.positAssistantUpdateMessage(newVersion);
-      String yesLabel = isInitialInstall ?
-         constants_.positAssistantInstallButton() :
-         constants_.positAssistantUpdateButton();
+            constants_.positAssistantInstallMessageNoVersion();
+         yesLabel = constants_.positAssistantInstallButton();
+      }
+      else if (isDowngrade)
+      {
+         title = constants_.positAssistantDowngradeTitle();
+         message = constants_.positAssistantDowngradeMessage(newVersion);
+         yesLabel = constants_.positAssistantInstallVersionButton(newVersion);
+      }
+      else
+      {
+         title = constants_.positAssistantUpdateTitle();
+         message = constants_.positAssistantUpdateMessage(newVersion);
+         yesLabel = constants_.positAssistantUpdateButton();
+      }
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,

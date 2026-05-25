@@ -16,11 +16,19 @@ on:
         type: string
         default: "desktop"
       grep:
-        description: "Optional Playwright --grep pattern to filter tests."
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
         type: string
         default: ""
       test_selector:
         description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title."
         type: string
         default: ""
       rstudio_extra_args:
@@ -42,6 +50,12 @@ on:
         type: string
         default: ""
       test_selector:
+        type: string
+        default: ""
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
         type: string
         default: ""
       rstudio_extra_args:
@@ -163,7 +177,9 @@ jobs:
           PW_RSTUDIO_MODE: desktop
           PW_PROJECT_NAME: ${{ inputs.project }}
           PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
           ARGS=()
@@ -175,6 +191,9 @@ jobs:
           ARGS+=(--project "$PW_PROJECT_NAME")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
+          fi
+          if [ -n "$PW_GREP_INVERT" ]; then
+            ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"

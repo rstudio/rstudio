@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
 
+type ProjectOptions = { mode: 'desktop' | 'server' };
+
 // Load env vars from a dotenv file before any process.env reads below.
 // Path is anchored to this config's directory so it works regardless of cwd.
 // PW_ENV_FILE overrides the default path; existing process.env values win
@@ -34,12 +36,12 @@ const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', '@smoke', ...desktopOsExclusions, ...editionExclusions].join('|')),
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', '@smoke', ...serverOsExclusions, ...editionExclusions].join('|')),
   },
 ];
 
@@ -47,23 +49,39 @@ if (process.env.PW_PROJECT) {
   console.warn('PW_PROJECT is no longer used; switch to --project=desktop|server or PW_RSTUDIO_MODE=desktop|server');
 }
 
-const projectFlagPresent = process.argv.some(a => a === '--project' || a.startsWith('--project='));
-const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase();
-
-let projects;
-if (projectFlagPresent) {
-  // Expose both projects; Playwright's CLI narrows down to the requested name post-load.
-  projects = allProjects;
-} else if (modeEnv === 'server') {
-  projects = allProjects.filter(p => p.name === 'server');
-} else if (modeEnv === 'desktop' || modeEnv === undefined) {
-  projects = allProjects.filter(p => p.name === 'desktop');
-} else {
-  throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
+// Worker processes re-load this config without --project in their argv, so we can't
+// rely on argv to pick the project there. Parse --project once in the main process and
+// forward it via PW_RSTUDIO_MODE; workers inherit process.env at fork time and end up
+// filtering to the same project the main process picked.
+function parseProjectFromArgv(): string | undefined {
+  const argv = process.argv;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--project' && i + 1 < argv.length) return argv[i + 1];
+    const prefix = '--project=';
+    if (argv[i].startsWith(prefix)) return argv[i].slice(prefix.length);
+  }
+  return undefined;
 }
 
-export default defineConfig({
+const argvProject = parseProjectFromArgv()?.toLowerCase();
+if (argvProject) {
+  // --project wins over a pre-existing PW_RSTUDIO_MODE (README documents this).
+  process.env.PW_RSTUDIO_MODE = argvProject;
+}
+
+const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase() ?? 'desktop';
+if (modeEnv !== 'desktop' && modeEnv !== 'server') {
+  throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
+}
+const projects = allProjects.filter(p => p.name === modeEnv);
+
+const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
+  .split(/\s+/)
+  .filter(Boolean);
+
+export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
+  testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
   fullyParallel: false,
   workers: 1,
   timeout: 300000,

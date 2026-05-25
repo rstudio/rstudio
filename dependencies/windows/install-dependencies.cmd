@@ -21,7 +21,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.9.37
-set COPILOT_VERSION=1.480.0
+set COPILOT_VERSION=1.489.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -129,11 +129,6 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
-set HUNSPELL_URL=hunspell/hunspell-v1.7.2.7z
-set HUNSPELL_FOLDER=hunspell-v1.7.2
-set HUNSPELL_OUTPUT=
-
-
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
 set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
 set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
@@ -227,7 +222,6 @@ call install-packages.cmd
 :: Install the rest of our dependencies in the 'windows' folder.
 cd ..\windows
 
-%RUN% install HUNSPELL
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA
