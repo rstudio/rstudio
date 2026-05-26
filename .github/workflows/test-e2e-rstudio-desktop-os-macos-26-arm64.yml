@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
-        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        description: "Optional .dmg URL to test against (e.g. a specific daily from dailies.rstudio.com). Leave empty to build RStudio Desktop from this branch's source on the runner."
         type: string
         default: ""
       r_version:
@@ -63,7 +63,91 @@ on:
         default: ""
 
 jobs:
+  # Builds RStudio Desktop from this PR's source on the same runner image as
+  # the e2e job below, then uploads RStudio.app as an artifact for the e2e
+  # job to consume. Skipped when rstudio_installer_url is set, in which case
+  # the e2e job downloads the dmg from that URL instead (existing override
+  # path -- useful for testing against a specific daily).
+  build:
+    if: inputs.rstudio_installer_url == ''
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      # The dependency / package scripts default RSTUDIO_TOOLS_ROOT to /opt,
+      # which isn't writable on hosted runners without sudo. Redirect to a
+      # workspace-local path that we can also cache.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/arm64
+      SCCACHE_ENABLED: '1'
+      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
+      # copilot-language-server, etc.) all land under RSTUDIO_TOOLS_ROOT.
+      # Caching this directory turns the install-common step from ~5-10 min
+      # of downloads into a no-op on warm runs.
+      - name: Cache rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: rstudio-tools-arm64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          restore-keys: |
+            rstudio-tools-arm64-
+
+      # sccache local cache for the C++ build. Keyed on the commit SHA for
+      # uniqueness; restore-keys pulls the most recent cache as a starting
+      # point so incremental builds get hits even when the SHA changed.
+      - name: Cache sccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-arm64-${{ github.sha }}
+          restore-keys: |
+            sccache-arm64-
+
+      # install-dependencies-osx (the entry-point script) builds both arm64
+      # and x86_64 dependencies on an M1 Mac, which we don't need. Call the
+      # per-arch script directly to install only arm64 brew formulae; that
+      # script also chains into dependencies/common/install-common at the
+      # end, so this single step covers brew formulae + Boost + SOCI + GWT
+      # + node + pandoc/quarto + panmirror + copilot-language-server +
+      # sccache + dictionaries + mathjax.
+      - name: Install build dependencies
+        working-directory: dependencies/osx
+        run: ./install-dependencies-osx-arch
+
+      - name: Build RStudio Desktop (arm64)
+        working-directory: package/osx
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
+        run: ./make-package --arch=arm64 --build-dmg=0 --use-creds=0
+
+      # tar (not zip) to preserve symlinks and executable permissions in the
+      # bundle. upload-artifact would otherwise zip the directory tree itself
+      # and break codesigned binaries on the way back out.
+      - name: Package RStudio.app
+        working-directory: package/osx/install
+        run: tar -czf "${{ github.workspace }}/RStudio.app.tar.gz" RStudio.app
+
+      - name: Upload RStudio.app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-app-macos-arm64
+          path: RStudio.app.tar.gz
+          retention-days: 7
+
   e2e-desktop-macos:
+    needs: build
+    # build is skipped when rstudio_installer_url is set; allow this job to
+    # run in that case too. needs.build.result is "success" on a normal run
+    # and "skipped" on the override path.
+    if: |
+      always() &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: macos-26
     timeout-minutes: 120
     env:
@@ -102,44 +186,47 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
+      # PR-built artifact path (default). Pulled in when no installer URL is
+      # provided -- the build job above produced RStudio.app.tar.gz for us.
+      - name: Download RStudio.app artifact
+        if: inputs.rstudio_installer_url == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: rstudio-app-macos-arm64
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio from artifact
+        if: inputs.rstudio_installer_url == ''
+        run: |
+          tar -xzf "${{ github.workspace }}/RStudio.app.tar.gz" -C "${{ github.workspace }}"
+          sudo rm -rf /Applications/RStudio.app
+          sudo cp -R "${{ github.workspace }}/RStudio.app" /Applications/
+          sudo xattr -cr /Applications/RStudio.app
+          ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
+
+      # Override path: use a specific .dmg URL when rstudio_installer_url is
+      # set. Useful for testing against a specific daily / past release.
       - name: Resolve RStudio .dmg URL
+        if: inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
           URL="$INSTALLER_URL"
-          SHA=""
-          FILENAME=""
-          if [ -z "$URL" ]; then
-            MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.link')
-            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms.macos.filename')
-            echo "Auto-resolved latest macos daily:"
-            echo "  URL:      $URL"
-            echo "  SHA-256:  $SHA"
-            echo "  Filename: $FILENAME"
-          else
-            FILENAME=$(basename "$URL")
-            echo "Using override URL: $URL (SHA-256 verification skipped)"
-          fi
+          FILENAME=$(basename "$URL")
+          echo "Using override URL: $URL (SHA-256 verification skipped)"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
       - name: Download RStudio .dmg
+        if: inputs.rstudio_installer_url != ''
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
             -o "${{ steps.resolve.outputs.filename }}" \
             "${{ steps.resolve.outputs.url }}"
 
-      - name: Verify SHA-256
-        if: steps.resolve.outputs.sha256 != ''
-        run: |
-          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
-            | shasum -a 256 -c -
-
-      - name: Install RStudio
+      - name: Install RStudio from .dmg
+        if: inputs.rstudio_installer_url != ''
         run: |
           MOUNT=$(hdiutil attach -nobrowse -readonly "${{ steps.resolve.outputs.filename }}" | grep -oE '/Volumes/.*' | tail -1)
           if [ -z "$MOUNT" ]; then
