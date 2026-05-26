@@ -269,6 +269,6 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    expect(responseText).toContain(`skill: ${USER_SKILL_NAME}`);
+    expect(responseText).toMatch(new RegExp(`skill:\\s*${USER_SKILL_NAME}`));
   });
 });
