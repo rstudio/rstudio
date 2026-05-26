@@ -112,6 +112,8 @@ public class TextEditingTargetWidget
 {
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 
+   private static final String DISABLE_DEPENDENCY_DISCOVERY = "disableDependencyDiscovery";
+
    public TextEditingTargetWidget(final TextEditingTarget target,
                                   DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
@@ -264,6 +266,13 @@ public class TextEditingTargetWidget
             editor_.setRainbowFencedDivs(rainbowFencedDivs);
          });
 
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+         DISABLE_DEPENDENCY_DISCOVERY, (newval) ->
+         {
+            boolean disabled = StringUtil.equals(newval.getValue(), "1");
+            commands_.toggleDetectMissingPackages().setChecked(!disabled);
+         });
+
       releaseOnDismiss_.add(userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -347,6 +356,25 @@ public class TextEditingTargetWidget
    {
       docUpdateSentinel_.setBoolProperty(
          TextEditingTarget.USE_RAINBOW_FENCED_DIVS, !editor_.getRainbowFencedDivs());
+   }
+
+   public void toggleDetectMissingPackages()
+   {
+      boolean isCurrentlyDisabled =
+            docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY) &&
+            StringUtil.equals(
+                  docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY), "1");
+
+      if (isCurrentlyDisabled)
+      {
+         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "0");
+         target_.getPackageDependencyHelper().discoverPackageDependencies();
+      }
+      else
+      {
+         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "1");
+         hideWarningBar();
+      }
    }
 
    public void toggleDocumentOutline()
@@ -1072,6 +1100,7 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncDetectMissingPackagesMode();
 
       toolbar_.invalidateSeparators();
    }
@@ -1235,9 +1264,9 @@ public class TextEditingTargetWidget
    @Override
    public void showRequiredPackagesMissingWarning(List<String> packages)
    {
-      if (docUpdateSentinel_.hasProperty("disableDependencyDiscovery"))
+      if (docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY))
       {
-         String disableDependencyDiscovery = docUpdateSentinel_.getProperty("disableDependencyDiscovery");
+         String disableDependencyDiscovery = docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY);
          if (StringUtil.equals(disableDependencyDiscovery, "1"))
          {
             return;
@@ -1265,7 +1294,7 @@ public class TextEditingTargetWidget
       };
 
       Command onDismiss = () -> {
-         docUpdateSentinel_.setProperty("disableDependencyDiscovery", "1");
+         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "1");
          hideWarningBar();
       };
 
@@ -1373,6 +1402,7 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncDetectMissingPackagesMode();
 
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -2155,7 +2185,16 @@ public class TextEditingTargetWidget
       editor_.setRainbowFencedDivs(rainbowMode);
       commands_.toggleRainbowFencedDivs().setChecked(rainbowMode);
    }
-   
+
+   private void syncDetectMissingPackagesMode()
+   {
+      boolean disabled =
+            docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY) &&
+            StringUtil.equals(
+                  docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY), "1");
+      commands_.toggleDetectMissingPackages().setChecked(!disabled);
+   }
+
    private void onUserSwitchingToVisualMode()
    {
       target_.onUserSwitchingToVisualMode();

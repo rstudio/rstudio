@@ -9197,6 +9197,11 @@ public class TextEditingTarget implements
       return docDisplay_;
    }
 
+   public TextEditingTargetPackageDependencyHelper getPackageDependencyHelper()
+   {
+      return packageDependencyHelper_;
+   }
+
    private void addAdditionalResourceFiles(List<String> additionalFiles)
    {
       // it does--get the YAML front matter and modify it to include
