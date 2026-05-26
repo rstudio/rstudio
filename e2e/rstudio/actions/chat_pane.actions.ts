@@ -99,14 +99,19 @@ export class ChatPaneActions {
         continue;
       }
 
-      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
-        throw new Error(
-          'Posit Assistant requires sign-in despite seeded credentials. ' +
-          'Sign in on the host (~/.positai) and re-run.'
-        );
-      }
-
       await sleep(500);
+    }
+
+    // Deadline expired -- pick the most actionable error message.
+    // The Sign-In affordance can flash briefly during backend startup while
+    // credentials are still being loaded from ~/.positai/store, so we only
+    // treat it as a hard failure when it's still visible at the end of the
+    // polling window.
+    if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+      throw new Error(
+        'Posit Assistant requires sign-in despite seeded credentials. ' +
+        'Sign in on the host (~/.positai) and re-run.'
+      );
     }
 
     throw new Error(
