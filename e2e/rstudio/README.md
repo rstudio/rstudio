@@ -91,6 +91,8 @@ npx playwright test tests/panes/posit-assistant-chat/ --project=server
 
 To skip the spawn and target an external server (e.g. CI, or a remote box), set `PW_RSTUDIO_SERVER_URL`. Credentials are required only when the external server presents a login form; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set.
 
+**Prerequisite for external servers**: the rsession processes the target server spawns must run with `--automation-agent`, otherwise `window.rstudio` is never installed and the very first step of `launchServer()` (which calls `setPref()` through the bridge) will time out. The in-tree spawn handles this by passing `--automation-agent=1` to `rserver-dev`, which forwards the flag to every rsession it launches. External servers have to be configured explicitly -- either start `rserver` with `--automation-agent=1`, or add `automation-agent=1` to `rserver.conf`. Servers that aren't dedicated test instances will not have this set by default.
+
 ```bash
 PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
   PW_RSTUDIO_SERVER_PORT=80 \
@@ -142,7 +144,7 @@ The `package.json` exposes a few convenience npm scripts on top of `npx playwrig
 
 - `npm test` / `npm run test:desktop` -- runs `--project=desktop`
 - `npm run test:server` -- runs `--project=server` pointing `PW_RSERVER_BIN` / `PW_RSERVER_CONF` at an installed Server build
-- `npm run test:desktop-dev` / `npm run test:server-dev` -- ensures the C++ session and GWT devmode are current, then launches against the in-tree dev build (see `scripts/`)
+- `npm run test:desktop-dev` / `npm run test:server-dev` -- runs an incremental `cmake --build` so the in-tree C++ session is current, then checks that a usable GWT build is available (devmode process running, or a precompiled bootstrap from `ant draft`) and launches against the in-tree dev build. The GWT check is a probe only -- if neither is present, the wrapper prints a warning telling you to run `ant devmode` or `ant draft` and continues; bring up GWT yourself before invoking these. See `scripts/`.
 - `npm run test:report` -- opens the HTML report
 - `npm run typecheck` -- `tsc --noEmit`
 
