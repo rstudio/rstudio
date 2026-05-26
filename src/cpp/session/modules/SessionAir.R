@@ -44,7 +44,10 @@
       if (autoinstall)
          .rs.air.installVersion(version)
    }
-   
+
+   if (!file.exists(exe))
+      stop(sprintf("Air binary not found at '%s'.", exe))
+
    normalizePath(exe)
 })
 
@@ -85,7 +88,7 @@
       fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-pc-windows-msvc.zip"
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
-      download.file(url, destfile = destfile)
+      download.file(url, destfile = destfile, mode = "wb")
       unzip(destfile)
    }
    else if (.rs.platform.isMacos)
@@ -109,8 +112,17 @@
    exeName <- if (.rs.platform.isWindows) "air.exe" else "air"
    exePattern <- if (.rs.platform.isWindows) "^air\\.exe$" else "^air$"
    airPath <- list.files(pattern = exePattern, full.names = TRUE, recursive = TRUE)
-   file.copy(airPath, file.path(binDir, exeName), overwrite = TRUE)
-   
+   if (length(airPath) != 1L)
+   {
+      fmt <- "Air binary not found in archive (pattern '%s'); found %d matches."
+      stop(sprintf(fmt, exePattern, length(airPath)))
+   }
+
+   destPath <- file.path(binDir, exeName)
+   ok <- file.copy(airPath, destPath, overwrite = TRUE)
+   if (!isTRUE(ok))
+      stop(sprintf("Failed to copy Air binary to '%s'.", destPath))
+
    fmt <- "Air %s has been installed to %s."
    msg <- sprintf(fmt, version, binDir)
    message(msg)
