@@ -6,7 +6,7 @@ import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
-import { openExistingFile } from '../utils/files';
+import { openFile } from '../utils/files';
 import { Ace, AceEditorElement } from '../utils/ace';
 
 export class SourcePaneActions {
@@ -36,7 +36,7 @@ export class SourcePaneActions {
       { wait: true },
     );
 
-    await openExistingFile(this.page, fileName);
+    await openFile(this.page, fileName);
   }
 
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {

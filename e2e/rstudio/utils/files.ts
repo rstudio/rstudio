@@ -34,14 +34,15 @@ export async function writeAndOpenFile(
   } else {
     await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
   }
-  await openExistingFile(page, fullPath);
+  await openFile(page, fullPath);
 }
 
 /**
- * Open an existing file via `file.edit()` and wait until the source editor
- * is fully hydrated and ready to drive: the tab is selected, the bridge
- * reports the file as the active document, and a source-pane Ace instance
- * is reachable.
+ * Open a file via `file.edit()` and wait until the source editor is fully
+ * hydrated and ready to drive: the tab is selected, the bridge reports
+ * the file as the active document, and a source-pane Ace instance is
+ * reachable. The file must already exist on disk -- `file.edit` resolves
+ * existing paths only.
  *
  * Use this instead of bare `file.edit(...)` + `selectedTab` wait. The tab
  * can be selected before Ace finishes loading the document body; without
@@ -54,7 +55,7 @@ export async function writeAndOpenFile(
  * post-condition compares basenames so the helper does not need to know
  * what RStudio will normalize the path to.
  */
-export async function openExistingFile(
+export async function openFile(
   page: Page,
   pathOrName: string,
 ): Promise<void> {

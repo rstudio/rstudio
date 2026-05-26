@@ -34,7 +34,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, saveDocument, setPref } from '@utils/commands';
-import { openExistingFile } from '@utils/files';
+import { openFile } from '@utils/files';
 import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
@@ -191,12 +191,12 @@ async function openTestFile(
     `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`,
     { wait: true },
   );
-  // openExistingFile waits for the source-pane Ace instance to be reachable,
-  // not just for the tab title to render. Without that wait, downstream
+  // openFile waits for the source-pane Ace instance to be reachable, not
+  // just for the tab title to render. Without that wait, downstream
   // getEditorContent() can read the editor before its document body has
   // loaded and the failure surfaces as a confusing reformatCode timeout
   // instead of "file never finished loading."
-  await openExistingFile(sourceActions.page, TEST_FILE);
+  await openFile(sourceActions.page, TEST_FILE);
 }
 
 /** Click the editor content area to make sure it has focus. */
