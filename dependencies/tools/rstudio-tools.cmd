@@ -352,13 +352,8 @@ if not defined _LABEL (
 )
 
 if exist %_FOLDER% (
-  set _FOLDER_HAS_CONTENTS=
-  for /f "delims=" %%I in ('dir /b "%_FOLDER%" 2^>nul') do set _FOLDER_HAS_CONTENTS=1
-  if defined _FOLDER_HAS_CONTENTS (
-    echo -- !_LABEL! is already installed.
-    goto :eof
-  )
-  rmdir /s /q "%_FOLDER%" 2>nul
+  echo -- !_LABEL! is already installed.
+  goto :eof
 )
 
 echo -- Installing !_LABEL!

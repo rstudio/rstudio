@@ -164,6 +164,15 @@ if exist quarto\bin\quarto.exe (
     )
   )
 )
+REM If a quarto directory exists but quarto.exe is missing, a previous install was incomplete; remove it so the install can retry.
+if exist quarto if not exist quarto\bin\quarto.exe (
+  echo -- Removing incomplete quarto directory from a prior failed install
+  rmdir /s /q quarto
+  if exist quarto (
+    echo ^^!^^! ERROR: Could not remove incomplete quarto directory. Close any process holding files in it and retry.
+    exit /b 1
+  )
+)
 %RUN% install QUARTO
 if not exist quarto\bin\quarto.exe (
   echo ^^!^^! ERROR: Quarto install failed: quarto\bin\quarto.exe not found.
