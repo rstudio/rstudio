@@ -233,9 +233,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     // full rule states.
     rules["#comment"] = [
       {
-        token : "comment.sectionhead",
-        regex : "#+(?!').*(?:----|====|####)\\s*$",
-        next  : "start"
+        token   : "comment.sectionhead",
+        regex   : "#+(?!').*(?:[\\p{Pd}\u2500\u2501#=-]{4,})\\s*$",
+        next    : "start",
+        unicode : true
       },
       {
         // Begin Roxygen with todo
