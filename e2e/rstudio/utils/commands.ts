@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { waitForConsoleIdle } from '../pages/console_pane.page';
 import { withBridgeLog, withBridgeLogResult } from './log';
+import type { Ace } from './ace';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -76,6 +77,16 @@ type Documents = {
   resetToUntitled(): void;
   /** Info on the focused source document, or null when no editor is active. */
   active(): ActiveDocument | null;
+  /**
+   * Native Ace editor instance backing the active source document, or null
+   * when no editor is active (or the active editor isn't Ace-backed -- data
+   * viewer, object explorer, etc.). Call Ace API methods (getValue, setValue,
+   * getSession, ...) on the returned object directly. Prefer this over
+   * iterating `.ace_editor` DOM nodes: the DOM scan can land on the console
+   * scroll panel, dialog editors (IgnoreDialog, ViewFileDialog, ...), or
+   * stale source editors left in the DOM after a tab close.
+   */
+  activeEditor(): Ace.Editor | null;
   /**
    * Open the file at `path` in the source pane. Fires OpenSourceFileEvent
    * directly; the caller must ensure the file exists on disk (the bridge

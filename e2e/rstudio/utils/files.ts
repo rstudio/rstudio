@@ -29,16 +29,75 @@ export async function writeAndOpenFile(
   content: string,
 ): Promise<void> {
   const fullPath = path.join(sandboxDir, fileName);
-  const rFullPath = rPathLiteral(fullPath);
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rFullPath})`);
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
   }
-  await executeInConsole(page, `file.edit(${rFullPath})`);
-  // The source tab shows the basename, not the full path.
+  await openFile(page, fullPath);
+}
+
+/**
+ * Open a file via `file.edit()` and wait until the source editor is fully
+ * hydrated and ready to drive: the tab is selected, the bridge reports
+ * the file as the active document, and a source-pane Ace instance is
+ * reachable. The file must already exist on disk -- `file.edit` resolves
+ * existing paths only.
+ *
+ * Use this instead of bare `file.edit(...)` + `selectedTab` wait. The tab
+ * can be selected before Ace finishes loading the document body; without
+ * the bridge + Ace polls the gap surfaces later as a confusing
+ * `Expected: not ""` timeout from a downstream getEditorContent /
+ * focusEditor call rather than as "file never finished loading."
+ *
+ * `pathOrName` may be a basename, a relative path, or an absolute path.
+ * When absolute, the active-doc post-condition compares full paths
+ * (case-insensitive, slashes normalized) so two open files that share a
+ * basename can't be confused for one another. When relative or a bare
+ * basename, falls back to basename match -- R resolves the path against
+ * its own cwd, which can differ from Node's, so the absolute form
+ * RStudio reports back is not known to the helper.
+ */
+export async function openFile(
+  page: Page,
+  pathOrName: string,
+): Promise<void> {
+  await executeInConsole(page, `file.edit(${rPathLiteral(pathOrName)})`);
+
+  // rPathLiteral normalizes backslashes to forward slashes for R; mirror
+  // that on the comparison side so platform-specific separators don't
+  // cause spurious mismatches.
+  const requestedSlashes = pathOrName.replace(/\\/g, '/');
+  const slash = requestedSlashes.lastIndexOf('/');
+  const basename = slash >= 0 ? requestedSlashes.slice(slash + 1) : requestedSlashes;
+  const expectedFullPath = path.isAbsolute(pathOrName) ? requestedSlashes : null;
+
   const tab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
-  await expect(tab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
+  await expect(tab).toContainText(basename, { timeout: TIMEOUTS.fileOpen });
+
+  await page.waitForFunction(
+    (args: { expectedFullPath: string | null; basename: string }) => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      if (!doc || !doc.path) return false;
+      const docPath = doc.path.replace(/\\/g, '/');
+      if (args.expectedFullPath !== null) {
+        // Full-path match: case-insensitive to tolerate macOS HFS+ /
+        // Windows NTFS, where the filesystem itself folds case.
+        if (docPath.toLowerCase() !== args.expectedFullPath.toLowerCase()) return false;
+      } else {
+        const docSlash = docPath.lastIndexOf('/');
+        const docBase = docSlash >= 0 ? docPath.slice(docSlash + 1) : docPath;
+        if (docBase.toLowerCase() !== args.basename.toLowerCase()) return false;
+      }
+      // Bridge confirms the active doc has a live Ace editor instance --
+      // the same handle the GWT side already tracks as "the active doc."
+      // Returns null when there's no editor or it's not Ace-backed (data
+      // viewer, object explorer, ...) so we don't return prematurely.
+      return window.rstudio?.documents.activeEditor() != null;
+    },
+    { expectedFullPath, basename },
+    { timeout: TIMEOUTS.fileOpen, polling: 50 },
+  );
 }
 
 /**

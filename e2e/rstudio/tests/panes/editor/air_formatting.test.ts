@@ -34,6 +34,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, saveDocument, setPref } from '@utils/commands';
+import { openFile } from '@utils/files';
 import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 
 // --- Test data (from issue #16721) ---
@@ -190,8 +191,12 @@ async function openTestFile(
     `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`,
     { wait: true },
   );
-  await consoleActions.executeInConsole(`file.edit("${TEST_FILE}")`);
-  await expect(sourceActions.sourcePane.selectedTab).toContainText(TEST_FILE, { timeout: 10000 });
+  // openFile waits for the source-pane Ace instance to be reachable, not
+  // just for the tab title to render. Without that wait, downstream
+  // getEditorContent() can read the editor before its document body has
+  // loaded and the failure surfaces as a confusing reformatCode timeout
+  // instead of "file never finished loading."
+  await openFile(sourceActions.page, TEST_FILE);
 }
 
 /** Click the editor content area to make sure it has focus. */
@@ -199,16 +204,54 @@ async function focusEditor(sourceActions: SourcePaneActions): Promise<void> {
   await sourceActions.sourcePane.contentPane.click();
   // Wait until focus has actually landed on a source-pane Ace textarea --
   // click() resolves before the focus event has propagated.
-  await sourceActions.page.waitForFunction(
-    () => {
-      const el = document.activeElement;
-      if (!el) return false;
-      if (el.closest('#rstudio_console_input')) return false;
-      return el.classList?.contains('ace_text-input') ?? false;
-    },
-    null,
-    { timeout: 2000, polling: 50 },
-  );
+  try {
+    await sourceActions.page.waitForFunction(
+      () => {
+        const el = document.activeElement;
+        if (!el) return false;
+        if (el.closest('#rstudio_console_input')) return false;
+        return el.classList?.contains('ace_text-input') ?? false;
+      },
+      null,
+      { timeout: 2000, polling: 50 },
+    );
+  } catch (err) {
+    // The bare waitForFunction timeout reads as an opaque "Timeout exceeded
+    // while waiting on the predicate" -- which makes it impossible to tell
+    // whether focus drifted to the console, the source pane has no editor
+    // at all (file load failed), or something stranger. Capture the actual
+    // active-element state and re-raise.
+    const diag = await sourceActions.page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      const describe = (e: Element | null): string => {
+        if (!e) return 'null';
+        const tag = e.tagName.toLowerCase();
+        const id = e.id ? `#${e.id}` : '';
+        const className = typeof (e as HTMLElement).className === 'string'
+          ? (e as HTMLElement).className
+          : '';
+        const cls = className
+          ? '.' + className.split(/\s+/).filter(Boolean).join('.')
+          : '';
+        return `${tag}${id}${cls}`;
+      };
+      const sourceAceCount = document.querySelectorAll(
+        "[class*='rstudio_source_panel'] textarea.ace_text-input",
+      ).length;
+      return {
+        active: describe(el),
+        inConsole: !!(el && el.closest('#rstudio_console_input')),
+        inSourcePanel: !!(el && el.closest("[class*='rstudio_source_panel']")),
+        sourceAceCount,
+      };
+    });
+    throw new Error(
+      `focusEditor: focus did not land on a source-pane ace_text-input ` +
+      `(active=${diag.active}, inConsole=${diag.inConsole}, ` +
+      `inSourcePanel=${diag.inSourcePanel}, sourceAceCount=${diag.sourceAceCount}). ` +
+      `Original: ${(err as Error).message}`,
+    );
+  }
 }
 
 /** Select all code in the editor, then reformat via Cmd+Shift+A / Ctrl+Shift+A. */
