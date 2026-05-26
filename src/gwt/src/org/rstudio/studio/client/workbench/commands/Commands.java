@@ -213,6 +213,7 @@ public abstract class
    public abstract AppCommand toggleSoftWrapMode();
    public abstract AppCommand toggleRainbowParens();
    public abstract AppCommand toggleRainbowFencedDivs();
+   public abstract AppCommand toggleDetectMissingPackages();
 
    // Projects
    public abstract AppCommand newProject();
