@@ -77,6 +77,11 @@ jobs:
       # which isn't writable on hosted runners without sudo. Redirect to a
       # workspace-local path that we can also cache.
       RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/arm64
+      # Pin R's user library to a workspace-local path so we can cache it.
+      # R expands %p/%v at startup to the platform triple and major.minor
+      # version (e.g. aarch64-apple-darwin20/4.5), which keeps libraries
+      # built for different R versions / platforms in separate subtrees.
+      R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
       SCCACHE_DIR: ${{ github.workspace }}/.sccache
     steps:
@@ -94,6 +99,18 @@ jobs:
           key: rstudio-tools-arm64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
             rstudio-tools-arm64-
+
+      # The "Install build dependencies" step below calls install-packages,
+      # which renv::install()s digest/purrr/rmarkdown/testthat/xml2/yaml into
+      # R_LIBS_USER. Cache the whole R-libs tree -- R's %p/%v subpaths keep
+      # different versions / platforms isolated automatically.
+      - name: Cache build-time R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: rstudio-build-rlibs-arm64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          restore-keys: |
+            rstudio-build-rlibs-arm64-
 
       # sccache local cache for the C++ build. Keyed on the commit SHA for
       # uniqueness; restore-keys pulls the most recent cache as a starting
