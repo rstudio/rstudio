@@ -93,11 +93,15 @@ code_2 <- 4
     await expect.poll(() => editor.getValue()).toContain('code_issue_example');
 
     // Each section header row should be tokenized as comment.sectionhead
-    // (drives the outline) and have a fold-widget start (drives folding).
+    // (drives the outline), have a fold-widget start, and yield a valid
+    // fold range (the range computation has its own delimiter regex that
+    // must stay in sync with the tokenizer).
     for (const row of [0, 2, 4, 6, 8]) {
       const tokens = await editor.getTokens(row);
       expect(tokens[0]?.type, `row ${row} token`).toBe('comment.sectionhead');
       expect(await editor.getFoldWidget(row), `row ${row} fold widget`).toBe('start');
+      const range = await editor.getFoldWidgetRange(row);
+      expect(range?.end.row, `row ${row} fold range end`).toBe(row + 1);
     }
   });
 
