@@ -29,16 +29,63 @@ export async function writeAndOpenFile(
   content: string,
 ): Promise<void> {
   const fullPath = path.join(sandboxDir, fileName);
-  const rFullPath = rPathLiteral(fullPath);
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rFullPath})`);
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
   }
-  await executeInConsole(page, `file.edit(${rFullPath})`);
-  // The source tab shows the basename, not the full path.
+  await openExistingFile(page, fullPath);
+}
+
+/**
+ * Open an existing file via `file.edit()` and wait until the source editor
+ * is fully hydrated and ready to drive: the tab is selected, the bridge
+ * reports the file as the active document, and a source-pane Ace instance
+ * is reachable.
+ *
+ * Use this instead of bare `file.edit(...)` + `selectedTab` wait. The tab
+ * can be selected before Ace finishes loading the document body; without
+ * the bridge + Ace polls the gap surfaces later as a confusing
+ * `Expected: not ""` timeout from a downstream getEditorContent /
+ * focusEditor call rather than as "file never finished loading."
+ *
+ * `pathOrName` may be a basename, a relative path, or an absolute path --
+ * `file.edit` resolves relative paths against R's cwd, and the active-doc
+ * post-condition compares basenames so the helper does not need to know
+ * what RStudio will normalize the path to.
+ */
+export async function openExistingFile(
+  page: Page,
+  pathOrName: string,
+): Promise<void> {
+  await executeInConsole(page, `file.edit(${rPathLiteral(pathOrName)})`);
+
+  // Compute the basename for both the tab and the bridge check. file.edit
+  // resolves relative paths against R's cwd, which can differ from Node's,
+  // so we don't know the exact absolute path the bridge will report -- but
+  // the basename is invariant.
+  const slash = Math.max(pathOrName.lastIndexOf('/'), pathOrName.lastIndexOf('\\'));
+  const basename = slash >= 0 ? pathOrName.slice(slash + 1) : pathOrName;
+
   const tab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
-  await expect(tab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
+  await expect(tab).toContainText(basename, { timeout: TIMEOUTS.fileOpen });
+
+  await page.waitForFunction(
+    (base: string) => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      if (!doc || !doc.path) return false;
+      const docSlash = Math.max(doc.path.lastIndexOf('/'), doc.path.lastIndexOf('\\'));
+      const docBase = docSlash >= 0 ? doc.path.slice(docSlash + 1) : doc.path;
+      if (docBase.toLowerCase() !== base.toLowerCase()) return false;
+      // Bridge confirms the active doc has a live Ace editor instance --
+      // the same handle the GWT side already tracks as "the active doc."
+      // Returns null when there's no editor or it's not Ace-backed (data
+      // viewer, object explorer, ...) so we don't return prematurely.
+      return window.rstudio?.documents.activeEditor() != null;
+    },
+    basename,
+    { timeout: TIMEOUTS.fileOpen, polling: 50 },
+  );
 }
 
 /**

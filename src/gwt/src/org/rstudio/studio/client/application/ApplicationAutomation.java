@@ -65,6 +65,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.documents.closeAllNoSave()
  *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
  *   window.rstudio.documents.active()          // { id, path, dirty } for the focused doc, or null
+ *   window.rstudio.documents.activeEditor()    // native Ace editor for the focused doc, or null
  *   window.rstudio.documents.open(path, opts?) // open file at path; opts: { line?, col?, moveCursor? }
  *
  *   window.rstudio.project.path()       // active project file path, or null
@@ -372,6 +373,17 @@ public class ApplicationAutomation
       return { id: id, path: path, dirty: dirty };
    }-*/;
 
+   // Returns the native Ace editor JS instance for the active document, or
+   // null when no active editor is present (or the active editor isn't
+   // Ace-backed). Callers invoke Ace API methods on the returned object
+   // directly -- this is the same JS object exposed via element.env.editor,
+   // but reached deterministically through the GWT-tracked active doc rather
+   // than by scanning the DOM.
+   private JavaScriptObject getActiveNativeEditor()
+   {
+      return sourceColumnManager_.getActiveNativeEditor();
+   }
+
    // Always read through session_.getSessionInfo() rather than capturing a
    // reference at install time -- a session restart (e.g. close-project)
    // replaces the SessionInfo JSO, and we want callers to see the live state.
@@ -484,6 +496,14 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.documents.active = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveDocument()();
+      });
+      // Native Ace editor for the active doc, or null. Lets tests call
+      // Ace API directly (getValue, setValue, getSession, ...) without
+      // walking `.ace_editor` DOM nodes -- which can collide with the
+      // console scroll panel, dialog editors, and stale source editors
+      // left in the DOM after a tab close.
+      $wnd.rstudio.documents.activeEditor = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveNativeEditor()();
       });
       // opts: { line?: number (1-indexed; omit/<0 = don't navigate),
       //         col?: number (1-indexed; defaults to 1),
