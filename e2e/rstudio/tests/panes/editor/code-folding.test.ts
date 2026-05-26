@@ -4,6 +4,7 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { clearPref, setPref } from '@utils/commands';
 
 test.describe('Code folding', () => {
   const sandbox = useSuiteSandbox();
@@ -17,13 +18,13 @@ test.describe('Code folding', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$clear()');
+    await clearPref(page, 'hierarchical_section_folding');
     await closeAndDeleteSandboxFiles(page, sandbox.dir, ['code_folding.R']);
   });
 
   // https://github.com/rstudio/rstudio/issues/16541
   test('hierarchical section folding respects heading depth', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(TRUE)');
+    await setPref(page, 'hierarchical_section_folding', true);
 
     const content = `# Section 1 ----
 code_1 <- 1
@@ -65,7 +66,7 @@ code_2 <- 4
 
   // https://github.com/rstudio/rstudio/issues/16541
   test('flat section folding stops at any section header', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$hierarchicalSectionFolding$set(FALSE)');
+    await setPref(page, 'hierarchical_section_folding', false);
 
     const content = `# Section 1 ----
 code_1 <- 1

@@ -14,7 +14,7 @@ import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { sleep, TIMEOUTS, typeSlowly } from '@utils/constants';
+import { typeSlowly } from '@utils/constants';
 
 const FILE_PREFIX = 'es_';
 const FILES = {
@@ -49,7 +49,9 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
     const editor = new AceEditor(page, '');
     const sourcePane = new SourcePane(page);
     await sourcePane.contentPane.click();
-    await sleep(TIMEOUTS.layoutSettle);
+    // Ensure the editor textarea actually owns focus before typing -- clicks
+    // dispatch synchronously but Ace's focus shift can lag by a tick.
+    await editor.focus();
 
     await page.keyboard.type('he');
     await expect.poll(() => editor.getLine(0)).toBe('he');

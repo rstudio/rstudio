@@ -85,7 +85,10 @@ export default defineConfig<{}, ProjectOptions>({
   fullyParallel: false,
   workers: 1,
   timeout: 300000,
-  retries: 0,
+  // On CI a single transient launch flake (e.g. GWT app slow to reach
+  // ready under cold disk caches on a fresh runner) can otherwise turn
+  // the whole suite red. One retry absorbs that without rerunning by hand.
+  retries: process.env.CI ? 1 : 0,
   reporter: [['html'], ['list'], ['./fixtures/sandbox-reporter.ts']],
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',

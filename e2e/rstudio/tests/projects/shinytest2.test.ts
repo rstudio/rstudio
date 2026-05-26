@@ -1,11 +1,11 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
-import { executeCommand } from '@utils/commands';
+import { documentOpen, executeCommand, openProject } from '@utils/commands';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
@@ -72,20 +72,22 @@ async function scaffoldShinytest2Project(
 
   const projectDirLit = rPathLiteral(projectDir);
   const appPathLit = rPathLiteral(`${projectDir}/app.R`);
-  const testPathLit = rPathLiteral(testFilePath);
 
+  // initializeProject writes ${dir}/${basename(dir)}.Rproj; no bridge
+  // equivalent for project init yet, so stays in console. The bridge's
+  // project.open then dispatches SwitchToProjectEvent directly and needs
+  // that .Rproj path (the R-side .rs.api.openProject accepts a dir and
+  // re-derives it, but the bridge does not). projectName mirrors
+  // basename(projectDir) here, so we can build the .Rproj path locally
+  // without a second R round-trip.
   await consoleActions.executeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
-  await consoleActions.executeInConsole(`.rs.api.openProject(${projectDirLit})`);
-  await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
-    timeout: TIMEOUTS.sessionRestart,
-  });
-  await waitForConsoleIdle(page);
+  await openProject(page, `${projectDir}/${projectName}.Rproj`);
+  await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
 
   await consoleActions.executeInConsole(
     `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,
   );
-  await consoleActions.executeInConsole(`.rs.api.documentOpen(${testPathLit})`);
-  await sleep(1000);
+  await documentOpen(page, testFilePath);
 }
 
 test.describe('shinytest2 integration', () => {

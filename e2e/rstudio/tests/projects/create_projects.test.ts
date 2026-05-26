@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
@@ -73,44 +73,43 @@ const ALL_TYPES = [NEW_PROJECT, R_PACKAGE, SHINY_APP, QUARTO_PROJECT, QUARTO_WEB
 // helpers are ever reused with uncontrolled input, add proper escaping.
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__CP_${Date.now()}__`;
-  await executeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
+  await executeInConsole(
+    page,
+    `cat("${marker}", ${rExpression}, "${marker}")`,
+    { wait: true },
+  );
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-  const start = Date.now();
-  while (Date.now() - start < TIMEOUTS.consoleReady) {
-    await sleep(500);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const match = output.match(pattern);
-    if (match) return match[1].trim();
+  const output = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = output.match(pattern);
+  if (!match) {
+    throw new Error(`captureResult: markers not found for "${rExpression}"`);
   }
-  throw new Error(`captureResult: markers not found for "${rExpression}" within ${TIMEOUTS.consoleReady}ms`);
+  return match[1].trim();
 }
 
 async function waitForSessionRestart(page: Page): Promise<void> {
   // Server navigates on project open/close; Desktop reloads in place, so
-  // waitForLoadState never fires there — intentional catch.
+  // waitForLoadState never fires there -- intentional catch.
   await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
-  await sleep(3000);
-  // 2× sessionRestart: after navigation settles, the console element may still
+  // 2x sessionRestart: after navigation settles, the console element may still
   // take extra time to mount on slower Server sessions.
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.sessionRestart * 2 });
-  await sleep(2000);
 
   // Confirm R is idle with retries. Individual attempts may fail while the
-  // console is still coming up — intentional catch inside the loop — but if
-  // all three fail we surface the timeout instead of silently returning and
-  // letting downstream code fail mysteriously.
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // console is still coming up (the bridge isn't yet wired through, the
+  // editor isn't mounted, etc.) -- intentional catch -- but if all attempts
+  // fail we surface the timeout instead of silently returning.
+  const deadline = Date.now() + TIMEOUTS.sessionRestart * 2;
+  while (Date.now() < deadline) {
     try {
-      const marker = `__READY_${Date.now()}__`;
-      await executeInConsole(page, `cat("${marker}")`);
-      await sleep(1500);
+      const marker = `[pw:session-restart-ready ${Date.now()}]`;
+      await executeInConsole(page, `cat("${marker}")`, { wait: true });
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
     } catch {
-      // console may not be ready yet
+      // console may not be ready yet -- retry
     }
-    await sleep(2000);
   }
   throw new Error('R session did not become idle within timeout after session restart');
 }
@@ -118,19 +117,18 @@ async function waitForSessionRestart(page: Page): Promise<void> {
 async function openNewProjectWizard(page: Page): Promise<void> {
   // Close any open source docs first to avoid "unsaved changes" dialogs
   await documentCloseAllNoSave(page);
-  await sleep(1000);
 
   // executeCommand("newProject") blocks the R thread with an "R session is busy"
   // modal on some platforms, so use the command palette instead.
   await page.keyboard.press('ControlOrMeta+Shift+p');
-  await sleep(1000);
+  // Wait for the palette list to render before typing -- the keystrokes get
+  // swallowed if the palette hasn't mounted yet.
+  await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
   await page.keyboard.type('Create a New Project');
-  await sleep(500);
 
   const item = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
   await expect(item).toBeVisible({ timeout: 5000 });
   await item.click();
-  await sleep(2000);
 
   await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
 }
@@ -144,23 +142,25 @@ async function createProjectInNewDir(
 
   const dialog = page.locator(WIZARD_DIALOG);
 
+  // Each step's `expect(...).toBeVisible` is the wait gate for the next
+  // panel to mount; click() returns once the event fires, not after the
+  // panel transitions.
   const newDir = dialog.locator(NEW_DIRECTORY_OPTION);
   await expect(newDir).toBeVisible({ timeout: 5000 });
   await newDir.click();
-  await sleep(1000);
 
   const wizardPage = dialog.locator(type.wizardPageId);
   await expect(wizardPage).toBeVisible({ timeout: 5000 });
   await wizardPage.click();
-  await sleep(1000);
 
   const dirInput = dialog.locator(type.dirInputId);
   await expect(dirInput).toBeVisible({ timeout: 5000 });
   await dirInput.click();
   // pressSequentially is required for GWT TextBox to fire keystroke handlers
-  // that enable the Create Project button.
+  // that enable the Create Project button. Wait for the input to actually
+  // hold the typed text before clicking Create.
   await dirInput.pressSequentially(type.name);
-  await sleep(500);
+  await expect(dirInput).toHaveValue(type.name, { timeout: 2000 });
 
   if (options.withGit !== undefined) {
     const gitCheckbox = dialog.locator('#rstudio_new_project_git_repo input');
@@ -170,7 +170,6 @@ async function createProjectInNewDir(
     } else {
       await gitCheckbox.uncheck();
     }
-    await sleep(300);
   }
 
   const createBtn = page.locator(CREATE_PROJECT_BTN);
@@ -202,8 +201,7 @@ async function closeCurrentProject(page: Page): Promise<void> {
 async function cleanupProject(page: Page, projectDir: string): Promise<void> {
   if (!projectDir) return;
   const escaped = projectDir.replace(/\\/g, '/');
-  await executeInConsole(page, `unlink("${escaped}", recursive = TRUE)`);
-  await sleep(500);
+  await executeInConsole(page, `unlink("${escaped}", recursive = TRUE)`, { wait: true });
 }
 
 // -- Tests --------------------------------------------------------------------
@@ -221,15 +219,14 @@ test.describe.serial('Create Projects in New Directory', () => {
   });
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog from a prior failed run
+    // Dismiss any leftover dialog from a prior failed run. Wait briefly after
+    // each Escape for the overlay to detach -- a long wait per loop would
+    // just waste time in the common no-dialog case.
+    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
     for (let i = 0; i < 3; i++) {
-      const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]');
-      if (await overlay.first().isVisible({ timeout: 2000 }).catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(1000);
-      } else {
-        break;
-      }
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
     }
 
     // Close any open project from a prior run
@@ -252,13 +249,11 @@ test.describe.serial('Create Projects in New Directory', () => {
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await setPref(page, 'default_project_location', escaped);
-    await sleep(TIMEOUTS.pollInterval);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     try {
       await setPref(page, 'default_project_location', originalDefaultProjectLocation);
-      await sleep(TIMEOUTS.pollInterval);
     } catch (err) {
       console.warn('default_project_location restore failed:', err);
     }

@@ -414,16 +414,66 @@ void listEnvironment(SEXP env,
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      SEXP lastValueSEXP = findVarInFrame(env, Rf_install(".Last.value"));
+      // R stores .Last.value in baseenv (SET_SYMVALUE on R_LastvalueSymbol).
+      // Use a chain walk so we only surface it for environments where it's
+      // actually reachable -- i.e. envs that inherit from baseenv (globalenv,
+      // package envs, function frames). Custom envs whose chain bypasses
+      // baseenv (e.g. parent = emptyenv()) intentionally don't see it.
+      // .Last.value is never a promise, so forcing in the findVar wrapper
+      // is a no-op here.
+      SEXP lastValueSEXP = findVar(R_LastvalueSymbol, env);
       if (lastValueSEXP != nullptr)
          pNames->push_back(".Last.value");
    }
 }
 
+namespace {
+
+// Walk env's parent chain to find the first env whose frame binds sym.
+// Mirrors Rf_findVar's traversal so we can classify or retrieve a binding
+// in the env that actually contains it, even when the chain doesn't end
+// in baseenv. Returns R_EmptyEnv when sym isn't reachable.
+//
+// Uses runtime::getBindingType for frame-presence checks because it's
+// non-evaluating -- a value lookup via findVarInFrame would invoke an
+// active binding's getter, which we must avoid while merely inspecting
+// where the binding lives.
+SEXP findBindingFrame(SEXP sym, SEXP env)
+{
+   while (env != R_EmptyEnv)
+   {
+      int bt = runtime::getBindingType(sym, env);
+      if (bt != runtime::kBindingTypeNotFound &&
+          bt != runtime::kBindingTypeUnbound)
+      {
+         return env;
+      }
+      env = getParentEnv(env);
+   }
+   return R_EmptyEnv;
+}
+
+} // anonymous namespace
+
 BindingType getBindingType(const std::string& name, SEXP env)
 {
    SEXP sym = Rf_install(name.c_str());
    int bt = runtime::getBindingType(sym, env);
+
+   // .Last.value lives in baseenv (SET_SYMVALUE on R_LastvalueSymbol), not
+   // in any user env's frame. If env doesn't shadow it but a binding is
+   // reachable via the parent chain, classify it against the env that
+   // actually contains the binding -- which is usually baseenv, but may be
+   // an intermediate env if a user has shadowed .Last.value (in which case
+   // classifying via baseenv would mis-report the binding's type).
+   if (sym == R_LastvalueSymbol &&
+       (bt == runtime::kBindingTypeUnbound || bt == runtime::kBindingTypeNotFound))
+   {
+      SEXP bindingEnv = findBindingFrame(sym, env);
+      if (bindingEnv != R_EmptyEnv)
+         bt = runtime::getBindingType(sym, bindingEnv);
+   }
+
    switch (bt)
    {
    case runtime::kBindingTypeActive:
@@ -448,8 +498,19 @@ SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
    {
    case BindingType::Normal:
    {
-      // value is already evaluated; safe to retrieve via public API
-      return findVarInFrame(env, sym);
+      // value is already evaluated; safe to retrieve via public API.
+      // .Last.value lives in baseenv (see getBindingType): if the queried
+      // env doesn't shadow it, retrieve from the env in the parent chain
+      // that actually contains the binding (matches the env getBindingType
+      // classified against).
+      SEXP value = findVarInFrame(env, sym);
+      if (value == nullptr && sym == R_LastvalueSymbol)
+      {
+         SEXP bindingEnv = findBindingFrame(sym, env);
+         if (bindingEnv != R_EmptyEnv)
+            value = findVarInFrame(bindingEnv, sym);
+      }
+      return value;
    }
 
    case BindingType::Promise:

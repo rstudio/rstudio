@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AutocompleteActions } from '@actions/autocomplete.actions';
@@ -18,8 +17,7 @@ for (const context of contexts) {
       sourceActions = new SourcePaneActions(page, consoleActions);
       autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
       await consoleActions.closeAllBuffersWithoutSaving();
-      await consoleActions.executeInConsole('rm(list = ls())');
-      await sleep(500);
+      await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
     });
 
     // Safety: ensure clean editor state before each editor test
@@ -32,9 +30,7 @@ for (const context of contexts) {
     // Safety: dismiss lingering popups or partial input between tests
     test.afterEach(async ({ rstudioPage: page }) => {
       await page.keyboard.press('Escape');
-      await sleep(200);
       await page.keyboard.press('Escape');
-      await sleep(200);
       if (context === 'editor') {
         await consoleActions.closeAllBuffersWithoutSaving();
       }

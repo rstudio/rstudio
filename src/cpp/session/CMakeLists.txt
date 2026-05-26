@@ -757,11 +757,23 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install node
+   # install node -- on Apple arm64-only builds, install-npm-dependencies
+   # only creates "-arm64-installed"; universal builds also have the
+   # un-suffixed "-installed" from the x86_64 primary install. Prefer the
+   # un-suffixed folder when present so universal-build behavior is
+   # unchanged.
+   set(_RSTUDIO_INSTALLED_NODE_SRC
+       "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed")
+   if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64"
+              AND NOT EXISTS "${_RSTUDIO_INSTALLED_NODE_SRC}")
+      set(_RSTUDIO_INSTALLED_NODE_SRC
+          "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-arm64-installed")
+   endif()
    install(
-      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/"
+      DIRECTORY "${_RSTUDIO_INSTALLED_NODE_SRC}/"
       DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
       USE_SOURCE_PERMISSIONS)
+   unset(_RSTUDIO_INSTALLED_NODE_SRC)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)

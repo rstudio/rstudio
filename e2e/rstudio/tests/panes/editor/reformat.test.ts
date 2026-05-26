@@ -9,13 +9,13 @@ import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { executeCommand } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 import {
   createAndOpenProject,
   closeProjectIfOpen,
   waitForConsoleIdle,
 } from '@utils/project';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 
 const FILE_5425 = 'reformat_5425.R';
 const FILE_STYLER_DOC = 'reformat_styler_doc.R';
@@ -23,13 +23,25 @@ const FILE_STYLER_SEL = 'reformat_styler_selection.R';
 
 async function focusEditor(page: Page): Promise<void> {
   await new SourcePane(page).contentPane.click();
-  await sleep(TIMEOUTS.layoutSettle);
+  // Wait for keyboard focus to actually land on a source-pane Ace textarea
+  // (not the console). page.click() resolves before the focus event has
+  // propagated; without this gate, subsequent keystrokes can fire while
+  // focus is still mid-flight and route to the previously focused element.
+  await page.waitForFunction(
+    () => {
+      const el = document.activeElement;
+      if (!el) return false;
+      if (el.closest('#rstudio_console_input')) return false;
+      return el.classList?.contains('ace_text-input') ?? false;
+    },
+    null,
+    { timeout: 2000, polling: 50 },
+  );
 }
 
 async function selectAllInEditor(page: Page): Promise<void> {
   await focusEditor(page);
   await page.keyboard.press('ControlOrMeta+a');
-  await sleep(TIMEOUTS.layoutSettle);
 }
 
 test.describe('Built-in code reformat', () => {
@@ -78,13 +90,13 @@ test.describe.serial('styler reformat on save', () => {
     projectDir = await createAndOpenProject(page, sandbox.dir, 'reformat-styler-project');
     await waitForConsoleIdle(page);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$reformatOnSave$set(TRUE)');
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'reformat_on_save', true);
+    await setPref(page, 'code_formatter', 'styler');
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$reformatOnSave$clear()');
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$clear()');
+    await clearPref(page, 'reformat_on_save');
+    await clearPref(page, 'code_formatter');
     await consoleActions.closeAllBuffersWithoutSaving();
     await waitForConsoleIdle(page);
     await closeProjectIfOpen(page);
@@ -100,14 +112,21 @@ test.describe.serial('styler reformat on save', () => {
     await writeAndOpenFile(page, projectDir, fileName, '# placeholder');
     const filePath = `${projectDir}/${fileName}`;
 
-    const editor = new AceEditor(page, '# placeholder');
+    // Empty-marker AceEditor matches the first non-console editor. Using
+    // '# placeholder' would break after the select-all-then-type replaces
+    // the file's contents, since AceEditor.runOnEditor finds the editor by
+    // content-substring match.
+    const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getValue()).toBe('# placeholder');
 
     // Replace the placeholder by selecting all and typing the messy code;
     // the buffer becomes dirty, so Ctrl+S triggers reformat-on-save.
     await selectAllInEditor(page);
     await page.keyboard.type('1+1; 2+2');
-    await sleep(TIMEOUTS.layoutSettle);
+    // Wait for the editor to actually contain the typed text before saving.
+    // keyboard.type returns when keystrokes have been dispatched, not when
+    // Ace has applied them all -- a fast Ctrl+S can race the last char.
+    await expect.poll(() => editor.getValue()).toBe('1+1; 2+2');
 
     await page.keyboard.press('ControlOrMeta+s');
 
@@ -140,14 +159,14 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$clear()');
+    await clearPref(page, 'code_formatter');
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE_STYLER_DOC, FILE_STYLER_SEL]);
   });
 
   test('Reformat Document does not add extra newlines', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `styler not available: ${missingPackages.join(', ')}`);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'code_formatter', 'styler');
 
     const initial = 'print("test")\nprint("test")\n\n';
     const expected = 'print("test")\nprint("test")\n';
@@ -163,7 +182,7 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
   test('Reformat Code (selection) does not add extra newlines', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `styler not available: ${missingPackages.join(', ')}`);
 
-    await consoleActions.executeInConsole('.rs.uiPrefs$codeFormatter$set("styler")');
+    await setPref(page, 'code_formatter', 'styler');
 
     const initial = '1+1; 2+2\n3+3; 4+4\n';
     const expected = '1 + 1\n2 + 2\n3 + 3\n4 + 4\n';

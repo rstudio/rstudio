@@ -8,12 +8,11 @@
 // values and column names.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
-import { executeCommand } from '@utils/commands';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { resetSourcePaneState } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
 
@@ -42,11 +41,6 @@ async function colOrder(dataViewer: DataViewerPane): Promise<string[]> {
   );
 }
 
-async function closeViewerTab(page: Page): Promise<void> {
-  await executeCommand(page, 'closeSourceDoc');
-  await sleep(TIMEOUTS.settleDelay);
-}
-
 test.describe('Data Viewer', () => {
   let consoleActions: ConsolePaneActions;
   let sourcePane: SourcePane;
@@ -60,7 +54,17 @@ test.describe('Data Viewer', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await closeViewerTab(page);
+    // Tear down every viewer / cell-explorer tab from this test, but go
+    // through resetSourcePaneState (not closeAllSourceDocs) so the Source
+    // pane never reaches zero tabs. closeAllSourceDocs would fire
+    // LastSourceDocClosedEvent and start a 250ms HIDE animation, which
+    // races the next test's View(df) and leaves its iframe in a pane that
+    // never finishes loading (#17738). resetToUntitled keeps an Untitled
+    // tab alive through the close so the pane stays in its NORMAL state.
+    await resetSourcePaneState(page);
+    // Assert the Untitled tab is what's selected -- doubles as a wait gate
+    // for the reset to land and as a canary for #17738 regressions.
+    await expect(sourcePane.selectedTab).toContainText('Untitled', { timeout: 5000 });
   });
 
   // https://github.com/rstudio/rstudio/pull/14657
@@ -96,10 +100,8 @@ test.describe('Data Viewer', () => {
       timeout: TIMEOUTS.fileOpen,
     });
 
-    // Close the cell-explorer tab; the data viewer tab itself is closed by
-    // the afterEach.
-    await executeCommand(page, 'closeSourceDoc');
-    await sleep(TIMEOUTS.settleDelay);
+    // The afterEach closes both tabs via documentCloseAllNoSave; no manual
+    // cleanup needed here.
   });
 
   test('sort headers cycle through asc, desc, and unsorted', async () => {

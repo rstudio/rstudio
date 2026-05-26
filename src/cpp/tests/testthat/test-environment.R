@@ -77,6 +77,89 @@ test_that("environment object listings are correct", {
    expect_true(!exists("obj6", globalenv()))
 })
 
+test_that(".Last.value appears in environment listing when enabled", {
+   # https://github.com/rstudio/rstudio/issues/17737
+   # Regression test: ensure the "Show .Last.value" preference works.
+   # .Last.value is stored on R_LastvalueSymbol via SET_SYMVALUE (it lives
+   # in baseenv, not in globalenv's frame), so a frame-only lookup misses it.
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_last_dot_value", TRUE)
+
+   # .Last.value's binding in baseenv is locked; unlock to set a known value
+   # then relock (and restore) so we don't leak state to other tests.
+   prev <- .Last.value
+   unlockBinding(".Last.value", baseenv())
+   on.exit({
+      assign(".Last.value", prev, envir = baseenv())
+      lockBinding(".Last.value", baseenv())
+   }, add = TRUE)
+   assign(".Last.value", 42L, envir = baseenv())
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true(".Last.value" %in% names)
+
+   lastVal <- contents[[which(names == ".Last.value")]]
+   # binding-type classification must resolve via baseenv (not "unknown")
+   expect_false(identical(lastVal[["type"]], "unknown"))
+   expect_equal(lastVal[["value"]], "42L")
+})
+
+test_that("ancestor-shadowed .Last.value is classified at the shadowing env", {
+   # https://github.com/rstudio/rstudio/issues/17737
+   # When a parent env in the search path shadows .Last.value (e.g. with an
+   # active binding), the binding-type cascade must classify it against the
+   # shadowing env, not against R_BaseEnv. This also exercises the
+   # non-evaluating chain walk in findBindingFrame: the active binding's
+   # getter must fire only once (during the existence check in listEnvironment),
+   # not again while we locate the binding's frame for type classification.
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_last_dot_value", TRUE)
+
+   # Attach an empty env first, then add the active binding directly to the
+   # env on the search path. attach(env) on R < 4.6 copies contents via get(),
+   # which would fire the active binding during the copy and demote it to a
+   # regular value -- defeating the test.
+   attach(NULL, name = "rstudio-17737-shadow", warn.conflicts = FALSE)
+   on.exit(detach("rstudio-17737-shadow"), add = TRUE)
+   shadow <- as.environment("rstudio-17737-shadow")
+
+   counter <- 0L
+   makeActiveBinding(".Last.value", function() {
+      counter <<- counter + 1L
+      42L
+   }, env = shadow)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true(".Last.value" %in% names)
+
+   lastVal <- contents[[which(names == ".Last.value")]]
+   expect_equal(lastVal[["type"]], "active binding")
+   # Getter ran only for the existence-check value lookup; the chain walk
+   # used to identify the shadowing env must not have re-fired it.
+   expect_equal(counter, 1L)
+})
+
+test_that(".Last.value is hidden when preference is disabled", {
+   # https://github.com/rstudio/rstudio/issues/17737
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_last_dot_value", FALSE)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_false(".Last.value" %in% names)
+})
+
 test_that("flag must be specified when removing objects", {
    expect_error(.rs.invokeRpc("remove_all_objects"))
 })

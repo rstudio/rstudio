@@ -1,24 +1,9 @@
-import type { Page, Route } from 'playwright';
+import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
 import { executeCommand } from '../utils/commands';
-
-/** Fields returned by the chatCheckForUpdates RPC. */
-export interface UpdateCheckResult {
-  updateAvailable: boolean;
-  isDowngrade: boolean;
-  noCompatibleVersion: boolean;
-  unsupportedInstalledVersion: boolean;
-  unsupportedProtocol: boolean;
-  manifestUnavailable: boolean;
-  errorMessage: string;
-  currentVersion: string;
-  newVersion: string;
-  downloadUrl: string;
-  isInitialInstall: boolean;
-}
 
 export class ChatPaneActions {
   readonly page: Page;
@@ -29,64 +14,6 @@ export class ChatPaneActions {
     this.page = page;
     this.chatPane = new ChatPane(page);
     this.consolePaneActions = consolePaneActions;
-  }
-
-  /** The mock result returned by the intercepted RPC. Null = no interception. */
-  private updateCheckMock: UpdateCheckResult | null = null;
-
-  /** Default (non-blocking) update check result. */
-  static defaultUpdateCheckResult(): UpdateCheckResult {
-    return {
-      updateAvailable: false,
-      isDowngrade: false,
-      noCompatibleVersion: false,
-      unsupportedInstalledVersion: false,
-      unsupportedProtocol: false,
-      manifestUnavailable: false,
-      errorMessage: '',
-      currentVersion: '1.0.0',
-      newVersion: '',
-      downloadUrl: '',
-      isInitialInstall: false,
-    };
-  }
-
-  /**
-   * Install a Playwright route handler that intercepts `chatCheckForUpdates`
-   * RPC responses and replaces the result with `this.updateCheckMock`.
-   * Call once per page; subsequent calls to `setUpdateCheckMock()` swap the
-   * payload without re-registering the route.
-   */
-  async interceptUpdateCheck(): Promise<void> {
-    // Use regex so query strings don't break matching
-    await this.page.route(/\/rpc\/chat_check_for_updates/, async (route: Route) => {
-      if (!this.updateCheckMock) {
-        console.log('[interceptUpdateCheck] no mock, passing through');
-        await route.continue();
-        return;
-      }
-      console.log('[interceptUpdateCheck] fulfilling with mock');
-      // Fulfill directly with our mock -- don't call route.fetch() because
-      // rsession returns empty bodies when requests overlap via CDP.
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ result: this.updateCheckMock }),
-      });
-    });
-  }
-
-  /** Set the mock payload for subsequent intercepted RPC calls. */
-  setUpdateCheckMock(overrides: Partial<UpdateCheckResult>): void {
-    this.updateCheckMock = {
-      ...ChatPaneActions.defaultUpdateCheckResult(),
-      ...overrides,
-    };
-  }
-
-  /** Disable interception so the real backend response flows through. */
-  clearUpdateCheckMock(): void {
-    this.updateCheckMock = null;
   }
 
   async openChatPane(): Promise<void> {
@@ -101,46 +28,98 @@ export class ChatPaneActions {
   }
 
   async dismissSetupPrompts(): Promise<void> {
-    // Short timeouts: if these prompts exist, they're visible almost immediately.
-    // Using 1500ms instead of 5000ms saves ~10s when no prompts are present.
-    try {
-      await this.chatPane.installBtn.click({ timeout: 1500 });
-      console.log('Clicked Install button — waiting for installation...');
+    // These prompts are visible immediately when present; absence is the common
+    // case. Gate each click on isVisible() (snapshot) so we don't burn the full
+    // click({ timeout }) auto-wait when the button is missing.
+    if (await this.chatPane.installBtn.isVisible()) {
+      await this.chatPane.installBtn.click();
+      console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
       await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
-      return;
-    } catch {
-      // No Install button
-    }
-
-    try {
-      await this.chatPane.updateBtn.click({ timeout: 1500 });
-      console.log('Clicked Update on update prompt — updating Posit Assistant');
+    } else if (await this.chatPane.updateBtn.isVisible()) {
+      await this.chatPane.updateBtn.click();
+      console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
-      return;
-    } catch {
-      // No update prompt, or pane is stale after update via Options
     }
 
-    // Dismiss "Trust this directory?" prompt if present
-    try {
-      const trustBtn = this.chatPane.frame.locator("button:has-text('Trust'), button:has-text('trust')");
-      await trustBtn.first().click({ timeout: 1500 });
-      console.log('Dismissed directory trust prompt');
-    } catch {
-      // No trust prompt
+    // The TrustOverlay and the chat textarea both render asynchronously after
+    // the iframe loads; waitForChatReady polls for either path through the
+    // workspace-trust dialog or a clean ready textarea, so callers don't need
+    // to handle it themselves.
+    await this.waitForChatReady();
+  }
+
+  /**
+   * Wait until the chat pane is actually usable -- i.e., the message textarea
+   * is enabled. Until that point, sending a message is a guaranteed failure
+   * even when chatRoot is visible, so this is the only real "ready" signal.
+   *
+   * Polls (a) clicking through any trust dialog that appears late and (b)
+   * failing fast with an actionable message if a Sign-In button shows up,
+   * since seeded credentials are the only auth path the test harness supports.
+   * The host's Posit Assistant rotates the refresh token in ~/.positai/store,
+   * so seeded copies can be invalidated between globalSetup and test
+   * execution; surfacing that as "sign in on the host and re-run" is more
+   * useful than the cryptic "textarea disabled after 15s" downstream timeout
+   * each test would otherwise hit.
+   *
+   * The TrustOverlay component in databot renders as a role="dialog" with the
+   * primary button; the RestrictedModeBadge also has a "Trust this workspace"
+   * affordance, so we explicitly target the dialog first (it's the modal
+   * blocker) and fall back to any visible match.
+   */
+  async waitForChatReady(timeout: number = 30000): Promise<void> {
+    const deadline = Date.now() + timeout;
+    const overlayTrustBtn = this.chatPane.frame.locator(
+      "[role='dialog'] button:has-text('Trust this workspace')"
+    );
+
+    let iter = 0;
+    while (Date.now() < deadline) {
+      iter += 1;
+
+      if (await this.chatPane.chatTextarea.isEnabled().catch(() => false)) {
+        if (iter > 1) console.log(`waitForChatReady: textarea enabled after ${iter} iterations`);
+        return;
+      }
+
+      if (await overlayTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking trust overlay button');
+        await overlayTrustBtn.click({ timeout: 5000 });
+        // Let the overlay tear down before re-polling
+        await sleep(500);
+        continue;
+      }
+
+      const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
+      if (await anyTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking fallback trust button');
+        await anyTrustBtn.click({ timeout: 5000 });
+        await sleep(500);
+        continue;
+      }
+
+      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+        throw new Error(
+          'Posit Assistant requires sign-in despite seeded credentials. ' +
+          'Sign in on the host (~/.positai) and re-run.'
+        );
+      }
+
+      await sleep(500);
     }
 
+    throw new Error(
+      `waitForChatReady: chat textarea still disabled after ${timeout}ms ` +
+      `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
+      `have stalled.`
+    );
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
-    try {
-      // click() already polls for actionability within its own timeout, so
-      // there's no need to pre-sleep waiting for the dialog to appear.
-      await this.chatPane.allowBtn.click({ timeout: 3000 });
+    if (await this.chatPane.allowBtn.isVisible()) {
+      await this.chatPane.allowBtn.click();
       console.log('Clicked "Allow" permission button');
-    } catch {
-      // No permission dialog
     }
   }
 
@@ -261,10 +240,11 @@ export class ChatPaneActions {
   }
 
   async getPositAssistantVersion(): Promise<string> {
+    if (!(await this.chatPane.moreBtn.isVisible())) {
+      return 'unknown';
+    }
     try {
-      await this.chatPane.moreBtn.click({ timeout: 5000 });
-      // .first().click() polls for the menu item, replacing the
-      // previous post-click sleep.
+      await this.chatPane.moreBtn.click();
       await this.chatPane.aboutItem.first().click();
 
       await this.chatPane.dialogOverlay.waitFor({ state: 'visible', timeout: 5000 });

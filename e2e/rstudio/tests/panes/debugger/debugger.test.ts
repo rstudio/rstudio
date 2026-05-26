@@ -3,9 +3,10 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { DebuggerActions } from '@actions/debugger.actions';
 import { EnvironmentPane } from '@pages/environment_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { TIMEOUTS, sleep } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { executeCommand } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
+import { waitForConsoleIdle } from '@pages/console_pane.page';
 
 const sandbox = useSuiteSandbox();
 
@@ -27,10 +28,22 @@ async function writeAndOpen(fileName: string, content: string): Promise<void> {
   // string-escape rules (\\, \", \n, \t, \uXXXX) match R's, so JSON.stringify
   // each line and join with commas to produce a valid R argument list.
   const lines = content.split('\n').map(l => JSON.stringify(l)).join(', ');
-  await consoleActions.executeInConsole(`writeLines(c(${lines}), "${fullPath}")`);
-  await sleep(TIMEOUTS.settleDelay);
+
+  // wait:true so file.edit doesn't race the writeLines completion.
+  await consoleActions.executeInConsole(
+    `writeLines(c(${lines}), "${fullPath}")`,
+    { wait: true },
+  );
+
   await consoleActions.executeInConsole(`file.edit("${fullPath}")`);
-  await sleep(TIMEOUTS.fileEditSettle);
+  // file.edit returns quickly on the R side but the editor opens
+  // asynchronously on the GWT side. Wait for the file's tab to actually
+  // be the selected one -- a deterministic signal that the buffer is
+  // ready to drive.
+  const selectedTab = consoleActions.page.locator(
+    "[class*='rstudio_source_panel'] [class*='PanelTab-selected']",
+  );
+  await expect(selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
 }
 
 async function resetAfterTest(): Promise<void> {
@@ -63,12 +76,8 @@ test.describe('R debugger', () => {
     consoleActions = new ConsolePaneActions(page);
     debuggerActions = new DebuggerActions(page, consoleActions);
     envPane = new EnvironmentPane(page);
-    // Defensive: drop any leftover open buffers from a prior crashed run.
-    // resetSourcePane (rather than closeAllBuffersWithoutSaving) keeps the
-    // source pane in its NORMAL state across the test-file handoff so the
-    // first file.edit doesn't race the LastSourceDocClosedEvent HIDE
-    // animation (#17738).
-    await consoleActions.resetSourcePane();
+    // Per-test cleanup of leftover debug mode + source buffers happens in
+    // the shared beforeEach (utils/test-reset.ts via fixtures/rstudio.fixture.ts).
   });
 
   // -------------------------------------------------------------------------
@@ -120,7 +129,7 @@ test.describe('R debugger', () => {
       // click produces an ACTIVE (.ace_breakpoint) marker rather than a
       // pending / inactive one that wouldn't satisfy our locator.
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
 
       // Set breakpoint on the brace-expression line (line 3).
       await debuggerActions.setBreakpoint(3);
@@ -154,7 +163,7 @@ test.describe('R debugger', () => {
       await writeAndOpen(fileName, content);
       // Source so the toggled breakpoint becomes ACTIVE rather than INACTIVE.
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
 
       // Place the cursor on line 2 via the goToLine command.
       await consoleActions.goToLine(2);
@@ -203,7 +212,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.executeInConsole('step_next_fn()');
 
@@ -231,7 +240,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       // Breakpoint on the line that calls inner() (line 5).
       await debuggerActions.setBreakpoint(5);
       await consoleActions.executeInConsole('outer()');
@@ -274,7 +283,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.executeInConsole('step_finish_fn()');
 
@@ -301,7 +310,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await debuggerActions.setBreakpoint(2);
       await debuggerActions.setBreakpoint(5);
       await consoleActions.executeInConsole('step_continue_fn()');
@@ -330,7 +339,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await debuggerActions.setBreakpoint(2);
       await consoleActions.executeInConsole('step_stop_fn()');
 
@@ -356,7 +365,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       for (const line of [2, 3, 4, 5, 6, 7]) {
         await debuggerActions.setBreakpoint(line);
       }
@@ -415,7 +424,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('browser_entry_fn()');
 
       await debuggerActions.waitForDebugMode();
@@ -439,13 +448,62 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('browser_continue_fn()');
 
       await debuggerActions.waitForDebugMode();
       await debuggerActions.continueDebug();
       await debuggerActions.waitForDebugExit();
       await expect(debuggerActions.debuggerPage.activeDebugLine).toHaveCount(0);
+    });
+
+    test('captures environment for functions loaded via box::use', async () => {
+      // Regression coverage for rstudio/rstudio#17743. Box modules live in
+      // hermetic namespace:<mod> -> imports:<mod> -> ... chains that bypass
+      // the user search path, so a bare-name .rs.captureCurrentEnvironment()
+      // lookup from the browser's rho would fail with "could not find
+      // function". RStdCallbacks.cpp now resolves it explicitly through
+      // as.environment("tools:rstudio"). Without that fix, browserEnv stays
+      // NIL, the Environment pane falls back to globalenv, and `localx`
+      // would not appear.
+      const missing = await consoleActions.ensurePackages(['box']);
+      test.skip(missing.length > 0, `Missing: ${missing.join(', ')}`);
+
+      const moduleName = `boxmod${Date.now()}`;
+      const fullPath = `${rPath(sandbox.dir)}/${moduleName}.R`;
+      const moduleContent = heredoc`
+        foo <- function() {
+           localx <- 42
+           browser()
+           localx
+        }
+      `;
+      const lines = moduleContent.split('\n').map(l => JSON.stringify(l)).join(', ');
+      await consoleActions.executeInConsole(
+        `writeLines(c(${lines}), "${fullPath}")`,
+        { wait: true },
+      );
+
+      // box::use(./<name>) resolves relative to cwd in interactive R
+      // sessions, which is what an RStudio session is. setwd persists
+      // beyond the test, but the rest of this file uses absolute sandbox
+      // paths so a stale cwd is harmless.
+      await consoleActions.executeInConsole(
+        `setwd("${rPath(sandbox.dir)}")`,
+        { wait: true },
+      );
+      await consoleActions.executeInConsole(
+        `box::use(./${moduleName})`,
+        { wait: true },
+      );
+      await consoleActions.executeInConsole(`${moduleName}$foo()`);
+
+      await debuggerActions.waitForDebugMode();
+
+      await expect.poll(
+        () => envPane.hasVariable('localx', '42'),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
     });
   });
 
@@ -466,7 +524,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('rerun_fn()');
 
       // The error widget — and the "Rerun with Debug" link inside it —
@@ -504,7 +562,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('env_locals_fn()');
 
       await debuggerActions.waitForDebugMode();
@@ -526,7 +584,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('tb_f()');
 
       await debuggerActions.waitForDebugMode();
@@ -563,7 +621,7 @@ test.describe('R debugger', () => {
 
       await writeAndOpen(fileName, content);
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
-      await sleep(TIMEOUTS.settleDelay);
+      await waitForConsoleIdle(consoleActions.page);
       await consoleActions.executeInConsole('fr_f()');
 
       await debuggerActions.waitForDebugMode();

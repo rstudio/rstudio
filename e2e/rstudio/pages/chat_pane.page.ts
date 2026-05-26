@@ -21,6 +21,8 @@ export class ChatPane extends FramePageObject {
   public installBtn: Locator;
   public updateBtn: Locator;
   public ignoreBtn: Locator;
+  public signInBtn: Locator;
+  public trustWorkspaceBtn: Locator;
   public moreBtn: Locator;
   public settingsMenu: Locator;
   public configurePositAiItem: Locator;
@@ -53,6 +55,8 @@ export class ChatPane extends FramePageObject {
     this.installBtn = this.frame.locator("button:has-text('Install')");
     this.updateBtn = this.frame.locator("button:has-text('Update')");
     this.ignoreBtn = this.frame.locator("button:has-text('Ignore')");
+    this.signInBtn = this.frame.locator("button:has-text('Sign In'), button:has-text('Sign in')");
+    this.trustWorkspaceBtn = this.frame.locator("button:has-text('Trust this workspace')");
     this.moreBtn = this.frame.getByRole('button', { name: 'More' });
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
     this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]");

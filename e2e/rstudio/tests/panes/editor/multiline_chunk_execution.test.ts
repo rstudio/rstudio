@@ -4,11 +4,10 @@
 // causing the notebook queue to defer indefinitely.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, saveDocument } from '@utils/commands';
 
 test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
   // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
@@ -48,8 +47,7 @@ test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
     // Save so it's on disk
-    await executeCommand(page, 'saveSourceDoc');
-    await sleep(1000);
+    await saveDocument(page);
 
     // --- Chunk 1: incomplete expression (1 +\n2) ---
     await consoleActions.clearConsole();
@@ -58,7 +56,6 @@ test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
 
     // If the bug is present, the chunk hangs and the interrupt button stays visible
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
-    await sleep(1000);
 
     await expect(consoleActions.consolePane.consoleOutput).toContainText('[1] 3', { timeout: 10000 });
 
@@ -68,7 +65,6 @@ test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
     await executeCommand(page, 'executeCurrentChunk');
 
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).not.toBeVisible({ timeout: 10000 });
-    await sleep(1000);
 
     await expect(consoleActions.consolePane.consoleOutput).toContainText('[1] 45', { timeout: 10000 });
 

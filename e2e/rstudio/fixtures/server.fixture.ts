@@ -246,13 +246,16 @@ export async function launchServer(): Promise<ServerSession> {
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
   console.log('RStudio console is ready');
 
-  try {
-    const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
-    await dontSaveBtn.click({ timeout: 2000 });
+  // Dismiss any "save changes" modal from a previous interrupted run.
+  // Use isVisible() (snapshot, no wait) to gate the click -- click({ timeout })
+  // would spend the full timeout when no dialog exists.
+  const dontSaveBtn = page.locator(
+    "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no",
+  ).first();
+  if (await dontSaveBtn.isVisible()) {
+    await dontSaveBtn.click();
     console.log('Dismissed save dialog from previous session');
     await sleep(500);
-  } catch {
-    // No dialog present
   }
 
   await page.getByRole('tab', { name: 'Files' }).click({ timeout: 120_000 });

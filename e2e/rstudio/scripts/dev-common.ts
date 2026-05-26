@@ -3,7 +3,7 @@
 // that a `npm run test:*-dev` invocation actually exercises the user's
 // uncommitted changes.
 
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -122,20 +122,45 @@ export function checkGwtBuildReady(tag: string): void {
 // Spawn `npx playwright test ...` with the supplied args appended and the
 // supplied env merged on top of process.env. Inherits stdio so the user
 // sees the live test output, and propagates the playwright exit code.
+//
+// Logs the Playwright launcher PID up front so a stuck run is easy to
+// abort -- `kill <pid>` on this PID tears down the launcher, the per-test
+// worker, the dev-build Electron process, and the in-tree rsession in
+// one shot.
 export function runPlaywright(
   tag: string,
   extraArgs: string[],
   env: Record<string, string> = {},
-): never {
+): void {
   step(tag, 'Running Playwright tests...');
 
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   const args = ['playwright', 'test', ...extraArgs];
 
-  const result = spawnSync(npx, args, {
+  const child = spawn(npx, args, {
     stdio: 'inherit',
     env: { ...process.env, ...env },
   });
 
-  process.exit(result.status ?? 1);
+  if (child.pid !== undefined) {
+    console.log(`[${tag}] Playwright launcher PID: ${child.pid} (kill this to abort the run)`);
+  }
+
+  // stdio:'inherit' keeps Node's event loop alive until the child exits, so
+  // we don't need to await here. Propagate the exit status when the child
+  // does finish.
+  child.on('exit', (code, signal) => {
+    process.exit(signal !== null ? 128 + (signalNumber(signal) ?? 1) : (code ?? 1));
+  });
+}
+
+// Look up a signal name's numeric code via os.constants.signals when
+// available. Falls back to a small allow-list so tests that hit SIGTERM /
+// SIGINT report a sensible exit code on platforms with a missing table.
+function signalNumber(signal: NodeJS.Signals): number | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const signalsModule = require('node:os').constants.signals as Record<string, number>;
+  if (signal in signalsModule) return signalsModule[signal];
+  const fallback: Record<string, number> = { SIGTERM: 15, SIGINT: 2, SIGKILL: 9, SIGHUP: 1 };
+  return fallback[signal];
 }

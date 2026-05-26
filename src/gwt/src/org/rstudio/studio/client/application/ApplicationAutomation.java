@@ -16,18 +16,30 @@ package org.rstudio.studio.client.application;
 
 import java.util.Map;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -52,10 +64,13 @@ import com.google.inject.Singleton;
  *
  *   window.rstudio.documents.closeAllNoSave()
  *   window.rstudio.documents.resetToUntitled() // close everything but a single untitled tab
+ *   window.rstudio.documents.active()          // { id, path, dirty } for the focused doc, or null
+ *   window.rstudio.documents.open(path, opts?) // open file at path; opts: { line?, col?, moveCursor? }
  *
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
  *   window.rstudio.project.isActive()   // boolean
+ *   window.rstudio.project.open(path)   // fire SwitchToProjectEvent; resets ready
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -74,12 +89,16 @@ public class ApplicationAutomation
    public ApplicationAutomation(Commands commands,
                                 EventBus eventBus,
                                 Session session,
-                                UserPrefs userPrefs)
+                                UserPrefs userPrefs,
+                                SourceColumnManager sourceColumnManager,
+                                ChatServerOperations chatServer)
    {
       commands_ = commands;
       eventBus_ = eventBus;
       session_ = session;
       userPrefs_ = userPrefs;
+      sourceColumnManager_ = sourceColumnManager;
+      chatServer_ = chatServer;
    }
 
    public final boolean isAutomationAgent()
@@ -96,6 +115,7 @@ public class ApplicationAutomation
       registerDocuments();
       registerProject();
       registerVersion();
+      registerChat();
       registerReadinessHandlers();
    }
 
@@ -114,6 +134,12 @@ public class ApplicationAutomation
    //     command (kSuspendAndRestart on the server side).
    //   - DeferredInitCompletedEvent: fires once R's deferred init has run for
    //     each session, signalling that R-to-GWT roundtrips are safe.
+   //   - OpenProjectErrorEvent: server-emitted client event when a project
+   //     open/switch fails before reaching quit. Bridge callers preemptively
+   //     reset ready in project.open() to close the kQuit-arrival window;
+   //     without this handler that flag would stay false forever on the
+   //     failure path and openProject() would time out instead of surfacing
+   //     the real error.
    //
    // doRestart-style flows (Electron relaunch on PAI uninstall etc.) reload
    // the GWT page entirely, so initializeRoot() handles their reset.
@@ -132,6 +158,7 @@ public class ApplicationAutomation
          if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
             setReadyFlag(false);
       });
+      eventBus_.addHandler(OpenProjectErrorEvent.TYPE, event -> setReadyFlag(true));
 
       readinessHandlersRegistered_ = true;
    }
@@ -172,6 +199,35 @@ public class ApplicationAutomation
    {
       registerProjectObject();
    }
+
+   private void registerChat()
+   {
+      registerChatObject();
+   }
+
+   private void setChatUpdateCheckOverride(JavaScriptObject override,
+                                           JavaScriptObject onCompleted)
+   {
+      chatServer_.chatSetUpdateCheckOverride(override,
+         new org.rstudio.studio.client.server.ServerRequestCallback<JavaScriptObject>()
+         {
+            @Override
+            public void onResponseReceived(JavaScriptObject response)
+            {
+               invokeBoolCallback(onCompleted, true);
+            }
+
+            @Override
+            public void onError(org.rstudio.studio.client.server.ServerError error)
+            {
+               invokeBoolCallback(onCompleted, false);
+            }
+         });
+   }
+
+   private native final void invokeBoolCallback(JavaScriptObject cb, boolean ok) /*-{
+      cb(ok);
+   }-*/;
 
    private void registerVersion()
    {
@@ -237,7 +293,7 @@ public class ApplicationAutomation
    }
 
    @SuppressWarnings("unchecked")
-   private void setPrefValue(Prefs.PrefValue<?> pref, Object value)
+   private void setPrefValue(Prefs.PrefValue<?> pref, Object value, JavaScriptObject onCompleted)
    {
       if (pref instanceof Prefs.BooleanValue)
       {
@@ -260,14 +316,18 @@ public class ApplicationAutomation
          throw new RuntimeException(
             "Unsupported preference type for " + pref.getId() + ": " + pref.getClass().getSimpleName());
       }
-      userPrefs_.writeUserPrefs();
+      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
    }
 
-   private void clearPrefValue(Prefs.PrefValue<?> pref)
+   private void clearPrefValue(Prefs.PrefValue<?> pref, JavaScriptObject onCompleted)
    {
       pref.removeGlobalValue(true);
-      userPrefs_.writeUserPrefs();
+      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
    }
+
+   private native void invokeWriteCallback(JavaScriptObject cb, boolean succeeded) /*-{
+      if (cb) cb(succeeded);
+   }-*/;
 
    private void dispatchCloseAllNoSave()
    {
@@ -278,6 +338,39 @@ public class ApplicationAutomation
    {
       eventBus_.dispatchEvent(new DocumentResetToUntitledEvent());
    }
+
+   // Equivalent to .rs.api.documentOpen(path, line, col, moveCursor) but skips
+   // the ensureFileExists RPC that columnManager_.editFile would do -- tests
+   // pass known-existing paths, and OpenSourceFileEvent is the same event the
+   // GWT side ultimately fires from the R-API path. line is 1-indexed; pass
+   // line < 0 to open without navigating.
+   private void dispatchDocumentOpen(String path, int line, int col, boolean moveCursor)
+   {
+      FileSystemItem file = FileSystemItem.createFile(path);
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      TextFileType fileType = registry.getTextTypeForFile(file);
+      FilePosition position = line >= 0
+         ? FilePosition.create(line, Math.max(col, 1))
+         : null;
+      eventBus_.dispatchEvent(new OpenSourceFileEvent(
+         file, position, fileType, moveCursor, NavigationMethods.DEFAULT));
+   }
+
+   // Returns null when no editor is active so callers can distinguish "no doc"
+   // from "doc exists but is clean".
+   private JavaScriptObject getActiveDocument()
+   {
+      if (!sourceColumnManager_.hasActiveEditor())
+         return null;
+      return makeActiveDocumentJso(
+         sourceColumnManager_.getActiveDocId(),
+         sourceColumnManager_.getActiveDocPath(),
+         sourceColumnManager_.isActiveDocDirty());
+   }
+
+   private native JavaScriptObject makeActiveDocumentJso(String id, String path, boolean dirty) /*-{
+      return { id: id, path: path, dirty: dirty };
+   }-*/;
 
    // Always read through session_.getSessionInfo() rather than capturing a
    // reference at install time -- a session restart (e.g. close-project)
@@ -295,6 +388,16 @@ public class ApplicationAutomation
    private boolean isProjectActive()
    {
       return getActiveProjectPath() != null;
+   }
+
+   // forceSaveAll=true matches what tests want: the bridge caller owns the
+   // document state going in, and a modal "save changes?" prompt would
+   // deadlock automation. Going through SwitchToProjectEvent directly (rather
+   // than OpenProjectFileEvent) also skips the confirm-open and "this is the
+   // current project, open options instead" branches in Projects.java.
+   private void switchToProject(String projectFilePath)
+   {
+      eventBus_.dispatchEvent(new SwitchToProjectEvent(projectFilePath, true));
    }
 
    // --- JSNI surface installation ------------------------------------------
@@ -346,11 +449,27 @@ public class ApplicationAutomation
          get: $entry(function() {
             return self.@org.rstudio.studio.client.application.ApplicationAutomation::getPrefValue(*)(pref);
          }),
+         // set / clear return a Promise that resolves once the setUserPrefs
+         // RPC has completed, so callers (especially tests that immediately
+         // follow with another server-affecting action) can be sure the
+         // pref change is fully landed before proceeding.
          set: $entry(function(value) {
-            self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value);
+            return new $wnd.Promise(function(resolve, reject) {
+               var cb = $entry(function(succeeded) {
+                  if (succeeded) resolve();
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+               });
+               self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value, cb);
+            });
          }),
          clear: $entry(function() {
-            self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref);
+            return new $wnd.Promise(function(resolve, reject) {
+               var cb = $entry(function(succeeded) {
+                  if (succeeded) resolve();
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+               });
+               self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref, cb);
+            });
          })
       };
    }-*/;
@@ -362,6 +481,20 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.documents.resetToUntitled = $entry(function() {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchResetToUntitled()();
+      });
+      $wnd.rstudio.documents.active = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getActiveDocument()();
+      });
+      // opts: { line?: number (1-indexed; omit/<0 = don't navigate),
+      //         col?: number (1-indexed; defaults to 1),
+      //         moveCursor?: boolean (defaults to true) }.
+      $wnd.rstudio.documents.open = $entry(function(path, opts) {
+         opts = opts || {};
+         var line = (typeof opts.line === 'number') ? opts.line : -1;
+         var col = (typeof opts.col === 'number') ? opts.col : 1;
+         var moveCursor = (opts.moveCursor !== false);
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dispatchDocumentOpen(*)(
+            path, line, col, moveCursor);
       });
    }-*/;
 
@@ -377,6 +510,15 @@ public class ApplicationAutomation
       $wnd.rstudio.project.isActive = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
       });
+      // Reset ready synchronously before dispatching. The QuitEvent handler
+      // will also reset it once kQuit lands, but resetting here closes the
+      // gap between this call returning and the server-emitted kQuit -- a
+      // caller polling immediately would otherwise see the prior session's
+      // stale true.
+      $wnd.rstudio.project.open = $entry(function(path) {
+         $wnd.rstudio.ready = false;
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::switchToProject(*)(path);
+      });
    }-*/;
 
    // Versions are stable for the life of the session, so install a plain
@@ -388,10 +530,31 @@ public class ApplicationAutomation
       };
    }-*/;
 
+   private native final void registerChatObject() /*-{
+      var self = this;
+      $wnd.rstudio.chat = $wnd.rstudio.chat || {};
+      // Install/clear an automation-only override for the next
+      // chat_check_for_updates response. Pass an object to install (any
+      // shape the real response can take); pass null to clear. Returns a
+      // Promise that resolves once the RPC has landed in rsession.
+      $wnd.rstudio.chat.setUpdateCheckOverride = $entry(function(override) {
+         return new $wnd.Promise(function(resolve, reject) {
+            var cb = $entry(function(succeeded) {
+               if (succeeded) resolve();
+               else reject(new Error('chat_set_update_check_override RPC failed'));
+            });
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::setChatUpdateCheckOverride(*)(
+               override || null, cb);
+         });
+      });
+   }-*/;
+
    private final Commands commands_;
    private final EventBus eventBus_;
    private final Session session_;
    private final UserPrefs userPrefs_;
+   private final SourceColumnManager sourceColumnManager_;
+   private final ChatServerOperations chatServer_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
 }

@@ -18,21 +18,23 @@ export class AssistantOptionsActions {
 
   /** Accept the "Update Posit Assistant" dialog if it appears, then dismiss "Installation Complete" */
   private async acceptUpdateDialog(): Promise<void> {
-    try {
-      const updateBtn = this.page.locator('#rstudio_dlg_yes');
-      if (await updateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await updateBtn.click();
-        console.log('Accepted Posit Assistant update dialog');
-
-        // Wait for "Installation Complete" dialog and dismiss it
-        const installOkBtn = this.page.locator('#rstudio_dlg_ok');
-        await installOkBtn.click({ timeout: 30000 });
-        console.log('Dismissed Installation Complete dialog');
-        await sleep(500);
-      }
-    } catch {
-      // No update dialog
+    // Caller already settled (selectOption + sleep), so an Update dialog --
+    // if it's going to appear -- is rendered by now. isVisible() snapshot
+    // returns instantly when absent.
+    const updateBtn = this.page.locator('#rstudio_dlg_yes');
+    if (!(await updateBtn.isVisible())) {
+      return;
     }
+    await updateBtn.click();
+    console.log('Accepted Posit Assistant update dialog');
+
+    // Wait for "Installation Complete" dialog and dismiss it. This wait IS
+    // legitimate -- the install runs asynchronously and the OK button only
+    // appears once it completes.
+    const installOkBtn = this.page.locator('#rstudio_dlg_ok');
+    await installOkBtn.click({ timeout: 30000 });
+    console.log('Dismissed Installation Complete dialog');
+    await sleep(500);
   }
 
   async setupAssistantOptions(provider: string): Promise<void> {
@@ -88,8 +90,10 @@ export class AssistantOptionsActions {
     await sleep(1000);
     await this.acceptUpdateDialog();
 
-    // Update dialog may have closed Options; only click OK if still visible
-    if (await this.assistantOptions.optionsOkButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+    // Update dialog may have closed Options; only click OK if still visible.
+    // Snapshot isVisible() -- absence (Options already closed) is the common
+    // case and we shouldn't burn extra time waiting for an element that's gone.
+    if (await this.assistantOptions.optionsOkButton.isVisible()) {
       await this.assistantOptions.optionsOkButton.click();
       await expect(this.assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
     }

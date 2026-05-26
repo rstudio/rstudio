@@ -12,6 +12,9 @@ test.describe('Session restart', () => {
 
   test('variables defined before restart are visible to the after-restart command', async () => {
     await consoleActions.executeInConsole('x <- 1; y <- 2');
+    // Test specifically exercises .rs.api.restartSession's afterRestart
+    // parameter -- the restartR AppCommand has no equivalent way to schedule
+    // a command for the post-restart session, so this stays in console.
     await consoleActions.executeInConsole(".rs.api.restartSession('print(x + y)')");
 
     await expect(consoleActions.consolePane.consoleOutput).toContainText('[1] 3', {

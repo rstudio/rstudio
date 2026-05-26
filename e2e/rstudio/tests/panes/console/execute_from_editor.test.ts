@@ -1,9 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { documentCloseAllNoSave } from '@utils/commands';
+import { documentCloseAllNoSave, waitForActiveDocument } from '@utils/commands';
 
 test.describe('Run Line button', () => {
   const sandbox = useSuiteSandbox();
@@ -23,9 +23,10 @@ test.describe('Run Line button', () => {
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
     await consoleActions.executeInConsole(
       `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${filePath}")`,
+      { wait: true },
     );
     await consoleActions.executeInConsole(`file.edit("${filePath}")`);
-    await sleep(1500);
+    await waitForActiveDocument(page, filePath, TIMEOUTS.fileOpen);
 
     await sourceActions.goToTop();
 

@@ -1,23 +1,26 @@
-// Regression test for https://github.com/rstudio/rstudio/issues/17738.
+// Regression tests for https://github.com/rstudio/rstudio/issues/17738.
 //
 // closeAllSourceDocs starts a SerializedCommandQueue of close operations and,
 // when the last tab closes, fires LastSourceDocClosedEvent ->
 // PaneManager.closeSourceWindow -> WindowStateChangeEvent(HIDE), which kicks
-// off a 250ms animation on the source LogicalWindow. A file.edit arriving in
+// off a 250ms animation on the source LogicalWindow. A file-open arriving in
 // that window would silently drop because WindowFrame.onEnsureVisible only
 // fired the WindowStateChangeEvent(NORMAL) recovery when !isVisible() -- and
 // during the HIDE animation the WindowFrame is still visible in the DOM.
 //
 // The fix tracks the LogicalWindow's state on the WindowFrame and also
-// recovers when that state is HIDE or MINIMIZE. This test asserts that a
-// file.edit issued immediately after closeAllSourceDocs opens its tab.
+// recovers when that state is HIDE or MINIMIZE. The tests below assert the
+// recovery for both file.edit (Source.onFileEdit) and View() (Source.onShowData)
+// since both flow into the same ensureVisible path.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
+import { DataViewerPane } from '@pages/data_viewer.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile } from '@utils/files';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, documentCloseAllNoSave } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 
 test.describe('Source pane open during close race', () => {
   const sandbox = useSuiteSandbox();
@@ -45,5 +48,36 @@ test.describe('Source pane open during close race', () => {
 
     const sourcePane = new SourcePane(page);
     await expect(sourcePane.selectedTab).toContainText(targetFile, { timeout: 10000 });
+  });
+
+  // FIXME: the View() / documentCloseAllNoSave race surfaces a real gap that
+  // #17740 doesn't cover -- the data viewer iframe never finishes loading
+  // even with the WindowFrame.onEnsureVisible HIDE-state recovery in place.
+  // Investigate the data-viewer-specific mount path (iframe SRC swap + initial
+  // load events) before un-fixme'ing. The data_viewer.test.ts afterEach uses
+  // resetSourcePaneState() to keep the pane open and side-step the race.
+  test.fixme('View() immediately after documentCloseAllNoSave still renders the data viewer', async ({
+    rstudioPage: page,
+  }) => {
+    const initialFile = `race_view_initial_${Date.now()}.R`;
+
+    // Seed the source pane so the close has something to close (and so
+    // LastSourceDocClosedEvent fires when the last tab goes away).
+    await writeAndOpenFile(page, sandbox.dir, initialFile, '# initial');
+
+    // Bridge-path close (mirrors what the data_viewer.test.ts afterEach was
+    // doing before we switched to resetSourcePaneState). Fire-and-forget --
+    // the close pipeline runs async and we want View() to land while the
+    // HIDE animation is still in flight.
+    await documentCloseAllNoSave(page);
+    await consoleActions.executeInConsole('View(mtcars)');
+
+    // The viewer tab opening isn't a strong enough signal -- under #17738
+    // the tab can attach to a still-hiding pane and never finish loading.
+    // Assert the iframe actually renders its first column header so we
+    // exercise the full open + render path.
+    const dataViewer = new DataViewerPane(page);
+    await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+      .toBeVisible({ timeout: TIMEOUTS.fileOpen });
   });
 });

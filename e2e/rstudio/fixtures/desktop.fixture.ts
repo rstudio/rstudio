@@ -198,13 +198,46 @@ function createTempConfig(): TempConfig {
   return { root, configHome, configDir, electronUserData };
 }
 
+// Cold CI runners can take longer than a developer machine to clear the
+// GWT-ready check (JS download/parse, R session boot, ApplicationAutomation
+// init, DeferredInitCompletedEvent). PW_GWT_READY_TIMEOUT_MS overrides
+// explicitly; otherwise default to 60s under CI and the previous 30s locally.
+const PAGE_READY_TIMEOUT_MS =
+  Number(process.env.PW_GWT_READY_TIMEOUT_MS) ||
+  (process.env.CI ? 60000 : 30000);
+
 /**
  * Launch RStudio with CDP, connect Playwright, and return the session.
  *
  * `existingConfigRoot` lets relaunchAfterRestart reuse the same config
  * directory across a quit-and-restart so prefs/state persist.
+ *
+ * Retries the underlying launch once on failure. A cold-cache flake during
+ * the GWT-ready phase is the dominant failure mode on CI runners, and the
+ * post-CDP catch already tears the process tree down on failure, so a
+ * second attempt is safe and cheap. Set PW_LAUNCH_ATTEMPTS to override the
+ * attempt count (default 2 -- one retry).
  */
 export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
+  const maxAttempts = Math.max(1, Number(process.env.PW_LAUNCH_ATTEMPTS) || 2);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await launchRStudioOnce(existingConfigRoot);
+    } catch (err) {
+      lastError = err;
+      const msg = (err as Error)?.message ?? String(err);
+      if (attempt < maxAttempts) {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- retrying`);
+      } else {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- giving up`);
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
   // Clean up any existing RStudio on our specific CDP port. The port is
   // random per worker (9231-9299), so a collision is rare -- only happens
   // when an orphaned process from a prior interrupted run is still bound.
@@ -391,86 +424,97 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
 
   // If anything fails after CDP connect, kill the process to avoid orphaning RStudio.
   try {
-    // The splash screen briefly holds its own page that gets replaced by the
-    // main GWT window. In GWT super dev mode there is also a transient
-    // "Compiling RStudio" page that briefly exposes window.rstudio just
-    // before the codeserver redirects to the compiled app. To avoid
-    // latching onto either of those, poll for a page whose automation
-    // bridge stays installed on the *same* page across consecutive polls.
-    const pageDeadline = Date.now() + 30000;
-    const requiredStableMs = 1000;
+    // Gated diagnostic for the post-CDP wait. Helps compare what the test
+    // fixture is waiting on against what's visible in the UI. Enabled by
+    // PW_DEBUG_LAUNCH=1, same flag as attachLaunchDebug above.
+    const launchDebug =
+      process.env.PW_DEBUG_LAUNCH === '1' || process.env.PW_DEBUG_LAUNCH === 'true';
+    const launchT0 = Date.now();
+    const logLaunchStep = (label: string): void => {
+      if (launchDebug) {
+        console.log(`[launch-timing] +${(Date.now() - launchT0).toString().padStart(5, ' ')}ms ${label}`);
+      }
+    };
+    logLaunchStep('CDP connected; polling for window.rstudio.ready');
+
+    // The splash screen and (in GWT super dev mode) a transient "Compiling
+    // RStudio" page both flash before the real app loads, and the compiling
+    // page briefly exposes window.rstudio. Polling for window.rstudio.ready
+    // === true cuts through both: ApplicationAutomation initializes ready to
+    // false and only flips it on DeferredInitCompletedEvent, so the transient
+    // page never matches and we proceed exactly when R-to-GWT roundtrips are
+    // safe (no separate stability window needed).
+    const pageDeadline = Date.now() + PAGE_READY_TIMEOUT_MS;
     let page: Page | undefined;
-    let stablePage: Page | undefined;
-    let stableSince = 0;
+    let bridgeFirstSeen = false;
 
     while (Date.now() < pageDeadline && !page) {
-      let foundPage: Page | undefined;
       for (const ctx of browser.contexts()) {
         for (const candidate of ctx.pages()) {
           if (candidate.isClosed()) continue;
           try {
-            const hasBridge = await candidate.evaluate(
-              'typeof window.rstudio?.commands?.activateConsole === "function"',
-            );
-            if (hasBridge === true) {
-              foundPage = candidate;
+            const state = await candidate.evaluate(() => {
+              const r = window.rstudio;
+              return {
+                hasBridge: typeof r?.commands?.activateConsole === 'function',
+                ready: r?.ready === true,
+              };
+            });
+            if (state.hasBridge && !bridgeFirstSeen) {
+              bridgeFirstSeen = true;
+              logLaunchStep('window.rstudio bridge installed (ready=false)');
+            }
+            if (state.hasBridge && state.ready) {
+              page = candidate;
               break;
             }
           } catch {
             // Page may be navigating or closing during splash -> main transition.
           }
         }
-        if (foundPage) break;
+        if (page) break;
       }
-
-      if (foundPage && foundPage === stablePage) {
-        if (Date.now() - stableSince >= requiredStableMs) {
-          page = stablePage;
-          break;
-        }
-      } else {
-        // Either no page has the bridge right now, or a different page does
-        // than the one we were tracking. Restart the stability window.
-        stablePage = foundPage;
-        stableSince = foundPage ? Date.now() : 0;
-      }
-
+      if (page) break;
       await sleep(250);
     }
     if (!page) {
-      throw new Error('GWT app did not finish loading within 30s (no stable page with window.rstudio bridge)');
+      throw new Error(
+        `GWT app did not finish loading within ${PAGE_READY_TIMEOUT_MS}ms (window.rstudio.ready never became true)`,
+      );
     }
+    logLaunchStep('window.rstudio.ready === true');
 
-    // Dismiss any "save changes" modal from a previous interrupted run
-    try {
-      const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
-      await dontSaveBtn.click({ timeout: 3000 });
+    // Dismiss any "save changes" modal from a previous interrupted run.
+    // Use isVisible() (snapshot, no wait) to gate the click -- the prior
+    // form passed timeout: 3000 to click(), which spends the full 3s waiting
+    // when no dialog exists (the common case with a fresh per-spec sandbox).
+    const dontSaveBtn = page.locator(
+      "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no",
+    ).first();
+    if (await dontSaveBtn.isVisible()) {
+      await dontSaveBtn.click();
       console.log('Dismissed save dialog from previous session');
       await sleep(1000);
-    } catch {
-      // No dialog, continue normally
     }
 
-    // Dismiss any other modal overlay (e.g. update notification, options dialog)
-    try {
-      const overlay = page.locator('.gwt-PopupPanelGlass');
-      if (await overlay.isVisible({ timeout: 1000 })) {
-        await page.keyboard.press('Escape');
-        console.log('Dismissed modal overlay during startup');
-        await sleep(1000);
-      }
-    } catch {
-      // No overlay
+    // Dismiss any other modal overlay (e.g. update notification, options dialog).
+    const overlay = page.locator('.gwt-PopupPanelGlass').first();
+    if (await overlay.isVisible()) {
+      await page.keyboard.press('Escape');
+      console.log('Dismissed modal overlay during startup');
+      await sleep(1000);
     }
 
     // Activate console (makes it visible without zooming)
     await executeCommand(page, 'activateConsole');
+    logLaunchStep('activateConsole dispatched');
 
     // Wait for the console input to be visible AND R to be idle (no
     // rstudio-console-busy class on #rstudio_console_input). The latter is
     // what GWT sets while R is executing -- visibility alone can occur a
     // beat before R is ready to accept input.
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
+    logLaunchStep('console input visible');
     await page.waitForFunction(
       () => {
         const el = document.getElementById('rstudio_console_input');
@@ -479,6 +523,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       null,
       { timeout: TIMEOUTS.consoleReady, polling: 100 },
     );
+    logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
 
     return { page, browser, rstudioProcess, configRoot };
