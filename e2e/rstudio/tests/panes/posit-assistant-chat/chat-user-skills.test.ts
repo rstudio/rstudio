@@ -8,7 +8,7 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { createAndOpenProject } from '@utils/project';
+import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 import { setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
@@ -190,7 +190,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     annotateVersions(versions);
   });
 
-  test.afterAll(async () => {
+  test.afterAll(async ({ rstudioPage: page }) => {
     // The project-level skill lives inside the sandbox project; the sandbox
     // afterAll (registered by useSuiteSandbox) removes the entire sandbox
     // tree, so no explicit cleanup is needed for it here.
@@ -200,6 +200,10 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
       `unlink("${userSkillDir()}", recursive = TRUE)`,
       { wait: true },
     );
+
+    // Close the project we opened in beforeAll so subsequent test files start
+    // from a no-project workbench (per the convention in utils/test-reset.ts).
+    await closeProjectIfOpen(page);
   });
 
   test('both custom skills are discovered by assistant', async () => {
@@ -269,6 +273,6 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    expect(responseText).toContain(`skill: ${USER_SKILL_NAME}`);
+    expect(responseText).toMatch(new RegExp(`skill:\\s*${USER_SKILL_NAME}`));
   });
 });
