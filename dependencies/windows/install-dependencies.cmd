@@ -157,10 +157,18 @@ if exist quarto\bin\quarto.exe (
     if not "%%v" == "%QUARTO_VERSION%" (
       echo -- Quarto version mismatch: found %%v, expected %QUARTO_VERSION%
       rmdir /s /q quarto
+      if exist quarto (
+        echo ^^!^^! ERROR: Could not remove old quarto directory. Close any process holding files in it and retry.
+        exit /b 1
+      )
     )
   )
 )
 %RUN% install QUARTO
+if not exist quarto\bin\quarto.exe (
+  echo ^^!^^! ERROR: Quarto install failed: quarto\bin\quarto.exe not found.
+  exit /b 1
+)
 
 REM Always remove any existing copilot-language-server installations to ensure latest version
 if exist copilot-language-server (
