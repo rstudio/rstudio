@@ -45,7 +45,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   // delimiter of an R section header: \p{Pd} dashes, box-drawing horizontals,
   // '#', '=', '-'. Used by both the tokenizer below and r_code_model.js for
   // label trimming and fold-range computation; must be used with the 'u' flag.
-  var reSectionDelimChars = "-\\p{Pd}\\u2500\\u2501#=";
+  var reSectionDelimChars = "\\p{Pd}\\u0023\\u002d\\u003d\\u2500\\u2501";
 
   var RoxygenHighlightRules = function()
   {
