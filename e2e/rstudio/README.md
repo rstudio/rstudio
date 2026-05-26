@@ -119,21 +119,32 @@ npx playwright show-report
 
 ### Configuration
 
-The Playwright config (`playwright.config.ts`) runs tests **sequentially** (1 worker, no parallel) with a 5-minute timeout per test and no retries by default. Add `--retries 1` if flakiness is expected.
+The Playwright config (`playwright.config.ts`) runs tests **sequentially** (1 worker, no parallel) with a 5-minute timeout per test. Retries default to 0 locally and to 1 under CI (controlled by the standard `CI` env var) -- one retry absorbs a transient launch flake on a fresh runner without rerunning the suite by hand. Override on the CLI with `--retries N`.
 
 ## Project Structure
 
 ```
 e2e/rstudio/
-├── fixtures/               # Test fixtures (session lifecycle)
+├── fixtures/               # Test fixtures (session lifecycle, sandbox setup/teardown)
 ├── pages/                  # Page objects (locators and low-level helpers)
 ├── actions/                # Higher-level actions (multi-step operations)
 ├── utils/                  # Shared utilities (timeouts, constants, helpers)
 ├── tests/                  # Test specs, organized by feature area
+├── scripts/                # Dev wrappers for the in-tree dev build (test:desktop-dev, test:server-dev)
+├── docs/                   # Supplementary documentation
+├── DESCRIPTION             # R-style package metadata (lets RStudio treat this dir as a project)
 ├── playwright.config.ts
 ├── tsconfig.json
 └── package.json
 ```
+
+The `package.json` exposes a few convenience npm scripts on top of `npx playwright test`:
+
+- `npm test` / `npm run test:desktop` -- runs `--project=desktop`
+- `npm run test:server` -- runs `--project=server` pointing `PW_RSERVER_BIN` / `PW_RSERVER_CONF` at an installed Server build
+- `npm run test:desktop-dev` / `npm run test:server-dev` -- ensures the C++ session and GWT devmode are current, then launches against the in-tree dev build (see `scripts/`)
+- `npm run test:report` -- opens the HTML report
+- `npm run typecheck` -- `tsc --noEmit`
 
 ### Path Aliases
 
@@ -152,10 +163,14 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 
 The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
-- **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
-- **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
+- **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
+- **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, `--automation-agent`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
 
 Both fixtures dismiss leftover save dialogs from previous runs.
+
+`--automation-agent` is the flag that makes the IDE testable: rsession's `ApplicationAutomation` only installs `window.rstudio` (the command, preference, and document bridge driven from `@utils/commands`) when this is set. The Desktop fixture polls for `window.rstudio.ready === true` rather than a fixed sleep, which transparently rides out the splash screen and (in GWT super dev mode) the transient "Compiling RStudio" page.
+
+In CI mode, `globalSetup` does a warmup launch+shutdown of Desktop RStudio before any worker starts, so the first real test doesn't pay the cold-cache GWT-ready cost. This adds one extra launch to a CI run; set `PW_WARMUP_LAUNCH=0` to opt out, or `PW_WARMUP_LAUNCH=1` to force-enable it locally. Skipped for Server mode regardless.
 
 Before any worker spawns, a Playwright `globalSetup` hook (`fixtures/sandbox-setup.ts`) creates a per-invocation **sandbox** directory under `os.tmpdir()` (or under `PW_SANDBOX_ROOT` if set) and exports its absolute path as the internal `PW_SANDBOX` env var. Every test-side artifact lives inside it. A matching `globalTeardown` (`fixtures/sandbox-teardown.ts`) removes the entire subtree at end of run -- unless a test failed or `PW_SANDBOX_SKIP_CLEANUP` is set, in which case the path is logged and the contents are left in place for triage. The auto-created `pw_sandbox_<rand>` subtree is the only thing that ever gets removed; if you set `PW_SANDBOX_ROOT` yourself, that parent directory is never touched.
 
@@ -401,8 +416,13 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_SANDBOX_NO_SEED_CREDENTIALS` | Both | No | Set to `true`/`1` to opt out of copying real AI credentials into the sandbox. By default, if `~/.positai/` or the GitHub Copilot config directory (`%LOCALAPPDATA%\github-copilot\` on Windows, `~/.config/github-copilot/` on macOS/Linux) exists on the host, it's copied into the sandbox so `@ai` tests start authenticated. When this is set (or the source directory is absent), `@ai` tests skip with a clear "no credentials seeded" reason. Privacy: tokens land inside the sandbox and persist on failed runs until you delete it -- set this opt-out on machines that aren't dedicated test accounts. |
 | `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. |
 | `PW_RSTUDIO_R_LIBS_SKIP_PREP` | Both | No | Set to `true`/`1` to skip globalSetup's pre-population of the user library. Useful when running against an R install that already has everything, or to reproduce the empty-library popup behavior on purpose. |
+| `PW_WARMUP_LAUNCH` | Desktop | No | `1`/`true` to force a warmup launch in globalSetup; `0`/`false` to skip it. Default: on under CI, off locally. Skipped entirely in Server mode. |
+| `PW_LAUNCH_ATTEMPTS` | Desktop | No | Number of attempts the in-fixture launch retry will make before giving up (default: `2`, i.e. one retry). |
+| `PW_GWT_READY_TIMEOUT_MS` | Desktop | No | Override how long the fixture waits for `window.rstudio.ready === true` after CDP connects. Default: `60000` on CI, `30000` locally. |
+| `PW_DEBUG_LAUNCH` | Desktop | No | Set to `1`/`true` to emit `[debug-launch]` / `[launch-timing]` traces (page lifecycle, console errors, post-CDP wait steps) during startup. Diagnostic only. |
+| `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
 
-`PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually.
+`PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually. `PW_AI_SEEDED_POSITAI` / `PW_AI_SEEDED_COPILOT` are also internal: `globalSetup` sets them to `1` for each provider whose credentials were successfully copied; `requireAiCredentials()` reads them to decide whether to skip an `@ai` test. Don't set those manually either.
 
 ### R package pre-population
 
