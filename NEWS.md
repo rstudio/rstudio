@@ -12,6 +12,7 @@
 - ([#17737](https://github.com/rstudio/rstudio/issues/17737)): Restore the "Show .Last.value in environment listing" preference, which had stopped surfacing `.Last.value` in the Environment pane.
 - ([#17743](https://github.com/rstudio/rstudio/issues/17743)): Fix the debugger failing to capture the browser environment for functions loaded by the `box` package.
 - ([#17712](https://github.com/rstudio/rstudio/issues/17712)): Fix Quarto rendering failing on Windows when the user's home folder path contains an ampersand.
+- ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 
 ### Dependencies
 - Ace 1.43.5
