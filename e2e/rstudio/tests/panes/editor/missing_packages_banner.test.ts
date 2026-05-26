@@ -3,12 +3,24 @@
 // "Don't show for this file" dismissal that can be undone via the
 // toggleDetectMissingPackages AppCommand.
 
+import type { Locator, Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { documentOpen, executeCommand, isCommandChecked, saveDocument } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+
+// InfoBar duplicates its message into a role="status" live-region for screen
+// readers (see InfoBar.java setText -- live_ is populated after a short
+// AriaLiveService.UI_ANNOUNCEMENT_DELAY). Scope locator queries to the
+// visible label so getByText doesn't trip strict mode once the live region
+// has caught up.
+function bannerLocator(page: Page, pkg: string): Locator {
+  return page
+    .getByText(`Package ${pkg} required but is not installed.`)
+    .and(page.locator(':not([role="status"])'));
+}
 
 // Two real CRAN packages that the test session won't already have installed.
 // `fortunes` has no Imports/Depends, so it isn't pulled in by REQUIRED_PACKAGES'
@@ -52,9 +64,7 @@ test.describe('Missing-package banner', () => {
       // AvailablePackagesReadyEvent). Save forces the path we care about.
       await saveDocument(page);
 
-      const banner = page.getByText(
-        `Package ${TEST_PKG_A} required but is not installed.`,
-      );
+      const banner = bannerLocator(page, TEST_PKG_A);
       // available.packages() may still be loading the first time the session
       // hits this path; the helper retries on AvailablePackagesReadyEvent,
       // so the visible-banner deadline is intentionally generous.
@@ -84,7 +94,7 @@ test.describe('Missing-package banner', () => {
       // Open A, save, wait for its banner, then dismiss in A.
       await writeAndOpenFile(page, sandbox.dir, 'missing_packages_a.R', `library(${TEST_PKG_A})\n`);
       await saveDocument(page);
-      const bannerA = page.getByText(`Package ${TEST_PKG_A} required but is not installed.`);
+      const bannerA = bannerLocator(page, TEST_PKG_A);
       await expect(bannerA).toBeVisible({ timeout: 60000 });
       await page.getByText("Don't show for this file").click();
       await expect(bannerA).toBeHidden({ timeout: 5000 });
@@ -97,7 +107,7 @@ test.describe('Missing-package banner', () => {
       // DocUpdateSentinel, not in a global pref.
       await writeAndOpenFile(page, sandbox.dir, 'missing_packages_b.R', `library(${TEST_PKG_B})\n`);
       await saveDocument(page);
-      const bannerB = page.getByText(`Package ${TEST_PKG_B} required but is not installed.`);
+      const bannerB = bannerLocator(page, TEST_PKG_B);
       await expect(bannerB).toBeVisible({ timeout: 60000 });
       // B is the active editor; syncDetectMissingPackagesMode() in onActivate
       // restores the command to checked for the newly-active file.
