@@ -50,10 +50,13 @@ export async function writeAndOpenFile(
  * `Expected: not ""` timeout from a downstream getEditorContent /
  * focusEditor call rather than as "file never finished loading."
  *
- * `pathOrName` may be a basename, a relative path, or an absolute path --
- * `file.edit` resolves relative paths against R's cwd, and the active-doc
- * post-condition compares basenames so the helper does not need to know
- * what RStudio will normalize the path to.
+ * `pathOrName` may be a basename, a relative path, or an absolute path.
+ * When absolute, the active-doc post-condition compares full paths
+ * (case-insensitive, slashes normalized) so two open files that share a
+ * basename can't be confused for one another. When relative or a bare
+ * basename, falls back to basename match -- R resolves the path against
+ * its own cwd, which can differ from Node's, so the absolute form
+ * RStudio reports back is not known to the helper.
  */
 export async function openFile(
   page: Page,
@@ -61,30 +64,38 @@ export async function openFile(
 ): Promise<void> {
   await executeInConsole(page, `file.edit(${rPathLiteral(pathOrName)})`);
 
-  // Compute the basename for both the tab and the bridge check. file.edit
-  // resolves relative paths against R's cwd, which can differ from Node's,
-  // so we don't know the exact absolute path the bridge will report -- but
-  // the basename is invariant.
-  const slash = Math.max(pathOrName.lastIndexOf('/'), pathOrName.lastIndexOf('\\'));
-  const basename = slash >= 0 ? pathOrName.slice(slash + 1) : pathOrName;
+  // rPathLiteral normalizes backslashes to forward slashes for R; mirror
+  // that on the comparison side so platform-specific separators don't
+  // cause spurious mismatches.
+  const requestedSlashes = pathOrName.replace(/\\/g, '/');
+  const slash = requestedSlashes.lastIndexOf('/');
+  const basename = slash >= 0 ? requestedSlashes.slice(slash + 1) : requestedSlashes;
+  const expectedFullPath = path.isAbsolute(pathOrName) ? requestedSlashes : null;
 
   const tab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
   await expect(tab).toContainText(basename, { timeout: TIMEOUTS.fileOpen });
 
   await page.waitForFunction(
-    (base: string) => {
+    (args: { expectedFullPath: string | null; basename: string }) => {
       const doc = window.rstudio?.documents.active() ?? null;
       if (!doc || !doc.path) return false;
-      const docSlash = Math.max(doc.path.lastIndexOf('/'), doc.path.lastIndexOf('\\'));
-      const docBase = docSlash >= 0 ? doc.path.slice(docSlash + 1) : doc.path;
-      if (docBase.toLowerCase() !== base.toLowerCase()) return false;
+      const docPath = doc.path.replace(/\\/g, '/');
+      if (args.expectedFullPath !== null) {
+        // Full-path match: case-insensitive to tolerate macOS HFS+ /
+        // Windows NTFS, where the filesystem itself folds case.
+        if (docPath.toLowerCase() !== args.expectedFullPath.toLowerCase()) return false;
+      } else {
+        const docSlash = docPath.lastIndexOf('/');
+        const docBase = docSlash >= 0 ? docPath.slice(docSlash + 1) : docPath;
+        if (docBase.toLowerCase() !== args.basename.toLowerCase()) return false;
+      }
       // Bridge confirms the active doc has a live Ace editor instance --
       // the same handle the GWT side already tracks as "the active doc."
       // Returns null when there's no editor or it's not Ace-backed (data
       // viewer, object explorer, ...) so we don't return prematurely.
       return window.rstudio?.documents.activeEditor() != null;
     },
-    basename,
+    { expectedFullPath, basename },
     { timeout: TIMEOUTS.fileOpen, polling: 50 },
   );
 }
