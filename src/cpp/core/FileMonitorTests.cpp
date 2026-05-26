@@ -1,0 +1,280 @@
+/*
+ * FileMonitorTests.cpp
+ *
+ * Copyright (C) 2026 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifdef __APPLE__
+
+#include <chrono>
+#include <thread>
+#include <fstream>
+#include <vector>
+
+#include <boost/bind/bind.hpp>
+
+#include <gtest/gtest.h>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
+#include <core/FileInfo.hpp>
+#include <core/collection/Tree.hpp>
+#include <core/system/FileChangeEvent.hpp>
+#include <core/system/FileMonitor.hpp>
+#include <core/system/System.hpp>
+
+namespace rstudio {
+namespace core {
+namespace tests {
+
+namespace {
+
+struct CallbackState
+{
+   bool registered = false;
+   bool registrationError = false;
+   bool monitoringError = false;
+   bool unregistered = false;
+   system::file_monitor::Handle handle;
+   std::vector<system::FileChangeEvent> events;
+};
+
+void onRegistered(CallbackState* pState,
+                  system::file_monitor::Handle handle,
+                  const tree<FileInfo>& /*files*/)
+{
+   pState->handle = handle;
+   pState->registered = true;
+}
+
+void onRegistrationError(CallbackState* pState, const Error& /*error*/)
+{
+   pState->registrationError = true;
+}
+
+void onMonitoringError(CallbackState* pState, const Error& /*error*/)
+{
+   pState->monitoringError = true;
+}
+
+void onFilesChanged(CallbackState* pState,
+                    const std::vector<system::FileChangeEvent>& events)
+{
+   for (const auto& event : events)
+      pState->events.push_back(event);
+}
+
+void onUnregistered(CallbackState* pState, system::file_monitor::Handle /*handle*/)
+{
+   pState->unregistered = true;
+}
+
+// Pumps the file_monitor callback queue on the current thread and polls
+// the supplied predicate until it returns true or the timeout elapses.
+template <typename Predicate>
+bool waitFor(Predicate pred,
+             std::chrono::milliseconds timeout = std::chrono::seconds(8))
+{
+   auto deadline = std::chrono::steady_clock::now() + timeout;
+   while (std::chrono::steady_clock::now() < deadline)
+   {
+      system::file_monitor::checkForChanges();
+      if (pred())
+         return true;
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+   }
+   system::file_monitor::checkForChanges();
+   return pred();
+}
+
+bool hasEventFor(const CallbackState& state,
+                 system::FileChangeEvent::Type type,
+                 const std::string& path)
+{
+   for (const auto& event : state.events)
+   {
+      if (event.type() == type &&
+          event.fileInfo().absolutePath() == path)
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
+void writeFile(const FilePath& path, const std::string& contents)
+{
+   std::ofstream out(path.getAbsolutePath());
+   ASSERT_TRUE(out.is_open());
+   out << contents;
+}
+
+system::file_monitor::Handle startMonitor(const FilePath& dir,
+                                          CallbackState* pState)
+{
+   using namespace boost::placeholders;
+
+   system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(onRegistered, pState, _1, _2);
+   cb.onRegistrationError = boost::bind(onRegistrationError, pState, _1);
+   cb.onMonitoringError = boost::bind(onMonitoringError, pState, _1);
+   cb.onFilesChanged = boost::bind(onFilesChanged, pState, _1);
+   cb.onUnregistered = boost::bind(onUnregistered, pState, _1);
+
+   system::file_monitor::registerMonitor(
+      dir,
+      /*recursive=*/false,
+      boost::function<bool(const FileInfo&)>(),
+      cb);
+
+   EXPECT_TRUE(waitFor([&] { return pState->registered || pState->registrationError; }));
+   EXPECT_TRUE(pState->registered);
+   EXPECT_FALSE(pState->registrationError);
+   return pState->handle;
+}
+
+void stopMonitor(system::file_monitor::Handle handle, CallbackState* pState)
+{
+   system::file_monitor::unregisterMonitor(handle);
+   waitFor([&] { return pState->unregistered; });
+}
+
+} // anonymous namespace
+
+class FileMonitorTest : public ::testing::Test
+{
+protected:
+   static void SetUpTestSuite()
+   {
+      system::file_monitor::initialize();
+   }
+
+   static void TearDownTestSuite()
+   {
+      system::file_monitor::stop();
+   }
+
+   void SetUp() override
+   {
+      std::string name = "rstudio-file-monitor-test-" + system::generateUuid(false);
+      FilePath created = FilePath("/tmp").completeChildPath(name);
+      Error error = created.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+
+      // Use the canonical path; FSEvents reports paths in canonical form
+      // (e.g. /private/tmp/... rather than /tmp/...) and registerMonitor
+      // canonicalizes the rootPath internally before scanning the tree.
+      std::string canonical = created.getCanonicalPath();
+      ASSERT_FALSE(canonical.empty());
+      tempDir_ = FilePath(canonical);
+   }
+
+   void TearDown() override
+   {
+      tempDir_.removeIfExists();
+   }
+
+   FilePath tempDir_;
+};
+
+TEST_F(FileMonitorTest, NonRecursiveDetectsFileAdded)
+{
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   state.events.clear();
+
+   FilePath child = tempDir_.completeChildPath("added.txt");
+   writeFile(child, "hello");
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         child.getAbsolutePath());
+   }));
+
+   stopMonitor(handle, &state);
+}
+
+TEST_F(FileMonitorTest, NonRecursiveDetectsFileModified)
+{
+   FilePath child = tempDir_.completeChildPath("modified.txt");
+   writeFile(child, "initial");
+   // mtime resolution: bump it so the modification is observable
+   std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   state.events.clear();
+
+   writeFile(child, "updated contents that are longer than the initial");
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileModified,
+                         child.getAbsolutePath());
+   }));
+
+   stopMonitor(handle, &state);
+}
+
+TEST_F(FileMonitorTest, NonRecursiveDetectsFileRemoved)
+{
+   FilePath child = tempDir_.completeChildPath("doomed.txt");
+   writeFile(child, "soon to be gone");
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   state.events.clear();
+
+   ASSERT_FALSE(child.remove());
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileRemoved,
+                         child.getAbsolutePath());
+   }));
+
+   stopMonitor(handle, &state);
+}
+
+TEST_F(FileMonitorTest, NonRecursiveIgnoresSubtreeChanges)
+{
+   FilePath subDir = tempDir_.completeChildPath("subdir");
+   ASSERT_FALSE(subDir.ensureDirectory());
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   // The subdir itself was created before the watch started; we should NOT
+   // receive any events for activity inside it.
+   state.events.clear();
+
+   FilePath nested = subDir.completeChildPath("deep.txt");
+   writeFile(nested, "nested activity");
+
+   // Wait long enough that an event WOULD have arrived if we were going to
+   // process subtree changes (FSEvents latency is configured at 1s; allow a
+   // generous margin).
+   std::this_thread::sleep_for(std::chrono::seconds(3));
+   system::file_monitor::checkForChanges();
+
+   for (const auto& event : state.events)
+   {
+      EXPECT_NE(event.fileInfo().absolutePath(), nested.getAbsolutePath())
+         << "Unexpected event for nested file";
+   }
+
+   stopMonitor(handle, &state);
+}
+
+} // namespace tests
+} // namespace core
+} // namespace rstudio
+
+#endif // __APPLE__
