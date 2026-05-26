@@ -10,11 +10,12 @@
 - ([#17738](https://github.com/rstudio/rstudio/issues/17738)): Fix `file.edit()` (and other Source pane open events) silently dropping when invoked during an in-flight `closeAllSourceDocs`.
 - ([#17737](https://github.com/rstudio/rstudio/issues/17737)): Restore the "Show .Last.value in environment listing" preference, which had stopped surfacing `.Last.value` in the Environment pane.
 - ([#17743](https://github.com/rstudio/rstudio/issues/17743)): Fix the debugger failing to capture the browser environment for functions loaded by the `box` package.
+- ([#17712](https://github.com/rstudio/rstudio/issues/17712)): Fix Quarto rendering failing on Windows when the user's home folder path contains an ampersand.
 
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.480.0
 - Electron 41.7.0
 - Node.js 22.22.2 (copilot, Posit AI)
-- Quarto 1.9.37
+- Quarto 1.9.38
 - xterm.js 6.0.0
