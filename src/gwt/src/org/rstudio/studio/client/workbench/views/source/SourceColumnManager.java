@@ -637,6 +637,27 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    }
 
    /**
+    * Native Ace editor instance backing the active source document, or null
+    * when there is no active editor or the active editor is not Ace-backed
+    * (e.g. data viewer, object explorer, code browser). Exposed to JS via
+    * the automation bridge (`window.rstudio.documents.activeEditor()`); tests
+    * call Ace API methods (getValue, getSession, setValue, ...) on it
+    * directly instead of walking the DOM for a `.ace_editor` element.
+    */
+   public JavaScriptObject getActiveNativeEditor()
+   {
+      if (!hasActiveEditor())
+         return null;
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (!(target instanceof TextEditingTarget))
+         return null;
+      DocDisplay display = ((TextEditingTarget) target).getDocDisplay();
+      if (!(display instanceof AceEditor))
+         return null;
+      return ((AceEditor) display).getWidget().getEditor();
+   }
+
+   /**
     * Get selections from the active editor as a JSON array.
     * Format: [{ "startLine": n, "startCharacter": n, "endLine": n, "endCharacter": n, "text": "..." }, ...]
     * For cursor position (no selection), start and end will be the same position and text will be empty.

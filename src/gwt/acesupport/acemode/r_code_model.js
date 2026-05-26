@@ -23,6 +23,15 @@ var Utils = require("mode/utils");
 var $verticallyAlignFunctionArgs = false;
 var $hierarchicalSectionFolding = true;
 
+// Regexes for R section header parsing, derived from the same delimiter class
+// the tokenizer uses (see mode/r_highlight_rules). Kept in sync so a line
+// recognized as a sectionhead also yields a label and a fold range.
+var reSectionDelimChars = require("mode/r_highlight_rules").reSectionDelimChars;
+var reSectionLabelStart = new RegExp("[^" + reSectionDelimChars + "\\s]", "u");
+var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
+var reSectionDelimsOnly = new RegExp("^\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
+var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
+
 function comparePoints(pos1, pos2)
 {
    if (pos1.row != pos2.row)
@@ -1004,10 +1013,10 @@ var RCodeModel = function(session, tokenizer,
             //
             // is accepted for folding purposes.
             var label = "(Untitled)";
-            var matchStart = /[^#=-\s]/.exec(value);
+            var matchStart = reSectionLabelStart.exec(value);
             if (matchStart) {
                label = value.substr(matchStart.index);
-               label = label.replace(/\s*[#=-]+\s*$/, "");
+               label = label.replace(reSectionLabelTail, "");
             }
 
             // Detect Markdown-style headers, of the form
@@ -1432,10 +1441,10 @@ var RCodeModel = function(session, tokenizer,
          // Otherwise, consume the '----' tail of the section
          // header as well.
          var index;
-         if (/^\s*[#=-]+\s*$/.test(line)) {
+         if (reSectionDelimsOnly.test(line)) {
             index = line.length;
          } else {
-            var match = /[#=-]+\s*$/.exec(line);
+            var match = reSectionTrailingTail.exec(line);
             if (!match)
                return;
             index = match.index;

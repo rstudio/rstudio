@@ -6,6 +6,7 @@ import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
+import { openFile } from '../utils/files';
 import { Ace, AceEditorElement } from '../utils/ace';
 
 export class SourcePaneActions {
@@ -35,9 +36,7 @@ export class SourcePaneActions {
       { wait: true },
     );
 
-    await this.consolePaneActions.executeInConsole(`file.edit(${rStringLiteral(fileName)})`);
-
-    await expect(this.sourcePane.selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
+    await openFile(this.page, fileName);
   }
 
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
@@ -189,17 +188,18 @@ export class SourcePaneActions {
   }
 
   /**
-   * Get the full text content of the active source editor via Ace API.
+   * Get the full text content of the active source editor via the
+   * automation bridge. `window.rstudio.documents.activeEditor()` returns
+   * the same native Ace instance the GWT side already tracks as "the
+   * active doc," so there's no DOM scan and no chance of landing on the
+   * console scroll panel, dialog editors, or stale source editors that
+   * linger in the DOM after a tab close.
    */
   async getEditorContent(): Promise<string> {
     return await this.page.evaluate(() => {
-      const editors = document.querySelectorAll('.ace_editor');
-      for (let i = 0; i < editors.length; i++) {
-        if (editors[i].closest('#rstudio_console_input')) continue;
-        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
-        if (editor) return editor.getValue();
-      }
-      throw new Error('No active source editor found');
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      return editor.getValue();
     });
   }
 

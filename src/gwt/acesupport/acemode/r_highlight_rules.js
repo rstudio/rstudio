@@ -41,6 +41,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   var reLhsBracket = "[[({]";
   var reRhsBracket = "[\\])}]";
 
+  // Body of the character class (no surrounding brackets) for the trailing
+  // delimiter of an R section header: \p{Pd} dashes, box-drawing horizontals,
+  // '#', '=', '-'. Used by both the tokenizer below and r_code_model.js for
+  // label trimming and fold-range computation; must be used with the 'u' flag.
+  var reSectionDelimChars = "\\p{Pd}\\u0023\\u002d\\u003d\\u2500\\u2501";
+
   var RoxygenHighlightRules = function()
   {
     var rules = {};
@@ -233,9 +239,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     // full rule states.
     rules["#comment"] = [
       {
-        token : "comment.sectionhead",
-        regex : "#+(?!').*(?:----|====|####)\\s*$",
-        next  : "start"
+        token   : "comment.sectionhead",
+        regex   : "#+(?!').*(?:[" + reSectionDelimChars + "]{4,})\\s*$",
+        next    : "start",
+        unicode : true
       },
       {
         // Begin Roxygen with todo
@@ -589,6 +596,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   oop.inherits(RHighlightRules, TextHighlightRules);
 
   exports.RHighlightRules = RHighlightRules;
+  exports.reSectionDelimChars = reSectionDelimChars;
   exports.setHighlightRFunctionCalls = function(value) {
     $colorFunctionCalls = value;
   };
