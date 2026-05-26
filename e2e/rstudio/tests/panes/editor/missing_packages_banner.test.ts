@@ -7,12 +7,15 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { executeCommand, isCommandChecked, saveDocument } from '@utils/commands';
+import { documentOpen, executeCommand, isCommandChecked, saveDocument } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 
-// `fortunes` is on CRAN and has no Imports/Depends, so it isn't pulled in by
-// any of REQUIRED_PACKAGES' transitive deps -- a reliable "real CRAN package
-// the test session doesn't already have installed."
-const TEST_PKG = 'fortunes';
+// Two real CRAN packages that the test session won't already have installed.
+// `fortunes` has no Imports/Depends, so it isn't pulled in by REQUIRED_PACKAGES'
+// transitive closure. `cowsay` is a small package that depends on `fortunes`
+// (so removing `fortunes` from the cache is enough to make both look missing).
+const TEST_PKG_A = 'fortunes';
+const TEST_PKG_B = 'cowsay';
 
 test.describe('Missing-package banner', () => {
   const sandbox = useSuiteSandbox();
@@ -23,12 +26,17 @@ test.describe('Missing-package banner', () => {
     await consoleActions.closeAllBuffersWithoutSaving();
     // discoverPackageDependencies filters to CRAN packages that aren't on
     // disk, so if a prior run or the shared R_LIBS_USER cache already has
-    // the package the banner won't appear. Force a clean slate.
-    await consoleActions.uninstallPackage(TEST_PKG);
+    // the package the banner won't appear. Force a clean slate for both.
+    await consoleActions.uninstallPackage(TEST_PKG_A);
+    await consoleActions.uninstallPackage(TEST_PKG_B);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['missing_packages.R']);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [
+      'missing_packages.R',
+      'missing_packages_a.R',
+      'missing_packages_b.R',
+    ]);
   });
 
   test('dismisses per-file and re-appears when toggleDetectMissingPackages is flipped back on',
@@ -37,7 +45,7 @@ test.describe('Missing-package banner', () => {
         page,
         sandbox.dir,
         'missing_packages.R',
-        `library(${TEST_PKG})\n`,
+        `library(${TEST_PKG_A})\n`,
       );
 
       // discoverPackageDependencies fires on save (and on
@@ -45,7 +53,7 @@ test.describe('Missing-package banner', () => {
       await saveDocument(page);
 
       const banner = page.getByText(
-        `Package ${TEST_PKG} required but is not installed.`,
+        `Package ${TEST_PKG_A} required but is not installed.`,
       );
       // available.packages() may still be loading the first time the session
       // hits this path; the helper retries on AvailablePackagesReadyEvent,
@@ -66,5 +74,50 @@ test.describe('Missing-package banner', () => {
       await executeCommand(page, 'toggleDetectMissingPackages');
       await expect(banner).toBeVisible({ timeout: 60000 });
       expect(await isCommandChecked(page, 'toggleDetectMissingPackages')).toBe(true);
+    });
+
+  test('dismissal is per-file and the command tracks the active editor',
+    async ({ rstudioPage: page }) => {
+      const pathA = `${sandbox.dir}/missing_packages_a.R`;
+      const pathB = `${sandbox.dir}/missing_packages_b.R`;
+
+      // Open A, save, wait for its banner, then dismiss in A.
+      await writeAndOpenFile(page, sandbox.dir, 'missing_packages_a.R', `library(${TEST_PKG_A})\n`);
+      await saveDocument(page);
+      const bannerA = page.getByText(`Package ${TEST_PKG_A} required but is not installed.`);
+      await expect(bannerA).toBeVisible({ timeout: 60000 });
+      await page.getByText("Don't show for this file").click();
+      await expect(bannerA).toBeHidden({ timeout: 5000 });
+      await expect
+        .poll(() => isCommandChecked(page, 'toggleDetectMissingPackages'))
+        .toBe(false);
+
+      // Open B (different missing package). The dismissal in A must not
+      // suppress B's banner -- the suppression property lives on A's
+      // DocUpdateSentinel, not in a global pref.
+      await writeAndOpenFile(page, sandbox.dir, 'missing_packages_b.R', `library(${TEST_PKG_B})\n`);
+      await saveDocument(page);
+      const bannerB = page.getByText(`Package ${TEST_PKG_B} required but is not installed.`);
+      await expect(bannerB).toBeVisible({ timeout: 60000 });
+      // B is the active editor; syncDetectMissingPackagesMode() in onActivate
+      // restores the command to checked for the newly-active file.
+      await expect
+        .poll(() => isCommandChecked(page, 'toggleDetectMissingPackages'))
+        .toBe(true);
+
+      // Switch back to A: command reflects A's (dismissed) state. The banner
+      // stays gone because tab activation doesn't re-run discovery.
+      await documentOpen(page, pathA, {}, TIMEOUTS.fileOpen);
+      await expect
+        .poll(() => isCommandChecked(page, 'toggleDetectMissingPackages'))
+        .toBe(false);
+      await expect(bannerA).toBeHidden();
+
+      // Switch back to B: command flips to true, B's banner is still visible.
+      await documentOpen(page, pathB, {}, TIMEOUTS.fileOpen);
+      await expect
+        .poll(() => isCommandChecked(page, 'toggleDetectMissingPackages'))
+        .toBe(true);
+      await expect(bannerB).toBeVisible();
     });
 });
