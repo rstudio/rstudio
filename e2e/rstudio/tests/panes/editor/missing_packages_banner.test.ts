@@ -35,8 +35,11 @@ test.describe('Missing-package banner', () => {
     await consoleActions.closeAllBuffersWithoutSaving();
     // discoverPackageDependencies filters to CRAN packages that aren't on
     // disk, so if a prior run or the shared R_LIBS_USER cache already has
-    // the package the banner won't appear. Force a clean slate.
-    await consoleActions.uninstallPackage(TEST_PKG);
+    // the package the banner won't appear. Force a clean slate -- assert
+    // the helper actually succeeded so a failure here surfaces as a clear
+    // setup error rather than a 60s banner-visibility timeout downstream.
+    const uninstalled = await consoleActions.uninstallPackage(TEST_PKG);
+    expect(uninstalled, `${TEST_PKG} must be absent before the test runs`).toBe(true);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
