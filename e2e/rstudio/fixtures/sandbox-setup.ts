@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { prepareRLibs } from './r-libs-setup';
+import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -164,4 +165,33 @@ export default async function globalSetup() {
   // test. Pre-populating here is idempotent -- a warm cache is a fast
   // installed.packages() check with no install call.
   await prepareRLibs();
+
+  // Warmup launch: workers are recycled between spec files, so each new file
+  // pays the cold-launch cost. Booting once here populates dyld/page caches
+  // before any worker tries, dropping subsequent launches well under the
+  // GWT-ready deadline. Skipped on Server mode (no IDE binary to warm) and
+  // when PW_WARMUP_LAUNCH explicitly opts out. Default on under CI only --
+  // a developer running locally has warm caches already.
+  const mode = (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase();
+  const warmupOverride = process.env.PW_WARMUP_LAUNCH?.toLowerCase();
+  const shouldWarmup =
+    mode === 'desktop' &&
+    (warmupOverride === '1' || warmupOverride === 'true' ||
+     (warmupOverride !== '0' && warmupOverride !== 'false' && !!process.env.CI));
+  if (shouldWarmup) {
+    console.log('[sandbox] warmup launch (populates RStudio launch caches)');
+    const t0 = Date.now();
+    try {
+      const session = await launchRStudio();
+      await shutdownRStudio(session);
+      console.log(`[sandbox] warmup launch complete in ${Date.now() - t0}ms`);
+    } catch (err) {
+      // A warmup failure is not fatal -- the first real test will retry the
+      // launch via the in-fixture retry. Log it so a persistent failure mode
+      // is visible without burning a whole test slot to surface it.
+      console.warn(
+        `[sandbox] warmup launch failed after ${Date.now() - t0}ms (continuing): ${(err as Error).message}`,
+      );
+    }
+  }
 }

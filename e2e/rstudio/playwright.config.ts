@@ -36,12 +36,12 @@ const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', '@smoke', ...desktopOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', '@smoke', ...serverOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
   },
 ];
 
@@ -85,7 +85,10 @@ export default defineConfig<{}, ProjectOptions>({
   fullyParallel: false,
   workers: 1,
   timeout: 300000,
-  retries: 0,
+  // On CI a single transient launch flake (e.g. GWT app slow to reach
+  // ready under cold disk caches on a fresh runner) can otherwise turn
+  // the whole suite red. One retry absorbs that without rerunning by hand.
+  retries: process.env.CI ? 1 : 0,
   reporter: [['html'], ['list'], ['./fixtures/sandbox-reporter.ts']],
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',

@@ -198,13 +198,46 @@ function createTempConfig(): TempConfig {
   return { root, configHome, configDir, electronUserData };
 }
 
+// Cold CI runners can take longer than a developer machine to clear the
+// GWT-ready check (JS download/parse, R session boot, ApplicationAutomation
+// init, DeferredInitCompletedEvent). PW_GWT_READY_TIMEOUT_MS overrides
+// explicitly; otherwise default to 60s under CI and the previous 30s locally.
+const PAGE_READY_TIMEOUT_MS =
+  Number(process.env.PW_GWT_READY_TIMEOUT_MS) ||
+  (process.env.CI ? 60000 : 30000);
+
 /**
  * Launch RStudio with CDP, connect Playwright, and return the session.
  *
  * `existingConfigRoot` lets relaunchAfterRestart reuse the same config
  * directory across a quit-and-restart so prefs/state persist.
+ *
+ * Retries the underlying launch once on failure. A cold-cache flake during
+ * the GWT-ready phase is the dominant failure mode on CI runners, and the
+ * post-CDP catch already tears the process tree down on failure, so a
+ * second attempt is safe and cheap. Set PW_LAUNCH_ATTEMPTS to override the
+ * attempt count (default 2 -- one retry).
  */
 export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
+  const maxAttempts = Math.max(1, Number(process.env.PW_LAUNCH_ATTEMPTS) || 2);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await launchRStudioOnce(existingConfigRoot);
+    } catch (err) {
+      lastError = err;
+      const msg = (err as Error)?.message ?? String(err);
+      if (attempt < maxAttempts) {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- retrying`);
+      } else {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- giving up`);
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
   // Clean up any existing RStudio on our specific CDP port. The port is
   // random per worker (9231-9299), so a collision is rare -- only happens
   // when an orphaned process from a prior interrupted run is still bound.
@@ -411,7 +444,7 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
     // false and only flips it on DeferredInitCompletedEvent, so the transient
     // page never matches and we proceed exactly when R-to-GWT roundtrips are
     // safe (no separate stability window needed).
-    const pageDeadline = Date.now() + 30000;
+    const pageDeadline = Date.now() + PAGE_READY_TIMEOUT_MS;
     let page: Page | undefined;
     let bridgeFirstSeen = false;
 
@@ -445,7 +478,9 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       await sleep(250);
     }
     if (!page) {
-      throw new Error('GWT app did not finish loading within 30s (window.rstudio.ready never became true)');
+      throw new Error(
+        `GWT app did not finish loading within ${PAGE_READY_TIMEOUT_MS}ms (window.rstudio.ready never became true)`,
+      );
     }
     logLaunchStep('window.rstudio.ready === true');
 
