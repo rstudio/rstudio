@@ -13,8 +13,6 @@
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.489.0
-- Electron 41.5.2
 - Copilot Language Server 1.480.0
 - Electron 41.7.0
 - Node.js 22.22.2 (copilot, Posit AI)
