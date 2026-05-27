@@ -13,13 +13,23 @@
  *
  */
 
+// The behavior covered here -- per-file event delivery for non-recursive
+// watches via FSEvents kFSEventStreamCreateFlagFileEvents -- is specific to
+// MacFileMonitor.cpp. The Linux (inotify) and Windows (ReadDirectoryChangesW)
+// backends have parallel semantics but different code paths. core/CMakeLists
+// globs all *Tests.cpp, so we gate the whole body rather than introduce a
+// per-platform conditional list.
 #ifdef __APPLE__
 
 #include <chrono>
+#include <cerrno>
 #include <thread>
 #include <fstream>
 #include <vector>
 
+#include <unistd.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 
 #include <gtest/gtest.h>
@@ -119,8 +129,11 @@ void writeFile(const FilePath& path, const std::string& contents)
    out << contents;
 }
 
-system::file_monitor::Handle startMonitor(const FilePath& dir,
-                                          CallbackState* pState)
+system::file_monitor::Handle startMonitor(
+      const FilePath& dir,
+      CallbackState* pState,
+      boost::function<bool(const FileInfo&)> filter =
+         boost::function<bool(const FileInfo&)>())
 {
    using namespace boost::placeholders;
 
@@ -134,7 +147,7 @@ system::file_monitor::Handle startMonitor(const FilePath& dir,
    system::file_monitor::registerMonitor(
       dir,
       /*recursive=*/false,
-      boost::function<bool(const FileInfo&)>(),
+      filter,
       cb);
 
    EXPECT_TRUE(waitFor([&] { return pState->registered || pState->registrationError; }));
@@ -208,7 +221,10 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsFileModified)
 {
    FilePath child = tempDir_.completeChildPath("modified.txt");
    writeFile(child, "initial");
-   // mtime resolution: bump it so the modification is observable
+   // FileInfo stores st_mtimespec.tv_sec (truncated to whole seconds), so
+   // back-to-back writes within the same wall-clock second produce identical
+   // FileInfos and processFileAdded suppresses the modify. Sleep past the
+   // second boundary so the next write produces an observably newer mtime.
    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
 
    CallbackState state;
@@ -258,16 +274,154 @@ TEST_F(FileMonitorTest, NonRecursiveIgnoresSubtreeChanges)
    FilePath nested = subDir.completeChildPath("deep.txt");
    writeFile(nested, "nested activity");
 
-   // Wait long enough that an event WOULD have arrived if we were going to
-   // process subtree changes (FSEvents latency is configured at 1s; allow a
-   // generous margin).
-   std::this_thread::sleep_for(std::chrono::seconds(3));
-   system::file_monitor::checkForChanges();
+   // Drain the event pump using a sentinel file in tempDir_ as positive
+   // evidence: once we see its FileAdded, anything FSEvents was going to
+   // deliver for the nested write has already passed through. A fixed sleep
+   // here would let a delayed callback land just after the sleep elapses and
+   // pass the assertion spuriously.
+   FilePath sentinel = tempDir_.completeChildPath("sentinel.txt");
+   writeFile(sentinel, "drain");
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         sentinel.getAbsolutePath());
+   }));
 
    for (const auto& event : state.events)
    {
       EXPECT_NE(event.fileInfo().absolutePath(), nested.getAbsolutePath())
          << "Unexpected event for nested file";
+   }
+
+   stopMonitor(handle, &state);
+}
+
+TEST_F(FileMonitorTest, NonRecursiveAppliesUserFilter)
+{
+   // Filter rejects *.tmp; the .txt sibling should still pass through. The
+   // filter path was previously untested (startMonitor's default left filter
+   // empty), so a polarity inversion here would silently expose hidden files.
+   auto filter = [](const FileInfo& info) -> bool {
+      return !boost::algorithm::ends_with(info.absolutePath(), ".tmp");
+   };
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state, filter);
+   state.events.clear();
+
+   FilePath rejected = tempDir_.completeChildPath("ignored.tmp");
+   FilePath accepted = tempDir_.completeChildPath("kept.txt");
+   writeFile(rejected, "filtered out");
+   writeFile(accepted, "filtered in");
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         accepted.getAbsolutePath());
+   }));
+
+   for (const auto& event : state.events)
+   {
+      EXPECT_NE(event.fileInfo().absolutePath(), rejected.getAbsolutePath())
+         << "Filter should have suppressed the .tmp event";
+   }
+
+   stopMonitor(handle, &state);
+}
+
+TEST_F(FileMonitorTest, NonRecursiveTreatsSymlinksLiterally)
+{
+   // readFileInfoLStat documents that symlink parity with PosixFileScanner
+   // (lstat semantics, no target follow) is what keeps the tree consistent
+   // with subsequent event-time lookups. A future "simplify to stat()"
+   // refactor would diverge: the initial tree would carry the link's size
+   // and mtime, while events for that path would carry the target's, and
+   // FileInfo::operator== would emit a spurious FileModified for every
+   // symlink whose target moved. Pin the expected behavior here.
+   FilePath external = FilePath("/tmp").completeChildPath(
+      "rstudio-file-monitor-target-" + system::generateUuid(false) + ".txt");
+   writeFile(external, "outside");
+   auto cleanupExternal = [&]() { external.removeIfExists(); };
+
+   FilePath link = tempDir_.completeChildPath("link.txt");
+   ASSERT_EQ(0, ::symlink(external.getAbsolutePath().c_str(),
+                          link.getAbsolutePath().c_str()))
+      << "symlink() failed: errno=" << errno;
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   state.events.clear();
+
+   // Touch the target. The link's lstat info (size = link path length,
+   // mtime = link creation time) is unchanged, so no FileModified for the
+   // link should arrive. Use a drain sentinel rather than a fixed sleep so
+   // a delayed callback can't slip past.
+   writeFile(external, "outside, modified");
+   FilePath sentinel = tempDir_.completeChildPath("sentinel.txt");
+   writeFile(sentinel, "drain");
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         sentinel.getAbsolutePath());
+   }));
+
+   for (const auto& event : state.events)
+   {
+      if (event.fileInfo().absolutePath() == link.getAbsolutePath())
+      {
+         EXPECT_NE(event.type(), system::FileChangeEvent::FileModified)
+            << "spurious FileModified for symlink whose target changed";
+      }
+   }
+
+   stopMonitor(handle, &state);
+   cleanupExternal();
+}
+
+TEST_F(FileMonitorTest, NonRecursiveDetectsSubdirectoryCreatedAfterStart)
+{
+   // The dynamic case is distinct from the pre-existing-subdir case covered
+   // by NonRecursiveIgnoresSubtreeChanges: the subdir creation itself is a
+   // top-level FileAdded that must surface as a directory, and subsequent
+   // activity inside it must still be filtered (non-recursive semantics).
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state);
+   state.events.clear();
+
+   FilePath subDir = tempDir_.completeChildPath("late-subdir");
+   ASSERT_FALSE(subDir.ensureDirectory());
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         subDir.getAbsolutePath());
+   }));
+
+   // The FileAdded should carry isDirectory=true; without that flag the
+   // FilesPane would render this as a regular file.
+   bool foundDirectoryEntry = false;
+   for (const auto& event : state.events)
+   {
+      if (event.fileInfo().absolutePath() == subDir.getAbsolutePath())
+      {
+         EXPECT_TRUE(event.fileInfo().isDirectory());
+         foundDirectoryEntry = true;
+      }
+   }
+   EXPECT_TRUE(foundDirectoryEntry);
+
+   // Nested activity must remain filtered. Drain with a sentinel so the
+   // assertion isn't a thinly-veiled race.
+   FilePath nested = subDir.completeChildPath("deep.txt");
+   writeFile(nested, "nested after start");
+
+   FilePath sentinel = tempDir_.completeChildPath("sentinel.txt");
+   writeFile(sentinel, "drain");
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         sentinel.getAbsolutePath());
+   }));
+
+   for (const auto& event : state.events)
+   {
+      EXPECT_NE(event.fileInfo().absolutePath(), nested.getAbsolutePath())
+         << "Unexpected event for nested file under late-created subdir";
    }
 
    stopMonitor(handle, &state);
