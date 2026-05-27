@@ -14,6 +14,7 @@
 - ([#17743](https://github.com/rstudio/rstudio/issues/17743)): Fix the debugger failing to capture the browser environment for functions loaded by the `box` package.
 - ([#17712](https://github.com/rstudio/rstudio/issues/17712)): Fix Quarto rendering failing on Windows when the user's home folder path contains an ampersand.
 - ([#17669](https://github.com/rstudio/rstudio/issues/17669)): Avoid re-scanning the watched directory on every Files pane notification on macOS by enabling FSEvents per-file event reporting for non-recursive watches.
+- ([#17768](https://github.com/rstudio/rstudio/issues/17768)): Handle the ANSI cursor-up (CSI A) and cursor-down (CSI B) escape sequences in the console so that multiple `cli` progress bars render on separate lines instead of overwriting each other.
 
 ### Dependencies
 - Ace 1.43.5

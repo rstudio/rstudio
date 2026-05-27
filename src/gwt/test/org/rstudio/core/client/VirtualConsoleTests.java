@@ -1381,6 +1381,74 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>Progress: 100%</span>", ele.getInnerHTML());
    }
 
+   public void testCsiCursorUpRewritesPreviousLine()
+   {
+      // \033[1A moves up one line; \r returns to column 0; overwrite the first line.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\u001b[1A\rLINE1");
+      Assert.assertEquals("LINE1\nline2", vc.toString());
+   }
+
+   public void testCsiCursorUpPreservesColumn()
+   {
+      // Cursor up from column 3 of line 2 lands at column 3 of line 1.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\nghijkl\u001b[3D\u001b[1AXY");
+      Assert.assertEquals("abcXYf\nghijkl", vc.toString());
+   }
+
+   public void testCsiCursorUpClampsAtTop()
+   {
+      // \033[5A on a single-line buffer cannot move vertically;
+      // the subsequent \r still puts the cursor at column 0.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("only line\u001b[5A\rOVER");
+      Assert.assertEquals("OVER line", vc.toString());
+   }
+
+   public void testCsiCursorUpDefaultCount()
+   {
+      // \033[A with no param defaults to 1 row.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\u001b[A\rLINE1");
+      Assert.assertEquals("LINE1\nline2", vc.toString());
+   }
+
+   public void testCsiCursorDownMovesToNextLine()
+   {
+      // After moving up two lines, \033[1B moves down one line.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\nline3\u001b[2A\u001b[1B\rLINE2");
+      Assert.assertEquals("line1\nLINE2\nline3", vc.toString());
+   }
+
+   public void testCsiCursorDownClampsAtBottom()
+   {
+      // \033[5B on a single-line buffer cannot move further down.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("only line\u001b[5B!");
+      Assert.assertEquals("only line!", vc.toString());
+   }
+
+   public void testCsiMultiProgressBarUpdate()
+   {
+      // Mirrors the output cli emits when rendering two progress bars on
+      // separate lines: each update moves up with \033[1A, redraws bar 1,
+      // moves down via \n, then redraws bar 2. Without CSI A support the
+      // second bar would clobber the first (see #17768).
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\rDownloads  10%\u001b[K\n\rProcessing 10%\u001b[K\r");
+      vc.submit("\u001b[1A\rDownloads  50%\u001b[K\n\rProcessing 50%\u001b[K\r");
+      Assert.assertEquals("Downloads  50%\nProcessing 50%", vc.toString());
+   }
+
    public void testIncompleteAnsiCodes()
    {
       PreElement ele = Document.get().createPreElement();

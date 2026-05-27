@@ -299,6 +299,80 @@ public class VirtualConsole
    }
 
    /**
+    * Cursor Up (CUU) -- CSI A
+    *
+    * Moves the cursor up n rows. If at the top of the buffer, no further
+    * movement occurs. The column is preserved, clamped to the target line
+    * length.
+    *
+    * @param n number of rows to move up
+    */
+   private void cursorUp(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      int lineStart = output_.lastIndexOf("\n", cursor_ - 1) + 1;
+      int column = cursor_ - lineStart;
+
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         if (targetLineStart == 0)
+            break;
+         targetLineStart = output_.lastIndexOf("\n", targetLineStart - 2) + 1;
+      }
+
+      cursor_ = targetLineStart + Math.min(column, lineContentLength(targetLineStart));
+   }
+
+   /**
+    * Cursor Down (CUD) -- CSI B
+    *
+    * Moves the cursor down n rows. If there are fewer than n rows below,
+    * stops at the last row. The column is preserved, clamped to the target
+    * line length.
+    *
+    * @param n number of rows to move down
+    */
+   private void cursorDown(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      int lineStart = output_.lastIndexOf("\n", cursor_ - 1) + 1;
+      int column = cursor_ - lineStart;
+
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         int nextNewline = output_.indexOf("\n", targetLineStart);
+         if (nextNewline == -1)
+            break;
+         targetLineStart = nextNewline + 1;
+      }
+
+      cursor_ = targetLineStart + Math.min(column, lineContentLength(targetLineStart));
+   }
+
+   /**
+    * Length of the line starting at {@code lineStart}, excluding the trailing
+    * newline if any. Cursor positions returned from this are safe to use with
+    * {@link #carriageReturn()}: a cursor placed at {@code lineStart + length}
+    * is on the line's terminating '\n' (interpreted as the next line) only
+    * when the line is the final, unterminated line of the buffer.
+    */
+   private int lineContentLength(int lineStart)
+   {
+      int lineEnd = output_.indexOf("\n", lineStart);
+      if (lineEnd == -1)
+         return output_.length() - lineStart;
+      return Math.max(0, lineEnd - lineStart - 1);
+   }
+
+   /**
     * Erase in Line (EL) -- CSI K
     *
     * The cursor position is not changed by this operation.
@@ -1000,7 +1074,17 @@ public class VirtualConsole
                   }
                   
                   // handle other supported commands
-                  if (command == "C")
+                  if (command == "A")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorUp(n);
+                  }
+                  else if (command == "B")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorDown(n);
+                  }
+                  else if (command == "C")
                   {
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.min(output_.length(), cursor_ + n);
