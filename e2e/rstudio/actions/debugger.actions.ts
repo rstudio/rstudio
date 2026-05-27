@@ -21,17 +21,20 @@ export class DebuggerActions {
   }
 
   /** Click the breakpoint area of the gutter cell for `line` (1-indexed).
-   *  Waits until any breakpoint marker (active / pending / inactive) appears
-   *  on the cell — the test caller can assert further on which class shows
-   *  up if a specific state matters. */
+   *  Waits until the marker on that line reaches a settled state -- either
+   *  active (`ace_breakpoint`, R registered the trace) or inactive
+   *  (`ace_inactive-breakpoint`, function not in scope yet). The transient
+   *  `ace_pending-breakpoint` state only means GWT created the breakpoint
+   *  object, not that R has finished processing; returning on pending lets
+   *  a follow-up `setBreakpoint` race the first one's RPC and leave R with
+   *  only one trace registered. See {@link DebuggerPage.settledBreakpointMarker}. */
   async setBreakpoint(line: number): Promise<void> {
-    const before = await this.debuggerPage.anyBreakpointMarker.count();
     const cell = this.debuggerPage.gutterCellForLine(line);
     await cell.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await cell.click({ position: GUTTER_BREAKPOINT_HIT_AREA });
-    await expect.poll(() => this.debuggerPage.anyBreakpointMarker.count(), {
-      timeout: TIMEOUTS.fileOpen,
-    }).toBeGreaterThan(before);
+    await expect(
+      this.debuggerPage.settledBreakpointForLine(line),
+    ).toBeVisible({ timeout: TIMEOUTS.fileOpen });
   }
 
   /** Toggle the breakpoint at the cursor's current position via Shift+F9
