@@ -27,6 +27,7 @@ export namespace Ace {
   // Methods on the EditSession (editor.session). Ace exposes many more --
   // restrict to the ones tests actually need to keep the surface obvious.
   export interface Session {
+    getLength(): number;
     getLine(row: number): string;
     getFoldWidget(row: number): string;
     getFoldWidgetRange(row: number): Range | null;

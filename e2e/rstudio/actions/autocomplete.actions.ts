@@ -103,39 +103,29 @@ export class AutocompleteActions {
     await this.sourceActions.sourcePane.aceTextInput.click({ force: true });
     await sleep(300);
 
-    // Position cursor in the source editor (skip console editor)
-    if (cursorLine !== undefined && cursorCol !== undefined) {
-      await this.page.evaluate(`
-        var editors = document.querySelectorAll('.ace_editor');
-        for (var i = 0; i < editors.length; i++) {
-          if (editors[i].closest('#rstudio_console_input')) continue;
-          var env = editors[i].env;
-          if (env && env.editor) {
-            env.editor.focus();
-            env.editor.gotoLine(${cursorLine}, ${cursorCol});
-            break;
-          }
+    // Position cursor in the source editor via the automation bridge.
+    // A DOM scan with `.ace_editor` here would pick stale editors left in
+    // the DOM after a tab close (ad175dccd1 / #17775) -- the chosen empty
+    // editor would silently receive focus + gotoLine, and Ctrl+Space then
+    // fires against an editor with no content to complete on.
+    await this.page.evaluate(
+      ({ line, col }: { line: number | null; col: number | null }) => {
+        const editor = window.rstudio?.documents.activeEditor() ?? null;
+        if (!editor) throw new Error('No active source editor');
+        editor.focus();
+        if (line !== null && col !== null) {
+          editor.gotoLine(line, col);
+        } else {
+          // Default: end of last non-empty line.
+          const session = editor.session;
+          let lastRow = session.getLength() - 1;
+          while (lastRow > 0 && session.getLine(lastRow).trim() === '') lastRow--;
+          const lastCol = session.getLine(lastRow).length;
+          editor.gotoLine(lastRow + 1, lastCol);
         }
-      `);
-    } else {
-      // Default: end of last non-empty line
-      await this.page.evaluate(`
-        var editors = document.querySelectorAll('.ace_editor');
-        for (var i = 0; i < editors.length; i++) {
-          if (editors[i].closest('#rstudio_console_input')) continue;
-          var env = editors[i].env;
-          if (env && env.editor) {
-            var editor = env.editor;
-            editor.focus();
-            var lastRow = editor.session.getLength() - 1;
-            while (lastRow > 0 && editor.session.getLine(lastRow).trim() === '') lastRow--;
-            var lastCol = editor.session.getLine(lastRow).length;
-            editor.gotoLine(lastRow + 1, lastCol);
-            break;
-          }
-        }
-      `);
-    }
+      },
+      { line: cursorLine ?? null, col: cursorCol ?? null },
+    );
     await sleep(500);
 
     // If autocomplete already appeared (e.g. after typing $ or (), use it;
