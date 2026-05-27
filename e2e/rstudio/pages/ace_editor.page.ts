@@ -1,4 +1,4 @@
-import type { Page } from 'playwright';
+import type { Page, JSHandle } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { Ace, AceEditorElement } from '../utils/ace';
 
@@ -46,62 +46,78 @@ export class AceEditor extends PageObject {
   }
 
   /**
-   * Reconstructs `fn` in the browser context, locates the editor (active doc
-   * when marker is empty, marker-substring match otherwise), and invokes
-   * `fn(editor, ...args)`. Args must be structured-clone serializable.
+   * Resolve the target editor in the browser and return a JSHandle to it.
+   * Pairs with `run()` below, which disposes the handle when done.
    */
-  private async runOnEditor<TArgs extends unknown[], TResult>(
-    fn: (editor: Ace.Editor, ...args: TArgs) => TResult,
-    ...args: TArgs
-  ): Promise<TResult> {
-    return this.page.evaluate(
-      ({ marker, fnSource, args }) => {
-        // Reconstruct the function passed by the test from its source.
-        // Input is trusted: it comes from our own .toString() in the caller.
-        const op = (0, eval)('(' + fnSource + ')') as (editor: Ace.Editor, ...args: unknown[]) => unknown;
-
-        if (marker === '') {
-          const editor = window.rstudio?.documents.activeEditor() ?? null;
-          if (!editor) {
-            throw new Error(
-              'AceEditor(\'\'): no active source editor (window.rstudio.documents.activeEditor() returned null)',
-            );
-          }
-          return op(editor, ...args);
+  private editorHandle(): Promise<JSHandle<Ace.Editor>> {
+    return this.page.evaluateHandle((marker: string): Ace.Editor => {
+      if (marker === '') {
+        const editor = window.rstudio?.documents.activeEditor() ?? null;
+        if (!editor) {
+          throw new Error(
+            'AceEditor(\'\'): no active source editor (window.rstudio.documents.activeEditor() returned null)',
+          );
         }
-
-        const editors = document.querySelectorAll('.ace_editor');
-        for (let i = 0; i < editors.length; i++) {
-          if (editors[i].closest('#rstudio_console_input')) continue;
-          const env = (editors[i] as unknown as AceEditorElement).env;
-          if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
-            return op(env.editor, ...args);
-          }
+        return editor;
+      }
+      const editors = document.querySelectorAll('.ace_editor');
+      for (let i = 0; i < editors.length; i++) {
+        if (editors[i].closest('#rstudio_console_input')) continue;
+        const env = (editors[i] as unknown as AceEditorElement).env;
+        if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
+          return env.editor;
         }
-        throw new Error('No Ace editor found containing marker: ' + marker);
-      },
-      { marker: this.marker, fnSource: fn.toString(), args: args as unknown[] }
-    ) as Promise<TResult>;
+      }
+      throw new Error('No Ace editor found containing marker: ' + marker);
+    }, this.marker);
+  }
+
+  /**
+   * Resolve the editor, run `fn(editor, arg)` against it in the browser, and
+   * return the result. Playwright serializes `fn` natively, so closures over
+   * Node-side state don't work -- pass everything through `arg`, which must
+   * be structured-clone serializable.
+   */
+  private async run<R>(fn: (editor: Ace.Editor) => R): Promise<R>;
+  private async run<A, R>(fn: (editor: Ace.Editor, arg: A) => R, arg: A): Promise<R>;
+  private async run<A, R>(
+    fn: ((editor: Ace.Editor) => R) | ((editor: Ace.Editor, arg: A) => R),
+    arg?: A,
+  ): Promise<R> {
+    const handle = await this.editorHandle();
+    try {
+      // Playwright's PageFunctionOn types wrap the arg in Unboxed<A>, which
+      // can't be reconciled with our open A from the public overloads. The
+      // overloads above keep call sites type-safe; the cast here just lets
+      // the bridge call through.
+      const handleEvaluate = handle.evaluate.bind(handle) as (
+        f: typeof fn,
+        a?: A,
+      ) => Promise<R>;
+      return arguments.length === 1 ? await handleEvaluate(fn) : await handleEvaluate(fn, arg);
+    } finally {
+      await handle.dispose();
+    }
   }
 
   async getValue(): Promise<string> {
-    return this.runOnEditor((editor) => editor.getValue());
+    return this.run((editor) => editor.getValue());
   }
 
   async gotoLine(line: number, column = 0): Promise<void> {
-    await this.runOnEditor(
-      (editor, l: number, c: number) => editor.gotoLine(l, c),
-      line, column
+    await this.run(
+      (editor, pos: { line: number; column: number }) => editor.gotoLine(pos.line, pos.column),
+      { line, column },
     );
   }
 
   /** Returns "start", "end", or "" depending on whether the row has a fold widget. */
   async getFoldWidget(row: number): Promise<string> {
-    return this.runOnEditor((editor, r: number) => editor.session.getFoldWidget(r), row);
+    return this.run((editor, r: number) => editor.session.getFoldWidget(r), row);
   }
 
   async getFoldWidgetRange(row: number): Promise<Ace.Range | null> {
-    return this.runOnEditor((editor, r: number) => {
+    return this.run((editor, r: number) => {
       const range = editor.session.getFoldWidgetRange(r);
       if (!range) return null;
       return {
@@ -113,26 +129,27 @@ export class AceEditor extends PageObject {
 
   /** Returns the raw text of `row` (0-indexed), excluding the trailing newline. */
   async getLine(row: number): Promise<string> {
-    return this.runOnEditor((editor, r: number) => editor.session.getLine(r), row);
+    return this.run((editor, r: number) => editor.session.getLine(r), row);
   }
 
   async getTokens(row: number): Promise<AceToken[]> {
-    return this.runOnEditor(
+    return this.run(
       (editor, r: number) => editor.session.getTokens(r) as AceToken[],
-      row
+      row,
     );
   }
 
   async getTokenAt(row: number, column: number): Promise<AceToken | null> {
-    return this.runOnEditor(
-      (editor, r: number, c: number) => editor.session.getTokenAt(r, c) as AceToken | null,
-      row, column
+    return this.run(
+      (editor, pos: { row: number; column: number }) =>
+        editor.session.getTokenAt(pos.row, pos.column) as AceToken | null,
+      { row, column },
     );
   }
 
   /** Returns all Ace markers on the session, normalized to plain objects. */
   async getMarkers(): Promise<AceMarker[]> {
-    return this.runOnEditor((editor) => {
+    return this.run((editor) => {
       const markers = editor.session.getMarkers() as Record<string, AceMarker>;
       return Object.values(markers).map((m) => ({
         range: m.range
@@ -148,7 +165,7 @@ export class AceEditor extends PageObject {
   }
 
   async getState(row: number): Promise<string> {
-    return this.runOnEditor((editor, r: number) => editor.session.getState(r), row);
+    return this.run((editor, r: number) => editor.session.getState(r), row);
   }
 
   /**
@@ -157,7 +174,7 @@ export class AceEditor extends PageObject {
    * cursor on every matching occurrence.
    */
   async getSelectionRanges(): Promise<Ace.Range[]> {
-    return this.runOnEditor((editor) => {
+    return this.run((editor) => {
       const ranges = editor.selection.rangeList.ranges;
       return ranges.map((r) => ({
         start: { row: r.start.row, column: r.start.column },
@@ -167,7 +184,7 @@ export class AceEditor extends PageObject {
   }
 
   async getCursorPosition(): Promise<Ace.Position> {
-    return this.runOnEditor((editor) => {
+    return this.run((editor) => {
       const pos = editor.getCursorPosition();
       return { row: pos.row, column: pos.column };
     });
@@ -175,7 +192,7 @@ export class AceEditor extends PageObject {
 
   /** Equivalent to Ace's editor.find(needle): selects the first match and scrolls to it. */
   async find(needle: string): Promise<void> {
-    await this.runOnEditor((editor, n: string) => editor.find(n), needle);
+    await this.run((editor, n: string) => editor.find(n), needle);
   }
 
   /**
@@ -183,16 +200,16 @@ export class AceEditor extends PageObject {
    * Useful when typed-key delivery is hard to time (e.g. right after a save).
    */
   async insert(text: string): Promise<void> {
-    await this.runOnEditor((editor, t: string) => editor.insert(t), text);
+    await this.run((editor, t: string) => editor.insert(t), text);
   }
 
   /** Move cursor to the end of the current line (Ace's editor.navigateLineEnd). */
   async navigateLineEnd(): Promise<void> {
-    await this.runOnEditor((editor) => editor.navigateLineEnd());
+    await this.run((editor) => editor.navigateLineEnd());
   }
 
   /** Move focus to the editor textarea so subsequent page.keyboard input routes here. */
   async focus(): Promise<void> {
-    await this.runOnEditor((editor) => editor.focus());
+    await this.run((editor) => editor.focus());
   }
 }
