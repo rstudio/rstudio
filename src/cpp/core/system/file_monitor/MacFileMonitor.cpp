@@ -227,6 +227,15 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
          LOG_ERROR(error);
    }
 
+   // Flush any per-file events the loop accumulated before kicking off a
+   // rescan. The loop already mutated pContext->fileTree as it processed
+   // each event, so discoverAndProcessFileChanges (which diffs the
+   // filesystem against the tree) would find no diff for those entries and
+   // emit nothing -- losing the events. Emit them now so the rescan only
+   // needs to reconcile what the loop couldn't (the dropped-event tail).
+   if (!fileChanges.empty())
+      pContext->callbacks.onFilesChanged(fileChanges);
+
    if (needsFullRescan)
    {
       FileInfo rootInfo(pContext->rootPath);
@@ -244,10 +253,6 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
             LOG_ERROR(error);
          }
       }
-   }
-   else if (!fileChanges.empty())
-   {
-      pContext->callbacks.onFilesChanged(fileChanges);
    }
 }
 
@@ -296,11 +301,8 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
 
    char **paths = (char**) eventPaths;
 
-   // Non-recursive watches use kFSEventStreamCreateFlagFileEvents so events
-   // are reported per-file; handle them on a separate path that updates the
-   // tree directly without a readdir per matched event.
-   //
-   // https://github.com/rstudio/rstudio/issues/17669
+   // Non-recursive watches go through the per-file event path; see
+   // processNonRecursiveFileEvents for details (#17669).
    if (!pContext->recursive)
    {
       processNonRecursiveFileEvents(pContext, numEvents, paths, eventFlags);
@@ -440,15 +442,13 @@ Handle registerMonitor(const FilePath& filePath,
 
    // create the stream and save a reference to it
    //
-   // For non-recursive watches we additionally request per-file events. Without
+   // For non-recursive watches we additionally request per-file events: without
    // this flag FSEvents reports only the enclosing directory of each change,
    // forcing a readdir+diff every time something inside the watched directory
-   // changes. With kFSEventStreamCreateFlagFileEvents the callback receives the
-   // specific file path plus flags identifying the change (created, removed,
-   // modified, renamed, etc.), so we can update the tree directly.
-   //
-   // Recursive watches keep the directory-granularity events (and the existing
-   // discoverAndProcessFileChanges path) to keep this change minimally invasive.
+   // changes. With the flag set the callback receives the specific file path
+   // and processNonRecursiveFileEvents reconciles it against the tree via
+   // lstat (it consults the per-event flags only to detect drops). Recursive
+   // watches stay on directory-granularity events and the readdir+diff path.
    FSEventStreamCreateFlags streamFlags =
                   kFSEventStreamCreateFlagNoDefer |
                   kFSEventStreamCreateFlagWatchRoot;
