@@ -18,6 +18,7 @@
 
 #include <map>
 #include <set>
+#include <sstream>
 
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
@@ -34,9 +35,9 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace lists {
-   
+
 namespace {
 
 using namespace collection;
@@ -52,6 +53,12 @@ const char * const kCommandPaletteMru = "command_palette_mru";
 
 // path to lists dir
 FilePath s_listsPath;
+
+// When normalizeProjectMru() rewrites the project_name_mru file at startup,
+// the file watcher would otherwise fire a kListChanged event carrying the
+// same contents the client already received via allListsAsJson(). This holds
+// the path whose next change event should be suppressed.
+FilePath s_suppressNextChange;
 
 // registered lists
 typedef std::map<std::string, std::size_t> Lists;
@@ -142,48 +149,18 @@ std::string removeCustomProjectName(const std::string& str)
       return str;
 }
 
-// Split a project_name_mru entry into (path, name). Returns an empty name
-// when the entry has no separator.
-std::pair<std::string, std::string> splitProjectMruEntry(const std::string& entry)
-{
-   std::size_t pos = entry.find(kProjectNameSepChar);
-   if (pos == std::string::npos)
-      return std::make_pair(entry, std::string());
-   return std::make_pair(entry.substr(0, pos), entry.substr(pos + 1));
-}
+// File-local wrappers for the detail helpers. These pull the home path
+// from module_context so callers in this file don't need to thread it
+// through. The tested overloads in detail:: take an explicit homePath.
 
-// Join a (path, name) pair back into the on-disk MRU entry form.
-std::string joinProjectMruEntry(const std::string& path, const std::string& name)
-{
-   if (name.empty())
-      return path;
-   return path + kProjectNameSepChar + name;
-}
-
-// Canonicalize the path portion of a project_name_mru entry. Aliased paths
-// (~/...) are resolved to their absolute form so the on-disk representation
-// is invariant under changes in how the home directory is resolved.
 std::string canonicalizeProjectMruEntry(const std::string& entry)
 {
-   auto parts = splitProjectMruEntry(entry);
-   if (parts.first.empty() || !FilePath::isAliasedPath(parts.first))
-      return entry;
-   std::string absolutePath =
-      module_context::resolveAliasedPath(parts.first).getAbsolutePath();
-   return joinProjectMruEntry(absolutePath, parts.second);
+   return detail::canonicalizeProjectMruEntry(entry, module_context::userHomePath());
 }
 
-// Alias the path portion of a project_name_mru entry for delivery to the
-// client. Paths within the user's home directory are rewritten to ~ form;
-// paths already aliased or outside the home directory pass through.
 std::string aliasProjectMruEntry(const std::string& entry)
 {
-   auto parts = splitProjectMruEntry(entry);
-   if (parts.first.empty() || FilePath::isAliasedPath(parts.first))
-      return entry;
-   std::string aliasedPath =
-      module_context::createAliasedPath(FilePath(parts.first));
-   return joinProjectMruEntry(aliasedPath, parts.second);
+   return detail::aliasProjectMruEntry(entry, module_context::userHomePath());
 }
 
 // Serialize a named list's contents to JSON, aliasing project_name_mru paths
@@ -247,8 +224,11 @@ Error normalizeProjectMru()
       if (canonical != entry)
          changed = true;
 
-      // dedupe by path, preserving the first occurrence's ordering and name
-      std::string path = splitProjectMruEntry(canonical).first;
+      // Dedupe by the canonical path; canonicalizeProjectMruEntry has
+      // already resolved aliased forms and normalized separators, so a
+      // string match here collapses the duplicates that motivated this
+      // pass.
+      std::string path = detail::splitProjectMruEntry(canonical).first;
       if (!seenPaths.insert(path).second)
       {
          changed = true;
@@ -261,8 +241,29 @@ Error normalizeProjectMru()
       return Success();
 
    LOG_INFO_MESSAGE("Normalizing project MRU list to canonical (absolute) paths");
-   return writeCollectionToFile<std::list<std::string>>(
-      mruPath, normalized, stringifyString);
+
+   // Serialize and write atomically: writeCollectionToFile truncates on
+   // open, so a crash mid-write would leave the MRU empty. Build the
+   // payload in memory and use the atomic helper instead.
+   std::ostringstream out;
+   for (const std::string& entry : normalized)
+      out << stringifyString(entry) << "\n";
+
+   // Suppress the kListChanged event that would otherwise fire from the
+   // monitor as a result of this rewrite; the contents we'd send are
+   // identical to what the client receives via allListsAsJson() on init.
+   s_suppressNextChange = mruPath;
+
+   error = writeStringToFileAtomic(mruPath, out.str());
+   if (error)
+   {
+      // clear the suppression flag so a subsequent legitimate change
+      // is not eaten
+      s_suppressNextChange = FilePath();
+      return error;
+   }
+
+   return Success();
 }
 
 void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
@@ -279,7 +280,14 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    FilePath filePath(fileChange.fileInfo().absolutePath());
    std::string name = filePath.getFilename();
 
-   // ignore changes to the legacy project_mru file; we write to it whenever project_name_mru is 
+   // swallow the single change event triggered by normalizeProjectMru()
+   if (!s_suppressNextChange.isEmpty() && filePath == s_suppressNextChange)
+   {
+      s_suppressNextChange = FilePath();
+      return;
+   }
+
+   // ignore changes to the legacy project_mru file; we write to it whenever project_name_mru is
    // written, but never read it; it's kept updated so user doesn't lose their Projects MRU if
    // they downgrade to an older version of RStudio
    if (name == kProjectMru)
@@ -397,8 +405,9 @@ Error listInsertItem(bool prepend,
    if (error)
       return error;
 
-   // project paths are stored canonically (absolute) so that aliased and
-   // non-aliased forms of the same path don't produce duplicate entries
+   // project paths are stored canonically (absolute, separator-normalized)
+   // so that aliased and non-aliased forms of the same path don't produce
+   // duplicate entries -- see rstudio/rstudio#17225
    if (name == kProjectNameMru)
       value = canonicalizeProjectMruEntry(value);
 
@@ -440,6 +449,7 @@ Error listUpdateItemExtraData(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // project paths are stored canonically (see canonicalizeProjectMruEntry)
    if (name == kProjectNameMru)
       value = canonicalizeProjectMruEntry(value);
 
@@ -462,7 +472,10 @@ Error listRemoveItem(const json::JsonRpcRequest& request,
    // get value to remove
    std::string value;
    error = json::readParam(request.params, 1, &value);
+   if (error)
+      return error;
 
+   // project paths are stored canonically (see canonicalizeProjectMruEntry)
    if (name == kProjectNameMru)
       value = canonicalizeProjectMruEntry(value);
 
@@ -512,6 +525,58 @@ Error listClear(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 
+namespace detail {
+
+std::pair<std::string, std::string> splitProjectMruEntry(const std::string& entry)
+{
+   std::size_t pos = entry.find(kProjectNameSepChar);
+   if (pos == std::string::npos)
+      return std::make_pair(entry, std::string());
+   return std::make_pair(entry.substr(0, pos), entry.substr(pos + 1));
+}
+
+std::string joinProjectMruEntry(const std::string& path, const std::string& name)
+{
+   if (name.empty())
+      return path;
+   return path + kProjectNameSepChar + name;
+}
+
+std::string canonicalizeProjectMruEntry(const std::string& entry,
+                                        const FilePath& homePath)
+{
+   auto parts = splitProjectMruEntry(entry);
+   if (parts.first.empty())
+      return entry;
+
+   // Resolve aliased paths against the supplied home path; treat any
+   // other input as already absolute (or relative-to-cwd, which the
+   // MRU path should never be in practice).
+   FilePath resolved = FilePath::isAliasedPath(parts.first)
+      ? FilePath::resolveAliasedPath(parts.first, homePath)
+      : FilePath(parts.first);
+
+   // getLexicallyNormalPath() returns the generic (forward-slash) form
+   // on all platforms and collapses .. components, so the result is
+   // invariant under Windows native vs. generic separator differences.
+   std::string canonical = resolved.getLexicallyNormalPath();
+   return joinProjectMruEntry(canonical, parts.second);
+}
+
+std::string aliasProjectMruEntry(const std::string& entry,
+                                 const FilePath& homePath)
+{
+   auto parts = splitProjectMruEntry(entry);
+   if (parts.first.empty() || FilePath::isAliasedPath(parts.first))
+      return entry;
+   std::string aliasedPath =
+      FilePath::createAliasedPath(FilePath(parts.first), homePath);
+   return joinProjectMruEntry(aliasedPath, parts.second);
+}
+
+} // namespace detail
+
+
 json::Object allListsAsJson()
 {
    json::Object allListsJson;
@@ -529,7 +594,7 @@ json::Object allListsAsJson()
 }
 
 Error initialize()
-{  
+{
    // register lists / max sizes
    s_lists[kFileMru] = 15;
    s_lists[kProjectMru] = 15; // legacy, kept in sync with kProjectNameMru
@@ -550,7 +615,7 @@ Error initialize()
 
    error = normalizeProjectMru();
    if (error)
-      LOG_ERROR(error);
+      return error;
 
    using boost::bind;
    using namespace module_context;
@@ -565,7 +630,7 @@ Error initialize()
       (bind(registerRpcMethod, "list_clear", listClear));
    return initBlock.execute();
 }
-   
+
 
 
 } // namespace lists
