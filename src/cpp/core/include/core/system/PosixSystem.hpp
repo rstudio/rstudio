@@ -25,6 +25,8 @@
 
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 typedef pid_t PidType;
 typedef rlim_t RLimitType;
 
@@ -51,6 +53,21 @@ enum UMask
    OthersNoneMask        // S_IWGRP | S_IRWXO
 };
 void setUMask(UMask mask);
+
+// RAII wrapper that sets the calling thread's umask for its lifetime and
+// restores the previous value on destruction. Use when a block of code needs
+// child files born with stricter mode bits (e.g. so an atomic-rename target
+// is never world-readable before a follow-up chmod).
+class ScopedUMask
+{
+public:
+   explicit ScopedUMask(mode_t mask) : previous_(::umask(mask)) {}
+   ~ScopedUMask() { ::umask(previous_); }
+   ScopedUMask(const ScopedUMask&) = delete;
+   ScopedUMask& operator=(const ScopedUMask&) = delete;
+private:
+   mode_t previous_;
+};
 
 
 // resource limits
