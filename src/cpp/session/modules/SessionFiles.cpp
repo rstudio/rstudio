@@ -2086,6 +2086,37 @@ SEXP rs_readLines(SEXP filePathSEXP)
    return r::sexp::create(splat, &protect);
 }
 
+// Vectorized: replaces each path's HOME prefix with "~" (and HOME itself
+// with "~"), leaving paths outside HOME unchanged. Delegates to the C++
+// FilePath::createAliasedPath so there's a single source of truth for
+// aliasing logic (used by enqueFileChangedEvent, list_files RPC, the
+// FilesPane breadcrumb, and now this R-callable wrapper).
+SEXP rs_createAliasedPath(SEXP pathsSEXP)
+{
+   if (TYPEOF(pathsSEXP) != STRSXP)
+      Rf_error("'path' must be a character vector");
+
+   FilePath home = module_context::userHomePath();
+   int n = r::sexp::length(pathsSEXP);
+   r::sexp::Protect protect;
+   SEXP result = Rf_allocVector(STRSXP, n);
+   protect.add(result);
+   for (int i = 0; i < n; i++)
+   {
+      SEXP elt = STRING_ELT(pathsSEXP, i);
+      if (elt == NA_STRING)
+      {
+         SET_STRING_ELT(result, i, NA_STRING);
+         continue;
+      }
+      std::string aliased = FilePath::createAliasedPath(
+         FilePath(r::sexp::asUtf8String(elt)),
+         home);
+      SET_STRING_ELT(result, i, Rf_mkCharCE(aliased.c_str(), CE_UTF8));
+   }
+   return result;
+}
+
 } // anonymous namespace
 
 bool isMonitoringDirectory(const FilePath& directory)
@@ -2104,10 +2135,11 @@ Error initialize()
    // subscribe to events
    events().onClientInit.connect(bind(onClientInit));
 
+   RS_REGISTER_CALL_METHOD(rs_createAliasedPath);
    RS_REGISTER_CALL_METHOD(rs_listFiles);
    RS_REGISTER_CALL_METHOD(rs_listDirs);
-   RS_REGISTER_CALL_METHOD(rs_readLines);
    RS_REGISTER_CALL_METHOD(rs_pathInfo);
+   RS_REGISTER_CALL_METHOD(rs_readLines);
 
    // install handlers
    using boost::bind;
