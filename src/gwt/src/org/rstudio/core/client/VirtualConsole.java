@@ -763,14 +763,17 @@ public class VirtualConsole
       int start = cursor_;
       int end = cursor_ + text.length();
 
-      // Preserve newline boundaries: if the write would otherwise reach past
-      // the next '\n' in the buffer, extend the current line with spaces so
-      // the overwrite stays inside it. Without this, a cursor placed on an
-      // earlier line via CSI A and then asked to write content longer than
-      // that line would clobber the line separator and run into the next
-      // line's content.
+      // Preserve newline boundaries: if a non-newline character in the write
+      // would land on top of an existing '\n' in the buffer, extend the
+      // current line with spaces so the overwrite stays inside it. Without
+      // this, a cursor placed on an earlier line via CSI A -- including on
+      // an empty line, where the cursor sits directly on the '\n' -- and
+      // then asked to write text would clobber the line separator and run
+      // into the next line's content. The newline()-driven self-overwrite
+      // (text == "\n" landing on an existing '\n') is left alone so that
+      // path remains idempotent and does not duplicate newlines.
       int nlPos = output_.indexOf("\n", start);
-      if (nlPos > start && nlPos < end)
+      if (nlPos >= start && nlPos < end && text.charAt(nlPos - start) != '\n')
       {
          extendLineBefore(nlPos, end - nlPos);
       }

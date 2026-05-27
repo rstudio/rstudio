@@ -1463,6 +1463,19 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("Downloads NEW 50%\nProcessing 50%", vc.toString());
    }
 
+   public void testCsiCursorUpOntoEmptyLinePreservesNewline()
+   {
+      // Regression guard for the cursor-on-newline case: CSI A from a
+      // following line can land the cursor directly on an empty line's
+      // terminating newline (lineStart == lineEnd). A subsequent non-newline
+      // write must not consume that newline and merge the lines below.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Header\n\nFooter");
+      vc.submit("\u001b[1AX");
+      Assert.assertEquals("Header\nX\nFooter", vc.toString());
+   }
+
    public void testIncompleteAnsiCodes()
    {
       PreElement ele = Document.get().createPreElement();
