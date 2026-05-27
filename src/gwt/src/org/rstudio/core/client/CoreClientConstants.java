@@ -77,7 +77,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String themeButtonOnErrorMessage();
     String onSubmitErrorMessage();
     String installText();
-    String donnotShowAgain();
+    String dontShowForThisFile();
     String showPanmirrorText();
     String reloadNowText();
     String installTinyTexText();

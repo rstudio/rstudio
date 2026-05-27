@@ -500,6 +500,13 @@ public class TextFileType extends EditableFileType
       results.add(commands.openNewTerminalAtEditorLocation());
       results.add(commands.toggleSoftWrapMode());
 
+      // The missing-package banner only fires for these four file types --
+      // see TextEditingTargetPackageDependencyHelper.discoverPackageDependencies.
+      if (isR() || isRmd() || isRnw() || isQuartoMarkdown())
+      {
+         results.add(commands.toggleDetectMissingPackages());
+      }
+
       return results;
    }
 

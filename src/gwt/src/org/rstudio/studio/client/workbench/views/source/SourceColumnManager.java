@@ -2588,6 +2588,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
       dynamicCommands_.add(commands_.runSelectionAsWorkbenchJob());
       dynamicCommands_.add(commands_.toggleSoftWrapMode());
+      dynamicCommands_.add(commands_.toggleDetectMissingPackages());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

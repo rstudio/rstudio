@@ -358,6 +358,7 @@ public class TextEditingTarget implements
       void toggleSoftWrapMode();
       void toggleRainbowParens();
       void toggleRainbowFencedDivs();
+      void toggleDetectMissingPackages();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -3980,6 +3981,12 @@ public class TextEditingTarget implements
    void onToggleRainbowFencedDivs()
    {
       view_.toggleRainbowFencedDivs();
+   }
+
+   @Handler
+   void onToggleDetectMissingPackages()
+   {
+      view_.toggleDetectMissingPackages();
    }
 
    @Handler
@@ -9188,6 +9195,11 @@ public class TextEditingTarget implements
    public DocDisplay getDocDisplay()
    {
       return docDisplay_;
+   }
+
+   public TextEditingTargetPackageDependencyHelper getPackageDependencyHelper()
+   {
+      return packageDependencyHelper_;
    }
 
    private void addAdditionalResourceFiles(List<String> additionalFiles)

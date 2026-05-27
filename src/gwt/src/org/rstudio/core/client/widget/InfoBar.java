@@ -144,7 +144,7 @@ public class InfoBar extends Composite
          onInstall.execute();
       }));
 
-      labelRight_.add(label(constants_.donnotShowAgain(), () -> {
+      labelRight_.add(label(constants_.dontShowForThisFile(), () -> {
          onDismiss.execute();
       }));
    }

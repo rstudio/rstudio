@@ -228,6 +228,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="toggleSoftWrapMode"/>
          <cmd refid="toggleRainbowParens"/>
          <cmd refid="toggleRainbowFencedDivs"/>
+         <cmd refid="toggleDetectMissingPackages"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -3901,6 +3902,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="toggleRainbowFencedDivs"
         label="Toggle Rainbow Fenced Divs Mode"
         menuLabel="Rainb_ow Fenced Divs"
+        checkable="true"
+        context="editor"/>
+
+   <cmd id="toggleDetectMissingPackages"
+        label="Toggle Detection of Missing Packages in This File"
+        menuLabel="_Detect Missing Packages in This File"
+        desc="Toggle the editor banner that warns when this file references R packages that are not installed"
         checkable="true"
         context="editor"/>
 
