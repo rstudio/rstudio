@@ -17,6 +17,8 @@
 
 #include <CoreServices/CoreServices.h>
 
+#include <sys/stat.h>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/bind/bind.hpp>
@@ -110,6 +112,147 @@ public:
    Callbacks callbacks;
 };
 
+// Read a FileInfo via lstat, matching what PosixFileScanner produces for the
+// initial tree population. Mirroring that view (in particular: symlinks treated
+// literally) keeps per-event updates consistent with the tree so we don't emit
+// spurious modify events for symlinks. Returns systemError on lstat failure;
+// callers special-case ENOENT to emit FileRemoved.
+Error readFileInfoLStat(const std::string& path, FileInfo* pFileInfo)
+{
+   struct stat st;
+   if (::lstat(path.c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   bool isSymlink = S_ISLNK(st.st_mode);
+   if (S_ISDIR(st.st_mode))
+   {
+      *pFileInfo = FileInfo(path, true, isSymlink);
+   }
+   else
+   {
+      *pFileInfo = FileInfo(path,
+                            false,
+                            st.st_size,
+                            st.st_mtimespec.tv_sec,
+                            isSymlink);
+   }
+   return Success();
+}
+
+// Process a batch of FSEvents events for a non-recursive watch. With the
+// kFSEventStreamCreateFlagFileEvents flag enabled, FSEvents reports the
+// specific file path that changed (rather than just the enclosing directory).
+// We filter to events whose parent is the watched root and update the tree
+// directly using lstat, avoiding the readdir+diff that the directory-level
+// callback path performs.
+void processNonRecursiveFileEvents(FileEventContext* pContext,
+                                   size_t numEvents,
+                                   char** paths,
+                                   const FSEventStreamEventFlags eventFlags[])
+{
+   const std::string& rootPathStr = pContext->rootPath.getAbsolutePath();
+
+   std::vector<FileChangeEvent> fileChanges;
+   bool needsFullRescan = false;
+
+   for (std::size_t i = 0; i < numEvents; i++)
+   {
+      FSEventStreamEventFlags flags = eventFlags[i];
+
+      // FSEvents indicates events were dropped (kernel/user buffer overflow,
+      // or MustScanSubDirs); reconcile by rescanning the watched directory.
+      if (flags & (kFSEventStreamEventFlagMustScanSubDirs |
+                   kFSEventStreamEventFlagKernelDropped |
+                   kFSEventStreamEventFlagUserDropped))
+      {
+         needsFullRescan = true;
+         continue;
+      }
+
+      std::string path(paths[i]);
+      boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
+
+      // Only process events whose direct parent is the watched root. Subtree
+      // events still wake us up, but they cost just this comparison.
+      FilePath eventPath(path);
+      if (eventPath.getParent().getAbsolutePath() != rootPathStr)
+         continue;
+
+      tree<FileInfo>::iterator rootIt = pContext->fileTree.begin();
+
+      FileInfo fileInfo;
+      Error statError = readFileInfoLStat(path, &fileInfo);
+      if (statError)
+      {
+         if (statError == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         {
+            // entry no longer exists; processFileRemoved finds it in the tree
+            // by path and uses the stored FileInfo for the event payload
+            FileChangeEvent change(FileChangeEvent::FileRemoved,
+                                   FileInfo(path, false));
+            impl::processFileRemoved(rootIt,
+                                     change,
+                                     false,
+                                     &pContext->fileTree,
+                                     &fileChanges);
+         }
+         else
+         {
+            LOG_ERROR(statError);
+         }
+         continue;
+      }
+
+      // entry exists; apply user filter
+      if (pContext->filter && !pContext->filter(fileInfo))
+         continue;
+
+      // processFileAdded handles the in-tree case by emitting FileModified
+      // when the FileInfo differs, and does nothing when it matches
+      FileChangeEvent change(FileChangeEvent::FileAdded, fileInfo);
+      Error error = impl::processFileAdded(rootIt,
+                                           change,
+                                           false,
+                                           pContext->filter,
+                                           &pContext->fileTree,
+                                           &fileChanges);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // Emission order matches LinuxFileMonitor's IN_Q_OVERFLOW path: rescan
+   // first (so it reconciles the filesystem against the tree the loop just
+   // mutated -- entries already applied have no diff and aren't re-emitted),
+   // then fire the per-event vector the loop accumulated. The rescan and
+   // the accumulated events are disjoint by construction, so order is just
+   // a matter of cross-backend consistency.
+   if (needsFullRescan)
+   {
+      FileInfo rootInfo(pContext->rootPath);
+      if (!pContext->filter || pContext->filter(rootInfo))
+      {
+         Error error = impl::discoverAndProcessFileChanges(
+                                             rootInfo,
+                                             false,
+                                             pContext->filter,
+                                             &(pContext->fileTree),
+                                             pContext->callbacks.onFilesChanged);
+         if (error &&
+            (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
+         {
+            LOG_ERROR(error);
+         }
+      }
+   }
+
+   if (!fileChanges.empty())
+      pContext->callbacks.onFilesChanged(fileChanges);
+}
+
 void fileEventCallback(ConstFSEventStreamRef streamRef,
                        void *pCallbackInfo,
                        size_t numEvents,
@@ -134,8 +277,8 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // against this by also double-checking whether the original path
    // monitored and the path reported by the file handle match up
    //
-   // We check for filesystem equivalence (not path equivalence) since macOS 
-   // Catalina can issue a RootChanged event for conversion to/from a 
+   // We check for filesystem equivalence (not path equivalence) since macOS
+   // Catalina can issue a RootChanged event for conversion to/from a
    // canonicalized /System/Volumes/Data path.
    //
    // https://github.com/rstudio/rstudio/issues/4755
@@ -153,17 +296,24 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       return;
    }
 
+   // FSEvents documents `eventPaths` (and the parallel `eventFlags` array) as
+   // valid only for the duration of this callback. Both branches below copy
+   // the strings they need before any cross-callback use.
    char **paths = (char**) eventPaths;
+
+   // Non-recursive watches go through the per-file event path; see
+   // processNonRecursiveFileEvents for details (#17669).
+   if (!pContext->recursive)
+   {
+      processNonRecursiveFileEvents(pContext, numEvents, paths, eventFlags);
+      return;
+   }
+
    for (std::size_t i = 0; i < numEvents; i++)
    {
       // make a copy of the path and strip off trailing / if necessary
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
-
-      // if we aren't in recursive mode then ignore this if it isn't for
-      // the root directory
-      if (!pContext->recursive && (path != pContext->rootPath.getAbsolutePath()))
-         continue;
 
       // get FileInfo for this directory
       FileInfo fileInfo(path, true);
@@ -291,6 +441,20 @@ Handle registerMonitor(const FilePath& filePath,
    context.copyDescription = nullptr;
 
    // create the stream and save a reference to it
+   //
+   // For non-recursive watches we additionally request per-file events: without
+   // this flag FSEvents reports only the enclosing directory of each change,
+   // forcing a readdir+diff every time something inside the watched directory
+   // changes. With the flag set the callback receives the specific file path
+   // and processNonRecursiveFileEvents reconciles it against the tree via
+   // lstat (it consults the per-event flags only to detect drops). Recursive
+   // watches stay on directory-granularity events and the readdir+diff path.
+   FSEventStreamCreateFlags streamFlags =
+                  kFSEventStreamCreateFlagNoDefer |
+                  kFSEventStreamCreateFlagWatchRoot;
+   if (!recursive)
+      streamFlags |= kFSEventStreamCreateFlagFileEvents;
+
    pContext->streamRef = ::FSEventStreamCreate(
                   kCFAllocatorDefault,
                   &fileEventCallback,
@@ -298,8 +462,7 @@ Handle registerMonitor(const FilePath& filePath,
                   pathsArrayRef,
                   kFSEventStreamEventIdSinceNow,
                   1,
-                  kFSEventStreamCreateFlagNoDefer |
-                  kFSEventStreamCreateFlagWatchRoot);
+                  streamFlags);
    if (pContext->streamRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(

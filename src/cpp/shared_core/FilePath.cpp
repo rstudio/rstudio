@@ -1457,7 +1457,10 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
    FilePath child(getLexicallyNormalPath());
    FilePath parent(in_scopePath.getLexicallyNormalPath());
 
-   // Easy test: We can't possibly be in this scope path if it has more components than we do
+   // Cheap early exit: boost::filesystem::path::size() is the length of the
+   // underlying pathname string (not the component count), so a parent whose
+   // string is longer than the child's can't possibly be a prefix of it. The
+   // component-wise comparison below does the real work.
    if (parent.m_impl->Path.size() > child.m_impl->Path.size())
       return false;
 
