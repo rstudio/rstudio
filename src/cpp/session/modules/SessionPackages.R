@@ -985,19 +985,6 @@
 })
 
 
-# a vectorized function that takes any number of paths and aliases the home
-# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
-# paths outside the home directory untouched
-.rs.addFunction("createAliasedPath", function(path)
-{
-   homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
-   homePaths <- path[homePathIdx]
-   homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
-   path[homePathIdx] <- paste0("~", homeSuffix)
-   path
-})
-
 # Some R commands called during packaging-related operations (such as untar)
 # delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
 # /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
