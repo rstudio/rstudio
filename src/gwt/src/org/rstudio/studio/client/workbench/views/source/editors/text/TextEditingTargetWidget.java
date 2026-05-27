@@ -231,7 +231,7 @@ public class TextEditingTargetWidget
       initWidget(panel_);
 
       // Update wrap mode on the editor when the soft wrap property changes
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
             TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
             {
                boolean wrap = StringUtil.equals(newval.getValue(), DocUpdateSentinel.PROPERTY_TRUE);
@@ -246,32 +246,32 @@ public class TextEditingTargetWidget
                {
                   editor_.setWrapLimitRange(null, null);
                }
-            });
+            }));
 
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
          TextEditingTarget.USE_RAINBOW_PARENS, (newval) ->
          {
             boolean rainbowParens = StringUtil.equals(newval.getValue(),
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowParens().setChecked(rainbowParens);
             editor_.setRainbowParentheses(rainbowParens);
-         });
+         }));
 
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
          TextEditingTarget.USE_RAINBOW_FENCED_DIVS, (newval) ->
          {
             boolean rainbowFencedDivs = StringUtil.equals(newval.getValue(),
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowFencedDivs().setChecked(rainbowFencedDivs);
             editor_.setRainbowFencedDivs(rainbowFencedDivs);
-         });
+         }));
 
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
          DISABLE_DEPENDENCY_DISCOVERY, (newval) ->
          {
             boolean disabled = StringUtil.equals(newval.getValue(), "1");
             commands_.toggleDetectMissingPackages().setChecked(!disabled);
-         });
+         }));
 
       releaseOnDismiss_.add(userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
@@ -792,11 +792,11 @@ public class TextEditingTargetWidget
       markdownToolbar_ = new MarkdownToolbar(commands_, event -> {
          toggleRmdVisualMode();
       });
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          markdownToolbar_.setVisualMode(isVisualMode());
          if (isVisualMode())
             findReplace_.hideFindReplace();
-      });
+      }));
       markdownToolbar_.setVisualMode(isVisualMode());
       
       addVisualModeOutlineButton(markdownToolbar_);
@@ -822,10 +822,10 @@ public class TextEditingTargetWidget
 
       // stay in sync w/ doc property
       syncVisualModeOutlineLatchState();
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
             (event) -> {
                syncVisualModeOutlineLatchState();
-            });
+            }));
 
       // add to toolbar
       toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
