@@ -10,37 +10,30 @@ import { sleep } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
-interface InstallTarget {
-  repos: string;
-  type: 'binary' | 'source';
-}
+let cachedInstallRepos: string | null = null;
 
-let cachedInstallTarget: InstallTarget | null = null;
-
-// Returns the repo URL and install type to use for install.packages().
-// On Linux, prefer Posit Public Package Manager's per-distro binary repo so
-// installs don't compile from source (which can take minutes for packages
-// with heavy C/C++ deps like duckdb).
-function getInstallTarget(): InstallTarget {
-  if (cachedInstallTarget) return cachedInstallTarget;
+// Returns the repo URL to use for install.packages(). On Linux, prefer Posit
+// Public Package Manager's per-distro repo so installs don't compile from
+// source (which can take minutes for packages with heavy C/C++ deps like
+// duckdb); PPM serves precompiled tarballs that R fetches via type="source".
+//
+// The install *type* is chosen at R runtime via .Platform$pkgType -- see the
+// install.packages() call below -- so source-only R builds (Homebrew macOS,
+// any Linux) don't fall over on a forced type = "binary". This mirrors the
+// pattern used by the global lib pre-population in fixtures/r-libs-setup.ts.
+function getInstallRepos(): string {
+  if (cachedInstallRepos) return cachedInstallRepos;
 
   if (process.platform === 'win32' || process.platform === 'darwin') {
-    cachedInstallTarget = { repos: 'https://cran.r-project.org', type: 'binary' };
-    return cachedInstallTarget;
+    cachedInstallRepos = 'https://cran.r-project.org';
+    return cachedInstallRepos;
   }
 
   const distro = detectLinuxDistro();
-  // On Linux, R has no formal "binary" type -- PPM's __linux__/<distro>/latest
-  // endpoint serves precompiled tarballs that R fetches via type="source".
-  // Passing type="binary" here causes R to look for a nonexistent format and
-  // silently skip the install.
-  cachedInstallTarget = distro
-    ? {
-        repos: `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`,
-        type: 'source',
-      }
-    : { repos: 'https://cran.r-project.org', type: 'source' };
-  return cachedInstallTarget;
+  cachedInstallRepos = distro
+    ? `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`
+    : 'https://cran.r-project.org';
+  return cachedInstallRepos;
 }
 
 // Returns the PPM distro slug for the current Linux host, or '' if unknown.
@@ -210,8 +203,11 @@ export class ConsolePaneActions {
     // Run install, then print marker as a separate command.
     // typeInConsole queues input — if R is busy with install, the cat()
     // will execute after install finishes.
-    const { repos, type } = getInstallTarget();
-    await this.executeInConsole(`install.packages("${pkg}", repos = "${repos}", type = "${type}")`);
+    const repos = getInstallRepos();
+    // Pick the install type at R runtime so source-only R builds (Homebrew
+    // macOS, all Linux) don't error with "type 'binary' is not supported".
+    const typeExpr = `if (identical(.Platform$pkgType, "source")) "source" else "binary"`;
+    await this.executeInConsole(`install.packages("${pkg}", repos = "${repos}", type = ${typeExpr})`);
     await this.executeInConsole(`cat("${doneMarker}")`);
 
 
