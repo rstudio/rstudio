@@ -763,6 +763,18 @@ public class VirtualConsole
       int start = cursor_;
       int end = cursor_ + text.length();
 
+      // Preserve newline boundaries: if the write would otherwise reach past
+      // the next '\n' in the buffer, extend the current line with spaces so
+      // the overwrite stays inside it. Without this, a cursor placed on an
+      // earlier line via CSI A and then asked to write content longer than
+      // that line would clobber the line separator and run into the next
+      // line's content.
+      int nlPos = output_.indexOf("\n", start);
+      if (nlPos > start && nlPos < end)
+      {
+         extendLineBefore(nlPos, end - nlPos);
+      }
+
       // real-time output if we have a parent
       if (parent_ != null)
       {
@@ -775,6 +787,56 @@ public class VirtualConsole
 
       output_.replace(start, end, text);
       cursor_ += text.length();
+   }
+
+   /**
+    * Insert {@code count} spaces into the buffer immediately before the '\n'
+    * at {@code nlPos}, extending the line that ends there. Class ranges and
+    * the DOM are kept consistent: the range containing the newline absorbs
+    * the spaces, and any range positioned strictly after the newline shifts
+    * right by {@code count}.
+    */
+   private void extendLineBefore(int nlPos, int count)
+   {
+      if (count <= 0)
+         return;
+
+      StringBuilder spaces = new StringBuilder(count);
+      for (int i = 0; i < count; i++)
+         spaces.append(' ');
+      String spacesStr = spaces.toString();
+
+      output_.insert(nlPos, spacesStr);
+
+      Entry<Integer, ClassRange> floor = class_.floorEntry(nlPos);
+      ClassRange straddler = null;
+      if (floor != null)
+      {
+         ClassRange r = floor.getValue();
+         if (r.start <= nlPos && r.start + r.length > nlPos)
+            straddler = r;
+      }
+
+      if (straddler != null)
+      {
+         String rText = straddler.text();
+         int offset = nlPos - straddler.start;
+         straddler.setText(
+               StringUtil.substring(rText, 0, offset)
+                     + spacesStr
+                     + StringUtil.substring(rText, offset));
+         straddler.length += count;
+      }
+
+      List<Integer> shiftKeys = new ArrayList<>(class_.tailMap(nlPos + 1).keySet());
+      List<ClassRange> shifted = new ArrayList<>(shiftKeys.size());
+      for (Integer key : shiftKeys)
+         shifted.add(class_.remove(key));
+      for (ClassRange r : shifted)
+      {
+         r.start += count;
+         class_.put(r.start, r);
+      }
    }
    
    public void submit(String data, Type type)

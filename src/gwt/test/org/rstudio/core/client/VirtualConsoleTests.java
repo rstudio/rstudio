@@ -1449,6 +1449,20 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("Downloads  50%\nProcessing 50%", vc.toString());
    }
 
+   public void testCsiCursorUpWriteLongerThanLinePreservesNewline()
+   {
+      // Regression guard: a write that begins on an earlier line via CSI A
+      // and is longer than that line's existing content must not run past
+      // the trailing newline and corrupt the line below it. The buffer
+      // newline stays where the writer expects, with the upper line
+      // extended to fit the new content.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Downloads 10%\nProcessing 10%");
+      vc.submit("\u001b[1A\rDownloads NEW 50%\u001b[K\n\rProcessing 50%\u001b[K\r");
+      Assert.assertEquals("Downloads NEW 50%\nProcessing 50%", vc.toString());
+   }
+
    public void testIncompleteAnsiCodes()
    {
       PreElement ele = Document.get().createPreElement();
