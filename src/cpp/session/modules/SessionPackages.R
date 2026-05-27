@@ -986,12 +986,20 @@
 
 
 # a vectorized function that takes any number of paths and aliases the home
-# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
-# paths outside the home directory untouched
+# directory in those paths (i.e. "/Users/bob/foo" => "~/foo", "/Users/bob"
+# => "~"), leaving any paths outside the home directory untouched
 .rs.addFunction("createAliasedPath", function(path)
 {
-   homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
+   homeBare <- path.expand("~")
+   homeDir  <- paste0(homeBare, "/")
+
+   # an exact match for the home directory itself (no trailing slash on the
+   # input) aliases to "~"; the prefix branch below only handles "<home>/foo"
+   # since its length check requires the trailing slash
+   exactMatch <- path == homeBare
+   path[exactMatch] <- "~"
+
+   homePathIdx <- !exactMatch & substr(path, 1L, nchar(homeDir)) == homeDir
    homePaths <- path[homePathIdx]
    homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
    path[homePathIdx] <- paste0("~", homeSuffix)
