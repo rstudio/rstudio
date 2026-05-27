@@ -21,17 +21,20 @@ export class DebuggerActions {
   }
 
   /** Click the breakpoint area of the gutter cell for `line` (1-indexed).
-   *  Waits until any breakpoint marker (active / pending / inactive) appears
-   *  on the cell — the test caller can assert further on which class shows
-   *  up if a specific state matters. */
+   *  Waits until the marker on that line reaches a settled state -- either
+   *  active (`ace_breakpoint`, R registered the trace) or inactive
+   *  (`ace_inactive-breakpoint`, function not in scope yet). The transient
+   *  `ace_pending-breakpoint` state only means GWT created the breakpoint
+   *  object, not that R has finished processing; returning on pending lets
+   *  a follow-up `setBreakpoint` race the first one's RPC and leave R with
+   *  only one trace registered. See {@link DebuggerPage.settledBreakpointMarker}. */
   async setBreakpoint(line: number): Promise<void> {
-    const before = await this.debuggerPage.anyBreakpointMarker.count();
     const cell = this.debuggerPage.gutterCellForLine(line);
     await cell.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await cell.click({ position: GUTTER_BREAKPOINT_HIT_AREA });
-    await expect.poll(() => this.debuggerPage.anyBreakpointMarker.count(), {
-      timeout: TIMEOUTS.fileOpen,
-    }).toBeGreaterThan(before);
+    await expect(
+      this.debuggerPage.settledBreakpointForLine(line),
+    ).toBeVisible({ timeout: TIMEOUTS.fileOpen });
   }
 
   /** Toggle the breakpoint at the cursor's current position via Shift+F9
@@ -121,6 +124,32 @@ export class DebuggerActions {
     await expect(this.debuggerPage.debugToolbar).not.toBeVisible({ timeout: TIMEOUTS.fileOpen });
   }
 
+  /** Wait until the active debug line marker is visible in the editor and
+   *  return its 0-indexed editor row. Prefer this over the bare
+   *  {@link getActiveDebugLineRow} in test code: after `waitForDebugMode`
+   *  the R debugger may take a beat to surface the marker, and a bare
+   *  read would throw before it appears. */
+  async waitForActiveDebugLineRow(timeout: number = TIMEOUTS.fileOpen): Promise<number> {
+    await this.debuggerPage.activeDebugLine.first().waitFor({
+      state: 'visible',
+      timeout,
+    });
+    return this.getActiveDebugLineRow();
+  }
+
+  /** Wait until the active debug line lands on `row` (0-indexed). Retries
+   *  through transient throws from {@link getActiveDebugLineRow} while the
+   *  marker is rendering. */
+  async waitForActiveDebugLineRowToBe(
+    row: number,
+    timeout: number = TIMEOUTS.fileOpen,
+  ): Promise<void> {
+    await expect.poll(
+      () => this.getActiveDebugLineRow().catch(() => -1),
+      { timeout },
+    ).toBe(row);
+  }
+
   /** Read the editor row (0-indexed) of the active debug line via Ace's
    *  pixel→screen mapping.
    *
@@ -131,9 +160,10 @@ export class DebuggerActions {
    *  first one that's actually rendered, then walk up to its containing
    *  .ace_editor for the pixel→screen mapping.
    *
-   *  Throws if no visibly-rendered active debug line is found — callers
-   *  that need to poll should wrap the call in `expect.poll`, which retries
-   *  on thrown errors. */
+   *  Throws if no visibly-rendered active debug line is found. Most test
+   *  code should use {@link waitForActiveDebugLineRow} instead; this raw
+   *  variant is reserved for the step methods that explicitly want to
+   *  capture "no marker yet" as a null via `.catch(() => null)`. */
   async getActiveDebugLineRow(): Promise<number> {
     const row = await this.page.evaluate(`(function() {
       var candidates = document.querySelectorAll('.ace_active_debug_line');
@@ -160,11 +190,14 @@ export class DebuggerActions {
     return row;
   }
 
-  /** Read the gutter row label of the cell that currently displays the
-   *  executing-line icon. Returns the line number text (e.g., "3"). */
-  async getExecutingLineGutterText(): Promise<string> {
+  /** Wait until the executing-line gutter cell is rendered, then return
+   *  its row label (e.g., "3"). The wait covers the gap between
+   *  `waitForDebugMode` returning and the gutter icon actually painting. */
+  async waitForExecutingLineGutterText(
+    timeout: number = TIMEOUTS.fileOpen,
+  ): Promise<string> {
     const el = this.debuggerPage.executingLineGutter.first();
-    await el.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await el.waitFor({ state: 'visible', timeout });
     return (await el.innerText()).trim();
   }
 }
