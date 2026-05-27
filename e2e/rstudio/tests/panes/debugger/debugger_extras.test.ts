@@ -176,6 +176,7 @@ test.describe('R debugger extras', () => {
 
       // Set a breakpoint on line 2.
       await debuggerActions.setBreakpoint(2);
+
       await expect.poll(
         () => debuggerActions.debuggerPage.anyBreakpointMarker.count(),
         { timeout: TIMEOUTS.fileOpen },
@@ -268,7 +269,7 @@ test.describe('R debugger extras', () => {
 
       await debuggerActions.waitForDebugMode();
       await expect.poll(
-        () => debuggerActions.getExecutingLineGutterText(),
+        () => debuggerActions.waitForExecutingLineGutterText(),
         { timeout: TIMEOUTS.fileOpen },
       ).toBe('3');
 

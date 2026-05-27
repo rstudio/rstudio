@@ -99,16 +99,11 @@ test.describe('R debugger', () => {
       `;
 
       await writeAndOpen(fileName, content);
-
       await debuggerActions.setBreakpoint(2);
-
       await executeCommand(consoleActions.page, 'sourceActiveDocument');
 
       await debuggerActions.waitForDebugMode();
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(1); // 0-indexed → line 2
+      await debuggerActions.waitForActiveDebugLineRowToBe(1); // 0-indexed → line 2
     });
 
     test('single gutter breakpoint highlights correct row', async () => {
@@ -141,12 +136,9 @@ test.describe('R debugger', () => {
       // Breakpoint on line 3 (the `{` opening the brace block). The active
       // debug line lands on row 2 (= line 3, 0-indexed); the gutter
       // executing-line icon shows "3".
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(2);
+      await debuggerActions.waitForActiveDebugLineRowToBe(2);
 
-      const gutterText = await debuggerActions.getExecutingLineGutterText();
+      const gutterText = await debuggerActions.waitForExecutingLineGutterText();
       expect(gutterText).toBe('3');
     });
 
@@ -217,14 +209,11 @@ test.describe('R debugger', () => {
       await consoleActions.executeInConsole('step_next_fn()');
 
       await debuggerActions.waitForDebugMode();
-      const startRow = await debuggerActions.getActiveDebugLineRow();
+      const startRow = await debuggerActions.waitForActiveDebugLineRow();
       expect(startRow).toBeGreaterThanOrEqual(0);
 
       await debuggerActions.stepOver();
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(startRow + 1);
+      await debuggerActions.waitForActiveDebugLineRowToBe(startRow + 1);
     });
 
     test('Step Into descends into a nested function call', async () => {
@@ -248,10 +237,7 @@ test.describe('R debugger', () => {
       await debuggerActions.waitForDebugMode();
 
       // Breakpoint at line 5 (the `inner()` call) → row 4 at debug entry.
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(4);
+      await debuggerActions.waitForActiveDebugLineRowToBe(4);
 
       await debuggerActions.stepInto();
 
@@ -261,10 +247,10 @@ test.describe('R debugger', () => {
       // (b) it landed inside inner()'s body (rows 0–2). Combined, these
       // distinguish a real descent from "debug exited" or "stepped over".
       await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
+        () => debuggerActions.getActiveDebugLineRow().catch(() => -1),
         { timeout: TIMEOUTS.fileOpen },
       ).not.toBe(4);
-      const after = await debuggerActions.getActiveDebugLineRow();
+      const after = await debuggerActions.waitForActiveDebugLineRow();
       expect(after).toBeGreaterThanOrEqual(0);
       expect(after).toBeLessThanOrEqual(2);
       await expect(debuggerActions.debuggerPage.debugToolbar).toBeVisible();
@@ -316,16 +302,10 @@ test.describe('R debugger', () => {
       await consoleActions.executeInConsole('step_continue_fn()');
 
       await debuggerActions.waitForDebugMode();
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(1); // 0-indexed → line 2
+      await debuggerActions.waitForActiveDebugLineRowToBe(1); // 0-indexed → line 2
 
       await debuggerActions.continueDebug();
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(4); // 0-indexed → line 5
+      await debuggerActions.waitForActiveDebugLineRowToBe(4); // 0-indexed → line 5
     });
 
     test('Stop button cleanly exits debug', async () => {
@@ -372,10 +352,7 @@ test.describe('R debugger', () => {
       await consoleActions.executeInConsole('five_continues_fn()');
 
       await debuggerActions.waitForDebugMode();
-      await expect.poll(
-        () => debuggerActions.getActiveDebugLineRow(),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(1); // 0-indexed → line 2
+      await debuggerActions.waitForActiveDebugLineRowToBe(1); // 0-indexed → line 2
 
       // Each Continue lands on the next breakpoint, and the prior
       // assignment becomes visible in the Environment pane.
@@ -388,10 +365,7 @@ test.describe('R debugger', () => {
       ];
       for (const { row, name, value } of stops) {
         await debuggerActions.continueDebug();
-        await expect.poll(
-          () => debuggerActions.getActiveDebugLineRow(),
-          { timeout: TIMEOUTS.fileOpen },
-        ).toBe(row);
+        await debuggerActions.waitForActiveDebugLineRowToBe(row);
         await expect.poll(
           () => envPane.hasVariable(name, value),
           { timeout: TIMEOUTS.fileOpen },
@@ -432,7 +406,7 @@ test.describe('R debugger', () => {
       // (row 1) before advancing. Assert the marker lands on row 1 or row
       // 2 — anywhere inside the function body but not on the function
       // declaration (row 0) or past the closing brace.
-      const row = await debuggerActions.getActiveDebugLineRow();
+      const row = await debuggerActions.waitForActiveDebugLineRow();
       expect(row).toBeGreaterThanOrEqual(1);
       expect(row).toBeLessThanOrEqual(2);
     });
