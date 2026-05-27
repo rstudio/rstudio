@@ -374,6 +374,7 @@ Error listSetContents(const json::JsonRpcRequest& request,
    bool isProjectMru = (name == kProjectNameMru);
 
    std::list<std::string> list;
+   std::set<std::string> seenPaths;
    for (const json::Value& val : jsonList)
    {
       if (!json::isType<std::string>(val))
@@ -384,7 +385,16 @@ Error listSetContents(const json::JsonRpcRequest& request,
 
       std::string entry = val.getString();
       if (isProjectMru)
+      {
+         // canonicalize, then drop any later entries that resolve to the
+         // same project path -- mirrors the dedup pass in normalizeProjectMru
+         // so callers can't reintroduce the duplicates from #17225 through
+         // this RPC path
          entry = canonicalizeProjectMruEntry(entry);
+         std::string path = detail::splitProjectMruEntry(entry).first;
+         if (!seenPaths.insert(path).second)
+            continue;
+      }
       list.push_back(entry);
    }
 
