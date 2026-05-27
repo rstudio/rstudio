@@ -2093,28 +2093,48 @@ SEXP rs_readLines(SEXP filePathSEXP)
 // FilesPane breadcrumb, and now this R-callable wrapper).
 SEXP rs_createAliasedPath(SEXP pathsSEXP)
 {
-   if (TYPEOF(pathsSEXP) != STRSXP)
-      Rf_error("'path' must be a character vector");
-
-   FilePath home = module_context::userHomePath();
-   int n = r::sexp::length(pathsSEXP);
-   r::sexp::Protect protect;
-   SEXP result = Rf_allocVector(STRSXP, n);
-   protect.add(result);
-   for (int i = 0; i < n; i++)
+   try
    {
-      SEXP elt = STRING_ELT(pathsSEXP, i);
-      if (elt == NA_STRING)
+      if (TYPEOF(pathsSEXP) != STRSXP)
+         throw r::exec::RErrorException("'path' must be a character vector");
+
+      FilePath home = module_context::userHomePath();
+
+      int n = r::sexp::length(pathsSEXP);
+      r::sexp::Protect protect;
+      SEXP result = Rf_allocVector(STRSXP, n);
+      protect.add(result);
+
+      for (int i = 0; i < n; i++)
       {
-         SET_STRING_ELT(result, i, NA_STRING);
-         continue;
+         SEXP elt = STRING_ELT(pathsSEXP, i);
+         if (elt == NA_STRING)
+         {
+            SET_STRING_ELT(result, i, NA_STRING);
+            continue;
+         }
+
+         std::string aliased = FilePath::createAliasedPath(
+            FilePath(r::sexp::asUtf8String(elt)),
+            home);
+
+         SEXP charSEXP = Rf_mkCharLenCE(
+            aliased.data(),
+            static_cast<int>(aliased.size()),
+            CE_UTF8);
+
+         SET_STRING_ELT(result, i, charSEXP);
       }
-      std::string aliased = FilePath::createAliasedPath(
-         FilePath(r::sexp::asUtf8String(elt)),
-         home);
-      SET_STRING_ELT(result, i, Rf_mkCharCE(aliased.c_str(), CE_UTF8));
+
+      return result;
    }
-   return result;
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
 }
 
 } // anonymous namespace
