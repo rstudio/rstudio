@@ -75,9 +75,10 @@ test.describe('Missing-package banner', () => {
         .toBe(false);
 
       // Re-enable via the AppCommand: clears the suppression property and
-      // re-runs discovery, so the banner returns.
+      // re-runs discovery, so the banner returns. available.packages() is
+      // cached by this point in the session, so this discovery is fast.
       await executeCommand(page, 'toggleDetectMissingPackages');
-      await expect(banner).toBeVisible({ timeout: 60000 });
+      await expect(banner).toBeVisible({ timeout: 10000 });
       expect(await isCommandChecked(page, 'toggleDetectMissingPackages')).toBe(true);
     });
 });
