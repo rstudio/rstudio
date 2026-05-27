@@ -21,9 +21,21 @@ export interface AceMarker {
 /**
  * Drives an Ace editor instance from Playwright via page.evaluate.
  *
- * Identifies the target editor by a content marker -- a substring guaranteed
- * to appear in its current value. Editors inside #rstudio_console_input are
- * skipped so the source editor is found even when the console is focused.
+ * Two ways to identify the target editor:
+ *
+ *   - Empty marker (`new AceEditor(page, '')`): the active source editor,
+ *     resolved through `window.rstudio.documents.activeEditor()`. Prefer this
+ *     when there's only one tab open, or when "the editor the user is looking
+ *     at" is what the test means.
+ *   - Non-empty marker: a `.ace_editor` element whose current value contains
+ *     the marker substring. Use this to target a *non-active* tab (e.g. a
+ *     hidden buffer left open in another tab). Editors inside
+ *     #rstudio_console_input are skipped so the source editor is still found
+ *     when the console happens to come first in DOM order.
+ *
+ * The marker-substring path is a DOM walk and can land on stale editors left
+ * in the DOM after a tab close (see ad175dccd1 / #17775 and #17784). Empty
+ * marker avoids that entirely.
  */
 export class AceEditor extends PageObject {
   private readonly marker: string;
@@ -34,9 +46,9 @@ export class AceEditor extends PageObject {
   }
 
   /**
-   * Reconstructs `fn` in the browser context, locates the editor whose value
-   * contains the marker, and invokes `fn(editor, ...args)`. Args must be
-   * structured-clone serializable.
+   * Reconstructs `fn` in the browser context, locates the editor (active doc
+   * when marker is empty, marker-substring match otherwise), and invokes
+   * `fn(editor, ...args)`. Args must be structured-clone serializable.
    */
   private async runOnEditor<TArgs extends unknown[], TResult>(
     fn: (editor: Ace.Editor, ...args: TArgs) => TResult,
@@ -44,14 +56,25 @@ export class AceEditor extends PageObject {
   ): Promise<TResult> {
     return this.page.evaluate(
       ({ marker, fnSource, args }) => {
+        // Reconstruct the function passed by the test from its source.
+        // Input is trusted: it comes from our own .toString() in the caller.
+        const op = (0, eval)('(' + fnSource + ')') as (editor: Ace.Editor, ...args: unknown[]) => unknown;
+
+        if (marker === '') {
+          const editor = window.rstudio?.documents.activeEditor() ?? null;
+          if (!editor) {
+            throw new Error(
+              'AceEditor(\'\'): no active source editor (window.rstudio.documents.activeEditor() returned null)',
+            );
+          }
+          return op(editor, ...args);
+        }
+
         const editors = document.querySelectorAll('.ace_editor');
         for (let i = 0; i < editors.length; i++) {
           if (editors[i].closest('#rstudio_console_input')) continue;
           const env = (editors[i] as unknown as AceEditorElement).env;
           if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
-            // Reconstruct the function passed by the test from its source.
-            // Input is trusted: it comes from our own .toString() in the caller.
-            const op = (0, eval)('(' + fnSource + ')') as (editor: Ace.Editor, ...args: unknown[]) => unknown;
             return op(env.editor, ...args);
           }
         }
