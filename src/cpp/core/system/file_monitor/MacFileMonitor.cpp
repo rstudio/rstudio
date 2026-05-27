@@ -115,15 +115,16 @@ public:
 // Read a FileInfo via lstat, matching what PosixFileScanner produces for the
 // initial tree population. Mirroring that view (in particular: symlinks treated
 // literally) keeps per-event updates consistent with the tree so we don't emit
-// spurious modify events for symlinks. Returns false on stat failure with errno
-// in *pErrno.
-bool readFileInfoLStat(const std::string& path, FileInfo* pFileInfo, int* pErrno)
+// spurious modify events for symlinks. Returns systemError on lstat failure;
+// callers special-case ENOENT to emit FileRemoved.
+Error readFileInfoLStat(const std::string& path, FileInfo* pFileInfo)
 {
    struct stat st;
    if (::lstat(path.c_str(), &st) == -1)
    {
-      *pErrno = errno;
-      return false;
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
    }
 
    bool isSymlink = S_ISLNK(st.st_mode);
@@ -139,7 +140,7 @@ bool readFileInfoLStat(const std::string& path, FileInfo* pFileInfo, int* pErrno
                             st.st_mtimespec.tv_sec,
                             isSymlink);
    }
-   return true;
+   return Success();
 }
 
 // Process a batch of FSEvents events for a non-recursive watch. With the
@@ -184,12 +185,10 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
       tree<FileInfo>::iterator rootIt = pContext->fileTree.begin();
 
       FileInfo fileInfo;
-      int statErrno = 0;
-      bool exists = readFileInfoLStat(path, &fileInfo, &statErrno);
-
-      if (!exists)
+      Error statError = readFileInfoLStat(path, &fileInfo);
+      if (statError)
       {
-         if (statErrno == ENOENT)
+         if (statError == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
          {
             // entry no longer exists; processFileRemoved finds it in the tree
             // by path and uses the stored FileInfo for the event payload
@@ -203,9 +202,7 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
          }
          else
          {
-            Error error = systemError(statErrno, ERROR_LOCATION);
-            error.addProperty("path", path);
-            LOG_ERROR(error);
+            LOG_ERROR(statError);
          }
          continue;
       }
@@ -227,15 +224,12 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
          LOG_ERROR(error);
    }
 
-   // Flush any per-file events the loop accumulated before kicking off a
-   // rescan. The loop already mutated pContext->fileTree as it processed
-   // each event, so discoverAndProcessFileChanges (which diffs the
-   // filesystem against the tree) would find no diff for those entries and
-   // emit nothing -- losing the events. Emit them now so the rescan only
-   // needs to reconcile what the loop couldn't (the dropped-event tail).
-   if (!fileChanges.empty())
-      pContext->callbacks.onFilesChanged(fileChanges);
-
+   // Emission order matches LinuxFileMonitor's IN_Q_OVERFLOW path: rescan
+   // first (so it reconciles the filesystem against the tree the loop just
+   // mutated -- entries already applied have no diff and aren't re-emitted),
+   // then fire the per-event vector the loop accumulated. The rescan and
+   // the accumulated events are disjoint by construction, so order is just
+   // a matter of cross-backend consistency.
    if (needsFullRescan)
    {
       FileInfo rootInfo(pContext->rootPath);
@@ -254,6 +248,9 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
          }
       }
    }
+
+   if (!fileChanges.empty())
+      pContext->callbacks.onFilesChanged(fileChanges);
 }
 
 void fileEventCallback(ConstFSEventStreamRef streamRef,
@@ -299,6 +296,9 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       return;
    }
 
+   // FSEvents documents `eventPaths` (and the parallel `eventFlags` array) as
+   // valid only for the duration of this callback. Both branches below copy
+   // the strings they need before any cross-callback use.
    char **paths = (char**) eventPaths;
 
    // Non-recursive watches go through the per-file event path; see
