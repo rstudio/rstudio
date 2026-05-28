@@ -1114,10 +1114,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       serialize(x, connection = NULL, ascii = FALSE)
 
    n <- length(bytes)
-   if (n == 0L)
-      return("00000001")
-
-   ints <- as.double(as.integer(bytes))
+   ints <- as.numeric(bytes)
    s1 <- sum(ints)
    s2 <- sum(seq_len(n) * ints)
    a <- (1 + s1) %% 65521
