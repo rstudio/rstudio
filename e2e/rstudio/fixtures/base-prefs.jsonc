@@ -10,5 +10,13 @@
   // Don't restore source tabs from the previous session. Prevents one spec's
   // open documents from leaking into a subsequent spec (Desktop-only effect;
   // Server prefs are server-side).
-  "restore_source_documents": false
+  "restore_source_documents": false,
+
+  // Disable UI animations so pane minimize/maximize/zoom transitions apply
+  // synchronously. The animated path (PaneManager + DualWindowLayoutPanel,
+  // both already gate on this pref) runs an async onAnimationComplete that
+  // automation can race -- leaving the Source pane stuck in the minimized
+  // state. Tests that specifically exercise animations override this with
+  // setPref(page, 'reduced_motion', false) in setup and restore it after.
+  "reduced_motion": true
 }

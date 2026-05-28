@@ -263,6 +263,11 @@ export async function launchServer(): Promise<ServerSession> {
   console.log('Files pane toolbar is ready');
 
   await setPref(page, 'save_workspace', 'never');
+  // Disable UI animations (pane minimize/maximize/zoom) so transitions apply
+  // synchronously; the animated path runs an async completion automation can
+  // race, leaving the Source pane stuck minimized. Mirrors reduced_motion in
+  // fixtures/base-prefs.jsonc (desktop). Animation tests override per-test.
+  await setPref(page, 'reduced_motion', true);
   await sleep(1000);
 
   await page.locator(CONSOLE_INPUT).click({ force: true });

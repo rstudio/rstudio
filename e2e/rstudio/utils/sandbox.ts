@@ -3,6 +3,7 @@ import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
 import { executeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
+import { assertAbsolutePath } from './paths';
 
 /**
  * Prefix for per-suite R workdir subdirectories created inside the sandbox.
@@ -65,6 +66,9 @@ export async function createSandbox(page: Page): Promise<string> {
     const match = output.match(pattern);
     if (match) {
       const dir = match[1].trim();
+      // Fail loudly if R handed back something unusable (empty / relative)
+      // rather than letting it flow downstream into a root-relative path.
+      assertAbsolutePath(dir, 'createSandbox: R returned workdir');
       // If the workdir's parent isn't PW_SANDBOX, the adaptive rootExpr()
       // chose the dirname(tempdir()) fallback on the rsession host -- meaning
       // PW_SANDBOX doesn't exist there (remote-rsession Server mode). Surface
@@ -76,6 +80,7 @@ export async function createSandbox(page: Page): Promise<string> {
           `[sandbox] R workdir ${dir} is not under PW_SANDBOX (${sandbox}); rsession appears to be on a different host. Workdir will not be auto-cleaned.`,
         );
       }
+      console.log(`[sandbox] createSandbox: workdir ${dir}`);
       return dir;
     }
   }
@@ -108,9 +113,43 @@ export async function createSandbox(page: Page): Promise<string> {
  *   });
  */
 export function useSuiteSandbox(): { dir: string } {
-  const ref = { dir: '' };
+  let value = '';
+  let warnedEmpty = false;
+  const ref = {
+    get dir(): string {
+      // Instrumentation: a read while still empty means the path built from it
+      // will be rooted at "/". Surface the first such read (with a stack so we
+      // can see the caller) instead of silently producing a bad path. The
+      // downstream assertAbsolutePath guards still throw; this just pins which
+      // read raced the beforeAll.
+      if (value === '' && !warnedEmpty) {
+        warnedEmpty = true;
+        console.warn(
+          '[sandbox] useSuiteSandbox: sandbox.dir read while still empty -- ' +
+          "the suite's sandbox beforeAll has not populated it (check beforeAll " +
+          'ordering / a failed createSandbox). Stack:\n' +
+          (new Error().stack ?? '(no stack)'),
+        );
+      }
+      return value;
+    },
+    set dir(next: string) {
+      value = next;
+    },
+  };
   test.beforeAll(async ({ rstudioPage }) => {
+    // Timeline instrumentation: bracket the sandbox creation with the suite
+    // name so a later "Error Opening Project" / empty-dir failure can be
+    // correlated against whether (and when) this suite's workdir was created.
+    let suite = '';
+    try {
+      suite = test.info().titlePath.join(' > ');
+    } catch {
+      // test.info() unavailable outside a running hook/test; name is optional.
+    }
+    console.log(`[sandbox] useSuiteSandbox beforeAll start${suite ? ` (${suite})` : ''}`);
     ref.dir = await createSandbox(rstudioPage);
+    console.log(`[sandbox] useSuiteSandbox beforeAll done: dir=${ref.dir}`);
   });
   return ref;
 }

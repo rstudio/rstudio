@@ -304,6 +304,16 @@ export async function documentOpen(
  * never transitions through the zero-tab HIDE state -- the gap that races a
  * subsequent file.edit (#17738). Prefer this over documentCloseAllNoSave for
  * cross-test resets where a following file.edit / newDoc is imminent.
+ *
+ * Waits for the reset to actually land before returning (see
+ * waitForSourcePaneReset). resetToUntitled's close chain is async, so
+ * returning on dispatch would let callers race the still-open tabs -- most
+ * damagingly, deleting their files while editors hold them open, which makes
+ * RStudio raise "File Deleted" / "Save File" (system error 2) modals whose
+ * glass panels block the next test. Best-effort: a reset that never settles
+ * warns rather than throwing, matching the cross-test reset's
+ * don't-fail-the-hook contract; residual staleness surfaces as a more precise
+ * failure in the test body.
  */
 export async function resetSourcePaneState(page: Page): Promise<void> {
   await withBridgeLog('resetSourcePaneState', '', async () => {
@@ -314,6 +324,50 @@ export async function resetSourcePaneState(page: Page): Promise<void> {
       r.documents.resetToUntitled();
     });
   });
+  await waitForSourcePaneReset(page).catch(() => {
+    console.warn(
+      '[commands] resetSourcePaneState did not settle within 10s ' +
+      '(active doc never became Untitled, or extra tabs remain). ' +
+      'Callers proceed against possibly-stale source-pane state.',
+    );
+  });
+}
+
+/**
+ * Wait until a resetSourcePaneState dispatch has actually settled: the active
+ * document is the kept Untitled (path === null) AND exactly one source tab
+ * remains across all columns.
+ *
+ * resetToUntitled dispatches a GWT event whose handler reverts dirty targets,
+ * then closes every tab except a kept Untitled in an async CPS chain of
+ * closeTab calls. The page.evaluate inside resetSourcePaneState returns the
+ * moment that event is enqueued, NOT when the chain finishes -- so callers
+ * that go on to touch what the still-open tabs hold (deleting their files on
+ * disk, opening a colliding file, asserting on tab count) race the close.
+ * The most damaging case: deleting a file while its editor is still open makes
+ * RStudio raise a "File Deleted" prompt and a "Save File" (system error 2)
+ * error, whose glass panels then block the next test.
+ *
+ * resetSourcePaneState already awaits this (best-effort) after dispatching, so
+ * call it directly only when you need to wait on the settle without
+ * re-dispatching the reset. Throws on timeout; best-effort callers `.catch()`.
+ */
+export async function waitForSourcePaneReset(page: Page, timeout = 10000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      if (doc === null || doc.path !== null) return false;
+      // Count source tabs across all source columns. The DocTabLayoutPanel
+      // wrapper tags its root with class `rstudio_source_panel`, and each
+      // open document renders one `[role="tab"]` child of the panel's tablist.
+      const tabs = document.querySelectorAll(
+        "[class*='rstudio_source_panel'] [role='tab']",
+      );
+      return tabs.length === 1;
+    },
+    null,
+    { timeout, polling: 50 },
+  );
 }
 
 /**
