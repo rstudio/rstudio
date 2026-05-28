@@ -1100,10 +1100,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # invent our own framing -- a delimiter-joined string can collide on
 # names that contain the delimiter.
 #
-# Processed in chunks small enough that every intermediate sum stays
-# within R's signed 32-bit integer range. The dominant term is
-# sum((k+1-i)*chunk[i]) (bounded by 255*k*(k+1)/2); the int32 ceiling
-# is k <= 3854 and 1024 stays comfortably under that.
+# The modulus 65521 is the largest prime below 2^16, per the spec.
+# Each loop iteration evaluates
+#   b + k*a + sum_{i=1..k} (k+1-i) * chunk[i]
+# before the %% reduction. Worst case (a, b near 65520; chunk[i] = 255)
+# bounds at 65520*(k+1) + 255*k*(k+1)/2; staying within R's signed
+# 32-bit integer range gives k <= 3854, so chunk size 1024 has plenty
+# of headroom.
 .rs.addFunction("digest", function(x)
 {
    bytes <- if (is.raw(x))

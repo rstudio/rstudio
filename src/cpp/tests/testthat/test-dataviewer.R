@@ -168,6 +168,13 @@ test_that(".rs.digest() matches the canonical Adler-32 reference value", {
 
    # Adler-32 of the empty input is defined as 1.
    expect_identical(.rs.digest(raw()), "00000001")
+
+   # Pin a serialize()-routed input. Real callers (colsFingerprint,
+   # log-once dedup) pass character vectors, not raw bytes, so the hash
+   # depends on R's serialization format -- if that ever changes under
+   # us the digest will drift silently and saved data-viewer state would
+   # get invalidated en masse after an R upgrade. Worth knowing.
+   expect_identical(.rs.digest(c("a", "b")), "44fa02c4")
 })
 
 test_that(".rs.digest() chunked path matches the recursive Adler-32 spec", {
@@ -192,10 +199,25 @@ test_that(".rs.digest() chunked path matches the recursive Adler-32 spec", {
    mixed <- as.raw(rep_len(0:255, 5000L))
    expect_identical(.rs.digest(mixed), refAdler32(mixed))
 
-   # Exact chunk boundary -- the loop's last iteration must consume the
-   # final chunk fully without spilling into a zero-length iteration.
-   boundary <- as.raw(rep_len(0:255, 2048L))
-   expect_identical(.rs.digest(boundary), refAdler32(boundary))
+   # Bracket the chunk-size boundary: n=1023 (just under, single short
+   # chunk), n=1024 (exact single chunk), n=1025 (two iterations, with
+   # a degenerate k=1 trailing chunk). An off-by-one in either
+   # `end <- min(pos + size - 1L, n)` or the `pos <= n` loop condition
+   # would slip through a multi-chunk test like n=2048 but get caught
+   # by at least one of these.
+   under <- as.raw(rep_len(0:255, 1023L))
+   expect_identical(.rs.digest(under), refAdler32(under))
+
+   exact <- as.raw(rep_len(0:255, 1024L))
+   expect_identical(.rs.digest(exact), refAdler32(exact))
+
+   over <- as.raw(rep_len(0:255, 1025L))
+   expect_identical(.rs.digest(over), refAdler32(over))
+
+   # Two full chunks -- guards against the chunk-stitching arithmetic
+   # (k*a carry between iterations) drifting from the recursive form.
+   twoChunks <- as.raw(rep_len(0:255, 2048L))
+   expect_identical(.rs.digest(twoChunks), refAdler32(twoChunks))
 })
 
 # Helper: strip the rs.scalar class wrapper so tests can compare against

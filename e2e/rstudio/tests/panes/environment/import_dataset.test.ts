@@ -51,10 +51,11 @@ test.describe('Import Dataset (readr)', () => {
     const dialog = page.locator(IMPORT_DIALOG);
     await expect(dialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
-    // Type the CSV path into the file chooser TextBox. The chooser polls
-    // for value changes every 250ms (DataImportFileChooser.checkForTextBoxChange)
-    // and flips the action button from "Browse..." to "Update" when the
-    // textbox transitions empty -> non-empty.
+    // Set the path on the file chooser TextBox in one shot. The chooser
+    // polls for value changes every 250ms (DataImportFileChooser.
+    // checkForTextBoxChange) and flips the action button from "Browse..."
+    // to "Update" when the textbox transitions empty -> non-empty -- we
+    // wait on that flip below rather than racing the poll per keystroke.
     //
     // The textbox's class is the obfuscated form of `modelTextBox` (set via
     // styleName= in DataImportFileChooser.ui.xml, which replaces the default
@@ -62,8 +63,7 @@ test.describe('Import Dataset (readr)', () => {
     // from the label-association in DataImport.ui.xml.
     const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
     await expect(fileInput).toBeVisible({ timeout: 5000 });
-    await fileInput.click();
-    await fileInput.pressSequentially(csvPath);
+    await fileInput.fill(csvPath);
 
     // Click "Update" to commit the path and kick off
     // preview_data_import_async. The textbox value change alone does not
