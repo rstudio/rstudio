@@ -17,7 +17,7 @@ test.describe('Data Viewer', () => {
     consoleActions = new ConsolePaneActions(page);
     sourcePane = new SourcePane(page);
     dataViewer = new DataViewerPane(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

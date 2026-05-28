@@ -39,7 +39,7 @@ test.describe('Packages pane', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   // Restore the Files tab as the active tabset member when we're done so a

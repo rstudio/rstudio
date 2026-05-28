@@ -13,7 +13,7 @@ test.describe('Sweave', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

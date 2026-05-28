@@ -151,14 +151,96 @@ test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
 })
 
 test_that(".rs.digest() distinguishes character vectors that concat-collide", {
-   # Without length-prefix / unit-separator framing, c("a","b") and
-   # c("ab") would hash identically -- a regression here would silently
-   # weaken the data viewer fingerprint.
+   # A naive delimiter join would let c("a","b") and c("ab") hash
+   # identically; serialize() encodes element boundaries unambiguously
+   # so these always differ.
    expect_false(identical(.rs.digest(c("a", "b")), .rs.digest("ab")))
    expect_false(identical(.rs.digest(c("a-b", "c")), .rs.digest(c("a", "b-c"))))
 
    # Stable across calls.
    expect_identical(.rs.digest(c("x", "y")), .rs.digest(c("x", "y")))
+})
+
+test_that(".rs.digest() matches the canonical Adler-32 reference value", {
+   # 0x024d0127 is the standard Adler-32 of "abc" -- guards against
+   # accidental algorithm drift in the chunked integer rewrite.
+   expect_identical(.rs.digest(charToRaw("abc")), "024d0127")
+
+   # Adler-32 of the empty input is defined as 1.
+   expect_identical(.rs.digest(raw()), "00000001")
+
+   # Pin a serialize()-routed input. Real callers (colsFingerprint,
+   # log-once dedup) pass character vectors. .rs.digest() pins
+   # serialize(version = 2L) and zeroes the writer-version field so the
+   # hash is stable across R upgrades; if either of those guards is
+   # dropped, this expectation will fire on whichever R version doesn't
+   # match the value the test was originally pinned against.
+   expect_identical(.rs.digest(c("a", "b")), "1732015b")
+})
+
+test_that(".rs.digest() zeroes the v2 writer-version field", {
+   # serialize(version = 2L) embeds the writer's R version in bytes
+   # 7-10 of its output. The character-input path of .rs.digest()
+   # zeroes those bytes before hashing so the colsFingerprint
+   # persisted alongside data-viewer state stays stable across R
+   # upgrades. Verify by reproducing the post-patch bytes manually
+   # and feeding them in via the raw path (which hashes directly,
+   # without re-patching).
+   manuallyPatched <- serialize(c("a", "b"), connection = NULL,
+                                ascii = FALSE, version = 2L)
+   manuallyPatched[7:10] <- as.raw(0L)
+   expect_identical(.rs.digest(c("a", "b")), .rs.digest(manuallyPatched))
+
+   # And without the patch, the writer-version bytes change the hash
+   # -- if .rs.digest() ever stops patching, this would silently
+   # invalidate every persisted data-viewer state token after an R
+   # upgrade.
+   unpatched <- serialize(c("a", "b"), connection = NULL,
+                          ascii = FALSE, version = 2L)
+   expect_false(identical(.rs.digest(c("a", "b")), .rs.digest(unpatched)))
+})
+
+test_that(".rs.digest() chunked path matches the recursive Adler-32 spec", {
+   # Cross-check the chunked implementation against a byte-at-a-time
+   # reference taken straight from the spec. Inputs deliberately span
+   # several chunks (chunk size is 1024) and include a non-multiple
+   # length so the partial trailing chunk is exercised.
+   refAdler32 <- function(bytes) {
+      a <- 1L
+      b <- 0L
+      for (byte in as.integer(bytes))
+      {
+         a <- (a + byte) %% 65521L
+         b <- (b + a) %% 65521L
+      }
+      sprintf("%04x%04x", b, a)
+   }
+
+   uniform <- as.raw(rep(255L, 5000L))
+   expect_identical(.rs.digest(uniform), refAdler32(uniform))
+
+   mixed <- as.raw(rep_len(0:255, 5000L))
+   expect_identical(.rs.digest(mixed), refAdler32(mixed))
+
+   # Bracket the chunk-size boundary: n=1023 (just under, single short
+   # chunk), n=1024 (exact single chunk), n=1025 (two iterations, with
+   # a degenerate k=1 trailing chunk). An off-by-one in either
+   # `end <- min(pos + size - 1L, n)` or the `pos <= n` loop condition
+   # would slip through a multi-chunk test like n=2048 but get caught
+   # by at least one of these.
+   under <- as.raw(rep_len(0:255, 1023L))
+   expect_identical(.rs.digest(under), refAdler32(under))
+
+   exact <- as.raw(rep_len(0:255, 1024L))
+   expect_identical(.rs.digest(exact), refAdler32(exact))
+
+   over <- as.raw(rep_len(0:255, 1025L))
+   expect_identical(.rs.digest(over), refAdler32(over))
+
+   # Two full chunks -- guards against the chunk-stitching arithmetic
+   # (k*a carry between iterations) drifting from the recursive form.
+   twoChunks <- as.raw(rep_len(0:255, 2048L))
+   expect_identical(.rs.digest(twoChunks), refAdler32(twoChunks))
 })
 
 # Helper: strip the rs.scalar class wrapper so tests can compare against

@@ -50,7 +50,7 @@ test.describe('Built-in code reformat', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
@@ -84,7 +84,7 @@ test.describe.serial('styler reformat on save', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     missingPackages = await consoleActions.ensurePackages(['styler'], 180_000);
 
     projectDir = await createAndOpenProject(page, sandbox.dir, 'reformat-styler-project');
@@ -97,7 +97,7 @@ test.describe.serial('styler reformat on save', () => {
   test.afterAll(async ({ rstudioPage: page }) => {
     await clearPref(page, 'reformat_on_save');
     await clearPref(page, 'code_formatter');
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     await waitForConsoleIdle(page);
     await closeProjectIfOpen(page);
   });
@@ -154,7 +154,7 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     missingPackages = await consoleActions.ensurePackages(['styler'], 180_000);
   });
 

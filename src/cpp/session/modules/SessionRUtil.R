@@ -226,27 +226,3 @@
 {
    .Call("rs_getSessionOverlayOption", as.character(key), PACKAGE = "(embedding)")
 })
-
-# SHA-256 hex digest of an R value. Avoids pulling in the digest package
-# for the small set of internal places where we need a stable, bounded
-# identity token for an in-memory value.
-#
-# Raw vectors are hashed directly. Everything else (including character
-# vectors) goes through serialize() so element boundaries are encoded
-# unambiguously -- any hand-rolled framing of a character vector via a
-# delimiter can collide on strings that happen to contain that delimiter.
-#
-# Returns NA_character_ if the C++ hash call fails (e.g. crypto init issue).
-.rs.addFunction("digest", function(x)
-{
-   bytes <- if (is.raw(x))
-      x
-   else
-      serialize(x, connection = NULL, ascii = FALSE)
-
-   hash <- .Call("rs_sha256", bytes, PACKAGE = "(embedding)")
-   if (is.null(hash))
-      NA_character_
-   else
-      hash
-})

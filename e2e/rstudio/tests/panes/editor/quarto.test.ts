@@ -20,7 +20,7 @@ test.describe('Quarto', () => {
     sourceActions = new SourcePaneActions(page, consoleActions);
 
     // Clean up leftover source files
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
 
     await consoleActions.ensurePackages(['rmarkdown']);
 

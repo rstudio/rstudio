@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { executeCommand, getPref, setPref, documentCloseAllNoSave } from '@utils/commands';
+import { executeCommand, getPref, setPref, resetSourcePaneState } from '@utils/commands';
 import type { Page } from 'playwright';
 
 /**
@@ -165,7 +165,7 @@ async function getWorkingDir(page: Page): Promise<string> {
  */
 async function createProjectViaUI(page: Page, name: string): Promise<void> {
   // Close any open source docs to prevent "unsaved changes" dialogs during project switch
-  await documentCloseAllNoSave(page);
+  await resetSourcePaneState(page);
 
   // Open command palette and invoke "Create a New Project...". Wait for the
   // palette list to render before typing -- keystrokes are dropped if the
