@@ -1090,6 +1090,41 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    contents
 })
 
+# Adler-32 fingerprint of an R value. Not cryptographic -- this is for
+# stable, bounded identity tokens (e.g. the data viewer's column-names
+# fingerprint), where a hypothetical collision means reapplying saved
+# UI state to the wrong frame, not a security boundary.
+#
+# Raw vectors hash directly; everything else goes through serialize() so
+# element boundaries are encoded unambiguously and we don't have to
+# invent our own framing -- a delimiter-joined string can collide on
+# names that contain the delimiter.
+#
+# Implemented as a closed-form vectorized Adler-32 (no R-level loop):
+# for bytes b[1..n],
+#    a = 1 + sum(b)
+#    b' = n + (n+1)*sum(b) - sum(k*b[k])
+# both reduced mod 65521. Promote to double before the weighted sum so
+# the cumulative values don't trip R's 32-bit integer overflow.
+.rs.addFunction("digest", function(x)
+{
+   bytes <- if (is.raw(x))
+      x
+   else
+      serialize(x, connection = NULL, ascii = FALSE)
+
+   n <- length(bytes)
+   if (n == 0L)
+      return("00000001")
+
+   ints <- as.double(as.integer(bytes))
+   s1 <- sum(ints)
+   s2 <- sum(seq_len(n) * ints)
+   a <- (1 + s1) %% 65521
+   b <- (n + (n + 1) * s1 - s2) %% 65521
+   sprintf("%04x%04x", b, a)
+})
+
 .rs.addFunction("fromJSON", function(string)
 {
    .Call("rs_fromJSON", string)

@@ -151,14 +151,23 @@ test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
 })
 
 test_that(".rs.digest() distinguishes character vectors that concat-collide", {
-   # Without length-prefix / unit-separator framing, c("a","b") and
-   # c("ab") would hash identically -- a regression here would silently
-   # weaken the data viewer fingerprint.
+   # A naive delimiter join would let c("a","b") and c("ab") hash
+   # identically; serialize() encodes element boundaries unambiguously
+   # so these always differ.
    expect_false(identical(.rs.digest(c("a", "b")), .rs.digest("ab")))
    expect_false(identical(.rs.digest(c("a-b", "c")), .rs.digest(c("a", "b-c"))))
 
    # Stable across calls.
    expect_identical(.rs.digest(c("x", "y")), .rs.digest(c("x", "y")))
+})
+
+test_that(".rs.digest() matches the canonical Adler-32 reference value", {
+   # 0x024d0127 is the standard Adler-32 of "abc" -- guards against
+   # accidental algorithm drift in the vectorized closed-form rewrite.
+   expect_identical(.rs.digest(charToRaw("abc")), "024d0127")
+
+   # Adler-32 of the empty input is defined as 1.
+   expect_identical(.rs.digest(raw()), "00000001")
 })
 
 # Helper: strip the rs.scalar class wrapper so tests can compare against

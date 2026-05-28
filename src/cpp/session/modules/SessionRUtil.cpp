@@ -27,7 +27,6 @@
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <core/system/Crypto.hpp>
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
@@ -390,35 +389,6 @@ SEXP rs_userDataDir()
    return r::sexp::createUtf8(userDataDir, &protect);
 }
 
-// SHA-256 hex digest of a raw or character SEXP. Used by .rs.digest as a
-// dependency-free alternative to digest::digest for the (small) set of
-// places we need a stable hash of in-memory R values.
-SEXP rs_sha256(SEXP inputSEXP)
-{
-   std::string input;
-   if (TYPEOF(inputSEXP) == RAWSXP)
-   {
-      input.assign(
-            reinterpret_cast<const char*>(RAW(inputSEXP)),
-            static_cast<std::size_t>(Rf_xlength(inputSEXP)));
-   }
-   else
-   {
-      input = r::sexp::asString(inputSEXP);
-   }
-
-   std::string hashHex;
-   Error error = core::system::crypto::sha256Hex(input, &hashHex);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return R_NilValue;
-   }
-
-   r::sexp::Protect protect;
-   return r::sexp::create(hashHex, &protect);
-}
-
 } // anonymous namespace
 
 Error initialize()
@@ -435,7 +405,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    RS_REGISTER_CALL_METHOD(rs_userDataDir);
-   RS_REGISTER_CALL_METHOD(rs_sha256);
 
    using boost::bind;
    using namespace module_context;
