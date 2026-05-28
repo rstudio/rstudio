@@ -170,11 +170,34 @@ test_that(".rs.digest() matches the canonical Adler-32 reference value", {
    expect_identical(.rs.digest(raw()), "00000001")
 
    # Pin a serialize()-routed input. Real callers (colsFingerprint,
-   # log-once dedup) pass character vectors, not raw bytes, so the hash
-   # depends on R's serialization format -- if that ever changes under
-   # us the digest will drift silently and saved data-viewer state would
-   # get invalidated en masse after an R upgrade. Worth knowing.
-   expect_identical(.rs.digest(c("a", "b")), "44fa02c4")
+   # log-once dedup) pass character vectors. .rs.digest() pins
+   # serialize(version = 2L) and zeroes the writer-version field so the
+   # hash is stable across R upgrades; if either of those guards is
+   # dropped, this expectation will fire on whichever R version doesn't
+   # match the value the test was originally pinned against.
+   expect_identical(.rs.digest(c("a", "b")), "1732015b")
+})
+
+test_that(".rs.digest() zeroes the v2 writer-version field", {
+   # serialize(version = 2L) embeds the writer's R version in bytes
+   # 7-10 of its output. The character-input path of .rs.digest()
+   # zeroes those bytes before hashing so the colsFingerprint
+   # persisted alongside data-viewer state stays stable across R
+   # upgrades. Verify by reproducing the post-patch bytes manually
+   # and feeding them in via the raw path (which hashes directly,
+   # without re-patching).
+   manuallyPatched <- serialize(c("a", "b"), connection = NULL,
+                                ascii = FALSE, version = 2L)
+   manuallyPatched[7:10] <- as.raw(0L)
+   expect_identical(.rs.digest(c("a", "b")), .rs.digest(manuallyPatched))
+
+   # And without the patch, the writer-version bytes change the hash
+   # -- if .rs.digest() ever stops patching, this would silently
+   # invalidate every persisted data-viewer state token after an R
+   # upgrade.
+   unpatched <- serialize(c("a", "b"), connection = NULL,
+                          ascii = FALSE, version = 2L)
+   expect_false(identical(.rs.digest(c("a", "b")), .rs.digest(unpatched)))
 })
 
 test_that(".rs.digest() chunked path matches the recursive Adler-32 spec", {

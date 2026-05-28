@@ -1100,6 +1100,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # invent our own framing -- a delimiter-joined string can collide on
 # names that contain the delimiter.
 #
+# We pin serialize(version = 2L) and zero out bytes 7-10 (the writer's R
+# version field) so the hash is stable across R upgrades. Otherwise the
+# colsFingerprint persisted alongside the data viewer's saved UI state
+# would silently invalidate after every R upgrade. Version 2 has been
+# the stable archival format since R 1.4.0; version 3 additionally
+# embeds the native encoding name in the header, which can vary by
+# platform.
+#
 # The modulus 65521 is the largest prime below 2^16, per the spec.
 # Each loop iteration evaluates
 #   b + k*a + sum_{i=1..k} (k+1-i) * chunk[i]
@@ -1109,10 +1117,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # of headroom.
 .rs.addFunction("digest", function(x)
 {
-   bytes <- if (is.raw(x))
-      x
+   if (is.raw(x))
+   {
+      bytes <- x
+   }
    else
-      serialize(x, connection = NULL, ascii = FALSE)
+   {
+      bytes <- serialize(x, connection = NULL, ascii = FALSE, version = 2L)
+      bytes[7:10] <- as.raw(0L)
+   }
 
    n <- length(bytes)
    a <- 1L
