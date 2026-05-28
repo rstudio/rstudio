@@ -709,7 +709,9 @@ test.describe('Pane and column management', () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    // Settle on the sidebar width: it reveals in the same relayout pass as the
+    // columns, so once it stops animating the column widths are final too.
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), modifiedConsoleWidth, 0.05, 'final Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), modifiedTabSet1Width, 0.05, 'final TabSet1');
@@ -729,7 +731,7 @@ test.describe('Pane and column management', () => {
 
       await executeCommand(page, 'toggleSidebar');
       await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-      await sleep(TIMEOUTS.layoutSettle);
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
       expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleModified, 0.05, `Console cycle ${cycle}`);
       expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1Modified, 0.05, `TabSet1 cycle ${cycle}`);
@@ -776,7 +778,7 @@ test.describe('Pane and column management', () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleAfterLeft, 0.05, 'Console after LEFT');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1AfterLeft, 0.05, 'TabSet1 after LEFT');
@@ -790,7 +792,7 @@ test.describe('Pane and column management', () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleAfterRight, 0.05, 'Console after RIGHT');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1AfterRight, 0.05, 'TabSet1 after RIGHT');
@@ -808,7 +810,7 @@ test.describe('Pane and column management', () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     const consoleAfterToggle = await getOffsetWidth(page, CONSOLE_PANE);
     const tabSet1AfterToggle = await getOffsetWidth(page, TABSET1_PANE);
