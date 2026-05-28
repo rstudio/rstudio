@@ -20,7 +20,7 @@ test.describe('Multiline chunk execution', { tag: ['@parallel_safe'] }, () => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     await consoleActions.clearConsole();
   });
 

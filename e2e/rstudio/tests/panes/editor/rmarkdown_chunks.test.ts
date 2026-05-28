@@ -70,11 +70,24 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
+    // Every test in this file drives chunks or saves a notebook, both of
+    // which need rmarkdown loadable. Without this check, a missing dep
+    // surfaces as an opaque chunk/save timeout deep inside a test; capture
+    // the failure once here and let test.beforeEach skip with a clear reason.
+    missingPackages = await consoleActions.ensurePackages(['rmarkdown'], 180_000);
     await consoleActions.clearConsole();
+  });
+
+  test.beforeEach(() => {
+    test.skip(
+      missingPackages.length > 0,
+      `required R package(s) not available: ${missingPackages.join(', ')}`,
+    );
   });
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {

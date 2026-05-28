@@ -11,7 +11,7 @@ import { SourcePane } from '@pages/source_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS, typeSlowly } from '@utils/constants';
-import { executeCommand, documentCloseAllNoSave, setPref, clearPref } from '@utils/commands';
+import { executeCommand, resetSourcePaneState, setPref, clearPref } from '@utils/commands';
 
 const MODAL_DIALOG = '.rstudio_modal_dialog';
 // The Open File dialog renders a virtualized file list as a `<table
@@ -28,12 +28,12 @@ test.describe('Open File dialog (virtualized)', { tag: ['@server_only'] }, () =>
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
     // Clean up any stub files and close opened source docs.
-    await documentCloseAllNoSave(page);
+    await resetSourcePaneState(page);
     await consoleActions.executeInConsole(`unlink(list.files(${JSON.stringify(sandbox.dir)}, pattern = "\\\\.R$", full.names = TRUE))`);
   });
 
@@ -88,7 +88,7 @@ test.describe('Autosave on blur', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   // https://github.com/rstudio/rstudio/issues/16329
@@ -142,7 +142,7 @@ test.describe('Autosave on blur', () => {
       );
     } finally {
       await clearPref(page, 'auto_save_on_blur');
-      await documentCloseAllNoSave(page);
+      await resetSourcePaneState(page);
       await consoleActions.executeInConsole(
         `{ unlink(file.path(${JSON.stringify(sandbox.dir)}, "autosave.R")); rm(list = ls(pattern = "^\\\\.rs_autosave", envir = globalenv()), envir = globalenv()) }`,
       );

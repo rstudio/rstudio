@@ -54,6 +54,7 @@ export namespace Ace {
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;
+    selectAll(): void;
   }
 }
 

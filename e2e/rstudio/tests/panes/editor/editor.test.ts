@@ -29,7 +29,7 @@ test.describe('Editor', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

@@ -42,11 +42,13 @@ export class SourcePaneActions {
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
     await executeCommand(this.page, 'saveAllSourceDocs');
     await sleep(1000);
-    await executeCommand(this.page, 'closeAllSourceDocs');
-
-    // Wait for the editor to detach before unlinking the file.
-    await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
-
+    // resetSourcePane closes every tab except a single Untitled placeholder,
+    // so the source pane never transits through the zero-tab HIDE state
+    // (#17738) and the next test starts from a known good state. The previous
+    // closeAllSourceDocs + toHaveCount(0) wait left the pane briefly empty,
+    // and the auto-spawned Untitled1 that filled the gap collided with the
+    // new file the next test opened (two publishBtns -> strict-mode error).
+    await this.consolePaneActions.resetSourcePane();
     await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`, { wait: true });
   }
 

@@ -32,7 +32,7 @@ test.describe('Missing-package banner', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     // discoverPackageDependencies filters to CRAN packages that aren't on
     // disk, so if a prior run or the shared R_LIBS_USER cache already has
     // the package the banner won't appear. Force a clean slate -- assert

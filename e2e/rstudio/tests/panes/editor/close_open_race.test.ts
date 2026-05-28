@@ -28,7 +28,7 @@ test.describe('Source pane open during close race', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test('file.edit immediately after closeAllSourceDocs still opens the tab', async ({ rstudioPage: page }) => {

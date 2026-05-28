@@ -3,10 +3,9 @@ import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { executeInConsole } from '../pages/console_pane.page';
-import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 import { rPathLiteral, rStringLiteral } from './r';
-import { documentCloseAllNoSave } from './commands';
+import { resetSourcePaneState } from './commands';
 
 /**
  * Write `content` to `fileName` in the per-spec sandbox workdir and open it
@@ -115,9 +114,12 @@ export async function closeAndDeleteSandboxFiles(
   sandboxDir: string,
   fileNames: string[],
 ): Promise<void> {
-  await documentCloseAllNoSave(page);
-  const sourcePane = new SourcePane(page);
-  await expect(sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
+  // Leave a single Untitled placeholder tab rather than draining the source
+  // pane to zero tabs. Going through zero triggers the source pane's HIDE
+  // animation (#17738) and lets RStudio auto-spawn a fresh Untitled1 in the
+  // gap -- which then collides with the next test's file (e.g. two
+  // publishBtns visible at the same time, breaking strict-mode locators).
+  await resetSourcePaneState(page);
   if (fs.existsSync(sandboxDir)) {
     for (const fileName of fileNames) {
       try {

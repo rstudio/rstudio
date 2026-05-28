@@ -4,7 +4,7 @@ import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { setPref, documentCloseAllNoSave } from '@utils/commands';
+import { setPref, resetSourcePaneState } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -116,7 +116,7 @@ async function waitForSessionRestart(page: Page): Promise<void> {
 
 async function openNewProjectWizard(page: Page): Promise<void> {
   // Close any open source docs first to avoid "unsaved changes" dialogs
-  await documentCloseAllNoSave(page);
+  await resetSourcePaneState(page);
 
   // executeCommand("newProject") blocks the R thread with an "R session is busy"
   // modal on some platforms, so use the command palette instead.

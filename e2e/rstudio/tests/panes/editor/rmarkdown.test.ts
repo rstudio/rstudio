@@ -17,16 +17,37 @@ test.describe('RMarkdown', () => {
   useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
 
-    await consoleActions.ensurePackages(['rmarkdown', 'remotes']);
+    // Bumped from the default 60s -- on slow CI runners rmarkdown's transitive
+    // install (knitr, markdown, etc.) regularly outlasts a minute. The previous
+    // call discarded the return value; if install timed out, every test below
+    // would then fail with an opaque knit/template/spellcheck timeout 60+
+    // seconds later. Capture failures and surface them as a clear test.skip
+    // in each test so the cause is visible in one place.
+    missingPackages = await consoleActions.ensurePackages(
+      ['rmarkdown', 'remotes'],
+      180_000,
+    );
 
     await consoleActions.clearConsole();
+  });
+
+  // Every test in this suite drives at least one .rmd path (knit, chunk run,
+  // spellcheck, templates) that needs rmarkdown installed. Skipping at the
+  // beforeEach level keeps the report honest -- a missing dep shows up as
+  // "skipped: rmarkdown not available", not as 4-6 different opaque timeouts.
+  test.beforeEach(() => {
+    test.skip(
+      missingPackages.length > 0,
+      `required R package(s) not available: ${missingPackages.join(', ')}`,
+    );
   });
 
   test('create new rmarkdown and knit to HTML', async ({ rstudioPage: page }) => {
@@ -116,7 +137,7 @@ test.describe('RMarkdown', () => {
     await page.keyboard.press('Enter');
     await expect(sourceActions.sourcePane.contentPane).toHaveText('# Section');
 
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     await consoleActions.executeInConsole(`unlink("${rmdFileName}")`, { wait: true });
 
     // Check that an R file DOES insert a comment on newline
@@ -205,7 +226,7 @@ test.describe('RMarkdown', () => {
     await expect(page.locator('.ProseMirror')).toContainText('Theming with bslib and thematic', { timeout: 10000 });
 
     // Cleanup
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test.skip('visual mode go to next and prev chunk', async ({ rstudioPage: page }) => {
@@ -256,6 +277,6 @@ test.describe('RMarkdown', () => {
     await expect(consoleOutput).not.toContainText('plot(pressure)');
 
     // Cleanup
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 });

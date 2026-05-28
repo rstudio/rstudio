@@ -37,7 +37,7 @@ test.describe('Autocomplete extras', () => {
     consoleActions = new ConsolePaneActions(page);
     const sourceActions = new SourcePaneActions(page, consoleActions);
     autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
   });
 
@@ -45,7 +45,7 @@ test.describe('Autocomplete extras', () => {
     // Dismiss lingering popups / partial console input.
     await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
   });
 
   test('new local variables show up as prefix completions', async () => {
