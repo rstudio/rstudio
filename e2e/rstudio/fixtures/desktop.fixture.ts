@@ -195,6 +195,25 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
+  // Pre-seed electron-store's config.json with explicit windowBounds. The
+  // schema default (1200x900) gets clamped by positionAndEnsureVisible to the
+  // workArea of whatever display is attached -- on macOS GH Actions runners
+  // that's around 1024x645, which is small enough that the left column's
+  // source pane drops under DualWindowLayoutPanel's 60px snap threshold and
+  // the Console gets promoted to MAXIMIZE state. Locking the renderer at
+  // 1400x900 keeps both panes comfortably above the snap threshold.
+  // Requested bounds that intersect any display.workArea are used as-is
+  // (window-utils.ts:191), so a 1400x900 rect at the origin sticks even on
+  // narrower virtual displays.
+  fs.writeFileSync(
+    path.join(electronUserData, 'config.json'),
+    JSON.stringify(
+      { view: { windowBounds: { x: 0, y: 0, width: 1400, height: 900, maximized: false } } },
+      null,
+      2,
+    ),
+  );
+
   return { root, configHome, configDir, electronUserData };
 }
 
