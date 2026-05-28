@@ -289,6 +289,15 @@ fi
 
 if has-scope "r"; then
 
+   # On macOS, rsession's startup goes down a different code path when
+   # stdin isn't a TTY -- the resulting teardown reliably SEGFAULTs even
+   # when the tests themselves pass, producing a confusing RETCODE=139.
+   # Bail early with a clear remediation rather than letting the run
+   # report a spurious failure.
+   if [ "$(uname)" = "Darwin" ] && [ ! -t 0 ]; then
+      error "$(printf 'The %s test scope requires a controlling TTY on macOS;\nrsession SEGFAULTs during teardown otherwise. Re-run under a PTY:\n\n    script -q /dev/null %s [args...]\n\n(or invoke from an interactive terminal.)' "'r'" "$0")"
+   fi
+
    section "Running 'r' tests"
 
    # tell testthat our source dir, binary dir
