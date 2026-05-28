@@ -26,7 +26,6 @@
 
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
-#include <core/system/LibraryLoader.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RHelpers.hpp>
@@ -44,14 +43,6 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "EnvironmentUtils.hpp"
-
-#if defined(_WIN32)
-# define kLibraryName "R.dll"
-#elif defined(__APPLE__)
-# define kLibraryName "libR.dylib"
-#else
-# define kLibraryName "libR.so"
-#endif
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -97,10 +88,6 @@ bool s_isGlobalEnvironmentSerializable = true;
 // whether or not particular objects can be safely serialized
 using SerializationCache = boost::container::flat_map<SEXP, bool>;
 SerializationCache s_serializationCache;
-
-// by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
-// if provided by this version of R
-int* (*INTEGER_OR_NULL)(SEXP) = INTEGER;
 
 // avoid potential contention between console handlers
 std::recursive_mutex s_consoleMutex;
@@ -1844,13 +1831,6 @@ Error initialize()
    boost::shared_ptr<SEXP> pCurrentEnv =
          boost::make_shared<SEXP>(R_GlobalEnv);
    R_PreserveObject(*pCurrentEnv);
-   
-   // get reference to INTEGER_OR_NULL if provided by this version of R
-   {
-      using core::system::Library;
-      Library rLibrary(kLibraryName);
-      core::system::loadSymbol(rLibrary, "INTEGER_OR_NULL", (void**) &INTEGER_OR_NULL);
-   }
 
    // functions that emit call frames also emit source references; these
    // values capture and supply the currently executing expression emitted by R
