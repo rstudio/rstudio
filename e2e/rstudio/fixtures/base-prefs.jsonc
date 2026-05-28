@@ -16,7 +16,8 @@
   // synchronously. The animated path (PaneManager + DualWindowLayoutPanel,
   // both already gate on this pref) runs an async onAnimationComplete that
   // automation can race -- leaving the Source pane stuck in the minimized
-  // state. Tests that specifically exercise animations override this with
-  // setPref(page, 'reduced_motion', false) in setup and restore it after.
+  // state. No test currently needs real animations; if one does, it can
+  // override this per-test with setPref(page, 'reduced_motion', false) and
+  // restore it afterward.
   "reduced_motion": true
 }

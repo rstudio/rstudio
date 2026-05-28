@@ -57,6 +57,16 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *     convention, not here.
  *   - **Working directory.** `useSuiteSandbox` already scopes cwd; tests
  *     that need a specific cwd set it themselves.
+ *
+ * Error handling: the debug-exit step (2) is incidental cleanup and is fully
+ * guarded -- it never throws. Steps 1, 3, and 4 (modal dismissal, source-pane
+ * reset, console focus) are structural and call the automation bridge; they
+ * will throw if `window.rstudio` is gone. That is intentional -- a missing
+ * bridge means the session is unusable and every following test would fail
+ * anyway, so failing here (named clearly) beats swallowing the error and
+ * letting the next test fail on a mystery first action. Guarding the
+ * source-pane reset in particular would let a previous test's buffers leak
+ * forward silently, defeating the point of the hook.
  */
 export async function resetForNextTest(page: Page): Promise<void> {
   // 1. Clear any leaked modal dialogs up front, before the steps below try to
@@ -65,8 +75,16 @@ export async function resetForNextTest(page: Page): Promise<void> {
   //    button click can't); it hides rather than answers, so a dirty doc's
   //    changes are discarded by resetSourcePaneState's revert in step 3.
   await dismissAllModals(page);
-  const leaked = await numModalsShowing(page).catch(() => 0);
-  if (leaked > 0) {
+  // Sentinel -1 (not 0) on a failed read: 0 would masquerade as "no modals
+  // left" and suppress the very warning this block exists to emit.
+  const leaked = await numModalsShowing(page).catch(() => -1);
+  if (leaked < 0) {
+    console.warn(
+      '[test-reset] Could not read the modal count after dismissAll ' +
+      '(the automation bridge may be unavailable); the next test could start ' +
+      'behind a leaked dialog.',
+    );
+  } else if (leaked > 0) {
     console.warn(
       `[test-reset] ${leaked} modal dialog(s) still showing after dismissAll. ` +
       'A non-GWT (e.g. native desktop) dialog may be up; the next test could ' +
