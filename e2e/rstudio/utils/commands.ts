@@ -133,12 +133,26 @@ type ChatBridge = {
   setUpdateCheckOverride(override: Record<string, unknown> | null): Promise<void>;
 };
 
+type DialogsBridge = {
+  /** Count of modal dialogs currently in the GWT modal stack. */
+  numShowing(): number;
+  /**
+   * Hide every modal dialog currently in the stack. Useful in test teardown
+   * so a forgotten Tools > Global Options / Import Dataset dialog does not
+   * block the Electron close path -- the renderer's quit confirmation
+   * prompts queue behind an existing modal and the window can end up in a
+   * half-shut-down state.
+   */
+  dismissAll(): void;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
   documents: Documents;
   project: ProjectInfo;
   version: VersionInfo;
+  dialogs: DialogsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -391,6 +405,34 @@ export async function clearPref(page: Page, name: string): Promise<void> {
         throw new Error(`Unknown user preference: ${prefName}`);
       await entry.clear();
     }, camel);
+  });
+}
+
+/**
+ * Count of modal dialogs currently in the GWT modal stack.
+ */
+export async function numModalsShowing(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const r = window.rstudio;
+    if (!r)
+      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+    return r.dialogs.numShowing();
+  });
+}
+
+/**
+ * Hide every modal dialog currently in the GWT modal stack. Use in test
+ * teardown to keep a leftover dialog (Global Options, Import Dataset, etc.)
+ * from blocking the Electron close path.
+ */
+export async function dismissAllModals(page: Page): Promise<void> {
+  await withBridgeLog('dismissAllModals', '', async () => {
+    await page.evaluate(() => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      r.dialogs.dismissAll();
+    });
   });
 }
 

@@ -8,7 +8,7 @@ import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
-import { documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
@@ -642,6 +642,16 @@ function getRStudioPids(): Set<number> {
  */
 export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   const { page, browser, rstudioProcess } = session;
+
+  // Dismiss any modal dialogs the test left open. An open GWT modal (Global
+  // Options, Import Dataset, ...) blocks the Electron close path: the
+  // renderer's quit confirmation prompts queue behind the existing modal and
+  // q(save="no") never gets a chance to cascade to a full quit (#17790).
+  try {
+    await dismissAllModals(page);
+  } catch {
+    // Page context may already be gone; we still force-kill below.
+  }
 
   // Close all source files without prompting to save. If a test left the page
   // in the middle of a navigation (e.g. opening a project triggers a session

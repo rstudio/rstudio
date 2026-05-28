@@ -19,6 +19,7 @@ import java.util.Map;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -72,6 +73,9 @@ import com.google.inject.Singleton;
  *   window.rstudio.project.name()       // active project display name, or null
  *   window.rstudio.project.isActive()   // boolean
  *   window.rstudio.project.open(path)   // fire SwitchToProjectEvent; resets ready
+ *
+ *   window.rstudio.dialogs.numShowing()  // count of open modal dialogs
+ *   window.rstudio.dialogs.dismissAll()  // hide every open modal dialog
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -117,6 +121,7 @@ public class ApplicationAutomation
       registerProject();
       registerVersion();
       registerChat();
+      registerDialogs();
       registerReadinessHandlers();
    }
 
@@ -204,6 +209,21 @@ public class ApplicationAutomation
    private void registerChat()
    {
       registerChatObject();
+   }
+
+   private void registerDialogs()
+   {
+      registerDialogsObject();
+   }
+
+   private int numModalsShowing()
+   {
+      return ModalDialogTracker.numModalsShowing();
+   }
+
+   private void dismissAllModals()
+   {
+      ModalDialogTracker.dismissAllModalDialogs();
    }
 
    private void setChatUpdateCheckOverride(JavaScriptObject override,
@@ -548,6 +568,23 @@ public class ApplicationAutomation
          rstudio: rstudio,
          r: r,
       };
+   }-*/;
+
+   // Open modal dialogs block the Electron close path: the renderer's quit
+   // confirmation prompts queue behind the existing modal and the window
+   // ends up in a half-shut-down state until a human dismisses things. Tests
+   // can call dialogs.dismissAll() from afterEach / teardown to clear the
+   // stack before the harness closes the app. numShowing() lets tests assert
+   // that earlier steps left the dialog stack clean.
+   private native final void registerDialogsObject() /*-{
+      var self = this;
+      $wnd.rstudio.dialogs = $wnd.rstudio.dialogs || {};
+      $wnd.rstudio.dialogs.numShowing = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::numModalsShowing()();
+      });
+      $wnd.rstudio.dialogs.dismissAll = $entry(function() {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::dismissAllModals()();
+      });
    }-*/;
 
    private native final void registerChatObject() /*-{
