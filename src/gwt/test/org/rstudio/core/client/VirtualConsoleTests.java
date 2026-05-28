@@ -1383,7 +1383,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorUpRewritesPreviousLine()
    {
-      // \033[1A moves up one line; \r returns to column 0; overwrite the first line.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("line1\nline2\u001b[1A\rLINE1");
@@ -1392,7 +1391,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorUpPreservesColumn()
    {
-      // Cursor up from column 3 of line 2 lands at column 3 of line 1.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("abcdef\nghijkl\u001b[3D\u001b[1AXY");
@@ -1401,8 +1399,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorUpClampsAtTop()
    {
-      // \033[5A on a single-line buffer cannot move vertically;
-      // the subsequent \r still puts the cursor at column 0.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("only line\u001b[5A\rOVER");
@@ -1411,7 +1407,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorUpDefaultCount()
    {
-      // \033[A with no param defaults to 1 row.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("line1\nline2\u001b[A\rLINE1");
@@ -1420,7 +1415,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorDownMovesToNextLine()
    {
-      // After moving up two lines, \033[1B moves down one line.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("line1\nline2\nline3\u001b[2A\u001b[1B\rLINE2");
@@ -1429,7 +1423,6 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testCsiCursorDownClampsAtBottom()
    {
-      // \033[5B on a single-line buffer cannot move further down.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("only line\u001b[5B!");
@@ -1441,7 +1434,7 @@ public class VirtualConsoleTests extends GWTTestCase
       // Mirrors the output cli emits when rendering two progress bars on
       // separate lines: each update moves up with \033[1A, redraws bar 1,
       // moves down via \n, then redraws bar 2. Without CSI A support the
-      // second bar would clobber the first (see #17768).
+      // second bar would clobber the first.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("\rDownloads  10%\u001b[K\n\rProcessing 10%\u001b[K\r");
@@ -1474,6 +1467,46 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Header\n\nFooter");
       vc.submit("\u001b[1AX");
       Assert.assertEquals("Header\nX\nFooter", vc.toString());
+   }
+
+   public void testCsiCursorDownDefaultCount()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\nline3\u001b[2A\u001b[B\rLINE2");
+      Assert.assertEquals("line1\nLINE2\nline3", vc.toString());
+   }
+
+   public void testCsiCursorUpClampsColumnToLineLength()
+   {
+      // Pin the absolute-position behavior without a \r chaser: when the
+      // source column exceeds the target line's length, the cursor lands
+      // on the line's last character (not past it) so subsequent ops like
+      // \r and eraseInLine stay on the intended line. See maxCursorColumn.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("short\nlongerline\u001b[1AX");
+      Assert.assertEquals("shorX\nlongerline", vc.toString());
+   }
+
+   public void testCsiCursorUpPreservesColorWhenRewriting()
+   {
+      // Verifies extendLineBefore keeps the DOM in sync: a CSI A overwrite
+      // that extends a colored line must produce HTML whose color span
+      // still covers the original characters and is followed by a new,
+      // uncolored span for the appended content.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b[32mbar1\u001b[39m\nbar2");
+      vc.submit("\u001b[1A\rbar1 EXTRA\u001b[K");
+      Assert.assertEquals("bar1 EXTRA\nbar2", vc.toString());
+      // The DOM must still contain the colored span (the green bar1 prefix)
+      // and the \n separator must survive intact.
+      String html = ele.getInnerHTML();
+      Assert.assertTrue("expected xtermColor2 span, got: " + html,
+         html.indexOf("xtermColor2") != -1);
+      Assert.assertTrue("expected newline preserved in DOM, got: " + html,
+         html.indexOf("\n") != -1);
    }
 
    public void testIncompleteAnsiCodes()

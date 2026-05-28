@@ -324,7 +324,7 @@ public class VirtualConsole
          targetLineStart = output_.lastIndexOf("\n", targetLineStart - 2) + 1;
       }
 
-      cursor_ = targetLineStart + Math.min(column, lineContentLength(targetLineStart));
+      cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
    }
 
    /**
@@ -354,17 +354,25 @@ public class VirtualConsole
          targetLineStart = nextNewline + 1;
       }
 
-      cursor_ = targetLineStart + Math.min(column, lineContentLength(targetLineStart));
+      cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
    }
 
    /**
-    * Length of the line starting at {@code lineStart}, excluding the trailing
-    * newline if any. Cursor positions returned from this are safe to use with
-    * {@link #carriageReturn()}: a cursor placed at {@code lineStart + length}
-    * is on the line's terminating '\n' (interpreted as the next line) only
-    * when the line is the final, unterminated line of the buffer.
+    * Returns the largest column offset {@link #cursorUp} / {@link #cursorDown}
+    * may place the cursor at on the line beginning at {@code lineStart}.
+    *
+    * <p>The flat buffer cannot distinguish "cursor past the last character
+    * but before the trailing '\n'" from "cursor on the '\n'": both are the
+    * same position. {@link #carriageReturn} treats a cursor on '\n' as
+    * belonging to the next line (a long-standing VirtualConsole convention
+    * used by {@code eraseInLine} as well). Clamping the column to
+    * {@code lineLength - 1} for terminated lines keeps the cursor on the
+    * intended line, at the cost of one column of preservation precision --
+    * the cursor lands on the line's last character rather than just past
+    * it. For the final, unterminated line of the buffer there is no '\n'
+    * to be confused with, so the full length is returned.
     */
-   private int lineContentLength(int lineStart)
+   private int maxCursorColumn(int lineStart)
    {
       int lineEnd = output_.indexOf("\n", lineStart);
       if (lineEnd == -1)
