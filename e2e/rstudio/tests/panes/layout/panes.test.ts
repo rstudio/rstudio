@@ -139,6 +139,19 @@ async function pressArrowMany(page: Page, key: 'ArrowLeft' | 'ArrowRight', count
   }
 }
 
+// Drag the middle splitter left until the center (Console) column collapses
+// below MINIMUM_CENTER_WIDTH (50px in MainSplitPanel). Pressing until the
+// width drops -- rather than a fixed count -- keeps the precondition robust if
+// the keyboard resize step changes; the cap stops a runaway loop. Returns the
+// collapsed width.
+async function collapseCenterColumn(page: Page): Promise<number> {
+  await focusSplitter(page);
+  for (let i = 0; i < 60 && (await getOffsetWidth(page, CONSOLE_PANE)) >= 50; i++) {
+    await page.keyboard.press('ArrowLeft');
+  }
+  return getOffsetWidth(page, CONSOLE_PANE);
+}
+
 // Resize the middle splitter and assert it actually moved at least one column.
 // Without this guard, a no-op resize would silently turn the preservation
 // tests into no-op cycles that can never fail.
@@ -739,6 +752,12 @@ test.describe('Pane and column management', () => {
   });
 
   // -------------------------------------------------------------------------
+  // Exercises MainSplitPanel's involuntary-squeeze "reclaim" branch: the
+  // center is healthy when the sidebar is hidden (so savedCenterCollapsed_ is
+  // false), then resizing while hidden leaves it near-zero on show -- so the
+  // reclaim resets columns to default widths, which the >100px assertions
+  // below verify. (The complementary "preserve" branch is covered by
+  // "Deliberately collapsed center is preserved across sidebar toggle".)
   test('Sidebar show uses default widths after columns resized while hidden', async ({ rstudioPage: page }) => {
     await showSidebar(page);
 
@@ -827,6 +846,42 @@ test.describe('Pane and column management', () => {
     expect(consoleAfterToggle).toBeGreaterThan(50);
     expect(tabSet1AfterToggle).toBeGreaterThanOrEqual(0);
     expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeGreaterThan(0);
+  });
+
+  // -------------------------------------------------------------------------
+  // Guards MainSplitPanel's savedCenterCollapsed_ "preserve" branch: a center
+  // the user deliberately collapsed must survive a sidebar hide/show as-is,
+  // NOT get reclaimed to a default width. (The complementary "reclaim" branch
+  // -- an involuntary squeeze -- is exercised by "Sidebar show uses default
+  // widths after columns resized while hidden" above.)
+  test('Deliberately collapsed center is preserved across sidebar toggle', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    const collapsedWidth = await collapseCenterColumn(page);
+    expect(collapsedWidth, 'precondition: center collapsed below minimum').toBeLessThan(50);
+
+    await executeCommand(page, 'toggleSidebar');
+    await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 5000 });
+
+    await executeCommand(page, 'toggleSidebar');
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
+
+    // With the fix the deliberately-collapsed center is restored as-is; an
+    // unconditional reclaim would instead snap it back to a default width well
+    // above the minimum (this assertion fails against that earlier behavior).
+    expect(
+      await getOffsetWidth(page, CONSOLE_PANE),
+      'deliberately-collapsed center should be preserved, not reclaimed',
+    ).toBeLessThan(50);
+
+    // Restore a healthy center so the shared afterEach -- which reads a <50px
+    // Console as a zoomed layout -- doesn't misfire on cleanup. Leaves the
+    // layout lopsided the same way the extreme-resize test above does, which
+    // resetUILayout already tolerates.
+    await focusSplitter(page);
+    await pressArrowMany(page, 'ArrowRight', 60);
+    await sleep(TIMEOUTS.layoutSettle);
   });
 
   // -------------------------------------------------------------------------
