@@ -3,6 +3,16 @@
 SCRIPT="${BASH_SOURCE[0]}"
 DIR="$(dirname "${SCRIPT}")"
 
+# rsession reliably SEGFAULTs during teardown of the r-scope tests on
+# macOS when stdin isn't a TTY -- the test bodies pass but the process
+# exits 139, which reads as a real failure. Re-invoke under `script` so
+# a controlling TTY is always present. RSTUDIO_TESTS_UNDER_SCRIPT guards
+# against infinite recursion if the re-exec somehow doesn't yield a TTY.
+if [ "$(uname)" = "Darwin" ] && [ ! -t 0 ] && [ -z "${RSTUDIO_TESTS_UNDER_SCRIPT}" ]; then
+   export RSTUDIO_TESTS_UNDER_SCRIPT=1
+   exec script -q /dev/null "${SCRIPT}" "$@"
+fi
+
 # Our macOS build machines currently run on arm64, but the rsession
 # binary we produce (in the default location) is built with x86_64.
 # Ensure that an x86_64 version of R is placed on the PATH first so
@@ -288,24 +298,6 @@ if has-scope "rsession"; then
 fi
 
 if has-scope "r"; then
-
-   # On macOS without a controlling TTY, rsession's startup takes a
-   # different code path and can SEGFAULT during teardown -- producing
-   # a confusing RETCODE=139 even when the tests themselves passed.
-   # Surface the remediation locally; skip in Jenkins, where r-scope
-   # tests are known to run despite no-TTY and a hard fail here would
-   # block CI for a (likely) false positive.
-   if [ "$(uname)" = "Darwin" ] && [ ! -t 0 ] && [ -z "${JENKINS_URL}" ]; then
-      echo "" >&2
-      printf '\033[1;93mWARNING\033[0m: stdin is not a TTY.\n' >&2
-      echo "On macOS, rsession may SEGFAULT during teardown of the 'r' test scope" >&2
-      echo "when no controlling TTY is present, producing a confusing RETCODE=139" >&2
-      echo "even if the tests themselves pass. If the run fails spuriously, re-invoke" >&2
-      echo "under a PTY:" >&2
-      echo "" >&2
-      echo "    script -q /dev/null $0 [args...]" >&2
-      echo "" >&2
-   fi
 
    section "Running 'r' tests"
 
