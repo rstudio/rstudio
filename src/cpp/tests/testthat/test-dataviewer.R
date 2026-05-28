@@ -163,11 +163,39 @@ test_that(".rs.digest() distinguishes character vectors that concat-collide", {
 
 test_that(".rs.digest() matches the canonical Adler-32 reference value", {
    # 0x024d0127 is the standard Adler-32 of "abc" -- guards against
-   # accidental algorithm drift in the vectorized closed-form rewrite.
+   # accidental algorithm drift in the chunked integer rewrite.
    expect_identical(.rs.digest(charToRaw("abc")), "024d0127")
 
    # Adler-32 of the empty input is defined as 1.
    expect_identical(.rs.digest(raw()), "00000001")
+})
+
+test_that(".rs.digest() chunked path matches the recursive Adler-32 spec", {
+   # Cross-check the chunked implementation against a byte-at-a-time
+   # reference taken straight from the spec. Inputs deliberately span
+   # several chunks (chunk size is 1024) and include a non-multiple
+   # length so the partial trailing chunk is exercised.
+   refAdler32 <- function(bytes) {
+      a <- 1L
+      b <- 0L
+      for (byte in as.integer(bytes))
+      {
+         a <- (a + byte) %% 65521L
+         b <- (b + a) %% 65521L
+      }
+      sprintf("%04x%04x", b, a)
+   }
+
+   uniform <- as.raw(rep(255L, 5000L))
+   expect_identical(.rs.digest(uniform), refAdler32(uniform))
+
+   mixed <- as.raw(rep_len(0:255, 5000L))
+   expect_identical(.rs.digest(mixed), refAdler32(mixed))
+
+   # Exact chunk boundary -- the loop's last iteration must consume the
+   # final chunk fully without spilling into a zero-length iteration.
+   boundary <- as.raw(rep_len(0:255, 2048L))
+   expect_identical(.rs.digest(boundary), refAdler32(boundary))
 })
 
 # Helper: strip the rs.scalar class wrapper so tests can compare against

@@ -1100,12 +1100,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # invent our own framing -- a delimiter-joined string can collide on
 # names that contain the delimiter.
 #
-# Implemented as a closed-form vectorized Adler-32 (no R-level loop):
-# for bytes b[1..n],
-#    a = 1 + sum(b)
-#    b' = n + (n+1)*sum(b) - sum(k*b[k])
-# both reduced mod 65521. Promote to double before the weighted sum so
-# the cumulative values don't trip R's 32-bit integer overflow.
+# Processed in chunks small enough that every intermediate sum stays
+# within R's signed 32-bit integer range. The dominant term is
+# sum((k+1-i)*chunk[i]) (bounded by 255*k*(k+1)/2); the int32 ceiling
+# is k <= 3854 and 1024 stays comfortably under that.
 .rs.addFunction("digest", function(x)
 {
    bytes <- if (is.raw(x))
@@ -1114,17 +1112,32 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       serialize(x, connection = NULL, ascii = FALSE)
 
    n <- length(bytes)
-   ints <- as.numeric(bytes)
-   s1 <- sum(ints)
-   s2 <- sum(seq_len(n) * ints)
-   a <- (1 + s1) %% 65521
-   b <- (n + (n + 1) * s1 - s2) %% 65521
+   a <- 1L
+   b <- 0L
+   size <- 1024L
+
+   pos <- 1L
+   while (pos <= n)
+   {
+      end <- min(pos + size - 1L, n)
+      k <- end - pos + 1L
+      chunk <- as.integer(bytes[pos:end])
+
+      s1 <- sum(chunk)
+      weighted <- sum(seq.int(k, 1L) * chunk)
+
+      b <- (b + k * a + weighted) %% 65521L
+      a <- (a + s1) %% 65521L
+
+      pos <- end + 1L
+   }
+
    sprintf("%04x%04x", b, a)
 })
 
 .rs.addFunction("fromJSON", function(string)
 {
-   .Call("rs_fromJSON", string)
+   .Call("rs_fromJSON", string, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("stringBuilder", function()
