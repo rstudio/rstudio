@@ -19,6 +19,10 @@
 # to disk, so an approval never silently re-arms across sessions or projects.
 .rs.setVar("preview.permittedExprs", new.env(parent = emptyenv()))
 
+# Cache for the administrator-configured allowlist extension (read lazily from
+# the 'preview-allowed-functions' session option); NULL until first read.
+.rs.setVar("preview.allowedFunctions", NULL)
+
 # The set of function calls we consider safe to evaluate without prompting when
 # resolving a preview expression (a SQL '!preview conn=' connection, or an
 # argument to an r2d3 preview). These are database connection constructors plus
@@ -27,7 +31,7 @@
 # unsafe and requires explicit consent.
 .rs.addFunction("preview.safeCallAllowlist", function()
 {
-   c(
+   builtin <- c(
       # database connection constructors
       "dbConnect", "DBI::dbConnect",
       "dbPool", "pool::dbPool",
@@ -47,6 +51,37 @@
       "c", "list", "paste", "paste0", "sprintf", "file.path",
       "Sys.getenv", "getOption"
    )
+
+   # Sites can extend the allowlist with their own connection helpers (for
+   # example, an internally-built package) via the 'preview-allowed-functions'
+   # session option (set in rsession.conf or by the session launcher). This
+   # only widens which *callees* are permitted; their arguments are still
+   # validated recursively, so it cannot be used to wave through arbitrary
+   # code. It is safe to honor here because untrusted file content can never
+   # reach this configuration: a preview expression's code does not run until
+   # the classifier has already approved it.
+   c(builtin, .rs.preview.configuredAllowlist())
+})
+
+# Additional safe callees configured by an administrator via the
+# 'preview-allowed-functions' session option. The option is a single string of
+# function names ('pkg::fn' or bare 'fn') separated by commas or whitespace.
+# The value is fixed for the lifetime of the session, so cache it after the
+# first read.
+.rs.addFunction("preview.configuredAllowlist", function()
+{
+   if (is.null(.rs.preview.allowedFunctions))
+   {
+      value <- .rs.tryCatch(.Call("rs_previewAllowedFunctions", PACKAGE = "(embedding)"))
+      parts <- if (is.character(value) && length(value))
+         unlist(strsplit(value, "[,[:space:]]+"))
+      else
+         character()
+
+      .rs.setVar("preview.allowedFunctions", parts[nzchar(parts)])
+   }
+
+   .rs.preview.allowedFunctions
 })
 
 # Resolve the name of a call's function position to a character string, for

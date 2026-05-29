@@ -77,6 +77,28 @@ test_that("active bindings are not treated as safe symbols", {
 
 })
 
+test_that("sites can extend the allowlist via the session option", {
+
+   call <- .rs.test.parseConn("acmedb::connect(\"prod\")")
+
+   # not allow-listed by default
+   expect_identical(.rs.preview.exprStatus(call), "unsafe")
+
+   # the 'preview-allowed-functions' session option is surfaced into this
+   # cache var; populate it directly to mirror an administrator setting it
+   .rs.setVar("preview.allowedFunctions", "acmedb::connect")
+   on.exit(.rs.setVar("preview.allowedFunctions", NULL), add = TRUE)
+
+   # an allow-listed callee makes the call safe, but its arguments are still
+   # validated recursively
+   expect_identical(.rs.preview.exprStatus(call), "safe")
+   expect_identical(
+      .rs.preview.exprStatus(.rs.test.parseConn("acmedb::connect(system(\"x\"))")),
+      "unsafe"
+   )
+
+})
+
 test_that("active bindings anywhere on the search path are unsafe", {
 
    # eval() resolves through the search path, so an active binding in an
