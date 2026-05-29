@@ -1,0 +1,104 @@
+name: "E2E test dependencies"
+description: >
+  Install and cache the dependencies shared by every RStudio e2e Playwright
+  workflow: R packages (via pak), npm modules, and Playwright browsers. All
+  steps run in bash, which is available on the Linux, macOS, and Windows
+  hosted runners alike, so a single implementation covers every platform.
+
+inputs:
+  r-libs-user:
+    description: "Absolute path to R_LIBS_USER (the per-job R library tree to cache)."
+    required: true
+  working-directory:
+    description: "Directory containing the Playwright project (package.json / DESCRIPTION)."
+    required: false
+    default: "e2e/rstudio"
+
+runs:
+  using: "composite"
+  steps:
+    # Pin Playwright's browser download dir and pak's cache dir to fixed,
+    # workspace-local paths so the cache `path:` is identical on every OS
+    # (the platform defaults differ). PLAYWRIGHT_BROWSERS_PATH is exported to
+    # GITHUB_ENV so the later "Run Playwright tests" step in the calling
+    # workflow finds the cached browsers. R_USER_CACHE_DIR is honored by
+    # tools::R_user_dir(), which pak/pkgcache use to locate their download
+    # cache, so only the install step below needs it.
+    - name: Configure dependency cache paths
+      shell: bash
+      run: |
+        echo "PLAYWRIGHT_BROWSERS_PATH=${{ github.workspace }}/ms-playwright" >> "$GITHUB_ENV"
+
+    # Resolve the *installed* R version (major.minor) and fold it into the
+    # cache keys below. Installed packages and pak's binary downloads are only
+    # compatible within an R major.minor series, so when an alias like
+    # "release" rolls forward to a new R the keys must change -- otherwise a
+    # library built for the old R would be restored into the new one. Keying
+    # on the resolved version (rather than the requested alias, which never
+    # changes) handles that, and scoping restore-keys to the same version
+    # stops a prefix-match fallback from pulling a stale-version library in.
+    - name: Resolve R version
+      id: r_version
+      shell: bash
+      run: |
+        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        echo "Resolved R version (major.minor): $VERSION"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Cache R packages (pak download cache)
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.r-pkg-cache
+        key: ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-
+
+    - name: Cache R library
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.r-libs-user }}
+        key: ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-
+
+    - name: Install R packages from DESCRIPTION
+      shell: bash
+      env:
+        E2E_ROOT: ${{ inputs.working-directory }}
+        R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/noble/latest"
+        else
+          export PKG_REPO="https://packagemanager.posit.co/cran/latest"
+        fi
+        SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
+        cat > "$SCRIPT" <<'EOF'
+        options(repos = c(P3M = Sys.getenv("PKG_REPO")))
+        if (!requireNamespace("pak", quietly = TRUE))
+          install.packages("pak")
+        pak::local_install_dev_deps(
+          root = Sys.getenv("E2E_ROOT"),
+          ask = FALSE,
+          upgrade = FALSE
+        )
+        EOF
+        Rscript "$SCRIPT"
+
+    - name: Install npm dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm ci
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/ms-playwright
+        key: ${{ runner.os }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-pw-
+
+    - name: Install Playwright browsers
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npx playwright install --with-deps chromium
