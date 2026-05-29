@@ -259,7 +259,12 @@ public class VirtualConsole
    private void backspace(int count)
    {
       clearPartialAnsiCode();
-      cursor_ = Math.max(0, cursor_ - count);
+
+      // Like a terminal's BS, backspace stays within the current line rather
+      // than crossing the preceding '\n'; clamping at the line start keeps the
+      // flat-buffer cursor from landing on another line's newline (which the
+      // line-sensitive carriageReturn / eraseInLine would then misattribute).
+      cursor_ = Math.max(currentLineStart(), cursor_ - count);
    }
 
    private void carriageReturn()
@@ -267,8 +272,14 @@ public class VirtualConsole
       clearPartialAnsiCode();
       if (cursor_ == 0)
          return;
-      
-      cursor_ = output_.lastIndexOf("\n", cursor_) + 1;
+
+      // currentLineStart() searches from cursor_ - 1 so that a cursor resting
+      // directly on a '\n' is treated as belonging to the line that '\n'
+      // terminates, not the next one. Horizontal moves (backspace, CSI C/D)
+      // are clamped to the current line, so the only way to land on a '\n' is
+      // at the end of that same line (via CHA or CSI C) -- making this the
+      // correct, unambiguous resolution.
+      cursor_ = currentLineStart();
    }
 
    private void newline(String clazz)
@@ -299,6 +310,206 @@ public class VirtualConsole
    }
 
    /**
+    * Returns the start offset of the current line: the line on which
+    * {@code cursor_} sits. Uses {@code cursor_ - 1} so that a cursor resting
+    * directly on a '\n' (e.g. an empty line) is treated as belonging to that
+    * line rather than the next one, matching {@link #cursorUp} semantics.
+    */
+   private int currentLineStart()
+   {
+      return output_.lastIndexOf("\n", cursor_ - 1) + 1;
+   }
+
+   /**
+    * Returns the end offset of the current line: the position of the '\n'
+    * terminating the line {@code cursor_} sits on, or the buffer length for
+    * the final, unterminated line. Moving the cursor here places it just past
+    * the last character (on the '\n'), which {@link #currentLineStart} still
+    * resolves to this same line.
+    */
+   private int currentLineEnd()
+   {
+      int lineEnd = output_.indexOf("\n", cursor_);
+      return lineEnd == -1 ? output_.length() : lineEnd;
+   }
+
+   /**
+    * Returns the start offset of the line {@code n} rows above the line
+    * beginning at {@code lineStart}, stopping at the top of the buffer.
+    */
+   private int lineStartAbove(int lineStart, int n)
+   {
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         if (targetLineStart == 0)
+            break;
+         targetLineStart = output_.lastIndexOf("\n", targetLineStart - 2) + 1;
+      }
+      return targetLineStart;
+   }
+
+   /**
+    * Returns the start offset of the line {@code n} rows below the line
+    * beginning at {@code lineStart}, stopping at the last line.
+    */
+   private int lineStartBelow(int lineStart, int n)
+   {
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         int nextNewline = output_.indexOf("\n", targetLineStart);
+         if (nextNewline == -1)
+            break;
+         targetLineStart = nextNewline + 1;
+      }
+      return targetLineStart;
+   }
+
+   /**
+    * Cursor Up (CUU) -- CSI A
+    *
+    * Moves the cursor up n rows. If at the top of the buffer, no further
+    * movement occurs. The column is preserved, clamped to the target line
+    * length.
+    *
+    * @param n number of rows to move up
+    */
+   private void cursorUp(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      int lineStart = currentLineStart();
+      int column = cursor_ - lineStart;
+      int targetLineStart = lineStartAbove(lineStart, n);
+      cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
+   }
+
+   /**
+    * Cursor Down (CUD) -- CSI B
+    *
+    * Moves the cursor down n rows. If there are fewer than n rows below,
+    * stops at the last row. The column is preserved, clamped to the target
+    * line length.
+    *
+    * @param n number of rows to move down
+    */
+   private void cursorDown(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      int lineStart = currentLineStart();
+      int column = cursor_ - lineStart;
+      int targetLineStart = lineStartBelow(lineStart, n);
+      cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
+   }
+
+   /**
+    * Cursor Next Line (CNL) -- CSI E
+    *
+    * Moves the cursor to the beginning (column 0) of the line n rows down.
+    * If there are fewer than n rows below, stops at the last row; the column
+    * is still reset to 0.
+    *
+    * @param n number of rows to move down
+    */
+   private void cursorNextLine(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      cursor_ = lineStartBelow(currentLineStart(), n);
+   }
+
+   /**
+    * Cursor Previous Line (CPL) -- CSI F
+    *
+    * Moves the cursor to the beginning (column 0) of the line n rows up. If
+    * at the top of the buffer, stops at the first row; the column is still
+    * reset to 0.
+    *
+    * @param n number of rows to move up
+    */
+   private void cursorPreviousLine(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      cursor_ = lineStartAbove(currentLineStart(), n);
+   }
+
+   /**
+    * Cursor Horizontal Absolute (CHA) -- CSI G
+    *
+    * Moves the cursor to column n (1-based) on the current line. The column
+    * is clamped to the line's content length (see {@link #lineLength});
+    * values below 1 are treated as column 1.
+    *
+    * <p>Unlike {@link #cursorUp} / {@link #cursorDown}, which clamp to
+    * {@link #maxCursorColumn} (one short of a terminated line's '\n' to avoid
+    * the cursor-on-newline ambiguity when a column is implicitly preserved),
+    * CHA addresses an explicit column and must be able to reach the cell just
+    * past the last character. Landing there places the cursor on the '\n';
+    * a subsequent write is handled by the newline-preservation path in
+    * {@link #text}, which extends the line rather than overwriting its last
+    * character or merging into the line below.
+    *
+    * @param n target column, 1-based
+    */
+   private void cursorToColumn(int n)
+   {
+      clearPartialAnsiCode();
+
+      int lineStart = currentLineStart();
+      int column = Math.max(0, n - 1);
+      cursor_ = lineStart + Math.min(column, lineLength(lineStart));
+   }
+
+   /**
+    * Returns the content length (excluding any trailing '\n') of the line
+    * beginning at {@code lineStart}.
+    */
+   private int lineLength(int lineStart)
+   {
+      int lineEnd = output_.indexOf("\n", lineStart);
+      if (lineEnd == -1)
+         return output_.length() - lineStart;
+      return lineEnd - lineStart;
+   }
+
+   /**
+    * Returns the largest column offset {@link #cursorUp} / {@link #cursorDown}
+    * may place the cursor at on the line beginning at {@code lineStart}.
+    *
+    * <p>The flat buffer cannot distinguish "cursor past the last character
+    * but before the trailing '\n'" from "cursor on the '\n'": both are the
+    * same position. For an implicitly preserved column (cursor up/down),
+    * clamping to {@code lineLength - 1} on terminated lines keeps the cursor
+    * on a real character of the intended line, at the cost of one column of
+    * preservation precision -- the cursor lands on the line's last character
+    * rather than just past it. For the final, unterminated line of the buffer
+    * there is no '\n' to be confused with, so the full length is returned.
+    *
+    * <p>{@link #cursorToColumn} (CHA) intentionally allows the full line
+    * length instead (see {@link #lineLength}); line-sensitive operations such
+    * as {@link #carriageReturn} and {@link #eraseInLine} resolve a cursor on a
+    * '\n' to the line that '\n' terminates, so landing there stays consistent.
+    */
+   private int maxCursorColumn(int lineStart)
+   {
+      int lineEnd = output_.indexOf("\n", lineStart);
+      if (lineEnd == -1)
+         return output_.length() - lineStart;
+      return Math.max(0, lineEnd - lineStart - 1);
+   }
+
+   /**
     * Erase in Line (EL) -- CSI K
     *
     * The cursor position is not changed by this operation.
@@ -311,7 +522,11 @@ public class VirtualConsole
    {
       clearPartialAnsiCode();
 
-      int lineStart = output_.lastIndexOf("\n", cursor_) + 1;
+      // Derive the line from cursor_ - 1 (via currentLineStart) so a cursor
+      // left on a '\n' by CHA erases the line that '\n' terminates rather than
+      // the following line. lineEnd is the '\n' the cursor sits on (or the next
+      // one), i.e. the end of that same line.
+      int lineStart = currentLineStart();
       int lineEnd = output_.indexOf("\n", cursor_);
       if (lineEnd == -1)
          lineEnd = output_.length();
@@ -689,6 +904,21 @@ public class VirtualConsole
       int start = cursor_;
       int end = cursor_ + text.length();
 
+      // Preserve newline boundaries: if a non-newline character in the write
+      // would land on top of an existing '\n' in the buffer, extend the
+      // current line with spaces so the overwrite stays inside it. Without
+      // this, a cursor placed on an earlier line via CSI A -- including on
+      // an empty line, where the cursor sits directly on the '\n' -- and
+      // then asked to write text would clobber the line separator and run
+      // into the next line's content. The newline()-driven self-overwrite
+      // (text == "\n" landing on an existing '\n') is left alone so that
+      // path remains idempotent and does not duplicate newlines.
+      int nlPos = output_.indexOf("\n", start);
+      if (nlPos >= start && nlPos < end && text.charAt(nlPos - start) != '\n')
+      {
+         extendLineBefore(nlPos, end - nlPos);
+      }
+
       // real-time output if we have a parent
       if (parent_ != null)
       {
@@ -701,6 +931,56 @@ public class VirtualConsole
 
       output_.replace(start, end, text);
       cursor_ += text.length();
+   }
+
+   /**
+    * Insert {@code count} spaces into the buffer immediately before the '\n'
+    * at {@code nlPos}, extending the line that ends there. Class ranges and
+    * the DOM are kept consistent: the range containing the newline absorbs
+    * the spaces, and any range positioned strictly after the newline shifts
+    * right by {@code count}.
+    */
+   private void extendLineBefore(int nlPos, int count)
+   {
+      if (count <= 0)
+         return;
+
+      StringBuilder spaces = new StringBuilder(count);
+      for (int i = 0; i < count; i++)
+         spaces.append(' ');
+      String spacesStr = spaces.toString();
+
+      output_.insert(nlPos, spacesStr);
+
+      Entry<Integer, ClassRange> floor = class_.floorEntry(nlPos);
+      ClassRange straddler = null;
+      if (floor != null)
+      {
+         ClassRange r = floor.getValue();
+         if (r.start <= nlPos && r.start + r.length > nlPos)
+            straddler = r;
+      }
+
+      if (straddler != null)
+      {
+         String rText = straddler.text();
+         int offset = nlPos - straddler.start;
+         straddler.setText(
+               StringUtil.substring(rText, 0, offset)
+                     + spacesStr
+                     + StringUtil.substring(rText, offset));
+         straddler.length += count;
+      }
+
+      List<Integer> shiftKeys = new ArrayList<>(class_.tailMap(nlPos + 1).keySet());
+      List<ClassRange> shifted = new ArrayList<>(shiftKeys.size());
+      for (Integer key : shiftKeys)
+         shifted.add(class_.remove(key));
+      for (ClassRange r : shifted)
+      {
+         r.start += count;
+         class_.put(r.start, r);
+      }
    }
    
    public void submit(String data, Type type)
@@ -1000,15 +1280,42 @@ public class VirtualConsole
                   }
                   
                   // handle other supported commands
-                  if (command == "C")
+                  if (command == "A")
                   {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorUp(n);
+                  }
+                  else if (command == "B")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorDown(n);
+                  }
+                  else if (command == "C")
+                  {
+                     // CUF: move right, but not past the end of the current line
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.min(output_.length(), cursor_ + n);
+                     cursor_ = Math.min(currentLineEnd(), cursor_ + n);
                   }
                   else if (command == "D")
                   {
+                     // CUB: move left, but not past the start of the current line
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.max(0, cursor_ - n);
+                     cursor_ = Math.max(currentLineStart(), cursor_ - n);
+                  }
+                  else if (command == "E")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorNextLine(n);
+                  }
+                  else if (command == "F")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorPreviousLine(n);
+                  }
+                  else if (command == "G")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorToColumn(n);
                   }
                   else if (command == "K")
                   {

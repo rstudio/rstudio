@@ -1331,10 +1331,12 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testEraseInLineMode0MiddleLine()
    {
-      // Mode 0 on a non-trailing line erases via the space-overwrite path
+      // Mode 0 on a non-trailing line erases via the space-overwrite path.
+      // Cursor up (CSI A) reaches line 2, landing on the space before "World"
+      // (column preserved from "Line3"); erase-to-EOL then clears " World".
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("Line1\nHello World\nLine3\033[12D\033[K");
+      vc.submit("Line1\nHello World\nLine3\033[1A\033[K");
       Assert.assertEquals("Line1\nHello      \nLine3", vc.toString());
       Assert.assertEquals("<span>Line1\nHello      \nLine3</span>", ele.getInnerHTML());
    }
@@ -1351,10 +1353,11 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testEraseInLineMode2MultiLine()
    {
-      // Mode 2 on a middle line of a multi-line buffer
+      // Mode 2 on a middle line of a multi-line buffer. Cursor up (CSI A)
+      // lands on line 2; mode 2 erases the whole line regardless of column.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("Line1\nHello World\nLine3\033[16D\033[2K");
+      vc.submit("Line1\nHello World\nLine3\033[1A\033[2K");
       Assert.assertEquals("Line1\n           \nLine3", vc.toString());
       Assert.assertEquals("<span>Line1\n           \nLine3</span>", ele.getInnerHTML());
    }
@@ -1381,6 +1384,134 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>Progress: 100%</span>", ele.getInnerHTML());
    }
 
+   public void testCsiCursorUpRewritesPreviousLine()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\u001b[1A\rLINE1");
+      Assert.assertEquals("LINE1\nline2", vc.toString());
+   }
+
+   public void testCsiCursorUpPreservesColumn()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\nghijkl\u001b[3D\u001b[1AXY");
+      Assert.assertEquals("abcXYf\nghijkl", vc.toString());
+   }
+
+   public void testCsiCursorUpClampsAtTop()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("only line\u001b[5A\rOVER");
+      Assert.assertEquals("OVER line", vc.toString());
+   }
+
+   public void testCsiCursorUpDefaultCount()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\u001b[A\rLINE1");
+      Assert.assertEquals("LINE1\nline2", vc.toString());
+   }
+
+   public void testCsiCursorDownMovesToNextLine()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\nline3\u001b[2A\u001b[1B\rLINE2");
+      Assert.assertEquals("line1\nLINE2\nline3", vc.toString());
+   }
+
+   public void testCsiCursorDownClampsAtBottom()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("only line\u001b[5B!");
+      Assert.assertEquals("only line!", vc.toString());
+   }
+
+   public void testCsiMultiProgressBarUpdate()
+   {
+      // Mirrors the output cli emits when rendering two progress bars on
+      // separate lines: each update moves up with \033[1A, redraws bar 1,
+      // moves down via \n, then redraws bar 2. Without CSI A support the
+      // second bar would clobber the first.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\rDownloads  10%\u001b[K\n\rProcessing 10%\u001b[K\r");
+      vc.submit("\u001b[1A\rDownloads  50%\u001b[K\n\rProcessing 50%\u001b[K\r");
+      Assert.assertEquals("Downloads  50%\nProcessing 50%", vc.toString());
+   }
+
+   public void testCsiCursorUpWriteLongerThanLinePreservesNewline()
+   {
+      // Regression guard: a write that begins on an earlier line via CSI A
+      // and is longer than that line's existing content must not run past
+      // the trailing newline and corrupt the line below it. The buffer
+      // newline stays where the writer expects, with the upper line
+      // extended to fit the new content.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Downloads 10%\nProcessing 10%");
+      vc.submit("\u001b[1A\rDownloads NEW 50%\u001b[K\n\rProcessing 50%\u001b[K\r");
+      Assert.assertEquals("Downloads NEW 50%\nProcessing 50%", vc.toString());
+   }
+
+   public void testCsiCursorUpOntoEmptyLinePreservesNewline()
+   {
+      // Regression guard for the cursor-on-newline case: CSI A from a
+      // following line can land the cursor directly on an empty line's
+      // terminating newline (lineStart == lineEnd). A subsequent non-newline
+      // write must not consume that newline and merge the lines below.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Header\n\nFooter");
+      vc.submit("\u001b[1AX");
+      Assert.assertEquals("Header\nX\nFooter", vc.toString());
+   }
+
+   public void testCsiCursorDownDefaultCount()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\nline3\u001b[2A\u001b[B\rLINE2");
+      Assert.assertEquals("line1\nLINE2\nline3", vc.toString());
+   }
+
+   public void testCsiCursorUpClampsColumnToLineLength()
+   {
+      // Pin the absolute-position behavior without a \r chaser: when the
+      // source column exceeds the target line's length, the cursor lands
+      // on the line's last character (not past it) so subsequent ops like
+      // \r and eraseInLine stay on the intended line. See maxCursorColumn.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("short\nlongerline\u001b[1AX");
+      Assert.assertEquals("shorX\nlongerline", vc.toString());
+   }
+
+   public void testCsiCursorUpPreservesColorWhenRewriting()
+   {
+      // Verifies extendLineBefore keeps the DOM in sync: a CSI A overwrite
+      // that extends a colored line must produce HTML whose color span
+      // still covers the original characters and is followed by a new,
+      // uncolored span for the appended content.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b[32mbar1\u001b[39m\nbar2");
+      vc.submit("\u001b[1A\rbar1 EXTRA\u001b[K");
+      Assert.assertEquals("bar1 EXTRA\nbar2", vc.toString());
+      // The DOM must still contain the colored span (the green bar1 prefix)
+      // and the \n separator must survive intact.
+      String html = ele.getInnerHTML();
+      Assert.assertTrue("expected xtermColor2 span, got: " + html,
+         html.indexOf("xtermColor2") != -1);
+      Assert.assertTrue("expected newline preserved in DOM, got: " + html,
+         html.indexOf("\n") != -1);
+   }
+
    public void testIncompleteAnsiCodes()
    {
       PreElement ele = Document.get().createPreElement();
@@ -1390,5 +1521,196 @@ public class VirtualConsoleTests extends GWTTestCase
          vc.submit(text.substring(i, i + 1));
       
       Assert.assertEquals(ele.getInnerText(), "hello");
+   }
+
+   public void testCsiCursorToColumnDefault()
+   {
+      // \033[G with no param defaults to column 1 (start of line)
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[GX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorToColumnExplicit()
+   {
+      // \033[7G moves to column 7 (1-based), i.e. the 'W' in "Hello World"
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[7GXYZ");
+      Assert.assertEquals("Hello XYZld", vc.toString());
+   }
+
+   public void testCsiCursorToColumnClampsBeyondLine()
+   {
+      // A column past the end of the (unterminated) line clamps to the end
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[99GX");
+      Assert.assertEquals("abcX", vc.toString());
+   }
+
+   public void testCsiCursorToColumnMultiLine()
+   {
+      // CHA operates on the line the cursor is currently on
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\033[3GX");
+      Assert.assertEquals("line1\nliXe2", vc.toString());
+   }
+
+   public void testCsiCursorToColumnEndOfNonFinalLine()
+   {
+      // CHA must be able to address the column just past the content of a
+      // terminated (non-final) line. After moving up to "abc", \033[4G lands
+      // after 'c' (not on it), so the write appends instead of clobbering
+      // 'c' or merging into the line below.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4GZ");
+      Assert.assertEquals("abcZ\ndef", vc.toString());
+   }
+
+   public void testCsiCursorToColumnEndOfLineThenCarriageReturn()
+   {
+      // A cursor left on a terminated line's '\n' by CHA must still belong to
+      // that line: \r returns to the start of "abc", not down to "def".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4G\rX");
+      Assert.assertEquals("Xbc\ndef", vc.toString());
+   }
+
+   public void testCsiCursorToColumnEndOfLineThenEraseLine()
+   {
+      // Likewise CSI K must operate on the line whose '\n' the cursor sits on.
+      // \033[2K erases "abc" (leaving spaces), not "def".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4G\033[2K");
+      Assert.assertEquals("   \ndef", vc.toString());
+   }
+
+   public void testCsiCursorBackClampsAtLineStart()
+   {
+      // CUB must not cross the preceding '\n': moving left 4 from the end of
+      // "def" stops at the start of "def", so the write overwrites 'd'.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4DX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorBackThenCarriageReturn()
+   {
+      // After CUB clamps at the start of "def", \r stays on "def" (it does not
+      // resolve to the previous line). Regression guard for cursor-backward
+      // interacting with the newline-resolution in carriageReturn().
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4D\rX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorBackThenEraseLine()
+   {
+      // Same for CSI K: it erases "def" (the line CUB stayed on), not "abc".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4D\033[2K");
+      Assert.assertEquals("abc\n   ", vc.toString());
+   }
+
+   public void testBackspaceClampsAtLineStart()
+   {
+      // Plain backspace must also stay within the current line.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\b\b\b\bX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorForwardClampsAtLineEnd()
+   {
+      // CUF must not cross into the next line: moving right past the end of
+      // "abc" stops at its end, so the write appends to "abc".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[9CX");
+      Assert.assertEquals("abcX\ndef", vc.toString());
+   }
+
+   public void testCsiCursorToColumnProgressBar()
+   {
+      // Realistic progress pattern: redraw the line via CHA + erase-to-EOL
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Downloading 45%");
+      vc.submit("\033[GDownloading 100%\033[K");
+      Assert.assertEquals("Downloading 100%", vc.toString());
+      Assert.assertEquals("<span>Downloading 100%</span>", ele.getInnerHTML());
+   }
+
+   public void testCsiCursorNextLine()
+   {
+      // \033[2A up to the first line, then \033[1E to the start of line 2
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[2A\033[1EX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorNextLineDefaultCount()
+   {
+      // \033[E with no param defaults to moving down one line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[2A\033[EX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorNextLineClampsAtBottom()
+   {
+      // CNL on the last line cannot move down but still resets to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[3EX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLine()
+   {
+      // \033[1F moves to the start of the line above
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[1FX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineDefaultCount()
+   {
+      // \033[F with no param defaults to moving up one line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[FX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineClampsAtTop()
+   {
+      // CPL on the first line cannot move up but still resets to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[3FX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineResetsColumn()
+   {
+      // Unlike CSI A (which preserves the column), CPL snaps to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\nghijkl\033[1FX");
+      Assert.assertEquals("Xbcdef\nghijkl", vc.toString());
    }
 }
