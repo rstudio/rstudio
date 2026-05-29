@@ -1077,6 +1077,67 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    contents
 })
 
+# Adler-32 fingerprint of an R value. Not cryptographic -- this is for
+# stable, bounded identity tokens (e.g. the data viewer's column-names
+# fingerprint), where a hypothetical collision means reapplying saved
+# UI state to the wrong frame, not a security boundary.
+#
+# Raw vectors hash directly; everything else goes through serialize() so
+# element boundaries are encoded unambiguously and we don't have to
+# invent our own framing -- a delimiter-joined string can collide on
+# names that contain the delimiter.
+#
+# We pin serialize(version = 2L) and zero out bytes 7-10 (the writer's R
+# version field) so the hash is stable across R upgrades. Otherwise the
+# colsFingerprint persisted alongside the data viewer's saved UI state
+# would silently invalidate after every R upgrade. Version 2 has been
+# the stable archival format since R 1.4.0; version 3 additionally
+# embeds the native encoding name in the header, which can vary by
+# platform.
+#
+# The modulus 65521 is the largest prime below 2^16, per the spec.
+# Each loop iteration evaluates
+#   b + k*a + sum_{i=1..k} (k+1-i) * chunk[i]
+# before the %% reduction. Worst case (a, b near 65520; chunk[i] = 255)
+# bounds at 65520*(k+1) + 255*k*(k+1)/2; staying within R's signed
+# 32-bit integer range gives k <= 3854, so chunk size 1024 has plenty
+# of headroom.
+.rs.addFunction("digest", function(x)
+{
+   if (is.raw(x))
+   {
+      bytes <- x
+   }
+   else
+   {
+      bytes <- serialize(x, connection = NULL, ascii = FALSE, version = 2L)
+      bytes[7:10] <- as.raw(0L)
+   }
+
+   n <- length(bytes)
+   a <- 1L
+   b <- 0L
+   size <- 1024L
+
+   pos <- 1L
+   while (pos <= n)
+   {
+      end <- min(pos + size - 1L, n)
+      k <- end - pos + 1L
+      chunk <- as.integer(bytes[pos:end])
+
+      s1 <- sum(chunk)
+      weighted <- sum(seq.int(k, 1L) * chunk)
+
+      b <- (b + k * a + weighted) %% 65521L
+      a <- (a + s1) %% 65521L
+
+      pos <- end + 1L
+   }
+
+   sprintf("%04x%04x", b, a)
+})
+
 .rs.addFunction("fromJSON", function(string)
 {
    .Call("rs_fromJSON", string)
