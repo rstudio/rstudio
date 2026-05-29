@@ -79,13 +79,28 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
     { wait: true },
   );
 
+  // executeInConsole's waitForConsoleIdle returns the moment R drops its busy
+  // flag, but the console-output client event that renders the cat() text can
+  // land a beat later. A single innerText read here therefore races the paint
+  // and intermittently misses the markers under full-suite load (the cause of
+  // the flaky "markers not found" beforeAll failure). Poll the console text
+  // until both markers are present, then extract the value between them.
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(pattern);
-  if (!match) {
-    throw new Error(`captureResult: markers not found for "${rExpression}"`);
-  }
-  return match[1].trim();
+  let match: RegExpMatchArray | null = null;
+  await expect
+    .poll(
+      async () => {
+        const output = await page.locator(CONSOLE_OUTPUT).innerText();
+        match = output.match(pattern);
+        return match !== null;
+      },
+      {
+        timeout: 10000,
+        message: `captureResult: markers not found for "${rExpression}"`,
+      },
+    )
+    .toBe(true);
+  return match![1].trim();
 }
 
 async function waitForSessionRestart(page: Page): Promise<void> {

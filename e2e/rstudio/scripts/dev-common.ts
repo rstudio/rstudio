@@ -134,8 +134,25 @@ export function runPlaywright(
 ): void {
   step(tag, 'Running Playwright tests...');
 
+  // Give each dev run its own timestamped artifact directory. Playwright wipes
+  // the --output dir at the start of every run, so with the default
+  // (test-results/) a follow-up run deletes the previous run's failure context
+  // -- error-context.md, screenshots, traces -- which is exactly what you want
+  // to read after a flaky failure. Pointing --output at a per-run subdir keeps
+  // earlier runs intact. The run id is printed so you know where to look, and
+  // appears in the "Error Context: ..." paths the list reporter prints.
+  //
+  // Skipped if the caller passed their own --output. test-results/ is
+  // gitignored, so these subdirs are too; prune with `rm -rf test-results/*`.
+  const hasOutput = extraArgs.some((a) => a === '--output' || a.startsWith('--output='));
+  const runId = new Date().toISOString().replace(/[:.]/g, '-');
+  const outputArgs = hasOutput ? [] : [`--output=test-results/${runId}`];
+  if (!hasOutput) {
+    console.log(`[${tag}] artifacts -> test-results/${runId} (prior runs preserved)`);
+  }
+
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const args = ['playwright', 'test', ...extraArgs];
+  const args = ['playwright', 'test', ...outputArgs, ...extraArgs];
 
   const child = spawn(npx, args, {
     stdio: 'inherit',

@@ -17,7 +17,7 @@ import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
 import { waitForConsoleBusy, waitForConsoleIdle } from '@pages/console_pane.page';
 
 /**
@@ -404,7 +404,16 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await sourceActions.goToEnd();
     await page.keyboard.press('Enter');
     await expect.poll(() => isCommandEnabled(page, 'saveSourceDoc'), { timeout: 5000 }).toBe(true);
-    await saveDocument(page);
+
+    // Fire-and-forget the save: do NOT use saveDocument(), which waits for the
+    // doc to be marked clean. An R Notebook never settles clean after save --
+    // notebooks always commit chunk output as "uncommitted" (getCommitMode() ==
+    // MODE_UNCOMMITTED), so when the post-save render's chunk output finishes,
+    // TextEditingTargetNotebook.setDirtyState() re-marks the doc dirty. That's
+    // by design (it lets users re-save to refresh the preview at any time), so
+    // the dirty bit is not a valid post-condition here. The nb.html write below
+    // is the real signal that the save landed.
+    await executeCommand(page, 'saveSourceDoc');
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);
