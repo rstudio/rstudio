@@ -1484,11 +1484,24 @@ public class RemoteServer implements Server
 
    @Override
    public void previewSql(String command,
-                          ServerRequestCallback<String> requestCallback)
+                          boolean allowUnsafe,
+                          ServerRequestCallback<org.rstudio.studio.client.common.PreviewResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(command));
+      params.set(1, JSONBoolean.getInstance(allowUnsafe));
       sendRequest(RPC_SCOPE, PREVIEW_SQL, params, requestCallback);
+   }
+
+   @Override
+   public void previewR2d3(String command,
+                           boolean allowUnsafe,
+                           ServerRequestCallback<org.rstudio.studio.client.common.PreviewResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      params.set(1, JSONBoolean.getInstance(allowUnsafe));
+      sendRequest(RPC_SCOPE, PREVIEW_R2D3, params, requestCallback);
    }
 
    public void editCompleted(String text,
@@ -7240,6 +7253,7 @@ public class RemoteServer implements Server
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
 
    private static final String PREVIEW_SQL = "preview_sql";
+   private static final String PREVIEW_R2D3 = "preview_r2d3";
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";

@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.sql.model;
 
+import org.rstudio.studio.client.common.PreviewResult;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
 public interface SqlServerOperations extends BuildServerOperations
 {
-   void previewSql(String command, ServerRequestCallback<String> requestCallback);
+   void previewSql(String command,
+                   boolean allowUnsafe,
+                   ServerRequestCallback<PreviewResult> requestCallback);
 }

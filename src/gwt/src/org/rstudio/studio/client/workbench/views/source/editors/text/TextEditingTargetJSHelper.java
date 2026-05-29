@@ -14,12 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.PreviewResult;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -31,15 +39,16 @@ public class TextEditingTargetJSHelper
       docDisplay_ = docDisplay;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
    @Inject
-   void initialize(GlobalDisplay display, EventBus eventBus)
+   void initialize(GlobalDisplay display, EventBus eventBus, SourceServerOperations server)
    {
       display_ = display;
       eventBus_ = eventBus;
+      server_ = server;
    }
-   
-   
+
+
    public boolean previewJS(EditingTarget editingTarget)
    {
       TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
@@ -47,7 +56,7 @@ public class TextEditingTargetJSHelper
          "preview",
          "//"
       );
-      
+
       if (!previewSource.hasCommentHeader())
          return false;
 
@@ -63,22 +72,79 @@ public class TextEditingTargetJSHelper
 
          previewSource.buildCommand(
             editingTarget.getPath(),
-            new OperationWithInput<String>() 
+            new OperationWithInput<String>()
             {
                @Override
                public void execute(String command)
                {
-                  eventBus_.fireEvent(new SendToConsoleEvent(command, true));
+                  doPreviewJS(command, false);
                }
             }
          );
       }
-      
+
       return true;
    }
-   
+
+   // Ask the backend whether the built r2d3 command is safe to run. The
+   // command comes from the file's '!preview' header, so an untrusted file
+   // could otherwise smuggle arbitrary R into the console. When the command
+   // is not statically safe the backend returns a "confirm" result; we prompt
+   // the user and only run it (in the console, where r2d3 renders the widget)
+   // once they consent.
+   private void doPreviewJS(final String command, boolean allowUnsafe)
+   {
+      server_.previewR2d3(command, allowUnsafe, new ServerRequestCallback<PreviewResult>()
+      {
+         @Override
+         public void onResponseReceived(PreviewResult result)
+         {
+            if (result == null)
+               return;
+
+            if (result.isOk())
+            {
+               eventBus_.fireEvent(new SendToConsoleEvent(command, true));
+               return;
+            }
+
+            if (result.isConfirm())
+            {
+               display_.showYesNoMessage(
+                     MessageDisplay.MSG_WARNING,
+                     constants_.previewRunCodeConfirmCaption(),
+                     constants_.previewRunCodeConfirmMessage(result.getExpression()),
+                     new Operation()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           doPreviewJS(command, true);
+                        }
+                     },
+                     false);
+               return;
+            }
+
+            if (!StringUtil.isNullOrEmpty(result.getMessage()))
+            {
+               display_.showErrorMessage(
+                     constants_.previewJSErrorCaption(),
+                     result.getMessage());
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+
    private GlobalDisplay display_;
-   private EventBus eventBus_; 
+   private EventBus eventBus_;
+   private SourceServerOperations server_;
    private DocDisplay docDisplay_;
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

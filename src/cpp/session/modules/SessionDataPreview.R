@@ -13,18 +13,188 @@
 #
 #
 
-.rs.addJsonRpcHandler("preview_sql", function(code)
+# Expressions which the user has explicitly permitted to run during a preview
+# this session. Membership is checked with identical() against the
+# (srcref-stripped) parsed expression; we deliberately do not persist this set
+# to disk, so an approval never silently re-arms across sessions or projects.
+.rs.setVar("preview.permittedExprs", new.env(parent = emptyenv()))
+
+# The set of function calls we consider safe to evaluate without prompting when
+# resolving a preview expression (a SQL '!preview conn=' connection, or an
+# argument to an r2d3 preview). These are database connection constructors plus
+# a handful of pure helpers commonly used to build arguments. The list is
+# intentionally small; any call whose callee is not named here is treated as
+# unsafe and requires explicit consent.
+.rs.addFunction("preview.safeCallAllowlist", function()
 {
-   # helper function for reporting errors
-   onError <- function(reason) {
-      .rs.scalar(.rs.truncate(reason))
+   c(
+      # database connection constructors
+      "dbConnect", "DBI::dbConnect",
+      "dbPool", "pool::dbPool",
+      "odbc", "odbc::odbc",
+      "dbDriver", "DBI::dbDriver",
+      "SQLite", "RSQLite::SQLite",
+      "Postgres", "RPostgres::Postgres",
+      "Redshift", "RPostgres::Redshift",
+      "PostgreSQL", "RPostgreSQL::PostgreSQL",
+      "MariaDB", "RMariaDB::MariaDB",
+      "MySQL", "RMySQL::MySQL",
+      "bigquery", "bigrquery::bigquery",
+      "duckdb", "duckdb::duckdb",
+      "Spark", "sparklyr::spark_connect",
+
+      # pure helpers for constructing arguments
+      "c", "list", "paste", "paste0", "sprintf", "file.path",
+      "Sys.getenv", "getOption"
+   )
+})
+
+# Resolve the name of a call's function position to a character string, for
+# matching against the allowlist. Handles bare symbols ('dbConnect') and
+# namespace-qualified access ('DBI::dbConnect'). Returns NULL for anything
+# else (e.g. a call that itself produces a function).
+.rs.addFunction("preview.callName", function(callee)
+{
+   if (is.symbol(callee))
+      return(as.character(callee))
+
+   if (is.call(callee) &&
+       (identical(callee[[1L]], as.symbol("::")) ||
+        identical(callee[[1L]], as.symbol(":::"))))
+   {
+      return(paste0(as.character(callee[[2L]]), "::", as.character(callee[[3L]])))
    }
-   
-   # parse the user-provided code
-   parsed <- .rs.tryCatch(parse(text = code)[[1]])
+
+   NULL
+})
+
+# Determine, via static analysis, whether a parsed preview expression is safe
+# to evaluate without prompting the user. The expression comes from a file's
+# '!preview' header, so it is fully attacker-controlled when the file comes
+# from an untrusted source.
+#
+# An expression is safe when it is:
+#   - a literal constant (no evaluation runs code), or
+#   - a bare symbol that is not an active binding (a plain variable lookup), or
+#   - namespace access ('pkg::name', 'pkg:::name'), or
+#   - a parenthesized safe expression, or
+#   - a call to an allow-listed function in which every argument is itself safe.
+#
+# Everything else (notably arbitrary function calls such as system(...)) is
+# unsafe. Note that namespace qualification does not make a call safe:
+# 'base::system(...)' is just as dangerous as 'system(...)', so the allowlist
+# is consulted by name and the arguments are validated recursively.
+.rs.addFunction("preview.isSafeExpr", function(expr)
+{
+   # literal constants (strings, numbers, logicals, NULL, ...) are safe
+   if (!is.language(expr))
+      return(TRUE)
+
+   # a bare symbol is a plain variable lookup; safe unless it is an active
+   # binding, in which case the lookup itself would execute a function
+   if (is.symbol(expr))
+   {
+      name <- as.character(expr)
+      if (!nzchar(name))
+         return(FALSE)
+
+      if (exists(name, envir = globalenv(), inherits = FALSE) &&
+          bindingIsActive(name, globalenv()))
+         return(FALSE)
+
+      return(TRUE)
+   }
+
+   # anything that is not a literal or symbol must be a call to be safe
+   if (!is.call(expr))
+      return(FALSE)
+
+   callee <- expr[[1L]]
+
+   # namespace access ('pkg::name') only resolves a binding; it does not call
+   if (identical(callee, as.symbol("::")) || identical(callee, as.symbol(":::")))
+      return(TRUE)
+
+   # a parenthesized expression is safe iff its body is safe
+   if (identical(callee, as.symbol("(")))
+      return(.rs.preview.isSafeExpr(expr[[2L]]))
+
+   # a regular call is safe only if the callee is allow-listed by name and
+   # every argument is itself safe (checked recursively)
+   name <- .rs.preview.callName(callee)
+   if (is.null(name) || !(name %in% .rs.preview.safeCallAllowlist()))
+      return(FALSE)
+
+   args <- as.list(expr)[-1L]
+   for (arg in args)
+      if (!.rs.preview.isSafeExpr(arg))
+         return(FALSE)
+
+   TRUE
+})
+
+.rs.addFunction("preview.isPermittedExpr", function(expr)
+{
+   permitted <- .rs.preview.permittedExprs$items
+   for (item in permitted)
+      if (identical(item, expr))
+         return(TRUE)
+   FALSE
+})
+
+.rs.addFunction("preview.permitExpr", function(expr)
+{
+   if (!.rs.preview.isPermittedExpr(expr))
+      .rs.preview.permittedExprs$items <-
+         c(.rs.preview.permittedExprs$items, list(expr))
+
+   invisible(NULL)
+})
+
+# Classify a parsed preview expression as "safe" (statically safe to
+# evaluate), "permitted" (the user has explicitly allowed it this session), or
+# "unsafe" (requires explicit consent before evaluation).
+.rs.addFunction("preview.exprStatus", function(expr)
+{
+   if (.rs.preview.isSafeExpr(expr))
+      return("safe")
+
+   if (.rs.preview.isPermittedExpr(expr))
+      return("permitted")
+
+   "unsafe"
+})
+
+.rs.addJsonRpcHandler("preview_sql", function(code, allow = FALSE)
+{
+   # result helpers; the front-end dispatches on 'action'
+   onError <- function(reason) {
+      list(action = .rs.scalar("error"),
+           message = .rs.scalar(.rs.truncate(reason)))
+   }
+
+   onConfirm <- function(expr) {
+      list(action = .rs.scalar("confirm"),
+           expression = .rs.scalar(.rs.truncate(.rs.deparse(expr))))
+   }
+
+   onSuccess <- function() {
+      list(action = .rs.scalar("ok"))
+   }
+
+   # parse the user-provided code (strip srcref so connection expressions
+   # compare equal against the permitted set maintained in SessionSql.R)
+   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE)[[1]])
    if (inherits(parsed, "error"))
       return(onError("Failed to parse SQL preview comment."))
-   
+
+   # require the canonical preview call shape. the '!preview' header lets the
+   # user override the function name (e.g. '-- !preview system(...)'), so we
+   # must confirm the callee is our own preview helper before evaluating --
+   # otherwise the function position is itself a code-injection vector.
+   if (!is.call(parsed) || !identical(parsed[[1L]], quote(.rs.previewSql)))
+      return(onError("Unsupported SQL preview comment."))
+
    # substitute missing arguments for NULL, so that match.call
    # does what we expect
    for (i in seq_along(parsed))
@@ -35,17 +205,90 @@
    matched <- .rs.tryCatch(match.call(.rs.previewSql, parsed))
    if (inherits(matched, "error"))
       return(onError("Unexpected SQL preview comment."))
-   
+
    # validate that the user provided a connection
    if (is.null(matched$conn))
       return(onError("No connection was specified in SQL preview comment."))
-   
+
+   # every argument other than the connection (the statement path, plus any
+   # extra arguments forwarded to DBI::dbSendQuery) must be statically safe,
+   # so they cannot smuggle in arbitrary code alongside a benign connection
+   others <- as.list(matched)[-1L]
+   others$conn <- NULL
+   for (arg in others)
+      if (!.rs.preview.isSafeExpr(arg))
+         return(onError("Unsupported SQL preview comment."))
+
+   # classify the connection expression itself; arbitrary expressions require
+   # the user's explicit consent before we evaluate them
+   connExpr <- matched$conn
+   if (identical(.rs.preview.exprStatus(connExpr), "unsafe"))
+   {
+      if (!isTRUE(allow))
+         return(onConfirm(connExpr))
+
+      # the user approved this expression; remember it for the rest of the
+      # session so future previews and completions resolve it without prompting
+      .rs.preview.permitExpr(connExpr)
+   }
+
    # okay, try to evaluate it
    status <- .rs.tryCatch(eval(parsed, envir = globalenv()))
    if (inherits(status, "error"))
       return(onError(conditionMessage(status)))
-   
-   invisible(status)
+
+   # .rs.previewSql reports connection/query failures by returning a
+   # (non-empty) message string rather than by signaling an error; surface
+   # those to the user just as the previous string-returning contract did
+   if (is.character(status) && length(status) && nzchar(status))
+      return(onError(status))
+
+   onSuccess()
+})
+
+# Consent check for the r2d3 ('// !preview r2d3 ...') file preview. Unlike SQL
+# preview, the built 'r2d3::r2d3(...)' call is run in the console (so r2d3 can
+# render the widget), so this handler only classifies the command and reports
+# whether it is safe to run -- the front-end performs the console execution.
+.rs.addJsonRpcHandler("preview_r2d3", function(code, allow = FALSE)
+{
+   onError <- function(reason) {
+      list(action = .rs.scalar("error"),
+           message = .rs.scalar(.rs.truncate(reason)))
+   }
+
+   onConfirm <- function(expr) {
+      list(action = .rs.scalar("confirm"),
+           expression = .rs.scalar(.rs.truncate(.rs.deparse(expr))))
+   }
+
+   onSuccess <- function() {
+      list(action = .rs.scalar("ok"))
+   }
+
+   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE)[[1]])
+   if (inherits(parsed, "error"))
+      return(onError("Failed to parse preview comment."))
+
+   # the front-end forces the call to r2d3::r2d3; confirm that here so the
+   # function position cannot itself be used to inject code
+   if (!is.call(parsed) || !identical(parsed[[1L]], quote(r2d3::r2d3)))
+      return(onError("Unsupported preview comment."))
+
+   # every argument (the source path plus header arguments such as 'data=')
+   # must be statically safe or already permitted; otherwise ask for consent
+   args <- as.list(parsed)[-1L]
+   unsafe <- Filter(function(arg) identical(.rs.preview.exprStatus(arg), "unsafe"), args)
+   if (length(unsafe))
+   {
+      if (!isTRUE(allow))
+         return(onConfirm(unsafe[[1L]]))
+
+      for (arg in unsafe)
+         .rs.preview.permitExpr(arg)
+   }
+
+   onSuccess()
 })
 
 .rs.addFunction("previewDataFrame", function(data, script)
