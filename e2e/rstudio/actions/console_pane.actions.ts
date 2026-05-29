@@ -184,8 +184,12 @@ export class ConsolePaneActions {
    * waiting for R to go idle, so the only `[1] ...` line in the output is this
    * result -- no unique marker needed (the echoed input line has no `[1]`
    * prefix, so it can't false-match).
+   *
+   * Intended for state probes (e.g. "is this package/binary available?") where
+   * the test wants the R value, not the console rendering. The expression must
+   * evaluate to a single (length-1) logical.
    */
-  private async evalRLogical(expr: string): Promise<boolean | null> {
+  async evalRLogical(expr: string): Promise<boolean | null> {
     await this.clearConsole();
     await this.executeInConsole(`(${expr})`);
     const output = await this.consolePane.consoleOutput.innerText();
