@@ -335,6 +335,12 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   let page: Page;
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  // Whether the Air binary can be resolved on this machine. Computed once in
+  // beforeAll; the cases that actually exercise Air (4/5/6, all useAir=true)
+  // skip when it's false so a runner without Air doesn't report failures for
+  // an unavailable dependency. The useAir=false cases (1/2/3/7/8) need no Air
+  // and always run -- they are the core #16721 regression coverage.
+  let airAvailable = false;
 
   test.beforeAll(async ({ rstudioPage }) => {
     page = rstudioPage;
@@ -371,6 +377,18 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
       );
     }
     await sourceActions.closeSourceAndDeleteFile(TEST_FILE);
+
+    // Preflight: can Air be resolved on this machine? .rs.air.ensureAvailable()
+    // returns a path to the Air binary or stop()s if it can't find (or, by
+    // default, install) one. This mirrors exactly what the reformat path does
+    // -- including autoinstall, so a sandbox where Air isn't on PATH but is
+    // installable still reports available -- and treats any error as "not
+    // available". The Air-dependent cases (4/5/6) skip when this is false
+    // rather than failing on a dependency the runner genuinely can't provide.
+    airAvailable =
+      (await consoleActions.evalRLogical(
+        'tryCatch(isTRUE(file.exists(.rs.air.ensureAvailable())), error = function(e) FALSE)',
+      )) === true;
   });
 
   test.afterEach(async () => {
@@ -416,6 +434,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('4: checked, air.toml present, manual reformat uses Air', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, false);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
@@ -425,6 +444,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('5: checked, air.toml present, save uses Air', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, true);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
@@ -434,6 +454,11 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('6: checked, no config, manual reformat uses built-in formatter', async () => {
+    // Gated on Air availability too: although this case expects the built-in
+    // formatter, enabling "Use Air" routes through the server format path,
+    // which a runner without Air can't satisfy (observed failing on CI while
+    // passing locally where Air is installed).
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, false);
     await removeAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);

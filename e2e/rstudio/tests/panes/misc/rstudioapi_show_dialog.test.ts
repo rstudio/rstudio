@@ -84,9 +84,11 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
 
   test('showDialog preserves "\\n" as a line break', async ({ rstudioPage: page }) => {
     // Calling .rs.api.showDialog blocks the R thread until the client fires
-    // showDialogCompleted, so this returns immediately after pressing Enter.
+    // showDialogCompleted, so use wait: false -- R stays busy behind the modal
+    // and executeInConsole's default idle-wait would otherwise time out.
     await consoleActions.executeInConsole(
       `.rs.api.showDialog("showDialog_17701", "line one\\nline two")`,
+      { wait: false },
     );
 
     const dialog = page.locator('.gwt-DialogBox[aria-label="showDialog_17701"]');
@@ -108,6 +110,7 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     // working after the fix.
     await consoleActions.executeInConsole(
       `.rs.api.showDialog("showDialog_17701_html", "<b>line one</b>\\nline two")`,
+      { wait: false },
     );
 
     const dialog = page.locator('.gwt-DialogBox[aria-label="showDialog_17701_html"]');
@@ -130,6 +133,7 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
     // so a blank line between two text lines should survive.
     await consoleActions.executeInConsole(
       `.rs.api.showDialog("showDialog_17701_blank", "line one\\n\\nline two")`,
+      { wait: false },
     );
 
     const dialog = page.locator('.gwt-DialogBox[aria-label="showDialog_17701_blank"]');
@@ -146,6 +150,7 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
   test('showPrompt preserves "\\n" as a line break', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole(
       `.rs.api.showPrompt("showPrompt_17701", "line one\\nline two")`,
+      { wait: false },
     );
 
     const dialog = page.locator('.gwt-DialogBox[aria-label="showPrompt_17701"]');
@@ -163,6 +168,7 @@ test.describe('rstudioapi dialog newline handling (#17701)', { tag: ['@parallel_
   test('showQuestion preserves "\\n" as a line break', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole(
       `.rs.api.showQuestion("showQuestion_17701", "line one\\nline two")`,
+      { wait: false },
     );
 
     const dialog = page.locator('.gwt-DialogBox[aria-label="showQuestion_17701"]');

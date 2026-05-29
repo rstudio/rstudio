@@ -2,6 +2,7 @@ import type { Page } from 'playwright';
 import * as fs from 'fs';
 import {
   ConsolePane,
+  waitForConsoleBusy,
   waitForConsoleIdle,
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
@@ -115,7 +116,7 @@ export class ConsolePaneActions {
     // focus can shift between the evaluate() returning and the key press,
     // leaving the text in the buffer but never submitted.
     await this.consolePane.consoleInput.press('Enter');
-    if (opts.wait) {
+    if (opts.wait ?? true) {
       await waitForConsoleIdle(this.page, opts.timeout);
     }
   }
@@ -176,72 +177,61 @@ export class ConsolePaneActions {
   }
 
   /**
+   * Evaluate an R expression that yields a single logical and return its value
+   * (or null if it couldn't be read). Wraps the expression in parens so R
+   * auto-prints the result, then reads the printed `[1] TRUE`/`[1] FALSE` out
+   * of the console. Clears the console first and relies on executeInConsole
+   * waiting for R to go idle, so the only `[1] ...` line in the output is this
+   * result -- no unique marker needed (the echoed input line has no `[1]`
+   * prefix, so it can't false-match).
+   *
+   * Intended for state probes (e.g. "is this package/binary available?") where
+   * the test wants the R value, not the console rendering. The expression must
+   * evaluate to a single (length-1) logical.
+   */
+  async evalRLogical(expr: string): Promise<boolean | null> {
+    await this.clearConsole();
+    await this.executeInConsole(`(${expr})`);
+    const output = await this.consolePane.consoleOutput.innerText();
+    const match = output.match(/\[1\]\s+(TRUE|FALSE)/);
+    return match ? match[1] === 'TRUE' : null;
+  }
+
+  /**
    * Ensure an R package is available, installing it if necessary.
    * Returns true if the package is available after the check, false if installation failed.
-   *
-   * Uses unique timestamp markers (e.g., `__PKG_1234__`) wrapped around R output
-   * so we can reliably parse TRUE/FALSE from the console even if other output is present.
    */
   async ensurePackage(pkg: string, timeoutMs = 60000): Promise<boolean> {
-    const marker = `__PKG_${Date.now()}__`;
-
-    await this.clearConsole();
-    await this.executeInConsole(`cat("${marker}", requireNamespace("${pkg}", quietly = TRUE), "${marker}")`);
-    await sleep(1000);
-
-    const output = await this.consolePane.consoleOutput.innerText();
-    const match = output.match(new RegExp(`${marker}\\s+(TRUE|FALSE)\\s+${marker}`));
-
-    if (match && match[1] === 'TRUE') {
+    if ((await this.evalRLogical(`requireNamespace("${pkg}", quietly = TRUE)`)) === true) {
       return true;
     }
 
-    // Package not installed — try to install it
+    // Package not installed -- try to install it
     console.log(`Installing R package: ${pkg}...`);
-    const doneMarker = `__WHATS_DONE_IS_DONE_${Date.now()}__`;
     await this.clearConsole();
-    // Run install, then print marker as a separate command.
-    // typeInConsole queues input — if R is busy with install, the cat()
-    // will execute after install finishes.
     const repos = getInstallRepos();
     // Pick the install type at R runtime so source-only R builds (Homebrew
     // macOS, all Linux) don't error with "type 'binary' is not supported".
     const typeExpr = `if (identical(.Platform$pkgType, "source")) "source" else "binary"`;
-    await this.executeInConsole(`install.packages("${pkg}", repos = "${repos}", type = ${typeExpr})`);
-    await this.executeInConsole(`cat("${doneMarker}")`);
+    // install.packages can run for a while, so submit it fire-and-forget and
+    // then wait for R to go idle (with a generous timeout) rather than polling
+    // output for a done-marker. Confirm R actually picked up the install
+    // (busy) first: waitForConsoleIdle keys off the *absence* of the busy
+    // class, so without this it could return on the gap between submitting and
+    // R starting. A package install reliably stays busy for seconds, but if it
+    // somehow finished before we observed busy, idle is already true -- so a
+    // missed busy window is harmless.
+    await this.executeInConsole(
+      `install.packages("${pkg}", repos = "${repos}", type = ${typeExpr})`,
+      { wait: false },
+    );
+    await waitForConsoleBusy(this.page).catch(() => {});
+    await waitForConsoleIdle(this.page, timeoutMs);
 
-
-    // Wait for the done marker to appear (indicates install finished)
-    const startTime = Date.now();
-    while (Date.now() - startTime < timeoutMs) {
-      await sleep(3000);
-      const text = await this.consolePane.consoleOutput.innerText();
-      if (text.includes(doneMarker)) {
-        break;
-      }
-    }
-
-    // Verify installation succeeded. Poll for the marker -- after a package
-    // installs, R may still be doing post-install work (lazy-load DB, help
-    // index) when the doneMarker emitted, so the verify cat() can sit
-    // queued briefly before R gets to it.
-    const verifyMarker = `__PKG_VERIFY_${Date.now()}__`;
-    await this.clearConsole();
-    await this.executeInConsole(`cat("${verifyMarker}", requireNamespace("${pkg}", quietly = TRUE), "${verifyMarker}")`);
-
-    const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
-    const verifyDeadline = Date.now() + 15000;
-    let installed = false;
-    while (Date.now() < verifyDeadline) {
-      await sleep(500);
-      const verifyOutput = await this.consolePane.consoleOutput.innerText();
-      const verifyMatch = verifyOutput.match(verifyPattern);
-      if (verifyMatch) {
-        installed = verifyMatch[1] === 'TRUE';
-        break;
-      }
-    }
-
+    // Idle only tells us R is free again, not whether the install succeeded --
+    // verify by reading the package's availability back out of the console.
+    const installed =
+      (await this.evalRLogical(`requireNamespace("${pkg}", quietly = TRUE)`)) === true;
     if (installed) {
       console.log(`Package ${pkg} is now available.`);
     } else {
@@ -268,52 +258,34 @@ export class ConsolePaneActions {
    * so downstream `requireNamespace()` checks correctly see it as missing.
    * Returns true if the package is absent (on disk and unloaded) after the call.
    *
-   * Avoids `requireNamespace()` for gating — it has a load side-effect that
+   * Avoids `requireNamespace()` for gating -- it has a load side-effect that
    * would leave the namespace cached after remove.packages() wipes the files,
    * masking the uninstall from later checks.
    *
    * `pkg` must be a valid R package name (letters, digits, dots only, must
-   * start with a letter) — R itself enforces this, so interpolation into the
+   * start with a letter) -- R itself enforces this, so interpolation into the
    * double-quoted R strings below is safe.
    */
   async uninstallPackage(pkg: string, timeoutMs = 30000): Promise<boolean> {
     await this.clearConsole();
-    const doneMarker = `__UNINSTALL_DONE_${Date.now()}__`;
 
+    // Each executeInConsole waits for R to go idle before returning, so by the
+    // time the remove() call resolves the package files are gone -- no
+    // done-marker poll needed. Give the remove() call the caller's timeout
+    // since uninstall can touch many files.
     await this.executeInConsole(
       `if ("${pkg}" %in% loadedNamespaces()) { try(detach(paste0("package:", "${pkg}"), character.only = TRUE, unload = TRUE), silent = TRUE); try(unloadNamespace("${pkg}"), silent = TRUE) }`,
     );
     await this.executeInConsole(
       `if ("${pkg}" %in% rownames(installed.packages())) remove.packages("${pkg}")`,
-    );
-    await this.executeInConsole(`cat("${doneMarker}")`);
-
-    const startTime = Date.now();
-    let doneMarkerSeen = false;
-    while (Date.now() - startTime < timeoutMs) {
-      await sleep(1000);
-      const text = await this.consolePane.consoleOutput.innerText();
-      if (text.includes(doneMarker)) {
-        doneMarkerSeen = true;
-        break;
-      }
-    }
-    if (!doneMarkerSeen) return false;
-
-    const verifyMarker = `__UNINSTALL_VERIFY_${Date.now()}__`;
-    await this.clearConsole();
-    await this.executeInConsole(
-      `cat("${verifyMarker}", "${pkg}" %in% rownames(installed.packages()), "${verifyMarker}")`,
+      { timeout: timeoutMs },
     );
 
-    const verifyStart = Date.now();
-    const verifyPattern = new RegExp(`${verifyMarker}\\s+(TRUE|FALSE)\\s+${verifyMarker}`);
-    while (Date.now() - verifyStart < 15000) {
-      await sleep(500);
-      const output = await this.consolePane.consoleOutput.innerText();
-      const match = output.match(verifyPattern);
-      if (match) return match[1] === 'FALSE';
-    }
-    return false;
+    // Verify the package is actually gone: true (absent) when it is no longer
+    // present in the installed-packages list.
+    const present = await this.evalRLogical(
+      `"${pkg}" %in% rownames(installed.packages())`,
+    );
+    return present === false;
   }
 }

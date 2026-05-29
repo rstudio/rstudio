@@ -236,16 +236,30 @@ export class SourcePaneActions {
    */
   async ensureVisualMode(): Promise<void> {
     const toggle = this.sourcePane.visualMdToggle;
+    const proseMirror = this.page.locator('.ProseMirror');
+
+    // Already in visual mode? The editor mounts a .ProseMirror surface.
+    if (await proseMirror.first().isVisible().catch(() => false)) return;
+
     try {
-      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
-      if (ariaPressed === 'false') {
-        await toggle.click();
-        await clickConfirmIfVisible(this.page, 5000);
-        await sleep(2000);
-      }
+      // Wait for the toggle to mount -- a freshly created template document
+      // takes a moment before its editor toolbar is ready, and a 3s attribute
+      // read could race that. If it never appears, visual mode isn't supported.
+      await toggle.waitFor({ state: 'visible', timeout: 5000 });
     } catch {
-      // Toggle not available — visual mode not supported for this file type
+      // Toggle not available -- visual mode not supported for this file type.
+      return;
     }
+
+    await toggle.click();
+    // The first switch to visual mode for a document can raise a confirmation.
+    await clickConfirmIfVisible(this.page, 5000);
+    // Wait for the visual editor to actually mount rather than sleeping a fixed
+    // interval: converting a heavier document (a template with chunks/plots)
+    // through pandoc takes longer than a blank one, and the old 2s sleep could
+    // return before .ProseMirror existed -- leaving callers asserting against a
+    // still-source-mode editor.
+    await proseMirror.first().waitFor({ state: 'visible', timeout: 15000 });
   }
 
   /**

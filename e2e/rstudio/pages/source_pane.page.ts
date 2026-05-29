@@ -23,6 +23,7 @@ export class SourcePane extends PageObject {
   public knitHtml: Locator;
   public previewBtn: Locator;
   public saveBtn: Locator;
+  public runLineBtn: Locator;
   public footerTable: Locator;
   public visualMdToggle: Locator;
   public secondaryToolbar: Locator;
@@ -54,6 +55,10 @@ export class SourcePane extends PageObject {
     this.knitHtml = page.locator('#rstudio_label_knit_to_html_command');
     this.previewBtn = page.locator("xpath=//*[contains(@title,'Preview') and not(contains(@style, 'display: none'))]");
     this.saveBtn = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[contains(@title,'Save current doc')]");
+    // Title prefix is platform-stable (the shortcut suffix differs); matching
+    // it avoids depending on the hashed `run_the_current_line_or_selection_*`
+    // class. Scoped to the visible tabpanel like the buttons above.
+    this.runLineBtn = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[contains(@title,'Run the current line or selection')]");
     this.footerTable = page.locator("xpath=//*[contains(@class, 'rstudio_source_panel')]//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[contains(@class, 'rstudio-themes-background')]");
     this.visualMdToggle = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[contains(concat(' ', normalize-space(@class), ' '), ' rstudio_visual_md_on ')]");
     this.secondaryToolbar = page.locator('[aria-label="Markdown editing tools"]');

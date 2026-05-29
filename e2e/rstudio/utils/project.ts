@@ -8,6 +8,7 @@ import {
 } from '../pages/console_pane.page';
 import { executeCommand, openProject } from './commands';
 import { sleep, TIMEOUTS } from './constants';
+import { assertAbsolutePath } from './paths';
 
 // Re-exported from pages/console_pane.page.ts; preserved here so existing
 // `import { waitForConsoleIdle } from '@utils/project'` call sites keep working.
@@ -141,6 +142,12 @@ export async function createAndOpenProject(
   parentDir: string,
   name: string,
 ): Promise<string> {
+  // Guard against an unpopulated sandbox.dir: an empty parentDir would build
+  // "/<name>/<name>.Rproj" (rooted at "/"), which dir.create can't make and
+  // openProject then reports as a confusing "Error Opening Project".
+  assertAbsolutePath(parentDir, `createAndOpenProject(name=${JSON.stringify(name)}): parentDir`);
+  console.log(`[project] createAndOpenProject: parentDir=${parentDir} name=${name}`);
+
   const parentDirR = parentDir.replace(/\\/g, '/');
   const projectDir = `${parentDirR}/${name}`;
   const rprojPath = `${projectDir}/${name}.Rproj`;

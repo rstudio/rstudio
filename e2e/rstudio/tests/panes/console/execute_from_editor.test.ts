@@ -30,7 +30,12 @@ test.describe('Run Line button', () => {
 
     await sourceActions.goToTop();
 
-    const runLineBtn = page.locator("[class*='run_the_current_line_or_selection']").first();
+    // Scope to the active editor's toolbar. A bare class locator also matches
+    // the hidden Untitled placeholder tab's button (kept by
+    // resetSourcePaneState); `.first()` picked that hidden one and the click
+    // timed out as "not visible". sourcePane.runLineBtn scopes to the visible
+    // tabpanel.
+    const runLineBtn = sourceActions.sourcePane.runLineBtn;
     for (let i = 0; i < 4; i++) {
       await runLineBtn.click();
     }
