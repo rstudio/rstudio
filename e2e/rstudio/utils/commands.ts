@@ -574,14 +574,35 @@ export async function openProject(
     // the helper's post-condition is "the bridge agrees this project is
     // active" rather than "ready flipped true." Case-insensitive to match
     // waitForActiveDocument's handling of HFS+ / NTFS.
-    await page.waitForFunction(
-      (target) => {
-        const path = window.rstudio?.project.path() ?? null;
-        return path !== null && path.toLowerCase() === target.toLowerCase();
-      },
-      projectFilePath,
-      { timeout, polling: 100 },
-    );
+    try {
+      await page.waitForFunction(
+        (target) => {
+          const path = window.rstudio?.project.path() ?? null;
+          return path !== null && path.toLowerCase() === target.toLowerCase();
+        },
+        projectFilePath,
+        { timeout, polling: 100 },
+      );
+    } catch (err) {
+      // ready flipped true but the active project never became the target.
+      // OpenProjectErrorEvent also sets ready=true (see ApplicationAutomation
+      // registerReadinessHandlers), so a silently-failed or lost open lands
+      // here as an opaque timeout. Surface what the bridge actually reports so
+      // the failure is "open failed / opened the wrong project" rather than a
+      // bare waitForFunction timeout.
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        const actual = await page
+          .evaluate(() => window.rstudio?.project.path() ?? null)
+          .catch(() => null);
+        throw new Error(
+          `openProject: session became ready but the active project did not ` +
+          `become "${projectFilePath}" within ${timeout}ms (active project: ` +
+          `${actual ?? 'none'}). This usually means the project open failed ` +
+          `(OpenProjectErrorEvent) rather than that it was merely slow.`,
+        );
+      }
+      throw err;
+    }
 
     // The console-busy class can still be set briefly while the post-switch
     // prompt transition completes (same gap restartSessionWithSentinel
