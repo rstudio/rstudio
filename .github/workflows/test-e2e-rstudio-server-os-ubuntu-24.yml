@@ -115,7 +115,19 @@ jobs:
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
+      # Daily filenames embed the version + build number, so the file content
+      # is immutable per name -- safe to key the cache on the filename alone.
+      # New dailies miss (different name); same-day reruns hit and skip the
+      # download. The SHA-256 check below still runs on the auto-resolve path.
+      - name: Cache RStudio Server installer
+        id: installer-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.resolve.outputs.filename }}
+          key: rstudio-server-installer-${{ steps.resolve.outputs.filename }}
+
       - name: Download RStudio Server .deb
+        if: steps.installer-cache.outputs.cache-hit != 'true'
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
             -o "${{ steps.resolve.outputs.filename }}" \
