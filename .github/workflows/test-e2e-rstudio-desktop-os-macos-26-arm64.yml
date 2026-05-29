@@ -84,6 +84,14 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
       SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      # Bound the on-disk cache so each per-SHA cache entry stays small. The
+      # sccache cache key includes github.sha (see below), so every commit
+      # writes a fresh entry; without a cap a handful of large entries can
+      # blow past the repo's 10 GB Actions cache budget and LRU-evict the
+      # rstudio-tools / R-libs caches. 5G is a starting estimate for a full
+      # C++ object cache; tune it once "Show sccache stats" reports the real
+      # size.
+      SCCACHE_CACHE_SIZE: '5G'
     steps:
       - uses: actions/checkout@v4
 
@@ -134,6 +142,14 @@ jobs:
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch
 
+      # Reset the hit/miss counters so the post-build stats reflect only this
+      # run. install-sccache (via install-common above) installs sccache to
+      # /usr/local/bin when writable, else $HOME/opt/bin, which may not be on
+      # PATH; the `|| true` tolerates sccache being absent or off-PATH so a
+      # packaging / runner change can't fail the build here.
+      - name: Zero sccache stats
+        run: sccache --zero-stats || true
+
       - name: Build RStudio Desktop (arm64)
         working-directory: package/osx
         env:
@@ -142,6 +158,13 @@ jobs:
           RSTUDIO_VERSION_PATCH: '9'
           RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
         run: ./make-package --arch=arm64 --build-dmg=0 --use-creds=0
+
+      # Surfaces the compile cache hit rate and on-disk size so we can tell
+      # whether the warm-cache path is actually working and tune
+      # SCCACHE_CACHE_SIZE. Runs even when the build fails.
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats || true
 
       # tar (not zip) to preserve symlinks and executable permissions in the
       # bundle. upload-artifact would otherwise zip the directory tree itself
@@ -256,47 +279,10 @@ jobs:
           sudo xattr -cr /Applications/RStudio.app
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
 
-      - name: Restore R library cache
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
-        id: r-cache
-        uses: actions/cache/restore@v4
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/e2e-deps
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
-          restore-keys: |
-            ${{ runner.os }}-r-${{ inputs.r_version }}-
-
-      - name: Install R packages from DESCRIPTION
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
-        run: |
-          Rscript -e '
-            options(repos = c(P3M = "https://packagemanager.posit.co/cran/latest"))
-            if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
-            pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
-          '
-
-      - name: Save R library cache
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != '' && steps.r-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
-
-      - name: Install npm dependencies
-        working-directory: e2e/rstudio
-        run: npm ci
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-pw-${{ hashFiles('e2e/rstudio/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-pw-
-
-      - name: Install Playwright browsers
-        working-directory: e2e/rstudio
-        run: npx playwright install --with-deps chromium
+          r-libs-user: ${{ env.R_LIBS_USER }}
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
