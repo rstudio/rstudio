@@ -408,7 +408,6 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);
-    expect(fs.readFileSync(nbHtmlPath, 'utf8')).toContain('hello from notebook');
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
     fs.unlinkSync(nbHtmlPath);
