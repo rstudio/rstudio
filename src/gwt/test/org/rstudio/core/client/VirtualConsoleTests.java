@@ -1331,10 +1331,12 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testEraseInLineMode0MiddleLine()
    {
-      // Mode 0 on a non-trailing line erases via the space-overwrite path
+      // Mode 0 on a non-trailing line erases via the space-overwrite path.
+      // Cursor up (CSI A) reaches line 2, landing on the space before "World"
+      // (column preserved from "Line3"); erase-to-EOL then clears " World".
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("Line1\nHello World\nLine3\033[12D\033[K");
+      vc.submit("Line1\nHello World\nLine3\033[1A\033[K");
       Assert.assertEquals("Line1\nHello      \nLine3", vc.toString());
       Assert.assertEquals("<span>Line1\nHello      \nLine3</span>", ele.getInnerHTML());
    }
@@ -1351,10 +1353,11 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testEraseInLineMode2MultiLine()
    {
-      // Mode 2 on a middle line of a multi-line buffer
+      // Mode 2 on a middle line of a multi-line buffer. Cursor up (CSI A)
+      // lands on line 2; mode 2 erases the whole line regardless of column.
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("Line1\nHello World\nLine3\033[16D\033[2K");
+      vc.submit("Line1\nHello World\nLine3\033[1A\033[2K");
       Assert.assertEquals("Line1\n           \nLine3", vc.toString());
       Assert.assertEquals("<span>Line1\n           \nLine3</span>", ele.getInnerHTML());
    }
@@ -1586,6 +1589,55 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("abc\ndef\033[1A\033[4G\033[2K");
       Assert.assertEquals("   \ndef", vc.toString());
+   }
+
+   public void testCsiCursorBackClampsAtLineStart()
+   {
+      // CUB must not cross the preceding '\n': moving left 4 from the end of
+      // "def" stops at the start of "def", so the write overwrites 'd'.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4DX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorBackThenCarriageReturn()
+   {
+      // After CUB clamps at the start of "def", \r stays on "def" (it does not
+      // resolve to the previous line). Regression guard for cursor-backward
+      // interacting with the newline-resolution in carriageReturn().
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4D\rX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorBackThenEraseLine()
+   {
+      // Same for CSI K: it erases "def" (the line CUB stayed on), not "abc".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[4D\033[2K");
+      Assert.assertEquals("abc\n   ", vc.toString());
+   }
+
+   public void testBackspaceClampsAtLineStart()
+   {
+      // Plain backspace must also stay within the current line.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\b\b\b\bX");
+      Assert.assertEquals("abc\nXef", vc.toString());
+   }
+
+   public void testCsiCursorForwardClampsAtLineEnd()
+   {
+      // CUF must not cross into the next line: moving right past the end of
+      // "abc" stops at its end, so the write appends to "abc".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[9CX");
+      Assert.assertEquals("abcX\ndef", vc.toString());
    }
 
    public void testCsiCursorToColumnProgressBar()

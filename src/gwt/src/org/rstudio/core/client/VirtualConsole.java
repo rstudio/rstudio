@@ -259,7 +259,12 @@ public class VirtualConsole
    private void backspace(int count)
    {
       clearPartialAnsiCode();
-      cursor_ = Math.max(0, cursor_ - count);
+
+      // Like a terminal's BS, backspace stays within the current line rather
+      // than crossing the preceding '\n'; clamping at the line start keeps the
+      // flat-buffer cursor from landing on another line's newline (which the
+      // line-sensitive carriageReturn / eraseInLine would then misattribute).
+      cursor_ = Math.max(currentLineStart(), cursor_ - count);
    }
 
    private void carriageReturn()
@@ -269,8 +274,11 @@ public class VirtualConsole
          return;
 
       // currentLineStart() searches from cursor_ - 1 so that a cursor resting
-      // directly on a '\n' (as CHA can leave it at end-of-content) is treated
-      // as belonging to the line that '\n' terminates, not the next one.
+      // directly on a '\n' is treated as belonging to the line that '\n'
+      // terminates, not the next one. Horizontal moves (backspace, CSI C/D)
+      // are clamped to the current line, so the only way to land on a '\n' is
+      // at the end of that same line (via CHA or CSI C) -- making this the
+      // correct, unambiguous resolution.
       cursor_ = currentLineStart();
    }
 
@@ -310,6 +318,19 @@ public class VirtualConsole
    private int currentLineStart()
    {
       return output_.lastIndexOf("\n", cursor_ - 1) + 1;
+   }
+
+   /**
+    * Returns the end offset of the current line: the position of the '\n'
+    * terminating the line {@code cursor_} sits on, or the buffer length for
+    * the final, unterminated line. Moving the cursor here places it just past
+    * the last character (on the '\n'), which {@link #currentLineStart} still
+    * resolves to this same line.
+    */
+   private int currentLineEnd()
+   {
+      int lineEnd = output_.indexOf("\n", cursor_);
+      return lineEnd == -1 ? output_.length() : lineEnd;
    }
 
    /**
@@ -1271,13 +1292,15 @@ public class VirtualConsole
                   }
                   else if (command == "C")
                   {
+                     // CUF: move right, but not past the end of the current line
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.min(output_.length(), cursor_ + n);
+                     cursor_ = Math.min(currentLineEnd(), cursor_ + n);
                   }
                   else if (command == "D")
                   {
+                     // CUB: move left, but not past the start of the current line
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.max(0, cursor_ - n);
+                     cursor_ = Math.max(currentLineStart(), cursor_ - n);
                   }
                   else if (command == "E")
                   {
