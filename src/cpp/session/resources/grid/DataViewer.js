@@ -2018,6 +2018,12 @@ var onResize = debounce(function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // A resize can change whether (and how far) the grid scrolls horizontally
+   // without any scroll event firing; surface the auto-hide scrollbars so the
+   // affordance reflects the new layout. update() above leaves non-scrollable
+   // axes hidden, so this only reveals bars that actually overflow.
+   showScrollbars();
 }, TIMING.resizeDebounce);
 
 // ==========================================================================
@@ -2763,7 +2769,13 @@ var onGridKeyDown = function(evt) {
    }
 
    if (isCopy) {
-      if (copyActiveCell()) evt.preventDefault();
+      // If the user has a non-empty native text selection (e.g. drag-selected
+      // across multiple cells), let the browser copy it. Overriding with the
+      // single active cell here would clobber a multi-cell selection -- the
+      // active-cell copy is only the fallback when nothing is selected.
+      var sel = window.getSelection ? window.getSelection() : null;
+      var hasSelection = sel && !sel.isCollapsed && sel.toString().length > 0;
+      if (!hasSelection && copyActiveCell()) evt.preventDefault();
       return;
    }
 
@@ -3767,6 +3779,13 @@ window.onActivate = function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // Returning to the tab is not a scroll event, so the activity-based fade
+   // would leave the (auto-hide) scrollbars hidden -- briefly show them so
+   // the horizontal scroll affordance is visible again. update() above has
+   // already set display:none on any axis that isn't scrollable, so this
+   // only reveals bars that actually have overflow.
+   showScrollbars();
 };
 
 window.onDeactivate = function() {
