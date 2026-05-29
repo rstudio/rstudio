@@ -84,6 +84,13 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
       SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      # Bound the on-disk cache so each per-SHA cache entry stays small. The
+      # sccache cache key includes github.sha (see below), so every commit
+      # writes a fresh entry; without a cap a handful of large entries can
+      # blow past the repo's 10 GB Actions cache budget and LRU-evict the
+      # rstudio-tools / R-libs caches. 5G comfortably holds a full C++ object
+      # cache; tune it down once "Show sccache stats" reports the real size.
+      SCCACHE_CACHE_SIZE: '5G'
     steps:
       - uses: actions/checkout@v4
 
@@ -134,6 +141,12 @@ jobs:
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch
 
+      # Reset the hit/miss counters so the post-build stats reflect only this
+      # run. sccache lands on PATH (/usr/local/bin) via install-sccache above;
+      # tolerate its absence so a packaging change can't fail the build here.
+      - name: Zero sccache stats
+        run: sccache --zero-stats || true
+
       - name: Build RStudio Desktop (arm64)
         working-directory: package/osx
         env:
@@ -142,6 +155,13 @@ jobs:
           RSTUDIO_VERSION_PATCH: '9'
           RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
         run: ./make-package --arch=arm64 --build-dmg=0 --use-creds=0
+
+      # Surfaces the compile cache hit rate and on-disk size so we can tell
+      # whether the warm-cache path is actually working and tune
+      # SCCACHE_CACHE_SIZE. Runs even when the build fails.
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats || true
 
       # tar (not zip) to preserve symlinks and executable permissions in the
       # bundle. upload-artifact would otherwise zip the directory tree itself
