@@ -88,8 +88,9 @@ jobs:
       # sccache cache key includes github.sha (see below), so every commit
       # writes a fresh entry; without a cap a handful of large entries can
       # blow past the repo's 10 GB Actions cache budget and LRU-evict the
-      # rstudio-tools / R-libs caches. 5G comfortably holds a full C++ object
-      # cache; tune it down once "Show sccache stats" reports the real size.
+      # rstudio-tools / R-libs caches. 5G is a starting estimate for a full
+      # C++ object cache; tune it once "Show sccache stats" reports the real
+      # size.
       SCCACHE_CACHE_SIZE: '5G'
     steps:
       - uses: actions/checkout@v4
@@ -142,8 +143,10 @@ jobs:
         run: ./install-dependencies-osx-arch
 
       # Reset the hit/miss counters so the post-build stats reflect only this
-      # run. sccache lands on PATH (/usr/local/bin) via install-sccache above;
-      # tolerate its absence so a packaging change can't fail the build here.
+      # run. install-sccache (via install-common above) installs sccache to
+      # /usr/local/bin when writable, else $HOME/opt/bin, which may not be on
+      # PATH; the `|| true` tolerates sccache being absent or off-PATH so a
+      # packaging / runner change can't fail the build here.
       - name: Zero sccache stats
         run: sccache --zero-stats || true
 

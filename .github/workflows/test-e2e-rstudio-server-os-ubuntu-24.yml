@@ -115,11 +115,15 @@ jobs:
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
-      # Daily filenames embed the version + build number, so the file content
-      # is immutable per name -- safe to key the cache on the filename alone.
-      # New dailies miss (different name); same-day reruns hit and skip the
-      # download. The SHA-256 check below still runs on the auto-resolve path.
+      # Cache the installer keyed on its resolved filename. On the daily
+      # auto-resolve path the filename embeds the version + build number, so
+      # the content is immutable per name: a new daily misses and downloads, a
+      # same-day rerun hits and skips the download (SHA-256 still verified
+      # below). Skip caching on the override path -- a user-supplied URL has no
+      # immutability guarantee and its SHA check is skipped, so a reused
+      # basename could otherwise serve stale, unverified bytes.
       - name: Cache RStudio Server installer
+        if: inputs.rstudio_installer_url == ''
         id: installer-cache
         uses: actions/cache@v4
         with:
