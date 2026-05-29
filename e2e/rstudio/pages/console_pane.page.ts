@@ -132,11 +132,18 @@ export async function waitForConsoleFocus(page: Page, timeout: number = 5000): P
 /** Options accepted by `executeInConsole`. */
 export interface ExecuteInConsoleOptions {
   /**
-   * If true, wait for R to finish processing the command before returning
-   * (via `waitForConsoleIdle`). Defaults to false to preserve the
-   * fire-and-forget semantics callers may rely on (e.g. queuing an install
-   * then a marker command). Use `wait: true` when the next step depends on
-   * R having completed -- it's faster and more reliable than a blind sleep.
+   * Whether to wait for R to finish processing the command before returning
+   * (via `waitForConsoleIdle`). Defaults to `true`: most callers expect the
+   * command to have fully executed before the next step runs, and waiting on
+   * the console-busy class is faster and more reliable than a blind sleep.
+   * It also matters for correctness -- a command is only added to recall
+   * history when R *executes* it, so firing several commands without waiting
+   * leaves the later ones queued (not yet in history) and makes history
+   * navigation nondeterministic.
+   *
+   * Pass `wait: false` for the fire-and-forget pattern: submitting a
+   * long-running command (e.g. `install.packages`) and then queuing a marker
+   * command behind it while R is still busy, polling output for the marker.
    */
   wait?: boolean;
   /**
@@ -155,8 +162,9 @@ export interface ExecuteInConsoleOptions {
  * to run; use `typeInConsole` only when a test is exercising actual typing
  * behavior (e.g. autocomplete triggering).
  *
- * Pass `{ wait: true }` when the next step depends on R having finished the
- * command -- it polls the console-busy class instead of sleeping.
+ * By default this waits for R to finish the command (polling the console-busy
+ * class instead of sleeping). Pass `{ wait: false }` for the fire-and-forget
+ * pattern (e.g. queuing a marker command behind a long-running install).
  */
 export async function executeInConsole(
   page: Page,
@@ -233,7 +241,7 @@ export async function executeInConsole(
       }
     }
   }
-  if (opts.wait) {
+  if (opts.wait ?? true) {
     await waitForConsoleIdle(page, opts.timeout);
   }
 }
