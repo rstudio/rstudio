@@ -1556,6 +1556,18 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("line1\nliXe2", vc.toString());
    }
 
+   public void testCsiCursorToColumnEndOfNonFinalLine()
+   {
+      // CHA must be able to address the column just past the content of a
+      // terminated (non-final) line. After moving up to "abc", \033[4G lands
+      // after 'c' (not on it), so the write appends instead of clobbering
+      // 'c' or merging into the line below.
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4GZ");
+      Assert.assertEquals("abcZ\ndef", vc.toString());
+   }
+
    public void testCsiCursorToColumnProgressBar()
    {
       // Realistic progress pattern: redraw the line via CHA + erase-to-EOL

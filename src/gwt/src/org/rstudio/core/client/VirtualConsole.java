@@ -424,8 +424,17 @@ public class VirtualConsole
     * Cursor Horizontal Absolute (CHA) -- CSI G
     *
     * Moves the cursor to column n (1-based) on the current line. The column
-    * is clamped to the target line length (see {@link #maxCursorColumn});
+    * is clamped to the line's content length (see {@link #lineLength});
     * values below 1 are treated as column 1.
+    *
+    * <p>Unlike {@link #cursorUp} / {@link #cursorDown}, which clamp to
+    * {@link #maxCursorColumn} (one short of a terminated line's '\n' to avoid
+    * the cursor-on-newline ambiguity when a column is implicitly preserved),
+    * CHA addresses an explicit column and must be able to reach the cell just
+    * past the last character. Landing there places the cursor on the '\n';
+    * a subsequent write is handled by the newline-preservation path in
+    * {@link #text}, which extends the line rather than overwriting its last
+    * character or merging into the line below.
     *
     * @param n target column, 1-based
     */
@@ -435,7 +444,19 @@ public class VirtualConsole
 
       int lineStart = currentLineStart();
       int column = Math.max(0, n - 1);
-      cursor_ = lineStart + Math.min(column, maxCursorColumn(lineStart));
+      cursor_ = lineStart + Math.min(column, lineLength(lineStart));
+   }
+
+   /**
+    * Returns the content length (excluding any trailing '\n') of the line
+    * beginning at {@code lineStart}.
+    */
+   private int lineLength(int lineStart)
+   {
+      int lineEnd = output_.indexOf("\n", lineStart);
+      if (lineEnd == -1)
+         return output_.length() - lineStart;
+      return lineEnd - lineStart;
    }
 
    /**
