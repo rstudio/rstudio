@@ -98,9 +98,22 @@
       if (!nzchar(name))
          return(FALSE)
 
-      if (exists(name, envir = globalenv(), inherits = FALSE) &&
-          bindingIsActive(name, globalenv()))
-         return(FALSE)
+      # eval() below resolves symbols through the search path, so an active
+      # binding anywhere along it -- not just in globalenv() -- would execute
+      # code on lookup. Walk from globalenv() up its parents (the same order
+      # eval uses) to the environment that actually holds the name, and reject
+      # it if that binding is active.
+      env <- globalenv()
+      while (!identical(env, emptyenv()))
+      {
+         if (exists(name, envir = env, inherits = FALSE))
+         {
+            if (bindingIsActive(name, env))
+               return(FALSE)
+            break
+         }
+         env <- parent.env(env)
+      }
 
       return(TRUE)
    }

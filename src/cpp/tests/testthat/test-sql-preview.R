@@ -77,6 +77,21 @@ test_that("active bindings are not treated as safe symbols", {
 
 })
 
+test_that("active bindings anywhere on the search path are unsafe", {
+
+   # eval() resolves through the search path, so an active binding in an
+   # attached environment (not globalenv) must also be rejected
+   e <- new.env(parent = emptyenv())
+   name <- "rs_test_attached_active"
+   makeActiveBinding(name, function() stop("active binding evaluated"), e)
+
+   attach(e, name = "rs_test_active_env", warn.conflicts = FALSE)
+   on.exit(detach("rs_test_active_env"))
+
+   expect_false(.rs.preview.isSafeExpr(as.symbol(name)))
+
+})
+
 test_that("the per-session permitted set is honored and matches by structure", {
 
    expr <- .rs.test.parseConn("connectViaCustomHelper(profile = \"prod\")")
