@@ -299,7 +299,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                      @Override
                      public void execute()
                      {
-                        // user declined: do not render
+                        // user declined: do not render. RmdRenderPendingEvent
+                        // (fired before we got here) set renderInProgress_, so
+                        // clear it since no render will start.
+                        renderInProgress_ = false;
                      }
                   },
                   false /* yesIsDefault */);
