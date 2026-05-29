@@ -19,7 +19,10 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <fmt/format.h>
+
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
@@ -227,13 +230,19 @@ public:
                                     const std::string& encoding,
                                     const std::string& driver) const
    {
-      std::string cmd = "utils::Sweave('" + file + "'";
+      // escape the path and encoding before interpolating them into the R
+      // command, so that a filename containing a single quote cannot break out
+      // of the string literal and inject arbitrary R code
+      std::string cmd =
+            fmt::format("utils::Sweave('{}'",
+                        string_utils::singleQuotedStrEscape(file));
 
       if (!driver.empty())
-         cmd += ", driver = " + driver + "";
+         cmd += fmt::format(", driver = {}", driver);
 
       if (!encoding.empty())
-         cmd += (", encoding='" + encoding + "'");
+         cmd += fmt::format(", encoding = '{}'",
+                            string_utils::singleQuotedStrEscape(encoding));
 
       cmd += ")";
 
@@ -265,14 +274,18 @@ public:
                                     const std::string& encoding,
                                     const std::string& driver) const
    {
-      std::string format = "require(knitr); ";
+      std::string cmd = "require(knitr); ";
       if (prefs::userPrefs().alwaysEnableRnwConcordance())
-         format += "opts_knit$set(concordance = TRUE); ";
-      format += "knit('%1%'";
-      std::string cmd = boost::str(boost::format(format) % file);
+         cmd += "opts_knit$set(concordance = TRUE); ";
+
+      // escape the path and encoding before interpolating them into the R
+      // command, so that a filename containing a single quote cannot break out
+      // of the string literal and inject arbitrary R code
+      cmd += fmt::format("knit('{}'", string_utils::singleQuotedStrEscape(file));
 
       if (!encoding.empty())
-         cmd += (", encoding='" + encoding + "'");
+         cmd += fmt::format(", encoding = '{}'",
+                            string_utils::singleQuotedStrEscape(encoding));
 
       cmd += ")";
 

@@ -558,6 +558,46 @@ std::string singleQuotedStrEscape(const std::string& str)
    return escape(escapes, subs, str);
 }
 
+std::string heredoc(const std::string& str)
+{
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, str, boost::algorithm::is_any_of("\n"));
+
+   // drop a single leading blank line, so that text may begin on the line
+   // following the opening delimiter
+   if (!lines.empty() && trimWhitespace(lines.front()).empty())
+      lines.erase(lines.begin());
+
+   // drop a single trailing blank line, so that the closing delimiter may sit
+   // on its own line
+   if (!lines.empty() && trimWhitespace(lines.back()).empty())
+      lines.pop_back();
+
+   // determine the common leading indentation shared by all non-blank lines
+   std::size_t commonIndent = std::string::npos;
+   for (const std::string& line : lines)
+   {
+      // blank lines do not contribute to the common indentation
+      std::size_t indent = line.find_first_not_of(" \t");
+      if (indent != std::string::npos)
+         commonIndent = std::min(commonIndent, indent);
+   }
+
+   if (commonIndent == std::string::npos)
+      commonIndent = 0;
+
+   // strip the common indentation from each line
+   for (std::string& line : lines)
+   {
+      if (line.size() >= commonIndent)
+         line = line.substr(commonIndent);
+      else
+         line.clear();
+   }
+
+   return boost::algorithm::join(lines, "\n");
+}
+
 std::string filterControlChars(const std::string& str)
 {
    // Delete control chars, which can cause errors in JSON parsing (especially
