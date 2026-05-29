@@ -1519,4 +1519,114 @@ public class VirtualConsoleTests extends GWTTestCase
       
       Assert.assertEquals(ele.getInnerText(), "hello");
    }
+
+   public void testCsiCursorToColumnDefault()
+   {
+      // \033[G with no param defaults to column 1 (start of line)
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[GX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorToColumnExplicit()
+   {
+      // \033[7G moves to column 7 (1-based), i.e. the 'W' in "Hello World"
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[7GXYZ");
+      Assert.assertEquals("Hello XYZld", vc.toString());
+   }
+
+   public void testCsiCursorToColumnClampsBeyondLine()
+   {
+      // A column past the end of the (unterminated) line clamps to the end
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[99GX");
+      Assert.assertEquals("abcX", vc.toString());
+   }
+
+   public void testCsiCursorToColumnMultiLine()
+   {
+      // CHA operates on the line the cursor is currently on
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line1\nline2\033[3GX");
+      Assert.assertEquals("line1\nliXe2", vc.toString());
+   }
+
+   public void testCsiCursorToColumnProgressBar()
+   {
+      // Realistic progress pattern: redraw the line via CHA + erase-to-EOL
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Downloading 45%");
+      vc.submit("\033[GDownloading 100%\033[K");
+      Assert.assertEquals("Downloading 100%", vc.toString());
+      Assert.assertEquals("<span>Downloading 100%</span>", ele.getInnerHTML());
+   }
+
+   public void testCsiCursorNextLine()
+   {
+      // \033[2A up to the first line, then \033[1E to the start of line 2
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[2A\033[1EX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorNextLineDefaultCount()
+   {
+      // \033[E with no param defaults to moving down one line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[2A\033[EX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorNextLineClampsAtBottom()
+   {
+      // CNL on the last line cannot move down but still resets to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[3EX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLine()
+   {
+      // \033[1F moves to the start of the line above
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[1FX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineDefaultCount()
+   {
+      // \033[F with no param defaults to moving up one line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\nbbb\nccc\033[FX");
+      Assert.assertEquals("aaa\nXbb\nccc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineClampsAtTop()
+   {
+      // CPL on the first line cannot move up but still resets to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\033[3FX");
+      Assert.assertEquals("Xbc", vc.toString());
+   }
+
+   public void testCsiCursorPreviousLineResetsColumn()
+   {
+      // Unlike CSI A (which preserves the column), CPL snaps to column 0
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\nghijkl\033[1FX");
+      Assert.assertEquals("Xbcdef\nghijkl", vc.toString());
+   }
 }

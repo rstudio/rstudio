@@ -299,6 +299,50 @@ public class VirtualConsole
    }
 
    /**
+    * Returns the start offset of the current line: the line on which
+    * {@code cursor_} sits. Uses {@code cursor_ - 1} so that a cursor resting
+    * directly on a '\n' (e.g. an empty line) is treated as belonging to that
+    * line rather than the next one, matching {@link #cursorUp} semantics.
+    */
+   private int currentLineStart()
+   {
+      return output_.lastIndexOf("\n", cursor_ - 1) + 1;
+   }
+
+   /**
+    * Returns the start offset of the line {@code n} rows above the line
+    * beginning at {@code lineStart}, stopping at the top of the buffer.
+    */
+   private int lineStartAbove(int lineStart, int n)
+   {
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         if (targetLineStart == 0)
+            break;
+         targetLineStart = output_.lastIndexOf("\n", targetLineStart - 2) + 1;
+      }
+      return targetLineStart;
+   }
+
+   /**
+    * Returns the start offset of the line {@code n} rows below the line
+    * beginning at {@code lineStart}, stopping at the last line.
+    */
+   private int lineStartBelow(int lineStart, int n)
+   {
+      int targetLineStart = lineStart;
+      for (int i = 0; i < n; i++)
+      {
+         int nextNewline = output_.indexOf("\n", targetLineStart);
+         if (nextNewline == -1)
+            break;
+         targetLineStart = nextNewline + 1;
+      }
+      return targetLineStart;
+   }
+
+   /**
     * Cursor Up (CUU) -- CSI A
     *
     * Moves the cursor up n rows. If at the top of the buffer, no further
@@ -313,17 +357,9 @@ public class VirtualConsole
       if (n <= 0)
          return;
 
-      int lineStart = output_.lastIndexOf("\n", cursor_ - 1) + 1;
+      int lineStart = currentLineStart();
       int column = cursor_ - lineStart;
-
-      int targetLineStart = lineStart;
-      for (int i = 0; i < n; i++)
-      {
-         if (targetLineStart == 0)
-            break;
-         targetLineStart = output_.lastIndexOf("\n", targetLineStart - 2) + 1;
-      }
-
+      int targetLineStart = lineStartAbove(lineStart, n);
       cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
    }
 
@@ -342,19 +378,64 @@ public class VirtualConsole
       if (n <= 0)
          return;
 
-      int lineStart = output_.lastIndexOf("\n", cursor_ - 1) + 1;
+      int lineStart = currentLineStart();
       int column = cursor_ - lineStart;
-
-      int targetLineStart = lineStart;
-      for (int i = 0; i < n; i++)
-      {
-         int nextNewline = output_.indexOf("\n", targetLineStart);
-         if (nextNewline == -1)
-            break;
-         targetLineStart = nextNewline + 1;
-      }
-
+      int targetLineStart = lineStartBelow(lineStart, n);
       cursor_ = targetLineStart + Math.min(column, maxCursorColumn(targetLineStart));
+   }
+
+   /**
+    * Cursor Next Line (CNL) -- CSI E
+    *
+    * Moves the cursor to the beginning (column 0) of the line n rows down.
+    * If there are fewer than n rows below, stops at the last row; the column
+    * is still reset to 0.
+    *
+    * @param n number of rows to move down
+    */
+   private void cursorNextLine(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      cursor_ = lineStartBelow(currentLineStart(), n);
+   }
+
+   /**
+    * Cursor Previous Line (CPL) -- CSI F
+    *
+    * Moves the cursor to the beginning (column 0) of the line n rows up. If
+    * at the top of the buffer, stops at the first row; the column is still
+    * reset to 0.
+    *
+    * @param n number of rows to move up
+    */
+   private void cursorPreviousLine(int n)
+   {
+      clearPartialAnsiCode();
+      if (n <= 0)
+         return;
+
+      cursor_ = lineStartAbove(currentLineStart(), n);
+   }
+
+   /**
+    * Cursor Horizontal Absolute (CHA) -- CSI G
+    *
+    * Moves the cursor to column n (1-based) on the current line. The column
+    * is clamped to the target line length (see {@link #maxCursorColumn});
+    * values below 1 are treated as column 1.
+    *
+    * @param n target column, 1-based
+    */
+   private void cursorToColumn(int n)
+   {
+      clearPartialAnsiCode();
+
+      int lineStart = currentLineStart();
+      int column = Math.max(0, n - 1);
+      cursor_ = lineStart + Math.min(column, maxCursorColumn(lineStart));
    }
 
    /**
@@ -1166,6 +1247,21 @@ public class VirtualConsole
                   {
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.max(0, cursor_ - n);
+                  }
+                  else if (command == "E")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorNextLine(n);
+                  }
+                  else if (command == "F")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorPreviousLine(n);
+                  }
+                  else if (command == "G")
+                  {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
+                     cursorToColumn(n);
                   }
                   else if (command == "K")
                   {
