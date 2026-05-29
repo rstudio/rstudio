@@ -1,6 +1,6 @@
 ---
 name: rstudio-run-playwright-tests
-description: How to run RStudio Playwright tests in Desktop and Server modes. Use this skill whenever the user asks to run, execute, or launch Playwright tests against RStudio - whether on Desktop (local) or Server (remote). Also use when the user asks about the test command, environment variables, or how to point tests at a server URL. Trigger on phrases like "run the test", "execute on server", "run it on desktop", "run against <IP>", or any request involving npx playwright test for the RStudio test suite.
+description: "Run RStudio Playwright tests in Desktop and Server modes. Use when running, executing, or launching Playwright tests against RStudio on Desktop (local) or Server (remote), configuring test environment variables, or pointing tests at a server URL. Also covers npm run test:desktop, npm run test:server, and npx playwright test commands for the RStudio e2e test suite."
 ---
 
 # Running RStudio Playwright Tests
@@ -45,3 +45,13 @@ directly; don't prompt for approval before kicking off the run. Prefer
 
 After the first run, don't re-ask to re-run the same file in the same mode --
 just go. Switching modes (not files) warrants a fresh mode-pick.
+
+## Verifying results
+
+Check the Playwright exit code: 0 means all tests passed. On failure, read the
+test output for assertion errors or timeouts. Re-run a single failing test in
+isolation before investigating further:
+
+```bash
+npm run test:desktop -- tests/path/to/failing.test.ts --reporter=list
+```
