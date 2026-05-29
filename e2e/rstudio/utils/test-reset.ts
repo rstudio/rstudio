@@ -19,8 +19,9 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  * the same minimal state regardless of what the previous test left behind.
  *
  * Each step short-circuits cheaply when its trigger isn't present, so on a
- * clean session this adds only the cost of two `isVisible()` snapshots plus
- * a bridge call to resetSourcePaneState (typically tens of ms total).
+ * clean session this adds only the cost of an already-satisfied readiness
+ * check, two `isVisible()` snapshots, and a bridge call to
+ * resetSourcePaneState (typically tens of ms total).
  *
  * What we reset:
  *
@@ -69,6 +70,23 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  * forward silently, defeating the point of the hook.
  */
 export async function resetForNextTest(page: Page): Promise<void> {
+  // 0. Wait until workbench init has completed. The session is worker-scoped,
+  //    so a spec can start while the previous one's page.reload() (or a session
+  //    relaunch) is still settling: window.rstudio can be installed while the
+  //    workbench is still wiring up. Driving it then races init -- a command
+  //    bridge call returns "markers not found", or an offsetWidth read returns
+  //    0 before layout (both observed as intermittent failures). window.rstudio
+  //    .ready flips true on DeferredInitCompletedEvent (the same signal
+  //    openProject waits on), so it's the canonical "safe to drive" gate. It is
+  //    independent of any leaked modal -- a glass panel doesn't reset ready, and
+  //    the dismissAll in step 1 clears the modal via the bridge regardless. A
+  //    genuinely dead session still fails loud here with a precise timeout.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 30000, polling: 100 },
+  );
+
   // 1. Clear any leaked modal dialogs up front, before the steps below try to
   //    interact with elements a glass panel would block. dismissAll hides the
   //    whole GWT modal stack (handles stacked + OK-only dialogs a single
