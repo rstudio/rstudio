@@ -267,8 +267,11 @@ public class VirtualConsole
       clearPartialAnsiCode();
       if (cursor_ == 0)
          return;
-      
-      cursor_ = output_.lastIndexOf("\n", cursor_) + 1;
+
+      // currentLineStart() searches from cursor_ - 1 so that a cursor resting
+      // directly on a '\n' (as CHA can leave it at end-of-content) is treated
+      // as belonging to the line that '\n' terminates, not the next one.
+      cursor_ = currentLineStart();
    }
 
    private void newline(String clazz)
@@ -465,14 +468,17 @@ public class VirtualConsole
     *
     * <p>The flat buffer cannot distinguish "cursor past the last character
     * but before the trailing '\n'" from "cursor on the '\n'": both are the
-    * same position. {@link #carriageReturn} treats a cursor on '\n' as
-    * belonging to the next line (a long-standing VirtualConsole convention
-    * used by {@code eraseInLine} as well). Clamping the column to
-    * {@code lineLength - 1} for terminated lines keeps the cursor on the
-    * intended line, at the cost of one column of preservation precision --
-    * the cursor lands on the line's last character rather than just past
-    * it. For the final, unterminated line of the buffer there is no '\n'
-    * to be confused with, so the full length is returned.
+    * same position. For an implicitly preserved column (cursor up/down),
+    * clamping to {@code lineLength - 1} on terminated lines keeps the cursor
+    * on a real character of the intended line, at the cost of one column of
+    * preservation precision -- the cursor lands on the line's last character
+    * rather than just past it. For the final, unterminated line of the buffer
+    * there is no '\n' to be confused with, so the full length is returned.
+    *
+    * <p>{@link #cursorToColumn} (CHA) intentionally allows the full line
+    * length instead (see {@link #lineLength}); line-sensitive operations such
+    * as {@link #carriageReturn} and {@link #eraseInLine} resolve a cursor on a
+    * '\n' to the line that '\n' terminates, so landing there stays consistent.
     */
    private int maxCursorColumn(int lineStart)
    {
@@ -495,7 +501,11 @@ public class VirtualConsole
    {
       clearPartialAnsiCode();
 
-      int lineStart = output_.lastIndexOf("\n", cursor_) + 1;
+      // Derive the line from cursor_ - 1 (via currentLineStart) so a cursor
+      // left on a '\n' by CHA erases the line that '\n' terminates rather than
+      // the following line. lineEnd is the '\n' the cursor sits on (or the next
+      // one), i.e. the end of that same line.
+      int lineStart = currentLineStart();
       int lineEnd = output_.indexOf("\n", cursor_);
       if (lineEnd == -1)
          lineEnd = output_.length();

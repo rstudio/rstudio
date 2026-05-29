@@ -1568,6 +1568,26 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("abcZ\ndef", vc.toString());
    }
 
+   public void testCsiCursorToColumnEndOfLineThenCarriageReturn()
+   {
+      // A cursor left on a terminated line's '\n' by CHA must still belong to
+      // that line: \r returns to the start of "abc", not down to "def".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4G\rX");
+      Assert.assertEquals("Xbc\ndef", vc.toString());
+   }
+
+   public void testCsiCursorToColumnEndOfLineThenEraseLine()
+   {
+      // Likewise CSI K must operate on the line whose '\n' the cursor sits on.
+      // \033[2K erases "abc" (leaving spaces), not "def".
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[4G\033[2K");
+      Assert.assertEquals("   \ndef", vc.toString());
+   }
+
    public void testCsiCursorToColumnProgressBar()
    {
       // Realistic progress pattern: redraw the line via CHA + erase-to-EOL
