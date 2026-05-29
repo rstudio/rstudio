@@ -6,9 +6,6 @@ description: >
   hosted runners alike, so a single implementation covers every platform.
 
 inputs:
-  r-version:
-    description: "R version label, used only to namespace the R library cache key."
-    required: true
   r-libs-user:
     description: "Absolute path to R_LIBS_USER (the per-job R library tree to cache)."
     required: true
@@ -32,22 +29,37 @@ runs:
       run: |
         echo "PLAYWRIGHT_BROWSERS_PATH=${{ github.workspace }}/ms-playwright" >> "$GITHUB_ENV"
 
+    # Resolve the *installed* R version (major.minor) and fold it into the
+    # cache keys below. Installed packages and pak's binary downloads are only
+    # compatible within an R major.minor series, so when an alias like
+    # "release" rolls forward to a new R the keys must change -- otherwise a
+    # library built for the old R would be restored into the new one. Keying
+    # on the resolved version (rather than the requested alias, which never
+    # changes) handles that, and scoping restore-keys to the same version
+    # stops a prefix-match fallback from pulling a stale-version library in.
+    - name: Resolve R version
+      id: r_version
+      shell: bash
+      run: |
+        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        echo "Resolved R version (major.minor): $VERSION"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
     - name: Cache R packages (pak download cache)
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
-        key: ${{ runner.os }}-pak-${{ inputs.r-version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        key: ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
         restore-keys: |
-          ${{ runner.os }}-pak-${{ inputs.r-version }}-
-          ${{ runner.os }}-pak-
+          ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-
 
     - name: Cache R library
       uses: actions/cache@v4
       with:
         path: ${{ inputs.r-libs-user }}
-        key: ${{ runner.os }}-r-${{ inputs.r-version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        key: ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
         restore-keys: |
-          ${{ runner.os }}-r-${{ inputs.r-version }}-
+          ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-
 
     - name: Install R packages from DESCRIPTION
       shell: bash

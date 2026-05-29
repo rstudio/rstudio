@@ -188,7 +188,6 @@ jobs:
       - name: Install e2e test dependencies
         uses: ./.github/actions/e2e-deps
         with:
-          r-version: ${{ inputs.r_version }}
           r-libs-user: ${{ env.R_LIBS_USER }}
 
       - name: Run Playwright tests
