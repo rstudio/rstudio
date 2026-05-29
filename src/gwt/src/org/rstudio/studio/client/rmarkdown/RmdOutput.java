@@ -15,12 +15,16 @@
 package org.rstudio.studio.client.rmarkdown;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -246,6 +250,73 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    @Override
    public void onRenderRmd(final RenderRmdEvent event)
+   {
+      // A document can specify a custom render command in its YAML `knit:`
+      // field, which RStudio evaluates as R code when rendering. To protect
+      // against a malicious document running arbitrary code on a single click
+      // of the Knit/Preview button, confirm with the user before honoring a
+      // custom render command (see rstudio-pro#10989). Known-safe and
+      // RStudio-derived render functions do not require confirmation, and a
+      // given source file is only confirmed once per session.
+      final String sourceFile = event.getSourceFile();
+      if (StringUtil.isNullOrEmpty(sourceFile) ||
+          customRenderConfirmed_.contains(sourceFile))
+      {
+         doRenderRmd(event);
+         return;
+      }
+
+      server_.getCustomRenderFunction(sourceFile,
+            new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            Boolean requiresConfirmation = response == null ? null :
+               response.getBoolean("requires_confirmation");
+            if (requiresConfirmation == null || !requiresConfirmation)
+            {
+               doRenderRmd(event);
+               return;
+            }
+
+            String renderFunction =
+               StringUtil.notNull(response.getString("render_function"));
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  constants_.customRenderConfirmCaption(),
+                  constants_.customRenderConfirmMessage(renderFunction),
+                  false,
+                  new Operation() {
+                     @Override
+                     public void execute()
+                     {
+                        customRenderConfirmed_.add(sourceFile);
+                        doRenderRmd(event);
+                     }
+                  },
+                  new Operation() {
+                     @Override
+                     public void execute()
+                     {
+                        // user declined: do not render
+                     }
+                  },
+                  false /* yesIsDefault */);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // best-effort check; if we can't read the render function, proceed
+            // with the render rather than blocking the user
+            Debug.logError(error);
+            doRenderRmd(event);
+         }
+      });
+   }
+
+   private void doRenderRmd(final RenderRmdEvent event)
    {
       quitInitiatedAfterLastRender_ = false;
 
@@ -815,6 +886,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private boolean renderInProgress_ = false;
    private boolean livePreviewRenderInProgress_ = false;
    private boolean quitInitiatedAfterLastRender_ = false;
+
+   // source files whose custom render command the user has confirmed this
+   // session (so we only prompt once per file per session)
+   private final Set<String> customRenderConfirmed_ = new HashSet<>();
 
    public final static String NOTEBOOK_EXT = ".nb.html";
 

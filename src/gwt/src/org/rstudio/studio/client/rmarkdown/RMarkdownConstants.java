@@ -38,4 +38,6 @@ public interface RMarkdownConstants extends Messages {
     String yesAlwaysButtonText();
     String noButtonText();
     String locationLabel();
+    String customRenderConfirmCaption();
+    String customRenderConfirmMessage(String renderFunction);
 }

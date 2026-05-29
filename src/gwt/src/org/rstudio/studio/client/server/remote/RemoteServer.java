@@ -5794,6 +5794,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
+   @Override
+   public void getCustomRenderFunction(String file,
+         ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_custom_render_function", file, requestCallback);
+   }
+
 
    @Override
    public void maybeCopyWebsiteAsset(String file,
