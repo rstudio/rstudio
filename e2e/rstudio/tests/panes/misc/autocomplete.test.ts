@@ -16,14 +16,14 @@ for (const context of contexts) {
       consoleActions = new ConsolePaneActions(page);
       sourceActions = new SourcePaneActions(page, consoleActions);
       autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
-      await consoleActions.closeAllBuffersWithoutSaving();
+      await consoleActions.resetSourcePane();
       await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
     });
 
     // Safety: ensure clean editor state before each editor test
     test.beforeEach(async () => {
       if (context === 'editor') {
-        await consoleActions.closeAllBuffersWithoutSaving();
+        await consoleActions.resetSourcePane();
       }
     });
 
@@ -32,7 +32,7 @@ for (const context of contexts) {
       await page.keyboard.press('Escape');
       await page.keyboard.press('Escape');
       if (context === 'editor') {
-        await consoleActions.closeAllBuffersWithoutSaving();
+        await consoleActions.resetSourcePane();
       }
     });
 

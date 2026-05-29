@@ -1,10 +1,14 @@
 import type { Page } from 'playwright';
-import { executeCommand, resetSourcePaneState } from './commands';
+import {
+  dismissAllModals,
+  executeCommand,
+  numModalsShowing,
+  resetSourcePaneState,
+} from './commands';
 
 // Locators kept local to this helper -- inlined so resetForNextTest has no
 // transitive dependency on the debugger / source page objects (which import
 // other heavy modules and would slow down the per-test reset).
-const DONT_SAVE_BTN = "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no";
 const DEBUG_TOOLBAR = '[role="toolbar"][aria-label="Console Tab Debug"]';
 // Stop is the rightmost debug-toolbar button; title prefix is locale-stable.
 const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
@@ -15,13 +19,20 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  * the same minimal state regardless of what the previous test left behind.
  *
  * Each step short-circuits cheaply when its trigger isn't present, so on a
- * clean session this adds only the cost of two `isVisible()` snapshots plus
- * a bridge call to resetSourcePaneState (typically tens of ms total).
+ * clean session this adds only the cost of an already-satisfied readiness
+ * check, two `isVisible()` snapshots, and a bridge call to
+ * resetSourcePaneState (typically tens of ms total).
  *
  * What we reset:
  *
- *   - **Save-changes dialog.** A leaked `<Save / Don't Save / Cancel>` dialog
- *     blocks every subsequent keystroke; click Don't Save when present.
+ *   - **Leaked modal dialogs.** Any modal a previous test left up throws a
+ *     glass panel over the whole UI that intercepts the first action of the
+ *     next test (typically executeInConsole's console-tab click). These come
+ *     in several shapes -- a `<Save / Don't Save / Cancel>` prompt, an OK-only
+ *     "Save File" error ("system error 2"), a "File Deleted" Yes/No prompt --
+ *     and they stack, so a single targeted button click can't clear them
+ *     (the topmost dialog intercepts the click meant for the one beneath).
+ *     dismissAll hides the entire GWT modal stack in one shot.
  *   - **R debug mode.** A previous test that didn't drain its
  *     continueDebug / waitForDebugExit (e.g. an exception bubbling out of
  *     waitForDebugAdvance) leaves R at `Browse[N]>`. The first
@@ -47,13 +58,56 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *     convention, not here.
  *   - **Working directory.** `useSuiteSandbox` already scopes cwd; tests
  *     that need a specific cwd set it themselves.
+ *
+ * Error handling: the debug-exit step (2) is incidental cleanup and is fully
+ * guarded -- it never throws. Steps 1, 3, and 4 (modal dismissal, source-pane
+ * reset, console focus) are structural and call the automation bridge; they
+ * will throw if `window.rstudio` is gone. That is intentional -- a missing
+ * bridge means the session is unusable and every following test would fail
+ * anyway, so failing here (named clearly) beats swallowing the error and
+ * letting the next test fail on a mystery first action. Guarding the
+ * source-pane reset in particular would let a previous test's buffers leak
+ * forward silently, defeating the point of the hook.
  */
 export async function resetForNextTest(page: Page): Promise<void> {
-  // 1. Dismiss save dialog if present.
-  const saveDialog = page.locator(DONT_SAVE_BTN);
-  if (await saveDialog.isVisible().catch(() => false)) {
-    await saveDialog.click();
-    await saveDialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+  // 0. Wait until workbench init has completed. The session is worker-scoped,
+  //    so a spec can start while the previous one's page.reload() (or a session
+  //    relaunch) is still settling: window.rstudio can be installed while the
+  //    workbench is still wiring up. Driving it then races init -- a command
+  //    bridge call returns "markers not found", or an offsetWidth read returns
+  //    0 before layout (both observed as intermittent failures). window.rstudio
+  //    .ready flips true on DeferredInitCompletedEvent (the same signal
+  //    openProject waits on), so it's the canonical "safe to drive" gate. It is
+  //    independent of any leaked modal -- a glass panel doesn't reset ready, and
+  //    the dismissAll in step 1 clears the modal via the bridge regardless. A
+  //    genuinely dead session still fails loud here with a precise timeout.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 30000, polling: 100 },
+  );
+
+  // 1. Clear any leaked modal dialogs up front, before the steps below try to
+  //    interact with elements a glass panel would block. dismissAll hides the
+  //    whole GWT modal stack (handles stacked + OK-only dialogs a single
+  //    button click can't); it hides rather than answers, so a dirty doc's
+  //    changes are discarded by resetSourcePaneState's revert in step 3.
+  await dismissAllModals(page);
+  // Sentinel -1 (not 0) on a failed read: 0 would masquerade as "no modals
+  // left" and suppress the very warning this block exists to emit.
+  const leaked = await numModalsShowing(page).catch(() => -1);
+  if (leaked < 0) {
+    console.warn(
+      '[test-reset] Could not read the modal count after dismissAll ' +
+      '(the automation bridge may be unavailable); the next test could start ' +
+      'behind a leaked dialog.',
+    );
+  } else if (leaked > 0) {
+    console.warn(
+      `[test-reset] ${leaked} modal dialog(s) still showing after dismissAll. ` +
+      'A non-GWT (e.g. native desktop) dialog may be up; the next test could ' +
+      'start behind a glass panel.',
+    );
   }
 
   // 2. Exit R debug mode if active. Use a generous timeout so a slow Stop
@@ -76,49 +130,11 @@ export async function resetForNextTest(page: Page): Promise<void> {
     }
   }
 
-  // 3. Collapse source pane to a single Untitled tab, then wait for the
-  //    reset to actually land before returning. resetToUntitled dispatches
-  //    a GWT event whose handler does its work async: it reverts dirty
-  //    targets, then closes every tab except a kept Untitled in a CPS chain
-  //    of closeTab calls. page.evaluate returns the moment the event
-  //    dispatch enqueues, NOT when the chain finishes.
-  //
-  //    The wait below polls for two conditions together:
-  //      - active doc is the Untitled (path === null), AND
-  //      - exactly one source tab remains in the DOM.
-  //    The previous version waited only on the first condition, which is
-  //    satisfied as soon as focus switches to the Untitled -- often well
-  //    before the close-all chain has actually closed the other tabs. Those
-  //    lingering tabs (and their hidden Ace editors) bleed state into the
-  //    next test: stale `.ace_active_debug_line` markers in hidden editors,
-  //    stale gutter breakpoints, etc.
+  // 3. Collapse source pane to a single Untitled tab. resetSourcePaneState
+  //    waits for the async close chain to drain before returning, so lingering
+  //    tabs (and their hidden Ace editors) can't bleed state into the next
+  //    test -- stale `.ace_active_debug_line` markers, gutter breakpoints, etc.
   await resetSourcePaneState(page);
-  await page.waitForFunction(
-    () => {
-      const doc = window.rstudio?.documents.active() ?? null;
-      if (doc === null || doc.path !== null) return false;
-      // Count source tabs across all source columns. The DocTabLayoutPanel
-      // wrapper tags its root with class `rstudio_source_panel`, and each
-      // open document renders one `[role="tab"]` child of the panel's
-      // tablist.
-      const tabs = document.querySelectorAll(
-        "[class*='rstudio_source_panel'] [role='tab']",
-      );
-      return tabs.length === 1;
-    },
-    null,
-    { timeout: 10000, polling: 50 },
-  ).catch(() => {
-    // Best-effort: don't fail the test if the reset didn't fully drain.
-    // The activateConsole below moves focus to the console either way, and
-    // any latent source-pane staleness will show up as a more precise
-    // assertion failure in the test itself.
-    console.warn(
-      '[test-reset] resetToUntitled did not settle within 10s ' +
-      '(either active doc never became Untitled, or extra tabs remain). ' +
-      'The next test starts with leftover source-pane state.',
-    );
-  });
 
   // 4. Restore focus to the console so tests start from a deterministic
   //    focus state. resetToUntitled's handler moves focus to the kept /

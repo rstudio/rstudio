@@ -75,6 +75,28 @@ public class ModalDialogTracker
    }
 
    /**
+    * Hide every modal dialog currently in the stack. Used during application
+    * shutdown so an open modal cannot prevent the quit path from completing.
+    */
+   public static void dismissAllModalDialogs()
+   {
+      // Iterate over a copy: hide() triggers onUnload() which calls onHide()
+      // and mutates dialogStack_.
+      List<PopupPanel> dialogs = new ArrayList<>(dialogStack_);
+      for (PopupPanel dialog : dialogs)
+      {
+         try
+         {
+            dialog.hide();
+         }
+         catch (Exception e)
+         {
+            Debug.logException(e);
+         }
+      }
+   }
+
+   /**
     * Attempt to dispatch an aria-live message to the topmost popup that supports it, if any.
     * 
     * @param message message to announce

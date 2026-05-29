@@ -48,6 +48,31 @@ async function getLeft(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => el.getBoundingClientRect().left);
 }
 
+// Wait until a pane's offsetWidth has settled: two consecutive samples agree
+// and the width is at least `min`. The offsetWidth observation is the most
+// direct DOM signal we have for "GWT has finished laying out this pane" --
+// the previous pattern (sleep(layoutSettle) + immediate read) lost races on
+// slow CI because relayout regularly outlasts the 300ms wait. Returns the
+// settled width.
+async function waitForStableWidth(
+  page: Page,
+  selector: string,
+  options: { min?: number; timeout?: number } = {},
+): Promise<number> {
+  const { min = 1, timeout = 5000 } = options;
+  let prev = -1;
+  await expect.poll(
+    async () => {
+      const w = await getOffsetWidth(page, selector);
+      const settled = w >= min && w === prev;
+      prev = w;
+      return settled;
+    },
+    { timeout, intervals: [50, 100, 150] },
+  ).toBe(true);
+  return prev;
+}
+
 async function elementExists(page: Page, selector: string): Promise<boolean> {
   return (await page.locator(selector).count()) > 0;
 }
@@ -112,6 +137,19 @@ async function pressArrowMany(page: Page, key: 'ArrowLeft' | 'ArrowRight', count
   for (let i = 0; i < count; i++) {
     await page.keyboard.press(key);
   }
+}
+
+// Drag the middle splitter left until the center (Console) column collapses
+// below MINIMUM_CENTER_WIDTH (50px in MainSplitPanel). Pressing until the
+// width drops -- rather than a fixed count -- keeps the precondition robust if
+// the keyboard resize step changes; the cap stops a runaway loop. Returns the
+// collapsed width.
+async function collapseCenterColumn(page: Page): Promise<number> {
+  await focusSplitter(page);
+  for (let i = 0; i < 60 && (await getOffsetWidth(page, CONSOLE_PANE)) >= 50; i++) {
+    await page.keyboard.press('ArrowLeft');
+  }
+  return getOffsetWidth(page, CONSOLE_PANE);
 }
 
 // Resize the middle splitter and assert it actually moved at least one column.
@@ -195,7 +233,13 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
+// Dropped `.describe.serial` here: the per-test `afterEach(resetUILayout)`
+// below already restores the layout between tests, and serial mode was
+// turning one flaky test failure into a cascade of skipped sibling tests
+// (then re-running the whole block on retry). Without serial, only the
+// failed test retries -- failures stay actionable instead of producing
+// 17-test noise dumps.
+test.describe('Pane and column management', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
     // Normalize the source pane to a single Untitled tab instead of
@@ -431,11 +475,12 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, TABSET2_PANE)).toBeLessThan(50);
 
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < zoomedConsoleWidth * 0.75
-        && (await getOffsetWidth(page, TABSET1_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    // Wait for the un-zoom relayout to settle on each pane before reading
+    // widths -- the previous `> 50 && < 0.75 * zoomed` threshold passed mid-
+    // animation, so expectWidthClose would see in-flight values.
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 50 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -471,12 +516,10 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeLessThan(50);
 
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < zoomedConsoleWidth * 0.75
-        && (await getOffsetWidth(page, TABSET1_PANE)) > 50
-        && (await getOffsetWidth(page, SIDEBAR_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 50 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -510,11 +553,9 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeLessThan(50);
 
     await executeCommand(page, 'layoutZoomRightColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, TABSET1_PANE)) < zoomedTabSet1Width * 0.75
-        && (await getOffsetWidth(page, CONSOLE_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -550,12 +591,10 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeLessThan(50);
 
     await executeCommand(page, 'layoutZoomRightColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, TABSET1_PANE)) < zoomedTabSet1Width * 0.75
-        && (await getOffsetWidth(page, CONSOLE_PANE)) > 50
-        && (await getOffsetWidth(page, SIDEBAR_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 100 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -596,12 +635,10 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     const zoomedConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
 
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < zoomedConsoleWidth * 0.75
-        && (await getOffsetWidth(page, TABSET1_PANE)) > 50
-        && (await getOffsetWidth(page, SIDEBAR_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 50 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -641,12 +678,10 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeLessThan(50);
 
     await executeCommand(page, 'layoutZoomRightColumn');
-    await expect.poll(
-      async () => (await getOffsetWidth(page, TABSET1_PANE)) < zoomedTabSet1Width * 0.75
-        && (await getOffsetWidth(page, CONSOLE_PANE)) > 50
-        && (await getOffsetWidth(page, SIDEBAR_PANE)) > 50,
-      { timeout: 5000 }
-    ).toBe(true);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 100 });
+    await waitForStableWidth(page, TABSET2_PANE, { min: 100 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
@@ -687,7 +722,9 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    // Settle on the sidebar width: it reveals in the same relayout pass as the
+    // columns, so once it stops animating the column widths are final too.
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), modifiedConsoleWidth, 0.05, 'final Console');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), modifiedTabSet1Width, 0.05, 'final TabSet1');
@@ -707,7 +744,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
       await executeCommand(page, 'toggleSidebar');
       await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-      await sleep(TIMEOUTS.layoutSettle);
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
       expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleModified, 0.05, `Console cycle ${cycle}`);
       expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1Modified, 0.05, `TabSet1 cycle ${cycle}`);
@@ -715,6 +752,12 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
   });
 
   // -------------------------------------------------------------------------
+  // Exercises MainSplitPanel's involuntary-squeeze "reclaim" branch: the
+  // center is healthy when the sidebar is hidden (so savedCenterCollapsed_ is
+  // false), then resizing while hidden leaves it near-zero on show -- so the
+  // reclaim resets columns to default widths, which the >100px assertions
+  // below verify. (The complementary "preserve" branch is covered by
+  // "Deliberately collapsed center is preserved across sidebar toggle".)
   test('Sidebar show uses default widths after columns resized while hidden', async ({ rstudioPage: page }) => {
     await showSidebar(page);
 
@@ -728,11 +771,17 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
 
-    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(100);
-    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(100);
-    expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeGreaterThan(100);
+    // Sidebar reveal animates: toBeVisible passes as soon as the element
+    // attaches with non-empty bounding box, but column widths can still be
+    // mid-relayout. Poll on each pane's offsetWidth -- a direct DOM signal
+    // -- instead of a blind 300ms sleep that loses the race on slow CI.
+    await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE),
+      { timeout: 5000 }).toBeGreaterThan(100);
+    await expect.poll(() => getOffsetWidth(page, TABSET1_PANE),
+      { timeout: 5000 }).toBeGreaterThan(100);
+    await expect.poll(() => getOffsetWidth(page, SIDEBAR_PANE),
+      { timeout: 5000 }).toBeGreaterThan(100);
   });
 
   // -------------------------------------------------------------------------
@@ -748,7 +797,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleAfterLeft, 0.05, 'Console after LEFT');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1AfterLeft, 0.05, 'TabSet1 after LEFT');
@@ -762,7 +811,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), consoleAfterRight, 0.05, 'Console after RIGHT');
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), tabSet1AfterRight, 0.05, 'TabSet1 after RIGHT');
@@ -780,7 +829,7 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
 
     await executeCommand(page, 'toggleSidebar');
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
-    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
 
     const consoleAfterToggle = await getOffsetWidth(page, CONSOLE_PANE);
     const tabSet1AfterToggle = await getOffsetWidth(page, TABSET1_PANE);
@@ -797,6 +846,42 @@ test.describe.serial('Pane and column management', { tag: ['@serial'] }, () => {
     expect(consoleAfterToggle).toBeGreaterThan(50);
     expect(tabSet1AfterToggle).toBeGreaterThanOrEqual(0);
     expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeGreaterThan(0);
+  });
+
+  // -------------------------------------------------------------------------
+  // Guards MainSplitPanel's savedCenterCollapsed_ "preserve" branch: a center
+  // the user deliberately collapsed must survive a sidebar hide/show as-is,
+  // NOT get reclaimed to a default width. (The complementary "reclaim" branch
+  // -- an involuntary squeeze -- is exercised by "Sidebar show uses default
+  // widths after columns resized while hidden" above.)
+  test('Deliberately collapsed center is preserved across sidebar toggle', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    const collapsedWidth = await collapseCenterColumn(page);
+    expect(collapsedWidth, 'precondition: center collapsed below minimum').toBeLessThan(50);
+
+    await executeCommand(page, 'toggleSidebar');
+    await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 5000 });
+
+    await executeCommand(page, 'toggleSidebar');
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 5000 });
+    await waitForStableWidth(page, SIDEBAR_PANE, { min: 100 });
+
+    // With the fix the deliberately-collapsed center is restored as-is; an
+    // unconditional reclaim would instead snap it back to a default width well
+    // above the minimum (this assertion fails against that earlier behavior).
+    expect(
+      await getOffsetWidth(page, CONSOLE_PANE),
+      'deliberately-collapsed center should be preserved, not reclaimed',
+    ).toBeLessThan(50);
+
+    // Restore a healthy center so the shared afterEach -- which reads a <50px
+    // Console as a zoomed layout -- doesn't misfire on cleanup. Leaves the
+    // layout lopsided the same way the extreme-resize test above does, which
+    // resetUILayout already tolerates.
+    await focusSplitter(page);
+    await pressArrowMany(page, 'ArrowRight', 60);
+    await sleep(TIMEOUTS.layoutSettle);
   });
 
   // -------------------------------------------------------------------------

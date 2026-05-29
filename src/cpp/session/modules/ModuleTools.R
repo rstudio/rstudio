@@ -51,13 +51,10 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
    if (isTRUE(once))
    {
       key <- .rs.digest(c(method, message))
-      if (!is.na(key))
-      {
-         cache <- .rs.loggedMessageCache
-         if (exists(key, envir = cache, inherits = FALSE))
-            return(invisible())
-         assign(key, TRUE, envir = cache)
-      }
+      cache <- .rs.loggedMessageCache
+      if (exists(key, envir = cache, inherits = FALSE))
+         return(invisible())
+      assign(key, TRUE, envir = cache)
    }
 
    .rs.logMessageEmit(method, message)

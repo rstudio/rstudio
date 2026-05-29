@@ -16,6 +16,7 @@
 - ([#17669](https://github.com/rstudio/rstudio/issues/17669)): Avoid re-scanning the watched directory on every Files pane notification on macOS by enabling FSEvents per-file event reporting for non-recursive watches.
 - ([#17768](https://github.com/rstudio/rstudio/issues/17768)): Handle the ANSI cursor-movement escape sequences cursor-up (CSI A), cursor-down (CSI B), cursor-next-line (CSI E), cursor-previous-line (CSI F), and cursor-horizontal-absolute (CSI G) in the console so that multiple `cli` progress bars render on separate lines instead of overwriting each other.
 - ([#17225](https://github.com/rstudio/rstudio/issues/17225)): Fix duplicate entries appearing in the recent projects list when the same project was recorded under both aliased (`~/...`) and absolute path forms.
+- ([#17777](https://github.com/rstudio/rstudio/issues/17777)): Fix "Import Dataset" from the Environment pane failing with "could not find function '.rs.digest'" when previewing a CSV (or other readr/readxl/haven source).
 
 ### Dependencies
 - Ace 1.43.5

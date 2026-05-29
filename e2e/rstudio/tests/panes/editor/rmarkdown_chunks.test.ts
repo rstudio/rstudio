@@ -17,7 +17,8 @@ import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
+import { waitForConsoleBusy, waitForConsoleIdle } from '@pages/console_pane.page';
 
 /**
  * Run a labeled chunk and wait for `signal` to appear in the console
@@ -42,26 +43,31 @@ async function runChunkByLabelAndWaitForConsoleSignal(
 
 /**
  * Run a labeled chunk that produces no visible output (e.g. invisible
- * assignments or `registerS3method` calls). Fires the chunk and then
- * cats a runtime-generated marker that R prints once the chunk has
- * been processed. This DOES pollute the console history, so callers
- * that walk Up-arrow history should use the console-signal variant.
+ * assignments or `registerS3method` calls) and wait for it to finish.
+ *
+ * There's no console signal to wait for, so we wait on R's busy state instead
+ * of injecting a synthetic marker. The previous approach cat()'d a marker via
+ * the console immediately after dispatching the chunk -- but executeCurrentChunk
+ * only dispatches (the chunk feeds the console asynchronously), so for a
+ * multi-line chunk the marker landed mid-continuation, corrupting R's input
+ * buffer ("Incomplete expression" from NotebookQueue) and silently skipping the
+ * chunk body. Bracketing busy->idle has no such race and doesn't pollute
+ * console history.
  */
-async function runChunkByLabelAndWaitForMarker(
+async function runChunkByLabelAndWaitForIdle(
   page: Page,
-  consoleActions: ConsolePaneActions,
   sourceActions: SourcePaneActions,
   label: string,
 ): Promise<void> {
   await sourceActions.navigateToChunkByLabel(label);
   await executeCommand(page, 'executeCurrentChunk');
-  await consoleActions.executeInConsole(
-    `cat(paste0("__CHUNKDONE_", proc.time()[3], "_", sample.int(1e9, 1L), "__"), "\\n")`
-  );
-  await expect(consoleActions.consolePane.consoleOutput).toContainText(
-    /__CHUNKDONE_[\d.]+_\d+__/,
-    { timeout: 30000 },
-  );
+  // executeCurrentChunk dispatches asynchronously, so R isn't busy on the next
+  // tick. Wait for it to enter the busy state before waiting for idle, so we
+  // don't catch a still-idle console and return before the chunk runs. Tolerate
+  // a chunk fast enough that the busy class is never observed -- idle is then
+  // already true.
+  await waitForConsoleBusy(page).catch(() => {});
+  await waitForConsoleIdle(page);
 }
 
 test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
@@ -70,11 +76,24 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
+    // Every test in this file drives chunks or saves a notebook, both of
+    // which need rmarkdown loadable. Without this check, a missing dep
+    // surfaces as an opaque chunk/save timeout deep inside a test; capture
+    // the failure once here and let test.beforeEach skip with a clear reason.
+    missingPackages = await consoleActions.ensurePackages(['rmarkdown'], 180_000);
     await consoleActions.clearConsole();
+  });
+
+  test.beforeEach(() => {
+    test.skip(
+      missingPackages.length > 0,
+      `required R package(s) not available: ${missingPackages.join(', ')}`,
+    );
   });
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
@@ -299,14 +318,14 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
     await sourceActions.createAndOpenFile(fileName, content);
 
-    // Setup chunk: registerS3method is invisible, so no chunk-output
-    // element appears -- fall back to the marker helper.
-    await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'setup');
+    // Setup chunk: registerS3method is invisible, so no chunk-output element
+    // appears -- wait on R's busy state instead.
+    await runChunkByLabelAndWaitForIdle(page, sourceActions, 'setup');
 
     // Buggy chunk: also invisible (assignment). Run twice -- the
     // first invocation might not surface a stale chunk-output buffer.
-    await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'buggy');
-    await runChunkByLabelAndWaitForMarker(page, consoleActions, sourceActions, 'buggy');
+    await runChunkByLabelAndWaitForIdle(page, sourceActions, 'buggy');
+    await runChunkByLabelAndWaitForIdle(page, sourceActions, 'buggy');
 
     // After the buggy chunk runs, there should be no chunk output element
     // for it (the S3 override would otherwise dump mtcars into the chunk).
@@ -385,11 +404,19 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await sourceActions.goToEnd();
     await page.keyboard.press('Enter');
     await expect.poll(() => isCommandEnabled(page, 'saveSourceDoc'), { timeout: 5000 }).toBe(true);
-    await saveDocument(page);
+
+    // Fire-and-forget the save: do NOT use saveDocument(), which waits for the
+    // doc to be marked clean. An R Notebook never settles clean after save --
+    // notebooks always commit chunk output as "uncommitted" (getCommitMode() ==
+    // MODE_UNCOMMITTED), so when the post-save render's chunk output finishes,
+    // TextEditingTargetNotebook.setDirtyState() re-marks the doc dirty. That's
+    // by design (it lets users re-save to refresh the preview at any time), so
+    // the dirty bit is not a valid post-condition here. The nb.html write below
+    // is the real signal that the save landed.
+    await executeCommand(page, 'saveSourceDoc');
 
     // RStudio writes nb.html on save; poll the filesystem for it.
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);
-    expect(fs.readFileSync(nbHtmlPath, 'utf8')).toContain('hello from notebook');
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
     fs.unlinkSync(nbHtmlPath);

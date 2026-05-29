@@ -137,10 +137,10 @@
 # Compact, collision-resistant hash of a frame's column names. Used as a
 # fingerprint to detect object reassignment between data viewer loads.
 #
-# Returns NA_character_ for empty / NULL names, and also when the digest
-# helper itself fails -- in both cases the client treats "no anchor" as
-# always-mismatch and discards any saved positional state, since there
-# is no safe way to align indices against a frame we can't fingerprint.
+# Returns NA_character_ for empty / NULL names so the client can treat
+# "no anchor" as always-mismatch; without anchors there's no way to
+# align saved positional state with the current frame, so we want it
+# discarded.
 .rs.addFunction("dataViewer.colsFingerprint", function(x)
 {
    nms <- names(x)
@@ -148,11 +148,7 @@
    if (n == 0L)
       return(NA_character_)
 
-   hash <- .rs.digest(nms)
-   if (is.na(hash))
-      return(NA_character_)
-
-   paste0(n, ":", hash)
+   paste0(n, ":", .rs.digest(nms))
 })
 
 .rs.addFunction("describeCols", function(x,

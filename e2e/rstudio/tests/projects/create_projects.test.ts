@@ -1,10 +1,10 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, waitForConsoleIdle, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { setPref, documentCloseAllNoSave } from '@utils/commands';
+import { setPref, resetSourcePaneState } from '@utils/commands';
 import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
@@ -79,44 +79,69 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
     { wait: true },
   );
 
+  // executeInConsole's waitForConsoleIdle returns the moment R drops its busy
+  // flag, but the console-output client event that renders the cat() text can
+  // land a beat later. A single innerText read here therefore races the paint
+  // and intermittently misses the markers under full-suite load (the cause of
+  // the flaky "markers not found" beforeAll failure). Poll the console text
+  // until both markers are present, then extract the value between them.
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(pattern);
-  if (!match) {
-    throw new Error(`captureResult: markers not found for "${rExpression}"`);
-  }
-  return match[1].trim();
+  let match: RegExpMatchArray | null = null;
+  await expect
+    .poll(
+      async () => {
+        const output = await page.locator(CONSOLE_OUTPUT).innerText();
+        match = output.match(pattern);
+        return match !== null;
+      },
+      {
+        timeout: 10000,
+        message: `captureResult: markers not found for "${rExpression}"`,
+      },
+    )
+    .toBe(true);
+  return match![1].trim();
 }
 
 async function waitForSessionRestart(page: Page): Promise<void> {
   // Server navigates on project open/close; Desktop reloads in place, so
   // waitForLoadState never fires there -- intentional catch.
   await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
-  // 2x sessionRestart: after navigation settles, the console element may still
-  // take extra time to mount on slower Server sessions.
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.sessionRestart * 2 });
 
-  // Confirm R is idle with retries. Individual attempts may fail while the
-  // console is still coming up (the bridge isn't yet wired through, the
-  // editor isn't mounted, etc.) -- intentional catch -- but if all attempts
-  // fail we surface the timeout instead of silently returning.
-  const deadline = Date.now() + TIMEOUTS.sessionRestart * 2;
-  while (Date.now() < deadline) {
-    try {
-      const marker = `[pw:session-restart-ready ${Date.now()}]`;
-      await executeInConsole(page, `cat("${marker}")`, { wait: true });
-      const output = await page.locator(CONSOLE_OUTPUT).innerText();
-      if (output.includes(marker)) return;
-    } catch {
-      // console may not be ready yet -- retry
-    }
-  }
-  throw new Error('R session did not become idle within timeout after session restart');
+  // Readiness is signalled by window.rstudio.ready: the GWT bridge resets it
+  // to false when the session-ending transition starts (QuitEvent on project
+  // open/close) and flips it back to true on the new session's
+  // DeferredInitCompletedEvent. Callers pre-reset it to false *before*
+  // triggering the restart (see closeCurrentProject / createProjectInNewDir)
+  // so this poll observes a clean false->true edge rather than the prior
+  // session's stale true.
+  //
+  // This replaces an older marker-echo loop that fired a `cat()` marker via
+  // executeInConsole and scanned console output for it. That approach was
+  // flaky: the marker could be submitted into the old console moments before
+  // the in-place restart cleared it (so it never reappeared), and each
+  // attempt's inner waitForConsoleIdle (default sessionRestart timeout) could
+  // consume the whole budget, leaving room for only a couple of retries.
+  //
+  // 2x sessionRestart covers the full restart + workspace/search-path restore
+  // on a slow CI worker.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: TIMEOUTS.sessionRestart * 2, polling: 100 },
+  );
+
+  // ready=true means GWT's workbench is wired up, but the console input may
+  // still be mounting and the console-busy class can linger briefly through
+  // the post-restart prompt transition. Wait for both so a caller that
+  // immediately issues console actions sees an idle, mounted console.
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.sessionRestart });
+  await waitForConsoleIdle(page);
 }
 
 async function openNewProjectWizard(page: Page): Promise<void> {
   // Close any open source docs first to avoid "unsaved changes" dialogs
-  await documentCloseAllNoSave(page);
+  await resetSourcePaneState(page);
 
   // executeCommand("newProject") blocks the R thread with an "R session is busy"
   // modal on some platforms, so use the command palette instead.
@@ -174,6 +199,15 @@ async function createProjectInNewDir(
 
   const createBtn = page.locator(CREATE_PROJECT_BTN);
   await expect(createBtn).toBeVisible({ timeout: 5000 });
+
+  // Pre-reset the readiness flag before creating: project creation restarts
+  // the session into the new project, and we want waitForSessionRestart to
+  // see a clean false->true transition rather than the prior session's stale
+  // true. Nothing flips ready back to true until the new session's deferred
+  // init, so doing this before the wizard dismisses is safe.
+  await page.evaluate(() => {
+    if (window.rstudio) window.rstudio.ready = false;
+  });
   await createBtn.click();
 
   // Wizard should dismiss within a few seconds. If it lingers, the name
@@ -193,6 +227,15 @@ async function closeCurrentProject(page: Page): Promise<void> {
 
   const close = page.locator(CLOSE_PROJECT_MENU_ITEM);
   await expect(close).toBeVisible({ timeout: 5000 });
+
+  // Pre-reset the readiness flag before triggering the close so
+  // waitForSessionRestart sees a clean false->true transition. The QuitEvent
+  // fired by closing the project also resets it, but that lands only after a
+  // server round-trip -- without this preemptive reset a poll could observe
+  // the prior session's stale true and return before the restart finishes.
+  await page.evaluate(() => {
+    if (window.rstudio) window.rstudio.ready = false;
+  });
   await close.click();
 
   await waitForSessionRestart(page);

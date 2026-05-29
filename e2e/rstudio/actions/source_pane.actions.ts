@@ -42,11 +42,13 @@ export class SourcePaneActions {
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
     await executeCommand(this.page, 'saveAllSourceDocs');
     await sleep(1000);
-    await executeCommand(this.page, 'closeAllSourceDocs');
-
-    // Wait for the editor to detach before unlinking the file.
-    await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
-
+    // resetSourcePane closes every tab except a single Untitled placeholder,
+    // so the source pane never transits through the zero-tab HIDE state
+    // (#17738) and the next test starts from a known good state. The previous
+    // closeAllSourceDocs + toHaveCount(0) wait left the pane briefly empty,
+    // and the auto-spawned Untitled1 that filled the gap collided with the
+    // new file the next test opened (two publishBtns -> strict-mode error).
+    await this.consolePaneActions.resetSourcePane();
     await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`, { wait: true });
   }
 
@@ -234,16 +236,30 @@ export class SourcePaneActions {
    */
   async ensureVisualMode(): Promise<void> {
     const toggle = this.sourcePane.visualMdToggle;
+    const proseMirror = this.page.locator('.ProseMirror');
+
+    // Already in visual mode? The editor mounts a .ProseMirror surface.
+    if (await proseMirror.first().isVisible().catch(() => false)) return;
+
     try {
-      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
-      if (ariaPressed === 'false') {
-        await toggle.click();
-        await clickConfirmIfVisible(this.page, 5000);
-        await sleep(2000);
-      }
+      // Wait for the toggle to mount -- a freshly created template document
+      // takes a moment before its editor toolbar is ready, and a 3s attribute
+      // read could race that. If it never appears, visual mode isn't supported.
+      await toggle.waitFor({ state: 'visible', timeout: 5000 });
     } catch {
-      // Toggle not available — visual mode not supported for this file type
+      // Toggle not available -- visual mode not supported for this file type.
+      return;
     }
+
+    await toggle.click();
+    // The first switch to visual mode for a document can raise a confirmation.
+    await clickConfirmIfVisible(this.page, 5000);
+    // Wait for the visual editor to actually mount rather than sleeping a fixed
+    // interval: converting a heavier document (a template with chunks/plots)
+    // through pandoc takes longer than a blank one, and the old 2s sleep could
+    // return before .ProseMirror existed -- leaving callers asserting against a
+    // still-source-mode editor.
+    await proseMirror.first().waitFor({ state: 'visible', timeout: 15000 });
   }
 
   /**

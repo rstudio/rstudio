@@ -374,9 +374,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
           savedSidebarLocation_ != null &&
           savedSidebarLocation_.equals(location);
       int restoredWidth = savedSidebarWidth_;
+      boolean centerWasCollapsed = savedCenterCollapsed_;
 
       savedSidebarWidth_ = -1;
       savedSidebarLocation_ = null;
+      savedCenterCollapsed_ = false;
 
       sidebar_ = widget;
       sidebarLocation_ = location;
@@ -427,6 +429,42 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       setSplitterAttributes();
       forceLayout();
       deferredSaveWidthPercent();
+
+      // Showing the sidebar takes its width from center_ (the fill column), so
+      // a narrow Source/Console column can be squeezed to ~0 while right_ keeps
+      // its width -- leaving Source/Console invisible. The geometry isn't
+      // settled until the forceLayout above lays out, so defer the check to
+      // read the post-relayout width; if the center collapsed involuntarily,
+      // reclaim space by resetting the other columns to default widths.
+      //
+      // But don't fight the user: if they had deliberately collapsed the center
+      // before hiding the sidebar, restoring it near-zero is the correct,
+      // faithful restore -- leave it alone.
+      final boolean preserveCollapsedCenter = restoringSavedWidths && centerWasCollapsed;
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            if (preserveCollapsedCenter)
+               return;
+
+            if (center_ == null || center_.getOffsetWidth() >= MINIMUM_CENTER_WIDTH)
+               return;
+
+            double defaultWidth = getDefaultSplitterWidth();
+            LayoutData rightLayout = (LayoutData) right_.getLayoutData();
+            if (rightLayout != null)
+               rightLayout.size = defaultWidth;
+            for (Widget w : leftList_)
+            {
+               LayoutData layout = (LayoutData) w.getLayoutData();
+               if (layout != null)
+                  layout.size = defaultWidth;
+            }
+            forceLayout();
+            deferredSaveWidthPercent();
+         }
+      });
    }
 
    public void removeSidebarWidget()
@@ -436,6 +474,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       {
          savedSidebarWidth_ = sidebar_.getOffsetWidth();
          savedSidebarLocation_ = sidebarLocation_;
+         // Remember a deliberately-collapsed center so showing the sidebar
+         // again restores it as-is rather than treating it as a squeeze.
+         savedCenterCollapsed_ = center_ != null &&
+             center_.getOffsetWidth() < MINIMUM_CENTER_WIDTH;
       }
 
       // Remove only the sidebar widget (and its splitter). center_ and right_
@@ -663,6 +705,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Integer previousOffsetWidth_ = null;
    private int savedSidebarWidth_ = -1;
    private String savedSidebarLocation_ = null;
+   // Whether the center (Source/Console) column was already collapsed below
+   // MINIMUM_CENTER_WIDTH when the sidebar was last hidden. A deliberately
+   // collapsed center must be restored as-is on show, not "reclaimed".
+   private boolean savedCenterCollapsed_ = false;
 
    private final EventBus events_;
    private final Session session_;
@@ -674,6 +720,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
    private static final int MINIMUM_SIDEBAR_WIDTH = 175;
+   // Showing the sidebar must not squeeze the center (Source/Console) column
+   // below this; if it would, the other columns are reset to default widths so
+   // Source/Console can't be left at ~0 width (invisible).
+   private static final int MINIMUM_CENTER_WIDTH = 50;
    private Command layoutCommand_;
 
    /**

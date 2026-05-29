@@ -2,7 +2,7 @@
 // Sidebar-width-when-adding-tabs scenarios are exercised by panes.test.ts.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { executeCommand, isCommandChecked } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetSourcePaneState } from '@utils/commands';
 import type { Page } from 'playwright';
 
 const WORKBENCH_TABS = [
@@ -122,6 +122,9 @@ test.describe('Workbench tabs', () => {
     expect(tol(await getOffsetHeight(page, TABSET2_PANE), initialTabSet2Height)).toBe(true);
 
     // layoutZoomEnvironment creates an untitled source doc as a side-effect.
-    await executeCommand(page, 'closeAllSourceDocs');
+    // resetSourcePaneState (not closeAllSourceDocs) so the pane keeps a
+    // single Untitled placeholder rather than draining to zero tabs and
+    // triggering the HIDE-animation race (#17738) that breaks the next test.
+    await resetSourcePaneState(page);
   });
 });

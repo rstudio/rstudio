@@ -3,7 +3,7 @@ import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { documentCloseAllNoSave, waitForActiveDocument } from '@utils/commands';
+import { resetSourcePaneState, waitForActiveDocument } from '@utils/commands';
 
 test.describe('Run Line button', () => {
   const sandbox = useSuiteSandbox();
@@ -17,7 +17,7 @@ test.describe('Run Line button', () => {
 
   test('submits queued lines to the console in document order', async ({ rstudioPage: page }) => {
     await consoleActions.clearConsole();
-    await documentCloseAllNoSave(page);
+    await resetSourcePaneState(page);
 
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
@@ -30,7 +30,12 @@ test.describe('Run Line button', () => {
 
     await sourceActions.goToTop();
 
-    const runLineBtn = page.locator("[class*='run_the_current_line_or_selection']").first();
+    // Scope to the active editor's toolbar. A bare class locator also matches
+    // the hidden Untitled placeholder tab's button (kept by
+    // resetSourcePaneState); `.first()` picked that hidden one and the click
+    // timed out as "not visible". sourcePane.runLineBtn scopes to the visible
+    // tabpanel.
+    const runLineBtn = sourceActions.sourcePane.runLineBtn;
     for (let i = 0; i < 4; i++) {
       await runLineBtn.click();
     }
@@ -39,6 +44,6 @@ test.describe('Run Line button', () => {
       timeout: 15000,
     });
 
-    await documentCloseAllNoSave(page);
+    await resetSourcePaneState(page);
   });
 });

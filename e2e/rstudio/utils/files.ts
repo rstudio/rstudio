@@ -3,10 +3,10 @@ import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { executeInConsole } from '../pages/console_pane.page';
-import { SourcePane } from '../pages/source_pane.page';
 import { TIMEOUTS } from './constants';
 import { rPathLiteral, rStringLiteral } from './r';
-import { documentCloseAllNoSave } from './commands';
+import { resetSourcePaneState } from './commands';
+import { assertAbsolutePath } from './paths';
 
 /**
  * Write `content` to `fileName` in the per-spec sandbox workdir and open it
@@ -28,6 +28,7 @@ export async function writeAndOpenFile(
   fileName: string,
   content: string,
 ): Promise<void> {
+  assertAbsolutePath(sandboxDir, `writeAndOpenFile(fileName=${JSON.stringify(fileName)}): sandboxDir`);
   const fullPath = path.join(sandboxDir, fileName);
   if (fs.existsSync(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
@@ -115,9 +116,18 @@ export async function closeAndDeleteSandboxFiles(
   sandboxDir: string,
   fileNames: string[],
 ): Promise<void> {
-  await documentCloseAllNoSave(page);
-  const sourcePane = new SourcePane(page);
-  await expect(sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
+  assertAbsolutePath(sandboxDir, 'closeAndDeleteSandboxFiles: sandboxDir');
+  // Leave a single Untitled placeholder tab rather than draining the source
+  // pane to zero tabs. Going through zero triggers the source pane's HIDE
+  // animation (#17738) and lets RStudio auto-spawn a fresh Untitled1 in the
+  // gap -- which then collides with the next test's file (e.g. two
+  // publishBtns visible at the same time, breaking strict-mode locators).
+  // resetSourcePaneState waits for its async close chain to drain before
+  // returning, so the editors have detached by the time we delete the files
+  // below. Deleting while a tab still holds a file open makes RStudio raise a
+  // "File Deleted" prompt and a "Save File" (system error 2) error whose glass
+  // panels then block the next test's first action.
+  await resetSourcePaneState(page);
   if (fs.existsSync(sandboxDir)) {
     for (const fileName of fileNames) {
       try {

@@ -254,19 +254,30 @@ async function focusEditor(sourceActions: SourcePaneActions): Promise<void> {
   }
 }
 
-/** Select all code in the editor, then reformat via Cmd+Shift+A / Ctrl+Shift+A. */
+/** Select all code in the editor, then dispatch the reformat command. */
 async function reformatCode(page: Page, sourceActions: SourcePaneActions): Promise<void> {
-  // Snapshot the content before the keystroke so we can poll for the diff
+  // Snapshot the content before the command so we can poll for the diff
   // to land. The reformat command (whether server-side Air or client-side
   // built-in) applies its diff asynchronously and exposes no per-command
   // signal; every caller of this helper expects the content to *change*,
   // so a content-change poll is a precise readiness signal. Callers that
   // need to assert "no change" should use saveFile (which polls dirty=false
   // via saveDocument) instead.
+  //
+  // Drive select-all and reformat through the window.rstudio bridge rather
+  // than Cmd+A / Cmd+Shift+A keyboard presses. The keyboard path lost the
+  // race on slow CI: focus could drift off the source pane between the two
+  // keystrokes (or between the keystroke and the command dispatch), at
+  // which point Cmd+Shift+A landed on a different focus target and the
+  // reformat never fired -- the failure surfaced as a 10s opaque timeout
+  // because *nothing happened* to the buffer.
   const before = await sourceActions.getEditorContent();
-  await focusEditor(sourceActions);
-  await page.keyboard.press('ControlOrMeta+a'); // select all
-  await page.keyboard.press('ControlOrMeta+Shift+a'); // reformat selection
+  await page.evaluate(() => {
+    const editor = window.rstudio?.documents.activeEditor();
+    if (!editor) throw new Error('reformatCode: no active source editor');
+    editor.selectAll();
+  });
+  await executeCommand(page, 'reformatCode');
   await expect.poll(
     () => sourceActions.getEditorContent(),
     { timeout: 10000 },
@@ -324,6 +335,12 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   let page: Page;
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  // Whether the Air binary can be resolved on this machine. Computed once in
+  // beforeAll; the cases that actually exercise Air (4/5/6, all useAir=true)
+  // skip when it's false so a runner without Air doesn't report failures for
+  // an unavailable dependency. The useAir=false cases (1/2/3/7/8) need no Air
+  // and always run -- they are the core #16721 regression coverage.
+  let airAvailable = false;
 
   test.beforeAll(async ({ rstudioPage }) => {
     page = rstudioPage;
@@ -337,11 +354,41 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     await createAndOpenProject(page, sandbox.dir, 'air_formatting');
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
-    await consoleActions.closeAllBuffersWithoutSaving();
+    await consoleActions.resetSourcePane();
     await consoleActions.clearConsole();
     // Start clean — programmatic reset (not the thing being tested)
     await removeAirConfig(consoleActions);
     await resetAirPrefs(consoleActions);
+
+    // Smoke probe: exercise the reformat machinery once with the simplest
+    // configuration (built-in formatter, no Air, no config). If the command
+    // bridge, source pane, or built-in formatter is wedged, every test below
+    // would fail with a 10-second opaque "content never changed" timeout --
+    // surface that here as a single beforeAll failure with the actual buffer
+    // we saw, so the cause is recognizable instead of a wall of identical
+    // reformatCode timeouts.
+    await openTestFile(consoleActions, sourceActions);
+    await reformatCode(page, sourceActions);
+    const probeContent = await sourceActions.getEditorContent();
+    if (!probeContent.includes('x <- 1 + 2 + 3')) {
+      throw new Error(
+        'Air suite smoke probe failed: built-in reformat did not produce ' +
+        `expected output. Got:\n${probeContent}`,
+      );
+    }
+    await sourceActions.closeSourceAndDeleteFile(TEST_FILE);
+
+    // Preflight: can Air be resolved on this machine? .rs.air.ensureAvailable()
+    // returns a path to the Air binary or stop()s if it can't find (or, by
+    // default, install) one. This mirrors exactly what the reformat path does
+    // -- including autoinstall, so a sandbox where Air isn't on PATH but is
+    // installable still reports available -- and treats any error as "not
+    // available". The Air-dependent cases (4/5/6) skip when this is false
+    // rather than failing on a dependency the runner genuinely can't provide.
+    airAvailable =
+      (await consoleActions.evalRLogical(
+        'tryCatch(isTRUE(file.exists(.rs.air.ensureAvailable())), error = function(e) FALSE)',
+      )) === true;
   });
 
   test.afterEach(async () => {
@@ -387,6 +434,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('4: checked, air.toml present, manual reformat uses Air', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, false);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
@@ -396,6 +444,7 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('5: checked, air.toml present, save uses Air', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, true);
     await createAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
@@ -405,6 +454,11 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   });
 
   test('6: checked, no config, manual reformat uses built-in formatter', async () => {
+    // Gated on Air availability too: although this case expects the built-in
+    // formatter, enabling "Use Air" routes through the server format path,
+    // which a runner without Air can't satisfy (observed failing on CI while
+    // passing locally where Air is installed).
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
     await setAirPrefs(page, true, false);
     await removeAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
