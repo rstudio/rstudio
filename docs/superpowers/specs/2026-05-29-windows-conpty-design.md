@@ -214,19 +214,33 @@ private:
 - `start()` builds the command line/env exactly as the current winpty path does
   (reuse the cmdline-quoting and UTF-8 env-block logic), then runs the 4
   sequence. **Each step that allocates is protected by a scope guard** so a
-  failure at any point closes the pipes, deletes the attribute list, and closes
-  the pseudoconsole before returning a context-rich `Error` (no leaks on partial
-  startup).
+  failure at any point unwinds cleanly (8). The reader thread is launched
+  **immediately after `CreateProcess` succeeds**, so any later failure unwinds
+  through the same bounded teardown as normal shutdown (6.3) -- there is no
+  window where `ClosePseudoConsole` runs with a live child but no draining
+  reader.
 - Reader thread: blocking `ReadFile(hOutputRead_, ...)`; append under
-  `outMutex_`. If `outputBuffer_.size()` exceeds the high-water mark, wait on
-  `outCv_` until `poll()` drains below the low-water mark (backpressure). On
-  `ERROR_BROKEN_PIPE`/EOF set `outputClosed_` and exit.
+  `outMutex_`. Backpressure wait is `while (!stopped_ && outputBuffer_.size() >=
+  kOutHighWater) outCv_.wait(...)` -- so once `stopped_` is set the reader stops
+  pausing and drains freely (this is what breaks the shutdown-while-paused
+  deadlock). On `ERROR_BROKEN_PIPE`/EOF set `outputClosed_`, notify, exit; on any
+  other `ReadFile` error, log, set `outputClosed_`, and exit (treated as
+  pipe-closed).
 - `readOutput()`: swap `outputBuffer_` into `*pOut` under `outMutex_`, then
   `notify` `outCv_` so a paused reader resumes.
-- Writer thread: wait on `inCv_` for queued input or `inputDone_`; blocking
-  `WriteFile(hInputWrite_, ...)`. On `inputDone_` with an empty queue, exit.
-- `writeInput()`: enqueue under `inMutex_` + notify (no main-thread blocking).
+- Writer thread: wait on `inCv_` for queued input, `inputDone_`, or `abandon_`.
+  If `abandon_` it exits immediately (queue already cleared, 6.3) -- it never
+  resumes draining after a cancelled write. Otherwise blocking
+  `WriteFile(hInputWrite_, ...)`; a failed/cancelled write stores the error in
+  `writerError_` (surfaced via `poll()` (6.2) / logged) and exits.
+- `writeInput()`: enqueue under `inMutex_` + notify, with no main-thread
+  blocking. The queue is **bounded by `kInQueueMax` bytes**; input that would
+  exceed the cap is rejected with an error (the caller logs it). Returns the
+  stored `writerError_` if a prior async write failed.
 - `setSize()`/`writeInput()` are no-ops returning an error once `stopped_`.
+- **Bounding constants** (defaults; final values validated by the plan's
+  sustained-high-output test): `kOutHighWater` ~1 MiB, `kOutLowWater` ~256 KiB,
+  `kInQueueMax` ~1 MiB, `kShutdownTimeoutMs` ~4000.
 
 ### 6.2 `Win32ChildProcess` integration
 
@@ -237,30 +251,38 @@ private:
   &pImpl_->hProcess)`.
 - `AsyncChildProcess::poll()`: replace the two `WinPty::readFromPty` calls with a
   single `pImpl_->pty.readOutput(&out)` -> `onStdout`.
-- **On process exit**: run the ordered teardown (`pty.stop()`, which joins the
-  reader after draining ConPTY's final frame), then **drain `readOutput()` one
-  final time and dispatch it to `onStdout`**, and only then close the process
-  handle and call `onExit`. This guarantees the last command output/prompt is
-  not lost.
+- **On process exit**: run the ordered teardown (`pty.stop()`). Because `stop()`
+  sets `stopped_` and wakes the reader, the reader drains ConPTY's final frame
+  without re-pausing on backpressure even though `poll()` is blocked inside
+  `stop()`; `stop()` joins it. Then **drain `readOutput()` one final time and
+  dispatch it to `onStdout`**, and only then close the process handle and call
+  `onExit`. This guarantees the last command output/prompt is not lost.
 - `writeToStdin` (PTY branch): `pImpl_->pty.writeInput(input)`.
 - `ptySetSize` -> `pty.setSize`; `ptyInterrupt` -> no-op (returns Success).
 
 ### 6.3 Shutdown ordering (bounded, deadlock-free)
 
-`ConPty::stop()` (idempotent; also called from `~ConPty`), under `stateMutex_`
-to serialize with `writeInput`/`setSize`:
-1. Set `stopped_`. Signal `inputDone_` and `notify` `inCv_`; to unblock a writer
-   stuck in `WriteFile`, `CancelSynchronousIo(writerThread_)` then `join()` it.
-   Queued-but-unsent input is abandoned (the terminal is closing).
-2. Run `ClosePseudoConsole(hPC_)` on a **separate closer thread** (never the
-   reader). The reader keeps draining output, so the close returns promptly even
+`ConPty::stop()` is idempotent and uses one deterministic sequence (also used by
+the partial-startup unwind in 8). Under `stateMutex_` to serialize with
+`writeInput`/`setSize`:
+1. Set `stopped_`. Wake the reader: lock `outMutex_`, `notify` `outCv_` so a
+   reader paused on backpressure resumes and drains freely (no re-pause while
+   `stopped_`). This is the step that prevents the shutdown-while-paused hang.
+2. Stop the writer: set `abandon_`, **clear `inputQueue_`**, `notify` `inCv_`,
+   and `CancelSynchronousIo(writerThread_)` to break a blocked `WriteFile`. The
+   writer exits immediately after a cancelled write or on seeing `abandon_`; it
+   does not resume draining. `join()` the writer (bounded by `kShutdownTimeoutMs`;
+   on timeout, log and detach).
+3. Run `ClosePseudoConsole(hPC_)` on a **separate closer thread** (never the
+   reader). The reader is draining (step 1), so it returns promptly even
    pre-24H2.
-3. Wait for the closer with a bounded timeout. If it returns, the output pipe is
-   broken and the reader's `ReadFile` returns `ERROR_BROKEN_PIPE`. If it exceeds
-   the timeout, `CancelSynchronousIo(readerThread_)` and/or close `hOutputRead_`
-   to force the reader out and unblock the close.
-4. `join()` the reader (and closer). Drain any final bytes (consumed by 6.2's
-   final `readOutput`). Close `hInputWrite_`/`hOutputRead_`; null `hPC_`.
+4. Wait for the closer and the reader with a single `kShutdownTimeoutMs` budget.
+   On timeout, force the reader out by closing `hOutputRead_` (breaks its
+   `ReadFile`) and `CancelSynchronousIo(readerThread_)`, which also lets a
+   blocked `ClosePseudoConsole` finish.
+5. `join()` the reader and closer. The accumulated `outputBuffer_` holds the
+   final frame for 6.2's final `readOutput`. Close `hInputWrite_`/`hOutputRead_`
+   (if not already); null `hPC_`.
 
 ### 6.4 Concurrency / lifecycle guards
 
@@ -295,8 +317,9 @@ to serialize with `writeInput`/`setSize`:
   so the format change coincides with ConPTY going live.**
 - `src/gwt/.../terminal/TerminalSession.java:777-799` (`shellSupportsReload`) ->
   remove the `WIN_CMD`/`WIN_PS`/`PS_CORE` cases so they fall through to
-  `default: return true`; default the Windows `CUSTOM` case to reloadable too
-  (clean VT under ConPTY), pending user confirmation (11).
+  `default: return true`; the Windows `CUSTOM` case is also reloadable (clean VT
+  under ConPTY) -- resolved default, see 11. A Phase-5 gate confirms it with the
+  user before shipping.
 - `src/cpp/conf/rdesktop-dev.conf` -> remove any winpty path entry.
 - `.gitignore` -> temporarily narrowed to commit only `docs/superpowers/specs`
   and `docs/superpowers/plans`; restored to the single `docs/superpowers` line
@@ -311,9 +334,17 @@ to serialize with `writeInput`/`setSize`:
 - If `GetProcAddress` cannot resolve the ConPTY functions, fail `start()` with
   an actionable "ConPTY not available on this Windows version" error (should not
   occur above 1809).
-- Every `start()` failure path unwinds via scope guards: close any created
-  pipe ends, `DeleteProcThreadAttributeList`, `ClosePseudoConsole`, terminate a
-  partially created child. No handle/PC leaks on partial startup.
+- `start()` failure unwinds via scope guards with two regimes:
+  - **Before `CreateProcess`** (pipe/attribute-list/pseudoconsole creation):
+    `DeleteProcThreadAttributeList`, close pipe ends, and `ClosePseudoConsole`
+    -- with no client attached the close returns immediately, so no drain is
+    needed.
+  - **After `CreateProcess`**: the reader thread is already running (6.1), so
+    unwind goes through the bounded `stop()` sequence (6.3), avoiding a blocking
+    `ClosePseudoConsole` with a live child and no reader.
+- Writer-thread transport errors are stored in `writerError_` and surfaced on
+  the next `poll()` (reported via the existing `onError`/log path); `writeInput`
+  also returns a stored prior error.
 
 ## 9. Testing and verification
 
@@ -331,7 +362,14 @@ to serialize with `writeInput`/`setSize`:
     error), **partial-startup failure** (assert no handle/PC leak),
   - **sustained high-output with a slow consumer** (assert bounded memory via
     backpressure and no deadlock), **shutdown timeout/cancel** backstop.
-  - Run via `rstudio-tests --scope core`.
+  - Combined-state cases (the likely deadlocks): **shutdown while the reader is
+    paused at the high-water mark**; **writer cancellation with a non-empty
+    queue** (asserts the writer abandons, does not resume); **input-queue
+    overflow** (rejected with an error); **partial-startup failure after
+    `CreateProcess`** (bounded teardown, no leak/hang); **reader non-EOF
+    `ReadFile` error**; **`0x03` ordering** behind queued input (FIFO preserved).
+  - Run via `rstudio-tests --scope core`. (Exact assertions/values pinned in the
+    implementation plan.)
 - **Playwright** `e2e/rstudio/tests/panes/terminal/terminal.test.ts` on Windows.
 - **Manual matrix**: cmd, pwsh, ps-core, git-bash; vim/less (alt-buffer); Ctrl+C
   in a busy program; resize; browser reload (buffer replay incl. cmd/PS);
@@ -342,9 +380,11 @@ to serialize with `writeInput`/`setSize`:
 0. Toolchain check + standalone POC proves the 4 contract on this machine.
 1. `ConPty` class with the **complete lifecycle** (reader + writer threads,
    bounded buffer with backpressure, full shutdown contract per 6.3/6.4) +
-   dynamic loader + types; `Win32ConPtyTests.cpp`. Build + run unit tests. The
-   shutdown/ownership/timeout contract is fully specified here (6.3) before
-   coding begins.
+   dynamic loader + types; `Win32ConPtyTests.cpp`. The shutdown/ownership/
+   timeout contract is fully specified (6.3) before coding begins. The plan
+   splits this into focused commits -- (1a) dynamic loader + startup/
+   `CreateProcess`, (1b) reader + bounded buffer/backpressure, (1c) writer +
+   input queue, (1d) shutdown/teardown -- each with its own tests.
 2. Integrate into `Win32ChildProcess` (reader -> poll with final-drain-on-exit,
    writer, setSize, shutdown). **Bump `kConsoleDir` -> `console08` in this phase**
    (ConPTY output format goes live here). Build session; smoke a terminal.
@@ -353,8 +393,10 @@ to serialize with `writeInput`/`setSize`:
 4. Build-system + dependency removal; delete winpty files.
 5. Frontend buffer-replay re-enable (`TerminalSession.java`).
 6. Full test pass (unit + Playwright) + manual matrix on cmd/pwsh/git-bash/TUI.
-7. Cleanup, restore `.gitignore` + remove `docs/superpowers`, `NEWS.md`, final
-   review.
+7. Cleanup + `NEWS.md` + final review. The cleanup removes exactly the two
+   committed design artifacts (`docs/superpowers/specs/2026-05-29-windows-conpty-design.md`
+   and the plan file under `docs/superpowers/plans/`) and restores the single
+   `docs/superpowers` line in `.gitignore` -- nothing else.
 
 Each phase is a commit (or small commit series) and goes through the roborev
 review loop before the next phase begins.
@@ -365,11 +407,22 @@ review loop before the next phase begins.
   winpty install simply goes away. Verify a 32-bit session build still links.
 - **Windows `CUSTOM` shell replay**: resolved default = reloadable like the
   standard shells (clean VT under ConPTY). Open only for user veto.
-- **Deadlock avoidance** rests on the reader always being able to drain (via
-  `poll()` on the session loop) and input living on the writer thread; the
-  `stop()` ordering in 6.3 must be honored exactly.
+- **Deadlock avoidance** rests on two invariants: steady-state output drains via
+  `poll()` on the session loop, and `stop()` releases a backpressure-paused
+  reader by setting `stopped_` + notifying `outCv_` (6.3). Input lives on the
+  writer thread and is abandoned on stop. The `stop()` ordering must be honored
+  exactly.
+- **Ctrl+C ordering (not a regression)**: input flows FIFO through the writer
+  queue -- identical ordering to today's synchronous writes. A large paste ahead
+  of `0x03` delays the interrupt exactly as it does today; the writer thread does
+  not change this. (Priority/out-of-band interrupt is the deferred signal-based
+  work, not this pass.)
 - **Persistence**: bumping `kConsoleDir` discards old winpty-era buffers (fresh
   start), which is acceptable; no migration.
-- **Watermark sizing**: high/low-water marks for the output buffer are tuning
-  values; pick conservative defaults (e.g., a few hundred KB) and confirm under
-  the sustained-high-output test.
+- **Buffer-replay timing**: Phase 2 makes ConPTY live, but the frontend replay
+  re-enable lands in Phase 5. In between, replay simply stays disabled for
+  Windows shells (today's behavior) -- no incompatibility, just the feature is
+  off until Phase 5.
+- **Design vs. plan boundary**: this design fixes the lifecycle *contract*. The
+  concrete tuning constants (6.1) and the full per-case test assertions are
+  pinned in the implementation plan, not here.
