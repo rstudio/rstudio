@@ -32,24 +32,24 @@
 .rs.addFunction("preview.safeCallAllowlist", function()
 {
    builtin <- c(
-      # database connection constructors
+      # database connection constructors (sorted alphabetically)
+      "bigquery", "bigrquery::bigquery",
       "dbConnect", "DBI::dbConnect",
-      "dbPool", "pool::dbPool",
-      "odbc", "odbc::odbc",
       "dbDriver", "DBI::dbDriver",
-      "SQLite", "RSQLite::SQLite",
-      "Postgres", "RPostgres::Postgres",
-      "Redshift", "RPostgres::Redshift",
-      "PostgreSQL", "RPostgreSQL::PostgreSQL",
+      "dbPool", "pool::dbPool",
+      "duckdb", "duckdb::duckdb",
       "MariaDB", "RMariaDB::MariaDB",
       "MySQL", "RMySQL::MySQL",
-      "bigquery", "bigrquery::bigquery",
-      "duckdb", "duckdb::duckdb",
+      "odbc", "odbc::odbc",
+      "Postgres", "RPostgres::Postgres",
+      "PostgreSQL", "RPostgreSQL::PostgreSQL",
+      "Redshift", "RPostgres::Redshift",
       "Spark", "sparklyr::spark_connect",
+      "SQLite", "RSQLite::SQLite",
 
-      # pure helpers for constructing arguments
-      "c", "list", "paste", "paste0", "sprintf", "file.path",
-      "Sys.getenv", "getOption"
+      # pure helpers for constructing arguments (sorted alphabetically)
+      "c", "file.path", "getOption", "list",
+      "paste", "paste0", "sprintf", "Sys.getenv"
    )
 
    # Sites can extend the allowlist with their own connection helpers (for
