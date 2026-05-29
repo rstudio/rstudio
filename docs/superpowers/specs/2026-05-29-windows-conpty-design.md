@@ -193,50 +193,54 @@ private:
    HPCON  hPC_ = nullptr;
    HANDLE hInputWrite_ = nullptr;                 // writer thread writes
    HANDLE hOutputRead_ = nullptr;                 // reader thread reads
-   std::thread readerThread_;
-   std::thread writerThread_;
+   std::thread readerThread_;                     // both launched after
+   std::thread writerThread_;                     //   CreatePseudoConsole,
+                                                  //   before CreateProcess (6.1)
 
-   std::mutex stateMutex_;                        // guards lifecycle/stopped_
-   bool stopped_ = false;
+   std::mutex stateMutex_;                        // serializes start/stop/setSize
+   std::atomic<bool> stopped_{false};             // read lock-free by threads
+   std::atomic<bool> abandon_{false};             // writer: exit without draining
 
    std::mutex outMutex_;
    std::condition_variable outCv_;                // reader<->poll backpressure
-   std::string outputBuffer_;                     // bounded by kMaxBuffer
+   std::string outputBuffer_;                     // bounded by kOutHighWater
    bool outputClosed_ = false;
+   bool outputTruncated_ = false;                 // forced-drain drop occurred
 
    std::mutex inMutex_;
    std::condition_variable inCv_;
    std::deque<std::string> inputQueue_;           // drained by writer thread
+   size_t inputQueuedBytes_ = 0;                  // kInQueueMax accounting
    bool inputDone_ = false;
+   Error writerError_;                            // last write failure; via poll()
 };
 ```
 
 - `start()` builds the command line/env exactly as the current winpty path does
   (reuse the cmdline-quoting and UTF-8 env-block logic), then runs the 4
-  sequence. **Each step that allocates is protected by a scope guard** so a
-  failure at any point unwinds cleanly (8). The reader thread is launched
-  **immediately after `CreateProcess` succeeds**, so any later failure unwinds
-  through the same bounded teardown as normal shutdown (6.3) -- there is no
-  window where `ClosePseudoConsole` runs with a live child but no draining
-  reader.
+  sequence. **Each step that allocates is protected by a scope guard.** The
+  reader and writer threads are launched **after `CreatePseudoConsole` but
+  before `CreateProcess`**, so a thread-creation failure happens while there is
+  still no child (clean unwind), and once the child exists a draining reader
+  always exists. Failures after `CreateProcess` unwind through the bounded
+  teardown (6.3).
 - Reader thread: blocking `ReadFile(hOutputRead_, ...)`; append under
   `outMutex_`. Backpressure wait is `while (!stopped_ && outputBuffer_.size() >=
-  kOutHighWater) outCv_.wait(...)` -- so once `stopped_` is set the reader stops
-  pausing and drains freely (this is what breaks the shutdown-while-paused
-  deadlock). On `ERROR_BROKEN_PIPE`/EOF set `outputClosed_`, notify, exit; on any
-  other `ReadFile` error, log, set `outputClosed_`, and exit (treated as
-  pipe-closed).
+  kOutHighWater) outCv_.wait(...)`. Once `stopped_` is set the reader no longer
+  *pauses*, but it still enforces `kOutHighWater` by dropping overflow and
+  setting `outputTruncated_` (logged) -- so memory stays bounded even while
+  `stop()` blocks the consumer. On `ERROR_BROKEN_PIPE`/EOF set `outputClosed_`,
+  notify, exit; on any other `ReadFile` error, log, set `outputClosed_`, exit.
 - `readOutput()`: swap `outputBuffer_` into `*pOut` under `outMutex_`, then
   `notify` `outCv_` so a paused reader resumes.
 - Writer thread: wait on `inCv_` for queued input, `inputDone_`, or `abandon_`.
-  If `abandon_` it exits immediately (queue already cleared, 6.3) -- it never
-  resumes draining after a cancelled write. Otherwise blocking
+  If `abandon_` it exits immediately without draining. Otherwise blocking
   `WriteFile(hInputWrite_, ...)`; a failed/cancelled write stores the error in
-  `writerError_` (surfaced via `poll()` (6.2) / logged) and exits.
-- `writeInput()`: enqueue under `inMutex_` + notify, with no main-thread
-  blocking. The queue is **bounded by `kInQueueMax` bytes**; input that would
-  exceed the cap is rejected with an error (the caller logs it). Returns the
-  stored `writerError_` if a prior async write failed.
+  `writerError_` (under `inMutex_`) and exits. `stopped_`/`abandon_` are atomic.
+- `writeInput()`: enqueue under `inMutex_` + notify, no main-thread blocking. The
+  queue is **bounded by `kInQueueMax` bytes** (`inputQueuedBytes_`); input that
+  would exceed the cap is rejected with an error. Also returns a stored
+  `writerError_` from a prior async write.
 - `setSize()`/`writeInput()` are no-ops returning an error once `stopped_`.
 - **Bounding constants** (defaults; final values validated by the plan's
   sustained-high-output test): `kOutHighWater` ~1 MiB, `kOutLowWater` ~256 KiB,
@@ -256,7 +260,9 @@ private:
   without re-pausing on backpressure even though `poll()` is blocked inside
   `stop()`; `stop()` joins it. Then **drain `readOutput()` one final time and
   dispatch it to `onStdout`**, and only then close the process handle and call
-  `onExit`. This guarantees the last command output/prompt is not lost.
+  `onExit`. On a normal close this preserves the last command output/prompt
+  (best-effort up to `kOutHighWater`); a forced/timed-out teardown (6.3) may
+  truncate, reported via `outputTruncated_`.
 - `writeToStdin` (PTY branch): `pImpl_->pty.writeInput(input)`.
 - `ptySetSize` -> `pty.setSize`; `ptyInterrupt` -> no-op (returns Success).
 
@@ -265,32 +271,35 @@ private:
 `ConPty::stop()` is idempotent and uses one deterministic sequence (also used by
 the partial-startup unwind in 8). Under `stateMutex_` to serialize with
 `writeInput`/`setSize`:
-1. Set `stopped_`. Wake the reader: lock `outMutex_`, `notify` `outCv_` so a
-   reader paused on backpressure resumes and drains freely (no re-pause while
-   `stopped_`). This is the step that prevents the shutdown-while-paused hang.
-2. Stop the writer: set `abandon_`, **clear `inputQueue_`**, `notify` `inCv_`,
-   and `CancelSynchronousIo(writerThread_)` to break a blocked `WriteFile`. The
-   writer exits immediately after a cancelled write or on seeing `abandon_`; it
-   does not resume draining. `join()` the writer (bounded by `kShutdownTimeoutMs`;
-   on timeout, log and detach).
-3. Run `ClosePseudoConsole(hPC_)` on a **separate closer thread** (never the
-   reader). The reader is draining (step 1), so it returns promptly even
-   pre-24H2.
-4. Wait for the closer and the reader with a single `kShutdownTimeoutMs` budget.
-   On timeout, force the reader out by closing `hOutputRead_` (breaks its
-   `ReadFile`) and `CancelSynchronousIo(readerThread_)`, which also lets a
-   blocked `ClosePseudoConsole` finish.
-5. `join()` the reader and closer. The accumulated `outputBuffer_` holds the
-   final frame for 6.2's final `readOutput`. Close `hInputWrite_`/`hOutputRead_`
-   (if not already); null `hPC_`.
+1. Set `stopped_` (atomic) and `notify` `outCv_` so a backpressure-paused reader
+   resumes (it then drains without pausing, dropping past `kOutHighWater` with
+   `outputTruncated_`). This prevents the shutdown-while-paused hang.
+2. Stop the writer: set `abandon_`, clear `inputQueue_`, `notify` `inCv_`, and
+   `CancelSynchronousIo(writerThread_)` to break a blocked `WriteFile`.
+   `CancelSynchronousIo` reliably unblocks the synchronous write, so the writer
+   returns and exits; **`join()` it -- never detach, since it touches members.**
+3. Run `ClosePseudoConsole(hPC_)` on a closer thread that **captures only the
+   `HPCON` value and the resolved function pointer** (no `this`/members). With
+   the reader draining, it returns promptly even pre-24H2.
+4. Bounded wait (`kShutdownTimeoutMs`) for the closer and reader. On timeout,
+   `CancelSynchronousIo(readerThread_)` reliably unblocks the reader's `ReadFile`
+   so the reader returns and is **joined**; closing `hOutputRead_` also breaks
+   the pipe and lets a blocked `ClosePseudoConsole` finish. If the closer still
+   has not returned, it is safe to **detach** -- it holds no members, so at worst
+   the `HPCON` leaks. The closer is the only thread ever detached.
+5. `join()` the reader (always). The accumulated `outputBuffer_` (capped) is
+   drained once more by 6.2. Close `hInputWrite_`/`hOutputRead_`; null `hPC_`.
 
 ### 6.4 Concurrency / lifecycle guards
 
-- `stateMutex_` serializes `start`/`stop`/`writeInput`/`setSize` so they cannot
-  race during close. After `stopped_`, `writeInput`/`setSize` return an error
-  and `setSize` never calls `ResizePseudoConsole` on a closed `HPCON`.
-- The reader/writer threads touch only their own buffers + the raw handles; the
-  handles are closed only after both threads are joined.
+- `stateMutex_` serializes `start`/`stop`/`setSize`. `stopped_`/`abandon_` are
+  atomic so the reader/writer read them lock-free without racing the writer in
+  `stateMutex_`. After `stopped_`, `writeInput`/`setSize` return an error and
+  `setSize` never calls `ResizePseudoConsole` on a closed `HPCON`.
+- The reader/writer touch only their buffers + the raw handles and are always
+  joined before any handle is closed (no use-after-free). The closer thread is
+  the only thread that may outlive `stop()`, and it captures no members -- so a
+  detached closer cannot race freed state.
 
 ## 7. Touch-points (verified file:line)
 
