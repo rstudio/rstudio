@@ -91,6 +91,27 @@ export async function waitForConsoleIdle(
 }
 
 /**
+ * Wait for the console input to gain its "busy" class -- i.e. for R to start
+ * processing submitted code. Pairs with waitForConsoleIdle to bracket an
+ * asynchronously-dispatched job (e.g. executeCurrentChunk) whose work doesn't
+ * begin on the same tick: wait for busy first so a following waitForConsoleIdle
+ * can't observe a spuriously-idle console and return before the job has even
+ * started. Callers should tolerate a job fast enough that the busy class is
+ * never observed (catch the timeout) -- waitForConsoleIdle is then already
+ * satisfied. Polls the DOM at 50ms intervals.
+ */
+export async function waitForConsoleBusy(page: Page, timeout: number = 2000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && el.classList.contains('rstudio-console-busy');
+    },
+    null,
+    { timeout, polling: 50 },
+  );
+}
+
+/**
  * Wait until the console input's Ace editor owns the document focus.
  * `activateConsole` schedules the focus shift on the next event-loop tick,
  * so callers that follow it with keystrokes can race the focus change.
