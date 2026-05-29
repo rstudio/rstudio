@@ -78,6 +78,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
 
       - name: Install rig
         run: |
@@ -161,40 +163,11 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
-      - name: Restore R library cache
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
-        id: r-cache
-        uses: actions/cache/restore@v4
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/e2e-deps
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
-          restore-keys: |
-            ${{ runner.os }}-r-${{ inputs.r_version }}-
-
-      - name: Install R packages from DESCRIPTION
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != ''
-        run: |
-          $ErrorActionPreference = 'Stop'
-          Rscript -e @'
-            options(repos = c(P3M = "https://packagemanager.posit.co/cran/latest"))
-            if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
-            pak::local_install_dev_deps(root = "e2e/rstudio", ask = FALSE, upgrade = FALSE)
-          '@
-
-      - name: Save R library cache
-        if: hashFiles('e2e/rstudio/DESCRIPTION') != '' && steps.r-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ inputs.r_version }}-${{ hashFiles('e2e/rstudio/DESCRIPTION') }}
-
-      - name: Install npm dependencies
-        working-directory: e2e/rstudio
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: e2e/rstudio
-        run: npx playwright install --with-deps chromium
+          r-version: ${{ inputs.r_version }}
+          r-libs-user: ${{ env.R_LIBS_USER }}
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
