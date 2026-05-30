@@ -54,7 +54,11 @@ namespace console_persist {
 // 2019/07/30 - console06 -> console07
 //                Changed shell type from int to string to align with user
 //                preferences
-#define kConsoleDir "console07"
+// 2026/05/30 - console07 -> console08
+//                Windows terminal output now comes from ConPTY as clean VT
+//                sequences (was winpty screen-scraping); old buffers cannot be
+//                replayed under the new renderer, so start fresh.
+#define kConsoleDir "console08"
 
 namespace {
 
