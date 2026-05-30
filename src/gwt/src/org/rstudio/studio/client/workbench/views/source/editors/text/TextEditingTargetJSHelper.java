@@ -88,7 +88,8 @@ public class TextEditingTargetJSHelper
 
    // Ask the backend whether the built r2d3 command is safe to run. The
    // command comes from the file's '!preview' header, so an untrusted file
-   // could otherwise smuggle arbitrary R into the console. When the command
+   // could otherwise smuggle arbitrary R into the console. The backend
+   // requires the command to be a single statement and classifies it; when it
    // is not statically safe the backend returns a "confirm" result; we prompt
    // the user and only run it (in the console, where r2d3 renders the widget)
    // once they consent.
@@ -131,6 +132,13 @@ public class TextEditingTargetJSHelper
                display_.showErrorMessage(
                      constants_.previewJSErrorCaption(),
                      result.getMessage());
+            }
+            else
+            {
+               // an unexpected (or empty) action with no message; log it
+               // rather than silently doing nothing
+               Debug.log("Unexpected r2d3 preview result action: '" +
+                         result.getAction() + "'");
             }
          }
 

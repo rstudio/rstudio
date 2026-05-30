@@ -97,6 +97,10 @@
        (identical(callee[[1L]], as.symbol("::")) ||
         identical(callee[[1L]], as.symbol(":::"))))
    {
+      # deliberately normalize both '::' and ':::' to a single '::' form so one
+      # allowlist entry (e.g. 'DBI::dbConnect') matches either spelling; the
+      # exported/internal distinction does not affect whether the call is safe,
+      # so do not "fix" this to preserve ':::'
       return(paste0(as.character(callee[[2L]]), "::", as.character(callee[[3L]])))
    }
 
@@ -239,9 +243,17 @@
 
    # parse the user-provided code (strip srcref so connection expressions
    # compare equal against the permitted set maintained in SessionSql.R)
-   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE)[[1]])
+   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE))
    if (inherits(parsed, "error"))
       return(onError("Failed to parse SQL preview comment."))
+
+   # a preview comment is a single '.rs.previewSql(...)' call; require exactly
+   # one statement so trailing statements cannot be silently dropped (here the
+   # call is evaluated server-side, but we keep the contract symmetric with the
+   # r2d3 handler, where multi-statement input is a code-injection vector)
+   if (length(parsed) != 1L)
+      return(onError("Unsupported SQL preview comment."))
+   parsed <- parsed[[1L]]
 
    # require the canonical preview call shape. the '!preview' header lets the
    # user override the function name (e.g. '-- !preview system(...)'), so we
@@ -303,8 +315,14 @@
 
 # Consent check for the r2d3 ('// !preview r2d3 ...') file preview. Unlike SQL
 # preview, the built 'r2d3::r2d3(...)' call is run in the console (so r2d3 can
-# render the widget), so this handler only classifies the command and reports
+# render the widget), so this handler classifies the command and reports
 # whether it is safe to run -- the front-end performs the console execution.
+#
+# Because the front-end runs the command string verbatim, the command must be
+# a single statement: classifying only the first expression while the console
+# runs every statement would let a multi-statement header (e.g.
+# 'r2d3::r2d3(...); system(...)') smuggle code past the classifier. We reject
+# anything that does not parse to exactly one statement.
 .rs.addJsonRpcHandler("preview_r2d3", function(code, allow = FALSE)
 {
    onError <- function(reason) {
@@ -321,9 +339,17 @@
       list(action = .rs.scalar("ok"))
    }
 
-   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE)[[1]])
+   parsed <- .rs.tryCatch(parse(text = code, keep.source = FALSE))
    if (inherits(parsed, "error"))
       return(onError("Failed to parse preview comment."))
+
+   # the front-end runs the command verbatim in the console, so it must be a
+   # single statement; reject multi-statement input that would otherwise run
+   # extra code the classifier (which inspects only the first expression) never
+   # examined
+   if (length(parsed) != 1L)
+      return(onError("Unsupported preview comment."))
+   parsed <- parsed[[1L]]
 
    # the front-end forces the call to r2d3::r2d3; confirm that here so the
    # function position cannot itself be used to inject code

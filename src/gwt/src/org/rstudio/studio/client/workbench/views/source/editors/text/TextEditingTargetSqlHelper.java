@@ -115,6 +115,13 @@ public class TextEditingTargetSqlHelper
                      constants_.errorPreviewingSql(),
                      result.getMessage());
             }
+            else
+            {
+               // an unexpected action with no message; log it rather than
+               // silently doing nothing
+               Debug.log("Unexpected SQL preview result action: '" +
+                         result.getAction() + "'");
+            }
          }
 
          @Override

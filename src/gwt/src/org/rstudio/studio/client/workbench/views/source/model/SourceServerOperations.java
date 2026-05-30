@@ -66,9 +66,10 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 ChatServerOperations
 {
    // Consent check for an r2d3 ('// !preview r2d3 ...') file preview. The
-   // backend classifies the built command and returns whether it is safe to
-   // run; when it is not, the front-end prompts the user and retries with
-   // allowUnsafe = true before executing the command in the console.
+   // backend requires the built command to be a single statement, classifies
+   // it, and returns whether it is safe to run; when it is not, the front-end
+   // prompts the user and retries with allowUnsafe = true before executing the
+   // command (verbatim) in the console.
    void previewR2d3(String command,
                     boolean allowUnsafe,
                     ServerRequestCallback<PreviewResult> requestCallback);

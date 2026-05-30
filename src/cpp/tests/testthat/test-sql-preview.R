@@ -238,3 +238,103 @@ test_that("preview_r2d3 allows statically-safe commands without prompting", {
    expect_identical(unclass(result$action), "ok")
 
 })
+
+test_that("preview_r2d3 rejects multi-statement input", {
+
+   handler <- .rs.rpc.preview_r2d3
+
+   # the front-end runs the command verbatim in the console, so a header that
+   # closes the r2d3 call early and appends another statement must not classify
+   # as safe: otherwise the classifier inspects only the first expression while
+   # the console runs both. This is the reported bypass.
+   code <- "r2d3::r2d3(\"viz.js\", height = 300); system(\"echo pwned\")"
+   result <- handler(code, allow = FALSE)
+   expect_false(identical(unclass(result$action), "ok"))
+   expect_identical(unclass(result$action), "error")
+   expect_match(unclass(result$message), "Unsupported")
+
+   # even explicit consent must not turn multi-statement input into "ok"
+   result <- handler(code, allow = TRUE)
+   expect_identical(unclass(result$action), "error")
+
+})
+
+test_that("preview_r2d3 rejects a top-level brace block", {
+
+   handler <- .rs.rpc.preview_r2d3
+
+   # a single '{ ... }' statement parses to length 1, so the multi-statement
+   # guard does not fire; the callee check rejects it instead (the function
+   # position must be r2d3::r2d3, not '{')
+   code <- "{ r2d3::r2d3(\"viz.js\"); system(\"echo pwned\") }"
+   result <- handler(code, allow = FALSE)
+   expect_identical(unclass(result$action), "error")
+   expect_match(unclass(result$message), "Unsupported")
+
+})
+
+test_that("preview_r2d3 prompts for a brace block smuggled through an argument", {
+
+   handler <- .rs.rpc.preview_r2d3
+
+   # a brace block nested as an argument is a single statement with the right
+   # callee, but '{' is not allow-listed, so the argument is unsafe and consent
+   # is required before it can run
+   code <- "r2d3::r2d3(\"viz.js\", data = { system(\"echo pwned\") })"
+   result <- handler(code, allow = FALSE)
+   expect_identical(unclass(result$action), "confirm")
+
+})
+
+test_that("preview_r2d3 permits an unsafe argument once the user consents", {
+
+   handler <- .rs.rpc.preview_r2d3
+   on.exit(.rs.preview.permittedExprs$items <- NULL)
+
+   code <- "r2d3::r2d3(\"viz.js\", data = system(\"echo pwned\"))"
+
+   # without consent the unsafe argument prompts
+   expect_identical(unclass(handler(code, allow = FALSE)$action), "confirm")
+
+   # with consent the handler permits the expression and reports it is safe to
+   # run. The r2d3 handler only classifies; it never evaluates the command, so
+   # 'system(...)' does not actually run here.
+   expect_identical(unclass(handler(code, allow = TRUE)$action), "ok")
+
+   # the consented argument is now permitted for the session, so a later
+   # preview of the same command no longer prompts
+   expect_identical(unclass(handler(code, allow = FALSE)$action), "ok")
+
+})
+
+test_that("preview_sql rejects multi-statement input", {
+
+   handler <- .rs.rpc.preview_sql
+
+   # symmetric with the r2d3 handler: a preview comment is a single call, so
+   # reject trailing statements rather than silently dropping them
+   code <- ".rs.previewSql(\"query.sql\", conn = con); system(\"echo pwned\")"
+   result <- handler(code, allow = FALSE)
+   expect_identical(unclass(result$action), "error")
+   expect_match(unclass(result$message), "Unsupported")
+
+})
+
+test_that("preview_sql permits an unsafe connection once the user consents", {
+
+   handler <- .rs.rpc.preview_sql
+   on.exit(.rs.preview.permittedExprs$items <- NULL)
+
+   # 'identity' is not allow-listed, so the connection expression is unsafe.
+   # Evaluating it is harmless (it yields NULL, which previewSql reports as a
+   # failed connection) but exercises the allow = TRUE permit-and-evaluate path.
+   code <- ".rs.previewSql(\"query.sql\", conn = identity(NULL))"
+
+   expect_identical(unclass(handler(code, allow = FALSE)$action), "confirm")
+
+   # with consent the expression is permitted and evaluation proceeds (no
+   # second prompt); it never returns "confirm" again
+   expect_false(identical(unclass(handler(code, allow = TRUE)$action), "confirm"))
+   expect_false(identical(unclass(handler(code, allow = FALSE)$action), "confirm"))
+
+})
