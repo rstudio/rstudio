@@ -101,6 +101,121 @@ TEST(Win32ConPtyTest, StopBeforeOutputDoesNotHang)
    ::CloseHandle(hProc);
 }
 
+TEST(Win32ConPtyTest, HighOutputStaysBounded)
+{
+   ConPty pty;
+   // emit ~5 MiB quickly without draining
+   std::vector<std::string> args = {"/c", "for /L %i in (1,1,80000) do @echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+
+   // do NOT drain for a while; the internal buffer must stay bounded
+   std::this_thread::sleep_for(std::chrono::seconds(2));
+   // First drain returns at most ~kOutHighWater; the class must not have grown
+   // unboundedly (process did not OOM and stop() must not hang).
+   std::string chunk;
+   pty.readOutput(&chunk);
+   EXPECT_LE(chunk.size(), 2u * 1024 * 1024);
+
+   pty.stop(); // must not hang even though the reader was paused
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, WriteInputIsEchoed)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+
+   drainUntil(pty, ">", 4000); // wait for prompt
+   ASSERT_FALSE(pty.writeInput("echo MARK_WRITE\r\n"));
+   std::string out = drainUntil(pty, "MARK_WRITE", 4000);
+   EXPECT_NE(out.find("MARK_WRITE"), std::string::npos) << out;
+
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, CtrlCByteTerminatesBusyChild)
+{
+   ConPty pty;
+   std::vector<std::string> args = {"/c", "ping -n 30 127.0.0.1 >nul"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(300));
+   ASSERT_FALSE(pty.writeInput(std::string(1, '\x03')));
+
+   DWORD wr = ::WaitForSingleObject(hProc, 5000);
+   EXPECT_EQ(wr, WAIT_OBJECT_0); // child died promptly
+
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, InputQueueOverflowRejected)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive, won't drain 1MiB fast
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+
+   Error err;
+   for (int i = 0; i < 4096 && !err; ++i)
+      err = pty.writeInput(std::string(1024, 'x')); // 4 MiB attempted
+   EXPECT_TRUE(err); // some write rejected by the queue cap
+
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, ShutdownWhilePausedAtWatermark)
+{
+   ConPty pty;
+   std::vector<std::string> args = {"/c", "for /L %i in (1,1,200000) do @echo PADPADPADPADPADPADPADPADPADPADPADPAD"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   std::this_thread::sleep_for(std::chrono::seconds(1)); // reader pauses at HWM
+
+   auto t0 = std::chrono::steady_clock::now();
+   pty.stop(); // must return within the shutdown budget, no hang
+   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+         std::chrono::steady_clock::now() - t0).count();
+   EXPECT_LT(ms, 8000);
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, StartFailsForMissingExeNoLeakNoHang)
+{
+   ConPty pty;
+   std::vector<std::string> args;
+   HANDLE hProc = nullptr;
+   Error err = pty.start("C:\\nope\\does-not-exist.exe", args, ptyOptions(), &hProc);
+   EXPECT_TRUE(err);
+   EXPECT_EQ(hProc, nullptr);
+   EXPECT_FALSE(pty.running());
+   // destructor must not hang
+}
+
+TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive cmd
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   drainUntil(pty, ">", 4000);
+
+   ASSERT_FALSE(pty.closeInput());     // request stdin EOF; writer drains then exits
+   Error e = pty.writeInput("x");      // must be rejected (closeInputRequested_/writerExited_)
+   EXPECT_TRUE(e);                     // not silently queued to a closing writer
+
+   EXPECT_FALSE(pty.takeWriterError()); // healthy session: no spurious writer error
+
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
 } // namespace tests
 } // namespace system
 } // namespace core
