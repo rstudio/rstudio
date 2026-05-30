@@ -1280,29 +1280,22 @@ void ConPty::teardownLocked()
       closer = std::thread([hpc] { api().close(hpc); });
    }
 
-   // 4) Join the writer with a GUARANTEED-bounded escalation so join() can never
-   //    hang. Tier 1: closer breaks the input pipe (WriteFile fails). Tier 2:
-   //    repeat CancelSynchronousIo every 25ms to cover the dequeue->WriteFile
-   //    TOCTOU. Tier 3 (last resort): if still alive after the window, close
-   //    hInputWrite_ to force any blocked WriteFile to fail. Closing a handle
-   //    under in-flight IO is normally unsafe, but teardown opens no new handles
-   //    (no handle-reuse hazard) and a guaranteed-terminating shutdown outranks
-   //    the residual risk. After tier 3 the writer exits, so join() returns.
+   // 4) Join the writer. Bounded WITHOUT closing any handle under in-flight IO
+   //    (that would be the handle-reuse race the design must avoid; ConPTY
+   //    requires synchronous handles, so cancelable overlapped IO is not an
+   //    option). The guarantee instead rests on CancelSynchronousIo: a thread
+   //    blocked in cancellable synchronous IO is always unblocked by it. We
+   //    repeat it every 25ms so the dequeue->WriteFile TOCTOU cannot make it
+   //    miss permanently; once the WriteFile is cancelled (or the closer breaks
+   //    the input pipe), the writer sees the error or abandon_ and returns. So
+   //    the loop is bounded and the following join() cannot hang -- independent
+   //    of whether the closer has finished. We close hInputWrite_ only AFTER the
+   //    join, when no thread can be using it.
    if (writerThread_.joinable())
    {
       HANDLE wh = writerThread_.native_handle();
-      DWORD waited = 0;
-      while (waited < kShutdownTimeout &&
-             ::WaitForSingleObject(wh, 25) != WAIT_OBJECT_0)
-      {
+      while (::WaitForSingleObject(wh, 25) != WAIT_OBJECT_0)
          ::CancelSynchronousIo(wh);
-         waited += 25;
-      }
-      if (::WaitForSingleObject(wh, 0) != WAIT_OBJECT_0 && hInputWrite_)
-      {
-         ::CloseHandle(hInputWrite_); // last resort: break the input pipe
-         hInputWrite_ = nullptr;
-      }
       writerThread_.join();
    }
 
@@ -1318,25 +1311,21 @@ void ConPty::teardownLocked()
    }
    hPC_ = nullptr;
 
-   // 6) Join the reader AFTER the closer, with the same guaranteed-bounded
-   //    escalation. Tier 1: the closed pseudoconsole broke the output pipe, so
-   //    ReadFile returns EOF (we wait kShutdownTimeout to let the closer's drain
-   //    finish first -- no tight cancel loop, which would abort that drain).
-   //    Tier 2: a single CancelSynchronousIo. Tier 3 (last resort): close
-   //    hOutputRead_ to force a stuck ReadFile to fail (same teardown-only
-   //    rationale as the writer). After tier 3 the reader exits, so join()
-   //    returns.
+   // 6) Join the reader AFTER the closer, in two bounded phases (also without
+   //    closing its handle under IO). Phase 1: wait kShutdownTimeout for a clean
+   //    exit -- the closed pseudoconsole breaks the output pipe so ReadFile
+   //    returns EOF after the reader has drained the final frame; we do NOT
+   //    cancel here, which would abort that drain. Phase 2 (closer slow/stuck):
+   //    fall back to the writer's bounded cancel loop -- a cancelled ReadFile
+   //    returns !ok, so the reader exits. Either way the following join() is
+   //    bounded and cannot hang.
    if (readerThread_.joinable())
    {
       HANDLE rh = readerThread_.native_handle();
       if (::WaitForSingleObject(rh, kShutdownTimeout) != WAIT_OBJECT_0)
       {
-         ::CancelSynchronousIo(rh);
-         if (::WaitForSingleObject(rh, kShutdownTimeout) != WAIT_OBJECT_0 && hOutputRead_)
-         {
-            ::CloseHandle(hOutputRead_); // last resort: break the output pipe
-            hOutputRead_ = nullptr;
-         }
+         while (::WaitForSingleObject(rh, 25) != WAIT_OBJECT_0)
+            ::CancelSynchronousIo(rh);
       }
       readerThread_.join();
    }
@@ -1358,13 +1347,18 @@ The race between `writeInput()` and `teardownLocked()` clearing the queue is alr
 
 - [ ] **Step 5: Add input-rejection-after-EOF and writer-error contract tests**
 
-A real `WriteFile` failure is not deterministically reproducible in a unit test
-(ConPTY keeps the input read end open until `ClosePseudoConsole`, so writes do
-not fail merely because the child exited; that path is covered by the Phase 6
-manual matrix -- large paste to a wedged child / forced close). What IS
-deterministic, and is the core of finding #3's fix, is that input is rejected
-once the input channel is closing -- never silently queued to a writer that is
-gone:
+On testing the writer-error report-once path: exercising `writerExited_`
+*distinctly from* `closeInputRequested_` requires the writer to exit via a real
+`WriteFile` failure while the session is live. That is not deterministically
+reproducible at the unit level -- ConPTY keeps the input read end open until
+`ClosePseudoConsole`, so `WriteFile` does not fail merely because the child
+exited, and forcing a failure would require a white-box test seam in the
+production class (which the project's "test behavior, not implementation"
+guidance discourages). So this path is covered by code review plus the Phase 6
+manual matrix (paste into a wedged child, then force-close). What IS
+deterministic -- and is the user-visible half of finding #3's fix -- is that
+input is rejected once the channel is closing, never silently queued to a writer
+that is gone:
 ```cpp
 TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
 {
