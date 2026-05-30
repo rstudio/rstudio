@@ -224,6 +224,32 @@ Note the printed `attr` value (must be `0x00020016`). This confirms the macro us
 
 (No commit — the POC is throwaway and lives outside `src/`. Leave the file on disk for reference until Phase 7.)
 
+### Phase 0 results (recorded 2026-05-30)
+
+Completed on this machine (MSVC VS2022 BuildTools, cl 19.44). Findings that shape Phase 1:
+
+- **Build approach validated:** compiles under `_WIN32_WINNT=0x601` with dynamic
+  kernel32 resolution; `PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE` == `0x00020016`; all
+  three functions resolve.
+- **Routing contract validated, and the prior failure explained:** with
+  `EXTENDED_STARTUPINFO_PRESENT`, `bInheritHandles=FALSE`, a zeroed `STARTUPINFOEX`
+  (no `STARTF_USESTDHANDLES`), and the PTY-side pipe ends closed before
+  `CreateProcess`, the child attaches to the pseudoconsole and `HELLO_CONPTY` /
+  interactive input route through the pipes **even when the host owns a console**.
+  A controlled confound experiment isolated the real breaker as **redirecting the
+  child's std handles** (`STARTF_USESTDHANDLES`), not console ownership —
+  `FreeConsole` is NOT needed. `DETACHED_PROCESS`/`CREATE_NO_WINDOW` break PC
+  attach and must not be used. `launchChild` above already matches the validated
+  configuration.
+- **Teardown validated:** `ClosePseudoConsole` on its own thread with a draining
+  reader terminated even a non-cooperative, actively-writing child in single-digit
+  milliseconds, both threads joined, deterministic across runs. The Task 1d
+  cancel-loop is a backstop; the closer breaking the pipes is the fast hot path.
+- **Caveat (fast-exit attach race):** a sub-millisecond child (e.g. `cmd /c echo`)
+  attaches ~95% of the time; a child living >~1s is deterministic. Real interactive
+  shells are unaffected. Not worth special handling; note it if a flaky
+  fast-command test appears.
+
 ---
 
 ## Phase 1: The `ConPty` class
@@ -548,6 +574,14 @@ Error ConPty::launchChild(const std::string& exe,
    STARTUPINFOEXW si;
    ZeroMemory(&si, sizeof(si));
    si.StartupInfo.cb = sizeof(STARTUPINFOEXW);
+   // EMPIRICALLY VALIDATED (Phase 0): leave dwFlags=0 and the hStdInput/Output/
+   // Error fields null -- do NOT set STARTF_USESTDHANDLES. Redirecting the
+   // child's std handles is what actually breaks ConPTY routing (the child
+   // writes to the redirected handle instead of the pseudoconsole); it is the
+   // real cause of the prior migration's "output went to the wrong place"
+   // failure, not console ownership. With clean std handles + bInheritHandles
+   // FALSE + closing the PTY-side ends before CreateProcess, routing works even
+   // when the host process owns a console -- no FreeConsole needed.
 
    SIZE_T bytes = 0;
    ::InitializeProcThreadAttributeList(nullptr, 1, 0, &bytes);
@@ -580,6 +614,11 @@ Error ConPty::launchChild(const std::string& exe,
    // empty environment.
    std::vector<wchar_t> env;
    LPVOID lpEnv = nullptr;
+   // EMPIRICALLY VALIDATED (Phase 0): do NOT add DETACHED_PROCESS or
+   // CREATE_NO_WINDOW -- both prevent the child from attaching to the
+   // pseudoconsole (routing breaks, 0/4 in testing). CREATE_NEW_PROCESS_GROUP is
+   // safe if ever needed for signal-based interrupt (deferred). Plain
+   // EXTENDED_STARTUPINFO_PRESENT is correct.
    DWORD creationFlags = EXTENDED_STARTUPINFO_PRESENT;
    if (options.environment)
    {
