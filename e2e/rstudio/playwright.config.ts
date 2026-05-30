@@ -7,8 +7,22 @@ type ProjectOptions = { mode: 'desktop' | 'server' };
 
 // Supported values for the PW_TRACE / PW_SCREENSHOT env escalations (a subset
 // of Playwright's string options, which is all we expose).
-type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries';
-type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
+const TRACE_MODES = ['off', 'on', 'retain-on-failure', 'on-first-retry', 'on-all-retries'] as const;
+const SCREENSHOT_MODES = ['off', 'on', 'only-on-failure'] as const;
+
+// Resolve an env override against its allowed values, falling back to the
+// default when unset. An unrecognized value is a hard error (matching the
+// PW_RSTUDIO_* env handling below) rather than being passed through to
+// Playwright, where a typo like PW_TRACE=retain-on-falure would otherwise turn
+// a debugging aid into a config error at startup.
+function resolveEnvMode<T extends string>(name: string, allowed: readonly T[], fallback: T): T {
+  const value = process.env[name];
+  if (value === undefined || value === '')
+    return fallback;
+  if (!allowed.includes(value as T))
+    throw new Error(`${name}="${value}" -- expected one of: ${allowed.join(', ')}`);
+  return value as T;
+}
 
 // Load env vars from a dotenv file before any process.env reads below.
 // Path is anchored to this config's directory so it works regardless of cwd.
@@ -110,8 +124,8 @@ export default defineConfig<{}, ProjectOptions>({
     // Both can be escalated via env for a run that passes but behaves oddly
     // (e.g. leaves a modal that only breaks a *later* test), where the
     // on-failure default captures nothing: PW_TRACE=on / PW_SCREENSHOT=on.
-    screenshot: (process.env.PW_SCREENSHOT as ScreenshotMode) ?? 'only-on-failure',
-    trace: (process.env.PW_TRACE as TraceMode) ?? 'retain-on-failure',
+    screenshot: resolveEnvMode('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
+    trace: resolveEnvMode('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
     actionTimeout: 10000,
   },
   projects,
