@@ -64,27 +64,10 @@ enum Mode
 // Struct for specifying pseudoterminal options
 struct Pseudoterminal
 {
-   Pseudoterminal(
-#ifdef _WIN32
-         const FilePath& winptyPath,
-         bool plainText,
-         bool conerr,
-#endif
-         int cols, int rows)
-      :
-#ifdef _WIN32
-        winptyPath(winptyPath),
-        plainText(plainText),
-        conerr(conerr),
-#endif
-        cols(cols), rows(rows)
+   Pseudoterminal(int cols, int rows)
+      : cols(cols), rows(rows)
    {
    }
-#ifdef _WIN32
-   FilePath winptyPath;
-   bool plainText;
-   bool conerr;
-#endif
    int cols;
    int rows;
 };

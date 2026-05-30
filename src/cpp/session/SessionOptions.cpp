@@ -320,29 +320,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &gnugrepPath_);
    resolvePath(resourcePath_, &sumatraPath_);
    resolvePath(resourcePath_, &winutilsPath_);
-   resolvePath(resourcePath_, &winptyPath_);
-
-   // winpty.dll lives next to rsession.exe on a full install; otherwise
-   // it lives in a directory named 32 or 64
-   core::FilePath pty(winptyPath_);
-   std::string completion;
-   if (pty.isWithin(resourcePath_))
-   {
-#ifdef _WIN64
-      completion = "winpty.dll";
-#else
-      completion = "x86/winpty.dll";
-#endif
-   }
-   else
-   {
-#ifdef _WIN64
-      completion = "64/bin/winpty.dll";
-#else
-      completion = "32/bin/winpty.dll";
-#endif
-   }
-   winptyPath_ = pty.completePath(completion).getAbsolutePath();
 #endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);

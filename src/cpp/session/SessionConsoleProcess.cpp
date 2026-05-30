@@ -297,14 +297,11 @@ void ConsoleProcess::commonInit()
       }
       else // terminal
       {
-         // undefine TERM, as it puts git-bash in a mode that winpty doesn't support;
+         // undefine TERM, as it puts git-bash into a mode the terminal doesn't support
          core::system::unsetenv(&(options_.environment.get()), "TERM");
 
          // request a pseudoterminal if this is an interactive console process
          options_.pseudoterminal = core::system::Pseudoterminal(
-                  session::options().winptyPath(),
-                  false /*plainText*/,
-                  false /*conerr*/,
                   options_.cols,
                   options_.rows);
       }
