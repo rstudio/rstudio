@@ -502,7 +502,12 @@ std::vector<wchar_t> buildEnvBlock(const ProcessOptions& options)
          env.push_back(L'\0');
       }
    }
-   env.push_back(L'\0'); // block terminator (also handles empty env)
+   // A Unicode environment block is terminated by a final L'\0'. An EMPTY block
+   // must still be two nulls (CreateProcessW reads a double-null terminator), so
+   // emit an extra null when there are no entries.
+   if (env.empty())
+      env.push_back(L'\0');
+   env.push_back(L'\0');
    return env;
 }
 
