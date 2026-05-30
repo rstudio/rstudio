@@ -74,7 +74,11 @@ TEST(Win32ConPtyTest, ApiIsAvailable)
 TEST(Win32ConPtyTest, StartSpawnsChildAndEchoes)
 {
    ConPty pty;
-   std::vector<std::string> args = {"/c", "echo HELLO_CONPTY"};
+   // Keep the child alive ~1s after echoing: a sub-millisecond child hits the
+   // documented ConPTY fast-exit attach race (it can exit before it finishes
+   // binding to the pseudoconsole, leaking output to the host console). A child
+   // that lives >~1s binds deterministically. See the plan's Phase 0 results.
+   std::vector<std::string> args = {"/c", "echo HELLO_CONPTY & ping -n 2 127.0.0.1 >nul"};
    HANDLE hProc = nullptr;
 
    Error err = pty.start(cmdExe(), args, ptyOptions(), &hProc);
