@@ -313,6 +313,14 @@ public:
    // if the queue would exceed its byte cap, or if a prior write failed.
    Error writeInput(const std::string& input);
 
+   // Request EOF on the child's stdin: after the queued input drains, the writer
+   // closes the input pipe (parity with the old winpty conin-close on eof).
+   Error closeInput();
+
+   // Returns and clears any error a prior asynchronous write recorded, so the
+   // caller (poll()) can surface it promptly. Success() if none.
+   Error takeWriterError();
+
    // ResizePseudoConsole. No-op error after stop().
    Error setSize(int cols, int rows);
 
@@ -330,6 +338,7 @@ private:
                      HANDLE* pProcess);
    void readerLoop();
    void writerLoop();
+   void teardownLocked();   // single ordered teardown path; caller holds stateMutex_
 
    HPCONHANDLE hPC_ = nullptr;
    HANDLE hInputWrite_ = nullptr;    // writer thread writes here
@@ -351,6 +360,7 @@ private:
    std::condition_variable inCv_;
    std::deque<std::string> inputQueue_;
    size_t inputQueuedBytes_ = 0;
+   bool closeInputRequested_ = false;   // writer closes input pipe after draining
    Error writerError_;
 };
 
@@ -620,6 +630,12 @@ Error ConPty::start(const std::string& exe,
    if (running())
       return systemError(boost::system::errc::already_connected,
                          "ConPty already running", ERROR_LOCATION);
+   // A ConPty is single-use: once stopped (or a start failed), per-run state is
+   // not reset. Reject reuse rather than support a restart path we never need
+   // (one ConPty per terminal). stopped_ is set by teardownLocked()/stop().
+   if (stopped_.load())
+      return systemError(boost::system::errc::not_supported,
+                         "ConPty cannot be reused after stop()", ERROR_LOCATION);
 
    int cols = options.pseudoterminal ? options.pseudoterminal.get().cols : options.cols;
    int rows = options.pseudoterminal ? options.pseudoterminal.get().rows : options.rows;
@@ -635,24 +651,7 @@ Error ConPty::start(const std::string& exe,
    error = launchChild(exe, args, options, pProcess);
    if (error)
    {
-      // Unwind: the reader is already running, so close on a closer thread and
-      // join the reader (1d unifies this with stop() into teardownLocked()).
-      stopped_.store(true);
-      { std::lock_guard<std::mutex> ol(outMutex_); outCv_.notify_all(); }
-      if (hPC_)
-      {
-         HPCONHANDLE hpc = hPC_;
-         std::thread closer([hpc] { api().close(hpc); });
-         if (readerThread_.joinable()) readerThread_.join();
-         if (closer.joinable()) closer.join();
-         hPC_ = nullptr;
-      }
-      else if (readerThread_.joinable())
-      {
-         readerThread_.join();
-      }
-      if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
-      if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
+      teardownLocked(); // reader already running; single teardown path (below)
       return error;
    }
    return Success();
@@ -702,6 +701,9 @@ Error ConPty::writeInput(const std::string& /*input*/)
 
 Error ConPty::setSize(int cols, int rows)
 {
+   // Hold stateMutex_ so we cannot race teardownLocked() nulling/closing hPC_
+   // (the resize call and the running/stopped check must be atomic together).
+   std::lock_guard<std::mutex> lock(stateMutex_);
    if (stopped_.load() || !running())
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
    if (cols < 1 || rows < 1)
@@ -724,23 +726,31 @@ Error ConPty::interrupt()
 void ConPty::stop()
 {
    std::lock_guard<std::mutex> lock(stateMutex_);
-   if (!running() && !readerThread_.joinable())
-      return;
-   stopped_.store(true);
+   teardownLocked();
+}
 
-   // basic ordered close (hardened in 1d):
+// 1a version: reader only. Extended for the writer in 1c and hardened
+// (closer-first ordering, cancel loops, bounded waits) in 1d.
+void ConPty::teardownLocked()
+{
+   if (stopped_.exchange(true) && !running() && !readerThread_.joinable())
+      return; // already torn down (idempotent)
+
+   { std::lock_guard<std::mutex> ol(outMutex_); outCv_.notify_all(); } // wake reader
+
+   // Close the pseudoconsole on a closer thread; it breaks the output pipe so
+   // the reader's ReadFile returns. The closer captures only the HPCON value.
+   std::thread closer;
    if (hPC_)
    {
       HPCONHANDLE hpc = hPC_;
-      std::thread closer([hpc] { api().close(hpc); });
-      if (readerThread_.joinable()) readerThread_.join();
-      if (closer.joinable()) closer.join();
-      hPC_ = nullptr;
+      closer = std::thread([hpc] { api().close(hpc); });
    }
-   else if (readerThread_.joinable())
-   {
+   if (readerThread_.joinable())
       readerThread_.join();
-   }
+   if (closer.joinable())
+      closer.join();
+   hPC_ = nullptr;
 
    if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
    if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
@@ -1050,16 +1060,32 @@ void ConPty::writerLoop()
    for (;;)
    {
       std::string chunk;
+      bool closeNow = false;
       {
          std::unique_lock<std::mutex> lock(inMutex_);
          inCv_.wait(lock, [this] {
-            return abandon_.load() || !inputQueue_.empty();
+            return abandon_.load() || !inputQueue_.empty() || closeInputRequested_;
          });
          if (abandon_.load())
-            return; // exit immediately; do not drain (shutdown abandons input)
-         chunk = std::move(inputQueue_.front());
-         inputQueue_.pop_front();
-         inputQueuedBytes_ -= chunk.size();
+            return; // shutdown abandons queued input; teardown closes the pipe
+         if (!inputQueue_.empty())
+         {
+            chunk = std::move(inputQueue_.front());
+            inputQueue_.pop_front();
+            inputQueuedBytes_ -= chunk.size();
+         }
+         else if (closeInputRequested_)
+         {
+            closeNow = true; // queue fully drained and EOF was requested
+         }
+      }
+
+      if (closeNow)
+      {
+         // Deliver stdin EOF by closing our input write end, then exit. Safe to
+         // close here: teardown joins this thread before touching hInputWrite_.
+         if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
+         return;
       }
 
       DWORD written = 0;
@@ -1068,21 +1094,21 @@ void ConPty::writerLoop()
       {
          std::lock_guard<std::mutex> lock(inMutex_);
          writerError_ = LAST_SYSTEM_ERROR();
-         return; // exit after a failed/cancelled write
+         return; // exit after a failed/cancelled write (surfaced via takeWriterError)
       }
    }
 }
 ```
-Replace the stub `writeInput()`:
+Replace the stub `writeInput()` (the final `stopped_`-under-lock form is set in 1d):
 ```cpp
 Error ConPty::writeInput(const std::string& input)
 {
    if (input.empty())
       return Success();
-   if (stopped_.load())
-      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
    std::lock_guard<std::mutex> lock(inMutex_);
+   if (stopped_.load() || closeInputRequested_)
+      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
    if (writerError_)
       return writerError_;
    if (inputQueuedBytes_ + input.size() > kInQueueMax)
@@ -1094,20 +1120,54 @@ Error ConPty::writeInput(const std::string& input)
    return Success();
 }
 ```
-
-- [ ] **Step 5: Join the writer in `stop()` (interim)**
-
-In `stop()`, before closing the pseudoconsole, add writer teardown:
+Add `closeInput()` and `takeWriterError()`:
 ```cpp
+Error ConPty::closeInput()
+{
+   std::lock_guard<std::mutex> lock(inMutex_);
+   if (stopped_.load())
+      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
+   closeInputRequested_ = true; // writer closes the pipe after draining the queue
+   inCv_.notify_one();
+   return Success();
+}
+
+Error ConPty::takeWriterError()
+{
+   std::lock_guard<std::mutex> lock(inMutex_);
+   Error e = writerError_;
+   writerError_ = Success();
+   return e;
+}
+```
+
+- [ ] **Step 5: Extend `teardownLocked()` to stop the writer**
+
+`start()` now launches the writer thread, so `teardownLocked()` must also stop it (or destroying a joinable thread calls `std::terminate`). Add writer teardown to `teardownLocked()` — abandon queued input, then cancel and join the writer — between the reader wake and the closer:
+```cpp
+   { std::lock_guard<std::mutex> ol(outMutex_); outCv_.notify_all(); } // wake reader
+
+   // stop the writer: abandon queued input and cancel a blocked WriteFile
    abandon_.store(true);
-   { std::lock_guard<std::mutex> il(inMutex_); inputQueue_.clear(); inputQueuedBytes_ = 0; inCv_.notify_all(); }
+   {
+      std::lock_guard<std::mutex> il(inMutex_);
+      inputQueue_.clear();
+      inputQueuedBytes_ = 0;
+      inCv_.notify_all();
+   }
    if (writerThread_.joinable())
    {
       ::CancelSynchronousIo(writerThread_.native_handle());
       writerThread_.join();
    }
 ```
-(The robust, timeout-bounded version is finalized in 1d.)
+Also extend the idempotency guard at the top of `teardownLocked()` to include the writer:
+```cpp
+   if (stopped_.exchange(true) && !running() &&
+       !readerThread_.joinable() && !writerThread_.joinable())
+      return;
+```
+(The robust, closer-first/bounded version is finalized in 1d. `start()`'s failure path and `stop()` both already route through `teardownLocked()`, so they get writer teardown for free.)
 
 - [ ] **Step 6: Run tests**
 
@@ -1166,42 +1226,35 @@ TEST(Win32ConPtyTest, StartFailsForMissingExeNoLeakNoHang)
 Run: `./rstudio-tests --scope core --filter "Win32ConPtyTest.ShutdownWhilePausedAtWatermark:Win32ConPtyTest.StartFailsForMissingExeNoLeakNoHang"`
 Expected: PASS (or hang/fail if teardown is not yet bounded — proceed to harden).
 
-- [ ] **Step 3: Declare `teardownLocked()` in the header**
+- [ ] **Step 3: Replace `teardownLocked()` with the hardened body**
 
-In `Win32ConPty.hpp` private section, add:
+`teardownLocked()` already exists (declared in 1a, extended for the writer in 1c) and both `stop()` and `start()`'s failure path already route through it, so only its body changes here. Replace the whole `teardownLocked()` body with the hardened, closer-first, bounded version:
 ```cpp
-   void teardownLocked(); // shared bounded teardown; caller holds stateMutex_
-```
-
-- [ ] **Step 4: Implement the unified, bounded teardown**
-
-Replace the body of `stop()` and the inline start-failure unwind with calls to `teardownLocked()`:
-```cpp
-void ConPty::stop()
-{
-   std::lock_guard<std::mutex> lock(stateMutex_);
-   teardownLocked();
-}
-
 void ConPty::teardownLocked()
 {
    if (stopped_.exchange(true) && !running() &&
        !readerThread_.joinable() && !writerThread_.joinable())
-      return; // already torn down
+      return; // already fully torn down (idempotent)
 
-   // 1) wake a backpressure-paused reader so it drains without re-pausing
+   // 1) Wake a backpressure-paused reader so it keeps draining output (the
+   //    closer below waits for the output to drain on pre-24H2 Windows).
    { std::lock_guard<std::mutex> ol(outMutex_); outCv_.notify_all(); }
 
-   // 2) stop the writer: abandon queued input and cancel a blocked write
+   // 2) Tell the writer to abandon any queued input.
    abandon_.store(true);
-   { std::lock_guard<std::mutex> il(inMutex_); inputQueue_.clear(); inputQueuedBytes_ = 0; inCv_.notify_all(); }
-   if (writerThread_.joinable())
    {
-      ::CancelSynchronousIo(writerThread_.native_handle());
-      writerThread_.join();
+      std::lock_guard<std::mutex> il(inMutex_);
+      inputQueue_.clear();
+      inputQueuedBytes_ = 0;
+      inCv_.notify_all();
    }
 
-   // 3) close the pseudoconsole on a closer thread that captures only the HPCON
+   // 3) Close the pseudoconsole on a closer thread FIRST. ClosePseudoConsole
+   //    terminates the child and closes ConPTY's pipe ends -- the RELIABLE
+   //    unblock for both our writer (broken input pipe) and reader (broken
+   //    output pipe). CancelSynchronousIo below is only a backstop. The closer
+   //    captures only the HPCON value, so detaching it as a last resort cannot
+   //    touch freed members.
    std::thread closer;
    if (hPC_)
    {
@@ -1209,31 +1262,50 @@ void ConPty::teardownLocked()
       closer = std::thread([hpc] { api().close(hpc); });
    }
 
-   // 4) bounded wait for the reader; on timeout force its ReadFile out
-   if (readerThread_.joinable())
+   // 4) Join the writer. The closer breaking the input pipe guarantees a blocked
+   //    WriteFile returns; repeating CancelSynchronousIo each step closes the
+   //    dequeue->WriteFile TOCTOU window (a single cancel can fire before the
+   //    write begins and be lost). The writer is not involved in draining, so
+   //    cancelling it freely is safe.
+   if (writerThread_.joinable())
    {
-      HANDLE rh = readerThread_.native_handle();
-      DWORD wr = ::WaitForSingleObject(rh, kShutdownTimeout);
-      if (wr != WAIT_OBJECT_0)
+      HANDLE wh = writerThread_.native_handle();
+      for (DWORD waited = 0; waited <= kShutdownTimeout; waited += 25)
       {
-         ::CancelSynchronousIo(rh);
-         if (hOutputRead_) ::CloseHandle(hOutputRead_); // also unblocks close
-         hOutputRead_ = nullptr;
+         ::CancelSynchronousIo(wh);
+         if (::WaitForSingleObject(wh, 25) == WAIT_OBJECT_0)
+            break;
       }
-      readerThread_.join();
+      writerThread_.join();
    }
 
-   // 5) closer: bounded join, else detach (it holds no members -> at worst HPCON leaks)
+   // 5) Reap the closer. The reader is still running and draining, so the closer
+   //    can complete even pre-24H2. Detach as a last resort (it holds only the
+   //    HPCON value, so this cannot race freed members).
    if (closer.joinable())
    {
-      HANDLE ch = closer.native_handle();
-      if (::WaitForSingleObject(ch, kShutdownTimeout) == WAIT_OBJECT_0)
+      if (::WaitForSingleObject(closer.native_handle(), kShutdownTimeout) == WAIT_OBJECT_0)
          closer.join();
       else
          closer.detach();
    }
    hPC_ = nullptr;
 
+   // 6) Join the reader AFTER the closer: with the pseudoconsole closed, the
+   //    output pipe is broken and the reader's ReadFile returns EOF. Use a
+   //    single post-timeout cancel as the last resort -- NOT a tight cancel loop,
+   //    which would prematurely abort the drain the closer depended on. We never
+   //    close hOutputRead_ while the reader might still be reading it.
+   if (readerThread_.joinable())
+   {
+      HANDLE rh = readerThread_.native_handle();
+      if (::WaitForSingleObject(rh, kShutdownTimeout) != WAIT_OBJECT_0)
+         ::CancelSynchronousIo(rh);
+      readerThread_.join();
+   }
+
+   // Threads are joined, so closing the handles now cannot race them. (The
+   // writer may already have closed hInputWrite_ on EOF, hence the null guard.)
    if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
    if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
 
@@ -1241,40 +1313,36 @@ void ConPty::teardownLocked()
       LOG_WARNING_MESSAGE("ConPty dropped terminal output during shutdown");
 }
 ```
-And in `start()`, replace the inline failure unwind with:
-```cpp
-   error = launchChild(exe, args, options, pProcess);
-   if (error)
-   {
-      teardownLocked(); // we hold stateMutex_
-      return error;
-   }
-```
-Note: `std::thread::native_handle()` returns the Win32 `HANDLE` for `WaitForSingleObject`/`CancelSynchronousIo`; do not close it (owned by the thread object).
+Note: `std::thread::native_handle()` returns the Win32 `HANDLE` for `WaitForSingleObject`/`CancelSynchronousIo`; do not close it (the `std::thread` owns it). `start()`'s failure path and `stop()` already call `teardownLocked()` (from 1a), so no call-site changes are needed here.
 
-- [ ] **Step 5: Guard the enqueue race in `writeInput()`**
+- [ ] **Step 4: Confirm the enqueue race guard**
 
-`writeInput()` currently checks `stopped_` before taking `inMutex_`, which races with `teardownLocked()` clearing the queue. Replace the whole body so the `stopped_` check is inside the lock:
+The race between `writeInput()` and `teardownLocked()` clearing the queue is already closed: the final `writeInput()` (Task 1c Step 4) takes `inMutex_` and checks `stopped_`/`closeInputRequested_` under that lock. No change needed here — just verify the 1c form is in place (the `stopped_.load()` check is inside `inMutex_`, not before it).
+
+- [ ] **Step 5: Add a writer-error-surfacing test**
+
 ```cpp
-Error ConPty::writeInput(const std::string& input)
+TEST(Win32ConPtyTest, WriterErrorSurfacedAfterChildExit)
 {
-   if (input.empty())
-      return Success();
+   ConPty pty;
+   std::vector<std::string> args = {"/c", "echo done"}; // exits almost immediately
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   ::WaitForSingleObject(hProc, 4000); // let the child exit so input pipe breaks
 
-   std::lock_guard<std::mutex> lock(inMutex_);
-   if (stopped_.load())
-      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
-   if (writerError_)
-      return writerError_;
-   if (inputQueuedBytes_ + input.size() > kInQueueMax)
-      return systemError(boost::system::errc::no_buffer_space,
-                         "ConPty input queue full", ERROR_LOCATION);
-   inputQueuedBytes_ += input.size();
-   inputQueue_.push_back(input);
-   inCv_.notify_one();
-   return Success();
+   // Writes after the child/pipe is gone fail; the error must be observable via
+   // takeWriterError() even if no later writeInput() is issued.
+   for (int i = 0; i < 50; ++i)
+      pty.writeInput("x");
+   std::this_thread::sleep_for(std::chrono::milliseconds(200));
+   Error werr = pty.takeWriterError();
+   EXPECT_TRUE(werr); // a broken-pipe write error was recorded and surfaced
+
+   pty.stop();
+   ::CloseHandle(hProc);
 }
 ```
+(`takeWriterError()` returning the recorded error is what `poll()` will call each tick in Phase 2.)
 
 - [ ] **Step 6: Run all class tests**
 
@@ -1285,7 +1353,7 @@ Expected: all PASS, no hangs.
 
 ```bash
 git add -A
-git commit -m "Harden ConPty teardown: bounded timeouts, race guards, partial startup"
+git commit -m "Harden ConPty teardown: closer-first unblock, bounded waits, EOF"
 ```
 Handle the roborev review before continuing.
 
@@ -1362,27 +1430,42 @@ with:
       return error;
 ```
 
-- [ ] **Step 5: Update `writeToStdin()` PTY branch (lines 258-263)**
+- [ ] **Step 5: Restructure `writeToStdin()` (lines 253-284)**
 
-Replace:
+The PTY path must route input through `ConPty` and route EOF through `ConPty::closeInput()` (closing `hStdInWrite` for the PTY case is wrong now -- ConPTY owns a different input handle, so the child would never see EOF). Replace the whole method body:
 ```cpp
-      if (options().pseudoterminal)
-      {
-         Error error = WinPty::writeToPty(pImpl_->hStdInWrite, input);
-         if (error)
-            return error;
-      }
-```
-with:
-```cpp
-      if (options().pseudoterminal)
+Error ChildProcess::writeToStdin(const std::string& input, bool eof)
+{
+   if (options().pseudoterminal)
+   {
+      if (!input.empty())
       {
          Error error = pImpl_->pty.writeInput(input);
          if (error)
             return error;
       }
+      if (eof)
+         return pImpl_->pty.closeInput();
+      return Success();
+   }
+
+   // non-pseudoterminal (anonymous pipe) path -- unchanged behavior
+   if (!input.empty())
+   {
+      DWORD dwWritten;
+      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                  input.data(),
+                                  static_cast<DWORD>(input.length()),
+                                  &dwWritten,
+                                  nullptr);
+      if (!bSuccess)
+         return LAST_SYSTEM_ERROR();
+   }
+   if (eof)
+      return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
+   return Success();
+}
 ```
-(The PTY branch no longer touches `hStdInWrite`; the non-PTY `else` branch with the raw `::WriteFile` is unchanged.)
 
 - [ ] **Step 6: `ptySetSize()`/`ptyInterrupt()` (lines 286-302)**
 
@@ -1423,6 +1506,11 @@ with:
 ```cpp
    if (options().pseudoterminal)
    {
+      // surface any asynchronous writer (stdin) error promptly
+      Error writerErr = pImpl_->pty.takeWriterError();
+      if (writerErr)
+         reportError(writerErr);
+
       // ConPTY: single merged VT output stream
       std::string out;
       Error error = pImpl_->pty.readOutput(&out);
@@ -1466,8 +1554,14 @@ In the process-exit block, branch the drain by PTY mode. For the PTY case use th
 ```cpp
    if (options().pseudoterminal)
    {
-      // stop() sets stopped_, wakes the reader so it drains ConPTY's final
-      // frame without re-pausing, and joins it.
+      // This branch runs only after WaitForSingleObject(hProcess) showed the
+      // child already exited, so the only output left is what is already in the
+      // OS output pipe buffer (tens of KB) -- far below kOutHighWater. The
+      // top-of-tick steady-state read above already drained the bulk; stop()
+      // then wakes the reader to drain ConPTY's final frame (no re-pause) and
+      // joins it. So normal-exit output is not truncated. (Truncation can only
+      // occur on terminal *close* with a live, noisy child via ~ConPty -> stop,
+      // where the buffer is being discarded anyway.)
       pImpl_->pty.stop();
       std::string out;
       pImpl_->pty.readOutput(&out);
@@ -1495,6 +1589,27 @@ git rm src/cpp/core/system/Win32Pty.hpp src/cpp/core/system/Win32Pty.cpp src/cpp
 ```
 In `src/cpp/core/CMakeLists.txt`, remove the `system/Win32Pty.cpp` line (leaving `system/Win32ConPty.cpp`).
 
+- [ ] **Step 9b: Bump the persistence version in the SAME commit**
+
+ConPTY's output format (clean VT) differs from winpty's screen-scraped buffers, and ConPTY goes live in this commit -- so the persistence dir bump must land here, not in a later commit, or an intermediate build could load incompatible winpty-era buffers. In `src/cpp/session/SessionConsoleProcessPersist.cpp`, replace:
+```cpp
+// 2019/07/30 - console06 -> console07
+//                Changed shell type from int to string to align with user
+//                preferences
+#define kConsoleDir "console07"
+```
+with:
+```cpp
+// 2019/07/30 - console06 -> console07
+//                Changed shell type from int to string to align with user
+//                preferences
+// 2026/05/30 - console07 -> console08
+//                Windows terminal output now comes from ConPTY as clean VT
+//                sequences (was winpty screen-scraping); old buffers cannot be
+//                replayed under the new renderer, so start fresh.
+#define kConsoleDir "console08"
+```
+
 - [ ] **Step 10: Build**
 
 Run: `ninja`
@@ -1509,52 +1624,13 @@ Launch the dev build, open a terminal, run `dir`, type a command, resize the pan
 Run: `./rstudio-tests --scope core --filter "*ConPty*:*ChildProcess*"`
 Expected: PASS (the old `Win32PtyTest.*` are gone).
 
-- [ ] **Step 13: Commit**
+- [ ] **Step 13: Commit (swap + persistence bump together)**
 
 ```bash
 git add -A
 git commit -m "Swap Windows PTY backend from winpty to ConPty"
 ```
-Handle the roborev review.
-
-### Task 2.2: Bump persistence version
-
-**Files:**
-- Modify: `src/cpp/session/SessionConsoleProcessPersist.cpp:54-57`
-
-- [ ] **Step 1: Bump `kConsoleDir` with a dated changelog line**
-
-Replace:
-```cpp
-// 2019/07/30 - console06 -> console07
-//                Changed shell type from int to string to align with user
-//                preferences
-#define kConsoleDir "console07"
-```
-with:
-```cpp
-// 2019/07/30 - console06 -> console07
-//                Changed shell type from int to string to align with user
-//                preferences
-// 2026/05/29 - console07 -> console08
-//                Windows terminal output now comes from ConPTY as clean VT
-//                sequences (was winpty screen-scraping); old buffers cannot be
-//                replayed under the new renderer, so start fresh.
-#define kConsoleDir "console08"
-```
-
-- [ ] **Step 2: Build**
-
-Run: `ninja`
-Expected: compiles.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add src/cpp/session/SessionConsoleProcessPersist.cpp
-git commit -m "Bump terminal persistence dir to console08 for ConPTY"
-```
-Handle the roborev review.
+The persistence bump (Step 9b) is part of this same commit so no intermediate build mixes ConPTY output with the `console07` format. Handle the roborev review.
 
 ---
 
@@ -1995,10 +2071,13 @@ Run: `git status` (clean), `grep -rni winpty src/cpp` (no matches), `ninja` (cle
 - Spec 5.3 (single output stream) -> Task 2.1.
 - Spec 5.4 (rename) -> Tasks 1a + 2.1.
 - Spec 5.5 (Ctrl+C via 0x03) -> Task 1c test `CtrlCByteTerminatesBusyChild`; `interrupt()` no-op.
-- Spec 6.2 (poll integration + final drain) -> Task 2.1.
+- Spec 6.2 (poll integration + final drain) -> Task 2.1 (Steps 7-8).
 - Spec 6.3 / 6.4 (bounded teardown, race guards) -> Task 1d.
 - Spec 7 (touch-points) -> Phases 2-5, 7.
 - Spec 8 (error handling, partial-startup) -> Tasks 1a/1d.
 - Spec 9 (tests) -> Tasks 1a-1d + Phase 6.
-- Spec 10 (phasing, persistence in Phase 2) -> Task 2.2.
+- Spec 10 (phasing, persistence in the swap commit) -> Task 2.1 (Step 9b).
+- Stdin EOF parity (writeToStdin eof) -> `ConPty::closeInput()` (Task 1c) + Task 2.1 (Step 5).
+- Async writer-error surfacing -> `ConPty::takeWriterError()` (Task 1c) + Task 2.1 (Step 7).
+- Single-use lifecycle (no reuse after stop) -> `start()` reuse rejection (Task 1a/1d).
 - Spec 11 (32-bit, CUSTOM replay, timing) -> Task 5.1 gate + Task 6.1 Step 6.
