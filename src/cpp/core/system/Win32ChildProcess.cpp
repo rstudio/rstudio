@@ -812,11 +812,6 @@ void AsyncChildProcess::poll()
 
    if (options().pseudoterminal)
    {
-      // surface any asynchronous writer (stdin) error promptly
-      Error writerErr = pImpl_->pty.takeWriterError();
-      if (writerErr)
-         reportError(writerErr);
-
       // ConPTY: single merged VT output stream
       std::string out;
       Error error = pImpl_->pty.readOutput(&out);

@@ -58,7 +58,13 @@ namespace console_persist {
 //                Windows terminal output now comes from ConPTY as clean VT
 //                sequences (was winpty screen-scraping); old buffers cannot be
 //                replayed under the new renderer, so start fresh.
+#ifdef _WIN32
+// Windows terminal output now comes from ConPTY (clean VT) rather than winpty
+// screen-scraping, so old buffers cannot be replayed; bump only on Windows.
 #define kConsoleDir "console08"
+#else
+#define kConsoleDir "console07"
+#endif
 
 namespace {
 

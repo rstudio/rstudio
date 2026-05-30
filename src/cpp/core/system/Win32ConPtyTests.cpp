@@ -158,22 +158,6 @@ TEST(Win32ConPtyTest, CtrlCByteTerminatesBusyChild)
    ::CloseHandle(hProc);
 }
 
-TEST(Win32ConPtyTest, InputQueueOverflowRejected)
-{
-   ConPty pty;
-   std::vector<std::string> args; // interactive, won't drain 1MiB fast
-   HANDLE hProc = nullptr;
-   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
-
-   Error err;
-   for (int i = 0; i < 4096 && !err; ++i)
-      err = pty.writeInput(std::string(1024, 'x')); // 4 MiB attempted
-   EXPECT_TRUE(err); // some write rejected by the queue cap
-
-   pty.stop();
-   ::CloseHandle(hProc);
-}
-
 TEST(Win32ConPtyTest, ShutdownWhilePausedAtWatermark)
 {
    ConPty pty;
@@ -210,11 +194,9 @@ TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
    ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
    drainUntil(pty, ">", 4000);
 
-   ASSERT_FALSE(pty.closeInput());     // request stdin EOF; writer drains then exits
-   Error e = pty.writeInput("x");      // must be rejected (closeInputRequested_/writerExited_)
-   EXPECT_TRUE(e);                     // not silently queued to a closing writer
-
-   EXPECT_FALSE(pty.takeWriterError()); // healthy session: no spurious writer error
+   ASSERT_FALSE(pty.closeInput());     // signal stdin EOF by closing the write end
+   Error e = pty.writeInput("x");      // must be rejected (hInputWrite_ is now null)
+   EXPECT_TRUE(e);                     // not silently written to a closed channel
 
    pty.stop();
    ::CloseHandle(hProc);

@@ -22,7 +22,6 @@ namespace {
 // readOutput() swaps the whole buffer out, so a paused reader resumes from an
 // empty buffer on the next drain -- no low-water hysteresis is needed.
 const size_t kOutHighWater    = 1u * 1024 * 1024;  // 1 MiB
-const size_t kInQueueMax      = 1u * 1024 * 1024;  // 1 MiB
 const DWORD  kShutdownTimeout = 4000;              // ms
 const DWORD  kReadChunk       = 4096;
 
@@ -284,10 +283,9 @@ Error ConPty::start(const std::string& exe,
    if (error)
       return error;
 
-   // Launch reader and writer BEFORE CreateProcess so a child is never live
-   // without a draining reader.
+   // Launch the reader BEFORE CreateProcess so a child is never live without a
+   // draining reader.
    readerThread_ = std::thread([this] { readerLoop(); });
-   writerThread_ = std::thread([this] { writerLoop(); });
 
    error = launchChild(exe, args, options, pProcess);
    if (error)
@@ -334,57 +332,6 @@ void ConPty::readerLoop()
    }
 }
 
-void ConPty::writerLoop()
-{
-   writerLoopBody();
-   writerExited_.store(true); // any exit: writer is no longer consuming input
-}
-
-void ConPty::writerLoopBody()
-{
-   for (;;)
-   {
-      std::string chunk;
-      bool closeNow = false;
-      {
-         std::unique_lock<std::mutex> lock(inMutex_);
-         inCv_.wait(lock, [this] {
-            return abandon_.load() || !inputQueue_.empty() || closeInputRequested_;
-         });
-         if (abandon_.load())
-            return; // shutdown abandons queued input; teardown closes the pipe
-         if (!inputQueue_.empty())
-         {
-            chunk = std::move(inputQueue_.front());
-            inputQueue_.pop_front();
-            inputQueuedBytes_ -= chunk.size();
-         }
-         else if (closeInputRequested_)
-         {
-            closeNow = true; // queue fully drained and EOF was requested
-         }
-      }
-
-      if (closeNow)
-      {
-         // Deliver stdin EOF by closing our input write end, then exit. Safe to
-         // close here: teardown joins this thread before touching hInputWrite_.
-         if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
-         return;
-      }
-
-      DWORD written = 0;
-      if (!::WriteFile(hInputWrite_, chunk.data(),
-                       static_cast<DWORD>(chunk.size()), &written, nullptr))
-      {
-         std::lock_guard<std::mutex> lock(inMutex_);
-         writerError_ = LAST_SYSTEM_ERROR();
-         writerExited_.store(true); // reject later input atomically with the error
-         return; // exit after a failed/cancelled write (surfaced via takeWriterError)
-      }
-   }
-}
-
 Error ConPty::readOutput(std::string* pOutput)
 {
    std::lock_guard<std::mutex> lock(outMutex_);
@@ -398,40 +345,30 @@ Error ConPty::writeInput(const std::string& input)
 {
    if (input.empty())
       return Success();
-
-   std::lock_guard<std::mutex> lock(inMutex_);
-   // Reject once the input channel is gone: stopping, EOF requested, or the
-   // writer thread has exited (writerExited_ is persistent and never cleared, so
-   // input is never queued to a dead writer even after takeWriterError() clears
-   // the reportable error).
-   if (stopped_.load() || closeInputRequested_ || writerExited_.load())
+   // Synchronous blocking write on the caller thread, matching the prior winpty
+   // behavior. hInputWrite_ is a synchronous pipe handle; conhost drains it into
+   // the console input buffer, so this rarely blocks in practice. hInputWrite_ is
+   // only ever touched on the caller (session) thread plus teardown on the same
+   // thread, so no lock is needed here.
+   HANDLE h = hInputWrite_;
+   if (stopped_.load() || h == nullptr)
       return systemError(boost::system::errc::not_connected,
                          "ConPty input channel is closed", ERROR_LOCATION);
-   if (inputQueuedBytes_ + input.size() > kInQueueMax)
-      return systemError(boost::system::errc::no_buffer_space,
-                         "ConPty input queue full", ERROR_LOCATION);
-   inputQueuedBytes_ += input.size();
-   inputQueue_.push_back(input);
-   inCv_.notify_one();
+   DWORD written = 0;
+   if (!::WriteFile(h, input.data(), static_cast<DWORD>(input.size()), &written, nullptr))
+      return LAST_SYSTEM_ERROR();
    return Success();
 }
 
 Error ConPty::closeInput()
 {
-   std::lock_guard<std::mutex> lock(inMutex_);
-   if (stopped_.load())
-      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
-   closeInputRequested_ = true; // writer closes the pipe after draining the queue
-   inCv_.notify_one();
+   std::lock_guard<std::mutex> lock(stateMutex_);
+   if (hInputWrite_)
+   {
+      ::CloseHandle(hInputWrite_);
+      hInputWrite_ = nullptr; // signals stdin EOF to the child
+   }
    return Success();
-}
-
-Error ConPty::takeWriterError()
-{
-   std::lock_guard<std::mutex> lock(inMutex_);
-   Error e = writerError_;
-   writerError_ = Success();
-   return e;
 }
 
 Error ConPty::setSize(int cols, int rows)
@@ -466,29 +403,16 @@ void ConPty::stop()
 
 void ConPty::teardownLocked()
 {
-   if (stopped_.exchange(true) && !running() &&
-       !readerThread_.joinable() && !writerThread_.joinable())
-      return; // already fully torn down (idempotent)
+   if (stopped_.exchange(true) && !running() && !readerThread_.joinable())
+      return; // already torn down (idempotent)
 
-   // 1) Wake a backpressure-paused reader so it keeps draining output (the
-   //    closer below waits for the output to drain on pre-24H2 Windows).
+   // Wake a backpressure-paused reader so it keeps draining (the closer below
+   // waits for the output to drain on pre-24H2 Windows).
    { std::lock_guard<std::mutex> ol(outMutex_); outCv_.notify_all(); }
 
-   // 2) Tell the writer to abandon any queued input.
-   abandon_.store(true);
-   {
-      std::lock_guard<std::mutex> il(inMutex_);
-      inputQueue_.clear();
-      inputQueuedBytes_ = 0;
-      inCv_.notify_all();
-   }
-
-   // 3) Close the pseudoconsole on a closer thread FIRST. ClosePseudoConsole
-   //    terminates the child and closes ConPTY's pipe ends -- the RELIABLE
-   //    unblock for both our writer (broken input pipe) and reader (broken
-   //    output pipe). CancelSynchronousIo below is only a backstop. The closer
-   //    captures only the HPCON value, so detaching it as a last resort cannot
-   //    touch freed members.
+   // Close the pseudoconsole on a closer thread that captures only the HPCON
+   // value (so detaching it as a last resort cannot touch freed members). This
+   // terminates the child and breaks the output pipe, unblocking the reader.
    std::thread closer;
    if (hPC_)
    {
@@ -496,28 +420,8 @@ void ConPty::teardownLocked()
       closer = std::thread([hpc] { api().close(hpc); });
    }
 
-   // 4) Join the writer. Bounded WITHOUT closing any handle under in-flight IO
-   //    (that would be the handle-reuse race the design must avoid; ConPTY
-   //    requires synchronous handles, so cancelable overlapped IO is not an
-   //    option). The guarantee instead rests on CancelSynchronousIo: a thread
-   //    blocked in cancellable synchronous IO is always unblocked by it. We
-   //    repeat it every 25ms so the dequeue->WriteFile TOCTOU cannot make it
-   //    miss permanently; once the WriteFile is cancelled (or the closer breaks
-   //    the input pipe), the writer sees the error or abandon_ and returns. So
-   //    the loop is bounded and the following join() cannot hang -- independent
-   //    of whether the closer has finished. We close hInputWrite_ only AFTER the
-   //    join, when no thread can be using it.
-   if (writerThread_.joinable())
-   {
-      HANDLE wh = writerThread_.native_handle();
-      while (::WaitForSingleObject(wh, 25) != WAIT_OBJECT_0)
-         ::CancelSynchronousIo(wh);
-      writerThread_.join();
-   }
-
-   // 5) Reap the closer. The reader is still running and draining, so the closer
-   //    can complete even pre-24H2. Detach as a last resort (it holds only the
-   //    HPCON value, so this cannot race freed members).
+   // Reap the closer (reader is still draining, so it completes even pre-24H2).
+   // Detach as a last resort -- it holds only the HPCON value.
    if (closer.joinable())
    {
       if (::WaitForSingleObject(closer.native_handle(), kShutdownTimeout) == WAIT_OBJECT_0)
@@ -527,14 +431,8 @@ void ConPty::teardownLocked()
    }
    hPC_ = nullptr;
 
-   // 6) Join the reader AFTER the closer, in two bounded phases (also without
-   //    closing its handle under IO). Phase 1: wait kShutdownTimeout for a clean
-   //    exit -- the closed pseudoconsole breaks the output pipe so ReadFile
-   //    returns EOF after the reader has drained the final frame; we do NOT
-   //    cancel here, which would abort that drain. Phase 2 (closer slow/stuck):
-   //    fall back to the writer's bounded cancel loop -- a cancelled ReadFile
-   //    returns !ok, so the reader exits. Either way the following join() is
-   //    bounded and cannot hang.
+   // Join the reader: with the pseudoconsole closed its ReadFile returns EOF;
+   // a bounded CancelSynchronousIo loop is the backstop. join() then cannot hang.
    if (readerThread_.joinable())
    {
       HANDLE rh = readerThread_.native_handle();
@@ -546,8 +444,6 @@ void ConPty::teardownLocked()
       readerThread_.join();
    }
 
-   // Threads are joined, so closing the handles now cannot race them. (The
-   // writer may already have closed hInputWrite_ on EOF, hence the null guard.)
    if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
    if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
 

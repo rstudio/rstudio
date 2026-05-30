@@ -18,7 +18,6 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <deque>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -42,8 +41,8 @@ typedef VOID* HPCONHANDLE;
 
 // Native Windows pseudoconsole (ConPTY) wrapper. Replaces the winpty-based
 // WinPty class. Owns the pseudoconsole, its input/output pipes, and a reader
-// thread + writer thread. Output is buffered (bounded, with backpressure) and
-// drained by the caller via readOutput(); input is queued to the writer thread.
+// thread. Output is buffered (bounded, with backpressure) and drained by the
+// caller via readOutput(); input is written synchronously on the caller thread.
 class ConPty : boost::noncopyable
 {
 public:
@@ -53,9 +52,9 @@ public:
    // True if ConPTY is available on this OS (functions resolved from kernel32).
    static bool isAvailable();
 
-   // Create the pseudoconsole + pipes, launch reader/writer threads, and spawn
-   // the child. On success *pProcess receives the child process handle (caller
-   // owns it). On failure all internal state is torn down and *pProcess is null.
+   // Create the pseudoconsole + pipes, launch the reader thread, and spawn the
+   // child. On success *pProcess receives the child process handle (caller owns
+   // it). On failure all internal state is torn down and *pProcess is null.
    Error start(const std::string& exe,
                const std::vector<std::string>& args,
                const ProcessOptions& options,
@@ -66,17 +65,14 @@ public:
    // Non-blocking: move buffered output into *pOutput (may be empty).
    Error readOutput(std::string* pOutput);
 
-   // Enqueue input for the writer thread (non-blocking). Rejects with an error
-   // if the queue would exceed its byte cap, or if a prior write failed.
+   // Synchronously write input to the child's stdin on the caller thread
+   // (blocking WriteFile, matching the prior winpty behavior). Returns an error
+   // if the input channel is closed or the write fails.
    Error writeInput(const std::string& input);
 
-   // Request EOF on the child's stdin: after the queued input drains, the writer
-   // closes the input pipe (parity with the old winpty conin-close on eof).
+   // Request EOF on the child's stdin by closing our input write end (parity
+   // with the old winpty conin-close on eof).
    Error closeInput();
-
-   // Returns and clears any error a prior asynchronous write recorded, so the
-   // caller (poll()) can surface it promptly. Success() if none.
-   Error takeWriterError();
 
    // ResizePseudoConsole. No-op error after stop().
    Error setSize(int cols, int rows);
@@ -94,33 +90,21 @@ private:
                      const ProcessOptions& options,
                      HANDLE* pProcess);
    void readerLoop();
-   void writerLoop();       // wraps writerLoopBody(), then sets writerExited_
-   void writerLoopBody();   // drains the input queue (defined in phase 1c)
    void teardownLocked();   // single ordered teardown path; caller holds stateMutex_
 
    HPCONHANDLE hPC_ = nullptr;
-   HANDLE hInputWrite_ = nullptr;    // writer thread writes here
+   HANDLE hInputWrite_ = nullptr;    // caller thread writes here (synchronous)
    HANDLE hOutputRead_ = nullptr;    // reader thread reads here
 
    std::thread readerThread_;
-   std::thread writerThread_;
 
    std::mutex stateMutex_;           // serializes start/stop/setSize
    std::atomic<bool> stopped_{false};
-   std::atomic<bool> abandon_{false};
-   std::atomic<bool> writerExited_{false};  // writer no longer consuming input
 
    std::mutex outMutex_;
    std::condition_variable outCv_;
    std::string outputBuffer_;
    bool outputTruncated_ = false;   // set if forced-shutdown dropped output
-
-   std::mutex inMutex_;
-   std::condition_variable inCv_;
-   std::deque<std::string> inputQueue_;
-   size_t inputQueuedBytes_ = 0;
-   bool closeInputRequested_ = false;   // writer closes input pipe after draining
-   Error writerError_;
 };
 
 } // namespace system
