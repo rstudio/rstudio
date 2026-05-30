@@ -225,6 +225,36 @@ TEST(Win32ConPtyTest, ConcurrentWriteAndStopIsSafe)
    ::CloseHandle(hProc);
 }
 
+TEST(Win32ConPtyTest, ConcurrentWriteAndCloseInputIsSafe)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive cmd
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   drainUntil(pty, ">", 4000);
+
+   std::atomic<bool> done{false};
+   std::thread writer([&]{
+      while (!done.load())
+         pty.writeInput("echo X\r\n"); // returns an error after closeInput; never blocks the closer
+   });
+   std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+   // closeInput() must return promptly even with writes in flight (watchdog).
+   std::atomic<bool> closed{false};
+   std::thread closeThread([&]{ pty.closeInput(); closed.store(true); });
+   auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+   while (!closed.load() && std::chrono::steady_clock::now() < deadline)
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   EXPECT_TRUE(closed.load()) << "closeInput() did not return promptly";
+
+   done.store(true);
+   writer.join();
+   closeThread.join();
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
 } // namespace tests
 } // namespace system
 } // namespace core

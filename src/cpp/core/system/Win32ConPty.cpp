@@ -345,22 +345,31 @@ Error ConPty::writeInput(const std::string& input)
 {
    if (input.empty())
       return Success();
-   // Terminal input may arrive on the websocket thread (ConsoleProcess::
-   // onReceivedInput is documented as possibly called on a different thread),
-   // concurrently with teardown on the session thread. inputMutex_ guards the
-   // input handle. The blocking WriteFile runs under the lock; this cannot
-   // deadlock teardown because teardownLocked() closes the pseudoconsole first
-   // (breaking the input pipe, so an in-flight WriteFile returns) and only then
-   // closes hInputWrite_ under inputMutex_.
-   std::lock_guard<std::mutex> lock(inputMutex_);
-   if (stopped_.load() || hInputWrite_ == nullptr)
-      return systemError(boost::system::errc::not_connected,
-                         "ConPty input channel is closed", ERROR_LOCATION);
+   // Duplicate the input handle under the lock, then perform the (possibly
+   // blocking) WriteFile on the duplicate OUTSIDE the lock. This keeps a stalled
+   // write from holding inputMutex_, so closeInput()/teardown can close the
+   // original handle without waiting. The duplicate keeps the pipe's write end
+   // alive until the write completes (correct EOF-after-pending-write semantics);
+   // if the child/conhost is wedged, teardown's ClosePseudoConsole breaks the
+   // pipe and the write fails. Terminal input may arrive on the websocket thread
+   // (ConsoleProcess::onReceivedInput), so this must be thread-safe.
+   HANDLE dup = nullptr;
+   {
+      std::lock_guard<std::mutex> lock(inputMutex_);
+      if (stopped_.load() || hInputWrite_ == nullptr)
+         return systemError(boost::system::errc::not_connected,
+                            "ConPty input channel is closed", ERROR_LOCATION);
+      if (!::DuplicateHandle(::GetCurrentProcess(), hInputWrite_,
+                             ::GetCurrentProcess(), &dup, 0, FALSE,
+                             DUPLICATE_SAME_ACCESS))
+         return LAST_SYSTEM_ERROR();
+   }
    DWORD written = 0;
-   if (!::WriteFile(hInputWrite_, input.data(),
-                    static_cast<DWORD>(input.size()), &written, nullptr))
-      return LAST_SYSTEM_ERROR();
-   return Success();
+   BOOL ok = ::WriteFile(dup, input.data(),
+                         static_cast<DWORD>(input.size()), &written, nullptr);
+   Error err = ok ? Success() : LAST_SYSTEM_ERROR();
+   ::CloseHandle(dup);
+   return err;
 }
 
 Error ConPty::closeInput()
