@@ -345,24 +345,27 @@ Error ConPty::writeInput(const std::string& input)
 {
    if (input.empty())
       return Success();
-   // Synchronous blocking write on the caller thread, matching the prior winpty
-   // behavior. hInputWrite_ is a synchronous pipe handle; conhost drains it into
-   // the console input buffer, so this rarely blocks in practice. hInputWrite_ is
-   // only ever touched on the caller (session) thread plus teardown on the same
-   // thread, so no lock is needed here.
-   HANDLE h = hInputWrite_;
-   if (stopped_.load() || h == nullptr)
+   // Terminal input may arrive on the websocket thread (ConsoleProcess::
+   // onReceivedInput is documented as possibly called on a different thread),
+   // concurrently with teardown on the session thread. inputMutex_ guards the
+   // input handle. The blocking WriteFile runs under the lock; this cannot
+   // deadlock teardown because teardownLocked() closes the pseudoconsole first
+   // (breaking the input pipe, so an in-flight WriteFile returns) and only then
+   // closes hInputWrite_ under inputMutex_.
+   std::lock_guard<std::mutex> lock(inputMutex_);
+   if (stopped_.load() || hInputWrite_ == nullptr)
       return systemError(boost::system::errc::not_connected,
                          "ConPty input channel is closed", ERROR_LOCATION);
    DWORD written = 0;
-   if (!::WriteFile(h, input.data(), static_cast<DWORD>(input.size()), &written, nullptr))
+   if (!::WriteFile(hInputWrite_, input.data(),
+                    static_cast<DWORD>(input.size()), &written, nullptr))
       return LAST_SYSTEM_ERROR();
    return Success();
 }
 
 Error ConPty::closeInput()
 {
-   std::lock_guard<std::mutex> lock(stateMutex_);
+   std::lock_guard<std::mutex> lock(inputMutex_);
    if (hInputWrite_)
    {
       ::CloseHandle(hInputWrite_);
@@ -444,7 +447,10 @@ void ConPty::teardownLocked()
       readerThread_.join();
    }
 
-   if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
+   {
+      std::lock_guard<std::mutex> il(inputMutex_);
+      if (hInputWrite_) { ::CloseHandle(hInputWrite_); hInputWrite_ = nullptr; }
+   }
    if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
 
    if (outputTruncated_)

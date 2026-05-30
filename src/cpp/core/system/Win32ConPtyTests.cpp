@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -199,6 +200,28 @@ TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
    EXPECT_TRUE(e);                     // not silently written to a closed channel
 
    pty.stop();
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, ConcurrentWriteAndStopIsSafe)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive cmd
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   drainUntil(pty, ">", 4000);
+
+   // Hammer writeInput from another thread while the main thread tears down.
+   std::atomic<bool> done{false};
+   std::thread writer([&]{
+      while (!done.load())
+         pty.writeInput("echo X\r\n"); // returns an error once stopped; never crashes
+   });
+   std::this_thread::sleep_for(std::chrono::milliseconds(50));
+   pty.stop();          // closes hInputWrite_ concurrently with the writer
+   done.store(true);
+   writer.join();       // must complete (no hang)
+   EXPECT_FALSE(pty.running());
    ::CloseHandle(hProc);
 }
 

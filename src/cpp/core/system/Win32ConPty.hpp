@@ -99,6 +99,7 @@ private:
    std::thread readerThread_;
 
    std::mutex stateMutex_;           // serializes start/stop/setSize
+   std::mutex inputMutex_;           // guards hInputWrite_ (input may arrive on the WS thread)
    std::atomic<bool> stopped_{false};
 
    std::mutex outMutex_;

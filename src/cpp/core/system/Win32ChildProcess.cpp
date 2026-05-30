@@ -16,8 +16,6 @@
 #include "ChildProcessSubprocPoll.hpp"
 #include "Win32ConPty.hpp"
 
-#include <iostream>
-
 #include <windows.h>
 #include <Shlwapi.h>
 
