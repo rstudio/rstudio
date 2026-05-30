@@ -101,16 +101,29 @@ test_that("sites can extend the allowlist via the session option", {
 
 test_that("active bindings anywhere on the search path are unsafe", {
 
-   # eval() resolves through the search path, so an active binding in an
-   # attached environment (not globalenv) must also be rejected
-   e <- new.env(parent = emptyenv())
-   name <- "rs_test_attached_active"
-   makeActiveBinding(name, function() stop("active binding evaluated"), e)
+   # eval() resolves a symbol starting in the evaluation environment and
+   # walking its enclosing environments, so an active binding in an enclosing
+   # environment (not just the evaluation environment itself) must also be
+   # rejected. Construct that chain directly rather than relying on attach(),
+   # whose environment-copying semantics for active bindings vary by R version.
+   name <- "rs_test_active"
 
-   attach(e, name = "rs_test_active_env", warn.conflicts = FALSE)
-   on.exit(detach("rs_test_active_env"))
+   # active binding directly in the evaluation environment
+   here <- new.env(parent = emptyenv())
+   makeActiveBinding(name, function() stop("active binding evaluated"), here)
+   expect_false(.rs.preview.isSafeExpr(as.symbol(name), envir = here))
 
-   expect_false(.rs.preview.isSafeExpr(as.symbol(name)))
+   # active binding in an enclosing environment, reached by the search walk
+   parent <- new.env(parent = emptyenv())
+   makeActiveBinding(name, function() stop("active binding evaluated"), parent)
+   child <- new.env(parent = parent)
+   expect_false(.rs.preview.isSafeExpr(as.symbol(name), envir = child))
+
+   # a plain (non-active) binding in an enclosing environment is a safe lookup
+   parent2 <- new.env(parent = emptyenv())
+   assign(name, 42, envir = parent2)
+   child2 <- new.env(parent = parent2)
+   expect_true(.rs.preview.isSafeExpr(as.symbol(name), envir = child2))
 
 })
 

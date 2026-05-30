@@ -119,7 +119,13 @@
 # unsafe. Note that namespace qualification does not make a call safe:
 # 'base::system(...)' is just as dangerous as 'system(...)', so the allowlist
 # is consulted by name and the arguments are validated recursively.
-.rs.addFunction("preview.isSafeExpr", function(expr)
+#
+# 'envir' is the environment in which the expression would ultimately be
+# evaluated (the preview code path uses globalenv()). It is required to decide
+# whether a bare symbol would trigger an active binding on lookup, so it is a
+# parameter rather than being hard-coded -- both to keep the contract honest
+# and so the classifier can be tested against a constructed environment.
+.rs.addFunction("preview.isSafeExpr", function(expr, envir = globalenv())
 {
    # literal constants (strings, numbers, logicals, NULL, ...) are safe
    if (!is.language(expr))
@@ -133,12 +139,13 @@
       if (!nzchar(name))
          return(FALSE)
 
-      # eval() below resolves symbols through the search path, so an active
-      # binding anywhere along it -- not just in globalenv() -- would execute
-      # code on lookup. Walk from globalenv() up its parents (the same order
-      # eval uses) to the environment that actually holds the name, and reject
-      # it if that binding is active.
-      env <- globalenv()
+      # eval() resolves symbols starting in 'envir' and walking its enclosing
+      # environments (for globalenv() that is the attached search path), so an
+      # active binding anywhere along that chain -- not just in 'envir' itself
+      # -- would execute code on lookup. Walk from 'envir' up its parents (the
+      # same order eval uses) to the environment that actually holds the name,
+      # and reject it if that binding is active.
+      env <- envir
       while (!identical(env, emptyenv()))
       {
          if (exists(name, envir = env, inherits = FALSE))
@@ -165,7 +172,7 @@
 
    # a parenthesized expression is safe iff its body is safe
    if (identical(callee, as.symbol("(")))
-      return(.rs.preview.isSafeExpr(expr[[2L]]))
+      return(.rs.preview.isSafeExpr(expr[[2L]], envir = envir))
 
    # a regular call is safe only if the callee is allow-listed by name and
    # every argument is itself safe (checked recursively)
@@ -175,7 +182,7 @@
 
    args <- as.list(expr)[-1L]
    for (arg in args)
-      if (!.rs.preview.isSafeExpr(arg))
+      if (!.rs.preview.isSafeExpr(arg, envir = envir))
          return(FALSE)
 
    TRUE
@@ -202,9 +209,9 @@
 # Classify a parsed preview expression as "safe" (statically safe to
 # evaluate), "permitted" (the user has explicitly allowed it this session), or
 # "unsafe" (requires explicit consent before evaluation).
-.rs.addFunction("preview.exprStatus", function(expr)
+.rs.addFunction("preview.exprStatus", function(expr, envir = globalenv())
 {
-   if (.rs.preview.isSafeExpr(expr))
+   if (.rs.preview.isSafeExpr(expr, envir = envir))
       return("safe")
 
    if (.rs.preview.isPermittedExpr(expr))
