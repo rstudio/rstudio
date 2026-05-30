@@ -337,7 +337,8 @@ private:
                      const ProcessOptions& options,
                      HANDLE* pProcess);
    void readerLoop();
-   void writerLoop();
+   void writerLoop();       // wraps writerLoopBody(), then sets writerExited_
+   void writerLoopBody();   // drains the input queue (defined in phase 1c)
    void teardownLocked();   // single ordered teardown path; caller holds stateMutex_
 
    HPCONHANDLE hPC_ = nullptr;
@@ -350,6 +351,7 @@ private:
    std::mutex stateMutex_;           // serializes start/stop/setSize
    std::atomic<bool> stopped_{false};
    std::atomic<bool> abandon_{false};
+   std::atomic<bool> writerExited_{false};  // writer no longer consuming input
 
    std::mutex outMutex_;
    std::condition_variable outCv_;
@@ -1053,9 +1055,17 @@ In `start()`, next to the reader launch, add:
 
 - [ ] **Step 4: Implement `writerLoop()` and `writeInput()`**
 
-Replace the stub `writerLoop()`:
+Replace the stub `writerLoop()`. The inner loop runs until it returns for any
+reason; the outer wrapper sets `writerExited_` exactly once so `writeInput()`
+rejects input after the writer is gone (whatever the exit cause):
 ```cpp
 void ConPty::writerLoop()
+{
+   writerLoopBody();
+   writerExited_.store(true); // any exit: writer is no longer consuming input
+}
+
+void ConPty::writerLoopBody()
 {
    for (;;)
    {
@@ -1094,11 +1104,16 @@ void ConPty::writerLoop()
       {
          std::lock_guard<std::mutex> lock(inMutex_);
          writerError_ = LAST_SYSTEM_ERROR();
+         writerExited_.store(true); // reject later input atomically with the error
          return; // exit after a failed/cancelled write (surfaced via takeWriterError)
       }
    }
 }
 ```
+Declare the helper in the header's private section: `void writerLoopBody();` (already
+added to the 1a header). Setting `writerExited_` under `inMutex_` here closes the
+window where `takeWriterError()` has cleared `writerError_` but the writer is gone:
+`writeInput()` (below) rejects on `writerExited_`, which is never cleared.
 Replace the stub `writeInput()` (the final `stopped_`-under-lock form is set in 1d):
 ```cpp
 Error ConPty::writeInput(const std::string& input)
@@ -1107,10 +1122,13 @@ Error ConPty::writeInput(const std::string& input)
       return Success();
 
    std::lock_guard<std::mutex> lock(inMutex_);
-   if (stopped_.load() || closeInputRequested_)
-      return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
-   if (writerError_)
-      return writerError_;
+   // Reject once the input channel is gone: stopping, EOF requested, or the
+   // writer thread has exited (writerExited_ is persistent and never cleared, so
+   // input is never queued to a dead writer even after takeWriterError() clears
+   // the reportable error).
+   if (stopped_.load() || closeInputRequested_ || writerExited_.load())
+      return systemError(boost::system::errc::not_connected,
+                         "ConPty input channel is closed", ERROR_LOCATION);
    if (inputQueuedBytes_ + input.size() > kInQueueMax)
       return systemError(boost::system::errc::no_buffer_space,
                          "ConPty input queue full", ERROR_LOCATION);
@@ -1262,19 +1280,28 @@ void ConPty::teardownLocked()
       closer = std::thread([hpc] { api().close(hpc); });
    }
 
-   // 4) Join the writer. The closer breaking the input pipe guarantees a blocked
-   //    WriteFile returns; repeating CancelSynchronousIo each step closes the
-   //    dequeue->WriteFile TOCTOU window (a single cancel can fire before the
-   //    write begins and be lost). The writer is not involved in draining, so
-   //    cancelling it freely is safe.
+   // 4) Join the writer with a GUARANTEED-bounded escalation so join() can never
+   //    hang. Tier 1: closer breaks the input pipe (WriteFile fails). Tier 2:
+   //    repeat CancelSynchronousIo every 25ms to cover the dequeue->WriteFile
+   //    TOCTOU. Tier 3 (last resort): if still alive after the window, close
+   //    hInputWrite_ to force any blocked WriteFile to fail. Closing a handle
+   //    under in-flight IO is normally unsafe, but teardown opens no new handles
+   //    (no handle-reuse hazard) and a guaranteed-terminating shutdown outranks
+   //    the residual risk. After tier 3 the writer exits, so join() returns.
    if (writerThread_.joinable())
    {
       HANDLE wh = writerThread_.native_handle();
-      for (DWORD waited = 0; waited <= kShutdownTimeout; waited += 25)
+      DWORD waited = 0;
+      while (waited < kShutdownTimeout &&
+             ::WaitForSingleObject(wh, 25) != WAIT_OBJECT_0)
       {
          ::CancelSynchronousIo(wh);
-         if (::WaitForSingleObject(wh, 25) == WAIT_OBJECT_0)
-            break;
+         waited += 25;
+      }
+      if (::WaitForSingleObject(wh, 0) != WAIT_OBJECT_0 && hInputWrite_)
+      {
+         ::CloseHandle(hInputWrite_); // last resort: break the input pipe
+         hInputWrite_ = nullptr;
       }
       writerThread_.join();
    }
@@ -1291,16 +1318,26 @@ void ConPty::teardownLocked()
    }
    hPC_ = nullptr;
 
-   // 6) Join the reader AFTER the closer: with the pseudoconsole closed, the
-   //    output pipe is broken and the reader's ReadFile returns EOF. Use a
-   //    single post-timeout cancel as the last resort -- NOT a tight cancel loop,
-   //    which would prematurely abort the drain the closer depended on. We never
-   //    close hOutputRead_ while the reader might still be reading it.
+   // 6) Join the reader AFTER the closer, with the same guaranteed-bounded
+   //    escalation. Tier 1: the closed pseudoconsole broke the output pipe, so
+   //    ReadFile returns EOF (we wait kShutdownTimeout to let the closer's drain
+   //    finish first -- no tight cancel loop, which would abort that drain).
+   //    Tier 2: a single CancelSynchronousIo. Tier 3 (last resort): close
+   //    hOutputRead_ to force a stuck ReadFile to fail (same teardown-only
+   //    rationale as the writer). After tier 3 the reader exits, so join()
+   //    returns.
    if (readerThread_.joinable())
    {
       HANDLE rh = readerThread_.native_handle();
       if (::WaitForSingleObject(rh, kShutdownTimeout) != WAIT_OBJECT_0)
+      {
          ::CancelSynchronousIo(rh);
+         if (::WaitForSingleObject(rh, kShutdownTimeout) != WAIT_OBJECT_0 && hOutputRead_)
+         {
+            ::CloseHandle(hOutputRead_); // last resort: break the output pipe
+            hOutputRead_ = nullptr;
+         }
+      }
       readerThread_.join();
    }
 
@@ -1319,30 +1356,36 @@ Note: `std::thread::native_handle()` returns the Win32 `HANDLE` for `WaitForSing
 
 The race between `writeInput()` and `teardownLocked()` clearing the queue is already closed: the final `writeInput()` (Task 1c Step 4) takes `inMutex_` and checks `stopped_`/`closeInputRequested_` under that lock. No change needed here — just verify the 1c form is in place (the `stopped_.load()` check is inside `inMutex_`, not before it).
 
-- [ ] **Step 5: Add a writer-error-surfacing test**
+- [ ] **Step 5: Add input-rejection-after-EOF and writer-error contract tests**
 
+A real `WriteFile` failure is not deterministically reproducible in a unit test
+(ConPTY keeps the input read end open until `ClosePseudoConsole`, so writes do
+not fail merely because the child exited; that path is covered by the Phase 6
+manual matrix -- large paste to a wedged child / forced close). What IS
+deterministic, and is the core of finding #3's fix, is that input is rejected
+once the input channel is closing -- never silently queued to a writer that is
+gone:
 ```cpp
-TEST(Win32ConPtyTest, WriterErrorSurfacedAfterChildExit)
+TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
 {
    ConPty pty;
-   std::vector<std::string> args = {"/c", "echo done"}; // exits almost immediately
+   std::vector<std::string> args; // interactive cmd
    HANDLE hProc = nullptr;
    ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
-   ::WaitForSingleObject(hProc, 4000); // let the child exit so input pipe breaks
+   drainUntil(pty, ">", 4000);
 
-   // Writes after the child/pipe is gone fail; the error must be observable via
-   // takeWriterError() even if no later writeInput() is issued.
-   for (int i = 0; i < 50; ++i)
-      pty.writeInput("x");
-   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-   Error werr = pty.takeWriterError();
-   EXPECT_TRUE(werr); // a broken-pipe write error was recorded and surfaced
+   ASSERT_FALSE(pty.closeInput());     // request stdin EOF; writer drains then exits
+   Error e = pty.writeInput("x");      // must be rejected (closeInputRequested_/writerExited_)
+   EXPECT_TRUE(e);                     // not silently queued to a closing writer
+
+   EXPECT_FALSE(pty.takeWriterError()); // healthy session: no spurious writer error
 
    pty.stop();
    ::CloseHandle(hProc);
 }
 ```
-(`takeWriterError()` returning the recorded error is what `poll()` will call each tick in Phase 2.)
+(`takeWriterError()` is what `poll()` calls each tick in Phase 2 to surface a real
+write failure; it returns `Success()` when healthy, as asserted here.)
 
 - [ ] **Step 6: Run all class tests**
 
