@@ -166,12 +166,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
    }
 
-   public void setActiveTerminalByCaption(String caption, boolean createdByApi)
+   public void setActiveTerminalByCaption(String caption)
    {
       String handle = terminals_.handleForCaption(caption);
       if (StringUtil.isNullOrEmpty(handle))
          return;
-      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null, createdByApi));
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null));
    }
 
    /**

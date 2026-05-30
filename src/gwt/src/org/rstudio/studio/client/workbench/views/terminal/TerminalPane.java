@@ -333,7 +333,7 @@ public class TerminalPane extends WorkbenchPane
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  uiPrefs_.terminalWeblinks().getValue(),
-                                                 false /*createdByApi*/, session ->
+                                                 session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
@@ -408,12 +408,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateNamedTerminal(String caption, boolean createdByApi)
+   public void activateNamedTerminal(String caption)
    {
       if (StringUtil.isNullOrEmpty(caption))
          return;
 
-      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption, createdByApi);
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
    }
 
    @Override
@@ -874,7 +874,7 @@ public class TerminalPane extends WorkbenchPane
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  uiPrefs_.terminalWeblinks().getValue(),
-                                                 event.createdByApi(), session ->
+                                                 session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
