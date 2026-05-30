@@ -774,29 +774,10 @@ public class TerminalSession extends XTermWidget
       if (consoleProcess_ == null)
          return false;
 
-      switch (consoleProcess_.getProcessInfo().getShellType())
-      {
-      // Windows command-prompt and PowerShell don't support buffer reloading
-      // due to limitations of how they work with WinPty.
-      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
-      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
-      case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
-         // Do load the buffer if terminal was just created via API, as
-         // the initial message and prompt may have been sent before the
-         // client/server channel was opened.
-         return createdByApi_;
-
-      case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
-         // on Windows we don't know if custom shell supports reload so
-         // assume it does not
-         if (BrowseCap.isWindowsDesktop())
-            return createdByApi_;
-         else
-            return true;
-
-      default:
-         return true;
-      }
+      // ConPTY emits clean VT sequences for all Windows shells (it replaced
+      // WinPty's screen-scraped output), so recorded terminal buffers replay
+      // faithfully on reconnect for every shell type.
+      return true;
    }
 
    private void fetchNextChunk(final int chunkToFetch)
