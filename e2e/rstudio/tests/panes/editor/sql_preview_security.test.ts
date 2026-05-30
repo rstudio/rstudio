@@ -82,6 +82,44 @@ test.describe('SQL Preview security (rstudio-pro#10981)', () => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
   });
 
+  test('keyword completions are still offered when the connection is untrusted', async ({ rstudioPage: page }) => {
+    const sentinel = `${sandbox.dir}/pwned_completion_keyword.txt`;
+    const fileName = 'injection_completion_keyword.sql';
+    // Untrusted connection header, plus a partial keyword that matches more
+    // than one SQL keyword ('SELECT', 'SET', ...). A prefix with a single
+    // candidate would be auto-inserted without ever showing the popup.
+    const content = heredoc`
+      -- !preview conn=${payload(sentinel)}
+      SE
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, fileName, content);
+
+    // Position at the end of the partial keyword and request completions.
+    await page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      editor.focus();
+      editor.gotoLine(2, editor.session.getLine(1).length);
+    });
+    await sleep(300);
+    await page.keyboard.press('Control+Space');
+
+    // Keyword completions are static -- they never resolve the connection -- so
+    // 'SELECT' is offered even though the connection expression is untrusted.
+    // The point of the hardening is only that the payload never runs; legible
+    // editing (keywords, buffer identifiers) must keep working.
+    const popup = page.locator(COMPLETION_POPUP);
+    await expect(popup).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(popup).toContainText('SELECT', { timeout: TIMEOUTS.fileOpen });
+    await page.keyboard.press('Escape');
+
+    // ...and offering keyword completions did not evaluate the connection.
+    expect(await sentinelExists(page, sentinel)).toBe(false);
+
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+  });
+
   test('preview prompts for consent and does not run the expression when declined', async ({ rstudioPage: page }) => {
     const sentinel = `${sandbox.dir}/pwned_preview_declined.txt`;
     const fileName = 'injection_preview_declined.sql';

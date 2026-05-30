@@ -93,7 +93,12 @@ export default defineConfig<{}, ProjectOptions>({
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',
   use: {
-    trace: 'on-first-retry',
+    // Capture a screenshot at the moment of failure and retain a full trace
+    // (DOM snapshots, console, network) for any failing test -- not just on a
+    // retry, which never happens locally (retries: 0). View with
+    // `npx playwright show-trace <trace.zip>`.
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
     actionTimeout: 10000,
   },
   projects,
