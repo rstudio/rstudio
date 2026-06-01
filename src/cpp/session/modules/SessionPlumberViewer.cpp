@@ -15,11 +15,13 @@
 
 #include "SessionPlumberViewer.hpp"
 
-#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+
+#include <fmt/format.h>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -167,18 +169,13 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    if (!isPlumberAttached)
       runCmd = "plumber::";
    
-   if (!hasEntrypointFile)
-   {
-      runCmd.append(R"RCODE(plumb(file=')RCODE");
-      runCmd.append(plumberRunPath);
-      runCmd.append(R"RCODE(')$run())RCODE");
-   } 
-   else
-   {
-      runCmd.append(R"RCODE(plumb(dir=')RCODE");
-      runCmd.append(plumberRunPath);
-      runCmd.append(R"RCODE(')$run())RCODE");
-   }
+   // escape the path before interpolating it into the R command, so that a
+   // filename containing a single quote cannot break out of the string literal
+   // and inject arbitrary R code
+   runCmd += fmt::format(
+      "plumb({} = '{}')$run()",
+      hasEntrypointFile ? "dir" : "file",
+      string_utils::singleQuotedStrEscape(plumberRunPath));
 
    json::Object dataJson;
    dataJson["run_cmd"] = runCmd;

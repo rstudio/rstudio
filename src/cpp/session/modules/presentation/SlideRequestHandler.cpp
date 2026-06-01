@@ -19,7 +19,6 @@
 #include <iostream>
 
 #include <boost/utility.hpp>
-#include <boost/format.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -27,8 +26,11 @@
 #include <boost/regex.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
+#include <fmt/format.h>
+
 #include <core/FileSerializer.hpp>
 #include <core/HtmlUtils.hpp>
+#include <core/StringUtils.hpp>
 #include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
@@ -314,23 +316,36 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-restore");
    args.push_back("-s");
    args.push_back("-e");
-   boost::format fmt("library(knitr); "
-                     "opts_chunk$set(cache.path='%1%-cache/', "
-                                    "fig.path='%1%-figure/', "
-                                    "tidy=FALSE, "
-                                    "warning=FALSE, "
-                                    "error=FALSE, "
-                                    "message=FALSE, "
-                                    "comment=NA); "
-                     "render_markdown(); "
-                     "knit('%2%', output = '%3%', encoding='%4%');");
    std::string encoding = projects::projectContext().defaultEncoding();
    if(encoding.empty()) encoding = "UTF-8";
-   std::string cmd = boost::str(
-      fmt % string_utils::utf8ToSystem(rmdPath.getStem())
-          % string_utils::utf8ToSystem(rmdPath.getFilename())
-          % string_utils::utf8ToSystem(mdPath.getFilename())
-          % encoding);
+
+   // escape the paths before interpolating them into the R command, so that a
+   // filename containing a single quote cannot break out of the string literal
+   // and inject arbitrary R code
+   std::string code = string_utils::heredoc(R"RCODE(
+      library(knitr)
+      opts_chunk$set(
+         cache.path = '{0}-cache/',
+         fig.path = '{0}-figure/',
+         tidy = FALSE,
+         warning = FALSE,
+         error = FALSE,
+         message = FALSE,
+         comment = NA
+      )
+      render_markdown()
+      knit('{1}', output = '{2}', encoding = '{3}')
+   )RCODE");
+
+   std::string cmd = fmt::format(
+      fmt::runtime(code),
+      string_utils::singleQuotedStrEscape(
+            string_utils::utf8ToSystem(rmdPath.getStem())),
+      string_utils::singleQuotedStrEscape(
+            string_utils::utf8ToSystem(rmdPath.getFilename())),
+      string_utils::singleQuotedStrEscape(
+            string_utils::utf8ToSystem(mdPath.getFilename())),
+      string_utils::singleQuotedStrEscape(encoding));
    args.push_back(cmd);
 
    // options

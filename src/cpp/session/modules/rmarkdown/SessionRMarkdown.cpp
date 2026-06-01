@@ -20,6 +20,7 @@
 #include <gsl/gsl-lite.hpp>
 
 #include <optional>
+#include <set>
 
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
@@ -1207,6 +1208,44 @@ Error getRMarkdownContext(const json::JsonRpcRequest&,
    return Success();
 }
 
+Error getCustomRenderFunction(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(file);
+
+   // note that .rs.getCustomRenderFunction only parses the document's YAML front
+   // matter -- it does not evaluate the `knit:` field, so calling it here is safe
+   std::string renderFunc;
+   error = r::exec::RFunction(
+      ".rs.getCustomRenderFunction",
+      string_utils::utf8ToSystem(targetPath.getAbsolutePath())).call(&renderFunc);
+
+   // fail closed: if we could not determine the document's render function, ask
+   // the client to confirm rather than silently treating it as known-safe. This
+   // is the last line of defense before RenderRmd::start evaluates the function.
+   bool requiresConfirmation;
+   if (error)
+   {
+      LOG_ERROR(error);
+      requiresConfirmation = true;
+   }
+   else
+   {
+      requiresConfirmation = requiresRenderConfirmation(renderFunc);
+   }
+
+   json::Object resultJson;
+   resultJson["render_function"] = renderFunc;
+   resultJson["requires_confirmation"] = requiresConfirmation;
+   pResponse->setResult(resultJson);
+   return Success();
+}
+
 void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
@@ -1313,6 +1352,13 @@ Error renderRmd(const json::JsonRpcRequest& request,
 Error renderRmdSource(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
+   // NOTE: This renders caller-supplied source text (written to a temp file)
+   // and so does not pass through the client-side custom-render confirmation in
+   // RmdOutput.onRenderRmd, which guards rendering of on-disk documents. This is
+   // currently safe because the only entry point (renderRMarkdownSource) has no
+   // live callers; if that changes, any new caller must apply the same
+   // confirmation before invoking this RPC (or the gate must move to the
+   // RenderRmd::start chokepoint for defense-in-depth).
    std::string source;
    Error error = json::readParams(request.params, &source);
    if (error)
@@ -1823,6 +1869,32 @@ void onResume(const Settings&)
 
 } // anonymous namespace
 
+bool requiresRenderConfirmation(const std::string& renderFunc)
+{
+   // A document's `knit:` YAML field is evaluated as R code when the document
+   // is rendered (see RenderRmd::start), so an untrusted document can use it to
+   // run arbitrary code on a single click of the Knit/Preview button. The
+   // values below are either RStudio's own defaults or are derived by RStudio
+   // from the document's runtime/site configuration, so they are known-safe;
+   // anything else originates verbatim from the document's `knit:` field and is
+   // confirmed with the user before it is run.
+   static const std::set<std::string> knownSafe = {
+      "",
+      kStandardRenderFunc,          // rmarkdown::render
+      kShinyRenderFunc,             // rmarkdown::run
+      "rmarkdown::render_site",
+      "blogdown::serve_site",
+      "bookdown::render_book",
+      "bookdown::preview_chapter",
+      "pkgdown::build_site",
+      "xaringan::inf_mr",
+      "quarto serve",
+      "quarto render",
+   };
+
+   return knownSafe.find(renderFunc) == knownSafe.end();
+}
+
 Error evaluateRmdParams(const std::string& docId)
 {
    // get document contents
@@ -1941,6 +2013,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rmarkdown_context", getRMarkdownContext))
       (bind(registerRpcMethod, "render_rmd", renderRmd))
+      (bind(registerRpcMethod, "get_custom_render_function", getCustomRenderFunction))
       (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))

@@ -116,6 +116,20 @@ std::string jsonLiteralUnescape(const std::string& str);
 std::string jsonHtmlEscape(const std::string& str);
 std::string singleQuotedStrEscape(const std::string& str);
 
+// Removes the common leading indentation shared by all non-blank lines, and
+// drops a single leading and trailing blank line. This allows multi-line raw
+// string literals to be indented to match the surrounding source code while
+// still producing cleanly-formatted (un-indented) output -- useful for
+// embedding inline R code, scripts, or other text. For example:
+//
+//    std::string code = heredoc(R"(
+//       library(knitr)
+//       knit('example.Rmd')
+//    )");
+//
+// produces "library(knitr)\nknit('example.Rmd')".
+std::string heredoc(const std::string& str);
+
 Error jsonLiteralUnescape(const std::string& string,
                           std::string* pEscaped);
 

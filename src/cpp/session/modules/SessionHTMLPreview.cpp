@@ -26,6 +26,8 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <fmt/format.h>
+
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -219,27 +221,38 @@ private:
          return;
       }
 
-      // args
+      // args -- note that paths are escaped before being interpolated into the
+      // R command, so that a filename containing a single quote cannot break
+      // out of the string literal and inject arbitrary R code
       std::string cmd;
       if (!knitrOutputFile_.isEmpty())
       {
-         boost::format fmt;
+         std::string code = string_utils::heredoc(R"RCODE(
+            require(knitr)
+            knit('{0}', encoding = '{1}')
+         )RCODE");
 
-         fmt = boost::format("require(knitr); "
-                              "knit('%2%', encoding='%1%');");
-
-         cmd = boost::str(fmt % encoding % targetFile_.getFilename());
+         cmd = fmt::format(
+            fmt::runtime(code),
+            string_utils::singleQuotedStrEscape(targetFile_.getFilename()),
+            string_utils::singleQuotedStrEscape(encoding));
       }
       else
       {
          std::string tempFilePath = string_utils::utf8ToSystem(
             outputFileTempFile.getAbsolutePath());
-         boost::format fmt;
-         fmt = boost::format("require(knitr); "
-                             "knit('%2%', encoding='%1%'); "
-                             "cat(o, file='%3%');");
-         cmd = boost::str(fmt % encoding % targetFile_.getFilename() %
-                          tempFilePath);
+
+         std::string code = string_utils::heredoc(R"RCODE(
+            require(knitr)
+            knit('{0}', encoding = '{1}')
+            cat(o, file = '{2}')
+         )RCODE");
+
+         cmd = fmt::format(
+            fmt::runtime(code),
+            string_utils::singleQuotedStrEscape(targetFile_.getFilename()),
+            string_utils::singleQuotedStrEscape(encoding),
+            string_utils::singleQuotedStrEscape(tempFilePath));
       }
 
       outputPathTempFile_ = outputFileTempFile;
