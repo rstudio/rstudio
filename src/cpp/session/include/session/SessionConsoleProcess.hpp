@@ -268,12 +268,8 @@ private:
    // terminal's first output so it doesn't wipe replayed scrollback
    // (see SessionConsoleProcess.cpp; microsoft/terminal#4252).
    bool pendingStripRestartClear_ = false;
-   // Accumulates the restarted shell's initial output while we locate that
-   // clear, which may span output chunks.
-   std::string restartClearBuf_;
-   // After this deadline the startup window is over: held output is flushed and
-   // no further stripping is done, so a later user-issued clear is never
-   // mistaken for the startup clear.
+   // After this deadline the startup window is over and no further stripping is
+   // done, so a later user-issued clear is never mistaken for the startup clear.
    std::chrono::steady_clock::time_point restartClearDeadline_;
 #endif
 

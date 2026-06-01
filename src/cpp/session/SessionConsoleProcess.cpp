@@ -618,95 +618,20 @@ std::string ConsoleProcess::getBuffer() const
 }
 
 #ifdef _WIN32
-namespace {
-
-// Pattern for the conhost startup clear: CSI 2J/3J, then an optional SGR reset
-// and an optional cursor home (microsoft/terminal#4252).
-const boost::regex& conPtyClearPattern()
+// Strip the first complete ConPTY startup clear (CSI 2J/3J, optionally followed
+// by an SGR reset and a cursor home) from *pStr. Returns true if one was
+// removed. See microsoft/terminal#4252. Not static: exercised by the tests.
+bool stripFirstConPtyClear(std::string* pStr)
 {
-   static const boost::regex pattern(
+   static const boost::regex clearPattern(
          "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
-   return pattern;
-}
-
-// True if the bytes at/after `pos` are empty or an incomplete escape sequence
-// that could still grow into part of the clear frame (an SGR reset or cursor
-// home). Used to avoid stripping when the frame is split across output chunks.
-bool trailingMayExtendClear(const std::string& s, std::size_t pos)
-{
-   if (pos >= s.size())
-      return true;                       // match at end; a home may still arrive
-   if (s[pos] != '\x1b')
-      return false;                      // real content follows; frame is done
-   if (pos + 1 >= s.size())
-      return true;                       // lone ESC; could become a CSI
-   if (s[pos + 1] != '[')
-      return false;                      // e.g. OSC "\x1b]"; not part of frame
-   std::size_t j = pos + 2;
-   while (j < s.size() && ((s[j] >= '0' && s[j] <= '9') || s[j] == ';'))
-      ++j;
-   return j >= s.size();                 // no final byte yet -> may become m/H
-}
-
-// True if `s` consists solely of the control sequences that can precede the
-// conhost startup clear (CSI sequences), possibly ending in an incomplete one.
-// Once real content (printable text or an OSC) appears, the startup clear is no
-// longer pending and output must be forwarded as-is rather than withheld.
-bool bufferIsLeadingFramePrefix(const std::string& s)
-{
-   std::size_t i = 0;
-   while (i < s.size())
-   {
-      if (s[i] != '\x1b')
-         return false;                   // printable content
-      if (i + 1 >= s.size())
-         return true;                    // trailing lone ESC
-      if (s[i + 1] != '[')
-         return false;                   // OSC ("\x1b]") or other: content
-      std::size_t j = i + 2;
-      while (j < s.size() &&
-             ((s[j] >= '0' && s[j] <= '9') || s[j] == ';' || s[j] == '?'))
-         ++j;
-      if (j >= s.size())
-         return true;                    // incomplete CSI at end
-      i = j + 1;                         // complete CSI; keep scanning
-   }
-   return true;
-}
-
-} // anonymous namespace
-
-// Locate and strip the conhost startup screen clear at the start of a restarted
-// shell's output. That frame can span output chunks, so the caller accumulates
-// output in *pBuf and calls this until it returns true. On true, *pBuf is the
-// output to forward, with at most the first startup clear removed; false
-// requests more input. Pass force=true to resolve immediately (e.g. the hold
-// window closed or the shell exited): a complete clear is still stripped, but
-// output is never withheld. Not static: exercised by the tests.
-bool resolveRestartStartupClear(std::string* pBuf, bool force)
-{
-   const std::size_t kMaxHold = 4096;    // never withhold more than this
-
    boost::smatch match;
-   if (boost::regex_search(*pBuf, match, conPtyClearPattern()))
-   {
-      std::size_t matchPos =
-            static_cast<std::size_t>(match[0].first - pBuf->cbegin());
-      std::size_t matchLen = static_cast<std::size_t>(match[0].length());
-      if (!force && trailingMayExtendClear(*pBuf, matchPos + matchLen) &&
-          pBuf->size() < kMaxHold)
-         return false;                   // the clear frame may still be arriving
-      pBuf->erase(matchPos, matchLen);
-      return true;
-   }
-
-   // No complete clear yet. Forced or oversized buffers always resolve.
-   if (force || pBuf->size() >= kMaxHold)
-      return true;
-   // Otherwise keep waiting only while the output so far is purely the leading
-   // control sequences that precede the clear (a clear may still arrive). As
-   // soon as real content appears, the startup clear is absent: forward as-is.
-   return !bufferIsLeadingFramePrefix(*pBuf);
+   if (!boost::regex_search(*pStr, match, clearPattern))
+      return false;
+   std::size_t pos = static_cast<std::size_t>(match[0].first - pStr->cbegin());
+   std::size_t len = static_cast<std::size_t>(match[0].length());
+   pStr->erase(pos, len);
+   return true;
 }
 #endif
 
@@ -719,31 +644,24 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    // A restarted terminal's ConPTY host emits a one-time screen clear (CSI 2J +
    // cursor home) when the new shell starts up (microsoft/terminal#4252). For
    // shells whose scrollback we replay on reconnect (e.g. Git Bash), persisting
-   // that clear would wipe the restored history. The clear can span output
-   // chunks, so accumulate the restarted shell's initial output and strip only
-   // the first clear before the output is buffered or forwarded.
-   std::string resolvedOutput;
+   // that clear would wipe the restored history, so strip the first clear seen
+   // within a short window after restart. Output is forwarded immediately
+   // (never withheld); once the clear is stripped or the window elapses we stop,
+   // so a later user-issued clear is never affected.
+   std::string strippedOutput;
    const std::string* pOutput = &rawOutput;
    if (pendingStripRestartClear_)
    {
       if (std::chrono::steady_clock::now() >= restartClearDeadline_)
       {
-         // Startup window elapsed: flush anything held and stop stripping, so a
-         // later user-issued clear is never mistaken for the startup clear.
-         pendingStripRestartClear_ = false;
-         resolvedOutput = restartClearBuf_ + rawOutput;
-         restartClearBuf_.clear();
-         pOutput = &resolvedOutput;
+         pendingStripRestartClear_ = false;   // window over; forward as-is
       }
       else
       {
-         restartClearBuf_.append(rawOutput);
-         if (!resolveRestartStartupClear(&restartClearBuf_, false))
-            return;                       // hold until the clear frame completes
-         pendingStripRestartClear_ = false;
-         resolvedOutput.swap(restartClearBuf_);
-         restartClearBuf_.clear();
-         pOutput = &resolvedOutput;
+         strippedOutput = rawOutput;
+         if (stripFirstConPtyClear(&strippedOutput))
+            pendingStripRestartClear_ = false; // startup clear handled
+         pOutput = &strippedOutput;
       }
    }
    const std::string& output = *pOutput;
@@ -868,27 +786,6 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
 void ConsoleProcess::onExit(int exitCode)
 {
-#ifdef _WIN32
-   // If the shell exited before we resolved the restart screen clear, flush any
-   // held output (stripping a complete clear if present) so it isn't lost.
-   // See enqueOutputEvent; microsoft/terminal#4252.
-   LOCK_MUTEX(inputOutputQueueMutex_)
-   {
-      if (pendingStripRestartClear_)
-      {
-         pendingStripRestartClear_ = false;
-         if (!restartClearBuf_.empty())
-         {
-            std::string held;
-            held.swap(restartClearBuf_);
-            resolveRestartStartupClear(&held, true /*force*/);
-            enqueOutputEvent(held);
-         }
-      }
-   }
-   END_LOCK_MUTEX
-#endif
-
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 

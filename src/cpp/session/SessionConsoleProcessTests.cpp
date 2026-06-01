@@ -25,9 +25,9 @@ namespace session {
 namespace console_process {
 
 #ifdef _WIN32
-// Defined in SessionConsoleProcess.cpp; locates and strips the ConPTY host's
-// one-time startup screen clear from a restarted terminal's accumulated output.
-bool resolveRestartStartupClear(std::string* pBuf, bool force);
+// Defined in SessionConsoleProcess.cpp; strips the first complete ConPTY
+// startup screen clear from a restarted terminal's output.
+bool stripFirstConPtyClear(std::string* pStr);
 #endif
 
 namespace tests {
@@ -249,55 +249,34 @@ TEST(ConsoleProcessConPty, StripsInlineRestartClear)
    // content is preserved; the destructive clear + home are removed.
    std::string out =
       "before\r\n$ \x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
-   EXPECT_TRUE(resolveRestartStartupClear(&out, false));
+   EXPECT_TRUE(stripFirstConPtyClear(&out));
    EXPECT_EQ(out, "before\r\n$ \x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
    EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
-}
-
-TEST(ConsoleProcessConPty, HandlesClearSplitAcrossChunks)
-{
-   // First chunk ends mid cursor-home: hold, then resolve once the rest arrives.
-   std::string buf = "\x1b[2J\x1b[m\x1b[";
-   EXPECT_FALSE(resolveRestartStartupClear(&buf, false));
-   buf += "H\x1b]0;t\x07$ ";
-   EXPECT_TRUE(resolveRestartStartupClear(&buf, false));
-   EXPECT_EQ(buf, "\x1b]0;t\x07$ ");
 }
 
 TEST(ConsoleProcessConPty, StripsOnlyFirstClear)
 {
    // A later clear (e.g. a real `clear` command) in the same output survives.
    std::string out = "\x1b[2J\x1b[Hkeep\x1b[2Jme";
-   EXPECT_TRUE(resolveRestartStartupClear(&out, false));
+   EXPECT_TRUE(stripFirstConPtyClear(&out));
    EXPECT_EQ(out, "keep\x1b[2Jme");
 }
 
-TEST(ConsoleProcessConPty, HoldsLeadingFramePrefix)
+TEST(ConsoleProcessConPty, StripsScrollbackClearVariant)
 {
-   // Only the leading control sequences have arrived (no content, no clear yet):
-   // a clear may still be coming, so keep waiting.
-   std::string buf = "\x1b[?2004h\x1b[?25l";
-   EXPECT_FALSE(resolveRestartStartupClear(&buf, false));
+   // CSI 3J (clear scrollback) and its cursor home are also removed.
+   std::string out = "x\x1b[3J\x1b[Hy";
+   EXPECT_TRUE(stripFirstConPtyClear(&out));
+   EXPECT_EQ(out, "xy");
 }
 
-TEST(ConsoleProcessConPty, ForwardsContentWithoutClearImmediately)
+TEST(ConsoleProcessConPty, LeavesOutputWithoutClearUnchanged)
 {
-   // A prompt (real content) arrives with no clear: forward at once rather than
-   // withhold it, even unforced -- otherwise an idle prompt would stay hidden.
-   std::string buf = "\x1b[?2004h\x1b[32mtomto@pc \x1b[m$ ";
-   const std::string orig = buf;
-   EXPECT_TRUE(resolveRestartStartupClear(&buf, false));
-   EXPECT_EQ(buf, orig);
-}
-
-TEST(ConsoleProcessConPty, ForcedResolveFlushesOutputWithoutClear)
-{
-   // When forced (hold window closed / shell exited) with no clear, output is
-   // flushed unchanged rather than withheld.
-   std::string buf = "no clear here\r\n$ ";
-   const std::string orig = buf;
-   EXPECT_TRUE(resolveRestartStartupClear(&buf, true));
-   EXPECT_EQ(buf, orig);
+   // Output with no clear (e.g. just a prompt) is returned untouched.
+   std::string out = "\x1b[?2004h\x1b[32mtomto@pc \x1b[m$ ";
+   const std::string orig = out;
+   EXPECT_FALSE(stripFirstConPtyClear(&out));
+   EXPECT_EQ(out, orig);
 }
 #endif // _WIN32
 
