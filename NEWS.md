@@ -19,6 +19,7 @@
 - ([#17777](https://github.com/rstudio/rstudio/issues/17777)): Fix "Import Dataset" from the Environment pane failing with "could not find function '.rs.digest'" when previewing a CSV (or other readr/readxl/haven source).
 - ([#3798](https://github.com/rstudio/rstudio/issues/3798)): The Windows terminal now uses the native Windows pseudoconsole (ConPTY) instead of the legacy winpty library, improving Ctrl+C handling in console programs.
 - ([#17800](https://github.com/rstudio/rstudio/issues/17800)): Fix the data viewer's horizontal scrollbar staying hidden after returning to the tab, and fix Ctrl+C/Cmd+C copying only the active cell instead of the user's multi-cell text selection.
+- ([#17810](https://github.com/rstudio/rstudio/issues/17810)): Fix the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.
 
 ### Dependencies
 - Ace 1.43.5

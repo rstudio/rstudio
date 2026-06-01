@@ -9419,7 +9419,11 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               save(new Command()
+               // Save any unsaved documents before running tests. We use
+               // withSaveFilesBeforeCommand (rather than an unconditional save)
+               // so that unmodified documents are not re-written to disk, which
+               // would needlessly update their timestamps. See #17810.
+               source_.withSaveFilesBeforeCommand(new Command()
                {
                   @Override
                   public void execute()
@@ -9439,7 +9443,9 @@ public class TextEditingTarget implements
                         }
                      });
                   }
-               });
+               },
+               () -> {},
+               "Run Tests");
             }
          },
          true
@@ -9457,7 +9463,11 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               save(new Command()
+               // Save any unsaved documents before running tests. We use
+               // withSaveFilesBeforeCommand (rather than an unconditional save)
+               // so that unmodified documents are not re-written to disk, which
+               // would needlessly update their timestamps. See #17810.
+               source_.withSaveFilesBeforeCommand(new Command()
                {
                   @Override
                   public void execute()
@@ -9477,7 +9487,9 @@ public class TextEditingTarget implements
                         }
                      });
                   }
-               });
+               },
+               () -> {},
+               "Run Tests");
             }
          },
          false
