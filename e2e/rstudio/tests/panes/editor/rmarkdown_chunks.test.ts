@@ -3,7 +3,8 @@
  * `warn` option round-trip when running a chunk, error halts
  * (#16006-adjacent), console-history recall after an errored chunk
  * (#16006), patchwork-style auto-printing (#13470), paged-table
- * representation (#16483), and nb.html generation on save.
+ * representation (#16483), suppression of invisibly-returned data.table
+ * auto-printing (#17278), and nb.html generation on save.
  *
  * Multiline chunk execution (#17350) is covered by
  * `multiline_chunk_execution.test.ts`; notebook-save-during-execution
@@ -373,6 +374,52 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     );
     await expect(page.locator('.pagedtable')).toHaveCount(0);
     await sourceActions.closeSourceAndDeleteFile(fileNamePrint);
+  });
+
+  // A data.table returned invisibly from `[.data.table` after a `:=` update
+  // must not be auto-printed -- matching the console, knitr, and rmarkdown
+  // behavior. The notebook print override regressed in 2026.01: on the
+  // suppression signal it fell through to data.table's own print method,
+  // re-triggering data.table's stateful shouldPrint() and dumping the table
+  // into the chunk. https://github.com/rstudio/rstudio/issues/17278
+  test('data.table returned invisibly from := is not auto-printed (#17278)', async ({ rstudioPage: page }) => {
+    const missing = await consoleActions.ensurePackages(['data.table'], 180_000);
+    test.skip(missing.length > 0, `required R package(s) not available: ${missing.join(', ')}`);
+
+    // Distinctive value for the added column: if the table is (incorrectly)
+    // printed, this string lands in the chunk output, which is what makes the
+    // assertion below non-vacuous. It cannot leak in from the source editor
+    // because the assertion is scoped to the chunk-output element.
+    const sentinel = 'NBDTSENTINEL17278';
+    const fileName = `rmarkdown_datatable_invisible_${Date.now()}.Rmd`;
+    const content = [
+      '---',
+      'title: data.table Invisible Update',
+      '---',
+      '',
+      '```{r dtinvisible}',
+      `data.table::as.data.table(mtcars)[, foo := '${sentinel}']`,
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+
+    // The `:=` update returns invisibly, so a correctly-behaving chunk
+    // produces no output -- wait on R's idle state. Run twice; the first run
+    // might not surface a stale chunk-output buffer (mirrors the #13470 test).
+    await runChunkByLabelAndWaitForIdle(page, sourceActions, 'dtinvisible');
+    await runChunkByLabelAndWaitForIdle(page, sourceActions, 'dtinvisible');
+
+    // No chunk-output element for this chunk should contain the table. The
+    // class is `rstudio_chunk_output_<label>` -- ClassIds.assignClassId adds it
+    // as a CSS *class*, so it must be matched with `.`, not `#`. Filtering on
+    // the sentinel keeps this robust whether or not an empty output frame
+    // exists, and only matches when the table was actually printed.
+    await expect(
+      page.locator('.rstudio_chunk_output_dtinvisible', { hasText: sentinel }),
+    ).toHaveCount(0);
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
   });
 
   test('saving an R Notebook creates an nb.html file', async ({ rstudioPage: page }) => {

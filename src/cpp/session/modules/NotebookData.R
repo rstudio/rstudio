@@ -122,8 +122,17 @@
         o <- overrideMap(x, options)
         if (!is.null(o))
           return(overridePrint(o$x, o$options, o$className, o$nRow, o$nCol))
+
+        # a NULL override map result signals that this auto-printed object
+        # should not be printed at all -- e.g. a 'data.table' returned
+        # invisibly from '[.data.table' following a ':=' update. suppress the
+        # output rather than falling through to the original print method,
+        # which would re-print the object (and, for data.table, re-trigger its
+        # stateful shouldPrint() check and dump the table).
+        # https://github.com/rstudio/rstudio/issues/17278
+        return(invisible(x))
       }
-      
+
       # otherwise, call the original S3 method. we need to manually manage the
       # lookup here since we inject overrides into the base namespace, which
       # could mask the visibility of certain S3 overrides
