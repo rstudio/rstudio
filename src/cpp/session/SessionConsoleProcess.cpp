@@ -618,26 +618,11 @@ std::string ConsoleProcess::getBuffer() const
 }
 
 #ifdef _WIN32
-// Strip the first complete ConPTY startup clear (CSI 2J/3J, optionally followed
-// by an SGR reset and a cursor home) from *pStr. Returns true if one was
-// removed. See microsoft/terminal#4252. Not static: exercised by the tests.
-bool stripFirstConPtyClear(std::string* pStr)
-{
-   static const boost::regex clearPattern(
-         "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
-   boost::smatch match;
-   if (!boost::regex_search(*pStr, match, clearPattern))
-      return false;
-   std::size_t pos = static_cast<std::size_t>(match[0].first - pStr->cbegin());
-   std::size_t len = static_cast<std::size_t>(match[0].length());
-   pStr->erase(pos, len);
-   return true;
-}
-
 // True if `s` is composed solely of the control sequences that can precede the
 // conhost startup clear (CSI sequences), possibly ending in an incomplete one.
-// Once visible content (printable text or an OSC) appears with no clear, the
-// startup clear is absent and stripping should stop. Not static: tested.
+// The startup clear is the one preceded only by such control output; once
+// visible content (printable text or an OSC) appears, it is absent or a clear
+// is a user clear. Not static: exercised by the tests.
 bool isPureLeadingControl(const std::string& s)
 {
    std::size_t i = 0;
@@ -658,6 +643,31 @@ bool isPureLeadingControl(const std::string& s)
       i = j + 1;                         // complete CSI; keep scanning
    }
    return true;
+}
+
+// Handle one output chunk during the post-restart window. If it begins with the
+// conhost startup clear (a CSI 2J/3J preceded only by leading control output,
+// optionally followed by an SGR reset and a cursor home), strip that clear in
+// place. Returns true to keep watching later chunks (the chunk was purely
+// leading control, so the clear may still arrive), false to stop -- the startup
+// clear was handled, a user clear after visible content was left intact, or
+// visible content arrived without a clear. See microsoft/terminal#4252.
+bool stripRestartClearFromChunk(std::string* pChunk)
+{
+   static const boost::regex clearPattern(
+         "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
+   boost::smatch match;
+   if (boost::regex_search(*pChunk, match, clearPattern))
+   {
+      std::size_t pos =
+            static_cast<std::size_t>(match[0].first - pChunk->cbegin());
+      // Only the startup clear is preceded solely by leading control output; a
+      // clear after visible content is a user clear and must be left intact.
+      if (isPureLeadingControl(pChunk->substr(0, pos)))
+         pChunk->erase(pos, static_cast<std::size_t>(match[0].length()));
+      return false;
+   }
+   return isPureLeadingControl(*pChunk);
 }
 #endif
 
@@ -686,11 +696,7 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
       else
       {
          strippedOutput = rawOutput;
-         if (stripFirstConPtyClear(&strippedOutput))
-            pendingStripRestartClear_ = false;   // startup clear handled
-         else if (!isPureLeadingControl(rawOutput))
-            pendingStripRestartClear_ = false;   // visible content, no clear:
-                                                 // the startup clear is absent
+         pendingStripRestartClear_ = stripRestartClearFromChunk(&strippedOutput);
          pOutput = &strippedOutput;
       }
    }

@@ -25,9 +25,10 @@ namespace session {
 namespace console_process {
 
 #ifdef _WIN32
-// Defined in SessionConsoleProcess.cpp; strips the first complete ConPTY
-// startup screen clear from a restarted terminal's output.
-bool stripFirstConPtyClear(std::string* pStr);
+// Defined in SessionConsoleProcess.cpp; strips the conhost startup clear (only
+// when preceded solely by leading control) from one post-restart output chunk.
+// Returns true to keep watching later chunks, false to stop.
+bool stripRestartClearFromChunk(std::string* pChunk);
 // True if the output is solely leading control sequences (a clear may still be
 // coming); false once visible content appears (the startup clear is absent).
 bool isPureLeadingControl(const std::string& s);
@@ -245,58 +246,60 @@ TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
 }
 
 #ifdef _WIN32
-TEST(ConsoleProcessConPty, StripsInlineRestartClear)
+TEST(ConsoleProcessConPty, StripsStartupClearAtHead)
 {
    // Bytes a restarted Git Bash emits under ConPTY: hide cursor, clear screen,
-   // reset SGR, home, then title + prompt (microsoft/terminal#4252). Prior
-   // content is preserved; the destructive clear + home are removed.
-   std::string out =
-      "before\r\n$ \x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
-   EXPECT_TRUE(stripFirstConPtyClear(&out));
-   EXPECT_EQ(out, "before\r\n$ \x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
+   // reset SGR, home, then title + prompt (microsoft/terminal#4252). The clear
+   // (preceded only by mode-sets) is removed; everything else is preserved.
+   std::string out = "\x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));   // a clear ends the window
+   EXPECT_EQ(out, "\x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
    EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
 }
 
-TEST(ConsoleProcessConPty, StripsOnlyFirstClear)
+TEST(ConsoleProcessConPty, KeepsUserClearAfterContent)
 {
-   // A later clear (e.g. a real `clear` command) in the same output survives.
-   std::string out = "\x1b[2J\x1b[Hkeep\x1b[2Jme";
-   EXPECT_TRUE(stripFirstConPtyClear(&out));
-   EXPECT_EQ(out, "keep\x1b[2Jme");
+   // A prompt and a user `clear` coalesced into one chunk: the clear follows
+   // visible content, so it is NOT the startup clear and must be left intact.
+   std::string out = "\x1b[32m$ \x1b[mecho hi\r\nhi\r\n$ \x1b[2J\x1b[H";
+   const std::string orig = out;
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, orig);                             // user clear preserved
+}
+
+TEST(ConsoleProcessConPty, KeepsWatchingPureLeadingControl)
+{
+   // Only mode-sets so far: the startup clear may still arrive in a later chunk.
+   std::string out = "\x1b[?2004h\x1b[?25l";
+   const std::string orig = out;
+   EXPECT_TRUE(stripRestartClearFromChunk(&out));    // keep watching
+   EXPECT_EQ(out, orig);
+}
+
+TEST(ConsoleProcessConPty, StopsOnContentWithoutClear)
+{
+   // A prompt arrives with no clear: the startup clear is absent, stop watching
+   // so a later user clear is never stripped.
+   std::string out = "\x1b[?2004h\x1b[32mtomto@pc$ ";
+   const std::string orig = out;
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, orig);
 }
 
 TEST(ConsoleProcessConPty, StripsScrollbackClearVariant)
 {
-   // CSI 3J (clear scrollback) and its cursor home are also removed.
-   std::string out = "x\x1b[3J\x1b[Hy";
-   EXPECT_TRUE(stripFirstConPtyClear(&out));
-   EXPECT_EQ(out, "xy");
-}
-
-TEST(ConsoleProcessConPty, LeavesOutputWithoutClearUnchanged)
-{
-   // Output with no clear (e.g. just a prompt) is returned untouched.
-   std::string out = "\x1b[?2004h\x1b[32mtomto@pc \x1b[m$ ";
-   const std::string orig = out;
-   EXPECT_FALSE(stripFirstConPtyClear(&out));
-   EXPECT_EQ(out, orig);
+   // CSI 3J (clear scrollback) at the head is also removed.
+   std::string out = "\x1b[3J\x1b[Hy";
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, "y");
 }
 
 TEST(ConsoleProcessConPty, LeadingControlIsRecognized)
 {
-   // Pure mode-sets: a clear may still be coming -> keep scanning.
    EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b[?25l"));
-   // A trailing incomplete escape is still "leading control".
-   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b["));
-}
-
-TEST(ConsoleProcessConPty, VisibleContentStopsScanning)
-{
-   // Printable prompt text -> the startup clear is absent, stop scanning so a
-   // later user clear is never stripped.
+   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b[")); // incomplete tail
    EXPECT_FALSE(isPureLeadingControl("\x1b[?2004h\x1b[32mtomto@pc$ "));
-   // An OSC title is content too (the prompt has started).
-   EXPECT_FALSE(isPureLeadingControl("\x1b]0;title\x07"));
+   EXPECT_FALSE(isPureLeadingControl("\x1b]0;title\x07")); // OSC is content
 }
 #endif // _WIN32
 
