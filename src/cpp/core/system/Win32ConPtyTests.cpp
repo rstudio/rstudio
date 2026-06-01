@@ -255,6 +255,47 @@ TEST(Win32ConPtyTest, ConcurrentWriteAndCloseInputIsSafe)
    ::CloseHandle(hProc);
 }
 
+TEST(Win32ConPtyTest, RoutesOutputWhenHostStdHandlesRedirected)
+{
+   // Simulate the desktop/GUI launch context: the host process's std handles are
+   // redirected to a (non-console) file at spawn time. The child must still
+   // attach to the pseudoconsole rather than inherit the host's file handle.
+   wchar_t tmpDir[MAX_PATH];
+   wchar_t tmpFile[MAX_PATH];
+   ::GetTempPathW(MAX_PATH, tmpDir);
+   ::GetTempFileNameW(tmpDir, L"cpt", 0, tmpFile);
+   HANDLE hFile = ::CreateFileW(tmpFile, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, nullptr);
+   ASSERT_NE(hFile, INVALID_HANDLE_VALUE);
+
+   HANDLE savedIn  = ::GetStdHandle(STD_INPUT_HANDLE);
+   HANDLE savedOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+   HANDLE savedErr = ::GetStdHandle(STD_ERROR_HANDLE);
+
+   ConPty pty;
+   std::vector<std::string> args = {"/c", "echo HELLO_REDIR & ping -n 2 127.0.0.1 >nul"};
+   HANDLE hProc = nullptr;
+
+   ::SetStdHandle(STD_INPUT_HANDLE, hFile);
+   ::SetStdHandle(STD_OUTPUT_HANDLE, hFile);
+   ::SetStdHandle(STD_ERROR_HANDLE, hFile);
+   Error err = pty.start(cmdExe(), args, ptyOptions(), &hProc);
+   // restore IMMEDIATELY so gtest output/assertions are not redirected
+   ::SetStdHandle(STD_INPUT_HANDLE, savedIn);
+   ::SetStdHandle(STD_OUTPUT_HANDLE, savedOut);
+   ::SetStdHandle(STD_ERROR_HANDLE, savedErr);
+
+   ASSERT_FALSE(err) << err.asString();
+   std::string out = drainUntil(pty, "HELLO_REDIR", 5000);
+   EXPECT_NE(out.find("HELLO_REDIR"), std::string::npos)
+       << "child output did not route through the pseudoconsole; got: " << out;
+
+   pty.stop();
+   ::CloseHandle(hProc);
+   ::CloseHandle(hFile);
+   ::DeleteFileW(tmpFile);
+}
+
 } // namespace tests
 } // namespace system
 } // namespace core

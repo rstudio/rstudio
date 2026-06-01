@@ -229,6 +229,25 @@ Error ConPty::launchChild(const std::string& exe,
          ? std::wstring()
          : options.workingDir.getAbsolutePathW();
 
+   // The child binds to the pseudoconsole only when our process's standard
+   // handles are NOT valid non-console handles at CreateProcess time. When
+   // rsession is launched by the desktop (GUI) process, its STD_INPUT/OUTPUT/
+   // ERROR are redirected to pipes, and the child would inherit those by value
+   // (in its process parameters) instead of attaching to the pseudoconsole --
+   // producing a terminal with no output and no echo, even with
+   // bInheritHandles=FALSE and no STARTF_USESTDHANDLES. Temporarily clear our
+   // std handles across CreateProcess so the child attaches to the
+   // pseudoconsole, then restore them. (Confirmed empirically; the trigger is
+   // redirected std handles, not console presence.) ChildProcess::run serializes
+   // process creation with a critical section, so this brief change to the
+   // process-global std handles does not race other CreateProcess calls.
+   HANDLE savedIn  = ::GetStdHandle(STD_INPUT_HANDLE);
+   HANDLE savedOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+   HANDLE savedErr = ::GetStdHandle(STD_ERROR_HANDLE);
+   ::SetStdHandle(STD_INPUT_HANDLE, nullptr);
+   ::SetStdHandle(STD_OUTPUT_HANDLE, nullptr);
+   ::SetStdHandle(STD_ERROR_HANDLE, nullptr);
+
    PROCESS_INFORMATION pi;
    ZeroMemory(&pi, sizeof(pi));
    BOOL ok = ::CreateProcessW(
@@ -242,6 +261,10 @@ Error ConPty::launchChild(const std::string& exe,
          &si.StartupInfo,
          &pi);
    Error createErr = ok ? Success() : LAST_SYSTEM_ERROR();
+
+   ::SetStdHandle(STD_INPUT_HANDLE, savedIn);
+   ::SetStdHandle(STD_OUTPUT_HANDLE, savedOut);
+   ::SetStdHandle(STD_ERROR_HANDLE, savedErr);
 
    ::DeleteProcThreadAttributeList(si.lpAttributeList);
    ::HeapFree(::GetProcessHeap(), 0, si.lpAttributeList);
