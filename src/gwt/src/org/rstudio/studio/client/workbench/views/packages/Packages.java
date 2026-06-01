@@ -841,6 +841,13 @@ public class Packages
 
    private void setViewPackageList()
    {
+      // the initial package state may not have loaded yet (e.g. an async
+      // PackageVulnerabilitiesReadyEvent can arrive first); projectContext_ is
+      // null until then, so bail out and let setPackageState() render once it
+      // populates the context
+      if (projectContext_ == null)
+         return;
+
       ArrayList<PackageInfo> packages = null;
 
       // apply filter (if any)
