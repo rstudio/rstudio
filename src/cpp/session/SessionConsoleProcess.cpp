@@ -633,6 +633,32 @@ bool stripFirstConPtyClear(std::string* pStr)
    pStr->erase(pos, len);
    return true;
 }
+
+// True if `s` is composed solely of the control sequences that can precede the
+// conhost startup clear (CSI sequences), possibly ending in an incomplete one.
+// Once visible content (printable text or an OSC) appears with no clear, the
+// startup clear is absent and stripping should stop. Not static: tested.
+bool isPureLeadingControl(const std::string& s)
+{
+   std::size_t i = 0;
+   while (i < s.size())
+   {
+      if (s[i] != '\x1b')
+         return false;                   // printable content
+      if (i + 1 >= s.size())
+         return true;                    // trailing lone ESC
+      if (s[i + 1] != '[')
+         return false;                   // OSC ("\x1b]") or other: content
+      std::size_t j = i + 2;
+      while (j < s.size() &&
+             ((s[j] >= '0' && s[j] <= '9') || s[j] == ';' || s[j] == '?'))
+         ++j;
+      if (j >= s.size())
+         return true;                    // incomplete CSI at end
+      i = j + 1;                         // complete CSI; keep scanning
+   }
+   return true;
+}
 #endif
 
 void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
@@ -646,21 +672,25 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    // shells whose scrollback we replay on reconnect (e.g. Git Bash), persisting
    // that clear would wipe the restored history, so strip the first clear seen
    // within a short window after restart. Output is forwarded immediately
-   // (never withheld); once the clear is stripped or the window elapses we stop,
-   // so a later user-issued clear is never affected.
+   // (never withheld). Stripping stops as soon as the clear is removed, visible
+   // content arrives without one, or the window elapses -- so a later
+   // user-issued clear is never affected.
    std::string strippedOutput;
    const std::string* pOutput = &rawOutput;
    if (pendingStripRestartClear_)
    {
       if (std::chrono::steady_clock::now() >= restartClearDeadline_)
       {
-         pendingStripRestartClear_ = false;   // window over; forward as-is
+         pendingStripRestartClear_ = false;      // window over; forward as-is
       }
       else
       {
          strippedOutput = rawOutput;
          if (stripFirstConPtyClear(&strippedOutput))
-            pendingStripRestartClear_ = false; // startup clear handled
+            pendingStripRestartClear_ = false;   // startup clear handled
+         else if (!isPureLeadingControl(rawOutput))
+            pendingStripRestartClear_ = false;   // visible content, no clear:
+                                                 // the startup clear is absent
          pOutput = &strippedOutput;
       }
    }

@@ -28,6 +28,9 @@ namespace console_process {
 // Defined in SessionConsoleProcess.cpp; strips the first complete ConPTY
 // startup screen clear from a restarted terminal's output.
 bool stripFirstConPtyClear(std::string* pStr);
+// True if the output is solely leading control sequences (a clear may still be
+// coming); false once visible content appears (the startup clear is absent).
+bool isPureLeadingControl(const std::string& s);
 #endif
 
 namespace tests {
@@ -277,6 +280,23 @@ TEST(ConsoleProcessConPty, LeavesOutputWithoutClearUnchanged)
    const std::string orig = out;
    EXPECT_FALSE(stripFirstConPtyClear(&out));
    EXPECT_EQ(out, orig);
+}
+
+TEST(ConsoleProcessConPty, LeadingControlIsRecognized)
+{
+   // Pure mode-sets: a clear may still be coming -> keep scanning.
+   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b[?25l"));
+   // A trailing incomplete escape is still "leading control".
+   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b["));
+}
+
+TEST(ConsoleProcessConPty, VisibleContentStopsScanning)
+{
+   // Printable prompt text -> the startup clear is absent, stop scanning so a
+   // later user clear is never stripped.
+   EXPECT_FALSE(isPureLeadingControl("\x1b[?2004h\x1b[32mtomto@pc$ "));
+   // An OSC title is content too (the prompt has started).
+   EXPECT_FALSE(isPureLeadingControl("\x1b]0;title\x07"));
 }
 #endif // _WIN32
 
