@@ -25,6 +25,7 @@
 #include <core/Exec.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 #include <core/http/URL.hpp>
 
@@ -128,47 +129,47 @@ int s_activeRequests = 0;
 bool s_refreshPending = false;
 
 void startVulnerabilityRequests();
+void enqueCachedVulnerabilities();
 
 // Runs on the main thread once a single repo's request has completed (whether
-// it succeeded or failed). On success, hand the response body back to R to fold
-// into the cache and forward the aggregated result to the client.
+// it succeeded or failed). On success, fold the response body into the per-repo
+// cache. We publish the aggregated result to the client once the whole batch
+// drains (see below) rather than per response, so that even a batch where every
+// request fails still produces a deterministic update -- otherwise the Packages
+// pane could keep showing stale badges after a repo/package change whose fetch
+// failed.
 void onVulnerabilityRequestComplete(const std::string& repoUrl,
                                     bool succeeded,
                                     const std::string& body)
 {
    if (succeeded)
    {
-      r::sexp::Protect protect;
-      SEXP vulnsSEXP = R_NilValue;
       Error error = r::exec::RFunction(".rs.ppm.recordVulnerabilityResponse")
                        .addParam(repoUrl)
                        .addParam(body)
-                       .call(&vulnsSEXP, &protect);
+                       .call();
       if (error)
-      {
          LOG_ERROR(error);
-      }
-      else
-      {
-         json::Value vulnsJson;
-         error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
-         if (error)
-            LOG_ERROR(error);
-         else
-            module_context::enqueClientEvent(
-               ClientEvent(client_events::kPackageVulnerabilitiesReady, vulnsJson));
-      }
    }
 
-   // this request is done; if it was the last one and another refresh came in
-   // while we were busy, run it now so we don't drop the latest state
    if (s_activeRequests > 0)
       s_activeRequests--;
 
-   if (s_activeRequests == 0 && s_refreshPending)
+   // not done yet -- wait for the remaining requests in this batch
+   if (s_activeRequests > 0)
+      return;
+
+   // the batch has drained; if another refresh came in while we were busy run
+   // it now, otherwise publish the (possibly unchanged) cached set so the UI is
+   // always updated deterministically -- including when every request failed
+   if (s_refreshPending)
    {
       s_refreshPending = false;
       startVulnerabilityRequests();
+   }
+   else
+   {
+      enqueCachedVulnerabilities();
    }
 }
 
@@ -199,7 +200,7 @@ void onVulnerabilityError(const std::string& repoUrl,
       boost::bind(onVulnerabilityRequestComplete, repoUrl, false, std::string()));
 }
 
-// Issue one async HTTPS POST for a single repo's request-plan entry.
+// Issue one async POST for a single repo's request-plan entry.
 void sendVulnerabilityRequest(const json::Object& entry)
 {
    std::string repoUrl, endpoint, authHeader, body;
@@ -214,10 +215,14 @@ void sendVulnerabilityRequest(const json::Object& entry)
       return;
    }
 
+   // https is the norm, but the legacy curl path also worked against http PPM
+   // deployments, so keep supporting both rather than silently dropping vuln
+   // checks for an http-configured repository
    http::URL url(endpoint);
-   if (!url.isValid() || url.protocol() != "https")
+   bool useSsl = url.protocol() == "https";
+   if (!url.isValid() || (!useSsl && url.protocol() != "http"))
    {
-      LOG_ERROR_MESSAGE("PPM vulnerability endpoint is not a valid https URL: " + endpoint);
+      LOG_ERROR_MESSAGE("PPM vulnerability endpoint is not a valid http(s) URL: " + endpoint);
       return;
    }
 
@@ -231,13 +236,23 @@ void sendVulnerabilityRequest(const json::Object& entry)
       request.setHeader("Authorization", authHeader);
    request.setBody(body);
 
-   boost::shared_ptr<http::TcpIpAsyncClientSsl> pClient(
-      new http::TcpIpAsyncClientSsl(server_rpc::ioContext(),
-                                    url.hostname(),
-                                    url.portStr(),
-                                    true, // verify certificates
-                                    std::string(), // certificate authority
-                                    kConnectionTimeout));
+   boost::shared_ptr<http::IAsyncClient> pClient;
+   if (useSsl)
+   {
+      pClient.reset(new http::TcpIpAsyncClientSsl(server_rpc::ioContext(),
+                                                  url.hostname(),
+                                                  url.portStr(),
+                                                  true, // verify certificates
+                                                  std::string(), // cert authority
+                                                  kConnectionTimeout));
+   }
+   else
+   {
+      pClient.reset(new http::TcpIpAsyncClient(server_rpc::ioContext(),
+                                               url.hostname(),
+                                               url.portStr(),
+                                               kConnectionTimeout));
+   }
 
    pClient->request().assign(request);
 

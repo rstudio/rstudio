@@ -139,10 +139,10 @@
 
 # Record the response to an asynchronous vulnerability request. Called by the
 # C++ backend on the main thread once the network request for 'repoUrl' has
-# completed successfully; 'body' is the raw (NDJSON) response payload. Updates
-# the per-repo cache and returns the full, aggregated vulnerability map for all
-# configured repositories (the same shape the synchronous path used to return)
-# so the backend can forward it to the client.
+# completed successfully; 'body' is the raw (NDJSON) response payload. Folds the
+# response into the per-repo cache. The backend publishes the aggregated result
+# (via .rs.ppm.getCachedVulnerabilities) once the whole batch of requests has
+# drained, so this only needs to update the cache.
 .rs.addFunction("ppm.recordVulnerabilityResponse", function(repoUrl, body)
 {
    newKeys <- .rs.ppm.pending[[repoUrl]]
@@ -170,7 +170,7 @@
          rm(list = repoUrl, envir = .rs.ppm.pending)
    }
 
-   .rs.ppm.getCachedVulnerabilities()
+   invisible(NULL)
 })
 
 # Aggregate the cached vulnerability data for all configured repositories,

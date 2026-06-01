@@ -360,9 +360,6 @@ test_that("recordVulnerabilityResponse caches vulns and empty markers for reques
    clearVulnsState()
    assign(.rs.testPpm$repoUrl, c("pkgA==1.0.0", "pkgB==2.0.0"), envir = .rs.ppm.pending)
 
-   # isolate the cache-update behaviour from the session's live repos option
-   withMockFunction(".rs.ppm.getCachedVulnerabilities", function(repos = NULL) list())
-
    body <- '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}'
    .rs.ppm.recordVulnerabilityResponse(.rs.testPpm$repoUrl, body)
 
@@ -378,8 +375,6 @@ test_that("recordVulnerabilityResponse caches vulns and empty markers for reques
 test_that("recordVulnerabilityResponse leaves cache and pending intact on a server error", {
    clearVulnsState()
    assign(.rs.testPpm$repoUrl, "pkgB==2.0.0", envir = .rs.ppm.pending)
-
-   withMockFunction(".rs.ppm.getCachedVulnerabilities", function(repos = NULL) list())
 
    body <- '{"error":"not allowed","code":"403"}'
    expect_warning(
