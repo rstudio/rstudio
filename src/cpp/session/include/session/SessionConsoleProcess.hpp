@@ -262,6 +262,13 @@ private:
    // Is there a child process matching the ignore list?
    bool ignoredChildProc_ = false;
 
+#ifdef _WIN32
+   // Strip the ConPTY host's one-time startup screen clear from a restarted
+   // terminal's first output so it doesn't wipe replayed scrollback
+   // (see SessionConsoleProcess.cpp; microsoft/terminal#4252).
+   bool pendingStripRestartClear_ = false;
+#endif
+
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_ = kIgnoreSequence;

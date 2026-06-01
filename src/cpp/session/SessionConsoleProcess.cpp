@@ -617,13 +617,49 @@ std::string ConsoleProcess::getBuffer() const
    return procInfo_->getFullSavedBuffer();
 }
 
-void ConsoleProcess::enqueOutputEvent(const std::string &output)
+#ifdef _WIN32
+// Remove the one-time screen clear that a ConPTY host emits when a shell starts
+// up: CSI 2J (or 3J) optionally followed by an SGR reset and a cursor home.
+// See microsoft/terminal#4252. Returns true if a clear was removed.
+// Not static: exercised directly by SessionConsoleProcessTests.cpp.
+bool removeConPtyStartupClear(std::string* pStr)
 {
-   if (envCaptureCmd_.output(output))
+   static const boost::regex clearPattern(
+         "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
+   std::string result = boost::regex_replace(*pStr, clearPattern, std::string());
+   bool removed = result.size() != pStr->size();
+   *pStr = result;
+   return removed;
+}
+#endif
+
+void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
+{
+   if (envCaptureCmd_.output(rawOutput))
       return;
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
+
+#ifdef _WIN32
+   // A restarted terminal's ConPTY host emits a one-time screen clear (CSI 2J +
+   // cursor home) when the new shell starts up (microsoft/terminal#4252). For
+   // shells whose scrollback we replay on reconnect (e.g. Git Bash), persisting
+   // that clear would wipe the restored history, so strip it from the new
+   // shell's first output.
+   std::string strippedOutput;
+   const std::string* pEffectiveOutput = &rawOutput;
+   if (pendingStripRestartClear_)
+   {
+      strippedOutput = rawOutput;
+      if (removeConPtyStartupClear(&strippedOutput))
+         pendingStripRestartClear_ = false;
+      pEffectiveOutput = &strippedOutput;
+   }
+   const std::string& output = *pEffectiveOutput;
+#else
+   const std::string& output = rawOutput;
+#endif
 
    // copy to output buffer
    procInfo_->appendToOutputBuffer(output);
@@ -1073,6 +1109,16 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          {
             cp->deleteLogFile();
          }
+#ifdef _WIN32
+         else
+         {
+            // Reloadable Windows shells (e.g. Git Bash) keep their buffer for
+            // replay on reconnect. Strip the ConPTY host's one-time startup
+            // screen clear from the restarted shell's first output so it does
+            // not wipe the restored scrollback (see enqueOutputEvent).
+            cp->pendingStripRestartClear_ = true;
+         }
+#endif
 
          saveConsoleProcesses();
       }

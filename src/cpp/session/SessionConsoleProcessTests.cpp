@@ -23,6 +23,13 @@
 namespace rstudio {
 namespace session {
 namespace console_process {
+
+#ifdef _WIN32
+// Defined in SessionConsoleProcess.cpp; strips the ConPTY host's one-time
+// startup screen clear from a restarted terminal's output.
+bool removeConPtyStartupClear(std::string* pStr);
+#endif
+
 namespace tests {
 
 using namespace console_process;
@@ -233,6 +240,44 @@ TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
 
    EXPECT_EQ(expected, result);
 }
+
+#ifdef _WIN32
+TEST(ConsoleProcessConPty, StripsRestartScreenClear)
+{
+   // Bytes a restarted Git Bash emits under ConPTY: hide cursor, clear screen,
+   // reset SGR, home, then title + prompt (microsoft/terminal#4252).
+   std::string out =
+      "before\r\n$ \x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
+   EXPECT_TRUE(removeConPtyStartupClear(&out));
+   // The destructive clear + home are gone...
+   EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
+   EXPECT_EQ(out.find("\x1b[H"), std::string::npos);
+   // ...but prior content, mode-sets, title and prompt are preserved.
+   EXPECT_EQ(out, "before\r\n$ \x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
+}
+
+TEST(ConsoleProcessConPty, LeavesOutputWithoutClearUnchanged)
+{
+   std::string out = "regular shell output\r\n$ ";
+   const std::string orig = out;
+   EXPECT_FALSE(removeConPtyStartupClear(&out));
+   EXPECT_EQ(out, orig);
+}
+
+TEST(ConsoleProcessConPty, StripsScrollbackClearVariant)
+{
+   std::string out = "x\x1b[3J\x1b[Hy";
+   EXPECT_TRUE(removeConPtyStartupClear(&out));
+   EXPECT_EQ(out, "xy");
+}
+
+TEST(ConsoleProcessConPty, StripsBareClearWithoutHome)
+{
+   std::string out = "a\x1b[2Jb";
+   EXPECT_TRUE(removeConPtyStartupClear(&out));
+   EXPECT_EQ(out, "ab");
+}
+#endif // _WIN32
 
 } // namespace tests
 } // namespace console_process
