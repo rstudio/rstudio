@@ -771,10 +771,25 @@ public class TerminalSession extends XTermWidget
       if (consoleProcess_ == null)
          return false;
 
-      // ConPTY emits clean VT sequences for all Windows shells (it replaced
-      // WinPty's screen-scraped output), so recorded terminal buffers replay
-      // faithfully on reconnect for every shell type.
-      return true;
+      switch (consoleProcess_.getProcessInfo().getShellType())
+      {
+      // Command Prompt and PowerShell repaint their startup screen with
+      // absolute cursor positioning (PowerShell's PSReadLine redraws its whole
+      // banner and prompt on the reconnect resize), which does not compose with
+      // replayed scrollback -- the prompt lands in the middle of the restored
+      // output. So these shells do not reload their buffer on restart.
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
+         return false;
+
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
+         // On Windows we can't assume a custom shell composes with reload.
+         return !BrowseCap.isWindowsDesktop();
+
+      default:
+         return true;
+      }
    }
 
    private void fetchNextChunk(final int chunkToFetch)
