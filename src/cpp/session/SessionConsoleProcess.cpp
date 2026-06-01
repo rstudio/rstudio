@@ -618,18 +618,62 @@ std::string ConsoleProcess::getBuffer() const
 }
 
 #ifdef _WIN32
-// Remove the one-time screen clear that a ConPTY host emits when a shell starts
-// up: CSI 2J (or 3J) optionally followed by an SGR reset and a cursor home.
-// See microsoft/terminal#4252. Returns true if a clear was removed.
-// Not static: exercised directly by SessionConsoleProcessTests.cpp.
-bool removeConPtyStartupClear(std::string* pStr)
+namespace {
+
+// Pattern for the conhost startup clear: CSI 2J/3J, then an optional SGR reset
+// and an optional cursor home (microsoft/terminal#4252).
+const boost::regex& conPtyClearPattern()
 {
-   static const boost::regex clearPattern(
+   static const boost::regex pattern(
          "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
-   std::string result = boost::regex_replace(*pStr, clearPattern, std::string());
-   bool removed = result.size() != pStr->size();
-   *pStr = result;
-   return removed;
+   return pattern;
+}
+
+// True if the bytes at/after `pos` are empty or an incomplete escape sequence
+// that could still grow into part of the clear frame (an SGR reset or cursor
+// home). Used to avoid stripping when the frame is split across output chunks.
+bool trailingMayExtendClear(const std::string& s, std::size_t pos)
+{
+   if (pos >= s.size())
+      return true;                       // match at end; a home may still arrive
+   if (s[pos] != '\x1b')
+      return false;                      // real content follows; frame is done
+   if (pos + 1 >= s.size())
+      return true;                       // lone ESC; could become a CSI
+   if (s[pos + 1] != '[')
+      return false;                      // e.g. OSC "\x1b]"; not part of frame
+   std::size_t j = pos + 2;
+   while (j < s.size() && ((s[j] >= '0' && s[j] <= '9') || s[j] == ';'))
+      ++j;
+   return j >= s.size();                 // no final byte yet -> may become m/H
+}
+
+} // anonymous namespace
+
+// Locate and strip the conhost startup screen clear at the start of a restarted
+// shell's output. That frame can span output chunks, so the caller accumulates
+// output in *pBuf and calls this until it returns true. On true, *pBuf is the
+// output to forward, with at most the first startup clear removed; false
+// requests more input. Not static: exercised by SessionConsoleProcessTests.cpp.
+bool resolveRestartStartupClear(std::string* pBuf)
+{
+   const std::size_t kMaxHold = 4096;    // never withhold more than this
+
+   boost::smatch match;
+   if (boost::regex_search(*pBuf, match, conPtyClearPattern()))
+   {
+      std::size_t matchPos =
+            static_cast<std::size_t>(match[0].first - pBuf->cbegin());
+      std::size_t matchLen = static_cast<std::size_t>(match[0].length());
+      if (trailingMayExtendClear(*pBuf, matchPos + matchLen) &&
+          pBuf->size() < kMaxHold)
+         return false;                   // the clear frame may still be arriving
+      pBuf->erase(matchPos, matchLen);
+      return true;
+   }
+
+   // No clear seen yet; keep accumulating until we're sure, but stay bounded.
+   return pBuf->size() >= kMaxHold;
 }
 #endif
 
@@ -638,28 +682,32 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    if (envCaptureCmd_.output(rawOutput))
       return;
 
-   // normal output processing
-   bool currentAltBufferStatus = procInfo_->getAltBufferActive();
-
 #ifdef _WIN32
    // A restarted terminal's ConPTY host emits a one-time screen clear (CSI 2J +
    // cursor home) when the new shell starts up (microsoft/terminal#4252). For
    // shells whose scrollback we replay on reconnect (e.g. Git Bash), persisting
-   // that clear would wipe the restored history, so strip it from the new
-   // shell's first output.
-   std::string strippedOutput;
-   const std::string* pEffectiveOutput = &rawOutput;
+   // that clear would wipe the restored history. The clear can span output
+   // chunks, so accumulate the restarted shell's initial output and strip only
+   // the first clear before the output is buffered or forwarded.
+   std::string resolvedOutput;
+   const std::string* pOutput = &rawOutput;
    if (pendingStripRestartClear_)
    {
-      strippedOutput = rawOutput;
-      if (removeConPtyStartupClear(&strippedOutput))
-         pendingStripRestartClear_ = false;
-      pEffectiveOutput = &strippedOutput;
+      restartClearBuf_.append(rawOutput);
+      if (!resolveRestartStartupClear(&restartClearBuf_))
+         return;                         // hold output until the clear resolves
+      pendingStripRestartClear_ = false;
+      resolvedOutput.swap(restartClearBuf_);
+      restartClearBuf_.clear();
+      pOutput = &resolvedOutput;
    }
-   const std::string& output = *pEffectiveOutput;
+   const std::string& output = *pOutput;
 #else
    const std::string& output = rawOutput;
 #endif
+
+   // normal output processing
+   bool currentAltBufferStatus = procInfo_->getAltBufferActive();
 
    // copy to output buffer
    procInfo_->appendToOutputBuffer(output);

@@ -267,6 +267,9 @@ private:
    // terminal's first output so it doesn't wipe replayed scrollback
    // (see SessionConsoleProcess.cpp; microsoft/terminal#4252).
    bool pendingStripRestartClear_ = false;
+   // Accumulates the restarted shell's initial output while we locate that
+   // clear, which may span output chunks.
+   std::string restartClearBuf_;
 #endif
 
    // Pending input (writes or ptyInterrupts)

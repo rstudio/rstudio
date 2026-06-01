@@ -25,9 +25,9 @@ namespace session {
 namespace console_process {
 
 #ifdef _WIN32
-// Defined in SessionConsoleProcess.cpp; strips the ConPTY host's one-time
-// startup screen clear from a restarted terminal's output.
-bool removeConPtyStartupClear(std::string* pStr);
+// Defined in SessionConsoleProcess.cpp; locates and strips the ConPTY host's
+// one-time startup screen clear from a restarted terminal's accumulated output.
+bool resolveRestartStartupClear(std::string* pBuf);
 #endif
 
 namespace tests {
@@ -242,40 +242,41 @@ TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
 }
 
 #ifdef _WIN32
-TEST(ConsoleProcessConPty, StripsRestartScreenClear)
+TEST(ConsoleProcessConPty, StripsInlineRestartClear)
 {
    // Bytes a restarted Git Bash emits under ConPTY: hide cursor, clear screen,
-   // reset SGR, home, then title + prompt (microsoft/terminal#4252).
+   // reset SGR, home, then title + prompt (microsoft/terminal#4252). Prior
+   // content is preserved; the destructive clear + home are removed.
    std::string out =
       "before\r\n$ \x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
-   EXPECT_TRUE(removeConPtyStartupClear(&out));
-   // The destructive clear + home are gone...
-   EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
-   EXPECT_EQ(out.find("\x1b[H"), std::string::npos);
-   // ...but prior content, mode-sets, title and prompt are preserved.
+   EXPECT_TRUE(resolveRestartStartupClear(&out));
    EXPECT_EQ(out, "before\r\n$ \x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
+   EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
 }
 
-TEST(ConsoleProcessConPty, LeavesOutputWithoutClearUnchanged)
+TEST(ConsoleProcessConPty, HandlesClearSplitAcrossChunks)
 {
-   std::string out = "regular shell output\r\n$ ";
-   const std::string orig = out;
-   EXPECT_FALSE(removeConPtyStartupClear(&out));
-   EXPECT_EQ(out, orig);
+   // First chunk ends mid cursor-home: hold, then resolve once the rest arrives.
+   std::string buf = "\x1b[2J\x1b[m\x1b[";
+   EXPECT_FALSE(resolveRestartStartupClear(&buf));
+   buf += "H\x1b]0;t\x07$ ";
+   EXPECT_TRUE(resolveRestartStartupClear(&buf));
+   EXPECT_EQ(buf, "\x1b]0;t\x07$ ");
 }
 
-TEST(ConsoleProcessConPty, StripsScrollbackClearVariant)
+TEST(ConsoleProcessConPty, StripsOnlyFirstClear)
 {
-   std::string out = "x\x1b[3J\x1b[Hy";
-   EXPECT_TRUE(removeConPtyStartupClear(&out));
-   EXPECT_EQ(out, "xy");
+   // A later clear (e.g. a real `clear` command) in the same output survives.
+   std::string out = "\x1b[2J\x1b[Hkeep\x1b[2Jme";
+   EXPECT_TRUE(resolveRestartStartupClear(&out));
+   EXPECT_EQ(out, "keep\x1b[2Jme");
 }
 
-TEST(ConsoleProcessConPty, StripsBareClearWithoutHome)
+TEST(ConsoleProcessConPty, HoldsShortOutputWithoutClear)
 {
-   std::string out = "a\x1b[2Jb";
-   EXPECT_TRUE(removeConPtyStartupClear(&out));
-   EXPECT_EQ(out, "ab");
+   // No clear yet and well under the hold bound: keep waiting for more output.
+   std::string buf = "$ ";
+   EXPECT_FALSE(resolveRestartStartupClear(&buf));
 }
 #endif // _WIN32
 
