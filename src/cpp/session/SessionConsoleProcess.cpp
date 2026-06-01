@@ -654,8 +654,10 @@ bool trailingMayExtendClear(const std::string& s, std::size_t pos)
 // shell's output. That frame can span output chunks, so the caller accumulates
 // output in *pBuf and calls this until it returns true. On true, *pBuf is the
 // output to forward, with at most the first startup clear removed; false
-// requests more input. Not static: exercised by SessionConsoleProcessTests.cpp.
-bool resolveRestartStartupClear(std::string* pBuf)
+// requests more input. Pass force=true to resolve immediately (e.g. the hold
+// window closed or the shell exited): a complete clear is still stripped, but
+// output is never withheld. Not static: exercised by the tests.
+bool resolveRestartStartupClear(std::string* pBuf, bool force)
 {
    const std::size_t kMaxHold = 4096;    // never withhold more than this
 
@@ -665,15 +667,15 @@ bool resolveRestartStartupClear(std::string* pBuf)
       std::size_t matchPos =
             static_cast<std::size_t>(match[0].first - pBuf->cbegin());
       std::size_t matchLen = static_cast<std::size_t>(match[0].length());
-      if (trailingMayExtendClear(*pBuf, matchPos + matchLen) &&
+      if (!force && trailingMayExtendClear(*pBuf, matchPos + matchLen) &&
           pBuf->size() < kMaxHold)
          return false;                   // the clear frame may still be arriving
       pBuf->erase(matchPos, matchLen);
       return true;
    }
 
-   // No clear seen yet; keep accumulating until we're sure, but stay bounded.
-   return pBuf->size() >= kMaxHold;
+   // No clear seen yet; keep accumulating until forced or sufficiently sure.
+   return force || pBuf->size() >= kMaxHold;
 }
 #endif
 
@@ -693,8 +695,10 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    const std::string* pOutput = &rawOutput;
    if (pendingStripRestartClear_)
    {
+      const int kMaxHeldChunks = 8;      // bound how long output is withheld
       restartClearBuf_.append(rawOutput);
-      if (!resolveRestartStartupClear(&restartClearBuf_))
+      bool force = (++restartClearChunks_ >= kMaxHeldChunks);
+      if (!resolveRestartStartupClear(&restartClearBuf_, force))
          return;                         // hold output until the clear resolves
       pendingStripRestartClear_ = false;
       resolvedOutput.swap(restartClearBuf_);
@@ -823,6 +827,27 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
 void ConsoleProcess::onExit(int exitCode)
 {
+#ifdef _WIN32
+   // If the shell exited before we resolved the restart screen clear, flush any
+   // held output (stripping a complete clear if present) so it isn't lost.
+   // See enqueOutputEvent; microsoft/terminal#4252.
+   LOCK_MUTEX(inputOutputQueueMutex_)
+   {
+      if (pendingStripRestartClear_)
+      {
+         pendingStripRestartClear_ = false;
+         if (!restartClearBuf_.empty())
+         {
+            std::string held;
+            held.swap(restartClearBuf_);
+            resolveRestartStartupClear(&held, true /*force*/);
+            enqueOutputEvent(held);
+         }
+      }
+   }
+   END_LOCK_MUTEX
+#endif
+
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 

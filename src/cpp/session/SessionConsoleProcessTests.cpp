@@ -27,7 +27,7 @@ namespace console_process {
 #ifdef _WIN32
 // Defined in SessionConsoleProcess.cpp; locates and strips the ConPTY host's
 // one-time startup screen clear from a restarted terminal's accumulated output.
-bool resolveRestartStartupClear(std::string* pBuf);
+bool resolveRestartStartupClear(std::string* pBuf, bool force);
 #endif
 
 namespace tests {
@@ -249,7 +249,7 @@ TEST(ConsoleProcessConPty, StripsInlineRestartClear)
    // content is preserved; the destructive clear + home are removed.
    std::string out =
       "before\r\n$ \x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
-   EXPECT_TRUE(resolveRestartStartupClear(&out));
+   EXPECT_TRUE(resolveRestartStartupClear(&out, false));
    EXPECT_EQ(out, "before\r\n$ \x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
    EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
 }
@@ -258,9 +258,9 @@ TEST(ConsoleProcessConPty, HandlesClearSplitAcrossChunks)
 {
    // First chunk ends mid cursor-home: hold, then resolve once the rest arrives.
    std::string buf = "\x1b[2J\x1b[m\x1b[";
-   EXPECT_FALSE(resolveRestartStartupClear(&buf));
+   EXPECT_FALSE(resolveRestartStartupClear(&buf, false));
    buf += "H\x1b]0;t\x07$ ";
-   EXPECT_TRUE(resolveRestartStartupClear(&buf));
+   EXPECT_TRUE(resolveRestartStartupClear(&buf, false));
    EXPECT_EQ(buf, "\x1b]0;t\x07$ ");
 }
 
@@ -268,15 +268,25 @@ TEST(ConsoleProcessConPty, StripsOnlyFirstClear)
 {
    // A later clear (e.g. a real `clear` command) in the same output survives.
    std::string out = "\x1b[2J\x1b[Hkeep\x1b[2Jme";
-   EXPECT_TRUE(resolveRestartStartupClear(&out));
+   EXPECT_TRUE(resolveRestartStartupClear(&out, false));
    EXPECT_EQ(out, "keep\x1b[2Jme");
 }
 
 TEST(ConsoleProcessConPty, HoldsShortOutputWithoutClear)
 {
-   // No clear yet and well under the hold bound: keep waiting for more output.
+   // No clear yet, under the hold bound, not forced: keep waiting.
    std::string buf = "$ ";
-   EXPECT_FALSE(resolveRestartStartupClear(&buf));
+   EXPECT_FALSE(resolveRestartStartupClear(&buf, false));
+}
+
+TEST(ConsoleProcessConPty, ForcedResolveFlushesOutputWithoutClear)
+{
+   // When the hold window closes with no clear, output is flushed unchanged
+   // rather than withheld indefinitely.
+   std::string buf = "no clear here\r\n$ ";
+   const std::string orig = buf;
+   EXPECT_TRUE(resolveRestartStartupClear(&buf, true));
+   EXPECT_EQ(buf, orig);
 }
 #endif // _WIN32
 

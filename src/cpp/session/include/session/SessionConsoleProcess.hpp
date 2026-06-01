@@ -270,6 +270,9 @@ private:
    // Accumulates the restarted shell's initial output while we locate that
    // clear, which may span output chunks.
    std::string restartClearBuf_;
+   // Number of output callbacks held while locating that clear; bounds how
+   // long output is withheld before it is flushed regardless.
+   int restartClearChunks_ = 0;
 #endif
 
    // Pending input (writes or ptyInterrupts)
