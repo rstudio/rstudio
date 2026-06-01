@@ -237,6 +237,13 @@ var gridScrollbarV_ = null;
 var gridScrollbarH_ = null;
 var sidebarScrollbar_ = null;
 
+// Sparklines whose container has been created but whose (relatively
+// expensive) canvas has not been drawn yet. Populated by initSidebar and
+// flushed by renderPendingSparklines once the summary panel is actually
+// visible -- so a hidden panel (e.g. data_viewer_show_summary off) never
+// pays the rendering cost for dozens of numeric columns (#17806).
+var pendingSparklines_ = [];
+
 // requestAnimationFrame tokens used to coalesce scroll/scrollbar updates
 // to once per frame. Non-zero means a frame is already scheduled.
 var pendingScrollbarRaf = 0;
@@ -2018,19 +2025,18 @@ var onResize = debounce(function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
-
-   // A resize can change whether (and how far) the grid scrolls horizontally
-   // without any scroll event firing; surface the auto-hide scrollbars so the
-   // affordance reflects the new layout. update() above leaves non-scrollable
-   // axes hidden, so this only reveals bars that actually overflow.
-   showScrollbars();
 }, TIMING.resizeDebounce);
 
 // ==========================================================================
 // Sidebar
 // ==========================================================================
 
-var createSparklineSVG = function(breaks, counts) {
+// Render a column's histogram into the sidebar. Drawn to a single <canvas>
+// rather than one <rect> per bin: across dozens of numeric columns the SVG
+// approach put thousands of vector nodes on the page, and repainting them
+// during grid scroll caused multi-second stalls with the summary panel open
+// (#17806). A canvas is one raster element, far cheaper for the compositor.
+var createSparkline = function(breaks, counts) {
    if (!breaks || !counts || counts.length === 0) return null;
 
    var max = 0;
@@ -2045,23 +2051,37 @@ var createSparklineSVG = function(breaks, counts) {
    var wrapper = document.createElement("div");
    wrapper.className = "sparkline-wrapper";
 
-   var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-   svg.setAttribute("viewBox", "0 0 " + counts.length + " 20");
-   svg.setAttribute("preserveAspectRatio", "none");
+   // Fixed intrinsic resolution; CSS stretches the canvas to the sidebar
+   // width (width: 100%). Decoupling from the live container width means
+   // rendering doesn't depend on layout being settled (e.g. mid-transition
+   // when the panel is opening). Scale the backing store by devicePixelRatio
+   // so bars stay crisp on HiDPI displays.
+   var LOGICAL_W = 120;
+   var LOGICAL_H = 24;
+   var dpr = window.devicePixelRatio || 1;
+   var canvas = document.createElement("canvas");
+   canvas.width = Math.max(1, Math.round(LOGICAL_W * dpr));
+   canvas.height = Math.max(1, Math.round(LOGICAL_H * dpr));
 
-   for (var j = 0; j < counts.length; j++) {
-      var h = (counts[j] / max) * 20;
-      var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", j);
-      rect.setAttribute("y", 20 - h);
-      rect.setAttribute("width", 1);
-      rect.setAttribute("height", h);
-      rect.setAttribute("class", "sparkline-bar");
-      rect.setAttribute("data-bin", j);
-      svg.appendChild(rect);
+   var ctx = canvas.getContext("2d");
+   if (ctx) {
+      // Resolve the bar color from CSS so theming still applies; a canvas
+      // can't pick up the old .sparkline-bar rule on its own.
+      var barColor = getComputedStyle(document.documentElement)
+         .getPropertyValue("--grid-focus-border").trim() || "#4d9de0";
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = barColor;
+      for (var j = 0; j < counts.length; j++) {
+         var h = (counts[j] / max) * canvas.height;
+         // Snap bar edges to device pixels so adjacent bars tile without
+         // seams or sub-pixel gaps.
+         var x0 = Math.round((j / counts.length) * canvas.width);
+         var x1 = Math.round(((j + 1) / counts.length) * canvas.width);
+         ctx.fillRect(x0, canvas.height - h, Math.max(1, x1 - x0), h);
+      }
    }
 
-   wrapper.appendChild(svg);
+   wrapper.appendChild(canvas);
 
    // Tooltip on hover
    var tooltip = document.createElement("div");
@@ -2079,11 +2099,13 @@ var createSparklineSVG = function(breaks, counts) {
       return n.toPrecision(3);
    };
 
-   svg.addEventListener("mousemove", function(evt) {
-      var target = evt.target;
-      var bin = target.getAttribute("data-bin");
-      if (bin === null) { tooltip.style.display = "none"; return; }
-      bin = parseInt(bin, 10);
+   canvas.addEventListener("mousemove", function(evt) {
+      // The canvas has no per-bar nodes, so derive the hovered bin from the
+      // cursor's horizontal position within the displayed canvas.
+      var rect = canvas.getBoundingClientRect();
+      if (rect.width === 0) { tooltip.style.display = "none"; return; }
+      var bin = Math.floor((evt.clientX - rect.left) / rect.width * counts.length);
+      if (bin < 0 || bin >= counts.length) { tooltip.style.display = "none"; return; }
 
       // breaks arrive from R as strings (col_breaks is as.character'd
       // server-side); coerce here so arithmetic doesn't fall into string
@@ -2111,7 +2133,7 @@ var createSparklineSVG = function(breaks, counts) {
       tooltip.style.display = "";
    });
 
-   svg.addEventListener("mouseleave", function() {
+   canvas.addEventListener("mouseleave", function() {
       tooltip.style.display = "none";
    });
 
@@ -2251,6 +2273,10 @@ var initSidebar = function() {
 
    content.innerHTML = "";
 
+   // Drop any sparklines registered by a previous initSidebar -- their
+   // containers were just removed by the innerHTML reset above.
+   pendingSparklines_ = [];
+
    for (var i = 0; i < cols.length; i++) {
       var col = cols[i];
       if (col.col_type === "rownames") continue;
@@ -2291,13 +2317,18 @@ var initSidebar = function() {
 
       entry.appendChild(header);
 
-      // Sparkline histogram for numeric columns
+      // Sparkline histogram for numeric columns. Create the (empty)
+      // container now but defer drawing the canvas until the panel is
+      // visible -- see renderPendingSparklines.
       if (col.col_type === "numeric" && col.col_breaks && col.col_counts) {
          var sparkContainer = document.createElement("div");
          sparkContainer.className = "sidebar-sparkline";
-         var svg = createSparklineSVG(col.col_breaks, col.col_counts);
-         if (svg) sparkContainer.appendChild(svg);
          entry.appendChild(sparkContainer);
+         pendingSparklines_.push({
+            container: sparkContainer,
+            breaks: col.col_breaks,
+            counts: col.col_counts
+         });
       }
 
       // Footer row: type-specific summary + NA count
@@ -2411,10 +2442,27 @@ var initSidebar = function() {
       panel.classList.toggle("expanded", sidebarVisible);
    }
 
+   // Draw the sparklines only if the panel is starting out visible; otherwise
+   // they stay pending until the first time the user opens the panel.
+   if (sidebarVisible) renderPendingSparklines();
+
    // Attach the floating sidebar scrollbar after the content is in place
    // (so its initial measurement reflects the populated entries).
    attachSidebarScrollbar();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
+};
+
+// Draw any sparklines whose canvas hasn't been rendered yet. Idempotent and
+// cheap to call repeatedly -- once drained, subsequent calls are no-ops, so
+// it is safe to invoke on every panel-open.
+var renderPendingSparklines = function() {
+   if (pendingSparklines_.length === 0) return;
+   var items = pendingSparklines_;
+   pendingSparklines_ = [];
+   for (var i = 0; i < items.length; i++) {
+      var spark = createSparkline(items[i].breaks, items[i].counts);
+      if (spark) items[i].container.appendChild(spark);
+   }
 };
 
 var toggleSidebar = function() {
@@ -2423,6 +2471,8 @@ var toggleSidebar = function() {
    sidebarVisible = !sidebarVisible;
    if (sidebarVisible) {
       panel.classList.add("expanded");
+      // Draw deferred sparklines the first time the panel is opened.
+      renderPendingSparklines();
    } else {
       panel.classList.remove("expanded");
    }
@@ -2769,13 +2819,7 @@ var onGridKeyDown = function(evt) {
    }
 
    if (isCopy) {
-      // If the user has a non-empty native text selection (e.g. drag-selected
-      // across multiple cells), let the browser copy it. Overriding with the
-      // single active cell here would clobber a multi-cell selection -- the
-      // active-cell copy is only the fallback when nothing is selected.
-      var sel = window.getSelection ? window.getSelection() : null;
-      var hasSelection = sel && !sel.isCollapsed && sel.toString().length > 0;
-      if (!hasSelection && copyActiveCell()) evt.preventDefault();
+      if (copyActiveCell()) evt.preventDefault();
       return;
    }
 
@@ -3779,13 +3823,6 @@ window.onActivate = function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
-
-   // Returning to the tab is not a scroll event, so the activity-based fade
-   // would leave the (auto-hide) scrollbars hidden -- briefly show them so
-   // the horizontal scroll affordance is visible again. update() above has
-   // already set display:none on any axis that isn't scrollable, so this
-   // only reveals bars that actually have overflow.
-   showScrollbars();
 };
 
 window.onDeactivate = function() {
