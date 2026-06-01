@@ -258,19 +258,11 @@ Error getPackageStateJson(json::Object* pJson)
       LOG_ERROR(error);
    (*pJson)["active_repository"] = activeRepository;
 
-   // collect vulnerability information as well
-   SEXP vulnsSEXP = R_NilValue;
-   error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
-               .call(&vulnsSEXP, &protect);
-   if (error)
-      LOG_ERROR(error);
-
-   json::Value vulnsJson;
-   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
-   if (error)
-      LOG_ERROR(error);
-
-   (*pJson)["vulns"] = vulnsJson;
+   // NOTE: vulnerability data is intentionally not part of the package state.
+   // It is fetched asynchronously (see ppm::refreshVulnerabilitiesAsync) so that
+   // a slow or unreachable PPM can't block the package list -- and therefore IDE
+   // startup -- and delivered separately via the kPackageVulnerabilitiesReady
+   // event.
 
    return Success();
 }
@@ -454,6 +446,9 @@ void onDeferredInit(bool /* newSession */)
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
+
+   // kick off the initial (asynchronous) vulnerability check
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error getPackageState(const json::JsonRpcRequest& ,
@@ -465,6 +460,15 @@ Error getPackageState(const json::JsonRpcRequest& ,
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
+
+   // The package list returns immediately without vulnerability data, which
+   // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
+   // for a re-join/reconnect to an already-running session (where onDeferredInit
+   // won't fire again) and for the user-facing Refresh command, so kick off a
+   // refresh here too -- otherwise a reconnected client would show no badges
+   // until some incidental package mutation happened to trigger one.
+   ppm::refreshVulnerabilitiesAsync();
+
    return error;
 }
 
@@ -487,6 +491,10 @@ void enquePackageStateChanged()
       ClientEvent event(client_events::kPackageStateChanged, pkgState);
       module_context::enqueClientEvent(event);
    }
+
+   // the package set or active repository may have changed; refresh
+   // vulnerability data asynchronously to match
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error initialize()
