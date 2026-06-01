@@ -416,16 +416,26 @@ test_that("getVulnerabilityRequestPlan emits one entry per PPM repo with uncache
    expect_true(grepl("pkgB==2.0.0", planB$body, fixed = TRUE))
 })
 
-test_that("buildVulnerabilityRequestBody sets the repo and omit/has_vulns flags", {
+test_that("buildVulnerabilityRequestBody sets the repo and omit flags", {
    parsed <- .rs.fromJSON(
       .rs.ppm.buildVulnerabilityRequestBody("cran", c("pkgA==1.0.0", "pkgB==2.0.0"))
    )
    expect_equal(as.character(parsed$repo), "cran")
-   expect_true(as.logical(parsed$has_vulns))
    expect_true(as.logical(parsed$omit_dependencies))
    expect_true(as.logical(parsed$omit_downloads))
    expect_true(as.logical(parsed$omit_package_details))
    expect_equal(as.character(parsed$names), c("pkgA==1.0.0", "pkgB==2.0.0"))
+})
+
+test_that("buildVulnerabilityRequestBody omits has_vulns so all packages are returned", {
+   # has_vulns is a server-side filter; sending it would drop every non-vulnerable
+   # package from the response, taking its metadata down with it. The single
+   # request must return a record for every requested package so we can feed both
+   # the vulnerability badges and the metadata column from one response.
+   body <- .rs.ppm.buildVulnerabilityRequestBody("cran", "pkgA==1.0.0")
+   parsed <- .rs.fromJSON(body)
+   expect_null(parsed$has_vulns)
+   expect_false(grepl("has_vulns", body, fixed = TRUE))
 })
 
 test_that("buildVulnerabilityRequestBody keeps a single package name as a JSON array", {
@@ -454,6 +464,47 @@ test_that("recordVulnerabilityResponse caches vulns and empty markers for reques
    expect_false(exists(.rs.testPpm$repoUrl, envir = .rs.ppm.pending, inherits = FALSE))
 })
 
+test_that("recordVulnerabilityResponse caches metadata from the same response", {
+   # a single filter/packages response carries both vulns and custom metadata;
+   # recording it must populate the metadata cache too (the metadata column reads
+   # this cache directly, with no network access of its own)
+   clearVulnsState()
+   rm(
+      list = ls(envir = .rs.ppm.metadataCache, all.names = TRUE),
+      envir = .rs.ppm.metadataCache
+   )
+   assign(.rs.testPpm$repoUrl, c("pkgA==1.0.0", "pkgB==2.0.0"), envir = .rs.ppm.pending)
+
+   body <- paste(
+      '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}],"metadata":[{"key":"risk-level","value":"low"}]}',
+      '{"name":"pkgB","version":"2.0.0"}',
+      sep = "\n"
+   )
+   .rs.ppm.recordVulnerabilityResponse(.rs.testPpm$repoUrl, body)
+
+   metaCache <- .rs.ppm.metadataCache[[.rs.testPpm$repoUrl]]
+   # pkgA's metadata is cached in the raw [{key,value}] form getMetadata expects
+   expect_equal(
+      get("pkgA==1.0.0", envir = metaCache),
+      list(list(key = "risk-level", value = "low"))
+   )
+   # pkgB reported no metadata -- cache an NA marker so we don't keep re-asking
+   expect_true(is.na(get("pkgB==2.0.0", envir = metaCache)))
+})
+
+test_that("metadataByKey keys metadata by name==version and marks misses with NA", {
+   records <- list(
+      list(name = "pkgA", version = "1.0.0",
+           metadata = list(list(key = "risk-level", value = "high"))),
+      list(name = "pkgB", version = "2.0.0"),
+      list(version = "9.9.9")   # missing name -- skipped entirely
+   )
+   result <- .rs.ppm.metadataByKey(records)
+   expect_equal(result[["pkgA==1.0.0"]], list(list(key = "risk-level", value = "high")))
+   expect_true(is.na(result[["pkgB==2.0.0"]]))
+   expect_false("9.9.9" %in% names(result))
+})
+
 test_that("recordVulnerabilityResponse leaves cache and pending intact on a server error", {
    clearVulnsState()
    assign(.rs.testPpm$repoUrl, "pkgB==2.0.0", envir = .rs.ppm.pending)
@@ -479,6 +530,38 @@ test_that("recordVulnerabilityResponse leaves cache and pending intact on an emp
 
    expect_null(.rs.ppm.vulns[[.rs.testPpm$repoUrl]])
    expect_equal(.rs.ppm.pending[[.rs.testPpm$repoUrl]], "pkgB==2.0.0")
+})
+
+test_that("getMetadata reads the cache for the active repo without any network access", {
+   clearVulnsState()
+   rm(
+      list = ls(envir = .rs.ppm.metadataCache, all.names = TRUE),
+      envir = .rs.ppm.metadataCache
+   )
+
+   # seed the metadata cache as the async refresh would have
+   metaCache <- .rs.ppm.repoMetadataCache(.rs.testPpm$repoUrl)
+   assign("pkgA==1.0.0", list(list(key = "risk-level", value = "low")), envir = metaCache)
+   assign("pkgB==2.0.0", NA_character_, envir = metaCache)
+
+   withMockFunction(".rs.ppm.getActiveRepository", function() list(url = .rs.testPpm$repoUrl))
+   withMockFunction(".rs.ppm.getMetadataKey", function() "risk-level")
+
+   result <- .rs.ppm.getMetadata()
+   # the requested key resolves to its value; the NA-marked package yields ""
+   expect_equal(as.character(result[["pkgA==1.0.0"]]), "low")
+   expect_equal(as.character(result[["pkgB==2.0.0"]]), "")
+})
+
+test_that("getMetadata returns an empty list when the active repo has no cache", {
+   rm(
+      list = ls(envir = .rs.ppm.metadataCache, all.names = TRUE),
+      envir = .rs.ppm.metadataCache
+   )
+   withMockFunction(".rs.ppm.getActiveRepository", function() list(url = .rs.testPpm$repoUrl))
+   withMockFunction(".rs.ppm.getMetadataKey", function() "risk-level")
+
+   expect_equal(.rs.ppm.getMetadata(), list())
 })
 
 test_that("getCachedVulnerabilities aggregates per repo without any network access", {

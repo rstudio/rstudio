@@ -64,6 +64,20 @@
    cache
 })
 
+.rs.addFunction("ppm.repoMetadataCache", function(repoUrl)
+{
+   # Per-repo metadata cache, keyed by "name==version" like the vuln cache and
+   # populated from the same response (see ppm.recordVulnerabilityResponse). Read
+   # cache-only by ppm.getMetadata; no network access happens at read time.
+   cache <- .rs.ppm.metadataCache[[repoUrl]]
+   if (is.null(cache))
+   {
+      cache <- new.env(parent = emptyenv())
+      assign(repoUrl, cache, envir = .rs.ppm.metadataCache)
+   }
+   cache
+})
+
 # Build the request plan for an asynchronous vulnerability refresh. The actual
 # network request is performed by the C++ backend (off the main thread); this
 # helper only inspects local, already-installed state to decide *what* to
@@ -125,10 +139,18 @@
 
 .rs.addFunction("ppm.buildVulnerabilityRequestBody", function(reposName, pkgKeys)
 {
+   # NOTE: we intentionally do NOT set has_vulns. has_vulns is a server-side
+   # *filter* (true => only vulnerable packages); omitting it returns a record
+   # for every requested package, each carrying both its vulns array (when the
+   # package is vulnerable) and its custom metadata. That lets this single
+   # request feed both the vulnerability badges and the PPM metadata column --
+   # see ppm.recordVulnerabilityResponse, which folds both out of one response.
+   #
+   # omit_package_details drops the heavier package-detail fields but does NOT
+   # suppress the custom metadata array, so we keep it for a leaner response.
    data <- list(
       repo                 = reposName,
       names                = as.list(pkgKeys),
-      has_vulns            = TRUE,
       omit_dependencies    = TRUE,
       omit_downloads       = TRUE,
       omit_package_details = TRUE
@@ -137,38 +159,48 @@
    .rs.toJSON(data, unbox = TRUE)
 })
 
-# Record the response to an asynchronous vulnerability request. Called by the
+# Record the response to an asynchronous filter/packages request. Called by the
 # C++ backend on the main thread once the network request for 'repoUrl' has
-# completed successfully; 'body' is the raw (NDJSON) response payload. Folds the
-# response into the per-repo cache. The backend publishes the aggregated result
-# (via .rs.ppm.getCachedVulnerabilities) once the whole batch of requests has
-# drained, so this only needs to update the cache.
+# completed successfully; 'body' is the raw (NDJSON) response payload. A single
+# response carries both vulnerability and custom-metadata data, so this folds
+# both into their per-repo caches. The backend publishes the aggregated vulns
+# (via .rs.ppm.getCachedVulnerabilities) and re-delivers the package list (for
+# the metadata column) once the whole batch of requests has drained, so this
+# only needs to update the caches.
 .rs.addFunction("ppm.recordVulnerabilityResponse", function(repoUrl, body)
 {
    newKeys <- .rs.ppm.pending[[repoUrl]]
    if (is.null(newKeys))
       newKeys <- character()
 
-   fetched <- .rs.ppm.parseVulnerabilityResponse(body)
+   records <- .rs.ppm.parsePackageRecords(body)
 
-   # NULL means the server reported an error on one of its records; leave the
-   # cache (and the pending keys) untouched so a later refresh retries rather
-   # than masking vulns with empty entries
-   if (!is.null(fetched))
+   # NULL means the request failed (an empty body, or the server reported an
+   # error on one of its records); leave the caches (and the pending keys)
+   # untouched so a later refresh retries rather than masking vulns or metadata
+   # with empty entries
+   if (is.null(records))
+      return(invisible(NULL))
+
+   vulnsByKey <- .rs.ppm.vulnsByKey(records)
+   metadataByKey <- .rs.ppm.metadataByKey(records)
+
+   vulnCache <- .rs.ppm.repoVulnCache(repoUrl)
+   metaCache <- .rs.ppm.repoMetadataCache(repoUrl)
+
+   # record every requested key (an empty/NA marker for the ones PPM didn't
+   # report on) so we don't keep re-querying packages with no vulns or metadata
+   for (key in newKeys)
    {
-      cache <- .rs.ppm.repoVulnCache(repoUrl)
+      vulnEntry <- vulnsByKey[[key]]
+      assign(key, if (is.null(vulnEntry)) list() else vulnEntry, envir = vulnCache)
 
-      # record every requested key (empty list for the ones PPM didn't report
-      # on) so we don't keep re-querying packages with no vulns
-      for (key in newKeys)
-      {
-         entry <- fetched[[key]]
-         assign(key, if (is.null(entry)) list() else entry, envir = cache)
-      }
-
-      if (!is.null(.rs.ppm.pending[[repoUrl]]))
-         rm(list = repoUrl, envir = .rs.ppm.pending)
+      metaEntry <- metadataByKey[[key]]
+      assign(key, if (is.null(metaEntry)) NA_character_ else metaEntry, envir = metaCache)
    }
+
+   if (!is.null(.rs.ppm.pending[[repoUrl]]))
+      rm(list = repoUrl, envir = .rs.ppm.pending)
 
    invisible(NULL)
 })
@@ -203,21 +235,27 @@
    })
 })
 
-.rs.addFunction("ppm.parseVulnerabilityResponse", function(contents)
+# Parse a filter/packages NDJSON body into a list of per-package records.
+# Returns:
+#   - an empty list for a missing body (character(0)): "nothing to record"
+#   - NULL for a failure: an empty/whitespace-only 2xx body, or a body in which
+#     the server reported an error on any line. NULL is the "request failed"
+#     signal that tells callers to leave their caches untouched and retry on a
+#     later refresh rather than caching every package as "checked, nothing".
+#   - otherwise, the parsed records (lines that aren't valid JSON are skipped)
+.rs.addFunction("ppm.parsePackageRecords", function(contents)
 {
-   empty <- structure(list(), names = character())
-
    # a missing body (character(0)) has no records to parse. Guarding here also
    # avoids a "subscript out of bounds" error from strsplit(character(0), ...),
    # which returns an empty list with no [[1L]] element. Treat this as "nothing
    # to record" rather than an error, matching the crash-guard intent.
    if (length(contents) == 0L)
-      return(empty)
+      return(list())
 
    # a 2xx with an empty or whitespace-only body tells us nothing about the
    # packages we asked about. Return NULL (the "request failed" signal) so the
    # caller leaves the cache untouched and retries on a later refresh, rather
-   # than caching every requested package as "checked, no vulns" and silently
+   # than caching every requested package as "checked, nothing" and silently
    # clearing any badges. trimws() is needed here because nzchar() considers a
    # whitespace-only string non-empty.
    if (!any(nzchar(trimws(contents))))
@@ -230,7 +268,7 @@
    records <- lapply(splat, .rs.fromJSON)
 
    # bail out if the server reported an error on any line. Returning NULL
-   # (rather than empty) lets the caller distinguish "no vulns" from
+   # (rather than empty) lets the caller distinguish "nothing reported" from
    # "request failed" and skip the cache, so a transient failure doesn't
    # mask vulns for the rest of the session.
    for (record in records)
@@ -246,18 +284,23 @@
       }
    }
 
-   # group vulns by "name==version" so cached entries can be invalidated
-   # individually when a specific installed version is upgraded
-   byKey <- empty
+   records
+})
+
+# Group the vulns out of a parsed record list, keyed by "name==version" so a
+# cached entry can be invalidated individually when an installed version is
+# upgraded. Records missing a name/version, or with no vulns, are skipped.
+.rs.addFunction("ppm.vulnsByKey", function(records)
+{
+   byKey <- structure(list(), names = character())
    for (record in records)
    {
       name <- record[["name"]]
       version <- record[["version"]]
       pkgVulns <- record[["vulns"]]
 
-      # name or version missing means PPM emitted something we can't key
-      # on -- warn once per session if it ever happens (the get-impl
-      # cache-fill below prevents us from re-querying), then move on
+      # name or version missing means PPM emitted something we can't key on --
+      # warn once per session if it ever happens, then move on
       if (is.null(name) || is.null(version))
       {
          if (is.null(.rs.ppm.warnings$malformedRecord))
@@ -278,6 +321,38 @@
    }
 
    .rs.markScalars(byKey)
+})
+
+# Pull the custom metadata out of a parsed record list, keyed by "name==version"
+# to match the vuln cache. A record with no metadata maps to NA so the response
+# handler can still mark the key as checked (avoiding a re-query).
+.rs.addFunction("ppm.metadataByKey", function(records)
+{
+   byKey <- list()
+   for (record in records)
+   {
+      name <- record[["name"]]
+      version <- record[["version"]]
+      if (is.null(name) || is.null(version))
+         next
+
+      key <- paste(name, version, sep = "==")
+      metadata <- record[["metadata"]]
+      byKey[[key]] <- if (is.null(metadata)) NA_character_ else metadata
+   }
+
+   byKey
+})
+
+# Thin wrapper retained for callers/tests that only care about vulnerability
+# data. Returns the by-"name==version" vuln map, or NULL on request failure.
+.rs.addFunction("ppm.parseVulnerabilityResponse", function(contents)
+{
+   records <- .rs.ppm.parsePackageRecords(contents)
+   if (is.null(records))
+      return(NULL)
+
+   .rs.ppm.vulnsByKey(records)
 })
 
 .rs.addFunction("ppm.aggregateVulnsByName", function(cache, pkgKeys)
@@ -348,127 +423,21 @@
    .rs.ppm.fromRepositoryUrl(repos[[1L]])
 })
 
-.rs.addFunction("ppm.updateMetadataCache", function(packages)
-{
-   # get the active ppm repository
-   parts <- .rs.ppm.getActiveRepository()
-   if (length(parts) == 0L)
-      return(new.env(parent = emptyenv()))
-   
-   # check and see if we've already cached results for these packages
-   url <- parts[["url"]]
-   cache <- .rs.ppm.metadataCache[[url]] <- .rs.nullCoalesce(
-      .rs.ppm.metadataCache[[url]],
-      new.env(parent = emptyenv())
-   )
-   
-   # update only packages which haven't yet been cached
-   keys <- ls(envir = cache, all.names = TRUE)
-   packages <- setdiff(packages, keys)
-   if (length(packages) == 0L)
-      return(cache)
-   
-   # one or more packages have not yet been cached; try to update them
-   # make a request to the active PPM instance for available metadata
-   
-   # set some dummy values in our local cache, so we can avoid re-querying
-   # packages which have no metadata available (or for queries that fail)
-   for (package in packages)
-      assign(package, list(), envir = cache)
-   
-   # TODO: can we avoid the curl requirement?
-   if (!requireNamespace("curl", quietly = TRUE))
-      return(cache)
-   
-   # begin building a curl handle
-   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
-   handle <- curl::new_handle(verbose = verbose)
-   
-   # set headers for request
-   headers <- list("Content-Type" = "application/json")
-   curl::handle_setheaders(handle, .list = headers)
-   
-   # start building POST options
-   data <- list(
-      repo                 = parts[["repos"]],
-      snapshot             = parts[["snapshot"]],
-      names                = as.list(packages),
-      metadata             = TRUE,
-      vulns                = TRUE,
-      omit_dependencies    = TRUE,
-      omit_downloads       = TRUE,
-      omit_package_details = TRUE
-   )
-   
-   json <- .rs.toJSON(data, unbox = TRUE)
-   
-   # get netrc file path
-   curl::handle_setopt(
-      handle     = handle,
-      post       = TRUE,
-      postfields = json
-   )
-   
-   # use netrc if available
-   netrcFile <- .rs.netrcPath()
-   if (file.exists(netrcFile))
-   {
-      curl::handle_setopt(
-         handle     = handle,
-         httpauth   = 1L,
-         netrc      = 1L,
-         netrc_file = path.expand(netrcFile)
-      )
-   }
-   
-   # make the request, collect the response
-   endpoint <- file.path(parts[["root"]], "__api__/filter/packages")
-   response <- curl::curl_fetch_memory(endpoint, handle = handle)
-   contents <- enc2utf8(rawToChar(response$content))
-   splat <- strsplit(contents, "\n", fixed = TRUE)[[1L]]
-   data <- lapply(splat, .rs.fromJSON)
-   
-   # handle errors
-   for (i in seq_along(data))
-   {
-      error <- data[[i]][["error"]]
-      if (!is.character(error))
-         next
-      
-      code <- .rs.nullCoalesce(data[[i]][["code"]], "unknown")
-      fmt <- "error requesting package metadata; %s [error code %s]"
-      msg <- sprintf(fmt, error, as.character(code))
-      warning(msg, call. = FALSE)
-      return(cache)
-   }
-   
-   # pull out the metadata from each response
-   metadata <- lapply(data, `[[`, "metadata")
-   if (length(metadata) == 0L)
-      return(cache)
-   
-   names(metadata) <- vapply(data, function(datum) {
-      paste(datum[["name"]], datum[["version"]], sep = "==")
-   }, FUN.VALUE = character(1))
-   
-   # add these results to the cache
-   list2env(metadata, envir = cache)
-   
-   # use NA for any requests which had no metadata available
-   for (package in setdiff(packages, names(metadata)))
-      if (is.null(cache[[package]]))
-         cache[[package]] <- NA_character_
-   
-   # we're done
-   cache
-   
-})
-
 .rs.addFunction("ppm.getMetadataKey", function()
 {
    .Call("rs_ppmMetadataKey", PACKAGE = "(embedding)")
 })
 
+#' Read cached PPM metadata for the active repository.
+#'
+#' Returns a (package-name -> value) map for the requested metadata key, drawn
+#' entirely from the local cache. The cache is populated off the main thread by
+#' the asynchronous filter/packages refresh (see ppm.recordVulnerabilityResponse
+#' in this file and ppm::refreshVulnerabilitiesAsync in SessionPPM.cpp), so this
+#' performs NO network access -- a slow or unreachable PPM can never block the
+#' package list (and therefore the IDE) here. Packages with no cached metadata
+#' yet (or none available) map to "".
+#'
 #' @param key The name of the metadata key which should be pulled.
 .rs.addFunction("ppm.getMetadata", function(key = NULL)
 {
@@ -478,21 +447,16 @@
 
    # figure out what metadata key should be used
    key <- .rs.nullCoalesce(key, .rs.ppm.getMetadataKey())
-   
-   # figure out the packages for which we need to request metadata
-   db <- as.data.frame(
-      installed.packages(priority = "NA"),
-      stringsAsFactors = FALSE
-   )
-   
-   packages <- paste(db[["Package"]], db[["Version"]], sep = "==")
-   
-   # update the metadata cache
-   cache <- .rs.ppm.updateMetadataCache(packages)
+
+   # read whatever the asynchronous refresh has cached for the active repo
+   cache <- .rs.ppm.metadataCache[[parts[["url"]]]]
+   if (is.null(cache))
+      return(list())
+
    metadata <- as.list.environment(cache, all.names = TRUE)
    if (length(metadata) == 0L)
       return(list())
-   
+
    # filter to requested metadata key
    result <- lapply(metadata, function(data) {
       for (datum in data)
@@ -501,8 +465,7 @@
       ""
    })
    names(result) <- names(metadata)
-   
+
    # return sorted metadata
    result[order(names(result))]
-   
 })

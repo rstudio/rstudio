@@ -41,6 +41,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionServerRpc.hpp>
 
+#include "SessionPackages.hpp"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -136,10 +138,13 @@ const boost::posix_time::time_duration kConnectionTimeout =
 const std::chrono::seconds kRequestTimeout(30);
 
 // Number of vulnerability requests currently in flight, plus a flag noting
-// that another refresh was requested while requests were outstanding. Both are
-// only ever touched on the main thread.
+// that another refresh was requested while requests were outstanding, plus a
+// flag recording whether any request in the current batch succeeded (used to
+// decide whether the metadata column needs a refreshed package list once the
+// batch drains). All are only ever touched on the main thread.
 int s_activeRequests = 0;
 bool s_refreshPending = false;
+bool s_batchSucceeded = false;
 
 void startVulnerabilityRequests();
 void enqueCachedVulnerabilities();
@@ -163,6 +168,8 @@ void onVulnerabilityRequestComplete(const std::string& repoUrl,
                        .call();
       if (error)
          LOG_ERROR(error);
+      else
+         s_batchSucceeded = true;
    }
 
    if (s_activeRequests > 0)
@@ -173,17 +180,32 @@ void onVulnerabilityRequestComplete(const std::string& repoUrl,
       return;
 
    // the batch has drained; if another refresh came in while we were busy run
-   // it now, otherwise publish the (possibly unchanged) cached set so the UI is
-   // always updated deterministically -- including when every request failed
+   // it now (its own drain will publish), otherwise publish results
    if (s_refreshPending)
    {
       s_refreshPending = false;
       startVulnerabilityRequests();
+      return;
    }
-   else
+
+   // A successful response folds new data into both the vuln cache and the
+   // metadata cache. Vulnerability badges arrive via the kPackageVulnerabilities
+   // Ready event, but metadata rides on the package list (PackageInfo), so when
+   // the metadata column is enabled we re-deliver the package list to fill the
+   // column in. enquePackageStateChanged() also kicks a (now no-op) vuln refresh
+   // that republishes the badges, so it subsumes enqueCachedVulnerabilities().
+   bool delivered = false;
+   if (s_batchSucceeded && isPpmMetadataColumnEnabled())
    {
-      enqueCachedVulnerabilities();
+      packages::enquePackageStateChanged();
+      delivered = true;
    }
+   s_batchSucceeded = false;
+
+   // publish the (possibly unchanged) cached set so the UI is always updated
+   // deterministically -- including when every request failed
+   if (!delivered)
+      enqueCachedVulnerabilities();
 }
 
 // Runs on the server_rpc io thread. A single request has three possible
@@ -365,6 +387,11 @@ void enqueCachedVulnerabilities()
 // thread.
 void startVulnerabilityRequests()
 {
+   // fresh batch: clear the success flag so a prior batch's outcome can't leak
+   // across a coalesced refresh (any cached metadata is re-read on the next
+   // package-list delivery regardless, so deferring delivery here loses nothing)
+   s_batchSucceeded = false;
+
    r::sexp::Protect protect;
    SEXP planSEXP = R_NilValue;
    Error error = r::exec::RFunction(".rs.ppm.getVulnerabilityRequestPlan")
