@@ -2025,6 +2025,12 @@ var onResize = debounce(function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // A resize can change whether (and how far) the grid scrolls horizontally
+   // without any scroll event firing; surface the auto-hide scrollbars so the
+   // affordance reflects the new layout. update() above leaves non-scrollable
+   // axes hidden, so this only reveals bars that actually overflow.
+   showScrollbars();
 }, TIMING.resizeDebounce);
 
 // ==========================================================================
@@ -2063,7 +2069,12 @@ var createSparkline = function(breaks, counts) {
    canvas.width = Math.max(1, Math.round(LOGICAL_W * dpr));
    canvas.height = Math.max(1, Math.round(LOGICAL_H * dpr));
 
+   // A 2D context can be unavailable (context loss, headless/sandboxed, or
+   // exhausted canvas memory). Bail out entirely rather than return a wrapper
+   // around an un-drawable canvas, which would render as an empty box that
+   // still shows a hover tooltip. Mirrors the max === 0 early return above.
    var ctx = canvas.getContext("2d");
+   if (!ctx) return null;
 
    // Resolve the bar color from CSS so theming still applies; a canvas
    // can't pick up the old .sparkline-bar rule on its own.
@@ -2072,10 +2083,9 @@ var createSparkline = function(breaks, counts) {
 
    // Redraw all bars, drawing the hovered bar (if any) at full opacity to
    // mimic the per-bar :hover highlight the SVG version had. Cheap to call
-   // on every hover change -- the canvas is tiny and a single fill loop.
+   // on every hover change -- one short fill loop (one fillRect per bin).
    var hoverBin = -1;
    var drawBars = function(highlightBin) {
-      if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = barColor;
       for (var j = 0; j < counts.length; j++) {
@@ -2478,7 +2488,14 @@ var renderPendingSparklines = function() {
    pendingSparklines_ = [];
    for (var i = 0; i < items.length; i++) {
       var spark = createSparkline(items[i].breaks, items[i].counts);
-      if (spark) items[i].container.appendChild(spark);
+      if (spark) {
+         items[i].container.appendChild(spark);
+      } else {
+         // No drawable histogram (e.g. all-equal values, or no 2D context):
+         // remove the empty placeholder rather than leave it reserving space.
+         var empty = items[i].container;
+         if (empty.parentNode) empty.parentNode.removeChild(empty);
+      }
    }
 };
 
@@ -2836,7 +2853,13 @@ var onGridKeyDown = function(evt) {
    }
 
    if (isCopy) {
-      if (copyActiveCell()) evt.preventDefault();
+      // If the user has a non-empty native text selection (e.g. drag-selected
+      // across multiple cells), let the browser copy it. Overriding with the
+      // single active cell here would clobber a multi-cell selection -- the
+      // active-cell copy is only the fallback when nothing is selected.
+      var sel = window.getSelection ? window.getSelection() : null;
+      var hasSelection = sel && !sel.isCollapsed && sel.toString().length > 0;
+      if (!hasSelection && copyActiveCell()) evt.preventDefault();
       return;
    }
 
@@ -3840,6 +3863,13 @@ window.onActivate = function() {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // Returning to the tab is not a scroll event, so the activity-based fade
+   // would leave the (auto-hide) scrollbars hidden -- briefly show them so
+   // the horizontal scroll affordance is visible again. update() above has
+   // already set display:none on any axis that isn't scrollable, so this
+   // only reveals bars that actually have overflow.
+   showScrollbars();
 };
 
 window.onDeactivate = function() {
