@@ -726,15 +726,25 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    const std::string* pOutput = &rawOutput;
    if (pendingStripRestartClear_)
    {
-      const int kMaxHeldChunks = 8;      // bound how long output is withheld
-      restartClearBuf_.append(rawOutput);
-      bool force = (++restartClearChunks_ >= kMaxHeldChunks);
-      if (!resolveRestartStartupClear(&restartClearBuf_, force))
-         return;                         // hold output until the clear resolves
-      pendingStripRestartClear_ = false;
-      resolvedOutput.swap(restartClearBuf_);
-      restartClearBuf_.clear();
-      pOutput = &resolvedOutput;
+      if (std::chrono::steady_clock::now() >= restartClearDeadline_)
+      {
+         // Startup window elapsed: flush anything held and stop stripping, so a
+         // later user-issued clear is never mistaken for the startup clear.
+         pendingStripRestartClear_ = false;
+         resolvedOutput = restartClearBuf_ + rawOutput;
+         restartClearBuf_.clear();
+         pOutput = &resolvedOutput;
+      }
+      else
+      {
+         restartClearBuf_.append(rawOutput);
+         if (!resolveRestartStartupClear(&restartClearBuf_, false))
+            return;                       // hold until the clear frame completes
+         pendingStripRestartClear_ = false;
+         resolvedOutput.swap(restartClearBuf_);
+         restartClearBuf_.clear();
+         pOutput = &resolvedOutput;
+      }
    }
    const std::string& output = *pOutput;
 #else
@@ -1219,8 +1229,12 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
             // Reloadable Windows shells (e.g. Git Bash) keep their buffer for
             // replay on reconnect. Strip the ConPTY host's one-time startup
             // screen clear from the restarted shell's first output so it does
-            // not wipe the restored scrollback (see enqueOutputEvent).
+            // not wipe the restored scrollback (see enqueOutputEvent). Only
+            // strip within a short window after restart so a later user-issued
+            // clear is never affected.
             cp->pendingStripRestartClear_ = true;
+            cp->restartClearDeadline_ =
+                  std::chrono::steady_clock::now() + std::chrono::seconds(3);
          }
 #endif
 

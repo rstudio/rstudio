@@ -17,6 +17,7 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
+#include <chrono>
 #include <deque>
 
 #include <boost/regex.hpp>
@@ -270,9 +271,10 @@ private:
    // Accumulates the restarted shell's initial output while we locate that
    // clear, which may span output chunks.
    std::string restartClearBuf_;
-   // Number of output callbacks held while locating that clear; bounds how
-   // long output is withheld before it is flushed regardless.
-   int restartClearChunks_ = 0;
+   // After this deadline the startup window is over: held output is flushed and
+   // no further stripping is done, so a later user-issued clear is never
+   // mistaken for the startup clear.
+   std::chrono::steady_clock::time_point restartClearDeadline_;
 #endif
 
    // Pending input (writes or ptyInterrupts)
