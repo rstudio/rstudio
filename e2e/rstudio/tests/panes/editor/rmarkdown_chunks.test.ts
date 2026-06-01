@@ -3,8 +3,9 @@
  * `warn` option round-trip when running a chunk, error halts
  * (#16006-adjacent), console-history recall after an errored chunk
  * (#16006), patchwork-style auto-printing (#13470), paged-table
- * representation (#16483), suppression of invisibly-returned data.table
- * auto-printing (#17278), and nb.html generation on save.
+ * representation (#16483), data.table auto-print behavior -- paged for a
+ * normal table, suppressed for an invisible `:=` update (#17278), and
+ * nb.html generation on save.
  *
  * Multiline chunk execution (#17350) is covered by
  * `multiline_chunk_execution.test.ts`; notebook-save-during-execution
@@ -376,26 +377,36 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await sourceActions.closeSourceAndDeleteFile(fileNamePrint);
   });
 
-  // A data.table returned invisibly from `[.data.table` after a `:=` update
-  // must not be auto-printed -- matching the console, knitr, and rmarkdown
-  // behavior. The notebook print override regressed in 2026.01: on the
-  // suppression signal it fell through to data.table's own print method,
-  // re-triggering data.table's stateful shouldPrint() and dumping the table
-  // into the chunk. https://github.com/rstudio/rstudio/issues/17278
-  test('data.table returned invisibly from := is not auto-printed (#17278)', async ({ rstudioPage: page }) => {
+  // The data.table override is the only one that signals "do not print" (a
+  // NULL override-map result), so the fix touches `print.data.table`
+  // specifically. The #16483/#13470 tests only exercise `print.data.frame`
+  // (via `mtcars`), so cover both sides of the data.table branch here:
+  //   - a normal data.table still renders as a paged table -- guards against
+  //     the fix over-suppressing a legitimate data.table; and
+  //   - a data.table returned invisibly from a `:=` update is not auto-printed,
+  //     matching the console/knitr behavior. This regressed in 2026.01: on the
+  //     suppression signal the override fell through to data.table's own print
+  //     method, re-triggering its stateful shouldPrint() and dumping the table.
+  // https://github.com/rstudio/rstudio/issues/17278
+  test('data.table auto-print: normal renders paged, invisible := is suppressed (#17278)', async ({ rstudioPage: page }) => {
     const missing = await consoleActions.ensurePackages(['data.table'], 180_000);
     test.skip(missing.length > 0, `required R package(s) not available: ${missing.join(', ')}`);
 
-    // Distinctive value for the added column: if the table is (incorrectly)
-    // printed, this string lands in the chunk output, which is what makes the
-    // assertion below non-vacuous. It cannot leak in from the source editor
-    // because the assertion is scoped to the chunk-output element.
+    // Distinctive value for the added column: if the invisible table is
+    // (incorrectly) printed, this string lands in the chunk output, which is
+    // what makes the suppression assertion non-vacuous. It cannot leak in from
+    // the source editor because that assertion is scoped to the chunk-output
+    // element.
     const sentinel = 'NBDTSENTINEL17278';
-    const fileName = `rmarkdown_datatable_invisible_${Date.now()}.Rmd`;
+    const fileName = `rmarkdown_datatable_${Date.now()}.Rmd`;
     const content = [
       '---',
-      'title: data.table Invisible Update',
+      'title: data.table Auto-Print',
       '---',
+      '',
+      '```{r dtnormal}',
+      'data.table::as.data.table(mtcars)',
+      '```',
       '',
       '```{r dtinvisible}',
       `data.table::as.data.table(mtcars)[, foo := '${sentinel}']`,
@@ -404,15 +415,23 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
 
     await sourceActions.createAndOpenFile(fileName, content);
 
+    // Positive guard: a normal (visibly-returned) data.table must still render
+    // as a paged table. It's the only paged table on the page at this point
+    // (the #16483 auto-print case closed its document), so the bare
+    // `.pagedtable` locator is unambiguous.
+    await sourceActions.navigateToChunkByLabel('dtnormal');
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.pagedtable')).toBeVisible({ timeout: 15000 });
+
     // The `:=` update returns invisibly, so a correctly-behaving chunk
     // produces no output -- wait on R's idle state. Run twice; the first run
     // might not surface a stale chunk-output buffer (mirrors the #13470 test).
     await runChunkByLabelAndWaitForIdle(page, sourceActions, 'dtinvisible');
     await runChunkByLabelAndWaitForIdle(page, sourceActions, 'dtinvisible');
 
-    // No chunk-output element for this chunk should contain the table. The
-    // class is `rstudio_chunk_output_<label>` -- ClassIds.assignClassId adds it
-    // as a CSS *class*, so it must be matched with `.`, not `#`. Filtering on
+    // No chunk-output element for the invisible chunk should contain the table.
+    // The class is `rstudio_chunk_output_<label>` -- ClassIds.assignClassId adds
+    // it as a CSS *class*, so it must be matched with `.`, not `#`. Filtering on
     // the sentinel keeps this robust whether or not an empty output frame
     // exists, and only matches when the table was actually printed.
     await expect(
