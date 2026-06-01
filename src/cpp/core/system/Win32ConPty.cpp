@@ -448,7 +448,10 @@ void ConPty::stop()
 
 void ConPty::teardownLocked()
 {
-   if (stopped_.exchange(true) && !running() && !readerThread_.joinable())
+   // Read hPC_ directly rather than via running(): we already hold stateMutex_,
+   // and running() would re-lock it (non-recursive) -- deadlocking a repeat
+   // teardown (e.g. the destructor after an explicit stop() or a failed start).
+   if (stopped_.exchange(true) && hPC_ == nullptr && !readerThread_.joinable())
       return; // already torn down (idempotent)
 
    // Wake a backpressure-paused reader so it keeps draining (the closer below
