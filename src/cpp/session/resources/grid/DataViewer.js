@@ -2064,12 +2064,19 @@ var createSparkline = function(breaks, counts) {
    canvas.height = Math.max(1, Math.round(LOGICAL_H * dpr));
 
    var ctx = canvas.getContext("2d");
-   if (ctx) {
-      // Resolve the bar color from CSS so theming still applies; a canvas
-      // can't pick up the old .sparkline-bar rule on its own.
-      var barColor = getComputedStyle(document.documentElement)
-         .getPropertyValue("--grid-focus-border").trim() || "#4d9de0";
-      ctx.globalAlpha = 0.6;
+
+   // Resolve the bar color from CSS so theming still applies; a canvas
+   // can't pick up the old .sparkline-bar rule on its own.
+   var barColor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--grid-focus-border").trim() || "#4d9de0";
+
+   // Redraw all bars, drawing the hovered bar (if any) at full opacity to
+   // mimic the per-bar :hover highlight the SVG version had. Cheap to call
+   // on every hover change -- the canvas is tiny and a single fill loop.
+   var hoverBin = -1;
+   var drawBars = function(highlightBin) {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = barColor;
       for (var j = 0; j < counts.length; j++) {
          var h = (counts[j] / max) * canvas.height;
@@ -2077,9 +2084,11 @@ var createSparkline = function(breaks, counts) {
          // seams or sub-pixel gaps.
          var x0 = Math.round((j / counts.length) * canvas.width);
          var x1 = Math.round(((j + 1) / counts.length) * canvas.width);
+         ctx.globalAlpha = (j === highlightBin) ? 1 : 0.6;
          ctx.fillRect(x0, canvas.height - h, Math.max(1, x1 - x0), h);
       }
-   }
+   };
+   drawBars(hoverBin);
 
    wrapper.appendChild(canvas);
 
@@ -2103,9 +2112,16 @@ var createSparkline = function(breaks, counts) {
       // The canvas has no per-bar nodes, so derive the hovered bin from the
       // cursor's horizontal position within the displayed canvas.
       var rect = canvas.getBoundingClientRect();
-      if (rect.width === 0) { tooltip.style.display = "none"; return; }
-      var bin = Math.floor((evt.clientX - rect.left) / rect.width * counts.length);
-      if (bin < 0 || bin >= counts.length) { tooltip.style.display = "none"; return; }
+      var bin = rect.width === 0 ? -1 :
+         Math.floor((evt.clientX - rect.left) / rect.width * counts.length);
+      if (bin < 0 || bin >= counts.length) {
+         tooltip.style.display = "none";
+         if (hoverBin !== -1) { hoverBin = -1; drawBars(hoverBin); }
+         return;
+      }
+
+      // Repaint with the hovered bar highlighted when the bin changes.
+      if (bin !== hoverBin) { hoverBin = bin; drawBars(hoverBin); }
 
       // breaks arrive from R as strings (col_breaks is as.character'd
       // server-side); coerce here so arithmetic doesn't fall into string
@@ -2135,6 +2151,7 @@ var createSparkline = function(breaks, counts) {
 
    canvas.addEventListener("mouseleave", function() {
       tooltip.style.display = "none";
+      if (hoverBin !== -1) { hoverBin = -1; drawBars(hoverBin); }
    });
 
    return wrapper;
