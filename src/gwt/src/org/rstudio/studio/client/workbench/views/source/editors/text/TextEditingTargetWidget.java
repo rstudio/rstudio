@@ -1374,7 +1374,15 @@ public class TextEditingTargetWidget
       syncRainbowParenMode();
       syncRainbowFencedDivs();
 
-      Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
+      // avoid lambda here (makes gwt devmode sad)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            manageToolbarSizes();
+         }
+      });
    }
 
    public void setFontSize(double size)

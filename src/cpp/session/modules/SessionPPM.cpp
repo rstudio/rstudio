@@ -13,17 +13,38 @@
  *
  */
 
+#include "SessionPPM.hpp"
+
+#include <chrono>
 #include <functional>
 
+#include <boost/asio/system_timer.hpp>
+#include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/weak_ptr.hpp>
+
 #include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
+#include <core/http/TcpIpAsyncClientSsl.hpp>
+#include <core/http/URL.hpp>
 
+#include <r/RExec.hpp>
+#include <r/RJson.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionServerRpc.hpp>
+
+#include "SessionPackages.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 #define kPwbPpmIntegrationEnabled  "PWB_PPM_INTEGRATION_ENABLED"
 #define kPwbPpmRepoUrl             "PWB_PPM_REPO_URL"
@@ -101,6 +122,318 @@ bool isPpmMetadataColumnEnabled()
 
 namespace {
 
+// Cap how long we'll wait to connect to PPM. The whole point of moving this
+// off the main thread is so a slow or unreachable PPM never blocks the IDE;
+// keep the timeout short so a dead endpoint fails fast and quietly.
+const boost::posix_time::time_duration kConnectionTimeout =
+   boost::posix_time::seconds(10);
+
+// Cap the *entire* request, not just the TCP connect phase. kConnectionTimeout
+// is handed to the connector and only bounds establishing the socket;
+// AsyncClient has no read/handshake deadline of its own. Without this overall
+// deadline, a PPM that completes the TCP handshake but then stalls during TLS
+// negotiation or while streaming the response body would keep its request in
+// flight forever -- s_activeRequests would never return to 0, so every later
+// refresh would be silently dropped for the rest of the session.
+const std::chrono::seconds kRequestTimeout(30);
+
+// Number of vulnerability requests currently in flight, plus a flag noting
+// that another refresh was requested while requests were outstanding, plus a
+// flag recording whether any request in the current batch succeeded (used to
+// decide whether the metadata column needs a refreshed package list once the
+// batch drains). All are only ever touched on the main thread.
+int s_activeRequests = 0;
+bool s_refreshPending = false;
+bool s_batchSucceeded = false;
+
+void startVulnerabilityRequests();
+void enqueCachedVulnerabilities();
+
+// Runs on the main thread once a single repo's request has completed (whether
+// it succeeded or failed). On success, fold the response body into the per-repo
+// cache. We publish the aggregated result to the client once the whole batch
+// drains (see below) rather than per response, so that even a batch where every
+// request fails still produces a deterministic update -- otherwise the Packages
+// pane could keep showing stale badges after a repo/package change whose fetch
+// failed.
+void onVulnerabilityRequestComplete(const std::string& repoUrl,
+                                    bool succeeded,
+                                    const std::string& body)
+{
+   if (succeeded)
+   {
+      Error error = r::exec::RFunction(".rs.ppm.recordVulnerabilityResponse")
+                       .addParam(repoUrl)
+                       .addParam(body)
+                       .call();
+      if (error)
+         LOG_ERROR(error);
+      else
+         s_batchSucceeded = true;
+   }
+
+   if (s_activeRequests > 0)
+      s_activeRequests--;
+
+   // not done yet -- wait for the remaining requests in this batch
+   if (s_activeRequests > 0)
+      return;
+
+   // the batch has drained; if another refresh came in while we were busy run
+   // it now (its own drain will publish), otherwise publish results
+   if (s_refreshPending)
+   {
+      s_refreshPending = false;
+      startVulnerabilityRequests();
+      return;
+   }
+
+   // A successful response folds new data into both the vuln cache and the
+   // metadata cache. Vulnerability badges arrive via the kPackageVulnerabilities
+   // Ready event, but metadata rides on the package list (PackageInfo), so when
+   // the metadata column is enabled we re-deliver the package list to fill the
+   // column in. enquePackageStateChanged() also kicks a (now no-op) vuln refresh
+   // that republishes the badges, so it subsumes enqueCachedVulnerabilities().
+   bool delivered = false;
+   if (s_batchSucceeded && isPpmMetadataColumnEnabled())
+   {
+      packages::enquePackageStateChanged();
+      delivered = true;
+   }
+   s_batchSucceeded = false;
+
+   // publish the (possibly unchanged) cached set so the UI is always updated
+   // deterministically -- including when every request failed
+   if (!delivered)
+      enqueCachedVulnerabilities();
+}
+
+// Runs on the server_rpc io thread. A single request has three possible
+// outcomes -- response, low-level error, or timeout -- and we must drive
+// completion from exactly one of them. The io context is single threaded (one
+// worker runs server_rpc::ioContext()), so a plain bool shared between the
+// three paths is sufficient; no lock is needed. Cancels the deadline timer and
+// marshals the result back to the main thread, where the batch bookkeeping
+// lives.
+void settleVulnerabilityRequest(const boost::shared_ptr<bool>& pSettled,
+                                const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                                const std::string& repoUrl,
+                                bool succeeded,
+                                const std::string& body)
+{
+   if (*pSettled)
+      return;
+   *pSettled = true;
+
+   pTimer->cancel();
+   module_context::executeOnMainThread(
+      boost::bind(onVulnerabilityRequestComplete, repoUrl, succeeded, body));
+}
+
+void onVulnerabilityResponse(const std::string& repoUrl,
+                             const std::string& endpoint,
+                             const boost::shared_ptr<bool>& pSettled,
+                             const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                             const http::Response& response)
+{
+   bool ok = response.statusCode() >= 200 && response.statusCode() < 300;
+   if (!ok)
+   {
+      LOG_ERROR_MESSAGE("PPM vulnerability request to " + endpoint +
+                        " returned HTTP " +
+                        safe_convert::numberToString(response.statusCode()));
+   }
+
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, ok, response.body());
+}
+
+void onVulnerabilityError(const std::string& repoUrl,
+                          const std::string& endpoint,
+                          const boost::shared_ptr<bool>& pSettled,
+                          const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                          const Error& error)
+{
+   LOG_ERROR_MESSAGE("PPM vulnerability request to " + endpoint +
+                     " failed: " + error.getSummary());
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, false, std::string());
+}
+
+// Fires when a request overruns kRequestTimeout. Closes the socket so the
+// AsyncClient abandons the stalled read and frees itself; its own error path
+// then sees the socket as already closed and stays quiet, so we drive
+// completion from here.
+void onVulnerabilityTimeout(const std::string& repoUrl,
+                            const std::string& endpoint,
+                            const boost::shared_ptr<bool>& pSettled,
+                            const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                            const boost::weak_ptr<http::IAsyncClient>& wClient,
+                            const boost::system::error_code& ec)
+{
+   // a normal completion cancels the timer, which delivers operation_aborted;
+   // nothing actually timed out in that case
+   if (ec == boost::asio::error::operation_aborted || *pSettled)
+      return;
+
+   LOG_ERROR_MESSAGE("PPM vulnerability request to " + endpoint +
+                     " timed out after " +
+                     safe_convert::numberToString(kRequestTimeout.count()) +
+                     "s; closing connection");
+
+   if (boost::shared_ptr<http::IAsyncClient> pClient = wClient.lock())
+      pClient->close();
+
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, false, std::string());
+}
+
+// Issue one async POST for a single repo's request-plan entry.
+void sendVulnerabilityRequest(const json::Object& entry)
+{
+   std::string repoUrl, endpoint, authHeader, body;
+   Error error = json::readObject(entry,
+                                  "repoUrl", repoUrl,
+                                  "endpoint", endpoint,
+                                  "authHeader", authHeader,
+                                  "body", body);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // https is the norm, but the legacy curl path also worked against http PPM
+   // deployments, so keep supporting both rather than silently dropping vuln
+   // checks for an http-configured repository
+   http::URL url(endpoint);
+   bool useSsl = url.protocol() == "https";
+   if (!url.isValid() || (!useSsl && url.protocol() != "http"))
+   {
+      LOG_ERROR_MESSAGE("PPM vulnerability endpoint is not a valid http(s) URL: " + endpoint);
+      return;
+   }
+
+   http::Request request;
+   request.setMethod("POST");
+   request.setUri(url.path());
+   request.setHost(url.hostWithPort());
+   request.setHeader("Connection", "close");
+   request.setContentType("application/json");
+   if (!authHeader.empty())
+      request.setHeader("Authorization", authHeader);
+   request.setBody(body);
+
+   boost::shared_ptr<http::IAsyncClient> pClient;
+   if (useSsl)
+   {
+      pClient.reset(new http::TcpIpAsyncClientSsl(server_rpc::ioContext(),
+                                                  url.hostname(),
+                                                  url.portStr(),
+                                                  true, // verify certificates
+                                                  std::string(), // cert authority
+                                                  kConnectionTimeout));
+   }
+   else
+   {
+      pClient.reset(new http::TcpIpAsyncClient(server_rpc::ioContext(),
+                                               url.hostname(),
+                                               url.portStr(),
+                                               kConnectionTimeout));
+   }
+
+   pClient->request().assign(request);
+
+   // arm the overall request deadline (see kRequestTimeout); the timer and the
+   // two completion handlers coordinate through pSettled so the request always
+   // settles exactly once
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(server_rpc::ioContext(), kRequestTimeout);
+   boost::shared_ptr<bool> pSettled = boost::make_shared<bool>(false);
+
+   boost::weak_ptr<http::IAsyncClient> wClient(pClient);
+   pTimer->async_wait(
+      boost::bind(onVulnerabilityTimeout, repoUrl, endpoint, pSettled, pTimer, wClient, _1));
+
+   s_activeRequests++;
+   pClient->execute(
+      boost::bind(onVulnerabilityResponse, repoUrl, endpoint, pSettled, pTimer, _1),
+      boost::bind(onVulnerabilityError, repoUrl, endpoint, pSettled, pTimer, _1));
+}
+
+// Forward the currently-cached vulnerability data to the client without making
+// any network request. Used when there's nothing new to fetch, so that (for
+// example) switching from a PPM repo to a non-PPM repo clears stale badges.
+void enqueCachedVulnerabilities()
+{
+   r::sexp::Protect protect;
+   SEXP vulnsSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.ppm.getCachedVulnerabilities")
+                    .call(&vulnsSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value vulnsJson;
+   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
+   if (error)
+      LOG_ERROR(error);
+   else
+      module_context::enqueClientEvent(
+         ClientEvent(client_events::kPackageVulnerabilitiesReady, vulnsJson));
+}
+
+// Ask R for the request plan (what to fetch + how to authenticate) and fire off
+// an async request for each repo that has uncached packages. Runs on the main
+// thread.
+void startVulnerabilityRequests()
+{
+   // fresh batch: clear the success flag so a prior batch's outcome can't leak
+   // across a coalesced refresh (any cached metadata is re-read on the next
+   // package-list delivery regardless, so deferring delivery here loses nothing)
+   s_batchSucceeded = false;
+
+   r::sexp::Protect protect;
+   SEXP planSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.ppm.getVulnerabilityRequestPlan")
+                    .call(&planSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value planJson;
+   error = r::json::jsonValueFromObject(planSEXP, &planJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Array plan = planJson.isArray() ? planJson.getArray() : json::Array();
+
+   // nothing new to fetch -- still publish what we have cached so the client
+   // reflects the current repository state (e.g. clears badges after a switch
+   // to a non-PPM repo)
+   if (plan.isEmpty())
+   {
+      enqueCachedVulnerabilities();
+      return;
+   }
+
+   for (const json::Value& entry : plan)
+   {
+      if (entry.isObject())
+         sendVulnerabilityRequest(entry.getObject());
+   }
+
+   // if no request was actually launched (e.g. every plan entry failed preflight
+   // validation), nothing will drain the batch, so publish the cached set here
+   // to keep every refresh deterministic
+   if (s_activeRequests == 0)
+      enqueCachedVulnerabilities();
+}
+
 SEXP rs_ppmIntegrationEnabled()
 {
    return isPpmIntegrationEnabled() ? Rf_ScalarLogical(TRUE) : Rf_ScalarLogical(FALSE);
@@ -118,6 +451,22 @@ SEXP rs_ppmMetadataKey()
 }
 
 } // end anonymous namespace
+
+void refreshVulnerabilitiesAsync()
+{
+   if (!isPpmIntegrationEnabled())
+      return;
+
+   // coalesce: if requests are still in flight, defer until they drain so the
+   // refresh reflects the latest installed-package / repo state
+   if (s_activeRequests > 0)
+   {
+      s_refreshPending = true;
+      return;
+   }
+
+   startVulnerabilityRequests();
+}
 
 Error initialize()
 {

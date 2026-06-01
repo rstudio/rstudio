@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageVulnerabilitiesReadyEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 
 public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
@@ -36,7 +37,8 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
          extends DelayLoadTabShim<Packages, PackagesTab>
          implements LoadedPackageUpdatesEvent.Handler,
                     RaisePackagePaneEvent.Handler,
-                    PackageStateChangedEvent.Handler
+                    PackageStateChangedEvent.Handler,
+                    PackageVulnerabilitiesReadyEvent.Handler
    {
       @Handler
       public abstract void onInstallPackage();
@@ -57,6 +59,7 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
       events.addHandler(LoadedPackageUpdatesEvent.TYPE, shim);
       events.addHandler(RaisePackagePaneEvent.TYPE, shim);
       events.addHandler(PackageStateChangedEvent.TYPE, shim);
+      events.addHandler(PackageVulnerabilitiesReadyEvent.TYPE, shim);
       uiPrefs_ = uiPrefs;
       session_ = session;
    }
