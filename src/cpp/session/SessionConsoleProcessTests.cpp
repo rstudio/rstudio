@@ -272,17 +272,28 @@ TEST(ConsoleProcessConPty, StripsOnlyFirstClear)
    EXPECT_EQ(out, "keep\x1b[2Jme");
 }
 
-TEST(ConsoleProcessConPty, HoldsShortOutputWithoutClear)
+TEST(ConsoleProcessConPty, HoldsLeadingFramePrefix)
 {
-   // No clear yet, under the hold bound, not forced: keep waiting.
-   std::string buf = "$ ";
+   // Only the leading control sequences have arrived (no content, no clear yet):
+   // a clear may still be coming, so keep waiting.
+   std::string buf = "\x1b[?2004h\x1b[?25l";
    EXPECT_FALSE(resolveRestartStartupClear(&buf, false));
+}
+
+TEST(ConsoleProcessConPty, ForwardsContentWithoutClearImmediately)
+{
+   // A prompt (real content) arrives with no clear: forward at once rather than
+   // withhold it, even unforced -- otherwise an idle prompt would stay hidden.
+   std::string buf = "\x1b[?2004h\x1b[32mtomto@pc \x1b[m$ ";
+   const std::string orig = buf;
+   EXPECT_TRUE(resolveRestartStartupClear(&buf, false));
+   EXPECT_EQ(buf, orig);
 }
 
 TEST(ConsoleProcessConPty, ForcedResolveFlushesOutputWithoutClear)
 {
-   // When the hold window closes with no clear, output is flushed unchanged
-   // rather than withheld indefinitely.
+   // When forced (hold window closed / shell exited) with no clear, output is
+   // flushed unchanged rather than withheld.
    std::string buf = "no clear here\r\n$ ";
    const std::string orig = buf;
    EXPECT_TRUE(resolveRestartStartupClear(&buf, true));

@@ -648,6 +648,32 @@ bool trailingMayExtendClear(const std::string& s, std::size_t pos)
    return j >= s.size();                 // no final byte yet -> may become m/H
 }
 
+// True if `s` consists solely of the control sequences that can precede the
+// conhost startup clear (CSI sequences), possibly ending in an incomplete one.
+// Once real content (printable text or an OSC) appears, the startup clear is no
+// longer pending and output must be forwarded as-is rather than withheld.
+bool bufferIsLeadingFramePrefix(const std::string& s)
+{
+   std::size_t i = 0;
+   while (i < s.size())
+   {
+      if (s[i] != '\x1b')
+         return false;                   // printable content
+      if (i + 1 >= s.size())
+         return true;                    // trailing lone ESC
+      if (s[i + 1] != '[')
+         return false;                   // OSC ("\x1b]") or other: content
+      std::size_t j = i + 2;
+      while (j < s.size() &&
+             ((s[j] >= '0' && s[j] <= '9') || s[j] == ';' || s[j] == '?'))
+         ++j;
+      if (j >= s.size())
+         return true;                    // incomplete CSI at end
+      i = j + 1;                         // complete CSI; keep scanning
+   }
+   return true;
+}
+
 } // anonymous namespace
 
 // Locate and strip the conhost startup screen clear at the start of a restarted
@@ -674,8 +700,13 @@ bool resolveRestartStartupClear(std::string* pBuf, bool force)
       return true;
    }
 
-   // No clear seen yet; keep accumulating until forced or sufficiently sure.
-   return force || pBuf->size() >= kMaxHold;
+   // No complete clear yet. Forced or oversized buffers always resolve.
+   if (force || pBuf->size() >= kMaxHold)
+      return true;
+   // Otherwise keep waiting only while the output so far is purely the leading
+   // control sequences that precede the clear (a clear may still arrive). As
+   // soon as real content appears, the startup clear is absent: forward as-is.
+   return !bufferIsLeadingFramePrefix(*pBuf);
 }
 #endif
 
