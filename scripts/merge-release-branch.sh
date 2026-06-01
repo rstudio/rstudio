@@ -67,6 +67,7 @@ RELEASE_ONLY_FILES=(
     version/BUILDTYPE
     version/RELEASE
     version/CALENDAR_VERSION
+    version/PATCH
 )
 
 # Directories whose contents should always retain main's value after a
