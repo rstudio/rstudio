@@ -374,6 +374,29 @@ TEST(StringTest, HeredocHandlesEmptyInput)
    EXPECT_EQ(std::string(""), heredoc(""));
 }
 
+TEST(StringTest, SingleQuotedStrEscapeLeavesPlainTextUnchanged)
+{
+   EXPECT_EQ(std::string("hello"), singleQuotedStrEscape("hello"));
+   EXPECT_EQ(std::string(""), singleQuotedStrEscape(""));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeEscapesQuotesAndBackslashes)
+{
+   // a single quote is escaped so it cannot terminate the enclosing literal
+   EXPECT_EQ(std::string("it\\'s"), singleQuotedStrEscape("it's"));
+
+   // a backslash is doubled so it cannot escape the following character
+   EXPECT_EQ(std::string("a\\\\b"), singleQuotedStrEscape("a\\b"));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeNeutralizesInjectionPayload)
+{
+   // a filename crafted to break out of a single-quoted R literal and inject
+   // code has every quote escaped, so the payload cannot close the literal
+   EXPECT_EQ(std::string("\\'); system(\\'rm -rf /\\'); #"),
+             singleQuotedStrEscape("'); system('rm -rf /'); #"));
+}
+
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio

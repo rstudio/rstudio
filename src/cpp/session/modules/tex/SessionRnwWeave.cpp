@@ -449,7 +449,29 @@ std::string driverForFile(const core::tex::TexMagicComments& magicComments)
       if (boost::algorithm::iequals(mc.scope(), "rnw") &&
           boost::algorithm::iequals(mc.variable(), "driver"))
       {
-         return mc.value();
+         std::string driver = mc.value();
+
+         // The driver is interpolated into the weave command as a bare R
+         // expression (not a quoted string literal), so unlike the file and
+         // encoding we cannot escape it. To keep an untrusted document from
+         // injecting arbitrary R code via a "% !Rnw driver = ..." magic
+         // comment, only accept values that look like a plain, optionally
+         // namespaced function reference -- e.g. "RweaveLatex",
+         // "cacheSweave::cacheSweaveDriver", or "RweaveLatex()". Anything else
+         // is rejected and the default driver is used instead.
+         static const boost::regex driverPattern(
+            "^\\s*"
+            "(?:[a-zA-Z.][a-zA-Z0-9._]*:{2,3})?"   // optional pkg:: or pkg:::
+            "[a-zA-Z.][a-zA-Z0-9._]*"              // function name
+            "\\s*(?:\\(\\s*\\))?"                  // optional empty arg list
+            "\\s*$");
+
+         if (regex_utils::match(driver, driverPattern))
+            return driver;
+
+         WLOGF("Ignoring invalid Sweave driver '{}' specified in magic comment",
+               driver);
+         return std::string();
       }
    }
 

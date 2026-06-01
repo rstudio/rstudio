@@ -40,4 +40,5 @@ public interface RMarkdownConstants extends Messages {
     String locationLabel();
     String customRenderConfirmCaption();
     String customRenderConfirmMessage(String renderFunction);
+    String customRenderConfirmMessageUnknown();
 }

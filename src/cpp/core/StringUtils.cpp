@@ -589,7 +589,11 @@ std::string heredoc(const std::string& str)
    // strip the common indentation from each line
    for (std::string& line : lines)
    {
-      if (line.size() >= commonIndent)
+      // blank lines collapse to empty, even when they are indented more deeply
+      // than the common indentation (so they leave no trailing whitespace)
+      if (line.find_first_not_of(" \t") == std::string::npos)
+         line.clear();
+      else if (line.size() >= commonIndent)
          line = line.substr(commonIndent);
       else
          line.clear();
