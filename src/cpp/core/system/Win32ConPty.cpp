@@ -9,6 +9,8 @@
 
 #include "Win32ConPty.hpp"
 
+#include <climits>
+
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
@@ -62,7 +64,7 @@ const ConPtyApi& api()
    return s_api;
 }
 
-// Build a mutable command-line string (ported from WinPty::runProcess).
+// Build a mutable command-line string for CreateProcessW.
 std::wstring buildCommandLine(const std::string& exe,
                               const std::vector<std::string>& args)
 {
@@ -79,7 +81,7 @@ std::wstring buildCommandLine(const std::string& exe,
    return string_utils::utf8ToWide(cmdLine, "ConPty::buildCommandLine");
 }
 
-// Build a UTF-16 environment block (ported from WinPtySpawnConfig).
+// Build a UTF-16 environment block for CreateProcessW.
 std::vector<wchar_t> buildEnvBlock(const ProcessOptions& options)
 {
    std::vector<wchar_t> env;
@@ -118,6 +120,7 @@ ConPty::~ConPty()
 
 bool ConPty::running() const
 {
+   std::lock_guard<std::mutex> lock(stateMutex_);
    return hPC_ != nullptr;
 }
 
@@ -125,6 +128,9 @@ Error ConPty::createPipesAndConsole(int cols, int rows)
 {
    if (cols < 1) cols = 80;
    if (rows < 1) rows = 25;
+   // COORD fields are SHORT; clamp so an absurd size cannot wrap negative.
+   if (cols > SHRT_MAX) cols = SHRT_MAX;
+   if (rows > SHRT_MAX) rows = SHRT_MAX;
 
    // Each failure path leaves the object clean (no half-opened handles), so a
    // failed start() can be safely destructed or retried.
@@ -221,11 +227,10 @@ Error ConPty::launchChild(const std::string& exe,
    // empty environment.
    std::vector<wchar_t> env;
    LPVOID lpEnv = nullptr;
-   // EMPIRICALLY VALIDATED (Phase 0): do NOT add DETACHED_PROCESS or
-   // CREATE_NO_WINDOW -- both prevent the child from attaching to the
-   // pseudoconsole (routing breaks, 0/4 in testing). CREATE_NEW_PROCESS_GROUP is
-   // safe if ever needed for signal-based interrupt (deferred). Plain
-   // EXTENDED_STARTUPINFO_PRESENT is correct.
+   // Do NOT add DETACHED_PROCESS or CREATE_NO_WINDOW -- both prevent the child
+   // from attaching to the pseudoconsole, which breaks I/O routing.
+   // CREATE_NEW_PROCESS_GROUP is safe if ever needed for signal-based interrupt
+   // (deferred). Plain EXTENDED_STARTUPINFO_PRESENT is correct.
    DWORD creationFlags = EXTENDED_STARTUPINFO_PRESENT;
    if (options.environment)
    {
@@ -269,13 +274,17 @@ Error ConPty::start(const std::string& exe,
                     HANDLE* pProcess)
 {
    std::lock_guard<std::mutex> lock(stateMutex_);
+   if (pProcess == nullptr)
+      return systemError(boost::system::errc::invalid_argument,
+                         "pProcess must not be null", ERROR_LOCATION);
    *pProcess = nullptr;
 
    if (!isAvailable())
       return systemError(boost::system::errc::not_supported,
                          "ConPTY is not available on this version of Windows",
                          ERROR_LOCATION);
-   if (running())
+   // Read hPC_ directly rather than via running(): we already hold stateMutex_.
+   if (hPC_ != nullptr)
       return systemError(boost::system::errc::already_connected,
                          "ConPty already running", ERROR_LOCATION);
    // A ConPty is single-use: once stopped (or a start failed), per-run state is
@@ -314,28 +323,39 @@ void ConPty::readerLoop()
       BOOL ok = ::ReadFile(hOutputRead_, buf.data(), kReadChunk, &n, nullptr);
       if (!ok || n == 0)
       {
-         // EOF/broken-pipe is the normal end; log only unexpected errors.
-         // ERROR_OPERATION_ABORTED is also normal here: teardownLocked() uses
-         // CancelSynchronousIo on this thread as a backstop, which aborts the
-         // in-flight ReadFile. It is the only caller that cancels reader IO, so
-         // suppressing it cannot mask a genuine read failure.
+         // EOF/broken-pipe is the normal end. ERROR_OPERATION_ABORTED is also
+         // normal here: teardownLocked() uses CancelSynchronousIo on this thread
+         // as a backstop, which aborts the in-flight ReadFile. It is the only
+         // caller that cancels reader IO, so suppressing it cannot mask a genuine
+         // read failure. Capture the error before any other call clobbers it.
          DWORD err = ::GetLastError();
-         if (!ok && n == 0 && err != ERROR_BROKEN_PIPE &&
+         {
+            std::lock_guard<std::mutex> lock(outMutex_);
+            // Salvage any bytes delivered alongside the terminating error/EOF.
+            if (n > 0)
+            {
+               if (outputBuffer_.size() < kOutHighWater)
+                  outputBuffer_.append(buf.data(), n);
+               else
+                  outputDroppedBytes_ += n;
+            }
+            outCv_.notify_all();
+         }
+         // Log a genuinely unexpected failure even when some bytes were read.
+         if (!ok && err != ERROR_BROKEN_PIPE &&
              err != ERROR_HANDLE_EOF && err != ERROR_OPERATION_ABORTED)
             LOG_ERROR(systemError(err, ERROR_LOCATION));
-         std::lock_guard<std::mutex> lock(outMutex_);
-         outCv_.notify_all();
          return;
       }
       std::unique_lock<std::mutex> lock(outMutex_);
       // Backpressure: while not stopping and at/over the high-water mark, wait
       // for poll() to drain the buffer (readOutput swaps it out entirely).
       // Once stopped_, never pause (this prevents the shutdown-while-paused
-      // hang); instead drop the chunk and flag truncation to keep memory bounded.
+      // hang); instead drop the chunk and count it to keep memory bounded.
       while (!stopped_.load() && outputBuffer_.size() >= kOutHighWater)
          outCv_.wait(lock);
       if (outputBuffer_.size() >= kOutHighWater)
-         outputTruncated_ = true; // stopped_ and at cap: drop to stay bounded
+         outputDroppedBytes_ += n; // stopped_ and at cap: drop to stay bounded
       else
          outputBuffer_.append(buf.data(), n);
    }
@@ -346,7 +366,7 @@ Error ConPty::readOutput(std::string* pOutput)
    std::lock_guard<std::mutex> lock(outMutex_);
    pOutput->clear();
    pOutput->swap(outputBuffer_);
-   outCv_.notify_all(); // release a paused reader (1b)
+   outCv_.notify_all(); // release a backpressure-paused reader
    return Success();
 }
 
@@ -397,10 +417,14 @@ Error ConPty::setSize(int cols, int rows)
    // Hold stateMutex_ so we cannot race teardownLocked() nulling/closing hPC_
    // (the resize call and the running/stopped check must be atomic together).
    std::lock_guard<std::mutex> lock(stateMutex_);
-   if (stopped_.load() || !running())
+   // Read hPC_ directly rather than via running(): we already hold stateMutex_.
+   if (stopped_.load() || hPC_ == nullptr)
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
    if (cols < 1 || rows < 1)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   // COORD fields are SHORT; clamp so an absurd size cannot wrap negative.
+   if (cols > SHRT_MAX) cols = SHRT_MAX;
+   if (rows > SHRT_MAX) rows = SHRT_MAX;
    COORD size;
    size.X = static_cast<SHORT>(cols);
    size.Y = static_cast<SHORT>(rows);
@@ -471,8 +495,10 @@ void ConPty::teardownLocked()
    }
    if (hOutputRead_) { ::CloseHandle(hOutputRead_); hOutputRead_ = nullptr; }
 
-   if (outputTruncated_)
-      LOG_WARNING_MESSAGE("ConPty dropped terminal output during shutdown");
+   // Safe to read without outMutex_: the reader thread was joined above.
+   if (outputDroppedBytes_ > 0)
+      LOG_WARNING_MESSAGE("ConPty dropped " + std::to_string(outputDroppedBytes_) +
+                          " bytes of terminal output during shutdown");
 }
 
 } // namespace system

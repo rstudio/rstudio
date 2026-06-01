@@ -165,7 +165,7 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 }
 
 // Non-blocking read of whatever bytes are currently available on a pipe.
-// (Relocated from the former WinPty::readFromPty; used by the non-PTY path.)
+// Used by the non-PTY path.
 Error readPipeAvailable(HANDLE hPipe, std::string* pOutput)
 {
    DWORD dwAvail = 0;
@@ -896,7 +896,9 @@ void AsyncChildProcess::poll()
          // where the buffer is being discarded anyway.)
          pImpl_->pty.stop();
          std::string out;
-         pImpl_->pty.readOutput(&out);
+         Error error = pImpl_->pty.readOutput(&out);
+         if (error)
+            reportError(error);
          if (!out.empty() && callbacks_.onStdout)
          {
             hasRecentOutput = true;

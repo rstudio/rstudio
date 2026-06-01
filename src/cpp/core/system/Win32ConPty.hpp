@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -60,6 +61,8 @@ public:
                const ProcessOptions& options,
                HANDLE* pProcess);
 
+   // True between a successful start() and teardown. Observes the lifecycle
+   // state under stateMutex_, so it is safe to call from any thread.
    bool running() const;
 
    // Non-blocking: move buffered output into *pOutput (may be empty).
@@ -98,14 +101,14 @@ private:
 
    std::thread readerThread_;
 
-   std::mutex stateMutex_;           // serializes start/stop/setSize
+   mutable std::mutex stateMutex_;   // serializes start/stop/setSize; guards hPC_
    std::mutex inputMutex_;           // guards hInputWrite_ (input may arrive on the WS thread)
    std::atomic<bool> stopped_{false};
 
    std::mutex outMutex_;
    std::condition_variable outCv_;
    std::string outputBuffer_;
-   bool outputTruncated_ = false;   // set if forced-shutdown dropped output
+   std::size_t outputDroppedBytes_ = 0;  // bytes dropped if forced shutdown truncated output
 };
 
 } // namespace system
