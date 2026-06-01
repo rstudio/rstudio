@@ -266,137 +266,142 @@ test_that("aggregateVulnsByName skips cached entries with empty vuln lists", {
    ))
 })
 
-# Tests for getVulnerabilityInformationImpl swap in a mock
-# fetchVulnerabilityInformation. The helper clears the session-wide cache
-# so each test starts from a known state, then installs the mock and
-# arranges for it to be restored when the test exits.
+# Tests for the asynchronous request-plan / response-recording flow. The
+# network request itself happens in C++ (off the main thread); these tests
+# exercise the R helpers that decide what to request and that fold a response
+# back into the per-repo cache.
 .rs.testPpm <- list(
    repoUrl = "https://example.test/repo/latest"
 )
 
-# Install a mock for .rs.ppm.fetchVulnerabilityInformation that runs the
-# supplied function. Schedules restoration via withr::defer so the swap
-# only lasts for the current test_that() frame. Preserves the closure's
-# lexical environment so <<- captures back into the test scope still work.
-withMockFetch <- function(fn)
+# Swap a tools-env function for the duration of the current test_that() frame.
+# Schedules restoration via withr::defer so the swap only lasts for that frame.
+withMockFunction <- function(name, fn)
 {
    toolsEnv <- .rs.toolsEnv()
-   original <- get(".rs.ppm.fetchVulnerabilityInformation", envir = toolsEnv)
-   assign(".rs.ppm.fetchVulnerabilityInformation", fn, envir = toolsEnv)
+   original <- get(name, envir = toolsEnv)
+   assign(name, fn, envir = toolsEnv)
    withr::defer(
-      assign(".rs.ppm.fetchVulnerabilityInformation", original, envir = toolsEnv),
+      assign(name, original, envir = toolsEnv),
       envir = parent.frame()
    )
 }
 
-# Reset the per-repo cache between tests so nothing leaks between them.
-clearVulnsCache <- function()
+# Reset the per-repo cache and pending-key state between tests so nothing
+# leaks between them.
+clearVulnsState <- function()
 {
    rm(list = ls(envir = .rs.ppm.vulns, all.names = TRUE), envir = .rs.ppm.vulns)
+   rm(list = ls(envir = .rs.ppm.pending, all.names = TRUE), envir = .rs.ppm.pending)
 }
 
-test_that("getVulnerabilityInformationImpl preserves cached vulns when fetch fails", {
-   # Pre-seed the cache for one package, then ask about that package plus
-   # a new one. A fetch failure (mock returns NULL) should leave the cache
-   # alone and still surface the cached vulns at aggregation time.
-   clearVulnsCache()
-   cache <- new.env(parent = emptyenv())
-   assign("pkgA==1.0.0", list(list(id = "V1", summary = "old")), envir = cache)
-   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
-
-   withMockFetch(function(repoUrl, pkgKeys) NULL)
-
-   result <- .rs.ppm.getVulnerabilityInformationImpl(
-      .rs.testPpm$repoUrl,
-      c("pkgA==1.0.0", "pkgB==2.0.0")
-   )
-
-   expect_equal(result, expected(
-      pkgA = list(list(id = "V1", summary = "old"))
-   ))
-   # pkgB must not be marked "queried, no vulns" -- the next refresh has
-   # to be free to retry it
-   expect_false(exists("pkgB==2.0.0", envir = cache, inherits = FALSE))
-})
-
-test_that("getVulnerabilityInformationImpl asks PPM only about uncached keys", {
-   clearVulnsCache()
+test_that("getVulnerabilityRequestPlan asks PPM only about uncached keys", {
+   clearVulnsState()
    cache <- new.env(parent = emptyenv())
    assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
    assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
 
-   capturedKeys <- NULL
-   withMockFetch(function(repoUrl, pkgKeys) {
-      capturedKeys <<- pkgKeys
-      structure(list(), names = character())
-   })
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() c("pkgA==1.0.0", "pkgB==2.0.0"))
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
 
-   .rs.ppm.getVulnerabilityInformationImpl(
-      .rs.testPpm$repoUrl,
-      c("pkgA==1.0.0", "pkgB==2.0.0")
-   )
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
 
-   expect_equal(capturedKeys, "pkgB==2.0.0")
+   expect_length(plan, 1L)
+   # only the uncached key should appear in the request body
+   expect_true(grepl("pkgB==2.0.0", plan[[1L]]$body, fixed = TRUE))
+   expect_false(grepl("pkgA==1.0.0", plan[[1L]]$body, fixed = TRUE))
+   # the requested keys are recorded so the response handler can mark them
+   expect_equal(.rs.ppm.pending[[.rs.testPpm$repoUrl]], "pkgB==2.0.0")
 })
 
-test_that("getVulnerabilityInformationImpl caches empty markers for keys PPM did not return", {
-   # PPM may report vulns for only a subset of requested keys. The impl
-   # caches an empty list for the missing keys so subsequent refreshes
-   # don't keep re-asking.
-   clearVulnsCache()
+test_that("getVulnerabilityRequestPlan skips repos with no uncached keys", {
+   clearVulnsState()
+   cache <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
+   assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
 
-   withMockFetch(function(repoUrl, pkgKeys) {
-      structure(
-         list(list(list(id = "V1"))),
-         names = "pkgA==1.0.0"
-      )
-   })
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
 
-   result <- .rs.ppm.getVulnerabilityInformationImpl(
-      .rs.testPpm$repoUrl,
-      c("pkgA==1.0.0", "pkgB==2.0.0")
-   )
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
 
-   expect_equal(result, expected(
-      pkgA = list(list(id = "V1"))
-   ))
+   expect_length(plan, 0L)
+   expect_false(exists(.rs.testPpm$repoUrl, envir = .rs.ppm.pending, inherits = FALSE))
+})
+
+test_that("getVulnerabilityRequestPlan returns nothing when integration is disabled", {
+   clearVulnsState()
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() FALSE)
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
+   expect_length(plan, 0L)
+})
+
+test_that("getVulnerabilityRequestPlan skips non-PPM repositories", {
+   clearVulnsState()
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = "https://cran.rstudio.com"))
+   expect_length(plan, 0L)
+})
+
+test_that("getVulnerabilityRequestPlan returns nothing when no packages are installed", {
+   clearVulnsState()
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() character())
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
+   expect_length(plan, 0L)
+})
+
+test_that("recordVulnerabilityResponse caches vulns and empty markers for requested keys", {
+   clearVulnsState()
+   assign(.rs.testPpm$repoUrl, c("pkgA==1.0.0", "pkgB==2.0.0"), envir = .rs.ppm.pending)
+
+   # isolate the cache-update behaviour from the session's live repos option
+   withMockFunction(".rs.ppm.getCachedVulnerabilities", function(repos = NULL) list())
+
+   body <- '{"name":"pkgA","version":"1.0.0","vulns":[{"id":"V1"}]}'
+   .rs.ppm.recordVulnerabilityResponse(.rs.testPpm$repoUrl, body)
 
    cache <- .rs.ppm.vulns[[.rs.testPpm$repoUrl]]
-   expect_equal(get("pkgA==1.0.0", envir = cache), list(list(id = "V1")))
+   # the parser marks leaf values as scalars, so compare against the marked form
+   expect_equal(get("pkgA==1.0.0", envir = cache), expected(list(id = "V1")))
+   # pkgB had no vulns reported -- cache an empty marker so we don't re-ask
    expect_equal(get("pkgB==2.0.0", envir = cache), list())
+   # the pending entry is cleared once recorded
+   expect_false(exists(.rs.testPpm$repoUrl, envir = .rs.ppm.pending, inherits = FALSE))
 })
 
-test_that("getVulnerabilityInformationImpl returns empty without calling PPM when pkgKeys is empty", {
-   clearVulnsCache()
+test_that("recordVulnerabilityResponse leaves cache and pending intact on a server error", {
+   clearVulnsState()
+   assign(.rs.testPpm$repoUrl, "pkgB==2.0.0", envir = .rs.ppm.pending)
 
-   called <- FALSE
-   withMockFetch(function(repoUrl, pkgKeys) {
-      called <<- TRUE
-      structure(list(), names = character())
-   })
+   withMockFunction(".rs.ppm.getCachedVulnerabilities", function(repos = NULL) list())
 
-   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, character())
+   body <- '{"error":"not allowed","code":"403"}'
+   expect_warning(
+      .rs.ppm.recordVulnerabilityResponse(.rs.testPpm$repoUrl, body),
+      "error requesting package vulnerabilities.*not allowed.*403"
+   )
 
-   expect_equal(result, structure(list(), names = character()))
-   expect_false(called)
+   # nothing cached, and the key stays pending so a later refresh retries it
+   expect_null(.rs.ppm.vulns[[.rs.testPpm$repoUrl]])
+   expect_equal(.rs.ppm.pending[[.rs.testPpm$repoUrl]], "pkgB==2.0.0")
 })
 
-test_that("getVulnerabilityInformationImpl skips the fetch when every key is already cached", {
-   clearVulnsCache()
+test_that("getCachedVulnerabilities aggregates per repo without any network access", {
+   clearVulnsState()
    cache <- new.env(parent = emptyenv())
    assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
    assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
 
-   called <- FALSE
-   withMockFetch(function(repoUrl, pkgKeys) {
-      called <<- TRUE
-      structure(list(), names = character())
-   })
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
 
-   result <- .rs.ppm.getVulnerabilityInformationImpl(.rs.testPpm$repoUrl, "pkgA==1.0.0")
-
-   expect_false(called)
-   expect_equal(result, expected(
+   result <- .rs.ppm.getCachedVulnerabilities(repos = c(CRAN = .rs.testPpm$repoUrl))
+   expect_equal(result, list(CRAN = expected(
       pkgA = list(list(id = "V1"))
-   ))
+   )))
 })

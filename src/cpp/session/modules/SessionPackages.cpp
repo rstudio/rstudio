@@ -258,19 +258,12 @@ Error getPackageStateJson(json::Object* pJson)
       LOG_ERROR(error);
    (*pJson)["active_repository"] = activeRepository;
 
-   // collect vulnerability information as well
-   SEXP vulnsSEXP = R_NilValue;
-   error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
-               .call(&vulnsSEXP, &protect);
-   if (error)
-      LOG_ERROR(error);
-
-   json::Value vulnsJson;
-   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
-   if (error)
-      LOG_ERROR(error);
-
-   (*pJson)["vulns"] = vulnsJson;
+   // Vulnerability information is fetched asynchronously (see
+   // ppm::refreshVulnerabilitiesAsync) so that a slow or unreachable PPM can't
+   // block the package list -- and therefore IDE startup. Start with an empty
+   // map here; the data arrives later via the kPackageVulnerabilitiesReady
+   // event.
+   (*pJson)["vulns"] = json::Object();
 
    return Success();
 }
@@ -454,6 +447,9 @@ void onDeferredInit(bool /* newSession */)
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
+
+   // kick off the initial (asynchronous) vulnerability check
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error getPackageState(const json::JsonRpcRequest& ,
@@ -487,6 +483,10 @@ void enquePackageStateChanged()
       ClientEvent event(client_events::kPackageStateChanged, pkgState);
       module_context::enqueClientEvent(event);
    }
+
+   // the package set or active repository may have changed; refresh
+   // vulnerability data asynchronously to match
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error initialize()

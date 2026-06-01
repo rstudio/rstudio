@@ -16,6 +16,12 @@
 .rs.setVar("ppm.vulns", new.env(parent = emptyenv()))
 .rs.setVar("ppm.metadataCache", new.env(parent = emptyenv()))
 
+# per-repo set of "name==version" keys we've asked the C++ backend to fetch
+# but haven't yet recorded a response for; keyed by repository URL. The fetch
+# itself happens asynchronously in C++ (see SessionPPM.cpp), so this is how the
+# request plan communicates the requested keys to the response handler.
+.rs.setVar("ppm.pending", new.env(parent = emptyenv()))
+
 # once-per-session flags for noisy diagnostics we don't want to repeat
 # on every package-list refresh
 .rs.setVar("ppm.warnings", new.env(parent = emptyenv()))
@@ -30,53 +36,23 @@
    .Call("rs_ppmMetadataColumnEnabled", PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("ppm.getVulnerabilityInformation", function(repos = NULL)
+.rs.addFunction("ppm.installedPackageKeys", function()
 {
-   # For each available repository, ask it for vulnerability information,
-   # then merge that all together.
-   repos <- .rs.nullCoalesce(repos, getOption("repos"))
-
    # PPM's filter/packages endpoint defaults to the current snapshot's latest
    # version of each package, so a vuln that only affects an older installed
-   # version is silently dropped. Ask explicitly for the installed (name,
-   # version) pairs instead.
+   # version is silently dropped. We key everything on the installed (name,
+   # version) pairs instead so older versions still get checked.
    db <- as.data.frame(
       installed.packages(priority = "NA"),
       stringsAsFactors = FALSE
    )
-   pkgKeys <- paste(db[["Package"]], db[["Version"]], sep = "==")
-
-   lapply(repos, function(repoUrl)
-   {
-      tryCatch(
-         .rs.ppm.getVulnerabilityInformationImpl(repoUrl, pkgKeys),
-         error = function(cnd)
-         {
-            # outer-catch: a fetch/parse path with a known failure mode
-            # would have logged and returned NULL already, so an exception
-            # here is unexpected. the caller receives an empty list, which
-            # is indistinguishable from "no vulns" -- the log is the only
-            # signal that something went wrong.
-            .rs.logErrorMessage(sprintf(
-               "unexpected error fetching PPM vulnerability information for %s: %s",
-               repoUrl, conditionMessage(cnd)
-            ))
-            structure(list(), names = character())
-         }
-      )
-   })
+   paste(db[["Package"]], db[["Version"]], sep = "==")
 })
 
-.rs.addFunction("ppm.getVulnerabilityInformationImpl", function(repoUrl, pkgKeys)
+.rs.addFunction("ppm.repoVulnCache", function(repoUrl)
 {
-   empty <- structure(list(), names = character())
-
-   # nothing to ask about
-   if (length(pkgKeys) == 0L)
-      return(empty)
-
-   # Per-repo cache lives in an environment keyed by "name==version" so we
-   # can request only newly-installed (or upgraded) packages on subsequent
+   # Per-repo cache lives in an environment keyed by "name==version" so we can
+   # request only newly-installed (or upgraded) packages on subsequent
    # refreshes. Stale "old==version" entries linger in the cache but are
    # filtered out at aggregation by pkgKeys.
    cache <- .rs.ppm.vulns[[repoUrl]]
@@ -85,63 +61,72 @@
       cache <- new.env(parent = emptyenv())
       assign(repoUrl, cache, envir = .rs.ppm.vulns)
    }
-
-   # only ask PPM about (name, version) pairs we haven't seen this session
-   cachedKeys <- ls(envir = cache, all.names = TRUE)
-   newKeys <- setdiff(pkgKeys, cachedKeys)
-   if (length(newKeys) > 0L)
-   {
-      fetched <- .rs.ppm.fetchVulnerabilityInformation(repoUrl, newKeys)
-
-      # NULL means the request failed; skip the cache update so the next
-      # refresh can retry rather than masking vulns with empty entries
-      if (is.null(fetched))
-         return(.rs.ppm.aggregateVulnsByName(cache, pkgKeys))
-
-      # record every requested key (empty list for the ones PPM didn't
-      # report on) so we don't keep re-querying packages with no vulns
-      for (key in newKeys)
-      {
-         entry <- fetched[[key]]
-         assign(key, if (is.null(entry)) list() else entry, envir = cache)
-      }
-   }
-
-   .rs.ppm.aggregateVulnsByName(cache, pkgKeys)
+   cache
 })
 
-.rs.addFunction("ppm.fetchVulnerabilityInformation", function(repoUrl, pkgKeys)
+# Build the request plan for an asynchronous vulnerability refresh. The actual
+# network request is performed by the C++ backend (off the main thread); this
+# helper only inspects local, already-installed state to decide *what* to
+# request and how to authenticate. It returns one entry per PPM repository that
+# has packages we haven't yet checked this session:
+#
+#   list(repoUrl, endpoint, authHeader, body)
+#
+# and records the requested (name==version) keys in .rs.ppm.pending so the
+# response handler (ppm.recordVulnerabilityResponse) knows which keys the
+# response covers.
+.rs.addFunction("ppm.getVulnerabilityRequestPlan", function(repos = NULL)
 {
-   ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
-   if (length(ppmUrl) == 0L)
-      return(NULL)
+   if (!.rs.ppm.isIntegrationEnabled())
+      return(list())
 
-   if (!requireNamespace("curl", quietly = TRUE))
+   repos <- .rs.nullCoalesce(repos, getOption("repos"))
+   if (length(repos) == 0L)
+      return(list())
+
+   pkgKeys <- .rs.ppm.installedPackageKeys()
+   if (length(pkgKeys) == 0L)
+      return(list())
+
+   plan <- list()
+   for (repoUrl in repos)
    {
-      # Without curl every refresh will hit this path and silently return,
-      # so we'd lose vulnerability badges with no diagnostic trail. Log
-      # once per session and return NULL so callers can still use any
-      # cached entries instead of poisoning the cache with empty markers.
-      if (is.null(.rs.ppm.warnings$curlMissing))
-      {
-         .rs.logErrorMessage(
-            "cannot fetch PPM vulnerability information: the 'curl' package is not installed"
-         )
-         .rs.ppm.warnings$curlMissing <- TRUE
-      }
-      return(NULL)
+      ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
+      if (length(ppmUrl) == 0L)
+         next
+
+      # only ask PPM about (name, version) pairs we haven't seen this session
+      cache <- .rs.ppm.repoVulnCache(repoUrl)
+      cachedKeys <- ls(envir = cache, all.names = TRUE)
+      newKeys <- setdiff(pkgKeys, cachedKeys)
+      if (length(newKeys) == 0L)
+         next
+
+      # the legacy /repos/{repo}/vulns endpoint was effectively anonymous;
+      # filter/packages requires auth on locked-down PPM instances, so compute
+      # a Basic auth header from the user's .netrc when one is configured
+      endpoint <- file.path(ppmUrl[["root"]], "__api__/filter/packages")
+      authHeader <- .rs.computeAuthorizationHeader(endpoint)
+
+      # remember which keys this request covers so the response handler can
+      # mark them (including the ones with no vulns) as checked
+      assign(repoUrl, newKeys, envir = .rs.ppm.pending)
+
+      plan[[length(plan) + 1L]] <- list(
+         repoUrl    = .rs.scalar(repoUrl),
+         endpoint   = .rs.scalar(endpoint),
+         authHeader = .rs.scalar(authHeader),
+         body       = .rs.scalar(.rs.ppm.buildVulnerabilityRequestBody(ppmUrl[["repos"]], newKeys))
+      )
    }
 
-   # build a curl handle for the request
-   verbose <- isTRUE(as.logical(Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")))
-   handle <- curl::new_handle(verbose = verbose)
+   plan
+})
 
-   headers <- list("Content-Type" = "application/json")
-   curl::handle_setheaders(handle, .list = headers)
-
-   # ask PPM for vulnerability info on each requested (name, version)
+.rs.addFunction("ppm.buildVulnerabilityRequestBody", function(reposName, pkgKeys)
+{
    data <- list(
-      repo                 = ppmUrl[["repos"]],
+      repo                 = reposName,
       names                = as.list(pkgKeys),
       has_vulns            = TRUE,
       omit_dependencies    = TRUE,
@@ -149,59 +134,72 @@
       omit_package_details = TRUE
    )
 
-   json <- .rs.toJSON(data, unbox = TRUE)
+   .rs.toJSON(data, unbox = TRUE)
+})
 
-   curl::handle_setopt(
-      handle     = handle,
-      post       = TRUE,
-      postfields = json
-   )
+# Record the response to an asynchronous vulnerability request. Called by the
+# C++ backend on the main thread once the network request for 'repoUrl' has
+# completed successfully; 'body' is the raw (NDJSON) response payload. Updates
+# the per-repo cache and returns the full, aggregated vulnerability map for all
+# configured repositories (the same shape the synchronous path used to return)
+# so the backend can forward it to the client.
+.rs.addFunction("ppm.recordVulnerabilityResponse", function(repoUrl, body)
+{
+   newKeys <- .rs.ppm.pending[[repoUrl]]
+   if (is.null(newKeys))
+      newKeys <- character()
 
-   # the legacy /repos/{repo}/vulns endpoint was effectively anonymous;
-   # filter/packages requires auth on locked-down PPM instances, so wire
-   # up netrc when the user has one configured
-   netrcFile <- .rs.netrcPath()
-   if (file.exists(netrcFile))
+   fetched <- .rs.ppm.parseVulnerabilityResponse(body)
+
+   # NULL means the server reported an error on one of its records; leave the
+   # cache (and the pending keys) untouched so a later refresh retries rather
+   # than masking vulns with empty entries
+   if (!is.null(fetched))
    {
-      curl::handle_setopt(
-         handle     = handle,
-         httpauth   = 1L,         # CURLAUTH_BASIC
-         netrc      = 1L,
-         netrc_file = path.expand(netrcFile)
-      )
+      cache <- .rs.ppm.repoVulnCache(repoUrl)
+
+      # record every requested key (empty list for the ones PPM didn't report
+      # on) so we don't keep re-querying packages with no vulns
+      for (key in newKeys)
+      {
+         entry <- fetched[[key]]
+         assign(key, if (is.null(entry)) list() else entry, envir = cache)
+      }
+
+      if (!is.null(.rs.ppm.pending[[repoUrl]]))
+         rm(list = repoUrl, envir = .rs.ppm.pending)
    }
 
-   endpoint <- file.path(ppmUrl[["root"]], "__api__/filter/packages")
-   response <- tryCatch(
-      curl::curl_fetch_memory(endpoint, handle = handle),
-      error = identity
-   )
+   .rs.ppm.getCachedVulnerabilities()
+})
 
-   if (inherits(response, "condition"))
+# Aggregate the cached vulnerability data for all configured repositories,
+# without performing any network access. Returns a list (one element per repo)
+# of package-name -> vulnerability lists.
+.rs.addFunction("ppm.getCachedVulnerabilities", function(repos = NULL)
+{
+   repos <- .rs.nullCoalesce(repos, getOption("repos"))
+   pkgKeys <- .rs.ppm.installedPackageKeys()
+
+   lapply(repos, function(repoUrl)
    {
-      .rs.logErrorMessage(sprintf(
-         "PPM vulnerability request to %s failed: %s",
-         endpoint, conditionMessage(response)
-      ))
-      return(NULL)
-   }
+      cache <- .rs.ppm.vulns[[repoUrl]]
+      if (is.null(cache))
+         return(structure(list(), names = character()))
 
-   if (response$status_code < 200L || response$status_code >= 300L)
-   {
-      .rs.logErrorMessage(sprintf(
-         "PPM vulnerability request to %s returned HTTP %d",
-         endpoint, response$status_code
-      ))
-      return(NULL)
-   }
-
-   contents <- enc2utf8(rawToChar(response$content))
-   .rs.ppm.parseVulnerabilityResponse(contents)
+      .rs.ppm.aggregateVulnsByName(cache, pkgKeys)
+   })
 })
 
 .rs.addFunction("ppm.parseVulnerabilityResponse", function(contents)
 {
    empty <- structure(list(), names = character())
+
+   # an empty (or missing) body has no records to parse. Guarding here also
+   # avoids a "subscript out of bounds" error from strsplit(character(0), ...),
+   # which returns an empty list with no [[1L]] element.
+   if (length(contents) == 0L || !any(nzchar(contents)))
+      return(empty)
 
    # tolerate CRLF in case a proxy or PPM build rewrites line endings
    contents <- gsub("\r", "", contents, fixed = TRUE)

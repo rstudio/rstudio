@@ -215,9 +215,11 @@ import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCp
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageVulnerabilitiesReadyEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
@@ -388,6 +390,11 @@ public class ClientEventDispatcher
          {
             PackageStatus status = event.getData();
             eventBus_.dispatchEvent(new PackageStatusChangedEvent(status));
+         }
+         else if (type == ClientEvent.PackageVulnerabilitiesReady)
+         {
+            RepositoryPackageVulnerabilityListMap vulns = event.getData();
+            eventBus_.dispatchEvent(new PackageVulnerabilitiesReadyEvent(vulns));
          }
          else if (type == ClientEvent.Locator)
          {
