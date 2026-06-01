@@ -775,17 +775,23 @@ public class TerminalSession extends XTermWidget
       {
       // Command Prompt and PowerShell repaint their startup screen with
       // absolute cursor positioning (PowerShell's PSReadLine redraws its whole
-      // banner and prompt on the reconnect resize), which does not compose with
-      // replayed scrollback -- the prompt lands in the middle of the restored
-      // output. So these shells do not reload their buffer on restart.
+      // banner and prompt on the reconnect resize). Replaying that over restored
+      // output on a restart lands the prompt in the middle of the restored
+      // content, so don't reload on restart. A non-restart reload -- an
+      // API-created terminal showing the initial output it produced before the
+      // UI attached, or reconnecting to the still-running shell -- replays only
+      // the shell's own faithful output and is fine.
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
       case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
-         return false;
+         return !consoleProcess_.getProcessInfo().getRestarted();
 
       case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
-         // On Windows we can't assume a custom shell composes with reload.
-         return !BrowseCap.isWindowsDesktop();
+         // On Windows we can't assume a custom shell composes with restart reload.
+         if (BrowseCap.isWindowsDesktop())
+            return !consoleProcess_.getProcessInfo().getRestarted();
+         else
+            return true;
 
       default:
          return true;
