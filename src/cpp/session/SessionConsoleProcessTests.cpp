@@ -301,6 +301,22 @@ TEST(ConsoleProcessConPty, LeadingControlIsRecognized)
    EXPECT_FALSE(isPureLeadingControl("\x1b[?2004h\x1b[32mtomto@pc$ "));
    EXPECT_FALSE(isPureLeadingControl("\x1b]0;title\x07")); // OSC is content
 }
+
+TEST(ConsoleProcessConPty, StripsStartupClearArrivingInLaterChunk)
+{
+   // The startup clear can land a chunk after the initial mode-sets. The first
+   // chunk (pure leading control) must keep the window open without altering
+   // anything; the clear in the following chunk is then stripped. This is the
+   // cross-chunk path the "keep watching" return value exists for.
+   std::string first = "\x1b[?2004h\x1b[?25l";
+   const std::string firstOrig = first;
+   EXPECT_TRUE(stripRestartClearFromChunk(&first));   // keep watching
+   EXPECT_EQ(first, firstOrig);                        // nothing stripped yet
+
+   std::string second = "\x1b[2J\x1b[H$ ";
+   EXPECT_FALSE(stripRestartClearFromChunk(&second));  // clear handled; stop
+   EXPECT_EQ(second, "$ ");
+}
 #endif // _WIN32
 
 } // namespace tests

@@ -32,8 +32,7 @@ namespace {
 // Note: the ConPty unit tests call pty.start() directly and only need
 // cols/rows, which ConPty::start reads from options.cols/rows when
 // pseudoterminal is unset. Deliberately do NOT construct a Pseudoterminal here
-// so these tests are independent of the struct's signature (which is trimmed in
-// Phase 3) and of the winpty coexistence during Phase 1.
+// so these tests are independent of that struct's signature.
 ProcessOptions ptyOptions(int cols = 80, int rows = 25)
 {
    ProcessOptions options;
@@ -45,6 +44,20 @@ ProcessOptions ptyOptions(int cols = 80, int rows = 25)
 std::string cmdExe()
 {
    return expandComSpec().getAbsolutePathNative();
+}
+
+// Like ptyOptions(), but pins PROMPT so the cmd prompt deterministically ends
+// in '>', independent of the runner's own PROMPT (otherwise drainUntil(">")
+// can silently hang until timeout). The parent environment is copied so the
+// child still has PATH, etc.
+ProcessOptions promptOptions(int cols = 80, int rows = 25)
+{
+   ProcessOptions options = ptyOptions(cols, rows);
+   Options env;
+   environment(&env);
+   setenv(&env, "PROMPT", "$G ");
+   options.environment = env;
+   return options;
 }
 
 // Drain output until `needle` appears or timeout. Returns accumulated output.
@@ -78,7 +91,7 @@ TEST(Win32ConPtyTest, StartSpawnsChildAndEchoes)
    // Keep the child alive ~1s after echoing: a sub-millisecond child hits the
    // documented ConPTY fast-exit attach race (it can exit before it finishes
    // binding to the pseudoconsole, leaking output to the host console). A child
-   // that lives >~1s binds deterministically. See the plan's Phase 0 results.
+   // that lives >~1s binds deterministically.
    std::vector<std::string> args = {"/c", "echo HELLO_CONPTY & ping -n 2 127.0.0.1 >nul"};
    HANDLE hProc = nullptr;
 
@@ -131,7 +144,7 @@ TEST(Win32ConPtyTest, WriteInputIsEchoed)
    ConPty pty;
    std::vector<std::string> args; // interactive
    HANDLE hProc = nullptr;
-   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   ASSERT_FALSE(pty.start(cmdExe(), args, promptOptions(), &hProc));
 
    drainUntil(pty, ">", 4000); // wait for prompt
    ASSERT_FALSE(pty.writeInput("echo MARK_WRITE\r\n"));
@@ -192,7 +205,7 @@ TEST(Win32ConPtyTest, InputRejectedAfterCloseInput)
    ConPty pty;
    std::vector<std::string> args; // interactive cmd
    HANDLE hProc = nullptr;
-   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   ASSERT_FALSE(pty.start(cmdExe(), args, promptOptions(), &hProc));
    drainUntil(pty, ">", 4000);
 
    ASSERT_FALSE(pty.closeInput());     // signal stdin EOF by closing the write end
@@ -208,7 +221,7 @@ TEST(Win32ConPtyTest, ConcurrentWriteAndStopIsSafe)
    ConPty pty;
    std::vector<std::string> args; // interactive cmd
    HANDLE hProc = nullptr;
-   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   ASSERT_FALSE(pty.start(cmdExe(), args, promptOptions(), &hProc));
    drainUntil(pty, ">", 4000);
 
    // Hammer writeInput from another thread while the main thread tears down.
@@ -230,7 +243,7 @@ TEST(Win32ConPtyTest, ConcurrentWriteAndCloseInputIsSafe)
    ConPty pty;
    std::vector<std::string> args; // interactive cmd
    HANDLE hProc = nullptr;
-   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   ASSERT_FALSE(pty.start(cmdExe(), args, promptOptions(), &hProc));
    drainUntil(pty, ">", 4000);
 
    std::atomic<bool> done{false};
@@ -294,6 +307,98 @@ TEST(Win32ConPtyTest, RoutesOutputWhenHostStdHandlesRedirected)
    ::CloseHandle(hProc);
    ::CloseHandle(hFile);
    ::DeleteFileW(tmpFile);
+}
+
+TEST(Win32ConPtyTest, ReuseAfterStopIsRejected)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive cmd
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   pty.stop();
+   ::CloseHandle(hProc);
+
+   // A ConPty is single-use: a second start() must be rejected rather than
+   // silently reuse stale state.
+   HANDLE hProc2 = nullptr;
+   Error err = pty.start(cmdExe(), args, ptyOptions(), &hProc2);
+   EXPECT_TRUE(err);
+   EXPECT_EQ(hProc2, nullptr);
+}
+
+TEST(Win32ConPtyTest, ReadOutputAfterStopSucceeds)
+{
+   ConPty pty;
+   std::vector<std::string> args = {"/c", "echo TAIL_OUTPUT & ping -n 2 127.0.0.1 >nul"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+   drainUntil(pty, "TAIL_OUTPUT", 5000);
+
+   pty.stop();
+   // The exit-drain path calls readOutput() after stop(); it must stay callable
+   // -- return Success and never block.
+   std::string tail;
+   EXPECT_FALSE(pty.readOutput(&tail));
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, SetSizeWhileRunningThenRejectedAfterStop)
+{
+   ConPty pty;
+   std::vector<std::string> args; // interactive cmd
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, ptyOptions(), &hProc));
+
+   EXPECT_FALSE(pty.setSize(100, 40));  // resizing a live pseudoconsole succeeds
+   pty.stop();
+   EXPECT_TRUE(pty.setSize(120, 50));   // rejected after stop (not_connected)
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, EnvironmentBlockReachesChild)
+{
+   ConPty pty;
+   ProcessOptions options = ptyOptions();
+   Options env;
+   environment(&env);
+   setenv(&env, "RS_CONPTY_TEST", "ENV_ROUNDTRIP_OK");
+   options.environment = env;
+
+   std::vector<std::string> args =
+         {"/c", "echo %RS_CONPTY_TEST% & ping -n 2 127.0.0.1 >nul"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, options, &hProc));
+
+   std::string out = drainUntil(pty, "ENV_ROUNDTRIP_OK", 5000);
+   EXPECT_NE(out.find("ENV_ROUNDTRIP_OK"), std::string::npos) << out;
+   pty.stop();
+   ::CloseHandle(hProc);
+}
+
+TEST(Win32ConPtyTest, WorkingDirReachesChild)
+{
+   wchar_t tmpDir[MAX_PATH];
+   ::GetTempPathW(MAX_PATH, tmpDir);
+   std::string unique = "rs_conpty_wd_" + std::to_string(::GetCurrentProcessId());
+   FilePath workingDir =
+         FilePath(string_utils::wideToUtf8(tmpDir)).completeChildPath(unique);
+   Error mkErr = workingDir.ensureDirectory();
+   ASSERT_FALSE(mkErr) << mkErr.asString();
+
+   ConPty pty;
+   ProcessOptions options = ptyOptions();
+   options.workingDir = workingDir;
+   // `cd` with no arguments prints the child's current directory.
+   std::vector<std::string> args = {"/c", "cd & ping -n 2 127.0.0.1 >nul"};
+   HANDLE hProc = nullptr;
+   ASSERT_FALSE(pty.start(cmdExe(), args, options, &hProc));
+
+   std::string out = drainUntil(pty, unique, 5000);
+   EXPECT_NE(out.find(unique), std::string::npos)
+       << "child did not start in the requested working directory; got: " << out;
+   pty.stop();
+   ::CloseHandle(hProc);
+   workingDir.removeIfExists();
 }
 
 } // namespace tests
