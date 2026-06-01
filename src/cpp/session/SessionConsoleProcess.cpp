@@ -1142,33 +1142,17 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          augmentTerminalProcess(cp);
          addConsoleProcess(cp);
 
-         // Windows Command Prompt and PowerShell don't support reloading
-         // buffers, so delete the buffer before we start the new process.
-         if (cp->getShellType() == TerminalShell::ShellType::Cmd32 ||
-             cp->getShellType() == TerminalShell::ShellType::Cmd64 ||
-             cp->getShellType() == TerminalShell::ShellType::PS32 ||
-             cp->getShellType() == TerminalShell::ShellType::PS64 ||
 #ifdef _WIN32
-             // Ditto for custom shell on Windows.
-             cp->getShellType() == TerminalShell::ShellType::CustomShell ||
-#endif
-             cp->getShellType() == TerminalShell::ShellType::PSCore)
-         {
-            cp->deleteLogFile();
-         }
-#ifdef _WIN32
-         else
-         {
-            // Reloadable Windows shells (e.g. Git Bash) keep their buffer for
-            // replay on reconnect. Strip the ConPTY host's one-time startup
-            // screen clear from the restarted shell's first output so it does
-            // not wipe the restored scrollback (see enqueOutputEvent). Only
-            // strip within a short window after restart so a later user-issued
-            // clear is never affected.
-            cp->pendingStripRestartClear_ = true;
-            cp->restartClearDeadline_ =
-                  std::chrono::steady_clock::now() + std::chrono::seconds(3);
-         }
+         // Under ConPTY every Windows shell produces replayable (clean VT)
+         // output -- including Command Prompt and PowerShell, which could not
+         // reload under WinPty -- so the buffer is kept for reload on restart.
+         // The restarted shell's conhost emits a one-time startup screen clear;
+         // strip it so it doesn't wipe the restored scrollback (see
+         // enqueOutputEvent; microsoft/terminal#4252), only within a short
+         // window so a later user-issued clear is unaffected.
+         cp->pendingStripRestartClear_ = true;
+         cp->restartClearDeadline_ =
+               std::chrono::steady_clock::now() + std::chrono::seconds(3);
 #endif
 
          saveConsoleProcesses();
