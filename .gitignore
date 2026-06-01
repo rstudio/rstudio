@@ -56,11 +56,7 @@ venv/
 .claude/settings.local.json
 .claude/skills/*.local/
 .claude/worktrees/
-# TEMP (restore the single "docs/superpowers" line before final cleanup):
-# narrowed to allow committing only the ConPTY spec/plan docs.
-docs/superpowers/*
-!docs/superpowers/specs/
-!docs/superpowers/plans/
+docs/superpowers
 .superpowers/
 .positai/
 AGENTS.md
