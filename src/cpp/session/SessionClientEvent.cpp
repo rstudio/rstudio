@@ -221,6 +221,7 @@ const int kShowMessage = 204;
 const int kNotebookRenderCompleted = 205;
 const int kConsoleReadCompleted = 206;
 const int kRStudioAPIShowMenu = 207;
+const int kPackageVulnerabilitiesReady = 208;
 
 }
 
@@ -619,6 +620,8 @@ std::string ClientEvent::typeName() const
          return "console_read_completed";
       case client_events::kRStudioAPIShowMenu:
          return "rstudioapi_show_menu";
+      case client_events::kPackageVulnerabilitiesReady:
+         return "package_vulnerabilities_ready";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

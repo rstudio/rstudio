@@ -232,6 +232,128 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/17800
+  //
+  // The grid intercepts Ctrl/Cmd+C while the viewport is focused to copy the
+  // single active cell. Regression: it did so unconditionally, clobbering a
+  // multi-cell native text selection -- so after clicking a cell the user
+  // could only ever copy that one cell. The fix steps aside when a non-empty
+  // selection exists and lets the browser copy it.
+  //
+  // The test installs a one-shot `copy` listener in the iframe that records
+  // window.getSelection().toString(). When the keystroke is correctly handed
+  // to the browser, that listener fires with the full selection; with the old
+  // behavior the keydown was preventDefault()ed and no `copy` event fired at
+  // all, so the recorded text stays null and the poll below times out.
+  test('Ctrl+C copies a multi-cell text selection, not just the active cell', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.copy_test_df <- data.frame(a = c("alpha", "bravo"), b = c("charlie", "delta"), stringsAsFactors = FALSE); View(.rs.copy_test_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Click a value cell first: this sets the active cell and focuses the
+      // viewport, which is the precondition for the grid's keydown handler to
+      // intercept Ctrl+C in the first place (and matches the user's report of
+      // "the cell that I initially clicked on").
+      await dataViewer.frame.locator('#gridBody tr[data-row="0"] td.textCell').first().click();
+
+      // Select the whole first data row natively, then arm a copy listener.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const win = f?.contentWindow as (Window & { __dvCopyText?: string | null }) | null;
+        const doc = f?.contentDocument;
+        if (!win || !doc) throw new Error('data viewer iframe not accessible');
+        const tr = doc.querySelector('#gridBody tr[data-row="0"]');
+        if (!tr) throw new Error('first data row not rendered');
+        const selection = win.getSelection();
+        if (!selection) throw new Error('no Selection object');
+        selection.removeAllRanges();
+        const range = doc.createRange();
+        range.selectNodeContents(tr);
+        selection.addRange(range);
+        win.__dvCopyText = null;
+        doc.addEventListener(
+          'copy',
+          () => { win.__dvCopyText = win.getSelection()?.toString() ?? ''; },
+          { once: true },
+        );
+      }, VIEWER_FRAME);
+
+      // ControlOrMeta so the platform copy accelerator fires the browser's
+      // native copy (Cmd+C on macOS, Ctrl+C elsewhere); the grid handler
+      // accepts either modifier too.
+      await page.keyboard.press('ControlOrMeta+c');
+
+      // The native copy should have captured both cells from row 0.
+      await expect.poll(
+        () => page.evaluate((sel: string) => {
+          const f = document.querySelector(sel) as HTMLIFrameElement | null;
+          const win = f?.contentWindow as (Window & { __dvCopyText?: string | null }) | null;
+          return win?.__dvCopyText ?? null;
+        }, VIEWER_FRAME),
+        { timeout: TIMEOUTS.fileOpen, message: 'native copy of the multi-cell selection never fired' },
+      ).toContain('alpha');
+
+      const copied = await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const win = f?.contentWindow as (Window & { __dvCopyText?: string | null }) | null;
+        return win?.__dvCopyText ?? '';
+      }, VIEWER_FRAME);
+      expect(copied).toContain('charlie');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.copy_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17800
+  //
+  // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of
+  // inactivity and only reappear on a scroll event. Regression: returning to
+  // the data viewer tab re-ran layout but never re-showed the bars, so the
+  // horizontal scrollbar stayed hidden (and horizontal scrolls rarely happen
+  // via the wheel, so it was effectively gone). The fix calls showScrollbars()
+  // from the tab-activation hook.
+  test('horizontal scrollbar reappears after returning to the data viewer tab', async ({ rstudioPage: page }) => {
+    // 60 columns guarantees the grid overflows its viewport horizontally
+    // regardless of the source pane width in CI.
+    await consoleActions.executeInConsole(
+      '{ .rs.wide_test_df <- as.data.frame(matrix(seq_len(300), nrow = 5, ncol = 60)); View(.rs.wide_test_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Precondition: the grid is actually horizontally scrollable.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate(
+          (el: HTMLElement) => el.scrollWidth - el.clientWidth,
+        ),
+        { message: 'wide data frame should overflow the viewport horizontally' },
+      ).toBeGreaterThan(1);
+
+      // Let the initial activity-based show fade out so the next assertion is
+      // meaningful: the bar must be hidden before we switch back to it.
+      await expect(dataViewer.horizontalScrollbar)
+        .not.toHaveClass(/\bvisible\b/, { timeout: 2500 });
+
+      // Switch away to the kept Untitled tab, then back to the viewer tab.
+      // Selecting the viewer tab fires the data viewer's onActivate hook.
+      const sourceTabs = page.locator("[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab");
+      await sourceTabs.filter({ hasText: 'Untitled' }).first().click();
+      await sourceTabs.filter({ hasText: '.rs.wide_test_df' }).first().click();
+
+      // The bar is shown again on activation (it fades after ~1.2s, but
+      // toHaveClass polls fast enough to observe the visible window).
+      await expect(dataViewer.horizontalScrollbar).toHaveClass(/\bvisible\b/);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.wide_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   test('HTML-special column names render as text, not markup', async () => {
     await consoleActions.executeInConsole(
       '{ .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE); names(.rs.escape_hdr_df) <- "<b>&\\"\'"; View(.rs.escape_hdr_df) }',

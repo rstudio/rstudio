@@ -34,6 +34,13 @@ bool isPpmMetadataColumnEnabled();
 std::string getPpmRepositoryUrl();
 std::string getPpmMetadataColumnLabel();
 
+// Kick off an asynchronous refresh of package vulnerability data. The network
+// request is performed off the main thread; results are delivered to the
+// client via the kPackageVulnerabilitiesReady event. Safe to call from the
+// main thread at any time -- it coalesces overlapping refreshes and is a no-op
+// when PPM integration is disabled.
+void refreshVulnerabilitiesAsync();
+
 core::Error initialize();
                        
 } // namespace ppm

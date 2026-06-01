@@ -37,6 +37,9 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void renderRmdSource(String source,
                         ServerRequestCallback<Boolean> requestCallback);
+
+   void getCustomRenderFunction(String file,
+                        ServerRequestCallback<JsObject> requestCallback);
    
    void maybeCopyWebsiteAsset(String file,
                          ServerRequestCallback<Boolean> requestCallback);

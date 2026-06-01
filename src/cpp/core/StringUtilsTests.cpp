@@ -335,6 +335,68 @@ TEST(StringTest, PositionCanBeComputedForMultiLineString)
    EXPECT_EQ(7u, pos.column);
 }
 
+TEST(StringTest, HeredocStripsCommonIndent)
+{
+   std::string text = heredoc(R"(
+      library(knitr)
+      knit('example.Rmd')
+   )");
+   EXPECT_EQ(std::string("library(knitr)\nknit('example.Rmd')"), text);
+}
+
+TEST(StringTest, HeredocPreservesRelativeIndent)
+{
+   std::string text = heredoc(R"(
+      if (x) {
+         f()
+      }
+   )");
+   EXPECT_EQ(std::string("if (x) {\n   f()\n}"), text);
+}
+
+TEST(StringTest, HeredocHandlesBlankInteriorLines)
+{
+   std::string text = heredoc(R"(
+      a
+
+      b
+   )");
+   EXPECT_EQ(std::string("a\n\nb"), text);
+}
+
+TEST(StringTest, HeredocLeavesUnindentedTextUnchanged)
+{
+   EXPECT_EQ(std::string("a\nb"), heredoc("a\nb"));
+}
+
+TEST(StringTest, HeredocHandlesEmptyInput)
+{
+   EXPECT_EQ(std::string(""), heredoc(""));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeLeavesPlainTextUnchanged)
+{
+   EXPECT_EQ(std::string("hello"), singleQuotedStrEscape("hello"));
+   EXPECT_EQ(std::string(""), singleQuotedStrEscape(""));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeEscapesQuotesAndBackslashes)
+{
+   // a single quote is escaped so it cannot terminate the enclosing literal
+   EXPECT_EQ(std::string("it\\'s"), singleQuotedStrEscape("it's"));
+
+   // a backslash is doubled so it cannot escape the following character
+   EXPECT_EQ(std::string("a\\\\b"), singleQuotedStrEscape("a\\b"));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeNeutralizesInjectionPayload)
+{
+   // a filename crafted to break out of a single-quoted R literal and inject
+   // code has every quote escaped, so the payload cannot close the literal
+   EXPECT_EQ(std::string("\\'); system(\\'rm -rf /\\'); #"),
+             singleQuotedStrEscape("'); system('rm -rf /'); #"));
+}
+
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio

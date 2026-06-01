@@ -14,6 +14,8 @@ export class DataViewerPane extends PageObject {
 
   // Elements inside the iframe
   public gridInfo: Locator;
+  public viewport: Locator;
+  public horizontalScrollbar: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -28,6 +30,10 @@ export class DataViewerPane extends PageObject {
     // The data grid renders inside an iframe
     this.frame = page.frameLocator('[title="Data Browser"]');
     this.gridInfo = this.frame.locator('#rsGridData_info');
+    this.viewport = this.frame.locator('#gridViewport');
+    // Custom auto-hide overlay scrollbar for the horizontal axis. Carries the
+    // "visible" class while shown; the class is removed when it fades out.
+    this.horizontalScrollbar = this.frame.locator('.custom-scrollbar.horizontal');
   }
 
   /** Get a column header locator by column number (inside iframe). */
