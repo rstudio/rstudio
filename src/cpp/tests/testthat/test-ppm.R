@@ -21,7 +21,8 @@ context("ppm")
 expected <- function(...) .rs.markScalars(list(...))
 
 # Helper: build a cache environment populated with the given keyed entries,
-# matching the layout used by .rs.ppm.getVulnerabilityInformationImpl.
+# matching the per-repo layout produced by .rs.ppm.repoVulnCache and consumed
+# by .rs.ppm.aggregateVulnsByName.
 cacheEnv <- function(...)
 {
    entries <- list(...)
@@ -31,9 +32,25 @@ cacheEnv <- function(...)
    env
 }
 
-test_that("parseVulnerabilityResponse handles an empty body", {
-   result <- .rs.ppm.parseVulnerabilityResponse("")
+test_that("parseVulnerabilityResponse treats a missing body as nothing-to-record", {
+   # character(0) is the crash-guard case: strsplit(character(0), ...) has no
+   # [[1L]] element. We return the empty marker (not NULL) so the response is
+   # recorded as "checked, no vulns" rather than retried forever.
+   result <- .rs.ppm.parseVulnerabilityResponse(character(0))
    expect_equal(result, structure(list(), names = character()))
+})
+
+test_that("parseVulnerabilityResponse returns NULL for an empty server body", {
+   # a 2xx with an empty body tells us nothing about the requested packages, so
+   # we signal failure (NULL) and let a later refresh retry rather than caching
+   # every package as "no vulns" and clearing badges
+   expect_null(.rs.ppm.parseVulnerabilityResponse(""))
+})
+
+test_that("parseVulnerabilityResponse returns NULL for a whitespace-only body", {
+   expect_null(.rs.ppm.parseVulnerabilityResponse("   "))
+   expect_null(.rs.ppm.parseVulnerabilityResponse("\n"))
+   expect_null(.rs.ppm.parseVulnerabilityResponse("\r\n"))
 })
 
 test_that("parseVulnerabilityResponse parses a single record into a name==version key", {
@@ -356,6 +373,71 @@ test_that("getVulnerabilityRequestPlan returns nothing when no packages are inst
    expect_length(plan, 0L)
 })
 
+test_that("getVulnerabilityRequestPlan includes the computed auth header and endpoint", {
+   clearVulnsState()
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
+   # mock the header explicitly so the assertion doesn't depend on the test
+   # runner's real ~/.netrc
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "Basic dXNlcjpwYXNz")
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
+   expect_length(plan, 1L)
+   expect_equal(as.character(plan[[1L]]$authHeader), "Basic dXNlcjpwYXNz")
+   expect_match(as.character(plan[[1L]]$endpoint), "/__api__/filter/packages$")
+})
+
+test_that("getVulnerabilityRequestPlan emits one entry per PPM repo with uncached keys", {
+   clearVulnsState()
+
+   repoA <- "https://a.example.test/repo/latest"
+   repoB <- "https://b.example.test/repo/latest"
+
+   # repoA already has pkgA cached; repoB has nothing cached yet
+   cacheA <- new.env(parent = emptyenv())
+   assign("pkgA==1.0.0", list(), envir = cacheA)
+   assign(repoA, cacheA, envir = .rs.ppm.vulns)
+
+   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() c("pkgA==1.0.0", "pkgB==2.0.0"))
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(A = repoA, B = repoB))
+   expect_length(plan, 2L)
+
+   repoUrls <- vapply(plan, function(e) as.character(e$repoUrl), character(1))
+   planA <- plan[[which(repoUrls == repoA)]]
+   planB <- plan[[which(repoUrls == repoB)]]
+
+   # repoA only needs pkgB (pkgA is cached); repoB needs both
+   expect_true(grepl("pkgB==2.0.0", planA$body, fixed = TRUE))
+   expect_false(grepl("pkgA==1.0.0", planA$body, fixed = TRUE))
+   expect_true(grepl("pkgA==1.0.0", planB$body, fixed = TRUE))
+   expect_true(grepl("pkgB==2.0.0", planB$body, fixed = TRUE))
+})
+
+test_that("buildVulnerabilityRequestBody sets the repo and omit/has_vulns flags", {
+   parsed <- .rs.fromJSON(
+      .rs.ppm.buildVulnerabilityRequestBody("cran", c("pkgA==1.0.0", "pkgB==2.0.0"))
+   )
+   expect_equal(as.character(parsed$repo), "cran")
+   expect_true(as.logical(parsed$has_vulns))
+   expect_true(as.logical(parsed$omit_dependencies))
+   expect_true(as.logical(parsed$omit_downloads))
+   expect_true(as.logical(parsed$omit_package_details))
+   expect_equal(as.character(parsed$names), c("pkgA==1.0.0", "pkgB==2.0.0"))
+})
+
+test_that("buildVulnerabilityRequestBody keeps a single package name as a JSON array", {
+   # as.list() prevents unbox = TRUE from collapsing a one-element vector into a
+   # bare string; PPM's filter/packages endpoint requires names to be an array.
+   # fromJSON can't distinguish array-of-one from a scalar, so assert on the
+   # serialized form directly.
+   body <- .rs.ppm.buildVulnerabilityRequestBody("cran", "pkgA==1.0.0")
+   expect_match(body, '"names"[[:space:]]*:[[:space:]]*\\[')
+   expect_true(grepl("pkgA==1.0.0", body, fixed = TRUE))
+})
+
 test_that("recordVulnerabilityResponse caches vulns and empty markers for requested keys", {
    clearVulnsState()
    assign(.rs.testPpm$repoUrl, c("pkgA==1.0.0", "pkgB==2.0.0"), envir = .rs.ppm.pending)
@@ -387,6 +469,18 @@ test_that("recordVulnerabilityResponse leaves cache and pending intact on a serv
    expect_equal(.rs.ppm.pending[[.rs.testPpm$repoUrl]], "pkgB==2.0.0")
 })
 
+test_that("recordVulnerabilityResponse leaves cache and pending intact on an empty body", {
+   # an empty 2xx body parses to NULL (request-failed signal), so nothing should
+   # be cached and the key stays pending for a later retry
+   clearVulnsState()
+   assign(.rs.testPpm$repoUrl, "pkgB==2.0.0", envir = .rs.ppm.pending)
+
+   .rs.ppm.recordVulnerabilityResponse(.rs.testPpm$repoUrl, "")
+
+   expect_null(.rs.ppm.vulns[[.rs.testPpm$repoUrl]])
+   expect_equal(.rs.ppm.pending[[.rs.testPpm$repoUrl]], "pkgB==2.0.0")
+})
+
 test_that("getCachedVulnerabilities aggregates per repo without any network access", {
    clearVulnsState()
    cache <- new.env(parent = emptyenv())
@@ -399,4 +493,36 @@ test_that("getCachedVulnerabilities aggregates per repo without any network acce
    expect_equal(result, list(CRAN = expected(
       pkgA = list(list(id = "V1"))
    )))
+})
+
+test_that("getCachedVulnerabilities isolates a failing repo from the others", {
+   # one repo's aggregation error must not take down the client update for the
+   # rest -- the failing repo yields an empty map while the others succeed
+   clearVulnsState()
+
+   repoA <- "https://a.example.test/repo/latest"   # will fail to aggregate
+   repoB <- "https://b.example.test/repo/latest"   # will aggregate cleanly
+
+   cacheA <- new.env(parent = emptyenv())
+   assign("__boom__", TRUE, envir = cacheA)
+   assign(repoA, cacheA, envir = .rs.ppm.vulns)
+
+   cacheB <- new.env(parent = emptyenv())
+   assign("pkgB==2.0.0", list(list(id = "V2")), envir = cacheB)
+   assign(repoB, cacheB, envir = .rs.ppm.vulns)
+
+   warned <- FALSE
+   withMockFunction(".rs.logWarningMessage", function(message) warned <<- TRUE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgB==2.0.0")
+   withMockFunction(".rs.ppm.aggregateVulnsByName", function(cache, pkgKeys)
+   {
+      if (exists("__boom__", envir = cache, inherits = FALSE))
+         stop("boom")
+      .rs.markScalars(list(pkgB = list(list(id = "V2"))))
+   })
+
+   result <- .rs.ppm.getCachedVulnerabilities(repos = c(A = repoA, B = repoB))
+   expect_true(warned)
+   expect_equal(result$A, structure(list(), names = character()))
+   expect_equal(result$B, expected(pkgB = list(list(id = "V2"))))
 })

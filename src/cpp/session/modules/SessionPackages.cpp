@@ -258,12 +258,11 @@ Error getPackageStateJson(json::Object* pJson)
       LOG_ERROR(error);
    (*pJson)["active_repository"] = activeRepository;
 
-   // Vulnerability information is fetched asynchronously (see
-   // ppm::refreshVulnerabilitiesAsync) so that a slow or unreachable PPM can't
-   // block the package list -- and therefore IDE startup. Start with an empty
-   // map here; the data arrives later via the kPackageVulnerabilitiesReady
+   // NOTE: vulnerability data is intentionally not part of the package state.
+   // It is fetched asynchronously (see ppm::refreshVulnerabilitiesAsync) so that
+   // a slow or unreachable PPM can't block the package list -- and therefore IDE
+   // startup -- and delivered separately via the kPackageVulnerabilitiesReady
    // event.
-   (*pJson)["vulns"] = json::Object();
 
    return Success();
 }
@@ -461,6 +460,15 @@ Error getPackageState(const json::JsonRpcRequest& ,
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
+
+   // The package list returns immediately without vulnerability data, which
+   // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
+   // for a re-join/reconnect to an already-running session (where onDeferredInit
+   // won't fire again) and for the user-facing Refresh command, so kick off a
+   // refresh here too -- otherwise a reconnected client would show no badges
+   // until some incidental package mutation happened to trigger one.
+   ppm::refreshVulnerabilitiesAsync();
+
    return error;
 }
 

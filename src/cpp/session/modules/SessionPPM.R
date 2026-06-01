@@ -183,11 +183,23 @@
 
    lapply(repos, function(repoUrl)
    {
+      empty <- structure(list(), names = character())
+
       cache <- .rs.ppm.vulns[[repoUrl]]
       if (is.null(cache))
-         return(structure(list(), names = character()))
+         return(empty)
 
-      .rs.ppm.aggregateVulnsByName(cache, pkgKeys)
+      # isolate per-repo failures so one repo's malformed cache entry can't take
+      # down the aggregation (and therefore the client update) for every repo
+      tryCatch(
+         .rs.ppm.aggregateVulnsByName(cache, pkgKeys),
+         error = function(e) {
+            .rs.logWarningMessage(paste(
+               "error aggregating PPM vulnerabilities for", repoUrl, "-", conditionMessage(e)
+            ))
+            empty
+         }
+      )
    })
 })
 
@@ -195,11 +207,21 @@
 {
    empty <- structure(list(), names = character())
 
-   # an empty (or missing) body has no records to parse. Guarding here also
+   # a missing body (character(0)) has no records to parse. Guarding here also
    # avoids a "subscript out of bounds" error from strsplit(character(0), ...),
-   # which returns an empty list with no [[1L]] element.
-   if (length(contents) == 0L || !any(nzchar(contents)))
+   # which returns an empty list with no [[1L]] element. Treat this as "nothing
+   # to record" rather than an error, matching the crash-guard intent.
+   if (length(contents) == 0L)
       return(empty)
+
+   # a 2xx with an empty or whitespace-only body tells us nothing about the
+   # packages we asked about. Return NULL (the "request failed" signal) so the
+   # caller leaves the cache untouched and retries on a later refresh, rather
+   # than caching every requested package as "checked, no vulns" and silently
+   # clearing any badges. trimws() is needed here because nzchar() considers a
+   # whitespace-only string non-empty.
+   if (!any(nzchar(trimws(contents))))
+      return(NULL)
 
    # tolerate CRLF in case a proxy or PPM build rewrites line endings
    contents <- gsub("\r", "", contents, fixed = TRUE)

@@ -15,9 +15,13 @@
 
 #include "SessionPPM.hpp"
 
+#include <chrono>
 #include <functional>
 
+#include <boost/asio/system_timer.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -122,6 +126,15 @@ namespace {
 const boost::posix_time::time_duration kConnectionTimeout =
    boost::posix_time::seconds(10);
 
+// Cap the *entire* request, not just the TCP connect phase. kConnectionTimeout
+// is handed to the connector and only bounds establishing the socket;
+// AsyncClient has no read/handshake deadline of its own. Without this overall
+// deadline, a PPM that completes the TCP handshake but then stalls during TLS
+// negotiation or while streaming the response body would keep its request in
+// flight forever -- s_activeRequests would never return to 0, so every later
+// refresh would be silently dropped for the rest of the session.
+const std::chrono::seconds kRequestTimeout(30);
+
 // Number of vulnerability requests currently in flight, plus a flag noting
 // that another refresh was requested while requests were outstanding. Both are
 // only ever touched on the main thread.
@@ -173,8 +186,32 @@ void onVulnerabilityRequestComplete(const std::string& repoUrl,
    }
 }
 
+// Runs on the server_rpc io thread. A single request has three possible
+// outcomes -- response, low-level error, or timeout -- and we must drive
+// completion from exactly one of them. The io context is single threaded (one
+// worker runs server_rpc::ioContext()), so a plain bool shared between the
+// three paths is sufficient; no lock is needed. Cancels the deadline timer and
+// marshals the result back to the main thread, where the batch bookkeeping
+// lives.
+void settleVulnerabilityRequest(const boost::shared_ptr<bool>& pSettled,
+                                const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                                const std::string& repoUrl,
+                                bool succeeded,
+                                const std::string& body)
+{
+   if (*pSettled)
+      return;
+   *pSettled = true;
+
+   pTimer->cancel();
+   module_context::executeOnMainThread(
+      boost::bind(onVulnerabilityRequestComplete, repoUrl, succeeded, body));
+}
+
 void onVulnerabilityResponse(const std::string& repoUrl,
                              const std::string& endpoint,
+                             const boost::shared_ptr<bool>& pSettled,
+                             const boost::shared_ptr<boost::asio::system_timer>& pTimer,
                              const http::Response& response)
 {
    bool ok = response.statusCode() >= 200 && response.statusCode() < 300;
@@ -185,19 +222,45 @@ void onVulnerabilityResponse(const std::string& repoUrl,
                         safe_convert::numberToString(response.statusCode()));
    }
 
-   std::string body = response.body();
-   module_context::executeOnMainThread(
-      boost::bind(onVulnerabilityRequestComplete, repoUrl, ok, body));
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, ok, response.body());
 }
 
 void onVulnerabilityError(const std::string& repoUrl,
                           const std::string& endpoint,
+                          const boost::shared_ptr<bool>& pSettled,
+                          const boost::shared_ptr<boost::asio::system_timer>& pTimer,
                           const Error& error)
 {
    LOG_ERROR_MESSAGE("PPM vulnerability request to " + endpoint +
                      " failed: " + error.getSummary());
-   module_context::executeOnMainThread(
-      boost::bind(onVulnerabilityRequestComplete, repoUrl, false, std::string()));
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, false, std::string());
+}
+
+// Fires when a request overruns kRequestTimeout. Closes the socket so the
+// AsyncClient abandons the stalled read and frees itself; its own error path
+// then sees the socket as already closed and stays quiet, so we drive
+// completion from here.
+void onVulnerabilityTimeout(const std::string& repoUrl,
+                            const std::string& endpoint,
+                            const boost::shared_ptr<bool>& pSettled,
+                            const boost::shared_ptr<boost::asio::system_timer>& pTimer,
+                            const boost::weak_ptr<http::IAsyncClient>& wClient,
+                            const boost::system::error_code& ec)
+{
+   // a normal completion cancels the timer, which delivers operation_aborted;
+   // nothing actually timed out in that case
+   if (ec == boost::asio::error::operation_aborted || *pSettled)
+      return;
+
+   LOG_ERROR_MESSAGE("PPM vulnerability request to " + endpoint +
+                     " timed out after " +
+                     safe_convert::numberToString(kRequestTimeout.count()) +
+                     "s; closing connection");
+
+   if (boost::shared_ptr<http::IAsyncClient> pClient = wClient.lock())
+      pClient->close();
+
+   settleVulnerabilityRequest(pSettled, pTimer, repoUrl, false, std::string());
 }
 
 // Issue one async POST for a single repo's request-plan entry.
@@ -256,10 +319,21 @@ void sendVulnerabilityRequest(const json::Object& entry)
 
    pClient->request().assign(request);
 
+   // arm the overall request deadline (see kRequestTimeout); the timer and the
+   // two completion handlers coordinate through pSettled so the request always
+   // settles exactly once
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(server_rpc::ioContext(), kRequestTimeout);
+   boost::shared_ptr<bool> pSettled = boost::make_shared<bool>(false);
+
+   boost::weak_ptr<http::IAsyncClient> wClient(pClient);
+   pTimer->async_wait(
+      boost::bind(onVulnerabilityTimeout, repoUrl, endpoint, pSettled, pTimer, wClient, _1));
+
    s_activeRequests++;
    pClient->execute(
-      boost::bind(onVulnerabilityResponse, repoUrl, endpoint, _1),
-      boost::bind(onVulnerabilityError, repoUrl, endpoint, _1));
+      boost::bind(onVulnerabilityResponse, repoUrl, endpoint, pSettled, pTimer, _1),
+      boost::bind(onVulnerabilityError, repoUrl, endpoint, pSettled, pTimer, _1));
 }
 
 // Forward the currently-cached vulnerability data to the client without making
