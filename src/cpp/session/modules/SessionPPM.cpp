@@ -325,6 +325,12 @@ void startVulnerabilityRequests()
       if (entry.isObject())
          sendVulnerabilityRequest(entry.getObject());
    }
+
+   // if no request was actually launched (e.g. every plan entry failed preflight
+   // validation), nothing will drain the batch, so publish the cached set here
+   // to keep every refresh deterministic
+   if (s_activeRequests == 0)
+      enqueCachedVulnerabilities();
 }
 
 SEXP rs_ppmIntegrationEnabled()
