@@ -95,10 +95,10 @@
    # Posit Package Manager instance -- NOT by .rs.ppm.isIntegrationEnabled() (the
    # PWB_PPM_* env vars). Vulnerability display is intentionally not opt-in: it
    # is shown whenever a PPM repo is in use, including open-source / desktop
-   # RStudio. The env-var gate is reserved for the Workbench-only metadata column
-   # (.rs.ppm.isMetadataColumnEnabled). See 88778df845 "always try to provide vuln
-   # info if available"; an async rewrite had briefly re-applied the env-var gate
-   # here, which regressed that behavior.
+   # RStudio. The env-var gate gates the Workbench-only metadata column
+   # (.rs.ppm.isMetadataColumnEnabled), not vulnerabilities. See 88778df845
+   # "always try to provide vuln info if available"; an async rewrite had briefly
+   # re-applied the env-var gate here, which regressed that behavior.
    repos <- .rs.nullCoalesce(repos, getOption("repos"))
    if (length(repos) == 0L)
       return(list())
@@ -389,6 +389,14 @@
 
 .rs.addFunction("ppm.fromRepositoryUrl", function(url)
 {
+   # guard against non-string / NA repo entries before .rs.regexMatches: a
+   # gregexpr-driven substring() on NA throws "invalid substring arguments",
+   # which would abort the whole vulnerability plan. getOption("repos") can
+   # legitimately carry an NA entry (e.g. an unset named repo), and this is now
+   # scanned unconditionally for every session, so handle it here.
+   if (!is.character(url) || length(url) != 1L || is.na(url))
+      return(NULL)
+
    pattern <- paste0(
       "^",                                  # start of url
       "(?<root>",                           # start of root of url
