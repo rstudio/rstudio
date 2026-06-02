@@ -370,6 +370,45 @@ test_that("getVulnerabilityRequestPlan skips non-PPM repositories", {
    expect_length(plan, 0L)
 })
 
+test_that("getVulnerabilityRequestPlan keeps the PPM repo when a non-PPM repo is mixed in", {
+   # the cheap any() pre-filter only decides whether to bail; the per-repo loop
+   # does the real filtering, so a non-PPM repo alongside a PPM one must not
+   # suppress the PPM plan entry
+   clearVulnsState()
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(
+      repos = c(CRAN = "https://cran.rstudio.com", PPM = .rs.testPpm$repoUrl)
+   )
+   expect_length(plan, 1L)
+   expect_equal(as.character(plan[[1L]]$repoUrl), .rs.testPpm$repoUrl)
+})
+
+test_that("getVulnerabilityRequestPlan skips installed.packages() for non-PPM sessions", {
+   # the PPM-URL pre-filter exists to avoid the expensive installed.packages()
+   # call when no repo qualifies; this locks in that ordering
+   clearVulnsState()
+   withMockFunction(".rs.ppm.installedPackageKeys", function() stop("should not be called"))
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = "https://cran.rstudio.com"))
+   expect_length(plan, 0L)
+})
+
+test_that("getVulnerabilityRequestPlan tolerates an NA repo entry", {
+   # getOption("repos") can carry an NA entry (e.g. an unset named repo); the
+   # plan must not abort on it (.rs.regexMatches would otherwise throw)
+   clearVulnsState()
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
+
+   plan <- .rs.ppm.getVulnerabilityRequestPlan(
+      repos = c(BIOC = NA_character_, PPM = .rs.testPpm$repoUrl)
+   )
+   expect_length(plan, 1L)
+   expect_equal(as.character(plan[[1L]]$repoUrl), .rs.testPpm$repoUrl)
+})
+
 test_that("getVulnerabilityRequestPlan returns nothing when no packages are installed", {
    clearVulnsState()
    withMockFunction(".rs.ppm.installedPackageKeys", function() character())
@@ -449,6 +488,34 @@ test_that("buildVulnerabilityRequestBody keeps a single package name as a JSON a
    body <- .rs.ppm.buildVulnerabilityRequestBody("cran", "pkgA==1.0.0")
    expect_match(body, '"names"[[:space:]]*:[[:space:]]*\\[')
    expect_true(grepl("pkgA==1.0.0", body, fixed = TRUE))
+})
+
+test_that("fromRepositoryUrl classifies a plain PPM repo URL", {
+   parts <- .rs.ppm.fromRepositoryUrl("https://packagemanager.posit.co/cran/latest")
+   expect_equal(parts[["root"]], "https://packagemanager.posit.co")
+   expect_equal(parts[["repos"]], "cran")
+   expect_equal(parts[["snapshot"]], "latest")
+   expect_false(nzchar(parts[["binary"]]))
+})
+
+test_that("fromRepositoryUrl extracts the optional binary / platform parts", {
+   parts <- .rs.ppm.fromRepositoryUrl(
+      "https://packagemanager.posit.co/cran/__linux__/jammy/2024-01-01"
+   )
+   expect_equal(parts[["repos"]], "cran")
+   expect_equal(parts[["binary"]], "__linux__")
+   expect_equal(parts[["platform"]], "jammy")
+   expect_equal(parts[["snapshot"]], "2024-01-01")
+})
+
+test_that("fromRepositoryUrl returns NULL for non-PPM and non-string inputs", {
+   # the common desktop entries -- "@CRAN@" and "" -- are not PPM URLs, and an
+   # NA entry must be tolerated rather than throwing from .rs.regexMatches
+   expect_null(.rs.ppm.fromRepositoryUrl("@CRAN@"))
+   expect_null(.rs.ppm.fromRepositoryUrl(""))
+   expect_null(.rs.ppm.fromRepositoryUrl(NA_character_))
+   expect_null(.rs.ppm.fromRepositoryUrl(NULL))
+   expect_null(.rs.ppm.fromRepositoryUrl(character()))
 })
 
 test_that("recordVulnerabilityResponse caches vulns and empty markers for requested keys", {
