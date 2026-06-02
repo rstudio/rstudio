@@ -69,6 +69,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
   # the e2e job below, then uploads RStudio.app as an artifact for the e2e
@@ -176,11 +179,17 @@ jobs:
       # tar (not zip) to preserve symlinks and executable permissions in the
       # bundle. upload-artifact would otherwise zip the directory tree itself
       # and break codesigned binaries on the way back out.
+      #
+      # Skipped in build_only (seed) runs: no e2e job consumes the artifact
+      # there, so packaging and uploading it would be pure waste (a large
+      # artifact produced and retained on every nightly seed for nothing).
       - name: Package RStudio.app
+        if: inputs.build_only != true
         working-directory: package/osx/install
         run: tar -czf "${{ github.workspace }}/RStudio.app.tar.gz" RStudio.app
 
       - name: Upload RStudio.app artifact
+        if: inputs.build_only != true
         uses: actions/upload-artifact@v4
         with:
           name: rstudio-app-macos-arm64
@@ -269,15 +278,20 @@ jobs:
 
       - name: Download RStudio .dmg
         if: inputs.rstudio_installer_url != ''
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
-            -o "${{ steps.resolve.outputs.filename }}" \
-            "${{ steps.resolve.outputs.url }}"
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
 
       - name: Install RStudio from .dmg
         if: inputs.rstudio_installer_url != ''
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          MOUNT=$(hdiutil attach -nobrowse -readonly "${{ steps.resolve.outputs.filename }}" | grep -oE '/Volumes/.*' | tail -1)
+          MOUNT=$(hdiutil attach -nobrowse -readonly "$INSTALLER_FILENAME" | grep -oE '/Volumes/.*' | tail -1)
           if [ -z "$MOUNT" ]; then
             echo "ERROR: failed to resolve mount path from hdiutil" >&2
             exit 1

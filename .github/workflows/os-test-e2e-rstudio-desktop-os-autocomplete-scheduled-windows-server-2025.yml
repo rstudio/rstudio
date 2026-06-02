@@ -1,6 +1,8 @@
-name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source)"
+name: "Test: E2E Playwright RStudio Autocomplete Scheduled (Desktop, Windows Server 2025 x64, Open Source)"
 
 on:
+  schedule:
+    - cron: '0 8,20 * * *'
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
@@ -20,9 +22,9 @@ on:
         type: string
         default: ""
       test_selector:
-        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests (default runs autocomplete tests)."
         type: string
-        default: ""
+        default: "autocomplete.test.ts"
       test_ignore:
         description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
         type: string
@@ -51,7 +53,7 @@ on:
         default: ""
       test_selector:
         type: string
-        default: ""
+        default: "autocomplete.test.ts"
       test_ignore:
         type: string
         default: ""
@@ -61,6 +63,13 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   e2e-desktop-windows:
@@ -90,11 +99,16 @@ jobs:
             -MaximumRetryCount 3 -RetryIntervalSec 5
           $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
+          $rigExe = 'C:\Program Files\rig\rig.exe'
+          if (-not (Test-Path $rigExe)) {
+            Write-Error "rig binary not found at $rigExe after install."
+            exit 1
+          }
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
       - name: Install R via rig
         env:
-          R_VERSION: ${{ inputs.r_version }}
+          R_VERSION: ${{ inputs.r_version || 'release' }}
         run: |
           $ErrorActionPreference = 'Stop'
           rig add $env:R_VERSION
@@ -119,6 +133,10 @@ jobs:
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
+            if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
+              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            }
             Write-Host "Auto-resolved latest windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
@@ -148,19 +166,25 @@ jobs:
 
       - name: Download RStudio .exe
         if: steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
           Invoke-WebRequest `
-            -Uri '${{ steps.resolve.outputs.url }}' `
-            -OutFile '${{ steps.resolve.outputs.filename }}' `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
             -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $expected = '${{ steps.resolve.outputs.sha256 }}'.ToLower()
-          $actual = (Get-FileHash -Algorithm SHA256 '${{ steps.resolve.outputs.filename }}').Hash.ToLower()
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
           if ($expected -ne $actual) {
             Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
             exit 1
@@ -168,9 +192,11 @@ jobs:
           Write-Host "SHA-256 OK: $actual"
 
       - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $p = Start-Process -FilePath '.\${{ steps.resolve.outputs.filename }}' -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
@@ -188,20 +214,16 @@ jobs:
         working-directory: e2e/rstudio
         env:
           PW_RSTUDIO_MODE: desktop
-          PW_PROJECT_NAME: ${{ inputs.project }}
+          PW_RSTUDIO_EDITION: os
+          PW_PROJECT_NAME: ${{ inputs.project || 'desktop' }}
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
-          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector || 'autocomplete.test.ts' }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $pwArgs = @()
-          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
-            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
-          }
-          $pwArgs += '--project'
-          $pwArgs += $env:PW_PROJECT_NAME
+          $pwArgs = @('--project', $env:PW_PROJECT_NAME)
           if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
             $pwArgs += '--grep'
             $pwArgs += $env:PW_GREP
@@ -209,6 +231,10 @@ jobs:
           if (-not [string]::IsNullOrEmpty($env:PW_GREP_INVERT)) {
             $pwArgs += '--grep-invert'
             $pwArgs += $env:PW_GREP_INVERT
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
+            $pwArgs += '--'
+            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
           }
           npx playwright test @pwArgs
 

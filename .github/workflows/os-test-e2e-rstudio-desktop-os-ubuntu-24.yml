@@ -1,10 +1,10 @@
-name: "Test: E2E Playwright RStudio (Server, Ubuntu 24, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, Ubuntu 24, Open Source)"
 
 on:
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
-        description: "URL to a Server installer (.deb on Ubuntu, .rpm on RHEL/Fedora). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
         type: string
         default: ""
       r_version:
@@ -14,7 +14,7 @@ on:
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
-        default: "server"
+        default: "desktop"
       grep:
         description: "Optional Playwright --grep pattern to run only tests whose title matches."
         type: string
@@ -31,6 +31,10 @@ on:
         description: "Optional Playwright --grep-invert pattern to skip tests by title."
         type: string
         default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
+        type: string
+        default: ""
   workflow_call:
     inputs:
       rstudio_installer_url:
@@ -41,7 +45,7 @@ on:
         default: "release"
       project:
         type: string
-        default: "server"
+        default: "desktop"
       grep:
         type: string
         default: ""
@@ -54,11 +58,17 @@ on:
       grep_invert:
         type: string
         default: ""
+      rstudio_extra_args:
+        type: string
+        default: ""
+
+permissions:
+  contents: read
 
 jobs:
-  e2e-server-ubuntu:
+  e2e-desktop-ubuntu:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
 
@@ -90,7 +100,7 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
-      - name: Resolve RStudio Server .deb URL
+      - name: Resolve RStudio .deb URL
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
@@ -100,15 +110,15 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".filename')
-            echo "Auto-resolved latest noble-amd64 server daily:"
+            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".link')
+            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".sha256')
+            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".filename')
+            echo "Auto-resolved latest noble-amd64 daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
           else
-            FILENAME=$(basename "${URL%%\?*}")
+            FILENAME=$(basename "$URL")
             echo "Using override URL: $URL (SHA-256 verification skipped)"
           fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
@@ -122,72 +132,39 @@ jobs:
       # below). Skip caching on the override path -- a user-supplied URL has no
       # immutability guarantee and its SHA check is skipped, so a reused
       # basename could otherwise serve stale, unverified bytes.
-      - name: Cache RStudio Server installer
+      - name: Cache RStudio installer
         if: inputs.rstudio_installer_url == ''
         id: installer-cache
         uses: actions/cache@v4
         with:
           path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-server-installer-${{ steps.resolve.outputs.filename }}
+          key: rstudio-installer-${{ steps.resolve.outputs.filename }}
 
-      - name: Download RStudio Server .deb
+      - name: Download RStudio .deb
         if: steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
-            -o "${{ steps.resolve.outputs.filename }}" \
-            "${{ steps.resolve.outputs.url }}"
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
+          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" \
             | sha256sum -c -
 
-      - name: Install RStudio Server
+      - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
-          sudo systemctl stop rstudio-server
-          sudo rstudio-server verify-installation
-
-      - name: Configure verbose RStudio Server logging
-        run: |
-          sudo tee /etc/rstudio/logging.conf >/dev/null <<'EOF'
-          [*]
-          log-level=debug
-          logger-type=file
-          EOF
-
-      - name: Start RStudio Server
-        run: |
-          sudo systemctl start rstudio-server
-          sudo systemctl status rstudio-server --no-pager
-
-      - name: Generate test credentials
-        run: |
-          USER="pw_$(openssl rand -hex 4)"
-          PASS="$(openssl rand -base64 24)"
-          echo "::add-mask::$USER"
-          echo "::add-mask::$PASS"
-          echo "PW_RSTUDIO_SERVER_USER=$USER" >> "$GITHUB_ENV"
-          echo "PW_RSTUDIO_SERVER_PASSWORD=$PASS" >> "$GITHUB_ENV"
-
-      - name: Create test user
-        run: |
-          sudo useradd -m -s /bin/bash "$PW_RSTUDIO_SERVER_USER"
-          echo "$PW_RSTUDIO_SERVER_USER:$PW_RSTUDIO_SERVER_PASSWORD" | sudo chpasswd
-
-      - name: Wait for rstudio-server
-        run: |
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8787/auth-sign-in >/dev/null 2>&1; then
-              echo "rstudio-server is ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "rstudio-server did not become ready"
-          sudo journalctl -u rstudio-server --no-pager -n 200
-          exit 1
+          sudo apt-get install -y "./$INSTALLER_FILENAME"
+          ls -la /usr/bin/rstudio
 
       - name: Install e2e test dependencies
         uses: ./.github/actions/e2e-deps
@@ -197,14 +174,13 @@ jobs:
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
-          PW_RSTUDIO_MODE: server
-          PW_RSTUDIO_EDITION: os
-          PW_RSTUDIO_SERVER_URL: http://localhost:8787
+          PW_RSTUDIO_MODE: desktop
           PW_PROJECT_NAME: ${{ inputs.project }}
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
@@ -236,29 +212,4 @@ jobs:
         with:
           name: test-results
           path: e2e/rstudio/test-results/
-          if-no-files-found: ignore
-
-      - name: Capture rstudio-server logs and diagnostics on failure
-        if: failure()
-        run: |
-          echo "=== /etc/rstudio/logging.conf ==="
-          sudo cat /etc/rstudio/logging.conf 2>&1 || echo "(missing)"
-          echo "=== layout: /var/log/rstudio ==="
-          sudo find /var/log/rstudio -ls 2>&1 || echo "(missing)"
-          echo "=== layout: /var/lib/rstudio-server *.log ==="
-          sudo find /var/lib/rstudio-server -name '*.log' -ls 2>&1 || echo "(missing)"
-          echo "=== full journalctl (last hour, all units) ==="
-          sudo journalctl --since="1 hour ago" --no-pager
-          sudo journalctl -u rstudio-server --no-pager > rstudio-server.log || true
-          sudo cp -r /var/log/rstudio rstudio-var-log || true
-          sudo chmod -R a+r rstudio-var-log || true
-
-      - name: Upload rstudio-server logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rstudio-server-logs
-          path: |
-            rstudio-server.log
-            rstudio-var-log/
           if-no-files-found: ignore

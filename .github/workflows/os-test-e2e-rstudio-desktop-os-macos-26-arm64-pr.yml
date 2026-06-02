@@ -6,16 +6,19 @@ on:
       - "src/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
-      - ".github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
-      - ".github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
 
 concurrency:
   group: pw-pr-macos-26-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   run-macos-26:
-    uses: ./.github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
     with:
       project: desktop
       r_version: "4.5.3"

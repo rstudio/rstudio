@@ -1,4 +1,4 @@
-name: "Test: E2E Playwright RStudio (Desktop, Ubuntu 24, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source)"
 
 on:
   workflow_dispatch:
@@ -62,12 +62,18 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: read
+
 jobs:
-  e2e-desktop-ubuntu:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
+  e2e-desktop-windows:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
     env:
-      R_LIBS_USER: ${{ github.workspace }}/R-libs
+      R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
       - uses: actions/checkout@v4
@@ -78,49 +84,55 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
-      - name: Install OS dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb jq
-
       - name: Install rig
         run: |
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
-            | sudo tar xz -C /usr/local
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest `
+            -Uri 'https://github.com/r-lib/rig/releases/download/latest/rig-windows-latest.exe' `
+            -OutFile rig-setup.exe `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
+          $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
       - name: Install R via rig
         env:
           R_VERSION: ${{ inputs.r_version }}
         run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
+          $ErrorActionPreference = 'Stop'
+          rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           rig ls
-          mkdir -p "$R_LIBS_USER"
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
-      - name: Resolve RStudio .deb URL
+      - name: Resolve RStudio .exe URL
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
-          URL="$INSTALLER_URL"
-          SHA=""
-          FILENAME=""
-          if [ -z "$URL" ]; then
-            MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '.products.electron.platforms."noble-amd64".filename')
-            echo "Auto-resolved latest noble-amd64 daily:"
-            echo "  URL:      $URL"
-            echo "  SHA-256:  $SHA"
-            echo "  Filename: $FILENAME"
-          else
-            FILENAME=$(basename "$URL")
-            echo "Using override URL: $URL (SHA-256 verification skipped)"
-          fi
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
-          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+          $ErrorActionPreference = 'Stop'
+          $url = $env:INSTALLER_URL
+          $sha = ''
+          $filename = ''
+          if ([string]::IsNullOrEmpty($url)) {
+            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json'
+            $win = $manifest.products.electron.platforms.windows
+            $url = $win.link
+            $sha = $win.sha256
+            $filename = $win.filename
+            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "  URL:      $url"
+            Write-Host "  SHA-256:  $sha"
+            Write-Host "  Filename: $filename"
+          } else {
+            $filename = Split-Path -Leaf $url
+            Write-Host "Using override URL: $url (SHA-256 verification skipped)"
+          }
+          "url=$url"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sha256=$sha"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       # Cache the installer keyed on its resolved filename. On the daily
       # auto-resolve path the filename embeds the version + build number, so
@@ -137,23 +149,46 @@ jobs:
           path: ${{ steps.resolve.outputs.filename }}
           key: rstudio-installer-${{ steps.resolve.outputs.filename }}
 
-      - name: Download RStudio .deb
+      - name: Download RStudio .exe
         if: steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          curl -fsSL --retry 3 --retry-delay 5 \
-            -o "${{ steps.resolve.outputs.filename }}" \
-            "${{ steps.resolve.outputs.url }}"
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
-            | sha256sum -c -
+          $ErrorActionPreference = 'Stop'
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
+          if ($expected -ne $actual) {
+            Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
+            exit 1
+          }
+          Write-Host "SHA-256 OK: $actual"
 
       - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
-          ls -la /usr/bin/rstudio
+          $ErrorActionPreference = 'Stop'
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
+          $exe = 'C:\Program Files\RStudio\rstudio.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Error "RStudio binary not found at $exe after install."
+            exit 1
+          }
+          Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
       - name: Install e2e test dependencies
         uses: ./.github/actions/e2e-deps
@@ -171,21 +206,22 @@ jobs:
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
         run: |
-          ARGS=()
-          if [ -n "$PW_TEST_SELECTOR" ]; then
-            set -f
-            ARGS+=($PW_TEST_SELECTOR)
-            set +f
-          fi
-          ARGS+=(--project "$PW_PROJECT_NAME")
-          if [ -n "$PW_GREP" ]; then
-            ARGS+=(--grep "$PW_GREP")
-          fi
-          if [ -n "$PW_GREP_INVERT" ]; then
-            ARGS+=(--grep-invert "$PW_GREP_INVERT")
-          fi
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-            npx playwright test "${ARGS[@]}"
+          $ErrorActionPreference = 'Stop'
+          $pwArgs = @()
+          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
+            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
+          }
+          $pwArgs += '--project'
+          $pwArgs += $env:PW_PROJECT_NAME
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
+            $pwArgs += '--grep'
+            $pwArgs += $env:PW_GREP
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP_INVERT)) {
+            $pwArgs += '--grep-invert'
+            $pwArgs += $env:PW_GREP_INVERT
+          }
+          npx playwright test @pwArgs
 
       - name: Upload Playwright report
         if: always()
