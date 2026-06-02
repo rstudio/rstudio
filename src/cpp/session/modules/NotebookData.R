@@ -123,12 +123,17 @@
         if (!is.null(o))
           return(overridePrint(o$x, o$options, o$className, o$nRow, o$nCol))
 
-        # a NULL override map result signals that this auto-printed object
-        # should not be printed at all -- e.g. a 'data.table' returned
-        # invisibly from '[.data.table' following a ':=' update. suppress the
-        # output rather than falling through to the original print method,
-        # which would re-print the object (and, for data.table, re-trigger its
-        # stateful shouldPrint() check and dump the table).
+        # A NULL from overrideMap() is a deliberate "do not print" signal, not a
+        # "no override available" miss: each overrideFun is bound to one class's
+        # map and only runs once S3 dispatch has already selected a registered
+        # override. data.table's map is currently the only one with a NULL branch
+        # -- it returns NULL for a table returned invisibly from a ':=' update,
+        # where data.table:::shouldPrint() returned FALSE. shouldPrint() is
+        # stateful and single-shot, so the overrideMap() call above already
+        # consumed that FALSE; falling through to the original print.data.table
+        # would call it again, get TRUE, and print the table. Return early so no
+        # output is emitted (invisible(x) just follows the print-method
+        # convention of returning its argument invisibly).
         # https://github.com/rstudio/rstudio/issues/17278
         return(invisible(x))
       }
