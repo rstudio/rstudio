@@ -454,8 +454,16 @@ SEXP rs_ppmMetadataKey()
 
 void refreshVulnerabilitiesAsync()
 {
-   if (!isPpmIntegrationEnabled())
-      return;
+   // NOTE: do NOT gate this on isPpmIntegrationEnabled(). Vulnerability display
+   // is intentionally not opt-in: we surface vulns whenever the session is using
+   // a Posit Package Manager repository, including open-source / desktop RStudio
+   // (the env-var-driven isPpmIntegrationEnabled() gate is for the Workbench-only
+   // metadata column, not for vulnerabilities). This mirrors the deliberate
+   // decision in 88778df845 "always try to provide vuln info if available", which
+   // an earlier async rewrite had inadvertently reverted. Whether any repository
+   // actually qualifies is decided downstream by .rs.ppm.getVulnerabilityRequestPlan,
+   // which inspects getOption("repos"); a non-PPM session simply yields an empty
+   // plan and publishes the (empty) cached set.
 
    // coalesce: if requests are still in flight, defer until they drain so the
    // refresh reflects the latest installed-package / repo state
