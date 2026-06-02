@@ -122,8 +122,22 @@
         o <- overrideMap(x, options)
         if (!is.null(o))
           return(overridePrint(o$x, o$options, o$className, o$nRow, o$nCol))
+
+        # A NULL from overrideMap() is a deliberate "do not print" signal, not a
+        # "no override available" miss: each overrideFun is bound to one class's
+        # map and only runs once S3 dispatch has already selected a registered
+        # override. data.table's map is currently the only one with a NULL branch
+        # -- it returns NULL for a table returned invisibly from a ':=' update,
+        # where data.table:::shouldPrint() returned FALSE. shouldPrint() is
+        # stateful and single-shot, so the overrideMap() call above already
+        # consumed that FALSE; falling through to the original print.data.table
+        # would call it again, get TRUE, and print the table. Return early so no
+        # output is emitted (invisible(x) just follows the print-method
+        # convention of returning its argument invisibly).
+        # https://github.com/rstudio/rstudio/issues/17278
+        return(invisible(x))
       }
-      
+
       # otherwise, call the original S3 method. we need to manually manage the
       # lookup here since we inject overrides into the base namespace, which
       # could mask the visibility of certain S3 overrides
