@@ -91,11 +91,24 @@
 # response covers.
 .rs.addFunction("ppm.getVulnerabilityRequestPlan", function(repos = NULL)
 {
-   if (!.rs.ppm.isIntegrationEnabled())
-      return(list())
-
+   # NOTE: enablement is driven by whether the session's repositories point at a
+   # Posit Package Manager instance -- NOT by .rs.ppm.isIntegrationEnabled() (the
+   # PWB_PPM_* env vars). Vulnerability display is intentionally not opt-in: it
+   # is shown whenever a PPM repo is in use, including open-source / desktop
+   # RStudio. The env-var gate is reserved for the Workbench-only metadata column
+   # (.rs.ppm.isMetadataColumnEnabled). See 88778df845 "always try to provide vuln
+   # info if available"; an async rewrite had briefly re-applied the env-var gate
+   # here, which regressed that behavior.
    repos <- .rs.nullCoalesce(repos, getOption("repos"))
    if (length(repos) == 0L)
+      return(list())
+
+   # bail out early -- before the potentially-expensive installed.packages() call
+   # below -- if none of the configured repositories is a PPM instance
+   isPpmRepo <- vapply(repos, function(url) {
+      length(.rs.ppm.fromRepositoryUrl(url)) > 0L
+   }, logical(1))
+   if (!any(isPpmRepo))
       return(list())
 
    pkgKeys <- .rs.ppm.installedPackageKeys()

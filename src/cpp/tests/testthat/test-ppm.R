@@ -318,7 +318,6 @@ test_that("getVulnerabilityRequestPlan asks PPM only about uncached keys", {
    assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
    assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
 
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() c("pkgA==1.0.0", "pkgB==2.0.0"))
    withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
 
@@ -338,7 +337,6 @@ test_that("getVulnerabilityRequestPlan skips repos with no uncached keys", {
    assign("pkgA==1.0.0", list(list(id = "V1")), envir = cache)
    assign(.rs.testPpm$repoUrl, cache, envir = .rs.ppm.vulns)
 
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
 
    plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
@@ -347,17 +345,25 @@ test_that("getVulnerabilityRequestPlan skips repos with no uncached keys", {
    expect_false(exists(.rs.testPpm$repoUrl, envir = .rs.ppm.pending, inherits = FALSE))
 })
 
-test_that("getVulnerabilityRequestPlan returns nothing when integration is disabled", {
+test_that("getVulnerabilityRequestPlan ignores the integration-enabled flag", {
+   # Regression guard: vulnerability display is intentionally NOT opt-in. It is
+   # driven by whether a PPM repository is configured (see the PPM-URL check
+   # below), NOT by the PWB_PPM_* env vars (.rs.ppm.isIntegrationEnabled, which
+   # gates only the Workbench metadata column). A plan must still be built for a
+   # PPM repo even when integration reports "disabled". See 88778df845 "always
+   # try to provide vuln info if available"; an async rewrite once re-applied the
+   # env-var gate here and suppressed vulns for sessions that set repos by hand.
    clearVulnsState()
    withMockFunction(".rs.ppm.isIntegrationEnabled", function() FALSE)
+   withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
+   withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
 
    plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
-   expect_length(plan, 0L)
+   expect_length(plan, 1L)
 })
 
 test_that("getVulnerabilityRequestPlan skips non-PPM repositories", {
    clearVulnsState()
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
 
    plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = "https://cran.rstudio.com"))
@@ -366,7 +372,6 @@ test_that("getVulnerabilityRequestPlan skips non-PPM repositories", {
 
 test_that("getVulnerabilityRequestPlan returns nothing when no packages are installed", {
    clearVulnsState()
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() character())
 
    plan <- .rs.ppm.getVulnerabilityRequestPlan(repos = c(CRAN = .rs.testPpm$repoUrl))
@@ -375,7 +380,6 @@ test_that("getVulnerabilityRequestPlan returns nothing when no packages are inst
 
 test_that("getVulnerabilityRequestPlan includes the computed auth header and endpoint", {
    clearVulnsState()
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() "pkgA==1.0.0")
    # mock the header explicitly so the assertion doesn't depend on the test
    # runner's real ~/.netrc
@@ -398,7 +402,6 @@ test_that("getVulnerabilityRequestPlan emits one entry per PPM repo with uncache
    assign("pkgA==1.0.0", list(), envir = cacheA)
    assign(repoA, cacheA, envir = .rs.ppm.vulns)
 
-   withMockFunction(".rs.ppm.isIntegrationEnabled", function() TRUE)
    withMockFunction(".rs.ppm.installedPackageKeys", function() c("pkgA==1.0.0", "pkgB==2.0.0"))
    withMockFunction(".rs.computeAuthorizationHeader", function(url) "")
 
