@@ -1,15 +1,21 @@
-// Import Dataset (readr) end-to-end test for #17777.
+// Import Dataset (readr) end-to-end tests.
 //
-// preview_data_import_async spawns a --vanilla R subprocess that sources
-// only Tools.R + a handful of session modules. Before the fix, .rs.digest
-// lived in SessionRUtil.R (not sourced in that subprocess) and was backed
-// by a .Call into the embedding (also not available there), so the CSV
-// preview failed with "Is this a valid CSV file? could not find function
-// '.rs.digest'". .rs.digest is now a pure-base-R Adler-32 in Tools.R,
-// which the subprocess already sources -- this test asserts the dialog
-// renders a successful preview end to end.
+// - #17777: the readr CSV preview must render without an .rs.digest lookup
+//   error. preview_data_import_async spawns a --vanilla R subprocess that
+//   sources only Tools.R + a handful of session modules. Before the fix,
+//   .rs.digest lived in SessionRUtil.R (not sourced there) and was backed by
+//   a .Call into the embedding (also unavailable), so the preview failed with
+//   "Is this a valid CSV file? could not find function '.rs.digest'".
+//   .rs.digest is now a pure-base-R Adler-32 in Tools.R, which the subprocess
+//   already sources.
+// - #17735: the import preview is a GridViewerFrame, which runs the shared
+//   grid viewer in data_source=data mode (data pushed in client-side, no
+//   server-side cached frame). The column-summary sidebar fetches stats from
+//   the grid_data endpoint and so has nothing to summarize in this host; it
+//   must be hidden. GridViewerFrame now requests show_summary=0.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
+import type { Page, FrameLocator, Locator } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand } from '@utils/commands';
 import { installDepIfPrompted } from '@pages/modals.page';
@@ -23,6 +29,57 @@ const IMPORT_DIALOG = '.gwt-DialogBox[aria-label="Import Text Data"]';
 // The preview iframe is a GridViewerFrame titled with constants_.dataPreview().
 const PREVIEW_FRAME = 'iframe[title="Data Preview"]';
 
+// Open Import Dataset > From Text (readr) for the given CSV path and drive the
+// dialog until the preview iframe is up. Returns the dialog + preview frame so
+// each test can assert on the rendered preview. The caller cancels the dialog.
+async function openReadrCsvPreview(
+  page: Page,
+  consoleActions: ConsolePaneActions,
+  csvPath: string,
+): Promise<{ dialog: Locator; previewFrame: FrameLocator }> {
+  // Write the CSV via the R session so the path is valid on the rsession host
+  // (matters for Server mode where runner and session can be on different
+  // machines).
+  await consoleActions.executeInConsole(
+    `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
+    { wait: true },
+  );
+
+  // The presenter wraps the dialog in a dependency check; accept the install
+  // prompt if readr (or a transitive dep) isn't already on the library path.
+  await executeCommand(page, 'importDatasetFromCsvUsingReadr');
+  await installDepIfPrompted(page);
+
+  const dialog = page.locator(IMPORT_DIALOG);
+  await expect(dialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+  // Set the path on the file chooser TextBox in one shot. The chooser polls
+  // for value changes every 250ms (DataImportFileChooser.checkForTextBoxChange)
+  // and flips the action button from "Browse..." to "Update" when the textbox
+  // transitions empty -> non-empty -- we wait on that flip below rather than
+  // racing the poll per keystroke.
+  //
+  // The textbox's class is the obfuscated form of `modelTextBox` (set via
+  // styleName= in DataImportFileChooser.ui.xml, which replaces the default
+  // .gwt-TextBox), so target it by ARIA name instead -- "File/URL:" comes from
+  // the label-association in DataImport.ui.xml.
+  const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
+  await expect(fileInput).toBeVisible({ timeout: 5000 });
+  await fileInput.fill(csvPath);
+
+  // Click "Update" to commit the path and kick off preview_data_import_async.
+  // The textbox value change alone does not trigger the preview -- it has to go
+  // through the action button's click handler (DataImportFileChooser.
+  // actionButton_). The button's aria-label flips from "Browse for File/URL"
+  // to "Update for File/URL" via switchToUpdateMode() once the polling timer
+  // notices the new value.
+  const updateBtn = dialog.getByRole('button', { name: 'Update for File/URL' });
+  await expect(updateBtn).toBeVisible({ timeout: 5000 });
+  await updateBtn.click();
+
+  return { dialog, previewFrame: dialog.frameLocator(PREVIEW_FRAME) };
+}
+
 test.describe('Import Dataset (readr)', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
@@ -33,47 +90,9 @@ test.describe('Import Dataset (readr)', () => {
 
   // https://github.com/rstudio/rstudio/issues/17777
   test('CSV preview renders without an .rs.digest lookup error', async ({ rstudioPage: page }) => {
-    // Write a tiny CSV via the R session so the path is valid on the
-    // rsession host (matters for Server mode where the runner and session
-    // can be on different machines).
-    const csvPath = `${sandbox.dir}/sample.csv`;
-    await consoleActions.executeInConsole(
-      `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
-      { wait: true },
+    const { dialog, previewFrame } = await openReadrCsvPreview(
+      page, consoleActions, `${sandbox.dir}/sample.csv`,
     );
-
-    // Open Import Dataset > From Text (readr). The presenter wraps the
-    // dialog in a dependency check; accept the install prompt if readr
-    // (or one of its transitive deps) isn't already on the library path.
-    await executeCommand(page, 'importDatasetFromCsvUsingReadr');
-    await installDepIfPrompted(page);
-
-    const dialog = page.locator(IMPORT_DIALOG);
-    await expect(dialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-
-    // Set the path on the file chooser TextBox in one shot. The chooser
-    // polls for value changes every 250ms (DataImportFileChooser.
-    // checkForTextBoxChange) and flips the action button from "Browse..."
-    // to "Update" when the textbox transitions empty -> non-empty -- we
-    // wait on that flip below rather than racing the poll per keystroke.
-    //
-    // The textbox's class is the obfuscated form of `modelTextBox` (set via
-    // styleName= in DataImportFileChooser.ui.xml, which replaces the default
-    // .gwt-TextBox), so target it by ARIA name instead -- "File/URL:" comes
-    // from the label-association in DataImport.ui.xml.
-    const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
-    await expect(fileInput).toBeVisible({ timeout: 5000 });
-    await fileInput.fill(csvPath);
-
-    // Click "Update" to commit the path and kick off
-    // preview_data_import_async. The textbox value change alone does not
-    // trigger the preview -- it has to go through the action button's
-    // click handler (DataImportFileChooser.actionButton_). The button's
-    // aria-label flips from "Browse for File/URL" to "Update for File/URL"
-    // via switchToUpdateMode() once the polling timer notices the new value.
-    const updateBtn = dialog.getByRole('button', { name: 'Update for File/URL' });
-    await expect(updateBtn).toBeVisible({ timeout: 5000 });
-    await updateBtn.click();
 
     // Preview iframe should populate with the CSV's three columns. Pre-fix
     // this never landed because the subprocess errored out before returning
@@ -81,7 +100,6 @@ test.describe('Import Dataset (readr)', () => {
     // CSV file?" error prefix instead. The grid renders each header as
     // "<name>(<type>)" once column inference completes; anchor on the name
     // prefix so the assertion doesn't depend on the inferred type string.
-    const previewFrame = dialog.frameLocator(PREVIEW_FRAME);
     await expect(previewFrame.locator('th[data-col-idx="1"]'))
       .toHaveText(/^a/, { timeout: TIMEOUTS.fileOpen });
     await expect(previewFrame.locator('th[data-col-idx="2"]')).toHaveText(/^b/);
@@ -93,6 +111,29 @@ test.describe('Import Dataset (readr)', () => {
     await expect(dialog).not.toContainText('valid CSV file');
 
     // Cancel out -- we don't want to actually run the import.
+    await dialog.locator('#rstudio_dlg_cancel').click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17735
+  test('preview hides the column-summary sidebar', async ({ rstudioPage: page }) => {
+    const { dialog, previewFrame } = await openReadrCsvPreview(
+      page, consoleActions, `${sandbox.dir}/summary.csv`,
+    );
+
+    // Gate on the preview being up (first data column header). initSidebar
+    // runs during the grid's data-mode bootstrap, so the sidebar's
+    // collapsed/expanded state is settled by the time the header is visible.
+    await expect(previewFrame.locator('th[data-col-idx="1"]'))
+      .toHaveText(/^a/, { timeout: TIMEOUTS.fileOpen });
+
+    // The fix: GridViewerFrame requests show_summary=0, so the panel never
+    // gains the "expanded" class and the toggle reports collapsed. Pre-fix the
+    // host defaulted show_summary to true and the (non-functional in data
+    // mode) summary sidebar was expanded.
+    await expect(previewFrame.locator('#sidebarPanel')).not.toHaveClass(/\bexpanded\b/);
+    await expect(previewFrame.locator('#sidebarToggle')).toHaveAttribute('aria-expanded', 'false');
+
     await dialog.locator('#rstudio_dlg_cancel').click();
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
