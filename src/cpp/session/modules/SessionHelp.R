@@ -578,10 +578,16 @@ options(help_type = "html")
    maxDisplayColumns <- .rs.readUiPref("data_viewer_max_columns")
 
    # build a uri
+   #
+   # The column-summary sidebar is hidden in the help preview: the help
+   # document already describes the data frame, so the summary is redundant
+   # here and would crowd out the rows the preview is meant to surface. Other
+   # hosts (the standalone Data Viewer) continue to honor the user preference.
    attrs <- c(
-      obj       = title,
-      max_rows  = 1000,
-      max_cols  = maxDisplayColumns
+      obj          = title,
+      max_rows     = 1000,
+      max_cols     = maxDisplayColumns,
+      show_summary = 0
    )
    
    # only include env if we didn't find the data from "anywhere"
