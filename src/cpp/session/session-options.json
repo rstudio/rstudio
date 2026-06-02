@@ -1029,6 +1029,13 @@
             "memberName": "projectTrustDialogs_",
             "defaultValue": -1,
             "description": "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio."
+         },
+         {
+            "name": "preview-allowed-functions",
+            "type": "string",
+            "memberName": "previewAllowedFunctions_",
+            "defaultValue": "",
+            "description": "A comma- or space-separated list of additional function names (for example, 'mypkg::connect') that may be evaluated without prompting when resolving a file preview connection expression -- the SQL '-- !preview conn=' header or an r2d3 preview. Each listed name is treated as a trusted constructor; its arguments are still validated. Use this to allow connection helpers from internally-built packages."
          }
       ],
       "misc": [

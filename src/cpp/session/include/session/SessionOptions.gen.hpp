@@ -503,7 +503,10 @@ protected:
    pTrust->add_options()
       ("project-trust-dialogs",
       value<int>(&projectTrustDialogs_)->default_value(-1),
-      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.");
+      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.")
+      ("preview-allowed-functions",
+      value<std::string>(&previewAllowedFunctions_)->default_value(""),
+      "A comma- or space-separated list of additional function names (for example, 'mypkg::connect') that may be evaluated without prompting when resolving a file preview connection expression -- the SQL '-- !preview conn=' header or an r2d3 preview. Each listed name is treated as a trusted constructor; its arguments are still validated. Use this to allow connection helpers from internally-built packages.");
 
    pMisc->add_options();
 
@@ -645,6 +648,7 @@ public:
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
+   std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
 
 
 protected:
@@ -781,6 +785,7 @@ protected:
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
    int projectTrustDialogs_;
+   std::string previewAllowedFunctions_;
    virtual bool allowOverlay() const { return false; };
 };
 

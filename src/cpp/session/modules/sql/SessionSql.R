@@ -308,17 +308,31 @@
 {
    if (inherits(conn, "DBIConnection"))
       return(conn)
-   
+
    if (is.character(conn))
    {
       if (!requireNamespace("DBI", quietly = TRUE))
          return(NULL)
-      
-      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
+
+      # parse the connection expression (strip srcref so equivalent
+      # expressions compare equal against the permitted set)
+      expr <- .rs.tryCatch(parse(text = conn, keep.source = FALSE))
+      if (inherits(expr, "error") || length(expr) != 1L)
+         return(NULL)
+      expr <- expr[[1L]]
+
+      # completions must never evaluate arbitrary connection expressions; only
+      # statically-safe or explicitly-permitted expressions are resolved here,
+      # and we never prompt from this (silent, as-you-type) code path. The
+      # classifier itself lives in SessionDataPreview.R (.rs.preview.*).
+      if (identical(.rs.preview.exprStatus(expr), "unsafe"))
+         return(NULL)
+
+      conn <- .rs.tryCatch(eval(expr, envir = globalenv()))
       if (inherits(conn, "error"))
          return(NULL)
    }
-   
+
    conn
 })
 
