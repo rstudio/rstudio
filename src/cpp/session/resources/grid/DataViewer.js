@@ -226,6 +226,13 @@ var activeHeaderUIs = {};
 // (in the Column resize state group above).
 var measuredWidths = [];
 
+// Cached cumulative column offsets (see columnOffsets). Derived purely from
+// columnOrder + measuredWidths, so it shares their invalidation point
+// (invalidatePinnedOffsets). Memoized because columnOffsets is called once per
+// rendered row in appendWindowedCells -- recomputing an O(columns) prefix sum
+// for every row of a wide frame was a measurable share of render cost (#17806).
+var columnOffsetsCache = null;
+
 // Authoritative table content width; mirrors the sum of measuredWidths after
 // autoSizeColumns. Prefer this over deriving content width from
 // table.offsetWidth - paddingRight, which the browser may reconcile
@@ -885,11 +892,17 @@ var firstUnpinnedPos = function() {
 // from measuredWidths. Returns an array of length columnOrder.length + 1 where
 // entry i is the sum of widths of positions [0, i); the last entry is the
 // total content width. Falls back to an empty result until widths exist.
+//
+// Memoized in columnOffsetsCache; invalidated via invalidatePinnedOffsets when
+// columnOrder or measuredWidths change. Callers treat the result as read-only.
 var columnOffsets = function() {
+   if (columnOffsetsCache !== null) return columnOffsetsCache;
+
    var offs = [0];
    for (var i = 0; i < columnOrder.length; i++) {
       offs.push(offs[i] + (measuredWidths[i] || 0));
    }
+   columnOffsetsCache = offs;
    return offs;
 };
 
@@ -1118,9 +1131,11 @@ var rebuildHeaders = function() {
 // state). Each entry costs an offsetWidth read which forces layout, and
 // this function is called from renderVisibleRows on every scroll.
 // Callers that change column widths or pinning must invalidate via
-// invalidatePinnedOffsets().
+// invalidatePinnedOffsets(). This also drops columnOffsetsCache, which is
+// derived from the same columnOrder + measuredWidths state.
 var invalidatePinnedOffsets = function() {
    pinnedOffsetsCache = null;
+   columnOffsetsCache = null;
 };
 
 var getPinnedOffsets = function() {
