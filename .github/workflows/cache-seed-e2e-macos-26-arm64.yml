@@ -1,0 +1,36 @@
+name: "Cache: Seed macOS 26 ARM64 build caches"
+
+# Seeds the build caches (rstudio-tools, build-time R packages, and sccache)
+# on the default branch so that PR builds start warm. GitHub Actions caches
+# are scoped per-branch: a cache can only be restored from the same branch,
+# the PR's base branch, or the default branch. Sibling branches / PRs cannot
+# see each other's caches. By running the build job on main, the caches it
+# saves land in main's scope, which every PR (based on main) can then restore
+# via the restore-keys prefixes (rstudio-tools-arm64-, etc.). Without this,
+# every new PR branch starts 100% cold on its first build.
+on:
+  # Re-seed when the dependency scripts / lockfiles change -- those feed the
+  # rstudio-tools and R-libs cache keys, so a change there invalidates the
+  # existing main cache and a fresh one needs to be saved.
+  push:
+    branches: [main]
+    paths:
+      - "dependencies/**"
+      - ".github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+      - ".github/workflows/cache-seed-e2e-macos-26-arm64.yml"
+  # Nightly re-seed keeps the sccache object cache (keyed per-commit, restored
+  # by prefix) recent on main so PR builds get a high compile-cache hit rate.
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+# Don't stack expensive macOS builds; the latest seed run wins.
+concurrency:
+  group: cache-seed-macos-26-arm64
+  cancel-in-progress: true
+
+jobs:
+  seed:
+    uses: ./.github/workflows/test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    with:
+      build_only: true

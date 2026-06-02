@@ -35,6 +35,10 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       rstudio_installer_url:
@@ -61,6 +65,9 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      build_only:
+        type: boolean
+        default: false
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -184,9 +191,11 @@ jobs:
     needs: build
     # build is skipped when rstudio_installer_url is set; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
-    # and "skipped" on the override path.
+    # and "skipped" on the override path. build_only seeds the build caches
+    # (rstudio-tools / R-libs / sccache) without running e2e, so skip here.
     if: |
       always() &&
+      inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: macos-26
     timeout-minutes: 120
