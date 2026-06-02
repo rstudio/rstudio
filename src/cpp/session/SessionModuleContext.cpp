@@ -383,6 +383,16 @@ SEXP rs_rstudioEdition()
    return R_NilValue;
 }
 
+// get the administrator-configured list of additional functions that may be
+// evaluated without prompting when resolving a file preview connection
+// expression (see SessionDataPreview.R and the 'preview-allowed-functions'
+// session option). Returned as the raw option string; the R side splits it.
+SEXP rs_previewAllowedFunctions()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(session::options().previewAllowedFunctions(), &rProtect);
+}
+
 // get version
 // NOTE: Used by 'rstudioapi'; unofficially part of the API.
 SEXP rs_rstudioVersion()
@@ -3228,6 +3238,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioCRANReposUrl);
    RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
    RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
+   RS_REGISTER_CALL_METHOD(rs_previewAllowedFunctions);
    RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioLongVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);

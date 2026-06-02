@@ -163,6 +163,8 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String ignoreWord();
     String addToUserDictionary();
     String errorPreviewingSql();
+    String previewRunCodeConfirmCaption();
+    String previewRunCodeConfirmMessage(String expression);
     String sourceOnSave();
     String textEditor();
     String compareResults();
