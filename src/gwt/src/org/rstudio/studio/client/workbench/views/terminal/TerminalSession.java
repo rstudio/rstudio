@@ -75,19 +75,16 @@ public class TerminalSession extends XTermWidget
     * @param options terminal emulator options
     * @param tabMovesFocus does pressing tab key move focus out of terminal
     * @param showWebLinks links detected and made clickable
-    * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
                           XTermOptions options,
                           boolean tabMovesFocus,
-                          boolean showWebLinks,
-                          boolean createdByApi)
+                          boolean showWebLinks)
    {
       super(options, tabMovesFocus, showWebLinks);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
-      createdByApi_ = createdByApi;
       hasChildProcs_ = new Value<>(!BrowseCap.isWindowsDesktop() && info.getHasChildProcs());
 
       setTitle(info.getTitle());
@@ -776,21 +773,23 @@ public class TerminalSession extends XTermWidget
 
       switch (consoleProcess_.getProcessInfo().getShellType())
       {
-      // Windows command-prompt and PowerShell don't support buffer reloading
-      // due to limitations of how they work with WinPty.
+      // Command Prompt and PowerShell repaint their startup screen with
+      // absolute cursor positioning (PowerShell's PSReadLine redraws its whole
+      // banner and prompt on the reconnect resize). Replaying that over restored
+      // output on a restart lands the prompt in the middle of the restored
+      // content, so don't reload on restart. A non-restart reload -- an
+      // API-created terminal showing the initial output it produced before the
+      // UI attached, or reconnecting to the still-running shell -- replays only
+      // the shell's own faithful output and is fine.
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
       case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
-         // Do load the buffer if terminal was just created via API, as
-         // the initial message and prompt may have been sent before the
-         // client/server channel was opened.
-         return createdByApi_;
+         return !consoleProcess_.getProcessInfo().getRestarted();
 
       case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
-         // on Windows we don't know if custom shell supports reload so
-         // assume it does not
+         // On Windows we can't assume a custom shell composes with restart reload.
          if (BrowseCap.isWindowsDesktop())
-            return createdByApi_;
+            return !consoleProcess_.getProcessInfo().getRestarted();
          else
             return true;
 
@@ -1032,7 +1031,6 @@ public class TerminalSession extends XTermWidget
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
-   private final boolean createdByApi_;
 
    // Injected ----
    private WorkbenchServerOperations server_;

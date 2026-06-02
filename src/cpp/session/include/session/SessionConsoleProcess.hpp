@@ -17,6 +17,7 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
+#include <chrono>
 #include <deque>
 
 #include <boost/regex.hpp>
@@ -261,6 +262,16 @@ private:
 
    // Is there a child process matching the ignore list?
    bool ignoredChildProc_ = false;
+
+#ifdef _WIN32
+   // Strip the ConPTY host's one-time startup screen clear from a restarted
+   // terminal's first output so it doesn't wipe replayed scrollback
+   // (see SessionConsoleProcess.cpp; microsoft/terminal#4252).
+   bool pendingStripRestartClear_ = false;
+   // After this deadline the startup window is over and no further stripping is
+   // done, so a later user-issued clear is never mistaken for the startup clear.
+   std::chrono::steady_clock::time_point restartClearDeadline_;
+#endif
 
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;

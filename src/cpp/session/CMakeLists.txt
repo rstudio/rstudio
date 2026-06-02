@@ -857,24 +857,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
    endif()
 
-   # install winpty on windows
-   if(WIN32)
-      install(PROGRAMS "${WINPTY_BINDIR_64}/winpty.dll"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}")
-      install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}")
-
-      # install 32 bit binaries
-      file(MAKE_DIRECTORY  "${CMAKE_CURRENT_BINARY_DIR}/x86")
-      install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86"
-              USE_SOURCE_PERMISSIONS
-              DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty.dll"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
-      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty-agent.exe"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
-   endif()
-
    # install gnudiff, gnugrep, mysys_ssh, and sumatra-pdf on windows
    if(WIN32)
 

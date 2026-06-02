@@ -122,9 +122,8 @@ public class TerminalTabPresenter extends BasePresenter
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
        * @param caption
-       * @param createdByApi terminal just created via rstudioapi?
        */
-      void activateNamedTerminal(String caption, boolean createdByApi);
+      void activateNamedTerminal(String caption);
 
       /**
        * Send current terminal's buffer to a new editor buffer.
@@ -250,8 +249,7 @@ public class TerminalTabPresenter extends BasePresenter
       {
          // And optionally bring tab forward and select the requested terminal
          view_.activateTerminal(
-               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption(),
-                                                 true /*createdByApi*/));
+               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption()));
       }
    }
 
@@ -271,7 +269,7 @@ public class TerminalTabPresenter extends BasePresenter
          if (StringUtil.isNullOrEmpty(event.getId()))
             view_.ensureTerminal();
          else
-            view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
+            view_.activateNamedTerminal(event.getId());
       });
    }
 
