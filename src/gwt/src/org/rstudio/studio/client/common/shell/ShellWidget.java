@@ -438,6 +438,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
+   public void setWaitingForInput(boolean waiting)
+   {
+      Element el = input_.getWidget().getElement();
+      if (waiting)
+      {
+         el.addClassName(RSTUDIO_CONSOLE_WAITING_FOR_INPUT);
+      }
+      else
+      {
+         el.removeClassName(RSTUDIO_CONSOLE_WAITING_FOR_INPUT);
+      }
+   }
+
+   @Override
    public void setSuppressPendingInput(boolean suppressPendingInput)
    {
       suppressPendingInput_ = suppressPendingInput;
@@ -1307,4 +1321,5 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private static final String AGENT_CLASS_OUTPUT = " rstudio-agent-output";
    private static final String AGENT_CLASS_ERROR = " rstudio-agent-error";
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
+   private static final String RSTUDIO_CONSOLE_WAITING_FOR_INPUT = "rstudio-console-waiting-for-input";
 }

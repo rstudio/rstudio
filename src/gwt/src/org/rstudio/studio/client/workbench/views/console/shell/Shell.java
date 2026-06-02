@@ -338,6 +338,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onConsoleInput(final ConsoleInputEvent event)
    {
       view_.setBusy(true);
+
+      // Input was submitted, so any pending readline()/menu() request is
+      // satisfied; clear the waiting-for-input flag immediately rather than
+      // waiting for the next prompt to arrive.
+      view_.setWaitingForInput(false);
+
       view_.clearLiveRegion();
       server_.consoleInput(event.getInput(),
                            event.getConsole(),
@@ -407,6 +413,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       view_.setBusy(false);
+
+      // A prompt that won't be added to history is an interactive input
+      // request from R (readline(), menu(), scan(), ...) rather than the REPL
+      // prompt. Flag it so callers can tell "R is waiting for the user" apart
+      // from "R is idle", since both clear the busy state.
+      view_.setWaitingForInput(!addToHistory);
+
       view_.consolePrompt(prompt, true);
 
       if (lastPromptText_ == null
