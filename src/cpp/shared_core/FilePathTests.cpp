@@ -457,7 +457,12 @@ TEST(SharedCoreTest, ResolveAliasedPath)
 TEST(SharedCoreTest, ResolveAliasedPathWithEnv)
 {
    std::string userName = "testuser";
-   FilePath userHome("/mnt/home/testuser");
+
+   // Use createPath() so the paths carry the current drive letter on Windows,
+   // where resolveAliasedPath() completes a driveless absolute path against the
+   // current directory (e.g. "/data/..." -> "C:/data/..."). On POSIX createPath()
+   // is the identity, so the expectations are unchanged there.
+   FilePath userHome = createPath("/mnt/home/testuser");
 
    FilePath resolved = FilePath::resolveAliasedPath("$HOME", userHome, userName);
    EXPECT_EQ(userHome, resolved);
@@ -472,10 +477,10 @@ TEST(SharedCoreTest, ResolveAliasedPathWithEnv)
    EXPECT_EQ(userHome.completeChildPath("projects"), resolved);
 
    resolved = FilePath::resolveAliasedPath("/data/$USER/projects", userHome, userName);
-   EXPECT_EQ(FilePath("/data/testuser/projects"), resolved);
+   EXPECT_EQ(createPath("/data/testuser/projects"), resolved);
 
    resolved = FilePath::resolveAliasedPath("/data/${USER}/projects", userHome, userName);
-   EXPECT_EQ(FilePath("/data/testuser/projects"), resolved);
+   EXPECT_EQ(createPath("/data/testuser/projects"), resolved);
 }
 
 TEST(SharedCoreTest, CreateAliasedPath)
