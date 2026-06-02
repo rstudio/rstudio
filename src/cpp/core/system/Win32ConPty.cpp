@@ -283,7 +283,8 @@ Error ConPty::start(const std::string& exe,
 
    if (!isAvailable())
       return systemError(boost::system::errc::not_supported,
-                         "ConPTY is not available on this version of Windows",
+                         "ConPTY is not available; the terminal requires "
+                         "Windows 10 version 1809 or newer",
                          ERROR_LOCATION);
    // Read hPC_ directly rather than via running(): we already hold stateMutex_.
    if (hPC_ != nullptr)
