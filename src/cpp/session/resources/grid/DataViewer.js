@@ -3742,6 +3742,11 @@ var resetGridState = function() {
    renderEnd = 0;
    colWinStart = -1;
    colWinEnd = -1;
+   // Injected header-UI registry is scoped to a single grid lifecycle (it
+   // drives reinjectHeaderUI as the column window slides). The next bootstrap
+   // re-populates it from the postInitActions replay, so drop it here rather
+   // than letting it leak header controls into a reset/refreshed grid.
+   activeHeaderUIs = {};
    renderedRowElements.clear();
    topSpacerRow = null;
    bottomSpacerRow = null;
@@ -4012,16 +4017,24 @@ var bootstrap = function(data) {
 var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
    var thead = document.getElementById("data_cols");
 
+   // Record the desired visibility so it's reapplied after a bootstrap
+   // (column pagination / refresh): initGrid replays postInitActions, which is
+   // the single source of truth for header-UI visibility across grid reloads.
+   // Recorded unconditionally -- not just when cols is null -- so a filter
+   // enabled after the grid is ready also survives column paging, rather than
+   // relying on activeHeaderUIs (which is cleared on teardown).
+   postInitActions["setHeaderUIVisible:" + markerClass] = visible
+      ? function() { setHeaderUIVisible(true, initialize, hide, markerClass); }
+      : null;
+
    if (thead === null || cols === null) {
-      postInitActions["setHeaderUIVisible:" + markerClass] = visible
-         ? function() { setHeaderUIVisible(true, initialize, hide, markerClass); }
-         : null;
       return false;
    }
 
    // Remember (or forget) this UI so reinjectHeaderUI re-applies it to headers
-   // created as the column window slides. Without this, scrolling would drop
-   // the filter/column-type widgets from newly rendered headers.
+   // created as the column window slides within the current render. Cleared on
+   // teardown (resetGridState); the postInitActions replay above re-populates
+   // it on the next bootstrap.
    if (visible) {
       activeHeaderUIs[markerClass] = initialize;
    } else {
