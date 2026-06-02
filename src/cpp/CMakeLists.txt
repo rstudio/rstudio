@@ -145,12 +145,16 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
-   # require Windows-7 SP1
+   # require Windows 10 version 1809 (build 17763), the minimum for the
+   # ConPTY pseudoconsole APIs. _WIN32_WINNT/WINVER are per-major-version and
+   # share one value across Windows 10 and 11 (0x0A00); NTDDI_VERSION selects
+   # the specific build (NTDDI_WIN10_RS5 = 1809) that gates the ConPTY headers.
    add_definitions(
       -DNOMINMAX
-      -DWINVER=0x601
-      -D_WIN32_WINNT=0x601
-      -D_WIN32_IE=0x601
+      -DWINVER=0x0A00
+      -D_WIN32_WINNT=0x0A00
+      -D_WIN32_IE=0x0A00
+      -DNTDDI_VERSION=0x0A000006
       -DWIN32_LEAN_AND_MEAN
       -DBOOST_USE_WINDOWS_H)
 

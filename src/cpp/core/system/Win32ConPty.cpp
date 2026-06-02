@@ -27,13 +27,15 @@ const size_t kOutHighWater    = 1u * 1024 * 1024;  // 1 MiB
 const DWORD  kShutdownTimeout = 4000;              // ms
 const DWORD  kReadChunk       = 4096;
 
-#ifndef PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE
-#define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE ProcThreadAttributeValue(22, FALSE, TRUE, FALSE)
-#endif
-
-typedef HRESULT (WINAPI *CreatePseudoConsoleFn)(COORD, HANDLE, HANDLE, DWORD, HPCONHANDLE*);
-typedef HRESULT (WINAPI *ResizePseudoConsoleFn)(HPCONHANDLE, COORD);
-typedef void    (WINAPI *ClosePseudoConsoleFn)(HPCONHANDLE);
+// The build targets Windows 10 1809 (NTDDI_WIN10_RS5), so the SDK declares
+// HPCON and the pseudoconsole functions natively. 1809 is the supported floor,
+// but we still resolve these from kernel32 at runtime rather than linking the
+// imports directly: if the pseudoconsole entry points are ever missing at
+// runtime, isAvailable() reports false and callers fall back instead of a
+// static import failing the whole process at load.
+typedef HRESULT (WINAPI *CreatePseudoConsoleFn)(COORD, HANDLE, HANDLE, DWORD, HPCON*);
+typedef HRESULT (WINAPI *ResizePseudoConsoleFn)(HPCON, COORD);
+typedef void    (WINAPI *ClosePseudoConsoleFn)(HPCON);
 
 struct ConPtyApi
 {
@@ -281,7 +283,8 @@ Error ConPty::start(const std::string& exe,
 
    if (!isAvailable())
       return systemError(boost::system::errc::not_supported,
-                         "ConPTY is not available on this version of Windows",
+                         "ConPTY is not available; the terminal requires "
+                         "Windows 10 version 1809 or newer",
                          ERROR_LOCATION);
    // Read hPC_ directly rather than via running(): we already hold stateMutex_.
    if (hPC_ != nullptr)
@@ -464,7 +467,7 @@ void ConPty::teardownLocked()
    std::thread closer;
    if (hPC_)
    {
-      HPCONHANDLE hpc = hPC_;
+      HPCON hpc = hPC_;
       closer = std::thread([hpc] { api().close(hpc); });
    }
 

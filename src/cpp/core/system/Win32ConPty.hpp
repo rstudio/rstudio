@@ -35,11 +35,6 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-// HPCON is only declared in SDK headers gated behind NTDDI_WIN10_RS5; the build
-// targets _WIN32_WINNT=0x601, so we use our own handle type and resolve the
-// pseudoconsole functions dynamically from kernel32 (see Win32ConPty.cpp).
-typedef VOID* HPCONHANDLE;
-
 // Native Windows pseudoconsole (ConPTY) wrapper. Replaces the winpty-based
 // WinPty class. Owns the pseudoconsole, its input/output pipes, and a reader
 // thread. Output is buffered (bounded, with backpressure) and drained by the
@@ -95,7 +90,7 @@ private:
    void readerLoop();
    void teardownLocked();   // single ordered teardown path; caller holds stateMutex_
 
-   HPCONHANDLE hPC_ = nullptr;
+   HPCON hPC_ = nullptr;
    HANDLE hInputWrite_ = nullptr;    // caller thread writes here (synchronous)
    HANDLE hOutputRead_ = nullptr;    // reader thread reads here
 
