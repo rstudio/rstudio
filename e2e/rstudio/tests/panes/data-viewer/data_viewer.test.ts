@@ -104,6 +104,50 @@ test.describe('Data Viewer', () => {
     // cleanup needed here.
   });
 
+  // Column virtualization (#17806) destroys and recreates a column's header
+  // when it scrolls out of and back into the rendered window. The per-column
+  // filter must restore its applied value on the recreated header rather than
+  // reset to "All".
+  test('per-column filter display survives a column scrolling out and back (#17806)', async ({ rstudioPage: page }) => {
+    // 300 columns so the first data column is virtualized out of the DOM on a
+    // full horizontal scroll; column 1 is made character so its filter is a
+    // simple text box to drive.
+    await consoleActions.executeInConsole(
+      '{ df <- as.data.frame(matrix(1:30000, nrow = 100, ncol = 300)); df[[1]] <- rep(letters[1:5], length.out = 100); View(df) }',
+    );
+    await waitForViewer(dataViewer);
+
+    // Reveal the per-column filter row (the latching "Filter" toolbar button).
+    await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+    const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    // Apply a text filter to column 1: click to reveal the input, then type.
+    // keyboard.type fires keyup (which the filter box listens for); fill()
+    // would not trigger the search.
+    await col1Filter.getByText('All').click();
+    await page.keyboard.type('a');
+
+    // Confirm the filter actually applied -- the info bar gains the
+    // "filtered from" suffix once the debounced search round-trips.
+    await expect(dataViewer.gridInfo)
+      .toContainText('filtered from 100', { timeout: TIMEOUTS.fileOpen });
+
+    // Scroll the column window fully right: column 1 is evicted from the DOM
+    // (this also confirms column virtualization is active).
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+      .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+
+    // Scroll back: the header is recreated and must show the active filter
+    // value, not "All".
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+    await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(col1Filter).toHaveClass(/filtered/);
+    await expect(dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox'))
+      .toHaveValue('a');
+  });
+
   test('sort headers cycle through asc, desc, and unsorted', async () => {
     await consoleActions.executeInConsole('View(mtcars)');
     await waitForViewer(dataViewer);

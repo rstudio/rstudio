@@ -153,6 +153,19 @@ tbody tr.spacer-row:hover td {
       );
 }
 
+/* Column-virtualization spacer cells: stand in for the horizontal space of
+   off-window columns. They must stay visually inert -- no borders, padding,
+   hover, or stripe -- so the gap they occupy reads as empty grid, and they
+   must never win the :not(.first-child) hover/stripe rules below. */
+td.col-spacer,
+th.col-spacer,
+tbody tr:hover td.col-spacer,
+tbody tr.odd-row td.col-spacer {
+   padding: 0;
+   border: none;
+   background: var(--grid-bg);
+}
+
 /* --- Data cells --- */
 
 td {

@@ -23,8 +23,12 @@
 var ROW_HEIGHT = 23;
 
 // Number of off-screen rows rendered above and below the viewport so the
-// recycler has a buffer to draw from before the next fetch lands.
-var BUFFER_ROWS = 200;
+// recycler has a buffer to draw from before the next fetch lands. Kept modest:
+// every buffered row now also pays for the rendered column window, and 200
+// (the previous value) multiplied the rendered-cell count enough to be a
+// meaningful share of the wide-frame render cost (#17806). Prefetch latency is
+// covered separately by FETCH_SIZE, so this only needs to cover fast scroll.
+var BUFFER_ROWS = 25;
 
 // Default fetch chunk for row requests, sized to comfortably cover the
 // visible window plus the buffer above.
@@ -204,6 +208,18 @@ var pinnedOffsetsCache = null;
 // Current column display order (pinned first, then unpinned), recomputed
 // by rebuildHeaders.
 var columnOrder = [];
+
+// Rendered unpinned column window (columnOrder positions, inclusive). Set by
+// computeColumnWindow from the horizontal scroll position; pinned columns are
+// always rendered and sit outside this range. See "Column virtualization".
+var colWinStart = -1;
+var colWinEnd = -1;
+
+// Header-attached UIs (filter inputs, column-type editors) that must be
+// re-applied whenever a header is (re)created as the column window slides.
+// Keyed by markerClass -> initialize(th, col, colIdx). Populated by
+// setHeaderUIVisible; consumed by reinjectHeaderUI.
+var activeHeaderUIs = {};
 
 // Per-column auto-sized widths in pixels, indexed by column position.
 // Populated by autoSizeColumns; user-driven resizes go to manualWidths
@@ -841,6 +857,213 @@ var isColumnPinned = function(colIdx) {
    return (colIdx === 0 && rowNumbers) || pinnedColumns.has(colIdx);
 };
 
+// ----------------------------------------------------------------------------
+// Column virtualization (client-side only -- the server still sends the full
+// page of columns; this just limits how many cells reach the DOM).
+//
+// Rendering ~200 columns x ~100 visible rows materializes ~20k cells, and the
+// compositor commit for that many cells stalls for seconds (#17806). Mirror
+// the row virtualization horizontally: render the pinned columns (always) plus
+// only the unpinned columns whose x-range intersects the viewport, with a
+// left/right spacer cell standing in for the off-window columns so the table's
+// total width -- and thus the custom horizontal scrollbar -- is unchanged.
+// ----------------------------------------------------------------------------
+
+// Number of extra off-screen columns to keep rendered on each side, so a small
+// horizontal scroll doesn't require an immediate re-render.
+var BUFFER_COLS = 3;
+
+// First unpinned position in columnOrder (pinned columns are all at the front).
+var firstUnpinnedPos = function() {
+   for (var i = 0; i < columnOrder.length; i++) {
+      if (!isColumnPinned(columnOrder[i])) return i;
+   }
+   return columnOrder.length;
+};
+
+// Cumulative left offset (in table content px) of each columnOrder position,
+// from measuredWidths. Returns an array of length columnOrder.length + 1 where
+// entry i is the sum of widths of positions [0, i); the last entry is the
+// total content width. Falls back to an empty result until widths exist.
+var columnOffsets = function() {
+   var offs = [0];
+   for (var i = 0; i < columnOrder.length; i++) {
+      offs.push(offs[i] + (measuredWidths[i] || 0));
+   }
+   return offs;
+};
+
+// Compute the visible unpinned column window for a given horizontal scroll
+// position. Returns columnOrder positions { start, end } (inclusive) covering
+// the unpinned columns whose x-range intersects the viewport plus BUFFER_COLS
+// on each side. Pinned columns are handled separately (always rendered), so
+// start is clamped to the first unpinned position. When widths aren't measured
+// yet, returns the full unpinned range so the grid still renders.
+var getColumnWindow = function(scrollLeft, clientWidth) {
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   if (lastPos < firstUnpinned || measuredWidths.length === 0) {
+      return { start: firstUnpinned, end: lastPos };
+   }
+
+   var offs = columnOffsets();
+   var visLeft = scrollLeft;
+   var visRight = scrollLeft + clientWidth;
+
+   var start = -1, end = -1;
+   for (var i = firstUnpinned; i <= lastPos; i++) {
+      var colLeft = offs[i];
+      var colRight = offs[i + 1];
+      if (colRight > visLeft && colLeft < visRight) {
+         if (start === -1) start = i;
+         end = i;
+      }
+   }
+
+   // Nothing intersected (e.g. scrolled past the end during a transient
+   // layout); fall back to the last column so we never render an empty body.
+   if (start === -1) { start = lastPos; end = lastPos; }
+
+   start = Math.max(firstUnpinned, start - BUFFER_COLS);
+   end = Math.min(lastPos, end + BUFFER_COLS);
+   return { start: start, end: end };
+};
+
+// Recompute the rendered column window from the current horizontal scroll
+// position. Returns true if the window changed (so callers can rebuild).
+var computeColumnWindow = function() {
+   var viewport = document.getElementById("gridViewport");
+   var sl = viewport ? viewport.scrollLeft : 0;
+   var cw = viewport ? viewport.clientWidth : 0;
+   var win = getColumnWindow(sl, cw);
+   var changed = (win.start !== colWinStart || win.end !== colWinEnd);
+   colWinStart = win.start;
+   colWinEnd = win.end;
+   return changed;
+};
+
+// A filler cell standing in for a run of off-window columns. Carries no
+// borders/padding and an explicit width so table-layout: fixed reserves the
+// off-window columns' horizontal space (keeping the table's total width, and
+// thus the custom horizontal scrollbar, unchanged).
+var colSpacerCell = function(tag, widthPx) {
+   var c = document.createElement(tag);
+   c.className = "col-spacer";
+   c.setAttribute("aria-hidden", "true");
+   c.style.width = widthPx + "px";
+   c.style.minWidth = widthPx + "px";
+   c.style.padding = "0";
+   c.style.border = "none";
+   return c;
+};
+
+// Append the windowed cell sequence to `parent`: all pinned cells, a left
+// spacer, the visible column window, and a right spacer. `makeCell(pos)`
+// builds the cell for columnOrder position `pos`. Shared by the header and
+// body so their column structure stays identical (required for table-layout:
+// fixed to keep columns aligned).
+var appendWindowedCells = function(parent, makeCell, spacerTag) {
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+
+   // Pinned columns are always rendered (they're sticky).
+   for (var p = 0; p < firstUnpinned; p++) {
+      parent.appendChild(makeCell(p));
+   }
+   if (firstUnpinned > lastPos) return;
+
+   // Clamp the window to the unpinned range; fall back to the full range if it
+   // hasn't been computed yet so we never render an empty body.
+   var winStart = colWinStart, winEnd = colWinEnd;
+   if (winEnd < winStart || winStart < firstUnpinned || winEnd > lastPos) {
+      winStart = firstUnpinned;
+      winEnd = lastPos;
+   }
+
+   var offs = columnOffsets();
+   var leftW = offs[winStart] - offs[firstUnpinned];
+   if (leftW > 0) parent.appendChild(colSpacerCell(spacerTag, leftW));
+
+   for (var p = winStart; p <= winEnd; p++) {
+      parent.appendChild(makeCell(p));
+   }
+
+   var rightW = offs[lastPos + 1] - offs[winEnd + 1];
+   if (rightW > 0) parent.appendChild(colSpacerCell(spacerTag, rightW));
+};
+
+// Number of cells appendWindowedCells emits per row (pinned + optional left
+// spacer + window + optional right spacer). The vertical spacer row's td must
+// use exactly this as its colSpan: an oversized colspan would force the table
+// to that many columns and break table-layout: fixed width distribution.
+var renderedColumnCount = function() {
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   var count = firstUnpinned; // pinned cells (always rendered)
+   if (firstUnpinned > lastPos) return count || 1;
+
+   var winStart = colWinStart, winEnd = colWinEnd;
+   if (winEnd < winStart || winStart < firstUnpinned || winEnd > lastPos) {
+      winStart = firstUnpinned;
+      winEnd = lastPos;
+   }
+   var offs = columnOffsets();
+   if (offs[winStart] - offs[firstUnpinned] > 0) count++;       // left spacer
+   count += (winEnd - winStart + 1);                            // window cells
+   if (offs[lastPos + 1] - offs[winEnd + 1] > 0) count++;       // right spacer
+   return count || 1;
+};
+
+// Re-apply any active header-attached UIs (filter inputs, column-type editors)
+// to a freshly created header. Needed because the column window destroys and
+// recreates headers as it slides, and that UI lives inside the <th>.
+var reinjectHeaderUI = function(th, colIdx, col) {
+   for (var marker in activeHeaderUIs) {
+      if (!activeHeaderUIs.hasOwnProperty(marker)) continue;
+      var existing = th.querySelectorAll("." + marker);
+      for (var k = 0; k < existing.length; k++) {
+         th.removeChild(existing[k]);
+      }
+      var el = activeHeaderUIs[marker](th, col, colIdx);
+      if (el) {
+         el.classList.add(marker);
+         th.appendChild(el);
+      }
+   }
+};
+
+// Rebuild the header row for the current column window: pinned headers, a left
+// spacer, the windowed headers (with widths + any active header UI), and a
+// right spacer. Cheap to call on every horizontal-window change.
+var rebuildHeaderWindow = function() {
+   var thead = document.getElementById("data_cols");
+   if (!thead || !cols || !columnOrder.length) return;
+
+   thead.innerHTML = "";
+   appendWindowedCells(
+      thead,
+      function(pos) {
+         var colIdx = columnOrder[pos];
+         var th = createHeader(colIdx, cols[colIdx]);
+         if (typeof measuredWidths[pos] === "number") {
+            th.style.width = measuredWidths[pos] + "px";
+         }
+         reinjectHeaderUI(th, colIdx, cols[colIdx]);
+         return th;
+      },
+      "th"
+   );
+   applySortIndicators();
+
+   // Headers are recreated as the window slides, so re-apply the active-header
+   // highlight if its column landed in the new window (the active cell is
+   // re-applied by buildRow).
+   if (activeHeaderCol >= 0 && activeHeaderCol < columnOrder.length) {
+      var activeTh = getHeaderCell(columnOrder[activeHeaderCol]);
+      if (activeTh) activeTh.classList.add("activeHeader");
+   }
+};
+
 var togglePinColumn = function(colIdx) {
    if (pinnedColumns.has(colIdx)) {
       pinnedColumns.delete(colIdx);
@@ -879,29 +1102,11 @@ var rebuildHeaders = function() {
    var thead = document.getElementById("data_cols");
    if (!thead || !cols) return;
 
+   // Recompute the pinned/unpinned order, then let autoSizeColumns rebuild the
+   // windowed header row. Header-attached UI (filters, column types) is
+   // restored by reinjectHeaderUI from activeHeaderUIs, so it survives the
+   // rebuild without the previous reuse-existing-<th> dance.
    columnOrder = getColumnOrder();
-
-   var existing = {};
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      existing[parseInt(th.getAttribute("data-col-idx"), 10)] = th;
-   }
-
-   for (var i = 0; i < columnOrder.length; i++) {
-      var colIdx = columnOrder[i];
-      var th = existing[colIdx] || createHeader(colIdx, cols[colIdx]);
-      thead.appendChild(th);
-      delete existing[colIdx];
-   }
-
-   // Remove any leftover headers whose columns are no longer in columnOrder
-   // (defensive: keeps thead consistent if the visible column set shrinks).
-   for (var leftoverIdx in existing) {
-      if (existing.hasOwnProperty(leftoverIdx)) {
-         thead.removeChild(existing[leftoverIdx]);
-      }
-   }
-
    autoSizeColumns();
    applyPinnedColumns();
 };
@@ -923,15 +1128,16 @@ var getPinnedOffsets = function() {
 
    var offsets = {};
    var cumulative = 0;
-   var thead = document.getElementById("data_cols");
-   if (!thead) return { offsets: offsets, totalWidth: 0 };
 
+   // Derive pinned offsets from measuredWidths rather than reading rendered
+   // <th> offsetWidths: with column virtualization the pinned headers are
+   // always present, but keying off measuredWidths avoids a per-call layout
+   // flush and stays correct regardless of what else is in the DOM.
    for (var i = 0; i < columnOrder.length; i++) {
       var colIdx = columnOrder[i];
       if (!isColumnPinned(colIdx)) break; // pinned columns are all at the front
       offsets[colIdx] = cumulative;
-      var th = thead.children[i];
-      cumulative += th ? th.offsetWidth : 0;
+      cumulative += measuredWidths[i] || 0;
    }
    pinnedOffsetsCache = { offsets: offsets, totalWidth: cumulative };
    return pinnedOffsetsCache;
@@ -952,7 +1158,11 @@ var applyPinnedColumns = function() {
 
    for (var i = 0; i < thead.children.length; i++) {
       var th = thead.children[i];
-      var colIdx = columnOrder[i];
+      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+      // Skip spacer cells (col-spacer): they carry no data-col-idx and are
+      // never pinned. With column virtualization thead.children no longer maps
+      // 1:1 to columnOrder, so read the column index off the header itself.
+      if (isNaN(colIdx)) continue;
       var pinIcon = th.querySelector(".pin-icon");
       var nowPinned = isColumnPinned(colIdx);
 
@@ -986,8 +1196,9 @@ var applyPinnedColumns = function() {
       // columnOrder places pinned columns before unpinned, so the last entry
       // being unpinned is sufficient to confirm an unpinned column exists.
       if (lastIdx >= 0 && !isColumnPinned(columnOrder[lastIdx])) {
-         var lastTh = thead.children[lastIdx];
-         var lastUnpinnedWidth = lastTh ? lastTh.offsetWidth : 0;
+         // The last column may be outside the rendered window; use its
+         // measured width rather than a (possibly absent) rendered <th>.
+         var lastUnpinnedWidth = measuredWidths[lastIdx] || 0;
          overscroll = Math.max(0,
             viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
       }
@@ -1028,7 +1239,9 @@ var avgCharWidth = function() {
 // values, then apply them with table-layout:fixed.
 var autoSizeColumns = function() {
    var thead = document.getElementById("data_cols");
-   if (!thead || !thead.children.length || !cols) return;
+   // Widths are computed from columnOrder + data (below), so headers need not
+   // exist yet -- this is also the path that first builds the windowed header.
+   if (!thead || !cols || !columnOrder.length) return;
 
    // If the viewport isn't visible (e.g. background tab), measurements
    // will be wrong. Flag and bail; onActivate will re-run sizing once the
@@ -1039,7 +1252,6 @@ var autoSizeColumns = function() {
       return;
    }
 
-   var colCount = thead.children.length;
    measuredWidths = [];
    var totalWidth = 0;
 
@@ -1055,10 +1267,14 @@ var autoSizeColumns = function() {
    var PIN_ICON_W    = 15;
    var ROWNAMES_PAD  = 8;
 
-   for (var i = 0; i < colCount; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      if (isNaN(colIdx)) colIdx = i;
+   // Measure from data (col metadata + cached cell values), not from rendered
+   // <th>/<td>. With column virtualization only a window of headers is in the
+   // DOM at a time, so widths must be computable for every column regardless
+   // of what's currently rendered. measuredWidths is indexed by columnOrder
+   // position (same as columnOrder), so the offset/window math and the apply
+   // loop below can both key off it.
+   for (var i = 0; i < columnOrder.length; i++) {
+      var colIdx = columnOrder[i];
       var col = cols[colIdx];
       var isRowNames = (colIdx === 0 && rowNumbers);
       var rowNamesPad = isRowNames ? ROWNAMES_PAD : 0;
@@ -1120,11 +1336,6 @@ var autoSizeColumns = function() {
       totalWidth += w;
    }
 
-   // Apply widths and lock to fixed layout
-   for (var i = 0; i < thead.children.length; i++) {
-      thead.children[i].style.width = measuredWidths[i] + "px";
-   }
-
    var table = document.getElementById("rsGridData");
    if (table) {
       table.style.width = totalWidth + "px";
@@ -1133,6 +1344,12 @@ var autoSizeColumns = function() {
 
    totalTableWidth = totalWidth;
    invalidatePinnedOffsets();
+
+   // Recompute the visible column window against the new widths and (re)build
+   // the windowed header row, which applies per-column widths to the rendered
+   // headers. Widths now exist for every column, so the window is accurate.
+   computeColumnWindow();
+   rebuildHeaderWindow();
 };
 
 // ==========================================================================
@@ -1187,10 +1404,14 @@ var initResizeHandlers = function() {
       saveState();
       // applyResizeDelta updates totalTableWidth on every mousemove but
       // skips applyPinnedColumns/updateCustomScrollbars to avoid jank
-      // (200+ DOM writes plus layout reads per frame). Sync them once at
-      // end of drag so the overscroll padding and scrollbar thumb size
-      // match the new column widths.
+      // (200+ DOM writes plus layout reads per frame). Sync everything once at
+      // end of drag. autoSizeColumns recomputes measuredWidths (honoring the
+      // new manualWidths), which the column-window/offset math depends on, and
+      // rebuilds the windowed header; then refresh rows, pinned offsets, and
+      // the scrollbar thumb to match the new widths.
       if (didResize) {
+         autoSizeColumns();
+         renderVisibleRows(true);
          applyPinnedColumns();
          updateCustomScrollbars();
       }
@@ -1298,22 +1519,33 @@ var createFilterUI = function(idx, col) {
 
    val = document.createElement("div");
    val.textContent = "All";
+
+   var buildTypedUI = function() {
+      if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss);
+      if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss);
+      if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss);
+      if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss);
+      return null;
+   };
+
+   // Swap the "All" placeholder for the typed filter widget and mark the host
+   // filtered. The typed widgets self-render from the cached search value
+   // (createNumericFilterUI calls renderActiveFilter; the text/factor boxes
+   // restore input.value), so this also correctly shows an already-applied
+   // filter -- not just a freshly clicked one.
+   var showFilteredUI = function() {
+      ui = buildTypedUI();
+      if (!ui) return false;
+      ui.classList.add("filterValue");
+      host.replaceChild(ui, val);
+      host.classList.remove("unfiltered");
+      host.classList.add("filtered");
+      clear.style.display = "block";
+      return true;
+   };
+
    val.addEventListener("click", function(evt) {
-      if (col.col_search_type === "numeric") {
-         ui = createNumericFilterUI(idx, col, onDismiss);
-      } else if (col.col_search_type === "factor") {
-         ui = createFactorFilterUI(idx, col, onDismiss);
-      } else if (col.col_search_type === "character") {
-         ui = createTextFilterUI(idx, col, onDismiss);
-      } else if (col.col_search_type === "boolean") {
-         ui = createBooleanFilterUI(idx, col, onDismiss);
-      }
-      if (ui) {
-         ui.classList.add("filterValue");
-         host.replaceChild(ui, val);
-         host.classList.remove("unfiltered");
-         host.classList.add("filtered");
-         clear.style.display = "block";
+      if (showFilteredUI()) {
          ui.dispatchEvent(new MouseEvent("click", { bubbles: true }));
          evt.preventDefault();
          evt.stopPropagation();
@@ -1321,6 +1553,16 @@ var createFilterUI = function(idx, col) {
    });
 
    host.appendChild(val);
+
+   // Restore the filtered display when the column already has an active
+   // filter. With column virtualization a header is destroyed and recreated
+   // as it scrolls out of and back into the window, so without this the widget
+   // would reset to "All" even though the filter is still applied server-side
+   // (#17806).
+   if (getColumnSearch(idx).length > 0) {
+      showFilteredUI();
+   }
+
    return host;
 };
 
@@ -1532,6 +1774,14 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
    var display = document.createElement("span");
    display.innerHTML = "&nbsp;";
    ele.appendChild(display);
+
+   // Restore the active selection so a recreated header (column scrolled back
+   // into view) shows the applied value rather than a blank, matching the
+   // self-rendering numeric/text/factor widgets.
+   var boolSearch = getColumnSearch(idx).split("|");
+   if (boolSearch.length > 1 && boolSearch[0] === "boolean") {
+      display.textContent = boolSearch[1];
+   }
 
    invokeFilterPopup(ele, function(popup) {
       var list = document.createElement("div");
@@ -1775,20 +2025,31 @@ var buildRow = function(r) {
    // so :nth-child would flip the stripe pattern as the window slides.
    if (r % 2 === 1) tr.classList.add("odd-row");
 
-   for (var c = 0; c < columnOrder.length; c++) {
-      var colIdx = columnOrder[c];
-      var clazz = getColClass(cols[colIdx]);
-      var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
-      td.setAttribute("role", "gridcell");
-      if (r === activeRow && c === activeCol) {
-         td.classList.add("activeCell");
-         // Stable id so the viewport's aria-activedescendant can refer
-         // to this cell. Re-applied here because rows are recreated
-         // when they scroll back into view.
-         td.id = activeCellId(r, c);
-      }
-      tr.appendChild(td);
-   }
+   // Render only the pinned columns plus the visible column window (with
+   // left/right spacers for the rest) -- see "Column virtualization". `pos`
+   // is the columnOrder position, matching activeCol's coordinate space.
+   appendWindowedCells(
+      tr,
+      function(pos) {
+         var colIdx = columnOrder[pos];
+         var clazz = getColClass(cols[colIdx]);
+         var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
+         td.setAttribute("role", "gridcell");
+         // Record the columnOrder position so click handling can map a cell
+         // back to its column without relying on DOM position (spacer cells
+         // make tr.children non-1:1 with columnOrder).
+         td.setAttribute("data-col-pos", pos);
+         if (r === activeRow && pos === activeCol) {
+            td.classList.add("activeCell");
+            // Stable id so the viewport's aria-activedescendant can refer
+            // to this cell. Re-applied here because rows are recreated
+            // when they scroll back into view.
+            td.id = activeCellId(r, pos);
+         }
+         return td;
+      },
+      "td"
+   );
 
    return tr;
 };
@@ -1864,7 +2125,9 @@ var renderVisibleRows = function(forceRebuild) {
    // Recompute pinned offsets for data cells
    cachedPinnedOffsets = getPinnedOffsets().offsets;
 
-   var colSpan = columnOrder.length || 1;
+   // Spacer rows span exactly the windowed cell count (pinned + spacers +
+   // window), not the full column count -- see renderedColumnCount.
+   var colSpan = renderedColumnCount();
 
    // --- Full rebuild (force, or no existing spacers) ---
    if (forceRebuild || !topSpacerRow || !bottomSpacerRow) {
@@ -1981,7 +2244,16 @@ var onScroll = function() {
       if (!viewport) return;
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
-      renderVisibleRows();
+      // Horizontal scroll may slide the column window; when it does, rebuild
+      // the header for the new window and force a full row rebuild (existing
+      // rows carry the old window's cells). Vertical-only scroll keeps the
+      // cheap incremental row path.
+      var colsChanged = computeColumnWindow();
+      if (colsChanged) {
+         rebuildHeaderWindow();
+         applyPinnedColumns();
+      }
+      renderVisibleRows(colsChanged);
       debouncedInfoBar();
    });
 };
@@ -2012,7 +2284,12 @@ var onScrollEnd = function() {
    if (!viewport) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
-   renderVisibleRows();
+   var colsChanged = computeColumnWindow();
+   if (colsChanged) {
+      rebuildHeaderWindow();
+      applyPinnedColumns();
+   }
+   renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
 };
@@ -2531,32 +2808,41 @@ var scrollToColumn = function(colIdx) {
    var thead = document.getElementById("data_cols");
    if (!viewport || !thead) return;
 
-   var th = getHeaderCell(colIdx);
-   if (!th) return;
-
-   // Scroll horizontally so the column is visible
-   var colLeft = th.offsetLeft;
-   var colWidth = th.offsetWidth;
+   // The target header may be outside the current column window (so not in the
+   // DOM); derive its geometry from measuredWidths instead of a rendered <th>.
+   var pos = columnOrder.indexOf(colIdx);
+   if (pos < 0) return;
+   var offs = columnOffsets();
+   var colLeft = offs[pos];
+   var colWidth = measuredWidths[pos] || 0;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
 
-   // Account for pinned column width
-   var pinnedWidth = 0;
-   if (rowNumbers && thead.children[0]) {
-      pinnedWidth = thead.children[0].offsetWidth;
-   }
+   // Account for the sticky pinned columns occluding the left edge.
+   var pinnedWidth = getPinnedOffsets().totalWidth;
 
    if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = colLeft - pinnedWidth;
+      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
       viewport.scrollLeft = colLeft + colWidth - viewWidth;
    }
 
-   // Briefly highlight the column header
-   th.classList.add("highlight-flash");
-   setTimeout(function() {
-      th.classList.remove("highlight-flash");
-   }, TIMING.columnFlash);
+   // Bring the new window into the DOM synchronously so the header exists to
+   // flash (the scroll event's re-window is async via requestAnimationFrame).
+   if (computeColumnWindow()) {
+      rebuildHeaderWindow();
+      applyPinnedColumns();
+      renderVisibleRows(true);
+   }
+
+   // Briefly highlight the column header (if it's now rendered).
+   var th = getHeaderCell(colIdx);
+   if (th) {
+      th.classList.add("highlight-flash");
+      setTimeout(function() {
+         th.classList.remove("highlight-flash");
+      }, TIMING.columnFlash);
+   }
 };
 
 // ==========================================================================
@@ -2573,7 +2859,11 @@ var getActiveCellTd = function() {
    if (activeRow < 0 || activeCol < 0) return null;
    var tr = renderedRowElements.get(activeRow);
    if (!tr) return null;
-   return tr.children[activeCol] || null;
+   // Can't index by activeCol: tr.children is the windowed cell set (pinned +
+   // spacers + window), not 1:1 with columnOrder. The active cell carries a
+   // stable id, so look it up by that. Returns null when the column is outside
+   // the rendered window (caller handles the absent case).
+   return tr.querySelector("#" + activeCellId(activeRow, activeCol));
 };
 
 var activeCellId = function(row, col) {
@@ -2582,9 +2872,9 @@ var activeCellId = function(row, col) {
 
 var getActiveHeaderTh = function() {
    if (activeHeaderCol < 0) return null;
-   var thead = document.getElementById("data_cols");
-   if (!thead) return null;
-   return thead.children[activeHeaderCol] || null;
+   // activeHeaderCol is a columnOrder position; resolve to the rendered <th>
+   // by its column index (may be null if outside the column window).
+   return getHeaderCell(columnOrder[activeHeaderCol]);
 };
 
 // Mirror the active descendant on the viewport so screen readers can
@@ -2643,27 +2933,27 @@ var ensureActiveCellVisible = function() {
       viewport.scrollTop = rowBottom - viewport.clientHeight;
    }
 
-   // Horizontal: header cells share widths with body cells, and headers
-   // are always rendered, so the header at the same display index gives
-   // an accurate offsetLeft/offsetWidth even when the body row isn't
-   // rendered yet.
-   var thead = document.getElementById("data_cols");
-   if (!thead) return;
-   var th = thead.children[activeCol];
-   if (!th) return;
-
-   var pinnedWidth = 0;
-   if (rowNumbers && thead.children[0]) {
-      pinnedWidth = thead.children[0].offsetWidth;
-   }
-   var colLeft = th.offsetLeft;
-   var colWidth = th.offsetWidth;
+   // Horizontal: the active column may be outside the rendered column window,
+   // so derive its geometry from measuredWidths rather than a rendered <th>.
+   if (activeCol < 0 || activeCol >= columnOrder.length) return;
+   var offs = columnOffsets();
+   var colLeft = offs[activeCol];
+   var colWidth = measuredWidths[activeCol] || 0;
+   var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
    if (colLeft < viewLeft + pinnedWidth) {
       viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
       viewport.scrollLeft = colLeft + colWidth - viewWidth;
+   }
+
+   // Bring the (possibly new) column window into the DOM synchronously so the
+   // active cell is rendered for the caller to mark and for screen readers.
+   if (computeColumnWindow()) {
+      rebuildHeaderWindow();
+      applyPinnedColumns();
+      renderVisibleRows(true);
    }
 };
 
@@ -2723,23 +3013,26 @@ var setActiveCell = function(row, col) {
 var ensureActiveHeaderVisible = function() {
    var viewport = document.getElementById("gridViewport");
    if (!viewport) return;
-   var thead = document.getElementById("data_cols");
-   if (!thead) return;
-   var th = thead.children[activeHeaderCol];
-   if (!th) return;
+   if (activeHeaderCol < 0 || activeHeaderCol >= columnOrder.length) return;
 
-   var pinnedWidth = 0;
-   if (rowNumbers && thead.children[0]) {
-      pinnedWidth = thead.children[0].offsetWidth;
-   }
-   var colLeft = th.offsetLeft;
-   var colWidth = th.offsetWidth;
+   // The active header may be outside the rendered window; derive geometry
+   // from measuredWidths rather than a rendered <th>.
+   var offs = columnOffsets();
+   var colLeft = offs[activeHeaderCol];
+   var colWidth = measuredWidths[activeHeaderCol] || 0;
+   var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
    if (colLeft < viewLeft + pinnedWidth) {
       viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
       viewport.scrollLeft = colLeft + colWidth - viewWidth;
+   }
+
+   if (computeColumnWindow()) {
+      rebuildHeaderWindow();
+      applyPinnedColumns();
+      renderVisibleRows(true);
    }
 };
 
@@ -2953,11 +3246,11 @@ var onGridCellClick = function(evt) {
    var row = parseInt(tr.getAttribute("data-row"), 10);
    if (isNaN(row)) return;
 
-   var col = -1;
-   for (var i = 0; i < tr.children.length; i++) {
-      if (tr.children[i] === td) { col = i; break; }
-   }
-   if (col < 0) return;
+   // The cell carries its columnOrder position (data-col-pos); spacer cells
+   // have none. Don't derive it from DOM position -- spacers make tr.children
+   // non-1:1 with columnOrder.
+   var col = parseInt(td.getAttribute("data-col-pos"), 10);
+   if (isNaN(col)) return;
 
    setActiveCell(row, col);
 
@@ -3315,16 +3608,15 @@ var initGrid = function(resCols, data) {
    // order is correct) and before fetchRows (so sort/filters are sent).
    applySavedState(savedState);
 
-   // Build headers (pinned columns first, then unpinned)
+   // Build headers (pinned columns first, then unpinned). autoSizeColumns
+   // computes per-column widths from data, picks the initial column window,
+   // and builds the windowed header row (applying widths + sort indicators).
+   // It re-runs after the first row fetch below to refine widths with real
+   // cell values.
    columnOrder = getColumnOrder();
    var thead = document.getElementById("data_cols");
    thead.innerHTML = "";
-
-   for (var c = 0; c < columnOrder.length; c++) {
-      var colIdx = columnOrder[c];
-      thead.appendChild(createHeader(colIdx, cols[colIdx]));
-   }
-   applySortIndicators();
+   autoSizeColumns();
 
    // Initialize sidebar
    initSidebar();
@@ -3448,6 +3740,8 @@ var resetGridState = function() {
    // Render window
    renderStart = 0;
    renderEnd = 0;
+   colWinStart = -1;
+   colWinEnd = -1;
    renderedRowElements.clear();
    topSpacerRow = null;
    bottomSpacerRow = null;
@@ -3642,8 +3936,10 @@ var applySortIndicators = function() {
    if (!thead) return;
    for (var i = 0; i < thead.children.length; i++) {
       var th = thead.children[i];
-      th.classList.remove("sorting", "sorting_asc", "sorting_desc");
       var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+      // Skip spacer cells (col-spacer) that stand in for off-window columns.
+      if (isNaN(colIdx)) continue;
+      th.classList.remove("sorting", "sorting_asc", "sorting_desc");
       if (colIdx === sortColumn && sortDirection) {
          th.classList.add("sorting_" + sortDirection);
       } else {
@@ -3723,6 +4019,15 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
       return false;
    }
 
+   // Remember (or forget) this UI so reinjectHeaderUI re-applies it to headers
+   // created as the column window slides. Without this, scrolling would drop
+   // the filter/column-type widgets from newly rendered headers.
+   if (visible) {
+      activeHeaderUIs[markerClass] = initialize;
+   } else {
+      delete activeHeaderUIs[markerClass];
+   }
+
    if (!visible && hide) {
       hide(thead);
       if (dismissActivePopup) dismissActivePopup(true);
@@ -3731,6 +4036,9 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
    for (var i = 0; i < thead.children.length; i++) {
       var th = thead.children[i];
       var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+      // Skip spacer cells (col-spacer), which stand in for off-window columns
+      // and carry no data-col-idx.
+      if (isNaN(colIdx)) continue;
       var col = cols[colIdx];
 
       // Always strip any existing instances of this marker first so

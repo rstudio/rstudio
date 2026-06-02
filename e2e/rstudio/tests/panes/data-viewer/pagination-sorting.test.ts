@@ -98,26 +98,31 @@ test.describe('Data Viewer', () => {
   // Sorting
   // -----------------------------------------------------------------------
   test('column sorting - descending order', async () => {
+    // This test exercises sorting in a wide frame with the summary panel
+    // active, so keep the 500 columns -- but only a handful of rows. A large
+    // row count adds no coverage here (sorting touches a single visible
+    // column) while making the server-side summary and initial render slower.
     await consoleActions.executeInConsole(
-      'df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))',
+      'df <- data.frame(matrix(1:50000, nrow=100, ncol=500))',
       { wait: true },
     );
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
 
-    // First row cells: [rowNum, X1, X2, X3, ...] -- X2 is td:nth-child(3).
-    // tbody starts with a virtual-scroll spacer row; select the first data
-    // row by its data-row attribute instead of :first-child.
+    // matrix() fills column-major, so X2 holds 101..200. First row cells are
+    // [rowNum, X1, X2, X3, ...] -- X2 is td:nth-child(3). tbody starts with a
+    // virtual-scroll spacer row; select the first data row by its data-row
+    // attribute instead of :first-child.
     const firstRowX2 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(3)');
-    await expect(firstRowX2).toContainText('100001');
+    await expect(firstRowX2).toContainText('101');
 
     // Click column 2 header twice for descending sort
     await dataViewer.columnHeader(2).click();
     await dataViewer.columnHeader(2).click();
 
-    // After descending sort, first row of X2 should be 200000 (max value)
-    await expect(firstRowX2).toContainText('200000');
+    // After descending sort, first row of X2 should be 200 (max value)
+    await expect(firstRowX2).toContainText('200');
   });
 
   // -----------------------------------------------------------------------

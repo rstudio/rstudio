@@ -18,7 +18,7 @@
 - ([#17225](https://github.com/rstudio/rstudio/issues/17225)): Fix duplicate entries appearing in the recent projects list when the same project was recorded under both aliased (`~/...`) and absolute path forms.
 - ([#17777](https://github.com/rstudio/rstudio/issues/17777)): Fix "Import Dataset" from the Environment pane failing with "could not find function '.rs.digest'" when previewing a CSV (or other readr/readxl/haven source).
 - ([#17800](https://github.com/rstudio/rstudio/issues/17800)): Fix the data viewer's horizontal scrollbar staying hidden after returning to the tab, and fix Ctrl+C/Cmd+C copying only the active cell instead of the user's multi-cell text selection.
-- ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Fix the data viewer becoming slow to open, scroll, and search when the summary panel is shown, especially for data frames with many numeric columns.
+- ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Fix the data viewer becoming slow to open, scroll, and search -- and freezing for several seconds when opening very wide data frames -- when there are many columns or the summary panel is shown. The grid now renders only the rows and columns currently in view.
 
 ### Dependencies
 - Ace 1.43.5
