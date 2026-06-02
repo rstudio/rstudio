@@ -9,9 +9,12 @@ name: "Cache: Seed macOS 26 ARM64 build caches"
 # via the restore-keys prefixes (rstudio-tools-arm64-, etc.). Without this,
 # every new PR branch starts 100% cold on its first build.
 on:
-  # Re-seed when the dependency scripts / lockfiles change -- those feed the
-  # rstudio-tools and R-libs cache keys, so a change there invalidates the
-  # existing main cache and a fresh one needs to be saved.
+  # Re-seed when files under dependencies/ change. This glob is deliberately a
+  # broad superset of the exact hashFiles() patterns that feed the cache keys
+  # (see the build workflow), so the trigger paths don't have to stay in
+  # lockstep with those patterns. Most edits here re-run the seed without
+  # changing any key (a no-op refresh); an edit that touches one of the hashed
+  # files additionally rotates the affected key, saving a fresh cache on main.
   push:
     branches: [main]
     paths:

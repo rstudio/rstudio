@@ -179,11 +179,17 @@ jobs:
       # tar (not zip) to preserve symlinks and executable permissions in the
       # bundle. upload-artifact would otherwise zip the directory tree itself
       # and break codesigned binaries on the way back out.
+      #
+      # Skipped in build_only (seed) runs: no e2e job consumes the artifact
+      # there, so packaging and uploading it would be pure waste (a large
+      # artifact produced and retained on every nightly seed for nothing).
       - name: Package RStudio.app
+        if: inputs.build_only != true
         working-directory: package/osx/install
         run: tar -czf "${{ github.workspace }}/RStudio.app.tar.gz" RStudio.app
 
       - name: Upload RStudio.app artifact
+        if: inputs.build_only != true
         uses: actions/upload-artifact@v4
         with:
           name: rstudio-app-macos-arm64
