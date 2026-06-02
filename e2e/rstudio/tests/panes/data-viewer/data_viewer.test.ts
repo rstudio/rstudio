@@ -122,11 +122,24 @@ test.describe('Data Viewer', () => {
     const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
     await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
-    // Apply a text filter to column 1: click to reveal the input, then type.
-    // keyboard.type fires keyup (which the filter box listens for); fill()
-    // would not trigger the search.
-    await col1Filter.getByText('All').click();
-    await page.keyboard.type('a');
+    // Apply a text filter to column 1. The text filter auto-dismisses (its
+    // input reverts to "All") if the input blurs while still empty, so the
+    // open-and-type has to land as a unit -- a timing hiccup between clicking
+    // "All" and the keystroke arriving closes the editor and removes the
+    // input. Retry the whole open-and-type until the value sticks. Typing
+    // through the input locator (not page.keyboard) avoids a separate
+    // focus race, and pressSequentially fires real keyup, which the filter
+    // listens for (fill() would not trigger the search).
+    const filterInput = dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox');
+    const allLabel = col1Filter.getByText('All');
+    await expect(async () => {
+      if ((await filterInput.inputValue().catch(() => '')) === 'a') return;
+      if (await allLabel.isVisible().catch(() => false)) await allLabel.click();
+      await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+      await filterInput.fill('');
+      await filterInput.pressSequentially('a');
+      await expect(filterInput).toHaveValue('a', { timeout: 2000 });
+    }).toPass({ timeout: TIMEOUTS.fileOpen });
 
     // Confirm the filter actually applied -- the info bar gains the
     // "filtered from" suffix once the debounced search round-trips.
@@ -144,8 +157,8 @@ test.describe('Data Viewer', () => {
     await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
     await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     await expect(col1Filter).toHaveClass(/filtered/);
-    await expect(dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox'))
-      .toHaveValue('a');
+    // filterInput is a lazy locator, so it re-resolves to the recreated input.
+    await expect(filterInput).toHaveValue('a');
   });
 
   test('sort headers cycle through asc, desc, and unsorted', async () => {
