@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, ReporterDescription } from '@playwright/test';
 import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
@@ -98,6 +98,32 @@ const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
   .filter(Boolean);
 
+// Reporters common to every environment. The HTML report is also uploaded as
+// a CI artifact (view locally with `npx playwright show-report`).
+const reporters: ReporterDescription[] = [
+  ['html'],
+  ['list'],
+  ['./fixtures/sandbox-reporter.ts'],
+];
+
+// On CI, add the 'github' reporter so failures are annotated inline on the
+// pull request at the failing file/line.
+if (process.env.CI)
+  reporters.unshift(['github']);
+
+// On GitHub Actions, also render a results table on the workflow run's Summary
+// page. This reporter writes to $GITHUB_STEP_SUMMARY, so test results are
+// viewable online directly from the run page without downloading and unzipping
+// the HTML report artifact. useDetails collapses the (potentially large) table
+// behind a disclosure so the summary stays scannable; showError inlines the
+// failure message for each failing test.
+if (process.env.GITHUB_ACTIONS)
+  reporters.unshift(['@estruyf/github-actions-reporter', {
+    title: 'RStudio Playwright Results',
+    useDetails: true,
+    showError: true,
+  }]);
+
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
@@ -108,11 +134,7 @@ export default defineConfig<{}, ProjectOptions>({
   // ready under cold disk caches on a fresh runner) can otherwise turn
   // the whole suite red. One retry absorbs that without rerunning by hand.
   retries: process.env.CI ? 1 : 0,
-  // On CI, add the 'github' reporter so failures are annotated inline on the
-  // pull request at the failing file/line.
-  reporter: process.env.CI
-    ? [['github'], ['html'], ['list'], ['./fixtures/sandbox-reporter.ts']]
-    : [['html'], ['list'], ['./fixtures/sandbox-reporter.ts']],
+  reporter: reporters,
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',
   use: {
