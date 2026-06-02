@@ -21,6 +21,7 @@ import debounce from 'lodash/debounce';
 import { EventEmitter } from 'stream';
 import { URL } from 'url';
 import { logger } from '../core/logger';
+import { getenv } from '../core/environment';
 import { appState, getEventBus } from './app-state';
 import { showContextMenu } from './context-menu';
 import { MainWindow } from './main-window';
@@ -194,8 +195,13 @@ export class DesktopBrowserWindow extends EventEmitter {
         });
       }
 
-      // Uncomment to have all windows show dev tools by default
-      // this.window.webContents.openDevTools();
+      // Open dev tools automatically when RSTUDIO_OPEN_DEVTOOLS is set. Used
+      // by the Playwright debug harness (waitForUserConsoleInput) to arm the
+      // renderer's Performance profiler before a test drives its scenario.
+      // Detached so the DevTools window doesn't reshape the app window layout.
+      if (getenv('RSTUDIO_OPEN_DEVTOOLS') === '1') {
+        this.window.webContents.openDevTools({ mode: 'detach' });
+      }
     }
 
     // register context menu (right click) handler

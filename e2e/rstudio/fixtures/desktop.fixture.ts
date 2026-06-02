@@ -10,6 +10,7 @@ import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
+import { isDebugMode } from '../utils/debug';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
@@ -358,6 +359,10 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
       RSTUDIO_DATA_HOME: sharedDataHome(),
       RSTUDIO_DISABLE_WHATS_NEW: '1',
+      // Under PW_DEBUG, have the launched app open Chromium DevTools on
+      // startup so the renderer's Performance profiler is ready before
+      // waitForUserConsoleInput resumes the test.
+      ...(isDebugMode() ? { RSTUDIO_OPEN_DEVTOOLS: '1' } : {}),
       // Suppress the Electron splash screen during automation; otherwise CDP
       // can grab the splash window before the main app loads (see the
       // automation-bridge poll loop below).

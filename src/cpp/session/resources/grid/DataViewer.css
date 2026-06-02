@@ -87,6 +87,13 @@ html, body {
    flex: 1;
    overflow: auto;
    position: relative;
+   /* Establish a paint/layout containment boundary so the frequent DOM
+      churn from virtual scrolling (spacer-height changes, row add/remove)
+      stays local to this element and does not invalidate the root layer --
+      which would otherwise force the summary sidebar (and its sparklines)
+      to repaint on every scroll frame (#17806). Filter popups are attached
+      to document.body, so they are unaffected by this clip. */
+   contain: layout paint;
    /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
    scrollbar-width: none;                /* Firefox */
    /* Suppress the rubber-band/bounce effect at the scroll boundary; the table
@@ -144,6 +151,19 @@ tbody tr.spacer-row:hover td {
          color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
          color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
       );
+}
+
+/* Column-virtualization spacer cells: stand in for the horizontal space of
+   off-window columns. They must stay visually inert -- no borders, padding,
+   hover, or stripe -- so the gap they occupy reads as empty grid, and they
+   must never win the :not(.first-child) hover/stripe rules below. */
+td.col-spacer,
+th.col-spacer,
+tbody tr:hover td.col-spacer,
+tbody tr.odd-row td.col-spacer {
+   padding: 0;
+   border: none;
+   background: var(--grid-bg);
 }
 
 /* --- Data cells --- */
@@ -697,6 +717,10 @@ th.columnClickable div {
    flex: 1;
    overflow-y: auto;
    overflow-x: hidden;
+   /* Paint/layout containment boundary (see #gridViewport): keeps the
+      sidebar's sparklines off the root layer so a grid scroll cannot
+      trigger their repaint (#17806). */
+   contain: layout paint;
    /* Hide native scrollbar -- a custom floating one is rendered inside
       #sidebarPanel by attachSidebarScrollbar. */
    scrollbar-width: none;                /* Firefox */
@@ -749,7 +773,7 @@ th.columnClickable div {
    margin-top: 3px;
 }
 
-.sidebar-sparkline svg {
+.sidebar-sparkline canvas {
    display: block;
    width: 100%;
    height: 24px;
@@ -757,15 +781,6 @@ th.columnClickable div {
 
 .sparkline-wrapper {
    position: relative;
-}
-
-.sparkline-bar {
-   fill: var(--grid-focus-border);
-   opacity: 0.6;
-}
-
-.sparkline-bar:hover {
-   opacity: 1;
 }
 
 .sparkline-tooltip {
