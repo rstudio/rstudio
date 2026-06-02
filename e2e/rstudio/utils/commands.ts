@@ -146,6 +146,16 @@ type DialogsBridge = {
   dismissAll(): void;
 };
 
+type LayoutBridge = {
+  /**
+   * End any active pane/window or column zoom, restoring the default layout;
+   * a no-op when nothing is zoomed. The returned Promise resolves once the
+   * relayout has settled (the restore flushes on a later animation frame even
+   * under reduced_motion).
+   */
+  reset(): Promise<void>;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
@@ -153,6 +163,7 @@ type RStudioBridge = {
   project: ProjectInfo;
   version: VersionInfo;
   dialogs: DialogsBridge;
+  layout: LayoutBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -224,6 +235,28 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
       throw new Error(`Unknown command: ${id}`);
     return cmd.isEnabled();
   }, commandId);
+}
+
+/**
+ * End any active pane/column zoom, restoring the default layout.
+ *
+ * The automation session is worker-scoped, so a test that zooms a pane (e.g.
+ * layoutZoomEnvironment) and fails before toggling it back off leaves the
+ * layout maximized -- which squeezes every other pane to near-zero and makes
+ * the next test's targets unclickable / invisible. This breaks the cascade by
+ * ending any active zoom.
+ *
+ * Delegates to the GWT bridge (window.rstudio.layout.reset), which decides
+ * based on the live PaneManager state: it un-zooms only when something is
+ * actually zoomed (so a non-zoomed layout keeps its column widths) and covers
+ * both pane/window zoom and column zoom. The bridge returns a Promise that
+ * resolves once the relayout has settled (the restore flushes on a later
+ * animation frame even under reduced_motion), so awaiting this leaves the
+ * layout stable before the caller measures or clicks panes. A no-op when the
+ * bridge is absent.
+ */
+export async function resetLayoutZoom(page: Page): Promise<void> {
+  await page.evaluate(() => window.rstudio?.layout?.reset());
 }
 
 /**
