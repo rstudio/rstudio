@@ -17,8 +17,10 @@
 - ([#17768](https://github.com/rstudio/rstudio/issues/17768)): Handle the ANSI cursor-movement escape sequences cursor-up (CSI A), cursor-down (CSI B), cursor-next-line (CSI E), cursor-previous-line (CSI F), and cursor-horizontal-absolute (CSI G) in the console so that multiple `cli` progress bars render on separate lines instead of overwriting each other.
 - ([#17225](https://github.com/rstudio/rstudio/issues/17225)): Fix duplicate entries appearing in the recent projects list when the same project was recorded under both aliased (`~/...`) and absolute path forms.
 - ([#17777](https://github.com/rstudio/rstudio/issues/17777)): Fix "Import Dataset" from the Environment pane failing with "could not find function '.rs.digest'" when previewing a CSV (or other readr/readxl/haven source).
+- ([#3798](https://github.com/rstudio/rstudio/issues/3798)): The Windows terminal now uses the native Windows pseudoconsole (ConPTY) instead of the legacy winpty library, improving Ctrl+C handling in console programs.
 - ([#17800](https://github.com/rstudio/rstudio/issues/17800)): Fix the data viewer's horizontal scrollbar staying hidden after returning to the tab, and fix Ctrl+C/Cmd+C copying only the active cell instead of the user's multi-cell text selection.
 - ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Fix the data viewer becoming slow to open, scroll, and search -- and freezing for several seconds when opening very wide data frames -- when there are many columns or the summary panel is shown. The grid now renders only the rows and columns currently in view.
+- ([#17278](https://github.com/rstudio/rstudio/issues/17278)): Fix a `data.table` returned invisibly from a `:=` update (e.g. `dt[, x := y]`) being auto-printed in notebook chunks, when its output should be suppressed as it is in the console.
 - ([#17810](https://github.com/rstudio/rstudio/issues/17810)): Fix the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.
 
 ### Dependencies

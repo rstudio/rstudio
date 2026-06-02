@@ -14,9 +14,7 @@
  */
 
 #include "ChildProcessSubprocPoll.hpp"
-#include "Win32Pty.hpp"
-
-#include <iostream>
+#include "Win32ConPty.hpp"
 
 #include <windows.h>
 #include <Shlwapi.h>
@@ -166,6 +164,29 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
    return Success();
 }
 
+// Non-blocking read of whatever bytes are currently available on a pipe.
+// Used by the non-PTY path.
+Error readPipeAvailable(HANDLE hPipe, std::string* pOutput)
+{
+   DWORD dwAvail = 0;
+   if (!::PeekNamedPipe(hPipe, nullptr, 0, nullptr, &dwAvail, nullptr))
+   {
+      DWORD lastErr = ::GetLastError();
+      if (lastErr == ERROR_BROKEN_PIPE)
+         return Success();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
+   if (dwAvail == 0)
+      return Success();
+
+   DWORD nBytesRead = 0;
+   std::vector<char> buffer(dwAvail, 0);
+   if (!::ReadFile(hPipe, buffer.data(), dwAvail, &nBytesRead, nullptr))
+      return LAST_SYSTEM_ERROR();
+   pOutput->append(buffer.data(), nBytesRead);
+   return Success();
+}
+
 } // anonymous namespace
 
 struct ChildProcess::Impl
@@ -201,7 +222,7 @@ public:
    PidType pid;
    char ctrlC;
    bool terminated;
-   WinPty pty;
+   ConPty pty;
 
 };
 
@@ -252,35 +273,34 @@ ChildProcess::~ChildProcess()
 
 Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
-   // write synchronously to the pipe
-   if (!input.empty())
+   if (options().pseudoterminal)
    {
-      if (options().pseudoterminal)
+      if (!input.empty())
       {
-         Error error = WinPty::writeToPty(pImpl_->hStdInWrite, input);
+         Error error = pImpl_->pty.writeInput(input);
          if (error)
             return error;
       }
-      else
-      {
-         DWORD dwWritten;
-         BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                                     input.data(),
-                                     static_cast<DWORD>(input.length()),
-                                     &dwWritten,
-                                     nullptr);
-         if (!bSuccess)
-         {
-            return LAST_SYSTEM_ERROR();
-         }
-      }
+      if (eof)
+         return pImpl_->pty.closeInput();
+      return Success();
    }
 
-   // close pipe if requested
+   // non-pseudoterminal (anonymous pipe) path -- unchanged behavior
+   if (!input.empty())
+   {
+      DWORD dwWritten;
+      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                  input.data(),
+                                  static_cast<DWORD>(input.length()),
+                                  &dwWritten,
+                                  nullptr);
+      if (!bSuccess)
+         return LAST_SYSTEM_ERROR();
+   }
    if (eof)
       return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
-   else
-      return Success();
+   return Success();
 }
 
 Error ChildProcess::ptySetSize(int cols, int rows)
@@ -388,18 +408,12 @@ Error ChildProcess::run()
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
 
-   // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
+   // pseudoterminal mode: use ConPTY to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      error = pImpl_->pty.start(exe_, args_, options_,
-                               &pImpl_->hStdInWrite,
-                               &pImpl_->hStdOutRead,
-                               &pImpl_->hStdErrRead,
-                               &pImpl_->hProcess);
+      error = pImpl_->pty.start(exe_, args_, options_, &pImpl_->hProcess);
       if (!error)
-      {
          pImpl_->pid = ::GetProcessId(pImpl_->hProcess);
-      }
       return error;
    }
 
@@ -794,30 +808,41 @@ void AsyncChildProcess::poll()
 
    bool hasRecentOutput = false;
 
-   // check stdout
-   if (pImpl_->hStdOutRead)
+   if (options().pseudoterminal)
    {
-      std::string stdOut;
-      Error error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
+      // ConPTY: single merged VT output stream
+      std::string out;
+      Error error = pImpl_->pty.readOutput(&out);
       if (error)
          reportError(error);
-
-      if (!stdOut.empty() && callbacks_.onStdout)
-         callbacks_.onStdout(*this, stdOut);
-   }
-
-   // check stderr
-   if (pImpl_->hStdErrRead)
-   {
-      std::string stdErr;
-      Error error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
-      if (error)
-         reportError(error);
-
-      if (!stdErr.empty() && callbacks_.onStderr)
+      if (!out.empty() && callbacks_.onStdout)
       {
          hasRecentOutput = true;
-         callbacks_.onStderr(*this, stdErr);
+         callbacks_.onStdout(*this, out);
+      }
+   }
+   else
+   {
+      if (pImpl_->hStdOutRead)
+      {
+         std::string stdOut;
+         Error error = readPipeAvailable(pImpl_->hStdOutRead, &stdOut);
+         if (error)
+            reportError(error);
+         if (!stdOut.empty() && callbacks_.onStdout)
+            callbacks_.onStdout(*this, stdOut);
+      }
+      if (pImpl_->hStdErrRead)
+      {
+         std::string stdErr;
+         Error error = readPipeAvailable(pImpl_->hStdErrRead, &stdErr);
+         if (error)
+            reportError(error);
+         if (!stdErr.empty() && callbacks_.onStderr)
+         {
+            hasRecentOutput = true;
+            callbacks_.onStderr(*this, stdErr);
+         }
       }
    }
 
@@ -859,48 +884,72 @@ void AsyncChildProcess::poll()
          LOG_ERROR(error);
       }
 
-      // read all remaining stdout, stderr -- use threads to avoid unexpected
-      // cases where reading from a handle on Windows can block
-      std::string stdOut, stdErr;
-
-      auto readStdOutThread = core::thread::run([&]()
+      if (options().pseudoterminal)
       {
-         if (pImpl_->hStdOutRead)
+         // This branch runs only after WaitForSingleObject(hProcess) showed the
+         // child already exited, so the only output left is what is already in the
+         // OS output pipe buffer (tens of KB) -- far below kOutHighWater. The
+         // top-of-tick steady-state read above already drained the bulk; stop()
+         // then wakes the reader to drain ConPTY's final frame (no re-pause) and
+         // joins it. So normal-exit output is not truncated. (Truncation can only
+         // occur on terminal *close* with a live, noisy child via ~ConPty -> stop,
+         // where the buffer is being discarded anyway.)
+         pImpl_->pty.stop();
+         std::string out;
+         Error error = pImpl_->pty.readOutput(&out);
+         if (error)
+            reportError(error);
+         if (!out.empty() && callbacks_.onStdout)
          {
-            std::string stdOut;
-            Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
-            if (error)
-               reportError(error);
+            hasRecentOutput = true;
+            callbacks_.onStdout(*this, out);
          }
-      });
-
-      auto readStdErrThread = core::thread::run([&]()
-      {
-         // read all remaining stderr
-         if (pImpl_->hStdErrRead)
-         {
-            Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
-            if (error)
-               reportError(error);
-         }
-      });
-
-      if (readStdOutThread.joinable())
-         readStdOutThread.timed_join(boost::posix_time::seconds(1));
-
-      if (readStdErrThread.joinable())
-         readStdErrThread.timed_join(boost::posix_time::seconds(1));
-
-      if (!stdOut.empty() && callbacks_.onStdout)
-      {
-         hasRecentOutput = true;
-         callbacks_.onStdout(*this, stdOut);
       }
-
-      if (!stdErr.empty() && callbacks_.onStderr)
+      else
       {
-         hasRecentOutput = true;
-         callbacks_.onStderr(*this, stdErr);
+         // read all remaining stdout, stderr -- use threads to avoid unexpected
+         // cases where reading from a handle on Windows can block
+         std::string stdOut, stdErr;
+
+         auto readStdOutThread = core::thread::run([&]()
+         {
+            if (pImpl_->hStdOutRead)
+            {
+               std::string stdOut;
+               Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
+               if (error)
+                  reportError(error);
+            }
+         });
+
+         auto readStdErrThread = core::thread::run([&]()
+         {
+            // read all remaining stderr
+            if (pImpl_->hStdErrRead)
+            {
+               Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
+               if (error)
+                  reportError(error);
+            }
+         });
+
+         if (readStdOutThread.joinable())
+            readStdOutThread.timed_join(boost::posix_time::seconds(1));
+
+         if (readStdErrThread.joinable())
+            readStdErrThread.timed_join(boost::posix_time::seconds(1));
+
+         if (!stdOut.empty() && callbacks_.onStdout)
+         {
+            hasRecentOutput = true;
+            callbacks_.onStdout(*this, stdOut);
+         }
+
+         if (!stdErr.empty() && callbacks_.onStderr)
+         {
+            hasRecentOutput = true;
+            callbacks_.onStderr(*this, stdErr);
+         }
       }
 
       // close the process handle

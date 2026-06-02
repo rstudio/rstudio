@@ -869,13 +869,6 @@
             "description": "Specifies the path to the libclang builtin headers.",
             "isDeprecated": true,
             "isHidden": true
-         },
-         {
-            "name": "external-winpty-path",
-            "type": "core::FilePath",
-            "memberName": "winptyPath_",
-            "defaultValue": "bin",
-            "description": "Specifies the path to winpty binaries."
          }
       ],
       "git": [

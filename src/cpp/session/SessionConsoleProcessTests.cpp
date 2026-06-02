@@ -23,6 +23,17 @@
 namespace rstudio {
 namespace session {
 namespace console_process {
+
+#ifdef _WIN32
+// Defined in SessionConsoleProcess.cpp; strips the conhost startup clear (only
+// when preceded solely by leading control) from one post-restart output chunk.
+// Returns true to keep watching later chunks, false to stop.
+bool stripRestartClearFromChunk(std::string* pChunk);
+// True if the output is solely leading control sequences (a clear may still be
+// coming); false once visible content appears (the startup clear is absent).
+bool isPureLeadingControl(const std::string& s);
+#endif
+
 namespace tests {
 
 using namespace console_process;
@@ -233,6 +244,80 @@ TEST_F(ConsoleProcessTest, ExplicitFlushReturnsInputWithGapsAndResetsSequence) {
 
    EXPECT_EQ(expected, result);
 }
+
+#ifdef _WIN32
+TEST(ConsoleProcessConPty, StripsStartupClearAtHead)
+{
+   // Bytes a restarted Git Bash emits under ConPTY: hide cursor, clear screen,
+   // reset SGR, home, then title + prompt (microsoft/terminal#4252). The clear
+   // (preceded only by mode-sets) is removed; everything else is preserved.
+   std::string out = "\x1b[?2004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b]0;t\x07PS1$ ";
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));   // a clear ends the window
+   EXPECT_EQ(out, "\x1b[?2004h\x1b[?25l\x1b]0;t\x07PS1$ ");
+   EXPECT_EQ(out.find("\x1b[2J"), std::string::npos);
+}
+
+TEST(ConsoleProcessConPty, KeepsUserClearAfterContent)
+{
+   // A prompt and a user `clear` coalesced into one chunk: the clear follows
+   // visible content, so it is NOT the startup clear and must be left intact.
+   std::string out = "\x1b[32m$ \x1b[mecho hi\r\nhi\r\n$ \x1b[2J\x1b[H";
+   const std::string orig = out;
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, orig);                             // user clear preserved
+}
+
+TEST(ConsoleProcessConPty, KeepsWatchingPureLeadingControl)
+{
+   // Only mode-sets so far: the startup clear may still arrive in a later chunk.
+   std::string out = "\x1b[?2004h\x1b[?25l";
+   const std::string orig = out;
+   EXPECT_TRUE(stripRestartClearFromChunk(&out));    // keep watching
+   EXPECT_EQ(out, orig);
+}
+
+TEST(ConsoleProcessConPty, StopsOnContentWithoutClear)
+{
+   // A prompt arrives with no clear: the startup clear is absent, stop watching
+   // so a later user clear is never stripped.
+   std::string out = "\x1b[?2004h\x1b[32mtomto@pc$ ";
+   const std::string orig = out;
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, orig);
+}
+
+TEST(ConsoleProcessConPty, StripsScrollbackClearVariant)
+{
+   // CSI 3J (clear scrollback) at the head is also removed.
+   std::string out = "\x1b[3J\x1b[Hy";
+   EXPECT_FALSE(stripRestartClearFromChunk(&out));
+   EXPECT_EQ(out, "y");
+}
+
+TEST(ConsoleProcessConPty, LeadingControlIsRecognized)
+{
+   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b[?25l"));
+   EXPECT_TRUE(isPureLeadingControl("\x1b[?2004h\x1b[")); // incomplete tail
+   EXPECT_FALSE(isPureLeadingControl("\x1b[?2004h\x1b[32mtomto@pc$ "));
+   EXPECT_FALSE(isPureLeadingControl("\x1b]0;title\x07")); // OSC is content
+}
+
+TEST(ConsoleProcessConPty, StripsStartupClearArrivingInLaterChunk)
+{
+   // The startup clear can land a chunk after the initial mode-sets. The first
+   // chunk (pure leading control) must keep the window open without altering
+   // anything; the clear in the following chunk is then stripped. This is the
+   // cross-chunk path the "keep watching" return value exists for.
+   std::string first = "\x1b[?2004h\x1b[?25l";
+   const std::string firstOrig = first;
+   EXPECT_TRUE(stripRestartClearFromChunk(&first));   // keep watching
+   EXPECT_EQ(first, firstOrig);                        // nothing stripped yet
+
+   std::string second = "\x1b[2J\x1b[H$ ";
+   EXPECT_FALSE(stripRestartClearFromChunk(&second));  // clear handled; stop
+   EXPECT_EQ(second, "$ ");
+}
+#endif // _WIN32
 
 } // namespace tests
 } // namespace console_process

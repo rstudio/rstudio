@@ -433,10 +433,7 @@ protected:
       "Specifies the path to the libclang shared library")
       ("external-libclang-headers-path",
       value<std::string>(&libclangHeadersPath_)->default_value("resources/libclang/builtin-headers"),
-      "Specifies the path to the libclang builtin headers.")
-      ("external-winpty-path",
-      value<std::string>(&winptyPath_)->default_value("bin"),
-      "Specifies the path to winpty binaries.");
+      "Specifies the path to the libclang builtin headers.");
 
    pGit->add_options()
       ("git-commit-large-file-size",
@@ -630,7 +627,6 @@ public:
    core::FilePath deprecatedCopilotAgentPath() const { return core::FilePath(deprecatedCopilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
-   core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
    int gitCommitLargeFileSize() const { return gitCommitLargeFileSize_; }
    std::string userIdentity() const { return userIdentity_; }
    bool showUserIdentity() const { return showUserIdentity_; }
@@ -765,7 +761,6 @@ protected:
    std::string deprecatedCopilotAgentPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
-   std::string winptyPath_;
    int gitCommitLargeFileSize_;
    std::string userIdentity_;
    bool showUserIdentity_;

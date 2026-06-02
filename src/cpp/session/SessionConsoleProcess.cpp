@@ -297,14 +297,11 @@ void ConsoleProcess::commonInit()
       }
       else // terminal
       {
-         // undefine TERM, as it puts git-bash in a mode that winpty doesn't support;
+         // undefine TERM, as it puts git-bash into a mode the terminal doesn't support
          core::system::unsetenv(&(options_.environment.get()), "TERM");
 
          // request a pseudoterminal if this is an interactive console process
          options_.pseudoterminal = core::system::Pseudoterminal(
-                  session::options().winptyPath(),
-                  false /*plainText*/,
-                  false /*conerr*/,
                   options_.cols,
                   options_.rows);
       }
@@ -620,10 +617,93 @@ std::string ConsoleProcess::getBuffer() const
    return procInfo_->getFullSavedBuffer();
 }
 
-void ConsoleProcess::enqueOutputEvent(const std::string &output)
+#ifdef _WIN32
+// True if `s` is composed solely of the control sequences that can precede the
+// conhost startup clear (CSI sequences), possibly ending in an incomplete one.
+// The startup clear is the one preceded only by such control output; once
+// visible content (printable text or an OSC) appears, it is absent or a clear
+// is a user clear. Not static: exercised by the tests.
+bool isPureLeadingControl(const std::string& s)
 {
-   if (envCaptureCmd_.output(output))
+   std::size_t i = 0;
+   while (i < s.size())
+   {
+      if (s[i] != '\x1b')
+         return false;                   // printable content
+      if (i + 1 >= s.size())
+         return true;                    // trailing lone ESC
+      if (s[i + 1] != '[')
+         return false;                   // OSC ("\x1b]") or other: content
+      std::size_t j = i + 2;
+      while (j < s.size() &&
+             ((s[j] >= '0' && s[j] <= '9') || s[j] == ';' || s[j] == '?'))
+         ++j;
+      if (j >= s.size())
+         return true;                    // incomplete CSI at end
+      i = j + 1;                         // complete CSI; keep scanning
+   }
+   return true;
+}
+
+// Handle one output chunk during the post-restart window. If it begins with the
+// conhost startup clear (a CSI 2J/3J preceded only by leading control output,
+// optionally followed by an SGR reset and a cursor home), strip that clear in
+// place. Returns true to keep watching later chunks (the chunk was purely
+// leading control, so the clear may still arrive), false to stop -- the startup
+// clear was handled, a user clear after visible content was left intact, or
+// visible content arrived without a clear. See microsoft/terminal#4252.
+bool stripRestartClearFromChunk(std::string* pChunk)
+{
+   static const boost::regex clearPattern(
+         "\x1b\\[[23]J(?:\x1b\\[[0-9;]*m)?(?:\x1b\\[[0-9;]*H)?");
+   boost::smatch match;
+   if (boost::regex_search(*pChunk, match, clearPattern))
+   {
+      std::size_t pos =
+            static_cast<std::size_t>(match[0].first - pChunk->cbegin());
+      // Only the startup clear is preceded solely by leading control output; a
+      // clear after visible content is a user clear and must be left intact.
+      if (isPureLeadingControl(pChunk->substr(0, pos)))
+         pChunk->erase(pos, static_cast<std::size_t>(match[0].length()));
+      return false;
+   }
+   return isPureLeadingControl(*pChunk);
+}
+#endif
+
+void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
+{
+   if (envCaptureCmd_.output(rawOutput))
       return;
+
+#ifdef _WIN32
+   // A restarted terminal's ConPTY host emits a one-time screen clear (CSI 2J +
+   // cursor home) when the new shell starts up (microsoft/terminal#4252). For
+   // shells whose scrollback we replay on reconnect (e.g. Git Bash), persisting
+   // that clear would wipe the restored history, so strip the first clear seen
+   // within a short window after restart. Output is forwarded immediately
+   // (never withheld). Stripping stops as soon as the clear is removed, visible
+   // content arrives without one, or the window elapses -- so a later
+   // user-issued clear is never affected.
+   std::string strippedOutput;
+   const std::string* pOutput = &rawOutput;
+   if (pendingStripRestartClear_)
+   {
+      if (std::chrono::steady_clock::now() >= restartClearDeadline_)
+      {
+         pendingStripRestartClear_ = false;      // window over; forward as-is
+      }
+      else
+      {
+         strippedOutput = rawOutput;
+         pendingStripRestartClear_ = stripRestartClearFromChunk(&strippedOutput);
+         pOutput = &strippedOutput;
+      }
+   }
+   const std::string& output = *pOutput;
+#else
+   const std::string& output = rawOutput;
+#endif
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
@@ -1062,8 +1142,10 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          augmentTerminalProcess(cp);
          addConsoleProcess(cp);
 
-         // Windows Command Prompt and PowerShell don't support reloading
-         // buffers, so delete the buffer before we start the new process.
+         // Command Prompt and PowerShell repaint their startup screen with
+         // absolute cursor positioning that does not compose with replayed
+         // scrollback, so they do not reload on restart (see
+         // TerminalSession.shellSupportsReload). Delete their stale buffer.
          if (cp->getShellType() == TerminalShell::ShellType::Cmd32 ||
              cp->getShellType() == TerminalShell::ShellType::Cmd64 ||
              cp->getShellType() == TerminalShell::ShellType::PS32 ||
@@ -1076,6 +1158,20 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          {
             cp->deleteLogFile();
          }
+#ifdef _WIN32
+         else
+         {
+            // Reloadable Windows shells (e.g. Git Bash) keep their buffer for
+            // replay on reconnect. The restarted shell's conhost emits a
+            // one-time startup screen clear; strip it so it doesn't wipe the
+            // restored scrollback (see enqueOutputEvent; microsoft/terminal#4252),
+            // only within a short window so a later user-issued clear is
+            // unaffected.
+            cp->pendingStripRestartClear_ = true;
+            cp->restartClearDeadline_ =
+                  std::chrono::steady_clock::now() + std::chrono::seconds(3);
+         }
+#endif
 
          saveConsoleProcesses();
       }
