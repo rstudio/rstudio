@@ -55,6 +55,9 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: read
+
 jobs:
   e2e-server-ubuntu:
     runs-on: ubuntu-24.04
@@ -132,20 +135,28 @@ jobs:
 
       - name: Download RStudio Server .deb
         if: steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
-            -o "${{ steps.resolve.outputs.filename }}" \
-            "${{ steps.resolve.outputs.url }}"
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          echo "${{ steps.resolve.outputs.sha256 }}  ${{ steps.resolve.outputs.filename }}" \
+          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" \
             | sha256sum -c -
 
       - name: Install RStudio Server
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          sudo apt-get install -y "./${{ steps.resolve.outputs.filename }}"
+          sudo apt-get install -y "./$INSTALLER_FILENAME"
           sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
 

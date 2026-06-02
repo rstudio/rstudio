@@ -68,6 +68,9 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   e2e-desktop-windows:
     runs-on: windows-2025

@@ -62,6 +62,9 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: read
+
 jobs:
   e2e-desktop-windows:
     runs-on: windows-2025
@@ -148,19 +151,25 @@ jobs:
 
       - name: Download RStudio .exe
         if: steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
           Invoke-WebRequest `
-            -Uri '${{ steps.resolve.outputs.url }}' `
-            -OutFile '${{ steps.resolve.outputs.filename }}' `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
             -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
         if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $expected = '${{ steps.resolve.outputs.sha256 }}'.ToLower()
-          $actual = (Get-FileHash -Algorithm SHA256 '${{ steps.resolve.outputs.filename }}').Hash.ToLower()
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
           if ($expected -ne $actual) {
             Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
             exit 1
@@ -168,9 +177,11 @@ jobs:
           Write-Host "SHA-256 OK: $actual"
 
       - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $p = Start-Process -FilePath '.\${{ steps.resolve.outputs.filename }}' -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
