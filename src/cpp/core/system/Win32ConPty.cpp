@@ -28,10 +28,11 @@ const DWORD  kShutdownTimeout = 4000;              // ms
 const DWORD  kReadChunk       = 4096;
 
 // The build targets Windows 10 1809 (NTDDI_WIN10_RS5), so the SDK declares
-// HPCON and the pseudoconsole functions natively. We still resolve them from
-// kernel32 at runtime rather than linking the imports directly: that keeps the
-// binary loadable on older Windows 10 builds (pre-1809), where isAvailable()
-// reports false and callers fall back instead of failing to start.
+// HPCON and the pseudoconsole functions natively. 1809 is the supported floor,
+// but we still resolve these from kernel32 at runtime rather than linking the
+// imports directly: if the pseudoconsole entry points are ever missing at
+// runtime, isAvailable() reports false and callers fall back instead of a
+// static import failing the whole process at load.
 typedef HRESULT (WINAPI *CreatePseudoConsoleFn)(COORD, HANDLE, HANDLE, DWORD, HPCON*);
 typedef HRESULT (WINAPI *ResizePseudoConsoleFn)(HPCON, COORD);
 typedef void    (WINAPI *ClosePseudoConsoleFn)(HPCON);
