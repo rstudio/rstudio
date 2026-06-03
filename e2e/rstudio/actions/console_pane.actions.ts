@@ -8,7 +8,7 @@ import {
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
 } from '../pages/console_pane.page';
-import { sleep } from '../utils/constants';
+import { sleep, TIMEOUTS } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
