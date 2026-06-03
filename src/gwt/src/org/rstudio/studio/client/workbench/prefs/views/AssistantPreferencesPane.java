@@ -444,14 +444,19 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            if (event == null)
                            {
-                              // Panel just loaded, not a user action — just refresh
+                              // Panel just loaded, not a user action -- just refresh
                               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
                            }
                            else
                            {
-                              // User changed the selection — check for
+                              // User changed the selection -- check for
                               // install, update, or unsupported status
                               checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
@@ -460,6 +465,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -503,6 +511,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            if (isInstalled)
                            {
                               // Copilot is installed - refresh status by passing assistantType
@@ -518,6 +531,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -749,17 +765,36 @@ public class AssistantPreferencesPane extends PreferencesPane
       });
    }
 
+   /**
+    * Returns true when an async status result for the given assistant type
+    * should be ignored because the user has since selected a different
+    * assistant. The status label and buttons are shared across panels, so a
+    * late callback for a no-longer-selected assistant must not overwrite the
+    * current panel's status.
+    */
+   private boolean isStaleStatusResult(String assistantType)
+   {
+      return !assistantType.equals(selAssistant_.getValue());
+   }
+
    private void refresh(String assistantType)
    {
       imgRefreshSpinner_.setVisible(true);
       reset();
 
-      // Use overloaded method to pass assistantType if provided
+      // Resolve to the current preference when no explicit type was provided
+      final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+
       ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
+            // Ignore a result for an assistant the user has since switched
+            // away from; the now-current panel owns the shared status UI
+            if (isStaleStatusResult(type))
+               return;
+
             imgRefreshSpinner_.setVisible(false);
             hideButtons();
 
@@ -773,7 +808,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
-                     refresh(assistantType);
+                     refresh(type);
                   });
                }
                else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
@@ -792,11 +827,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
                   // Show Install button for Posit Assistant when not installed
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
-                      assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                      type.equals(UserPrefsAccessor.ASSISTANT_POSIT))
                   {
                      showButtons(btnInstall_, btnRefresh_);
                   }
@@ -808,7 +843,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (projectOptions_ != null &&
                         UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
                {
-                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(type)));
                   showButtons(btnProjectOptions_);
                }
                else
@@ -843,6 +878,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onError(ServerError error)
          {
+            if (isStaleStatusResult(type))
+               return;
+
             Debug.logError(error);
             hideButtons();
             lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
@@ -850,8 +888,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      // If no assistantType specified, use current preference
-      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
       server_.assistantStatus(type, callback);
    }
 
