@@ -887,6 +887,10 @@ th.columnClickable div {
 .sidebar-stats-table td {
    padding: 1px 0;
    border: none;
+   /* Stay transparent so the parent .sidebar-col background (including the
+      hover highlight) shows through; otherwise the global "td" rule paints
+      an opaque --grid-bg over the stats widget. */
+   background-color: transparent;
 }
 
 .stats-label {
