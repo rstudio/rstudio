@@ -117,25 +117,33 @@ test.describe('Data Viewer', () => {
     );
     await waitForViewer(dataViewer);
 
+    // Wait for the initial row batch to land before touching the filter. The
+    // info bar's row count only appears once the first fetch returns -- which is
+    // also when the post-load column auto-size runs. Opening the filter before
+    // that races the auto-size's header rebuild, which would tear the editor
+    // down mid-type and force the retry loop below to spin (slow + flaky).
+    await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
+
     // Reveal the per-column filter row (the latching "Filter" toolbar button).
     await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
     const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
     await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
-    // Apply a text filter to column 1. The text filter auto-dismisses (its
-    // input reverts to "All") if the input blurs while still empty, so the
-    // open-and-type has to land as a unit -- a timing hiccup between clicking
-    // "All" and the keystroke arriving closes the editor and removes the
-    // input. Retry the whole open-and-type until the value sticks. Typing
-    // through the input locator (not page.keyboard) avoids a separate
-    // focus race, and pressSequentially fires real keyup, which the filter
-    // listens for (fill() would not trigger the search).
+    // Apply a text filter to column 1. The text input only exists once the
+    // filter editor is open (clicking the "All" chip opens it), and the editor
+    // auto-dismisses if it blurs while still empty -- so the open-and-type has
+    // to land as a unit. Retry the whole thing until the value sticks. Probe
+    // for the input with count() (instant) rather than inputValue(), which
+    // would block on the action timeout each iteration while the editor is
+    // closed. pressSequentially fires real keyup (which the filter listens
+    // for); fill() alone would not trigger the search.
     const filterInput = dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox');
     const allLabel = col1Filter.getByText('All');
     await expect(async () => {
-      if ((await filterInput.inputValue().catch(() => '')) === 'a') return;
-      if (await allLabel.isVisible().catch(() => false)) await allLabel.click();
-      await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+      if ((await filterInput.count()) === 0) {
+        await allLabel.click();
+        await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+      }
       await filterInput.fill('');
       await filterInput.pressSequentially('a');
       await expect(filterInput).toHaveValue('a', { timeout: 2000 });
