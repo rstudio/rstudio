@@ -882,6 +882,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             if (isStaleStatusResult(type))
                return;
 
+            imgRefreshSpinner_.setVisible(false);
             Debug.logError(error);
             hideButtons();
             lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
