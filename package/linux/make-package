@@ -115,6 +115,12 @@ RSTUDIO_TARGET=$1
 PACKAGE_TARGET=$2
 CLEAN=$3
 
+# The Qt-based "Desktop" target is defunct; re-route to "Electron".
+if [ "$RSTUDIO_TARGET" = "Desktop" ]; then
+   echo "Note: the 'Desktop' target is defunct; building 'Electron' instead."
+   RSTUDIO_TARGET=Electron
+fi
+
 # This script populates BUILD_DIR, CMAKE_BUILD_TYPE, and RSTUDIO_VERSION_FULL,
 # as well as filling in RSTUDIO_VERSION_MAJOR/MINOR/PATCH with defaults if not
 # specified.
@@ -124,7 +130,7 @@ if [ -f "${PKG_DIR}/scripts/overlay.sh" ]; then
   source "${PKG_DIR}/scripts/overlay.sh"
 fi
 
-if [ "$RSTUDIO_TARGET" != "Desktop" ] && [ "$RSTUDIO_TARGET" != "Electron" ] && [ "$RSTUDIO_TARGET" != "Server" ]
+if [ "$RSTUDIO_TARGET" != "Electron" ] && [ "$RSTUDIO_TARGET" != "Server" ]
 then
    help
    exit 1
