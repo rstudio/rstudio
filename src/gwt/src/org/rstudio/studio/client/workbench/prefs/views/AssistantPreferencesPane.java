@@ -408,6 +408,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
+
+               // Reset both flags so each panel re-queries its status when next shown
+               copilotRefreshed_ = false;
                positAiRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
@@ -420,6 +423,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
+
+               // Reset the Copilot flag so it re-queries its status when next shown
+               copilotRefreshed_ = false;
 
                // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
@@ -849,7 +855,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          prefs_.copilotEnabled().setGlobalValue(false);
          prefs_.assistant().setGlobalValue(newAssistant);
          prefs_.writeUserPrefs((completed) -> {});
-         copilotRefreshed_ = false;
       }
    }
 
@@ -1141,6 +1146,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void reset()
    {
       assistantStartupError_ = null;
+      // Clear the shared status label so a previous assistant's account info
+      // is not shown while the new status is being fetched
+      lblAssistantStatus_.setText("");
       hideButtons();
    }
    
