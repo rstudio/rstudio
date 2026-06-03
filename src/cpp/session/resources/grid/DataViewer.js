@@ -272,6 +272,12 @@ var avgCharWidthCache = 0;
 // the next onActivate re-measures.
 var needsAutoSize = false;
 
+// Set when autoSizeColumns was asked to run while a header editor (a filter
+// popup or a focused inline text-filter input) was open. Rebuilding the header
+// row destroys that editor mid-edit, so the rebuild is deferred and flushed
+// once the editor closes (flushDeferredHeaderRebuild).
+var deferredHeaderRebuild = false;
+
 // Custom scrollbar handles (vertical/horizontal grid + sidebar). Null
 // before createCustomScrollbars and again after destroyCustomScrollbars.
 var gridScrollbarV_ = null;
@@ -1374,6 +1380,33 @@ var avgCharWidth = function() {
 
 // Compute column widths by measuring header text and a sample of cached cell
 // values, then apply them with table-layout:fixed.
+// True while a header editor is open: a filter popup (numeric/factor/boolean,
+// tracked by dismissActivePopup) or a focused inline text-filter input (which
+// lives in the <th> and is not popup-tracked). Rebuilding the header row while
+// one is open would tear it down mid-edit, dropping the user's keystrokes.
+var isHeaderEditorOpen = function() {
+   if (dismissActivePopup)
+      return true;
+   var active = document.activeElement;
+   return !!(active && active.classList &&
+             active.classList.contains("textFilterBox"));
+};
+
+// Run a header rebuild that was deferred because an editor was open. Scheduled
+// asynchronously so it doesn't reenter DOM teardown from within the editor's
+// own blur/dismiss handler.
+var flushDeferredHeaderRebuild = function() {
+   if (!deferredHeaderRebuild)
+      return;
+   setTimeout(function() {
+      if (!deferredHeaderRebuild || isHeaderEditorOpen())
+         return;
+      deferredHeaderRebuild = false;
+      autoSizeColumns();
+      applyPinnedColumns();
+   }, 0);
+};
+
 var autoSizeColumns = function() {
    var thead = document.getElementById("data_cols");
    // Widths are computed from columnOrder + data (below), so headers need not
@@ -1386,6 +1419,14 @@ var autoSizeColumns = function() {
    var viewport = document.getElementById("gridViewport");
    if (viewport && viewport.offsetHeight === 0) {
       needsAutoSize = true;
+      return;
+   }
+
+   // Don't rebuild the header row out from under an open filter editor (the
+   // post-load width refine, fired from the initial row fetch, otherwise
+   // destroys a filter the user just opened). Defer until the editor closes.
+   if (isHeaderEditorOpen()) {
+      deferredHeaderRebuild = true;
       return;
    }
 
@@ -1905,7 +1946,10 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
 var createTextFilterUI = function(idx, col, onDismiss) {
    var ele = document.createElement("div");
    var input = createTextFilterBox(ele, idx, col, onDismiss);
-   input.addEventListener("blur", function() { onDismiss(); });
+   input.addEventListener("blur", function() {
+      onDismiss();
+      flushDeferredHeaderRebuild();
+   });
    input.addEventListener("focus", function() {
       if (dismissActivePopup) dismissActivePopup(true);
    });
@@ -1964,6 +2008,7 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
          dismissActivePopup = null;
          popup = null;
          if (actionComplete) onDismiss();
+         flushDeferredHeaderRebuild();
          return true;
       }
       return false;
@@ -3910,6 +3955,7 @@ var resetGridState = function() {
    cachedPinnedOffsets = {};
    invalidatePinnedOffsets();
    needsAutoSize = false;
+   deferredHeaderRebuild = false;
 
    // Resize -- also clear the body class in case a drag was in progress when
    // teardown was triggered.
