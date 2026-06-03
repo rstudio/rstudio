@@ -246,49 +246,56 @@ TEST(DatabaseTest, CanUseConnectionPool)
    SqliteConnectionOptions options;
    options.file = dbPath.getAbsolutePath();
 
-   boost::shared_ptr<ConnectionPool> connectionPool;
-   Error error = createConnectionPool(5, options, &connectionPool);
-   ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
-   boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
-   ASSERT_TRUE(connection) << "Failed to get connection from pool";
-
-   Query query = connection->query("create table Test(id int, text varchar(255))");
-   error = connection->execute(query);
-   ASSERT_FALSE(error) << "Failed to create Test table in fixture: " << error.getMessage();
-
-   // Insert some data into the Test table
-   for (int id = 0; id < 100; ++id)
+   // Scope the pool, connections, and queries so they are all destroyed - and their
+   // SQLite handles closed - before the database file is removed. The Query objects
+   // hold prepared statements that keep the connection open, so they must go out of
+   // scope too; otherwise the file handle is still open and, on Windows, the delete
+   // fails silently and orphans the random temp file.
    {
-      std::string text = "Test text " + core::safe_convert::numberToString(id);
-      query = connection->query("insert into Test(id, text) values(:id, :text)")
-            .withInput(id)
-            .withInput(text);
+      boost::shared_ptr<ConnectionPool> connectionPool;
+      Error error = createConnectionPool(5, options, &connectionPool);
+      ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
+      boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
+      ASSERT_TRUE(connection) << "Failed to get connection from pool";
+
+      Query query = connection->query("create table Test(id int, text varchar(255))");
       error = connection->execute(query);
-      ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
+      ASSERT_FALSE(error) << "Failed to create Test table in fixture: " << error.getMessage();
+
+      // Insert some data into the Test table
+      for (int id = 0; id < 100; ++id)
+      {
+         std::string text = "Test text " + core::safe_convert::numberToString(id);
+         query = connection->query("insert into Test(id, text) values(:id, :text)")
+               .withInput(id)
+               .withInput(text);
+         error = connection->execute(query);
+         ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
+      }
+
+      int rowId;
+      std::string rowText;
+      query = connection->query("select id, text from Test where id = 50")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+      bool dataReturned = false;
+      error = connection->execute(query, &dataReturned);
+      ASSERT_FALSE(error) << "Failed to execute query from pool connection: " << error.getMessage();
+      ASSERT_TRUE(dataReturned) << "Expected data to be returned but none was";
+
+      boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
+      ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
+
+      Query query2 = connection2->query("select id, text from Test where id = 25")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+      dataReturned = false;
+      error = connection2->execute(query2, &dataReturned);
+      ASSERT_FALSE(error) << "Failed to execute query from second pool connection: " << error.getMessage();
+      ASSERT_TRUE(dataReturned) << "Expected data to be returned from second query but none was";
    }
-
-   int rowId;
-   std::string rowText;
-   query = connection->query("select id, text from Test where id = 50")
-      .withOutput(rowId)
-      .withOutput(rowText);
-
-   bool dataReturned = false;
-   error = connection->execute(query, &dataReturned);
-   ASSERT_FALSE(error) << "Failed to execute query from pool connection: " << error.getMessage();
-   ASSERT_TRUE(dataReturned) << "Expected data to be returned but none was";
-
-   boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
-   ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-
-   Query query2 = connection2->query("select id, text from Test where id = 25")
-      .withOutput(rowId)
-      .withOutput(rowText);
-
-   dataReturned = false;
-   error = connection2->execute(query2, &dataReturned);
-   ASSERT_FALSE(error) << "Failed to execute query from second pool connection: " << error.getMessage();
-   ASSERT_TRUE(dataReturned) << "Expected data to be returned from second query but none was";
 
    dbPath.removeIfExists();
 }
