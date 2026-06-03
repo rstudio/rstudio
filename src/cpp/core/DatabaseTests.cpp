@@ -48,7 +48,7 @@ protected:
 
    void SetUp() override
    {
-      dbPath = FilePath("/tmp/rstudio-test-db");
+      ASSERT_FALSE(FilePath::tempFilePath(dbPath));
       dbPath.removeIfExists();
 
       SqliteConnectionOptions options;
@@ -239,7 +239,8 @@ TEST_F(DatabaseTestsFixture, CanBulkInsert)
 
 TEST(DatabaseTest, CanUseConnectionPool)
 {
-   FilePath dbPath = FilePath("/tmp/rstudio-test-db-pool");
+   FilePath dbPath;
+   ASSERT_FALSE(FilePath::tempFilePath(dbPath));
    dbPath.removeIfExists();
 
    SqliteConnectionOptions options;
@@ -834,7 +835,7 @@ protected:
 
    void SetUp() override
    {
-      dbPath = FilePath("/tmp/rstudio-test-db-pool");
+      ASSERT_FALSE(FilePath::tempFilePath(dbPath));
       dbPath.removeIfExists();
 
       SqliteConnectionOptions options;
