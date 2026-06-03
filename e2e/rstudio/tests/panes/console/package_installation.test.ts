@@ -29,17 +29,17 @@ test.describe.serial('Package installation', { tag: ['@serial'] }, () => {
 
       // meditations: known quote at index 70
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('meditations::meditations(70)');
+      await consoleActions.executeInConsole('meditations::meditations(70)');
       await expect(consoleActions.consolePane.consoleOutput).toContainText('Death hangs over thee.');
 
       // titanic: second test passenger ID
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('titanic::titanic_test[2,1]');
+      await consoleActions.executeInConsole('titanic::titanic_test[2,1]');
       await expect(consoleActions.consolePane.consoleOutput).toContainText('893');
 
       // rtrek: third series name
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('rtrek::stSeries[3,1]');
+      await consoleActions.executeInConsole('rtrek::stSeries[3,1]');
       await expect(consoleActions.consolePane.consoleOutput).toContainText('Deep Space Nine');
     },
   );

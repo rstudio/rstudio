@@ -30,19 +30,19 @@ test.describe('R file execution and environment pane', () => {
     'creates an R file, executes code, and tracks environment pane state',
     { tag: ['@parallel_safe', '@smoketest'] },
     async () => {
-      await consoleActions.typeInConsole('rm(list = ls())');
+      await consoleActions.executeInConsole('rm(list = ls())');
 
       const fileName = `rTest${Date.now()}.R`;
       const filePath = `${rPath(sandbox.dir)}/${fileName}`;
 
-      await consoleActions.typeInConsole(`writeLines("", "${filePath}")`);
-      await consoleActions.typeInConsole(`file.edit("${filePath}")`);
+      await consoleActions.executeInConsole(`writeLines("", "${filePath}")`);
+      await consoleActions.executeInConsole(`file.edit("${filePath}")`);
       await expect(sourcePane.selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
       await expect(sourcePane.footerTable).toContainText('R Script', { timeout: TIMEOUTS.fileOpen });
 
       await sourceActions.sendText('x <- 3\ny <- 10\ny - x');
 
-      await consoleActions.typeInConsole(".rs.api.executeCommand('executeAllCode')");
+      await consoleActions.executeInConsole(".rs.api.executeCommand('executeAllCode')");
       await expect(consoleActions.consolePane.consoleOutput).toContainText('[1] 7', {
         timeout: TIMEOUTS.sessionRestart,
       });
@@ -51,21 +51,21 @@ test.describe('R file execution and environment pane', () => {
       await expect(consoleActions.consolePane.consoleOutput).toContainText('y - x');
 
       // Verify initial environment state: x=3, y=10
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateEnvironment')");
+      await consoleActions.executeInConsole(".rs.api.executeCommand('activateEnvironment')");
       await expect(envPane.panel).toBeVisible();
       await expect.poll(() => envPane.hasVariable('x', '3'), { timeout: 5000 }).toBe(true);
       await expect.poll(() => envPane.hasVariable('y', '10'), { timeout: 5000 }).toBe(true);
 
       // Change x and verify env pane updates
-      await consoleActions.typeInConsole('x <- 22');
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateEnvironment')");
+      await consoleActions.executeInConsole('x <- 22');
+      await consoleActions.executeInConsole(".rs.api.executeCommand('activateEnvironment')");
       await expect(envPane.panel).toBeVisible();
       await expect.poll(() => envPane.hasVariable('x', '22'), { timeout: 5000 }).toBe(true);
       await expect.poll(() => envPane.hasVariable('y', '10'), { timeout: 5000 }).toBe(true);
 
       // Remove x and verify it disappears from the env pane
-      await consoleActions.typeInConsole('rm(x)');
-      await consoleActions.typeInConsole(".rs.api.executeCommand('activateEnvironment')");
+      await consoleActions.executeInConsole('rm(x)');
+      await consoleActions.executeInConsole(".rs.api.executeCommand('activateEnvironment')");
       await expect(envPane.panel).toBeVisible();
       await expect.poll(() => envPane.hasVariable('x', '22'), { timeout: 5000 }).toBe(false);
       await expect.poll(() => envPane.hasVariable('y', '10'), { timeout: 5000 }).toBe(true);

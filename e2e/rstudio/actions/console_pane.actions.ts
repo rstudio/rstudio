@@ -273,7 +273,7 @@ export class ConsolePaneActions {
     if (options?.clean !== undefined) {
       args.push(`clean = ${options.clean ? 'TRUE' : 'FALSE'}`);
     }
-    await this.typeInConsole(`.rs.api.restartSession(${args.join(', ')})`);
+    await this.executeInConsole(`.rs.api.restartSession(${args.join(', ')})`, { wait: false });
     await expect(this.consolePane.consoleOutput).toContainText(marker, {
       timeout: TIMEOUTS.sessionRestart,
     });

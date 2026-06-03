@@ -20,33 +20,33 @@ test.describe.serial('R session restart', { tag: ['@serial'] }, () => {
       await consoleActions.restartSession({ clean: true });
 
       // Load magrittr and set a variable
-      await consoleActions.typeInConsole('library(magrittr, logical.return = TRUE)');
-      await consoleActions.typeInConsole("mb <- 'ISFP'");
+      await consoleActions.executeInConsole('library(magrittr, logical.return = TRUE)');
+      await consoleActions.executeInConsole("mb <- 'ISFP'");
 
       // Verify state before any restart
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole("isNamespaceLoaded('magrittr')");
+      await consoleActions.executeInConsole("isNamespaceLoaded('magrittr')");
       await expect(consoleActions.consolePane.consoleOutput).toContainText('TRUE');
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('mb');
+      await consoleActions.executeInConsole('mb');
       await expect(consoleActions.consolePane.consoleOutput).toContainText('ISFP');
 
       // clean=false: namespace and workspace should be preserved
       await consoleActions.restartSession({ clean: false });
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole("isNamespaceLoaded('magrittr')");
+      await consoleActions.executeInConsole("isNamespaceLoaded('magrittr')");
       await expect(consoleActions.consolePane.consoleOutput).toContainText('TRUE');
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('mb');
+      await consoleActions.executeInConsole('mb');
       await expect(consoleActions.consolePane.consoleOutput).toContainText('ISFP');
 
       // clean=true: namespace and workspace should be cleared
       await consoleActions.restartSession({ clean: true });
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole("isNamespaceLoaded('magrittr')");
+      await consoleActions.executeInConsole("isNamespaceLoaded('magrittr')");
       await expect(consoleActions.consolePane.consoleOutput).toContainText('FALSE');
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('mb');
+      await consoleActions.executeInConsole('mb');
       await expect(consoleActions.consolePane.consoleOutput).toContainText("object 'mb' not found");
     },
   );
