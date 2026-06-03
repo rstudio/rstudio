@@ -422,6 +422,43 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // Regression from the column-virtualization work (#17812): getActiveCellTd
+  // located the active cell by the rsGridCell_<row>_<col> id, but buildRow
+  // assigns that id only to the cell that is *already* active. So clicking (or
+  // arrow-keying to) a fresh cell set activeRow/activeCol logically, but the
+  // lookup couldn't find the cell to mark and .activeCell was never applied --
+  // the highlight only appeared once a later render pass (a scroll) rebuilt the
+  // row. Column headers were unaffected (looked up by index). Asserting on the
+  // class -- not the painted outline -- mirrors the actual defect and avoids
+  // depending on focus/compositing state.
+  test('clicking or arrow-keying a cell applies the active-cell highlight immediately', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.active_cell_df <- data.frame(a = c("alpha", "bravo"), b = c("charlie", "delta"), stringsAsFactors = FALSE); View(.rs.active_cell_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Click a value cell in the first data row. The cell is already
+      // rendered and on screen, so nothing scrolls -- the regression was that
+      // the class only landed after a scroll re-rendered the row.
+      const firstRowCell = dataViewer.frame.locator('#gridBody tr[data-row="0"] td.textCell').first();
+      await firstRowCell.click();
+      await expect(firstRowCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Arrow-down moves the highlight to the next row's cell and clears it
+      // from the first, confirming setActiveCell tracks the live cell on
+      // keyboard navigation too (clicking focused the viewport).
+      await page.keyboard.press('ArrowDown');
+      const secondRowCell = dataViewer.frame.locator('#gridBody tr[data-row="1"] td.textCell').first();
+      await expect(secondRowCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect(firstRowCell).not.toHaveClass(/\bactiveCell\b/);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.active_cell_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of
