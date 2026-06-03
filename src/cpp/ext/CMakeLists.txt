@@ -236,21 +236,31 @@ set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
 
 # Choose libgit2's regex backend. On Windows we use the bundled PCRE ("builtin"),
 # matching libgit2's own auto-detected default there. On Unix we use the libc
-# POSIX backend ("regcomp_l"), which is libgit2's default on those platforms and
-# avoids statically linking a private PCRE into rsession.
+# POSIX backend ("regcomp"), which avoids statically linking a private PCRE into
+# rsession.
+#
+# We deliberately avoid "regcomp_l": although libgit2's docs call it the default
+# "where available", its availability check (cmake/SelectRegex.cmake) compiles a
+# probe that includes <xlocale.h>. regcomp_l is a BSD/macOS extension that glibc
+# never provided, and glibc removed <xlocale.h> in 2.26, so that probe always
+# fails on Linux and libgit2 itself never auto-selects regcomp_l there -- it falls
+# through to system PCRE or "builtin". Forcing regcomp_l on glibc instead compiles
+# the dead #include <xlocale.h> in src/util/regexp.c. Plain "regcomp" is always
+# present in glibc (it is also libgit2's own fallback on iOS) and needs no header
+# that modern glibc has dropped.
 #
 # The "builtin" backend compiles a private, UTF-less copy of PCRE1 into rsession.
 # On ELF platforms that copy's symbols (pcre_compile, pcre_exec, ...) would land
 # in rsession's dynamic symbol table (rsession is linked with --export-dynamic so
 # libR.so can resolve callbacks against it) and interpose the system PCRE that an
 # R built --with-pcre1 uses, breaking any perl = TRUE regex that requests UTF mode.
-# See rstudio/rstudio#17841. Selecting regcomp_l on Unix sidesteps this entirely;
+# See rstudio/rstudio#17841. Selecting regcomp on Unix sidesteps this entirely;
 # the visibility guard further below keeps "builtin" safe should it ever be used
 # on an ELF platform.
 if(WIN32)
    set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
 else()
-   set(REGEX_BACKEND "regcomp_l" CACHE STRING "" FORCE)
+   set(REGEX_BACKEND "regcomp" CACHE STRING "" FORCE)
 endif()
 
 
@@ -426,7 +436,7 @@ restore_global_settings()
 # REGEX_BACKEND it creates a 'pcre' OBJECT target from a private, UTF-less copy
 # of PCRE1 that gets archived into rsession. On ELF platforms those symbols
 # would otherwise be exported from rsession (which is linked --export-dynamic)
-# and interpose the system PCRE that libR.so uses. We select regcomp_l on Unix
+# and interpose the system PCRE that libR.so uses. We select regcomp on Unix
 # above so this target normally does not exist there, but if "builtin" is ever
 # used on an ELF platform, compiling it with hidden visibility keeps its symbols
 # out of the dynamic symbol table while still resolving libgit2's own (static)
