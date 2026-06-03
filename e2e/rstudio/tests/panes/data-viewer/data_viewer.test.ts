@@ -213,6 +213,55 @@ test.describe('Data Viewer', () => {
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
   });
 
+  // https://github.com/rstudio/rstudio/issues/17835
+  test('a pinned column stays pinned to its original column across column pagination', async ({ rstudioPage: page }) => {
+    // 300 columns exceeds the 200-column page size, so server-side column
+    // windowing (the "Cols:" navigator) is active and column 1 can be paged
+    // out of view. Column 1 carries a sentinel value so we can confirm its
+    // data -- not just its header -- follows the pin into a window that does
+    // not otherwise include column 1.
+    await consoleActions.executeInConsole(
+      '{ .rs.pin_paginate_df <- as.data.frame(matrix(1:30000, nrow = 100, ncol = 300)); .rs.pin_paginate_df[[1]] <- rep("PINSENTINEL", 100); View(.rs.pin_paginate_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Pin column 1 (V1), which is in the initial window.
+      await dataViewer.frame.locator('th[data-col-idx="1"] .pin-icon').click();
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/\bpinned\b/);
+
+      // Page to a window that starts well past column 1 (offset 100 -> columns
+      // 101..300). This is the exact action from the bug report: with the bug,
+      // the pinned slot started showing column 101 instead of column 1.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as
+          { setOffsetAndMaxColumns?: (offset: number, max: number) => void } | undefined;
+        if (!w?.setOffsetAndMaxColumns)
+          throw new Error('setOffsetAndMaxColumns() not available on data viewer iframe');
+        w.setOffsetAndMaxColumns(100, 200);
+      }, VIEWER_FRAME);
+
+      // The new window loaded: a header for column 101 (outside the old window)
+      // is now present.
+      await expect(dataViewer.frame.locator('th[title^="column 101:"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // The pinned slot still tracks the ORIGINAL column 1: it is still pinned,
+      // its header reports absolute column 1 (not the window's first column),
+      // and a pinned body cell still shows column 1's sentinel value -- so the
+      // column's data was fetched even though it lies outside the visible
+      // window.
+      const pinnedHeader = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await expect(pinnedHeader).toHaveClass(/\bpinned\b/);
+      await expect(pinnedHeader).toHaveAttribute('title', /^column 1:/);
+      await expect(dataViewer.frame.locator('#gridBody td.pinned', { hasText: 'PINSENTINEL' }).first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.pin_paginate_df", envir = .GlobalEnv)');
+    }
+  });
+
   test('per-object state survives a refresh', async ({ rstudioPage: page }) => {
     // Use a uniquely-named object so localStorage for this viewer can't be
     // contaminated by a previous test that happened to View(mtcars).

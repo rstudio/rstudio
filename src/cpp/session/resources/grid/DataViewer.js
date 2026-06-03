@@ -64,7 +64,7 @@ var AVG_CHAR_REF_STRING =
 // STATE_VERSION when the stored state shape changes incompatibly so old
 // payloads are dropped on next read instead of being applied with
 // mismatched indices.
-var STATE_VERSION = 2;
+var STATE_VERSION = 3;
 var STATE_KEY_PREFIX = "rstudio.dataViewer:";
 
 // Per-load sentinel used in place of a real column fingerprint when the
@@ -116,13 +116,16 @@ var rowNumbers = true;
 // Status text override (replaces "Showing x of y...")
 var statusTextOverride = null;
 
-// Current sort state
+// Current sort state. sortColumn is the absolute (1-based) column index in
+// the full frame, or -1 when unsorted -- not a position within the currently
+// fetched window, so it stays correct as the user pages through columns.
 var sortColumn = -1;
 var sortDirection = ""; // "", "asc", "desc"
 
-// Cached search/filter values
+// Cached search/filter values, keyed by absolute (1-based) column index so a
+// filter tracks its column across pagination rather than its window position.
 var cachedSearch = "";
-var cachedFilterValues = [];
+var cachedFilterValues = {};
 
 // Scroll position preservation
 var lastScrollTop = 0;
@@ -195,8 +198,23 @@ var activeCol = -1;
 // from the body via ArrowUp at row 0.
 var activeHeaderCol = -1;
 
-// Pinned columns (set of column indices; column 0/rownames is always implicitly pinned)
+// Pinned columns: a set of absolute (1-based) column indices in the full
+// frame, so a pin tracks its column across pagination rather than its position
+// within the currently fetched window. The rownames column is always
+// implicitly pinned and is not represented here.
 var pinnedColumns = new Set();
+
+// Saved per-object state loaded at the start of bootstrap (before the column
+// fetch) so the request can include pinned columns that fall outside the
+// visible window. Validated against the column fingerprint once `cols`
+// arrives; see primeSelectionState / applySavedState.
+var pendingSavedState = null;
+
+// Number of pinned columns primed from saved state for the in-flight column
+// request. If the fingerprint turns out not to match (object reassigned to a
+// different frame), those columns were requested against the wrong frame, so
+// initGrid re-bootstraps once after clearing the stale selection.
+var primedPinnedCount = 0;
 
 // Pinned-column layout cache. cachedPinnedOffsets[colIdx] -> px offset
 // from the viewport's left edge; the more elaborate pinnedOffsetsCache
@@ -429,8 +447,14 @@ var fetchColumnSummary = function(columnIndex, callback) {
 };
 
 var fetchColumns = function(callback) {
-   var params = "show=cols&" + window.location.search.substring(1) +
-      "&column_offset=" + columnOffset;
+   var params = "show=cols&" + window.location.search.substring(1);
+
+   // Request exactly the columns we display (pinned first, then the window),
+   // by absolute index. An empty list means the whole frame.
+   var requestedColumns = buildRequestedColumns();
+   if (requestedColumns.length > 0) {
+      params += "&columns_requested=" + requestedColumns.join(",");
+   }
 
    gridDataFetch(params)
       .then(function(result) {
@@ -456,21 +480,30 @@ var fetchRows = function(start, length, callback) {
       start: start,
       length: length,
       draw: startToken,
-      column_offset: columnOffset,
-      max_display_columns: maxDisplayColumns,
       max_rows: maxRows,
       "search[value]": cachedSearch
    };
 
-   // Add sort parameters
+   // Request exactly the columns we display (pinned first, then the window),
+   // by absolute index. An empty list means the whole frame.
+   var requestedColumns = buildRequestedColumns();
+   if (requestedColumns.length > 0) {
+      params["columns_requested"] = requestedColumns.join(",");
+   }
+
+   // Add sort parameters (order[0][column] is an absolute column index)
    if (sortColumn >= 0 && sortDirection) {
       params["order[0][column]"] = sortColumn;
       params["order[0][dir]"] = sortDirection;
    }
 
-   // Add column filter parameters
-   for (var i = 0; i < cachedFilterValues.length; i++) {
-      params["columns[" + i + "][search][value]"] = cachedFilterValues[i];
+   // Add column filter parameters, keyed by absolute column index
+   for (var absIdx in cachedFilterValues) {
+      if (!cachedFilterValues.hasOwnProperty(absIdx))
+         continue;
+      var filterVal = cachedFilterValues[absIdx];
+      if (filterVal)
+         params["columns[" + absIdx + "][search][value]"] = filterVal;
    }
 
    var controller = new AbortController();
@@ -580,8 +613,8 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    }
 
    // Column-specific search highlighting (skip if global search already highlighted)
-   if (!didHighlight && colIdx < cachedFilterValues.length) {
-      var colSearch = cachedFilterValues[colIdx];
+   if (!didHighlight) {
+      var colSearch = getColumnSearch(colIdx);
       if (colSearch && colSearch.indexOf("character|") === 0) {
          var term = decodeURIComponent(parseSearchString(colSearch));
          var colIdx2 = data.toLowerCase().indexOf(term.toLowerCase());
@@ -599,7 +632,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       td.innerHTML = "<i>" + escaped + "</i> ";
 
       var cbName = clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback";
-      var cbCol = colIdx + columnOffset;
+      var cbCol = absColIndex(colIdx);
       // rowData[0] arrives JSON-encoded for character row names and as a plain
       // numeric string (or a number, in preview mode) for automatic ones;
       // JSON.parse handles both.
@@ -696,7 +729,7 @@ var createHeader = function(idx, col) {
       // keeps the grid a single tabstop per the WAI-ARIA grid pattern.
       var pinIcon = document.createElement("span");
       pinIcon.className = "pin-icon";
-      var pinned = pinnedColumns.has(idx);
+      var pinned = pinnedColumns.has(absColIndex(idx));
       if (pinned) pinIcon.classList.add("pinned");
       pinIcon.setAttribute("aria-hidden", "true");
       pinIcon.title = pinned ? "Unpin column" : "Pin column";
@@ -725,7 +758,7 @@ var createHeader = function(idx, col) {
    if (col.col_type === "rownames") {
       th.title = "row names";
    } else {
-      th.title = "column " + (idx + columnOffset) + ": " + col.col_type;
+      th.title = "column " + absColIndex(idx) + ": " + col.col_type;
       if (col.col_type === "numeric" && col.col_breaks && col.col_breaks.length > 0) {
          th.title += " with range " + col.col_breaks[0] +
             " - " + col.col_breaks[col.col_breaks.length - 1];
@@ -764,7 +797,7 @@ var createHeader = function(idx, col) {
       th.style.cursor = "pointer";
       th.setAttribute("role", "columnheader");
       th.setAttribute("aria-sort",
-         idx === sortColumn ? sortAriaValue(sortDirection) : "none");
+         absColIndex(idx) === sortColumn ? sortAriaValue(sortDirection) : "none");
    }
    th.addEventListener("click", function(evt) {
       if (evt.target.className === "resizer") return;
@@ -789,9 +822,13 @@ var handleSortClick = function(colIdx, th) {
    var thead = document.getElementById("data_cols");
    var headers = thead.children;
 
+   // sortColumn is an absolute column identity, so translate the clicked
+   // window position before comparing/storing.
+   var absIdx = absColIndex(colIdx);
+
    // Cycle: unsorted -> asc -> desc -> unsorted
    var newDir = "";
-   if (sortColumn !== colIdx) {
+   if (sortColumn !== absIdx) {
       newDir = "asc";
    } else if (sortDirection === "asc") {
       newDir = "desc";
@@ -802,7 +839,7 @@ var handleSortClick = function(colIdx, th) {
    }
 
    // Update sort state
-   sortColumn = newDir ? colIdx : -1;
+   sortColumn = newDir ? absIdx : -1;
    sortDirection = newDir;
 
    // Sort changes row identity at every index; clear the active cell so
@@ -844,10 +881,93 @@ var handleSortClick = function(colIdx, th) {
 // Column Pinning
 // ==========================================================================
 
+// Translate a position in the currently fetched `cols` array to the absolute
+// (1-based) column index in the full frame. Falls back to the position itself
+// when col_index is unavailable (older server or the rownames column, which is
+// index 0). This is the single bridge between the window-relative positions
+// used throughout the render path and the absolute identities used for
+// pinning, sorting, and filtering.
+var absColIndex = function(pos) {
+   if (cols && cols[pos] && typeof cols[pos].col_index === "number")
+      return cols[pos].col_index;
+   return pos;
+};
+
+// Reverse of absColIndex: find the position in `cols` of the column with the
+// given absolute index, or -1 if it isn't in the current window/fetch.
+var posForAbsColIndex = function(absIdx) {
+   if (!cols)
+      return -1;
+   for (var i = 0; i < cols.length; i++) {
+      if (cols[i] && cols[i].col_index === absIdx)
+         return i;
+   }
+   return -1;
+};
+
+// Build the ordered list of absolute (1-based) column indices to request from
+// the server: pinned columns first (ascending), then the visible window,
+// prepending only pinned columns that fall OUTSIDE that window (so their data
+// is available while the window is scrolled away). Pins that are already inside
+// the window keep their natural position -- the pinned-first display order is a
+// render-time concern handled by getColumnOrder, not a fetch-order one, so the
+// position of an in-window column stays stable across a re-fetch. Returns an
+// empty array to mean "the whole frame" -- used when no column windowing is
+// configured, in which case every column is present.
+var buildRequestedColumns = function() {
+   var maxCols = effectiveMaxDisplayColumns();
+   if (maxCols <= 0)
+      return [];
+
+   // Window range is 1-based absolute: columnOffset is a 0-based data-column
+   // offset, so the first window column is columnOffset + 1. The server clamps
+   // indices past the end of the frame, so an unknown totalCols is harmless.
+   var windowStart = columnOffset + 1;
+   var windowEnd = columnOffset + maxCols;
+   if (totalCols > 0)
+      windowEnd = Math.min(windowEnd, totalCols);
+
+   var requested = [];
+   var seen = {};
+
+   // Pinned columns that lie outside the window, in ascending order, come
+   // first so their data accompanies the window we're about to display.
+   Array.from(pinnedColumns)
+      .filter(function(a) {
+         return typeof a === "number" && a >= 1 &&
+            (a < windowStart || a > windowEnd);
+      })
+      .sort(function(a, b) { return a - b; })
+      .forEach(function(a) {
+         if (!seen[a]) { seen[a] = true; requested.push(a); }
+      });
+
+   for (var c = windowStart; c <= windowEnd; c++) {
+      if (!seen[c]) { seen[c] = true; requested.push(c); }
+   }
+   return requested;
+};
+
+// The number of display columns in the current window, resolved from the
+// module state if known or from the URL parameters otherwise (the module
+// value isn't set until initGrid, but the column fetch runs before that).
+var effectiveMaxDisplayColumns = function() {
+   if (maxDisplayColumns > 0)
+      return maxDisplayColumns;
+   var loc = parseLocationUrl();
+   if (loc.maxDisplayColumns > 0)
+      return loc.maxDisplayColumns;
+   if (loc.maxCols > 0)
+      return loc.maxCols;
+   return -1;
+};
+
 // Returns the column render order: pinned columns first (in original order),
 // then unpinned columns (in original order). Column 0 (rownames) is always first.
+// The server returns exactly the columns we asked for (pinned + window), so we
+// order the whole fetched set rather than capping at maxDisplayColumns.
 var getColumnOrder = function() {
-   var colCount = cols ? Math.min(cols.length, maxDisplayColumns + 1) : 0;
+   var colCount = cols ? cols.length : 0;
    var pinned = [];
    var unpinned = [];
    for (var i = 0; i < colCount; i++) {
@@ -861,7 +981,7 @@ var getColumnOrder = function() {
 };
 
 var isColumnPinned = function(colIdx) {
-   return (colIdx === 0 && rowNumbers) || pinnedColumns.has(colIdx);
+   return (colIdx === 0 && rowNumbers) || pinnedColumns.has(absColIndex(colIdx));
 };
 
 // ----------------------------------------------------------------------------
@@ -1078,10 +1198,12 @@ var rebuildHeaderWindow = function() {
 };
 
 var togglePinColumn = function(colIdx) {
-   if (pinnedColumns.has(colIdx)) {
-      pinnedColumns.delete(colIdx);
+   // pinnedColumns tracks absolute column identities, not window positions.
+   var absIdx = absColIndex(colIdx);
+   if (pinnedColumns.has(absIdx)) {
+      pinnedColumns.delete(absIdx);
    } else {
-      pinnedColumns.add(colIdx);
+      pinnedColumns.add(absIdx);
    }
    // Pinning reorders columns, so the active cell's display index would
    // now refer to a different column; clear it. The active header, if
@@ -1581,13 +1703,19 @@ var createFilterUI = function(idx, col) {
    return host;
 };
 
+// idx is a position in the current window; cachedFilterValues is keyed by
+// absolute column identity so a filter follows its column across pagination.
 var getColumnSearch = function(idx) {
-   return cachedFilterValues[idx] || "";
+   return cachedFilterValues[absColIndex(idx)] || "";
 };
 
 var setColumnSearch = function(idx, val) {
-   while (cachedFilterValues.length <= idx) cachedFilterValues.push("");
-   cachedFilterValues[idx] = val;
+   var absIdx = absColIndex(idx);
+   if (val) {
+      cachedFilterValues[absIdx] = val;
+   } else {
+      delete cachedFilterValues[absIdx];
+   }
 };
 
 var applyFilters = function() {
@@ -2019,9 +2147,12 @@ var updateInfoBar = function() {
    if (textEl) textEl.textContent = text;
 
    var sortText = "";
-   if (sortColumn >= 0 && sortDirection && cols && cols[sortColumn]) {
-      var dirText = sortDirection === "asc" ? "ascending" : "descending";
-      sortText = "Sorted by: " + cols[sortColumn].col_name + " (" + dirText + ")";
+   if (sortColumn >= 0 && sortDirection && cols) {
+      var sortPos = posForAbsColIndex(sortColumn);
+      if (sortPos >= 0 && cols[sortPos]) {
+         var dirText = sortDirection === "asc" ? "ascending" : "descending";
+         sortText = "Sorted by: " + cols[sortPos].col_name + " (" + dirText + ")";
+      }
    }
    if (sortEl) sortEl.textContent = sortText;
 };
@@ -2708,7 +2839,7 @@ var initSidebar = function() {
                   var spinner = document.getElementById("sidebarSpinner");
                   pendingSummaryFetches++;
                   if (spinner) spinner.style.display = "";
-                  fetchColumnSummary(colIdx + columnOffset, function(data) {
+                  fetchColumnSummary(absColIndex(colIdx), function(data) {
                      pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
                      if (spinner && pendingSummaryFetches === 0) {
                         spinner.style.display = "none";
@@ -3611,7 +3742,7 @@ var initGrid = function(resCols, data) {
    // to a different column set) applySavedState drops the saved state
    // without applying its sidebar choice, so the URL default is still
    // needed.
-   var savedState = loadSavedState();
+   var savedState = pendingSavedState;
    var willRestoreSidebar = savedState &&
       typeof savedState.sidebarVisible === "boolean" &&
       savedState.columns === columnFingerprint();
@@ -3619,9 +3750,20 @@ var initGrid = function(resCols, data) {
       sidebarVisible = loc.showSummary;
    }
 
-   // Restore saved per-object UI state before headers are built (so pinning
-   // order is correct) and before fetchRows (so sort/filters are sent).
-   applySavedState(savedState);
+   // Validate the primed selection (pinned/sort/filters) against the fetched
+   // columns and restore window-dependent saved state. Headers are built next,
+   // so pinning order must be settled here; fetchRows below needs sort/filters.
+   var stateDiscarded = applySavedState(savedState);
+
+   // If the fingerprint didn't match, the columns we requested may have
+   // included pinned indices from an unrelated frame (now cleared). Re-bootstrap
+   // once with a clean window so we don't display the wrong prepended columns.
+   if (stateDiscarded && primedPinnedCount > 0) {
+      primedPinnedCount = 0;
+      pendingSavedState = null;
+      bootstrap();
+      return;
+   }
 
    // Build headers (pinned columns first, then unpinned). autoSizeColumns
    // computes per-column widths from data, picks the initial column window,
@@ -3736,7 +3878,7 @@ var resetGridState = function() {
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";
-   cachedFilterValues = [];
+   cachedFilterValues = {};
    pinnedColumns.clear();
    columnOrder = [];
    activeRow = -1;
@@ -3837,6 +3979,9 @@ var columnFingerprint = function() {
 var saveState = function() {
    var key = stateKey();
    if (!key) return;
+   // pinnedColumns/sort/filters are stored by absolute column identity (1-based
+   // index in the full frame), so they survive column pagination. manualWidths
+   // remains positional within the current window.
    var state = {
       version: STATE_VERSION,
       columns: columnFingerprint(),
@@ -3844,7 +3989,7 @@ var saveState = function() {
       sidebarVisible: sidebarVisible,
       manualWidths: manualWidths.slice(),
       sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
-      filters: cachedFilterValues.slice()
+      filters: Object.assign({}, cachedFilterValues)
    };
    try {
       localStorage.setItem(key, JSON.stringify(state));
@@ -3896,33 +4041,82 @@ var clearSavedState = function() {
    try { localStorage.removeItem(key); } catch (e) { /* quota / disabled storage */ }
 };
 
-// Apply restored state. Must be called after `cols` is populated but before
-// the first row fetch (so sort/filters are included in fetch params) and
-// before headers are built (so pinning order is correct).
-var applySavedState = function(state) {
-   if (!state || !cols) return;
-   // Drop state saved against a different column structure: the
-   // pinned-column indices, manual widths, and filter values are all
-   // positional, so applying them to an unrelated frame would corrupt
-   // the user's view (e.g. typed filter strings landing on numeric
-   // columns) with no obvious recovery. Fail-closed: if state.columns
-   // is missing or non-string (older format, corrupt payload), discard
-   // rather than apply blind.
-   if (typeof state.columns !== "string" ||
-       state.columns !== columnFingerprint()) {
-      clearSavedState();
+// Populate the pinned/sort/filter selection from saved state before `cols` is
+// available. These are all keyed by absolute column identity, so they can be
+// resolved without the fetched columns -- which is what lets the column
+// request include pinned columns outside the visible window. The fingerprint
+// cannot be checked yet (it comes from the server response), so applySavedState
+// validates it once `cols` arrives and clears the selection on a mismatch.
+var primeSelectionState = function() {
+   pendingSavedState = loadSavedState();
+   pinnedColumns.clear();
+   sortColumn = -1;
+   sortDirection = "";
+   cachedFilterValues = {};
+   primedPinnedCount = 0;
+
+   var state = pendingSavedState;
+   if (!state)
       return;
-   }
-   var colCount = cols.length;
 
    if (Array.isArray(state.pinnedColumns)) {
       state.pinnedColumns.forEach(function(idx) {
-         // Allow idx 0 -- when rowNumbers is false, the first column is a
-         // regular data column that may be user-pinned.
-         if (typeof idx === "number" && idx >= 0 && idx < colCount) {
+         if (typeof idx === "number" && idx >= 1)
             pinnedColumns.add(idx);
-         }
       });
+   }
+   primedPinnedCount = pinnedColumns.size;
+
+   if (state.sort &&
+       typeof state.sort.col === "number" && state.sort.col >= 1 &&
+       (state.sort.dir === "asc" || state.sort.dir === "desc")) {
+      sortColumn = state.sort.col;
+      sortDirection = state.sort.dir;
+   }
+
+   if (state.filters && typeof state.filters === "object") {
+      for (var absIdx in state.filters) {
+         if (!state.filters.hasOwnProperty(absIdx))
+            continue;
+         var val = state.filters[absIdx];
+         if (typeof val === "string" && val.length > 0)
+            cachedFilterValues[absIdx] = val;
+      }
+   }
+};
+
+// Validate the primed selection against the freshly fetched columns and apply
+// the window-dependent saved state (sidebar, manual widths). Must be called
+// after `cols`/`totalCols` are populated but before the first row fetch (so
+// sort/filters are sent) and before headers are built (so pinning order is
+// correct). Returns true if the saved state was discarded as incompatible.
+var applySavedState = function(state) {
+   if (!state || !cols)
+      return false;
+   // Drop state saved against a different column structure: applying it to an
+   // unrelated frame would corrupt the user's view (e.g. a typed filter string
+   // landing on a numeric column) with no obvious recovery. Fail-closed: if
+   // state.columns is missing or non-string (older format, corrupt payload),
+   // discard rather than apply blind.
+   if (typeof state.columns !== "string" ||
+       state.columns !== columnFingerprint()) {
+      clearSavedState();
+      pinnedColumns.clear();
+      sortColumn = -1;
+      sortDirection = "";
+      cachedFilterValues = {};
+      return true;
+   }
+
+   // Selection (pins/sort/filters) was primed by primeSelectionState; clamp it
+   // to the frame now that the column count is known.
+   pinnedColumns.forEach(function(absIdx) {
+      if (absIdx > totalCols)
+         pinnedColumns.delete(absIdx);
+   });
+   if (sortColumn > totalCols) {
+      sortColumn = -1;
+      sortDirection = "";
    }
 
    if (typeof state.sidebarVisible === "boolean") {
@@ -3930,22 +4124,14 @@ var applySavedState = function(state) {
    }
 
    if (Array.isArray(state.manualWidths)) {
+      var colCount = cols.length;
       for (var i = 0; i < state.manualWidths.length && i < colCount; i++) {
          var w = state.manualWidths[i];
          if (typeof w === "number" && w > 0) manualWidths[i] = w;
       }
    }
 
-   if (state.sort &&
-       typeof state.sort.col === "number" && state.sort.col < colCount &&
-       (state.sort.dir === "asc" || state.sort.dir === "desc")) {
-      sortColumn = state.sort.col;
-      sortDirection = state.sort.dir;
-   }
-
-   if (Array.isArray(state.filters)) {
-      cachedFilterValues = state.filters.slice(0, colCount);
-   }
+   return false;
 };
 
 // Apply asc/desc CSS classes on header cells based on current sort state.
@@ -3960,7 +4146,7 @@ var applySortIndicators = function() {
       // Skip spacer cells (col-spacer) that stand in for off-window columns.
       if (isNaN(colIdx)) continue;
       th.classList.remove("sorting", "sorting_asc", "sorting_desc");
-      if (colIdx === sortColumn && sortDirection) {
+      if (absColIndex(colIdx) === sortColumn && sortDirection) {
          th.classList.add("sorting_" + sortDirection);
       } else {
          th.classList.add("sorting");
@@ -4003,6 +4189,12 @@ var destroyGrid = function() {
 var bootstrap = function(data) {
    bootstrapping = true;
    destroyGrid();
+
+   // Prime the pinned/sort/filter selection from saved state before the column
+   // fetch so the request can include pinned columns outside the visible
+   // window. The fingerprint is validated once `cols` arrives (initGrid ->
+   // applySavedState); a mismatch clears the primed selection.
+   primeSelectionState();
 
    if (!data) {
       fetchColumns(function(result) {
@@ -4121,10 +4313,8 @@ window.setFilterUIVisible = function(visible) {
          return null;
       },
       function() {
-         var hadFilters = cachedFilterValues.some(function(v) {
-            return v && v.length > 0;
-         });
-         cachedFilterValues = [];
+         var hadFilters = Object.keys(cachedFilterValues).length > 0;
+         cachedFilterValues = {};
          if (hadFilters) {
             invalidateCache();
             fetchRows(0, FETCH_SIZE);
