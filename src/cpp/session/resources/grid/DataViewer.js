@@ -3051,10 +3051,15 @@ var getActiveCellTd = function() {
    var tr = renderedRowElements.get(activeRow);
    if (!tr) return null;
    // Can't index by activeCol: tr.children is the windowed cell set (pinned +
-   // spacers + window), not 1:1 with columnOrder. The active cell carries a
-   // stable id, so look it up by that. Returns null when the column is outside
-   // the rendered window (caller handles the absent case).
-   return tr.querySelector("#" + activeCellId(activeRow, activeCol));
+   // spacers + window), not 1:1 with columnOrder. Every rendered cell records
+   // its columnOrder position in data-col-pos (set by buildRow), so match on
+   // that. We must NOT look up by the activeCell id here: buildRow assigns that
+   // id only to the cell that is *already* active, so a freshly clicked or
+   // navigated-to cell would not have it yet and setActiveCell could never find
+   // the cell to mark -- the highlight would only appear after a later render
+   // pass rebuilt the row. Returns null when the column is outside the rendered
+   // window (caller handles the absent case).
+   return tr.querySelector('[data-col-pos="' + activeCol + '"]');
 };
 
 var activeCellId = function(row, col) {
