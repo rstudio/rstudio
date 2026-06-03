@@ -233,7 +233,25 @@ set(USE_HTTPS OFF CACHE BOOL "" FORCE)
 set(USE_ICONV OFF CACHE BOOL "" FORCE)
 set(USE_NTLMCLIENT OFF CACHE BOOL "" FORCE)
 set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
-set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
+
+# Choose libgit2's regex backend. On Windows we use the bundled PCRE ("builtin"),
+# matching libgit2's own auto-detected default there. On Unix we use the libc
+# POSIX backend ("regcomp_l"), which is libgit2's default on those platforms and
+# avoids statically linking a private PCRE into rsession.
+#
+# The "builtin" backend compiles a private, UTF-less copy of PCRE1 into rsession.
+# On ELF platforms that copy's symbols (pcre_compile, pcre_exec, ...) would land
+# in rsession's dynamic symbol table (rsession is linked with --export-dynamic so
+# libR.so can resolve callbacks against it) and interpose the system PCRE that an
+# R built --with-pcre1 uses, breaking any perl = TRUE regex that requests UTF mode.
+# See rstudio/rstudio#17841. Selecting regcomp_l on Unix sidesteps this entirely;
+# the visibility guard further below keeps "builtin" safe should it ever be used
+# on an ELF platform.
+if(WIN32)
+   set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
+else()
+   set(REGEX_BACKEND "regcomp_l" CACHE STRING "" FORCE)
+endif()
 
 
 # gsl-lite
@@ -402,6 +420,22 @@ if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
 endif()
 
 restore_global_settings()
+
+
+# Regression guard for rstudio/rstudio#17841. When libgit2 uses its "builtin"
+# REGEX_BACKEND it creates a 'pcre' OBJECT target from a private, UTF-less copy
+# of PCRE1 that gets archived into rsession. On ELF platforms those symbols
+# would otherwise be exported from rsession (which is linked --export-dynamic)
+# and interpose the system PCRE that libR.so uses. We select regcomp_l on Unix
+# above so this target normally does not exist there, but if "builtin" is ever
+# used on an ELF platform, compiling it with hidden visibility keeps its symbols
+# out of the dynamic symbol table while still resolving libgit2's own (static)
+# calls at link time. PCRE_EXP_DECL is a bare 'extern' with no visibility
+# attribute, so -fvisibility=hidden suffices. (No-op on Windows: MSVC ignores
+# -fvisibility, and PE/COFF does not export static-lib symbols or interpose.)
+if(TARGET pcre)
+   set_target_properties(pcre PROPERTIES C_VISIBILITY_PRESET hidden)
+endif()
 
 
 # Create dtl target.
