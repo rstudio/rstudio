@@ -452,14 +452,28 @@ jobs:
             PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE")
             FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE")
             SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE")
+            FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE")
           else
-            PASSED=0; FAILED=0; SKIPPED=0
+            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
+          fi
+          TOTAL=$((PASSED + FAILED))
+          if [ "$TOTAL" -gt 0 ]; then
+            RATE=$(( (PASSED * 100) / TOTAL ))
+            FILLED=$(( (RATE * 20) / 100 ))
+            EMPTY=$(( 20 - FILLED ))
+            BAR=$(printf '█%.0s' $(seq 1 $FILLED) 2>/dev/null)$(printf '░%.0s' $(seq 1 $EMPTY) 2>/dev/null)
+          else
+            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
           fi
           echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
           echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
           echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
+          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
+          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
 
       - name: Upload merged Playwright report
+        id: upload-report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -475,18 +489,24 @@ jobs:
         with:
           header: e2e-macos-arm64-results
           message: |
-            ${{ needs.e2e-desktop-macos.result == 'success' && steps.summary.outputs.failed == '0' && ':white_check_mark: macOS E2E tests passed!' || ':x: Some macOS E2E tests failed. Check the report for details.' }}
+            ## 🍎 macOS Desktop E2E · ARM64
 
-            **macOS Desktop E2E Test Results (ARM64)**
-            | :white_check_mark: Passed | :x: Failed | :warning: Skipped |
-            | :---: | :---: | :---: |
-            | ${{ steps.summary.outputs.passed }} | ${{ steps.summary.outputs.failed }} | ${{ steps.summary.outputs.skipped }} |
+            ${{ needs.e2e-desktop-macos.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
 
-            :bar_chart: **View Full HTML Report:**
-            1. Go to the [workflow run page](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            2. Scroll to "Artifacts" section at the bottom
-            3. Click `playwright-report` to download (downloads as .zip)
-            4. Extract the zip file and open `index.html` in a browser
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
 
             ---
-            <sub>Last updated: ${{ github.event.pull_request.head.sha }} | [Workflow run #${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
+            <sub>2 shards · macos-26 ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
