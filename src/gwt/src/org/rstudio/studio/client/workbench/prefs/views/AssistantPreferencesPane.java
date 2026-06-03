@@ -779,8 +779,9 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void refresh(String assistantType)
    {
-      imgRefreshSpinner_.setVisible(true);
+      // Clear any prior status, then show the spinner for this request
       reset();
+      imgRefreshSpinner_.setVisible(true);
 
       // Resolve to the current preference when no explicit type was provided
       final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
@@ -1190,8 +1191,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void reset()
    {
       assistantStartupError_ = null;
-      // Clear the shared status label so a previous assistant's account info
-      // is not shown while the new status is being fetched
+      // Clear the shared status UI so a previous assistant's account info and
+      // loading spinner are not shown while the new status is being fetched
+      imgRefreshSpinner_.setVisible(false);
       lblAssistantStatus_.setText("");
       hideButtons();
    }
