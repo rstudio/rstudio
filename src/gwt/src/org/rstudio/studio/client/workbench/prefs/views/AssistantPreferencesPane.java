@@ -779,12 +779,19 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void refresh(String assistantType)
    {
+      // Resolve to the current preference when no explicit type was provided
+      final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+
+      // A queued or late refresh for a no-longer-selected assistant must not
+      // touch the shared status UI: it would clear the current panel and, since
+      // the callback below early-returns, leave the spinner running. This guards
+      // invocation paths such as the retry timer and the sign-in/out callbacks.
+      if (isStaleStatusResult(type))
+         return;
+
       // Clear any prior status, then show the spinner for this request
       reset();
       imgRefreshSpinner_.setVisible(true);
-
-      // Resolve to the current preference when no explicit type was provided
-      final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
 
       ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
