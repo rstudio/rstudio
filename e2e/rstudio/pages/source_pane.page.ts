@@ -29,11 +29,6 @@ export class SourcePane extends PageObject {
   public secondaryToolbar: Locator;
   public chunkImage: Locator;
   public statusBarCompletionReceived: Locator;
-  public visualEditorContent: Locator;
-  public closeFindAndReplaceBtn: Locator;
-  public visualInsertMenu: Locator;
-  public visualInsertCitation: Locator;
-  public findInput: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -69,13 +64,6 @@ export class SourcePane extends PageObject {
     this.secondaryToolbar = page.locator('[aria-label="Markdown editing tools"]');
     this.chunkImage = page.locator("xpath=//*[@id='rstudio_source_text_editor']//*[@class='gwt-Image']");
     this.statusBarCompletionReceived = this.footerTable.locator('.gwt-Label', { hasText: 'Completion response received' });
-    this.visualEditorContent = page.locator(
-      "xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@class,'body')]"
-    );
-    this.closeFindAndReplaceBtn = page.locator("[aria-label='Close find and replace']");
-    this.visualInsertMenu = page.locator('[aria-label="Insert"]');
-    this.visualInsertCitation = page.locator('#rstudio_label_citation_command');
-    this.findInput = page.locator("[placeholder='Find']");
   }
 }
 

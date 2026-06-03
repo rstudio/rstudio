@@ -16,7 +16,6 @@ export const TIMEOUTS = {
   // keystroke before the next arrives.
   slowKeystroke: 200,
   packageInstall: 120000,
-  citationSearch: 30000,
 };
 
 export async function sleep(ms: number): Promise<void> {

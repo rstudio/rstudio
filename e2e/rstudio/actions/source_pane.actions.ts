@@ -2,7 +2,7 @@ import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
-import { clickConfirmIfVisible, installDepIfPrompted, CONFIRM_BTN } from '../pages/modals.page';
+import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
@@ -260,42 +260,6 @@ export class SourcePaneActions {
     // return before .ProseMirror existed -- leaving callers asserting against a
     // still-source-mode editor.
     await proseMirror.first().waitFor({ state: 'visible', timeout: 15000 });
-  }
-
-  /**
-   * Creates a new untitled Markdown document via the `newMarkdownDoc` command
-   * and ensures the visual editor is active.
-   */
-  async createMarkdownWithVisualEditor(): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('newMarkdownDoc')");
-    await expect(this.sourcePane.selectedTab).toContainText('Untitled', { timeout: TIMEOUTS.fileOpen });
-    await installDepIfPrompted(this.page);
-    await this.ensureVisualMode();
-  }
-
-  /**
-   * Creates a new untitled Quarto document via the `newQuartoDoc` command,
-   * accepts the default name in the wizard, and ensures the visual editor is active.
-   */
-  async createQuartoWithVisualEditor(): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('newQuartoDoc')");
-    await installDepIfPrompted(this.page);
-    await this.page.locator(CONFIRM_BTN).click({ timeout: 30000 });
-    await sleep(2000);
-    await this.ensureVisualMode();
-    await expect(this.sourcePane.publishBtn).toBeVisible({ timeout: 10000 });
-  }
-
-  /**
-   * Quarto's default visual editor opens with the cursor inside the YAML header,
-   * where citations cannot be inserted. Click the "Quarto enables" prose text
-   * to position the cursor in editable content.
-   */
-  async navigateOutOfQuartoYaml(): Promise<void> {
-    const prose = this.sourcePane.visualEditorContent.locator('text=Quarto enables').first();
-    await expect(prose).toBeVisible({ timeout: 30000 });
-    await prose.click();
-    await sleep(500);
   }
 
   /**
