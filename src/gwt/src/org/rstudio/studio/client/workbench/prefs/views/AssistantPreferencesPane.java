@@ -432,6 +432,10 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   positAiRefreshed_ = true;
 
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
+
                   // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
                      UserPrefsAccessor.ASSISTANT_POSIT,
@@ -485,6 +489,10 @@ public class AssistantPreferencesPane extends PreferencesPane
                if (!copilotRefreshed_)
                {
                   copilotRefreshed_ = true;
+
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
 
                   // Check if Copilot is installed (passing assistantType so backend knows
                   // which language server to check, even if preference isn't saved yet)
