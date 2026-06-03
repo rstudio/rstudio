@@ -124,6 +124,17 @@ if (process.env.GITHUB_ACTIONS)
     showError: true,
   }]);
 
+// Write a machine-readable summary so CI can parse passed/failed/skipped counts
+// without re-running tests (used by PR comment steps).
+if (process.env.GITHUB_ACTIONS)
+  reporters.push(['json', { outputFile: 'e2e-results.json' }]);
+
+// Sharded CI runs use blob reporter so the merge job can reassemble a single
+// HTML report and accurate counts from all shards. All other reporters are
+// suppressed per-shard to avoid producing N partial HTML reports.
+if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
+  reporters.splice(0, reporters.length, ['blob']);
+
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,

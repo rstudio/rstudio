@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "src/**"
+      - "dependencies/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
@@ -15,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   run-macos-26:
@@ -24,3 +26,4 @@ jobs:
       r_version: "4.5.3"
       # Skip @ai-tagged tests on PRs for now.
       grep_invert: "@ai"
+      post_pr_comment: true
