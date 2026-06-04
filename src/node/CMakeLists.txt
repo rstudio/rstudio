@@ -12,7 +12,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.19.8)
 
 # don't add electron for development mode (since faster to work
 # iteratively using "npm start" and so forth)
