@@ -131,9 +131,11 @@ if (process.env.GITHUB_ACTIONS)
 
 // Sharded CI runs use blob reporter so the merge job can reassemble a single
 // HTML report and accurate counts from all shards. All other reporters are
-// suppressed per-shard to avoid producing N partial HTML reports.
+// suppressed per-shard to avoid producing N partial HTML reports. The E2E Test
+// Insights reporter rides alongside blob so per-shard results also reach the
+// dashboard; it no-ops without CONNECT_API_KEY (e.g. fork PRs).
 if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
-  reporters.splice(0, reporters.length, ['blob']);
+  reporters.splice(0, reporters.length, ['blob'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
 
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',

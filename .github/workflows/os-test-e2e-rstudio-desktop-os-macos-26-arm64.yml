@@ -334,6 +334,12 @@ jobs:
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard
+          # API. SHARD_NAME makes each shard's S3 run id unique so shards don't
+          # overwrite each other. CONNECT_API_KEY is empty on fork PRs, where the
+          # reporter no-ops (warns, never fails the run).
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: desktop-mac-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows
           # which phase exceeded the deadline (CDP-connect vs. bridge-installed
           # vs. ready-flag vs. console-visible).
