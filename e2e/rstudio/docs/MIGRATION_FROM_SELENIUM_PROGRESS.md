@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 19 |
+| Files fully converted | 20 |
 | Files partially converted | 0 |
-| Files not started | 13 |
+| Files not started | 12 |
 
 ## Conversion Status
 
@@ -28,7 +28,7 @@ Target: `e2e/rstudio/tests/`
 | test_desktop_PlotsPane.py | 11 | — | Not started | |
 | test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
 | test_desktop_R_Session_Restart.py | 1 | panes/console/r_session_restart.test.ts (1) | Complete | |
-| test_desktop_terminal.py | 4 | — | Not started | |
+| test_desktop_terminal.py | 4 | panes/terminal/terminal.test.ts (4) | Complete | Added to existing terminal spec: toolbar next/previous buttons, R --version output, file create and ls, Shift+Backspace character deletion (@desktop_only). Uses rstudioapi::terminalBuffer for all output assertions. |
 | test_desktop_ViewerPane.py | 1 | panes/viewer/htmlwidgets.test.ts (1) | Complete | |
 
 ### EditorPane (10 files, 37 methods)
