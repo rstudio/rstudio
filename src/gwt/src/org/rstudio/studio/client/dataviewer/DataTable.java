@@ -23,6 +23,7 @@ import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -212,9 +213,13 @@ public class DataTable
             onStateChanged();
          }
       };
+      // Format the label through formatMenuLabel (with a null icon) so it
+      // carries the same 25px icon column that AppCommand- and
+      // CheckableMenuItem-backed items use; otherwise this plain MenuItem's
+      // text starts flush left and looks offset from the summary toggle below.
       optionsMenu_.addItem(new MenuItem(
-            constants_.optionsResetView(),
-            false,
+            AppCommand.formatMenuLabel(constants_.optionsResetView()),
+            true,
             () -> refreshAndReset()));
       optionsMenu_.addSeparator();
       optionsMenu_.addItem(showSummaryItem_);

@@ -568,6 +568,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             getImageResource(), label, shortcut, rightImage_, rightImageDesc_);
    }
 
+   public static String formatMenuLabel(String label)
+   {
+      return formatMenuLabel(null, label, null);
+   }
+
    public static String formatMenuLabel(ImageResource icon,
          String label,
          String shortcut)

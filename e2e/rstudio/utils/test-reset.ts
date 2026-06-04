@@ -3,6 +3,7 @@ import {
   dismissAllModals,
   executeCommand,
   numModalsShowing,
+  resetLayoutZoom,
   resetSourcePaneState,
 } from './commands';
 
@@ -20,8 +21,9 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *
  * Each step short-circuits cheaply when its trigger isn't present, so on a
  * clean session this adds only the cost of an already-satisfied readiness
- * check, two `isVisible()` snapshots, and a bridge call to
- * resetSourcePaneState (typically tens of ms total).
+ * check, two `isVisible()` snapshots, a layout-zoom reset (a no-op bridge call
+ * when nothing is zoomed), and a bridge call to resetSourcePaneState
+ * (typically tens of ms total).
  *
  * What we reset:
  *
@@ -40,6 +42,10 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *     against a stale state and getActiveDebugLineRow throws because the
  *     debug marker is in a hidden editor tab. Click Stop on the debug
  *     toolbar when it's visible.
+ *   - **Pane zoom.** A previous test that maximized a pane (layoutZoom*) and
+ *     failed before toggling it back leaves the layout zoomed, squeezing every
+ *     other pane to near-zero so the next test can't click its targets. End the
+ *     zoom when one is active (see resetLayoutZoom).
  *   - **Source pane buffers.** Collapse to a single Untitled tab via the
  *     `resetToUntitled` bridge (kept-or-created untitled + close everything
  *     else). resetSourcePaneState specifically -- NOT closeAllSourceDocs --
@@ -59,10 +65,12 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *   - **Working directory.** `useSuiteSandbox` already scopes cwd; tests
  *     that need a specific cwd set it themselves.
  *
- * Error handling: the debug-exit step (2) is incidental cleanup and is fully
- * guarded -- it never throws. Steps 1, 3, and 4 (modal dismissal, source-pane
- * reset, console focus) are structural and call the automation bridge; they
- * will throw if `window.rstudio` is gone. That is intentional -- a missing
+ * Error handling: the debug-exit (2) and zoom-reset (3) steps are incidental
+ * cleanup and are fully guarded -- they never throw (resetLayoutZoom treats a
+ * missing bridge as "nothing zoomed"). Steps 1, 4, and 5 (modal dismissal,
+ * source-pane reset, console focus) are structural and call the automation
+ * bridge; they will throw if `window.rstudio` is gone. That is intentional --
+ * a missing
  * bridge means the session is unusable and every following test would fail
  * anyway, so failing here (named clearly) beats swallowing the error and
  * letting the next test fail on a mystery first action. Guarding the
@@ -130,13 +138,22 @@ export async function resetForNextTest(page: Page): Promise<void> {
     }
   }
 
-  // 3. Collapse source pane to a single Untitled tab. resetSourcePaneState
+  // 3. End any active pane zoom. The session is worker-scoped, so a prior test
+  //    that zoomed a pane (e.g. layoutZoomEnvironment) and failed before
+  //    toggling it back off leaves the layout maximized -- which squeezes every
+  //    other pane to near-zero, so the next test's locator clicks land on a
+  //    zero-size element and time out as "not visible". resetLayoutZoom reads
+  //    the live zoom state and is a no-op (preserving any custom column widths)
+  //    when nothing is zoomed.
+  await resetLayoutZoom(page);
+
+  // 4. Collapse source pane to a single Untitled tab. resetSourcePaneState
   //    waits for the async close chain to drain before returning, so lingering
   //    tabs (and their hidden Ace editors) can't bleed state into the next
   //    test -- stale `.ace_active_debug_line` markers, gutter breakpoints, etc.
   await resetSourcePaneState(page);
 
-  // 4. Restore focus to the console so tests start from a deterministic
+  // 5. Restore focus to the console so tests start from a deterministic
   //    focus state. resetToUntitled's handler moves focus to the kept /
   //    newly-created Untitled tab; without this, the first test action
   //    that needs console focus (e.g. clearConsole, executeInConsole) has

@@ -20,13 +20,15 @@
 - ([#3798](https://github.com/rstudio/rstudio/issues/3798)): The Windows terminal now uses the native Windows pseudoconsole (ConPTY) instead of the legacy winpty library, improving Ctrl+C handling in console programs.
 - ([#17800](https://github.com/rstudio/rstudio/issues/17800)): Fix the data viewer's horizontal scrollbar staying hidden after returning to the tab, and fix Ctrl+C/Cmd+C copying only the active cell instead of the user's multi-cell text selection.
 - ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Fix the data viewer becoming slow to open, scroll, and search -- and freezing for several seconds when opening very wide data frames -- when there are many columns or the summary panel is shown. The grid now renders only the rows and columns currently in view.
+- ([#17835](https://github.com/rstudio/rstudio/issues/17835)): Fix a pinned column in the data viewer jumping to a different column after paging to another set of columns in a very wide data frame; the pinned column now stays visible and tracks its original column across column pagination.
 - ([#17278](https://github.com/rstudio/rstudio/issues/17278)): Fix a `data.table` returned invisibly from a `:=` update (e.g. `dt[, x := y]`) being auto-printed in notebook chunks, when its output should be suppressed as it is in the console.
 - ([#17810](https://github.com/rstudio/rstudio/issues/17810)): Fix the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.
 - ([#17735](https://github.com/rstudio/rstudio/issues/17735)): Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.
+- ([#17066](https://github.com/rstudio/rstudio/issues/17066)): Fix the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.480.0
+- Copilot Language Server 1.500.0
 - Electron 41.7.0
 - Node.js 22.22.2 (copilot, Posit AI)
 - Quarto 1.9.38

@@ -2,7 +2,7 @@
 // Sidebar-width-when-adding-tabs scenarios are exercised by panes.test.ts.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { executeCommand, isCommandChecked, resetSourcePaneState } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom, resetSourcePaneState } from '@utils/commands';
 import type { Page } from 'playwright';
 
 const WORKBENCH_TABS = [
@@ -42,6 +42,17 @@ async function getAriaSelected(page: Page, selector: string): Promise<boolean> {
 }
 
 test.describe('Workbench tabs', () => {
+  // layoutZoomEnvironment mutates global, worker-scoped layout state. If the
+  // zoom test fails before toggling the zoom back off, the maximized pane
+  // squeezes every other pane to near-zero and poisons the next spec in this
+  // worker (workers=1) -- the Packages pane collapses and its checkbox clicks
+  // time out as "not visible". Guarantee the layout is restored after every
+  // test here regardless of where it failed. resetLayoutZoom is a no-op when
+  // nothing is zoomed, and the per-test reset re-runs it before the next spec.
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await resetLayoutZoom(page);
+  });
+
   test('all core tabs are present and visible', async ({ rstudioPage: page }) => {
     for (const selector of WORKBENCH_TABS) {
       const tab = page.locator(selector);
@@ -75,6 +86,17 @@ test.describe('Workbench tabs', () => {
   // layoutZoomEnvironment is a separate command from layoutZoomLeftColumn /
   // layoutZoomRightColumn (covered by panes.test.ts) -- it expands just the
   // environment panel rather than a whole column.
+  //
+  // Asserts the zoom *invariants* -- the deterministic command-checked state,
+  // the other panes collapsing, and a tolerance-based restore -- rather than a
+  // growth ratio. An earlier version polled `envWidth > initialEnvWidth * 1.5`,
+  // which couples the assertion to the default column proportions: on a CI
+  // display where the Source/Console column starts narrow (the snap-threshold
+  // case the 1400x900 window-bounds pin in desktop.fixture.ts guards against),
+  // the Environment column is already wide, so zooming it grows < 1.5x and the
+  // poll never satisfies. The collapse of the Console / TabSet2 panes is what
+  // "Environment is zoomed" actually means and holds regardless of the starting
+  // proportions (matching how panes.test.ts verifies its column-zoom tests).
   test('layoutZoomEnvironment zooms the environment pane and toggles back', async ({ rstudioPage: page }) => {
     const initialEnvWidth = await getOffsetWidth(page, ENV_PANEL);
     const initialEnvHeight = await getOffsetHeight(page, ENV_PANEL);
@@ -82,37 +104,44 @@ test.describe('Workbench tabs', () => {
     const initialTabSet2Width = await getOffsetWidth(page, TABSET2_PANE);
     const initialTabSet2Height = await getOffsetHeight(page, TABSET2_PANE);
 
-    expect(initialEnvWidth).toBeGreaterThan(0);
-    expect(initialEnvHeight).toBeGreaterThan(0);
-    expect(initialConsoleWidth).toBeGreaterThan(0);
-    expect(initialTabSet2Width).toBeGreaterThan(0);
+    // Precondition: a real (non-collapsed) default layout. Toggle-off restores
+    // the *pre-zoom* widths, so a Console that starts collapsed would make the
+    // restore checks below fail in a confusing way -- assert it loudly here
+    // instead. The per-test reset un-zooms any leaked zoom before we get here.
+    expect(initialEnvWidth, 'Environment panel should have a real width').toBeGreaterThan(50);
+    expect(initialEnvHeight, 'Environment panel should have a real height').toBeGreaterThan(50);
+    expect(initialConsoleWidth, 'Console should start as a non-collapsed column').toBeGreaterThan(50);
+    expect(initialTabSet2Width, 'TabSet2 should have a real width').toBeGreaterThan(50);
 
     await executeCommand(page, 'layoutZoomEnvironment');
 
+    // Zoomed: command is checked and the Console column (different column from
+    // Environment) has collapsed. Poll the command state -- the deterministic
+    // signal -- alongside the collapse so we wait on the relayout settling.
     await expect.poll(
-      async () => (await getOffsetWidth(page, ENV_PANEL)) > initialEnvWidth * 1.5
+      async () => (await isCommandChecked(page, 'layoutZoomEnvironment'))
         && (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
       { timeout: 5000 },
     ).toBe(true);
 
-    await expect.poll(() => isCommandChecked(page, 'layoutZoomEnvironment')).toBe(true);
+    // The Environment panel took the freed space: strictly larger than before
+    // (no ratio -- the magnitude depends on the starting proportions).
+    expect(await getOffsetWidth(page, ENV_PANEL)).toBeGreaterThan(initialEnvWidth);
+    expect(await getOffsetHeight(page, ENV_PANEL)).toBeGreaterThan(initialEnvHeight);
 
-    const zoomedEnvHeight = await getOffsetHeight(page, ENV_PANEL);
-    expect(zoomedEnvHeight).toBeGreaterThan(initialEnvHeight * 1.5);
-
+    // TabSet2 (same column as Environment, stacked below it) collapsed.
     const zoomedTabSet2Width = await getOffsetWidth(page, TABSET2_PANE);
     const zoomedTabSet2Height = await getOffsetHeight(page, TABSET2_PANE);
     expect(zoomedTabSet2Width < 50 || zoomedTabSet2Height < 50).toBe(true);
 
     await executeCommand(page, 'layoutZoomEnvironment');
 
+    // Restored: command unchecked and the Console column is back.
     await expect.poll(
-      async () => (await getOffsetWidth(page, ENV_PANEL)) < initialEnvWidth * 1.5
+      async () => !(await isCommandChecked(page, 'layoutZoomEnvironment'))
         && (await getOffsetWidth(page, CONSOLE_PANE)) > 50,
       { timeout: 5000 },
     ).toBe(true);
-
-    await expect.poll(() => isCommandChecked(page, 'layoutZoomEnvironment')).toBe(false);
 
     const tol = (actual: number, expected: number) => Math.abs(actual - expected) / expected < 0.1;
     expect(tol(await getOffsetWidth(page, ENV_PANEL), initialEnvWidth)).toBe(true);

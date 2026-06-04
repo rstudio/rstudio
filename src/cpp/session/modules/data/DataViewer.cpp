@@ -21,7 +21,10 @@
 #include <vector>
 
 #include <boost/format.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
@@ -493,26 +496,49 @@ json::Value getCols(SEXP dataSEXP,
    return result;
 }
 
-json::Value getColSlice(SEXP dataSEXP,
-                         int columnOffset,
-                         int maxDisplayColumns)
+// Parse the client's "columns_requested" field: a comma-separated list of
+// absolute, 1-based column indices in display order (pinned columns first,
+// then the visible window). Invalid/empty tokens are skipped; the returned
+// vector preserves order, and an empty result means "no explicit request"
+// (callers fall back to describing/returning the full frame).
+std::vector<int> parseColumnIndices(const std::string& field)
+{
+   std::vector<int> indices;
+   std::string decoded = http::util::urlDecode(field);
+   if (decoded.empty())
+      return indices;
+
+   std::vector<std::string> tokens;
+   boost::algorithm::split(tokens, decoded, boost::is_any_of(","));
+   for (const std::string& token : tokens)
+   {
+      std::string trimmed = boost::algorithm::trim_copy(token);
+      if (trimmed.empty())
+         continue;
+      int value = safe_convert::stringTo<int>(trimmed, -1);
+      if (value >= 1)
+         indices.push_back(value);
+   }
+   return indices;
+}
+
+json::Value getColsByIndex(SEXP dataSEXP,
+                           const std::vector<int>& columnIndices)
 {
    SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
 
-   // DataTables use 0-based indexing, but R uses 1-based indexing, so add 1 to the columnOffset
-   int sliceStart = columnOffset + 1;
-   int totalCols = safeDim(dataSEXP, DIM_COLS);
-   int sliceEnd = columnOffset + maxDisplayColumns < totalCols ? columnOffset + maxDisplayColumns : totalCols;
-
-   Error error = r::exec::RFunction(".rs.describeColSlice")
+   // columnIndices are absolute, 1-based column positions in the full frame.
+   // The client sends an arbitrary ordered set (pinned columns followed by the
+   // visible window), so this is not necessarily contiguous; .rs.describeColsByIndex
+   // gathers exactly those columns and passes the indices through as col_index.
+   Error error = r::exec::RFunction(".rs.describeColsByIndex")
          .addParam(dataSEXP)
-         .addParam(sliceStart)
-         .addParam(sliceEnd)
+         .addParam(columnIndices)
          .call(&colsSEXP, &protect);
 
-   if (error || colsSEXP == R_NilValue) 
+   if (error || colsSEXP == R_NilValue)
    {
       json::Object err;
       if (error) 
@@ -574,9 +600,12 @@ json::Object getData(SEXP dataSEXP,
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
    
-   // Parameters from the client to delimit the column slice to return
-   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
-   int maxDisplayColumns = http::util::fieldValue<int>(fields, "max_display_columns", 0);
+   // Absolute, 1-based column indices the client wants returned, in display
+   // order (pinned columns first, then the visible window). Empty means the
+   // whole frame. The sort column and per-column filters below are likewise
+   // keyed by absolute index, so no column-offset translation is needed.
+   std::vector<int> columnIndices =
+         parseColumnIndices(http::util::fieldValue<std::string>(fields, "columns_requested", ""));
 
    // loop through sort columns
    std::vector<int> ordercols;
@@ -593,7 +622,7 @@ json::Object getData(SEXP dataSEXP,
 
       if (ordercol > 0)
       {
-         ordercols.push_back(ordercol + columnOffset);
+         ordercols.push_back(ordercol);
          orderdirs.push_back(orderdir);
       }
 
@@ -605,19 +634,10 @@ json::Object getData(SEXP dataSEXP,
 
    int filteredNRow = 0;
 
-   // extract filters
+   // extract filters, keyed by absolute (1-based) column index
    std::vector<std::string> filters;
    bool hasFilter = false;
 
-   // fill the initial filters outside of the visible frame
-   // unfortunately the code that consumes these filters assumes
-   // it's purely index based and needs to be padded out
-   for (int i = 0; i < columnOffset; i++)
-   {
-      std::string emptyStr = "";
-      filters.push_back(emptyStr);
-   }
-   
    for (int i = 1; i <= ncol; i++)
    {
       std::string filterVal = http::util::urlDecode(
@@ -714,30 +734,42 @@ json::Object getData(SEXP dataSEXP,
    // DataTables uses 0-based indexing, but R uses 1-based indexing
    start++;
 
-   // extract the portion of the column vector requested by the client
-   int numFormattedColumns = ncol - columnOffset < maxDisplayColumns ? ncol - columnOffset : maxDisplayColumns;
-   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
+   // Gather the columns requested by the client, in the order requested. The
+   // indices are absolute (1-based) positions in the (transformed) frame; the
+   // sort/filter transform above preserves column order and count, so they
+   // still address the intended columns. An empty request means the whole
+   // frame, in natural order.
+   std::vector<int> outputColumns = columnIndices;
+   if (outputColumns.empty())
+   {
+      for (int i = 1; i <= ncol; i++)
+         outputColumns.push_back(i);
+   }
+
+   int dataLength = r::sexp::length(dataSEXP);
+   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, gsl::narrow_cast<int>(outputColumns.size()));
    protect.add(formattedDataSEXP);
 
-   int initialIndex = 0 + columnOffset;
-   for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
+   for (std::size_t outIdx = 0; outIdx < outputColumns.size(); outIdx++)
    {
-      if (i >= r::sexp::length(dataSEXP))
+      // convert the absolute 1-based column index to a 0-based vector position
+      int i = outputColumns[outIdx] - 1;
+      if (i < 0 || i >= dataLength)
       {
          throw r::exec::RErrorException(
                   string_utils::sprintf(
                      "Internal error: attempted to access column %i in vector of size %i",
                      i,
-                     r::sexp::length(dataSEXP)));
+                     dataLength));
       }
-      
+
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
       if (columnSEXP == nullptr || columnSEXP == R_NilValue)
       {
          throw r::exec::RErrorException(
                   string_utils::sprintf("No data in column %i", i));
       }
-      
+
       SEXP formattedColumnSEXP = R_NilValue;
       r::exec::RFunction formatFx(".rs.formatDataColumn");
       formatFx.addParam(columnSEXP);
@@ -746,8 +778,8 @@ json::Object getData(SEXP dataSEXP,
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
-      
-      SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
+
+      SET_VECTOR_ELT(formattedDataSEXP, gsl::narrow_cast<int>(outIdx), formattedColumnSEXP);
    }
 
    // format the row names
@@ -871,19 +903,19 @@ Error getGridData(const http::Request& request,
       std::string maxColsField = http::util::urlDecode(
                http::util::fieldValue<std::string>(fields, "max_cols", ""));
 
-      std::string maxDisplayColumnsField = http::util::urlDecode(
-               http::util::fieldValue<std::string>(fields, "max_display_columns", ""));
-
-      std::string columnOffsetField = http::util::urlDecode(
-               http::util::fieldValue<std::string>(fields, "column_offset", ""));
+      std::string columnsRequestedField =
+               http::util::fieldValue<std::string>(fields, "columns_requested", "");
 
       std::string show = http::util::fieldValue<std::string>(
                fields, "show", "data");
 
       int maxRows = safe_convert::stringTo<int>(maxRowsField, -1);
       int maxCols = safe_convert::stringTo<int>(maxColsField, -1);
-      int maxDisplayColumns = safe_convert::stringTo<int>(maxDisplayColumnsField, -1);
-      int columnOffset = safe_convert::stringTo<int>(columnOffsetField, 0);
+
+      // Absolute, 1-based column indices the client wants, in display order
+      // (pinned columns first, then the visible window). Empty means "the
+      // whole frame" (e.g. data-import preview or a small, unpaginated frame).
+      std::vector<int> columnIndices = parseColumnIndices(columnsRequestedField);
 
       if (objName.empty() && cacheKey.empty()) 
       {
@@ -941,9 +973,9 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
-            if (columnOffset >= 0 && maxDisplayColumns > 0)
+            if (!columnIndices.empty())
             {
-               result = getColSlice(dataSEXP, columnOffset, maxDisplayColumns);
+               result = getColsByIndex(dataSEXP, columnIndices);
             }
             else
             {
