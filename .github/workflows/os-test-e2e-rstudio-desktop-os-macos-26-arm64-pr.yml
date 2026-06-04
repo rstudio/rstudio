@@ -24,7 +24,8 @@ jobs:
     # Forward repo secrets (CONNECT_API_KEY) into the reusable workflow so the
     # E2E Test Insights reporter can post on PR runs. Fork PRs receive no
     # secrets, so the reporter no-ops there.
-    secrets: inherit
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
       project: desktop
       r_version: "4.5.3"
