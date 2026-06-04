@@ -16,11 +16,11 @@ The user provides one or more targets:
 
 ## Hard Rules
 
-1. **Load skills first** — Always load `rstudio-create-playwright-tests` before doing any conversion work.
+1. **Load skills and the README first** — Before doing any conversion work, always: (a) load `rstudio-create-playwright-tests`; (b) read `e2e/rstudio/README.md` in full, the suite's primary reference (read it fresh for each migration; don't assume it was read earlier in the session); (c) load `rstudio-run-playwright-tests`, whose run protocol governs the verification in Hard Rule 5.
 2. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
-4. **Tests must work on Desktop and Server** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only patterns.
-5. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
-6. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
+3. **Tests must work on Desktop and Server, and on Windows, macOS, and Linux** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only or OS-specific patterns; use cross-platform shortcuts (`ControlOrMeta` where appropriate) and `process.platform` guards, or tag mode/OS-specific tests (`@desktop_only`, `@windows_only`, etc.).
+4. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
+5. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
 
 ## Steps
 
@@ -33,6 +33,8 @@ The user provides one or more targets:
 ### Step 2: Read reference materials
 
 - Load `rstudio-create-playwright-tests` skill
+- Read `e2e/rstudio/README.md` in full -- the suite's primary reference; read it fresh for each migration, don't assume it was read earlier in the session
+- Load `rstudio-run-playwright-tests` skill -- its run protocol governs the verification gate (Hard Rule 5)
 - Check `rstudio-ide-automation/rstudio_server_pro/electron-tests/` for other Selenium/Selene electron tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-ide-automation/rstudio_server_pro/tests/` for Selenium/Selene server tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable
@@ -84,7 +86,7 @@ If the test needs locators or methods not yet available:
 
 ### Step 6: Run the test
 
-**Hard gate (Hard Rule 6):** a test doesn't count as migrated until it passes here.
+**Hard gate (Hard Rule 5):** a test doesn't count as migrated until it passes here.
 
 Defer to the `rstudio-run-playwright-tests` skill for the canonical run commands (Desktop and Server). Present the command and wait for user approval before executing.
 
@@ -154,7 +156,7 @@ Present the assessed findings with recommendations. Wait for approval before edi
 - Fix Low findings only if they're real bugs or silent failures
 - Skip cosmetic Lows and "add tests for simple scripts" suggestions
 
-Apply fixes manually. **Do not invoke `roborev-fix`** -- Ron prefers manual fixes through the migration flow. Re-run the test (Hard Rule 6 still applies). Commit per Step 9. Re-run `roborev-review` on the new commit. Repeat until no actionable findings remain.
+Apply fixes manually. **Do not invoke `roborev-fix`** -- Ron prefers manual fixes through the migration flow. Re-run the test (Hard Rule 5 still applies). Commit per Step 9. Re-run `roborev-review` on the new commit. Repeat until no actionable findings remain.
 
 Close reviewed findings via the `roborev-respond` skill once they're addressed.
 
