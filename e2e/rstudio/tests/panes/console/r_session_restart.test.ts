@@ -11,7 +11,6 @@ test.describe.serial('R session restart', { tag: ['@serial'] }, () => {
 
   test(
     'clean=false preserves environment; clean=true clears it',
-    { tag: ['@smoketest'] },
     async () => {
       const missing = await consoleActions.ensurePackages(['magrittr']);
       test.skip(missing.length > 0, 'magrittr could not be installed');

@@ -17,9 +17,15 @@ test.describe.serial('Package installation', { tag: ['@serial'] }, () => {
     async () => {
       test.setTimeout(600000);
 
-      // Remove any pre-existing copies so the install path is exercised
+      // Remove any pre-existing copies so the install path is exercised.
+      // Assert each package is actually absent afterward -- otherwise a silent
+      // uninstall failure would leave it present and the install path below
+      // would be skipped while the functional checks still passed.
       for (const pkg of PACKAGES) {
-        await consoleActions.uninstallPackage(pkg);
+        expect(
+          await consoleActions.uninstallPackage(pkg),
+          `precondition: ${pkg} must be absent before install`,
+        ).toBe(true);
       }
       await consoleActions.restartSession({ clean: true });
 

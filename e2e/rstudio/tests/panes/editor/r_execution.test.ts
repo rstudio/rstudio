@@ -28,7 +28,7 @@ test.describe('R file execution and environment pane', () => {
 
   test(
     'creates an R file, executes code, and tracks environment pane state',
-    { tag: ['@parallel_safe', '@smoketest'] },
+    { tag: ['@parallel_safe'] },
     async () => {
       await consoleActions.executeInConsole('rm(list = ls())');
 
