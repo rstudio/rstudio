@@ -259,15 +259,13 @@ jobs:
       # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
       # (where node.dir is the bundled node downloaded by install-dependencies.cmd).
       # install-dependencies.cmd runs `npm install --global yarn` but Node 22's global
-      # prefix goes to %APPDATA%\npm, not the bundled node dir, so the set-if-exists
-      # check misses. Java's exec with resolveexecutable=true also can't find bare
-      # "yarn.cmd" via CreateProcess. Install yarn locally inside the bundled node dir
-      # so the exact path build.xml checks is satisfied.
       # GWT's build.xml checks ${node.dir}/node_modules/yarn/bin/yarn.cmd via
       # set-if-exists (node.dir = the bundled node downloaded by install-deps).
-      # The bundled node's own npm is a stripped distribution missing node-gyp
-      # and cannot install packages. Use the system npm (from setup-node) with
-      # --prefix to drop yarn exactly at the path build.xml expects.
+      # Installing directly into the bundled node dir via npm --prefix pollutes
+      # it with an incompatible node_modules/npm tree (system npm vs bundled npm),
+      # which breaks the Electron packaging step later. Instead: install yarn into
+      # a throwaway temp dir, then copy only the yarn package into the bundled
+      # node dir so build.xml's check is satisfied without touching bundled npm.
       - name: Install yarn in bundled node directory
         run: |
           $ErrorActionPreference = 'Stop'
@@ -278,14 +276,18 @@ jobs:
             Write-Error "Bundled node directory not found: $nodeDir"
             exit 1
           }
-          Write-Host "Installing yarn into $nodeDir"
-          npm install --prefix "$nodeDir" yarn
-          $yarnCmd = "$nodeDir\node_modules\yarn\bin\yarn.cmd"
-          if (-not (Test-Path $yarnCmd)) {
-            Write-Error "yarn.cmd not found at $yarnCmd after install"
+          $tempDir = "$env:RUNNER_TEMP\yarn-install"
+          Write-Host "Installing yarn to temp dir: $tempDir"
+          npm install --prefix "$tempDir" yarn
+          $yarnSrc = "$tempDir\node_modules\yarn"
+          if (-not (Test-Path "$yarnSrc\bin\yarn.cmd")) {
+            Write-Error "yarn.cmd not found in temp install at $yarnSrc"
             exit 1
           }
-          Write-Host "yarn installed: $yarnCmd"
+          $yarnDest = "$nodeDir\node_modules\yarn"
+          if (Test-Path $yarnDest) { Remove-Item -Recurse -Force $yarnDest }
+          Copy-Item -Recurse $yarnSrc $yarnDest
+          Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
 
       # sccache wraps cl.exe so identical object files are served from cache.
       # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1
