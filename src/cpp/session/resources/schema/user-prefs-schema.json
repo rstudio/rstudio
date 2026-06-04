@@ -1709,6 +1709,12 @@
             "title": "Save Retry Timeout",
             "description": "The maximum amount of seconds of retry for save operations."
         },
+        "save_files_durably": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use durable writes when saving files",
+            "description": "Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes."
+        },
         "insert_native_pipe_operator": {
             "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",

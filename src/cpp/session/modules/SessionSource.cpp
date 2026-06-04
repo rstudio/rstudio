@@ -458,6 +458,27 @@ Error openDocument(const json::JsonRpcRequest& request,
    return Success();
 } 
 
+// Translate a low-level save failure into a message the user can act on. The
+// original error (with the precise OS message and errno) has already been
+// logged by writeStringToFile, so this only changes what is surfaced to the
+// user. Non-disk-space errors are returned unchanged.
+Error friendlySaveError(const Error& error)
+{
+   if (isDiskSpaceError(error))
+   {
+      return Error(
+         boost::system::error_code(error.getCode(), boost::system::system_category()),
+         "There is not enough free space to save this file -- the disk may be "
+         "full, or a disk quota may have been exceeded. Free up some disk space "
+         "(or increase your disk quota) and try saving the file again.",
+         ERROR_LOCATION);
+   }
+   else
+   {
+      return error;
+   }
+}
+
 Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonPath,
                        const json::Value& jsonType,
@@ -540,14 +561,22 @@ Error saveDocumentCore(const std::string& contents,
       // note whether the file existed prior to writing
       bool newFile = !fullDocPath.exists();
 
-      // write the contents to the file
+      // write the contents to the file; request a durable flush (unless the
+      // user has opted out) so that a write that fails on a full disk or over
+      // quota is reported rather than silently dropped -- which would clear the
+      // editor's unsaved marker and lose the user's work
       int writeTimeout = retryWrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
-      error = writeStringToFile(fullDocPath, encoded,
-                                module_context::lineEndings(fullDocPath),
-                                true,
-                                writeTimeout);
+      bool durable = session::prefs::userPrefs().saveFilesDurably();
+      error = writeStringToFile(
+            fullDocPath,
+            encoded,
+            module_context::lineEndings(fullDocPath),
+            true /* truncate */,
+            writeTimeout,
+            true /* logError */,
+            durable);
       if (error)
-         return error;
+         return friendlySaveError(error);
 
       // set the new path and contents for the document
       error = pDoc->setPathAndContents(path);

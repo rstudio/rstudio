@@ -2302,6 +2302,18 @@
    clear = function() { .rs.clearUserPref("save_retry_timeout") }
 )
 
+# Use durable writes when saving files
+#
+# Whether to flush saved files all the way to physical storage so that write
+# failures (such as a full disk or an exceeded quota) are reported rather than
+# silently lost. Disabling this can improve save performance on slow or networked
+# filesystems, at the risk of not detecting some failed writes.
+.rs.uiPrefs$saveFilesDurably <- list(
+   get = function() { .rs.getUserPref("save_files_durably") },
+   set = function(value) { .rs.setUserPref("save_files_durably", value) },
+   clear = function() { .rs.clearUserPref("save_files_durably") }
+)
+
 # Use R's native pipe operator, |>
 #
 # Whether the Insert Pipe Operator command should use the native R pipe operator,
