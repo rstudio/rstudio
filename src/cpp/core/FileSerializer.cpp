@@ -88,9 +88,11 @@ Error writeContentsToFile(const FilePath& filePath,
                           bool truncate,
                           bool durable)
 {
+   // request GENERIC_WRITE in both modes: FlushFileBuffers requires it, so an
+   // append handle opened with only FILE_APPEND_DATA would fail at flush time
    HANDLE hFile = ::CreateFileW(
       filePath.getAbsolutePathW().c_str(),
-      truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
+      GENERIC_WRITE,
       0, // exclusive access (matches FilePath::openForWrite)
       nullptr,
       truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
@@ -102,6 +104,21 @@ Error writeContentsToFile(const FilePath& filePath,
       Error error = LAST_SYSTEM_ERROR();
       error.addProperty("path", filePath.getAbsolutePath());
       return error;
+   }
+
+   // in append mode, move to the end of the file before writing -- a GENERIC_WRITE
+   // handle does not auto-append the way a FILE_APPEND_DATA-only handle would
+   if (!truncate)
+   {
+      LARGE_INTEGER offset;
+      offset.QuadPart = 0;
+      if (!::SetFilePointerEx(hFile, offset, nullptr, FILE_END))
+      {
+         Error error = LAST_SYSTEM_ERROR();
+         (void) ::CloseHandle(hFile);
+         error.addProperty("path", filePath.getAbsolutePath());
+         return error;
+      }
    }
 
    // write all of the bytes, looping in case WriteFile performs a partial write
