@@ -372,17 +372,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — pressing Escape');
 
-      // A late completion response can re-render ghost text after a single
-      // Escape (see status bar "Completion response received"), so retry Escape
-      // until the suggestion clears AND stays cleared: assert empty, wait out
-      // the late-response window, then assert empty again. A bare toPass would
-      // resolve the instant the count first hits 0 and miss a re-render landing
-      // moments later. This also covers the case where the first Escape only
-      // closes the Ace autocomplete popup.
+      // Press Escape until the suggestion is gone AND no completion request is
+      // still in flight. An in-flight request -- shown as "Waiting for
+      // completions..." in the status bar -- can land a response that re-renders
+      // ghost text right after we dismiss it (the original flake; the failure
+      // snapshot showed a late "Completion response received"). Gating on "no
+      // request pending" is the meaningful signal that nothing can resurrect the
+      // suggestion, so we don't need a blind stability sleep. This also covers
+      // the case where the first Escape only closes the Ace autocomplete popup.
       await expect(async () => {
         await page.keyboard.press('Escape');
-        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
-        await sleep(1000);
+        await expect(sourcePane.statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
         await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
       }).toPass({ timeout: 15000 });
       console.log('  Ghost text dismissed with Escape');
