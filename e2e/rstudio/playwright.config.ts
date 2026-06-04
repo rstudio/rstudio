@@ -130,12 +130,13 @@ if (process.env.GITHUB_ACTIONS)
   reporters.push(['json', { outputFile: 'e2e-results.json' }]);
 
 // Sharded CI runs use blob reporter so the merge job can reassemble a single
-// HTML report and accurate counts from all shards. All other reporters are
-// suppressed per-shard to avoid producing N partial HTML reports. The E2E Test
+// HTML report and accurate counts from all shards. Other human-facing reporters
+// are suppressed per-shard. sandbox-reporter is kept so teardown can still
+// detect failures and preserve sandbox state for artifact upload. The E2E Test
 // Insights reporter rides alongside blob so per-shard results also reach the
 // dashboard; it no-ops without CONNECT_API_KEY (e.g. fork PRs).
 if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
-  reporters.splice(0, reporters.length, ['blob'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
+  reporters.splice(0, reporters.length, ['blob'], ['./fixtures/sandbox-reporter.ts'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
 
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',

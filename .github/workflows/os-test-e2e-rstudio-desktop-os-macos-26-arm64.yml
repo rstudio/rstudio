@@ -1,9 +1,6 @@
 name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source)"
 
 on:
-  schedule:
-    # Mon–Fri at 02:00 UTC — daily smoke run against latest source on main.
-    - cron: '0 2 * * 1-5'
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
