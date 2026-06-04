@@ -222,6 +222,26 @@ jobs:
         shell: cmd
         run: install-dependencies.cmd
 
+      # make-package.bat calls `vcvarsall.bat amd64` by name (line 192) to
+      # initialize the MSVC environment.  On GitHub runners, Visual Studio is
+      # installed but its VC\Auxiliary\Build directory (where vcvarsall.bat
+      # lives) is not on the default PATH.  Use vswhere.exe -- pre-installed on
+      # all GitHub Windows runners -- to locate the installation and add it.
+      - name: Add MSVC build tools to PATH
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
+            -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if ([string]::IsNullOrEmpty($vsPath)) {
+            Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
+            exit 1
+          }
+          $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
+          Write-Host "Adding to PATH: $vcBuildPath"
+          Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+
       # sccache wraps cl.exe so identical object files are served from cache.
       # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1
       # and sccache is on PATH.
