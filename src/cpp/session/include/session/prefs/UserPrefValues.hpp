@@ -306,6 +306,7 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleInlineOnly "inline_only"
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
+#define kMousewheelChangesEditorTab "mousewheel_changes_editor_tab"
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
@@ -1526,6 +1527,12 @@ public:
     */
    bool wrapTabNavigation();
    core::Error setWrapTabNavigation(bool val);
+
+   /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   bool mousewheelChangesEditorTab();
+   core::Error setMousewheelChangesEditorTab(bool val);
 
    /**
     * The theme to use for the main RStudio user interface.

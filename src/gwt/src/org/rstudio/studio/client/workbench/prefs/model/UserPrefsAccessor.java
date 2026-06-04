@@ -215,6 +215,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DOC_OUTLINE_SHOW = "doc_outline_show";
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
+   public static final String MOUSEWHEEL_CHANGES_EDITOR_TAB = "mousewheel_changes_editor_tab";
    public static final String GLOBAL_THEME = "global_theme";
    public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
    public static final String GIT_DIFF_IGNORE_WHITESPACE = "git_diff_ignore_whitespace";
@@ -2777,6 +2778,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   public PrefValue<Boolean> mousewheelChangesEditorTab()
+   {
+      return bool(
+         "mousewheel_changes_editor_tab",
+         _constants.mousewheelChangesEditorTabTitle(), 
+         _constants.mousewheelChangesEditorTabDescription(), 
+         true);
+   }
+
+   /**
     * The theme to use for the main RStudio user interface.
     */
    public PrefValue<String> globalTheme()
@@ -4820,6 +4833,8 @@ public class UserPrefsAccessor extends Prefs
          latexPreviewOnCursorIdle().setValue(layer, source.getString("latex_preview_on_cursor_idle"));
       if (source.hasKey("wrap_tab_navigation"))
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
+      if (source.hasKey("mousewheel_changes_editor_tab"))
+         mousewheelChangesEditorTab().setValue(layer, source.getBool("mousewheel_changes_editor_tab"));
       if (source.hasKey("global_theme"))
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("use_dark_theme_modal_dialogs"))
@@ -5233,6 +5248,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
+      prefs.add(mousewheelChangesEditorTab());
       prefs.add(globalTheme());
       prefs.add(useDarkThemeModalDialogs());
       prefs.add(gitDiffIgnoreWhitespace());

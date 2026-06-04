@@ -1448,6 +1448,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationDescription();
 
    /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   @DefaultStringValue("Change active editor tab with mouse wheel")
+   String mousewheelChangesEditorTabTitle();
+   @DefaultStringValue("Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.")
+   String mousewheelChangesEditorTabDescription();
+
+   /**
     * The theme to use for the main RStudio user interface.
     */
    @DefaultStringValue("Global theme")

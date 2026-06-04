@@ -1195,6 +1195,12 @@
             "title": "Wrap around when going to previous/next tab",
             "description": "Whether to wrap around when going to the previous or next editor tab."
         },
+        "mousewheel_changes_editor_tab": {
+            "type": "boolean",
+            "default": true,
+            "title": "Change active editor tab with mouse wheel",
+            "description": "Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab."
+        },
         "global_theme": {
             "type": "string",
             "default": "default",

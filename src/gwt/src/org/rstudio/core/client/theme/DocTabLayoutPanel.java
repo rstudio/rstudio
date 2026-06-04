@@ -607,6 +607,12 @@ public class DocTabLayoutPanel
          else if (event.getType() == "wheel" ||
                   event.getType() == "mousewheel")
          {
+            // only translate wheel scroll into tab selection when the user
+            // has left this behavior enabled
+            if (!RStudioGinjector.INSTANCE.getUserPrefs()
+                  .mousewheelChangesEditorTab().getValue())
+               return;
+
             // extract the delta from the wheel event (note that this could be
             // zero)
             JsObject evt = event.cast();

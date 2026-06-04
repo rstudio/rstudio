@@ -1605,6 +1605,16 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
+# Change active editor tab with mouse wheel
+#
+# Whether scrolling the mouse wheel over the editor tab bar changes the active
+# editor tab.
+.rs.uiPrefs$mousewheelChangesEditorTab <- list(
+   get = function() { .rs.getUserPref("mousewheel_changes_editor_tab") },
+   set = function(value) { .rs.setUserPref("mousewheel_changes_editor_tab", value) },
+   clear = function() { .rs.clearUserPref("mousewheel_changes_editor_tab") }
+)
+
 # Global theme
 #
 # The theme to use for the main RStudio user interface.

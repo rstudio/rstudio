@@ -218,6 +218,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(enableMouseWheelZoom);
       }
 
+      basic.add(checkboxPref(prefs_.mousewheelChangesEditorTab()));
+
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
       initializeGraphicsBackendWidget();
