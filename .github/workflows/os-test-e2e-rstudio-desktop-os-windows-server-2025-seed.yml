@@ -1,0 +1,25 @@
+name: "Cache Seed: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source)"
+
+# Runs weekly to keep the sccache and rstudio-tools caches alive (GitHub
+# evicts caches after 7 days of inactivity). Without this, the first PR run
+# after a quiet week would be a full cold build (~90 min instead of ~20 min).
+on:
+  schedule:
+    # Every Monday at 04:00 UTC -- before the work week starts.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: pw-seed-windows-2025
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed-windows-2025:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    with:
+      build_from_source: true
+      build_only: true
+      r_version: "release"

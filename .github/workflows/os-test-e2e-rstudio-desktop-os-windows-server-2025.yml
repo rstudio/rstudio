@@ -3,8 +3,12 @@ name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Sour
 on:
   workflow_dispatch:
     inputs:
+      build_from_source:
+        description: "Build RStudio Desktop from this branch's source. When false (default), downloads the latest daily installer."
+        type: boolean
+        default: false
       rstudio_installer_url:
-        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        description: "URL to a Desktop installer (.exe). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
         default: ""
       r_version:
@@ -35,8 +39,15 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / sccache caches) and skip the e2e job. Only meaningful when build_from_source is true."
+        type: boolean
+        default: false
   workflow_call:
     inputs:
+      build_from_source:
+        type: boolean
+        default: false
       rstudio_installer_url:
         type: string
         default: ""
@@ -61,38 +72,120 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      build_only:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
-  e2e-desktop-windows:
+  # Builds RStudio Desktop from this PR's source on the same runner image as
+  # the e2e job below, then uploads a zipped Electron app directory as an
+  # artifact. Only runs when build_from_source is true; skipped on daily
+  # download runs.
+  build:
+    if: inputs.build_from_source == true
     runs-on: windows-2025
-    timeout-minutes: 120
+    timeout-minutes: 180
     defaults:
       run:
         shell: pwsh
     env:
       R_LIBS_USER: ${{ github.workspace }}\R-libs
+      SCCACHE_ENABLED: '1'
+      SCCACHE_DIR: ${{ github.workspace }}\.sccache
+      SCCACHE_CACHE_SIZE: '5G'
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Enable long paths before any build step: the Electron output tree and
+      # node_modules can exceed Windows' 260-char MAX_PATH limit silently.
+      - name: Enable Windows long paths
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
+          git config --global core.longpaths true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: e2e/rstudio/package-lock.json
+          cache-dependency-path: src/node/desktop/package-lock.json
+
+      # Windows runners have ~14GB free. RStudio's C++ build + MSVC + all
+      # downloaded deps can push that limit. Remove pre-installed components
+      # we don't need to free ~6-8GB before the build starts.
+      - name: Free disk space
+        run: |
+          $before = Get-PSDrive -Name C
+          Write-Host "Disk space before cleanup: $([math]::Round($before.Free / 1GB, 1)) GB free"
+          $dirs = @(
+            'C:\Program Files\dotnet',
+            'C:\Program Files (x86)\Android',
+            'C:\Program Files\Microsoft SQL Server',
+            'C:\Program Files\Azure Cosmos DB Emulator',
+            'C:\Program Files (x86)\Microsoft SDKs\Azure',
+            'C:\Android'
+          )
+          foreach ($d in $dirs) {
+            if (Test-Path $d) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }
+          }
+          $after  = Get-PSDrive -Name C
+          $freed  = [math]::Round(($after.Free - $before.Free) / 1GB, 1)
+          $freeGB = [math]::Round($after.Free / 1GB, 1)
+          Write-Host "Disk space after cleanup:  $freeGB GB free (freed ~$freed GB)"
+
+      # Downloaded build deps (Boost, SOCI, GWT, Node, pandoc, quarto, etc.)
+      # land in dependencies/common and dependencies/windows within the
+      # workspace when c:\rstudio-tools\dependencies doesn't exist. Keyed on
+      # the install scripts so a version bump forces a fresh download.
+      - name: Cache rstudio-tools deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            dependencies/common
+            dependencies/windows
+          key: rstudio-tools-win64-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-dependencies.cmd', 'dependencies/tools/rstudio-tools.cmd') }}
+          restore-keys: |
+            rstudio-tools-win64-
+          # Save even when the build fails so a later retry doesn't re-download
+          # all deps from scratch (deps are installed before compilation starts).
+          save-always: true
+
+      - name: Cache sccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-win64-${{ github.sha }}
+          restore-keys: |
+            sccache-win64-
+          # Save even on failure: a build that fails at link time has already
+          # compiled most object files -- save-always means the next run reuses
+          # them instead of recompiling from scratch.
+          save-always: true
+
+      - name: Install build tools
+        run: choco install ant sccache --yes --no-progress
 
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
-          Invoke-WebRequest `
-            -Uri 'https://github.com/r-lib/rig/releases/download/latest/rig-windows-latest.exe' `
-            -OutFile rig-setup.exe `
-            -MaximumRetryCount 3 -RetryIntervalSec 5
-          $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
+          }
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
       - name: Install R via rig
@@ -107,7 +200,189 @@ jobs:
           rig ls
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
+      # make-package.bat passes -DLIBR_HOME=C:\R\R-3.6.3 to CMake (hardcoded).
+      # Create a directory junction at that path pointing to the rig-installed
+      # R so CMake can find R headers and R.dll regardless of actual version.
+      - name: Create R junction for CMake
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
+          Write-Host "R home: $rHome"
+          New-Item -ItemType Directory -Force -Path 'C:\R' | Out-Null
+          if (Test-Path 'C:\R\R-3.6.3') { [System.IO.Directory]::Delete('C:\R\R-3.6.3') }
+          New-Item -ItemType Junction -Path 'C:\R\R-3.6.3' -Target $rHome | Out-Null
+          Write-Host "Junction created: C:\R\R-3.6.3 -> $rHome"
+          if (-not (Test-Path 'C:\R\R-3.6.3\bin\Rscript.exe')) {
+            Write-Error "Rscript.exe not found via junction; check rig install path"
+            exit 1
+          }
+
+      - name: Install build dependencies
+        working-directory: dependencies/windows
+        shell: cmd
+        run: install-dependencies.cmd
+
+      # sccache wraps cl.exe so identical object files are served from cache.
+      # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1
+      # and sccache is on PATH.
+      - name: Zero sccache stats
+        run: sccache --zero-stats
+
+      - name: Build RStudio Desktop (x64)
+        working-directory: package/win32
+        shell: cmd
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          # Suffix uses '+' as build-metadata separator per semver spec.
+          # The run_number makes each CI build uniquely identifiable in logs.
+          RSTUDIO_VERSION_SUFFIX: '-pr+${{ github.run_number }}'
+        # nozip: skip NSIS installer creation (we package with 7z in the next step).
+        # quick: skip GWT recompilation and unit tests to shorten CI turnaround.
+        run: make-package.bat nozip quick
+
+      - name: Show sccache stats
+        if: always()
+        run: |
+          $stats = sccache --show-stats
+          Write-Host ($stats -join "`n")
+          # Warn loudly if sccache saw no compile requests -- that means
+          # SCCACHE_ENABLED=1 is not wiring sccache into cl.exe and every build
+          # recompiles from scratch.  Check RStudio's CMake config for how it
+          # reads SCCACHE_ENABLED and sets CMAKE_C/CXX_COMPILER_LAUNCHER.
+          $match = $stats | Select-String 'Compile requests\s+(\d+)'
+          if (-not $match) {
+            Write-Warning "Could not parse sccache stats -- output format may have changed."
+          } elseif ([int]$match.Matches[0].Groups[1].Value -eq 0) {
+            Write-Warning "sccache recorded 0 compile requests -- sccache is NOT caching the build.  See comment above."
+          }
+
+      # The Electron app lands at src/node/desktop-build-AMD64/out/RStudio-win32-x64/
+      # after the build. Zip and upload it so the e2e job can extract it
+      # directly to C:\Program Files\RStudio\ without running an NSIS installer.
+      # Skipped in build_only (seed) runs -- no e2e job consumes the artifact.
+      - name: Package RStudio Desktop
+        if: inputs.build_only != true
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $electronOut = "$env:GITHUB_WORKSPACE\src\node\desktop-build-AMD64\out\RStudio-win32-x64"
+          if (-not (Test-Path "$electronOut\rstudio.exe")) {
+            Write-Error "rstudio.exe not found at $electronOut after build"
+            exit 1
+          }
+          # Use 7z instead of Compress-Archive: it handles Windows MAX_PATH (260
+          # char) limits that Electron's deeply nested output tree can exceed.
+          $zipPath = "$env:GITHUB_WORKSPACE\rstudio-app-windows-x64.zip"
+          7z a -mx=1 $zipPath "$electronOut\*"
+          if ($LASTEXITCODE -ne 0) { Write-Error "7z failed with exit $LASTEXITCODE"; exit 1 }
+          Write-Host "Packaged: $zipPath"
+
+      - name: Upload RStudio Desktop artifact
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-app-windows-x64
+          path: rstudio-app-windows-x64.zip
+          retention-days: 7
+
+  e2e-desktop-windows:
+    needs: build
+    # build is skipped when build_from_source is false; allow this job to run
+    # in that case too. build_only seeds caches without running e2e, so skip here.
+    if: |
+      always() &&
+      inputs.build_only != true &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      R_LIBS_USER: ${{ github.workspace }}\R-libs
+      PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Enable Windows long paths
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
+          git config --global core.longpaths true
+          # Export LOCALAPPDATA to GITHUB_ENV so the crash-dump upload step can
+          # reference it via ${{ env.LOCALAPPDATA }}.  GitHub Actions' env context
+          # does not expose OS environment variables directly.
+          "LOCALAPPDATA=$env:LOCALAPPDATA" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install rig
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig ls
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+
+      # Build-from-source path: install from the artifact produced by the
+      # build job above.
+      - name: Download RStudio Desktop artifact
+        if: inputs.build_from_source == true
+        uses: actions/download-artifact@v4
+        with:
+          name: rstudio-app-windows-x64
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio from artifact
+        if: inputs.build_from_source == true
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dest = 'C:\Program Files\RStudio'
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          # Use 7z instead of Expand-Archive to handle long paths in the
+          # Electron output tree (Windows MAX_PATH 260 char limit).
+          7z x "$env:GITHUB_WORKSPACE\rstudio-app-windows-x64.zip" -o"$dest" -y
+          if ($LASTEXITCODE -ne 0) { Write-Error "7z extraction failed with exit $LASTEXITCODE"; exit 1 }
+          $exe = "$dest\rstudio.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "rstudio.exe not found at $exe after extraction"
+            exit 1
+          }
+          Get-Item $exe | Format-List FullName, Length, LastWriteTime
+
+      # Daily-download path: resolve and install the latest (or specified) .exe.
       - name: Resolve RStudio .exe URL
+        if: inputs.build_from_source == false
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
@@ -117,32 +392,34 @@ jobs:
           $sha = ''
           $filename = ''
           if ([string]::IsNullOrEmpty($url)) {
-            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json'
+            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json' `
+              -MaximumRetryCount 3 -RetryIntervalSec 5
             $win = $manifest.products.electron.platforms.windows
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
+            if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
+              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            }
             Write-Host "Auto-resolved latest windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
             Write-Host "  Filename: $filename"
           } else {
             $filename = Split-Path -Leaf $url
+            if ([string]::IsNullOrEmpty($filename)) {
+              Write-Error "Could not derive filename from rstudio_installer_url='$url'. Provide a URL whose path ends with a filename (e.g. .../RStudio-2024.12.0-467.exe)."
+              exit 1
+            }
             Write-Host "Using override URL: $url (SHA-256 verification skipped)"
           }
           "url=$url"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "sha256=$sha"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      # Cache the installer keyed on its resolved filename. On the daily
-      # auto-resolve path the filename embeds the version + build number, so
-      # the content is immutable per name: a new daily misses and downloads, a
-      # same-day rerun hits and skips the download (SHA-256 still verified
-      # below). Skip caching on the override path -- a user-supplied URL has no
-      # immutability guarantee and its SHA check is skipped, so a reused
-      # basename could otherwise serve stale, unverified bytes.
       - name: Cache RStudio installer
-        if: inputs.rstudio_installer_url == ''
+        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
         id: installer-cache
         uses: actions/cache@v4
         with:
@@ -150,7 +427,7 @@ jobs:
           key: rstudio-installer-${{ steps.resolve.outputs.filename }}
 
       - name: Download RStudio .exe
-        if: steps.installer-cache.outputs.cache-hit != 'true'
+        if: inputs.build_from_source == false && steps.installer-cache.outputs.cache-hit != 'true'
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -162,7 +439,7 @@ jobs:
             -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
-        if: steps.resolve.outputs.sha256 != ''
+        if: inputs.build_from_source == false && steps.resolve.outputs.sha256 != ''
         env:
           EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -176,7 +453,8 @@ jobs:
           }
           Write-Host "SHA-256 OK: $actual"
 
-      - name: Install RStudio
+      - name: Install RStudio from .exe
+        if: inputs.build_from_source == false
         env:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
@@ -205,6 +483,7 @@ jobs:
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          PW_DEBUG_LAUNCH: '1'
         run: |
           $ErrorActionPreference = 'Stop'
           $pwArgs = @()
@@ -221,7 +500,7 @@ jobs:
             $pwArgs += '--grep-invert'
             $pwArgs += $env:PW_GREP_INVERT
           }
-          npx playwright test @pwArgs
+          npx playwright test $pwArgs
 
       - name: Upload Playwright report
         if: always()
@@ -229,6 +508,7 @@ jobs:
         with:
           name: playwright-report
           path: e2e/rstudio/playwright-report/
+          retention-days: 15
           if-no-files-found: ignore
 
       - name: Upload test results
@@ -237,4 +517,25 @@ jobs:
         with:
           name: test-results
           path: e2e/rstudio/test-results/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox
+          path: ${{ github.workspace }}\pw-sandbox\
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Windows writes application crash dumps here; useful when RStudio
+      # aborts before the GWT-ready handshake.
+      - name: Upload Windows crash dumps (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-crash-dumps
+          path: ${{ env.LOCALAPPDATA }}\CrashDumps\
+          retention-days: 15
           if-no-files-found: ignore

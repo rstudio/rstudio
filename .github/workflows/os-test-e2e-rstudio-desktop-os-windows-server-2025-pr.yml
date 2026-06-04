@@ -1,0 +1,28 @@
+name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source, PR-triggered)"
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "dependencies/**"
+      - "e2e/rstudio/**"
+      - ".github/actions/e2e-deps/**"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
+
+concurrency:
+  group: pw-pr-windows-2025-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  run-windows-2025:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    with:
+      build_from_source: true
+      project: desktop
+      r_version: "release"
+      # Skip @ai-tagged tests on PRs for now.
+      grep_invert: "@ai"
