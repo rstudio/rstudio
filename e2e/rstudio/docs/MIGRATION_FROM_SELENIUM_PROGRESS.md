@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 20 |
+| Files fully converted | 21 |
 | Files partially converted | 0 |
-| Files not started | 12 |
+| Files not started | 11 |
 
 ## Conversion Status
 
@@ -25,7 +25,7 @@ Target: `e2e/rstudio/tests/`
 | test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
 | test_desktop_Package_Installation.py | 1 | panes/console/package_installation.test.ts (1) | Complete | |
-| test_desktop_PlotsPane.py | 11 | — | Not started | |
+| test_desktop_PlotsPane.py | 11 | panes/plots/plots_pane.test.ts (11) | Complete | All 11 tests including the 3 that were commented out in the desktop source (export dropdown, save as image, save as PDF). Two-step save flow (OK + GWT file chooser) with R file-exists verification. Zoom and resize tests are @desktop_only. |
 | test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
 | test_desktop_R_Session_Restart.py | 1 | panes/console/r_session_restart.test.ts (1) | Complete | |
 | test_desktop_terminal.py | 4 | panes/terminal/terminal.test.ts (4) | Complete | Added to existing terminal spec: toolbar next/previous buttons, R --version output, file create and ls, Shift+Backspace character deletion (@desktop_only). Uses rstudioapi::terminalBuffer for all output assertions. |

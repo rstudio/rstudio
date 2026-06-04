@@ -40,6 +40,7 @@ The user provides one or more targets:
 - Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable
 - Read relevant existing Playwright page objects in `e2e/rstudio/pages/`
 - Read relevant existing Playwright actions in `e2e/rstudio/actions/`
+- Read relevant existing Playwright test specs in `e2e/rstudio/tests/` -- BRAT is retired; anything that was in BRAT is now in the Playwright suite
 
 **For large files or batch migrations:** if the source has many methods (say 10+) or you're migrating a directory, consider launching a general-purpose subagent to analyze the Python source(s) and return a brief covering: test methods to convert, pytest markers / skip reasons, fixtures used, page objects referenced, parallel safety hints, and any unusual patterns. This keeps the main context lean for the writing and running phases. For typical single-file migrations with a handful of methods, do the analysis inline.
 
