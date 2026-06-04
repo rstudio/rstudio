@@ -374,13 +374,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // A late completion response can re-render ghost text after a single
       // Escape (see status bar "Completion response received"), so retry Escape
-      // until the suggestion stays cleared rather than pressing a fixed number
-      // of times. This also covers the case where the first Escape only closes
-      // the Ace autocomplete popup.
+      // until the suggestion clears AND stays cleared: assert empty, wait out
+      // the late-response window, then assert empty again. A bare toPass would
+      // resolve the instant the count first hits 0 and miss a re-render landing
+      // moments later. This also covers the case where the first Escape only
+      // closes the Ace autocomplete popup.
       await expect(async () => {
         await page.keyboard.press('Escape');
         await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
-      }).toPass({ timeout: 10000 });
+        await sleep(1000);
+        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
       console.log('  Ghost text dismissed with Escape');
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
