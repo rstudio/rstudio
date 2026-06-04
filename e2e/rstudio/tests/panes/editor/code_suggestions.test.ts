@@ -50,6 +50,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
@@ -641,6 +642,75 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
 
+    test('no completion requests in visual mode', async ({ rstudioPage: page }) => {
+      const fileName = `${prefix}_visual_no_completions.qmd`;
+
+      // A Quarto doc with prose and an R chunk. Visual mode is only offered for
+      // markdown documents; the chunk gives the source-mode self-validation
+      // step below a place to trigger a real completion.
+      const fileContent =
+        '---\n' +
+        'title: "Visual Mode Completions"\n' +
+        '---\n' +
+        '\n' +
+        '## Section\n' +
+        '\n' +
+        'Some introductory prose.\n' +
+        '\n' +
+        '```{r}\n' +
+        'x <- 1\n' +
+        '```\n' +
+        '\n' +
+        'Closing prose.\n';
+
+      // The assistant posts a status-bar message for every completion/NES
+      // request: "Waiting for completions..." when the request is sent, then
+      // "Completion response received." / "No completions available." once it
+      // resolves. None of these auto-hide, so their presence after an edit is a
+      // reliable signal that a request was sent to the backend. Matched
+      // page-wide (not scoped to the editor footer) so the check holds in
+      // visual mode too.
+      const completionStatus = page.locator('.gwt-Label', {
+        hasText: /Waiting for completions|Completion response received|No completions available/,
+      });
+
+      await sourceActions.createAndOpenFile(fileName, fileContent);
+      await sleep(1000);
+
+      // --- Visual mode: editing must not trigger a completion request ---
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror').first();
+      // Fail loudly if visual mode didn't actually activate, rather than
+      // silently exercising source mode and passing for the wrong reason.
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      await proseMirror.click();
+      await page.keyboard.type('Typing in the visual editor.');
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('Enter');
+
+      // Give the visual editor's sync-on-idle, the completion delay, and a
+      // backend round-trip ample time to fire a request, so a regression
+      // (request sent in visual mode) reliably surfaces the status message.
+      await sleep(10000);
+
+      await expect(completionStatus).toHaveCount(0);
+      console.log('  No completion status surfaced in visual mode');
+
+      // --- Source mode: completions resume (guards against a false pass and
+      // confirms suppression is scoped to visual mode) ---
+      await sourceActions.ensureSourceMode();
+      await sourceActions.navigateToChunkByIndex(1);
+      await page.keyboard.press('End');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('y <- fun');
+
+      await expect(completionStatus.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      console.log('  Completion status surfaced again in source mode');
+
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    });
+
     test.afterAll(async ({ rstudioPage: page }) => {
       // Post-suite cleanup: discard any open buffers and delete artifacts.
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
@@ -663,6 +733,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
