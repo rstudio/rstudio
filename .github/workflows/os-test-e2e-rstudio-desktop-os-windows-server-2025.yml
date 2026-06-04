@@ -169,7 +169,15 @@ jobs:
           save-always: true
 
       - name: Install build tools
-        run: choco install ant sccache --yes --no-progress
+        run: |
+          choco install ant sccache --yes --no-progress
+          # GWT's build.xml resolves yarn via a set-if-exists chain ending in
+          # the system PATH.  install-dependencies.cmd installs yarn via global
+          # npm but Node 22's default prefix goes to %APPDATA%\npm rather than
+          # the bundled node directory, so the earlier set-if-exists checks miss
+          # and the PATH fallback is needed.  Install here using setup-node's
+          # system npm so yarn.cmd ends up in a directory already on PATH.
+          npm install -g yarn
 
       - name: Install rig
         run: |
