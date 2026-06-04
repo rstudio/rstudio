@@ -319,6 +319,12 @@ Error writeStringToFileAtomic(const core::FilePath& filePath,
                               const std::string& str,
                               string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough);
 
+// Returns true if the given error indicates that a write failed because the
+// disk is full (ENOSPC) or a disk quota was exceeded (EDQUOT), including the
+// Windows equivalents. Useful for translating a raw write failure into a
+// recovery-oriented message for the user.
+bool isDiskSpaceError(const core::Error& error);
+
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,

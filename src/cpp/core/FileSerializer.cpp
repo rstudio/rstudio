@@ -439,6 +439,31 @@ Error writeStringToFile(const FilePath& filePath,
    return error;
 }
 
+bool isDiskSpaceError(const Error& error)
+{
+   if (!error)
+      return false;
+
+   // ENOSPC / EDQUOT (and the Windows equivalents) are reported in the system
+   // category: errno on POSIX, the Win32 error code on Windows
+   if (error.getName() != boost::system::system_category().name())
+      return false;
+
+   int code = error.getCode();
+
+#ifdef _WIN32
+   return code == ERROR_DISK_FULL || code == ERROR_HANDLE_DISK_FULL;
+#else
+   if (code == ENOSPC)
+      return true;
+# ifdef EDQUOT
+   if (code == EDQUOT)
+      return true;
+# endif
+   return false;
+#endif
+}
+
 Error writeStringToFileAtomic(const FilePath& filePath,
                               const std::string& str,
                               string_utils::LineEnding lineEnding)

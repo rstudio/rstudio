@@ -19,6 +19,12 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#ifdef _WIN32
+# include <windows.h>
+#else
+# include <cerrno>
+#endif
+
 namespace rstudio {
 namespace core {
 
@@ -215,6 +221,26 @@ TEST(FileSerializerTest, WriteStringReportsFailedWrite)
                                    false /* logError */,
                                    true /* durable */);
    EXPECT_TRUE(error);
+}
+
+// isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
+// raw write failure can be turned into a recovery-oriented message) and must
+// not misclassify unrelated errors or success.
+TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
+{
+   EXPECT_FALSE(isDiskSpaceError(Success()));
+
+#ifdef _WIN32
+   EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_DISK_FULL, ERROR_LOCATION)));
+   EXPECT_TRUE(isDiskSpaceError(systemError(ERROR_HANDLE_DISK_FULL, ERROR_LOCATION)));
+#else
+   EXPECT_TRUE(isDiskSpaceError(systemError(ENOSPC, ERROR_LOCATION)));
+# ifdef EDQUOT
+   EXPECT_TRUE(isDiskSpaceError(systemError(EDQUOT, ERROR_LOCATION)));
+# endif
+   // an unrelated system error is not a disk-space error
+   EXPECT_FALSE(isDiskSpaceError(systemError(ENOENT, ERROR_LOCATION)));
+#endif
 }
 
 } // namespace core
