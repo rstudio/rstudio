@@ -217,13 +217,15 @@ jobs:
             exit 1
           }
 
-      # install-dependencies.cmd checks for MSVC 2022 and compiles SOCI against
-      # it.  On GitHub runners, Visual Studio is installed but its
-      # VC\Auxiliary\Build directory is not on the default PATH, so the check
-      # fails and SOCI is skipped.  Use vswhere.exe -- pre-installed on all
-      # GitHub Windows runners -- to locate the installation and add it to
-      # GITHUB_PATH before any step that needs cl.exe or vcvarsall.bat.
-      - name: Add MSVC build tools to PATH
+      # install-dependencies.cmd (via tools.R) checks for MSVC 2022 at a set of
+      # hardcoded paths: BuildTools, Community, and their x86 variants.  GitHub
+      # runners have Visual Studio 2022 Enterprise, which is not in that list.
+      # Use vswhere.exe to find the actual installation, then:
+      #   1. Add VC\Auxiliary\Build to GITHUB_PATH so vcvarsall.bat is on PATH
+      #      for make-package.bat (which calls it by name).
+      #   2. Create a junction at the BuildTools path so tools.R's file.exists
+      #      check finds MSVC and proceeds to compile SOCI.
+      - name: Set up MSVC environment
         run: |
           $ErrorActionPreference = 'Stop'
           $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
@@ -234,9 +236,20 @@ jobs:
             Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
             exit 1
           }
+          Write-Host "Visual Studio installation: $vsPath"
+          # 1. PATH for vcvarsall.bat
           $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
-          Write-Host "Adding to PATH: $vcBuildPath"
           Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+          Write-Host "Added to PATH: $vcBuildPath"
+          # 2. Junction so tools.R's hardcoded BuildTools check passes
+          $junctionTarget = $vsPath
+          $junctionPath   = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
+          if (-not (Test-Path $junctionPath)) {
+            New-Item -ItemType Junction -Path $junctionPath -Target $junctionTarget | Out-Null
+            Write-Host "Junction created: $junctionPath -> $junctionTarget"
+          } else {
+            Write-Host "Junction already exists: $junctionPath"
+          }
 
       - name: Install build dependencies
         working-directory: dependencies/windows
