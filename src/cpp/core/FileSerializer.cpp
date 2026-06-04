@@ -17,7 +17,6 @@
 
 #include <utility>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
@@ -28,8 +27,12 @@
 #include <boost/thread.hpp>
 
 #ifdef _WIN32
-# include <boost/iostreams/device/file_descriptor.hpp>
-# include <boost/iostreams/stream.hpp>
+# include <windows.h>
+#else
+# include <cerrno>
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <unistd.h>
 #endif
 
 #include <shared_core/FilePath.hpp>
@@ -52,85 +55,252 @@ bool isFileLockedError(const Error& error)
 #endif
 }
 
-Error openFileForWritingWithRetry(const FilePath& filePath,
-                                  bool truncate,
-                                  int maxOpenRetrySeconds,
-                                  bool logError,
-                                  std::shared_ptr<std::ostream>* pOfs)
+// Build an Error describing a failed file operation, annotated with the path.
+// The code is captured by the caller immediately after the failing syscall so
+// that it is not clobbered by any intervening cleanup (close, etc.).
+Error fileError(int code, const FilePath& filePath, const ErrorLocation& location)
+{
+   Error error = systemError(code, location);
+   error.addProperty("path", filePath.getAbsolutePath());
+   return error;
+}
+
+// Write the given contents to filePath, flushing all the way to durable storage
+// before returning so that a failed write (most importantly a full disk,
+// ENOSPC, or an exceeded disk quota, EDQUOT) is reported rather than silently
+// discarded.
+//
+// We deliberately work directly against the operating system's file APIs rather
+// than a std::ostream. A stream defers the actual write until its buffer is
+// flushed, and its destructor (which must not throw) swallows any error from
+// that final flush -- which is how a save onto a full disk could appear to
+// succeed. Going through the OS directly also lets us flush to physical storage
+// (fsync / FlushFileBuffers): with delayed allocation (ext4, btrfs, XFS) a small
+// write into the page cache succeeds even on a full disk, and the ENOSPC /
+// EDQUOT failure only becomes visible when those pages are flushed.
+#ifdef _WIN32
+
+Error writeContentsToFile(const FilePath& filePath,
+                          const std::string& contents,
+                          bool truncate)
+{
+   HANDLE hFile = ::CreateFileW(
+      filePath.getAbsolutePathW().c_str(),
+      truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
+      0, // exclusive access (matches FilePath::openForWrite)
+      nullptr,
+      truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr);
+
+   if (hFile == INVALID_HANDLE_VALUE)
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("path", filePath.getAbsolutePath());
+      return error;
+   }
+
+   // write all of the bytes, looping in case WriteFile performs a partial write
+   const char* data = contents.data();
+   std::size_t remaining = contents.size();
+   while (remaining > 0)
+   {
+      // WriteFile takes a DWORD count; cap each call well within its range
+      const std::size_t kMaxWrite = 0x7fffffff;
+      DWORD toWrite = (remaining > kMaxWrite) ? static_cast<DWORD>(kMaxWrite)
+                                              : static_cast<DWORD>(remaining);
+
+      DWORD written = 0;
+      if (!::WriteFile(hFile, data, toWrite, &written, nullptr))
+      {
+         Error error = LAST_SYSTEM_ERROR();
+         (void) ::CloseHandle(hFile);
+         error.addProperty("path", filePath.getAbsolutePath());
+         return error;
+      }
+
+      data += written;
+      remaining -= written;
+   }
+
+   // flush to durable storage; this is the point at which a full disk or an
+   // exceeded quota is reliably reported
+   if (!::FlushFileBuffers(hFile))
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      (void) ::CloseHandle(hFile);
+      error.addProperty("path", filePath.getAbsolutePath());
+      return error;
+   }
+
+   if (!::CloseHandle(hFile))
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("path", filePath.getAbsolutePath());
+      return error;
+   }
+
+   return Success();
+}
+
+#else
+
+Error writeContentsToFile(const FilePath& filePath,
+                          const std::string& contents,
+                          bool truncate)
+{
+   // open the file, retrying only on EINTR (there are no sharing violations on
+   // POSIX, so the higher-level retry loop runs this exactly once)
+   int flags = O_WRONLY | O_CREAT | (truncate ? O_TRUNC : O_APPEND);
+   int fd = -1;
+   do
+   {
+      fd = ::open(filePath.getAbsolutePath().c_str(), flags, 0666);
+   }
+   while (fd == -1 && errno == EINTR);
+
+   if (fd == -1)
+      return fileError(errno, filePath, ERROR_LOCATION);
+
+   // write all of the bytes, handling partial writes and EINTR
+   const char* data = contents.data();
+   std::size_t remaining = contents.size();
+   while (remaining > 0)
+   {
+      ssize_t written = ::write(fd, data, remaining);
+      if (written < 0)
+      {
+         if (errno == EINTR)
+            continue;
+
+         int code = errno;
+         (void) ::close(fd);
+         return fileError(code, filePath, ERROR_LOCATION);
+      }
+
+      data += written;
+      remaining -= static_cast<std::size_t>(written);
+   }
+
+   // flush to durable storage; on macOS plain fsync() does not push data to the
+   // physical platter, so we prefer F_FULLFSYNC and fall back to fsync() when
+   // the filesystem does not support it
+   int rc = -1;
+#ifdef __APPLE__
+   do
+   {
+      rc = ::fcntl(fd, F_FULLFSYNC, 0);
+   }
+   while (rc == -1 && errno == EINTR);
+
+   if (rc == -1 && (errno == ENOTSUP || errno == ENOTTY || errno == EINVAL))
+   {
+      do
+      {
+         rc = ::fsync(fd);
+      }
+      while (rc == -1 && errno == EINTR);
+   }
+#else
+   do
+   {
+      rc = ::fsync(fd);
+   }
+   while (rc == -1 && errno == EINTR);
+#endif
+
+   if (rc == -1)
+   {
+      int code = errno;
+      (void) ::close(fd);
+      return fileError(code, filePath, ERROR_LOCATION);
+   }
+
+   // close the file; a close() that returns EINTR has still closed the
+   // descriptor on Linux, so we must not retry it (that could close an
+   // unrelated fd that was opened in the meantime)
+   if (::close(fd) == -1 && errno != EINTR)
+      return fileError(errno, filePath, ERROR_LOCATION);
+
+   return Success();
+}
+
+#endif
+
+// Write the given contents to filePath. On Windows, openForWrite requests
+// exclusive access, so a file held open by another process (commonly backup
+// software) fails with a sharing violation; maxOpenRetrySeconds asks us to keep
+// retrying for that long before giving up. A sharing violation occurs before
+// any data is written, so retrying the whole operation is safe.
+Error writeContentsToFileWithRetry(const FilePath& filePath,
+                                   const std::string& contents,
+                                   bool truncate,
+                                   int maxOpenRetrySeconds)
 {
    using namespace boost::posix_time;
-
-   ptime startTime = second_clock::universal_time();
-   Error lastError;
 
    // do not allow negative values - regular signed int was chosen here for
    // easier integration with other parts of the codebase
    if (maxOpenRetrySeconds < 0)
       maxOpenRetrySeconds = 0;
 
+   ptime startTime = second_clock::universal_time();
    int numTries = 0;
+
    while (true)
    {
-      lastError = filePath.openForWrite(*pOfs, truncate);
+      Error error = writeContentsToFile(filePath, contents, truncate);
 
-      // if the error is a non file lock error, then we should just return it
-      if (!isFileLockedError(lastError))
-      {
-         if (lastError && logError)
-            LOG_ERROR(lastError);
+      // success and all non-sharing-violation errors are returned immediately
+      if (!isFileLockedError(error))
+         return error;
 
-         return lastError;
-      }
-
-      lastError.addOrUpdateProperty("open-attempts", ++numTries);
+      error.addOrUpdateProperty("open-attempts", ++numTries);
 
       // stop retrying if we've spent more than the requested amount of time
       if ((second_clock::universal_time() - startTime) >= seconds(maxOpenRetrySeconds))
       {
-         lastError.addProperty("description", "Timed out while attempting to reopen the file");
-         break;
+         error.addProperty("description", "Timed out while attempting to reopen the file");
+         return error;
       }
 
       // wait a moment before retrying
       boost::this_thread::sleep(milliseconds(500));
    }
-
-   if (lastError && logError)
-      LOG_ERROR(lastError);
-
-   return lastError;
 }
 
-// Flush and close an output stream opened by openFileForWritingWithRetry,
-// surfacing any deferred write errors (e.g. a full disk or an exceeded disk
-// quota) as exceptions rather than letting them be silently swallowed when the
-// stream is destroyed.
-//
-// Stream destructors must not throw, so the std::ostream destructor closes the
-// underlying file and discards any error reported by the final flush. For small
-// writes the buffered data is not actually written to disk until that point, so
-// without an explicit flush and close the caller can observe success even though
-// nothing was durably written. Note that on some filesystems (for example NFS)
-// write errors are reported only when the file is closed, not when written, so
-// we must close here too rather than relying on the flush alone.
-//
-// The concrete stream type is platform-specific (a std::ofstream on POSIX, a
-// boost file-descriptor sink stream on Windows), so we downcast to invoke the
-// appropriate close(). The exception mask set by the caller ensures both flush()
-// and close() throw on failure.
-void closeFileForWriting(const std::shared_ptr<std::ostream>& pOfs)
+#ifndef _WIN32
+// Flush a directory so that a newly created or renamed entry within it survives
+// a crash. This is a POSIX-only durability optimization (Windows has no portable
+// equivalent) and is best-effort: the rename has already completed and is
+// visible, so a failure here only affects crash durability, not correctness.
+void syncDirectory(const FilePath& dirPath)
 {
-   pOfs->flush();
-
-#ifdef _WIN32
-   typedef boost::iostreams::stream<boost::iostreams::file_descriptor_sink> FileStream;
-#else
-   typedef std::ofstream FileStream;
+   int flags = O_RDONLY;
+#ifdef O_DIRECTORY
+   flags |= O_DIRECTORY;
 #endif
 
-   if (FileStream* pStream = dynamic_cast<FileStream*>(pOfs.get()))
-      pStream->close();
+   int fd = -1;
+   do
+   {
+      fd = ::open(dirPath.getAbsolutePath().c_str(), flags);
+   }
+   while (fd == -1 && errno == EINTR);
+
+   if (fd == -1)
+      return;
+
+   int rc;
+   do
+   {
+      rc = ::fsync(fd);
+   }
+   while (rc == -1 && errno == EINTR);
+
+   (void) ::close(fd);
 }
+#endif
 
 } // anonymous namespace
 
@@ -227,41 +397,18 @@ Error writeStringToFile(const FilePath& filePath,
                         int maxOpenRetrySeconds,
                         bool logError)
 {
-   using namespace boost::system::errc;
-   
-   // open file
-   std::shared_ptr<std::ostream> pOfs;
-   Error error = openFileForWritingWithRetry(filePath, truncate, maxOpenRetrySeconds, logError, &pOfs);
-   if (error)
-      return error;
+   // normalize line endings up front
+   std::string contents = str;
+   string_utils::convertLineEndings(&contents, lineEnding);
 
-   try
-   {
-      // set exception mask (required for proper reporting of errors)
-      pOfs->exceptions(std::ostream::failbit | std::ostream::badbit);
-      
-      // copy string to file
-      std::string normalized = str;
-      string_utils::convertLineEndings(&normalized, lineEnding);
-      std::istringstream istr(normalized);
-      boost::iostreams::copy(istr, *pOfs);
+   // write the contents, flushing all the way to durable storage so that
+   // deferred write failures (a full disk or an exceeded quota) are reported
+   // rather than silently discarded
+   Error error = writeContentsToFileWithRetry(filePath, contents, truncate, maxOpenRetrySeconds);
+   if (error && logError)
+      LOG_ERROR(error);
 
-      // explicitly flush and close so that write errors (e.g. a full disk or
-      // an exceeded disk quota) are reported here rather than being silently
-      // discarded when the stream is destroyed
-      closeFileForWriting(pOfs);
-
-      // return success
-      return Success();
-   }
-   catch(const std::exception& e)
-   {
-      Error error = systemError(boost::system::errc::io_error, 
-                                ERROR_LOCATION);
-      error.addProperty("what", e.what());
-      error.addProperty("path", filePath.getAbsolutePath());
-      return error;
-   }
+   return error;
 }
 
 Error writeStringToFileAtomic(const FilePath& filePath,
@@ -289,6 +436,13 @@ Error writeStringToFileAtomic(const FilePath& filePath,
       tmpFile.removeIfExists();
       return error;
    }
+
+   // the temporary file's contents were already flushed to disk by
+   // writeStringToFile; flush the parent directory as well so that the rename
+   // itself is durable across a crash (best-effort, POSIX only)
+#ifndef _WIN32
+   syncDirectory(filePath.getParent());
+#endif
 
    return Success();
 }
