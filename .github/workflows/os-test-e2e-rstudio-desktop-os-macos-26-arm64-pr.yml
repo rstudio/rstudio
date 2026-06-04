@@ -4,10 +4,13 @@ on:
   pull_request:
     paths:
       - "src/**"
+      - "dependencies/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
 
 concurrency:
   group: pw-pr-macos-26-${{ github.event.pull_request.number }}

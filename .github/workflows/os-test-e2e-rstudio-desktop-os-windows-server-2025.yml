@@ -169,15 +169,7 @@ jobs:
           save-always: true
 
       - name: Install build tools
-        run: |
-          choco install ant sccache --yes --no-progress
-          # GWT's build.xml resolves yarn via a set-if-exists chain ending in
-          # the system PATH.  install-dependencies.cmd installs yarn via global
-          # npm but Node 22's default prefix goes to %APPDATA%\npm rather than
-          # the bundled node directory, so the earlier set-if-exists checks miss
-          # and the PATH fallback is needed.  Install here using setup-node's
-          # system npm so yarn.cmd ends up in a directory already on PATH.
-          npm install -g yarn
+        run: choco install ant sccache --yes --no-progress
 
       - name: Install rig
         run: |
@@ -263,6 +255,32 @@ jobs:
         working-directory: dependencies/windows
         shell: cmd
         run: install-dependencies.cmd
+
+      # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
+      # (where node.dir is the bundled node downloaded by install-dependencies.cmd).
+      # install-dependencies.cmd runs `npm install --global yarn` but Node 22's global
+      # prefix goes to %APPDATA%\npm, not the bundled node dir, so the set-if-exists
+      # check misses. Java's exec with resolveexecutable=true also can't find bare
+      # "yarn.cmd" via CreateProcess. Install yarn locally inside the bundled node dir
+      # so the exact path build.xml checks is satisfied.
+      - name: Install yarn in bundled node directory
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
+            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
+          $nodeDir = "$env:GITHUB_WORKSPACE\dependencies\common\node\$nodeVersion"
+          if (-not (Test-Path "$nodeDir\npm.cmd")) {
+            Write-Error "Bundled node not found at $nodeDir"
+            exit 1
+          }
+          Write-Host "Installing yarn into $nodeDir"
+          & "$nodeDir\npm.cmd" install --prefix "$nodeDir" yarn
+          $yarnCmd = "$nodeDir\node_modules\yarn\bin\yarn.cmd"
+          if (-not (Test-Path $yarnCmd)) {
+            Write-Error "yarn.cmd not found at $yarnCmd after install"
+            exit 1
+          }
+          Write-Host "yarn installed: $yarnCmd"
 
       # sccache wraps cl.exe so identical object files are served from cache.
       # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1

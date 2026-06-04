@@ -9,6 +9,8 @@ on:
       - ".github/actions/e2e-deps/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
 
 concurrency:
   group: pw-pr-windows-2025-${{ github.event.pull_request.number }}
