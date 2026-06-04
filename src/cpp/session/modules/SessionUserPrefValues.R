@@ -1605,7 +1605,7 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
-# Change active editor tab with mouse-wheel
+# Change active editor tab with mouse wheel
 #
 # Whether scrolling the mouse wheel over the editor tab bar changes the active
 # editor tab.

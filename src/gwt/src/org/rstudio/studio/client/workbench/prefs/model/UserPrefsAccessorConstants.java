@@ -1450,7 +1450,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
     */
-   @DefaultStringValue("Change active editor tab with mouse-wheel")
+   @DefaultStringValue("Change active editor tab with mouse wheel")
    String mousewheelChangesEditorTabTitle();
    @DefaultStringValue("Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.")
    String mousewheelChangesEditorTabDescription();

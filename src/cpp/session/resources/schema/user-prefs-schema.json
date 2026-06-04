@@ -1198,7 +1198,7 @@
         "mousewheel_changes_editor_tab": {
             "type": "boolean",
             "default": true,
-            "title": "Change active editor tab with mouse-wheel",
+            "title": "Change active editor tab with mouse wheel",
             "description": "Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab."
         },
         "global_theme": {
