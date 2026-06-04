@@ -437,7 +437,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found — both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
             exit 1
           fi
           cat > merge.config.ts <<'EOF'
