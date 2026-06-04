@@ -152,6 +152,31 @@ TEST(FileSerializerTest, WriteStringAppends)
    filePath.removeIfExists();
 }
 
+// The durable write path additionally flushes to physical storage; confirm a
+// normal round-trip still works through it.
+TEST(FileSerializerTest, WriteStringDurableRoundTrips)
+{
+   FilePath filePath;
+   ASSERT_FALSE(FilePath::tempFilePath(filePath));
+
+   std::string contents = "hello\nworld\n";
+   Error error = writeStringToFile(filePath,
+                                   contents,
+                                   string_utils::LineEndingPassthrough,
+                                   true /* truncate */,
+                                   0 /* maxOpenRetrySeconds */,
+                                   true /* logError */,
+                                   true /* durable */);
+   EXPECT_FALSE(error);
+
+   std::string readback;
+   error = readStringFromFile(filePath, &readback);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(contents, readback);
+
+   filePath.removeIfExists();
+}
+
 TEST(FileSerializerTest, WriteStringAtomicRoundTrips)
 {
    FilePath filePath;
@@ -173,16 +198,22 @@ TEST(FileSerializerTest, WriteStringAtomicRoundTrips)
 // exceeded disk quota) must be reported as an error rather than silently
 // appearing to succeed. We use /dev/full, which always fails writes with
 // ENOSPC, to simulate the condition. The device is only available on Linux,
-// so the test is skipped elsewhere. Because we now write to the file
-// descriptor directly (rather than buffering through a stream), the failure
-// surfaces regardless of payload size.
+// so the test is skipped elsewhere. We exercise the durable path (matching the
+// document-save call site) and disable error logging so the expected failure
+// does not pollute the test output.
 TEST(FileSerializerTest, WriteStringReportsFailedWrite)
 {
    FilePath devFull("/dev/full");
    if (!devFull.exists())
       GTEST_SKIP() << "/dev/full not available on this platform";
 
-   Error error = writeStringToFile(devFull, "this write should fail");
+   Error error = writeStringToFile(devFull,
+                                   "this write should fail",
+                                   string_utils::LineEndingPassthrough,
+                                   true /* truncate */,
+                                   0 /* maxOpenRetrySeconds */,
+                                   false /* logError */,
+                                   true /* durable */);
    EXPECT_TRUE(error);
 }
 

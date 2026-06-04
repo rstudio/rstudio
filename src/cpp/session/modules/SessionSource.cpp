@@ -540,12 +540,20 @@ Error saveDocumentCore(const std::string& contents,
       // note whether the file existed prior to writing
       bool newFile = !fullDocPath.exists();
 
-      // write the contents to the file
+      // write the contents to the file; request a durable flush (unless the
+      // user has opted out) so that a write that fails on a full disk or over
+      // quota is reported rather than silently dropped -- which would clear the
+      // editor's unsaved marker and lose the user's work
       int writeTimeout = retryWrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
-      error = writeStringToFile(fullDocPath, encoded,
-                                module_context::lineEndings(fullDocPath),
-                                true,
-                                writeTimeout);
+      bool durable = session::prefs::userPrefs().saveFilesDurably();
+      error = writeStringToFile(
+            fullDocPath,
+            encoded,
+            module_context::lineEndings(fullDocPath),
+            true /* truncate */,
+            writeTimeout,
+            true /* logError */,
+            durable);
       if (error)
          return error;
 

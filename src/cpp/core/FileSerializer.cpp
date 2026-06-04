@@ -65,24 +65,28 @@ Error fileError(int code, const FilePath& filePath, const ErrorLocation& locatio
    return error;
 }
 
-// Write the given contents to filePath, flushing all the way to durable storage
-// before returning so that a failed write (most importantly a full disk,
-// ENOSPC, or an exceeded disk quota, EDQUOT) is reported rather than silently
-// discarded.
+// Write the given contents to filePath.
 //
 // We deliberately work directly against the operating system's file APIs rather
 // than a std::ostream. A stream defers the actual write until its buffer is
 // flushed, and its destructor (which must not throw) swallows any error from
 // that final flush -- which is how a save onto a full disk could appear to
-// succeed. Going through the OS directly also lets us flush to physical storage
-// (fsync / FlushFileBuffers): with delayed allocation (ext4, btrfs, XFS) a small
-// write into the page cache succeeds even on a full disk, and the ENOSPC /
-// EDQUOT failure only becomes visible when those pages are flushed.
+// succeed. Going through the OS directly lets us check the write and the close
+// for errors instead.
+//
+// When durable is true we additionally flush all the way to physical storage
+// (fsync / FlushFileBuffers) before returning. This is required to reliably
+// surface a full disk (ENOSPC) or an exceeded quota (EDQUOT): with delayed
+// allocation (ext4, btrfs, XFS) a small write into the page cache succeeds even
+// on a full disk, and the failure only becomes visible when those pages are
+// flushed. It is also relatively expensive, so callers that do not need their
+// write to survive a crash (the great majority) leave it off.
 #ifdef _WIN32
 
 Error writeContentsToFile(const FilePath& filePath,
                           const std::string& contents,
-                          bool truncate)
+                          bool truncate,
+                          bool durable)
 {
    HANDLE hFile = ::CreateFileW(
       filePath.getAbsolutePathW().c_str(),
@@ -123,9 +127,9 @@ Error writeContentsToFile(const FilePath& filePath,
       remaining -= written;
    }
 
-   // flush to durable storage; this is the point at which a full disk or an
-   // exceeded quota is reliably reported
-   if (!::FlushFileBuffers(hFile))
+   // when durability is requested, flush to physical storage; this is the point
+   // at which a full disk or an exceeded quota is reliably reported
+   if (durable && !::FlushFileBuffers(hFile))
    {
       Error error = LAST_SYSTEM_ERROR();
       (void) ::CloseHandle(hFile);
@@ -147,7 +151,8 @@ Error writeContentsToFile(const FilePath& filePath,
 
 Error writeContentsToFile(const FilePath& filePath,
                           const std::string& contents,
-                          bool truncate)
+                          bool truncate,
+                          bool durable)
 {
    // open the file, retrying only on EINTR (there are no sharing violations on
    // POSIX, so the higher-level retry loop runs this exactly once)
@@ -182,38 +187,42 @@ Error writeContentsToFile(const FilePath& filePath,
       remaining -= static_cast<std::size_t>(written);
    }
 
-   // flush to durable storage; on macOS plain fsync() does not push data to the
-   // physical platter, so we prefer F_FULLFSYNC and fall back to fsync() when
-   // the filesystem does not support it
-   int rc = -1;
+   // when durability is requested, flush to physical storage; this is the point
+   // at which a full disk or an exceeded quota is reliably reported. On macOS
+   // plain fsync() does not push data to the physical platter, so we prefer
+   // F_FULLFSYNC and fall back to fsync() when the filesystem does not support it.
+   if (durable)
+   {
+      int rc = -1;
 #ifdef __APPLE__
-   do
-   {
-      rc = ::fcntl(fd, F_FULLFSYNC, 0);
-   }
-   while (rc == -1 && errno == EINTR);
+      do
+      {
+         rc = ::fcntl(fd, F_FULLFSYNC, 0);
+      }
+      while (rc == -1 && errno == EINTR);
 
-   if (rc == -1 && (errno == ENOTSUP || errno == ENOTTY || errno == EINVAL))
-   {
+      if (rc == -1 && (errno == ENOTSUP || errno == ENOTTY || errno == EINVAL))
+      {
+         do
+         {
+            rc = ::fsync(fd);
+         }
+         while (rc == -1 && errno == EINTR);
+      }
+#else
       do
       {
          rc = ::fsync(fd);
       }
       while (rc == -1 && errno == EINTR);
-   }
-#else
-   do
-   {
-      rc = ::fsync(fd);
-   }
-   while (rc == -1 && errno == EINTR);
 #endif
 
-   if (rc == -1)
-   {
-      int code = errno;
-      (void) ::close(fd);
-      return fileError(code, filePath, ERROR_LOCATION);
+      if (rc == -1)
+      {
+         int code = errno;
+         (void) ::close(fd);
+         return fileError(code, filePath, ERROR_LOCATION);
+      }
    }
 
    // close the file; a close() that returns EINTR has still closed the
@@ -235,7 +244,8 @@ Error writeContentsToFile(const FilePath& filePath,
 Error writeContentsToFileWithRetry(const FilePath& filePath,
                                    const std::string& contents,
                                    bool truncate,
-                                   int maxOpenRetrySeconds)
+                                   int maxOpenRetrySeconds,
+                                   bool durable)
 {
    using namespace boost::posix_time;
 
@@ -249,7 +259,7 @@ Error writeContentsToFileWithRetry(const FilePath& filePath,
 
    while (true)
    {
-      Error error = writeContentsToFile(filePath, contents, truncate);
+      Error error = writeContentsToFile(filePath, contents, truncate, durable);
 
       // success and all non-sharing-violation errors are returned immediately
       if (!isFileLockedError(error))
@@ -395,16 +405,17 @@ Error writeStringToFile(const FilePath& filePath,
                         string_utils::LineEnding lineEnding,
                         bool truncate,
                         int maxOpenRetrySeconds,
-                        bool logError)
+                        bool logError,
+                        bool durable)
 {
    // normalize line endings up front
    std::string contents = str;
    string_utils::convertLineEndings(&contents, lineEnding);
 
-   // write the contents, flushing all the way to durable storage so that
-   // deferred write failures (a full disk or an exceeded quota) are reported
-   // rather than silently discarded
-   Error error = writeContentsToFileWithRetry(filePath, contents, truncate, maxOpenRetrySeconds);
+   // write the contents; when durable is set we flush all the way to physical
+   // storage so that deferred write failures (a full disk or an exceeded quota)
+   // are reported rather than silently discarded
+   Error error = writeContentsToFileWithRetry(filePath, contents, truncate, maxOpenRetrySeconds, durable);
    if (error && logError)
       LOG_ERROR(error);
 
@@ -421,8 +432,15 @@ Error writeStringToFileAtomic(const FilePath& filePath,
    if (error)
       return error;
 
-   // write to the temporary file
-   error = writeStringToFile(tmpFile, str, lineEnding);
+   // write to the temporary file, flushing it to physical storage so the
+   // contents are durable before we rename it into place
+   error = writeStringToFile(tmpFile,
+                             str,
+                             lineEnding,
+                             true /* truncate */,
+                             0 /* maxOpenRetrySeconds */,
+                             true /* logError */,
+                             true /* durable */);
    if (error)
    {
       tmpFile.removeIfExists();

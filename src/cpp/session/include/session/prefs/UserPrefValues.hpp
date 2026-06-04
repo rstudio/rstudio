@@ -425,6 +425,7 @@ namespace prefs {
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
+#define kSaveFilesDurably "save_files_durably"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
@@ -1976,6 +1977,12 @@ public:
     */
    int saveRetryTimeout();
    core::Error setSaveRetryTimeout(int val);
+
+   /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   bool saveFilesDurably();
+   core::Error setSaveFilesDurably(bool val);
 
    /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>

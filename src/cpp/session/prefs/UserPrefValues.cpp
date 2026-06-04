@@ -3222,6 +3222,19 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
+ * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+ */
+bool UserPrefValues::saveFilesDurably()
+{
+   return readPref<bool>("save_files_durably");
+}
+
+core::Error UserPrefValues::setSaveFilesDurably(bool val)
+{
+   return writePref("save_files_durably", val);
+}
+
+/**
  * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
@@ -4042,6 +4055,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonVersion,
       kPythonPath,
       kSaveRetryTimeout,
+      kSaveFilesDurably,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
       kShowMemoryUsage,

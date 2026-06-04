@@ -297,12 +297,21 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // when it is in use by another process (common when using backup software), and if so
 // how many seconds of elapsed time should we wait for the file to become available
 // note: this only has an effect on Windows
+//
+// durable, when true, flushes the contents all the way to physical storage
+// (fsync / FlushFileBuffers) before returning. This is required to reliably
+// detect a full disk (ENOSPC) or an exceeded quota (EDQUOT) -- with delayed
+// allocation a write into the page cache succeeds even on a full disk, and the
+// failure only surfaces when the pages are flushed -- but it is relatively
+// expensive, so it defaults off. Enable it on paths where a silently dropped
+// write would lose user data (e.g. saving an editor document).
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
                         bool truncate = true,
                         int maxOpenRetrySeconds = 0,
-                        bool logError = true);
+                        bool logError = true,
+                        bool durable = false);
 
 // Writes a string to a file atomically by first writing to a temporary file
 // in the same directory and then renaming it into place.
