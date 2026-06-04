@@ -378,6 +378,31 @@ public class StringUtilTests extends GWTTestCase
       );
    }
 
+   // https://github.com/rstudio/rstudio/issues/17493
+   public void testCommonPrefixWhitespaceOnlyLines()
+   {
+      // A single whitespace-only line should still report its own indent as the
+      // common prefix when skipWhitespaceOnlyLines is enabled; otherwise the
+      // comment shortcut loses the indent and inserts "#" at column zero.
+      assertEquals(
+         "    ",
+         StringUtil.getCommonPrefix(new String[] { "    " }, true, true)
+      );
+
+      // When every line is whitespace-only, fall back to comparing them rather
+      // than collapsing the prefix to the empty string.
+      assertEquals(
+         "  ",
+         StringUtil.getCommonPrefix(new String[] { "  ", "    " }, false, true)
+      );
+
+      // With at least one content line, whitespace-only lines are still skipped.
+      assertEquals(
+         "  ",
+         StringUtil.getCommonPrefix(new String[] { "  x", "", "  y" }, false, true)
+      );
+   }
+
    // -- StringUtil.htmlUnescape tests ----------------------------------------
 
    public void testHtmlUnescapeNullAndEmpty()
