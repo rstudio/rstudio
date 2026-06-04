@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
@@ -25,6 +26,11 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/thread.hpp>
+
+#ifdef _WIN32
+# include <boost/iostreams/device/file_descriptor.hpp>
+# include <boost/iostreams/stream.hpp>
+#endif
 
 #include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -93,6 +99,37 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
       LOG_ERROR(lastError);
 
    return lastError;
+}
+
+// Flush and close an output stream opened by openFileForWritingWithRetry,
+// surfacing any deferred write errors (e.g. a full disk or an exceeded disk
+// quota) as exceptions rather than letting them be silently swallowed when the
+// stream is destroyed.
+//
+// Stream destructors must not throw, so the std::ostream destructor closes the
+// underlying file and discards any error reported by the final flush. For small
+// writes the buffered data is not actually written to disk until that point, so
+// without an explicit flush and close the caller can observe success even though
+// nothing was durably written. Note that on some filesystems (for example NFS)
+// write errors are reported only when the file is closed, not when written, so
+// we must close here too rather than relying on the flush alone.
+//
+// The concrete stream type is platform-specific (a std::ofstream on POSIX, a
+// boost file-descriptor sink stream on Windows), so we downcast to invoke the
+// appropriate close(). The exception mask set by the caller ensures both flush()
+// and close() throw on failure.
+void closeFileForWriting(const std::shared_ptr<std::ostream>& pOfs)
+{
+   pOfs->flush();
+
+#ifdef _WIN32
+   typedef boost::iostreams::stream<boost::iostreams::file_descriptor_sink> FileStream;
+#else
+   typedef std::ofstream FileStream;
+#endif
+
+   if (FileStream* pStream = dynamic_cast<FileStream*>(pOfs.get()))
+      pStream->close();
 }
 
 } // anonymous namespace
@@ -208,7 +245,12 @@ Error writeStringToFile(const FilePath& filePath,
       string_utils::convertLineEndings(&normalized, lineEnding);
       std::istringstream istr(normalized);
       boost::iostreams::copy(istr, *pOfs);
-      
+
+      // explicitly flush and close so that write errors (e.g. a full disk or
+      // an exceeded disk quota) are reported here rather than being silently
+      // discarded when the stream is destroyed
+      closeFileForWriting(pOfs);
+
       // return success
       return Success();
    }
