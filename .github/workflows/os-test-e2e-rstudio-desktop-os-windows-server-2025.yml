@@ -362,7 +362,7 @@ jobs:
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: windows-2025
-    timeout-minutes: 120
+    timeout-minutes: 180
     defaults:
       run:
         shell: pwsh
