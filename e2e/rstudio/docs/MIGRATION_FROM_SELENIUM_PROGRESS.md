@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 16 |
+| Files fully converted | 19 |
 | Files partially converted | 0 |
-| Files not started | 16 |
+| Files not started | 13 |
 
 ## Conversion Status
 
@@ -19,15 +19,15 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Citations.py | 17 | — | Not started | |
+| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (to be scrapped) | Failed miserably (restart from scratch) | First attempt failed miserably: only 6 of 18 tests passing, a mid-session refactor regressed a 9-passing state, and Quarto never reaches visual mode. Scrapping the file and redoing the migration from scratch. |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Complete | |
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
-| test_desktop_Package_Installation.py | 1 | — | Not started | |
+| test_desktop_Package_Installation.py | 1 | panes/console/package_installation.test.ts (1) | Complete | |
 | test_desktop_PlotsPane.py | 11 | — | Not started | |
-| test_desktop_R.py | 1 | — | Not started | |
-| test_desktop_R_Session_Restart.py | 1 | — | Not started | |
+| test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
+| test_desktop_R_Session_Restart.py | 1 | panes/console/r_session_restart.test.ts (1) | Complete | |
 | test_desktop_terminal.py | 4 | — | Not started | |
 | test_desktop_ViewerPane.py | 1 | panes/viewer/htmlwidgets.test.ts (1) | Complete | |
 

@@ -18,6 +18,7 @@ export const TIMEOUTS = {
   // with typeahead/incremental-search handlers can finish reacting to one
   // keystroke before the next arrives.
   slowKeystroke: 200,
+  packageInstall: 120000,
 };
 
 export async function sleep(ms: number): Promise<void> {

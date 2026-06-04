@@ -1,4 +1,5 @@
 import type { Page } from 'playwright';
+import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import {
   ConsolePane,
@@ -7,7 +8,7 @@ import {
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
 } from '../pages/console_pane.page';
-import { sleep } from '../utils/constants';
+import { sleep, TIMEOUTS } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
@@ -251,6 +252,31 @@ export class ConsolePaneActions {
       if (!ok) failed.push(pkg);
     }
     return failed;
+  }
+
+  /**
+   * Restart the R session and wait for the new session to be ready.
+   * Passes a timestamped marker expression as the post-restart command so
+   * the readiness signal is unambiguous -- the marker only appears after
+   * the restart finishes and the new R session executes it.
+   *
+   * @param options.clean - true: clear workspace and unload packages;
+   *                        false: preserve workspace and loaded packages.
+   *                        Omit to use .rs.api.restartSession() defaults.
+   */
+  async restartSession(options?: { clean?: boolean }): Promise<void> {
+    await this.clearConsole();
+    const token = `RESTART_${Date.now()}`;
+    const marker = `__${token}__DONE`;
+    const rExpr = `cat(paste0("__", "${token}", "__DONE"))`;
+    const args: string[] = [`'${rExpr}'`];
+    if (options?.clean !== undefined) {
+      args.push(`clean = ${options.clean ? 'TRUE' : 'FALSE'}`);
+    }
+    await this.executeInConsole(`.rs.api.restartSession(${args.join(', ')})`, { wait: false });
+    await expect(this.consolePane.consoleOutput).toContainText(marker, {
+      timeout: TIMEOUTS.sessionRestart,
+    });
   }
 
   /**
