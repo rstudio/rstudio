@@ -156,6 +156,7 @@
                                          maxCols = -1,
                                          maxFactors = 64,
                                          totalCols = -1,
+                                         colIndices = NULL,
                                          colsFingerprint = NULL)
 {
    # The client compares this fingerprint against the one stored alongside
@@ -163,7 +164,7 @@
    # visibility). A mismatch invalidates the saved state -- without it,
    # positional indices saved against one frame can land on an unrelated
    # frame after reassignment (df <- iris; df <- mtcars). Callers that have
-   # already subset x (e.g. describeColSlice) must compute the fingerprint
+   # already subset x (e.g. describeColsByIndex) must compute the fingerprint
    # from the underlying frame and pass it in, otherwise pagination would
    # silently invalidate state on every column-frame change.
    if (is.null(colsFingerprint))
@@ -171,7 +172,15 @@
 
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
-   
+
+   # absolute (1-based) column indices for the columns being described. The
+   # client uses these as the stable identity for pinning, sorting, and
+   # filtering, so they survive column pagination (callers that describe an
+   # arbitrary slice -- describeColsByIndex -- pass the original indices in).
+   # Default to a contiguous range for the full-frame case.
+   if (is.null(colIndices))
+      colIndices <- seq_len(ncol(x))
+
    # get the variable labels, if any--labels may be provided either by this 
    # global attribute or by a 'label' attribute on an individual column (as in
    # e.g. Hmisc), which takes precedence if both are present
@@ -241,6 +250,7 @@
       col_vals        = "",
       col_type_r      = .rs.scalar(""),
       col_na_count    = .rs.scalar(0),
+      col_index       = .rs.scalar(0L),
       total_cols      = .rs.scalar(totalCols),
       total_rows      = .rs.scalar(nrow(x)),
       cols_fingerprint = .rs.scalar(colsFingerprint))
@@ -412,7 +422,8 @@
          col_label       = .rs.scalar(col_label),
          col_vals        = col_vals,
          col_type_r      = .rs.scalar(col_type_r),
-         col_na_count    = .rs.scalar(col_na_count)
+         col_na_count    = .rs.scalar(col_na_count),
+         col_index       = .rs.scalar(as.integer(colIndices[idx]))
       )
 
       # Optionally include a cheap upper bound on displayed character count.
@@ -429,23 +440,22 @@
    c(list(rowNameCol), colAttrs)
 })
 
-.rs.addFunction("describeColSlice", function(x,
-                                             sliceStart = 1,
-                                             sliceEnd = 1)
+.rs.addFunction("describeColsByIndex", function(x, indices)
 {
    totalCols <- ncol(x)
    if (is.null(totalCols) || totalCols == 0)
       return(NULL)
-   
-   if (sliceEnd > totalCols || sliceEnd < 1)
-      sliceEnd <- totalCols
-   
-   if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
-      sliceStart <- 1
-   
-   indices <- sliceStart:sliceEnd
+
+   # Keep only valid, in-range column indices (1-based). The client sends an
+   # arbitrary ordered set -- pinned columns followed by the visible window --
+   # so this is not necessarily contiguous. Fall back to the full frame if the
+   # request is empty or entirely out of range.
+   indices <- indices[!is.na(indices) & indices >= 1 & indices <= totalCols]
+   if (length(indices) == 0)
+      indices <- seq_len(totalCols)
+
    colSlice <- x[indices]
-   
+
    # Make sure we preserve variable.labels if set.
    #
    # The structure of 'variable.labels' is not documented,
@@ -473,9 +483,18 @@
    
    # Pass the fingerprint of the full frame so pagination doesn't fold
    # each page into a distinct fingerprint -- doing so would invalidate
-   # saved UI state on every page change.
-   .rs.describeCols(colSlice, -1, -1, 64, totalCols,
-                    .rs.dataViewer.colsFingerprint(x))
+   # saved UI state on every page change. The original (absolute) indices
+   # are passed through as col_index so the client can track pinned/sorted/
+   # filtered columns by identity rather than by their position in the slice.
+   .rs.describeCols(
+      x                = colSlice,
+      maxRows          = -1,
+      maxCols          = -1,
+      maxFactors       = 64,
+      totalCols        = totalCols,
+      colIndices       = indices,
+      colsFingerprint  = .rs.dataViewer.colsFingerprint(x)
+   )
 })
 
 .rs.addFunction("summarizeColumn", function(x, columnIndex)

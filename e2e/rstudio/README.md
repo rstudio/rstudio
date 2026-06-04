@@ -119,6 +119,56 @@ After a test run, open the HTML report with:
 npx playwright show-report
 ```
 
+### Profiling a slow test
+
+When a test passes but is slower than expected, find out *which step* is slow
+rather than guessing. A full trace records every action (clicks, `waitFor`,
+`expect`, `evaluate`) with begin/end timestamps.
+
+Traces are retained automatically on failure (see `use.trace` in
+`playwright.config.ts`), so a failing test already has one. For a passing test,
+force one with `--trace on`:
+
+```bash
+npm run test:desktop-dev -- tests/path/to/test.test.ts -g "test name" --trace on
+```
+
+The fastest way to read per-action timing headlessly (no GUI) is to unzip the
+trace and pair the `before`/`after` events in `test.trace` by `callId`:
+
+```bash
+TRACE=$(find test-results -name trace.zip | tail -1)
+mkdir -p /tmp/tx && unzip -o "$TRACE" -d /tmp/tx >/dev/null
+node -e '
+const fs = require("fs");
+const ev = fs.readFileSync("/tmp/tx/test.trace", "utf8")
+  .split("\n").filter(Boolean).map(JSON.parse);
+const open = {}, dur = [];
+for (const e of ev) {
+  if (e.type === "before") open[e.callId] = { t: e.startTime, title: e.title || e.method };
+  else if (e.type === "after" && open[e.callId])
+    dur.push({ ms: (e.endTime - open[e.callId].t) | 0, title: open[e.callId].title });
+}
+dur.sort((a, b) => b.ms - a.ms);
+for (const r of dur.slice(0, 15)) console.log(String(r.ms).padStart(6), r.title);
+'
+```
+
+`startTime`/`endTime` are milliseconds. The one-time app launch shows up as
+multi-second `Before Hooks` / `beforeAll hook` / `Fixture "rstudioPage"`
+entries -- ignore those and look at the actions inside the test body. A common
+gotcha this surfaces: calling `locator.inputValue()` (or other
+value-reading actions) on an element that isn't in the DOM yet blocks on the
+action timeout; probe with `locator.count()` (instant) instead, and open the
+editor/popup before reading from it.
+
+For an interactive view (DOM snapshots, network, console per step), use the
+GUI trace viewer instead:
+
+```bash
+npx playwright show-trace "$TRACE"
+```
+
 ### Configuration
 
 The Playwright config (`playwright.config.ts`) runs tests **sequentially** (1 worker, no parallel) with a 5-minute timeout per test. Retries default to 0 locally and to 1 under CI (controlled by the standard `CI` env var) -- one retry absorbs a transient launch flake on a fresh runner without rerunning the suite by hand. Override on the CLI with `--retries N`.
