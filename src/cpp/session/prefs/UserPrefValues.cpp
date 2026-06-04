@@ -2247,6 +2247,19 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
+ * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+ */
+bool UserPrefValues::mousewheelChangesEditorTab()
+{
+   return readPref<bool>("mousewheel_changes_editor_tab");
+}
+
+core::Error UserPrefValues::setMousewheelChangesEditorTab(bool val)
+{
+   return writePref("mousewheel_changes_editor_tab", val);
+}
+
+/**
  * The theme to use for the main RStudio user interface.
  */
 std::string UserPrefValues::globalTheme()
@@ -3967,6 +3980,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
+      kMousewheelChangesEditorTab,
       kGlobalTheme,
       kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
