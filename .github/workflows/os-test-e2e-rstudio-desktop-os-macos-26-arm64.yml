@@ -75,6 +75,10 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
 
 permissions:
   contents: read
