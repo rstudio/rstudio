@@ -217,16 +217,12 @@ jobs:
             exit 1
           }
 
-      - name: Install build dependencies
-        working-directory: dependencies/windows
-        shell: cmd
-        run: install-dependencies.cmd
-
-      # make-package.bat calls `vcvarsall.bat amd64` by name (line 192) to
-      # initialize the MSVC environment.  On GitHub runners, Visual Studio is
-      # installed but its VC\Auxiliary\Build directory (where vcvarsall.bat
-      # lives) is not on the default PATH.  Use vswhere.exe -- pre-installed on
-      # all GitHub Windows runners -- to locate the installation and add it.
+      # install-dependencies.cmd checks for MSVC 2022 and compiles SOCI against
+      # it.  On GitHub runners, Visual Studio is installed but its
+      # VC\Auxiliary\Build directory is not on the default PATH, so the check
+      # fails and SOCI is skipped.  Use vswhere.exe -- pre-installed on all
+      # GitHub Windows runners -- to locate the installation and add it to
+      # GITHUB_PATH before any step that needs cl.exe or vcvarsall.bat.
       - name: Add MSVC build tools to PATH
         run: |
           $ErrorActionPreference = 'Stop'
@@ -241,6 +237,11 @@ jobs:
           $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
           Write-Host "Adding to PATH: $vcBuildPath"
           Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+
+      - name: Install build dependencies
+        working-directory: dependencies/windows
+        shell: cmd
+        run: install-dependencies.cmd
 
       # sccache wraps cl.exe so identical object files are served from cache.
       # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1
