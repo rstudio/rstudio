@@ -25,6 +25,7 @@
 - ([#17810](https://github.com/rstudio/rstudio/issues/17810)): Fix the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.
 - ([#17735](https://github.com/rstudio/rstudio/issues/17735)): Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.
 - ([#17066](https://github.com/rstudio/rstudio/issues/17066)): Fix the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.
+- ([#17845](https://github.com/rstudio/rstudio/issues/17845)): Fix Find in Files "Replace" overwriting a file with truncated contents (and reporting success) when the write failed, for example because the disk was full or a quota was exceeded; the original file is now left untouched and an error is reported.
 
 ### Dependencies
 - Ace 1.43.5

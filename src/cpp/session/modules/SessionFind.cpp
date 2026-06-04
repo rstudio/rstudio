@@ -16,12 +16,19 @@
 #include "SessionFind.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/system/error_code.hpp>
+
+#ifdef _WIN32
+# include <boost/iostreams/device/file_descriptor.hpp>
+# include <boost/iostreams/stream.hpp>
+#endif
 
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -592,13 +599,50 @@ private:
       }
    }
 
+   // Flush and close outputStream_ (the temporary file holding the replaced
+   // contents), returning an error if any buffered write failed -- for example
+   // because the disk is full or a quota was exceeded. A stream's destructor
+   // cannot report such errors, and some filesystems (e.g. NFS) report write
+   // failures only when the file is closed, so we flush and close explicitly
+   // here and inspect the result. The concrete stream type is platform-specific
+   // (std::ofstream on POSIX, a boost file-descriptor sink stream on Windows),
+   // so we downcast to invoke close().
+   Error closeReplacementFile()
+   {
+      Error error;
+
+      try
+      {
+         // arming the exception mask reports a failed flush/close, and also
+         // throws immediately if an earlier buffered write already failed
+         outputStream_->exceptions(std::ostream::failbit | std::ostream::badbit);
+         outputStream_->flush();
+
+#ifdef _WIN32
+         typedef boost::iostreams::stream<boost::iostreams::file_descriptor_sink> FileStream;
+#else
+         typedef std::ofstream FileStream;
+#endif
+         if (FileStream* pStream = dynamic_cast<FileStream*>(outputStream_.get()))
+            pStream->close();
+      }
+      catch (const std::exception& e)
+      {
+         error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+         error.addProperty("what", e.what());
+         error.addProperty("path", tempReplaceFile_.getAbsolutePath());
+      }
+
+      outputStream_.reset();
+      return error;
+   }
+
    Error completeFileReplace(std::set<std::string>* pErrorMessage)
    {
       if (fileSuccess_)
       {
          if (!currentFile_.empty() &&
-             !tempReplaceFile_.getAbsolutePath().empty() &&
-             outputStream_->good())
+             !tempReplaceFile_.getAbsolutePath().empty())
          {
              Error error;
 // For Windows we ignore this additional safety check
@@ -613,24 +657,35 @@ private:
                return error;
             }
 #endif
+            // write any remaining (unmatched) lines from the original file
             std::string line;
             while (std::getline(*inputStream_, line))
             {
                addNewLine(line);
                outputStream_->write(line.c_str(), line.size());
             }
-            outputStream_->flush();
+
+            // flush and close the temporary file, surfacing any write error
+            // (e.g. the disk being full or a quota being exceeded). this must
+            // succeed before we replace the original file below -- otherwise a
+            // failed write could move a truncated file over the user's source,
+            // destroying content that was previously saved to disk.
+            error = closeReplacementFile();
             inputStream_.reset();
-            outputStream_.reset();
 
 // Unnecessary on Windows because this only sets write permissions which we
 // already know are correct if we are writing.
 // This needs to happen after outputStream is flushed
 #ifndef _WIN32
-            error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
+            if (!error)
+               error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
 #endif
+            // only replace the original file if the new contents were written
+            // successfully; otherwise leave the user's file untouched
             if (!error)
                error = tempReplaceFile_.move(FilePath(currentFile_), FilePath::MoveType::MoveCrossDevice, true);
+            else
+               tempReplaceFile_.removeIfExists();
 
             currentFile_.clear();
             if (error)
