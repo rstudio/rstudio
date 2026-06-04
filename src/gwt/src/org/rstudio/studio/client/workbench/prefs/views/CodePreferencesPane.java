@@ -333,7 +333,8 @@ public class CodePreferencesPane extends PreferencesPane
       savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
       savePanel.add(checkboxPref(prefs_.reformatOnSave()));
-      
+      savePanel.add(checkboxPref(prefs_.saveFilesDurably()));
+
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       savePanel.add(serializationLabel);

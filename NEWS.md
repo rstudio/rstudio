@@ -3,6 +3,7 @@
 ### New
 - ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
+- ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
 
 ### Fixed
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
@@ -26,6 +27,7 @@
 - ([#17735](https://github.com/rstudio/rstudio/issues/17735)): Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.
 - ([#17066](https://github.com/rstudio/rstudio/issues/17066)): Fix the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.
 - ([#17327](https://github.com/rstudio/rstudio/issues/17327)): Stop requesting code completions and next-edit suggestions while editing in visual mode, where suggestions aren't shown, so document contents are no longer sent to the completion backend for suggestions there.
+- ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
 
 ### Dependencies
 - Ace 1.43.5
