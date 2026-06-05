@@ -157,19 +157,31 @@ mutate the stored project value or `.Rproj`:
    theme falls back. Restructure the function so the target theme is computed and
    compared by name, rather than relying solely on the current `state != prefTheme`
    short-circuit.
-   - Extract the decision as a pure, unit-testable free function declared in
-     `SessionThemes.hpp`:
+   - Extract **two** pure, unit-testable free functions declared in `SessionThemes.hpp`.
+     The first guards the layer-walk (the "user layer only" regression); the second
+     guards the installed/fallback decision:
      ```cpp
-     // Returns the theme name to apply given the effective and global editor_theme
-     // values and the set of installed theme names. Never returns a name absent from
-     // availableThemes unless that set is empty.
+     // Resolves the global (non-project) editor theme name by consulting the layers in
+     // precedence order: user, system, computed, default. Returns the first present
+     // value, or "" if none. `readLayer` is injected so this is testable without a
+     // live Preferences object; syncThemePrefs() passes a lambda wrapping
+     // prefs::userPrefs().readValue(layer, kEditorTheme).
+     std::string resolveGlobalThemeName(
+        const std::function<boost::optional<std::string>(const std::string& layer)>& readLayer);
+
+     // Returns the theme name to apply: effectiveName if installed, else globalName if
+     // installed, else defaultName. Never returns a name absent from availableThemes
+     // when that set is non-empty.
      std::string chooseAppliedThemeName(const std::string& effectiveName,
                                         const std::string& globalName,
                                         const std::set<std::string>& availableThemes,
                                         const std::string& defaultName);
      ```
-     `syncThemePrefs()` reads the layer values, builds `availableThemes` from
-     `getAllThemes()`, calls this helper, then writes `userState().theme()`.
+     `syncThemePrefs()` composes them: `effectiveName = userPrefs().editorTheme()`;
+     `globalName = resolveGlobalThemeName(...)`; build `availableThemes` from
+     `getAllThemes()`; `appliedName = chooseAppliedThemeName(effectiveName, globalName,
+     availableThemes, defaultThemeName)`; then write the resolved object to
+     `userState().theme()`.
 
 ### Frontend (GWT)
 
@@ -194,12 +206,15 @@ mutate the stored project value or `.Rproj`:
    - `getName()` → "Appearance"; `getIcon()` → appearance icon;
      `wrapWithPanel("project_appearance_prefs")`.
    - Expose a small helper for the dialog's live-apply that implements the
-     **Applied-theme resolution rule**:
-     `AceTheme resolveAppliedTheme(UserPrefs uiPrefs)` returns
+     **Applied-theme resolution rule**: `AceTheme resolveAppliedTheme(UserPrefs uiPrefs)`.
+     If `themeList_` is not loaded (`null`/empty) return `null`. Otherwise return
      `themeList_.get(uiPrefs.editorTheme().getValue())` if installed, else
-     `themeList_.get(uiPrefs.editorTheme().getGlobalValue())`, else `null` (theme list
-     not yet loaded). It must be called **after** the dialog has set/removed the project
-     value, so `getValue()` reflects the new effective theme.
+     `themeList_.get(uiPrefs.editorTheme().getGlobalValue())` if installed, else the
+     built-in default theme from `themeList_` (the entry whose `isDefaultTheme()` is
+     true). So `null` means **only** "list not loaded"; a loaded list always yields a
+     theme (matching the resolution rule's `else default` branch). Call it **after** the
+     dialog has set/removed the project value, so `getValue()` reflects the new effective
+     theme.
 
 8. **`src/gwt/.../projects/ui/prefs/ProjectPreferencesDialog.java`**
    - Add `public static final int APPEARANCE = 2;` **between** `EDITING (1)` and
@@ -278,13 +293,15 @@ mutate the stored project value or `.Rproj`:
   preservation), and that a config with `editorTheme == ""` writes no `EditorTheme` line
   and preserves any pre-existing `EditorTheme` value is **not** the goal here — empty
   means the key is removed, so assert it is absent after writing an empty value.
-- **C++ `chooseAppliedThemeName` unit tests (`rsession` scope, new
-  `SessionThemesTests.cpp`)** — directly cover the fallback decision (finding from
-  review): (a) effective installed → returns effective; (b) effective missing but global
-  installed → returns global (the missing **project** theme is *not* returned, proving
-  fallback without mutation); (c) both missing → returns the default; (d) global resolved
-  from a non-user layer — e.g. effective and user-layer empty but a `system`/`default`
-  value installed → returns that, guarding against the "user layer only" bug.
+- **C++ unit tests (`rsession` scope, new `SessionThemesTests.cpp`):**
+  - `chooseAppliedThemeName` — the installed/fallback decision: (a) effective installed →
+    returns effective; (b) effective missing but global installed → returns global (the
+    missing **project** theme is *not* returned, proving fallback without mutation);
+    (c) both missing → returns the default.
+  - `resolveGlobalThemeName` — the layer-walk that guards the "user layer only" bug, using
+    a fake `readLayer`: (a) only `system` has a value (user empty) → returns the system
+    value (proves layers beyond `user` are consulted); (b) both `user` and `system`
+    present → returns the `user` value (precedence); (c) none present → returns `""`.
 - **Playwright e2e (`e2e/rstudio/`):** open a project; set the project editor theme via
   the dialog and assert the active editor theme changes live; set it back to `(Default)`
   and assert it reverts to the global theme. Drive via the `window.rstudio` bridge
