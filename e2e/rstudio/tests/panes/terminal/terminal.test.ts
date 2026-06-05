@@ -4,7 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { rStringLiteral } from '@utils/r';
-import { executeCommand, setPref } from '@utils/commands';
+import { executeCommand } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
@@ -53,13 +53,6 @@ test.describe.serial('Terminal pane', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    // Force the DOM renderer so the xterm widget renders correctly in
-    // headless/software-rasterized environments (default is canvas).
-    await setPref(page, 'terminal_renderer', 'dom');
-  });
-
-  test.afterAll(async ({ rstudioPage: page }) => {
-    await setPref(page, 'terminal_renderer', 'canvas');
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
@@ -148,7 +141,10 @@ test.describe.serial('Terminal pane', () => {
     await openTerminal(page);
 
     // Use an absolute sandbox path so the file is cleaned up by globalTeardown
-    // regardless of the terminal's working directory.
+    // regardless of the terminal's working directory. Require the filename to
+    // appear at least twice in the buffer: once in the echoed touch command and
+    // once in the ls output. A single match would pass even if touch failed
+    // (the filename appears in the echoed command regardless).
     const sandboxDir = sandbox.dir.replace(/\\/g, '/');
     await page.keyboard.type(`touch ${sandboxDir}/ztestfile.txt`);
     await page.keyboard.press('Enter');
@@ -159,7 +155,8 @@ test.describe.serial('Terminal pane', () => {
       () => captureResult(
         page,
         '{ ids <- rstudioapi::terminalList(); ' +
-        'length(ids) > 0 && any(grepl("ztestfile.txt", rstudioapi::terminalBuffer(ids[[1]]))) }',
+        'buf <- paste(rstudioapi::terminalBuffer(ids[[1]]), collapse = "\\n"); ' +
+        'length(ids) > 0 && length(grep("ztestfile.txt", unlist(strsplit(buf, "\\n")))) >= 2 }',
       ),
       { timeout: TIMEOUTS.consoleReady },
     ).toBe('TRUE');

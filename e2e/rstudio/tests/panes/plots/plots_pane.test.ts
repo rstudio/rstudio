@@ -109,10 +109,11 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
     await expect(plotsPane.saveAsImageDialog).toBeHidden();
 
     // Verify a file was actually written -- the dialog closing alone doesn't
-    // confirm a successful save.
+    // confirm a successful save. Match the extension so a pre-existing Rplot.pdf
+    // from a later test can't satisfy this assertion vacuously.
     await expect.poll(
       () => consoleActions.evalRLogical(
-        `length(list.files(getwd(), pattern = "Rplot")) > 0`,
+        `length(list.files(getwd(), pattern = "Rplot.*\\\\.png$")) > 0`,
       ),
       { timeout: TIMEOUTS.fileOpen },
     ).toBe(true);
@@ -128,9 +129,11 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
     await page.locator(FILE_ACCEPT_SAVE).click();
     await expect(plotsPane.saveAsPdfDialog).toBeHidden();
 
+    // RStudio increments the filename (Rplot01.pdf, Rplot02.pdf, ...) when a
+    // previous export already exists in the directory. Match any Rplot*.pdf.
     await expect.poll(
       () => consoleActions.evalRLogical(
-        `length(list.files(getwd(), pattern = "Rplot")) > 0`,
+        `length(list.files(getwd(), pattern = "Rplot.*\\\\.pdf$")) > 0`,
       ),
       { timeout: TIMEOUTS.fileOpen },
     ).toBe(true);
