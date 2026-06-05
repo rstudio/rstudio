@@ -5,6 +5,7 @@ import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { rStringLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
+import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 const TERMINAL_TAB = '#rstudio_workbench_tab_terminal';
@@ -42,6 +43,10 @@ async function openTerminal(page: Page): Promise<void> {
     timeout: TIMEOUTS.consoleReady,
   });
 }
+
+// Sandbox for file-creation test (terminal cwd is its own shell, so we
+// pass the absolute sandbox path directly to the shell command).
+const sandbox = useSuiteSandbox();
 
 test.describe.serial('Terminal pane', () => {
   let consoleActions: ConsolePaneActions;
@@ -103,4 +108,83 @@ test.describe.serial('Terminal pane', () => {
       { timeout: TIMEOUTS.fileOpen },
     ).toContain('expr 1 + 1\n2\n');
   });
+
+  test('toolbar shows next and previous terminal buttons', async ({ rstudioPage: page }) => {
+    await killAllTerminals(page);
+    await openTerminal(page);
+
+    await expect(page.locator('#rstudio_tb_nextterminal')).toBeVisible();
+    await expect(page.locator('#rstudio_tb_previousterminal')).toBeVisible();
+  });
+
+  test('R --version runs in the terminal', async ({ rstudioPage: page }) => {
+    await killAllTerminals(page);
+    await openTerminal(page);
+
+    await page.keyboard.type('R --version');
+    await page.keyboard.press('Enter');
+
+    await expect.poll(
+      () => captureResult(
+        page,
+        '{ ids <- rstudioapi::terminalList(); ' +
+        'length(ids) > 0 && any(grepl("R version", rstudioapi::terminalBuffer(ids[[1]]))) }',
+      ),
+      { timeout: TIMEOUTS.consoleReady },
+    ).toBe('TRUE');
+  });
+
+  test('a file created in the terminal appears in a directory listing', async ({
+    rstudioPage: page,
+  }) => {
+    await killAllTerminals(page);
+    await openTerminal(page);
+
+    // Use an absolute sandbox path so the file is cleaned up by globalTeardown
+    // regardless of the terminal's working directory. Require the filename to
+    // appear at least twice in the buffer: once in the echoed touch command and
+    // once in the ls output. A single match would pass even if touch failed
+    // (the filename appears in the echoed command regardless).
+    const sandboxDir = sandbox.dir.replace(/\\/g, '/');
+    await page.keyboard.type(`touch ${sandboxDir}/ztestfile.txt`);
+    await page.keyboard.press('Enter');
+    await page.keyboard.type(`ls ${sandboxDir}`);
+    await page.keyboard.press('Enter');
+
+    await expect.poll(
+      () => captureResult(
+        page,
+        '{ ids <- rstudioapi::terminalList(); ' +
+        'buf <- paste(rstudioapi::terminalBuffer(ids[[1]]), collapse = "\\n"); ' +
+        'length(ids) > 0 && length(grep("ztestfile.txt", unlist(strsplit(buf, "\\n")))) >= 2 }',
+      ),
+      { timeout: TIMEOUTS.consoleReady },
+    ).toBe('TRUE');
+  });
+
+  test(
+    'Shift+Backspace deletes the last character before submission',
+    { tag: ['@desktop_only'] },
+    async ({ rstudioPage: page }) => {
+      await killAllTerminals(page);
+      await openTerminal(page);
+
+      await page.keyboard.type('echo hello');
+      await page.keyboard.press('Shift+Backspace');
+      await page.keyboard.press('Enter');
+
+      // "echo hell" must appear AND "echo hello" must not -- if Shift+Backspace
+      // had no effect the full word would be present and the test would pass
+      // vacuously on the substring match alone.
+      await expect.poll(
+        () => captureResult(
+          page,
+          '{ ids <- rstudioapi::terminalList(); ' +
+          'buf <- paste(rstudioapi::terminalBuffer(ids[[1]]), collapse = "\\n"); ' +
+          'grepl("echo hell", buf) && !grepl("echo hello", buf) }',
+        ),
+        { timeout: TIMEOUTS.consoleReady },
+      ).toBe('TRUE');
+    },
+  );
 });

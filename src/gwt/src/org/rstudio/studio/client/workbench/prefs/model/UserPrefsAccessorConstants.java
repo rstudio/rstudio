@@ -1448,6 +1448,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationDescription();
 
    /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   @DefaultStringValue("Change active editor tab with mouse wheel")
+   String mousewheelChangesEditorTabTitle();
+   @DefaultStringValue("Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.")
+   String mousewheelChangesEditorTabDescription();
+
+   /**
     * The theme to use for the main RStudio user interface.
     */
    @DefaultStringValue("Global theme")
@@ -2056,6 +2064,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutTitle();
    @DefaultStringValue("The maximum amount of seconds of retry for save operations.")
    String saveRetryTimeoutDescription();
+
+   /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   @DefaultStringValue("Use durable writes when saving files")
+   String saveFilesDurablyTitle();
+   @DefaultStringValue("Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.")
+   String saveFilesDurablyDescription();
 
    /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>

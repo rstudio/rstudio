@@ -215,6 +215,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DOC_OUTLINE_SHOW = "doc_outline_show";
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
+   public static final String MOUSEWHEEL_CHANGES_EDITOR_TAB = "mousewheel_changes_editor_tab";
    public static final String GLOBAL_THEME = "global_theme";
    public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
    public static final String GIT_DIFF_IGNORE_WHITESPACE = "git_diff_ignore_whitespace";
@@ -290,6 +291,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String PYTHON_VERSION = "python_version";
    public static final String PYTHON_PATH = "python_path";
    public static final String SAVE_RETRY_TIMEOUT = "save_retry_timeout";
+   public static final String SAVE_FILES_DURABLY = "save_files_durably";
    public static final String INSERT_NATIVE_PIPE_OPERATOR = "insert_native_pipe_operator";
    public static final String COMMAND_PALETTE_MRU = "command_palette_mru";
    public static final String SHOW_MEMORY_USAGE = "show_memory_usage";
@@ -2777,6 +2779,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   public PrefValue<Boolean> mousewheelChangesEditorTab()
+   {
+      return bool(
+         "mousewheel_changes_editor_tab",
+         _constants.mousewheelChangesEditorTabTitle(), 
+         _constants.mousewheelChangesEditorTabDescription(), 
+         true);
+   }
+
+   /**
     * The theme to use for the main RStudio user interface.
     */
    public PrefValue<String> globalTheme()
@@ -3824,6 +3838,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   public PrefValue<Boolean> saveFilesDurably()
+   {
+      return bool(
+         "save_files_durably",
+         _constants.saveFilesDurablyTitle(), 
+         _constants.saveFilesDurablyDescription(), 
+         true);
+   }
+
+   /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
@@ -4820,6 +4846,8 @@ public class UserPrefsAccessor extends Prefs
          latexPreviewOnCursorIdle().setValue(layer, source.getString("latex_preview_on_cursor_idle"));
       if (source.hasKey("wrap_tab_navigation"))
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
+      if (source.hasKey("mousewheel_changes_editor_tab"))
+         mousewheelChangesEditorTab().setValue(layer, source.getBool("mousewheel_changes_editor_tab"));
       if (source.hasKey("global_theme"))
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("use_dark_theme_modal_dialogs"))
@@ -4970,6 +4998,8 @@ public class UserPrefsAccessor extends Prefs
          pythonPath().setValue(layer, source.getString("python_path"));
       if (source.hasKey("save_retry_timeout"))
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
+      if (source.hasKey("save_files_durably"))
+         saveFilesDurably().setValue(layer, source.getBool("save_files_durably"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
@@ -5233,6 +5263,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
+      prefs.add(mousewheelChangesEditorTab());
       prefs.add(globalTheme());
       prefs.add(useDarkThemeModalDialogs());
       prefs.add(gitDiffIgnoreWhitespace());
@@ -5308,6 +5339,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
+      prefs.add(saveFilesDurably());
       prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());

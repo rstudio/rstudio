@@ -2247,6 +2247,19 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
+ * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+ */
+bool UserPrefValues::mousewheelChangesEditorTab()
+{
+   return readPref<bool>("mousewheel_changes_editor_tab");
+}
+
+core::Error UserPrefValues::setMousewheelChangesEditorTab(bool val)
+{
+   return writePref("mousewheel_changes_editor_tab", val);
+}
+
+/**
  * The theme to use for the main RStudio user interface.
  */
 std::string UserPrefValues::globalTheme()
@@ -3222,6 +3235,19 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
+ * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+ */
+bool UserPrefValues::saveFilesDurably()
+{
+   return readPref<bool>("save_files_durably");
+}
+
+core::Error UserPrefValues::setSaveFilesDurably(bool val)
+{
+   return writePref("save_files_durably", val);
+}
+
+/**
  * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
@@ -3967,6 +3993,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
+      kMousewheelChangesEditorTab,
       kGlobalTheme,
       kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
@@ -4042,6 +4069,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonVersion,
       kPythonPath,
       kSaveRetryTimeout,
+      kSaveFilesDurably,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
       kShowMemoryUsage,

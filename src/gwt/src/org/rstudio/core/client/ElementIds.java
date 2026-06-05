@@ -228,6 +228,11 @@ public class ElementIds
    public final static String FIND_FILES_EXCLUDE_CUSTOM = "find_files_exclude_custom";
    public static String getExcludeCustom() { return getElementId(FIND_FILES_EXCLUDE_CUSTOM); }
 
+   // FindOutputPane (Find in Files results / replace toolbar)
+   public final static String FIND_REPLACE_MODE_TOGGLE = "find_replace_mode_toggle";
+   public final static String FIND_REPLACE_TEXT = "find_replace_text";
+   public final static String FIND_REPLACE_ALL = "find_replace_all";
+
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
    public static String getImportFileName() { return getElementId(IMPORT_FILE_NAME); }
