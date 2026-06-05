@@ -1232,13 +1232,32 @@
    }, numeric(1))
 })
 
+.rs.addFunction("python.isHelpTopicValid", function(code)
+{
+   # a valid Python help topic is a simple qualified name; that is, a
+   # sequence of identifiers joined by dots (e.g. 'numpy', 'os.path',
+   # 'pandas.DataFrame'). the topic is evaluated as a Python expression
+   # when generating help, so anything that isn't a plain dotted name is
+   # rejected to guard against code injection.
+   pattern <- "^[A-Za-z_][A-Za-z0-9_]*([.][A-Za-z_][A-Za-z0-9_]*)*$"
+   grepl(pattern, code, perl = TRUE)
+})
+
 .rs.addFunction("python.generateHtmlHelp", function(code)
 {
    Encoding(code) <- "UTF-8"
-   
+
    # remove a '.html' suffix if present
    code <- sub("[.]html$", "", code)
-   
+
+   # validate the requested topic before attempting to resolve it; the
+   # topic is otherwise evaluated as a Python expression below, so an
+   # invalid topic could be used to inject and execute arbitrary code
+   if (!.rs.python.isHelpTopicValid(code)) {
+      warning(sprintf("'%s' is not a valid Python help topic", code), call. = FALSE)
+      return("")
+   }
+
    # check for pre-existing generated HTML
    dir <- file.path(tempdir(), "reticulate-python-help")
    if (!.rs.ensureDirectory(dir)) {

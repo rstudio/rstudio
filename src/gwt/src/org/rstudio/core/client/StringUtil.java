@@ -495,9 +495,16 @@ public class StringUtil
    {
       if (skipWhitespaceOnlyLines)
       {
-         lines = lines.stream()
+         // Drop whitespace-only lines only when at least one line with content
+         // remains. If every line is whitespace-only, keep them so callers can
+         // still recover the common indent (e.g. commenting an empty indented
+         // line -- https://github.com/rstudio/rstudio/issues/17493).
+         List<String> filtered = lines.stream()
             .filter(line -> !line.trim().isEmpty())
             .collect(Collectors.toList());
+
+         if (!filtered.isEmpty())
+            lines = filtered;
       }
 
       if (lines.size() == 0)

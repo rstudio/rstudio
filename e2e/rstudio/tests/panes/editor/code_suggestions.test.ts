@@ -372,15 +372,19 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — pressing Escape');
 
-      // First Escape closes Ace autocomplete popup if active;
-      // second Escape dismisses the ghost text itself
-      await page.keyboard.press('Escape');
-      await sleep(500);
-      await page.keyboard.press('Escape');
-      await sleep(1000);
-
-      // Verify ghost text is fully cleared
-      await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
+      // Press Escape until the suggestion is gone AND no completion request is
+      // still in flight. An in-flight request -- shown as "Waiting for
+      // completions..." in the status bar -- can land a response that re-renders
+      // ghost text right after we dismiss it (the original flake; the failure
+      // snapshot showed a late "Completion response received"). Gating on "no
+      // request pending" is the meaningful signal that nothing can resurrect the
+      // suggestion, so we don't need a blind stability sleep. This also covers
+      // the case where the first Escape only closes the Ace autocomplete popup.
+      await expect(async () => {
+        await page.keyboard.press('Escape');
+        await expect(sourcePane.statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
+        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
       console.log('  Ghost text dismissed with Escape');
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
@@ -596,22 +600,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.statusBarCompletionReceived).toBeVisible({ timeout: 5000 });
       console.log('  Status bar shows "Completion response received"');
 
-      // Scroll the viewport to the middle of the file WITHOUT moving the cursor.
-      // Using keyboard shortcuts would move the cursor, triggering a new
-      // completion request that replaces the click handler we want to test.
-      // We scroll to the middle so that regardless of whether the completion
-      // is near the top or bottom, clicking the status bar causes an
-      // observable scroll change.
+      // Scroll the active editor to the top WITHOUT moving the cursor (the
+      // completion is at the bottom where we typed, so clicking the status bar
+      // produces an observable downward scroll). Using keyboard shortcuts would
+      // move the cursor and trigger a new completion request, replacing the
+      // click handler we want to test. Target activeEditor() rather than the
+      // first .ace_editor in the DOM: the suite keeps an empty Untitled tab
+      // open, whose editor sorts first and would otherwise absorb the scroll.
       await page.evaluate(`(function() {
-        var editors = document.querySelectorAll('.ace_editor');
-        for (var i = 0; i < editors.length; i++) {
-          if (editors[i].closest('#rstudio_console_input')) continue;
-          var env = editors[i].env;
-          if (env && env.editor) {
-            env.editor.scrollToLine(0, false);
-            break;
-          }
-        }
+        var editor = window.rstudio && window.rstudio.documents.activeEditor();
+        if (editor) editor.scrollToLine(0, false);
       })()`);
       await sleep(1000);
 
