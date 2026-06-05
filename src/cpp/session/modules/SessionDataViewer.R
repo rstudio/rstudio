@@ -884,6 +884,9 @@
    if (length(cols) > 0)
    {
       vals <- list()
+      # iterate every requested sort key; the previous "for (i in length(cols))"
+      # ran the loop exactly once with i == length(cols), so multi-column sorts
+      # silently applied only the last key.
       for (i in seq_along(cols))
       {
          idx <- cols[[i]]

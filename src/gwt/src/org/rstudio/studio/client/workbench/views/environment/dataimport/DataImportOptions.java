@@ -143,7 +143,9 @@ public class DataImportOptions extends JavaScriptObject
                index: index,
                name: response.columns[key].col_name,
                assignedType: null,
-               rType: response.columns[key].col_type_r
+               // col_class is the column's class() reported as an array; take
+               // the most-specific class (class()[1]) as the scalar R type
+               rType: response.columns[key].col_class[0]
             };
          }
       });

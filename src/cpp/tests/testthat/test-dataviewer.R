@@ -399,6 +399,29 @@ test_that(".rs.describeCols() reports col_type as typeof() and col_class as clas
    classes <- lapply(cols[-1], function(col) col$col_class)
    expect_equal(types, c("double", "integer", "character", "logical", "integer", "list"))
    expect_equal(classes, list("numeric", "integer", "character", "logical", "factor", "list"))
+
+   # the Data Import preview keys its column-type detection on col_class[[1]]
+   # (read as col_class[0] in DataImportOptions.java), so the most-specific
+   # class must be the first element of the array for every column
+   first_class <- vapply(cols[-1], function(col) col$col_class[[1]], "")
+   expect_equal(first_class, c("numeric", "integer", "character", "logical", "factor", "list"))
+})
+
+test_that(".rs.describeCols() reports a nested data.frame column faithfully", {
+   df <- data.frame(a = 1:2)
+   # a column that is itself a data.frame. describeCols does not flatten (that
+   # happens upstream in the viewer pipeline via .rs.flattenFrame), so it must
+   # report the column as typeof() "list" with class() "data.frame" -- the
+   # shape the frontend's isDataFrameColumn relies on to tell list and
+   # data.frame columns apart.
+   df$nested <- data.frame(x = c(1.5, 2.5), y = c(3L, 4L))
+
+   cols <- .rs.describeCols(df)
+
+   # cols[[1]] rownames, cols[[2]] = a, cols[[3]] = nested
+   nested <- cols[[3L]]
+   expect_equal(nested$col_type, .rs.scalar("list"))
+   expect_equal(nested$col_class, "data.frame")
 })
 
 test_that(".rs.applyTransform() does not error when sorting a list column", {
@@ -415,4 +438,21 @@ test_that(".rs.applyTransform() does not error when sorting a list column", {
    # sorting an atomic column still works
    sorted <- .rs.applyTransform(df, character(), "", 1L, "asc")
    expect_equal(sorted$a, c(1L, 2L, 3L))
+})
+
+test_that(".rs.applyTransform() applies every key in a multi-column sort", {
+   # primary key 'a' has ties that the tiebreaker 'c' resolves; 'b' is a list
+   # column sitting between them so it is skipped without disturbing the
+   # dirs/vals alignment of the remaining keys. The old "for (i in length(cols))"
+   # loop ran once with the last key only, sorting by 'c' alone.
+   df <- data.frame(a = c(1L, 1L, 2L, 2L))
+   df$b <- list(1, 2:3, 4:6, 7)
+   df$c <- c(2L, 1L, 2L, 1L)
+
+   sorted <- .rs.applyTransform(df, character(3L), "",
+                                c(1L, 2L, 3L), c("asc", "asc", "asc"))
+
+   # correct multi-key result: primary 'a' ascending, ties broken by 'c'
+   expect_equal(sorted$a, c(1L, 1L, 2L, 2L))
+   expect_equal(sorted$c, c(1L, 2L, 1L, 2L))
 })

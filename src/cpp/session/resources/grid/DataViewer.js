@@ -742,8 +742,10 @@ var isNumericColumn = function(col) {
 };
 
 // Whether the backend computed histogram data for this column. col_breaks /
-// col_counts are populated only for base-numeric columns; other columns carry
-// empty arrays (which are truthy in JS, hence the explicit length checks).
+// col_counts are populated only for base-numeric columns; other data columns
+// carry empty arrays and the rownames column omits the fields entirely. Both
+// the empty-array and undefined cases are handled by the explicit checks (an
+// empty array is truthy in JS, so length must be tested too).
 var hasHistogram = function(col) {
    return col.col_breaks && col.col_breaks.length > 0 &&
           col.col_counts && col.col_counts.length > 0;
@@ -2126,7 +2128,9 @@ var createColumnTypesUI = function(th, idx, col) {
    host.className = "columnTypeWrapper";
 
    var val = document.createElement("div");
-   val.textContent = "(" + colClassLabel(col) + ")";
+   // show the user's assigned type if they picked one in the import dialog,
+   // otherwise fall back to the detected R class
+   val.textContent = "(" + (col.col_type_assigned || colClassLabel(col)) + ")";
    val.className = "columnTypeHeader";
 
    th.classList.add("columnClickable");
