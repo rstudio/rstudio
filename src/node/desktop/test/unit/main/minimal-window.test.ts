@@ -15,6 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import { isWindowsDocker } from '../unit-utils';
 import { openMinimalWindow } from '../../../src/main/minimal-window';
@@ -42,6 +43,21 @@ if (!isWindowsDocker()) {
       const gwtWindow = new TestMinimalGwtWindow({ name: '' });
       const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
       assert.isObject(minWin);
+      minWin.close();
+    });
+
+    it('closes a live child window when the parent is destroyed', () => {
+      const gwtWindow = new TestMinimalGwtWindow({ name: '' });
+      const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
+      const closeSpy = sinon.spy(minWin.window, 'close');
+
+      // The normal case: the child is still alive when the parent is
+      // destroyed, so parentWindowDestroyed() takes the guard's true branch
+      // and closes the child.
+      gwtWindow.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
+
+      assert.isTrue(closeSpy.calledOnce);
+      closeSpy.restore();
       minWin.close();
     });
 
