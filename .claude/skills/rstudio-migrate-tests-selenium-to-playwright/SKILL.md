@@ -116,11 +116,26 @@ Present proposed improvements to the user. Only apply if approved. Re-run after 
 
 ### Step 8: Update progress tracking
 
-Edit `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`:
+Two records to update -- the progress doc (this repo) and the migrated marker
+on the Selenium source (the `rstudio-ide-automation` repo).
+
+**Progress doc** -- edit `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`:
 - Update the file's status (Complete, Partial, or Fixme)
 - Add the Playwright target path and test count
 - Add notes if relevant
 - Add any fixme tests to the Fixme Tests table with blocker description
+
+**Mark the Selenium source as migrated** -- in `rstudio-ide-automation`, add
+`@pytest.mark.migratedToTypeScript` so the Python suite records which tests are
+ported. Follow that repo's `migrate-test` skill, Step 15:
+- Mark **each individual test method** that passed verification. **Never mark
+  at the class level** -- a class may be only partially migrated, and class-level
+  marking would wrongly imply every method is done.
+- Module-level `pytestmark = [pytest.mark.migratedToTypeScript, ...]` is
+  acceptable only when the file has no class and every method passed.
+- Never mark a method that ended up `test.fixme()` in Playwright.
+- This is a separate repo, so it needs its own `test/ron/` branch, commit, and
+  PR -- don't fold it into the rstudio PR.
 
 ### Step 9: Commit and submit
 
