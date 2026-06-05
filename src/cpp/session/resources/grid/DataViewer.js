@@ -3982,6 +3982,14 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   // Invalidate the cached column count. buildRequestedColumns clamps the
+   // requested window to totalCols, so a stale value left over from the
+   // previous frame would cap the fetch at the old column count and drop any
+   // columns added since (e.g. `df$new <- ...`). 0 means "unknown"; the window
+   // is then requested in full and the server clamps it to the real frame.
+   // Reset here (rather than in invalidateCache) because resetGridState only
+   // runs from bootstrap, which always re-fetches columns and repopulates this.
+   totalCols = 0;
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";

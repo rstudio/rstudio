@@ -337,12 +337,14 @@ test.describe('Data Viewer', () => {
       // assignment fires the structure-changed refresh through the backend.
       await consoleActions.executeInConsole('.rs.scroll_pos_df$added <- 1L');
 
-      // Wait for the refresh to land: the status bar reports the new column
-      // count (5 -> 6 total columns). The new column isn't pulled into the
-      // visible window automatically -- the viewer keeps its prior column
-      // window on refresh -- so gate on the count, not on a 6th header cell.
+      // The refresh must both report the new column count (5 -> 6 total) and
+      // actually bring the new sixth column into view. (The latter regressed
+      // when a refresh reused the previous frame's stale totalCols to clamp the
+      // requested column window, dropping any column added since.)
       await expect(dataViewer.gridInfo)
         .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('th[data-col-idx="6"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
       // Position should be restored to (about) where it was, not reset to the
       // top. Allow one row of slack for rounding. On the pre-fix code this
