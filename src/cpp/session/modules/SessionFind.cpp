@@ -24,6 +24,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -518,45 +519,6 @@ private:
       }
    }
 
-// permissions getter/setter (only applicable to Unix platforms)
-#ifndef _WIN32
-   Error setPermissions(const std::string& filePath, boost::filesystem::perms permissions)
-   {
-      boost::filesystem::path path(filePath);
-      try
-      {
-         boost::filesystem::permissions(path, permissions);
-      }
-      catch (const boost::filesystem::filesystem_error& e)
-      {
-         return Error(e.code(), ERROR_LOCATION);
-      }
-
-      return Success();
-   }
-
-   Error getPermissions(const std::string& filePath, boost::filesystem::perms* pPerms)
-   {
-      *pPerms = boost::filesystem::no_perms;
-
-      boost::filesystem::path path(filePath);
-      try
-      {
-         boost::filesystem::file_status fileStatus = status(path);
-         *pPerms = fileStatus.permissions();
-      }
-      catch (const boost::filesystem::filesystem_error& e)
-      {
-         return (Error(
-                  errc::findCategory(),
-                  errc::PermissionsError,
-                  "A permissions error occurred during replace operation.",
-                  ERROR_LOCATION));
-      }
-      return Success();
-   }
-#endif
-
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -594,52 +556,49 @@ private:
 
    Error completeFileReplace(std::set<std::string>* pErrorMessage)
    {
-      if (fileSuccess_)
+      if (fileSuccess_ && !currentFile_.empty() && !findResults().preview())
       {
-         if (!currentFile_.empty() &&
-             !tempReplaceFile_.getAbsolutePath().empty() &&
-             outputStream_->good())
-         {
-             Error error;
+         Error error;
 // For Windows we ignore this additional safety check
 // it will always fail because we have inputStream_ reading the file
 #ifndef _WIN32
-            error = FilePath(currentFile_).testWritePermissions();
-            if (error)
-            {
-               json::Array replaceMatchOn, replaceMatchOff;
-               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
-                  &replaceMatchOff, &fileSuccess_);
-               return error;
-            }
+         error = FilePath(currentFile_).testWritePermissions();
+         if (error)
+         {
+            json::Array replaceMatchOn, replaceMatchOff;
+            addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+               &replaceMatchOff, &fileSuccess_);
+            return error;
+         }
 #endif
-            std::string line;
-            while (std::getline(*inputStream_, line))
-            {
-               addNewLine(line);
-               outputStream_->write(line.c_str(), line.size());
-            }
-            outputStream_->flush();
-            inputStream_.reset();
-            outputStream_.reset();
+         // append any lines following the final match unchanged
+         std::string line;
+         while (std::getline(*inputStream_, line))
+         {
+            addNewLine(line);
+            outputContents_.append(line);
+         }
+         inputStream_.reset();
 
-// Unnecessary on Windows because this only sets write permissions which we
-// already know are correct if we are writing.
-// This needs to happen after outputStream is flushed
-#ifndef _WIN32
-            error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
-#endif
-            if (!error)
-               error = tempReplaceFile_.move(FilePath(currentFile_), FilePath::MoveType::MoveCrossDevice, true);
+         // Write the replacement atomically: writeStringToFileAtomic writes to a
+         // temporary file in the same directory, flushes it durably (so a full
+         // disk or exceeded quota surfaces as an error rather than a silently
+         // truncated write), preserves the original file's permissions, and only
+         // then renames it into place. On failure the original file is left
+         // untouched.
+         error = writeStringToFileAtomic(FilePath(currentFile_),
+                                         outputContents_,
+                                         string_utils::LineEndingPassthrough,
+                                         true /* preservePermissions */);
+         outputContents_.clear();
+         currentFile_.clear();
 
-            currentFile_.clear();
-            if (error)
-            {
-               json::Array replaceMatchOn, replaceMatchOff;
-               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
-                  &replaceMatchOff, &fileSuccess_);
-               return error;
-            }
+         if (error)
+         {
+            json::Array replaceMatchOn, replaceMatchOff;
+            addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+               &replaceMatchOff, &fileSuccess_);
+            return error;
          }
       }
       return Success();
@@ -709,27 +668,16 @@ private:
       if (error)
          return error;
 
-      if (!findResults().preview())
-      {
-         tempReplaceFile_ =  module_context::tempFile("replace", "txt");
-         error = tempReplaceFile_.openForWrite(outputStream_);
-         if (error)
-            return error;
-      }
-      
+      // accumulate the replaced contents in memory; completeFileReplace writes
+      // them out atomically once the whole file has been processed
+      outputContents_.clear();
+
       lineEnding_ = string_utils::LineEndingNative;
       string_utils::detectLineEndings(file, &lineEnding_);
 
       error = file.openForRead(inputStream_);
       if (error)
          return error;
-
-      // boost only acknowledges write permissions on Windows which we already know exist
-#ifndef _WIN32
-      error = getPermissions(file.getAbsolutePath(), &filePermissions_);
-      if (error)
-         return (error);
-#endif
 
       fileSuccess_ = true;
       inputLineNum_ = 0;
@@ -754,7 +702,7 @@ private:
          subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
-   Error writeToFile(
+   void writeToFile(
          const std::string& line,
          const std::string& lineLeftContents,
          const std::string& lineRightContents)
@@ -764,19 +712,8 @@ private:
       newLine.insert(newLine.length(), lineRightContents);
       addNewLine(newLine);
 
-      Error error;
-      
-      try
-      {
-         outputStream_->write(newLine.c_str(), newLine.size());
-         outputStream_->flush();
-      }
-      catch (const std::ios_base::failure& e)
-      {
-         error = systemError(errno, e.what(), ERROR_LOCATION);
-      }
-      
-      return error;
+      // buffer the replaced line; it is written to disk in completeFileReplace
+      outputContents_.append(newLine);
    }
 
    void cleanLineAndGetMatches(std::string* pEncodedLine,
@@ -845,7 +782,7 @@ private:
             if (!findResults().preview())
             {
                addNewLine(line);
-               outputStream_->write(line.c_str(), line.size());
+               outputContents_.append(line);
             }
          }
          else // perform replace
@@ -947,14 +884,13 @@ private:
                }
                pos--;
             }
-            // write the new line to file
+            // buffer the new line; it is written to disk in completeFileReplace
             if (!findResults().preview())
             {
-               Error error = writeToFile(pLineInfo->encodedContents,
-                     pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
-               if (error)
-                  addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
-                     pReplaceMatchOff, &lineSuccess);
+               writeToFile(
+                     pLineInfo->encodedContents,
+                     pLineInfo->leadingWhitespace,
+                     pLineInfo->trailingWhitespace);
             }
          }
       }
@@ -1219,12 +1155,8 @@ private:
    bool firstDecodeError_;
    std::string stdOutBuf_;
    std::string currentFile_;
-   FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
-   std::shared_ptr<std::ostream> outputStream_;
-#ifndef _WIN32
-   boost::filesystem::perms filePermissions_;
-#endif
+   std::string outputContents_;
    int inputLineNum_;
    bool fileSuccess_;
    string_utils::LineEnding lineEnding_;

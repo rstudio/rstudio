@@ -27,6 +27,9 @@
 - ([#17735](https://github.com/rstudio/rstudio/issues/17735)): Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.
 - ([#17066](https://github.com/rstudio/rstudio/issues/17066)): Fix the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.
 - ([#17493](https://github.com/rstudio/rstudio/issues/17493)): Fix the comment/uncomment shortcut inserting the comment character at the start of an empty indented line instead of after the indent.
+- ([#17868](https://github.com/rstudio/rstudio/issues/17868)): Restrict the Python help URL handler (`/python/`) to valid help-topic names, accepting only plain dotted qualified names.
+- ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
+- ([#17845](https://github.com/rstudio/rstudio/issues/17845)): Fix Find in Files "Replace All" overwriting a source file with truncated or empty contents when the write failed (for example, when the disk is full or a disk quota is exceeded); the replacement is now written atomically and durably, so on failure the original file is left untouched and the error is reported.
 
 ### Dependencies
 - Ace 1.43.5
