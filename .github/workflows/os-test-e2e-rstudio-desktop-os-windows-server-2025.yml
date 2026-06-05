@@ -423,6 +423,11 @@ jobs:
           rig default $env:R_VERSION
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           rig ls
+          # Prepend the rig-installed R to PATH so it wins over any R version
+          # pre-installed on the runner image (e.g. R 4.6 shipped on windows-2025).
+          $rBin = (rig bin $env:R_VERSION).Trim()
+          Write-Host "Prepending R bin to PATH: $rBin"
+          "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
       # Build-from-source path: install from the artifact produced by the
@@ -591,6 +596,15 @@ jobs:
         with:
           name: test-results-shard-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Upload RStudio session logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-logs-shard-${{ matrix.shard }}
+          path: ${{ env.APPDATA }}\RStudio\
           retention-days: 15
           if-no-files-found: ignore
 
