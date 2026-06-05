@@ -425,7 +425,8 @@ jobs:
           rig ls
           # Prepend the rig-installed R to PATH so it wins over any R version
           # pre-installed on the runner image (e.g. R 4.6 shipped on windows-2025).
-          $rBin = (rig bin $env:R_VERSION).Trim()
+          # rig installs to C:\Program Files\R\R-{version}\bin\x64 on Windows.
+          $rBin = "C:\Program Files\R\R-$env:R_VERSION\bin\x64"
           Write-Host "Prepending R bin to PATH: $rBin"
           "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
