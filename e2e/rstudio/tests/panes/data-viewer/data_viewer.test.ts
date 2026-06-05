@@ -312,6 +312,90 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/17861
+  // Adding or removing a column (or editing values in an existing column)
+  // refreshes the grid in place. As long as the row count is unchanged the
+  // refresh should keep the user where they were scrolled, instead of snapping
+  // back to the first row.
+  test('scroll position is preserved across an in-place refresh (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_pos_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_pos_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Scroll well down into the grid and record where we landed (clamped to
+      // the scrollable range by the browser).
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Add a column: the row count is unchanged, so this is exactly the kind
+      // of in-place change whose scroll position should survive. The
+      // assignment fires the structure-changed refresh through the backend.
+      await consoleActions.executeInConsole('.rs.scroll_pos_df$added <- 1L');
+
+      // Wait for the refresh to land: the status bar reports the new column
+      // count (5 -> 6 total columns). The new column isn't pulled into the
+      // visible window automatically -- the viewer keeps its prior column
+      // window on refresh -- so gate on the count, not on a 6th header cell.
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // Position should be restored to (about) where it was, not reset to the
+      // top. Allow one row of slack for rounding. On the pre-fix code this
+      // would be 0.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be preserved across the refresh' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_pos_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // When the refresh is for genuinely new data -- signalled by a change in the
+  // underlying row count -- the grid resets to the top, since the previous row
+  // position no longer maps to anything meaningful.
+  test('scroll position resets to the top when the row count changes (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_reset_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_reset_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 20000; });
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+      ).toBeGreaterThan(0);
+
+      // Halve the rows: still tall enough to scroll, but a different row count,
+      // so the refresh should snap back to the top rather than restoring the
+      // old position.
+      await consoleActions.executeInConsole(
+        '.rs.scroll_reset_df <- .rs.scroll_reset_df[1:1000, ]',
+      );
+
+      // Wait for the refresh to report the new row count.
+      await expect(dataViewer.gridInfo)
+        .toContainText('1,000', { timeout: TIMEOUTS.fileOpen });
+
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should reset to the top for new data' },
+      ).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_reset_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   test('HTML-special cell values render as text, not markup', async () => {
     // textContent encodes <, >, and & but leaves quotes as plain text.
     // The security property is that nothing user-supplied becomes a real
