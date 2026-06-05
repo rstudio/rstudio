@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -77,6 +78,7 @@ public class FindOutputPane extends WorkbenchPane
       setStopSearchButtonVisible(false);
 
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
+      ElementIds.assignElementId(showFindButton_, ElementIds.FIND_REPLACE_MODE_TOGGLE);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -109,6 +111,7 @@ public class FindOutputPane extends WorkbenchPane
       replaceMode_ = true;
 
       replaceTextBox_ = new TextBox();
+      ElementIds.assignElementId(replaceTextBox_, ElementIds.FIND_REPLACE_TEXT);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
@@ -128,6 +131,7 @@ public class FindOutputPane extends WorkbenchPane
       setStopReplaceButtonVisible(false);
 
       replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
+      ElementIds.assignElementId(replaceAllButton_, ElementIds.FIND_REPLACE_ALL);
       replaceToolbar.addRightWidget(replaceAllButton_);
 
       replaceProgress_ = new ProgressBar();

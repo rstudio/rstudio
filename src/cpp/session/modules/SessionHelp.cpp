@@ -1099,6 +1099,17 @@ void handlePythonHelpRequest(const http::Request& request,
       return;
    }
 
+   // the requested topic is evaluated as a Python expression when help is
+   // generated, so reject anything that isn't a plain dotted name (e.g.
+   // 'numpy', 'os.path', 'pandas.DataFrame.html') to guard against code
+   // injection. the R side performs stricter validation as well.
+   static const boost::regex rePythonHelpTopic("^[A-Za-z_][A-Za-z0-9_.]*$");
+   if (!boost::regex_match(code, rePythonHelpTopic))
+   {
+      pResponse->setNotFoundError(request);
+      return;
+   }
+
    // construct HTML help file from requested object
    std::string path;
    Error error = r::exec::RFunction(".rs.python.generateHtmlHelp")

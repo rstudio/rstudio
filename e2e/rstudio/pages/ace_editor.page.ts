@@ -104,6 +104,10 @@ export class AceEditor extends PageObject {
     return this.run((editor) => editor.getValue());
   }
 
+  /**
+   * Moves the cursor to `line` (1-indexed, matching Ace's own gotoLine and the
+   * editor's gutter), distinct from the 0-indexed row taken by getLine et al.
+   */
   async gotoLine(line: number, column = 0): Promise<void> {
     await this.run(
       (editor, pos: { line: number; column: number }) => editor.gotoLine(pos.line, pos.column),

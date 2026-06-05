@@ -23,6 +23,7 @@
 # include <windows.h>
 #else
 # include <cerrno>
+# include <sys/stat.h>
 #endif
 
 namespace rstudio {
@@ -199,6 +200,43 @@ TEST(FileSerializerTest, WriteStringAtomicRoundTrips)
 
    filePath.removeIfExists();
 }
+
+// When overwriting an existing file with preservePermissions set, the renamed
+// replacement must carry the original file's permission bits rather than the
+// temporary file's defaults. Used by Find in Files "Replace All" so a replace
+// does not silently change a source file's mode. POSIX-only (Windows manages
+// permissions differently).
+#ifndef _WIN32
+TEST(FileSerializerTest, WriteStringAtomicPreservesPermissions)
+{
+   FilePath filePath;
+   ASSERT_FALSE(FilePath::tempFilePath(filePath));
+
+   // create the file with a distinctive, non-default mode
+   Error error = writeStringToFile(filePath, "original\n");
+   ASSERT_FALSE(error);
+   ASSERT_EQ(0, ::chmod(filePath.getAbsolutePath().c_str(), 0640));
+
+   // overwrite it atomically, asking to preserve permissions
+   error = writeStringToFileAtomic(filePath,
+                                   "replaced\n",
+                                   string_utils::LineEndingPassthrough,
+                                   true /* preservePermissions */);
+   EXPECT_FALSE(error);
+
+   // the new contents are present and the original mode is intact
+   std::string readback;
+   error = readStringFromFile(filePath, &readback);
+   EXPECT_FALSE(error);
+   EXPECT_EQ("replaced\n", readback);
+
+   struct stat st;
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   EXPECT_EQ(0640, static_cast<int>(st.st_mode & 07777));
+
+   filePath.removeIfExists();
+}
+#endif
 
 // Regression test for #17833: a write that fails (e.g. a full disk or an
 // exceeded disk quota) must be reported as an error rather than silently

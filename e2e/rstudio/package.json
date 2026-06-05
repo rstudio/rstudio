@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@estruyf/github-actions-reporter": "^1.12.0",
+    "@midleman/playwright-reporter": "^0.49.0",
     "@types/node": "^25.9.1",
     "cross-env": "^10.1.0",
     "tsx": "^4.20.3",

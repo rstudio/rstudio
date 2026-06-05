@@ -15,11 +15,13 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import { isWindowsDocker } from '../unit-utils';
 import { openMinimalWindow } from '../../../src/main/minimal-window';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
+import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { GwtWindow } from '../../../src/main/gwt-window';
 
 class TestMinimalGwtWindow extends GwtWindow {
@@ -42,6 +44,37 @@ if (!isWindowsDocker()) {
       const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
       assert.isObject(minWin);
       minWin.close();
+    });
+
+    it('closes a live child window when the parent is destroyed', () => {
+      const gwtWindow = new TestMinimalGwtWindow({ name: '' });
+      const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
+      const closeSpy = sinon.spy(minWin.window, 'close');
+
+      // The normal case: the child is still alive when the parent is
+      // destroyed, so parentWindowDestroyed() takes the guard's true branch
+      // and closes the child.
+      gwtWindow.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
+
+      assert.isTrue(closeSpy.calledOnce);
+      closeSpy.restore();
+      minWin.close();
+    });
+
+    it('does not throw when the parent is destroyed after the child window', () => {
+      const gwtWindow = new TestMinimalGwtWindow({ name: '' });
+      const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
+
+      // Simulate the shutdown-ordering race from rstudio#17870: the child's
+      // underlying window is already destroyed when the parent emits
+      // WINDOW_DESTROYED. destroy() (unlike close()) does not fire the child's
+      // 'close' event, so the parent listener that would normally be removed is
+      // still registered and parentWindowDestroyed() runs on a dead window.
+      minWin.window.destroy();
+
+      assert.doesNotThrow(() => {
+        gwtWindow.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
+      });
     });
   });
 }
