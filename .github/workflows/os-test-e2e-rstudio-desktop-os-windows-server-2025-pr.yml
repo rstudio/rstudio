@@ -25,6 +25,6 @@ jobs:
     with:
       build_from_source: true
       project: desktop
-      r_version: "release"
+      r_version: "4.5.3"
       # Skip @ai-tagged tests on PRs for now.
       grep_invert: "@ai"
