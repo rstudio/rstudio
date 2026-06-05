@@ -166,10 +166,10 @@ protected:
       return quartoYml;
    }
 
-   bool changed(const FilePath& priorConfig, std::time_t priorWriteTime)
+   bool changed(const FilePath& priorConfig, const std::string& priorContents)
    {
       return modules::quarto::preview::projectConfigChanged(
-         previewTarget_, priorConfig, priorWriteTime);
+         previewTarget_, priorConfig, priorContents);
    }
 
    FilePath projectDir_;
@@ -178,50 +178,58 @@ protected:
 
 TEST_F(PreviewConfigChange, UnchangedConfigIsNotChanged)
 {
-   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
-   EXPECT_FALSE(changed(quartoYml, quartoYml.getLastWriteTime()));
+   std::string contents = "project:\n  type: default\n";
+   FilePath quartoYml = writeQuartoYml(contents);
+   EXPECT_FALSE(changed(quartoYml, contents));
 }
 
-TEST_F(PreviewConfigChange, ConfigModifiedAfterStartIsChanged)
+TEST_F(PreviewConfigChange, ConfigContentsModifiedIsChanged)
 {
-   // the file on disk is newer than the time captured when the preview started
-   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
-   EXPECT_TRUE(changed(quartoYml, quartoYml.getLastWriteTime() - 10));
+   FilePath quartoYml = writeQuartoYml("pdf-engine: pdflatex\n");
+   EXPECT_TRUE(changed(quartoYml, "pdf-engine: xelatex\n"));
 }
 
-TEST_F(PreviewConfigChange, ConfigSavedBeforeStartIsNotChanged)
+TEST_F(PreviewConfigChange, SameSecondEditIsDetected)
 {
-   // the file on disk is older than the time captured when the preview started
-   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
-   EXPECT_FALSE(changed(quartoYml, quartoYml.getLastWriteTime() + 10));
+   // contents are compared rather than timestamps, so an edit that lands in the
+   // same second as the captured startup state is still detected
+   FilePath quartoYml = writeQuartoYml("pdf-engine: pdflatex\n");
+   std::time_t startupTime = quartoYml.getLastWriteTime();
+
+   // rewrite with the original startup timestamp to simulate a same-second edit
+   writeStringToFile(quartoYml, "pdf-engine: xelatex\n");
+   quartoYml.setLastWriteTime(startupTime);
+
+   EXPECT_TRUE(changed(quartoYml, "pdf-engine: pdflatex\n"));
 }
 
 TEST_F(PreviewConfigChange, NoConfigIsNotChanged)
 {
    // no _quarto.yml exists and none did when the preview started
-   EXPECT_FALSE(changed(FilePath(), 0));
+   EXPECT_FALSE(changed(FilePath(), std::string()));
 }
 
 TEST_F(PreviewConfigChange, ConfigAddedIsChanged)
 {
    // no config when the preview started, but one exists now
    FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
-   EXPECT_TRUE(changed(FilePath(), 0));
+   EXPECT_TRUE(changed(FilePath(), std::string()));
 }
 
 TEST_F(PreviewConfigChange, ConfigRemovedIsChanged)
 {
    // a config governed the preview at startup, but none exists now
    FilePath priorConfig = projectDir_.completeChildPath("_quarto.yml");
-   EXPECT_TRUE(changed(priorConfig, std::time_t(0)));
+   EXPECT_TRUE(changed(priorConfig, "project:\n  type: default\n"));
 }
 
 TEST_F(PreviewConfigChange, DifferentConfigFileIsChanged)
 {
    // a different config file governs the file than did at startup
-   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   std::string contents = "project:\n  type: default\n";
+   FilePath quartoYml = writeQuartoYml(contents);
    FilePath priorConfig = projectDir_.completeChildPath("_quarto.yaml");
-   EXPECT_TRUE(changed(priorConfig, quartoYml.getLastWriteTime()));
+   EXPECT_TRUE(changed(priorConfig, contents));
 }
 
 } // namespace tests

@@ -114,7 +114,7 @@ public:
    // the server rather than reuse it. See https://github.com/rstudio/rstudio/issues/17874.
    bool configChanged()
    {
-      return projectConfigChanged(previewTarget_, configFile_, configLastWriteTime_);
+      return projectConfigChanged(previewTarget_, configFile_, configContents_);
    }
 
    std::string viewerType()
@@ -159,8 +159,7 @@ public:
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
       : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
-                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType()),
-                     configLastWriteTime_(0)
+                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType())
    {
      renderToken_ = core::system::generateUuid();
 
@@ -514,7 +513,13 @@ private:
    void captureConfigState()
    {
       configFile_ = quartoProjectConfigFile(previewTarget_);
-      configLastWriteTime_ = configFile_.isEmpty() ? 0 : configFile_.getLastWriteTime();
+      configContents_.clear();
+      if (!configFile_.isEmpty())
+      {
+         Error error = core::readStringFromFile(configFile_, &configContents_);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
    int quartoSlideLevelFromOutput(const std::string& output)
@@ -559,7 +564,7 @@ private:
    std::string path_;
    std::string viewerType_;
    FilePath configFile_;
-   std::time_t configLastWriteTime_;
+   std::string configContents_;
 };
 
 // preview singleton
@@ -700,7 +705,7 @@ void onResume(const Settings&)
 
 bool projectConfigChanged(const FilePath& previewTarget,
                           const FilePath& priorConfigFile,
-                          std::time_t priorConfigWriteTime)
+                          const std::string& priorConfigContents)
 {
    FilePath configFile = quartoProjectConfigFile(previewTarget);
 
@@ -716,8 +721,18 @@ bool projectConfigChanged(const FilePath& previewTarget,
    if (configFile != priorConfigFile)
       return true;
 
-   // same config file -- did it change on disk since the preview started?
-   return configFile.getLastWriteTime() > priorConfigWriteTime;
+   // same config file -- compare contents rather than timestamps so that an edit
+   // made within the same second as the captured startup state is still detected
+   std::string configContents;
+   Error error = core::readStringFromFile(configFile, &configContents);
+   if (error)
+   {
+      // can't read it to compare -- assume it changed so we restart the preview
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return configContents != priorConfigContents;
 }
 
 
