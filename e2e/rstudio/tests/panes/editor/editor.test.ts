@@ -175,7 +175,8 @@ test.describe('Editor', () => {
     await expect.poll(() => editor.getValue()).toContain('f <- function()');
 
     // Put the cursor on the empty body line and indent it, mirroring the user
-    // pressing Tab on a fresh line inside the function.
+    // pressing Tab on a fresh line inside the function. gotoLine(2) and
+    // getLine(1) below both target this line (1-indexed vs 0-indexed).
     await editor.gotoLine(2);
     await editor.insert('  ');
 
