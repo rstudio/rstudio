@@ -464,4 +464,12 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setScratchPath(String scratchPath) /*-{
       this.scratch_path = scratchPath;
    }-*/;
+
+   public native final String getEditorTheme() /*-{
+      return this.editor_theme || "";
+   }-*/;
+
+   public native final void setEditorTheme(String editorTheme) /*-{
+      this.editor_theme = editorTheme;
+   }-*/;
 }
