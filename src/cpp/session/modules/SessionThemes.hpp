@@ -16,7 +16,11 @@
 #ifndef SESSION_THEMES_HPP
 #define SESSION_THEMES_HPP
 
+#include <functional>
+#include <set>
 #include <string>
+
+#include <boost/optional.hpp>
 
 namespace rstudio {
 namespace core {
@@ -41,6 +45,19 @@ struct ThemeColors
  * Colors are retrieved from client state; defaults to black on white if unavailable.
  */
 ThemeColors getThemeColors();
+
+// Resolves the global (non-project) editor theme name by consulting the layers in
+// precedence order: user, system, computed, default. Returns the first present
+// value, or "" if none. readLayer is injected for testability.
+std::string resolveGlobalThemeName(
+   const std::function<boost::optional<std::string>(const std::string& layer)>& readLayer);
+
+// Returns the theme name to apply: effectiveName if installed, else globalName if
+// installed, else defaultName.
+std::string chooseAppliedThemeName(const std::string& effectiveName,
+                                   const std::string& globalName,
+                                   const std::set<std::string>& availableThemes,
+                                   const std::string& defaultName);
 
 core::Error initialize();
 

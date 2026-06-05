@@ -701,6 +701,31 @@ SEXP rs_getLocalThemePath(SEXP themeFileSEXP)
    return r::sexp::create(requestedTheme.getAbsolutePath(), &protect);
 }
 
+std::string resolveGlobalThemeName(
+   const std::function<boost::optional<std::string>(const std::string& layer)>& readLayer)
+{
+   for (const char* layer : { kUserPrefsUserLayer, kUserPrefsSystemLayer,
+                              kUserPrefsComputedLayer, kUserPrefsDefaultLayer })
+   {
+      boost::optional<std::string> value = readLayer(layer);
+      if (value && !value->empty())
+         return *value;
+   }
+   return std::string();
+}
+
+std::string chooseAppliedThemeName(const std::string& effectiveName,
+                                   const std::string& globalName,
+                                   const std::set<std::string>& availableThemes,
+                                   const std::string& defaultName)
+{
+   if (availableThemes.count(effectiveName) == 1)
+      return effectiveName;
+   if (availableThemes.count(globalName) == 1)
+      return globalName;
+   return defaultName;
+}
+
 Error initialize()
 {
    using boost::bind;
