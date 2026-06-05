@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 21 |
+| Files fully converted | 30 |
 | Files partially converted | 0 |
-| Files not started | 11 |
+| Files not started | 6 |
 
 ## Conversion Status
 
@@ -50,16 +50,16 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_GlobalPrefAccessibility.py | 6 | — | Not started | |
-| test_desktop_GlobalPrefAppearance.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefCode.py | 2 | — | Not started | |
-| test_desktop_GlobalPrefGeneral.py | 3 | — | Not started | |
-| test_desktop_GlobalPrefPackages.py | 2 | — | Not started | |
-| test_desktop_GlobalPrefPaneLayout.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefRMarkdown.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefSpelling.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefSweave.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefTerminal.py | 1 | — | Not started | |
+| test_desktop_GlobalPrefAccessibility.py | 6 | — | Not started | Keyboard focus/tab-wrap navigation tests; medium complexity |
+| test_desktop_GlobalPrefAppearance.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefCode.py | 2 | preferences/global_prefs_panels.test.ts (2) | Complete | |
+| test_desktop_GlobalPrefGeneral.py | 3 | preferences/global_prefs_panels.test.ts (1) | Complete | 2 WIP methods were commented out in the Python source; not migrated |
+| test_desktop_GlobalPrefPackages.py | 2 | preferences/global_prefs_panels.test.ts (1) | Complete | 1 method was commented out in the Python source; not migrated |
+| test_desktop_GlobalPrefPaneLayout.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefRMarkdown.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefSpelling.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefSweave.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefTerminal.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | Also includes 2 new tests (Python panel, Assistant panel) with no Selenium equivalent |
 
 ### Licensing (4 files, 9 methods)
 
