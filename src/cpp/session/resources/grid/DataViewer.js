@@ -135,9 +135,19 @@ var lastScrollLeft = 0;
 // can be restored once the rebuilt grid has re-fetched its first row batch.
 // Holds { top, left, rows } where rows is the pre-refresh unfiltered row count;
 // the restore only fires when the new row count matches (see
-// restoreScrollAfterRefresh). Null except during the brief window between
-// refreshData() and the restore.
+// restoreScrollAfterRefresh).
+//
+// pendingScrollRestore is the handoff slot, set by captureScrollForRefresh()
+// just before it calls bootstrap(). bootstrap() immediately moves it into
+// activeScrollRestore (the value owned by the in-flight rebuild) and clears the
+// handoff slot, so it is null except in that brief window. This split keeps a
+// capture bound to a single rebuild: if a refresh aborts before the restore
+// callback runs, the stranded value lives in activeScrollRestore, which the
+// next bootstrap unconditionally overwrites -- so it can never leak onto an
+// unrelated later rebuild (e.g. column pagination, which carries no scroll
+// intent).
 var pendingScrollRestore = null;
+var activeScrollRestore = null;
 
 // Row data cache
 var rowCache = new Map();
@@ -2133,17 +2143,31 @@ var captureScrollForRefresh = function() {
 // transformations we do want to preserve -- adding a column, removing a column,
 // editing values in an existing column -- all leave recordsTotal unchanged,
 // which is exactly what this row-count compare detects.
+//
+// The compare is against the unfiltered total, not the filtered view. Per-column
+// filters are persisted across the refresh, so the filtered position is also
+// preserved. An active *global* search is not persisted (cachedSearch is cleared
+// on refresh); when one was active, filteredRows snaps back to totalRows and the
+// restored offset lands on a different (clamped, never out-of-range) row. That
+// edge is benign and rare enough not to special-case here.
 var restoreScrollAfterRefresh = function() {
-   var restore = pendingScrollRestore;
-   pendingScrollRestore = null;
+   var restore = activeScrollRestore;
+   activeScrollRestore = null;
    if (!restore || restore.rows !== totalRows)
       return;
+
+   // Guard against a rapid second refresh landing in the gap before this frame
+   // paints: capture the current draw and bail if another fetch has superseded
+   // us, so a stale offset isn't applied to a newer render.
+   var restoreToken = drawCounter;
 
    // The viewport's scrollable height only exists once renderVisibleRows has
    // sized the spacer rows, which fetchRows does right after this callback.
    // Defer to the next frame so the scrollTop assignment isn't clamped to 0
    // against a body that hasn't grown yet.
    requestAnimationFrame(function() {
+      if (restoreToken !== drawCounter)
+         return;
       var viewport = document.getElementById("gridViewport");
       if (!viewport)
          return;
@@ -4304,6 +4328,14 @@ var destroyGrid = function() {
 
 var bootstrap = function(data) {
    bootstrapping = true;
+
+   // Take ownership of any pending scroll-restore intent for this rebuild only.
+   // Clearing the handoff slot here (rather than relying on the restore callback
+   // to consume it) means a prior refresh that aborted before its callback ran
+   // cannot leak its captured position onto this unrelated bootstrap.
+   activeScrollRestore = pendingScrollRestore;
+   pendingScrollRestore = null;
+
    destroyGrid();
 
    // Prime the pinned/sort/filter selection from saved state before the column

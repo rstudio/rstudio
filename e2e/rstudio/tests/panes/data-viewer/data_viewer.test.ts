@@ -313,11 +313,11 @@ test.describe('Data Viewer', () => {
   });
 
   // https://github.com/rstudio/rstudio/issues/17861
-  // Adding or removing a column (or editing values in an existing column)
-  // refreshes the grid in place. As long as the row count is unchanged the
-  // refresh should keep the user where they were scrolled, instead of snapping
-  // back to the first row.
-  test('scroll position is preserved across an in-place refresh (#17861)', async () => {
+  // Adding a column refreshes the grid in place. As long as the row count is
+  // unchanged the refresh should keep the user where they were scrolled,
+  // instead of snapping back to the first row. (Column removal -- another
+  // in-place change -- is covered by the next test.)
+  test('scroll position is preserved when a column is added (#17861)', async () => {
     await consoleActions.executeInConsole(
       '{ .rs.scroll_pos_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_pos_df) }',
     );
@@ -347,8 +347,8 @@ test.describe('Data Viewer', () => {
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
       // Position should be restored to (about) where it was, not reset to the
-      // top. Allow one row of slack for rounding. On the pre-fix code this
-      // would be 0.
+      // top. Allow one ROW_HEIGHT (23px) of slack for rounding. On the pre-fix
+      // code this would be 0.
       await expect.poll(
         () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
         { message: 'scroll position should be preserved across the refresh' },
@@ -394,6 +394,91 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.scroll_reset_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // Removing a column is the other in-place change (alongside column add)
+  // that leaves the row count unchanged; the scroll position should survive
+  // it too. This exercises a different refresh path than the add case.
+  test('scroll position is preserved when a column is removed (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_drop_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 6)); View(.rs.scroll_drop_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Drop a column: row count unchanged, so the position should be kept.
+      await consoleActions.executeInConsole('.rs.scroll_drop_df$V6 <- NULL');
+
+      // The refresh should report the reduced column count (6 -> 5 total)...
+      await expect(dataViewer.gridInfo)
+        .toContainText('5 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // ...and keep the user where they were, not snap to the top. Allow one
+      // ROW_HEIGHT (23px) of slack for rounding.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be preserved across a column removal' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_drop_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // "Reset View" rebuilds the grid like an in-place refresh, but deliberately
+  // returns to the top and discards the captured scroll position -- even when
+  // the row count is unchanged (which would otherwise trigger a restore). This
+  // guards the explicit pendingScrollRestore drop in refreshAndReset().
+  test('Reset View returns to the top even when the row count is unchanged (#17861)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.reset_view_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.reset_view_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Drive the iframe's refreshAndReset() directly -- the same method the
+      // toolbar's "Reset View" option invokes.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { refreshAndReset?: () => void } | undefined;
+        if (!w?.refreshAndReset) throw new Error('refreshAndReset() not available on data viewer iframe');
+        w.refreshAndReset();
+      }, VIEWER_FRAME);
+
+      // Wait for the grid to finish rebuilding (headers + a real data cell --
+      // body cells carry data-col-pos; the empty colspan spacer row does not --
+      // back in the DOM), by which point any erroneous restore would already
+      // have run.
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.frame.locator('#gridBody td[data-col-pos]').first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'Reset View should return to the top' },
+      ).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.reset_view_df", envir = .GlobalEnv)',
       );
     }
   });
