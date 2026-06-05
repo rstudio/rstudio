@@ -73,6 +73,24 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
     const rprojPath = `${projectDir}/${name}.Rproj`;
     const rprojLit = rPathLiteral(rprojPath);
 
+    // Set the global theme to a non-Cobalt theme first, so the post-open
+    // "cobalt" assertion proves the project override changed something rather
+    // than coincidentally matching a global theme that was already Cobalt.
+    await setPref(page, 'editor_theme', THEME_DEFAULT);
+
+    // Sanity-check the before state: the active theme is Textmate, NOT Cobalt.
+    await expect
+      .poll(
+        () => getActiveThemeHref(page),
+        {
+          message: `Expected ace theme link href to start at "textmate" (global theme: ${THEME_DEFAULT})`,
+          timeout: 15000,
+          intervals: [200, 500, 1000],
+        },
+      )
+      .toMatch(/textmate/i);
+    expect(await getActiveThemeHref(page)).not.toMatch(/cobalt/i);
+
     // Create the directory and write a .Rproj with EditorTheme: Cobalt.
     // The .Rproj lines follow the standard DCF format RStudio uses.
     await executeInConsole(
