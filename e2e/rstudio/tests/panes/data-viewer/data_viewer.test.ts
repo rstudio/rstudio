@@ -117,25 +117,33 @@ test.describe('Data Viewer', () => {
     );
     await waitForViewer(dataViewer);
 
+    // Wait for the initial row batch to land before touching the filter. The
+    // info bar's row count only appears once the first fetch returns -- which is
+    // also when the post-load column auto-size runs. Opening the filter before
+    // that races the auto-size's header rebuild, which would tear the editor
+    // down mid-type and force the retry loop below to spin (slow + flaky).
+    await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
+
     // Reveal the per-column filter row (the latching "Filter" toolbar button).
     await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
     const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
     await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
-    // Apply a text filter to column 1. The text filter auto-dismisses (its
-    // input reverts to "All") if the input blurs while still empty, so the
-    // open-and-type has to land as a unit -- a timing hiccup between clicking
-    // "All" and the keystroke arriving closes the editor and removes the
-    // input. Retry the whole open-and-type until the value sticks. Typing
-    // through the input locator (not page.keyboard) avoids a separate
-    // focus race, and pressSequentially fires real keyup, which the filter
-    // listens for (fill() would not trigger the search).
+    // Apply a text filter to column 1. The text input only exists once the
+    // filter editor is open (clicking the "All" chip opens it), and the editor
+    // auto-dismisses if it blurs while still empty -- so the open-and-type has
+    // to land as a unit. Retry the whole thing until the value sticks. Probe
+    // for the input with count() (instant) rather than inputValue(), which
+    // would block on the action timeout each iteration while the editor is
+    // closed. pressSequentially fires real keyup (which the filter listens
+    // for); fill() alone would not trigger the search.
     const filterInput = dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox');
     const allLabel = col1Filter.getByText('All');
     await expect(async () => {
-      if ((await filterInput.inputValue().catch(() => '')) === 'a') return;
-      if (await allLabel.isVisible().catch(() => false)) await allLabel.click();
-      await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+      if ((await filterInput.count()) === 0) {
+        await allLabel.click();
+        await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+      }
       await filterInput.fill('');
       await filterInput.pressSequentially('a');
       await expect(filterInput).toHaveValue('a', { timeout: 2000 });
@@ -211,6 +219,55 @@ test.describe('Data Viewer', () => {
     await expect.poll(() => colHeaderClass(dataViewer, 3))
       .not.toMatch(/\bpinned\b/);
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17835
+  test('a pinned column stays pinned to its original column across column pagination', async ({ rstudioPage: page }) => {
+    // 300 columns exceeds the 200-column page size, so server-side column
+    // windowing (the "Cols:" navigator) is active and column 1 can be paged
+    // out of view. Column 1 carries a sentinel value so we can confirm its
+    // data -- not just its header -- follows the pin into a window that does
+    // not otherwise include column 1.
+    await consoleActions.executeInConsole(
+      '{ .rs.pin_paginate_df <- as.data.frame(matrix(1:30000, nrow = 100, ncol = 300)); .rs.pin_paginate_df[[1]] <- rep("PINSENTINEL", 100); View(.rs.pin_paginate_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Pin column 1 (V1), which is in the initial window.
+      await dataViewer.frame.locator('th[data-col-idx="1"] .pin-icon').click();
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/\bpinned\b/);
+
+      // Page to a window that starts well past column 1 (offset 100 -> columns
+      // 101..300). This is the exact action from the bug report: with the bug,
+      // the pinned slot started showing column 101 instead of column 1.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as
+          { setOffsetAndMaxColumns?: (offset: number, max: number) => void } | undefined;
+        if (!w?.setOffsetAndMaxColumns)
+          throw new Error('setOffsetAndMaxColumns() not available on data viewer iframe');
+        w.setOffsetAndMaxColumns(100, 200);
+      }, VIEWER_FRAME);
+
+      // The new window loaded: a header for column 101 (outside the old window)
+      // is now present.
+      await expect(dataViewer.frame.locator('th[title^="column 101:"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // The pinned slot still tracks the ORIGINAL column 1: it is still pinned,
+      // its header reports absolute column 1 (not the window's first column),
+      // and a pinned body cell still shows column 1's sentinel value -- so the
+      // column's data was fetched even though it lies outside the visible
+      // window.
+      const pinnedHeader = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await expect(pinnedHeader).toHaveClass(/\bpinned\b/);
+      await expect(pinnedHeader).toHaveAttribute('title', /^column 1:/);
+      await expect(dataViewer.frame.locator('#gridBody td.pinned', { hasText: 'PINSENTINEL' }).first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.pin_paginate_df", envir = .GlobalEnv)');
+    }
   });
 
   test('per-object state survives a refresh', async ({ rstudioPage: page }) => {
@@ -361,6 +418,43 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.copy_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // Regression from the column-virtualization work (#17812): getActiveCellTd
+  // located the active cell by the rsGridCell_<row>_<col> id, but buildRow
+  // assigns that id only to the cell that is *already* active. So clicking (or
+  // arrow-keying to) a fresh cell set activeRow/activeCol logically, but the
+  // lookup couldn't find the cell to mark and .activeCell was never applied --
+  // the highlight only appeared once a later render pass (a scroll) rebuilt the
+  // row. Column headers were unaffected (looked up by index). Asserting on the
+  // class -- not the painted outline -- mirrors the actual defect and avoids
+  // depending on focus/compositing state.
+  test('clicking or arrow-keying a cell applies the active-cell highlight immediately', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.active_cell_df <- data.frame(a = c("alpha", "bravo"), b = c("charlie", "delta"), stringsAsFactors = FALSE); View(.rs.active_cell_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Click a value cell in the first data row. The cell is already
+      // rendered and on screen, so nothing scrolls -- the regression was that
+      // the class only landed after a scroll re-rendered the row.
+      const firstRowCell = dataViewer.frame.locator('#gridBody tr[data-row="0"] td.textCell').first();
+      await firstRowCell.click();
+      await expect(firstRowCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Arrow-down moves the highlight to the next row's cell and clears it
+      // from the first, confirming setActiveCell tracks the live cell on
+      // keyboard navigation too (clicking focused the viewport).
+      await page.keyboard.press('ArrowDown');
+      const secondRowCell = dataViewer.frame.locator('#gridBody tr[data-row="1"] td.textCell').first();
+      await expect(secondRowCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect(firstRowCell).not.toHaveClass(/\bactiveCell\b/);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.active_cell_df", envir = .GlobalEnv)',
       );
     }
   });

@@ -67,40 +67,55 @@ test_that(".rs.flattenFrame() handles matrices and data frames", {
    expect_equal(names(flat3), c("x", "df_col$y", "df_col$z", "df_col$df$y", "df_col$df$z", 'mat_col[, "a"]', 'mat_col[, "b"]'))
 })
 
-test_that(".rs.describeColSlice() describes the correct number of column slices", {
+test_that(".rs.describeColsByIndex() describes the requested columns", {
    tbl <- data.frame(x = 1:2, y = 1:2, x = 1:2)
-   # valid sliceStart and sliceEnd values
-   expect_equal(length(.rs.describeColSlice(tbl, 0, 1)), 2)
-   expect_equal(length(.rs.describeColSlice(tbl, 1, 1)), 2)
-   expect_equal(length(.rs.describeColSlice(tbl, 1, 2)), 3)
-   expect_equal(length(.rs.describeColSlice(tbl, 1, 3)), 4)
-   # sliceStart == 0
-   expect_equal(length(.rs.describeColSlice(tbl, 0, 1)), 2)
-   # negative sliceStart
-   expect_equal(length(.rs.describeColSlice(tbl, -1, 1)), 2)
-   # sliceStart > sliceEnd
-   expect_equal(length(.rs.describeColSlice(tbl, 2, 1)), 2)
-   # sliceEnd == 0, sliceEnd < sliceStart
-   expect_equal(length(.rs.describeColSlice(tbl, 1, 0)), 4)
-   # negative sliceEnd
-   expect_equal(length(.rs.describeColSlice(tbl, 1, -1)), 4)
-   # sliceEnd out of bounds
-   expect_equal(length(.rs.describeColSlice(tbl, 1, 4)), 4)
+   # length includes the always-present rownames column at the front
+   expect_equal(length(.rs.describeColsByIndex(tbl, 1)), 2)
+   expect_equal(length(.rs.describeColsByIndex(tbl, c(1, 2))), 3)
+   expect_equal(length(.rs.describeColsByIndex(tbl, 1:3)), 4)
+   # out-of-range indices are dropped
+   expect_equal(length(.rs.describeColsByIndex(tbl, c(1, 99))), 2)
+   # an empty / all-invalid request falls back to the full frame
+   expect_equal(length(.rs.describeColsByIndex(tbl, integer())), 4)
+   expect_equal(length(.rs.describeColsByIndex(tbl, c(0, -1))), 4)
 })
 
-test_that(".rs.describeColSlice() returns NULL for empty data frames", {
+test_that(".rs.describeColsByIndex() preserves order and reports absolute col_index", {
+   tbl <- data.frame(a = 1:2, b = 1:2, c = 1:2, d = 1:2)
+
+   # An arbitrary, non-contiguous request (pinned column first, then a window)
+   # is honored in order, and each column carries its absolute index.
+   res <- .rs.describeColsByIndex(tbl, c(1, 3, 4))
+   expect_equal(length(res), 4)
+   expect_equal(res[[1]]$col_type, .rs.scalar("rownames"))
+   expect_equal(res[[1]]$col_index, .rs.scalar(0L))
+   expect_equal(res[[2]]$col_index, .rs.scalar(1L))
+   expect_equal(res[[2]]$col_name, .rs.scalar("a"))
+   expect_equal(res[[3]]$col_index, .rs.scalar(3L))
+   expect_equal(res[[3]]$col_name, .rs.scalar("c"))
+   expect_equal(res[[4]]$col_index, .rs.scalar(4L))
+   expect_equal(res[[4]]$col_name, .rs.scalar("d"))
+
+   # The non-paginated path reports contiguous absolute indices by default.
+   direct <- .rs.describeCols(tbl)
+   expect_equal(direct[[1]]$col_index, .rs.scalar(0L))
+   expect_equal(direct[[2]]$col_index, .rs.scalar(1L))
+   expect_equal(direct[[5]]$col_index, .rs.scalar(4L))
+})
+
+test_that(".rs.describeColsByIndex() returns NULL for empty data frames", {
    tbl <- data.frame()
-   expect_equal(.rs.describeColSlice(tbl, 1, 1), NULL)
+   expect_equal(.rs.describeColsByIndex(tbl, 1), NULL)
 })
 
-test_that(".rs.describeColSlice() emits a fingerprint stable across pagination", {
+test_that(".rs.describeColsByIndex() emits a fingerprint stable across pagination", {
    tbl <- as.data.frame(setNames(
       replicate(20, 1:5, simplify = FALSE),
       paste0("X", 1:20)
    ))
-   slice_a <- .rs.describeColSlice(tbl, 1, 5)
-   slice_b <- .rs.describeColSlice(tbl, 6, 10)
-   slice_c <- .rs.describeColSlice(tbl, 16, 20)
+   slice_a <- .rs.describeColsByIndex(tbl, 1:5)
+   slice_b <- .rs.describeColsByIndex(tbl, 6:10)
+   slice_c <- .rs.describeColsByIndex(tbl, 16:20)
 
    # The rownames slot is always the first column and is where the
    # fingerprint is attached. Anchor that here so a refactor that moves
@@ -113,7 +128,7 @@ test_that(".rs.describeColSlice() emits a fingerprint stable across pagination",
 
    # A different frame produces a different fingerprint.
    other <- data.frame(a = 1:5, b = 1:5, c = 1:5)
-   slice_other <- .rs.describeColSlice(other, 1, 3)
+   slice_other <- .rs.describeColsByIndex(other, 1:3)
    expect_false(identical(slice_a[[1]]$cols_fingerprint,
                           slice_other[[1]]$cols_fingerprint))
 

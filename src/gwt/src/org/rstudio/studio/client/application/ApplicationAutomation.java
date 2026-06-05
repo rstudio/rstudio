@@ -37,11 +37,14 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 /**
@@ -76,6 +79,9 @@ import com.google.inject.Singleton;
  *
  *   window.rstudio.dialogs.numShowing()  // count of open modal dialogs
  *   window.rstudio.dialogs.dismissAll()  // hide every open modal dialog
+ *
+ *   window.rstudio.layout.reset()        // end any active pane/column zoom;
+ *                                        // Promise resolves once layout settles
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -96,7 +102,8 @@ public class ApplicationAutomation
                                 Session session,
                                 UserPrefs userPrefs,
                                 SourceColumnManager sourceColumnManager,
-                                ChatServerOperations chatServer)
+                                ChatServerOperations chatServer,
+                                Provider<PaneManager> pPaneManager)
    {
       commands_ = commands;
       eventBus_ = eventBus;
@@ -104,6 +111,10 @@ public class ApplicationAutomation
       userPrefs_ = userPrefs;
       sourceColumnManager_ = sourceColumnManager;
       chatServer_ = chatServer;
+      // Provider, not a direct injection: PaneManager is constructed later in
+      // the workbench lifecycle than this early-initialized agent, so resolve
+      // it lazily (mirrors WorkbenchScreen / PaneLayoutPreferencesPane).
+      pPaneManager_ = pPaneManager;
    }
 
    public final boolean isAutomationAgent()
@@ -122,6 +133,7 @@ public class ApplicationAutomation
       registerVersion();
       registerChat();
       registerDialogs();
+      registerLayout();
       registerReadinessHandlers();
    }
 
@@ -215,6 +227,24 @@ public class ApplicationAutomation
    {
       registerDialogsObject();
    }
+
+   private void registerLayout()
+   {
+      registerLayoutObject();
+   }
+
+   // End any pane/column zoom a prior test left active. No-op when nothing is
+   // zoomed, so a non-zoomed layout keeps its current column widths. onCompleted
+   // fires once the relayout has settled (see PaneManager.endZoomIfActive) so
+   // the JS side can await it.
+   private void resetLayoutZoom(JavaScriptObject onCompleted)
+   {
+      pPaneManager_.get().endZoomIfActive(() -> invokeCallback(onCompleted));
+   }
+
+   private native void invokeCallback(JavaScriptObject cb) /*-{
+      if (cb) cb();
+   }-*/;
 
    private int numModalsShowing()
    {
@@ -587,6 +617,24 @@ public class ApplicationAutomation
       });
    }-*/;
 
+   // End any pane/column zoom left active by a prior test (no-op otherwise).
+   // Lets a per-test reset clear leaked zoom state without reverse-engineering
+   // it from command checked-states -- PaneManager decides based on the live
+   // layout state it owns. Returns a Promise that resolves once the relayout
+   // has settled (the restore flushes on a later animation frame even under
+   // reduced_motion), so callers can await a stable layout before measuring or
+   // clicking panes.
+   private native final void registerLayoutObject() /*-{
+      var self = this;
+      $wnd.rstudio.layout = $wnd.rstudio.layout || {};
+      $wnd.rstudio.layout.reset = $entry(function() {
+         return new $wnd.Promise(function(resolve) {
+            var cb = $entry(function() { resolve(); });
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::resetLayoutZoom(*)(cb);
+         });
+      });
+   }-*/;
+
    private native final void registerChatObject() /*-{
       var self = this;
       $wnd.rstudio.chat = $wnd.rstudio.chat || {};
@@ -612,6 +660,7 @@ public class ApplicationAutomation
    private final UserPrefs userPrefs_;
    private final SourceColumnManager sourceColumnManager_;
    private final ChatServerOperations chatServer_;
+   private final Provider<PaneManager> pPaneManager_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
 }

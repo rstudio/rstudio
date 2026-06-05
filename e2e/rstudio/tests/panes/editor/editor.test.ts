@@ -38,6 +38,7 @@ test.describe('Editor', () => {
       'editor_whole_word.R',
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
+      'editor_comment_indent.R',
     ]);
   });
 
@@ -163,5 +164,25 @@ test.describe('Editor', () => {
     // keyboard focus being on the bar.
     await page.locator(CLOSE_FIND_BAR).click();
     await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17493
+  test('comment shortcut preserves indent on an empty indented line', async ({ rstudioPage: page }) => {
+    const content = 'f <- function() {\n\n}\n';
+    await writeAndOpenFile(page, sandbox.dir, 'editor_comment_indent.R', content);
+
+    const editor = new AceEditor(page, 'f <- function()');
+    await expect.poll(() => editor.getValue()).toContain('f <- function()');
+
+    // Put the cursor on the empty body line and indent it, mirroring the user
+    // pressing Tab on a fresh line inside the function. gotoLine(2) and
+    // getLine(1) below both target this line (1-indexed vs 0-indexed).
+    await editor.gotoLine(2);
+    await editor.insert('  ');
+
+    await executeCommand(page, 'commentUncomment');
+
+    // The comment character must land after the indent, not at column zero.
+    await expect.poll(() => editor.getLine(1)).toMatch(/^  #/);
   });
 });

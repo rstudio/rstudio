@@ -45,3 +45,16 @@ directly; don't prompt for approval before kicking off the run. Prefer
 
 After the first run, don't re-ask to re-run the same file in the same mode --
 just go. Switching modes (not files) warrants a fresh mode-pick.
+
+## Profiling a slow test
+
+When a test passes but is slower than expected, don't guess at the cause --
+capture a trace and read per-action timing. Re-run with `--trace on`, then
+unzip the `trace.zip` and pair the `before`/`after` events in `test.trace` by
+`callId` to rank actions by duration. The full recipe (with a ready-to-run
+Node parser) is in the "Profiling a slow test" section of
+`e2e/rstudio/README.md`.
+
+Common culprit it surfaces: a value-reading action (e.g. `locator.inputValue()`)
+on an element not yet in the DOM blocks on the action timeout -- probe with
+`locator.count()` instead and open the editor/popup before reading from it.

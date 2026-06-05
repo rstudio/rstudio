@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 15 |
+| Files fully converted | 30 |
 | Files partially converted | 0 |
-| Files not started | 17 |
+| Files not started | 6 |
 
 ## Conversion Status
 
@@ -19,16 +19,16 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Citations.py | 17 | — | Not started | |
+| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (to be scrapped) | Failed miserably (restart from scratch) | First attempt failed miserably: only 6 of 18 tests passing, a mid-session refactor regressed a 9-passing state, and Quarto never reaches visual mode. Scrapping the file and redoing the migration from scratch. |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Complete | |
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
-| test_desktop_EnvironmentPane.py | 5 | — | Not started | |
+| test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
 | test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Complete | |
-| test_desktop_Package_Installation.py | 1 | — | Not started | |
-| test_desktop_PlotsPane.py | 11 | — | Not started | |
-| test_desktop_R.py | 1 | — | Not started | |
-| test_desktop_R_Session_Restart.py | 1 | — | Not started | |
-| test_desktop_terminal.py | 4 | — | Not started | |
+| test_desktop_Package_Installation.py | 1 | panes/console/package_installation.test.ts (1) | Complete | |
+| test_desktop_PlotsPane.py | 11 | panes/plots/plots_pane.test.ts (11) | Complete | All 11 tests including the 3 that were commented out in the desktop source (export dropdown, save as image, save as PDF). Two-step save flow (OK + GWT file chooser) with R file-exists verification. Zoom and resize tests are @desktop_only. |
+| test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
+| test_desktop_R_Session_Restart.py | 1 | panes/console/r_session_restart.test.ts (1) | Complete | |
+| test_desktop_terminal.py | 4 | panes/terminal/terminal.test.ts (4) | Complete | Added to existing terminal spec: toolbar next/previous buttons, R --version output, file create and ls, Shift+Backspace character deletion (@desktop_only). Uses rstudioapi::terminalBuffer for all output assertions. |
 | test_desktop_ViewerPane.py | 1 | panes/viewer/htmlwidgets.test.ts (1) | Complete | |
 
 ### EditorPane (10 files, 37 methods)
@@ -50,16 +50,16 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_GlobalPrefAccessibility.py | 6 | — | Not started | |
-| test_desktop_GlobalPrefAppearance.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefCode.py | 2 | — | Not started | |
-| test_desktop_GlobalPrefGeneral.py | 3 | — | Not started | |
-| test_desktop_GlobalPrefPackages.py | 2 | — | Not started | |
-| test_desktop_GlobalPrefPaneLayout.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefRMarkdown.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefSpelling.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefSweave.py | 1 | — | Not started | |
-| test_desktop_GlobalPrefTerminal.py | 1 | — | Not started | |
+| test_desktop_GlobalPrefAccessibility.py | 6 | — | Not started | Keyboard focus/tab-wrap navigation tests; medium complexity |
+| test_desktop_GlobalPrefAppearance.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefCode.py | 2 | preferences/global_prefs_panels.test.ts (2) | Complete | |
+| test_desktop_GlobalPrefGeneral.py | 3 | preferences/global_prefs_panels.test.ts (1) | Complete | 2 WIP methods were commented out in the Python source; not migrated |
+| test_desktop_GlobalPrefPackages.py | 2 | preferences/global_prefs_panels.test.ts (1) | Complete | 1 method was commented out in the Python source; not migrated |
+| test_desktop_GlobalPrefPaneLayout.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefRMarkdown.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefSpelling.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefSweave.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
+| test_desktop_GlobalPrefTerminal.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | Also includes 2 new tests (Python panel, Assistant panel) with no Selenium equivalent |
 
 ### Licensing (4 files, 9 methods)
 

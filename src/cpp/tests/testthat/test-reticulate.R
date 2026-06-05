@@ -30,3 +30,28 @@ test_that("RETICULATE_PYTHON environment variable is respected", {
    # we expect that since we set a custom value it'll be reflected
    expect_equal(python, Sys.getenv("RETICULATE_PYTHON"))
 })
+
+test_that("Python help topics accept only plain dotted names", {
+
+   # legitimate help topics resolve to valid qualified names
+   expect_true(.rs.python.isHelpTopicValid("numpy"))
+   expect_true(.rs.python.isHelpTopicValid("os.path"))
+   expect_true(.rs.python.isHelpTopicValid("pandas.DataFrame"))
+   expect_true(.rs.python.isHelpTopicValid("_private.member"))
+
+})
+
+test_that("Python help topics reject code injection payloads", {
+
+   # these would otherwise be evaluated as Python expressions
+   expect_false(.rs.python.isHelpTopicValid("open('pwned.txt','w').write('RCE')"))
+   expect_false(.rs.python.isHelpTopicValid("__import__('os').system('id')"))
+   expect_false(.rs.python.isHelpTopicValid("os.system('id')"))
+   expect_false(.rs.python.isHelpTopicValid("numpy.array(1)"))
+   expect_false(.rs.python.isHelpTopicValid("a;b"))
+   expect_false(.rs.python.isHelpTopicValid("a b"))
+   expect_false(.rs.python.isHelpTopicValid("1abc"))
+   expect_false(.rs.python.isHelpTopicValid(".leadingdot"))
+   expect_false(.rs.python.isHelpTopicValid(""))
+
+})

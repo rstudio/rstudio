@@ -29,6 +29,7 @@ export class SourcePane extends PageObject {
   public secondaryToolbar: Locator;
   public chunkImage: Locator;
   public statusBarCompletionReceived: Locator;
+  public statusBarCompletionPending: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -64,6 +65,9 @@ export class SourcePane extends PageObject {
     this.secondaryToolbar = page.locator('[aria-label="Markdown editing tools"]');
     this.chunkImage = page.locator("xpath=//*[@id='rstudio_source_text_editor']//*[@class='gwt-Image']");
     this.statusBarCompletionReceived = this.footerTable.locator('.gwt-Label', { hasText: 'Completion response received' });
+    // Shown while a code-completion request is in flight (COMPLETION_REQUESTED).
+    // Its presence means a response may still land and re-render ghost text.
+    this.statusBarCompletionPending = this.footerTable.locator('.gwt-Label', { hasText: 'Waiting for completions' });
   }
 }
 

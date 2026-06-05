@@ -408,6 +408,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
+
+               // Reset both flags so each panel re-queries its status when next shown
+               copilotRefreshed_ = false;
                positAiRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
@@ -421,10 +424,17 @@ public class AssistantPreferencesPane extends PreferencesPane
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
 
+               // Reset the Copilot flag so it re-queries its status when next shown
+               copilotRefreshed_ = false;
+
                // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
                {
                   positAiRefreshed_ = true;
+
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
 
                   // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
@@ -434,14 +444,19 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            if (event == null)
                            {
-                              // Panel just loaded, not a user action — just refresh
+                              // Panel just loaded, not a user action -- just refresh
                               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
                            }
                            else
                            {
-                              // User changed the selection — check for
+                              // User changed the selection -- check for
                               // install, update, or unsupported status
                               checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
@@ -450,6 +465,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -480,6 +498,10 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   copilotRefreshed_ = true;
 
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
+
                   // Check if Copilot is installed (passing assistantType so backend knows
                   // which language server to check, even if preference isn't saved yet)
                   server_.assistantVerifyInstalled(
@@ -489,6 +511,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            if (isInstalled)
                            {
                               // Copilot is installed - refresh status by passing assistantType
@@ -504,6 +531,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -735,17 +765,44 @@ public class AssistantPreferencesPane extends PreferencesPane
       });
    }
 
+   /**
+    * Returns true when an async status result for the given assistant type
+    * should be ignored because the user has since selected a different
+    * assistant. The status label and buttons are shared across panels, so a
+    * late callback for a no-longer-selected assistant must not overwrite the
+    * current panel's status.
+    */
+   private boolean isStaleStatusResult(String assistantType)
+   {
+      return !assistantType.equals(selAssistant_.getValue());
+   }
+
    private void refresh(String assistantType)
    {
-      imgRefreshSpinner_.setVisible(true);
-      reset();
+      // Resolve to the current preference when no explicit type was provided
+      final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
 
-      // Use overloaded method to pass assistantType if provided
+      // A queued or late refresh for a no-longer-selected assistant must not
+      // touch the shared status UI: it would clear the current panel and, since
+      // the callback below early-returns, leave the spinner running. This guards
+      // invocation paths such as the retry timer and the sign-in/out callbacks.
+      if (isStaleStatusResult(type))
+         return;
+
+      // Clear any prior status, then show the spinner for this request
+      reset();
+      imgRefreshSpinner_.setVisible(true);
+
       ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
+            // Ignore a result for an assistant the user has since switched
+            // away from; the now-current panel owns the shared status UI
+            if (isStaleStatusResult(type))
+               return;
+
             imgRefreshSpinner_.setVisible(false);
             hideButtons();
 
@@ -759,7 +816,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
-                     refresh(assistantType);
+                     refresh(type);
                   });
                }
                else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
@@ -778,11 +835,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
                   // Show Install button for Posit Assistant when not installed
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
-                      assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                      type.equals(UserPrefsAccessor.ASSISTANT_POSIT))
                   {
                      showButtons(btnInstall_, btnRefresh_);
                   }
@@ -794,7 +851,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (projectOptions_ != null &&
                         UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
                {
-                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(type)));
                   showButtons(btnProjectOptions_);
                }
                else
@@ -829,6 +886,10 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onError(ServerError error)
          {
+            if (isStaleStatusResult(type))
+               return;
+
+            imgRefreshSpinner_.setVisible(false);
             Debug.logError(error);
             hideButtons();
             lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
@@ -836,8 +897,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      // If no assistantType specified, use current preference
-      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
       server_.assistantStatus(type, callback);
    }
 
@@ -849,7 +908,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          prefs_.copilotEnabled().setGlobalValue(false);
          prefs_.assistant().setGlobalValue(newAssistant);
          prefs_.writeUserPrefs((completed) -> {});
-         copilotRefreshed_ = false;
       }
    }
 
@@ -1141,6 +1199,10 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void reset()
    {
       assistantStartupError_ = null;
+      // Clear the shared status UI so a previous assistant's account info and
+      // loading spinner are not shown while the new status is being fetched
+      imgRefreshSpinner_.setVisible(false);
+      lblAssistantStatus_.setText("");
       hideButtons();
    }
    
