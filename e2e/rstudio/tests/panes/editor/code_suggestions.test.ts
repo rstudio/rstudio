@@ -52,6 +52,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
         `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
@@ -642,11 +643,37 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test('no completion requests in visual mode', async ({ rstudioPage: page }) => {
-      const fileName = `${prefix}_visual_no_completions.qmd`;
+      const qmdFile = `${prefix}_visual_no_completions.qmd`;
+      const rFile = `${prefix}_visual_source_probe.R`;
 
-      // A Quarto doc with prose and an R chunk. Visual mode is only offered for
-      // markdown documents; the chunk also makes the visual editor mount an
-      // embedded Ace editor, exercising the teardown path on the way back.
+      // The two RPCs the editor issues for inline completions and next-edit
+      // suggestions. The fix suppresses these in visual mode, so assert on the
+      // RPC itself -- the status bar's last message lingers across a mode switch
+      // (it never auto-hides) and is a misleading proxy.
+      const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
+
+      // --- Source mode (plain R file): a completion request IS issued, and the
+      // request monitoring observes it. This guards the visual-mode check below
+      // against a false pass (completions or monitoring silently broken). A
+      // fresh R file is always a single editor, avoiding the ambiguous editor
+      // state a document leaves behind after visual mode. ---
+      await sourceActions.createAndOpenFile(rFile, 'x <- 1\n');
+      try {
+        await sleep(1000);
+        // Arm the wait before typing so a fast request isn't missed.
+        const sourceRequest = page.waitForRequest(completionRpc, { timeout: TIMEOUTS.ghostText });
+        await sourceActions.goToEnd();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('y <- fun');
+        await sourceRequest;
+        console.log('  Completion request issued in source mode');
+      } finally {
+        await sourceActions.closeSourceAndDeleteFile(rFile).catch(() => {});
+      }
+
+      // --- Visual mode (Quarto doc): editing must not issue a completion
+      // request. Visual mode is only offered for markdown documents; the chunk
+      // makes the visual editor mount an embedded Ace editor as well. ---
       const fileContent =
         '---\n' +
         'title: "Visual Mode Completions"\n' +
@@ -662,18 +689,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         '\n' +
         'Closing prose.\n';
 
-      // The fix suppresses the actual requests to the completion backend, so
-      // assert on the RPC itself rather than the status bar: the status bar's
-      // last message lingers across a source->visual switch (it never
-      // auto-hides), which makes it a misleading proxy. These are the two RPCs
-      // the editor issues for inline completions and next-edit suggestions.
-      const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
-
-      await sourceActions.createAndOpenFile(fileName, fileContent);
-      await sleep(1000);
-
+      await sourceActions.createAndOpenFile(qmdFile, fileContent);
       try {
-        // --- Visual mode: editing must not issue a completion request ---
+        await sleep(1000);
         await sourceActions.ensureVisualMode();
         const proseMirror = page.locator('.ProseMirror').first();
         // Fail loudly if visual mode didn't actually activate, rather than
@@ -707,28 +725,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         } finally {
           page.off('request', onVisualRequest);
         }
-
-        // --- Source mode: completions resume. Guards against a false pass,
-        // confirms suppression is scoped to visual mode, and proves the request
-        // monitoring above actually observes these RPCs. ---
-        await sourceActions.ensureSourceMode();
-        // The visual editor's embedded chunk/YAML editors must be gone before
-        // we drive the source editor, otherwise aceTextInput is ambiguous.
-        await expect(sourcePane.aceTextInput).toHaveCount(1, { timeout: 15000 });
-
-        // Arm the wait before typing so a fast request isn't missed.
-        const sourceRequest = page.waitForRequest(completionRpc, { timeout: TIMEOUTS.ghostText });
-        await sourceActions.goToEnd();
-        await page.keyboard.press('Enter');
-        await page.keyboard.type('y <- fun');
-        await sourceRequest;
-        console.log('  Completion request issued again in source mode');
       } finally {
-        // Never leave the shared (worker-scoped) IDE in visual mode: a lingering
-        // visual editor keeps embedded Ace editors mounted, which makes the
-        // source aceTextInput locator ambiguous and fails every later test.
-        await sourceActions.ensureSourceMode().catch(() => {});
-        await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+        // Closing the tab tears down the visual editor entirely. Prefer this to
+        // toggling back to source mode, which only hides the panmirror and
+        // leaves its embedded Ace editors mounted -- that makes the source
+        // aceTextInput locator ambiguous for later tests in the shared IDE.
+        await sourceActions.closeSourceAndDeleteFile(qmdFile).catch(() => {});
       }
     });
 
@@ -755,6 +757,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
         `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);

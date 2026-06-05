@@ -268,20 +268,15 @@ export class SourcePaneActions {
    * Ensures the editor is in source mode. If already in source mode, does nothing.
    */
   async ensureSourceMode(): Promise<void> {
-    const proseMirror = this.page.locator('.ProseMirror');
-
-    // Already in source mode? The visual editor mounts a .ProseMirror surface;
-    // its absence means we're already in source mode (or the file type has no
-    // visual mode at all).
-    if (!(await proseMirror.first().isVisible().catch(() => false))) return;
-
-    await this.sourcePane.visualMdToggle.click();
-
-    // Wait for the visual editor -- and the embedded chunk/YAML Ace editors it
-    // mounts -- to tear down before returning. Converting a document with
-    // chunks back to source syncs through pandoc, which takes longer than a
-    // fixed sleep can safely cover; returning early leaves multiple Ace editors
-    // mounted and makes the source aceTextInput locator ambiguous for callers.
-    await proseMirror.first().waitFor({ state: 'hidden', timeout: 15000 });
+    const toggle = this.sourcePane.visualMdToggle;
+    try {
+      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
+      if (ariaPressed === 'true') {
+        await toggle.click();
+        await sleep(1000);
+      }
+    } catch {
+      // Toggle not found — already in source mode
+    }
   }
 }
