@@ -664,11 +664,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // The assistant posts a status-bar message for every completion/NES
       // request: "Waiting for completions..." when the request is sent, then
       // "Completion response received." / "No completions available." once it
-      // resolves. None of these auto-hide, so their presence after an edit is a
-      // reliable signal that a request was sent to the backend. Matched
-      // page-wide (not scoped to the editor footer) so the check holds in
-      // visual mode too.
-      const completionStatus = page.locator('.gwt-Label', {
+      // resolves. None of these auto-hide, so such a message in the active
+      // editor's footer after an edit is a reliable signal that a request was
+      // sent. Scope to the visible tab's footer (footerTable) -- a page-wide
+      // match would also pick up a stale status left in a background editor,
+      // e.g. the suite's persistent Untitled tab.
+      const completionStatus = sourcePane.footerTable.locator('.gwt-Label', {
         hasText: /Waiting for completions|Completion response received|No completions available/,
       });
 
@@ -693,6 +694,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         // (request sent in visual mode) reliably surfaces the status message.
         await sleep(10000);
 
+        // Confirm the visual editor's footer is present, so the count-0 check
+        // below is meaningful rather than vacuously matching an absent footer.
+        await expect(sourcePane.footerTable.first()).toBeVisible({ timeout: 15000 });
         await expect(completionStatus).toHaveCount(0);
         console.log('  No completion status surfaced in visual mode');
 
