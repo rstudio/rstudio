@@ -315,9 +315,16 @@ Error writeStringToFile(const core::FilePath& filePath,
 
 // Writes a string to a file atomically by first writing to a temporary file
 // in the same directory and then renaming it into place.
+//
+// preservePermissions, when true and filePath already exists, copies the
+// existing file's permission bits onto the temporary file before renaming so
+// that an atomic overwrite does not silently reset the file's mode to the
+// temporary file's defaults. No-op on Windows. Defaults off so existing
+// callers (which create new files) are unaffected.
 Error writeStringToFileAtomic(const core::FilePath& filePath,
                               const std::string& str,
-                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough);
+                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
+                              bool preservePermissions = false);
 
 // Returns true if the given error indicates that a write failed because the
 // disk is full (ENOSPC) or a disk quota was exceeded (EDQUOT), including the

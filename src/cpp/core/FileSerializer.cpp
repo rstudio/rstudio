@@ -466,7 +466,8 @@ bool isDiskSpaceError(const Error& error)
 
 Error writeStringToFileAtomic(const FilePath& filePath,
                               const std::string& str,
-                              string_utils::LineEnding lineEnding)
+                              string_utils::LineEnding lineEnding,
+                              bool preservePermissions)
 {
    // generate a unique temporary file in the same directory
    FilePath tmpFile;
@@ -488,6 +489,29 @@ Error writeStringToFileAtomic(const FilePath& filePath,
       tmpFile.removeIfExists();
       return error;
    }
+
+   // when replacing an existing file, carry its permission bits over to the
+   // temporary file so the rename does not reset the mode to the temporary
+   // file's defaults (no-op on Windows, which manages permissions differently)
+#ifndef _WIN32
+   if (preservePermissions && filePath.exists())
+   {
+      struct stat st;
+      if (::stat(filePath.getAbsolutePath().c_str(), &st) != 0)
+      {
+         error = fileError(errno, filePath, ERROR_LOCATION);
+         tmpFile.removeIfExists();
+         return error;
+      }
+
+      if (::chmod(tmpFile.getAbsolutePath().c_str(), st.st_mode & 07777) != 0)
+      {
+         error = fileError(errno, tmpFile, ERROR_LOCATION);
+         tmpFile.removeIfExists();
+         return error;
+      }
+   }
+#endif
 
    // atomically rename into place
    error = tmpFile.move(filePath, FilePath::MoveDirect);
