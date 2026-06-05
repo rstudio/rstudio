@@ -34,6 +34,12 @@ concurrency:
 
 permissions:
   contents: read
+  # Required so this workflow can pass pull-requests: write to the called
+  # workflow's e2e-merge job (GitHub validates ALL job-level permissions in the
+  # called workflow at call time). The e2e-merge job is skipped when
+  # build_only=true (the only mode the cache seeder uses), so this permission
+  # is never exercised here — it's declared only to satisfy the validator.
+  pull-requests: write
 
 jobs:
   seed:
