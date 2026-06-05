@@ -724,10 +724,66 @@ var createCell = function(data, colIdx, rowData, clazz) {
 // Header Construction
 // ==========================================================================
 
+// Column-type predicates. col_type is the column's R typeof() ("double",
+// "integer", "logical", "character", "list", ...; "rownames" is a synthetic
+// sentinel for the row-name column) and col_class is its class() reported as
+// an array. Note typeof() of a data.frame column is "list", so a single
+// col_type === "list" test covers both list and data.frame columns.
+var colHasClass = function(col, name) {
+   return col.col_class && col.col_class.indexOf(name) >= 0;
+};
+
+var isRownameColumn = function(col) {
+   return col.col_type === "rownames";
+};
+
+var isDataFrameColumn = function(col) {
+   return colHasClass(col, "data.frame");
+};
+
+var isListColumn = function(col) {
+   return col.col_type === "list" && !isDataFrameColumn(col);
+};
+
+var isFactorColumn = function(col) {
+   return colHasClass(col, "factor");
+};
+
+// Base numeric columns (right-aligned, histogram-summarized). Factors have
+// typeof "integer" but class "factor", so keying on class excludes them;
+// Date / POSIXct are likewise excluded, matching prior behavior.
+var isNumericColumn = function(col) {
+   return colHasClass(col, "numeric") ||
+          colHasClass(col, "integer") ||
+          colHasClass(col, "double") ||
+          colHasClass(col, "integer64");
+};
+
+// Whether the backend computed histogram data for this column. col_breaks /
+// col_counts are populated only for base-numeric columns; other data columns
+// carry empty arrays and the rownames column omits the fields entirely. Both
+// the empty-array and undefined cases are handled by the explicit checks (an
+// empty array is truthy in JS, so length must be tested too).
+var hasHistogram = function(col) {
+   return col.col_breaks && col.col_breaks.length > 0 &&
+          col.col_counts && col.col_counts.length > 0;
+};
+
+// Coarse category used to choose which summary stats to render in the sidebar.
+// Anything not matched here (Date, POSIXct, ...) falls through to the generic
+// min/max stats in renderColumnStats.
+var statsCategory = function(col) {
+   if (isFactorColumn(col)) return "factor";
+   if (isNumericColumn(col)) return "numeric";
+   if (col.col_type === "character") return "character";
+   if (col.col_type === "logical") return "boolean";
+   return "other";
+};
+
 var getColClass = function(col) {
-   if (col.col_type === "numeric") return "numberCell";
-   if (col.col_type === "data.frame") return "dataCell";
-   if (col.col_type === "list") return "listCell";
+   if (isNumericColumn(col)) return "numberCell";
+   if (isDataFrameColumn(col)) return "dataCell";
+   if (isListColumn(col)) return "listCell";
    return "textCell";
 };
 
@@ -779,14 +835,14 @@ var createHeader = function(idx, col) {
    interior.appendChild(title);
 
    // Tooltip
-   if (col.col_type === "rownames") {
+   if (isRownameColumn(col)) {
       th.title = "row names";
    } else {
       th.title = "column " + absColIndex(idx) + ": " + col.col_type;
-      if (col.col_type === "numeric" && col.col_breaks && col.col_breaks.length > 0) {
+      if (hasHistogram(col)) {
          th.title += " with range " + col.col_breaks[0] +
             " - " + col.col_breaks[col.col_breaks.length - 1];
-      } else if (col.col_type === "factor" && col.col_vals) {
+      } else if (isFactorColumn(col) && col.col_vals) {
          th.title += " with " + col.col_vals.length + " levels";
       }
    }
@@ -816,7 +872,7 @@ var createHeader = function(idx, col) {
    // when ordering is disabled) routes the click into the grid so
    // subsequent keystrokes operate on the column the user just clicked;
    // sort cycling additionally requires ordering && !rownames.
-   var sortable = ordering && col.col_type !== "rownames";
+   var sortable = ordering && isColumnSortable(col);
    if (sortable) {
       th.style.cursor = "pointer";
       th.setAttribute("role", "columnheader");
@@ -834,6 +890,15 @@ var createHeader = function(idx, col) {
    });
 
    return th;
+};
+
+// Whether a column can be sorted. Rownames are an identity column with no
+// natural ordering, and list / data.frame columns are non-atomic -- R's
+// order() and xtfrm() error out on them ("unimplemented type 'list'"), which
+// would otherwise put the whole grid into a "Failed to fetch" error state.
+// Both list and data.frame columns report col_type === "list" (their typeof).
+var isColumnSortable = function(col) {
+   return col && !isRownameColumn(col) && col.col_type !== "list";
 };
 
 var sortAriaValue = function(dir) {
@@ -2081,7 +2146,9 @@ var createColumnTypesUI = function(th, idx, col) {
    host.className = "columnTypeWrapper";
 
    var val = document.createElement("div");
-   val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
+   // show the user's assigned type if they picked one in the import dialog,
+   // otherwise fall back to the detected R class
+   val.textContent = "(" + (col.col_type_assigned || colClassLabel(col)) + ")";
    val.className = "columnTypeHeader";
 
    th.classList.add("columnClickable");
@@ -2715,8 +2782,16 @@ var createSparkline = function(breaks, counts) {
    return wrapper;
 };
 
+// The most-specific R class of a column (its class()[1]), used for the
+// human-readable type label. Falls back to the typeof() if class is absent.
+var colClassLabel = function(col) {
+   if (col.col_class && col.col_class.length > 0)
+      return col.col_class[0];
+   return col.col_type || "";
+};
+
 var typeLabel = function(col) {
-   var type = col.col_type_r || col.col_type || "";
+   var type = colClassLabel(col);
    // Map common R classes to short labels
    var map = {
       "character": "chr",
@@ -2854,7 +2929,7 @@ var initSidebar = function() {
 
    for (var i = 0; i < cols.length; i++) {
       var col = cols[i];
-      if (col.col_type === "rownames") continue;
+      if (isRownameColumn(col)) continue;
 
       var entry = document.createElement("div");
       entry.className = "sidebar-col";
@@ -2895,7 +2970,7 @@ var initSidebar = function() {
       // Sparkline histogram for numeric columns. Create the (empty)
       // container now but defer drawing the canvas until the panel is
       // visible -- see renderPendingSparklines.
-      if (col.col_type === "numeric" && col.col_breaks && col.col_counts) {
+      if (hasHistogram(col)) {
          var sparkContainer = document.createElement("div");
          sparkContainer.className = "sidebar-sparkline";
          entry.appendChild(sparkContainer);
@@ -2912,9 +2987,9 @@ var initSidebar = function() {
 
       // Type-specific summary (left)
       var summaryText = "";
-      if (col.col_type === "factor" && col.col_vals) {
+      if (isFactorColumn(col) && col.col_vals) {
          summaryText = col.col_vals.length + " levels";
-      } else if (col.col_type === "boolean") {
+      } else if (col.col_type === "logical") {
          summaryText = "logical";
       }
       if (summaryText) {
@@ -3005,7 +3080,7 @@ var initSidebar = function() {
                scrollToCol();
             }
          });
-      })(i, statsPanel, expandBtn, header, col.col_type);
+      })(i, statsPanel, expandBtn, header, statsCategory(col));
 
       content.appendChild(entry);
    }
@@ -3405,10 +3480,10 @@ var onGridKeyDown = function(evt) {
    if (activeHeaderCol >= 0) {
       var origCol = columnOrder[activeHeaderCol];
       var col = cols[origCol];
-      var isRownames = col && col.col_type === "rownames";
+      var isRownames = col && isRownameColumn(col);
       if (key === "Enter" || key === " ") {
          evt.preventDefault();
-         if (ordering && !isRownames) {
+         if (ordering && isColumnSortable(col)) {
             var th = getActiveHeaderTh();
             if (th) handleSortClick(origCol, th);
          }

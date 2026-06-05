@@ -373,3 +373,86 @@ test_that(".rs.summarizeColumn() handles zero-row data frames", {
    expect_equal(.rs.summarize.bare(r$n_unique), 0L)
    expect_null(r$min)
 })
+
+test_that(".rs.describeCols() reports col_type as typeof() and col_class as class()", {
+   df <- data.frame(
+      d = c(1.5, 2.5),
+      i = 1:2,
+      c = c("a", "b"),
+      l = c(TRUE, FALSE),
+      f = factor(c("x", "y")),
+      stringsAsFactors = FALSE
+   )
+   # a list column whose elements are themselves atomic vectors -- this is the
+   # shape from #17863 that the old first-element heuristic misclassified as
+   # "unknown" rather than "list"
+   df$lst <- list(1:3, 4:6)
+
+   cols <- .rs.describeCols(df)
+
+   # cols[[1]] is the synthetic rownames column
+   expect_equal(cols[[1]]$col_type, .rs.scalar("rownames"))
+   expect_equal(cols[[1]]$col_class, "rownames")
+
+   # data columns follow, in order, reporting typeof() and class()
+   types   <- vapply(cols[-1], function(col) as.character(col$col_type), "")
+   classes <- lapply(cols[-1], function(col) col$col_class)
+   expect_equal(types, c("double", "integer", "character", "logical", "integer", "list"))
+   expect_equal(classes, list("numeric", "integer", "character", "logical", "factor", "list"))
+
+   # the Data Import preview keys its column-type detection on col_class[[1]]
+   # (read as col_class[0] in DataImportOptions.java), so the most-specific
+   # class must be the first element of the array for every column
+   first_class <- vapply(cols[-1], function(col) col$col_class[[1]], "")
+   expect_equal(first_class, c("numeric", "integer", "character", "logical", "factor", "list"))
+})
+
+test_that(".rs.describeCols() reports a nested data.frame column faithfully", {
+   df <- data.frame(a = 1:2)
+   # a column that is itself a data.frame. describeCols does not flatten (that
+   # happens upstream in the viewer pipeline via .rs.flattenFrame), so it must
+   # report the column as typeof() "list" with class() "data.frame" -- the
+   # shape the frontend's isDataFrameColumn relies on to tell list and
+   # data.frame columns apart.
+   df$nested <- data.frame(x = c(1.5, 2.5), y = c(3L, 4L))
+
+   cols <- .rs.describeCols(df)
+
+   # cols[[1]] rownames, cols[[2]] = a, cols[[3]] = nested
+   nested <- cols[[3L]]
+   expect_equal(nested$col_type, .rs.scalar("list"))
+   expect_equal(nested$col_class, "data.frame")
+})
+
+test_that(".rs.applyTransform() does not error when sorting a list column", {
+   df <- data.frame(a = c(3L, 1L, 2L))
+   df$b <- list(10:12, 1:2, 100)
+
+   # column 2 is the list column; sorting it must be a no-op rather than an
+   # error ("unimplemented type 'list' in 'orderVector1'"). See #17863.
+   asc  <- .rs.applyTransform(df, character(), "", 2L, "asc")
+   desc <- .rs.applyTransform(df, character(), "", 2L, "desc")
+   expect_equal(asc$a, df$a)
+   expect_equal(desc$a, df$a)
+
+   # sorting an atomic column still works
+   sorted <- .rs.applyTransform(df, character(), "", 1L, "asc")
+   expect_equal(sorted$a, c(1L, 2L, 3L))
+})
+
+test_that(".rs.applyTransform() applies every key in a multi-column sort", {
+   # primary key 'a' has ties that the tiebreaker 'c' resolves; 'b' is a list
+   # column sitting between them so it is skipped without disturbing the
+   # dirs/vals alignment of the remaining keys. The old "for (i in length(cols))"
+   # loop ran once with the last key only, sorting by 'c' alone.
+   df <- data.frame(a = c(1L, 1L, 2L, 2L))
+   df$b <- list(1, 2:3, 4:6, 7)
+   df$c <- c(2L, 1L, 2L, 1L)
+
+   sorted <- .rs.applyTransform(df, character(3L), "",
+                                c(1L, 2L, 3L), c("asc", "asc", "asc"))
+
+   # correct multi-key result: primary 'a' ascending, ties broken by 'c'
+   expect_equal(sorted$a, c(1L, 1L, 2L, 2L))
+   expect_equal(sorted$c, c(1L, 2L, 1L, 2L))
+})
