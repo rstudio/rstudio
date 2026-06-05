@@ -56,7 +56,9 @@ venv/
 .claude/settings.local.json
 .claude/skills/*.local/
 .claude/worktrees/
-docs/superpowers
+# TEMP(feature/project-editor-theme): un-ignored so roborev can review specs/plans.
+# Revert this (restore "docs/superpowers") and delete docs/superpowers before opening the PR.
+# docs/superpowers
 .superpowers/
 .positai/
 AGENTS.md
