@@ -131,6 +131,24 @@ var cachedFilterValues = {};
 var lastScrollTop = 0;
 var lastScrollLeft = 0;
 
+// Scroll position captured just before a refresh tears the grid down, so it
+// can be restored once the rebuilt grid has re-fetched its first row batch.
+// Holds { top, left, rows } where rows is the pre-refresh unfiltered row count;
+// the restore only fires when the new row count matches (see
+// restoreScrollAfterRefresh).
+//
+// pendingScrollRestore is the handoff slot, set by captureScrollForRefresh()
+// just before it calls bootstrap(). bootstrap() immediately moves it into
+// activeScrollRestore (the value owned by the in-flight rebuild) and clears the
+// handoff slot, so it is null except in that brief window. This split keeps a
+// capture bound to a single rebuild: if a refresh aborts before the restore
+// callback runs, the stranded value lives in activeScrollRestore, which the
+// next bootstrap unconditionally overwrites -- so it can never leak onto an
+// unrelated later rebuild (e.g. column pagination, which carries no scroll
+// intent).
+var pendingScrollRestore = null;
+var activeScrollRestore = null;
+
 // Row data cache
 var rowCache = new Map();
 var totalRows = 0;
@@ -2168,6 +2186,68 @@ var scrollToTop = function() {
    if (viewport) viewport.scrollTop = 0;
 };
 
+// Snapshot the live scroll position (and the current unfiltered row count) so a
+// refresh triggered by an in-place data change can restore the user's position
+// after the grid is torn down and rebuilt. Must run before bootstrap() (whose
+// destroyGrid zeroes the viewport and lastScroll* state).
+var captureScrollForRefresh = function() {
+   var viewport = document.getElementById("gridViewport");
+   var top = viewport ? viewport.scrollTop : 0;
+   var left = viewport ? viewport.scrollLeft : 0;
+   // If the refresh fired while the tab was inactive, the live scrollTop may
+   // already read 0 (onDeactivate folded it into lastScrollTop); fall back to
+   // the saved value so the position isn't lost.
+   if (top === 0 && lastScrollTop > 0) top = lastScrollTop;
+   if (left === 0 && lastScrollLeft > 0) left = lastScrollLeft;
+   pendingScrollRestore = { top: top, left: left, rows: totalRows };
+};
+
+// After a refresh re-fetches its first row batch, restore the pre-refresh
+// scroll position -- but only when the underlying (unfiltered) row count is
+// unchanged. A changed row count means the data was materially replaced (rows
+// subset, reassigned, appended, or removed), so the row the user was looking at
+// no longer maps to the same thing; leave the grid at the top instead. The
+// transformations we do want to preserve -- adding a column, removing a column,
+// editing values in an existing column -- all leave recordsTotal unchanged,
+// which is exactly what this row-count compare detects.
+//
+// The compare is against the unfiltered total, not the filtered view. Per-column
+// filters are persisted across the refresh, so the filtered position is also
+// preserved. An active *global* search is not persisted (cachedSearch is cleared
+// on refresh); when one was active, filteredRows snaps back to totalRows and the
+// restored offset lands on a different (clamped, never out-of-range) row. That
+// edge is benign and rare enough not to special-case here.
+var restoreScrollAfterRefresh = function() {
+   var restore = activeScrollRestore;
+   activeScrollRestore = null;
+   if (!restore || restore.rows !== totalRows)
+      return;
+
+   // Guard against a rapid second refresh landing in the gap before this frame
+   // paints: capture the current draw and bail if another fetch has superseded
+   // us, so a stale offset isn't applied to a newer render.
+   var restoreToken = drawCounter;
+
+   // The viewport's scrollable height only exists once renderVisibleRows has
+   // sized the spacer rows, which fetchRows does right after this callback.
+   // Defer to the next frame so the scrollTop assignment isn't clamped to 0
+   // against a body that hasn't grown yet.
+   requestAnimationFrame(function() {
+      if (restoreToken !== drawCounter)
+         return;
+      var viewport = document.getElementById("gridViewport");
+      if (!viewport)
+         return;
+      viewport.scrollTop = restore.top;
+      viewport.scrollLeft = restore.left;
+      lastScrollTop = viewport.scrollTop;
+      lastScrollLeft = viewport.scrollLeft;
+      renderVisibleRows(true);
+      updateInfoBar();
+      updateCustomScrollbars();
+   });
+};
+
 var updateAriaRowCount = function() {
    // Expose the navigable row count to assistive tech. Use filteredRows so
    // a screen reader announces the rows the user can actually move through,
@@ -3913,6 +3993,7 @@ var initGrid = function(resCols, data) {
       fetchRows(0, FETCH_SIZE, function() {
          autoSizeColumns();
          applyPinnedColumns();
+         restoreScrollAfterRefresh();
       });
    }
 
@@ -4000,6 +4081,14 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   // Invalidate the cached column count. buildRequestedColumns clamps the
+   // requested window to totalCols, so a stale value left over from the
+   // previous frame would cap the fetch at the old column count and drop any
+   // columns added since (e.g. `df$new <- ...`). 0 means "unknown"; the window
+   // is then requested in full and the server clamps it to the real frame.
+   // Reset here (rather than in invalidateCache) because resetGridState only
+   // runs from bootstrap, which always re-fetches columns and repopulates this.
+   totalCols = 0;
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";
@@ -4314,6 +4403,14 @@ var destroyGrid = function() {
 
 var bootstrap = function(data) {
    bootstrapping = true;
+
+   // Take ownership of any pending scroll-restore intent for this rebuild only.
+   // Clearing the handoff slot here (rather than relying on the restore callback
+   // to consume it) means a prior refresh that aborted before its callback ran
+   // cannot leak its captured position onto this unrelated bootstrap.
+   activeScrollRestore = pendingScrollRestore;
+   pendingScrollRestore = null;
+
    destroyGrid();
 
    // Prime the pinned/sort/filter selection from saved state before the column
@@ -4469,11 +4566,17 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
 };
 
 window.refreshData = function() {
+   // Preserve the user's scroll position across the rebuild for in-place data
+   // changes (restoreScrollAfterRefresh decides whether to actually restore,
+   // based on the row count).
+   captureScrollForRefresh();
    bootstrap();
 };
 
 window.refreshAndReset = function() {
+   // Reset View deliberately returns to the top, so drop any captured position.
    clearSavedState();
+   pendingScrollRestore = null;
    bootstrap();
 };
 

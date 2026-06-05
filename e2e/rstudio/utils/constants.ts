@@ -3,6 +3,9 @@ export const TIMEOUTS = {
   rstudioStartup: 30000,
   consoleReady: 15000,
   sessionRestart: 30000,
+  // The Environment pane requeries memory stats every memory_query_interval_seconds
+  // (default 10s), so a memory-pie change can take a full interval to surface.
+  memoryUsageUpdate: 30000,
   settleDelay: 1000,
   pollInterval: 500,
   fileOpen: 20000,
