@@ -210,9 +210,12 @@ mutate the stored project value or `.Rproj`:
      If `themeList_` is not loaded (`null`/empty) return `null`. Otherwise return
      `themeList_.get(uiPrefs.editorTheme().getValue())` if installed, else
      `themeList_.get(uiPrefs.editorTheme().getGlobalValue())` if installed, else the
-     built-in default theme from `themeList_` (the entry whose `isDefaultTheme()` is
-     true). So `null` means **only** "list not loaded"; a loaded list always yields a
-     theme (matching the resolution rule's `else default` branch). Call it **after** the
+     built-in default theme: `themeList_.get(AceTheme.createDefault().getName())` (the
+     unambiguous `Textmate (default)`, which is also the `editor_theme` schema default).
+     Do **not** use `isDefaultTheme()` to pick the default — it matches *any* bundled
+     `theme/default/*.rstheme` and would select an arbitrary theme. So `null` means
+     **only** "list not loaded"; a loaded list always yields a theme (matching the
+     resolution rule's `else default` branch). Call it **after** the
      dialog has set/removed the project value, so `getValue()` reflects the new effective
      theme.
 
