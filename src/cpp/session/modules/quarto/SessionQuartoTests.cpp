@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include "SessionQuartoPreview.hpp"
+
 namespace rstudio {
 namespace session {
 namespace quarto {
@@ -135,6 +137,91 @@ TEST_F(ProjectTypeResolution, ExtensionWithoutBaseTypeFallsBackToRawType)
    writeStringToFile(extYml, "title: A partial extension\n");
 
    EXPECT_EQ(resolvedType(quartoYml), "partial-ext");
+}
+
+// Tests for the preview-reuse "did the project config change?" predicate that
+// decides whether a running 'quarto preview' server can be reused for an
+// in-place re-render. See https://github.com/rstudio/rstudio/issues/17874.
+class PreviewConfigChange : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath::tempFilePath(projectDir_);
+      projectDir_.ensureDirectory();
+
+      previewTarget_ = projectDir_.completeChildPath("doc.qmd");
+      writeStringToFile(previewTarget_, "---\ntitle: Test\n---\n");
+   }
+
+   void TearDown() override
+   {
+      projectDir_.removeIfExists();
+   }
+
+   FilePath writeQuartoYml(const std::string& contents)
+   {
+      FilePath quartoYml = projectDir_.completeChildPath("_quarto.yml");
+      writeStringToFile(quartoYml, contents);
+      return quartoYml;
+   }
+
+   bool changed(const FilePath& priorConfig, std::time_t priorWriteTime)
+   {
+      return modules::quarto::preview::projectConfigChanged(
+         previewTarget_, priorConfig, priorWriteTime);
+   }
+
+   FilePath projectDir_;
+   FilePath previewTarget_;
+};
+
+TEST_F(PreviewConfigChange, UnchangedConfigIsNotChanged)
+{
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   EXPECT_FALSE(changed(quartoYml, quartoYml.getLastWriteTime()));
+}
+
+TEST_F(PreviewConfigChange, ConfigModifiedAfterStartIsChanged)
+{
+   // the file on disk is newer than the time captured when the preview started
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   EXPECT_TRUE(changed(quartoYml, quartoYml.getLastWriteTime() - 10));
+}
+
+TEST_F(PreviewConfigChange, ConfigSavedBeforeStartIsNotChanged)
+{
+   // the file on disk is older than the time captured when the preview started
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   EXPECT_FALSE(changed(quartoYml, quartoYml.getLastWriteTime() + 10));
+}
+
+TEST_F(PreviewConfigChange, NoConfigIsNotChanged)
+{
+   // no _quarto.yml exists and none did when the preview started
+   EXPECT_FALSE(changed(FilePath(), 0));
+}
+
+TEST_F(PreviewConfigChange, ConfigAddedIsChanged)
+{
+   // no config when the preview started, but one exists now
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   EXPECT_TRUE(changed(FilePath(), 0));
+}
+
+TEST_F(PreviewConfigChange, ConfigRemovedIsChanged)
+{
+   // a config governed the preview at startup, but none exists now
+   FilePath priorConfig = projectDir_.completeChildPath("_quarto.yml");
+   EXPECT_TRUE(changed(priorConfig, std::time_t(0)));
+}
+
+TEST_F(PreviewConfigChange, DifferentConfigFileIsChanged)
+{
+   // a different config file governs the file than did at startup
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   FilePath priorConfig = projectDir_.completeChildPath("_quarto.yaml");
+   EXPECT_TRUE(changed(priorConfig, quartoYml.getLastWriteTime()));
 }
 
 } // namespace tests

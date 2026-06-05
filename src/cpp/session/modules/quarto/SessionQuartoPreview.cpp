@@ -107,6 +107,16 @@ public:
       return pJob_->id();
    }
 
+   // has the Quarto project config (_quarto.yml / _quarto.yaml) that governs this
+   // preview changed since the preview server started? The running 'quarto preview'
+   // server reads project metadata (e.g. pdf-engine) once at startup and does not
+   // reload it for an in-place re-render, so when the config changes we must restart
+   // the server rather than reuse it. See https://github.com/rstudio/rstudio/issues/17874.
+   bool configChanged()
+   {
+      return projectConfigChanged(previewTarget_, configFile_, configLastWriteTime_);
+   }
+
    std::string viewerType()
    {
       return viewerType_;
@@ -149,11 +159,13 @@ public:
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
       : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
-                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType())
+                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType()),
+                     configLastWriteTime_(0)
    {
      renderToken_ = core::system::generateUuid();
 
      readInputFileLines();
+     captureConfigState();
    }
 
    virtual std::string name()
@@ -499,6 +511,12 @@ private:
       }
    }
 
+   void captureConfigState()
+   {
+      configFile_ = quartoProjectConfigFile(previewTarget_);
+      configLastWriteTime_ = configFile_.isEmpty() ? 0 : configFile_.getLastWriteTime();
+   }
+
    int quartoSlideLevelFromOutput(const std::string& output)
    {
       boost::regex slideLevelRe("\n\\s+slide-level:\\s+(\\d)+\n");
@@ -540,6 +558,8 @@ private:
    int controlPort_;
    std::string path_;
    std::string viewerType_;
+   FilePath configFile_;
+   std::time_t configLastWriteTime_;
 };
 
 // preview singleton
@@ -610,9 +630,13 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    }
    else
    {
-      // see if there is a running preview w/ the same viewer type we can target
+      // see if there is a running preview w/ the same viewer type we can target.
+      // if the governing Quarto project config has changed since the preview started,
+      // fall through to a fresh preview so the new config is picked up (the running
+      // server caches project metadata at startup).
       if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
-          (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()))
+          (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()) &&
+          !s_pPreview->configChanged())
       {
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
@@ -673,6 +697,28 @@ void onResume(const Settings&)
 
 } // anonymous namespace
 
+
+bool projectConfigChanged(const FilePath& previewTarget,
+                          const FilePath& priorConfigFile,
+                          std::time_t priorConfigWriteTime)
+{
+   FilePath configFile = quartoProjectConfigFile(previewTarget);
+
+   // a config was added or removed since the preview started
+   if (configFile.isEmpty() != priorConfigFile.isEmpty())
+      return true;
+
+   // no config governs this file (and none did before) -- nothing to compare
+   if (configFile.isEmpty())
+      return false;
+
+   // a different config file now governs this file
+   if (configFile != priorConfigFile)
+      return true;
+
+   // same config file -- did it change on disk since the preview started?
+   return configFile.getLastWriteTime() > priorConfigWriteTime;
+}
 
 
 Error initialize()
