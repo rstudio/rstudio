@@ -644,8 +644,8 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_visual_no_completions.qmd`;
 
       // A Quarto doc with prose and an R chunk. Visual mode is only offered for
-      // markdown documents; the chunk gives the source-mode self-validation
-      // step below a place to trigger a real completion.
+      // markdown documents; the chunk also makes the visual editor mount an
+      // embedded Ace editor, exercising the teardown path on the way back.
       const fileContent =
         '---\n' +
         'title: "Visual Mode Completions"\n' +
@@ -675,38 +675,47 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      // --- Visual mode: editing must not trigger a completion request ---
-      await sourceActions.ensureVisualMode();
-      const proseMirror = page.locator('.ProseMirror').first();
-      // Fail loudly if visual mode didn't actually activate, rather than
-      // silently exercising source mode and passing for the wrong reason.
-      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+      try {
+        // --- Visual mode: editing must not trigger a completion request ---
+        await sourceActions.ensureVisualMode();
+        const proseMirror = page.locator('.ProseMirror').first();
+        // Fail loudly if visual mode didn't actually activate, rather than
+        // silently exercising source mode and passing for the wrong reason.
+        await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
-      await proseMirror.click();
-      await page.keyboard.type('Typing in the visual editor.');
-      await page.keyboard.press('Enter');
-      await page.keyboard.press('Enter');
+        await proseMirror.click();
+        await page.keyboard.type('Typing in the visual editor.');
+        await page.keyboard.press('Enter');
+        await page.keyboard.press('Enter');
 
-      // Give the visual editor's sync-on-idle, the completion delay, and a
-      // backend round-trip ample time to fire a request, so a regression
-      // (request sent in visual mode) reliably surfaces the status message.
-      await sleep(10000);
+        // Give the visual editor's sync-on-idle, the completion delay, and a
+        // backend round-trip ample time to fire a request, so a regression
+        // (request sent in visual mode) reliably surfaces the status message.
+        await sleep(10000);
 
-      await expect(completionStatus).toHaveCount(0);
-      console.log('  No completion status surfaced in visual mode');
+        await expect(completionStatus).toHaveCount(0);
+        console.log('  No completion status surfaced in visual mode');
 
-      // --- Source mode: completions resume (guards against a false pass and
-      // confirms suppression is scoped to visual mode) ---
-      await sourceActions.ensureSourceMode();
-      await sourceActions.navigateToChunkByIndex(1);
-      await page.keyboard.press('End');
-      await page.keyboard.press('Enter');
-      await page.keyboard.type('y <- fun');
+        // --- Source mode: completions resume (guards against a false pass and
+        // confirms suppression is scoped to visual mode) ---
+        await sourceActions.ensureSourceMode();
+        // The visual editor's embedded chunk/YAML editors must be gone before
+        // we drive the source editor, otherwise aceTextInput is ambiguous.
+        await expect(sourcePane.aceTextInput).toHaveCount(1, { timeout: 15000 });
 
-      await expect(completionStatus.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
-      console.log('  Completion status surfaced again in source mode');
+        await sourceActions.goToEnd();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('y <- fun');
 
-      await sourceActions.closeSourceAndDeleteFile(fileName);
+        await expect(completionStatus.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+        console.log('  Completion status surfaced again in source mode');
+      } finally {
+        // Never leave the shared (worker-scoped) IDE in visual mode: a lingering
+        // visual editor keeps embedded Ace editors mounted, which makes the
+        // source aceTextInput locator ambiguous and fails every later test.
+        await sourceActions.ensureSourceMode().catch(() => {});
+        await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+      }
     });
 
     test.afterAll(async ({ rstudioPage: page }) => {
