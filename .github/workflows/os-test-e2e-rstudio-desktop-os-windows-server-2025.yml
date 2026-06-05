@@ -187,7 +187,7 @@ jobs:
           save-always: true
 
       - name: Install build tools
-        run: choco install ant sccache --yes --no-progress
+        run: choco install ant sccache nsis --yes --no-progress
 
       - name: Install rig
         run: |
