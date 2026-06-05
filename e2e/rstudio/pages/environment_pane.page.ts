@@ -63,8 +63,7 @@ export class EnvironmentPane extends PageObject {
     this.refreshWorkspaceBtn = page.locator('#rstudio_tb_refreshenvironment');
     this.loadWorkspaceBtn = page.locator('#rstudio_tb_loadworkspace');
     this.saveWorkspaceBtn = page.locator('#rstudio_tb_saveworkspace');
-    // The pie-crust div carries the stable id; the adjacent button is the menu.
-    this.memoryPieBtn = page.locator('#rstudio_memory_pie_mini + button');
+    this.memoryPieBtn = page.locator('#rstudio_memory_dropdown');
 
     this.importDatasetMenu = page.locator('#rstudio_mb_import_dataset');
     this.viewMenu = page.locator('#rstudio_mb_object_list_view');

@@ -173,6 +173,15 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
       ]);
       await expect(popup.locator('#plot')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
+      // Confirm a resize actually drives the popup window before stressing it --
+      // otherwise a silent setViewportSize no-op would leave the loop below
+      // exercising nothing. innerWidth must track the requested size.
+      await popup.setViewportSize({ width: 640, height: 480 });
+      const widthSmall = await popup.evaluate(() => window.innerWidth);
+      await popup.setViewportSize({ width: 1280, height: 900 });
+      const widthLarge = await popup.evaluate(() => window.innerWidth);
+      expect(widthLarge).toBeGreaterThan(widthSmall);
+
       for (let i = 0; i < 8; i++) {
         await popup.setViewportSize({ width: 1280, height: 900 });
         await popup.setViewportSize({ width: 640, height: 480 });
@@ -181,10 +190,10 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
 
       await popup.close();
 
-      // The real point: R is still responsive after the resize storm.
-      await consoleActions.clearConsole();
-      await consoleActions.executeInConsole("cat('alive')");
-      await expect(consoleActions.consolePane.consoleOutput).toContainText('alive');
+      // The real point: R is still responsive after the resize storm. evalRLogical
+      // reads R's "[1] TRUE" output -- a token the echoed console input can't
+      // contain -- so this proves a genuine round-trip, not just an echo match.
+      expect(await consoleActions.evalRLogical('TRUE')).toBe(true);
     },
   );
 });
