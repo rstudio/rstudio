@@ -168,6 +168,24 @@ jobs:
           # them instead of recompiling from scratch.
           save-always: true
 
+      # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
+      # is the single most expensive step in the build (~15-30 min). When the
+      # GWT sources haven't changed since the last seeder run on main, the cache
+      # restores the compiled JS/CSS into src/gwt/ and the build step skips
+      # recompilation via the nogwt flag below.
+      - name: Cache GWT output
+        id: gwt-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            src/gwt/www
+            src/gwt/bin
+            src/gwt/extras
+          key: rstudio-gwt-win64-${{ hashFiles('src/gwt/src/**/*.java', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          restore-keys: |
+            rstudio-gwt-win64-
+          save-always: true
+
       - name: Install build tools
         run: choco install ant sccache --yes --no-progress
 
@@ -295,6 +313,14 @@ jobs:
       - name: Zero sccache stats
         run: sccache --zero-stats
 
+      # Use nogwt when the GWT cache was restored -- skips the Ant compilation
+      # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
+      # miss (first run, or after GWT source changes) a full GWT build runs and
+      # the result is saved to the cache for the next PR.
+      # nozip: skip the cpack ZIP target -- we use the NSIS installer instead.
+      # (Removing 'quick' means cpack -G NSIS runs and produces the .exe, which
+      # includes rsession.exe, vcredist DLLs, GWT output, and all cmake-installed
+      # resources -- unlike a raw electron-packager zip which is missing them.)
       - name: Build RStudio Desktop (x64)
         working-directory: package/win32
         shell: cmd
@@ -302,12 +328,16 @@ jobs:
           RSTUDIO_VERSION_MAJOR: '99'
           RSTUDIO_VERSION_MINOR: '9'
           RSTUDIO_VERSION_PATCH: '9'
-          # Suffix uses '+' as build-metadata separator per semver spec.
-          # The run_number makes each CI build uniquely identifiable in logs.
           RSTUDIO_VERSION_SUFFIX: '-pr+${{ github.run_number }}'
-        # nozip: skip NSIS installer creation (we package with 7z in the next step).
-        # quick: skip GWT recompilation and unit tests to shorten CI turnaround.
-        run: make-package.bat nozip quick
+          GWT_CACHE_HIT: ${{ steps.gwt-cache.outputs.cache-hit }}
+        run: |
+          if "%GWT_CACHE_HIT%"=="true" (
+            echo GWT cache hit -- using nogwt flag
+            make-package.bat nozip nogwt
+          ) else (
+            echo GWT cache miss -- compiling GWT from scratch
+            make-package.bat nozip
+          )
 
       - name: Show sccache stats
         if: always()
@@ -325,32 +355,34 @@ jobs:
             Write-Warning "sccache recorded 0 compile requests -- sccache is NOT caching the build.  See comment above."
           }
 
-      # The Electron app lands at src/node/desktop-build-AMD64/out/RStudio-win32-x64/
-      # after the build. Zip and upload it so the e2e job can extract it
-      # directly to C:\Program Files\RStudio\ without running an NSIS installer.
+      # The NSIS installer is created by cpack -G NSIS (run by make-package.bat
+      # without the 'quick' flag) and placed in package\win32\build\. It
+      # includes rsession.exe, GWT output, vcredist DLLs, and all cmake-installed
+      # resources -- a complete, properly-assembled RStudio installation.
+      # The e2e job runs it with /S (silent) so RStudio lands at the standard
+      # C:\Program Files\RStudio\ path identical to end-user installs.
       # Skipped in build_only (seed) runs -- no e2e job consumes the artifact.
-      - name: Package RStudio Desktop
+      - name: Find and stage NSIS installer
         if: inputs.build_only != true
         run: |
           $ErrorActionPreference = 'Stop'
-          $electronOut = "$env:GITHUB_WORKSPACE\src\node\desktop-build-AMD64\out\RStudio-win32-x64"
-          if (-not (Test-Path "$electronOut\rstudio.exe")) {
-            Write-Error "rstudio.exe not found at $electronOut after build"
+          $installer = Get-ChildItem -Path 'package\win32\build' -Filter 'RStudio-*.exe' |
+                       Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $installer) {
+            Write-Error "No NSIS installer found in package\win32\build\; check that make-package.bat ran without the 'quick' flag"
             exit 1
           }
-          # Use 7z instead of Compress-Archive: it handles Windows MAX_PATH (260
-          # char) limits that Electron's deeply nested output tree can exceed.
-          $zipPath = "$env:GITHUB_WORKSPACE\rstudio-app-windows-x64.zip"
-          7z a -mx=1 $zipPath "$electronOut\*"
-          if ($LASTEXITCODE -ne 0) { Write-Error "7z failed with exit $LASTEXITCODE"; exit 1 }
-          Write-Host "Packaged: $zipPath"
+          $sizeMB = [math]::Round($installer.Length / 1MB, 1)
+          Write-Host "Found installer: $($installer.FullName) ($sizeMB MB)"
+          Copy-Item $installer.FullName "$env:GITHUB_WORKSPACE\RStudio-installer.exe"
+          Write-Host "Staged as: $env:GITHUB_WORKSPACE\RStudio-installer.exe"
 
       - name: Upload RStudio Desktop artifact
         if: inputs.build_only != true
         uses: actions/upload-artifact@v4
         with:
           name: rstudio-app-windows-x64
-          path: rstudio-app-windows-x64.zip
+          path: RStudio-installer.exe
           retention-days: 7
 
   e2e-desktop-windows:
@@ -374,6 +406,11 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
+      # Override the default platform-specific R library template so the sandbox
+      # uses the same path that the e2e-deps action installs and caches. Without
+      # this the sandbox writes to %LOCALAPPDATA%\rstudio-playwright\r-libs\...
+      # (a different path) causing packages to be re-downloaded on every run.
+      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
       - uses: actions/checkout@v4
@@ -431,8 +468,9 @@ jobs:
           "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
-      # Build-from-source path: install from the artifact produced by the
-      # build job above.
+      # Build-from-source path: download and install the NSIS installer produced
+      # by the build job above. Runs the same /S silent install as the
+      # daily-download path so RStudio lands at C:\Program Files\RStudio\.
       - name: Download RStudio Desktop artifact
         if: inputs.build_from_source == true
         uses: actions/download-artifact@v4
@@ -444,15 +482,17 @@ jobs:
         if: inputs.build_from_source == true
         run: |
           $ErrorActionPreference = 'Stop'
-          $dest = 'C:\Program Files\RStudio'
-          New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          # Use 7z instead of Expand-Archive to handle long paths in the
-          # Electron output tree (Windows MAX_PATH 260 char limit).
-          7z x "$env:GITHUB_WORKSPACE\rstudio-app-windows-x64.zip" -o"$dest" -y
-          if ($LASTEXITCODE -ne 0) { Write-Error "7z extraction failed with exit $LASTEXITCODE"; exit 1 }
-          $exe = "$dest\rstudio.exe"
+          $installer = "$env:GITHUB_WORKSPACE\RStudio-installer.exe"
+          if (-not (Test-Path $installer)) {
+            Write-Error "RStudio installer not found at $installer"
+            exit 1
+          }
+          Write-Host "Installing from: $installer"
+          $p = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
+          $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
-            Write-Error "rstudio.exe not found at $exe after extraction"
+            Write-Error "rstudio.exe not found at $exe after install"
             exit 1
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
