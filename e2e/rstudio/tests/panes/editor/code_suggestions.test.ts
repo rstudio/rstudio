@@ -1,3 +1,4 @@
+import type { Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS, sleep, CODE_SUGGESTION_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -50,6 +51,8 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
@@ -639,6 +642,106 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
 
+    test('no completion requests in visual mode', async ({ rstudioPage: page }) => {
+      const qmdFile = `${prefix}_visual_no_completions.qmd`;
+      const rFile = `${prefix}_visual_source_probe.R`;
+
+      // The two RPCs the editor issues for inline completions and next-edit
+      // suggestions. The fix suppresses these in visual mode, so assert on the
+      // RPC itself -- the status bar can retain its last message across a mode
+      // switch, which makes it a misleading proxy.
+      const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
+
+      // --- Source mode (plain R file): a completion request IS issued, and the
+      // request monitoring observes it. This guards the visual-mode check below
+      // against a false pass (completions or monitoring silently broken). A
+      // fresh R file is always a single editor, avoiding the ambiguous editor
+      // state a document leaves behind after visual mode. ---
+      await sourceActions.createAndOpenFile(rFile, 'x <- 1\n');
+      try {
+        await sleep(1000);
+        // Arm the wait before typing so a fast request isn't missed.
+        const sourceRequest = page.waitForRequest(completionRpc, { timeout: TIMEOUTS.ghostText });
+        await sourceActions.goToEnd();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('y <- fun');
+        await sourceRequest;
+        console.log('  Completion request issued in source mode');
+      } finally {
+        await sourceActions.closeSourceAndDeleteFile(rFile).catch(() => {});
+      }
+
+      // --- Visual mode (Quarto doc): editing must not issue a completion
+      // request -- neither in prose nor inside the code chunk's embedded editor.
+      // Visual mode is only offered for markdown documents. No YAML header, so
+      // the R chunk is the only embedded editor (simplifies targeting it). ---
+      const fileContent =
+        '## Section\n' +
+        '\n' +
+        'Some introductory prose.\n' +
+        '\n' +
+        '```{r}\n' +
+        'x <- 1\n' +
+        '```\n' +
+        '\n' +
+        'Closing prose.\n';
+
+      await sourceActions.createAndOpenFile(qmdFile, fileContent);
+      try {
+        await sleep(1000);
+        await sourceActions.ensureVisualMode();
+        const proseMirror = page.locator('.ProseMirror').first();
+        // Fail loudly if visual mode didn't actually activate, rather than
+        // silently exercising source mode and passing for the wrong reason.
+        await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+        // Start watching only after visual mode is active, so requests from
+        // opening the document or the source->visual sync don't count.
+        let visualCompletionRpc: string | null = null;
+        const onVisualRequest = (request: Request) => {
+          if (completionRpc.test(request.url())) visualCompletionRpc = request.url();
+        };
+        page.on('request', onVisualRequest);
+
+        try {
+          await proseMirror.click();
+          await page.keyboard.type('Typing in the visual editor.');
+          await page.keyboard.press('Enter');
+          await page.keyboard.press('Enter');
+
+          // Also type inside the code chunk's embedded Ace editor -- where a
+          // user writes code and where completions would normally fire. Its
+          // edits reach completions through the same source documentChanged
+          // handler the guard sits on. Force-click because an ace_content
+          // overlay intercepts normal clicks on the hidden textarea.
+          const chunkInput = page.locator('.ProseMirror textarea.ace_text-input').first();
+          await chunkInput.click({ force: true });
+          await page.keyboard.press('End');
+          await page.keyboard.press('Enter');
+          await page.keyboard.type('y <- fun');
+
+          // Give the visual editor's sync-on-idle, the completion delay, and a
+          // backend round-trip ample time, so a regression (request issued in
+          // visual mode) reliably shows up.
+          await sleep(10000);
+
+          expect(
+            visualCompletionRpc,
+            `unexpected completion request in visual mode: ${visualCompletionRpc}`,
+          ).toBeNull();
+          console.log('  No completion request issued in visual mode');
+        } finally {
+          page.off('request', onVisualRequest);
+        }
+      } finally {
+        // Closing the tab tears down the visual editor entirely. Prefer this to
+        // toggling back to source mode, which only hides the panmirror and
+        // leaves its embedded Ace editors mounted -- that makes the source
+        // aceTextInput locator ambiguous for later tests in the shared IDE.
+        await sourceActions.closeSourceAndDeleteFile(qmdFile).catch(() => {});
+      }
+    });
+
     test.afterAll(async ({ rstudioPage: page }) => {
       // Post-suite cleanup: discard any open buffers and delete artifacts.
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
@@ -661,6 +764,8 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
       await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);

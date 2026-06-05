@@ -27,6 +27,7 @@
 - ([#17810](https://github.com/rstudio/rstudio/issues/17810)): Fix the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.
 - ([#17735](https://github.com/rstudio/rstudio/issues/17735)): Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.
 - ([#17066](https://github.com/rstudio/rstudio/issues/17066)): Fix the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.
+- ([#17327](https://github.com/rstudio/rstudio/issues/17327)): Stop requesting code completions and next-edit suggestions while editing in visual mode, where suggestions aren't shown, so document contents are no longer sent to the completion backend for suggestions there.
 - ([#17493](https://github.com/rstudio/rstudio/issues/17493)): Fix the comment/uncomment shortcut inserting the comment character at the start of an empty indented line instead of after the indent.
 - ([#17868](https://github.com/rstudio/rstudio/issues/17868)): Restrict the Python help URL handler (`/python/`) to valid help-topic names, accepting only plain dotted qualified names.
 - ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
