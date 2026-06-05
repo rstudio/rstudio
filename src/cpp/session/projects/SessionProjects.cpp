@@ -514,7 +514,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    else
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
-   
+   configJson["editor_theme"] = config.editorTheme;
+
    // scratch path
    std::string scratchPath;
    Error error = readProjectScratchPath(&scratchPath);
@@ -778,6 +779,9 @@ Error writeProjectConfig(const json::Object& configJson)
       {
          config.defaultTutorial = existingConfig.defaultTutorial;
       }
+
+      // preserve the editor theme; the presence-checked read below may override it
+      config.editorTheme = existingConfig.editorTheme;
    }
 
    error = json::readObject(
@@ -862,6 +866,15 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
   
+   // editor theme -- presence-checked so a missing key preserves the existing
+   // value, while an explicit empty string from the Appearance pane correctly
+   // clears the project override
+   {
+      auto themeItr = configJson.find("editor_theme");
+      if (themeItr != configJson.end() && json::isType<std::string>((*themeItr).getValue()))
+         config.editorTheme = (*themeItr).getValue().getString();
+   }
+
    // project id
    config.projectId = existingConfig.projectId;
 
