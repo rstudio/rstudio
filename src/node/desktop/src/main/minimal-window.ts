@@ -59,7 +59,13 @@ class MinimalWindow extends DesktopBrowserWindow {
   }
 
   parentWindowDestroyed(): void {
-    this.window.close();
+    // The parent listener is removed on this window's 'close' event, but a
+    // shutdown-ordering race can fire WINDOW_DESTROYED after this window's
+    // BrowserWindow is already destroyed. Guard against closing a dead window
+    // to avoid an uncaught "Object has been destroyed" error (rstudio#17870).
+    if (!this.window.isDestroyed()) {
+      this.window.close();
+    }
   }
 }
 
