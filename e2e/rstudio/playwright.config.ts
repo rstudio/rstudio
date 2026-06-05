@@ -129,7 +129,8 @@ if (process.env.GITHUB_ACTIONS)
 // are suppressed per-shard. sandbox-reporter is kept so teardown can still
 // detect failures and preserve sandbox state for artifact upload. The E2E Test
 // Insights reporter rides alongside blob so per-shard results also reach the
-// dashboard; it no-ops without CONNECT_API_KEY (e.g. fork PRs).
+// dashboard. Without CONNECT_API_KEY (e.g. fork PRs) it still runs but
+// its uploads fail with warnings (never fails the run).
 if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
   reporters.splice(0, reporters.length, ['blob'], ['./fixtures/sandbox-reporter.ts'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
 
