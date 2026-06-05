@@ -1,3 +1,4 @@
+import type { Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS, sleep, CODE_SUGGESTION_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -661,58 +662,67 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         '\n' +
         'Closing prose.\n';
 
-      // The assistant posts a status-bar message for every completion/NES
-      // request: "Waiting for completions..." when the request is sent, then
-      // "Completion response received." / "No completions available." once it
-      // resolves. None of these auto-hide, so such a message in the active
-      // editor's footer after an edit is a reliable signal that a request was
-      // sent. Scope to the visible tab's footer (footerTable) -- a page-wide
-      // match would also pick up a stale status left in a background editor,
-      // e.g. the suite's persistent Untitled tab.
-      const completionStatus = sourcePane.footerTable.locator('.gwt-Label', {
-        hasText: /Waiting for completions|Completion response received|No completions available/,
-      });
+      // The fix suppresses the actual requests to the completion backend, so
+      // assert on the RPC itself rather than the status bar: the status bar's
+      // last message lingers across a source->visual switch (it never
+      // auto-hides), which makes it a misleading proxy. These are the two RPCs
+      // the editor issues for inline completions and next-edit suggestions.
+      const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
       try {
-        // --- Visual mode: editing must not trigger a completion request ---
+        // --- Visual mode: editing must not issue a completion request ---
         await sourceActions.ensureVisualMode();
         const proseMirror = page.locator('.ProseMirror').first();
         // Fail loudly if visual mode didn't actually activate, rather than
         // silently exercising source mode and passing for the wrong reason.
         await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
-        await proseMirror.click();
-        await page.keyboard.type('Typing in the visual editor.');
-        await page.keyboard.press('Enter');
-        await page.keyboard.press('Enter');
+        // Start watching only after visual mode is active, so requests from
+        // opening the document or the source->visual sync don't count.
+        let visualCompletionRpc: string | null = null;
+        const onVisualRequest = (request: Request) => {
+          if (completionRpc.test(request.url())) visualCompletionRpc = request.url();
+        };
+        page.on('request', onVisualRequest);
 
-        // Give the visual editor's sync-on-idle, the completion delay, and a
-        // backend round-trip ample time to fire a request, so a regression
-        // (request sent in visual mode) reliably surfaces the status message.
-        await sleep(10000);
+        try {
+          await proseMirror.click();
+          await page.keyboard.type('Typing in the visual editor.');
+          await page.keyboard.press('Enter');
+          await page.keyboard.press('Enter');
 
-        // Confirm the visual editor's footer is present, so the count-0 check
-        // below is meaningful rather than vacuously matching an absent footer.
-        await expect(sourcePane.footerTable.first()).toBeVisible({ timeout: 15000 });
-        await expect(completionStatus).toHaveCount(0);
-        console.log('  No completion status surfaced in visual mode');
+          // Give the visual editor's sync-on-idle, the completion delay, and a
+          // backend round-trip ample time, so a regression (request issued in
+          // visual mode) reliably shows up.
+          await sleep(10000);
 
-        // --- Source mode: completions resume (guards against a false pass and
-        // confirms suppression is scoped to visual mode) ---
+          expect(
+            visualCompletionRpc,
+            `unexpected completion request in visual mode: ${visualCompletionRpc}`,
+          ).toBeNull();
+          console.log('  No completion request issued in visual mode');
+        } finally {
+          page.off('request', onVisualRequest);
+        }
+
+        // --- Source mode: completions resume. Guards against a false pass,
+        // confirms suppression is scoped to visual mode, and proves the request
+        // monitoring above actually observes these RPCs. ---
         await sourceActions.ensureSourceMode();
         // The visual editor's embedded chunk/YAML editors must be gone before
         // we drive the source editor, otherwise aceTextInput is ambiguous.
         await expect(sourcePane.aceTextInput).toHaveCount(1, { timeout: 15000 });
 
+        // Arm the wait before typing so a fast request isn't missed.
+        const sourceRequest = page.waitForRequest(completionRpc, { timeout: TIMEOUTS.ghostText });
         await sourceActions.goToEnd();
         await page.keyboard.press('Enter');
         await page.keyboard.type('y <- fun');
-
-        await expect(completionStatus.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
-        console.log('  Completion status surfaced again in source mode');
+        await sourceRequest;
+        console.log('  Completion request issued again in source mode');
       } finally {
         // Never leave the shared (worker-scoped) IDE in visual mode: a lingering
         // visual editor keeps embedded Ace editors mounted, which makes the
