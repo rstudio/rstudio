@@ -94,6 +94,28 @@ binding. No new theme-application machinery is added.
 - In `ProjectContext::uiPrefs()`, `editor_theme` is added to the project layer only
   when non-empty (so `(Default)` correctly falls through to the user layer).
 
+## Applied-theme resolution rule
+
+Three code paths apply a theme. They all use the **same rule** to choose the
+*applied* theme (the object written to `userState.theme`), and **none** of them
+mutate the stored project value or `.Rproj`:
+
+> **applied = the effective `editor_theme` (project layer included) if that name is
+> installed; else the *global* `editor_theme` (the effective value with the project
+> layer excluded) if installed; else the built-in default theme.**
+
+- **Backend — `syncThemePrefs()`:** "effective" is `prefs::userPrefs().editorTheme()`.
+  "Global" is the first present value when reading `editor_theme` across the
+  non-project layers in precedence — `kUserPrefsUserLayer` → `kUserPrefsSystemLayer`
+  → `kUserPrefsComputedLayer` → `kUserPrefsDefaultLayer` — via
+  `readValue(layer, kEditorTheme)`. Installed-ness is membership in `getAllThemes()`.
+  (Reading only the user layer is **not** sufficient: a site/admin `system` default or
+  the schema `default` must still win when the user has no explicit theme.)
+- **Client — the project dialog and the global pane:** "effective" is
+  `editorTheme().getValue()`; "global" is `editorTheme().getGlobalValue()`, which
+  already iterates user→system→computed→default and skips the project layer
+  (`Prefs.java:159`). Installed-ness is membership in the loaded `themeList_`.
+
 ## Detailed changes
 
 ### Backend (C++): `.Rproj` ⇄ project pref layer
@@ -125,14 +147,29 @@ binding. No new theme-application machinery is added.
      `config.editorTheme`.
 
 5. **`src/cpp/session/modules/SessionThemes.cpp`** — `syncThemePrefs()` (line 632):
-   add the missing-theme fallback. Resolve the *effective* `editor_theme`; if its name
-   is not present in `getAllThemes()`, fall back to the **user-layer** value
-   (`prefs::userPrefs().readValue(kUserPrefsUserLayer, kEditorTheme)`) and resolve that;
-   if that is also missing, leave the built-in default. Set `userState().theme()` to the
-   resolved object. **Do not** modify the `editor_theme` pref or the `.Rproj` value — the
-   project setting is preserved; only the *applied* theme falls back. Restructure the
-   function so the target theme is computed and compared by name, rather than relying
-   solely on the current `state != prefTheme` short-circuit.
+   add the missing-theme fallback following the **Applied-theme resolution rule**
+   above. Compute the applied theme name = effective `editor_theme` if installed, else
+   the global `editor_theme` resolved across the non-project layers
+   (`kUserPrefsUserLayer` → `kUserPrefsSystemLayer` → `kUserPrefsComputedLayer` →
+   `kUserPrefsDefaultLayer`, first present wins), else the built-in default; then set
+   `userState().theme()` to that theme's object. **Do not** modify the `editor_theme`
+   pref or the `.Rproj` value — the project setting is preserved; only the *applied*
+   theme falls back. Restructure the function so the target theme is computed and
+   compared by name, rather than relying solely on the current `state != prefTheme`
+   short-circuit.
+   - Extract the decision as a pure, unit-testable free function declared in
+     `SessionThemes.hpp`:
+     ```cpp
+     // Returns the theme name to apply given the effective and global editor_theme
+     // values and the set of installed theme names. Never returns a name absent from
+     // availableThemes unless that set is empty.
+     std::string chooseAppliedThemeName(const std::string& effectiveName,
+                                        const std::string& globalName,
+                                        const std::set<std::string>& availableThemes,
+                                        const std::string& defaultName);
+     ```
+     `syncThemePrefs()` reads the layer values, builds `availableThemes` from
+     `getAllThemes()`, calls this helper, then writes `userState().theme()`.
 
 ### Frontend (GWT)
 
@@ -156,10 +193,13 @@ binding. No new theme-application machinery is added.
      Return an empty `RestartRequirement` (applied live; no restart needed).
    - `getName()` → "Appearance"; `getIcon()` → appearance icon;
      `wrapWithPanel("project_appearance_prefs")`.
-   - Expose a small helper for the dialog's live-apply, e.g.
-     `AceTheme resolveAppliedTheme(UserPrefs uiPrefs)` returning the selected theme if
-     installed, otherwise the user-global theme (`editorTheme().getGlobalValue()`)
-     looked up in the loaded theme list, or `null` if the list has not loaded yet.
+   - Expose a small helper for the dialog's live-apply that implements the
+     **Applied-theme resolution rule**:
+     `AceTheme resolveAppliedTheme(UserPrefs uiPrefs)` returns
+     `themeList_.get(uiPrefs.editorTheme().getValue())` if installed, else
+     `themeList_.get(uiPrefs.editorTheme().getGlobalValue())`, else `null` (theme list
+     not yet loaded). It must be called **after** the dialog has set/removed the project
+     value, so `getValue()` reflects the new effective theme.
 
 8. **`src/gwt/.../projects/ui/prefs/ProjectPreferencesDialog.java`**
    - Add `public static final int APPEARANCE = 2;` **between** `EDITING (1)` and
@@ -188,16 +228,24 @@ binding. No new theme-application machinery is added.
 ### Global Appearance pane companion fix
 
 9. **`src/gwt/.../workbench/prefs/views/AppearancePreferencesPane.java`**
-   - Today the theme selector is seeded and the availability check is performed from
-     `userState_.theme().getName()` (e.g. lines 565, 581). Once project overrides can
-     mutate `userState.theme`, that no longer equals the user's global theme. Change the
-     pane to seed/select and availability-check the theme from
-     `userPrefs_.editorTheme().getGlobalValue()` (the user-layer name), looked up in the
-     loaded theme list. `onApply` continues to write **both** `userState.theme` global
-     value and `editor_theme` global value as today.
-   - Effect: opening Global Options → Appearance while a project override is active shows
-     and edits the user's *global* theme, and clicking OK can no longer overwrite it with
-     the project theme.
+   - **Seed/availability check (lines ~565, 581):** today these read
+     `userState_.theme().getName()`. Once a project override can mutate `userState.theme`
+     that no longer equals the user's global theme, so the pane would display/edit the
+     project's theme. Change both to use `userPrefs_.editorTheme().getGlobalValue()`
+     (which already skips the project layer, `Prefs.java:159`), looked up in the loaded
+     theme list. This makes the global pane always edit the user's *global* theme.
+   - **`onApply` (lines ~760-765):** persist the new global value with
+     `userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false)` as today, but
+     do **not** blindly write the selected theme to `userState.theme`. Instead apply the
+     **Applied-theme resolution rule**: after persisting, set `userState.theme` to
+     `resolveAppliedTheme`'s result — the effective theme (`editorTheme().getValue()`,
+     which is the project override when one is active) if installed, else
+     `editorTheme().getGlobalValue()`. Guard on `themeList_ != null` as today.
+   - Effect: while a project override is active, opening Global Options → Appearance shows
+     and edits the user's *global* theme, and clicking OK updates the stored global theme
+     **without** clobbering it and **without** replacing the still-active project theme in
+     the editor (the project override remains applied). With no override active, behavior
+     is unchanged from today.
 
 ## Edge cases and decisions
 
@@ -212,6 +260,10 @@ binding. No new theme-application machinery is added.
   are left unchanged, so the override is honored again on a machine that has the theme.
   The Project Options pane preserves the uninstalled name (adds it as a selected item)
   so editing other options and clicking OK does not erase it.
+- **Global theme edited while a project override is active** — the global pane edits the
+  user's global `editor_theme` (seeded from `getGlobalValue()`) and, on OK, applies the
+  *effective* theme per the resolution rule. The active project override therefore stays
+  applied in the editor and the stored global value is not clobbered.
 - **`(Default)` selected** — `removeProjectValue` drops the project override; the editor
   reverts to the user's global theme.
 - **Theme list not yet loaded when OK is clicked** — `resolveAppliedTheme` returns
@@ -220,22 +272,38 @@ binding. No new theme-application machinery is added.
 
 ## Testing
 
-- **C++ (`rsession` / `core` scope):** `RProjectFile` round-trip test — write a config
-  with `editorTheme` set, read it back, assert equality; and assert that an unknown
-  sorted field present in the source `.Rproj` survives a write alongside `EditorTheme`
-  (guards the churn-preservation behavior).
+- **C++ `RProjectFile` round-trip (`core` scope):** write a config with `editorTheme`
+  set, read it back, assert equality. Separately, assert that an unknown sorted field
+  present in the source `.Rproj` survives a write alongside `EditorTheme` (churn
+  preservation), and that a config with `editorTheme == ""` writes no `EditorTheme` line
+  and preserves any pre-existing `EditorTheme` value is **not** the goal here — empty
+  means the key is removed, so assert it is absent after writing an empty value.
+- **C++ `chooseAppliedThemeName` unit tests (`rsession` scope, new
+  `SessionThemesTests.cpp`)** — directly cover the fallback decision (finding from
+  review): (a) effective installed → returns effective; (b) effective missing but global
+  installed → returns global (the missing **project** theme is *not* returned, proving
+  fallback without mutation); (c) both missing → returns the default; (d) global resolved
+  from a non-user layer — e.g. effective and user-layer empty but a `system`/`default`
+  value installed → returns that, guarding against the "user layer only" bug.
 - **Playwright e2e (`e2e/rstudio/`):** open a project; set the project editor theme via
   the dialog and assert the active editor theme changes live; set it back to `(Default)`
   and assert it reverts to the global theme. Drive via the `window.rstudio` bridge
-  (`prefs`, `project`, `commands`).
+  (`prefs`, `project`, `commands`). See the `rstudio-create-playwright-tests` skill.
+- **Manual verification (hard to automate — no API to uninstall a theme mid-session):**
+  (1) a `.Rproj` referencing a theme not installed on the machine → editor shows the
+  user's global theme and the `.Rproj` `EditorTheme` line is left untouched after editing
+  and saving other project options; (2) with a project override active, change the theme
+  in Global Options → Appearance and confirm the editor keeps showing the project theme
+  while the user's global theme is updated (no clobber).
 - **NEWS.md:** add an entry under `### New` referencing
   [#2350](https://github.com/rstudio/rstudio/issues/2350).
 
 ## Files touched (summary)
 
 Backend: `RProjectFile.hpp`, `RProjectFile.cpp`, `SessionProjectContext.cpp`,
-`SessionProjects.cpp`, `SessionThemes.cpp`.
+`SessionProjects.cpp`, `SessionThemes.hpp`, `SessionThemes.cpp`.
 Frontend: `RProjectConfig.java`, new `ProjectAppearancePreferencesPane.java`,
 `ProjectPreferencesDialog.java`, `AppearancePreferencesPane.java`, project pane
 resources/constants as needed.
-Docs/tests: `NEWS.md`, C++ `RProjectFile` test, Playwright e2e test.
+Docs/tests: `NEWS.md`, new `RProjectFileTests.cpp`, new `SessionThemesTests.cpp`,
+Playwright e2e test.
