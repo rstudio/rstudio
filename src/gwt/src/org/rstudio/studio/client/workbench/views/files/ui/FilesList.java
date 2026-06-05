@@ -478,6 +478,11 @@ public class FilesList extends Composite
             {
                files.add(file);
                filesDataGrid_.setPageSize(files.size() + 1);
+
+               // re-apply the active sort so the new file lands in its
+               // sorted position rather than at the bottom of the list
+               applyColumnSortList();
+
                scheduleRedraw();
             }
             else
