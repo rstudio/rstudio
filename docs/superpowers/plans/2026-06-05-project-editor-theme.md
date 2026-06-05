@@ -740,6 +740,7 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    protected void initialize(RProjectOptions options)
    {
       final String storedTheme = options.getConfig().getEditorTheme();
+      initialEditorTheme_ = storedTheme;
 
       themes_.getThemes(themeList ->
       {
@@ -765,7 +766,10 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
-      options.getConfig().setEditorTheme(theme_.getSelectedValue());
+      // If the theme list has not loaded yet, the selector only holds (Default);
+      // preserve the stored value rather than erasing an existing override.
+      String value = (themeList_ == null) ? initialEditorTheme_ : theme_.getSelectedValue();
+      options.getConfig().setEditorTheme(value);
       return new RestartRequirement();
    }
 
@@ -799,6 +803,7 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
 
    private static final String DEFAULT_VALUE = "";
 
+   private String initialEditorTheme_ = "";
    private final AceThemes themes_;
    private final ListBox theme_;
    private HashMap<String, AceTheme> themeList_;
@@ -975,6 +980,10 @@ with:
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(globalThemeName);
             AceTheme globalTheme = themeList_.get(globalThemeName);
+            // keep the preview in sync with the selected (global) theme -- otherwise,
+            // with a project override active, the preview would still show the override
+            if (globalTheme != null)
+               preview_.setTheme(globalTheme.getUrl());
             removeThemeButton_.setEnabled(globalTheme != null && !globalTheme.isDefaultTheme());
 ```
 
