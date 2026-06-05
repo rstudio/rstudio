@@ -779,9 +779,6 @@ Error writeProjectConfig(const json::Object& configJson)
       {
          config.defaultTutorial = existingConfig.defaultTutorial;
       }
-
-      // preserve the editor theme; the presence-checked read below may override it
-      config.editorTheme = existingConfig.editorTheme;
    }
 
    error = json::readObject(
@@ -866,14 +863,9 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
   
-   // editor theme -- presence-checked so a missing key preserves the existing
-   // value, while an explicit empty string from the Appearance pane correctly
-   // clears the project override
-   {
-      auto themeItr = configJson.find("editor_theme");
-      if (themeItr != configJson.end() && json::isType<std::string>((*themeItr).getValue()))
-         config.editorTheme = (*themeItr).getValue().getString();
-   }
+   // editor theme -- a missing key preserves the existing value, while an
+   // explicit empty string from the Appearance pane clears the project override
+   config.editorTheme = resolveWrittenEditorTheme(existingConfig.editorTheme, configJson);
 
    // project id
    config.projectId = existingConfig.projectId;
@@ -1405,6 +1397,15 @@ json::Array websiteOutputFormatsJson()
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;
+}
+
+std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
+                                      const json::Object& configJson)
+{
+   auto it = configJson.find("editor_theme");
+   if (it != configJson.end() && (*it).getValue().isString())
+      return (*it).getValue().getString();
+   return existingEditorTheme;
 }
 
 } // namespace projects
