@@ -82,7 +82,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -218,6 +217,9 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
