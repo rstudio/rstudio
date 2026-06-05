@@ -648,8 +648,8 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // The two RPCs the editor issues for inline completions and next-edit
       // suggestions. The fix suppresses these in visual mode, so assert on the
-      // RPC itself -- the status bar's last message lingers across a mode switch
-      // (it never auto-hides) and is a misleading proxy.
+      // RPC itself -- the status bar can retain its last message across a mode
+      // switch, which makes it a misleading proxy.
       const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
 
       // --- Source mode (plain R file): a completion request IS issued, and the
@@ -672,13 +672,10 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       }
 
       // --- Visual mode (Quarto doc): editing must not issue a completion
-      // request. Visual mode is only offered for markdown documents; the chunk
-      // makes the visual editor mount an embedded Ace editor as well. ---
+      // request -- neither in prose nor inside the code chunk's embedded editor.
+      // Visual mode is only offered for markdown documents. No YAML header, so
+      // the R chunk is the only embedded editor (simplifies targeting it). ---
       const fileContent =
-        '---\n' +
-        'title: "Visual Mode Completions"\n' +
-        '---\n' +
-        '\n' +
         '## Section\n' +
         '\n' +
         'Some introductory prose.\n' +
@@ -711,6 +708,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           await page.keyboard.type('Typing in the visual editor.');
           await page.keyboard.press('Enter');
           await page.keyboard.press('Enter');
+
+          // Also type inside the code chunk's embedded Ace editor -- where a
+          // user writes code and where completions would normally fire. Its
+          // edits reach completions through the same source documentChanged
+          // handler the guard sits on. Force-click because an ace_content
+          // overlay intercepts normal clicks on the hidden textarea.
+          const chunkInput = page.locator('.ProseMirror textarea.ace_text-input').first();
+          await chunkInput.click({ force: true });
+          await page.keyboard.press('End');
+          await page.keyboard.press('Enter');
+          await page.keyboard.type('y <- fun');
 
           // Give the visual editor's sync-on-idle, the completion delay, and a
           // backend round-trip ample time, so a regression (request issued in
