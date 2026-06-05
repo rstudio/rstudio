@@ -218,16 +218,18 @@ export class SourcePaneActions {
     }, marker);
   }
 
-  /** Get the first visible row index (0-based) of the active source editor. */
+  /**
+   * Get the first visible row index (0-based) of the active source editor.
+   * Uses the automation bridge's activeEditor() rather than scanning
+   * `.ace_editor` nodes -- a DOM scan can land on a stale or background
+   * editor (e.g. the empty Untitled tab the suite keeps open), which sorts
+   * first and always reports row 0. See getEditorContent for the same pattern.
+   */
   async getFirstVisibleRow(): Promise<number> {
     return await this.page.evaluate(() => {
-      const editors = document.querySelectorAll('.ace_editor');
-      for (let i = 0; i < editors.length; i++) {
-        if (editors[i].closest('#rstudio_console_input')) continue;
-        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
-        if (editor) return editor.getFirstVisibleRow();
-      }
-      throw new Error('No active source editor found');
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      return editor.getFirstVisibleRow();
     });
   }
 

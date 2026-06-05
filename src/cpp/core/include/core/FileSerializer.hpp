@@ -297,18 +297,40 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // when it is in use by another process (common when using backup software), and if so
 // how many seconds of elapsed time should we wait for the file to become available
 // note: this only has an effect on Windows
+//
+// durable, when true, flushes the contents all the way to physical storage
+// (fsync / FlushFileBuffers) before returning. This is required to reliably
+// detect a full disk (ENOSPC) or an exceeded quota (EDQUOT) -- with delayed
+// allocation a write into the page cache succeeds even on a full disk, and the
+// failure only surfaces when the pages are flushed -- but it is relatively
+// expensive, so it defaults off. Enable it on paths where a silently dropped
+// write would lose user data (e.g. saving an editor document).
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
                         bool truncate = true,
                         int maxOpenRetrySeconds = 0,
-                        bool logError = true);
+                        bool logError = true,
+                        bool durable = false);
 
 // Writes a string to a file atomically by first writing to a temporary file
 // in the same directory and then renaming it into place.
+//
+// preservePermissions, when true and filePath already exists, copies the
+// existing file's permission bits onto the temporary file before renaming so
+// that an atomic overwrite does not silently reset the file's mode to the
+// temporary file's defaults. No-op on Windows. Defaults off so existing
+// callers (which create new files) are unaffected.
 Error writeStringToFileAtomic(const core::FilePath& filePath,
                               const std::string& str,
-                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough);
+                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
+                              bool preservePermissions = false);
+
+// Returns true if the given error indicates that a write failed because the
+// disk is full (ENOSPC) or a disk quota was exceeded (EDQUOT), including the
+// Windows equivalents. Useful for translating a raw write failure into a
+// recovery-oriented message for the user.
+bool isDiskSpaceError(const core::Error& error);
 
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
