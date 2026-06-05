@@ -30,6 +30,7 @@
 - ([#17868](https://github.com/rstudio/rstudio/issues/17868)): Restrict the Python help URL handler (`/python/`) to valid help-topic names, accepting only plain dotted qualified names.
 - ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
 - ([#17845](https://github.com/rstudio/rstudio/issues/17845)): Fix Find in Files "Replace All" overwriting a source file with truncated or empty contents when the write failed (for example, when the disk is full or a disk quota is exceeded); the replacement is now written atomically and durably, so on failure the original file is left untouched and the error is reported.
+- ([#17865](https://github.com/rstudio/rstudio/issues/17865)): Fix project paths on a mapped network drive (e.g. `S:`) being resolved to their UNC target (e.g. `\\server\share`) on Windows, which caused functions such as `here::here()` and `getwd()` to report the UNC path instead of the mapped drive.
 
 ### Dependencies
 - Ace 1.43.5
