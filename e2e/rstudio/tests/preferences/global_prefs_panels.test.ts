@@ -81,7 +81,9 @@ test.describe('Global Options panels', () => {
     await expect(page.locator(CODE_DIAGNOSTICS_TAB)).toBeVisible();
 
     await expect(page.locator(CODE_EDITING_PANEL)).toBeVisible();
-    await expect(page.getByLabel('Auto-detect code indentation')).not.toBeChecked();
+    const autoDetect = page.getByLabel('Auto-detect code indentation');
+    await expect(autoDetect).toBeVisible();
+    await expect(autoDetect).not.toBeChecked();
 
     await page.locator(CODE_DISPLAY_TAB).click();
     await expect(page.locator(CODE_DISPLAY_PANEL)).toBeVisible();
@@ -130,33 +132,23 @@ test.describe('Global Options panels', () => {
     await closeGlobalOptions(page);
   });
 
-  test('Pane Layout panel is accessible', async ({ rstudioPage: page }) => {
-    await openGlobalOptions(page);
-    await page.locator(PANE_LAYOUT_TAB).click();
-    await expect(page.locator(PANE_LAYOUT_PANEL)).toBeVisible();
-    await closeGlobalOptions(page);
-  });
+  // Panels that are a plain open -> click tab -> verify panel visible. Each row
+  // generates its own named test so a failure still points at one panel.
+  const SIMPLE_PANELS = [
+    { name: 'Pane Layout', tab: PANE_LAYOUT_TAB, panel: PANE_LAYOUT_PANEL },
+    { name: 'R Markdown', tab: RMARKDOWN_TAB, panel: RMARKDOWN_PANEL },
+    { name: 'Spelling', tab: SPELLING_TAB, panel: SPELLING_PANEL },
+    { name: 'Sweave', tab: SWEAVE_TAB, panel: SWEAVE_PANEL },
+  ];
 
-  test('R Markdown panel is accessible', async ({ rstudioPage: page }) => {
-    await openGlobalOptions(page);
-    await page.locator(RMARKDOWN_TAB).click();
-    await expect(page.locator(RMARKDOWN_PANEL)).toBeVisible();
-    await closeGlobalOptions(page);
-  });
-
-  test('Spelling panel is accessible', async ({ rstudioPage: page }) => {
-    await openGlobalOptions(page);
-    await page.locator(SPELLING_TAB).click();
-    await expect(page.locator(SPELLING_PANEL)).toBeVisible();
-    await closeGlobalOptions(page);
-  });
-
-  test('Sweave panel is accessible', async ({ rstudioPage: page }) => {
-    await openGlobalOptions(page);
-    await page.locator(SWEAVE_TAB).click();
-    await expect(page.locator(SWEAVE_PANEL)).toBeVisible();
-    await closeGlobalOptions(page);
-  });
+  for (const { name, tab, panel } of SIMPLE_PANELS) {
+    test(`${name} panel is accessible`, async ({ rstudioPage: page }) => {
+      await openGlobalOptions(page);
+      await page.locator(tab).click();
+      await expect(page.locator(panel)).toBeVisible();
+      await closeGlobalOptions(page);
+    });
+  }
 
   test('Terminal sub-panels are accessible', async ({ rstudioPage: page }) => {
     await openGlobalOptions(page);

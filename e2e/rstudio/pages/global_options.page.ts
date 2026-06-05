@@ -75,6 +75,8 @@ export const PYTHON_INTERPRETER_SELECT_BTN = '#rstudio_tbb_button_python_path';
 export const PYTHON_INTERPRETERS_MODAL = '[aria-label="Python Interpreters"]';
 
 // Assistant (code assistant / GitHub Copilot configuration)
+// ASSISTANT_TAB/ASSISTANT_PANEL and OPTIONS_OK mirror selectors in
+// pages/assistant_options.page.ts; keep both in sync if these IDs change.
 export const ASSISTANT_TAB = '#rstudio_label_assistant_options';
 export const ASSISTANT_PANEL = '#rstudio_label_assistant_options_panel';
 export const ASSISTANT_LABEL = 'Use code assistant:';
@@ -87,5 +89,5 @@ export async function openGlobalOptions(page: Page): Promise<void> {
 
 export async function closeGlobalOptions(page: Page): Promise<void> {
   await page.locator(OPTIONS_CANCEL).click();
-  await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 10000 });
+  await page.waitForSelector(GLOBAL_OPTIONS_DIALOG, { state: 'detached', timeout: 10000 });
 }
