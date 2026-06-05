@@ -248,7 +248,7 @@
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
       col_vals        = "",
-      col_type_r      = .rs.scalar(""),
+      col_class       = "rownames",
       col_na_count    = .rs.scalar(0),
       col_index       = .rs.scalar(0L),
       total_cols      = .rs.scalar(totalCols),
@@ -293,8 +293,11 @@
          colNames[idx] 
       else 
          as.character(idx)
-      col_type <- "unknown"
-      col_type_r <- "unknown"
+      # col_type and col_class are reported faithfully from the column itself
+      # (typeof / class); the cascade below only derives the search type and
+      # the histogram / factor-level metadata used by the client.
+      col_type <- typeof(x[[idx]])
+      col_class <- class(x[[idx]])
       col_breaks <- c()
       col_counts <- c()
       col_vals <- ""
@@ -329,11 +332,6 @@
       if (length(x[[idx]]) > 0)
       {
          val <- x[[idx]][[1]]
-         # col_type_r feeds the sidebar's typeLabel map in DataViewer.js;
-         # changing this from typeof(val) to class(val)[[1]] is a wire-
-         # protocol-visible behavior change (e.g. Date columns now report
-         # "Date" instead of "double").
-         col_type_r <- class(val)[[1]]
          if (is.factor(val))
          {
             # we previously used the 'maxFactors' variable to try and guess
@@ -343,7 +341,6 @@
             # ignore the 'maxFactors' parameter.
             #
             # https://github.com/rstudio/rstudio/issues/14113
-            col_type <- "factor"
             col_search_type <- "factor"
             col_vals <- levels(val)
          }
@@ -381,33 +378,21 @@
                col_breaks <- h$breaks
                col_counts <- h$counts
 
-               # record column type
-               col_type <- "numeric"
+               # record search type
                col_search_type <- "numeric"
             }
          }
          else if (inherits(x[[idx]], "integer64"))
          {
-            col_type <- "numeric"
             col_search_type <- "character"
          }
          else if (is.character(val))
          {
-            col_type <- "character"
             col_search_type <- "character"
          }
          else if (is.logical(val))
          {
-            col_type <- "boolean"
             col_search_type <- "boolean"
-         }
-         else if (is.data.frame(val))
-         {
-            col_type <- "data.frame"
-         }
-         else if (is.list(val))
-         {
-            col_type <- "list"
          }
       }
       # count NA values
@@ -421,7 +406,7 @@
          col_search_type = .rs.scalar(col_search_type),
          col_label       = .rs.scalar(col_label),
          col_vals        = col_vals,
-         col_type_r      = .rs.scalar(col_type_r),
+         col_class       = as.character(col_class),
          col_na_count    = .rs.scalar(col_na_count),
          col_index       = .rs.scalar(as.integer(colIndices[idx]))
       )
@@ -899,10 +884,13 @@
    if (length(cols) > 0)
    {
       vals <- list()
-      for (i in length(cols))
+      for (i in seq_along(cols))
       {
          idx <- cols[[i]]
-         if (length(x[[idx]]) > 0)
+         # list and data.frame columns are non-atomic; order() and xtfrm()
+         # error out on them ("unimplemented type 'list'"), so skip them here
+         # as a backstop in case the client requests a sort on such a column
+         if (length(x[[idx]]) > 0 && !is.list(x[[idx]]))
          {
             if (identical(dirs[[i]], "asc"))
             {

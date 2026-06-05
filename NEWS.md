@@ -30,6 +30,7 @@
 - ([#17868](https://github.com/rstudio/rstudio/issues/17868)): Restrict the Python help URL handler (`/python/`) to valid help-topic names, accepting only plain dotted qualified names.
 - ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
 - ([#17845](https://github.com/rstudio/rstudio/issues/17845)): Fix Find in Files "Replace All" overwriting a source file with truncated or empty contents when the write failed (for example, when the disk is full or a disk quota is exceeded); the replacement is now written atomically and durably, so on failure the original file is left untouched and the error is reported.
+- ([#17863](https://github.com/rstudio/rstudio/issues/17863)): Fix the Data Viewer entering a "Failed to fetch" error state when clicking the header of a list column to sort it; such columns are no longer sortable.
 
 ### Dependencies
 - Ace 1.43.5
