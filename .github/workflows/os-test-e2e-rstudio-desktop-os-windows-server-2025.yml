@@ -361,8 +361,12 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: windows-2025
-    timeout-minutes: 180
+    timeout-minutes: 120
     defaults:
       run:
         shell: pwsh
@@ -551,6 +555,7 @@ jobs:
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           PW_DEBUG_LAUNCH: '1'
+          PW_SHARD: ${{ matrix.shard }}/2
         run: |
           $ErrorActionPreference = 'Stop'
           $pwArgs = @()
@@ -567,13 +572,15 @@ jobs:
             $pwArgs += '--grep-invert'
             $pwArgs += $env:PW_GREP_INVERT
           }
+          $pwArgs += '--shard'
+          $pwArgs += $env:PW_SHARD
           npx playwright test $pwArgs
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shard }}
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
@@ -582,7 +589,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-shard-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
           retention-days: 15
           if-no-files-found: ignore
@@ -591,7 +598,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pw-sandbox
+          name: pw-sandbox-shard-${{ matrix.shard }}
           path: ${{ github.workspace }}\pw-sandbox\
           retention-days: 15
           if-no-files-found: ignore
@@ -602,7 +609,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-crash-dumps
+          name: windows-crash-dumps-shard-${{ matrix.shard }}
           path: ${{ env.LOCALAPPDATA }}\CrashDumps\
           retention-days: 15
           if-no-files-found: ignore
