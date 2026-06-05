@@ -560,26 +560,41 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
 
+            // Seed the selector from the user's stored global theme preference,
+            // not from userState_.theme(), which may reflect a project override.
+            String globalThemeName = userPrefs_.editorTheme().getGlobalValue();
+
             // It's possible the current theme was removed outside the context of
             // RStudio, so choose a default if it can't be found.
-            AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
-            if (!themeList_.containsKey(currentTheme.getName()))
+            if (!themeList_.containsKey(globalThemeName))
             {
+               // Determine whether the missing theme was dark so we can fall
+               // back to the matching default variant.
+               AceTheme missingTheme = userState_.theme().getGlobalValue().cast();
+               boolean wasDark = missingTheme != null && missingTheme.isDark();
+
                StringBuilder warningMsg = new StringBuilder();
-               warningMsg.append(constants_.setThemeWarningMessage(currentTheme.getName(), currentTheme.isDark() ? constants_.themeWarningMessageDarkLabel() : constants_.themeWarningMessageLightLabel()));
+               warningMsg.append(constants_.setThemeWarningMessage(globalThemeName, wasDark ? constants_.themeWarningMessageDarkLabel() : constants_.themeWarningMessageLightLabel()));
 
-               currentTheme = AceTheme.createDefault(currentTheme.isDark());
-               userState_.theme().setGlobalValue(currentTheme);
-               preview_.setTheme(currentTheme.getUrl());
+               AceTheme defaultTheme = AceTheme.createDefault(wasDark);
+               userState_.theme().setGlobalValue(defaultTheme);
+               preview_.setTheme(defaultTheme.getUrl());
 
-               warningMsg.append(currentTheme.getName())
+               warningMsg.append(defaultTheme.getName())
                   .append("\".");
                Debug.logWarning(warningMsg.toString());
+
+               globalThemeName = defaultTheme.getName();
             }
 
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(currentTheme.getName());
-            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+            theme_.setValue(globalThemeName);
+
+            // Update the preview and remove-button to match the selected global theme.
+            AceTheme globalTheme = themeList_.get(globalThemeName);
+            if (globalTheme != null)
+               preview_.setTheme(globalTheme.getUrl());
+            removeThemeButton_.setEnabled(globalTheme != null && !globalTheme.isDefaultTheme());
          },
          getProgressIndicator());
    }
@@ -760,8 +775,19 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (themeList_ != null &&
           !StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
-         userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+         // persist the user's global editor theme
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
+
+         // apply the *effective* theme: a project override (if active and installed)
+         // must win, so changing the global theme does not replace it
+         String effectiveName = userPrefs_.editorTheme().getValue();
+         AceTheme applied = themeList_.get(effectiveName);
+         if (applied == null)
+            applied = themeList_.get(userPrefs_.editorTheme().getGlobalValue());
+         if (applied == null)
+            applied = themeList_.get(AceTheme.createDefault().getName());
+         if (applied != null)
+            userState_.theme().setGlobalValue(applied);
       }
 
      if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
