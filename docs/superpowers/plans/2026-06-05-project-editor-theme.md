@@ -511,20 +511,36 @@ In `src/cpp/session/projects/SessionProjects.cpp`, in `projectConfigJson()` (aft
    configJson["editor_theme"] = config.editorTheme;
 ```
 
-In `writeProjectConfig()`, add `editor_theme` to the **existing markdown `readObject`
-group** (~line 825-829). The frontend always sends `editor_theme` (Task 4 Step 1 adds it
-to `projectConfigJson()`, and `RProjectConfig.java.getEditorTheme()` returns `""` rather
-than `undefined`), so reading it in the required group is correct and avoids a spurious
-`LOG_ERROR`:
+In `writeProjectConfig()`, the freshly-built `config` is written by `writeProjectFile()`,
+which **erases** `EditorTheme` from the sorted fields when `config.editorTheme` is empty.
+`writeProjectConfig()` copies `existingConfig.sortedFields` (which contains `EditorTheme`)
+but does not otherwise populate `config.editorTheme`, so **saving unrelated project options
+would drop an existing `EditorTheme`** unless we explicitly carry it. Do both of:
 
-```cpp
-   error = json::readObject(configJson,
-                            "markdown_wrap", config.markdownWrap,
-                            "markdown_wrap_at_column", config.markdownWrapAtColumn,
-                            "markdown_references", config.markdownReferences,
-                            "markdown_canonical", config.markdownCanonical,
-                            "editor_theme", config.editorTheme);
-```
+1. In the block that preserves fields from the on-disk config (where
+   `config.sortedFields = existingConfig.sortedFields;` and `defaultOpenDocs` /
+   `defaultTutorial` / `projectId` are copied, ~line 756-781), also preserve the theme:
+
+   ```cpp
+   config.editorTheme = existingConfig.editorTheme;
+   ```
+
+2. Override it from the request JSON **only when present** (a presence-checked optional
+   read, so a client that omits the key preserves the existing value, while an explicit
+   empty string from the Appearance pane's `(Default)` correctly clears the override):
+
+   ```cpp
+   if (configJson.hasMember("editor_theme") && configJson["editor_theme"].isString())
+      config.editorTheme = configJson["editor_theme"].getString();
+   ```
+
+   Do **not** add `editor_theme` to a required `readObject` group — a missing key there
+   would error and could clobber the preserved value.
+
+**Regression coverage:** add a test (or, if there is no session-level `writeProjectConfig`
+harness, perform the manual check in the Manual Verification section) proving that writing
+project options whose JSON does **not** include `editor_theme` leaves an existing `.Rproj`
+`EditorTheme` line intact.
 
 - [ ] **Step 2: Mirror into the project pref layer**
 
