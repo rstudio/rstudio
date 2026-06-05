@@ -13,7 +13,9 @@
 **Conventions used below:**
 - C++ build (per project memory): from `build/`, run `cmake ..` (only needed after *adding* a file, because tests are GLOB-ed) then `ninja` (build everything, don't scope to a subtarget).
 - C++ tests: `./rstudio-tests --scope core --filter "<Pattern>"` (or `--scope rsession`).
-- GWT compile check: `cd src/gwt && ant javac`.
+- GWT compile check (syntax only, fast): `cd src/gwt && ant javac` — this does **not**
+  produce runnable JS. To produce runnable artifacts (required for the e2e test and any
+  manual/runtime verification) run `cd src/gwt && ant draft` (debug) or `ant` (full).
 - Commit after each task. Branch is `feature/project-editor-theme`. Each commit triggers a roborev review — wait for it and address findings before the next task.
 
 ---
@@ -1087,7 +1089,16 @@ The test should, using the project/automation fixtures:
    ```
 4. Open a second project with **no** `EditorTheme` line and assert the theme reverts to the user's global theme (capture the global theme href before opening the override project, and assert it matches after).
 
-- [ ] **Step 2: Run the test**
+- [ ] **Step 2: Build runnable frontend artifacts**
+
+`ant javac` (used in earlier tasks) only checks syntax. The e2e test exercises the IDE
+at runtime, so produce the transpiled JS first:
+```bash
+cd src/gwt && ant draft
+```
+Expected: build completes.
+
+- [ ] **Step 3: Run the test**
 
 Per the `rstudio-run-playwright-tests` skill (Desktop or Server). Example (Desktop):
 ```bash
@@ -1095,7 +1106,7 @@ cd e2e/rstudio && npx playwright test tests/<area>/project-editor-theme.spec.ts
 ```
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add e2e/rstudio/tests/<area>/project-editor-theme.spec.ts
