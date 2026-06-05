@@ -577,8 +577,11 @@ public class AppearancePreferencesPane extends PreferencesPane
                warningMsg.append(constants_.setThemeWarningMessage(globalThemeName, wasDark ? constants_.themeWarningMessageDarkLabel() : constants_.themeWarningMessageLightLabel()));
 
                AceTheme defaultTheme = AceTheme.createDefault(wasDark);
-               userState_.theme().setGlobalValue(defaultTheme);
-               preview_.setTheme(defaultTheme.getUrl());
+               // Do not write userState_.theme() here: seeding the pane must not mutate
+               // the applied theme. syncThemePrefs() already resolves a valid theme on
+               // startup, and a project override may currently be active in
+               // userState_.theme(). The selector/preview below show the default; the
+               // user's OK persists it.
 
                warningMsg.append(defaultTheme.getName())
                   .append("\".");
