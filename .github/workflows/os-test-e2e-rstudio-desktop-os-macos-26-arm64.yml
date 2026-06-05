@@ -82,7 +82,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -412,6 +411,9 @@ jobs:
     if: always() && needs.e2e-desktop-macos.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4

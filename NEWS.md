@@ -31,6 +31,7 @@
 - ([#17833](https://github.com/rstudio/rstudio/issues/17833)): Fix saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.
 - ([#17845](https://github.com/rstudio/rstudio/issues/17845)): Fix Find in Files "Replace All" overwriting a source file with truncated or empty contents when the write failed (for example, when the disk is full or a disk quota is exceeded); the replacement is now written atomically and durably, so on failure the original file is left untouched and the error is reported.
 - ([#17865](https://github.com/rstudio/rstudio/issues/17865)): Fix project paths on a mapped network drive (e.g. `S:`) being resolved to their UNC target (e.g. `\\server\share`) on Windows, which caused functions such as `here::here()` and `getwd()` to report the UNC path instead of the mapped drive.
+- ([#17870](https://github.com/rstudio/rstudio/issues/17870)): Fix an uncaught "Object has been destroyed" error in RStudio Desktop when quitting with a plot zoom (or other child) window still open.
 
 ### Dependencies
 - Ace 1.43.5
