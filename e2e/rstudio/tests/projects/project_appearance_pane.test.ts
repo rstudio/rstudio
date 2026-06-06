@@ -1,7 +1,14 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import {
+  executeInConsole,
+  waitForConsoleIdle,
+  CONSOLE_OUTPUT,
+} from '@pages/console_pane.page';
 import { executeCommand, dismissAllModals, numModalsShowing } from '@utils/commands';
 import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { rPathLiteral } from '@utils/r';
+import type { Page } from 'playwright';
 
 // Regression for the project Appearance pane editor-theme dropdown.
 //
@@ -32,8 +39,37 @@ const THEME_SELECT = '#rstudio_project_editor_theme';
 // avoids matching the hidden aria-hidden duplicate the dialog also renders.
 const PROJECT_OPTIONS_CANCEL = '#rstudio_dlg_cancel';
 
+// PreferencesDialogBase.addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM)
+// with PREFERENCES_CONFIRM = "preferences_confirm" -> "rstudio_" prefixed id.
+const PROJECT_OPTIONS_OK = '#rstudio_preferences_confirm';
+
 // The placeholder option the pane always seeds first.
 const DEFAULT_OPTION_LABEL = '(Default)';
+
+/**
+ * Read the contents of the project's .Rproj via the R console and return the
+ * text between fresh unique delimiters. Reading R-side (not the runner's FS)
+ * keeps this working in Server mode where the rsession host may not share the
+ * test runner's filesystem. A unique token per call avoids parsing a stale
+ * dump left in the accumulated console output.
+ */
+async function readRprojViaConsole(page: Page, rprojPath: string): Promise<string> {
+  const token = `PWRPROJ_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const open = `<<<${token}`;
+  const close = `${token}>>>`;
+  const rprojLit = rPathLiteral(rprojPath);
+
+  await executeInConsole(
+    page,
+    `cat("${open}\\n", paste(readLines(${rprojLit}), collapse="\\n"), "\\n${close}\\n", sep="")`,
+    { wait: true },
+  );
+  await waitForConsoleIdle(page);
+
+  const output = await page.locator(CONSOLE_OUTPUT).innerText();
+  const match = output.match(new RegExp(`${open}\\n([\\s\\S]*?)\\n${close}`));
+  return match ? match[1] : '';
+}
 
 // -- Test suite ---------------------------------------------------------------
 
@@ -102,5 +138,62 @@ test.describe.serial('Project Appearance pane theme dropdown', () => {
     // Dismiss without saving so no project config is written.
     await page.locator(PROJECT_OPTIONS_CANCEL).click();
     await expect(page.locator(PROJECT_OPTIONS_DIALOG)).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test('saving the pane writes then erases EditorTheme in .Rproj', async ({
+    rstudioPage: page,
+  }) => {
+    const rprojPath = `${projectDir.replace(/\\/g, '/')}/AppearancePane.Rproj`;
+
+    // --- Select "Cobalt" and save: .Rproj should gain "EditorTheme: Cobalt" ---
+    await executeCommand(page, 'projectOptions');
+    await expect(page.locator(PROJECT_OPTIONS_DIALOG)).toBeVisible({ timeout: 15000 });
+    await page.locator(APPEARANCE_TAB).click();
+
+    const select = page.locator(THEME_SELECT);
+    await expect(select).toBeVisible({ timeout: 5000 });
+    // Wait for the installed themes to land before selecting; selectOption
+    // would throw if "Cobalt" weren't an option yet.
+    await expect(select.locator('option', { hasText: 'Cobalt' })).toHaveCount(1, { timeout: 15000 });
+
+    await select.selectOption({ label: 'Cobalt' });
+    // onApply reads the DOM <select> via ListBox.getSelectedValue(), and the
+    // pane's change handler keys off the change event; fire it explicitly so
+    // the selection is observed regardless of how selectOption dispatched.
+    await select.dispatchEvent('change');
+
+    await page.locator(PROJECT_OPTIONS_OK).click();
+    await expect(page.locator(PROJECT_OPTIONS_DIALOG)).not.toBeVisible({ timeout: 10000 });
+
+    // The .Rproj write happens asynchronously after the dialog closes (the
+    // writeProjectOptions RPC), so poll the file until it reflects the override.
+    await expect
+      .poll(() => readRprojViaConsole(page, rprojPath), {
+        message: 'Expected .Rproj to gain "EditorTheme: Cobalt" after saving the pane',
+        timeout: 15000,
+        intervals: [500, 1000],
+      })
+      .toMatch(/^EditorTheme: Cobalt$/m);
+
+    // --- Select "(Default)" and save: the EditorTheme line should be erased ---
+    await executeCommand(page, 'projectOptions');
+    await expect(page.locator(PROJECT_OPTIONS_DIALOG)).toBeVisible({ timeout: 15000 });
+    await page.locator(APPEARANCE_TAB).click();
+    await expect(select).toBeVisible({ timeout: 5000 });
+
+    await select.selectOption({ label: DEFAULT_OPTION_LABEL });
+    await select.dispatchEvent('change');
+
+    await page.locator(PROJECT_OPTIONS_OK).click();
+    await expect(page.locator(PROJECT_OPTIONS_DIALOG)).not.toBeVisible({ timeout: 10000 });
+
+    // Poll until no EditorTheme line remains.
+    await expect
+      .poll(() => readRprojViaConsole(page, rprojPath), {
+        message: 'Expected .Rproj to drop the EditorTheme line after selecting (Default)',
+        timeout: 15000,
+        intervals: [500, 1000],
+      })
+      .not.toMatch(/^EditorTheme:/m);
   });
 });
