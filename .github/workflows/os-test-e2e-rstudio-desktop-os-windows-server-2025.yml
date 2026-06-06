@@ -809,3 +809,15 @@ jobs:
             | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
             | :---: | :---: | :---: | :---: |
             | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>2 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

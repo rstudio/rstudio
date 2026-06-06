@@ -105,13 +105,13 @@ test.describe('Project ignore files', () => {
     await expect.poll(() => fs.existsSync(gitignorePath), {
       timeout: TIMEOUTS.consoleReady,
     }).toBe(true);
-    expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain('.positai');
+    expect(fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/)).not.toContain('.positai');
 
     // Create .positai via rsession so the file monitor picks it up.
     await consoleActions.executeInConsole(`dir.create("${projectDir}/.positai")`);
 
     await expect
-      .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes('.positai'), {
+      .poll(() => fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/).includes('.positai'), {
         timeout: TIMEOUTS.consoleReady,
       })
       .toBe(true);

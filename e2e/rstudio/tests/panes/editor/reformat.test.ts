@@ -132,7 +132,7 @@ test.describe.serial('styler reformat on save', () => {
 
     // styler runs async; poll the disk for the formatted file.
     await expect.poll(
-      () => fs.readFileSync(filePath, 'utf8'),
+      () => fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n'),
       { timeout: TIMEOUTS.consoleReady },
     ).toBe('1 + 1\n2 + 2\n');
   });
