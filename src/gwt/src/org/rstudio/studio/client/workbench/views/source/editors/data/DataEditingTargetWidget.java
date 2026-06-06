@@ -155,7 +155,9 @@ public class DataEditingTargetWidget extends Composite
          table_.setListViewerCallback(callback);
          table_.setColumnFrameCallback();
          table_.setSidebarStateCallback();
-         
+         table_.setFilterStateCallback();
+         table_.setStateKeyCallback();
+
       });
 
       Widget mainWidget;

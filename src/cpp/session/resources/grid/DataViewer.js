@@ -195,6 +195,11 @@ var postInitActions = {};
 // Sidebar state
 var sidebarVisible = true;
 
+// Marker class for the injected per-column filter widgets. Shared by
+// setFilterUIVisible (which injects them) and isFilterUIVisible (which reads
+// the recorded postInitActions entry keyed by this marker).
+var FILTER_UI_MARKER = "filter-injected-ui";
+
 // In-flight column-summary fetches; the shared sidebar spinner only
 // hides when this drops back to zero so partial completion doesn't yank
 // it out from under still-pending fetches.
@@ -4033,6 +4038,21 @@ var initGrid = function(resCols, data) {
    // been registered before bootstrap ran with a different default.
    if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
 
+   // Reveal the filter row when saved state restored active per-column filters,
+   // so they're visible and editable instead of being applied with no UI
+   // (#17830). Filter-row visibility itself isn't persisted -- it's derived
+   // from whether any filter values came back. setFilterUIVisible records a
+   // post-init action, so this also survives column-pagination re-bootstraps;
+   // the replay loop below applies it once the headers are built.
+   if (Object.keys(cachedFilterValues).length > 0) {
+      window.setFilterUIVisible(true);
+   }
+
+   // Sync the host's filter latch with the resolved filter-row visibility,
+   // mirroring the sidebar callback above. The callback may have been
+   // registered before bootstrap resolved the restored filters.
+   if (window.filterStateCallback) window.filterStateCallback(isFilterUIVisible());
+
    // Run post-init actions
    for (var actionName in postInitActions) {
       if (postInitActions[actionName]) {
@@ -4523,6 +4543,13 @@ var columnNav = function(newOffset) {
 // Window API Exports
 // ==========================================================================
 
+// True when the filter row is shown. Reads the recorded postInitActions entry
+// (the source of truth that survives column-pagination re-bootstraps) rather
+// than the live DOM, so it stays correct before headers are rebuilt.
+var isFilterUIVisible = function() {
+   return !!postInitActions["setHeaderUIVisible:" + FILTER_UI_MARKER];
+};
+
 window.setFilterUIVisible = function(visible) {
    return setHeaderUIVisible(
       visible,
@@ -4544,7 +4571,7 @@ window.setFilterUIVisible = function(visible) {
             saveState();
          }
       },
-      "filter-injected-ui"
+      FILTER_UI_MARKER
    );
 };
 
@@ -4637,8 +4664,11 @@ window.onDeactivate = function() {
 };
 
 // Called from GWT when the data viewer tab is being closed (dismissType
-// CLOSE, not MOVE). Discard the saved state so it doesn't accumulate in
-// localStorage past the lifetime of the tab.
+// CLOSE, not MOVE). Discards the saved state so it doesn't accumulate in
+// localStorage past the lifetime of the tab. This is best-effort only: the
+// iframe is usually already detached by the time a close reaches us, so the
+// host clears the same key directly via the stateKeyCallback path (#17830).
+// Kept for the rare case where the frame is still live at dismiss.
 window.onDismiss = function() {
    clearSavedState();
 };
@@ -4676,6 +4706,23 @@ window.setOption = function(option, value) {
          // callback typically registers after bootstrap has already
          // resolved sidebarVisible from URL params + saved state.
          value(sidebarVisible);
+         break;
+      case "filterStateCallback":
+         window.filterStateCallback = value;
+         // Sync immediately, then again at the end of bootstrap once saved
+         // filters have been resolved (mirrors sidebarStateCallback).
+         value(isFilterUIVisible());
+         break;
+      case "stateKeyCallback":
+         window.stateKeyCallback = value;
+         // Report the localStorage key for this object's saved UI state so the
+         // host can clear it on explicit close. The host has to do the clearing
+         // because by the time the close reaches us the data viewer iframe is
+         // already detached (TabClosedEvent fires after the widget is removed),
+         // so an in-frame clear would no-op (#17830). The key derives only from
+         // the iframe URL (env+obj), which is available as soon as the frame
+         // loads, so this does not need to wait for bootstrap.
+         value(stateKey());
          break;
    }
 };
