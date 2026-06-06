@@ -68,22 +68,44 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
     rstudioPage: page,
   }) => {
     const parentDir = sandbox.dir.replace(/\\/g, '/');
-    const name = 'theme_override_project';
-    const projectDir = `${parentDir}/${name}`;
-    const rprojPath = `${projectDir}/${name}.Rproj`;
-    const rprojLit = rPathLiteral(rprojPath);
 
-    // Set the global theme to a non-Cobalt theme first, so the post-open
-    // "cobalt" assertion proves the project override changed something rather
-    // than coincidentally matching a global theme that was already Cobalt.
+    // Pin the global editor theme to a non-Cobalt theme. This is the value a
+    // no-override project falls back to, and the contrast that makes the
+    // post-override "cobalt" assertion meaningful (the override changed
+    // something rather than coincidentally matching an already-Cobalt global).
+    //
+    // Note: setPref alone does NOT change the live rendered theme mid-session.
+    // The active theme <link> is driven by userState.theme(), which is only
+    // mapped from the editor_theme pref by the backend syncThemePrefs(), and
+    // that runs on session/project open -- not on a pref change. So the
+    // baseline below must be established by a real project open, not by reading
+    // the active theme right after setPref.
     await setPref(page, 'editor_theme', THEME_DEFAULT);
 
-    // Sanity-check the before state: the active theme is Textmate, NOT Cobalt.
+    // Baseline: open a NO-override project. Opening it re-runs syncThemePrefs(),
+    // which applies the global (Textmate) to userState.theme(). This makes the
+    // "before" state deterministic -- Textmate, NOT Cobalt -- regardless of
+    // whatever userState.theme() happened to be before.
+    const baselineName = 'theme_baseline_project';
+    const baselineDir = `${parentDir}/${baselineName}`;
+    const baselineRproj = `${baselineDir}/${baselineName}.Rproj`;
+    await executeInConsole(
+      page,
+      `{ dir.create(${rPathLiteral(baselineDir)}); ` +
+        `writeLines(c(` +
+        `"Version: 1.0", "", ` +
+        `"RestoreWorkspace: Default", ` +
+        `"SaveWorkspace: Default"` +
+        `), ${rPathLiteral(baselineRproj)}) }`,
+    );
+    await waitForConsoleIdle(page);
+    await openProject(page, baselineRproj);
+
     await expect
       .poll(
         () => getActiveThemeHref(page),
         {
-          message: `Expected ace theme link href to start at "textmate" (global theme: ${THEME_DEFAULT})`,
+          message: `Expected baseline ace theme link href to contain "textmate" (global theme: ${THEME_DEFAULT})`,
           timeout: 15000,
           intervals: [200, 500, 1000],
         },
@@ -91,8 +113,13 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
       .toMatch(/textmate/i);
     expect(await getActiveThemeHref(page)).not.toMatch(/cobalt/i);
 
-    // Create the directory and write a .Rproj with EditorTheme: Cobalt.
-    // The .Rproj lines follow the standard DCF format RStudio uses.
+    // Now open the Cobalt-override project. Its .Rproj sets EditorTheme: Cobalt,
+    // and the standard DCF fields surrounding it follow the format RStudio uses.
+    const name = 'theme_override_project';
+    const projectDir = `${parentDir}/${name}`;
+    const rprojPath = `${projectDir}/${name}.Rproj`;
+    const rprojLit = rPathLiteral(rprojPath);
+
     await executeInConsole(
       page,
       `{ dir.create(${rPathLiteral(projectDir)}); ` +
@@ -117,9 +144,9 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
     // project path matches.
     await openProject(page, rprojPath);
 
-    // The theme CSS link href must include "cobalt" (case-insensitive) once
-    // the new session has applied the project-level EditorTheme pref.
-    // Poll to allow the GWT theme-apply cycle to complete after session init.
+    // The theme CSS link href must now include "cobalt" (case-insensitive):
+    // syncThemePrefs() applied the project-level EditorTheme on session init,
+    // overriding the Textmate global the baseline project resolved to.
     await expect
       .poll(
         () => getActiveThemeHref(page),
@@ -134,11 +161,11 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
     // Clean up: close the project before the second test.
     await closeProjectIfOpen(page);
 
-    // Remove the project directory via the R session (cross-platform, works in
-    // both Desktop and Server mode where the test runner may not share a FS).
+    // Remove the project directories via the R session (cross-platform, works
+    // in both Desktop and Server mode where the test runner may not share a FS).
     await executeInConsole(
       page,
-      `unlink(${rPathLiteral(projectDir)}, recursive = TRUE)`,
+      `unlink(c(${rPathLiteral(projectDir)}, ${rPathLiteral(baselineDir)}), recursive = TRUE)`,
     );
     await waitForConsoleIdle(page);
   });
