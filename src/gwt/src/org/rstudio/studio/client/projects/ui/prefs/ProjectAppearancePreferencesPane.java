@@ -31,6 +31,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
@@ -142,6 +144,30 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
       String value = (themeList_ == null) ? initialEditorTheme_ : theme_.getSelectedValue();
       options.getConfig().setEditorTheme(value);
       return new RestartRequirement();
+   }
+
+   @Override
+   protected void setPaneVisible(boolean visible)
+   {
+      super.setPaneVisible(visible);
+      if (visible)
+      {
+         // When making the pane visible, toggle a meaningless transform on the
+         // preview iframe to work around a QtWebEngine bug that can leave the
+         // region unpainted (showing stale content) until invalidated. Mirrors
+         // the global AppearancePreferencesPane. See
+         // https://github.com/rstudio/rstudio/issues/6268
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            Style style = preview_.getElement().getStyle();
+            String translate = "translate(0px, 0px)";
+            String transform = style.getProperty("transform");
+            style.setProperty("transform",
+                  StringUtil.isNullOrEmpty(transform) || !StringUtil.equals(translate, transform) ?
+                     translate :
+                     "");
+         });
+      }
    }
 
    // Applied-theme resolution rule: effective if installed, else global, else the
