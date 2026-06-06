@@ -187,13 +187,21 @@ test.describe.serial('Project Appearance pane theme dropdown', () => {
     await page.locator(PROJECT_OPTIONS_OK).click();
     await expect(page.locator(PROJECT_OPTIONS_DIALOG)).not.toBeVisible({ timeout: 10000 });
 
-    // Poll until no EditorTheme line remains.
+    // Poll until the EditorTheme line is gone. Also require a stable line
+    // (Version: 1.0) to be present, so an empty/failed console read or a
+    // truncated .Rproj cannot satisfy the negative assertion.
     await expect
-      .poll(() => readRprojViaConsole(page, rprojPath), {
-        message: 'Expected .Rproj to drop the EditorTheme line after selecting (Default)',
-        timeout: 15000,
-        intervals: [500, 1000],
-      })
-      .not.toMatch(/^EditorTheme:/m);
+      .poll(
+        async () => {
+          const content = await readRprojViaConsole(page, rprojPath);
+          return content.includes('Version: 1.0') && !/^EditorTheme:/m.test(content);
+        },
+        {
+          message: 'Expected .Rproj to drop the EditorTheme line (and remain intact) after selecting (Default)',
+          timeout: 15000,
+          intervals: [500, 1000],
+        },
+      )
+      .toBe(true);
   });
 });
