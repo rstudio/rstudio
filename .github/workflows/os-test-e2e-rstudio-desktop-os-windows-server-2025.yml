@@ -43,6 +43,10 @@ on:
         description: "Run only the build job (to seed the rstudio-tools / sccache caches) and skip the e2e job. Only meaningful when build_from_source is true."
         type: boolean
         default: false
+      post_pr_comment:
+        description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       build_from_source:
@@ -75,6 +79,13 @@ on:
       build_only:
         type: boolean
         default: false
+      post_pr_comment:
+        type: boolean
+        default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
 
 permissions:
   contents: read
@@ -601,7 +612,13 @@ jobs:
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           PW_DEBUG_LAUNCH: '1'
-          PW_SHARD: ${{ matrix.shard }}/2
+          # Tells playwright.config.ts to switch to blob reporter for this shard.
+          PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard.
+          # CONNECT_API_KEY is empty on fork PRs; reporter runs but uploads fail
+          # with warnings (never fails the run).
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: desktop-win-${{ matrix.shard }}
         run: |
           $ErrorActionPreference = 'Stop'
           $pwArgs = @()
@@ -619,8 +636,17 @@ jobs:
             $pwArgs += $env:PW_GREP_INVERT
           }
           $pwArgs += '--shard'
-          $pwArgs += $env:PW_SHARD
+          $pwArgs += "$($env:PW_SHARD)/2"
           npx playwright test $pwArgs
+
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-blob-report-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Upload Playwright report
         if: always()
@@ -668,3 +694,118 @@ jobs:
           path: ${{ env.LOCALAPPDATA }}\CrashDumps\
           retention-days: 15
           if-no-files-found: ignore
+
+  # Merge per-shard blob reports into a single HTML report, parse aggregated
+  # counts, and post a sticky PR comment with pass/fail/skip totals
+  # (when post_pr_comment is set).
+  e2e-merge:
+    needs: [e2e-desktop-windows]
+    if: always() && needs.e2e-desktop-windows.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        run: npm ci
+
+      - name: Download shard blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-blob-report-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge shard reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            exit 1
+          fi
+          cat > merge.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            reporter: [
+              ['html', { outputFolder: 'playwright-report', open: 'never' }],
+              ['json', { outputFile: 'playwright-report/test-results.json' }],
+            ],
+          });
+          EOF
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      - name: Parse aggregated results
+        id: summary
+        if: always()
+        run: |
+          FILE="e2e/rstudio/playwright-report/test-results.json"
+          if [ -f "$FILE" ]; then
+            if ! PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (PASSED)"; exit 1
+            fi
+            if ! FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (FAILED)"; exit 1
+            fi
+            if ! SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (SKIPPED)"; exit 1
+            fi
+            if ! FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (FLAKY)"; exit 1
+            fi
+          else
+            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
+          fi
+          TOTAL=$((PASSED + FAILED))
+          if [ "$TOTAL" -gt 0 ]; then
+            RATE=$(( (PASSED * 100) / TOTAL ))
+            FILLED=$(( (RATE * 20) / 100 ))
+            EMPTY=$(( 20 - FILLED ))
+            BAR=""
+            [ "$FILLED" -gt 0 ] && BAR=$(printf '█%.0s' $(seq 1 $FILLED))
+            [ "$EMPTY"  -gt 0 ] && BAR="${BAR}$(printf '░%.0s' $(seq 1 $EMPTY))"
+          else
+            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
+          fi
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
+          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
+          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Post E2E results to PR
+        if: always() && inputs.post_pr_comment == true && github.event.pull_request.head.repo.fork == false
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: e2e-windows-2025-results
+          message: |
+            ## 🪟 Windows Desktop E2E · Server 2025 x64
+
+            ${{ needs.e2e-desktop-windows.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |

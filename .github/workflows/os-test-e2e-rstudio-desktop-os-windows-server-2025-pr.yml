@@ -12,15 +12,23 @@ on:
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
 
+concurrency:
+  group: pw-pr-windows-2025-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   run-windows-2025:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
       build_from_source: true
       project: desktop
       r_version: "4.5.3"
       # Skip @ai-tagged tests on PRs for now.
       grep_invert: "@ai"
+      post_pr_comment: true
