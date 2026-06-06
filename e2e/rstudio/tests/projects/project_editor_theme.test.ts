@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole, waitForConsoleIdle } from '@pages/console_pane.page';
 import { getPref, setPref, clearPref, openProject } from '@utils/commands';
-import { closeProjectIfOpen } from '@utils/project';
+import { closeProjectIfOpen, restartSessionWithSentinel } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral } from '@utils/r';
 
@@ -44,11 +44,7 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Restore the original global theme BEFORE closing the project. Closing
-    // rebuilds the session, which re-runs syncThemePrefs() and applies the
-    // (now-restored) editor_theme pref to the live userState.theme. Doing it in
-    // the other order would leave the active theme stale for the next suite in
-    // this worker, since setPref alone does not re-apply the theme mid-session.
+    // Restore the original global editor_theme pref first.
     try {
       if (originalTheme !== null) {
         await setPref(page, 'editor_theme', originalTheme);
@@ -58,10 +54,25 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
     } catch (err) {
       console.warn('[project_editor_theme] afterAll theme restore failed:', err);
     }
+
+    // Then force a session rebuild so the restored pref is re-applied to the
+    // live userState.theme -- setPref alone does not re-theme mid-session; only
+    // syncThemePrefs (run on session init) does. The tests close their own
+    // projects, so normally no project is open here: restart the session
+    // explicitly. If a project is somehow still open, closing it rebuilds the
+    // session instead (avoiding a redundant second rebuild). Without this, the
+    // next suite in this worker could inherit a stale active theme.
     try {
-      await closeProjectIfOpen(page);
+      const projectActive = await page
+        .evaluate(() => window.rstudio?.project?.isActive() === true)
+        .catch(() => false);
+      if (projectActive) {
+        await closeProjectIfOpen(page);
+      } else {
+        await restartSessionWithSentinel(page);
+      }
     } catch (err) {
-      console.warn('[project_editor_theme] afterAll closeProjectIfOpen failed:', err);
+      console.warn('[project_editor_theme] afterAll session rebuild failed:', err);
     }
   });
 
