@@ -140,15 +140,22 @@ test.describe.serial('Terminal pane', () => {
     await killAllTerminals(page);
     await openTerminal(page);
 
-    // Use an absolute sandbox path so the file is cleaned up by globalTeardown
-    // regardless of the terminal's working directory. Require the filename to
-    // appear at least twice in the buffer: once in the echoed touch command and
-    // once in the ls output. A single match would pass even if touch failed
-    // (the filename appears in the echoed command regardless).
+    // cd into the absolute sandbox path first, then create and list the file
+    // using a short name. The file is cleaned up by globalTeardown regardless
+    // of the terminal's working directory. We deliberately keep the touch/ls
+    // arguments short rather than passing the absolute path: a narrow terminal
+    // wraps a long path across physical lines, and terminalBuffer() returns one
+    // entry per physical line, which would split "ztestfile.txt" across a wrap
+    // boundary and break the grep below. Require the filename to appear at least
+    // twice in the buffer: once in the echoed touch command and once in the ls
+    // output. A single match would pass even if touch failed (the filename
+    // appears in the echoed command regardless).
     const sandboxDir = sandbox.dir.replace(/\\/g, '/');
-    await page.keyboard.type(`touch ${sandboxDir}/ztestfile.txt`);
+    await page.keyboard.type(`cd ${sandboxDir}`);
     await page.keyboard.press('Enter');
-    await page.keyboard.type(`ls ${sandboxDir}`);
+    await page.keyboard.type('touch ztestfile.txt');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('ls');
     await page.keyboard.press('Enter');
 
     await expect.poll(
