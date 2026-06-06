@@ -318,6 +318,17 @@ test.describe('Data Viewer', () => {
   // tab must discard it, so reopening the data set starts fresh -- the clear
   // runs host-side because the iframe is already detached by the time the close
   // reaches us.
+  //
+  // NOTE: the complementary half of this invariant -- that MOVING the tab
+  // between source columns must PRESERVE the saved state -- is deliberately not
+  // covered here. The gate lives in DataEditingTarget.onDismiss, which clears
+  // only on DISMISS_TYPE_CLOSE and not on DISMISS_TYPE_MOVE. A cross-column tab
+  // move is a drag-and-drop layout operation with no AppCommand to drive it
+  // from the automation bridge, so it can't be exercised reliably from
+  // Playwright. If a future refactor drops that dismissType guard (or clears
+  // unconditionally), a column move would silently wipe the user's sorts and
+  // filters and this suite would stay green -- so guard the invariant at the
+  // source, not just here.
   test('explicitly closing the viewer clears its saved sorts and filters (#17830)', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole(
       '{ .rs.close_clear_df <- mtcars; View(.rs.close_clear_df) }',
