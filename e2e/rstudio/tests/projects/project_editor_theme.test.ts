@@ -44,12 +44,11 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Restore original global theme and leave no project open.
-    try {
-      await closeProjectIfOpen(page);
-    } catch (err) {
-      console.warn('[project_editor_theme] afterAll closeProjectIfOpen failed:', err);
-    }
+    // Restore the original global theme BEFORE closing the project. Closing
+    // rebuilds the session, which re-runs syncThemePrefs() and applies the
+    // (now-restored) editor_theme pref to the live userState.theme. Doing it in
+    // the other order would leave the active theme stale for the next suite in
+    // this worker, since setPref alone does not re-apply the theme mid-session.
     try {
       if (originalTheme !== null) {
         await setPref(page, 'editor_theme', originalTheme);
@@ -58,6 +57,11 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
       }
     } catch (err) {
       console.warn('[project_editor_theme] afterAll theme restore failed:', err);
+    }
+    try {
+      await closeProjectIfOpen(page);
+    } catch (err) {
+      console.warn('[project_editor_theme] afterAll closeProjectIfOpen failed:', err);
     }
   });
 
