@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
@@ -232,6 +233,10 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 AceTheme appliedTheme = appearance_.resolveAppliedTheme(uiPrefs);
                 if (appliedTheme != null)
                    pUserState_.get().theme().setGlobalValue(appliedTheme);
+                else
+                   Debug.logWarning(
+                      "Project editor theme saved but not applied live (theme list " +
+                      "not loaded yet); it will take effect on the next project open.");
 
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
