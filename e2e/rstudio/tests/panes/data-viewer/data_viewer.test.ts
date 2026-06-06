@@ -599,6 +599,71 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // The scroll position is part of the per-object UI state persisted to
+  // localStorage (alongside sorts/filters/pins), so it survives a close/reopen
+  // reload the same way they do. A page/iframe reload preserves saved state
+  // (it's not a close), so it exercises the restore path -- mirroring the
+  // #17830 filter-restore test.
+  test('scroll position is restored after a reload', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_reload_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_reload_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Scroll well down, then fire scrollend so the settled position is
+      // persisted to localStorage (onScrollEnd -> saveState). Dispatching the
+      // event explicitly removes the timing flake of waiting on the browser to
+      // emit scrollend for a programmatic scroll.
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        el.dispatchEvent(new Event('scrollend'));
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Confirm the position landed in the shared (host/iframe) localStorage
+      // entry: both a wait gate for the write and proof it was persisted.
+      const savedScrollTop = () => page.evaluate(() => {
+        const key = Object.keys(window.localStorage).find(
+          (k) => k.startsWith('rstudio.dataViewer:') && k.includes('scroll_reload_df'));
+        if (!key)
+          return null;
+        try {
+          const state = JSON.parse(window.localStorage.getItem(key) ?? '');
+          return state && state.scroll ? state.scroll.top : null;
+        } catch (e) {
+          return null;
+        }
+      });
+      await expect.poll(savedScrollTop, { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(0);
+
+      // Reload only the data viewer iframe: a reload preserves saved state (it's
+      // not a close), so the scroll position must come back.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        if (!f?.contentWindow) throw new Error('data viewer iframe not accessible');
+        f.contentWindow.location.reload();
+      }, VIEWER_FRAME);
+
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.frame.locator('#gridBody td[data-col-pos]').first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // Position is restored to (about) where it was, not reset to the top.
+      // Allow one ROW_HEIGHT (23px) of slack for rounding.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be restored after a reload' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_reload_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   test('HTML-special cell values render as text, not markup', async () => {
     // textContent encodes <, >, and & but leaves quotes as plain text.
     // The security property is that nothing user-supplied becomes a real
