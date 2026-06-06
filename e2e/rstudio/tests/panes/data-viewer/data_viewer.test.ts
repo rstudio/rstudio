@@ -11,7 +11,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
-import { resetSourcePaneState } from '@utils/commands';
+import { resetSourcePaneState, executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
@@ -309,6 +309,111 @@ test.describe('Data Viewer', () => {
       await consoleActions.executeInConsole(
         'rm(".rs.persist_test_df", envir = .GlobalEnv)',
       );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17830
+  // Saved per-object UI state lives in localStorage (shared same-origin between
+  // the host page and the data viewer iframe). Explicitly closing the viewer
+  // tab must discard it, so reopening the data set starts fresh -- the clear
+  // runs host-side because the iframe is already detached by the time the close
+  // reaches us.
+  test('explicitly closing the viewer clears its saved sorts and filters (#17830)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.close_clear_df <- mtcars; View(.rs.close_clear_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Sort col 1 ascending -- this writes per-object state to localStorage.
+      const col1 = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await col1.click();
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_asc/);
+
+      // The saved-state entry for this object is readable from the host page,
+      // which both confirms the write landed and proves the host/iframe share
+      // localStorage (the assumption the host-side clear relies on).
+      const savedKey = () => page.evaluate(() =>
+        Object.keys(window.localStorage).find(
+          (k) => k.startsWith('rstudio.dataViewer:') && k.includes('close_clear_df')) ?? null);
+      await expect.poll(savedKey, { timeout: TIMEOUTS.fileOpen }).not.toBeNull();
+
+      // Explicitly close the data viewer tab (DISMISS_TYPE_CLOSE).
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(sourcePane.selectedTab).toContainText('Untitled', { timeout: 5000 });
+
+      // The saved state must be gone, so a later View() of the same object
+      // would start unsorted/unfiltered.
+      await expect.poll(savedKey, { timeout: TIMEOUTS.fileOpen }).toBeNull();
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.close_clear_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17830
+  // A saved filter is restored on open, but it must also reveal the filter row
+  // so it's visible and editable -- before the fix the rows were filtered with
+  // no filter UI shown. A page/iframe reload preserves saved state (it's not a
+  // close), so it exercises the restore path.
+  test('restored filters reveal the filter row after a reload (#17830)', async ({ rstudioPage: page }) => {
+    // A character first column gives a simple text-box filter to drive.
+    await consoleActions.executeInConsole(
+      '{ .rs.restore_filter_df <- data.frame(x = letters, stringsAsFactors = FALSE); View(.rs.restore_filter_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const filterToggle = page.locator('#data_editing_toolbar .rstudio_dt_filter_toggle');
+
+      // Reveal the filter row and apply a text filter to column 1. Mirrors the
+      // open-and-type retry from the #17806 test (the editor auto-dismisses if
+      // it blurs while empty, so the open + type has to land as a unit).
+      await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+      const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      const filterInput = dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox');
+      const allLabel = col1Filter.getByText('All');
+      await expect(async () => {
+        if ((await filterInput.count()) === 0) {
+          await allLabel.click();
+          await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+        }
+        await filterInput.fill('');
+        await filterInput.pressSequentially('a');
+        await expect(filterInput).toHaveValue('a', { timeout: 2000 });
+      }).toPass({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+
+      // Reload only the data viewer iframe: a reload preserves saved state (it's
+      // not a close), so the filter must come back -- and reveal its row.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        if (!f?.contentWindow) throw new Error('data viewer iframe not accessible');
+        f.contentWindow.location.reload();
+      }, VIEWER_FRAME);
+
+      await waitForViewer(dataViewer);
+
+      // The filter row is shown automatically (no manual toolbar click) and
+      // still carries the active value -- the core of the bug.
+      const col1FilterAfter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(col1FilterAfter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(col1FilterAfter).toHaveClass(/filtered/);
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox'))
+        .toHaveValue('a');
+
+      // The toolbar funnel reflects the restored filter state (aria-pressed is
+      // set by the LatchingToolbarButton when filterStateCallback latches it).
+      await expect(filterToggle)
+        .toHaveAttribute('aria-pressed', 'true', { timeout: TIMEOUTS.fileOpen });
+
+      // ...and the data is still filtered.
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.restore_filter_df", envir = .GlobalEnv)');
     }
   });
 
