@@ -24,11 +24,9 @@ const PROJECT_OPTIONS_DIALOG = '.gwt-DialogBox[aria-label="Project Options"]';
 // (ElementIds.idFromLabel + "_options"). The Appearance pane's name is "Appearance".
 const APPEARANCE_TAB = '#rstudio_label_appearance_options';
 
-// ProjectAppearancePreferencesPane.wrapWithPanel("project_appearance_prefs")
-// produces a VerticalTabPanel whose DOM id is "<base>_panel" prefixed with
-// ElementIds.ID_PREFIX ("rstudio_"). The GWT ListBox renders as a <select>.
-const APPEARANCE_PANEL = '#rstudio_project_appearance_prefs_panel';
-const THEME_SELECT = `${APPEARANCE_PANEL} select`;
+// ProjectAppearancePreferencesPane assigns this id to its editor-theme ListBox,
+// which renders as a multi-row <select> (a listbox, not a dropdown).
+const THEME_SELECT = '#rstudio_project_editor_theme';
 
 // PreferencesDialogBase.addCancelButton() assigns this stable id; using it
 // avoids matching the hidden aria-hidden duplicate the dialog also renders.
@@ -76,7 +74,6 @@ test.describe.serial('Project Appearance pane theme dropdown', () => {
     // opens, so the Appearance dropdown populates even if its tab isn't active.
     // Click the tab anyway so the <select> is rendered/visible for reading.
     await page.locator(APPEARANCE_TAB).click();
-    await expect(page.locator(APPEARANCE_PANEL)).toBeVisible({ timeout: 5000 });
 
     const select = page.locator(THEME_SELECT);
     await expect(select).toBeVisible({ timeout: 5000 });
