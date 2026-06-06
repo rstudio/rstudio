@@ -2635,6 +2635,11 @@ var onScrollEnd = function() {
    renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // Persist the settled scroll position so it survives a close/reopen reload,
+   // alongside pins/sort/filters. scrollend fires once per gesture (including
+   // keyboard-driven scrolls), so this stays cheap.
+   saveState();
 };
 
 // Window resize handler: debounce wrapper is created once here so its
@@ -4214,6 +4219,11 @@ var columnFingerprint = function() {
 var saveState = function() {
    var key = stateKey();
    if (!key) return;
+   // Don't persist before the grid is initialized: columnFingerprint() would
+   // fall back to its missing-data sentinel and totalRows would be stale, so the
+   // entry could never validate on reload. (saveState now also fires from scroll
+   // settling and tab deactivation, either of which can race an early teardown.)
+   if (!cols) return;
    // pinnedColumns/sort/filters are stored by absolute column identity (1-based
    // index in the full frame), so they survive column pagination. manualWidths
    // remains positional within the current window.
@@ -4224,7 +4234,12 @@ var saveState = function() {
       sidebarVisible: sidebarVisible,
       manualWidths: manualWidths.slice(),
       sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
-      filters: Object.assign({}, cachedFilterValues)
+      filters: Object.assign({}, cachedFilterValues),
+      // Scroll offset, keyed to the unfiltered row count so a frame whose size
+      // changed while closed reopens at the top -- the same guard refreshes use
+      // (see restoreScrollAfterRefresh). lastScroll* is kept current by onScroll/
+      // onScrollEnd/onDeactivate, so it's the live position at any save.
+      scroll: { top: lastScrollTop, left: lastScrollLeft, rows: totalRows }
    };
    try {
       localStorage.setItem(key, JSON.stringify(state));
@@ -4364,6 +4379,25 @@ var applySavedState = function(state) {
          var w = state.manualWidths[i];
          if (typeof w === "number" && w > 0) manualWidths[i] = w;
       }
+   }
+
+   // Restore the saved scroll position through the same path a refresh uses:
+   // restoreScrollAfterRefresh (run after the first row fetch) re-checks the
+   // row count before applying, so a frame whose row count changed while closed
+   // still opens at the top. Defer to a live refresh capture if one already owns
+   // the slot (a refresh-driven rebuild carries a fresher position than the
+   // persisted one), and only when the fingerprint matched -- a mismatch returns
+   // early above without reaching here.
+   if (!activeScrollRestore &&
+       state.scroll &&
+       typeof state.scroll.top === "number" &&
+       typeof state.scroll.left === "number" &&
+       typeof state.scroll.rows === "number") {
+      activeScrollRestore = {
+         top: state.scroll.top,
+         left: state.scroll.left,
+         rows: state.scroll.rows
+      };
    }
 
    return false;
@@ -4661,6 +4695,11 @@ window.onDeactivate = function() {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
    }
+
+   // Leaving the tab is a natural persist point: capture the final position to
+   // localStorage in case the gesture that put us here didn't emit a scrollend
+   // (e.g. a programmatic or interrupted scroll).
+   saveState();
 };
 
 // Called from GWT when the data viewer tab is being closed (dismissType
