@@ -91,7 +91,10 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
 
          selectValue(StringUtil.isNullOrEmpty(storedTheme) ? DEFAULT_VALUE : storedTheme);
       },
-      null);
+      // A non-null ProgressIndicator is required: DelayedProgressRequestCallback
+      // dereferences it in onResponseReceived/onError. The dialog sets it on every
+      // pane before initialize() runs, so getProgressIndicator() is non-null here.
+      getProgressIndicator());
    }
 
    @Override
