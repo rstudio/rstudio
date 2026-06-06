@@ -681,8 +681,10 @@ Error syncThemePrefs()
       }
       else
       {
-         LOG_WARNING_MESSAGE("No installed theme resolved for editor_theme '" +
-                             effectiveName + "' (global '" + globalName + "').");
+         LOG_WARNING_MESSAGE("No installed theme found to apply for editor_theme '" +
+                             effectiveName + "' (global '" + globalName +
+                             "', default '" + appliedName + "'); leaving the "
+                             "applied editor theme unchanged.");
       }
    }
 

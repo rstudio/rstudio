@@ -47,8 +47,9 @@ struct ThemeColors
 ThemeColors getThemeColors();
 
 // Resolves the global (non-project) editor theme name by consulting the layers in
-// precedence order: user, system, computed, default. Returns the first present
-// value, or "" if none. readLayer is injected for testability.
+// precedence order: user, system, computed, default. Returns the first present,
+// non-empty value, or "" if none (a present-but-empty layer value falls through).
+// readLayer is injected for testability.
 std::string resolveGlobalThemeName(
    const std::function<boost::optional<std::string>(const std::string& layer)>& readLayer);
 

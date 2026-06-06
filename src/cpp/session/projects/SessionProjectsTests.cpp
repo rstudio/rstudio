@@ -47,6 +47,15 @@ TEST(SessionProjectsTests, ResolveWrittenEditorThemeNonEmptySetsValue)
    EXPECT_EQ(resolveWrittenEditorTheme("Cobalt", configJson), "Monokai");
 }
 
+TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenValueNotString)
+{
+   // Present but not a string (malformed request) -> preserve existing, like a
+   // missing key (and a warning is logged).
+   core::json::Object configJson;
+   configJson["editor_theme"] = 42;
+   EXPECT_EQ(resolveWrittenEditorTheme("Cobalt", configJson), "Cobalt");
+}
+
 } // anonymous namespace
 } // namespace projects
 } // namespace session

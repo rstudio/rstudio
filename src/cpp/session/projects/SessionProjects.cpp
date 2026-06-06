@@ -1403,8 +1403,17 @@ std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
                                       const json::Object& configJson)
 {
    auto it = configJson.find("editor_theme");
-   if (it != configJson.end() && (*it).getValue().isString())
-      return (*it).getValue().getString();
+   if (it != configJson.end())
+   {
+      if ((*it).getValue().isString())
+         return (*it).getValue().getString();
+
+      // Present but not a string -- a malformed request or a client/server
+      // mismatch. Preserve the existing value (as for a missing key), but log it
+      // so this isn't indistinguishable from the normal key-omitted path.
+      LOG_WARNING_MESSAGE("Ignoring non-string 'editor_theme' in project config; "
+                          "preserving the existing value");
+   }
    return existingEditorTheme;
 }
 

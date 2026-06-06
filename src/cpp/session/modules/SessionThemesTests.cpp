@@ -49,6 +49,26 @@ TEST(SessionThemesTests, ChooseAppliedThemeNameFallsBackToDefaultWhenBothMissing
              "Textmate (default)");
 }
 
+TEST(SessionThemesTests, ChooseAppliedThemeNameReturnsDefaultWhenEffectiveAndGlobalEmpty)
+{
+   // Empty effective + global (e.g. nothing set) -> the built-in default.
+   std::set<std::string> installed = { "Textmate (default)" };
+   EXPECT_EQ(chooseAppliedThemeName("", "", installed, "Textmate (default)"),
+             "Textmate (default)");
+}
+
+TEST(SessionThemesTests, ResolveGlobalThemeNameSkipsPresentButEmptyUserLayer)
+{
+   // A present-but-empty user-layer value falls through to a lower layer
+   // (the !empty() guard, distinct from boost::none).
+   auto readLayer = [](const std::string& layer) -> boost::optional<std::string> {
+      if (layer == "user") return std::string("");
+      if (layer == "system") return std::string("Ambiance");
+      return boost::none;
+   };
+   EXPECT_EQ(resolveGlobalThemeName(readLayer), "Ambiance");
+}
+
 TEST(SessionThemesTests, ResolveGlobalThemeNameChecksLayersBeyondUser)
 {
    // user layer empty, system layer set -> must return the system value
