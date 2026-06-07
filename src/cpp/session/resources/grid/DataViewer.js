@@ -131,6 +131,24 @@ var cachedFilterValues = {};
 var lastScrollTop = 0;
 var lastScrollLeft = 0;
 
+// Scroll position captured just before a refresh tears the grid down, so it
+// can be restored once the rebuilt grid has re-fetched its first row batch.
+// Holds { top, left, rows } where rows is the pre-refresh unfiltered row count;
+// the restore only fires when the new row count matches (see
+// restoreScrollAfterRefresh).
+//
+// pendingScrollRestore is the handoff slot, set by captureScrollForRefresh()
+// just before it calls bootstrap(). bootstrap() immediately moves it into
+// activeScrollRestore (the value owned by the in-flight rebuild) and clears the
+// handoff slot, so it is null except in that brief window. This split keeps a
+// capture bound to a single rebuild: if a refresh aborts before the restore
+// callback runs, the stranded value lives in activeScrollRestore, which the
+// next bootstrap unconditionally overwrites -- so it can never leak onto an
+// unrelated later rebuild (e.g. column pagination, which carries no scroll
+// intent).
+var pendingScrollRestore = null;
+var activeScrollRestore = null;
+
 // Row data cache
 var rowCache = new Map();
 var totalRows = 0;
@@ -176,6 +194,11 @@ var postInitActions = {};
 
 // Sidebar state
 var sidebarVisible = true;
+
+// Marker class for the injected per-column filter widgets. Shared by
+// setFilterUIVisible (which injects them) and isFilterUIVisible (which reads
+// the recorded postInitActions entry keyed by this marker).
+var FILTER_UI_MARKER = "filter-injected-ui";
 
 // In-flight column-summary fetches; the shared sidebar spinner only
 // hides when this drops back to zero so partial completion doesn't yank
@@ -706,10 +729,66 @@ var createCell = function(data, colIdx, rowData, clazz) {
 // Header Construction
 // ==========================================================================
 
+// Column-type predicates. col_type is the column's R typeof() ("double",
+// "integer", "logical", "character", "list", ...; "rownames" is a synthetic
+// sentinel for the row-name column) and col_class is its class() reported as
+// an array. Note typeof() of a data.frame column is "list", so a single
+// col_type === "list" test covers both list and data.frame columns.
+var colHasClass = function(col, name) {
+   return col.col_class && col.col_class.indexOf(name) >= 0;
+};
+
+var isRownameColumn = function(col) {
+   return col.col_type === "rownames";
+};
+
+var isDataFrameColumn = function(col) {
+   return colHasClass(col, "data.frame");
+};
+
+var isListColumn = function(col) {
+   return col.col_type === "list" && !isDataFrameColumn(col);
+};
+
+var isFactorColumn = function(col) {
+   return colHasClass(col, "factor");
+};
+
+// Base numeric columns (right-aligned, histogram-summarized). Factors have
+// typeof "integer" but class "factor", so keying on class excludes them;
+// Date / POSIXct are likewise excluded, matching prior behavior.
+var isNumericColumn = function(col) {
+   return colHasClass(col, "numeric") ||
+          colHasClass(col, "integer") ||
+          colHasClass(col, "double") ||
+          colHasClass(col, "integer64");
+};
+
+// Whether the backend computed histogram data for this column. col_breaks /
+// col_counts are populated only for base-numeric columns; other data columns
+// carry empty arrays and the rownames column omits the fields entirely. Both
+// the empty-array and undefined cases are handled by the explicit checks (an
+// empty array is truthy in JS, so length must be tested too).
+var hasHistogram = function(col) {
+   return col.col_breaks && col.col_breaks.length > 0 &&
+          col.col_counts && col.col_counts.length > 0;
+};
+
+// Coarse category used to choose which summary stats to render in the sidebar.
+// Anything not matched here (Date, POSIXct, ...) falls through to the generic
+// min/max stats in renderColumnStats.
+var statsCategory = function(col) {
+   if (isFactorColumn(col)) return "factor";
+   if (isNumericColumn(col)) return "numeric";
+   if (col.col_type === "character") return "character";
+   if (col.col_type === "logical") return "boolean";
+   return "other";
+};
+
 var getColClass = function(col) {
-   if (col.col_type === "numeric") return "numberCell";
-   if (col.col_type === "data.frame") return "dataCell";
-   if (col.col_type === "list") return "listCell";
+   if (isNumericColumn(col)) return "numberCell";
+   if (isDataFrameColumn(col)) return "dataCell";
+   if (isListColumn(col)) return "listCell";
    return "textCell";
 };
 
@@ -761,14 +840,14 @@ var createHeader = function(idx, col) {
    interior.appendChild(title);
 
    // Tooltip
-   if (col.col_type === "rownames") {
+   if (isRownameColumn(col)) {
       th.title = "row names";
    } else {
       th.title = "column " + absColIndex(idx) + ": " + col.col_type;
-      if (col.col_type === "numeric" && col.col_breaks && col.col_breaks.length > 0) {
+      if (hasHistogram(col)) {
          th.title += " with range " + col.col_breaks[0] +
             " - " + col.col_breaks[col.col_breaks.length - 1];
-      } else if (col.col_type === "factor" && col.col_vals) {
+      } else if (isFactorColumn(col) && col.col_vals) {
          th.title += " with " + col.col_vals.length + " levels";
       }
    }
@@ -798,7 +877,7 @@ var createHeader = function(idx, col) {
    // when ordering is disabled) routes the click into the grid so
    // subsequent keystrokes operate on the column the user just clicked;
    // sort cycling additionally requires ordering && !rownames.
-   var sortable = ordering && col.col_type !== "rownames";
+   var sortable = ordering && isColumnSortable(col);
    if (sortable) {
       th.style.cursor = "pointer";
       th.setAttribute("role", "columnheader");
@@ -816,6 +895,15 @@ var createHeader = function(idx, col) {
    });
 
    return th;
+};
+
+// Whether a column can be sorted. Rownames are an identity column with no
+// natural ordering, and list / data.frame columns are non-atomic -- R's
+// order() and xtfrm() error out on them ("unimplemented type 'list'"), which
+// would otherwise put the whole grid into a "Failed to fetch" error state.
+// Both list and data.frame columns report col_type === "list" (their typeof).
+var isColumnSortable = function(col) {
+   return col && !isRownameColumn(col) && col.col_type !== "list";
 };
 
 var sortAriaValue = function(dir) {
@@ -2063,7 +2151,9 @@ var createColumnTypesUI = function(th, idx, col) {
    host.className = "columnTypeWrapper";
 
    var val = document.createElement("div");
-   val.textContent = "(" + (col.col_type_assigned ? col.col_type_assigned : col.col_type_r) + ")";
+   // show the user's assigned type if they picked one in the import dialog,
+   // otherwise fall back to the detected R class
+   val.textContent = "(" + (col.col_type_assigned || colClassLabel(col)) + ")";
    val.className = "columnTypeHeader";
 
    th.classList.add("columnClickable");
@@ -2099,6 +2189,68 @@ var createColumnTypesUI = function(th, idx, col) {
 var scrollToTop = function() {
    var viewport = document.getElementById("gridViewport");
    if (viewport) viewport.scrollTop = 0;
+};
+
+// Snapshot the live scroll position (and the current unfiltered row count) so a
+// refresh triggered by an in-place data change can restore the user's position
+// after the grid is torn down and rebuilt. Must run before bootstrap() (whose
+// destroyGrid zeroes the viewport and lastScroll* state).
+var captureScrollForRefresh = function() {
+   var viewport = document.getElementById("gridViewport");
+   var top = viewport ? viewport.scrollTop : 0;
+   var left = viewport ? viewport.scrollLeft : 0;
+   // If the refresh fired while the tab was inactive, the live scrollTop may
+   // already read 0 (onDeactivate folded it into lastScrollTop); fall back to
+   // the saved value so the position isn't lost.
+   if (top === 0 && lastScrollTop > 0) top = lastScrollTop;
+   if (left === 0 && lastScrollLeft > 0) left = lastScrollLeft;
+   pendingScrollRestore = { top: top, left: left, rows: totalRows };
+};
+
+// After a refresh re-fetches its first row batch, restore the pre-refresh
+// scroll position -- but only when the underlying (unfiltered) row count is
+// unchanged. A changed row count means the data was materially replaced (rows
+// subset, reassigned, appended, or removed), so the row the user was looking at
+// no longer maps to the same thing; leave the grid at the top instead. The
+// transformations we do want to preserve -- adding a column, removing a column,
+// editing values in an existing column -- all leave recordsTotal unchanged,
+// which is exactly what this row-count compare detects.
+//
+// The compare is against the unfiltered total, not the filtered view. Per-column
+// filters are persisted across the refresh, so the filtered position is also
+// preserved. An active *global* search is not persisted (cachedSearch is cleared
+// on refresh); when one was active, filteredRows snaps back to totalRows and the
+// restored offset lands on a different (clamped, never out-of-range) row. That
+// edge is benign and rare enough not to special-case here.
+var restoreScrollAfterRefresh = function() {
+   var restore = activeScrollRestore;
+   activeScrollRestore = null;
+   if (!restore || restore.rows !== totalRows)
+      return;
+
+   // Guard against a rapid second refresh landing in the gap before this frame
+   // paints: capture the current draw and bail if another fetch has superseded
+   // us, so a stale offset isn't applied to a newer render.
+   var restoreToken = drawCounter;
+
+   // The viewport's scrollable height only exists once renderVisibleRows has
+   // sized the spacer rows, which fetchRows does right after this callback.
+   // Defer to the next frame so the scrollTop assignment isn't clamped to 0
+   // against a body that hasn't grown yet.
+   requestAnimationFrame(function() {
+      if (restoreToken !== drawCounter)
+         return;
+      var viewport = document.getElementById("gridViewport");
+      if (!viewport)
+         return;
+      viewport.scrollTop = restore.top;
+      viewport.scrollLeft = restore.left;
+      lastScrollTop = viewport.scrollTop;
+      lastScrollLeft = viewport.scrollLeft;
+      renderVisibleRows(true);
+      updateInfoBar();
+      updateCustomScrollbars();
+   });
 };
 
 var updateAriaRowCount = function() {
@@ -2483,6 +2635,11 @@ var onScrollEnd = function() {
    renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
+
+   // Persist the settled scroll position so it survives a close/reopen reload,
+   // alongside pins/sort/filters. scrollend fires once per gesture (including
+   // keyboard-driven scrolls), so this stays cheap.
+   saveState();
 };
 
 // Window resize handler: debounce wrapper is created once here so its
@@ -2635,8 +2792,16 @@ var createSparkline = function(breaks, counts) {
    return wrapper;
 };
 
+// The most-specific R class of a column (its class()[1]), used for the
+// human-readable type label. Falls back to the typeof() if class is absent.
+var colClassLabel = function(col) {
+   if (col.col_class && col.col_class.length > 0)
+      return col.col_class[0];
+   return col.col_type || "";
+};
+
 var typeLabel = function(col) {
-   var type = col.col_type_r || col.col_type || "";
+   var type = colClassLabel(col);
    // Map common R classes to short labels
    var map = {
       "character": "chr",
@@ -2774,7 +2939,7 @@ var initSidebar = function() {
 
    for (var i = 0; i < cols.length; i++) {
       var col = cols[i];
-      if (col.col_type === "rownames") continue;
+      if (isRownameColumn(col)) continue;
 
       var entry = document.createElement("div");
       entry.className = "sidebar-col";
@@ -2815,7 +2980,7 @@ var initSidebar = function() {
       // Sparkline histogram for numeric columns. Create the (empty)
       // container now but defer drawing the canvas until the panel is
       // visible -- see renderPendingSparklines.
-      if (col.col_type === "numeric" && col.col_breaks && col.col_counts) {
+      if (hasHistogram(col)) {
          var sparkContainer = document.createElement("div");
          sparkContainer.className = "sidebar-sparkline";
          entry.appendChild(sparkContainer);
@@ -2832,9 +2997,9 @@ var initSidebar = function() {
 
       // Type-specific summary (left)
       var summaryText = "";
-      if (col.col_type === "factor" && col.col_vals) {
+      if (isFactorColumn(col) && col.col_vals) {
          summaryText = col.col_vals.length + " levels";
-      } else if (col.col_type === "boolean") {
+      } else if (col.col_type === "logical") {
          summaryText = "logical";
       }
       if (summaryText) {
@@ -2925,7 +3090,7 @@ var initSidebar = function() {
                scrollToCol();
             }
          });
-      })(i, statsPanel, expandBtn, header, col.col_type);
+      })(i, statsPanel, expandBtn, header, statsCategory(col));
 
       content.appendChild(entry);
    }
@@ -3325,10 +3490,10 @@ var onGridKeyDown = function(evt) {
    if (activeHeaderCol >= 0) {
       var origCol = columnOrder[activeHeaderCol];
       var col = cols[origCol];
-      var isRownames = col && col.col_type === "rownames";
+      var isRownames = col && isRownameColumn(col);
       if (key === "Enter" || key === " ") {
          evt.preventDefault();
-         if (ordering && !isRownames) {
+         if (ordering && isColumnSortable(col)) {
             var th = getActiveHeaderTh();
             if (th) handleSortClick(origCol, th);
          }
@@ -3838,6 +4003,7 @@ var initGrid = function(resCols, data) {
       fetchRows(0, FETCH_SIZE, function() {
          autoSizeColumns();
          applyPinnedColumns();
+         restoreScrollAfterRefresh();
       });
    }
 
@@ -3876,6 +4042,21 @@ var initGrid = function(resCols, data) {
    // params + saved state have both resolved -- the callback may have
    // been registered before bootstrap ran with a different default.
    if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
+
+   // Reveal the filter row when saved state restored active per-column filters,
+   // so they're visible and editable instead of being applied with no UI
+   // (#17830). Filter-row visibility itself isn't persisted -- it's derived
+   // from whether any filter values came back. setFilterUIVisible records a
+   // post-init action, so this also survives column-pagination re-bootstraps;
+   // the replay loop below applies it once the headers are built.
+   if (Object.keys(cachedFilterValues).length > 0) {
+      window.setFilterUIVisible(true);
+   }
+
+   // Sync the host's filter latch with the resolved filter-row visibility,
+   // mirroring the sidebar callback above. The callback may have been
+   // registered before bootstrap resolved the restored filters.
+   if (window.filterStateCallback) window.filterStateCallback(isFilterUIVisible());
 
    // Run post-init actions
    for (var actionName in postInitActions) {
@@ -3925,6 +4106,14 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   // Invalidate the cached column count. buildRequestedColumns clamps the
+   // requested window to totalCols, so a stale value left over from the
+   // previous frame would cap the fetch at the old column count and drop any
+   // columns added since (e.g. `df$new <- ...`). 0 means "unknown"; the window
+   // is then requested in full and the server clamps it to the real frame.
+   // Reset here (rather than in invalidateCache) because resetGridState only
+   // runs from bootstrap, which always re-fetches columns and repopulates this.
+   totalCols = 0;
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";
@@ -4030,6 +4219,11 @@ var columnFingerprint = function() {
 var saveState = function() {
    var key = stateKey();
    if (!key) return;
+   // Don't persist before the grid is initialized: columnFingerprint() would
+   // fall back to its missing-data sentinel and totalRows would be stale, so the
+   // entry could never validate on reload. (saveState now also fires from scroll
+   // settling and tab deactivation, either of which can race an early teardown.)
+   if (!cols) return;
    // pinnedColumns/sort/filters are stored by absolute column identity (1-based
    // index in the full frame), so they survive column pagination. manualWidths
    // remains positional within the current window.
@@ -4040,7 +4234,12 @@ var saveState = function() {
       sidebarVisible: sidebarVisible,
       manualWidths: manualWidths.slice(),
       sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
-      filters: Object.assign({}, cachedFilterValues)
+      filters: Object.assign({}, cachedFilterValues),
+      // Scroll offset, keyed to the unfiltered row count so a frame whose size
+      // changed while closed reopens at the top -- the same guard refreshes use
+      // (see restoreScrollAfterRefresh). lastScroll* is kept current by onScroll/
+      // onScrollEnd/onDeactivate, so it's the live position at any save.
+      scroll: { top: lastScrollTop, left: lastScrollLeft, rows: totalRows }
    };
    try {
       localStorage.setItem(key, JSON.stringify(state));
@@ -4182,6 +4381,25 @@ var applySavedState = function(state) {
       }
    }
 
+   // Restore the saved scroll position through the same path a refresh uses:
+   // restoreScrollAfterRefresh (run after the first row fetch) re-checks the
+   // row count before applying, so a frame whose row count changed while closed
+   // still opens at the top. Defer to a live refresh capture if one already owns
+   // the slot (a refresh-driven rebuild carries a fresher position than the
+   // persisted one), and only when the fingerprint matched -- a mismatch returns
+   // early above without reaching here.
+   if (!activeScrollRestore &&
+       state.scroll &&
+       typeof state.scroll.top === "number" &&
+       typeof state.scroll.left === "number" &&
+       typeof state.scroll.rows === "number") {
+      activeScrollRestore = {
+         top: state.scroll.top,
+         left: state.scroll.left,
+         rows: state.scroll.rows
+      };
+   }
+
    return false;
 };
 
@@ -4239,6 +4457,14 @@ var destroyGrid = function() {
 
 var bootstrap = function(data) {
    bootstrapping = true;
+
+   // Take ownership of any pending scroll-restore intent for this rebuild only.
+   // Clearing the handoff slot here (rather than relying on the restore callback
+   // to consume it) means a prior refresh that aborted before its callback ran
+   // cannot leak its captured position onto this unrelated bootstrap.
+   activeScrollRestore = pendingScrollRestore;
+   pendingScrollRestore = null;
+
    destroyGrid();
 
    // Prime the pinned/sort/filter selection from saved state before the column
@@ -4351,6 +4577,13 @@ var columnNav = function(newOffset) {
 // Window API Exports
 // ==========================================================================
 
+// True when the filter row is shown. Reads the recorded postInitActions entry
+// (the source of truth that survives column-pagination re-bootstraps) rather
+// than the live DOM, so it stays correct before headers are rebuilt.
+var isFilterUIVisible = function() {
+   return !!postInitActions["setHeaderUIVisible:" + FILTER_UI_MARKER];
+};
+
 window.setFilterUIVisible = function(visible) {
    return setHeaderUIVisible(
       visible,
@@ -4372,7 +4605,7 @@ window.setFilterUIVisible = function(visible) {
             saveState();
          }
       },
-      "filter-injected-ui"
+      FILTER_UI_MARKER
    );
 };
 
@@ -4394,11 +4627,17 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
 };
 
 window.refreshData = function() {
+   // Preserve the user's scroll position across the rebuild for in-place data
+   // changes (restoreScrollAfterRefresh decides whether to actually restore,
+   // based on the row count).
+   captureScrollForRefresh();
    bootstrap();
 };
 
 window.refreshAndReset = function() {
+   // Reset View deliberately returns to the top, so drop any captured position.
    clearSavedState();
+   pendingScrollRestore = null;
    bootstrap();
 };
 
@@ -4456,11 +4695,19 @@ window.onDeactivate = function() {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
    }
+
+   // Leaving the tab is a natural persist point: capture the final position to
+   // localStorage in case the gesture that put us here didn't emit a scrollend
+   // (e.g. a programmatic or interrupted scroll).
+   saveState();
 };
 
 // Called from GWT when the data viewer tab is being closed (dismissType
-// CLOSE, not MOVE). Discard the saved state so it doesn't accumulate in
-// localStorage past the lifetime of the tab.
+// CLOSE, not MOVE). Discards the saved state so it doesn't accumulate in
+// localStorage past the lifetime of the tab. This is best-effort only: the
+// iframe is usually already detached by the time a close reaches us, so the
+// host clears the same key directly via the stateKeyCallback path (#17830).
+// Kept for the rare case where the frame is still live at dismiss.
 window.onDismiss = function() {
    clearSavedState();
 };
@@ -4498,6 +4745,23 @@ window.setOption = function(option, value) {
          // callback typically registers after bootstrap has already
          // resolved sidebarVisible from URL params + saved state.
          value(sidebarVisible);
+         break;
+      case "filterStateCallback":
+         window.filterStateCallback = value;
+         // Sync immediately, then again at the end of bootstrap once saved
+         // filters have been resolved (mirrors sidebarStateCallback).
+         value(isFilterUIVisible());
+         break;
+      case "stateKeyCallback":
+         window.stateKeyCallback = value;
+         // Report the localStorage key for this object's saved UI state so the
+         // host can clear it on explicit close. The host has to do the clearing
+         // because by the time the close reaches us the data viewer iframe is
+         // already detached (TabClosedEvent fires after the widget is removed),
+         // so an in-frame clear would no-op (#17830). The key derives only from
+         // the iframe URL (env+obj), which is available as soon as the frame
+         // loads, so this does not need to wait for bootstrap.
+         value(stateKey());
          break;
    }
 };

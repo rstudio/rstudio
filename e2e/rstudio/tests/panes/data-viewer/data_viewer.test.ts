@@ -11,7 +11,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
-import { resetSourcePaneState } from '@utils/commands';
+import { resetSourcePaneState, executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
@@ -308,6 +308,358 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.persist_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17830
+  // Saved per-object UI state lives in localStorage (shared same-origin between
+  // the host page and the data viewer iframe). Explicitly closing the viewer
+  // tab must discard it, so reopening the data set starts fresh -- the clear
+  // runs host-side because the iframe is already detached by the time the close
+  // reaches us.
+  //
+  // NOTE: the complementary half of this invariant -- that MOVING the tab
+  // between source columns must PRESERVE the saved state -- is deliberately not
+  // covered here. The gate lives in DataEditingTarget.onDismiss, which clears
+  // only on DISMISS_TYPE_CLOSE and not on DISMISS_TYPE_MOVE. A cross-column tab
+  // move is a drag-and-drop layout operation with no AppCommand to drive it
+  // from the automation bridge, so it can't be exercised reliably from
+  // Playwright. If a future refactor drops that dismissType guard (or clears
+  // unconditionally), a column move would silently wipe the user's sorts and
+  // filters and this suite would stay green -- so guard the invariant at the
+  // source, not just here.
+  test('explicitly closing the viewer clears its saved sorts and filters (#17830)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.close_clear_df <- mtcars; View(.rs.close_clear_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Sort col 1 ascending -- this writes per-object state to localStorage.
+      const col1 = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await col1.click();
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_asc/);
+
+      // The saved-state entry for this object is readable from the host page,
+      // which both confirms the write landed and proves the host/iframe share
+      // localStorage (the assumption the host-side clear relies on).
+      const savedKey = () => page.evaluate(() =>
+        Object.keys(window.localStorage).find(
+          (k) => k.startsWith('rstudio.dataViewer:') && k.includes('close_clear_df')) ?? null);
+      await expect.poll(savedKey, { timeout: TIMEOUTS.fileOpen }).not.toBeNull();
+
+      // Explicitly close the data viewer tab (DISMISS_TYPE_CLOSE).
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(sourcePane.selectedTab).toContainText('Untitled', { timeout: 5000 });
+
+      // The saved state must be gone, so a later View() of the same object
+      // would start unsorted/unfiltered.
+      await expect.poll(savedKey, { timeout: TIMEOUTS.fileOpen }).toBeNull();
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.close_clear_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17830
+  // A saved filter is restored on open, but it must also reveal the filter row
+  // so it's visible and editable -- before the fix the rows were filtered with
+  // no filter UI shown. A page/iframe reload preserves saved state (it's not a
+  // close), so it exercises the restore path.
+  test('restored filters reveal the filter row after a reload (#17830)', async ({ rstudioPage: page }) => {
+    // A character first column gives a simple text-box filter to drive.
+    await consoleActions.executeInConsole(
+      '{ .rs.restore_filter_df <- data.frame(x = letters, stringsAsFactors = FALSE); View(.rs.restore_filter_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const filterToggle = page.locator('#data_editing_toolbar .rstudio_dt_filter_toggle');
+
+      // Reveal the filter row and apply a text filter to column 1. Mirrors the
+      // open-and-type retry from the #17806 test (the editor auto-dismisses if
+      // it blurs while empty, so the open + type has to land as a unit).
+      await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+      const col1Filter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(col1Filter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      const filterInput = dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox');
+      const allLabel = col1Filter.getByText('All');
+      await expect(async () => {
+        if ((await filterInput.count()) === 0) {
+          await allLabel.click();
+          await filterInput.waitFor({ state: 'visible', timeout: 2000 });
+        }
+        await filterInput.fill('');
+        await filterInput.pressSequentially('a');
+        await expect(filterInput).toHaveValue('a', { timeout: 2000 });
+      }).toPass({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+
+      // Reload only the data viewer iframe: a reload preserves saved state (it's
+      // not a close), so the filter must come back -- and reveal its row.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        if (!f?.contentWindow) throw new Error('data viewer iframe not accessible');
+        f.contentWindow.location.reload();
+      }, VIEWER_FRAME);
+
+      await waitForViewer(dataViewer);
+
+      // The filter row is shown automatically (no manual toolbar click) and
+      // still carries the active value -- the core of the bug.
+      const col1FilterAfter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(col1FilterAfter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(col1FilterAfter).toHaveClass(/filtered/);
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"] .textFilterBox'))
+        .toHaveValue('a');
+
+      // The toolbar funnel reflects the restored filter state (aria-pressed is
+      // set by the LatchingToolbarButton when filterStateCallback latches it).
+      await expect(filterToggle)
+        .toHaveAttribute('aria-pressed', 'true', { timeout: TIMEOUTS.fileOpen });
+
+      // ...and the data is still filtered.
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.restore_filter_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // Adding a column refreshes the grid in place. As long as the row count is
+  // unchanged the refresh should keep the user where they were scrolled,
+  // instead of snapping back to the first row. (Column removal -- another
+  // in-place change -- is covered by the next test.)
+  test('scroll position is preserved when a column is added (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_pos_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_pos_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Scroll well down into the grid and record where we landed (clamped to
+      // the scrollable range by the browser).
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Add a column: the row count is unchanged, so this is exactly the kind
+      // of in-place change whose scroll position should survive. The
+      // assignment fires the structure-changed refresh through the backend.
+      await consoleActions.executeInConsole('.rs.scroll_pos_df$added <- 1L');
+
+      // The refresh must both report the new column count (5 -> 6 total) and
+      // actually bring the new sixth column into view. (The latter regressed
+      // when a refresh reused the previous frame's stale totalCols to clamp the
+      // requested column window, dropping any column added since.)
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('th[data-col-idx="6"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // Position should be restored to (about) where it was, not reset to the
+      // top. Allow one ROW_HEIGHT (23px) of slack for rounding. On the pre-fix
+      // code this would be 0.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be preserved across the refresh' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_pos_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // When the refresh is for genuinely new data -- signalled by a change in the
+  // underlying row count -- the grid resets to the top, since the previous row
+  // position no longer maps to anything meaningful.
+  test('scroll position resets to the top when the row count changes (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_reset_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_reset_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 20000; });
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+      ).toBeGreaterThan(0);
+
+      // Halve the rows: still tall enough to scroll, but a different row count,
+      // so the refresh should snap back to the top rather than restoring the
+      // old position.
+      await consoleActions.executeInConsole(
+        '.rs.scroll_reset_df <- .rs.scroll_reset_df[1:1000, ]',
+      );
+
+      // Wait for the refresh to report the new row count.
+      await expect(dataViewer.gridInfo)
+        .toContainText('1,000', { timeout: TIMEOUTS.fileOpen });
+
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should reset to the top for new data' },
+      ).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_reset_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // Removing a column is the other in-place change (alongside column add)
+  // that leaves the row count unchanged; the scroll position should survive
+  // it too. This exercises a different refresh path than the add case.
+  test('scroll position is preserved when a column is removed (#17861)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_drop_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 6)); View(.rs.scroll_drop_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Drop a column: row count unchanged, so the position should be kept.
+      await consoleActions.executeInConsole('.rs.scroll_drop_df$V6 <- NULL');
+
+      // The refresh should report the reduced column count (6 -> 5 total)...
+      await expect(dataViewer.gridInfo)
+        .toContainText('5 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // ...and keep the user where they were, not snap to the top. Allow one
+      // ROW_HEIGHT (23px) of slack for rounding.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be preserved across a column removal' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_drop_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17861
+  // "Reset View" rebuilds the grid like an in-place refresh, but deliberately
+  // returns to the top and discards the captured scroll position -- even when
+  // the row count is unchanged (which would otherwise trigger a restore). This
+  // guards the explicit pendingScrollRestore drop in refreshAndReset().
+  test('Reset View returns to the top even when the row count is unchanged (#17861)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.reset_view_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.reset_view_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Drive the iframe's refreshAndReset() directly -- the same method the
+      // toolbar's "Reset View" option invokes.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { refreshAndReset?: () => void } | undefined;
+        if (!w?.refreshAndReset) throw new Error('refreshAndReset() not available on data viewer iframe');
+        w.refreshAndReset();
+      }, VIEWER_FRAME);
+
+      // Wait for the grid to finish rebuilding (headers + a real data cell --
+      // body cells carry data-col-pos; the empty colspan spacer row does not --
+      // back in the DOM), by which point any erroneous restore would already
+      // have run.
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.frame.locator('#gridBody td[data-col-pos]').first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'Reset View should return to the top' },
+      ).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.reset_view_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // The scroll position is part of the per-object UI state persisted to
+  // localStorage (alongside sorts/filters/pins), so it survives a close/reopen
+  // reload the same way they do. A page/iframe reload preserves saved state
+  // (it's not a close), so it exercises the restore path -- mirroring the
+  // #17830 filter-restore test.
+  test('scroll position is restored after a reload', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.scroll_reload_df <- as.data.frame(matrix(0L, nrow = 2000, ncol = 5)); View(.rs.scroll_reload_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Scroll well down, then fire scrollend so the settled position is
+      // persisted to localStorage (onScrollEnd -> saveState). Dispatching the
+      // event explicitly removes the timing flake of waiting on the browser to
+      // emit scrollend for a programmatic scroll.
+      const target = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        el.scrollTop = 20000;
+        el.dispatchEvent(new Event('scrollend'));
+        return el.scrollTop;
+      });
+      expect(target).toBeGreaterThan(0);
+
+      // Confirm the position landed in the shared (host/iframe) localStorage
+      // entry: both a wait gate for the write and proof it was persisted.
+      const savedScrollTop = () => page.evaluate(() => {
+        const key = Object.keys(window.localStorage).find(
+          (k) => k.startsWith('rstudio.dataViewer:') && k.includes('scroll_reload_df'));
+        if (!key)
+          return null;
+        try {
+          const state = JSON.parse(window.localStorage.getItem(key) ?? '');
+          return state && state.scroll ? state.scroll.top : null;
+        } catch (e) {
+          return null;
+        }
+      });
+      await expect.poll(savedScrollTop, { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(0);
+
+      // Reload only the data viewer iframe: a reload preserves saved state (it's
+      // not a close), so the scroll position must come back.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        if (!f?.contentWindow) throw new Error('data viewer iframe not accessible');
+        f.contentWindow.location.reload();
+      }, VIEWER_FRAME);
+
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.frame.locator('#gridBody td[data-col-pos]').first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // Position is restored to (about) where it was, not reset to the top.
+      // Allow one ROW_HEIGHT (23px) of slack for rounding.
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop),
+        { message: 'scroll position should be restored after a reload' },
+      ).toBeGreaterThan(target - 23);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.scroll_reload_df", envir = .GlobalEnv)',
       );
     }
   });
