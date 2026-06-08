@@ -58,6 +58,10 @@ const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 
+// Built-in default editor theme, applied when neither the effective nor the
+// global theme is installed. Mirrors AceTheme.createDefault() on the client.
+const std::string kDefaultThemeName = "Textmate (default)";
+
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
 typedef std::map<std::string, std::tuple<std::string, std::string, bool>> ThemeMap;
@@ -657,9 +661,8 @@ Error syncThemePrefs()
       byName[name] = theme.second;
    }
 
-   std::string defaultName = "Textmate (default)";
    std::string appliedName =
-      chooseAppliedThemeName(effectiveName, globalName, available, defaultName);
+      chooseAppliedThemeName(effectiveName, globalName, available, kDefaultThemeName);
 
    // Only update user state when the applied theme differs from what is stored.
    json::Object stateTheme = prefs::userState().theme();

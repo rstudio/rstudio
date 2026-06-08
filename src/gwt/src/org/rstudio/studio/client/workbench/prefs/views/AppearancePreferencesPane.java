@@ -461,12 +461,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
-
-      // Re-evaluate the project-override UI whenever project options are saved
-      // (e.g. via the "Edit Project Options..." button); the project pref layer
-      // is updated before this event fires, so reading it here is accurate.
-      projectOptionsChangedHandler_ = events_.addHandler(
-         ProjectOptionsChangedEvent.TYPE, event -> updateProjectThemeOverride());
    }
    
    // It looks like theme components are larger in desktop, so we need
@@ -828,6 +822,20 @@ public class AppearancePreferencesPane extends PreferencesPane
          msg.toString(),
          continueOperation,
          true);
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      // Re-evaluate the project-override UI whenever project options are saved
+      // (e.g. via the "Edit Project Options..." button); the project pref layer
+      // is updated before this event fires, so reading it here is accurate.
+      // Registered on attach and torn down in onUnload so a detach/reattach
+      // keeps the handler live.
+      if (projectOptionsChangedHandler_ == null)
+         projectOptionsChangedHandler_ = events_.addHandler(
+            ProjectOptionsChangedEvent.TYPE, event -> updateProjectThemeOverride());
    }
 
    @Override
