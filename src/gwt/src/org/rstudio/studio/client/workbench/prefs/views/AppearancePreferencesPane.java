@@ -470,6 +470,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             constants_.ignoreProjectAppearanceLabel(),
             userPrefs_.ignoreProjectAppearance());
       initialIgnoreProjectAppearance_ = userPrefs_.ignoreProjectAppearance().getGlobalValue();
+      // Breathe a little above the checkbox so it isn't cramped against the
+      // two-column area.
+      add(new VerticalSpacer("8px"));
       add(ignoreProjectAppearance_);
 
       // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
@@ -1182,8 +1185,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final static String DEFAULT_FONT_VALUE = "__default__";
 
    // Vertical space (px) reserved below the two columns for the
-   // "ignore project appearance" checkbox row.
-   private final static int IGNORE_APPEARANCE_ROW_HEIGHT = 28;
+   // "ignore project appearance" checkbox row, including the spacer above it.
+   private final static int IGNORE_APPEARANCE_ROW_HEIGHT = 36;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
    

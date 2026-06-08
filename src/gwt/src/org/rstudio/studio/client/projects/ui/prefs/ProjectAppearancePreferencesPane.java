@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
@@ -105,6 +106,8 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
          Label ignoredNote = new Label(constants_.appearanceIgnoredByGlobalText());
          ignoredNote.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
          ignoredNote.setWidth("100%");
+         // Separate the note from the theme controls below it.
+         ignoredNote.getElement().getStyle().setMarginBottom(8, Unit.PX);
          add(ignoredNote);
       }
 
@@ -232,8 +235,9 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    private static final int PREVIEW_VERTICAL_MARGIN = 38;
    private static final int THEME_LABEL_HEIGHT = 24;
    // Vertical space (px) reserved for the "settings ignored" note when the user
-   // is globally ignoring project appearance settings (the note wraps to ~2 lines).
-   private static final int IGNORED_NOTE_HEIGHT = 48;
+   // is globally ignoring project appearance settings (the note wraps to ~2
+   // lines, plus a little space below it).
+   private static final int IGNORED_NOTE_HEIGHT = 56;
    private static final int VISIBLE_ITEM_COUNT = 20;
 
    private String initialEditorTheme_ = "";
