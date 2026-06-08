@@ -394,8 +394,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
-      // Set up panel swapping based on assistant selection
-      ChangeHandler assistantChangedHandler = new ChangeHandler()
+      // Set up panel swapping based on assistant selection. A null event means a
+      // programmatic refresh (panel load, project-options change, revert); a
+      // non-null event means a genuine user selection, which may trigger an
+      // install/version check. Callers that refresh programmatically must invoke
+      // assistantChangedHandler_.onChange(null) rather than firing a synthetic
+      // ChangeEvent, so an unrelated refresh is not mistaken for a user action.
+      assistantChangedHandler_ = new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
@@ -543,8 +548,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      selAssistant_.addChangeHandler(assistantChangedHandler);
-      assistantChangedHandler.onChange(null); // Initialize
+      selAssistant_.addChangeHandler(assistantChangedHandler_);
+      assistantChangedHandler_.onChange(null); // Initialize
 
       wrapWithPanel("assistant_prefs");
    }
@@ -1176,7 +1181,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          prefs_.writeUserPrefs((completed) -> {});
 
          // Trigger the change handler to update the UI
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
       else
       {
@@ -1284,7 +1289,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(projectAssistant);
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
    }
 
@@ -1343,7 +1348,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          positAiRefreshed_ = false;
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
       else
       {
@@ -1360,7 +1365,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          positAiRefreshed_ = false;
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
    }
 
@@ -1410,6 +1415,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
+   private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 

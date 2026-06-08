@@ -514,7 +514,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    else
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
-   
+   configJson["editor_theme"] = config.editorTheme;
+
    // scratch path
    std::string scratchPath;
    Error error = readProjectScratchPath(&scratchPath);
@@ -862,6 +863,10 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
   
+   // editor theme -- a missing key preserves the existing value, while an
+   // explicit empty string from the Appearance pane clears the project override
+   config.editorTheme = resolveWrittenEditorTheme(existingConfig.editorTheme, configJson);
+
    // project id
    config.projectId = existingConfig.projectId;
 
@@ -1392,6 +1397,24 @@ json::Array websiteOutputFormatsJson()
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;
+}
+
+std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
+                                      const json::Object& configJson)
+{
+   auto it = configJson.find("editor_theme");
+   if (it != configJson.end())
+   {
+      if ((*it).getValue().isString())
+         return (*it).getValue().getString();
+
+      // Present but not a string -- a malformed request or a client/server
+      // mismatch. Preserve the existing value (as for a missing key), but log it
+      // so this isn't indistinguishable from the normal key-omitted path.
+      LOG_WARNING_MESSAGE("Ignoring non-string 'editor_theme' in project config; "
+                          "preserving the existing value");
+   }
+   return existingEditorTheme;
 }
 
 } // namespace projects

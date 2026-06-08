@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import java.util.Map;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
@@ -44,6 +46,30 @@ public class AceTheme extends UserStateAccessor.Theme
       {
          return create(constants_.textmateDefaultParentheses(), "theme/default/textmate.rstheme", false);
       }
+   }
+
+   /**
+    * Resolve the editor theme that actually applies, following the single
+    * "selected -> global -> built-in default" fallback that defines which theme
+    * the IDE renders. Callers pass the preferred name (an effective/project
+    * value or the pane's current selection) and the global fallback; an
+    * uninstalled name drops to the next tier. Returns null only when the theme
+    * list is unavailable (null or empty), which callers treat as "leave the
+    * current theme in place."
+    */
+   public static final AceTheme resolveApplied(Map<String, AceTheme> themeList,
+                                               String selectedName,
+                                               String globalName)
+   {
+      if (themeList == null || themeList.isEmpty())
+         return null;
+
+      AceTheme theme = themeList.get(selectedName);
+      if (theme == null)
+         theme = themeList.get(globalName);
+      if (theme == null)
+         theme = themeList.get(createDefault().getName());
+      return theme;
    }
 
    public static final native AceTheme create(String name, String url, Boolean isDark)

@@ -1085,12 +1085,12 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->projectName = it->second;
    }
 
-   // EXAMPLE: adding a new field; this can be removed once we've actually added new fields
-   // it = dcfFields.find("FirstSortedExample");
-   // if (it != dcfFields.end())
-   // {
-   //    pConfig->firstSortedExample = it->second;
-   // }
+   // editor theme (sorted field; preserved by older RStudio versions)
+   it = dcfFields.find("EditorTheme");
+   if (it != dcfFields.end())
+      pConfig->editorTheme = it->second;
+   else
+      pConfig->editorTheme = defaultConfig.editorTheme;
 
    return Success();
 }
@@ -1412,11 +1412,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
    // Unlike the "legacy" fields above, do not add these directly to "contents"; instead
    // add (or remove) from sortedFields.
 
-   // EXAMPLE: adding/updating a new field; remove example after actually adding a new field
-   // if (!config.firstSortedExample.empty())
-   //    sortedFields["FirstSortedExample"] = config.firstSortedExample;
-   // else
-   //    sortedFields.erase("FirstSortedExample");
+   if (!config.editorTheme.empty())
+      sortedFields["EditorTheme"] = config.editorTheme;
+   else
+      sortedFields.erase("EditorTheme");
 
    // add the sorted fields
    if (!sortedFields.empty())

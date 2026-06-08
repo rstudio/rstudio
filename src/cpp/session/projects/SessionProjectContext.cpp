@@ -1097,10 +1097,14 @@ json::Object ProjectContext::uiPrefs() const
 
    if (config_.copilotEnabled != DefaultValue)
       uiPrefs[kCopilotEnabled] = config_.copilotEnabled == YesValue;
-   
+
    if (config_.copilotIndexingEnabled != DefaultValue)
       uiPrefs[kCopilotIndexingEnabled] = config_.copilotIndexingEnabled == YesValue;
-   
+
+   // editor theme -- only set the project value when overridden
+   if (!config_.editorTheme.empty())
+      uiPrefs[kEditorTheme] = config_.editorTheme;
+
    return uiPrefs;
 }
 
