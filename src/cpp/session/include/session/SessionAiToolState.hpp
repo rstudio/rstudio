@@ -77,13 +77,17 @@ inline std::vector<std::string> aiAssistantMonitorPaths()
 // escaped; the '/' path separator is left as-is.
 inline std::string aiAssistantStateDirRegex(const std::string& dir)
 {
+   // Escape every regex metacharacter except '/', which is not special and is
+   // kept as-is so the entry reads as a literal path. ".Rbuildignore" entries
+   // are POSIX extended regular expressions.
+   static const std::string metacharacters = "\\^$.|?*+()[]{}";
+
    std::string escaped;
    for (char ch : dir)
    {
-      if (ch == '.')
-         escaped += "\\.";
-      else
-         escaped += ch;
+      if (metacharacters.find(ch) != std::string::npos)
+         escaped += '\\';
+      escaped += ch;
    }
 
    return "^" + escaped + "$";

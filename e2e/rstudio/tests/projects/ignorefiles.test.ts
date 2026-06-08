@@ -71,80 +71,80 @@ test.describe('Project ignore files', () => {
   ];
 
   for (const { dir, projectName } of aiStateDirs) {
-  test(`${dir} is added to .gitignore only after the directory exists`, async ({ rstudioPage: page }) => {
-    const projectDir = `${sandbox.dir}/${projectName}`.replace(/\\/g, '/');
-    const gitignorePath = `${projectDir}/.gitignore`;
+    test(`${dir} is added to .gitignore only after the directory exists`, async ({ rstudioPage: page }) => {
+      const projectDir = `${sandbox.dir}/${projectName}`.replace(/\\/g, '/');
+      const gitignorePath = `${projectDir}/.gitignore`;
 
-    // Open New Project wizard via the command palette (executeCommand blocks
-    // on an "R session is busy" modal on some platforms). Wait for the
-    // palette list to render before typing -- the keystrokes get dropped if
-    // the palette hasn't mounted yet.
-    await page.keyboard.press('ControlOrMeta+Shift+p');
-    await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
-    await page.keyboard.type('Create a New Project');
-    const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
-    await expect(paletteItem).toBeVisible({ timeout: 5000 });
-    await paletteItem.click();
-    await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
+      // Open New Project wizard via the command palette (executeCommand blocks
+      // on an "R session is busy" modal on some platforms). Wait for the
+      // palette list to render before typing -- the keystrokes get dropped if
+      // the palette hasn't mounted yet.
+      await page.keyboard.press('ControlOrMeta+Shift+p');
+      await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
+      await page.keyboard.type('Create a New Project');
+      const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
+      await expect(paletteItem).toBeVisible({ timeout: 5000 });
+      await paletteItem.click();
+      await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
 
-    // Each wizard step's click auto-waits for the next panel to render before
-    // the next click is dispatched.
-    await page.locator(NEW_DIRECTORY_OPTION).click();
-    await page.locator(NEW_PROJECT_OPTION).click();
+      // Each wizard step's click auto-waits for the next panel to render before
+      // the next click is dispatched.
+      await page.locator(NEW_DIRECTORY_OPTION).click();
+      await page.locator(NEW_PROJECT_OPTION).click();
 
-    const nameInput = page.locator(PROJECT_NAME_INPUT);
-    await nameInput.click();
-    // pressSequentially fires GWT key events that enable the Create button.
-    // Wait for the input to actually hold the typed text before checking the
-    // git checkbox below.
-    await nameInput.pressSequentially(projectName);
-    await expect(nameInput).toHaveValue(projectName, { timeout: 2000 });
+      const nameInput = page.locator(PROJECT_NAME_INPUT);
+      await nameInput.click();
+      // pressSequentially fires GWT key events that enable the Create button.
+      // Wait for the input to actually hold the typed text before checking the
+      // git checkbox below.
+      await nameInput.pressSequentially(projectName);
+      await expect(nameInput).toHaveValue(projectName, { timeout: 2000 });
 
-    await page.locator(GIT_CHECKBOX).check();
+      await page.locator(GIT_CHECKBOX).check();
 
-    await page.locator(CREATE_PROJECT_BTN).click();
-    await expect(page.locator(WIZARD_DIALOG)).not.toBeVisible({ timeout: 15000 });
+      await page.locator(CREATE_PROJECT_BTN).click();
+      await expect(page.locator(WIZARD_DIALOG)).not.toBeVisible({ timeout: 15000 });
 
-    await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
-      timeout: TIMEOUTS.sessionRestart,
-    });
-    await waitForConsoleIdle(page);
-
-    // The AI state dir is added only after the directory exists, not
-    // unconditionally at project open.
-    await expect.poll(() => fs.existsSync(gitignorePath), {
-      timeout: TIMEOUTS.consoleReady,
-    }).toBe(true);
-    expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain(dir);
-
-    // Create the directory via rsession so the file monitor picks it up
-    // (recursive so the nested ".posit/assistant" case creates ".posit" too).
-    await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}", recursive = TRUE)`);
-
-    await expect
-      .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes(dir), {
-        timeout: TIMEOUTS.consoleReady,
-      })
-      .toBe(true);
-
-    // For the nested ".posit/assistant", the parent ".posit" must stay tracked
-    // (it is shared with tools like the Publisher extension), so only the
-    // specific subdirectory -- not ".posit" itself -- is added to .gitignore.
-    // Create a sibling ".posit/publisher" to prove a real Publisher directory
-    // coexisting with ".posit/assistant" stays committable.
-    if (dir.includes('/')) {
-      const parent = dir.split('/')[0];
-      await consoleActions.executeInConsole(
-        `dir.create("${projectDir}/${parent}/publisher", recursive = TRUE)`,
-      );
-      // give the file monitor a beat to (not) react to the publisher dir
+      await expect(page.locator(PROJECT_MENU)).toContainText(projectName, {
+        timeout: TIMEOUTS.sessionRestart,
+      });
       await waitForConsoleIdle(page);
-      const lines = fs.readFileSync(gitignorePath, 'utf8').split('\n');
-      expect(lines).not.toContain(parent);
-      expect(lines).not.toContain(`${parent}/`);
-      expect(lines).not.toContain(`${parent}/publisher`);
-      expect(lines).not.toContain(`${parent}/publisher/`);
-    }
-  });
+
+      // The AI state dir is added only after the directory exists, not
+      // unconditionally at project open.
+      await expect.poll(() => fs.existsSync(gitignorePath), {
+        timeout: TIMEOUTS.consoleReady,
+      }).toBe(true);
+      expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain(dir);
+
+      // Create the directory via rsession so the file monitor picks it up
+      // (recursive so the nested ".posit/assistant" case creates ".posit" too).
+      await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}", recursive = TRUE)`);
+
+      await expect
+        .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes(dir), {
+          timeout: TIMEOUTS.consoleReady,
+        })
+        .toBe(true);
+
+      // For the nested ".posit/assistant", the parent ".posit" must stay tracked
+      // (it is shared with tools like the Publisher extension), so only the
+      // specific subdirectory -- not ".posit" itself -- is added to .gitignore.
+      // Create a sibling ".posit/publisher" to prove a real Publisher directory
+      // coexisting with ".posit/assistant" stays committable.
+      if (dir.includes('/')) {
+        const parent = dir.split('/')[0];
+        await consoleActions.executeInConsole(
+          `dir.create("${projectDir}/${parent}/publisher", recursive = TRUE)`,
+        );
+        // give the file monitor a beat to (not) react to the publisher dir
+        await waitForConsoleIdle(page);
+        const lines = fs.readFileSync(gitignorePath, 'utf8').split('\n');
+        expect(lines).not.toContain(parent);
+        expect(lines).not.toContain(`${parent}/`);
+        expect(lines).not.toContain(`${parent}/publisher`);
+        expect(lines).not.toContain(`${parent}/publisher/`);
+      }
+    });
   }
 });

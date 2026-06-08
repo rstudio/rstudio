@@ -3057,8 +3057,8 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    FilePath repoRoot = gitIgnoreFile.getParent();
    libgit2::Git git(repoRoot);
 
-   // only add a Posit Assistant state directory (current ".posit" or the
-   // legacy ".positai") when it exists at the repo root AND isn't already
+   // only add a Posit Assistant state directory (current ".posit/assistant" or
+   // the legacy ".positai") when it exists at the repo root AND isn't already
    // covered by an existing ignore rule. The existence check decouples this
    // from the assistant preference: these directories belong to a separate
    // tool that may write them independent of RStudio's own AI integration

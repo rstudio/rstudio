@@ -832,9 +832,9 @@ void ProjectContext::fileMonitorRegistered(
    hasFileMonitor_ = true;
 
    // re-augment .Rbuildignore to pick up any AI tool-state directories
-   // (.posit/.positai/.claude) that were created between project init and
-   // file monitor start (small but real window). augmentRbuildignore is
-   // idempotent.
+   // (.posit/assistant, legacy .positai) that were created between project
+   // init and file monitor start (small but real window). augmentRbuildignore
+   // is idempotent.
    augmentRbuildignore();
 
    // notify subscribers

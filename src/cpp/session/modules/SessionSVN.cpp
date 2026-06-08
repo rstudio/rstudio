@@ -1681,7 +1681,7 @@ Error setIgnores(const FilePath& filePath,
    // always remove the temporary file
    Error removeError = ignoresFile.remove();
    if (removeError)
-      LOG_ERROR(error);
+      LOG_ERROR(removeError);
 
    // return svn error status
    return error;
