@@ -3509,9 +3509,13 @@ const char* const kManifestTestUrl = "https://cdn.posit.co/posit-ai/manifest-tes
 // check fails (manifestUnavailable) after this long.
 const int kManifestDeadlineSeconds = 30;
 
-// Single-flight state for manifest update checks. Main-thread-only: the async
-// subprocess completion and the RPC handlers all run on the main thread, so no
-// lock is needed here (s_updateState keeps its own mutex for cross-thread reads).
+// Single-flight state for manifest update checks. All access happens on the main
+// thread, so no lock is needed here (s_updateState keeps its own mutex for
+// cross-thread reads): the two RPC handlers are not offlineable (so they run on
+// the main thread), the scheduled startup and deadline work run on the main
+// thread, and the async subprocess completion is explicitly marshalled onto the
+// main thread by fetchManifestAsync -- its process callbacks can otherwise fire
+// on the offline-service background thread while R is busy.
 // s_pendingCompletions holds the actions to run once the in-flight check
 // finishes (each RPC caller queues one); s_checkIncludesStartup records whether
 // any caller in the current batch is the startup check (which also runs the
@@ -3520,9 +3524,8 @@ bool s_checkInProgress = false;
 bool s_checkIncludesStartup = false;
 std::vector<boost::function<void()>> s_pendingCompletions;
 
-// Defined further below (at the former doUpdateCheck site, after the manifest
-// parse/check helpers); forward-declared here so onDeferredInit's startup
-// kickoff can reference startUpdateCheck.
+// Defined further below (after the manifest parse/check helpers); forward-declared
+// here so onDeferredInit's startup kickoff can reference startUpdateCheck.
 void startUpdateCheck(bool isStartup, boost::function<void()> onComplete);
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest);
 
@@ -3668,16 +3671,26 @@ void fetchManifestAsync(
    }
 
    // Single-completion guard shared by the normal completion and the deadline.
+   // The AsyncRProcess completion can fire on the offline-service background
+   // thread (processSupervisor().poll() runs there while R occupies the main
+   // thread), so marshal the body onto the main thread before touching pDone or
+   // the single-flight state, and before onReady -> onUpdateCheckComplete drains
+   // queued completions (which may run R, e.g. performInstall). executeOnMainThread
+   // runs inline when already on the main thread (the deadline path below), so it
+   // adds no latency there.
    boost::shared_ptr<bool> pDone = boost::make_shared<bool>(false);
    boost::function<void(const core::system::ProcessResult&)> complete =
       [onReady, pDone](const core::system::ProcessResult& result)
       {
-         if (*pDone)
-            return;
-         *pDone = true;
-         json::Object manifest;
-         Error err = integrity::manifestFromDownloadResult(result, &manifest);
-         onReady(err, manifest);
+         module_context::executeOnMainThread([onReady, pDone, result]()
+         {
+            if (*pDone)
+               return;
+            *pDone = true;
+            json::Object manifest;
+            Error err = integrity::manifestFromDownloadResult(result, &manifest);
+            onReady(err, manifest);
+         });
       };
 
    boost::shared_ptr<ManifestDownload> pProc =
@@ -4213,13 +4226,13 @@ Error installPackage(const FilePath& packagePath)
    return Success();
 }
 
-// Runs on the main thread once a manifest fetch completes (success or failure).
-// Computes the new update state from the manifest, writes s_updateState in one
-// atomic locked update (no reset-at-start window), stops the agent when the
-// installed version/protocol is unsupported or the manifest is unavailable, runs
-// the startup-only recommended-RStudio-version warning, then drains any queued
-// single-flight completions. Replaces the old (synchronous) doUpdateCheck /
-// checkForUpdatesOnStartup, whose bodies were ~identical apart from the warning.
+// Runs on the main thread (fetchManifestAsync marshals the subprocess completion
+// there) once a manifest fetch completes (success or failure). Computes the new
+// update state from the manifest, writes s_updateState in one atomic locked update
+// (no reset-at-start window), stops the agent when the installed version/protocol
+// is unsupported or the manifest is unavailable, runs the startup-only
+// recommended-RStudio-version warning, then drains any queued single-flight
+// completions.
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest)
 {
    bool wasStartup = s_checkIncludesStartup;
