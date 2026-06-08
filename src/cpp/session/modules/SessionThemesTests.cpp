@@ -57,6 +57,17 @@ TEST(SessionThemesTests, ChooseAppliedThemeNameReturnsDefaultWhenEffectiveAndGlo
              "Textmate (default)");
 }
 
+TEST(SessionThemesTests, ChooseAppliedThemeNameUninstalledOverrideEmptyGlobalResolvesDefault)
+{
+   // An uninstalled project override with an empty global -> the built-in
+   // default, not the empty string. This is the combination that flows through
+   // syncThemePrefs when a project names a theme that is no longer installed.
+   std::set<std::string> installed = { "Textmate (default)" };
+   EXPECT_EQ(chooseAppliedThemeName("DeletedTheme", "", installed,
+                                    "Textmate (default)"),
+             "Textmate (default)");
+}
+
 TEST(SessionThemesTests, ResolveGlobalThemeNameSkipsPresentButEmptyUserLayer)
 {
    // A present-but-empty user-layer value falls through to a lower layer

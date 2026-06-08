@@ -172,7 +172,8 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    }
 
    // Applied-theme resolution rule: effective if installed, else global, else the
-   // built-in default. Returns null only when the theme list has not loaded.
+   // built-in default. Returns null only when the theme list is unavailable
+   // (not yet loaded or empty).
    public AceTheme resolveAppliedTheme(UserPrefs uiPrefs)
    {
       if (themeList_ == null || themeList_.isEmpty())

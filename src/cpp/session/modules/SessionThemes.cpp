@@ -743,9 +743,9 @@ std::string chooseAppliedThemeName(const std::string& effectiveName,
                                    const std::set<std::string>& availableThemes,
                                    const std::string& defaultName)
 {
-   if (availableThemes.count(effectiveName) == 1)
+   if (availableThemes.count(effectiveName))
       return effectiveName;
-   if (availableThemes.count(globalName) == 1)
+   if (availableThemes.count(globalName))
       return globalName;
    return defaultName;
 }

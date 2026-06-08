@@ -228,8 +228,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.editorTheme().setProjectValue(projectTheme);
 
                 // apply the effective theme live (handles (Default) and uninstalled
-                // project themes); resolveAppliedTheme is null only if themes have not
-                // loaded, in which case syncThemePrefs applies on next project open
+                // project themes); resolveAppliedTheme is null only if the theme list
+                // is unavailable (not yet loaded or empty), in which case syncThemePrefs
+                // applies on next project open
                 AceTheme appliedTheme = appearance_.resolveAppliedTheme(uiPrefs);
                 if (appliedTheme != null)
                    pUserState_.get().theme().setGlobalValue(appliedTheme);
