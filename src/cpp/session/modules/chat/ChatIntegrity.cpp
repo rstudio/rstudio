@@ -255,31 +255,33 @@ Error manifestFromDownloadResult(const core::system::ProcessResult& result,
    if (pManifest == nullptr)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
+   // Non-empty stderr (rare with --vanilla + quiet) is appended to every failure
+   // message for diagnostics -- the human message becomes the error's description,
+   // surfaced when the error is logged in full. It is never parsed to decide
+   // behavior, so the error mapping stays locale-independent. Any non-zero exit,
+   // and any empty / invalid / non-object / trailing-content body, is treated as
+   // "unavailable".
+   std::string detail = boost::algorithm::trim_copy(result.stdErr);
+   std::string suffix = detail.empty() ? std::string() : (": " + detail);
+
    if (result.exitStatus != EXIT_SUCCESS)
-   {
-      // Locale-independent: stderr is only folded into the message for the log,
-      // never parsed to decide behavior. Any non-zero exit is "unavailable".
-      std::string detail = boost::algorithm::trim_copy(result.stdErr);
-      std::string message = "Manifest download failed";
-      if (!detail.empty())
-         message += ": " + detail;
-      return systemError(boost::system::errc::io_error, message, ERROR_LOCATION);
-   }
+      return systemError(boost::system::errc::io_error,
+                         "Manifest download failed" + suffix, ERROR_LOCATION);
 
    std::string body = boost::algorithm::trim_copy(result.stdOut);
    if (body.empty())
       return systemError(boost::system::errc::io_error,
-                         "Manifest download produced no output", ERROR_LOCATION);
+                         "Manifest download produced no output" + suffix, ERROR_LOCATION);
 
    // json::Value::parse returns a (truthy) Error on failure.
    json::Value value;
    if (value.parse(body))
       return systemError(boost::system::errc::protocol_error,
-                         "Manifest is not valid JSON", ERROR_LOCATION);
+                         "Manifest is not valid JSON" + suffix, ERROR_LOCATION);
 
    if (!value.isObject())
       return systemError(boost::system::errc::protocol_error,
-                         "Manifest must be a JSON object", ERROR_LOCATION);
+                         "Manifest must be a JSON object" + suffix, ERROR_LOCATION);
 
    // json::Value::parse uses kParseStopWhenDoneFlag and would accept a valid
    // object followed by trailing content (e.g. "{...}\nwarning"). The body is
@@ -287,7 +289,7 @@ Error manifestFromDownloadResult(const core::system::ProcessResult& result,
    // non-whitespace junk -- reject it; the manifest must be exactly one object.
    if (endOfFirstJsonObject(body) != body.size())
       return systemError(boost::system::errc::protocol_error,
-                         "Manifest has unexpected content after the JSON object",
+                         "Manifest has unexpected content after the JSON object" + suffix,
                          ERROR_LOCATION);
 
    *pManifest = value.getObject();
