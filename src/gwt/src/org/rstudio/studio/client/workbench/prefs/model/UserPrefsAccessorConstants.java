@@ -846,6 +846,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorThemeDescription();
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   @DefaultStringValue("Ignore project-specific appearance settings")
+   String ignoreProjectAppearanceTitle();
+   @DefaultStringValue("Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.")
+   String ignoreProjectAppearanceDescription();
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    @DefaultStringValue("Enable editor fonts on RStudio Server")

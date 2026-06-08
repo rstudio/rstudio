@@ -917,6 +917,16 @@
    clear = function() { .rs.clearUserPref("editor_theme") }
 )
 
+# Ignore project-specific appearance settings
+#
+# Whether to ignore appearance settings (such as the editor theme) configured at
+# the project level, always using the global settings instead.
+.rs.uiPrefs$ignoreProjectAppearance <- list(
+   get = function() { .rs.getUserPref("ignore_project_appearance") },
+   set = function(value) { .rs.setUserPref("ignore_project_appearance", value) },
+   clear = function() { .rs.clearUserPref("ignore_project_appearance") }
+)
+
 # Enable editor fonts on RStudio Server
 #
 # Whether to use a custom editor font in RStudio Server.

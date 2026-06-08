@@ -20,6 +20,7 @@ import java.util.HashMap;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
@@ -39,6 +40,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
@@ -59,7 +61,13 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
             - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
       int paneHeight = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_HEIGHT;
 
-      int previewHeight = paneHeight - PREVIEW_VERTICAL_MARGIN;
+      // When the user is globally ignoring project appearance settings, reserve
+      // room above the two columns for a note explaining that anything chosen
+      // here has no effect until that option is turned off.
+      boolean ignoringAppearance = userPrefs_.ignoreProjectAppearance().getGlobalValue();
+
+      int previewHeight = paneHeight - PREVIEW_VERTICAL_MARGIN
+            - (ignoringAppearance ? IGNORED_NOTE_HEIGHT : 0);
       int previewWidth = paneWidth - LEFT_COLUMN_WIDTH;
 
       // Editor-theme list: a multi-row listbox (not a dropdown) that fills the
@@ -91,6 +99,15 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
       hpanel.add(leftPanel);
       hpanel.setCellWidth(leftPanel, LEFT_COLUMN_WIDTH + "px");
       hpanel.add(previewPanel);
+
+      if (ignoringAppearance)
+      {
+         Label ignoredNote = new Label(constants_.appearanceIgnoredByGlobalText());
+         ignoredNote.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+         ignoredNote.setWidth("100%");
+         add(ignoredNote);
+      }
+
       add(hpanel);
    }
 
@@ -173,11 +190,14 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
 
    // Applied-theme resolution rule: effective if installed, else global, else the
    // built-in default. Returns null only when the theme list is unavailable
-   // (not yet loaded or empty).
+   // (not yet loaded or empty). When the user is ignoring project appearance
+   // settings, the project override is excluded so the global theme is applied.
    public AceTheme resolveAppliedTheme(UserPrefs uiPrefs)
    {
-      return AceTheme.resolveApplied(themeList_,
-         uiPrefs.editorTheme().getValue(),
+      String preferred = uiPrefs.ignoreProjectAppearance().getGlobalValue()
+         ? uiPrefs.editorTheme().getGlobalValue()
+         : uiPrefs.editorTheme().getValue();
+      return AceTheme.resolveApplied(themeList_, preferred,
          uiPrefs.editorTheme().getGlobalValue());
    }
 
@@ -211,6 +231,9 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    private static final int LEFT_COLUMN_PADDING = 12;
    private static final int PREVIEW_VERTICAL_MARGIN = 38;
    private static final int THEME_LABEL_HEIGHT = 24;
+   // Vertical space (px) reserved for the "settings ignored" note when the user
+   // is globally ignoring project appearance settings (the note wraps to ~2 lines).
+   private static final int IGNORED_NOTE_HEIGHT = 48;
    private static final int VISIBLE_ITEM_COUNT = 20;
 
    private String initialEditorTheme_ = "";

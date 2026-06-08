@@ -141,6 +141,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ENABLE_MOUSEWHEEL_ZOOM = "enable_mousewheel_zoom";
    public static final String MOUSEWHEEL_ZOOM_DEBOUNCE_MS = "mousewheel_zoom_debounce_ms";
    public static final String EDITOR_THEME = "editor_theme";
+   public static final String IGNORE_PROJECT_APPEARANCE = "ignore_project_appearance";
    public static final String SERVER_EDITOR_FONT_ENABLED = "server_editor_font_enabled";
    public static final String SERVER_EDITOR_FONT = "server_editor_font";
    public static final String DEFAULT_ENCODING = "default_encoding";
@@ -1740,6 +1741,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.editorThemeTitle(), 
          _constants.editorThemeDescription(), 
          "Textmate (default)");
+   }
+
+   /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   public PrefValue<Boolean> ignoreProjectAppearance()
+   {
+      return bool(
+         "ignore_project_appearance",
+         _constants.ignoreProjectAppearanceTitle(), 
+         _constants.ignoreProjectAppearanceDescription(), 
+         false);
    }
 
    /**
@@ -4698,6 +4711,8 @@ public class UserPrefsAccessor extends Prefs
          mousewheelZoomDebounceMs().setValue(layer, source.getInteger("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("ignore_project_appearance"))
+         ignoreProjectAppearance().setValue(layer, source.getBool("ignore_project_appearance"));
       if (source.hasKey("server_editor_font_enabled"))
          serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
       if (source.hasKey("server_editor_font"))
@@ -5189,6 +5204,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(enableMousewheelZoom());
       prefs.add(mousewheelZoomDebounceMs());
       prefs.add(editorTheme());
+      prefs.add(ignoreProjectAppearance());
       prefs.add(serverEditorFontEnabled());
       prefs.add(serverEditorFont());
       prefs.add(defaultEncoding());

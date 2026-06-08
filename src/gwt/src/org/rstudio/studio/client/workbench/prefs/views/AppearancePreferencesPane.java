@@ -76,6 +76,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -438,7 +439,9 @@ public class AppearancePreferencesPane extends PreferencesPane
       FlowPanel previewPanel = new FlowPanel();
 
       int previewWidth = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 312;
-      int previewHeight = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 38;
+      // Reserve room below the two columns for the "ignore project appearance"
+      // checkbox so it fits without overflowing the pane.
+      int previewHeight = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 38 - IGNORE_APPEARANCE_ROW_HEIGHT;
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setWidth(previewWidth + "px");
@@ -456,6 +459,18 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(previewPanel);
 
       add(hpanel);
+
+      // "Ignore project-specific appearance settings" -- a global opt-out that
+      // makes RStudio always use the global editor theme even when the active
+      // project sets its own. checkboxPref persists the value in the base
+      // onApply(); the visible effect (reverting the applied theme, restoring
+      // the selector) is handled in this pane's onApply(), so toggling the box
+      // alone changes nothing until OK/Apply.
+      ignoreProjectAppearance_ = checkboxPref(
+            constants_.ignoreProjectAppearanceLabel(),
+            userPrefs_.ignoreProjectAppearance());
+      initialIgnoreProjectAppearance_ = userPrefs_.ignoreProjectAppearance().getGlobalValue();
+      add(ignoreProjectAppearance_);
 
       // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
       // asynchronously too. We also need to wait until the next event cycle so that the progress
@@ -663,6 +678,13 @@ public class AppearancePreferencesPane extends PreferencesPane
    private boolean isProjectThemeOverrideActive()
    {
       if (!hasActiveProject_)
+         return false;
+
+      // When the user has opted to ignore project appearance settings, the
+      // project's editor theme is not applied, so there is no override to show.
+      // Read the persisted pref (not the checkbox) so that merely toggling the
+      // checkbox doesn't change the pane until OK/Apply persists it.
+      if (userPrefs_.ignoreProjectAppearance().getGlobalValue())
          return false;
 
       return userPrefs_.editorTheme().hasProjectValue() &&
@@ -900,19 +922,40 @@ public class AppearancePreferencesPane extends PreferencesPane
          initialEditorFontSize_ = helpFontSize;
       }
 
-      // themeList_ is populated asynchronously from setThemes(); if the user
-      // clicks OK before that lands, the dropdown is empty and the user can't
-      // have made a selection -- so there's nothing to apply.
-      if (themeList_ != null &&
-          !StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
-      {
-         // persist the user's global editor theme
+      // The editor-theme selector is only meaningful when visible; an active
+      // project override hides it. themeList_ is populated asynchronously from
+      // setThemes(), so if the user clicks OK before that lands there's nothing
+      // to apply.
+      boolean globalThemeChanged =
+         themeList_ != null &&
+         theme_.isVisible() &&
+         !StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue());
+      if (globalThemeChanged)
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
 
-         // apply the *effective* theme: a project override (if active and installed)
-         // must win, so changing the global theme does not replace it
-         AceTheme applied = AceTheme.resolveApplied(themeList_,
-            userPrefs_.editorTheme().getValue(),
+      // "Ignore project appearance settings" was already persisted by
+      // super.onApply(); detect whether it changed since the pane was seeded so
+      // we can re-resolve the applied theme (e.g. revert a project override back
+      // to the global theme) and refresh the pane to match.
+      boolean ignoreChanged =
+         userPrefs_.ignoreProjectAppearance().getGlobalValue() != initialIgnoreProjectAppearance_;
+      initialIgnoreProjectAppearance_ = userPrefs_.ignoreProjectAppearance().getGlobalValue();
+
+      if (themeList_ != null && (globalThemeChanged || ignoreChanged))
+      {
+         // Reflect the (possibly new) override state in the pane -- show the
+         // selector vs. the override indicator and point the preview at the
+         // applied theme. On Apply this updates the still-visible pane
+         // immediately; on OK it refreshes a pane that is about to close.
+         updateProjectThemeOverride();
+
+         // Apply the *effective* theme: a project override wins only while it is
+         // active (the project sets a theme and it isn't being ignored);
+         // otherwise the global selection applies.
+         String preferred = isProjectThemeOverrideActive()
+            ? userPrefs_.editorTheme().getValue()
+            : userPrefs_.editorTheme().getGlobalValue();
+         AceTheme applied = AceTheme.resolveApplied(themeList_, preferred,
             userPrefs_.editorTheme().getGlobalValue());
          if (applied != null)
             userState_.theme().setGlobalValue(applied);
@@ -1081,6 +1124,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private ThemedButton removeThemeButton_;
    private HorizontalPanel themeButtonsPanel_;
    private VerticalPanel projectThemeOverridePanel_;
+   private CheckBox ignoreProjectAppearance_;
+   private boolean initialIgnoreProjectAppearance_;
    private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
@@ -1100,6 +1145,10 @@ public class AppearancePreferencesPane extends PreferencesPane
 
    private final static String DEFAULT_FONT_NAME = "(Default)";
    private final static String DEFAULT_FONT_VALUE = "__default__";
+
+   // Vertical space (px) reserved below the two columns for the
+   // "ignore project appearance" checkbox row.
+   private final static int IGNORE_APPEARANCE_ROW_HEIGHT = 28;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
    

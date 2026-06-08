@@ -44,6 +44,14 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
+    // Defensively clear the ignore-project-appearance opt-out so a failing test
+    // can't leak it into other suites in this worker.
+    try {
+      await clearPref(page, 'ignore_project_appearance');
+    } catch (err) {
+      console.warn('[project_editor_theme] afterAll clearPref(ignore) failed:', err);
+    }
+
     // Restore the original global editor_theme pref first.
     try {
       if (originalTheme !== null) {
@@ -230,6 +238,67 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
 
     // Clean up.
     await closeProjectIfOpen(page);
+    await executeInConsole(
+      page,
+      `unlink(${rPathLiteral(projectDir)}, recursive = TRUE)`,
+    );
+    await waitForConsoleIdle(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 3: A project's EditorTheme is NOT applied when the user has globally
+  // opted to ignore project appearance settings; the global theme stays active.
+  // This exercises the backend syncThemePrefs() path (project layer excluded),
+  // complementing the live Global Options toggle in
+  // ignore_project_appearance.test.ts.
+  // ---------------------------------------------------------------------------
+  test('project EditorTheme is not applied when project appearance settings are ignored', async ({
+    rstudioPage: page,
+  }) => {
+    // Globally ignore project appearance settings, and pin the global theme so
+    // the "stayed on the global theme" assertion is deterministic.
+    await setPref(page, 'ignore_project_appearance', true);
+    await setPref(page, 'editor_theme', THEME_DEFAULT);
+
+    const parentDir = sandbox.dir.replace(/\\/g, '/');
+    const name = 'ignored_theme_project';
+    const projectDir = `${parentDir}/${name}`;
+    const rprojPath = `${projectDir}/${name}.Rproj`;
+    const rprojLit = rPathLiteral(rprojPath);
+
+    // Write a .Rproj that sets EditorTheme: Cobalt -- which would normally
+    // override the global theme on open.
+    await executeInConsole(
+      page,
+      `{ dir.create(${rPathLiteral(projectDir)}); ` +
+        `writeLines(c(` +
+        `"Version: 1.0", "", ` +
+        `"RestoreWorkspace: Default", ` +
+        `"SaveWorkspace: Default", ` +
+        `"EditorTheme: ${THEME_WITH_OVERRIDE}"` +
+        `), ${rprojLit}) }`,
+    );
+    await waitForConsoleIdle(page);
+
+    await openProject(page, rprojPath);
+
+    // syncThemePrefs() excludes the project layer while the opt-out is on, so the
+    // global Textmate remains applied even though the .Rproj sets Cobalt.
+    await expect
+      .poll(
+        () => getActiveThemeHref(page),
+        {
+          message: `Expected ace theme link href to stay "textmate" (project Cobalt ignored)`,
+          timeout: 15000,
+          intervals: [200, 500, 1000],
+        },
+      )
+      .toMatch(/textmate/i);
+    expect(await getActiveThemeHref(page)).not.toMatch(/cobalt/i);
+
+    // Clean up: close the project (rebuilds the session), stop ignoring, remove dir.
+    await closeProjectIfOpen(page);
+    await clearPref(page, 'ignore_project_appearance');
     await executeInConsole(
       page,
       `unlink(${rPathLiteral(projectDir)}, recursive = TRUE)`,

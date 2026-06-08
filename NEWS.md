@@ -4,7 +4,7 @@
 - ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
 - ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
-- ([#2350](https://github.com/rstudio/rstudio/issues/2350)): Add an Appearance pane to Project Options for setting a project-specific editor theme; leaving it at "(Default)" uses the global theme.
+- ([#2350](https://github.com/rstudio/rstudio/issues/2350)): Add an Appearance pane to Project Options for setting a project-specific editor theme; leaving it at "(Default)" uses the global theme. A new "Ignore project-specific appearance settings" option (Global Options > Appearance) keeps the global editor theme even when a project sets its own.
 
 ### Fixed
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
