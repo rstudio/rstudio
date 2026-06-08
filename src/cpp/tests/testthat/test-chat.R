@@ -62,3 +62,17 @@ test_that("manifestDownloadCommand errors when download.file reports a non-zero 
    env$download.file <- function(...) 1L  # non-zero status, no file written
    expect_error(eval(parse(text = cmd), envir = env), "download.file failed")
 })
+
+test_that("manifestDownloadCommand emits the downloaded body with newlines intact", {
+   # cat() defaults to sep = " "; the command uses sep = "\n" so a multi-line body
+   # round-trips verbatim rather than having its line breaks collapsed to spaces.
+   cmd <- .rs.chat.manifestDownloadCommand("https://example.test/m.json")
+
+   env <- new.env()
+   env$download.file <- function(url, destfile, ...) {
+      writeLines(c("{", '  "v": 1', "}"), destfile)
+      0L
+   }
+   out <- paste(capture.output(eval(parse(text = cmd), envir = env)), collapse = "\n")
+   expect_identical(out, "{\n  \"v\": 1\n}")
+})

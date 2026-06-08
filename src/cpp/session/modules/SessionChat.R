@@ -968,8 +968,11 @@
    # status and stop() before reading the file -- the manifest subprocess
    # contract is that a download failure surfaces as a non-zero exit status, not
    # a clean exit with a partial/empty body on stdout.
+   # cat() with the default sep = " " would replace newlines with spaces; use
+   # sep = "\n" so the downloaded body round-trips verbatim on stdout rather than
+   # relying on JSON tolerating that substitution.
    sprintf(
-      "{ options(timeout = 30L); tmp <- tempfile(); status <- download.file(%s); if (!isTRUE(status == 0)) stop(paste('download.file failed, status', status)); cat(readLines(tmp, warn = FALSE)) }",
+      "{ options(timeout = 30L); tmp <- tempfile(); status <- download.file(%s); if (!isTRUE(status == 0)) stop(paste('download.file failed, status', status)); cat(readLines(tmp, warn = FALSE), sep = '\\n') }",
       paste(args, collapse = ", ")
    )
 })
