@@ -6,7 +6,7 @@
 - ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
 
 ### Fixed
-- ([#17898](https://github.com/rstudio/rstudio/issues/17898)): Recognize the Posit Assistant's `.posit` project-state directory (in addition to the legacy `.positai`) when updating a project's `.gitignore`, `.Rbuildignore`, and `svn:ignore` files, so it is ignored automatically once it appears.
+- ([#17898](https://github.com/rstudio/rstudio/issues/17898)): Recognize the Posit Assistant's `.posit/assistant` project-state directory (in addition to the legacy `.positai`) when updating a project's `.gitignore`, `.Rbuildignore`, and `svn:ignore` files, so it is ignored automatically once it appears. The rest of `.posit` -- such as the Posit Publisher extension's `.posit/publisher` -- is left tracked.
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
 - ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
 - ([#17729](https://github.com/rstudio/rstudio/issues/17729)): Show distinct copy in the Posit Assistant chat pane and preferences install prompt when the recommended Posit Assistant version is older than the installed one.

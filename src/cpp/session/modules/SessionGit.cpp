@@ -3280,10 +3280,12 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    if (s_git_.root().isEmpty())
       return;
 
-   // re-augment .gitignore when a Posit Assistant state directory
-   // (.posit/.positai) is created at the repo root mid-session
+   // re-augment .gitignore when a Posit Assistant state directory is created
+   // mid-session. We also watch the parent of the nested ".posit/assistant"
+   // (i.e. ".posit") so creation is observed when both are created together;
+   // augmentGitIgnore re-checks existence and is idempotent.
    std::vector<std::string> watchPaths;
-   for (const std::string& dir : aiAssistantStateDirs())
+   for (const std::string& dir : aiAssistantMonitorPaths())
       watchPaths.push_back(s_git_.root().completeChildPath(dir).getAbsolutePath());
 
    for (const auto& event : events)

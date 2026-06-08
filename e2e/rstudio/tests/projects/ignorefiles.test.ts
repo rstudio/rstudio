@@ -60,12 +60,13 @@ test.describe('Project ignore files', () => {
   });
 
   // Posit Assistant moved its project-state directory from ".positai" to
-  // ".posit"; RStudio recognizes both, adding whichever exists to .gitignore.
-  // ".posit" is the current directory; ".positai" is retained for projects
-  // created by older Assistant releases.
+  // ".posit/assistant"; RStudio recognizes both, adding whichever exists to
+  // .gitignore. ".posit/assistant" is the current directory; ".positai" is
+  // retained for projects created by older Assistant releases. The rest of
+  // ".posit" (e.g. the Publisher extension's ".posit/publisher") stays tracked.
   // https://github.com/rstudio/rstudio/commit/89f6cef5d8
   const aiStateDirs: Array<{ dir: string; projectName: string }> = [
-    { dir: '.posit', projectName: 'PositIgnoreTest' },
+    { dir: '.posit/assistant', projectName: 'PositIgnoreTest' },
     { dir: '.positai', projectName: 'PositaiIgnoreTest' },
   ];
 
@@ -116,14 +117,25 @@ test.describe('Project ignore files', () => {
     }).toBe(true);
     expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain(dir);
 
-    // Create the directory via rsession so the file monitor picks it up.
-    await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}")`);
+    // Create the directory via rsession so the file monitor picks it up
+    // (recursive so the nested ".posit/assistant" case creates ".posit" too).
+    await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}", recursive = TRUE)`);
 
     await expect
       .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes(dir), {
         timeout: TIMEOUTS.consoleReady,
       })
       .toBe(true);
+
+    // For the nested ".posit/assistant", the parent ".posit" must stay tracked
+    // (it is shared with tools like the Publisher extension), so only the
+    // specific subdirectory -- not ".posit" itself -- is added to .gitignore.
+    if (dir.includes('/')) {
+      const parent = dir.split('/')[0];
+      const lines = fs.readFileSync(gitignorePath, 'utf8').split('\n');
+      expect(lines).not.toContain(parent);
+      expect(lines).not.toContain(`${parent}/`);
+    }
   });
   }
 });

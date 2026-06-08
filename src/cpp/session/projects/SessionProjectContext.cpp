@@ -15,6 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <sys/stat.h>
 
@@ -695,10 +696,14 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore contents of AI tool state directories. The trailing slash is
       // important: it excludes children but lets the directory entry itself
-      // ("/proj/.posit") pass through so the allowlist in fileMonitorFilter
-      // can react to its creation. ".positai" is the legacy Posit Assistant
-      // directory, retained so existing projects keep working.
-      "/.posit/",
+      // ("/proj/.posit/assistant") pass through so the allowlist in
+      // fileMonitorFilter can react to its creation. Note we exclude only
+      // ".posit/assistant", not all of ".posit" -- the latter is shared with
+      // other Posit tools (e.g. the Publisher extension's ".posit/publisher",
+      // whose files are committed) and must stay monitored. ".positai" is the
+      // legacy Posit Assistant directory, retained so existing projects keep
+      // working.
+      "/.posit/assistant/",
       "/.positai/",
       "/.claude/",
 
@@ -840,20 +845,20 @@ void ProjectContext::fileMonitorFilesChanged(
    // own handler
    onProjectFilesChanged(events);
 
-   // if an AI tool-state directory (.posit/.positai/.claude) was added at the
-   // project root, augment .Rbuildignore now (we don't add these entries
-   // until the directory exists)
+   // if an AI tool-state directory (or, for the nested ".posit/assistant", its
+   // parent ".posit") was added, augment .Rbuildignore now -- we don't add
+   // these entries until the directory exists. Reacting to ".posit" as well
+   // covers the case where ".posit" and ".posit/assistant" are created
+   // together: augmentRbuildignore re-checks existence and is idempotent.
+   std::vector<std::string> triggerPaths = aiAssistantMonitorPaths();
+   triggerPaths.push_back(".claude");
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
       FilePath path(event.fileInfo().absolutePath());
-      if (path.getParent() != directory())
-         continue;
-      std::string filename = path.getFilename();
-      if (filename == kPositAssistantStateDir ||
-          filename == kPositAssistantStateDirLegacy ||
-          filename == ".claude")
+      std::string rel = path.getRelativePath(directory());
+      if (std::find(triggerPaths.begin(), triggerPaths.end(), rel) != triggerPaths.end())
       {
          augmentRbuildignore();
          break;
@@ -924,24 +929,33 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(absPath, component))
          return false;
 
-   // Allow AI tool-state directories (.posit/.positai/.claude) at the project
-   // root through the filter so we can react to their creation and update
-   // ignore files accordingly. This must run before the gitignore directory
-   // check below -- a global or parent gitignore that already covers them
-   // would otherwise drop the FileAdded event and prevent mid-session
-   // augmentation. fileListingFilter would also drop them as hidden.
+   // Allow AI tool-state directories through the filter so we can react to
+   // their creation and update ignore files accordingly. This must run before
+   // the gitignore directory check below -- a global or parent gitignore that
+   // already covers them would otherwise drop the FileAdded event and prevent
+   // mid-session augmentation. fileListingFilter would also drop them as
+   // hidden.
    //
-   // Use a cheap string-suffix check before constructing FilePath so we
-   // don't pay the allocation cost for the ~all files that don't match.
+   // The allowed paths include each state directory plus, for the nested
+   // ".posit/assistant", its parent ".posit" -- the parent must pass the
+   // filter so the monitor descends into it and observes ".posit/assistant"
+   // being created. ".claude" is Claude Code's directory.
+   //
+   // Use a cheap basename check before constructing FilePath so we don't pay
+   // the allocation cost for the ~all files that don't match.
    std::size_t slashPos = absPath.find_last_of('/');
    const char* filename = (slashPos == std::string::npos)
          ? absPath.c_str()
          : absPath.c_str() + slashPos + 1;
-   if (std::strcmp(filename, kPositAssistantStateDir) == 0 ||
+   if (std::strcmp(filename, ".posit") == 0 ||
+       std::strcmp(filename, "assistant") == 0 ||
        std::strcmp(filename, kPositAssistantStateDirLegacy) == 0 ||
        std::strcmp(filename, ".claude") == 0)
    {
-      if (FilePath(absPath).getParent() == directory())
+      std::string rel = FilePath(absPath).getRelativePath(directory());
+      std::vector<std::string> allowed = aiAssistantMonitorPaths();
+      allowed.push_back(".claude");
+      if (std::find(allowed.begin(), allowed.end(), rel) != allowed.end())
          return true;
    }
 

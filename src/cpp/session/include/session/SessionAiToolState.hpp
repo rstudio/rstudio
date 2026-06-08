@@ -16,43 +16,65 @@
 #ifndef SESSION_AI_TOOL_STATE_HPP
 #define SESSION_AI_TOOL_STATE_HPP
 
+#include <set>
 #include <string>
 #include <vector>
 
 namespace rstudio {
 namespace session {
 
-// Project-local directory used by the Posit Assistant to store its state.
+// Project-local directory (relative to the project root) used by the Posit
+// Assistant to store its state. RStudio adds this to a project's ignore files
+// (.gitignore, .Rbuildignore, svn:ignore) when it is present.
 //
-// When this directory is present in a project, RStudio adds it to the
-// project's ignore files (.gitignore, .Rbuildignore, svn:ignore). The
-// Assistant stores its state under ".posit/assistant"; for now we ignore the
-// parent ".posit" directory rather than that specific subdirectory.
-//
-// To ignore the more specific subdirectory instead, change this to
-// ".posit/assistant". Note, however, that the file-monitor logic which
-// detects mid-session creation (in SessionProjectContext, SessionGit, and
-// SessionSVN) assumes a single path component at the project root, and that
-// svn:ignore matches only immediate children of the directory it is set on --
-// both would need revisiting before a nested path could be used here.
-constexpr const char* kPositAssistantStateDir = ".posit";
+// We ignore the ".posit/assistant" subdirectory specifically rather than the
+// whole ".posit" directory: ".posit" is shared with other Posit tools (e.g.
+// the Posit Publisher extension writes ".posit/publisher", whose files are
+// meant to be committed), so ".posit" itself must stay tracked.
+constexpr const char* kPositAssistantStateDir = ".posit/assistant";
 
-// Directory used by Posit Assistant releases prior to the ".posit" rename.
-// Still recognized so that projects which already contain it continue to have
-// it ignored.
+// Directory used by Posit Assistant releases prior to the ".posit/assistant"
+// rename. Still recognized so that projects which already contain it continue
+// to have it ignored.
 constexpr const char* kPositAssistantStateDirLegacy = ".positai";
 
 // All Posit Assistant project-state directory names RStudio recognizes, in
-// preference order (current name first, then legacy).
+// preference order (current name first, then legacy). Paths are relative to
+// the project root and use '/' as the separator.
 inline std::vector<std::string> aiAssistantStateDirs()
 {
    return { kPositAssistantStateDir, kPositAssistantStateDirLegacy };
 }
 
+// Project-relative directories that the file monitor must allow through (and
+// whose creation should trigger an ignore-file update). This is each state
+// directory plus, for any nested one, its ancestor directories -- the
+// ancestors must be monitored so the creation of the nested directory is
+// observed, even though the ancestors themselves are not ignored (e.g.
+// ".posit" must be monitored to observe ".posit/assistant", but ".posit" is
+// shared with the Posit Publisher extension and stays tracked).
+inline std::vector<std::string> aiAssistantMonitorPaths()
+{
+   std::set<std::string> paths;
+   for (const std::string& dir : aiAssistantStateDirs())
+   {
+      std::string prefix;
+      for (char ch : dir)
+      {
+         if (ch == '/')
+            paths.insert(prefix);
+         prefix += ch;
+      }
+      paths.insert(prefix);
+   }
+
+   return std::vector<std::string>(paths.begin(), paths.end());
+}
+
 // Returns an anchored regular expression matching exactly the given directory
-// name, suitable for use as an entry in .Rbuildignore or svn:ignore (both of
-// which interpret entries as regular expressions). Regex metacharacters in
-// the name are escaped.
+// path, suitable for use as an entry in .Rbuildignore (which interprets
+// entries as regular expressions). Regex metacharacters in the path are
+// escaped; the '/' path separator is left as-is.
 inline std::string aiAssistantStateDirRegex(const std::string& dir)
 {
    std::string escaped;

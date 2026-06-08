@@ -561,10 +561,12 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    if (s_workingDir.isEmpty())
       return;
 
-   // re-augment svn:ignore when a Posit Assistant state directory
-   // (.posit/.positai) is created at the working dir root mid-session
+   // re-augment svn:ignore when a Posit Assistant state directory is created
+   // mid-session. We also watch the parent of the nested ".posit/assistant"
+   // (i.e. ".posit") so creation is observed when both are created together;
+   // augmentSvnIgnore re-checks existence and is idempotent.
    std::vector<std::string> watchPaths;
-   for (const std::string& dir : aiAssistantStateDirs())
+   for (const std::string& dir : aiAssistantMonitorPaths())
       watchPaths.push_back(s_workingDir.completeChildPath(dir).getAbsolutePath());
 
    for (const auto& event : events)
@@ -1813,21 +1815,65 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
    (*pFileObject)["svn_status"] = jsonStatus;
 }
 
+// Ensure `dir`'s svn:ignore property contains `entry`. Used for AI state dirs
+// whose svn:ignore must be set on a subdirectory rather than the working-dir
+// root (svn:ignore matches only immediate children of the directory it is set
+// on). A no-op if `entry` is already present; degrades gracefully (logs and
+// continues) if `dir` is not under version control.
+Error ensureSvnIgnoreEntry(const FilePath& dir, const std::string& entry)
+{
+   core::system::ProcessResult result;
+   Error error = getIgnores(dir, &result);
+   if (error)
+      return error;
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+      return Success();
+   }
+   std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
+
+   boost::regex pattern(aiAssistantStateDirRegex(entry));
+   if (regex_utils::search(svnIgnore, pattern))
+      return Success();
+
+   if (!svnIgnore.empty())
+      svnIgnore += "\n";
+   svnIgnore += entry;
+
+   core::system::ProcessResult setResult;
+   error = setIgnores(dir, svnIgnore, &setResult);
+   if (error)
+      return error;
+   if (setResult.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE(setResult.stdErr);
+
+   return Success();
+}
+
 Error augmentSvnIgnore()
 {
-   // only add a Posit Assistant state directory (current ".posit" or the
-   // legacy ".positai") when it exists in the working dir. The existence
-   // check decouples this from the assistant preference: these directories
-   // belong to a separate tool that may write them independent of RStudio's
-   // own AI integration state.
-   std::vector<std::string> aiDirsToIgnore;
+   // Partition the present Posit Assistant state directories by where their
+   // svn:ignore entry must live. svn:ignore matches only immediate children of
+   // the directory it is set on, so the nested ".posit/assistant" is ignored
+   // by setting "assistant" on the ".posit" directory rather than at the
+   // working-dir root. The existence check decouples this from the assistant
+   // preference: these directories belong to a separate tool that may write
+   // them independent of RStudio's own AI integration state.
+   std::vector<std::string> rootAiDirs;
+   std::vector<std::pair<FilePath, std::string>> nestedAiDirs;
    for (const std::string& dir : aiAssistantStateDirs())
    {
-      if (s_workingDir.completeChildPath(dir).exists())
-         aiDirsToIgnore.push_back(dir);
+      FilePath dirPath = s_workingDir.completeChildPath(dir);
+      if (!dirPath.exists())
+         continue;
+      if (dirPath.getParent() == s_workingDir)
+         rootAiDirs.push_back(dir);
+      else
+         nestedAiDirs.push_back({ dirPath.getParent(), dirPath.getFilename() });
    }
 
-   // check for existing svn:ignore
+   // check for existing svn:ignore on the working dir
    core::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
    if (error)
@@ -1847,41 +1893,51 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      for (const std::string& dir : aiDirsToIgnore)
+      for (const std::string& dir : rootAiDirs)
          svnIgnore += dir + "\n";
+
+      core::system::ProcessResult setResult;
+      error = setIgnores(s_workingDir, svnIgnore, &setResult);
+      if (error)
+         return error;
+      if (setResult.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE(setResult.stdErr);
    }
    else
    {
-      bool addExtraNewline = svnIgnore.size() > 0
-                             && svnIgnore[svnIgnore.size() - 1] != '\n';
-      if (addExtraNewline)
-         svnIgnore += "\n";
-
       // Add missing entries
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      for (const std::string& dir : aiDirsToIgnore)
+      for (const std::string& dir : rootAiDirs)
       {
          boost::regex pattern(aiAssistantStateDirRegex(dir));
          if (!regex_utils::search(svnIgnore, pattern))
             additions += dir + "\n";
       }
 
-      if (additions.empty())
-         return Success();
+      if (!additions.empty())
+      {
+         if (svnIgnore[svnIgnore.size() - 1] != '\n')
+            svnIgnore += "\n";
+         svnIgnore += additions;
 
-      svnIgnore += additions;
+         core::system::ProcessResult setResult;
+         error = setIgnores(s_workingDir, svnIgnore, &setResult);
+         if (error)
+            return error;
+         if (setResult.exitStatus != EXIT_SUCCESS)
+            LOG_ERROR_MESSAGE(setResult.stdErr);
+      }
    }
 
-   // write back svn:ignore
-   core::system::ProcessResult setResult;
-   error = setIgnores(s_workingDir, svnIgnore, &setResult);
-   if (error)
-      return error;
-
-   if (setResult.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE(setResult.stdErr);
+   // nested AI dirs (e.g. ".posit/assistant"): set svn:ignore on the parent
+   for (const auto& nested : nestedAiDirs)
+   {
+      error = ensureSvnIgnoreEntry(nested.first, nested.second);
+      if (error)
+         return error;
+   }
 
    return Success();
 }
