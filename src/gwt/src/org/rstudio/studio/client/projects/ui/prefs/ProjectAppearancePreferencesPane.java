@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -64,7 +65,7 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
       // Editor-theme list: a multi-row listbox (not a dropdown) that fills the
       // available vertical space, with "(Default)" as the first entry.
       theme_ = new ListBox();
-      theme_.getElement().setId(THEME_LIST_ELEMENT_ID);
+      ElementIds.assignElementId(theme_, ElementIds.PROJECT_EDITOR_THEME);
       theme_.setVisibleItemCount(VISIBLE_ITEM_COUNT);
       theme_.setWidth((LEFT_COLUMN_WIDTH - LEFT_COLUMN_PADDING) + "px");
       theme_.setHeight((previewHeight - THEME_LABEL_HEIGHT) + "px");
@@ -216,7 +217,6 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    }
 
    private static final String DEFAULT_VALUE = "";
-   private static final String THEME_LIST_ELEMENT_ID = "rstudio_project_editor_theme";
    private static final int LEFT_COLUMN_WIDTH = 160;
    private static final int LEFT_COLUMN_PADDING = 12;
    private static final int PREVIEW_VERTICAL_MARGIN = 38;

@@ -21,6 +21,7 @@ import java.util.TreeSet;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.NumericTextBox;
@@ -342,6 +344,10 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       theme_.addStyleName(res.styles().themeChooser());
+      // SelectWidget.setElementId sets the id on the underlying <select> and
+      // keeps its label associated (unlike assignElementId, which would land on
+      // the composite wrapper).
+      theme_.setElementId(ElementIds.getUniqueElementId(ElementIds.APPEARANCE_EDITOR_THEME));
 
       AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       addThemeButton_ = new ThemedButton(constants_.addThemeButtonLabel(), event ->
@@ -391,17 +397,32 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       // Shown in place of the theme selector when the active project sets its
       // own editor theme. The global selection is ignored while that override
-      // is in effect, so point the user at the project options instead.
+      // is in effect, so keep the "Editor theme:" label and, below it, explain
+      // the override and point the user at the project options. Stacked
+      // vertically because the left column is too narrow to fit the message and
+      // button side by side.
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
-      projectThemeOverridePanel_ = new HorizontalPanel();
-      projectThemeOverridePanel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-      Label projectOverrideLabel = new Label(constants_.appearanceEditorThemeProjectOverrideText());
-      projectOverrideLabel.addStyleName(baseRes.styles().infoLabel());
-      projectThemeOverridePanel_.add(projectOverrideLabel);
-      SmallButton editProjectOptions = new SmallButton(constants_.editProjectPreferencesButtonLabel());
-      editProjectOptions.getElement().getStyle().setMarginLeft(8, Unit.PX);
+      projectThemeOverridePanel_ = new VerticalPanel();
+      projectThemeOverridePanel_.setWidth("100%");
+      ElementIds.assignElementId(projectThemeOverridePanel_,
+         ElementIds.APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE);
+
+      FormLabel projectOverrideThemeLabel =
+         new FormLabel(constants_.appearanceEditorThemeLabel());
+      projectThemeOverridePanel_.add(projectOverrideThemeLabel);
+
+      Label projectOverrideMessage =
+         new Label(constants_.appearanceEditorThemeProjectOverrideText());
+      projectOverrideMessage.addStyleName(baseRes.styles().infoLabel());
+      projectOverrideMessage.setWidth("100%");
+      projectThemeOverridePanel_.add(projectOverrideMessage);
+
+      SmallButton editProjectOptions =
+         new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectOptions.getElement().getStyle().setMarginTop(6, Unit.PX);
       editProjectOptions.addClickHandler(event -> commands_.projectOptions().execute());
       projectThemeOverridePanel_.add(editProjectOptions);
+
       projectThemeOverridePanel_.setVisible(false);
 
       leftPanel.add(textRendering_);
@@ -1054,7 +1075,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private ThemedButton addThemeButton_;
    private ThemedButton removeThemeButton_;
    private HorizontalPanel themeButtonsPanel_;
-   private HorizontalPanel projectThemeOverridePanel_;
+   private VerticalPanel projectThemeOverridePanel_;
    private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
