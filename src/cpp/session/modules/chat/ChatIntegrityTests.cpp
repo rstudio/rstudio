@@ -15,11 +15,84 @@
 
 #include "ChatIntegrity.hpp"
 
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 #include <core/FileSerializer.hpp>
+#include <core/system/Process.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::integrity;
+
+// NOTE: fully qualify ProcessResult -- this file has `using namespace
+// rstudio::core;` (not `rstudio`), so the bare name `core` is not in scope here.
+namespace {
+rstudio::core::system::ProcessResult downloadResult(int exitStatus,
+                                                    const std::string& out,
+                                                    const std::string& err = std::string())
+{
+   rstudio::core::system::ProcessResult result;
+   result.exitStatus = exitStatus;
+   result.stdOut = out;
+   result.stdErr = err;
+   return result;
+}
+} // anonymous namespace
+
+TEST(ChatIntegrity, ManifestFromResultParsesValidObject)
+{
+   json::Object manifest;
+   Error error = manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "{\"version\":\"1.0\"}"), &manifest);
+   EXPECT_FALSE(error);
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsNonObjectJson)
+{
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "[]"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsInvalidJson)
+{
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "not json"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsEmptyOutput)
+{
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "   \n"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsNonZeroExit)
+{
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(1, "", "cannot resolve host name"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsLeadingNonJson)
+{
+   // Defends the parse contract even though --vanilla keeps the child's stdout clean.
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "startup msg\n{\"v\":1}"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsTrailingContent)
+{
+   // json::Value::parse stops at the first value, so a valid object followed by
+   // junk (e.g. a warning line) must be rejected, not silently accepted.
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(EXIT_SUCCESS, "{\"version\":\"1.0\"}\nwarning: stuff"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultAcceptsNestedObject)
+{
+   // The brace scan must handle nested objects and strings containing braces.
+   json::Object manifest;
+   Error error = manifestFromDownloadResult(
+      downloadResult(EXIT_SUCCESS, "{\"versions\":{\"1.0\":{\"url\":\"https://x/{y}\"}}}"), &manifest);
+   EXPECT_FALSE(error);
+}
 
 // ============================================================================
 // verifyPackageSha256 tests

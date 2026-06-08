@@ -17,10 +17,13 @@
 #include "ChatLogging.hpp"
 #include "ChatTypes.hpp"
 
+#include <cstdlib>
+
 #include <boost/algorithm/string.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/Process.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::types;
@@ -36,6 +39,42 @@ namespace {
 bool isHttpsUrl(const std::string& url)
 {
    return boost::starts_with(url, "https://");
+}
+
+// Index just past the first balanced top-level {...} in `s` (string-literal
+// aware), or std::string::npos if there is no complete top-level object. Used
+// to detect trailing content after a parsed manifest object, which
+// json::Value::parse (kParseStopWhenDoneFlag) would otherwise accept silently.
+std::string::size_type endOfFirstJsonObject(const std::string& s)
+{
+   int depth = 0;
+   bool inString = false;
+   bool escaped = false;
+   bool started = false;
+   for (std::string::size_type i = 0; i < s.size(); ++i)
+   {
+      char c = s[i];
+      if (inString)
+      {
+         if (escaped)
+            escaped = false;
+         else if (c == '\\')
+            escaped = true;
+         else if (c == '"')
+            inString = false;
+         continue;
+      }
+      if (c == '"')
+         inString = true;
+      else if (c == '{')
+      {
+         ++depth;
+         started = true;
+      }
+      else if (c == '}' && started && --depth == 0)
+         return i + 1;
+   }
+   return std::string::npos;
 }
 
 } // anonymous namespace
@@ -207,6 +246,51 @@ Error verifyPackageSha256(const FilePath& packagePath,
    }
 
    DLOG("SHA-256 verification passed: {}", actualSha256);
+   return Success();
+}
+
+Error manifestFromDownloadResult(const core::system::ProcessResult& result,
+                                 json::Object* pManifest)
+{
+   if (pManifest == nullptr)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      // Locale-independent: stderr is only folded into the message for the log,
+      // never parsed to decide behavior. Any non-zero exit is "unavailable".
+      std::string detail = boost::algorithm::trim_copy(result.stdErr);
+      std::string message = "Manifest download failed";
+      if (!detail.empty())
+         message += ": " + detail;
+      return systemError(boost::system::errc::io_error, message, ERROR_LOCATION);
+   }
+
+   std::string body = boost::algorithm::trim_copy(result.stdOut);
+   if (body.empty())
+      return systemError(boost::system::errc::io_error,
+                         "Manifest download produced no output", ERROR_LOCATION);
+
+   // json::Value::parse returns a (truthy) Error on failure.
+   json::Value value;
+   if (value.parse(body))
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest is not valid JSON", ERROR_LOCATION);
+
+   if (!value.isObject())
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest must be a JSON object", ERROR_LOCATION);
+
+   // json::Value::parse uses kParseStopWhenDoneFlag and would accept a valid
+   // object followed by trailing content (e.g. "{...}\nwarning"). The body is
+   // already trimmed, so anything past the top-level object's close brace is
+   // non-whitespace junk -- reject it; the manifest must be exactly one object.
+   if (endOfFirstJsonObject(body) != body.size())
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest has unexpected content after the JSON object",
+                         ERROR_LOCATION);
+
+   *pManifest = value.getObject();
    return Success();
 }
 
