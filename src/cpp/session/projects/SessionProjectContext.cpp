@@ -514,7 +514,12 @@ void ProjectContext::augmentRbuildignore()
          bool hasAllPackageExclusions = true;
 
          // AI tool-state patterns that are wanted (directory present) but not
-         // yet listed in the existing .Rbuildignore
+         // yet listed in the existing .Rbuildignore. The presence test is a
+         // plain substring search for the canonical anchored pattern we write
+         // (e.g. "^\.posit/assistant$"); this stays correct because no AI
+         // pattern is a substring of another (the "$" anchor keeps the shared
+         // ".posit" prefix from colliding "^\.positai$" with the assistant
+         // pattern). Revisit if a future entry breaks that invariant.
          std::vector<std::string> missingAiPatterns;
          for (const std::string& pattern : aiPatterns)
          {
@@ -938,8 +943,9 @@ bool ProjectContext::fileMonitorFilter(
    //
    // The allowed paths include each state directory plus, for the nested
    // ".posit/assistant", its parent ".posit" -- the parent must pass the
-   // filter so the monitor descends into it and observes ".posit/assistant"
-   // being created. ".claude" is Claude Code's directory.
+   // filter so its (and the nested dir's) creation event is not dropped,
+   // letting us observe ".posit/assistant" being created. ".claude" is Claude
+   // Code's directory.
    //
    // Use a cheap basename check before constructing FilePath so we don't pay
    // the allocation cost for the ~all files that don't match.

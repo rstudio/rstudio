@@ -130,11 +130,20 @@ test.describe('Project ignore files', () => {
     // For the nested ".posit/assistant", the parent ".posit" must stay tracked
     // (it is shared with tools like the Publisher extension), so only the
     // specific subdirectory -- not ".posit" itself -- is added to .gitignore.
+    // Create a sibling ".posit/publisher" to prove a real Publisher directory
+    // coexisting with ".posit/assistant" stays committable.
     if (dir.includes('/')) {
       const parent = dir.split('/')[0];
+      await consoleActions.executeInConsole(
+        `dir.create("${projectDir}/${parent}/publisher", recursive = TRUE)`,
+      );
+      // give the file monitor a beat to (not) react to the publisher dir
+      await waitForConsoleIdle(page);
       const lines = fs.readFileSync(gitignorePath, 'utf8').split('\n');
       expect(lines).not.toContain(parent);
       expect(lines).not.toContain(`${parent}/`);
+      expect(lines).not.toContain(`${parent}/publisher`);
+      expect(lines).not.toContain(`${parent}/publisher/`);
     }
   });
   }

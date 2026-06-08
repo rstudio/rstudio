@@ -1828,7 +1828,11 @@ Error ensureSvnIgnoreEntry(const FilePath& dir, const std::string& entry)
       return error;
    if (result.exitStatus != EXIT_SUCCESS)
    {
-      LOG_ERROR_MESSAGE(result.stdErr);
+      // most likely `dir` (e.g. ".posit") is not under version control, so
+      // there is nothing to ignore in commits -- continue. svn folds stderr
+      // into stdout (getIgnores passes redirectStdErrToStdOut), so log stdOut.
+      LOG_ERROR_MESSAGE("svn:ignore propget on '" + dir.getAbsolutePath() +
+                        "' failed: " + result.stdOut);
       return Success();
    }
    std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
@@ -1846,7 +1850,8 @@ Error ensureSvnIgnoreEntry(const FilePath& dir, const std::string& entry)
    if (error)
       return error;
    if (setResult.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE(setResult.stdErr);
+      LOG_ERROR_MESSAGE("svn:ignore propset on '" + dir.getAbsolutePath() +
+                        "' failed: " + setResult.stdOut);
 
    return Success();
 }
@@ -1873,14 +1878,15 @@ Error augmentSvnIgnore()
          nestedAiDirs.push_back({ dirPath.getParent(), dirPath.getFilename() });
    }
 
-   // check for existing svn:ignore on the working dir
+   // check for existing svn:ignore on the working dir (svn folds stderr into
+   // stdout, so log stdOut on failure)
    core::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
    if (error)
       return error;
    if (result.exitStatus != EXIT_SUCCESS)
    {
-      LOG_ERROR_MESSAGE(result.stdErr);
+      LOG_ERROR_MESSAGE("svn:ignore propget on working dir failed: " + result.stdOut);
       return Success();
    }
    std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
@@ -1901,7 +1907,7 @@ Error augmentSvnIgnore()
       if (error)
          return error;
       if (setResult.exitStatus != EXIT_SUCCESS)
-         LOG_ERROR_MESSAGE(setResult.stdErr);
+         LOG_ERROR_MESSAGE("svn:ignore propset on working dir failed: " + setResult.stdOut);
    }
    else
    {
@@ -1927,7 +1933,7 @@ Error augmentSvnIgnore()
          if (error)
             return error;
          if (setResult.exitStatus != EXIT_SUCCESS)
-            LOG_ERROR_MESSAGE(setResult.stdErr);
+            LOG_ERROR_MESSAGE("svn:ignore propset on working dir failed: " + setResult.stdOut);
       }
    }
 
