@@ -3124,21 +3124,32 @@ std::vector<FilePath> ignoreContentDirs()
       if (quartoConf.is_project)
       {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
-         
+
          std::string quartoOutputDir = quartoConf.project_output_dir;
          if (!quartoOutputDir.empty())
-            ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoOutputDir));
-         
+         {
+            // don't ignore an output dir that resolves to the project directory
+            // itself (e.g. 'output-dir: .'), as that would ignore all project content
+            FilePath outputDirPath = quartoProjDir.completeChildPath(quartoOutputDir);
+            if (outputDirPath.getLexicallyNormalPath() != quartoProjDir.getLexicallyNormalPath())
+               ignoreDirs.push_back(outputDirPath);
+         }
+
          ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
-      
+
       // rmarkdown site output dir
       if (module_context::isWebsiteProject())
       {
          FilePath buildTargetPath = projects::projectContext().buildTargetPath();
          std::string outputDir = module_context::websiteOutputDir();
          if (!outputDir.empty())
-            ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
+         {
+            // as above, don't ignore an output dir that is the project directory itself
+            FilePath outputDirPath = buildTargetPath.completeChildPath(outputDir);
+            if (outputDirPath.getLexicallyNormalPath() != buildTargetPath.getLexicallyNormalPath())
+               ignoreDirs.push_back(outputDirPath);
+         }
       }
    }
    
