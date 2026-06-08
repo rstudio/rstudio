@@ -176,15 +176,9 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    // (not yet loaded or empty).
    public AceTheme resolveAppliedTheme(UserPrefs uiPrefs)
    {
-      if (themeList_ == null || themeList_.isEmpty())
-         return null;
-
-      AceTheme theme = themeList_.get(uiPrefs.editorTheme().getValue());
-      if (theme == null)
-         theme = themeList_.get(uiPrefs.editorTheme().getGlobalValue());
-      if (theme == null)
-         theme = themeList_.get(AceTheme.createDefault().getName());
-      return theme;
+      return AceTheme.resolveApplied(themeList_,
+         uiPrefs.editorTheme().getValue(),
+         uiPrefs.editorTheme().getGlobalValue());
    }
 
    // Show the selected theme in the preview. "(Default)" (and any stored-but-
@@ -192,14 +186,9 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    // what the project will actually use.
    private void updatePreview()
    {
-      if (themeList_ == null)
-         return;
-
-      AceTheme theme = themeList_.get(theme_.getSelectedValue());
-      if (theme == null)
-         theme = themeList_.get(userPrefs_.editorTheme().getGlobalValue());
-      if (theme == null)
-         theme = themeList_.get(AceTheme.createDefault().getName());
+      AceTheme theme = AceTheme.resolveApplied(themeList_,
+         theme_.getSelectedValue(),
+         userPrefs_.editorTheme().getGlobalValue());
       if (theme != null)
          preview_.setTheme(theme.getUrl());
    }

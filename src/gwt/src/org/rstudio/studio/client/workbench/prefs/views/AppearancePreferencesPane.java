@@ -698,11 +698,9 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (isProjectThemeOverrideActive())
       {
          // effective theme: project value if installed, else global, else default
-         theme = themeList_.get(userPrefs_.editorTheme().getValue());
-         if (theme == null)
-            theme = themeList_.get(userPrefs_.editorTheme().getGlobalValue());
-         if (theme == null)
-            theme = themeList_.get(AceTheme.createDefault().getName());
+         theme = AceTheme.resolveApplied(themeList_,
+            userPrefs_.editorTheme().getValue(),
+            userPrefs_.editorTheme().getGlobalValue());
       }
       else
       {
@@ -905,12 +903,9 @@ public class AppearancePreferencesPane extends PreferencesPane
 
          // apply the *effective* theme: a project override (if active and installed)
          // must win, so changing the global theme does not replace it
-         String effectiveName = userPrefs_.editorTheme().getValue();
-         AceTheme applied = themeList_.get(effectiveName);
-         if (applied == null)
-            applied = themeList_.get(userPrefs_.editorTheme().getGlobalValue());
-         if (applied == null)
-            applied = themeList_.get(AceTheme.createDefault().getName());
+         AceTheme applied = AceTheme.resolveApplied(themeList_,
+            userPrefs_.editorTheme().getValue(),
+            userPrefs_.editorTheme().getGlobalValue());
          if (applied != null)
             userState_.theme().setGlobalValue(applied);
       }
