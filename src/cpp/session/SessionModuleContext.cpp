@@ -3110,31 +3110,40 @@ void checkXcodeLicense()
 #endif
 }
 
+bool shouldIgnoreOutputDir(const FilePath& base, const std::string& outputDir)
+{
+   if (outputDir.empty())
+      return false;
+
+   // Compare by filesystem identity rather than lexically-normal string: a
+   // configured 'output-dir: .' resolves to base, but 'base/.' does not
+   // normalize to 'base' as a string. Ignoring base would drop all project
+   // content, leaving Find in Files with no results (#17900).
+   FilePath outputDirPath = base.completeChildPath(outputDir);
+   return !outputDirPath.isEquivalentTo(base);
+}
+
 std::vector<FilePath> ignoreContentDirs()
 {
    std::vector<FilePath> ignoreDirs;
-   
+
    if (projects::projectContext().hasProject())
    {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
       quarto::QuartoConfig quartoConf = quarto::quartoConfig();
-      
+
+      auto addOutputDir = [&ignoreDirs](const FilePath& base, const std::string& outputDir)
+      {
+         if (shouldIgnoreOutputDir(base, outputDir))
+            ignoreDirs.push_back(base.completeChildPath(outputDir));
+      };
+
       // quarto site output dir
       if (quartoConf.is_project)
       {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
-
-         std::string quartoOutputDir = quartoConf.project_output_dir;
-         if (!quartoOutputDir.empty())
-         {
-            // don't ignore an output dir that resolves to the project directory
-            // itself (e.g. 'output-dir: .'), as that would ignore all project content
-            FilePath outputDirPath = quartoProjDir.completeChildPath(quartoOutputDir);
-            if (outputDirPath.getLexicallyNormalPath() != quartoProjDir.getLexicallyNormalPath())
-               ignoreDirs.push_back(outputDirPath);
-         }
-
+         addOutputDir(quartoProjDir, quartoConf.project_output_dir);
          ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
 
@@ -3142,14 +3151,7 @@ std::vector<FilePath> ignoreContentDirs()
       if (module_context::isWebsiteProject())
       {
          FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-         std::string outputDir = module_context::websiteOutputDir();
-         if (!outputDir.empty())
-         {
-            // as above, don't ignore an output dir that is the project directory itself
-            FilePath outputDirPath = buildTargetPath.completeChildPath(outputDir);
-            if (outputDirPath.getLexicallyNormalPath() != buildTargetPath.getLexicallyNormalPath())
-               ignoreDirs.push_back(outputDirPath);
-         }
+         addOutputDir(buildTargetPath, module_context::websiteOutputDir());
       }
    }
    

@@ -552,6 +552,13 @@ public:
     * @brief Gets the lexically normal representation of this file path, with . and ..
     *    components resolved and/or removed.
     *
+    * This is a purely lexical (string) operation: it does not touch the filesystem
+    * or resolve symlinks. Note that a trailing "." is NOT removed -- "/proj/."
+    * normalizes to "/proj/.", not "/proj" (only the "sub/.." spelling collapses
+    * back to the parent). Do NOT use this to test path equality: two paths that
+    * refer to the same directory can have different normal forms. Use
+    * isEquivalentTo() to test whether two paths refer to the same entity.
+    *
     * @return The lexically normal representation of this file path.
     */
    std::string getLexicallyNormalPath() const;
