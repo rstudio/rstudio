@@ -25,6 +25,7 @@
 #include "chat/ChatStaticFiles.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <map>
 #include <queue>
@@ -3673,20 +3674,25 @@ void fetchManifestAsync(
    // Single-completion guard shared by the normal completion and the deadline.
    // The AsyncRProcess completion can fire on the offline-service background
    // thread (processSupervisor().poll() runs there while R occupies the main
-   // thread), so marshal the body onto the main thread before touching pDone or
-   // the single-flight state, and before onReady -> onUpdateCheckComplete drains
-   // queued completions (which may run R, e.g. performInstall). executeOnMainThread
-   // runs inline when already on the main thread (the deadline path below), so it
-   // adds no latency there.
-   boost::shared_ptr<bool> pDone = boost::make_shared<bool>(false);
+   // thread), so pDone is claimed atomically the instant either event occurs.
+   // Claiming before we schedule means a subprocess that finishes before the
+   // deadline always wins, even if R stays busy and the main thread only drains
+   // both scheduled tasks (the deadline and this completion) afterwards -- the
+   // deadline's complete() then no-ops instead of overwriting a real result with a
+   // timeout. The winner's body is marshalled onto the main thread so onReady ->
+   // onUpdateCheckComplete (and any queued completions it runs, e.g. performInstall,
+   // which execute R) never touch the single-flight state off-thread.
+   // executeOnMainThread runs inline when already on the main thread (the deadline
+   // path below), so it adds no latency there.
+   boost::shared_ptr<std::atomic<bool>> pDone =
+      boost::make_shared<std::atomic<bool>>(false);
    boost::function<void(const core::system::ProcessResult&)> complete =
       [onReady, pDone](const core::system::ProcessResult& result)
       {
-         module_context::executeOnMainThread([onReady, pDone, result]()
+         if (pDone->exchange(true))
+            return;
+         module_context::executeOnMainThread([onReady, result]()
          {
-            if (*pDone)
-               return;
-            *pDone = true;
             json::Object manifest;
             Error err = integrity::manifestFromDownloadResult(result, &manifest);
             onReady(err, manifest);
@@ -3698,10 +3704,11 @@ void fetchManifestAsync(
    pProc->start(command.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
 
    // Wall-clock deadline. terminate() only sends a soft interrupt, so a child
-   // wedged in DNS/connect may not die promptly. Resolve the waiting callers
-   // immediately under the single-completion guard (bounding how long they wait)
-   // and free the single-flight, then best-effort terminate the child; its
-   // eventual onCompleted re-enters complete() and no-ops.
+   // wedged in DNS/connect may not die promptly. complete() no-ops if the fetch
+   // already finished (pDone claimed); otherwise it resolves the waiting callers
+   // with a timeout (bounding how long they wait) and frees the single-flight,
+   // then we best-effort terminate the child; its eventual onCompleted re-enters
+   // complete() and no-ops.
    //
    // Intentional tradeoff: a wedged child can briefly outlive the deadline, so a
    // retry in that window could spawn a second fetch. This is bounded and
@@ -3714,10 +3721,8 @@ void fetchManifestAsync(
    boost::weak_ptr<ManifestDownload> wProc(pProc);
    module_context::scheduleDelayedWork(
       boost::posix_time::seconds(kManifestDeadlineSeconds),
-      [wProc, pDone, complete]()
+      [wProc, complete]()
       {
-         if (*pDone)
-            return;
          core::system::ProcessResult timeout;
          timeout.exitStatus = 1;
          timeout.stdErr = "manifest download timed out";
