@@ -101,7 +101,7 @@ test.describe('Import Dataset (readr)', () => {
     // "<name>(<type>)" once column inference completes; anchor on the name
     // prefix so the assertion doesn't depend on the inferred type string.
     await expect(previewFrame.locator('th[data-col-idx="1"]'))
-      .toHaveText(/^a/, { timeout: TIMEOUTS.fileOpen });
+      .toHaveText(/^a/, { timeout: 45000 });
     await expect(previewFrame.locator('th[data-col-idx="2"]')).toHaveText(/^b/);
     await expect(previewFrame.locator('th[data-col-idx="3"]')).toHaveText(/^c/);
 
@@ -125,7 +125,7 @@ test.describe('Import Dataset (readr)', () => {
     // runs during the grid's data-mode bootstrap, so the sidebar's
     // collapsed/expanded state is settled by the time the header is visible.
     await expect(previewFrame.locator('th[data-col-idx="1"]'))
-      .toHaveText(/^a/, { timeout: TIMEOUTS.fileOpen });
+      .toHaveText(/^a/, { timeout: 45000 });
 
     // The fix: GridViewerFrame requests show_summary=0, so the panel never
     // gains the "expanded" class and the toggle reports collapsed. Pre-fix the

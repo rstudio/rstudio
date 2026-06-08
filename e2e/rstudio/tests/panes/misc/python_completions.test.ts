@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, TIMEOUTS } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import type { Page } from 'playwright';
 
@@ -50,13 +50,16 @@ test.describe('Python REPL completions', () => {
     await consoleActions.executeInConsole('import sys');
     await waitForConsoleIdle(page);
 
-    // Type the partial attribute, give the completion engine time to respond,
-    // then accept with Tab and execute with Enter.
+    // Type the partial attribute, wait for the completion popup to actually
+    // appear (explicit wait instead of a fixed sleep -- the completion engine
+    // is slower on Windows), then accept with Tab and submit with Enter.
     await consoleActions.typeInConsole('sys.__name');
-    await sleep(3000);
+    await expect(page.locator('#rstudio_popup_completions')).toBeVisible({ timeout: 8000 });
 
     await page.keyboard.press('Tab');
-    await sleep(500);
+    // Wait for the popup to close (Tab accepted the completion and the popup
+    // dismissed itself) before pressing Enter to submit the command.
+    await expect(page.locator('#rstudio_popup_completions')).not.toBeVisible({ timeout: 3000 });
     await page.keyboard.press('Enter');
 
     // Before the fix the dunder name was emitted as `sys."__name__"` (quoted),

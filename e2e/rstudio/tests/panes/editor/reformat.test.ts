@@ -188,8 +188,11 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
     const expected = '1 + 1\n2 + 2\n3 + 3\n4 + 4\n';
     await writeAndOpenFile(page, sandbox.dir, FILE_STYLER_SEL, initial);
 
-    const editor = new AceEditor(page, '1+1');
-    await expect.poll(() => editor.getValue()).toBe(initial);
+    // Empty-marker: targets the active editor by bridge lookup, which openFile
+    // already confirmed is non-null. More reliable than a content-substring DOM
+    // scan when the file was just opened and content may not be in the DOM yet.
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getValue(), { timeout: 20000 }).toBe(initial);
 
     await selectAllInEditor(page);
     await executeCommand(page, 'reformatCode');
