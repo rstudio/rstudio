@@ -415,6 +415,8 @@ public class AppearancePreferencesPane extends PreferencesPane
          new Label(constants_.appearanceEditorThemeProjectOverrideText());
       projectOverrideMessage.addStyleName(baseRes.styles().infoLabel());
       projectOverrideMessage.setWidth("100%");
+      // Breathe a little between the "Editor theme:" heading and the message.
+      projectOverrideMessage.getElement().getStyle().setMarginTop(4, Unit.PX);
       projectThemeOverridePanel_.add(projectOverrideMessage);
 
       SmallButton editProjectOptions =

@@ -38,7 +38,7 @@ const PROJECT_THEME_SELECT = '#rstudio_project_editor_theme';
 const PREFERENCES_OK = '[id^="rstudio_preferences_confirm"]';
 const DIALOG_CANCEL = '[id^="rstudio_dlg_cancel"]';
 
-const PROJECT_OVERRIDE_TEXT = 'The editor theme is being overridden by the project.';
+const PROJECT_OVERRIDE_TEXT = 'The editor theme is overridden by project settings.';
 const EDIT_PROJECT_OPTIONS_BUTTON = 'Edit Project Options...';
 const DEFAULT_OPTION_LABEL = '(Default)';
 const PROJECT_THEME = 'Cobalt';
