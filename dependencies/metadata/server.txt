@@ -1,0 +1,18 @@
+dependency(LIBPQ
+   DEPNAME      "PostgreSQL Client Library"
+   REPOSITORY   "https://github.com/postgres/postgres"
+   LICENSE      "PostgreSQL"
+)
+
+dependency(SOCI
+   DEPNAME      "SOCI"
+   REPOSITORY   "https://github.com/SOCI/soci"
+   LICENSE_PATH "LICENSE_1_0.txt"
+)
+
+dependency(SQLITE
+   DEPNAME      "SQLite"
+   HOMEPAGE     "https://sqlite.org/"
+   LICENSE      "SQLite Blessing"
+   ATTRIBUTION  "Dedicated to the public domain"
+)

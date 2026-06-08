@@ -1,0 +1,22 @@
+dependency(GWT
+   DEPNAME      "Google Web Toolkit"
+   REPOSITORY   "https://github.com/gwtproject/gwt"
+   VERSION      "2.12.2"
+)
+
+dependency(ELEMENTAL2
+   DEPNAME      "Elemental2"
+   REPOSITORY   "https://github.com/google/elemental2"
+   VERSION      "1.2.3"
+)
+
+dependency(GWTWEBSOCKETS
+   DEPNAME      "gwt-websockets"
+   REPOSITORY   "https://github.com/sksamuel/gwt-websockets"
+)
+
+dependency(JSINTEROPBASE
+   DEPNAME      "JsInterop Base"
+   REPOSITORY   "https://github.com/google/jsinterop-base"
+   VERSION      "1.0.3"
+)
