@@ -30,10 +30,13 @@ const GLOBAL_THEME_SELECT = '#rstudio_appearance_editor_theme';
 const GLOBAL_THEME_OVERRIDE = '#rstudio_appearance_editor_theme_project_override';
 const PROJECT_THEME_SELECT = '#rstudio_project_editor_theme';
 
-// ModalDialogBase.addOkButton sets this id verbatim (no disambiguation), so it
-// collides when both dialogs are open -- always scope it to a dialog.
-const PREFERENCES_OK = '#rstudio_preferences_confirm';
-const DIALOG_CANCEL = '#rstudio_dlg_cancel';
+// ModalDialogBase.addButton assigns these via ElementIds.assignElementId, which
+// disambiguates with a numeric suffix when another dialog already holds the base
+// id -- the project dialog opens on top of the global one, so its OK button is
+// "rstudio_preferences_confirm_0", not the plain id. Match by id prefix, scoped
+// to a dialog container, so either form resolves to the one button per dialog.
+const PREFERENCES_OK = '[id^="rstudio_preferences_confirm"]';
+const DIALOG_CANCEL = '[id^="rstudio_dlg_cancel"]';
 
 const PROJECT_OVERRIDE_TEXT = 'The editor theme is being overridden by the project.';
 const EDIT_PROJECT_OPTIONS_BUTTON = 'Edit Project Options...';
