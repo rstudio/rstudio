@@ -94,6 +94,55 @@ TEST(ChatIntegrity, ManifestFromResultAcceptsNestedObject)
    EXPECT_FALSE(error);
 }
 
+TEST(ChatIntegrity, ManifestFromResultAcceptsEscapedQuoteInString)
+{
+   // A backslash-escaped quote must not end the string early, so the braces that
+   // follow it stay inside the string and are ignored by the brace scan.
+   json::Object manifest;
+   Error error = manifestFromDownloadResult(
+      downloadResult(EXIT_SUCCESS, "{\"note\":\"a \\\" b {c}\"}"), &manifest);
+   EXPECT_FALSE(error);
+}
+
+TEST(ChatIntegrity, ManifestFromResultAcceptsBraceInsideString)
+{
+   // A closing brace inside a top-level string must not be mistaken for the end
+   // of the object.
+   json::Object manifest;
+   Error error = manifestFromDownloadResult(
+      downloadResult(EXIT_SUCCESS, "{\"a\":\"}\"}"), &manifest);
+   EXPECT_FALSE(error);
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsExtraTrailingBrace)
+{
+   // json::Value::parse stops after the first object; a stray trailing '}' is
+   // content past the object's close brace and must be rejected.
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(
+      downloadResult(EXIT_SUCCESS, "{\"a\":1}}"), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultRejectsNonZeroExitWithEmptyStderr)
+{
+   // A non-zero exit with no stderr is still "unavailable" (the mapping does not
+   // depend on stderr being present).
+   json::Object manifest;
+   EXPECT_TRUE(manifestFromDownloadResult(downloadResult(1, "", ""), &manifest) != Success());
+}
+
+TEST(ChatIntegrity, ManifestFromResultFoldsStderrIntoMessage)
+{
+   // Non-empty stderr is appended to the failure message for diagnostics. The
+   // human message is stored as the error's description (getMessage() returns the
+   // generic errno text), so assert on the full diagnostic string.
+   json::Object manifest;
+   Error error = manifestFromDownloadResult(
+      downloadResult(1, "", "cannot resolve host name"), &manifest);
+   EXPECT_TRUE(error != Success());
+   EXPECT_NE(error.asString().find("cannot resolve host name"), std::string::npos);
+}
+
 // ============================================================================
 // verifyPackageSha256 tests
 // ============================================================================

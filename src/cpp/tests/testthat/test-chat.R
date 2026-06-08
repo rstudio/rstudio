@@ -48,11 +48,17 @@ test_that("manifestDownloadCommand omits method/extra when unset", {
    })
 })
 
-test_that("manifestDownloadCommand propagates download failures as a non-zero exit", {
+test_that("manifestDownloadCommand errors when download.file reports a non-zero status", {
    # Some download.file methods return a non-zero status with only a warning, so
    # the command must check the status and stop() -- otherwise a failed download
    # would exit 0 with a partial/empty body and be parsed as a valid manifest.
+   # Exercise the behavior (the command throws), not the command text. cmd is the
+   # trusted output of the function under test, evaluated in a sandbox env whose
+   # download.file is stubbed to report failure -- this is how the generated R
+   # command is meant to be run.
    cmd <- .rs.chat.manifestDownloadCommand("https://example.test/m.json")
-   expect_true(grepl("status <- download.file(", cmd, fixed = TRUE))
-   expect_true(grepl("stop(paste(", cmd, fixed = TRUE))
+
+   env <- new.env()
+   env$download.file <- function(...) 1L  # non-zero status, no file written
+   expect_error(eval(parse(text = cmd), envir = env), "download.file failed")
 })
