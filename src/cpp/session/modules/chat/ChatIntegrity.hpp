@@ -21,6 +21,11 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
+// forward declaration -- the signature below takes ProcessResult by reference,
+// so the full definition (<core/system/Process.hpp>) is only needed in the
+// .cpp and tests, not in every includer of this header.
+namespace rstudio { namespace core { namespace system { struct ProcessResult; } } }
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -56,6 +61,22 @@ core::Error getPackageInfoFromManifest(
  */
 core::Error verifyPackageSha256(const core::FilePath& packagePath,
                                 const std::string& expectedSha256);
+
+/**
+ * Map a manifest download subprocess result to a parsed manifest object.
+ *
+ * The manifest body is expected on the subprocess's stdout. Any failure --
+ * non-zero exit, empty output, invalid JSON, or a JSON root that is not an
+ * object -- is returned as an error (the caller treats that as the manifest
+ * being unavailable). Error mapping is locale-independent: stderr text is only
+ * folded into the message for diagnostics, never used to decide behavior.
+ *
+ * @param result The completed download subprocess result.
+ * @param pManifest Output: the parsed manifest object (set only on success).
+ * @return Success(), or an error describing the failure.
+ */
+core::Error manifestFromDownloadResult(const core::system::ProcessResult& result,
+                                       core::json::Object* pManifest);
 
 } // namespace integrity
 } // namespace chat
