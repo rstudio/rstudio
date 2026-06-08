@@ -667,6 +667,17 @@ public class AppearancePreferencesPane extends PreferencesPane
             // Toggle the project-override UI and point the preview at the theme
             // that is actually in effect (the project's theme when overriding).
             updateProjectThemeOverride();
+
+            // If the user changed a theme-affecting setting (e.g. toggled
+            // "ignore project appearance") and applied it before this list
+            // loaded, onApply couldn't resolve a live theme then; do it now.
+            if (pendingThemeApply_)
+            {
+               pendingThemeApply_ = false;
+               initialIgnoreProjectAppearance_ =
+                  userPrefs_.ignoreProjectAppearance().getGlobalValue();
+               applyEffectiveThemeLive();
+            }
          },
          getProgressIndicator());
    }
@@ -725,6 +736,25 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (theme != null)
          preview_.setTheme(theme.getUrl());
+   }
+
+   // Resolve the effective editor theme (the project override when active, else
+   // the global selection) and apply it to the live editor via user state.
+   // Requires the theme list to be loaded; updating the preview and the
+   // selector vs. override-indicator UI is the caller's job (via
+   // updateProjectThemeOverride()).
+   private void applyEffectiveThemeLive()
+   {
+      if (themeList_ == null)
+         return;
+
+      String preferred = isProjectThemeOverrideActive()
+         ? userPrefs_.editorTheme().getValue()
+         : userPrefs_.editorTheme().getGlobalValue();
+      AceTheme applied = AceTheme.resolveApplied(themeList_, preferred,
+         userPrefs_.editorTheme().getGlobalValue());
+      if (applied != null)
+         userState_.theme().setGlobalValue(applied);
    }
 
    private void updateThemes(String focusedThemeName, AceThemes themes)
@@ -925,7 +955,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       // The editor-theme selector is only meaningful when visible; an active
       // project override hides it. themeList_ is populated asynchronously from
       // setThemes(), so if the user clicks OK before that lands there's nothing
-      // to apply.
+      // in the dropdown to apply.
       boolean globalThemeChanged =
          themeList_ != null &&
          theme_.isVisible() &&
@@ -939,26 +969,28 @@ public class AppearancePreferencesPane extends PreferencesPane
       // to the global theme) and refresh the pane to match.
       boolean ignoreChanged =
          userPrefs_.ignoreProjectAppearance().getGlobalValue() != initialIgnoreProjectAppearance_;
-      initialIgnoreProjectAppearance_ = userPrefs_.ignoreProjectAppearance().getGlobalValue();
 
-      if (themeList_ != null && (globalThemeChanged || ignoreChanged))
+      if (globalThemeChanged || ignoreChanged)
       {
-         // Reflect the (possibly new) override state in the pane -- show the
-         // selector vs. the override indicator and point the preview at the
-         // applied theme. On Apply this updates the still-visible pane
-         // immediately; on OK it refreshes a pane that is about to close.
-         updateProjectThemeOverride();
+         if (themeList_ != null)
+         {
+            initialIgnoreProjectAppearance_ = userPrefs_.ignoreProjectAppearance().getGlobalValue();
 
-         // Apply the *effective* theme: a project override wins only while it is
-         // active (the project sets a theme and it isn't being ignored);
-         // otherwise the global selection applies.
-         String preferred = isProjectThemeOverrideActive()
-            ? userPrefs_.editorTheme().getValue()
-            : userPrefs_.editorTheme().getGlobalValue();
-         AceTheme applied = AceTheme.resolveApplied(themeList_, preferred,
-            userPrefs_.editorTheme().getGlobalValue());
-         if (applied != null)
-            userState_.theme().setGlobalValue(applied);
+            // Reflect the (possibly new) override state in the pane -- show the
+            // selector vs. the override indicator and point the preview at the
+            // applied theme. On Apply this updates the still-visible pane
+            // immediately; on OK it refreshes a pane that is about to close.
+            updateProjectThemeOverride();
+            applyEffectiveThemeLive();
+         }
+         else
+         {
+            // The theme list hasn't loaded, so the AceTheme (url/isDark) can't be
+            // resolved yet. Defer the live re-resolution to setThemes(), which
+            // runs once the list arrives. initialIgnoreProjectAppearance_ is left
+            // unchanged so the change is still seen as pending.
+            pendingThemeApply_ = true;
+         }
       }
 
      if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
@@ -1126,6 +1158,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    private VerticalPanel projectThemeOverridePanel_;
    private CheckBox ignoreProjectAppearance_;
    private boolean initialIgnoreProjectAppearance_;
+   // Set when a theme-affecting setting is applied before the async theme list
+   // loads; setThemes() resolves and applies the live theme once it arrives.
+   private boolean pendingThemeApply_ = false;
    private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
