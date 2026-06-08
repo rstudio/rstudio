@@ -1,0 +1,11 @@
+# TODO: verify
+dependency(OPENBSM
+   DEPNAME      "OpenBSM"
+   REPOSITORY   "https://github.com/openbsm/openbsm"
+   LICENSE      "BSD-2-Clause"
+)
+
+dependency(JSCUSTOMBADGE
+   DEPNAME      "JSCustomBadge"
+   REPOSITORY   "https://github.com/jessesquires/JSCustomBadge"
+)
