@@ -15,6 +15,8 @@
 
 #include "SessionSVN.hpp"
 
+#include <algorithm>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
@@ -36,6 +38,7 @@
 #include <core/http/Header.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -547,9 +550,9 @@ void reaugmentSvnIgnore()
 void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
 {
    // close the window between initializeSvn() and file monitor start:
-   // if .positai appeared in that interval, augmentSvnIgnore wasn't aware
-   // of it. Re-run now that monitoring is live; augmentSvnIgnore is
-   // idempotent.
+   // if a Posit Assistant state directory appeared in that interval,
+   // augmentSvnIgnore wasn't aware of it. Re-run now that monitoring is
+   // live; augmentSvnIgnore is idempotent.
    reaugmentSvnIgnore();
 }
 
@@ -558,13 +561,18 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    if (s_workingDir.isEmpty())
       return;
 
-   std::string positaiAbsPath =
-         s_workingDir.completeChildPath(".positai").getAbsolutePath();
+   // re-augment svn:ignore when a Posit Assistant state directory
+   // (.posit/.positai) is created at the working dir root mid-session
+   std::vector<std::string> watchPaths;
+   for (const std::string& dir : aiAssistantStateDirs())
+      watchPaths.push_back(s_workingDir.completeChildPath(dir).getAbsolutePath());
+
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
-      if (event.fileInfo().absolutePath() != positaiAbsPath)
+      if (std::find(watchPaths.begin(), watchPaths.end(),
+                    event.fileInfo().absolutePath()) == watchPaths.end())
          continue;
 
       reaugmentSvnIgnore();
@@ -1807,11 +1815,17 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 
 Error augmentSvnIgnore()
 {
-   // only add the .positai entry when the directory exists in the working
-   // dir. The existence check decouples this from the assistant
-   // preference: .positai belongs to a separate tool that may write it
-   // independent of RStudio's own AI integration state.
-   bool wantPositai = s_workingDir.completeChildPath(".positai").exists();
+   // only add a Posit Assistant state directory (current ".posit" or the
+   // legacy ".positai") when it exists in the working dir. The existence
+   // check decouples this from the assistant preference: these directories
+   // belong to a separate tool that may write them independent of RStudio's
+   // own AI integration state.
+   std::vector<std::string> aiDirsToIgnore;
+   for (const std::string& dir : aiAssistantStateDirs())
+   {
+      if (s_workingDir.completeChildPath(dir).exists())
+         aiDirsToIgnore.push_back(dir);
+   }
 
    // check for existing svn:ignore
    core::system::ProcessResult result;
@@ -1833,8 +1847,8 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      if (wantPositai)
-         svnIgnore += ".positai\n";
+      for (const std::string& dir : aiDirsToIgnore)
+         svnIgnore += dir + "\n";
    }
    else
    {
@@ -1847,10 +1861,12 @@ Error augmentSvnIgnore()
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      bool positaiAlreadyInIgnore =
-            regex_utils::search(svnIgnore, boost::regex("^\\.positai$"));
-      if (wantPositai && !positaiAlreadyInIgnore)
-         additions += ".positai\n";
+      for (const std::string& dir : aiDirsToIgnore)
+      {
+         boost::regex pattern(aiAssistantStateDirRegex(dir));
+         if (!regex_utils::search(svnIgnore, pattern))
+            additions += dir + "\n";
+      }
 
       if (additions.empty())
          return Success();
@@ -1879,8 +1895,9 @@ Error initialize()
                          boost::regex("^(.+): $"),
                          boost::bind(promptForPassword, _1, _2, _3, _4)));
 
-   // subscribe to project file monitor so we can update svn:ignore when
-   // .positai appears at the working dir root mid-session
+   // subscribe to project file monitor so we can update svn:ignore when a
+   // Posit Assistant state directory appears at the working dir root
+   // mid-session
    projects::FileMonitorCallbacks fileMonitorCallbacks;
    fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
    fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;

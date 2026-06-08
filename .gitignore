@@ -58,6 +58,7 @@ venv/
 .claude/worktrees/
 docs/superpowers
 .superpowers/
+.posit/
 .positai/
 AGENTS.md
 GEMINI.md

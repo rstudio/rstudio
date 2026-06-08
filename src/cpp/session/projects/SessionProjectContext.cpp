@@ -32,6 +32,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionScopes.hpp>
 
@@ -444,24 +445,26 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
 
-      const char * const kIgnorePositai = R"(^\.positai$)";
-      const char * const kIgnoreClaude = R"(^\.claude$)";
-
       // only add AI tool-state ignores when those directories actually
       // exist in the project. Decoupled from the assistant preference:
       // the directories belong to tools (Posit Assistant, Claude Code,
       // etc.) that may write them whether or not RStudio's own AI
       // integration is enabled.
-      bool wantPositai = directory().completeChildPath(".positai").exists();
-      bool wantClaude = directory().completeChildPath(".claude").exists();
+      std::vector<std::string> aiDirs = aiAssistantStateDirs();
+      aiDirs.push_back(".claude");
+
+      std::vector<std::string> aiPatterns;
+      for (const std::string& dir : aiDirs)
+      {
+         if (directory().completeChildPath(dir).exists())
+            aiPatterns.push_back(aiAssistantStateDirRegex(dir));
+      }
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
 
-      if (wantPositai)
-         ignoreLines += kIgnorePositai + newLine;
-      if (wantClaude)
-         ignoreLines += kIgnoreClaude + newLine;
+      for (const std::string& pattern : aiPatterns)
+         ignoreLines += pattern + newLine;
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -507,9 +510,16 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = !wantPositai || strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = !wantClaude || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
+
+         // AI tool-state patterns that are wanted (directory present) but not
+         // yet listed in the existing .Rbuildignore
+         std::vector<std::string> missingAiPatterns;
+         for (const std::string& pattern : aiPatterns)
+         {
+            if (strIgnore.find(pattern) == std::string::npos)
+               missingAiPatterns.push_back(pattern);
+         }
 
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
@@ -520,10 +530,8 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
-         if (!hasPositai)
-            strIgnore += kIgnorePositai + newLine;
-         if (!hasClaude)
-            strIgnore += kIgnoreClaude + newLine;
+         for (const std::string& pattern : missingAiPatterns)
+            strIgnore += pattern + newLine;
 
          if (session::options().packageOutputInPackageFolder())
          {
@@ -552,7 +560,7 @@ void ProjectContext::augmentRbuildignore()
             }
          }
 
-         if (hasRProj && hasRProjUser && hasPositai && hasClaude && hasAllPackageExclusions)
+         if (hasRProj && hasRProjUser && missingAiPatterns.empty() && hasAllPackageExclusions)
             return;
 
          error = core::writeStringToFile(rbuildIgnorePath,
@@ -687,8 +695,10 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore contents of AI tool state directories. The trailing slash is
       // important: it excludes children but lets the directory entry itself
-      // ("/proj/.positai") pass through so the allowlist in fileMonitorFilter
-      // can react to its creation.
+      // ("/proj/.posit") pass through so the allowlist in fileMonitorFilter
+      // can react to its creation. ".positai" is the legacy Posit Assistant
+      // directory, retained so existing projects keep working.
+      "/.posit/",
       "/.positai/",
       "/.claude/",
 
@@ -811,9 +821,10 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
-   // re-augment .Rbuildignore to pick up any .positai/.claude that were
-   // created between project init and file monitor start (small but real
-   // window). augmentRbuildignore is idempotent.
+   // re-augment .Rbuildignore to pick up any AI tool-state directories
+   // (.posit/.positai/.claude) that were created between project init and
+   // file monitor start (small but real window). augmentRbuildignore is
+   // idempotent.
    augmentRbuildignore();
 
    // notify subscribers
@@ -829,8 +840,9 @@ void ProjectContext::fileMonitorFilesChanged(
    // own handler
    onProjectFilesChanged(events);
 
-   // if .positai or .claude was added at the project root, augment
-   // .Rbuildignore now (we don't add these entries until the file exists)
+   // if an AI tool-state directory (.posit/.positai/.claude) was added at the
+   // project root, augment .Rbuildignore now (we don't add these entries
+   // until the directory exists)
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
@@ -839,7 +851,9 @@ void ProjectContext::fileMonitorFilesChanged(
       if (path.getParent() != directory())
          continue;
       std::string filename = path.getFilename();
-      if (filename == ".positai" || filename == ".claude")
+      if (filename == kPositAssistantStateDir ||
+          filename == kPositAssistantStateDirLegacy ||
+          filename == ".claude")
       {
          augmentRbuildignore();
          break;
@@ -910,11 +924,11 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(absPath, component))
          return false;
 
-   // Allow .positai/.claude at the project root through the filter so we
-   // can react to their creation and update ignore files accordingly.
-   // This must run before the gitignore directory check below -- a global
-   // or parent gitignore that already covers .positai/.claude would
-   // otherwise drop the FileAdded event and prevent mid-session
+   // Allow AI tool-state directories (.posit/.positai/.claude) at the project
+   // root through the filter so we can react to their creation and update
+   // ignore files accordingly. This must run before the gitignore directory
+   // check below -- a global or parent gitignore that already covers them
+   // would otherwise drop the FileAdded event and prevent mid-session
    // augmentation. fileListingFilter would also drop them as hidden.
    //
    // Use a cheap string-suffix check before constructing FilePath so we
@@ -923,7 +937,8 @@ bool ProjectContext::fileMonitorFilter(
    const char* filename = (slashPos == std::string::npos)
          ? absPath.c_str()
          : absPath.c_str() + slashPos + 1;
-   if (std::strcmp(filename, ".positai") == 0 ||
+   if (std::strcmp(filename, kPositAssistantStateDir) == 0 ||
+       std::strcmp(filename, kPositAssistantStateDirLegacy) == 0 ||
        std::strcmp(filename, ".claude") == 0)
    {
       if (FilePath(absPath).getParent() == directory())

@@ -59,9 +59,18 @@ test.describe('Project ignore files', () => {
     }
   });
 
+  // Posit Assistant moved its project-state directory from ".positai" to
+  // ".posit"; RStudio recognizes both, adding whichever exists to .gitignore.
+  // ".posit" is the current directory; ".positai" is retained for projects
+  // created by older Assistant releases.
   // https://github.com/rstudio/rstudio/commit/89f6cef5d8
-  test('.positai is added to .gitignore only after the directory exists', async ({ rstudioPage: page }) => {
-    const projectName = 'PositaiIgnoreTest';
+  const aiStateDirs: Array<{ dir: string; projectName: string }> = [
+    { dir: '.posit', projectName: 'PositIgnoreTest' },
+    { dir: '.positai', projectName: 'PositaiIgnoreTest' },
+  ];
+
+  for (const { dir, projectName } of aiStateDirs) {
+  test(`${dir} is added to .gitignore only after the directory exists`, async ({ rstudioPage: page }) => {
     const projectDir = `${sandbox.dir}/${projectName}`.replace(/\\/g, '/');
     const gitignorePath = `${projectDir}/.gitignore`;
 
@@ -100,20 +109,21 @@ test.describe('Project ignore files', () => {
     });
     await waitForConsoleIdle(page);
 
-    // Before the fix, .positai was added unconditionally at project open. Now
-    // it should appear only after the directory exists.
+    // The AI state dir is added only after the directory exists, not
+    // unconditionally at project open.
     await expect.poll(() => fs.existsSync(gitignorePath), {
       timeout: TIMEOUTS.consoleReady,
     }).toBe(true);
-    expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain('.positai');
+    expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain(dir);
 
-    // Create .positai via rsession so the file monitor picks it up.
-    await consoleActions.executeInConsole(`dir.create("${projectDir}/.positai")`);
+    // Create the directory via rsession so the file monitor picks it up.
+    await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}")`);
 
     await expect
-      .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes('.positai'), {
+      .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes(dir), {
         timeout: TIMEOUTS.consoleReady,
       })
       .toBe(true);
   });
+  }
 });
