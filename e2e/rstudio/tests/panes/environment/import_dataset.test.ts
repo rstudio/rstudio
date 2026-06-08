@@ -16,6 +16,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page, FrameLocator, Locator } from 'playwright';
+import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand } from '@utils/commands';
 import { installDepIfPrompted } from '@pages/modals.page';
@@ -65,7 +66,11 @@ async function openReadrCsvPreview(
   // the label-association in DataImport.ui.xml.
   const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
   await expect(fileInput).toBeVisible({ timeout: 5000 });
-  await fileInput.fill(csvPath);
+  // On Windows the readr dialog's file chooser passes the path to a subprocess
+  // via Java's File API, which expects backslash separators. Forward-slash
+  // paths (produced by R's tempfile()) cause the preview to silently fail.
+  const fillPath = os.platform() === 'win32' ? csvPath.replace(/\//g, '\\') : csvPath;
+  await fileInput.fill(fillPath);
 
   // Click "Update" to commit the path and kick off preview_data_import_async.
   // The textbox value change alone does not trigger the preview -- it has to go
