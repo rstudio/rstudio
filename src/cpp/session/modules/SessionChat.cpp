@@ -3663,6 +3663,10 @@ void fetchManifestAsync(
 
    // Build the child command in the parent session so the --vanilla child
    // reproduces the parent's resolved download.file.method/extra and timeout.
+   // --vanilla implies --no-environ, so the child does not itself re-read
+   // .Renviron; proxy config still applies because the child inherits the parent's
+   // process environment (the parent read .Renviron at startup) and the
+   // method/extra options are injected explicitly into the command.
    std::string command;
    Error error = r::exec::RFunction(".rs.chat.manifestDownloadCommand", url).call(&command);
    if (error)
@@ -3703,7 +3707,10 @@ void fetchManifestAsync(
       boost::make_shared<ManifestDownload>(complete);
    pProc->start(command.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
 
-   // Wall-clock deadline. terminate() only sends a soft interrupt, so a child
+   // Deadline (bounded by main-thread availability: like the completion, it fires
+   // when the main thread next services its scheduled-work queue, so a main thread
+   // wedged in a long synchronous R computation defers both -- no worse than the
+   // old in-process download). terminate() only sends a soft interrupt, so a child
    // wedged in DNS/connect may not die promptly. complete() no-ops if the fetch
    // already finished (pDone claimed); otherwise it resolves the waiting callers
    // with a timeout (bounding how long they wait) and frees the single-flight,
@@ -3733,7 +3740,7 @@ void fetchManifestAsync(
                pClient->terminate();
          }
       },
-      false);  // not idleOnly: a real wall-clock deadline
+      false);  // not idleOnly: fire even while R is busy (not only when idle)
 }
 
 
@@ -5219,6 +5226,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
                                    "No update available", ERROR_LOCATION),
                        &response);
+      lock.unlock();  // don't hold the state lock across the continuation
       cont(Success(), &response);
       return;
    }
@@ -5231,6 +5239,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       setErrorResponse(systemError(boost::system::errc::operation_in_progress,
                                    "Update already in progress", ERROR_LOCATION),
                        &response);
+      lock.unlock();  // don't hold the state lock across the continuation
       cont(Success(), &response);
       return;
    }
