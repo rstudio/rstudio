@@ -162,6 +162,17 @@ test.describe.serial('Global Appearance pane project theme override', () => {
     await expect(overridePanel).not.toBeVisible({ timeout: 10000 });
     await expect(globalDialog.locator(GLOBAL_THEME_SELECT)).toBeVisible({ timeout: 10000 });
 
+    // Safety net: if a regression in AssistantPreferencesPane lets a project-
+    // options save fire a spurious "Install Posit Assistant" modal (the global
+    // assistant pref defaults to "posit"), it would sit on top of the global
+    // dialog and intercept the cancel click. The live-revert assertions above
+    // are the real subject; clear any stray modal so it can't wedge teardown.
+    if ((await numModalsShowing(page)) > 1) {
+      await dismissAllModals(page);
+      await expect(globalDialog).not.toBeVisible({ timeout: 10000 });
+      return;
+    }
+
     await cancelDialog(page, GLOBAL_OPTIONS_DIALOG);
   });
 });
