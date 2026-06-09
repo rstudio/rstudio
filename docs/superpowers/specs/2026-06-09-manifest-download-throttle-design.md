@@ -78,6 +78,12 @@ Keeps the throttle decision and the persisted record pure and unit-testable,
 alongside the existing `ChatIntegrity` / `ChatInstallation` components. Namespace
 `rstudio::session::modules::chat::throttle`.
 
+`SessionChat.cpp` adds `using throttle::ManifestCheckRecord;`,
+`using throttle::ResolvedBlock;`, and `using throttle::InstalledVersionBlock;`
+alongside its existing selective `using chat_installation::...` declarations, so
+the snippets below refer to these types unqualified while still calling the
+`throttle::` free functions explicitly.
+
 ```cpp
 // Default throttle window: 24 hours.
 extern const int kManifestCheckThrottleSeconds;
@@ -163,6 +169,28 @@ ResolvedBlock resolvePersistedBlock(const ManifestCheckRecord& record,
    out.unsupportedProtocol = record.unsupportedProtocol && protoMatch;
    out.unsupportedInstalledVersion =
       record.unsupportedInstalledVersion && versionMatch && protoMatch;
+   return out;
+}
+```
+
+The `unsupportedInstalledVersion` flag is a composite of a manifest decision and
+a local protocol.json mismatch. Those have different lifetimes: the manifest
+decision is persisted; the mismatch is not (it is recomputed locally). This pure
+helper makes the live-vs-persisted split explicit and testable, so a regression
+that persists the live composite would fail a unit test rather than slip through:
+
+```cpp
+// live     = what s_updateState.unsupportedInstalledVersion should be now
+//            (manifest version decision OR a current local protocol mismatch)
+// persisted = what the record stores (manifest version decision ONLY)
+struct InstalledVersionBlock { bool live; bool persisted; };
+
+InstalledVersionBlock composeInstalledVersionBlock(bool versionUnsupported,
+                                                   bool protocolMismatch)
+{
+   InstalledVersionBlock out;
+   out.live = versionUnsupported || protocolMismatch;
+   out.persisted = versionUnsupported;
    return out;
 }
 ```
@@ -279,9 +307,10 @@ record excludes the local protocol-mismatch term:
 ```cpp
 bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
 bool protocolMismatch   = hasProtocolMismatch(installedVersion);
-// live composite (unchanged behavior for s_updateState):
-unsupportedInstalledVersion = versionUnsupported || protocolMismatch;
-// `versionUnsupported` (manifest-only) is what gets persisted -- see section 5.
+InstalledVersionBlock blk =
+   throttle::composeInstalledVersionBlock(versionUnsupported, protocolMismatch);
+unsupportedInstalledVersion = blk.live;   // live composite for s_updateState
+// blk.persisted (manifest-only) is what gets persisted -- see section 5.
 ```
 
 `versionUnsupported` is declared (defaulting to `false`) among the block of
@@ -304,6 +333,9 @@ if (fetchSucceeded)
    record.lastCheckTime = now;
    record.installedVersion = installedVersion;
    record.rstudioProtocol = kProtocolVersion;
+   // versionUnsupported is the manifest-only value (== blk.persisted) and, unlike
+   // the success-path-local `blk`, is one of the top-level computed locals, so the
+   // by-reference finish() lambda can read it on both exit paths.
    record.unsupportedInstalledVersion = versionUnsupported;   // manifest-only
    record.unsupportedProtocol = unsupportedProtocol;          // manifest-only
 }
@@ -395,23 +427,32 @@ finish(): write record (success: overwrite flags; failure: preserve flags,
     dropped, `unsupportedProtocol` preserved (the independence fix).
   - protocol differs -> both flags dropped.
   - record has both flags false -> both stay false regardless of match.
+- `composeInstalledVersionBlock` (pins the live-vs-persisted contract so a
+  regression that persists the composite is caught):
+  - `versionUnsupported=false, protocolMismatch=true` -> `live=true`,
+    `persisted=false` (the manifest-only persistence guarantee).
+  - `versionUnsupported=true, protocolMismatch=false` -> `live=true`,
+    `persisted=true`.
+  - `versionUnsupported=false, protocolMismatch=false` -> both false.
 - `readManifestCheckRecord` / `writeManifestCheckRecord` round-trip against a
   temp file; missing file -> none; malformed JSON -> none; valid -> expected
   fields (including the boolean flags and the context strings).
 
 ### Behavior paths (throttled-skip and fetch-failure)
 
-`resolveWithoutManifestFetch` and the `onUpdateCheckComplete` failure branch are
-deliberately thin wrappers around `resolvePersistedBlock` and the record
-read/write helpers, so the substantive reapply/preserve logic is fully covered by
-the pure tests above. The wrappers themselves only (a) clear the update fields,
-(b) copy the resolved flags into `s_updateState`, and (c) on failure, bump the
-timestamp while preserving the stored flags. Full SessionChat-level integration
-tests of these wrappers would require new seams around the file-static
-`s_updateState`, the filesystem-backed `getInstalledVersion` /
+`resolveWithoutManifestFetch`, the `onUpdateCheckComplete` failure branch, and
+the success-path persistence are deliberately thin wrappers around the three pure
+helpers (`resolvePersistedBlock`, `composeInstalledVersionBlock`) and the record
+read/write helpers, so the substantive logic -- which flags reapply, and the
+live-vs-persisted split -- is fully covered by the pure tests above. The wrappers
+themselves only (a) clear the update fields, (b) copy the resolved/composed flags
+into `s_updateState`, and (c) persist `versionUnsupported` (success) or preserve
+the stored flags and bump the timestamp (failure). Full SessionChat-level
+integration tests of these wrappers would require new seams around the
+file-static `s_updateState`, the filesystem-backed `getInstalledVersion` /
 `hasProtocolMismatch`, and `enqueClientEvent`; that refactor is out of scope for
 this change. The risk is mitigated by keeping the wrappers trivial and the
-decision pure -- this tradeoff is called out explicitly so the implementer keeps
+decisions pure -- this tradeoff is called out explicitly so the implementer keeps
 the wrappers thin rather than reintroducing logic into them.
 
 No new frontend tests; payload shape and client behavior are unchanged.
