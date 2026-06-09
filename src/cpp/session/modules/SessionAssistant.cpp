@@ -1229,6 +1229,18 @@ Error startAgent(const std::string& assistantType = "")
 
    DLOG("Using node.js at '{}'.", nodePath.getAbsolutePath());
 
+   // Trust the OS certificate store when the user has opted in. Additive to
+   // NODE_EXTRA_CA_CERTS; preserves any NODE_OPTIONS already in the environment.
+   // Guarded on the resolved node version: NODE_OPTIONS=--use-system-ca is
+   // rejected by node < 22.17.0, which would otherwise break agent startup.
+   if (prefs::userPrefs().assistantUseSystemCa() &&
+       node_tools::nodeSupportsSystemCa(nodePath))
+   {
+      std::string nodeOptions = core::system::getenv(environment, "NODE_OPTIONS");
+      core::system::setenv(&environment, "NODE_OPTIONS",
+                           node_tools::appendNodeOption(nodeOptions, "--use-system-ca"));
+   }
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
