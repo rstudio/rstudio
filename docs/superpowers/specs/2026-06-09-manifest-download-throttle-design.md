@@ -319,16 +319,12 @@ else
    manifestUnavailable = true;          // not installed, or protocol mismatch
    errorMessage = fetchError.getMessage();
 }
-
-// Failure learns nothing about support status: preserve the prior block and bump
-// only the timestamp. (Only a success may set/clear the persisted block.)
-ManifestCheckRecord bumped = prior.value_or(ManifestCheckRecord{});
-bumped.lastCheckTime = std::time(nullptr);
-recordToWrite = bumped;
-
-finish();   // fetchSucceeded == false
+finish();   // fetchSucceeded == false; finish() handles the preserve-and-bump
 return;
 ```
+
+This branch leaves `recordToWrite` unset; the preserve-and-bump is centralized in
+`finish()` (section 5) so it also covers the other non-success exits.
 
 The success path computes the raw inputs and delegates the live-flag / persisted-
 record split to `buildSuccessOutcome`, then sets `fetchSucceeded = true`:
@@ -346,24 +342,39 @@ fetchSucceeded = true;
 
 `recordToWrite` is a `boost::optional<ManifestCheckRecord>` declared (defaulting
 to none) among the block of computed locals at the top of `onUpdateCheckComplete`,
-so the by-reference `finish()` lambda can read it on both exit paths. The success
-branch sets it from `buildSuccessOutcome`; the failure branch sets it to the
-preserve-and-bump record.
+so the by-reference `finish()` lambda can read it. Only the success path sets it
+(from `buildSuccessOutcome`); every non-success exit leaves it unset and relies on
+`finish()`'s fallback.
 
 ### 5. Record persistence in `finish()`
 
-Both exit branches have already populated `recordToWrite` (success: from
-`buildSuccessOutcome`; failure: the preserve-and-bump record). `finish()` no
-longer decides record contents -- it just writes whatever was staged:
+`onUpdateCheckComplete` reaches `finish()` from several exits: the success path
+(`recordToWrite` staged), the fetch-error branch, and the early manifest-
+processing failures (malformed `getUnsupportedInfo`, `getPackageInfoFromManifest`
+error). All of those are real fetch attempts and must bump the timestamp, or a
+bad manifest would bypass the throttle and re-download on every startup. So
+`finish()` writes the staged success record when present, and otherwise falls
+back to a preserve-and-bump (read prior, keep its block flags, bump only the
+timestamp -- only a success may set/clear the persisted block):
 
 ```cpp
 if (recordToWrite)
+{
    throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), *recordToWrite);
+}
+else
+{
+   boost::optional<ManifestCheckRecord> prior =
+      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+   ManifestCheckRecord bumped = prior.value_or(ManifestCheckRecord{});
+   bumped.lastCheckTime = std::time(nullptr);
+   throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), bumped);
+}
 ```
 
-`recordToWrite` is only set on the two fetch-completion branches, so this write
-happens on every real attempt and never on the throttled-skip path (which does
-not call `finish()`).
+Because every `finish()` path writes (staged or fallback), each real attempt bumps
+the timestamp. The throttled-skip path does not call `finish()`, so it never
+writes (no attempt was made).
 
 ### 6. Shared helper
 
@@ -403,12 +414,14 @@ fetchManifestAsync       resolveWithoutManifestFetch
    |                     stopAgentForUpdate if blocked; drainPendingCompletions
    v
 onUpdateCheckComplete
-   |--- success ---> compute flags fresh (authoritative)
+   |--- success ---> buildSuccessOutcome (live flag + staged record)
    |--- failure + compatible install ---> reapply persisted block (else no error)
    |--- failure + (not installed | mismatch) ---> manifestUnavailable -> block
+   |--- malformed manifest / no-compatible-version ---> block / leave running
    v
-finish(): write record (success: overwrite flags; failure: preserve flags,
-          bump timestamp) -> stopAgentForUpdate if blocked -> drainPendingCompletions
+finish(): write staged success record, else fallback preserve-and-bump (every
+          exit bumps the timestamp) -> stopAgentForUpdate if blocked ->
+          drainPendingCompletions
 ```
 
 ## Error handling
@@ -419,6 +432,19 @@ finish(): write record (success: overwrite flags; failure: preserve flags,
 - `writeManifestCheckRecord` failure: logged (WLOG), not fatal. Worst case the
   next startup fetches again (no throttle benefit that one time).
 - Fetch failure semantics covered in section 4.
+- `manifestUnavailable` is transient state, never persisted. It is recomputed on
+  each real attempt and only the manifest-derived block flags are stored. Two
+  consequences, both intentional:
+  - A download failure (or, per existing behavior, a malformed manifest) sets
+    `manifestUnavailable` and blocks only within the session that observed it; a
+    restart within the throttle window throttle-skips and uses the installed
+    version (consistent with "just use the compatible install").
+  - This change scopes the "use the installed version without an error" handling
+    to download *failures* (the user's stated case). The pre-existing
+    malformed-manifest / no-compatible-version exits keep their current
+    within-session behavior (block / leave-running respectively) but now also bump
+    the throttle timestamp via `finish()`'s fallback. Broadening "just use it" to
+    malformed manifests is out of scope.
 
 ## Testing
 
