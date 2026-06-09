@@ -68,6 +68,21 @@ TEST(SessionThemesTests, ChooseAppliedThemeNameUninstalledOverrideEmptyGlobalRes
              "Textmate (default)");
 }
 
+TEST(SessionThemesTests, ChooseEffectiveThemeNameUsesProjectWhenNotIgnoring)
+{
+   // Not ignoring: the project-effective value (a project override here) wins.
+   EXPECT_EQ(chooseEffectiveThemeName(false, "Cobalt", "Textmate (default)"),
+             "Cobalt");
+}
+
+TEST(SessionThemesTests, ChooseEffectiveThemeNameUsesGlobalWhenIgnoring)
+{
+   // Ignoring project appearance settings: the project layer is excluded and the
+   // global theme is used even when a project names its own.
+   EXPECT_EQ(chooseEffectiveThemeName(true, "Cobalt", "Textmate (default)"),
+             "Textmate (default)");
+}
+
 TEST(SessionThemesTests, ResolveGlobalThemeNameSkipsPresentButEmptyUserLayer)
 {
    // A present-but-empty user-layer value falls through to a lower layer

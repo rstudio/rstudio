@@ -650,9 +650,10 @@ Error syncThemePrefs()
    // Effective editor theme (project layer wins if set), unless the user has
    // opted to ignore project-level appearance settings -- then the project
    // layer is excluded and the global theme is applied.
-   std::string effectiveName = prefs::userPrefs().ignoreProjectAppearance()
-      ? globalName
-      : prefs::userPrefs().editorTheme();
+   std::string effectiveName = chooseEffectiveThemeName(
+      prefs::userPrefs().ignoreProjectAppearance(),
+      prefs::userPrefs().editorTheme(),
+      globalName);
 
    // Installed themes and the built-in default name.
    ThemeMap themes = getAllThemes();
@@ -755,6 +756,13 @@ std::string chooseAppliedThemeName(const std::string& effectiveName,
    if (availableThemes.count(globalName))
       return globalName;
    return defaultName;
+}
+
+std::string chooseEffectiveThemeName(bool ignoreProjectAppearance,
+                                     const std::string& projectEffectiveName,
+                                     const std::string& globalName)
+{
+   return ignoreProjectAppearance ? globalName : projectEffectiveName;
 }
 
 Error initialize()
