@@ -59,7 +59,7 @@ test.describe('Python REPL completions', () => {
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
-    test.skip(!popupVisible, 'Python REPL completion popup did not appear; skipping completion acceptance');
+    test.fixme(!popupVisible, 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
 
     await page.keyboard.press('Tab');
     // Wait for the popup to close (Tab accepted the completion and the popup

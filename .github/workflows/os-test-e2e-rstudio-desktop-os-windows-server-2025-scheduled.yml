@@ -17,6 +17,8 @@ permissions:
 jobs:
   run-windows-2025:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
       project: desktop
       r_version: "release"

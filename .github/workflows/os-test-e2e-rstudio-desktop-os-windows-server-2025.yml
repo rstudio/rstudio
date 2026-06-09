@@ -100,7 +100,7 @@ jobs:
   # artifact. Only runs when build_from_source is true; skipped on daily
   # download runs.
   build:
-    if: inputs.build_from_source == true
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: windows-2025
     timeout-minutes: 180
     defaults:
@@ -159,8 +159,11 @@ jobs:
       # land in dependencies/common and dependencies/windows within the
       # workspace when c:\rstudio-tools\dependencies doesn't exist. Keyed on
       # the install scripts so a version bump forces a fresh download.
-      - name: Cache rstudio-tools deps
-        uses: actions/cache@v4
+      # Restore-only; Save rstudio-tools cache runs after the build with
+      # if: always() so deps are cached even when compilation fails.
+      - name: Restore rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             dependencies/common
@@ -168,18 +171,16 @@ jobs:
           key: rstudio-tools-win64-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-dependencies.cmd', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
             rstudio-tools-win64-
-          # Save even when the build fails so a later retry doesn't re-download
-          # all deps from scratch (deps are installed before compilation starts).
-          save-always: true
 
       # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
       # is the single most expensive step in the build (~15-30 min). When the
       # GWT sources haven't changed since the last seeder run on main, the cache
       # restores the compiled JS/CSS into src/gwt/ and the build step skips
       # recompilation via the nogwt flag below.
-      - name: Cache GWT output
+      # Restore-only; Save GWT output runs after the build with if: always().
+      - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             src/gwt/www
@@ -188,7 +189,6 @@ jobs:
           key: rstudio-gwt-win64-${{ hashFiles('src/gwt/src/**/*.java', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-win64-
-          save-always: true
 
       - name: Install build tools
         run: choco install ant nsis --yes --no-progress
@@ -336,6 +336,25 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
+
+      - name: Save rstudio-tools cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            dependencies/common
+            dependencies/windows
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      - name: Save GWT output
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            src/gwt/www
+            src/gwt/bin
+            src/gwt/extras
+          key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # The NSIS installer is created by cpack -G NSIS (run by make-package.bat
       # without the 'quick' flag) and placed in package\win32\build\. It
@@ -608,7 +627,7 @@ jobs:
             $pwArgs += $env:PW_GREP_INVERT
           }
           $pwArgs += '--shard'
-          $pwArgs += "$($env:PW_SHARD)/2"
+          $pwArgs += "$($env:PW_SHARD)/${{ strategy.job-total }}"
           npx playwright test $pwArgs
 
       - name: Upload blob report
@@ -690,7 +709,7 @@ jobs:
 
       - name: Install Playwright
         working-directory: e2e/rstudio
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
         uses: actions/download-artifact@v4

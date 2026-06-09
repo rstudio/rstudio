@@ -95,7 +95,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $maxAttempts = 3
           for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
             if ($LASTEXITCODE -eq 0) { break }
             if ($i -lt $maxAttempts) {
               Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
