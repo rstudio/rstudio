@@ -70,6 +70,10 @@ copilot-ssl-certificates-file=<path>
 
 in your `/etc/rstudio/rsession.conf`. Note that this is functionally equivalent to setting the `NODE_EXTRA_CA_CERTS` environment variable for the GitHub Copilot agent process -- see https://nodejs.org/api/cli.html#node_extra_ca_certsfile for more details.
 
+On RStudio Desktop, where `rsession.conf` is not used, enable **Tools > Global Options > Assistant > "Use the system certificate store"** instead. When enabled, RStudio trusts the operating system certificate store (the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities, which is usually all that is needed behind a TLS-inspecting proxy whose root CA the machine already trusts. The setting applies to both the GitHub Copilot agent and the Posit Assistant. Restart the R session for the change to take effect.
+
+This option is additive: it supplements `NODE_EXTRA_CA_CERTS` and `copilot-ssl-certificates-file` rather than replacing them. It requires the bundled Node.js (or any configured Node.js 22.17.0 or newer); with an older configured Node.js the option is ignored.
+
 ### External Services Used by GitHub Copilot
 
 The GitHub Copilot agent process will communicate with the following external services when authenticating the current user, and also when generating code suggestions:
