@@ -106,6 +106,8 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       SCCACHE_ENABLED: '1'
       SCCACHE_GHA_ENABLED: 'true'
+      NPM_CONFIG_LOGLEVEL: error
+      NPM_CONFIG_AUDIT: 'false'
 
     steps:
       - uses: actions/checkout@v4

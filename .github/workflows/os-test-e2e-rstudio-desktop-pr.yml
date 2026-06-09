@@ -1,4 +1,4 @@
-name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source, PR-triggered)"
+name: "Test: E2E Playwright RStudio (Desktop, PR-triggered)"
 
 on:
   pull_request:
@@ -7,13 +7,12 @@ on:
       - "dependencies/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
-      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
-      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
 
 concurrency:
-  group: pw-pr-windows-2025-${{ github.event.pull_request.number }}
+  group: pw-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -21,10 +20,10 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Detect whether this PR changes files that affect the compiled binary.
-  # When only e2e tests, CI workflows, docs, or R code changed, the daily
-  # installer is identical to what a source build would produce — no need
-  # to spend ~60 min recompiling unchanged C++.
+  # Single change-detection job shared by both platforms. Checks if C++,
+  # CMake, build scripts, or dependencies changed. When only e2e tests or
+  # CI workflows changed, both platforms skip the ~60 min source build and
+  # use the latest daily installer instead.
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -43,7 +42,7 @@ jobs:
           echo "$CHANGED"
           # Build from source when C++, GWT, CMake, build scripts, or
           # dependencies changed — anything that ends up in the compiled binary.
-          if echo "$CHANGED" | grep -qE '^(src/|package/win32/|dependencies/|cmake/)'; then
+          if echo "$CHANGED" | grep -qE '^(src/|package/win32/|package/osx/|dependencies/|cmake/)'; then
             echo "Source files changed — building from source"
             echo "build_from_source=true" >> "$GITHUB_OUTPUT"
           else
@@ -51,7 +50,7 @@ jobs:
             echo "build_from_source=false" >> "$GITHUB_OUTPUT"
           fi
 
-  run-windows-2025:
+  windows:
     needs: detect-changes
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
     secrets:
@@ -60,6 +59,17 @@ jobs:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
       project: desktop
       r_version: "4.5.3"
-      # Skip @ai-tagged tests on PRs for now.
+      grep_invert: "@ai"
+      post_pr_comment: true
+
+  macos:
+    needs: detect-changes
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      project: desktop
+      r_version: "4.5.3"
       grep_invert: "@ai"
       post_pr_comment: true
