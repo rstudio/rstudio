@@ -85,13 +85,23 @@ extern const int kManifestCheckThrottleSeconds;
 // Persisted record. installedVersion / rstudioProtocol record the context the
 // unsupported flags were computed against, so a stale block is never applied to
 // a different install.
+//
+// IMPORTANT: the two bool flags store only MANIFEST-derived decisions, never the
+// locally-checkable protocol.json mismatch. In the live state,
+// s_updateState.unsupportedInstalledVersion is the composite
+// `isVersionUnsupported(...) || hasProtocolMismatch(...)`, but only the
+// `isVersionUnsupported(...)` term is persisted here. The mismatch term is
+// recomputed locally at reapply time, and both reapply paths (throttled-skip and
+// fetch-failure-with-compatible-install) only run when there is NO current
+// mismatch -- so a block caused purely by a transient/stale protocol.json is
+// never resurrected after the install is repaired.
 struct ManifestCheckRecord
 {
    std::time_t lastCheckTime = 0;
    std::string installedVersion;            // installed PAI version at last success
    std::string rstudioProtocol;             // RStudio kProtocolVersion at last success
-   bool unsupportedInstalledVersion = false;
-   bool unsupportedProtocol = false;
+   bool unsupportedInstalledVersion = false; // manifest version decision only
+   bool unsupportedProtocol = false;         // manifest protocol decision only
 };
 
 // Persisted state file: <userDataDir>/pai/manifest-check.json
@@ -203,12 +213,24 @@ protocol mismatch) writes `s_updateState` from the installed version with the
 update fields cleared (`updateAvailable=false`, `isDowngrade=false`,
 `noCompatibleVersion=false`, `manifestUnavailable=false`, empty `newVersion` /
 `downloadUrl` / `expectedSha256`). For the unsupported flags it reapplies the
-persisted block: read the record, then
-`ResolvedBlock b = resolvePersistedBlock(record, installedVersion, kProtocolVersion)`
-and set `unsupportedInstalledVersion = b.unsupportedInstalledVersion`,
-`unsupportedProtocol = b.unsupportedProtocol` (both false when there is no
-record). Then call `isPositAssistantUnsupported()` and `stopAgentForUpdate()` if
-blocked (mirroring `finish()`), and drain the pending completions via
+persisted block using the same guarded form as the failure branch:
+
+```cpp
+unsupportedInstalledVersion = false;
+unsupportedProtocol = false;
+boost::optional<ManifestCheckRecord> record =
+   throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+if (record)
+{
+   ResolvedBlock b =
+      throttle::resolvePersistedBlock(*record, installedVersion, kProtocolVersion);
+   unsupportedInstalledVersion = b.unsupportedInstalledVersion;
+   unsupportedProtocol = b.unsupportedProtocol;
+}
+```
+
+Then call `isPositAssistantUnsupported()` and `stopAgentForUpdate()` if blocked
+(mirroring `finish()`), and drain the pending completions via
 `drainPendingCompletions()`. It does not write the record (no attempt was made).
 
 ### 3. Caller updates
@@ -250,23 +272,40 @@ finish();   // fetchSucceeded == false
 return;
 ```
 
-The success path is unchanged in how it computes the flags.
+The success path is unchanged in how it computes the *live* flags, but it now
+also captures the manifest-only version decision separately so the persisted
+record excludes the local protocol-mismatch term:
+
+```cpp
+bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
+bool protocolMismatch   = hasProtocolMismatch(installedVersion);
+// live composite (unchanged behavior for s_updateState):
+unsupportedInstalledVersion = versionUnsupported || protocolMismatch;
+// `versionUnsupported` (manifest-only) is what gets persisted -- see section 5.
+```
+
+`versionUnsupported` is declared (defaulting to `false`) among the block of
+computed locals at the top of `onUpdateCheckComplete`, alongside
+`unsupportedInstalledVersion` etc., so the by-reference `finish()` lambda can read
+it on both the success and failure exit paths.
 
 ### 5. Record persistence in `finish()`
 
-`finish()` records the attempt on every real fetch completion:
+`finish()` records the attempt on every real fetch completion. On success it
+persists the manifest-only decisions (`versionUnsupported`, not the live
+composite `unsupportedInstalledVersion`):
 
 ```cpp
 ManifestCheckRecord record;
 std::time_t now = std::time(nullptr);
 if (fetchSucceeded)
 {
-   // Authoritative result -- overwrite context + flags.
+   // Authoritative result -- overwrite context + manifest-only flags.
    record.lastCheckTime = now;
    record.installedVersion = installedVersion;
    record.rstudioProtocol = kProtocolVersion;
-   record.unsupportedInstalledVersion = unsupportedInstalledVersion;
-   record.unsupportedProtocol = unsupportedProtocol;
+   record.unsupportedInstalledVersion = versionUnsupported;   // manifest-only
+   record.unsupportedProtocol = unsupportedProtocol;          // manifest-only
 }
 else
 {
