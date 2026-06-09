@@ -646,7 +646,8 @@ void callExpressionBoundaryHook(const std::string& hookName,
                                 SEXP valueSEXP,
                                 bool ok,
                                 bool visible,
-                                SEXP errorSEXP)
+                                SEXP errorSEXP,
+                                SEXP conditionsSEXP)
 {
    if (hookName.empty())
       return;
@@ -658,6 +659,7 @@ void callExpressionBoundaryHook(const std::string& hookName,
       .addParam("ok", ok)
       .addParam("visible", visible)
       .addParam("error", errorSEXP)
+      .addParam("conditions", conditionsSEXP)
       .call();
 
    if (hookError)
@@ -1684,8 +1686,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
             }
 
+            SEXP conditionsSEXP = Rf_getAttrib(
+               evalResultSEXP,
+               Rf_install("assistant_conditions"));
             callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, R_NilValue,
-                                       false, false, evalResultSEXP);
+                                       false, false, evalResultSEXP, conditionsSEXP);
 
             error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
@@ -1704,6 +1709,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Extract result and visibility
          SEXP exprResult = VECTOR_ELT(evalResultSEXP, 0);
          SEXP visibleSEXP = VECTOR_ELT(evalResultSEXP, 1);
+         SEXP conditionsSEXP = Rf_length(evalResultSEXP) >= 3
+            ? VECTOR_ELT(evalResultSEXP, 2)
+            : R_NilValue;
 
          // Validate visibility flag
          if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
@@ -1748,7 +1756,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          }
 
          callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
-                                    true, exprVisible, R_NilValue);
+                                    true, exprVisible, R_NilValue, conditionsSEXP);
       }
    }
 

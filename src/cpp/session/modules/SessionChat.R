@@ -817,27 +817,56 @@
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
-   tryCatch(error = identity, interrupt = identity, {
+   conditionState <- new.env(parent = emptyenv())
+   conditionState$conditions <- list()
 
-      # Register cleanup first so bindings are restored even if
-      # injectBindings() itself errors partway through
-      on.exit({
-         tryCatch(
-            .rs.chat.restoreBindings(),
-            error = function(e) {
-               warning("failed to restore bindings: ", conditionMessage(e))
+   tryCatch(
+      error = function(e) {
+         attr(e, "assistant_conditions") <- conditionState$conditions
+         e
+      },
+      interrupt = function(e) {
+         attr(e, "assistant_conditions") <- conditionState$conditions
+         e
+      },
+      {
+
+         # Register cleanup first so bindings are restored even if
+         # injectBindings() itself errors partway through
+         on.exit({
+            tryCatch(
+               .rs.chat.restoreBindings(),
+               error = function(e) {
+                  warning("failed to restore bindings: ", conditionMessage(e))
+               }
+            )
+         }, add = TRUE)
+         .rs.chat.injectBindings()
+
+         # Evaluate the provided code
+         result <- withCallingHandlers(
+            withVisible(eval(expr, envir = envir)),
+            warning = function(w) {
+               conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
+                  type = "warning",
+                  text = conditionMessage(w)
+               )
+            },
+            message = function(m) {
+               conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
+                  type = "message",
+                  text = conditionMessage(m)
+               )
             }
          )
-      }, add = TRUE)
-      .rs.chat.injectBindings()
-      
-      # Evaluate the provided code
-      withVisible(eval(expr, envir = envir))
+         result$conditions <- conditionState$conditions
+         result
 
-   })
+      }
+   )
 })
 
-.rs.addFunction("chat.callExpressionBoundaryHook", function(name, expr, value, ok, visible, error = NULL)
+.rs.addFunction("chat.callExpressionBoundaryHook", function(name, expr, value, ok, visible, error = NULL, conditions = list())
 {
    if (!nzchar(name))
       return(invisible(NULL))
@@ -847,7 +876,14 @@
       return(invisible(NULL))
 
    tryCatch(
-      hook(expr = expr, value = value, ok = ok, visible = visible, error = error),
+      hook(
+         expr = expr,
+         value = value,
+         ok = ok,
+         visible = visible,
+         error = error,
+         conditions = conditions
+      ),
       error = function(e) NULL
    )
 
