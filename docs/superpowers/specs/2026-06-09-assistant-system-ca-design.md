@@ -38,6 +38,24 @@ the enterprise helper-script launch paths and any child Node processes the
 agents spawn, with no extra plumbing. `NODE_OPTIONS=--use-system-ca` is
 accepted on Node 22.17.0+, which the bundled runtime satisfies.
 
+### Node version compatibility (guard)
+
+The resolved Node binary is not always the bundled one. `node_tools::findNode`
+honors the `rstudio.copilot.nodeBinaryPath` / `rstudio.positAi.nodeBinaryPath`
+R options, the admin `node-path` session option, and finally a `PATH` lookup.
+Node **older than 22.17.0 rejects `NODE_OPTIONS=--use-system-ca` and exits on
+startup** rather than ignoring it, so blindly injecting the flag could make the
+agent fail to start when an older Node is configured -- a worse outcome than the
+CA simply not being trusted.
+
+To prevent that, the flag is injected only after confirming the resolved Node is
+compatible. When the pref is enabled (and only then -- zero cost when off), the
+launch site probes `<nodePath> --version`, parses the major/minor, and appends
+the flag only when the version is >= 22.17.0. Otherwise it logs a clear warning
+(naming the path and version) and starts the agent without the flag, so an old
+configured Node degrades to "CA not trusted" instead of "agent won't start".
+The bundled Node 22.22.2 always passes.
+
 ## How the setting takes effect (restart semantics)
 
 The agents read `NODE_OPTIONS` only when launched, and both are child processes
@@ -125,21 +143,62 @@ whitespace; if `option` is already present as a token, return the original
 value unchanged (trimmed); otherwise append `option` after a single separating
 space. Empty input returns `option`. Pure function, no I/O.
 
+Add two more helpers to the same header for the version guard:
+
+```cpp
+/**
+ * Parse the major and minor version from `node --version` output
+ * (e.g. "v22.22.2\n" -> 22, 22).
+ *
+ * @param versionOutput Raw stdout from `node --version`.
+ * @param pMajor Output major version.
+ * @param pMinor Output minor version.
+ * @return true if a version was parsed, false otherwise.
+ */
+bool parseNodeVersion(const std::string& versionOutput, int* pMajor, int* pMinor);
+
+/**
+ * Whether the Node binary at nodePath supports `--use-system-ca` via
+ * NODE_OPTIONS (Node >= 22.17.0). Runs `<nodePath> --version` and parses the
+ * result. Returns false (with a logged warning) if the version cannot be
+ * determined, so callers fail safe by not injecting the flag.
+ */
+bool nodeSupportsSystemCa(const core::FilePath& nodePath);
+```
+
+`parseNodeVersion` is pure (trims a leading `v`, parses `major.minor`) and
+unit-tested. `nodeSupportsSystemCa` runs the binary via
+`core::system::runProgram`, feeds stdout to `parseNodeVersion`, and returns
+`major > 22 || (major == 22 && minor >= 17)`.
+
 ### 4. Both launch sites
 
 In `SessionAssistant.cpp::startAgent` and `SessionChat.cpp::startChatBackend`,
-immediately after the existing `NODE_USE_ENV_PROXY` line:
+once the resolved `nodePath` is available (the version guard needs it):
 
 ```cpp
 // Trust the OS certificate store when the user has opted in. Additive to
 // NODE_EXTRA_CA_CERTS; preserves any NODE_OPTIONS already in the environment.
-if (prefs::userPrefs().assistantUseSystemCa())
+// Guarded on the resolved Node version: NODE_OPTIONS=--use-system-ca is
+// rejected by Node < 22.17.0, which would otherwise break agent startup.
+if (prefs::userPrefs().assistantUseSystemCa() &&
+    node_tools::nodeSupportsSystemCa(nodePath))
 {
    std::string nodeOptions = core::system::getenv(environment, "NODE_OPTIONS");
    core::system::setenv(&environment, "NODE_OPTIONS",
                         node_tools::appendNodeOption(nodeOptions, "--use-system-ca"));
 }
 ```
+
+Placement differs because of where `nodePath` is resolved:
+
+- `SessionChat.cpp`: `findNode` runs (line ~4689) before the environment block,
+  so the snippet goes in that block after the `NODE_USE_ENV_PROXY` line.
+- `SessionAssistant.cpp`: `findNode` runs *after* the `NODE_USE_ENV_PROXY` line
+  (~line 1217), and the environment is later assigned into `options.environment`
+  separately for the direct-launch and helper-script branches. Add the snippet
+  after `nodePath` is resolved and validated, but before those `options.environment`
+  assignments, so every launch branch picks up the modified `environment`.
 
 Both sites already build `environment` via `core::system::environment(&environment)`,
 so an inherited `NODE_OPTIONS` (e.g. from `.Renviron`) is present and preserved.
@@ -181,7 +240,8 @@ same shape as `AccessibilityPreferencesPane.onApply`.)
 ### 6. Tests
 
 `src/cpp/session/modules/SessionNodeToolsTests.cpp` (auto-discovered by the
-`*Tests.cpp` glob in `src/cpp/session/CMakeLists.txt`; no CMake edit). Cover
+`*Tests.cpp` glob in `src/cpp/session/CMakeLists.txt`; no CMake edit).
+
 `node_tools::appendNodeOption`:
 
 - empty existing value -> returns the flag alone
@@ -192,9 +252,16 @@ same shape as `AccessibilityPreferencesPane.onApply`.)
 - existing value with extra/leading/trailing whitespace -> normalized to
   single-space-separated tokens
 
-Run via the `rsession` scope. End-to-end TLS/proxy trust is verified manually on
-Windows (behind a TLS-inspecting proxy with the proxy CA installed in the
-Windows Certificate Store).
+`node_tools::parseNodeVersion` (drives the >= 22.17.0 gate):
+
+- `"v22.22.2\n"` -> 22, 22 (leading `v` and trailing newline tolerated)
+- exactly `"v22.17.0"` -> 22, 17 (boundary that must pass the gate)
+- `"v22.16.1"` / `"v20.19.4"` -> parsed, but below the gate (must not inject)
+- malformed / empty output -> returns false (caller fails safe, skips the flag)
+
+Run via the `rsession` scope. `nodeSupportsSystemCa` (subprocess) and end-to-end
+TLS/proxy trust are verified manually on Windows (behind a TLS-inspecting proxy
+with the proxy CA installed in the Windows Certificate Store).
 
 ### 7. Documentation
 
