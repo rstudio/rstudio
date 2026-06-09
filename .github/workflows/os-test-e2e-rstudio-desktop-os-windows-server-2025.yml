@@ -105,8 +105,7 @@ jobs:
     env:
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       SCCACHE_ENABLED: '1'
-      SCCACHE_DIR: ${{ github.workspace }}\.sccache
-      SCCACHE_CACHE_SIZE: '5G'
+      SCCACHE_GHA_ENABLED: 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -167,18 +166,6 @@ jobs:
           # all deps from scratch (deps are installed before compilation starts).
           save-always: true
 
-      - name: Cache sccache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-win64-${{ github.sha }}
-          restore-keys: |
-            sccache-win64-
-          # Save even on failure: a build that fails at link time has already
-          # compiled most object files -- save-always means the next run reuses
-          # them instead of recompiling from scratch.
-          save-always: true
-
       # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
       # is the single most expensive step in the build (~15-30 min). When the
       # GWT sources haven't changed since the last seeder run on main, the cache
@@ -198,7 +185,10 @@ jobs:
           save-always: true
 
       - name: Install build tools
-        run: choco install ant sccache nsis --yes --no-progress
+        run: choco install ant nsis --yes --no-progress
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Install rig
         run: |
@@ -318,12 +308,6 @@ jobs:
           Copy-Item -Recurse $yarnSrc $yarnDest
           Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
 
-      # sccache wraps cl.exe so identical object files are served from cache.
-      # RStudio's CMake config picks it up automatically when SCCACHE_ENABLED=1
-      # and sccache is on PATH.
-      - name: Zero sccache stats
-        run: sccache --zero-stats
-
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
       # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
       # miss (first run, or after GWT source changes) a full GWT build runs and
@@ -349,22 +333,6 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
-
-      - name: Show sccache stats
-        if: always()
-        run: |
-          $stats = sccache --show-stats
-          Write-Host ($stats -join "`n")
-          # Warn loudly if sccache saw no compile requests -- that means
-          # SCCACHE_ENABLED=1 is not wiring sccache into cl.exe and every build
-          # recompiles from scratch.  Check RStudio's CMake config for how it
-          # reads SCCACHE_ENABLED and sets CMAKE_C/CXX_COMPILER_LAUNCHER.
-          $match = $stats | Select-String 'Compile requests\s+(\d+)'
-          if (-not $match) {
-            Write-Warning "Could not parse sccache stats -- output format may have changed."
-          } elseif ([int]$match.Matches[0].Groups[1].Value -eq 0) {
-            Write-Warning "sccache recorded 0 compile requests -- sccache is NOT caching the build.  See comment above."
-          }
 
       # The NSIS installer is created by cpack -G NSIS (run by make-package.bat
       # without the 'quick' flag) and placed in package\win32\build\. It
