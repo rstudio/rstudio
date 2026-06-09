@@ -124,6 +124,11 @@ bool manifestCheckDue(bool force,
       return true;
    if (!lastCheckTime)
       return true;
+   // A future timestamp (clock skew, or a corrupted/copied state file) would
+   // otherwise suppress checks until that future time plus the window; treat it
+   // as due so checks resume immediately.
+   if (now < *lastCheckTime)
+      return true;
    std::time_t elapsed = now - *lastCheckTime;
    return elapsed >= static_cast<std::time_t>(throttleSeconds);
 }

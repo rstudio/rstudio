@@ -80,6 +80,8 @@ ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
 // Pure: is a manifest fetch due now?
 //   force || !installed || protocolMismatch || !lastCheckTime ||
 //   (now - *lastCheckTime) >= throttleSeconds
+// A future lastCheckTime (clock skew or a corrupted/copied state file) is also
+// treated as due, so checks resume immediately rather than being suppressed.
 bool manifestCheckDue(bool force,
                       bool installed,
                       bool protocolMismatch,

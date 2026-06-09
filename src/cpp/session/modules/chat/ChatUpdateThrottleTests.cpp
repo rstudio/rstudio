@@ -87,6 +87,12 @@ TEST(ChatUpdateThrottle, DuePastWindow)
    EXPECT_TRUE(manifestCheckDue(false, true, false, last, kNow, kDay));
 }
 
+TEST(ChatUpdateThrottle, DueWhenLastCheckInFuture)
+{
+   std::time_t future = kNow + kDay;
+   EXPECT_TRUE(manifestCheckDue(false, true, false, future, kNow, kDay));
+}
+
 // ---- resolvePersistedBlock ----
 
 TEST(ChatUpdateThrottle, ResolveBothPreservedWhenContextMatches)
