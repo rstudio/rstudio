@@ -99,6 +99,38 @@ TEST(SessionNodeToolsTest, ParseNodeVersionMalformed)
    EXPECT_FALSE(parseNodeVersion("not-a-version", &major, &minor));
 }
 
+TEST(SessionNodeToolsTest, VersionSupportsSystemCaBoundary)
+{
+   EXPECT_FALSE(versionSupportsSystemCa(22, 16));
+   EXPECT_TRUE(versionSupportsSystemCa(22, 17));
+   EXPECT_TRUE(versionSupportsSystemCa(22, 18));
+   EXPECT_TRUE(versionSupportsSystemCa(23, 0));
+   EXPECT_FALSE(versionSupportsSystemCa(21, 99));
+   EXPECT_FALSE(versionSupportsSystemCa(20, 19));
+}
+
+TEST(SessionNodeToolsTest, ParseNodeVersionNoMinor)
+{
+   int major = 0, minor = 0;
+   EXPECT_FALSE(parseNodeVersion("v22", &major, &minor));
+}
+
+TEST(SessionNodeToolsTest, ParseNodeVersionLeadingWhitespace)
+{
+   int major = 0, minor = 0;
+   EXPECT_TRUE(parseNodeVersion("  v22.17.0\n", &major, &minor));
+   EXPECT_EQ(major, 22);
+   EXPECT_EQ(minor, 17);
+}
+
+TEST(SessionNodeToolsTest, ParseNodeVersionEmbeddedSuffix)
+{
+   int major = 0, minor = 0;
+   EXPECT_TRUE(parseNodeVersion("v22.17.0-nightly", &major, &minor));
+   EXPECT_EQ(major, 22);
+   EXPECT_EQ(minor, 17);
+}
+
 } // namespace tests
 } // namespace node_tools
 } // namespace modules

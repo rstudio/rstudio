@@ -19,8 +19,11 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #include <cctype>
 #include <cstdio>
@@ -230,8 +233,18 @@ bool parseNodeVersion(const std::string& versionOutput, int* pMajor, int* pMinor
    return true;
 }
 
+bool versionSupportsSystemCa(int major, int minor)
+{
+   // Patch is intentionally ignored: the floor (22.17.0) is a .0 release, so
+   // major.minor fully determines support.
+   return (major > 22) || (major == 22 && minor >= 17);
+}
+
 bool nodeSupportsSystemCa(const core::FilePath& nodePath)
 {
+   DLOG("Probing node version at '{}' for --use-system-ca support.",
+        nodePath.getAbsolutePath());
+
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
    Error error = core::system::runProgram(nodePath.getAbsolutePath(),
@@ -259,8 +272,7 @@ bool nodeSupportsSystemCa(const core::FilePath& nodePath)
       return false;
    }
 
-   // --use-system-ca via NODE_OPTIONS requires Node >= 22.17.0.
-   bool supported = (major > 22) || (major == 22 && minor >= 17);
+   bool supported = versionSupportsSystemCa(major, minor);
    if (!supported)
    {
       WLOG("Node {}.{} at '{}' does not support --use-system-ca via NODE_OPTIONS "
@@ -269,6 +281,24 @@ bool nodeSupportsSystemCa(const core::FilePath& nodePath)
    }
 
    return supported;
+}
+
+void applySystemCaOption(core::system::Options* pEnvironment,
+                         const core::FilePath& nodePath)
+{
+   // Trust the OS certificate store when the user has opted in and the resolved
+   // Node supports the flag. Additive to NODE_EXTRA_CA_CERTS; preserves any
+   // existing NODE_OPTIONS. Guarded on the Node version because
+   // NODE_OPTIONS=--use-system-ca is rejected by Node < 22.17.0 (it would
+   // otherwise break agent startup).
+   if (!prefs::userPrefs().assistantUseSystemCa())
+      return;
+   if (!nodeSupportsSystemCa(nodePath))
+      return;
+
+   std::string nodeOptions = core::system::getenv(*pEnvironment, "NODE_OPTIONS");
+   core::system::setenv(pEnvironment, "NODE_OPTIONS",
+                        appendNodeOption(nodeOptions, "--use-system-ca"));
 }
 
 } // namespace node_tools
