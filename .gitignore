@@ -56,7 +56,7 @@ venv/
 .claude/settings.local.json
 .claude/skills/*.local/
 .claude/worktrees/
-# docs/superpowers (temporarily un-ignored to let roborev review the design spec; restore before PR)
+docs/superpowers
 .superpowers/
 .positai/
 AGENTS.md
