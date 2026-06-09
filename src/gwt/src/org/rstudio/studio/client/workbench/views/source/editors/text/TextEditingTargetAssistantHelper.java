@@ -490,6 +490,11 @@ public class TextEditingTargetAssistantHelper
       {
          // Ghost text at cursor position
          setEditSuggestion(normalized, SuggestionType.GHOST_TEXT, null);
+
+         // A zero-width insertion at the cursor behaves like a regular inline
+         // completion, including dismissal when the cursor moves away
+         editSuggestion_.isInlineCompletion = suggestionStart.isEqualTo(cursorPosition);
+
          if (autoshow)
             renderEditSuggestion();
          else

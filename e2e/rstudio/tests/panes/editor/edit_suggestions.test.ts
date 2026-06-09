@@ -24,6 +24,7 @@ const FILES = {
   move:            `${FILE_PREFIX}move.R`,
   clearOldRow:     `${FILE_PREFIX}clear_old_row.R`,
   inline:          `${FILE_PREFIX}inline.R`,
+  cursorDismiss:   `${FILE_PREFIX}cursor_dismiss.R`,
   offscreenAbove:  `${FILE_PREFIX}offscreen_above.R`,
   offscreenBelow:  `${FILE_PREFIX}offscreen_below.R`,
   offscreenClick:  `${FILE_PREFIX}offscreen_click.R`,
@@ -190,6 +191,28 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
       const tokens = await editor.getTokens(0);
       return tokens[0]?.value;
     }).toBe('# Create a 4D point.');
+  });
+
+  test('at-cursor ghost text is dismissed when the cursor moves away', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.cursorDismiss, '# abc\n\n\n');
+
+    const editor = new AceEditor(page, '# abc');
+    const sourcePane = new SourcePane(page);
+
+    // A zero-width suggestion at the cursor position is treated as an
+    // inline (at-cursor) completion, like real provider ghost text.
+    await editor.gotoLine(1, 5);
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 6, 1, 6), " def")',
+    );
+
+    await expect(sourcePane.ghostText.first()).toBeVisible();
+
+    // Moving the cursor away dismisses the ghost text without inserting it
+    // (https://github.com/rstudio/rstudio/issues/17147)
+    await editor.gotoLine(3);
+    await expect(sourcePane.ghostText).toHaveCount(0);
+    expect(await editor.getLine(0)).toBe('# abc');
   });
 
   // --- Off-screen suggestion handling (#17147) ---
