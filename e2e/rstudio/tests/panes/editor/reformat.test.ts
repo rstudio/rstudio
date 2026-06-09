@@ -199,6 +199,6 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
     // trimEnd: Ace's getValue() on Windows omits the trailing newline from the
     // document model; the substantive assertion is "no extra blank lines", not
     // the presence of exactly one trailing newline.
-    await expect.poll(() => editor.getValue().trimEnd()).toBe(expected.trimEnd());
+    await expect.poll(async () => (await editor.getValue()).trimEnd()).toBe(expected.trimEnd());
   });
 });
