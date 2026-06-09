@@ -297,13 +297,19 @@ See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guida
 ## Testing
 
 
-### C++ Tests
+### C++ and R Tests
 
-C++ tests use Google Test. Run them with:
+Both are run through `rstudio-tests`:
 
     ./rstudio-tests --scope <scope> --filter <pattern>
 
-where `<scope>` is one of `core`, `rserver`, `rsession`, or `r`.
+The `core`, `rserver`, and `rsession` scopes run the C++ Google Test suites.
+The `r` scope runs the R `testthat` suite under `src/cpp/tests/testthat/`
+(e.g. `test-help.R`). `--filter` matches the test *file* basename, so an R
+`testthat` file is reached with `--scope r --filter <basename>` (for example
+`--scope r --filter help` for `test-help.R`) -- NOT with `--scope rsession`,
+which only runs C++ tests and ignores the testthat files. Rebuild first so the
+staged R copies under `build/src/cpp/session/modules/R/` are current.
 
 
 ### GWT Tests
