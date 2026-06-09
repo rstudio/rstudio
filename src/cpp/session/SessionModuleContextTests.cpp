@@ -264,6 +264,79 @@ TEST(CreateFileUrlTest, HomeFileRoundTripSkipsAudit)
       << " should skip audit via the ?show=1 marker";
 }
 
+// --- shouldIgnoreOutputDir --------------------------------------------------
+//
+// Regression coverage for #17900: a website 'output-dir' that resolves to the
+// project directory itself (e.g. 'output-dir: .') must NOT be added to the
+// ignore list, or Find in Files / code search drops every result. The decision
+// compares by filesystem identity, so '.', './', and 'sub/..' -- all naming the
+// project root -- are recognized even though they do not normalize to the base
+// path as strings (the bug in the original fix: lexically_normal("base/.") is
+// "base/.", not "base").
+
+class ShouldIgnoreOutputDirTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      // Create a unique temp directory to stand in for the project root.
+      core::Error error = core::FilePath::tempFilePath(baseDir_);
+      ASSERT_FALSE(error) << error.asString();
+      error = baseDir_.removeIfExists();
+      ASSERT_FALSE(error) << error.asString();
+      error = baseDir_.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+   }
+
+   void TearDown() override
+   {
+      baseDir_.removeIfExists();
+   }
+
+   core::FilePath baseDir_;
+};
+
+TEST_F(ShouldIgnoreOutputDirTest, EmptyOutputDirIsNotIgnored)
+{
+   EXPECT_FALSE(shouldIgnoreOutputDir(baseDir_, ""));
+}
+
+TEST_F(ShouldIgnoreOutputDirTest, DotResolvesToBaseAndIsNotIgnored)
+{
+   // 'output-dir: .' -- the exact #17900 repro.
+   EXPECT_FALSE(shouldIgnoreOutputDir(baseDir_, "."));
+}
+
+TEST_F(ShouldIgnoreOutputDirTest, DotSlashResolvesToBaseAndIsNotIgnored)
+{
+   EXPECT_FALSE(shouldIgnoreOutputDir(baseDir_, "./"));
+}
+
+TEST_F(ShouldIgnoreOutputDirTest, SubdirParentResolvesToBaseAndIsNotIgnored)
+{
+   // 'sub/..' names the project root; boost::filesystem::equivalent needs the
+   // intermediate 'sub' to exist on disk to resolve the path.
+   core::Error error = baseDir_.completeChildPath("sub").ensureDirectory();
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_FALSE(shouldIgnoreOutputDir(baseDir_, "sub/.."));
+}
+
+TEST_F(ShouldIgnoreOutputDirTest, RealSubdirIsIgnored)
+{
+   // A genuine output dir (e.g. a built '_site') is distinct from the project
+   // root and must still be ignored.
+   core::Error error = baseDir_.completeChildPath("_site").ensureDirectory();
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_TRUE(shouldIgnoreOutputDir(baseDir_, "_site"));
+}
+
+TEST_F(ShouldIgnoreOutputDirTest, UnbuiltSubdirIsIgnored)
+{
+   // A not-yet-built output dir does not exist on disk; it must still be
+   // ignored (isEquivalentTo returns false when a path is missing).
+   EXPECT_TRUE(shouldIgnoreOutputDir(baseDir_, "_site_not_built"));
+}
+
 } // namespace tests
 } // namespace module_context
 } // namespace session
