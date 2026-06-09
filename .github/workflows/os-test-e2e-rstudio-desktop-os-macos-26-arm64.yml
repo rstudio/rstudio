@@ -3,8 +3,12 @@ name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source)"
 on:
   workflow_dispatch:
     inputs:
+      build_from_source:
+        description: "Build RStudio Desktop from this branch's source. When false, downloads the latest daily .dmg installer."
+        type: boolean
+        default: true
       rstudio_installer_url:
-        description: "Optional .dmg URL to test against (e.g. a specific daily from dailies.rstudio.com). Leave empty to build RStudio Desktop from this branch's source on the runner."
+        description: "Optional .dmg URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
         default: ""
       r_version:
@@ -45,6 +49,9 @@ on:
         default: false
   workflow_call:
     inputs:
+      build_from_source:
+        type: boolean
+        default: true
       rstudio_installer_url:
         type: string
         default: ""
@@ -86,11 +93,10 @@ permissions:
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
   # the e2e job below, then uploads RStudio.app as an artifact for the e2e
-  # job to consume. Skipped when rstudio_installer_url is set, in which case
-  # the e2e job downloads the dmg from that URL instead (existing override
-  # path -- useful for testing against a specific daily).
+  # job to consume. Skipped when build_from_source is false, in which case
+  # the e2e job downloads the daily .dmg (or rstudio_installer_url) instead.
   build:
-    if: inputs.rstudio_installer_url == ''
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: macos-26
     timeout-minutes: 90
     env:
@@ -178,10 +184,10 @@ jobs:
 
   e2e-desktop-macos:
     needs: build
-    # build is skipped when rstudio_installer_url is set; allow this job to
+    # build is skipped when build_from_source is false; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
-    # and "skipped" on the override path. build_only seeds the build caches
-    # (rstudio-tools / R-libs / sccache) without running e2e, so skip here.
+    # and "skipped" on the daily-download path. build_only seeds the build
+    # caches (rstudio-tools / R-libs / sccache) without running e2e, so skip.
     if: |
       always() &&
       inputs.build_only != true &&
@@ -228,17 +234,17 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
-      # PR-built artifact path (default). Pulled in when no installer URL is
-      # provided -- the build job above produced RStudio.app.tar.gz for us.
+      # Build-from-source path: extract the RStudio.app artifact produced by
+      # the build job above.
       - name: Download RStudio.app artifact
-        if: inputs.rstudio_installer_url == ''
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
         with:
           name: rstudio-app-macos-arm64
           path: ${{ github.workspace }}
 
       - name: Install RStudio from artifact
-        if: inputs.rstudio_installer_url == ''
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
           tar -xzf "${{ github.workspace }}/RStudio.app.tar.gz" -C "${{ github.workspace }}"
           sudo rm -rf /Applications/RStudio.app
@@ -246,22 +252,52 @@ jobs:
           sudo xattr -cr /Applications/RStudio.app
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
 
-      # Override path: use a specific .dmg URL when rstudio_installer_url is
-      # set. Useful for testing against a specific daily / past release.
+      # Daily-download path: resolve and install the latest (or specified) .dmg.
+      # Runs when build_from_source is false or an explicit URL was provided.
       - name: Resolve RStudio .dmg URL
-        if: inputs.rstudio_installer_url != ''
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
           URL="$INSTALLER_URL"
-          FILENAME=$(basename "$URL")
-          echo "Using override URL: $URL (SHA-256 verification skipped)"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
+            if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
+              echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            fi
+            echo "Auto-resolved latest macOS ARM64 daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "$URL")
+            if [ -z "$FILENAME" ]; then
+              echo "::error::Could not derive filename from rstudio_installer_url='$URL'. Provide a URL whose path ends with a filename (e.g. .../RStudio-2024.12.0-467.dmg)."
+              exit 1
+            fi
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL"      >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA"   >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
+      - name: Cache RStudio installer
+        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
+        id: installer-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.resolve.outputs.filename }}
+          key: rstudio-installer-${{ steps.resolve.outputs.filename }}
+
       - name: Download RStudio .dmg
-        if: inputs.rstudio_installer_url != ''
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -270,8 +306,21 @@ jobs:
             -o "$DOWNLOAD_FILENAME" \
             "$DOWNLOAD_URL"
 
+      - name: Verify SHA-256
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          expected=$(echo "$EXPECTED_SHA256" | tr '[:upper:]' '[:lower:]')
+          actual=$(shasum -a 256 "$DOWNLOAD_FILENAME" | awk '{print $1}')
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::SHA-256 mismatch. Expected: $expected. Actual: $actual."
+            exit 1
+          fi
+
       - name: Install RStudio from .dmg
-        if: inputs.rstudio_installer_url != ''
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |

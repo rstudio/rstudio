@@ -21,11 +21,43 @@ permissions:
   pull-requests: write
 
 jobs:
+  # Detect whether this PR changes files that affect the compiled binary.
+  # When only e2e tests, CI workflows, docs, or R code changed, the daily
+  # installer is identical to what a source build would produce — no need
+  # to spend ~60 min recompiling unchanged C++.
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build_from_source: ${{ steps.check.outputs.build_from_source }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for source changes requiring a build
+        id: check
+        run: |
+          BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+          CHANGED=$(git diff --name-only "$BASE" HEAD)
+          echo "Changed files vs merge base with ${{ github.base_ref }}:"
+          echo "$CHANGED"
+          # Build from source when C++, GWT, CMake, build scripts, or
+          # dependencies changed — anything that ends up in the compiled binary.
+          if echo "$CHANGED" | grep -qE '^(src/|package/osx/|dependencies/|cmake/)'; then
+            echo "Source files changed — building from source"
+            echo "build_from_source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No source files changed — using daily installer"
+            echo "build_from_source=false" >> "$GITHUB_OUTPUT"
+          fi
+
   run-macos-26:
+    needs: detect-changes
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
       project: desktop
       r_version: "4.5.3"
       # Skip @ai-tagged tests on PRs for now.
