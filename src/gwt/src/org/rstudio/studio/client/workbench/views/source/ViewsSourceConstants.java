@@ -278,6 +278,7 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String chunkSequence(int itemSequence);
     String topLevelParentheses();
     String cantEnterVisualModeUsingRealtime();
+    String cantEnterVisualModeInUntrustedProject();
     String visualModeChunkSummary(String enging, int lines);
     String visualModeChunkSummaryPlural(String engine, int lines);
     String images();

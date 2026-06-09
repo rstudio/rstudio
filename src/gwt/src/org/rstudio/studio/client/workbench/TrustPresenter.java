@@ -87,7 +87,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
     */
    public void initializeForSession(SessionInfo sessionInfo)
    {
-      restrictedModeIcon_.setVisible(sessionInfo.getStartupFilesSuppressed());
+      restrictedModeIcon_.setVisible(sessionInfo.getProjectUntrusted());
    }
 
    /**
@@ -114,10 +114,11 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
       JsObject data = event.getData().cast();
-      if (data.hasKey("startup_files_suppressed"))
+      if (data.hasKey("project_untrusted"))
       {
-         boolean suppressed = data.getBoolean("startup_files_suppressed");
-         restrictedModeIcon_.setVisible(suppressed);
+         boolean untrusted = data.getBoolean("project_untrusted");
+         restrictedModeIcon_.setVisible(untrusted);
+         session_.getSessionInfo().setProjectUntrusted(untrusted);
       }
 
       if (data.hasKey("trust_request"))

@@ -449,12 +449,18 @@ SEXP rs_trustStatus(SEXP directorySEXP)
 
 void initializeTrustState()
 {
+   // Check whether projects are untrusted by default; that is, whether
+   // an explicit trust grant is required for every project, even those
+   // without risky startup files.
+   bool trustRequired = options().projectTrustRequired();
+
    // Check if trust dialogs are enabled.
    // Explicit setting (0 or 1) takes precedence; if unset (-1),
-   // fall back to the edition-specific overlay default.
+   // fall back to the edition-specific overlay default, treating
+   // project-trust-required as implicitly enabling the dialogs.
    int trustDialogs = options().projectTrustDialogs();
    bool trustDialogsEnabled = (trustDialogs == -1)
-      ? overlay::trustDialogsEnabledByDefault()
+      ? (overlay::trustDialogsEnabledByDefault() || trustRequired)
       : (trustDialogs != 0);
 
    if (!trustDialogsEnabled)
@@ -480,8 +486,9 @@ void initializeTrustState()
       return;
    }
 
-   // Check for risky files
-   if (!hasRiskyFiles(projectDir))
+   // Check for risky files; when trust is required for all projects,
+   // prompt even if no risky files are present
+   if (!trustRequired && !hasRiskyFiles(projectDir))
    {
       s_trustStatus = TrustStatus::NotRequired;
       return;
@@ -506,16 +513,20 @@ void initializeTrustState()
       s_trustStatus = TrustStatus::Unknown;
 }
 
-bool shouldSuppressStartupFiles()
+bool isProjectUntrusted()
 {
    return s_trustStatus == TrustStatus::Untrusted ||
           s_trustStatus == TrustStatus::Unknown;
 }
 
+bool shouldSuppressStartupFiles()
+{
+   return isProjectUntrusted();
+}
+
 bool shouldSuppressWorkspaceRestore()
 {
-   return s_trustStatus == TrustStatus::Untrusted ||
-          s_trustStatus == TrustStatus::Unknown;
+   return isProjectUntrusted();
 }
 
 std::string projectTrustStatus()

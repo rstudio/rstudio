@@ -971,8 +971,8 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
 
-   dataJson["startup_files_suppressed"] =
-      modules::trust::shouldSuppressStartupFiles();
+   dataJson["project_untrusted"] =
+      modules::trust::isProjectUntrusted();
    dataJson["trust_request"] = modules::trust::trustRequestData();
 
    // record that deferred init has completed for this R session, so that a

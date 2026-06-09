@@ -34,6 +34,11 @@ constexpr const char* const kTrustStatusUnknown = "unknown";
 // Determines trust status for the current project directory.
 void initializeTrustState();
 
+// Whether the current project is untrusted (either explicitly, or
+// because a trust decision is still pending). Untrusted projects run
+// in restricted mode.
+bool isProjectUntrusted();
+
 // Whether startup files (.Rprofile, .Renviron) should be suppressed
 bool shouldSuppressStartupFiles();
 

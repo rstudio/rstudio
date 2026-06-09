@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Sour
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -1310,7 +1311,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             String mode = RmdEditorMode.getEditorMode(document.getPath(), yaml, sessionInfo);
             if ((mode == null) && newDoc && userPrefs.visualMarkdownEditingIsDefault().getValue())
                mode = RmdEditorMode.VISUAL;
-            
+
+            // only the source editor is available in untrusted projects
+            if (mode == RmdEditorMode.VISUAL && !VisualModeUtil.isVisualEditingEnabled(sessionInfo))
+               mode = RmdEditorMode.SOURCE;
+
             if (mode != null)
             {
                HashMap<String,String> props = new HashMap<String,String>();
