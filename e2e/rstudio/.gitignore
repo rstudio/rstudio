@@ -8,3 +8,6 @@ playwright-report/
 
 # Local-only notes, scratchpads, audit lists, etc.
 *.local.md
+
+# Local rstudio preference overrides
+.prefs.local.json

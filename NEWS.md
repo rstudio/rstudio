@@ -4,7 +4,7 @@
 - ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
 - ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
-- ([#2350](https://github.com/rstudio/rstudio/issues/2350)): Add an Appearance pane to Project Options for setting a project-specific editor theme; leaving it at "(Default)" uses the global theme.
+- ([#2350](https://github.com/rstudio/rstudio/issues/2350)): Add an Appearance pane to Project Options for setting a project-specific editor theme; leaving it at "(Default)" uses the global theme. A new "Ignore project-specific appearance settings" option (Global Options > Appearance) keeps the global editor theme even when a project sets its own.
 - ([#14965](https://github.com/rstudio/rstudio/issues/14965)): The Insert Pipe Operator command (Ctrl+Shift+M / Cmd+Shift+M) now inserts the native R pipe operator `|>` by default; the magrittr pipe `%>%` can be restored via the "Use R's native pipe operator, |>" preference.
 
 ### Fixed
@@ -42,6 +42,7 @@
 - ([#17870](https://github.com/rstudio/rstudio/issues/17870)): Fix an uncaught "Object has been destroyed" error in RStudio Desktop when quitting with a plot zoom (or other child) window still open.
 - ([#17830](https://github.com/rstudio/rstudio/issues/17830)): Fix the data viewer not clearing a data set's saved sorts and filters when its tab is explicitly closed, so reopening the data set no longer restores stale filters; the saved state still persists across a session suspend/restore or a page reload. Restored filters now also reveal the filter row, instead of being applied with no visible filter UI.
 - ([#17178](https://github.com/rstudio/rstudio/issues/17178)): Fix RStudio locking up when clicking "Run examples" in a help page whose examples launch a blocking application such as a Shiny app. Such examples now run in the console (like `example()`) instead of being rendered inline by the help server.
+- ([#17909](https://github.com/rstudio/rstudio/issues/17909)): Fix the Files pane on macOS briefly showing and then emptying the contents of a symlinked directory; file change events are now reported against the path the directory was opened as, rather than its resolved target. Opening a project via a symlinked path on macOS also no longer rewrites the project directory (as reported by `getwd()` and `here::here()`) to the symlink's target.
 
 ### Dependencies
 - Ace 1.43.5

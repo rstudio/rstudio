@@ -130,7 +130,7 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@seri
     await chatActions.dismissSetupPrompts();
 
     await expect(chatActions.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
-    await expect(chatActions.chatPane.chatTextarea).toBeVisible({ timeout: 15000 });
+    await expect(chatActions.chatPane.chatInput).toBeVisible({ timeout: 15000 });
   });
 
   // -----------------------------------------------------------------------
