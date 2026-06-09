@@ -10,6 +10,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -18,19 +19,35 @@ import { typeSlowly } from '@utils/constants';
 
 const FILE_PREFIX = 'es_';
 const FILES = {
-  prefix:        `${FILE_PREFIX}prefix.R`,
-  mutate:        `${FILE_PREFIX}mutate.R`,
-  move:          `${FILE_PREFIX}move.R`,
-  clearOldRow:   `${FILE_PREFIX}clear_old_row.R`,
-  inline:        `${FILE_PREFIX}inline.R`,
+  prefix:          `${FILE_PREFIX}prefix.R`,
+  mutate:          `${FILE_PREFIX}mutate.R`,
+  move:            `${FILE_PREFIX}move.R`,
+  clearOldRow:     `${FILE_PREFIX}clear_old_row.R`,
+  inline:          `${FILE_PREFIX}inline.R`,
+  offscreenAbove:  `${FILE_PREFIX}offscreen_above.R`,
+  offscreenBelow:  `${FILE_PREFIX}offscreen_below.R`,
+  offscreenClick:  `${FILE_PREFIX}offscreen_click.R`,
 } as const;
+
+// A file long enough that the editor must scroll: the suggestion target line
+// and the cursor can't both be in the viewport at once.
+function longFileContents(): string {
+  const lines: string[] = ['# Create a 3D point.'];
+  for (let i = 2; i < 100; i++) {
+    lines.push(`value_${i} <- ${i}`);
+  }
+  lines.push('point <- function(x, y, z) {}');
+  return lines.join('\n');
+}
 
 test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
+  let sourceActions: SourcePaneActions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
+    sourceActions = new SourcePaneActions(page, consoleActions);
     await consoleActions.resetSourcePane();
   });
 
@@ -173,5 +190,98 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
       const tokens = await editor.getTokens(0);
       return tokens[0]?.value;
     }).toBe('# Create a 4D point.');
+  });
+
+  // --- Off-screen suggestion handling (#17147) ---
+  //
+  // A suggestion whose range is scrolled out of view must not be accepted
+  // blindly: while it is off-screen an edge-pinned gutter arrow points toward
+  // it, the first accept keypress navigates to it, and only a subsequent
+  // accept inserts the edit.
+
+  test('accepting an off-screen pending suggestion navigates first', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.offscreenAbove, longFileContents());
+
+    const editor = new AceEditor(page, '# Create');
+    const sourcePane = new SourcePane(page);
+
+    // Move to the bottom of the file so row 0 is scrolled out of view
+    await editor.gotoLine(100);
+    await expect.poll(() => sourceActions.getFirstVisibleRow()).toBeGreaterThan(50);
+
+    // The suggestion starts before the cursor, so it shows as a pending
+    // (gutter-only) suggestion on row 0 -- off-screen.
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 12, 1, 14), "4D")',
+    );
+
+    // The edge-pinned indicator points toward the off-screen suggestion
+    await expect(sourcePane.nesOffscreenGutter.first()).toBeVisible();
+
+    await sourcePane.contentPane.click();
+    await editor.focus();
+
+    // First accept navigates to the suggestion without applying it
+    await page.keyboard.press('ControlOrMeta+;');
+    await expect.poll(() => sourceActions.getFirstVisibleRow()).toBeLessThan(5);
+    await expect(sourcePane.nesOffscreenGutter).toHaveCount(0);
+    expect(await editor.getLine(0)).toBe('# Create a 3D point.');
+
+    // Second accept applies it
+    await page.keyboard.press('ControlOrMeta+;');
+    await expect.poll(() => editor.getLine(0)).toBe('# Create a 4D point.');
+  });
+
+  test('accepting an off-screen revealed suggestion navigates first', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.offscreenBelow, longFileContents());
+
+    const editor = new AceEditor(page, '# Create');
+    const sourcePane = new SourcePane(page);
+
+    // Keep the cursor at the top; the suggestion lands on the last row,
+    // after the cursor, so it autoshows (as ghost text) -- off-screen.
+    await editor.gotoLine(1);
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(100, 1, 100, 1), "# ")',
+    );
+
+    await expect(sourcePane.nesOffscreenGutter.first()).toBeVisible();
+
+    await sourcePane.contentPane.click();
+    await editor.focus();
+
+    // First accept navigates to the suggestion without applying it
+    await page.keyboard.press('ControlOrMeta+;');
+    await expect.poll(() => sourceActions.getFirstVisibleRow()).toBeGreaterThan(50);
+    await expect(sourcePane.nesOffscreenGutter).toHaveCount(0);
+    expect(await editor.getLine(99)).toBe('point <- function(x, y, z) {}');
+
+    // Second accept applies it
+    await page.keyboard.press('ControlOrMeta+;');
+    await expect.poll(() => editor.getLine(99)).toBe('# point <- function(x, y, z) {}');
+  });
+
+  test('clicking the off-screen indicator navigates to the suggestion', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.offscreenClick, longFileContents());
+
+    const editor = new AceEditor(page, '# Create');
+    const sourcePane = new SourcePane(page);
+
+    await editor.gotoLine(100);
+    await expect.poll(() => sourceActions.getFirstVisibleRow()).toBeGreaterThan(50);
+
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 12, 1, 14), "4D")',
+    );
+
+    await expect(sourcePane.nesOffscreenGutter.first()).toBeVisible();
+    await sourcePane.nesOffscreenGutter.first().click({ force: true });
+
+    // Navigates without accepting; the suggestion's own gutter icon is now
+    // visible and the document text is unchanged.
+    await expect.poll(() => sourceActions.getFirstVisibleRow()).toBeLessThan(5);
+    await expect(sourcePane.nesOffscreenGutter).toHaveCount(0);
+    await expect(sourcePane.nesGutter.first()).toBeVisible();
+    expect(await editor.getLine(0)).toBe('# Create a 3D point.');
   });
 });

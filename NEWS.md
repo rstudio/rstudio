@@ -8,6 +8,7 @@
 - ([#14965](https://github.com/rstudio/rstudio/issues/14965)): The Insert Pipe Operator command (Ctrl+Shift+M / Cmd+Shift+M) now inserts the native R pipe operator `|>` by default; the magrittr pipe `%>%` can be restored via the "Use R's native pipe operator, |>" preference.
 
 ### Fixed
+- ([#17147](https://github.com/rstudio/rstudio/issues/17147)): Fix code suggestions being silently accepted off-screen. Inline (at-cursor) ghost text is now dismissed when the cursor moves elsewhere; accepting a next edit suggestion that is scrolled out of view first navigates to it, with a second key press accepting it; an arrow indicator pinned to the edge of the gutter now points toward an active off-screen suggestion, and clicking it navigates there.
 - ([#17900](https://github.com/rstudio/rstudio/issues/17900)): Fix Find in Files (and project code search) returning no results in a Quarto or R Markdown website project whose output directory is set to the project directory itself (for example `output-dir: .` in `_quarto.yml`); the project root is no longer treated as ignored output content.
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
 - ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
