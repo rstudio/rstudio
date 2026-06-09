@@ -12,25 +12,28 @@ if(CCACHE_PROGRAM)
     # C1041 "cannot open program database" errors. Use embedded debug info (/Z7)
     # instead -- each object file carries its own symbols, no shared PDB needed.
     #
-    # CMP0141 (CMake 3.25+) is the authoritative way to set this for ALL targets
-    # including FetchContent subprojects (e.g. libgit2). When the policy is
-    # available we set CMAKE_MSVC_DEBUG_INFORMATION_FORMAT so CMake stops
-    # injecting /Zi from the per-config flag strings entirely.
-    # For older CMake we fall back to replacing /Zi in the flag variables, which
-    # covers the main project but may not reach every subproject.
+    # Three layers, most-to-least reliable:
+    # 1. add_compile_options(/Z7) -- directory property, inherited by ALL
+    #    subdirectories including FetchContent subprojects (libgit2, pcre, ...).
+    # 2. CACHE FORCE on per-config flag variables -- strips /Zi so it doesn't
+    #    appear alongside /Z7 in the final command line.
+    # 3. CMP0141 (CMake 3.25+) -- tells CMake to stop managing debug-info flags
+    #    through the flags variables entirely; uses target properties instead.
     if(MSVC)
-        if(POLICY CMP0141)
-            cmake_policy(SET CMP0141 NEW)
-            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded" CACHE STRING
-                "Force /Z7 (embedded debug info) so sccache can cache MSVC compilations" FORCE)
-        endif()
+        add_compile_options(/Z7)
         foreach(_lang C CXX)
             foreach(_config DEBUG RELWITHDEBINFO MINSIZEREL RELEASE)
-                string(REGEX REPLACE "/Z[iI]" "/Z7"
-                    CMAKE_${_lang}_FLAGS_${_config}
-                    "${CMAKE_${_lang}_FLAGS_${_config}}")
+                get_property(_flags CACHE CMAKE_${_lang}_FLAGS_${_config} PROPERTY VALUE)
+                if(_flags)
+                    string(REGEX REPLACE "/Z[iI]" "" _flags "${_flags}")
+                    set(CMAKE_${_lang}_FLAGS_${_config} "${_flags}" CACHE STRING "" FORCE)
+                endif()
             endforeach()
         endforeach()
+        if(POLICY CMP0141)
+            cmake_policy(SET CMP0141 NEW)
+            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded" CACHE STRING "" FORCE)
+        endif()
     endif()
 endif()
 
