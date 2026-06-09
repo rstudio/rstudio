@@ -63,3 +63,41 @@ test_that(".rs.exampleCodeLaunchesApp() ignores launcher names in comments and s
     # unparseable input should never error -- it just isn't diverted
     expect_false(.rs.exampleCodeLaunchesApp("this is not valid R code ("))
 })
+
+test_that(".rs.helpExampleDivertCommand() handles demos", {
+    # build a fake installed package with demos, in a temporary library
+    lib <- tempfile("rstudio-test-lib-")
+    pkg <- file.path(lib, "fakepkg")
+    dir.create(file.path(pkg, "demo"), recursive = TRUE)
+    on.exit(unlink(lib, recursive = TRUE), add = TRUE)
+
+    writeLines(
+        c("Package: fakepkg", "Version: 0.1.0"),
+        file.path(pkg, "DESCRIPTION")
+    )
+
+    writeLines(
+        c(
+            "ui <- shiny::fluidPage()",
+            "server <- function(input, output, session) {}",
+            "shiny::runApp(shiny::shinyApp(ui, server))"
+        ),
+        file.path(pkg, "demo", "blocking.R")
+    )
+
+    writeLines("plot(1:10)", file.path(pkg, "demo", "benign.R"))
+
+    libPaths <- .libPaths()
+    .libPaths(c(lib, libPaths))
+    on.exit(.libPaths(libPaths), add = TRUE)
+
+    # a demo that launches an app is diverted to the console
+    expect_identical(
+        .rs.helpExampleDivertCommand("Demo", "fakepkg", "blocking"),
+        "demo(\"blocking\", package = \"fakepkg\")"
+    )
+
+    # a benign demo, and a missing one, are not diverted
+    expect_null(.rs.helpExampleDivertCommand("Demo", "fakepkg", "benign"))
+    expect_null(.rs.helpExampleDivertCommand("Demo", "fakepkg", "nosuchdemo"))
+})

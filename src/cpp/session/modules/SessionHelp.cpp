@@ -979,13 +979,17 @@ void handleHttpdRequest(const std::string& location,
    // session (see issue #17178). When we detect such an example, run it in the
    // console instead -- matching the behavior of example()/demo() at the prompt.
    {
-      static const boost::regex reRunnable("^/library/([^/]+)/(Example|Demo)/(.+)$");
+      // these mirror the URL patterns recognized by tools:::httpd()
+      static const boost::regex reExample("^/library/([^/]+)/Example/(.+)$");
+      static const boost::regex reDemo("^/library/([^/]+)/Demo/([^/]+)$");
+
       boost::smatch match;
-      if (boost::regex_search(path, match, reRunnable))
+      bool isExample = boost::regex_match(path, match, reExample);
+      if (isExample || boost::regex_match(path, match, reDemo))
       {
          std::string package = match[1];
-         std::string type = match[2];
-         std::string topic = match[3];
+         std::string topic = match[2];
+         std::string type = isExample ? "Example" : "Demo";
 
          bool diverted = false;
          Error error = r::exec::RFunction(".rs.runExampleInConsoleIfBlocking")
@@ -998,12 +1002,21 @@ void handleHttpdRequest(const std::string& location,
 
          if (diverted)
          {
-            std::string label = (type == "Demo") ? "demo" : "example";
+            // for an example, the topic in the URL is the Rd base name, so the
+            // help page we came from is ../html/<topic>.html; for a demo, fall
+            // back to the package index
+            std::string label = isExample ? "example" : "demo";
+            std::string backUrl = isExample
+                  ? "../html/" + http::util::urlEncode(topic) + ".html"
+                  : "../html/00Index.html";
+            std::string backLabel = isExample ? "Back to help topic" : "Back to package index";
+
             std::string html =
                   "<!DOCTYPE html>\n"
                   "<html>\n<head><meta charset=\"utf-8\"></head>\n<body>\n"
                   "<p>Running " + label + " <code>" +
                   string_utils::htmlEscape(topic) + "</code> in the R console.</p>\n"
+                  "<p><a href=\"" + backUrl + "\">" + backLabel + "</a></p>\n"
                   "</body>\n</html>\n";
 
             pResponse->setContentType("text/html");

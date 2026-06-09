@@ -1103,33 +1103,42 @@ options(help_type = "html")
    any(calls %in% launchers)
 })
 
-.rs.addFunction("runExampleInConsoleIfBlocking", function(type, package, topic)
+.rs.addFunction("helpExampleDivertCommand", function(type, package, topic)
 {
    # Fetch the example (or demo) source without running it.
    code <- tryCatch(
-      if (identical(type, "Demo"))
-         readLines(system.file("demo", paste0(topic, ".R"), package = package))
-      else
-         utils::example(
-            topic,
-            package = package,
-            character.only = TRUE,
-            give.lines = TRUE
-         ),
+      suppressWarnings(
+         if (identical(type, "Demo"))
+            readLines(system.file("demo", paste0(topic, ".R"), package = package, mustWork = TRUE))
+         else
+            utils::example(
+               topic,
+               package = package,
+               character.only = TRUE,
+               give.lines = TRUE
+            )
+      ),
       error = function(e) NULL
    )
 
    # If we couldn't read the source, or it doesn't look like it launches a
    # blocking application, let the normal (inline) help server path handle it.
    if (is.null(code) || !.rs.exampleCodeLaunchesApp(code))
-      return(FALSE)
+      return(NULL)
 
-   command <- sprintf(
+   sprintf(
       "%s(%s, package = %s)",
       if (identical(type, "Demo")) "demo" else "example",
       deparse(topic),
       deparse(package)
    )
+})
+
+.rs.addFunction("runExampleInConsoleIfBlocking", function(type, package, topic)
+{
+   command <- .rs.helpExampleDivertCommand(type, package, topic)
+   if (is.null(command))
+      return(FALSE)
 
    .rs.api.sendToConsole(command, echo = TRUE, execute = TRUE, focus = TRUE)
    TRUE

@@ -17,7 +17,13 @@ import { useSuiteSandbox } from '@utils/sandbox';
 const sandbox = useSuiteSandbox();
 
 const PKG = 'lockuptest';
+
+// The marker the example emits when it actually runs. example() echoes the
+// example *source* into the console before executing it, so the Rd builds the
+// marker from two halves via cat(..., sep = "") -- the joined string below can
+// only ever appear as executed output, never in the echoed source.
 const MARKER = 'LOCKUP-EXAMPLE-RAN';
+const MARKER_CALL = 'cat("LOCKUP-", "EXAMPLE-RAN\\n", sep = "")';
 
 let consoleActions: ConsolePaneActions;
 
@@ -63,7 +69,7 @@ test.describe('Help "Run examples" for blocking examples', () => {
 if (FALSE) {
   shiny::runApp(shiny::shinyApp(ui, server))
 }
-cat("${MARKER}\n")
+${MARKER_CALL}
 }`;
 
     // Build a minimal source package directly from the session so it lands in
