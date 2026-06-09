@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       build_from_source:
-        description: "Build RStudio Desktop from this branch's source. When false (default), downloads the latest daily installer."
+        description: "Build RStudio Desktop from this branch's source. When false, downloads the latest daily installer."
         type: boolean
-        default: false
+        default: true
       rstudio_installer_url:
         description: "URL to a Desktop installer (.exe). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
@@ -190,14 +190,14 @@ jobs:
         run: choco install ant nsis --yes --no-progress
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
 
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
           $maxAttempts = 3
           for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
             if ($LASTEXITCODE -eq 0) { break }
             if ($i -lt $maxAttempts) {
               Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
@@ -416,7 +416,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $maxAttempts = 3
           for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
             if ($LASTEXITCODE -eq 0) { break }
             if ($i -lt $maxAttempts) {
               Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."

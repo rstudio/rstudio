@@ -168,7 +168,7 @@ jobs:
         run: ./install-dependencies-osx-arch
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
 
       - name: Build RStudio Desktop (arm64)
         working-directory: package/osx
