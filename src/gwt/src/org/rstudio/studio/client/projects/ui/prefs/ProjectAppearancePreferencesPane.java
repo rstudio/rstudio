@@ -235,9 +235,12 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    private static final int PREVIEW_VERTICAL_MARGIN = 38;
    private static final int THEME_LABEL_HEIGHT = 24;
    // Vertical space (px) reserved for the "settings ignored" note when the user
-   // is globally ignoring project appearance settings (the note wraps to ~2
-   // lines, plus a little space below it).
-   private static final int IGNORED_NOTE_HEIGHT = 56;
+   // is globally ignoring project appearance settings. The pane is ~413px wide
+   // (PROJECT_PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH - padding), where the
+   // note wraps to ~2 lines in English but more in longer locales (French is
+   // ~30% longer). Budget ~4 lines at the info font (~16px each) plus the 8px
+   // bottom margin so the note never overlaps the theme controls below it.
+   private static final int IGNORED_NOTE_HEIGHT = 72;
    private static final int VISIBLE_ITEM_COUNT = 20;
 
    private String initialEditorTheme_ = "";

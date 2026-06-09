@@ -1185,7 +1185,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final static String DEFAULT_FONT_VALUE = "__default__";
 
    // Vertical space (px) reserved below the two columns for the
-   // "ignore project appearance" checkbox row, including the spacer above it.
+   // "ignore project appearance" checkbox: 8px spacer above + ~28px for the
+   // single-line checkbox row. The label spans the full pane width, so it stays
+   // on one line in every locale -- no wrap headroom is needed here.
    private final static int IGNORE_APPEARANCE_ROW_HEIGHT = 36;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
