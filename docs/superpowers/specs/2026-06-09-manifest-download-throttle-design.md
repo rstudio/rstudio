@@ -116,12 +116,45 @@ bool manifestCheckDue(bool force,
                       std::time_t now,
                       int throttleSeconds);
 
-// Pure: does a persisted block still apply to the current install? True only
-// when the record's context matches the current installed version AND RStudio
-// protocol -- otherwise the block is stale and must not be reapplied.
-bool persistedBlockApplies(const ManifestCheckRecord& record,
-                           const std::string& installedVersion,
-                           const std::string& rstudioProtocol);
+// The persisted unsupported flags, resolved against the current install.
+struct ResolvedBlock
+{
+   bool unsupportedInstalledVersion = false;
+   bool unsupportedProtocol = false;
+};
+
+// Pure: resolve which persisted flags still apply to the current install. The
+// two flags are independent, because they were computed from different inputs:
+//
+//   - unsupportedProtocol is a manifest decision about RStudio's kProtocolVersion
+//     and does NOT depend on the installed package version. It is kept whenever
+//     the record's stored RStudio protocol still matches the current one.
+//   - unsupportedInstalledVersion depends on the installed package version (vs
+//     the manifest's minimum/blocklist). It is kept only when the stored
+//     installed version AND RStudio protocol both still match.
+//
+// Any mismatch makes that flag stale, so it is dropped (returns false for it).
+ResolvedBlock resolvePersistedBlock(const ManifestCheckRecord& record,
+                                    const std::string& installedVersion,
+                                    const std::string& rstudioProtocol);
+```
+
+Reference implementation:
+
+```cpp
+ResolvedBlock resolvePersistedBlock(const ManifestCheckRecord& record,
+                                    const std::string& installedVersion,
+                                    const std::string& rstudioProtocol)
+{
+   bool protoMatch = (record.rstudioProtocol == rstudioProtocol);
+   bool versionMatch = (record.installedVersion == installedVersion);
+
+   ResolvedBlock out;
+   out.unsupportedProtocol = record.unsupportedProtocol && protoMatch;
+   out.unsupportedInstalledVersion =
+      record.unsupportedInstalledVersion && versionMatch && protoMatch;
+   return out;
+}
 ```
 
 Passing the state-file path, `now`, and times as parameters is what lets the
@@ -170,12 +203,13 @@ protocol mismatch) writes `s_updateState` from the installed version with the
 update fields cleared (`updateAvailable=false`, `isDowngrade=false`,
 `noCompatibleVersion=false`, `manifestUnavailable=false`, empty `newVersion` /
 `downloadUrl` / `expectedSha256`). For the unsupported flags it reapplies the
-persisted block: read the record; if `persistedBlockApplies(record,
-installedVersion, kProtocolVersion)` then copy `unsupportedInstalledVersion` /
-`unsupportedProtocol` from the record, else set both false. Then call
-`isPositAssistantUnsupported()` and `stopAgentForUpdate()` if blocked (mirroring
-`finish()`), and drain the pending completions via `drainPendingCompletions()`.
-It does not write the record (no attempt was made).
+persisted block: read the record, then
+`ResolvedBlock b = resolvePersistedBlock(record, installedVersion, kProtocolVersion)`
+and set `unsupportedInstalledVersion = b.unsupportedInstalledVersion`,
+`unsupportedProtocol = b.unsupportedProtocol` (both false when there is no
+record). Then call `isPositAssistantUnsupported()` and `stopAgentForUpdate()` if
+blocked (mirroring `finish()`), and drain the pending completions via
+`drainPendingCompletions()`. It does not write the record (no attempt was made).
 
 ### 3. Caller updates
 
@@ -198,10 +232,12 @@ if (isInstalled && !mismatch)
    // Compatible install -- reapply persisted block (if any) instead of clearing.
    boost::optional<ManifestCheckRecord> record =
       throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
-   if (record && throttle::persistedBlockApplies(*record, installedVersion, kProtocolVersion))
+   if (record)
    {
-      unsupportedInstalledVersion = record->unsupportedInstalledVersion;
-      unsupportedProtocol = record->unsupportedProtocol;
+      ResolvedBlock b =
+         throttle::resolvePersistedBlock(*record, installedVersion, kProtocolVersion);
+      unsupportedInstalledVersion = b.unsupportedInstalledVersion;
+      unsupportedProtocol = b.unsupportedProtocol;
    }
    // manifestUnavailable stays false; surface no error.
 }
@@ -313,13 +349,31 @@ finish(): write record (success: overwrite flags; failure: preserve flags,
   - no prior check (`lastCheckTime` = none) -> due.
   - within window (`now - last < throttle`) -> not due.
   - exactly at / past window -> due.
-- `persistedBlockApplies`:
-  - matching installedVersion + protocol -> true.
-  - installedVersion differs -> false.
-  - protocol differs -> false.
+- `resolvePersistedBlock` (the core of both the throttled-skip and the
+  fetch-failure reapply, so this is where the regression risk concentrates):
+  - installedVersion + protocol both match -> both flags preserved as stored.
+  - installedVersion differs, protocol matches -> `unsupportedInstalledVersion`
+    dropped, `unsupportedProtocol` preserved (the independence fix).
+  - protocol differs -> both flags dropped.
+  - record has both flags false -> both stay false regardless of match.
 - `readManifestCheckRecord` / `writeManifestCheckRecord` round-trip against a
   temp file; missing file -> none; malformed JSON -> none; valid -> expected
   fields (including the boolean flags and the context strings).
+
+### Behavior paths (throttled-skip and fetch-failure)
+
+`resolveWithoutManifestFetch` and the `onUpdateCheckComplete` failure branch are
+deliberately thin wrappers around `resolvePersistedBlock` and the record
+read/write helpers, so the substantive reapply/preserve logic is fully covered by
+the pure tests above. The wrappers themselves only (a) clear the update fields,
+(b) copy the resolved flags into `s_updateState`, and (c) on failure, bump the
+timestamp while preserving the stored flags. Full SessionChat-level integration
+tests of these wrappers would require new seams around the file-static
+`s_updateState`, the filesystem-backed `getInstalledVersion` /
+`hasProtocolMismatch`, and `enqueClientEvent`; that refactor is out of scope for
+this change. The risk is mitigated by keeping the wrappers trivial and the
+decision pure -- this tradeoff is called out explicitly so the implementer keeps
+the wrappers thin rather than reintroducing logic into them.
 
 No new frontend tests; payload shape and client behavior are unchanged.
 
@@ -334,4 +388,3 @@ No new frontend tests; payload shape and client behavior are unchanged.
   globbed)
 - `NEWS.md` (entry under the appropriate section, if user-facing per the repo's
   NEWS rules)
-```
