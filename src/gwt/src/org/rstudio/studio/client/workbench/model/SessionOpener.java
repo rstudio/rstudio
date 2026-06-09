@@ -200,14 +200,14 @@ public class SessionOpener
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
          private int retries_ = 0;
-         private boolean pingDelivered_ = false;
+         private boolean completed_ = false;
          private boolean pingInFlight_ = false;
          
          @Override
          public boolean execute()
          {
-            // if we've already delivered the ping, return false
-            if (pingDelivered_)
+            // if we've already completed, return false
+            if (completed_)
             {
                return false;
             }
@@ -217,7 +217,7 @@ public class SessionOpener
             if (retries_++ > maxRetries)
             {
                Debug.logWarning("Error connecting with session.");
-               pingDelivered_ = true;
+               completed_ = true;
 
                if (onCompleted != null)
                   onCompleted.execute();
@@ -235,11 +235,11 @@ public class SessionOpener
                   {
                      pingInFlight_ = false;
                      
-                     // if the ping was already handled separately, discard this
-                     if (pingDelivered_)
+                     // if completion was already signaled, discard this
+                     if (completed_)
                         return;
-                     
-                     pingDelivered_ = true;
+
+                     completed_ = true;
                      pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
                      
                      if (onCompleted != null)
@@ -251,13 +251,13 @@ public class SessionOpener
                   {
                      pingInFlight_ = false;
 
-                     // if completion was already delivered, discard this
-                     if (pingDelivered_)
+                     // if completion was already signaled, discard this
+                     if (completed_)
                         return;
 
                      // treat a failed ping as completion as well, but mark
-                     // ourselves delivered so onCompleted fires only once
-                     pingDelivered_ = true;
+                     // ourselves completed so onCompleted fires only once
+                     completed_ = true;
 
                      if (onCompleted != null)
                         onCompleted.execute();
@@ -265,7 +265,7 @@ public class SessionOpener
                });
             }
             
-            // keep trying until the ping is delivered
+            // keep trying until completion is signaled
             return true;
          }
          
