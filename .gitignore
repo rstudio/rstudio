@@ -56,7 +56,9 @@ venv/
 .claude/settings.local.json
 .claude/skills/*.local/
 .claude/worktrees/
-docs/superpowers
+# TEMPORARY: un-ignored so design spec/plan docs can be committed for roborev
+# review. MUST be restored (and docs/superpowers removed) before opening the PR.
+# docs/superpowers
 .superpowers/
 .positai/
 AGENTS.md
