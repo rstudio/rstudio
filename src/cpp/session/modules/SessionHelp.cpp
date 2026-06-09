@@ -972,6 +972,48 @@ void handleHttpdRequest(const std::string& location,
       return;
    }
 
+   // intercept "Run examples" (and "Run demo") links for examples that launch a
+   // blocking application such as a Shiny app. R's enhanced HTML help renders
+   // these inline by running the example on the R event loop while serving this
+   // request; a blocking runApp() there never returns, locking up the whole
+   // session (see issue #17178). When we detect such an example, run it in the
+   // console instead -- matching the behavior of example()/demo() at the prompt.
+   {
+      static const boost::regex reRunnable("^/library/([^/]+)/(Example|Demo)/(.+)$");
+      boost::smatch match;
+      if (boost::regex_search(path, match, reRunnable))
+      {
+         std::string package = match[1];
+         std::string type = match[2];
+         std::string topic = match[3];
+
+         bool diverted = false;
+         Error error = r::exec::RFunction(".rs.runExampleInConsoleIfBlocking")
+               .addParam(type)
+               .addParam(package)
+               .addParam(topic)
+               .call(&diverted);
+         if (error)
+            LOG_ERROR(error);
+
+         if (diverted)
+         {
+            std::string label = (type == "Demo") ? "demo" : "example";
+            std::string html =
+                  "<!DOCTYPE html>\n"
+                  "<html>\n<head><meta charset=\"utf-8\"></head>\n<body>\n"
+                  "<p>Running " + label + " <code>" +
+                  string_utils::htmlEscape(topic) + "</code> in the R console.</p>\n"
+                  "</body>\n</html>\n";
+
+            pResponse->setContentType("text/html");
+            pResponse->setNoCacheHeaders();
+            pResponse->setBody(html, filter);
+            return;
+         }
+      }
+   }
+
    // evaluate the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;

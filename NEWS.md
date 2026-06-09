@@ -41,6 +41,7 @@
 - ([#17865](https://github.com/rstudio/rstudio/issues/17865)): Fix project paths on a mapped network drive (e.g. `S:`) being resolved to their UNC target (e.g. `\\server\share`) on Windows, which caused functions such as `here::here()` and `getwd()` to report the UNC path instead of the mapped drive.
 - ([#17870](https://github.com/rstudio/rstudio/issues/17870)): Fix an uncaught "Object has been destroyed" error in RStudio Desktop when quitting with a plot zoom (or other child) window still open.
 - ([#17830](https://github.com/rstudio/rstudio/issues/17830)): Fix the data viewer not clearing a data set's saved sorts and filters when its tab is explicitly closed, so reopening the data set no longer restores stale filters; the saved state still persists across a session suspend/restore or a page reload. Restored filters now also reveal the filter row, instead of being applied with no visible filter UI.
+- ([#17178](https://github.com/rstudio/rstudio/issues/17178)): Fix RStudio locking up when clicking "Run examples" in a help page whose examples launch a blocking application such as a Shiny app. Such examples now run in the console (like `example()`) instead of being rendered inline by the help server.
 
 ### Dependencies
 - Ace 1.43.5

@@ -1071,3 +1071,66 @@ options(help_type = "html")
    
    paste(lines, collapse = "\n")
 })
+
+.rs.addFunction("exampleCodeLaunchesApp", function(code)
+{
+   # Returns TRUE if the supplied example/demo code appears to launch a blocking
+   # application (e.g. a Shiny app). Such code, when run inline by R's enhanced
+   # HTML help, locks up the session (issue #17178), so we run it in the console
+   # instead. We parse the code and inspect the function calls it makes, so that
+   # comments and strings mentioning these names don't trigger a false positive.
+   exprs <- tryCatch(
+      parse(text = code, keep.source = TRUE),
+      error = function(e) NULL
+   )
+
+   if (is.null(exprs))
+      return(FALSE)
+
+   parseData <- utils::getParseData(exprs)
+   if (is.null(parseData))
+      return(FALSE)
+
+   calls <- parseData$text[parseData$token == "SYMBOL_FUNCTION_CALL"]
+
+   launchers <- c(
+      "runApp", "runExample", "runGadget",
+      "runUrl", "runGist", "runGitHub",
+      "shinyApp", "shinyAppDir", "shinyAppFile",
+      "run_tutorial"
+   )
+
+   any(calls %in% launchers)
+})
+
+.rs.addFunction("runExampleInConsoleIfBlocking", function(type, package, topic)
+{
+   # Fetch the example (or demo) source without running it.
+   code <- tryCatch(
+      if (identical(type, "Demo"))
+         readLines(system.file("demo", paste0(topic, ".R"), package = package))
+      else
+         utils::example(
+            topic,
+            package = package,
+            character.only = TRUE,
+            give.lines = TRUE
+         ),
+      error = function(e) NULL
+   )
+
+   # If we couldn't read the source, or it doesn't look like it launches a
+   # blocking application, let the normal (inline) help server path handle it.
+   if (is.null(code) || !.rs.exampleCodeLaunchesApp(code))
+      return(FALSE)
+
+   command <- sprintf(
+      "%s(%s, package = %s)",
+      if (identical(type, "Demo")) "demo" else "example",
+      deparse(topic),
+      deparse(package)
+   )
+
+   .rs.api.sendToConsole(command, echo = TRUE, execute = TRUE, focus = TRUE)
+   TRUE
+})
