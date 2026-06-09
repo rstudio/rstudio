@@ -94,19 +94,26 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
 
    // Context + flags are optional: a missing key leaves the struct default in place
    // (the boost::optional<T> readObject overload reports absence as Success/none).
+   // A present field of the wrong type means the record is corrupt -> malformed.
    boost::optional<std::string> installedVersion;
    boost::optional<std::string> rstudioProtocol;
    boost::optional<bool> unsupportedInstalledVersion;
    boost::optional<bool> unsupportedProtocol;
-   // Missing optional fields are tolerated (older/partial records); a present
-   // field of the wrong type means the record is corrupt -> treat as malformed.
-   if (json::readObject(obj, "installedVersion", installedVersion))
-      return boost::none;
-   if (json::readObject(obj, "rstudioProtocol", rstudioProtocol))
-      return boost::none;
-   if (json::readObject(obj, "unsupportedInstalledVersion", unsupportedInstalledVersion))
-      return boost::none;
-   if (json::readObject(obj, "unsupportedProtocol", unsupportedProtocol))
+   auto readOptionalField = [&](const char* fieldName, auto& outValue) -> bool
+   {
+      Error fieldError = json::readObject(obj, fieldName, outValue);
+      if (fieldError)
+      {
+         WLOG("Manifest-check record at {} has a malformed '{}' field: {}",
+              stateFile.getAbsolutePath(), fieldName, fieldError.getMessage());
+         return true;
+      }
+      return false;
+   };
+   if (readOptionalField("installedVersion", installedVersion) ||
+       readOptionalField("rstudioProtocol", rstudioProtocol) ||
+       readOptionalField("unsupportedInstalledVersion", unsupportedInstalledVersion) ||
+       readOptionalField("unsupportedProtocol", unsupportedProtocol))
       return boost::none;
    if (installedVersion)
       record.installedVersion = *installedVersion;
