@@ -641,6 +641,33 @@ void echoSourceCode(const std::string& code)
    }
 }
 
+// Print warnings recorded by .rs.chat.safeEval for the expression that just
+// completed, mimicking the REPL's deferred warning output (safeEval muffles
+// warnings during evaluation, so they are only surfaced here).
+void writeWarningMessages(SEXP conditionsSEXP)
+{
+   if (conditionsSEXP == R_NilValue)
+      return;
+
+   std::string warningOutput;
+   Error error = r::exec::RFunction(".rs.chat.formatWarningMessages")
+      .addParam(conditionsSEXP)
+      .call(&warningOutput);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (warningOutput.empty())
+      return;
+
+   // Fire signal first so callback captures it, then write to console UI
+   module_context::events().onConsoleOutput(
+      module_context::ConsoleOutputError, warningOutput);
+   module_context::consoleWriteError(warningOutput);
+}
+
 void callExpressionBoundaryHook(const std::string& hookName,
                                 SEXP exprSEXP,
                                 SEXP valueSEXP,
@@ -1688,6 +1715,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             SEXP conditionsSEXP = Rf_getAttrib(
                evalResultSEXP,
                Rf_install("assistant_conditions"));
+
+            if (!silentExecution)
+               writeWarningMessages(conditionsSEXP);
+
             callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, R_NilValue,
                                        false, false, evalResultSEXP, conditionsSEXP);
 
@@ -1754,6 +1785,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             }
          }
 
+         // Print deferred warnings after the expression's result (mimics REPL)
+         if (!silentExecution)
+            writeWarningMessages(conditionsSEXP);
+
          callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
                                     true, exprVisible, R_NilValue, conditionsSEXP);
       }
@@ -1782,9 +1817,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             SEXP failedExprSEXP = VECTOR_ELT(parsedSEXP, currentExpressionIndex);
             SEXP deparsedSEXP = R_NilValue;
 
-            // Try to deparse - if it fails, that's okay, we'll just skip the text
+            // Try to deparse - if it fails, that's okay, we'll just skip the text.
+            // IMPORTANT: Use addQuotedParam so the failing expression is not
+            // re-evaluated during argument passing (see safeEval call above).
             Error deparseError = r::exec::RFunction("deparse")
-               .addParam(failedExprSEXP)
+               .addQuotedParam(failedExprSEXP)
                .addParam("width.cutoff", 80)
                .call(&deparsedSEXP, &protect);
 

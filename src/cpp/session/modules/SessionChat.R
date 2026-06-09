@@ -843,7 +843,12 @@
          }, add = TRUE)
          .rs.chat.injectBindings()
 
-         # Evaluate the provided code
+         # Evaluate the provided code. Warnings are muffled after recording:
+         # left alone, R defers them to the end of the whole batch and prints
+         # them with the internal eval() call as context. The caller re-emits
+         # them per expression instead (see writeWarningMessages). With
+         # warn = 2 muffling would defeat the warning-to-error conversion,
+         # which happens after calling handlers run, so leave those alone.
          result <- withCallingHandlers(
             withVisible(eval(expr, envir = envir)),
             warning = function(w) {
@@ -851,6 +856,8 @@
                   type = "warning",
                   text = conditionMessage(w)
                )
+               if (getOption("warn", 0L) < 2L)
+                  invokeRestart("muffleWarning")
             },
             message = function(m) {
                conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
@@ -864,6 +871,28 @@
 
       }
    )
+})
+
+# Format warnings recorded by chat.safeEval the way the REPL prints
+# deferred warnings after an expression completes.
+.rs.addFunction("chat.formatWarningMessages", function(conditions)
+{
+   texts <- character(0)
+   for (condition in conditions)
+   {
+      if (identical(condition$type, "warning"))
+         texts <- c(texts, condition$text)
+   }
+
+   if (length(texts) == 0L)
+      ""
+   else if (length(texts) == 1L)
+      paste0("Warning message:\n", texts, "\n")
+   else
+      paste0(
+         "Warning messages:\n",
+         paste0(seq_along(texts), ": ", texts, "\n", collapse = "")
+      )
 })
 
 .rs.addFunction("chat.callExpressionBoundaryHook", function(name, expr, value, ok, visible, error = NULL, conditions = list())
