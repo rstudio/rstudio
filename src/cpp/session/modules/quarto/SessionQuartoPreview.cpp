@@ -107,6 +107,14 @@ public:
       return pJob_->id();
    }
 
+   // has the Quarto project config that governs this preview changed since the
+   // preview server started? See projectConfigChanged() in the header for why a
+   // change forces a restart rather than an in-place re-render.
+   bool configChanged()
+   {
+      return projectConfigChanged(previewTarget_, configFile_, configContents_, configCaptured_);
+   }
+
    std::string viewerType()
    {
       return viewerType_;
@@ -149,11 +157,13 @@ public:
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
       : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
-                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType())
+                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType()),
+                     configCaptured_(true)
    {
      renderToken_ = core::system::generateUuid();
 
      readInputFileLines();
+     captureConfigState();
    }
 
    virtual std::string name()
@@ -499,6 +509,29 @@ private:
       }
    }
 
+   void captureConfigState()
+   {
+      configFile_ = quartoProjectConfigFile(previewTarget_);
+      configContents_.clear();
+      configCaptured_ = true;
+      if (!configFile_.isEmpty())
+      {
+         Error error = core::readStringFromFile(configFile_, &configContents_);
+         if (error)
+         {
+            // record that we failed to capture a baseline so a later compare treats
+            // the config as changed and restarts the preview, rather than reusing a
+            // server whose project metadata may now be stale
+            error.addProperty(
+               "description",
+               "could not capture Quarto preview config state; "
+               "preview reuse may trigger an unnecessary restart");
+            LOG_ERROR(error);
+            configCaptured_ = false;
+         }
+      }
+   }
+
    int quartoSlideLevelFromOutput(const std::string& output)
    {
       boost::regex slideLevelRe("\n\\s+slide-level:\\s+(\\d)+\n");
@@ -540,6 +573,9 @@ private:
    int controlPort_;
    std::string path_;
    std::string viewerType_;
+   FilePath configFile_;
+   std::string configContents_;
+   bool configCaptured_;
 };
 
 // preview singleton
@@ -610,9 +646,13 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    }
    else
    {
-      // see if there is a running preview w/ the same viewer type we can target
+      // see if there is a running preview w/ the same viewer type we can target.
+      // if the governing Quarto project config has changed since the preview started,
+      // fall through to a fresh preview so the new config is picked up (see
+      // projectConfigChanged() in the header for why reuse isn't safe).
       if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
-          (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()))
+          (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()) &&
+          !s_pPreview->configChanged())
       {
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
@@ -673,6 +713,48 @@ void onResume(const Settings&)
 
 } // anonymous namespace
 
+
+bool projectConfigChanged(const FilePath& previewTarget,
+                          const FilePath& priorConfigFile,
+                          const std::string& priorConfigContents,
+                          bool priorConfigCaptured)
+{
+   // we couldn't capture a baseline config when the preview started -- treat as
+   // changed so we restart rather than reuse a server with possibly stale metadata
+   if (!priorConfigCaptured)
+      return true;
+
+   FilePath configFile = quartoProjectConfigFile(previewTarget);
+
+   // a config was added or removed since the preview started
+   if (configFile.isEmpty() != priorConfigFile.isEmpty())
+      return true;
+
+   // no config governs this file (and none did before) -- nothing to compare
+   if (configFile.isEmpty())
+      return false;
+
+   // a different config file now governs this file
+   if (configFile != priorConfigFile)
+      return true;
+
+   // same config file -- compare contents rather than timestamps so that an edit
+   // made within the same second as the captured startup state is still detected
+   std::string configContents;
+   Error error = core::readStringFromFile(configFile, &configContents);
+   if (error)
+   {
+      // can't read it to compare -- assume it changed so we restart the preview
+      error.addProperty(
+         "description",
+         "could not read Quarto project config to compare; "
+         "assuming it changed and restarting the preview");
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return configContents != priorConfigContents;
+}
 
 
 Error initialize()

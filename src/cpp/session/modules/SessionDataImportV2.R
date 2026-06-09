@@ -208,9 +208,11 @@
                col <- colsByIndex[[colIdx + 1]]
 
                if (!identical(col$rType, NULL)) {
-                  # rType is sourced from col_type_r in SessionDataViewer.R,
-                  # which now reports class(val)[[1]] -- so Date/POSIXct/POSIXlt
-                  # appear here verbatim and must be mapped explicitly.
+                  # rType is the most-specific class of the column, sourced from
+                  # col_class[0] in DataImportOptions.java (col_class is class()
+                  # reported by .rs.describeCols in SessionDataViewer.R) -- so
+                  # Date/POSIXct/POSIXlt appear here verbatim and must be mapped
+                  # explicitly.
                   colParams[[colIdx]] <- switch(col$rType,
                      "date" = "date",
                      "time" = "date",

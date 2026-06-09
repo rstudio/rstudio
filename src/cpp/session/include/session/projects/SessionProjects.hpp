@@ -301,6 +301,12 @@ void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<st
 
 core::json::Array websiteOutputFormatsJson();
 
+// Returns the editor_theme value to write: the value from the request JSON when the
+// "editor_theme" key is present and a string (an explicit "" clears the override),
+// otherwise the existing on-disk value (preserved when the key is omitted).
+std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
+                                      const core::json::Object& configJson);
+
 } // namespace projects
 } // namespace session
 } // namespace rstudio

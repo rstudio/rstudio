@@ -33,6 +33,8 @@ namespace server {
 const char * const kErrorParam = "error";
 const char * const kErrorDisplay = "errorDisplay";
 const char * const kErrorMessage = "errorMessage";
+const char * const kAriaInvalid = "ariaInvalid";
+const char * const kAriaDescribedBy = "ariaDescribedBy";
 
 const char * const kLoginPageHtml = "loginPageHtml";
 

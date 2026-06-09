@@ -22,6 +22,7 @@ import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -430,6 +431,34 @@ public class DataTable
       });
    }
 
+   public void setFilterStateCallback()
+   {
+      // JS owns whether the filter row is shown. It can become visible without
+      // a toolbar click -- restoring saved per-column filters reveals the row
+      // so they aren't applied invisibly (#17830). The callback fires on
+      // registration and again at the end of bootstrap, keeping filtered_ and
+      // the funnel latch in sync, mirroring the sidebar pattern above.
+      setFilterStateCallback(getWindow(), new CommandWithArg<Boolean>() {
+         public void execute(Boolean visible) {
+            filtered_ = visible != null && visible;
+            if (filterButton_ != null)
+               filterButton_.setLatched(filtered_);
+         }
+      });
+   }
+
+   public void setStateKeyCallback()
+   {
+      // JS reports the localStorage key holding this object's saved UI state.
+      // We stash it so onDismiss can clear it host-side on an explicit close;
+      // see clearSavedStateHostSide for why the host (not the iframe) clears.
+      setStateKeyCallback(getWindow(), new CommandWithArg<String>() {
+         public void execute(String key) {
+            stateKey_ = key;
+         }
+      });
+   }
+
    public void refreshData()
    {
       filtered_= false;
@@ -474,6 +503,14 @@ public class DataTable
    {
       try
       {
+         // Authoritative clear: the iframe is usually already detached by the
+         // time an explicit close reaches us (TabClosedEvent fires after the
+         // tab widget is removed from the DOM), so getWindow() is null and the
+         // in-frame onDismiss below no-ops. Clearing host-side works regardless
+         // (#17830).
+         clearSavedStateHostSide();
+
+         // Best-effort in-frame clear for the rare case the frame is still live.
          onDismiss(getWindow());
       }
       catch(Exception e)
@@ -482,6 +519,18 @@ public class DataTable
          // log so failures show up in dev/diagnostics output.
          Debug.logException(e);
       }
+   }
+
+   private void clearSavedStateHostSide()
+   {
+      // The data viewer iframe is same-origin with the host page, so they share
+      // localStorage. That lets us remove the saved-state entry the frame
+      // reported (via stateKeyCallback) even after the frame is gone -- the
+      // frame can't do it itself once detached.
+      if (StringUtil.isNullOrEmpty(stateKey_))
+         return;
+
+      removeLocalStorageItem(stateKey_);
    }
 
    private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
@@ -654,6 +703,31 @@ public class DataTable
             sidebarStateCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(@java.lang.Boolean::valueOf(Z)(!!visible));
          }));
    }-*/;
+
+   private static final native void setFilterStateCallback(WindowEx frame, CommandWithArg<Boolean> filterStateCallback) /*-{
+      frame.setOption(
+         "filterStateCallback",
+         $entry(function(visible) {
+            filterStateCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(@java.lang.Boolean::valueOf(Z)(!!visible));
+         }));
+   }-*/;
+
+   private static final native void setStateKeyCallback(WindowEx frame, CommandWithArg<String> stateKeyCallback) /*-{
+      frame.setOption(
+         "stateKeyCallback",
+         $entry(function(key) {
+            stateKeyCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(key);
+         }));
+   }-*/;
+
+   private static final native void removeLocalStorageItem(String key) /*-{
+      try {
+         $wnd.localStorage.removeItem(key);
+      } catch (e) {
+         // localStorage may be unavailable (private mode / blocked); nothing
+         // to clear in that case.
+      }
+   }-*/;
    private Host host_;
    private LatchingToolbarButton filterButton_;
    private LatchingToolbarButton sidebarButton_;
@@ -667,6 +741,10 @@ public class DataTable
    private ArrayList<SimpleButton> columnViewButtons_;
    private SearchWidget searchWidget_;
    private boolean filtered_ = false;
+
+   // localStorage key for this object's persisted UI state, reported by the
+   // iframe via stateKeyCallback; used to clear it host-side on close (#17830).
+   private String stateKey_ = null;
 
    private static String COLUMN_VIEW_BUTTONS[] = {
       "<i class=\"icon-angle-double-left \"></i>",

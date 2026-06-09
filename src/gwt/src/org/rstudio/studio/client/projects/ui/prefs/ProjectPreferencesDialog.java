@@ -17,6 +17,8 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -41,6 +43,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -52,14 +55,15 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    // project preferences dialog panes.
    public static final int GENERAL    = 0;
    public static final int EDITING    = 1;
-   public static final int R_MARKDOWN = 2;
-   public static final int PYTHON     = 3;
-   public static final int SWEAVE     = 4;
-   public static final int SPELLING   = 5;
-   public static final int BUILD      = 6;
-   public static final int VCS        = 7;
-   public static final int RENV       = 8;
-   public static final int SHARING    = 9;
+   public static final int APPEARANCE = 2;
+   public static final int R_MARKDOWN = 3;
+   public static final int PYTHON     = 4;
+   public static final int SWEAVE     = 5;
+   public static final int SPELLING   = 6;
+   public static final int BUILD      = 7;
+   public static final int VCS        = 8;
+   public static final int RENV       = 9;
+   public static final int SHARING    = 10;
 
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -69,6 +73,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    Provider<Session> session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
+                                   ProjectAppearancePreferencesPane appearance,
                                    ProjectRMarkdownPreferencesPane rMarkdown,
                                    ProjectCompilePdfPreferencesPane compilePdf,
                                    ProjectSpellingPreferencesPane spelling,
@@ -88,6 +93,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             panes(
                   general,
                   editing,
+                  appearance,
                   rMarkdown,
                   python,
                   compilePdf,
@@ -104,6 +110,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       pEventBus_ = pEventBus;
       pQuit_ = pQuit;
       pGlobalDisplay_ = pGlobalDisplay;
+      appearance_ = appearance;
+      pUserState_ = pUserState;
    }
 
    @Override
@@ -211,7 +219,26 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());
                 else
                    uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
-                
+
+                // editor theme: drop the project override when (Default), else set it
+                String projectTheme = config.getEditorTheme();
+                if (StringUtil.isNullOrEmpty(projectTheme))
+                   uiPrefs.editorTheme().removeProjectValue(true);
+                else
+                   uiPrefs.editorTheme().setProjectValue(projectTheme);
+
+                // apply the effective theme live (handles (Default) and uninstalled
+                // project themes); resolveAppliedTheme is null only if the theme list
+                // is unavailable (not yet loaded or empty), in which case syncThemePrefs
+                // applies on next project open
+                AceTheme appliedTheme = appearance_.resolveAppliedTheme(uiPrefs);
+                if (appliedTheme != null)
+                   pUserState_.get().theme().setGlobalValue(appliedTheme);
+                else
+                   Debug.logWarning(
+                      "Project editor theme saved but not applied live (theme list " +
+                      "not loaded yet); it will take effect on the next project open.");
+
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
 
@@ -264,6 +291,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    private final Provider<EventBus> pEventBus_;
    private final Provider<ApplicationQuit> pQuit_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
+   private final ProjectAppearancePreferencesPane appearance_;
+   private final Provider<UserState> pUserState_;
 
    private RProjectRenvOptions renvOptions_;
 

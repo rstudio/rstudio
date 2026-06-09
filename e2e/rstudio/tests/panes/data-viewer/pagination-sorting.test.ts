@@ -126,6 +126,37 @@ test.describe('Data Viewer', () => {
   });
 
   // -----------------------------------------------------------------------
+  // Issue 17863 - Clicking a list-column header must not error
+  // -----------------------------------------------------------------------
+  test('list columns are not sortable and clicking the header does not error (#17863)', async () => {
+    // A data frame with a list column (each element an atomic vector). Sorting
+    // such a column server-side errors in R ("unimplemented type 'list'"), so
+    // the header must be inert rather than triggering a failing fetch.
+    await consoleActions.executeInConsole('df <- data.frame(a = 1:20)');
+    await consoleActions.executeInConsole(
+      'df$b <- replicate(20, as.numeric(1:100), simplify = FALSE)',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 20 entries/);
+
+    // The list column reports its R typeof() in the header tooltip.
+    const listHeader = dataViewer.columnHeader(2);
+    await expect(listHeader).toHaveAttribute('title', 'column 2: list');
+
+    // Clicking it twice (which would cycle asc/desc on a sortable column) must
+    // not apply a sort or surface the error overlay.
+    await listHeader.click();
+    await listHeader.click();
+
+    await expect(listHeader).not.toHaveClass(/sorting_asc|sorting_desc/);
+    await expect(dataViewer.frame.locator('#errorWrapper')).toBeHidden();
+    await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 20 entries/);
+  });
+
+  // -----------------------------------------------------------------------
   // Issue 13328 - Sorting with many columns after navigating
   // -----------------------------------------------------------------------
   test('sorting after navigating to later columns (#13328)', async () => {

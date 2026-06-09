@@ -21,29 +21,37 @@ import java.util.TreeSet;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -64,6 +72,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
@@ -102,7 +111,10 @@ public class AppearancePreferencesPane extends PreferencesPane
                                     GlobalDisplay globalDisplay,
                                     DependencyManager dependencyManager,
                                     FileDialogs fileDialogs,
-                                    ThemeServerOperations server)
+                                    ThemeServerOperations server,
+                                    EventBus events,
+                                    Session session,
+                                    Commands commands)
    {
       res_ = res;
       userPrefs_ = userPrefs;
@@ -110,6 +122,9 @@ public class AppearancePreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       server_ = server;
+      events_ = events;
+      commands_ = commands;
+      hasActiveProject_ = session.getSessionInfo().getActiveProjectFile() != null;
 
       VerticalPanel leftPanel = new VerticalPanel();
 
@@ -329,6 +344,10 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       theme_.addStyleName(res.styles().themeChooser());
+      // SelectWidget.setElementId sets the id on the underlying <select> and
+      // keeps its label associated (unlike assignElementId, which would land on
+      // the composite wrapper).
+      theme_.setElementId(ElementIds.getUniqueElementId(ElementIds.APPEARANCE_EDITOR_THEME));
 
       AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       addThemeButton_ = new ThemedButton(constants_.addThemeButtonLabel(), event ->
@@ -372,16 +391,49 @@ public class AppearancePreferencesPane extends PreferencesPane
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
 
-      HorizontalPanel buttonPanel = new HorizontalPanel();
-      buttonPanel.add(addThemeButton_);
-      buttonPanel.add(removeThemeButton_);
+      themeButtonsPanel_ = new HorizontalPanel();
+      themeButtonsPanel_.add(addThemeButton_);
+      themeButtonsPanel_.add(removeThemeButton_);
+
+      // Shown in place of the theme selector when the active project sets its
+      // own editor theme. The global selection is ignored while that override
+      // is in effect, so keep the "Editor theme:" label and, below it, explain
+      // the override and point the user at the project options. Stacked
+      // vertically because the left column is too narrow to fit the message and
+      // button side by side.
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
+      projectThemeOverridePanel_ = new VerticalPanel();
+      projectThemeOverridePanel_.setWidth("100%");
+      ElementIds.assignElementId(projectThemeOverridePanel_,
+         ElementIds.APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE);
+
+      FormLabel projectOverrideThemeLabel =
+         new FormLabel(constants_.appearanceEditorThemeLabel());
+      projectThemeOverridePanel_.add(projectOverrideThemeLabel);
+
+      Label projectOverrideMessage =
+         new Label(constants_.appearanceEditorThemeProjectOverrideText());
+      projectOverrideMessage.addStyleName(baseRes.styles().infoLabel());
+      projectOverrideMessage.setWidth("100%");
+      // Breathe a little between the "Editor theme:" heading and the message.
+      projectOverrideMessage.getElement().getStyle().setMarginTop(4, Unit.PX);
+      projectThemeOverridePanel_.add(projectOverrideMessage);
+
+      SmallButton editProjectOptions =
+         new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectOptions.getElement().getStyle().setMarginTop(6, Unit.PX);
+      editProjectOptions.addClickHandler(event -> commands_.projectOptions().execute());
+      projectThemeOverridePanel_.add(editProjectOptions);
+
+      projectThemeOverridePanel_.setVisible(false);
 
       leftPanel.add(textRendering_);
       leftPanel.add(fontFace_);
       leftPanel.add(editorGrid);
       leftPanel.add(new VerticalSpacer("12px"));
       leftPanel.add(theme_);
-      leftPanel.add(buttonPanel);
+      leftPanel.add(themeButtonsPanel_);
+      leftPanel.add(projectThemeOverridePanel_);
 
       FlowPanel previewPanel = new FlowPanel();
 
@@ -560,28 +612,97 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
 
+            // Seed the selector from the user's stored global theme preference,
+            // not from userState_.theme(), which may reflect a project override.
+            String globalThemeName = userPrefs_.editorTheme().getGlobalValue();
+
             // It's possible the current theme was removed outside the context of
             // RStudio, so choose a default if it can't be found.
-            AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
-            if (!themeList_.containsKey(currentTheme.getName()))
+            if (!themeList_.containsKey(globalThemeName))
             {
+               // Determine whether the missing theme was dark so we can fall
+               // back to the matching default variant.
+               AceTheme missingTheme = userState_.theme().getGlobalValue().cast();
+               boolean wasDark = missingTheme != null && missingTheme.isDark();
+
                StringBuilder warningMsg = new StringBuilder();
-               warningMsg.append(constants_.setThemeWarningMessage(currentTheme.getName(), currentTheme.isDark() ? constants_.themeWarningMessageDarkLabel() : constants_.themeWarningMessageLightLabel()));
+               warningMsg.append(constants_.setThemeWarningMessage(globalThemeName, wasDark ? constants_.themeWarningMessageDarkLabel() : constants_.themeWarningMessageLightLabel()));
 
-               currentTheme = AceTheme.createDefault(currentTheme.isDark());
-               userState_.theme().setGlobalValue(currentTheme);
-               preview_.setTheme(currentTheme.getUrl());
+               AceTheme defaultTheme = AceTheme.createDefault(wasDark);
+               // Do not write userState_.theme() here: seeding the pane must not mutate
+               // the applied theme. syncThemePrefs() already resolves a valid theme on
+               // startup, and a project override may currently be active in
+               // userState_.theme(). The selector/preview below show the default; the
+               // user's OK persists it.
 
-               warningMsg.append(currentTheme.getName())
+               warningMsg.append(defaultTheme.getName())
                   .append("\".");
                Debug.logWarning(warningMsg.toString());
+
+               globalThemeName = defaultTheme.getName();
             }
 
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(currentTheme.getName());
-            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+            theme_.setValue(globalThemeName);
+
+            // Enable removal only for the (global) selection shown in the list.
+            AceTheme globalTheme = themeList_.get(globalThemeName);
+            removeThemeButton_.setEnabled(globalTheme != null && !globalTheme.isDefaultTheme());
+
+            // Toggle the project-override UI and point the preview at the theme
+            // that is actually in effect (the project's theme when overriding).
+            updateProjectThemeOverride();
          },
          getProgressIndicator());
+   }
+
+   // The active project's editor theme overrides the global selection. The
+   // project pref layer is only populated while a project is open, so a
+   // non-empty project value implies a project is active; the explicit guard
+   // keeps that intent clear.
+   private boolean isProjectThemeOverrideActive()
+   {
+      if (!hasActiveProject_)
+         return false;
+
+      return userPrefs_.editorTheme().hasProjectValue() &&
+             !StringUtil.isNullOrEmpty(userPrefs_.editorTheme().getProjectValue());
+   }
+
+   // When a project theme override is active, hide the theme selector (the
+   // global choice is ignored) and show an indicator pointing at project
+   // options; otherwise show the normal selector and Add/Remove buttons.
+   private void updateProjectThemeOverride()
+   {
+      boolean overrideActive = isProjectThemeOverrideActive();
+      theme_.setVisible(!overrideActive);
+      themeButtonsPanel_.setVisible(!overrideActive);
+      projectThemeOverridePanel_.setVisible(overrideActive);
+      updatePreviewTheme();
+   }
+
+   // Point the preview at the theme that is actually applied: the effective
+   // (project) theme when overriding, otherwise the global selection.
+   private void updatePreviewTheme()
+   {
+      if (themeList_ == null)
+         return;
+
+      AceTheme theme;
+      if (isProjectThemeOverrideActive())
+      {
+         // effective theme: project value if installed, else global, else default
+         theme = AceTheme.resolveApplied(themeList_,
+            userPrefs_.editorTheme().getValue(),
+            userPrefs_.editorTheme().getGlobalValue());
+      }
+      else
+      {
+         theme = themeList_.get(theme_.getValue());
+      }
+
+      if (theme != null)
+         preview_.setTheme(theme.getUrl());
    }
 
    private void updateThemes(String focusedThemeName, AceThemes themes)
@@ -704,6 +825,31 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      // Re-evaluate the project-override UI whenever project options are saved
+      // (e.g. via the "Edit Project Options..." button); the project pref layer
+      // is updated before this event fires, so reading it here is accurate.
+      // Registered on attach and torn down in onUnload so a detach/reattach
+      // keeps the handler live.
+      if (projectOptionsChangedHandler_ == null)
+         projectOptionsChangedHandler_ = events_.addHandler(
+            ProjectOptionsChangedEvent.TYPE, event -> updateProjectThemeOverride());
+   }
+
+   @Override
+   public void onUnload()
+   {
+      if (projectOptionsChangedHandler_ != null)
+      {
+         projectOptionsChangedHandler_.removeHandler();
+         projectOptionsChangedHandler_ = null;
+      }
+      super.onUnload();
+   }
+
+   @Override
    public ImageResource getIcon()
    {
       return new ImageResource2x(res_.iconAppearance2x());
@@ -760,8 +906,16 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (themeList_ != null &&
           !StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
-         userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+         // persist the user's global editor theme
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
+
+         // apply the *effective* theme: a project override (if active and installed)
+         // must win, so changing the global theme does not replace it
+         AceTheme applied = AceTheme.resolveApplied(themeList_,
+            userPrefs_.editorTheme().getValue(),
+            userPrefs_.editorTheme().getGlobalValue());
+         if (applied != null)
+            userState_.theme().setGlobalValue(applied);
       }
 
      if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
@@ -925,6 +1079,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;
    private ThemedButton removeThemeButton_;
+   private HorizontalPanel themeButtonsPanel_;
+   private VerticalPanel projectThemeOverridePanel_;
    private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
@@ -936,6 +1092,10 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;
    private final ThemeServerOperations server_;
+   private final EventBus events_;
+   private final Commands commands_;
+   private final boolean hasActiveProject_;
+   private HandlerRegistration projectOptionsChangedHandler_;
    private int renderPass_ = 1;
 
    private final static String DEFAULT_FONT_NAME = "(Default)";

@@ -63,3 +63,7 @@ AGENTS.md
 GEMINI.md
 spec/
 .positai
+
+# Non-persistent Mole caches
+.mole.web_cache
+.mole.rust_cache

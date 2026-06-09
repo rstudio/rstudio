@@ -388,12 +388,23 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // /private/tmp/foo rather than /tmp/foo). Without this, paths from
    // file change events won't compare equal to directory() and any
    // root-anchored matches downstream silently miss.
+   //
+   // This is gated to macOS on purpose. On Windows, getCanonicalPath()
+   // (boost::filesystem::canonical) resolves a mapped network drive back to
+   // its UNC target (e.g. S:/foo -> //server/share/foo), which then becomes
+   // the working directory and surfaces in user-facing paths such as
+   // here::here(); see https://github.com/rstudio/rstudio/issues/17865. R's
+   // own normalizePath deliberately avoids this by preferring the drive-letter
+   // form. The Win32 (GetLongPathName) and inotify file monitors don't report
+   // canonical paths anyway, so the macOS FSEvents mismatch is unique to macOS.
+#ifdef __APPLE__
    if (directory_.exists())
    {
       std::string canonical = directory_.getCanonicalPath();
       if (!canonical.empty())
          directory_ = FilePath(canonical);
    }
+#endif
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;
@@ -1086,10 +1097,14 @@ json::Object ProjectContext::uiPrefs() const
 
    if (config_.copilotEnabled != DefaultValue)
       uiPrefs[kCopilotEnabled] = config_.copilotEnabled == YesValue;
-   
+
    if (config_.copilotIndexingEnabled != DefaultValue)
       uiPrefs[kCopilotIndexingEnabled] = config_.copilotIndexingEnabled == YesValue;
-   
+
+   // editor theme -- only set the project value when overridden
+   if (!config_.editorTheme.empty())
+      uiPrefs[kEditorTheme] = config_.editorTheme;
+
    return uiPrefs;
 }
 

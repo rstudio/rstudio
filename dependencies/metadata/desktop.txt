@@ -1,0 +1,4 @@
+dependency(JSCUSTOMBADGE
+   DEPNAME      "JSCustomBadge"
+   REPOSITORY   "https://github.com/jessesquires/JSCustomBadge"
+)

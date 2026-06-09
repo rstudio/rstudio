@@ -1327,6 +1327,12 @@ public class TextEditingTargetAssistantHelper
             if (assistantDisabledInThisDocument_)
                return;
 
+            // Completions aren't surfaced in visual mode, so don't request them
+            // (which would needlessly exchange document contents with the
+            // completion backend). See issue #17327.
+            if (target_.isVisualEditorActive())
+               return;
+
             target_.withSavedDoc(() ->
             {
                requestId_ += 1;
@@ -1956,6 +1962,12 @@ public class TextEditingTargetAssistantHelper
          return;
 
       if (completionRequestsSuspended_)
+         return;
+
+      // Suggestions aren't surfaced in visual mode, so don't request them
+      // (which would needlessly exchange document contents with the
+      // completion backend). See issue #17327.
+      if (target_.isVisualEditorActive())
          return;
 
       target_.withSavedDoc(() ->
