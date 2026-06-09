@@ -289,9 +289,31 @@ export async function shutdownServer(session: ServerSession): Promise<void> {
 
   try {
     await documentCloseAllNoSave(page);
-    await sleep(1000);
-    await executeInConsole(page, 'q("no")');
-    await sleep(2000);
+    // The dispatch returns before the async close chain finishes; wait for
+    // the file-backed tabs to actually close so the RPCs removing the docs
+    // from the source database land before we quit the session. Accept zero
+    // tabs or a lone untitled placeholder (one can auto-spawn when the last
+    // tab closes). Best-effort: quitting with a straggler tab only risks a
+    // save prompt on the next run, which launchServer already dismisses.
+    await page.waitForFunction(
+      () => {
+        const doc = window.rstudio?.documents.active() ?? null;
+        if (doc !== null && doc.path !== null) return false;
+        const tabs = document.querySelectorAll(
+          "[class*='rstudio_source_panel'] [role='tab']",
+        );
+        return tabs.length <= 1;
+      },
+      null,
+      { timeout: 10000, polling: 50 },
+    ).catch(() => {});
+    await executeInConsole(page, 'quit(save = "no")');
+    // Wait for the "R Session Ended" overlay (ApplicationEndedPopupPanel in
+    // QUIT mode) -- the deterministic signal that the rsession has exited --
+    // rather than sleeping a fixed interval with the dead tab still open.
+    await page
+      .locator('[role="alertdialog"]', { hasText: 'R Session Ended' })
+      .waitFor({ state: 'visible', timeout: 10000 });
   } catch {
     // Page may already be closed
   }
