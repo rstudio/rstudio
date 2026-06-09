@@ -212,10 +212,16 @@ public class SessionOpener
                return false;
             }
             
-            // if we hit our retry count, give up
+            // if we hit our retry count, give up -- but still signal completion
+            // so callers (e.g. the restart flow) don't get stuck waiting forever
             if (retries_++ > maxRetries)
             {
                Debug.logWarning("Error connecting with session.");
+               pingDelivered_ = true;
+
+               if (onCompleted != null)
+                  onCompleted.execute();
+
                return false;
             }
             
@@ -244,11 +250,15 @@ public class SessionOpener
                   protected void onFailure()
                   {
                      pingInFlight_ = false;
-                     
-                     // if the ping was already handled separately, discard this
+
+                     // if completion was already delivered, discard this
                      if (pingDelivered_)
                         return;
-                     
+
+                     // treat a failed ping as completion as well, but mark
+                     // ourselves delivered so onCompleted fires only once
+                     pingDelivered_ = true;
+
                      if (onCompleted != null)
                         onCompleted.execute();
                   }
