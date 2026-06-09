@@ -13,7 +13,7 @@ The following documentation walks through an example of using the `ggplot2` R pa
 
 RStudio is an integrated development environment (IDE) designed to help you be more productive in your daily data science work.
 
-After you have installed [R](https://cloud.r-project.org/) and [RStudio](https://posit.co/downloads/), you are ready to begin this section!
+After you have installed [R](https://cloud.r-project.org/) and [RStudio](../../index.qmd#rstudio-ide-oss-downloads), you are ready to begin this section!
 
 When you start RStudio, you'll see four key regions or "panes" in the interface: the Source pane, the Console pane, the Environment pane and the Output Pane.
 
