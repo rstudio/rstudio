@@ -96,6 +96,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String appearanceEditorLineHeightLabel();
     String appearanceEditorThemeLabel();
     String appearanceEditorThemeProjectOverrideText();
+    String ignoreProjectAppearanceLabel();
     String addThemeButtonLabel();
     String addThemeButtonCaption();
     String removeThemeButtonLabel();
