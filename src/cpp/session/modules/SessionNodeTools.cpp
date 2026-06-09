@@ -20,6 +20,13 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Process.hpp>
+
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+
+#include <boost/algorithm/string/trim.hpp>
 
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
@@ -164,6 +171,104 @@ Error findNode(FilePath* pNodePath, const std::string& rOptionName)
 
    DLOG("Found node on PATH: '{}'.", pNodePath->getAbsolutePath());
    return Success();
+}
+
+namespace {
+
+// Whether `token` appears in `options` as a whole, whitespace-delimited token
+// (so "--use-system-ca" does not match inside "--use-system-cafoo").
+bool containsOptionToken(const std::string& options, const std::string& token)
+{
+   if (token.empty())
+      return false;
+
+   std::string::size_type pos = 0;
+   while ((pos = options.find(token, pos)) != std::string::npos)
+   {
+      bool atStart = (pos == 0) ||
+         std::isspace(static_cast<unsigned char>(options[pos - 1]));
+      std::string::size_type end = pos + token.size();
+      bool atEnd = (end == options.size()) ||
+         std::isspace(static_cast<unsigned char>(options[end]));
+      if (atStart && atEnd)
+         return true;
+      pos = end;
+   }
+   return false;
+}
+
+} // anonymous namespace
+
+std::string appendNodeOption(const std::string& existingOptions,
+                             const std::string& option)
+{
+   // Preserve the caller's NODE_OPTIONS verbatim (quoted values may contain
+   // intentional whitespace); only append our flag when it is not already
+   // present as a whole token. No tokenize/rejoin, so nothing is rewritten.
+   if (containsOptionToken(existingOptions, option))
+      return existingOptions;
+   if (existingOptions.empty())
+      return option;
+   return existingOptions + " " + option;
+}
+
+bool parseNodeVersion(const std::string& versionOutput, int* pMajor, int* pMinor)
+{
+   std::string trimmed = boost::algorithm::trim_copy(versionOutput);
+   if (!trimmed.empty() && (trimmed[0] == 'v' || trimmed[0] == 'V'))
+      trimmed = trimmed.substr(1);
+
+   int major = 0, minor = 0;
+   if (std::sscanf(trimmed.c_str(), "%d.%d", &major, &minor) != 2)
+      return false;
+
+   if (major < 0 || minor < 0)
+      return false;
+
+   *pMajor = major;
+   *pMinor = minor;
+   return true;
+}
+
+bool nodeSupportsSystemCa(const core::FilePath& nodePath)
+{
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(nodePath.getAbsolutePath(),
+                                          { "--version" },
+                                          options,
+                                          &result);
+   if (error)
+   {
+      WLOG("Could not determine node version at '{}': {}",
+           nodePath.getAbsolutePath(), error.getMessage());
+      return false;
+   }
+
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      WLOG("node --version at '{}' exited with status {}.",
+           nodePath.getAbsolutePath(), result.exitStatus);
+      return false;
+   }
+
+   int major = 0, minor = 0;
+   if (!parseNodeVersion(result.stdOut, &major, &minor))
+   {
+      WLOG("Could not parse node version from output '{}'.", result.stdOut);
+      return false;
+   }
+
+   // --use-system-ca via NODE_OPTIONS requires Node >= 22.17.0.
+   bool supported = (major > 22) || (major == 22 && minor >= 17);
+   if (!supported)
+   {
+      WLOG("Node {}.{} at '{}' does not support --use-system-ca via NODE_OPTIONS "
+           "(requires 22.17.0+); the system certificate store will not be trusted.",
+           major, minor, nodePath.getAbsolutePath());
+   }
+
+   return supported;
 }
 
 } // namespace node_tools
