@@ -446,8 +446,8 @@ Exceptions — do NOT add a NEWS.md entry for:
 ## Pull Requests
 
 - Pull requests should be associated with a GitHub issue.
-- Pull requests that fix an existing issue, and also include tests, should include "Fixes #<issue>" in their body.
-- Pull requests that only partially address an issue, or require manual verification, should include "Addresses #<issue>" in their body.
+- Pull requests that fix an existing issue, and also include tests, should include "Fixes #<issue>." in their body.
+- Pull requests that only partially address an issue, or require manual verification, should include "Addresses #<issue>." in their body.
 - When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
 
 

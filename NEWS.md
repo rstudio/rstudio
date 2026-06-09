@@ -5,8 +5,10 @@
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
 - ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
 - ([#2350](https://github.com/rstudio/rstudio/issues/2350)): Add an Appearance pane to Project Options for setting a project-specific editor theme; leaving it at "(Default)" uses the global theme. A new "Ignore project-specific appearance settings" option (Global Options > Appearance) keeps the global editor theme even when a project sets its own.
+- ([#14965](https://github.com/rstudio/rstudio/issues/14965)): The Insert Pipe Operator command (Ctrl+Shift+M / Cmd+Shift+M) now inserts the native R pipe operator `|>` by default; the magrittr pipe `%>%` can be restored via the "Use R's native pipe operator, |>" preference.
 
 ### Fixed
+- ([#17900](https://github.com/rstudio/rstudio/issues/17900)): Fix Find in Files (and project code search) returning no results in a Quarto or R Markdown website project whose output directory is set to the project directory itself (for example `output-dir: .` in `_quarto.yml`); the project root is no longer treated as ignored output content.
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
 - ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
 - ([#17729](https://github.com/rstudio/rstudio/issues/17729)): Show distinct copy in the Posit Assistant chat pane and preferences install prompt when the recommended Posit Assistant version is older than the installed one.

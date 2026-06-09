@@ -3871,7 +3871,7 @@ public class UserPrefsAccessor extends Prefs
          "insert_native_pipe_operator",
          _constants.insertNativePipeOperatorTitle(), 
          _constants.insertNativePipeOperatorDescription(), 
-         false);
+         true);
    }
 
    /**
