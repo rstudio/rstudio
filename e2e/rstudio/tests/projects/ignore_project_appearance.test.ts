@@ -38,6 +38,10 @@ const DIALOG_CANCEL = '[id^="rstudio_dlg_cancel"]';
 // the checkbox resolves by accessible name (PrefsConstants.ignoreProjectAppearanceLabel).
 const IGNORE_CHECKBOX_LABEL = 'Ignore project-specific appearance settings';
 
+// Leading, quote-free substring of the project Appearance pane note
+// (StudioClientProjectConstants.appearanceIgnoredByGlobalText).
+const PROJECT_IGNORED_NOTE = 'Project appearance settings are currently ignored';
+
 // The 'Cobalt' theme ships with RStudio; its stylesheet href is
 // "theme/default/cobalt.rstheme". 'Textmate (default)' is the out-of-the-box
 // global theme and its href contains "textmate". Pinning the global theme to
@@ -198,5 +202,49 @@ test.describe.serial('Ignore project appearance settings', () => {
     }
 
     await cancelDialog(page, GLOBAL_OPTIONS_DIALOG);
+  });
+
+  test('the project Appearance pane shows the ignored note when the option is on', async ({
+    rstudioPage: page,
+  }) => {
+    // Enable the option out-of-band; the note is rendered when the project
+    // Appearance pane is constructed (on dialog open).
+    await setPref(page, 'ignore_project_appearance', true);
+    try {
+      await executeCommand(page, 'projectOptions');
+      const dialog = page.locator(PROJECT_OPTIONS_DIALOG);
+      await expect(dialog).toBeVisible({ timeout: 15000 });
+      await dialog.locator(APPEARANCE_TAB).click();
+
+      await expect(
+        dialog.getByText(PROJECT_IGNORED_NOTE, { exact: false }),
+      ).toBeVisible({ timeout: 10000 });
+
+      await cancelDialog(page, PROJECT_OPTIONS_DIALOG);
+    } finally {
+      // Restore the default so the override (and the next test) behave normally.
+      await setPref(page, 'ignore_project_appearance', false);
+    }
+  });
+
+  test('enabling the option and clicking OK reverts the live theme to the global one', async ({
+    rstudioPage: page,
+  }) => {
+    const dialog = await openGlobalAppearance(page);
+
+    // Precondition: the project override is active and Cobalt is applied live.
+    const overridePanel = dialog.locator(GLOBAL_THEME_OVERRIDE);
+    await expect(overridePanel).toBeVisible({ timeout: 15000 });
+    await expect.poll(() => getActiveThemeHref(page), THEME_POLL).toMatch(/cobalt/i);
+
+    // Enable the option and confirm with OK (which closes the dialog) -- a
+    // different code path than Apply, which keeps it open.
+    await dialog.getByRole('checkbox', { name: IGNORE_CHECKBOX_LABEL }).check();
+    await dialog.locator(PREFERENCES_OK).click();
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // The live editor theme still reverts to the global Textmate even though the
+    // dialog closed: onApply persisted the pref and re-resolved the applied theme.
+    await expect.poll(() => getActiveThemeHref(page), THEME_POLL).toMatch(/textmate/i);
   });
 });
