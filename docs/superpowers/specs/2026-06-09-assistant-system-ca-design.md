@@ -127,8 +127,8 @@ Add to the shared `node_tools` namespace (used by both launch sites):
 /**
  * Append a Node.js option to an existing NODE_OPTIONS value.
  *
- * Preserves any options the caller already set (e.g. via .Renviron) and avoids
- * adding a duplicate flag. Tokens are separated by single spaces.
+ * Preserves the caller's value verbatim and avoids adding a duplicate flag; the
+ * option is appended after a single space when absent.
  *
  * @param existingOptions The current NODE_OPTIONS value (may be empty).
  * @param option The flag to append, e.g. "--use-system-ca".
@@ -138,10 +138,13 @@ std::string appendNodeOption(const std::string& existingOptions,
                              const std::string& option);
 ```
 
-`src/cpp/session/modules/SessionNodeTools.cpp`: split `existingOptions` on
-whitespace; if `option` is already present as a token, return the original
-value unchanged (trimmed); otherwise append `option` after a single separating
-space. Empty input returns `option`. Pure function, no I/O.
+`src/cpp/session/modules/SessionNodeTools.cpp`: preserve `existingOptions`
+verbatim and append `option` only when it is not already present as a whole,
+whitespace-delimited token (a boundary-aware check, so `--use-system-ca` does
+not match inside `--use-system-cafoo`). Empty input returns `option`; otherwise
+return `existingOptions + " " + option`. It does not tokenize/rejoin, so quoted
+values containing intentional whitespace are never rewritten. Pure function, no
+I/O.
 
 Add two more helpers to the same header for the version guard:
 
@@ -245,12 +248,14 @@ same shape as `AccessibilityPreferencesPane.onApply`.)
 `node_tools::appendNodeOption`:
 
 - empty existing value -> returns the flag alone
-- existing unrelated options -> flag appended, originals preserved, single-space
-  separated
+- existing unrelated options -> original preserved verbatim, flag appended after
+  a single space
 - flag already present -> returned unchanged (idempotent), including when it is
   the first, middle, or last token
-- existing value with extra/leading/trailing whitespace -> normalized to
-  single-space-separated tokens
+- quoted value with intentional internal whitespace -> preserved verbatim, not
+  rewritten
+- a longer option that merely starts with the flag (e.g. `--use-system-cafoo`)
+  -> not treated as present
 
 `node_tools::parseNodeVersion` (drives the >= 22.17.0 gate):
 

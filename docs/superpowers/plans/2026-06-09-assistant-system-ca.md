@@ -99,10 +99,18 @@ TEST(SessionNodeToolsTest, AppendNodeOptionIdempotentFirstAndMiddle)
              "--a --use-system-ca --b");
 }
 
-TEST(SessionNodeToolsTest, AppendNodeOptionNormalizesWhitespace)
+TEST(SessionNodeToolsTest, AppendNodeOptionPreservesQuotedWhitespace)
 {
-   EXPECT_EQ(appendNodeOption("  --a   --b  ", "--use-system-ca"),
-             "--a --b --use-system-ca");
+   // Quoted values with intentional internal whitespace must not be rewritten.
+   EXPECT_EQ(appendNodeOption("--require \"/my  app/x.js\"", "--use-system-ca"),
+             "--require \"/my  app/x.js\" --use-system-ca");
+}
+
+TEST(SessionNodeToolsTest, AppendNodeOptionMatchesWholeTokenOnly)
+{
+   // A longer option that merely starts with the flag is not a match.
+   EXPECT_EQ(appendNodeOption("--use-system-cafoo", "--use-system-ca"),
+             "--use-system-cafoo --use-system-ca");
 }
 
 TEST(SessionNodeToolsTest, ParseNodeVersionTypical)
@@ -156,8 +164,8 @@ In `src/cpp/session/modules/SessionNodeTools.hpp`, after the `findNode` declarat
 /**
  * Append a Node.js option to an existing NODE_OPTIONS value.
  *
- * Preserves any options the caller already set (e.g. via .Renviron) and avoids
- * adding a duplicate flag. Tokens are normalized to single-space separation.
+ * Preserves the caller's value verbatim and avoids adding a duplicate flag; the
+ * option is appended after a single space when absent.
  *
  * @param existingOptions The current NODE_OPTIONS value (may be empty).
  * @param option The flag to append, e.g. "--use-system-ca".
@@ -193,42 +201,49 @@ In `src/cpp/session/modules/SessionNodeTools.cpp`, add to the include block (aft
 ```cpp
 #include <core/system/Process.hpp>
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <cctype>
 #include <cstdio>
-#include <vector>
 ```
 
 Then add the implementations before `} // namespace node_tools` (after `findNode`):
 
 ```cpp
+namespace {
+
+// Whether `token` appears in `options` as a whole, whitespace-delimited token
+// (so "--use-system-ca" does not match inside "--use-system-cafoo").
+bool containsOptionToken(const std::string& options, const std::string& token)
+{
+   std::string::size_type pos = 0;
+   while ((pos = options.find(token, pos)) != std::string::npos)
+   {
+      bool atStart = (pos == 0) ||
+         std::isspace(static_cast<unsigned char>(options[pos - 1]));
+      std::string::size_type end = pos + token.size();
+      bool atEnd = (end == options.size()) ||
+         std::isspace(static_cast<unsigned char>(options[end]));
+      if (atStart && atEnd)
+         return true;
+      pos = end;
+   }
+   return false;
+}
+
+} // anonymous namespace
+
 std::string appendNodeOption(const std::string& existingOptions,
                              const std::string& option)
 {
-   std::vector<std::string> tokens;
-   boost::algorithm::split(tokens,
-                           existingOptions,
-                           boost::algorithm::is_space(),
-                           boost::algorithm::token_compress_on);
-
-   std::vector<std::string> kept;
-   bool present = false;
-   for (const std::string& token : tokens)
-   {
-      if (token.empty())
-         continue;
-      if (token == option)
-         present = true;
-      kept.push_back(token);
-   }
-
-   if (!present)
-      kept.push_back(option);
-
-   return boost::algorithm::join(kept, " ");
+   // Preserve the caller's NODE_OPTIONS verbatim (quoted values may contain
+   // intentional whitespace); only append our flag when it is not already
+   // present as a whole token. No tokenize/rejoin, so nothing is rewritten.
+   if (containsOptionToken(existingOptions, option))
+      return existingOptions;
+   if (existingOptions.empty())
+      return option;
+   return existingOptions + " " + option;
 }
 
 bool parseNodeVersion(const std::string& versionOutput, int* pMajor, int* pMinor)
