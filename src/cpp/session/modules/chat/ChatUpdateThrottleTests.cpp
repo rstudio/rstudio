@@ -211,6 +211,29 @@ TEST(ChatUpdateThrottle, ReadMalformedReturnsNone)
    tmp.removeIfExists();
 }
 
+TEST(ChatUpdateThrottle, ReadMalformedOptionalFieldReturnsNone)
+{
+   FilePath tmp;
+   ASSERT_FALSE(FilePath::tempFilePath(tmp));
+   ASSERT_FALSE(writeStringToFile(tmp,
+      "{\"lastCheckTime\":\"100\",\"unsupportedInstalledVersion\":\"notabool\"}"));
+   EXPECT_FALSE(readManifestCheckRecord(tmp));
+   tmp.removeIfExists();
+}
+
+TEST(ChatUpdateThrottle, ReadMissingOptionalFieldsTolerated)
+{
+   FilePath tmp;
+   ASSERT_FALSE(FilePath::tempFilePath(tmp));
+   ASSERT_FALSE(writeStringToFile(tmp, "{\"lastCheckTime\":\"100\"}"));
+   boost::optional<ManifestCheckRecord> out = readManifestCheckRecord(tmp);
+   ASSERT_TRUE(out);
+   EXPECT_EQ(out->lastCheckTime, static_cast<std::time_t>(100));
+   EXPECT_TRUE(out->installedVersion.empty());
+   EXPECT_FALSE(out->unsupportedInstalledVersion);
+   tmp.removeIfExists();
+}
+
 TEST(ChatUpdateThrottle, StatePathHasExpectedNameAndParent)
 {
    FilePath path = manifestCheckStatePath();

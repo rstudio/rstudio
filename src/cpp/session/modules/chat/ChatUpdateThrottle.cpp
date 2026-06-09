@@ -73,10 +73,16 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
    boost::optional<std::string> rstudioProtocol;
    boost::optional<bool> unsupportedInstalledVersion;
    boost::optional<bool> unsupportedProtocol;
-   json::readObject(obj, "installedVersion", installedVersion);
-   json::readObject(obj, "rstudioProtocol", rstudioProtocol);
-   json::readObject(obj, "unsupportedInstalledVersion", unsupportedInstalledVersion);
-   json::readObject(obj, "unsupportedProtocol", unsupportedProtocol);
+   // Missing optional fields are tolerated (older/partial records); a present
+   // field of the wrong type means the record is corrupt -> treat as malformed.
+   if (json::readObject(obj, "installedVersion", installedVersion))
+      return boost::none;
+   if (json::readObject(obj, "rstudioProtocol", rstudioProtocol))
+      return boost::none;
+   if (json::readObject(obj, "unsupportedInstalledVersion", unsupportedInstalledVersion))
+      return boost::none;
+   if (json::readObject(obj, "unsupportedProtocol", unsupportedProtocol))
+      return boost::none;
    if (installedVersion)
       record.installedVersion = *installedVersion;
    if (rstudioProtocol)
