@@ -79,7 +79,7 @@ alongside the existing `ChatIntegrity` / `ChatInstallation` components. Namespac
 `rstudio::session::modules::chat::throttle`.
 
 `SessionChat.cpp` adds `using throttle::ManifestCheckRecord;`,
-`using throttle::ResolvedBlock;`, and `using throttle::InstalledVersionBlock;`
+`using throttle::ResolvedBlock;`, and `using throttle::SuccessOutcome;`
 alongside its existing selective `using chat_installation::...` declarations, so
 the snippets below refer to these types unqualified while still calling the
 `throttle::` free functions explicitly.
@@ -173,27 +173,50 @@ ResolvedBlock resolvePersistedBlock(const ManifestCheckRecord& record,
 }
 ```
 
-The `unsupportedInstalledVersion` flag is a composite of a manifest decision and
-a local protocol.json mismatch. Those have different lifetimes: the manifest
-decision is persisted; the mismatch is not (it is recomputed locally). This pure
-helper makes the live-vs-persisted split explicit and testable, so a regression
-that persists the live composite would fail a unit test rather than slip through:
+The success path must do two related-but-distinct things from the same manifest
+result: set the *live* `s_updateState.unsupportedInstalledVersion` (a composite of
+the manifest version decision OR a current local protocol mismatch) and build the
+*persisted* record (manifest version decision ONLY). To remove all selection
+logic from the impure call site -- which is where "persist the live composite by
+mistake" would otherwise hide -- both are produced by a single pure function from
+raw inputs:
 
 ```cpp
-// live     = what s_updateState.unsupportedInstalledVersion should be now
-//            (manifest version decision OR a current local protocol mismatch)
-// persisted = what the record stores (manifest version decision ONLY)
-struct InstalledVersionBlock { bool live; bool persisted; };
-
-InstalledVersionBlock composeInstalledVersionBlock(bool versionUnsupported,
-                                                   bool protocolMismatch)
+struct SuccessOutcome
 {
-   InstalledVersionBlock out;
-   out.live = versionUnsupported || protocolMismatch;
-   out.persisted = versionUnsupported;
+   bool liveUnsupportedInstalledVersion = false;   // -> s_updateState
+   ManifestCheckRecord record;                     // -> persist verbatim
+};
+
+// `now` / `installedVersion` / `rstudioProtocol` are the current context;
+// versionUnsupported = isVersionUnsupported(installed, manifest) (manifest-only);
+// protocolMismatch   = hasProtocolMismatch(installed) (local);
+// unsupportedProtocol = isProtocolUnsupported(manifest) (manifest-only).
+SuccessOutcome buildSuccessOutcome(std::time_t now,
+                                   const std::string& installedVersion,
+                                   const std::string& rstudioProtocol,
+                                   bool versionUnsupported,
+                                   bool protocolMismatch,
+                                   bool unsupportedProtocol)
+{
+   SuccessOutcome out;
+   out.liveUnsupportedInstalledVersion = versionUnsupported || protocolMismatch;
+   out.record.lastCheckTime = now;
+   out.record.installedVersion = installedVersion;
+   out.record.rstudioProtocol = rstudioProtocol;
+   out.record.unsupportedInstalledVersion = versionUnsupported;   // manifest-only
+   out.record.unsupportedProtocol = unsupportedProtocol;          // manifest-only
    return out;
 }
 ```
+
+Because this single function decides both the live flag and every persisted
+field, the call site becomes a mechanical copy of `outcome.liveUnsupportedInstalledVersion`
+into `s_updateState` and `outcome.record` into the record-to-write -- no
+selection, nothing to get wrong. That mechanical copy is the irreducible impure
+boundary (writing to the file-static `s_updateState` and the on-disk record);
+this is the convergence point for testability, and further pure decomposition
+would not reduce risk.
 
 Passing the state-file path, `now`, and times as parameters is what lets the
 tests avoid the filesystem and the wall clock. `lastCheckTime` is stored as
@@ -277,15 +300,15 @@ Fetch-failure branch (`if (fetchError)`):
 ```cpp
 bool isInstalled = (installedVersion != "0.0.0");
 bool mismatch = hasProtocolMismatch(installedVersion);
+boost::optional<ManifestCheckRecord> prior =
+   throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
 if (isInstalled && !mismatch)
 {
    // Compatible install -- reapply persisted block (if any) instead of clearing.
-   boost::optional<ManifestCheckRecord> record =
-      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
-   if (record)
+   if (prior)
    {
       ResolvedBlock b =
-         throttle::resolvePersistedBlock(*record, installedVersion, kProtocolVersion);
+         throttle::resolvePersistedBlock(*prior, installedVersion, kProtocolVersion);
       unsupportedInstalledVersion = b.unsupportedInstalledVersion;
       unsupportedProtocol = b.unsupportedProtocol;
    }
@@ -296,63 +319,51 @@ else
    manifestUnavailable = true;          // not installed, or protocol mismatch
    errorMessage = fetchError.getMessage();
 }
+
+// Failure learns nothing about support status: preserve the prior block and bump
+// only the timestamp. (Only a success may set/clear the persisted block.)
+ManifestCheckRecord bumped = prior.value_or(ManifestCheckRecord{});
+bumped.lastCheckTime = std::time(nullptr);
+recordToWrite = bumped;
+
 finish();   // fetchSucceeded == false
 return;
 ```
 
-The success path is unchanged in how it computes the *live* flags, but it now
-also captures the manifest-only version decision separately so the persisted
-record excludes the local protocol-mismatch term:
+The success path computes the raw inputs and delegates the live-flag / persisted-
+record split to `buildSuccessOutcome`, then sets `fetchSucceeded = true`:
 
 ```cpp
 bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
 bool protocolMismatch   = hasProtocolMismatch(installedVersion);
-InstalledVersionBlock blk =
-   throttle::composeInstalledVersionBlock(versionUnsupported, protocolMismatch);
-unsupportedInstalledVersion = blk.live;   // live composite for s_updateState
-// blk.persisted (manifest-only) is what gets persisted -- see section 5.
+SuccessOutcome outcome = throttle::buildSuccessOutcome(
+   std::time(nullptr), installedVersion, kProtocolVersion,
+   versionUnsupported, protocolMismatch, unsupportedProtocol);
+unsupportedInstalledVersion = outcome.liveUnsupportedInstalledVersion;
+recordToWrite = outcome.record;   // persisted verbatim in finish()
+fetchSucceeded = true;
 ```
 
-`versionUnsupported` is declared (defaulting to `false`) among the block of
-computed locals at the top of `onUpdateCheckComplete`, alongside
-`unsupportedInstalledVersion` etc., so the by-reference `finish()` lambda can read
-it on both the success and failure exit paths.
+`recordToWrite` is a `boost::optional<ManifestCheckRecord>` declared (defaulting
+to none) among the block of computed locals at the top of `onUpdateCheckComplete`,
+so the by-reference `finish()` lambda can read it on both exit paths. The success
+branch sets it from `buildSuccessOutcome`; the failure branch sets it to the
+preserve-and-bump record.
 
 ### 5. Record persistence in `finish()`
 
-`finish()` records the attempt on every real fetch completion. On success it
-persists the manifest-only decisions (`versionUnsupported`, not the live
-composite `unsupportedInstalledVersion`):
+Both exit branches have already populated `recordToWrite` (success: from
+`buildSuccessOutcome`; failure: the preserve-and-bump record). `finish()` no
+longer decides record contents -- it just writes whatever was staged:
 
 ```cpp
-ManifestCheckRecord record;
-std::time_t now = std::time(nullptr);
-if (fetchSucceeded)
-{
-   // Authoritative result -- overwrite context + manifest-only flags.
-   record.lastCheckTime = now;
-   record.installedVersion = installedVersion;
-   record.rstudioProtocol = kProtocolVersion;
-   // versionUnsupported is the manifest-only value (== blk.persisted) and, unlike
-   // the success-path-local `blk`, is one of the top-level computed locals, so the
-   // by-reference finish() lambda can read it on both exit paths.
-   record.unsupportedInstalledVersion = versionUnsupported;   // manifest-only
-   record.unsupportedProtocol = unsupportedProtocol;          // manifest-only
-}
-else
-{
-   // Failure learns nothing about support status: preserve the prior block,
-   // bump only the timestamp. (Only a success may set/clear the block.)
-   boost::optional<ManifestCheckRecord> prior =
-      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
-   record = prior.value_or(ManifestCheckRecord{});
-   record.lastCheckTime = now;
-}
-throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), record);
+if (recordToWrite)
+   throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), *recordToWrite);
 ```
 
-This write happens inside `finish()` (a real attempt completed), never on the
-throttled-skip path.
+`recordToWrite` is only set on the two fetch-completion branches, so this write
+happens on every real attempt and never on the throttled-skip path (which does
+not call `finish()`).
 
 ### 6. Shared helper
 
@@ -427,13 +438,19 @@ finish(): write record (success: overwrite flags; failure: preserve flags,
     dropped, `unsupportedProtocol` preserved (the independence fix).
   - protocol differs -> both flags dropped.
   - record has both flags false -> both stay false regardless of match.
-- `composeInstalledVersionBlock` (pins the live-vs-persisted contract so a
-  regression that persists the composite is caught):
-  - `versionUnsupported=false, protocolMismatch=true` -> `live=true`,
-    `persisted=false` (the manifest-only persistence guarantee).
-  - `versionUnsupported=true, protocolMismatch=false` -> `live=true`,
-    `persisted=true`.
-  - `versionUnsupported=false, protocolMismatch=false` -> both false.
+- `buildSuccessOutcome` (pins the live-vs-persisted contract AND the record
+  construction, so a regression that writes the live composite into the record is
+  caught -- the call site has no selection logic left to mis-wire):
+  - `versionUnsupported=false, protocolMismatch=true` ->
+    `liveUnsupportedInstalledVersion=true` but
+    `record.unsupportedInstalledVersion=false` (the manifest-only persistence
+    guarantee -- the key regression guard).
+  - `versionUnsupported=true, protocolMismatch=false` -> live true,
+    `record.unsupportedInstalledVersion=true`.
+  - `versionUnsupported=false, protocolMismatch=false` -> live false,
+    `record.unsupportedInstalledVersion=false`.
+  - `record` carries through `lastCheckTime`, `installedVersion`,
+    `rstudioProtocol`, and `unsupportedProtocol` from the inputs.
 - `readManifestCheckRecord` / `writeManifestCheckRecord` round-trip against a
   temp file; missing file -> none; malformed JSON -> none; valid -> expected
   fields (including the boolean flags and the context strings).
@@ -441,19 +458,21 @@ finish(): write record (success: overwrite flags; failure: preserve flags,
 ### Behavior paths (throttled-skip and fetch-failure)
 
 `resolveWithoutManifestFetch`, the `onUpdateCheckComplete` failure branch, and
-the success-path persistence are deliberately thin wrappers around the three pure
-helpers (`resolvePersistedBlock`, `composeInstalledVersionBlock`) and the record
+the success-path persistence are deliberately thin wrappers around the pure
+helpers (`resolvePersistedBlock`, `buildSuccessOutcome`) and the record
 read/write helpers, so the substantive logic -- which flags reapply, and the
-live-vs-persisted split -- is fully covered by the pure tests above. The wrappers
-themselves only (a) clear the update fields, (b) copy the resolved/composed flags
-into `s_updateState`, and (c) persist `versionUnsupported` (success) or preserve
-the stored flags and bump the timestamp (failure). Full SessionChat-level
-integration tests of these wrappers would require new seams around the
-file-static `s_updateState`, the filesystem-backed `getInstalledVersion` /
-`hasProtocolMismatch`, and `enqueClientEvent`; that refactor is out of scope for
-this change. The risk is mitigated by keeping the wrappers trivial and the
-decisions pure -- this tradeoff is called out explicitly so the implementer keeps
-the wrappers thin rather than reintroducing logic into them.
+live-vs-persisted split with its record construction -- is fully covered by the
+pure tests above. The success call site carries no selection logic: it copies
+`outcome.liveUnsupportedInstalledVersion` into `s_updateState` and
+`outcome.record` into `recordToWrite`. What remains untested is the irreducible
+impure boundary -- assigning those pure results into the file-static
+`s_updateState` and writing the record to disk -- which is a mechanical field copy
+with no branching. Full SessionChat-level integration tests would require new
+seams around `s_updateState`, the filesystem-backed `getInstalledVersion` /
+`hasProtocolMismatch`, and `enqueClientEvent`; that refactor is out of scope. This
+is the convergence point: the decisions are pure and tested, and the wrappers are
+kept trivial so there is nothing left to mis-wire -- the implementer must keep
+them mechanical rather than reintroducing logic.
 
 No new frontend tests; payload shape and client behavior are unchanged.
 
