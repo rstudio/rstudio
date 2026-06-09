@@ -1113,8 +1113,9 @@ to:
 
 - [ ] **Step 6: Update the `chatInstallUpdate` caller (bypass the throttle when a fetch is needed for install)**
 
-This is the `else` branch of `chatInstallUpdate` — the path taken only when update
-state is **not** yet populated. Change:
+This is the `else` branch of `chatInstallUpdate`, taken when update state is not
+yet populated **or** a check is already in flight (`!haveState || s_checkInProgress`).
+Change:
 
 ```cpp
       startUpdateCheck(false, boost::bind(performInstall, cont));
@@ -1126,22 +1127,29 @@ to:
       startUpdateCheck(false, true, boost::bind(performInstall, cont));
 ```
 
-**Why `force=true` here, and why the populated-state path is left alone:** when
-state is missing, the install needs `startUpdateCheck` to actually fetch the
-manifest to obtain `downloadUrl` / `sha256`. Without `force`, the throttle could
+**Why `force=true` here, and why the populated-state path is left alone:**
+`force=true` matters only when this call actually *starts* the pre-install check
+(no check already in flight). In that case the install needs `startUpdateCheck` to
+fetch the manifest for `downloadUrl` / `sha256`; without `force` the throttle could
 take the skip path (`resolveWithoutManifestFetch`), which sets
 `updateAvailable=false` and clears the URL, so `performInstall` would then fail
-with "No update available". `force=true` guarantees the fetch happens.
+with "No update available". When the `else` branch is instead reached because a
+check is already in flight, `startUpdateCheck` queues `performInstall` onto that
+check's completion and returns at the single-flight guard before `force` is
+consulted — so `force` is a no-op there and the in-flight check's own behavior
+(fetch vs. throttled skip) governs. Either way `performInstall` runs once the
+check it joined or started has produced fresh state.
 
-The populated-state branch (`performInstall(cont)` directly) is intentionally
-**not** changed — this matches the approved spec, which keeps installing from the
-already-fetched state. It is safe because `updateAvailable` (and therefore the UI
-Install affordance) is only ever set by a real successful fetch and is cleared by
-a throttled skip; a populated, install-eligible state can only have come from a
-real fetch with a valid URL. Routing this branch through a forced fetch as well
-would make an install fail during a transient manifest-fetch error even when a
-valid offered URL exists, which conflicts with the requirement to "use the
-installed version without an error" when the manifest is momentarily unavailable.
+The populated-state branch (`performInstall(cont)` directly, when `haveState &&
+!s_checkInProgress`) is intentionally **not** changed — this matches the approved
+spec, which keeps installing from the already-fetched state. It is safe because
+`updateAvailable` (and therefore the UI Install affordance) is only ever set by a
+real successful fetch and is cleared by a throttled skip; a populated,
+install-eligible state can only have come from a real fetch with a valid URL.
+Routing this branch through a forced fetch as well would make an install fail
+during a transient manifest-fetch error even when a valid offered URL exists,
+which conflicts with the requirement to "use the installed version without an
+error" when the manifest is momentarily unavailable.
 
 - [ ] **Step 7: Build and run the chat tests**
 
