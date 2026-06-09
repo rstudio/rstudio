@@ -175,6 +175,41 @@ TEST(ChatUpdateThrottle, BumpWithNoPriorReturnsDefaultWithTime)
    EXPECT_FALSE(b.unsupportedInstalledVersion);
 }
 
+// ---- recordToPersist (the finish() persistence decision) ----
+
+TEST(ChatUpdateThrottle, PersistUsesStagedRecordOnSuccess)
+{
+   // A success stages an authoritative record; it is persisted verbatim, which is
+   // how a successful check sets or clears the block.
+   ManifestCheckRecord staged = makeRecord(kNow, "1.2.3", "10.0", true, false);
+   ManifestCheckRecord prior = makeRecord(kNow - kDay, "1.0.0", "10.0", false, true);
+   ManifestCheckRecord out = recordToPersist(staged, prior, kNow + 5);
+   EXPECT_EQ(out.lastCheckTime, kNow);
+   EXPECT_EQ(out.installedVersion, "1.2.3");
+   EXPECT_TRUE(out.unsupportedInstalledVersion);
+   EXPECT_FALSE(out.unsupportedProtocol);
+}
+
+TEST(ChatUpdateThrottle, PersistBumpsAndPreservesPriorWhenNotStaged)
+{
+   // Failure / bad-manifest path: no staged record -> bump the timestamp (so the
+   // attempt is recorded and cannot bypass the throttle) while preserving the prior
+   // block (only a success may clear it).
+   ManifestCheckRecord prior = makeRecord(kNow - kDay, "1.2.3", "10.0", true, false);
+   ManifestCheckRecord out = recordToPersist(boost::none, prior, kNow);
+   EXPECT_EQ(out.lastCheckTime, kNow);
+   EXPECT_EQ(out.installedVersion, "1.2.3");
+   EXPECT_TRUE(out.unsupportedInstalledVersion);
+}
+
+TEST(ChatUpdateThrottle, PersistBumpsDefaultWhenNoStagedNoPrior)
+{
+   ManifestCheckRecord out = recordToPersist(boost::none, boost::none, kNow);
+   EXPECT_EQ(out.lastCheckTime, kNow);
+   EXPECT_TRUE(out.installedVersion.empty());
+   EXPECT_FALSE(out.unsupportedInstalledVersion);
+}
+
 // ---- read / write round-trip ----
 
 TEST(ChatUpdateThrottle, RecordRoundTrip)
@@ -217,6 +252,18 @@ TEST(ChatUpdateThrottle, ReadMalformedOptionalFieldReturnsNone)
    ASSERT_FALSE(FilePath::tempFilePath(tmp));
    ASSERT_FALSE(writeStringToFile(tmp,
       "{\"lastCheckTime\":\"100\",\"unsupportedInstalledVersion\":\"notabool\"}"));
+   EXPECT_FALSE(readManifestCheckRecord(tmp));
+   tmp.removeIfExists();
+}
+
+TEST(ChatUpdateThrottle, ReadNonNumericLastCheckTimeReturnsNone)
+{
+   FilePath tmp;
+   ASSERT_FALSE(FilePath::tempFilePath(tmp));
+   // A non-numeric required lastCheckTime is a corrupt record: it must be rejected
+   // rather than silently parsed to epoch 0 (which would also let its flags through).
+   ASSERT_FALSE(writeStringToFile(tmp,
+      "{\"lastCheckTime\":\"notanumber\",\"unsupportedInstalledVersion\":true}"));
    EXPECT_FALSE(readManifestCheckRecord(tmp));
    tmp.removeIfExists();
 }

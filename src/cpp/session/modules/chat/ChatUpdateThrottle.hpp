@@ -37,6 +37,8 @@ extern const int kManifestCheckThrottleSeconds;
 // decisions; the local protocol.json mismatch is never persisted (it is recomputed
 // at reapply time). installedVersion / rstudioProtocol record the context the flags
 // were computed for, so a stale block is never applied to a different install.
+// Never apply the bool flags directly: resolve them through resolvePersistedBlock(),
+// which drops a flag whose context no longer matches the current install.
 struct ManifestCheckRecord
 {
    std::time_t lastCheckTime = 0;
@@ -77,11 +79,22 @@ core::Error writeManifestCheckRecord(const core::FilePath& stateFile,
 ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
                                std::time_t now);
 
+// Pure: the record to persist for a completed fetch attempt. On success `staged`
+// holds the authoritative record (which sets or clears the block); otherwise
+// preserve `prior`'s block and bump only the timestamp via bumpRecord(). Only a
+// success may set or clear the persisted block, and every real attempt bumps the
+// timestamp -- so a failed or bad-manifest fetch still records the attempt and
+// cannot bypass the throttle.
+ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& staged,
+                                    const boost::optional<ManifestCheckRecord>& prior,
+                                    std::time_t now);
+
 // Pure: is a manifest fetch due now?
 //   force || !installed || protocolMismatch || !lastCheckTime ||
-//   (now - *lastCheckTime) >= throttleSeconds
-// A future lastCheckTime (clock skew or a corrupted/copied state file) is also
-// treated as due, so checks resume immediately rather than being suppressed.
+//   now < *lastCheckTime || (now - *lastCheckTime) >= throttleSeconds
+// A future lastCheckTime (clock skew or a corrupted/copied state file) is treated
+// as due (the `now < *lastCheckTime` disjunct), so checks resume immediately
+// rather than being suppressed.
 bool manifestCheckDue(bool force,
                       bool installed,
                       bool protocolMismatch,

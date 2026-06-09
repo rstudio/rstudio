@@ -4323,11 +4323,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // every other exit leaves it unset and we preserve-and-bump (only a success
       // may set or clear the persisted block). Every real attempt bumps the
       // timestamp, so a bad manifest cannot bypass the throttle.
-      ManifestCheckRecord record = recordToWrite
-         ? *recordToWrite
-         : throttle::bumpRecord(
-              throttle::readManifestCheckRecord(throttle::manifestCheckStatePath()),
-              std::time(nullptr));
+      boost::optional<ManifestCheckRecord> prior =
+         throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+      ManifestCheckRecord record =
+         throttle::recordToPersist(recordToWrite, prior, std::time(nullptr));
       Error writeError = throttle::writeManifestCheckRecord(
          throttle::manifestCheckStatePath(), record);
       if (writeError)
@@ -4567,6 +4566,10 @@ void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComp
    if (isStartup)
       s_checkIncludesStartup = true;
 
+   // A caller that joins an in-flight check only enqueues its completion above;
+   // `force` is not re-evaluated here, so the in-flight check's own fetch-vs-skip
+   // decision governs. Benign today: throttled skips resolve synchronously and so
+   // never overlap a real fetch already in flight.
    if (s_checkInProgress)
       return;
 

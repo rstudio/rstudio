@@ -14,6 +14,7 @@
  */
 
 #include "ChatUpdateThrottle.hpp"
+#include "ChatLogging.hpp"
 
 #include <string>
 
@@ -48,24 +49,48 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
    std::string content;
    Error error = core::readStringFromFile(stateFile, &content);
    if (error)
+   {
+      WLOG("Failed to read manifest-check record at {}: {}",
+           stateFile.getAbsolutePath(), error.getMessage());
       return boost::none;
+   }
 
    json::Value value;
    if (value.parse(content))
+   {
+      WLOG("Manifest-check record at {} is not valid JSON; treating as malformed",
+           stateFile.getAbsolutePath());
       return boost::none;
+   }
    if (!value.isObject())
+   {
+      WLOG("Manifest-check record at {} is not a JSON object; treating as malformed",
+           stateFile.getAbsolutePath());
       return boost::none;
+   }
 
    json::Object obj = value.getObject();
 
-   // lastCheckTime is required, stored as a decimal-seconds string for portability.
+   // lastCheckTime is required: absent or non-numeric means the record is corrupt.
    std::string lastCheckStr;
    if (json::readObject(obj, "lastCheckTime", lastCheckStr))
+   {
+      WLOG("Manifest-check record at {} is missing a string lastCheckTime; "
+           "treating as malformed", stateFile.getAbsolutePath());
       return boost::none;
+   }
+
+   boost::optional<long long> lastCheckSeconds =
+      core::safe_convert::stringTo<long long>(lastCheckStr);
+   if (!lastCheckSeconds)
+   {
+      WLOG("Manifest-check record at {} has non-numeric lastCheckTime '{}'; "
+           "treating as malformed", stateFile.getAbsolutePath(), lastCheckStr);
+      return boost::none;
+   }
 
    ManifestCheckRecord record;
-   record.lastCheckTime = static_cast<std::time_t>(
-      core::safe_convert::stringTo<long long>(lastCheckStr, 0));
+   record.lastCheckTime = static_cast<std::time_t>(*lastCheckSeconds);
 
    // Context + flags are optional: a missing key leaves the struct default in place
    // (the boost::optional<T> readObject overload reports absence as Success/none).
@@ -117,6 +142,13 @@ ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
    ManifestCheckRecord out = prior.value_or(ManifestCheckRecord());
    out.lastCheckTime = now;
    return out;
+}
+
+ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& staged,
+                                    const boost::optional<ManifestCheckRecord>& prior,
+                                    std::time_t now)
+{
+   return staged ? *staged : bumpRecord(prior, now);
 }
 
 bool manifestCheckDue(bool force,
