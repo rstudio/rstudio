@@ -122,6 +122,12 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
 core::Error writeManifestCheckRecord(const core::FilePath& stateFile,
                                      const ManifestCheckRecord& record);
 
+// Preserve a prior record's block flags + context, bumping only lastCheckTime.
+// Returns a default record (flags false, empty context) with `now` when prior is
+// none. Used by finish()'s non-success fallback so every real attempt is recorded.
+ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
+                               std::time_t now);
+
 // Pure decision. Returns true (fetch is due) when:
 //   force || !installed || protocolMismatch || !lastCheckTime ||
 //   (now - *lastCheckTime) >= throttleSeconds
@@ -358,23 +364,33 @@ back to a preserve-and-bump (read prior, keep its block flags, bump only the
 timestamp -- only a success may set/clear the persisted block):
 
 ```cpp
-if (recordToWrite)
+ManifestCheckRecord record = recordToWrite
+   ? *recordToWrite
+   : throttle::bumpRecord(
+        throttle::readManifestCheckRecord(throttle::manifestCheckStatePath()),
+        std::time(nullptr));
+throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), record);
+```
+
+The fallback's record construction is a pure helper so it is unit-tested rather
+than living inline in `finish()`:
+
+```cpp
+// Preserve the prior record's manifest block flags and context, bumping only the
+// timestamp. Returns a default record (empty context, flags false) with the new
+// timestamp when there is no prior record.
+ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
+                               std::time_t now)
 {
-   throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), *recordToWrite);
-}
-else
-{
-   boost::optional<ManifestCheckRecord> prior =
-      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
-   ManifestCheckRecord bumped = prior.value_or(ManifestCheckRecord{});
-   bumped.lastCheckTime = std::time(nullptr);
-   throttle::writeManifestCheckRecord(throttle::manifestCheckStatePath(), bumped);
+   ManifestCheckRecord out = prior.value_or(ManifestCheckRecord{});
+   out.lastCheckTime = now;
+   return out;
 }
 ```
 
-Because every `finish()` path writes (staged or fallback), each real attempt bumps
-the timestamp. The throttled-skip path does not call `finish()`, so it never
-writes (no attempt was made).
+Because every `finish()` path writes (staged success record or bumped fallback),
+each real attempt bumps the timestamp. The throttled-skip path does not call
+`finish()`, so it never writes (no attempt was made).
 
 ### 6. Shared helper
 
@@ -477,6 +493,12 @@ finish(): write staged success record, else fallback preserve-and-bump (every
     `record.unsupportedInstalledVersion=false`.
   - `record` carries through `lastCheckTime`, `installedVersion`,
     `rstudioProtocol`, and `unsupportedProtocol` from the inputs.
+- `bumpRecord` (the non-success fallback used for fetch-error, malformed-manifest,
+  and no-compatible-version exits):
+  - prior present -> all block flags + context preserved, `lastCheckTime` set to
+    `now`.
+  - prior none -> default record (flags false, empty context), `lastCheckTime` set
+    to `now`.
 - `readManifestCheckRecord` / `writeManifestCheckRecord` round-trip against a
   temp file; missing file -> none; malformed JSON -> none; valid -> expected
   fields (including the boolean flags and the context strings).
@@ -484,21 +506,20 @@ finish(): write staged success record, else fallback preserve-and-bump (every
 ### Behavior paths (throttled-skip and fetch-failure)
 
 `resolveWithoutManifestFetch`, the `onUpdateCheckComplete` failure branch, and
-the success-path persistence are deliberately thin wrappers around the pure
-helpers (`resolvePersistedBlock`, `buildSuccessOutcome`) and the record
-read/write helpers, so the substantive logic -- which flags reapply, and the
-live-vs-persisted split with its record construction -- is fully covered by the
-pure tests above. The success call site carries no selection logic: it copies
-`outcome.liveUnsupportedInstalledVersion` into `s_updateState` and
-`outcome.record` into `recordToWrite`. What remains untested is the irreducible
-impure boundary -- assigning those pure results into the file-static
-`s_updateState` and writing the record to disk -- which is a mechanical field copy
-with no branching. Full SessionChat-level integration tests would require new
-seams around `s_updateState`, the filesystem-backed `getInstalledVersion` /
+the success/fallback persistence are deliberately thin wrappers around the pure
+helpers (`resolvePersistedBlock`, `buildSuccessOutcome`, `bumpRecord`) and the
+record read/write helpers, so all record *construction* -- which flags reapply,
+the live-vs-persisted split, and the preserve-and-bump -- is covered by the pure
+tests above. What remains in the wrappers is one routing branch in `finish()`
+(`recordToWrite` staged vs. `bumpRecord` fallback) plus the irreducible impure
+boundary: reading the prior record, assigning pure results into the file-static
+`s_updateState`, and writing the record to disk. That routing + I/O is what a full
+SessionChat-level integration test would cover, and it would require new seams
+around `s_updateState`, the filesystem-backed `getInstalledVersion` /
 `hasProtocolMismatch`, and `enqueClientEvent`; that refactor is out of scope. This
-is the convergence point: the decisions are pure and tested, and the wrappers are
-kept trivial so there is nothing left to mis-wire -- the implementer must keep
-them mechanical rather than reintroducing logic.
+is the convergence point: every decision and record-construction step is pure and
+tested, leaving only mechanical routing + I/O in the wrappers -- the implementer
+must keep them mechanical rather than reintroducing logic.
 
 No new frontend tests; payload shape and client behavior are unchanged.
 
