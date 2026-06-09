@@ -23,10 +23,12 @@
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
+#include "chat/ChatUpdateThrottle.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <ctime>
 #include <map>
 #include <queue>
 #include <set>
@@ -269,6 +271,11 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
+
+// Update throttle types used throughout
+using throttle::ManifestCheckRecord;
+using throttle::ResolvedBlock;
+using throttle::SuccessOutcome;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -3525,6 +3532,18 @@ bool s_checkInProgress = false;
 bool s_checkIncludesStartup = false;
 std::vector<boost::function<void()>> s_pendingCompletions;
 
+// Reset single-flight state and run queued completions. Swap first so a completion
+// that kicks a fresh check sees a clean queue. Main-thread only.
+void drainPendingCompletions()
+{
+   s_checkInProgress = false;
+   s_checkIncludesStartup = false;
+   std::vector<boost::function<void()>> completions;
+   completions.swap(s_pendingCompletions);
+   for (boost::function<void()>& completion : completions)
+      completion();
+}
+
 // Defined further below (after the manifest parse/check helpers); forward-declared
 // here so onDeferredInit's startup kickoff can reference startUpdateCheck.
 void startUpdateCheck(bool isStartup, boost::function<void()> onComplete);
@@ -4297,14 +4316,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       if (showVersionWarning)
          showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
 
-      // Reset single-flight state and run queued completions. Swap first so a
-      // completion that kicks a fresh check sees a clean queue.
-      s_checkInProgress = false;
-      s_checkIncludesStartup = false;
-      std::vector<boost::function<void()>> completions;
-      completions.swap(s_pendingCompletions);
-      for (boost::function<void()>& completion : completions)
-         completion();
+      drainPendingCompletions();
    };
 
    if (fetchError)
