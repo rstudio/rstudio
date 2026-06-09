@@ -380,31 +380,16 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // initialize members
+   //
+   // NOTE: the project directory is deliberately not canonicalized here.
+   // Canonicalizing rewrote user-visible paths (getwd(), here::here()) for
+   // projects opened via a symlinked path on macOS, and resolved mapped
+   // network drives to their UNC targets on Windows (#17865). The macOS
+   // file monitor maps FSEvents' canonical event paths back to the
+   // registered path form itself (#17909), so file change events compare
+   // equal to directory() without any canonicalization on our side.
    file_ = projectFile;
    directory_ = file_.getParent();
-
-   // Canonicalize the project directory so it matches what the file
-   // monitor will see (FSEvents on macOS reports canonical paths -- e.g.
-   // /private/tmp/foo rather than /tmp/foo). Without this, paths from
-   // file change events won't compare equal to directory() and any
-   // root-anchored matches downstream silently miss.
-   //
-   // This is gated to macOS on purpose. On Windows, getCanonicalPath()
-   // (boost::filesystem::canonical) resolves a mapped network drive back to
-   // its UNC target (e.g. S:/foo -> //server/share/foo), which then becomes
-   // the working directory and surfaces in user-facing paths such as
-   // here::here(); see https://github.com/rstudio/rstudio/issues/17865. R's
-   // own normalizePath deliberately avoids this by preferring the drive-letter
-   // form. The Win32 (GetLongPathName) and inotify file monitors don't report
-   // canonical paths anyway, so the macOS FSEvents mismatch is unique to macOS.
-#ifdef __APPLE__
-   if (directory_.exists())
-   {
-      std::string canonical = directory_.getCanonicalPath();
-      if (!canonical.empty())
-         directory_ = FilePath(canonical);
-   }
-#endif
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;

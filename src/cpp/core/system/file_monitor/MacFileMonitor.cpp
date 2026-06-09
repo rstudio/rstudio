@@ -104,6 +104,7 @@ public:
 
    Handle handle;
    FilePath rootPath;
+   std::string canonicalRootPath;
    DirectoryHandle rootHandle;
    FSEventStreamRef streamRef;
    bool recursive;
@@ -111,6 +112,33 @@ public:
    tree<FileInfo> fileTree;
    Callbacks callbacks;
 };
+
+// FSEvents reports event paths in canonical form (e.g. /private/tmp/foo for
+// a watch registered as /tmp/foo, since /tmp is a symlink on macOS). The file
+// tree and the paths we report to clients use the form the watch was
+// registered with, so map the canonical root prefix back to the registered
+// root before any tree lookup or event emission. Without this, clients that
+// compare reported paths against the path they asked us to monitor (like the
+// Files pane) drop every event (#17909).
+std::string mapEventPath(FileEventContext* pContext, const std::string& path)
+{
+   const std::string& canonicalRoot = pContext->canonicalRootPath;
+   const std::string& registeredRoot = pContext->rootPath.getAbsolutePath();
+   if (canonicalRoot == registeredRoot)
+      return path;
+
+   if (path == canonicalRoot)
+      return registeredRoot;
+
+   if (path.length() > canonicalRoot.length() &&
+       path.compare(0, canonicalRoot.length(), canonicalRoot) == 0 &&
+       path[canonicalRoot.length()] == '/')
+   {
+      return registeredRoot + path.substr(canonicalRoot.length());
+   }
+
+   return path;
+}
 
 // Read a FileInfo via lstat, matching what PosixFileScanner produces for the
 // initial tree population. Mirroring that view (in particular: symlinks treated
@@ -175,6 +203,9 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
 
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
+
+      // map the canonical event path back to the registered path form
+      path = mapEventPath(pContext, path);
 
       // Only process events whose direct parent is the watched root. Subtree
       // events still wake us up, but they cost just this comparison.
@@ -315,6 +346,9 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
 
+      // map the canonical event path back to the registered path form
+      path = mapEventPath(pContext, path);
+
       // get FileInfo for this directory
       FileInfo fileInfo(path, true);
 
@@ -386,23 +420,24 @@ Handle registerMonitor(const FilePath& filePath,
 {
    // FSEvents reports event paths in canonical form (e.g. /private/tmp/foo
    // even when we registered /tmp/foo, because /tmp is a symlink on macOS).
-   // Canonicalize up front so the rootPath, the file tree we build during
-   // the initial scan, and the paths reported in change events all agree.
-   // Without this, the tree lookup in discoverAndProcessFileChanges fails
-   // and no FileChangeEvents are dispatched for projects opened via a
-   // symlinked path.
-   FilePath rootPath = filePath;
+   // Register the stream against the canonical path so that the WatchRoot
+   // machinery agrees with what FSEvents reports, but keep the caller's path
+   // form for the rootPath, the file tree built during the initial scan, and
+   // the paths reported to callbacks -- clients compare reported paths
+   // against the path they asked us to monitor (#17909). Event paths arriving
+   // in canonical form are mapped back via mapEventPath.
+   std::string canonicalRootPath = filePath.getAbsolutePath();
    if (filePath.exists())
    {
       std::string canonical = filePath.getCanonicalPath();
       if (!canonical.empty())
-         rootPath = FilePath(canonical);
+         canonicalRootPath = canonical;
    }
 
    // allocate file path
    CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
-                                       rootPath.getAbsolutePath().c_str(),
+                                       canonicalRootPath.c_str(),
                                        kCFStringEncodingUTF8);
    if (filePathRef == nullptr)
    {
@@ -429,7 +464,8 @@ Handle registerMonitor(const FilePath& filePath,
 
    // create and allocate FileEventContext (create auto-ptr in case we
    // return early, we'll call release later before returning)
-   FileEventContext* pContext = new FileEventContext(rootPath);
+   FileEventContext* pContext = new FileEventContext(filePath);
+   pContext->canonicalRootPath = canonicalRootPath;
    pContext->recursive = recursive;
    pContext->filter = filter;
    std::unique_ptr<FileEventContext> autoPtrContext(pContext);
@@ -492,7 +528,7 @@ Handle registerMonitor(const FilePath& filePath,
    options.recursive = recursive;
    options.yield = true;
    options.filter = filter;
-   Error error = scanFiles(FileInfo(rootPath), options, &pContext->fileTree);
+   Error error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release

@@ -41,6 +41,7 @@
 - ([#17865](https://github.com/rstudio/rstudio/issues/17865)): Fix project paths on a mapped network drive (e.g. `S:`) being resolved to their UNC target (e.g. `\\server\share`) on Windows, which caused functions such as `here::here()` and `getwd()` to report the UNC path instead of the mapped drive.
 - ([#17870](https://github.com/rstudio/rstudio/issues/17870)): Fix an uncaught "Object has been destroyed" error in RStudio Desktop when quitting with a plot zoom (or other child) window still open.
 - ([#17830](https://github.com/rstudio/rstudio/issues/17830)): Fix the data viewer not clearing a data set's saved sorts and filters when its tab is explicitly closed, so reopening the data set no longer restores stale filters; the saved state still persists across a session suspend/restore or a page reload. Restored filters now also reveal the filter row, instead of being applied with no visible filter UI.
+- ([#17909](https://github.com/rstudio/rstudio/issues/17909)): Fix the Files pane on macOS briefly showing and then emptying the contents of a symlinked directory; file change events are now reported against the path the directory was opened as, rather than its resolved target. Opening a project via a symlinked path on macOS also no longer rewrites the project directory (as reported by `getwd()` and `here::here()`) to the symlink's target.
 
 ### Dependencies
 - Ace 1.43.5
