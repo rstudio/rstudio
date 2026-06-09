@@ -998,13 +998,20 @@ void handleHttpdRequest(const std::string& location,
                .addParam(topic)
                .call(&diverted);
          if (error)
+         {
+            error.addProperty("type", type);
+            error.addProperty("package", package);
+            error.addProperty("topic", topic);
             LOG_ERROR(error);
+         }
 
          if (diverted)
          {
-            // for an example, the topic in the URL is the Rd base name, so the
-            // help page we came from is ../html/<topic>.html; for a demo, fall
-            // back to the package index
+            // for an example, the topic in the URL is the Rd file's first
+            // \alias, which usually -- but not always -- matches the Rd base
+            // name used in help page URLs (../html/<topic>.html), so this
+            // back-link is best-effort; for a demo, fall back to the package
+            // index
             std::string label = isExample ? "example" : "demo";
             std::string backUrl = isExample
                   ? "../html/" + http::util::urlEncode(topic) + ".html"

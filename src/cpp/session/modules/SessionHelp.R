@@ -1105,7 +1105,12 @@ options(help_type = "html")
 
 .rs.addFunction("helpExampleDivertCommand", function(type, package, topic)
 {
-   # Fetch the example (or demo) source without running it.
+   # Fetch the example (or demo) source without running it. Note that
+   # 'give.lines = TRUE' applies the same \dontrun{} / \donttest{} commenting
+   # as a real example() call, so a launcher living only inside \dontrun{}
+   # arrives commented out, doesn't trip detection, and isn't diverted --
+   # consistent with the diverted example() call below, which wouldn't have
+   # run it either.
    code <- tryCatch(
       suppressWarnings(
          if (identical(type, "Demo"))
@@ -1118,7 +1123,15 @@ options(help_type = "html")
                give.lines = TRUE
             )
       ),
-      error = function(e) NULL
+      error = function(e) {
+         # Log before swallowing so a residual lockup stays debuggable.
+         msg <- sprintf(
+            "Error retrieving %s source for %s::%s: %s",
+            tolower(type), package, topic, conditionMessage(e)
+         )
+         .rs.logWarningMessage(msg)
+         NULL
+      }
    )
 
    # If we couldn't read the source, or it doesn't look like it launches a

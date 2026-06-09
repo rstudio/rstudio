@@ -305,11 +305,12 @@ Both are run through `rstudio-tests`:
 
 The `core`, `rserver`, and `rsession` scopes run the C++ Google Test suites.
 The `r` scope runs the R `testthat` suite under `src/cpp/tests/testthat/`
-(e.g. `test-help.R`). `--filter` matches the test *file* basename, so an R
-`testthat` file is reached with `--scope r --filter <basename>` (for example
-`--scope r --filter help` for `test-help.R`) -- NOT with `--scope rsession`,
-which only runs C++ tests and ignores the testthat files. Rebuild first so the
-staged R copies under `build/src/cpp/session/modules/R/` are current.
+(e.g. `test-help.R`). `--filter` is a `testthat::test_dir()` filter: a regular
+expression matched against the test file name after its `test-` prefix and
+`.R` extension are stripped, so `test-help.R` is reached with
+`--scope r --filter help` -- NOT with `--scope rsession`, which only runs C++
+tests and ignores the testthat files. Rebuild first so the staged R copies
+under `build/src/cpp/session/modules/R/` are current.
 
 
 ### GWT Tests
