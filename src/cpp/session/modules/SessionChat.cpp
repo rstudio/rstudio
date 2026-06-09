@@ -1519,7 +1519,6 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    // Error variable for R execution
    Error error;
-   std::string silentErrorOutput;
 
    // Create execution context with streaming support
    // Pass shared_ptr for safe access from background thread
@@ -1823,16 +1822,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
       std::string errorOutput = errorMsg + "\n";
 
-      if (silentExecution)
-      {
-         silentErrorOutput = errorOutput;
-      }
-      else
-      {
-         // Fire signal first so callback captures it
-         module_context::events().onConsoleOutput(
-            module_context::ConsoleOutputError, errorOutput);
+      // Fire signal first so callback captures it
+      module_context::events().onConsoleOutput(
+         module_context::ConsoleOutputError, errorOutput);
 
+      if (!silentExecution)
+      {
          // Send as kConsoleWritePendingError so the event queue's
          // annotateOutput() adds ANSI error highlighting (e.g. coloring the
          // "Error" prefix). Clear the agent flag so the event goes through the
@@ -1956,7 +1951,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Build response (same format as before)
    json::Object result;
    result["output"] = execContext.getOutput();
-   result["error"] = execContext.getError() + silentErrorOutput;
+   result["error"] = execContext.getError();
    result["canceled"] = wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
