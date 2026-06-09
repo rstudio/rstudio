@@ -66,10 +66,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;

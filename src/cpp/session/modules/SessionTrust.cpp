@@ -479,8 +479,10 @@ void initializeTrustState()
 
    FilePath projectDir = projContext.directory();
 
-   // Skip trust check if project dir is the user's home directory
-   if (projectDir == options().userHomePath())
+   // Skip trust check if project dir is the user's home directory.
+   // When trust is required for all projects, no such exemption applies;
+   // even the home directory must be explicitly trusted.
+   if (!trustRequired && projectDir == options().userHomePath())
    {
       s_trustStatus = TrustStatus::Trusted;
       return;

@@ -36,7 +36,8 @@ void initializeTrustState();
 
 // Whether the current project is untrusted (either explicitly, or
 // because a trust decision is still pending). Untrusted projects run
-// in restricted mode.
+// in restricted mode: startup files are suppressed, workspace restore
+// is suppressed, and the visual editor is disabled.
 bool isProjectUntrusted();
 
 // Whether startup files (.Rprofile, .Renviron) should be suppressed
@@ -62,7 +63,7 @@ core::Error resetTrust(const core::FilePath& directory);
 core::Error resetTrust();
 
 // Returns trust request data for inclusion in session info.
-// If startup files are suppressed (unknown or untrusted), returns an
+// If the project is untrusted (unknown or untrusted status), returns an
 // object with "directory", "status", and "risky_files" fields.
 // Otherwise returns an empty object.
 core::json::Object trustRequestData();

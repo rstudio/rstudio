@@ -63,7 +63,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
 
-      // Initially hidden; shown when startup files are suppressed
+      // Initially hidden; shown when the project is untrusted
       String lockSvg =
          "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' " +
          "viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
@@ -83,7 +83,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
 
    /**
     * Sets the initial visibility of the restricted mode icon based on
-    * whether startup files were suppressed.
+    * whether the project is untrusted.
     */
    public void initializeForSession(SessionInfo sessionInfo)
    {
