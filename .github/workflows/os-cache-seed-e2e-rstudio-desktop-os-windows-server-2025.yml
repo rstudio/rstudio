@@ -17,10 +17,6 @@ on:
       - "src/gwt/conf/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
       - ".github/workflows/os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml"
-  # Nightly re-seed keeps the sccache object cache (keyed per-commit, restored
-  # by prefix) recent on main so PR builds get a high compile-cache hit rate.
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
 
 # Don't stack expensive Windows builds; the latest seed run wins.

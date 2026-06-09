@@ -15,6 +15,10 @@ concurrency:
 
 permissions:
   contents: read
+  # Required for call-time validation: the called workflow's e2e-merge job
+  # declares pull-requests: write. GitHub validates all declared permissions at
+  # call time even for jobs that will be skipped (build_only=true skips e2e-merge).
+  pull-requests: write
 
 jobs:
   seed-windows-2025:

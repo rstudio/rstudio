@@ -33,6 +33,25 @@ const PREVIEW_FRAME = 'iframe[title="Data Preview"]';
 // Open Import Dataset > From Text (readr) for the given CSV path and drive the
 // dialog until the preview iframe is up. Returns the dialog + preview frame so
 // each test can assert on the rendered preview. The caller cancels the dialog.
+// Waits for the readr preview iframe to show its first column header.
+// On Windows CI the preview subprocess occasionally fails to start; soft-skip
+// rather than hard-fail so an environment issue doesn't mask other results.
+async function awaitPreviewOrSkip(
+  dialog: Locator,
+  previewFrame: FrameLocator,
+): Promise<void> {
+  const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
+  const previewReady = await firstColHeader
+    .waitFor({ state: 'visible', timeout: 45000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!previewReady) {
+    await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
+    test.skip(os.platform() === 'win32', 'readr CSV preview subprocess did not load on Windows CI');
+    throw new Error('readr CSV preview did not produce column headers within 45 s');
+  }
+}
+
 async function openReadrCsvPreview(
   page: Page,
   consoleActions: ConsolePaneActions,
@@ -105,22 +124,9 @@ test.describe('Import Dataset (readr)', () => {
     // CSV file?" error prefix instead. The grid renders each header as
     // "<name>(<type>)" once column inference completes; anchor on the name
     // prefix so the assertion doesn't depend on the inferred type string.
-    //
-    // On Windows CI the readr preview subprocess sometimes does not produce
-    // column headers (subprocess launch or path-handling issue). Soft-skip
-    // rather than hard-fail so that a Windows environment issue doesn't mask
-    // other test results.
-    const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
-    const previewReady = await firstColHeader
-      .waitFor({ state: 'visible', timeout: 45000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!previewReady) {
-      await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-      test.skip(os.platform() === 'win32', 'readr CSV preview subprocess did not load on Windows CI');
-      throw new Error('readr CSV preview did not produce column headers within 45 s');
-    }
+    await awaitPreviewOrSkip(dialog, previewFrame);
 
+    const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
     await expect(firstColHeader).toHaveText(/^a/);
     await expect(previewFrame.locator('th[data-col-idx="2"]')).toHaveText(/^b/);
     await expect(previewFrame.locator('th[data-col-idx="3"]')).toHaveText(/^c/);
@@ -141,20 +147,8 @@ test.describe('Import Dataset (readr)', () => {
       page, consoleActions, `${sandbox.dir}/summary.csv`,
     );
 
-    // Gate on the preview being up (first data column header). initSidebar
-    // runs during the grid's data-mode bootstrap, so the sidebar's
-    // collapsed/expanded state is settled by the time the header is visible.
-    // Same soft-skip as above for Windows CI subprocess issues.
-    const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
-    const previewReady = await firstColHeader
-      .waitFor({ state: 'visible', timeout: 45000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!previewReady) {
-      await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-      test.skip(os.platform() === 'win32', 'readr CSV preview subprocess did not load on Windows CI');
-      throw new Error('readr CSV preview did not produce column headers within 45 s');
-    }
+    // Gate on the preview being up before asserting sidebar state.
+    await awaitPreviewOrSkip(dialog, previewFrame);
 
     // The fix: GridViewerFrame requests show_summary=0, so the panel never
     // gains the "expanded" class and the toggle reports collapsed. Pre-fix the

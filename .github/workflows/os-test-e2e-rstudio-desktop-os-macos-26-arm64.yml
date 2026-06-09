@@ -110,19 +110,7 @@ jobs:
       # built for different R versions / platforms in separate subtrees.
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
-<<<<<<< Updated upstream
       SCCACHE_GHA_ENABLED: 'true'
-=======
-      SCCACHE_DIR: ${{ github.workspace }}/.sccache
-      # Bound the on-disk cache so each per-SHA cache entry stays small. The
-      # sccache cache key includes github.sha (see below), so every commit
-      # writes a fresh entry; without a cap a handful of large entries can
-      # blow past the repo's 10 GB Actions cache budget and LRU-evict the
-      # rstudio-tools / R-libs caches. 5G is a starting estimate for a full
-      # C++ object cache; tune it once "Show sccache stats" reports the real
-      # size.
-      SCCACHE_CACHE_SIZE: '5G'
->>>>>>> Stashed changes
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
     steps:
@@ -153,19 +141,6 @@ jobs:
           restore-keys: |
             rstudio-build-rlibs-arm64-
 
-<<<<<<< Updated upstream
-=======
-      # sccache local cache for the C++ build. Keyed on the commit SHA for
-      # uniqueness; restore-keys pulls the most recent cache as a starting
-      # point so incremental builds get hits even when the SHA changed.
-      - name: Cache sccache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-arm64-${{ github.sha }}
-          restore-keys: |
-            sccache-arm64-
-
       # Cache compiled GWT output (package/osx/build-arm64/gwt/{bin,www,extras}).
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
@@ -181,8 +156,6 @@ jobs:
           restore-keys: |
             rstudio-gwt-arm64-
           save-always: true
-
->>>>>>> Stashed changes
       # install-dependencies-osx (the entry-point script) builds both arm64
       # and x86_64 dependencies on an M1 Mac, which we don't need. Call the
       # per-arch script directly to install only arm64 brew formulae; that

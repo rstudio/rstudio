@@ -278,10 +278,7 @@ jobs:
         run: install-dependencies.cmd
 
       # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
-      # (where node.dir is the bundled node downloaded by install-dependencies.cmd).
-      # install-dependencies.cmd runs `npm install --global yarn` but Node 22's global
-      # GWT's build.xml checks ${node.dir}/node_modules/yarn/bin/yarn.cmd via
-      # set-if-exists (node.dir = the bundled node downloaded by install-deps).
+      # via set-if-exists (node.dir = the bundled node downloaded by install-deps).
       # Installing directly into the bundled node dir via npm --prefix pollutes
       # it with an incompatible node_modules/npm tree (system npm vs bundled npm),
       # which breaks the Electron packaging step later. Instead: install yarn into
@@ -444,7 +441,8 @@ jobs:
           # Prepend the rig-installed R to PATH so it wins over any R version
           # pre-installed on the runner image (e.g. R 4.6 shipped on windows-2025).
           # rig installs to C:\Program Files\R\R-{version}\bin\x64 on Windows.
-          $rBin = "C:\Program Files\R\R-$env:R_VERSION\bin\x64"
+          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
+          $rBin = "$rHome\bin\x64"
           Write-Host "Prepending R bin to PATH: $rBin"
           "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
