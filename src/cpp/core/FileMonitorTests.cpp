@@ -527,6 +527,16 @@ TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathFormRecursive)
                          nested.getAbsolutePath());
    }));
 
+   // the recursive branch can also emit events for enclosing directories
+   // (e.g. a FileModified for subdir); every event must be in link form
+   std::string linkPrefix = link.getAbsolutePath();
+   for (const auto& event : state.events)
+   {
+      EXPECT_TRUE(boost::algorithm::starts_with(event.fileInfo().absolutePath(),
+                                                linkPrefix + "/"))
+         << "event path not in link form: " << event.fileInfo().absolutePath();
+   }
+
    stopMonitor(handle, &state);
 }
 
