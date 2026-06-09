@@ -4287,6 +4287,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    std::string newVersion;
    std::string downloadUrl;
    std::string expectedSha256;
+   // Staged on the success path (authoritative record from buildSuccessOutcome).
+   // Left unset on every other exit, so finish() falls back to preserve-and-bump.
+   boost::optional<ManifestCheckRecord> recordToWrite;
    bool showVersionWarning = false;
    std::string recommendedVersion;
    std::string downloadPageUrl;
@@ -4316,14 +4319,52 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       if (showVersionWarning)
          showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
 
+      // Persist the attempt. The success path stages an authoritative record;
+      // every other exit leaves it unset and we preserve-and-bump (only a success
+      // may set or clear the persisted block). Every real attempt bumps the
+      // timestamp, so a bad manifest cannot bypass the throttle.
+      ManifestCheckRecord record = recordToWrite
+         ? *recordToWrite
+         : throttle::bumpRecord(
+              throttle::readManifestCheckRecord(throttle::manifestCheckStatePath()),
+              std::time(nullptr));
+      Error writeError = throttle::writeManifestCheckRecord(
+         throttle::manifestCheckStatePath(), record);
+      if (writeError)
+         WLOG("Failed to persist manifest-check record: {}", writeError.getMessage());
+
       drainPendingCompletions();
    };
 
    if (fetchError)
    {
       WLOG("Failed to download manifest: {}", fetchError.getMessage());
-      manifestUnavailable = true;
-      errorMessage = fetchError.getMessage();
+
+      bool isInstalled = (installedVersion != "0.0.0");
+      bool protocolMismatch = hasProtocolMismatch(installedVersion);
+      if (isInstalled && !protocolMismatch)
+      {
+         // Compatible install present: use it, surface no error. Reapply any
+         // persisted (manifest-only) unsupported block so a known-bad version
+         // stays blocked across the failure.
+         boost::optional<ManifestCheckRecord> prior =
+            throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+         if (prior)
+         {
+            ResolvedBlock block = throttle::resolvePersistedBlock(
+               *prior, installedVersion, kProtocolVersion);
+            unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+            unsupportedProtocol = block.unsupportedProtocol;
+         }
+      }
+      else
+      {
+         // Not installed, or protocol mismatch: cannot proceed -> block.
+         manifestUnavailable = true;
+         errorMessage = fetchError.getMessage();
+      }
+
+      // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
       finish();
       return;
    }
@@ -4344,8 +4385,19 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    // Protocol mismatch (file I/O, no lock held).
    bool protocolMismatch = hasProtocolMismatch(installedVersion);
    unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
-   unsupportedInstalledVersion =
-      isVersionUnsupported(installedVersion, unsupportedInfo) || protocolMismatch;
+   bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
+
+   // Split the live composite (for s_updateState) from the manifest-only record
+   // (persisted). The local protocol mismatch contributes to the live flag but is
+   // never persisted -- it is recomputed locally, and the reapply paths run only
+   // when there is no current mismatch. The manifest fetch succeeded, so this is
+   // the authoritative result for every remaining exit (including no-compatible-
+   // version): stage it now.
+   SuccessOutcome outcome = throttle::buildSuccessOutcome(
+      std::time(nullptr), installedVersion, kProtocolVersion,
+      versionUnsupported, protocolMismatch, unsupportedProtocol);
+   unsupportedInstalledVersion = outcome.liveUnsupportedInstalledVersion;
+   recordToWrite = outcome.record;
    DLOG("Unsupported check: protocol={}, installedVersion={}",
         unsupportedProtocol, unsupportedInstalledVersion);
 
