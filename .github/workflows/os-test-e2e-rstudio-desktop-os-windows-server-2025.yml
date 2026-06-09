@@ -51,6 +51,10 @@ on:
     inputs:
       build_from_source:
         type: boolean
+        # Callers (PR dispatcher, seed, scheduled) always pass this explicitly.
+        # false here is a safe fallback — if a caller omits it, the workflow
+        # downloads a daily rather than unexpectedly kicking off a 90-min build.
+        # macOS defaults to true in workflow_call; the asymmetry is intentional.
         default: false
       rstudio_installer_url:
         type: string
