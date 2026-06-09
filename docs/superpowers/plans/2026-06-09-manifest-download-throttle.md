@@ -491,9 +491,9 @@ Replace the body of `src/cpp/session/modules/chat/ChatUpdateThrottle.cpp` (keep 
 #include <string>
 
 #include <shared_core/json/Json.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
 #include <core/system/Xdg.hpp>
 
 using namespace rstudio::core;
@@ -1111,9 +1111,10 @@ to:
    startUpdateCheck(false, forceRecheck, boost::bind(resolveWithUpdateState, cont));
 ```
 
-- [ ] **Step 6: Update the `chatInstallUpdate` caller (force a fresh fetch)**
+- [ ] **Step 6: Update the `chatInstallUpdate` caller (bypass the throttle when a fetch is needed for install)**
 
-Change:
+This is the `else` branch of `chatInstallUpdate` — the path taken only when update
+state is **not** yet populated. Change:
 
 ```cpp
       startUpdateCheck(false, boost::bind(performInstall, cont));
@@ -1124,6 +1125,23 @@ to:
 ```cpp
       startUpdateCheck(false, true, boost::bind(performInstall, cont));
 ```
+
+**Why `force=true` here, and why the populated-state path is left alone:** when
+state is missing, the install needs `startUpdateCheck` to actually fetch the
+manifest to obtain `downloadUrl` / `sha256`. Without `force`, the throttle could
+take the skip path (`resolveWithoutManifestFetch`), which sets
+`updateAvailable=false` and clears the URL, so `performInstall` would then fail
+with "No update available". `force=true` guarantees the fetch happens.
+
+The populated-state branch (`performInstall(cont)` directly) is intentionally
+**not** changed — this matches the approved spec, which keeps installing from the
+already-fetched state. It is safe because `updateAvailable` (and therefore the UI
+Install affordance) is only ever set by a real successful fetch and is cleared by
+a throttled skip; a populated, install-eligible state can only have come from a
+real fetch with a valid URL. Routing this branch through a forced fetch as well
+would make an install fail during a transient manifest-fetch error even when a
+valid offered URL exists, which conflicts with the requirement to "use the
+installed version without an error" when the manifest is momentarily unavailable.
 
 - [ ] **Step 7: Build and run the chat tests**
 
