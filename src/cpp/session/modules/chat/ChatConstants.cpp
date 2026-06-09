@@ -42,6 +42,7 @@ const std::vector<std::string>& rstudioCapabilities()
       "runtime/getActiveSession",
       "runtime/getDetailedContext",
       "runtime/executeCode",
+      "runtime/executeCode/interleavingPrimitives",
       "runtime/getConsoleContent",
       "workspace/readFileContent",
       "workspace/writeFileContent",

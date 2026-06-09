@@ -366,6 +366,8 @@ struct PendingExecutionRequest
    std::string trackingId;
    bool captureOutput;
    bool capturePlot;
+   bool silentExecution;
+   std::string expressionBoundaryHook;
    int timeout;
    std::chrono::steady_clock::time_point queuedTime;
 
@@ -376,9 +378,12 @@ struct PendingExecutionRequest
       const std::string& tid,
       bool capture,
       bool plot,
+      bool silent,
+      const std::string& hook,
       int to)
       : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), timeout(to),
+        captureOutput(capture), capturePlot(plot), silentExecution(silent),
+        expressionBoundaryHook(hook), timeout(to),
         queuedTime(std::chrono::steady_clock::now())
    {
    }
@@ -539,12 +544,53 @@ private:
 class ScopedAgentExecution
 {
 public:
-   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
-   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+   explicit ScopedAgentExecution(bool enabled = true)
+      : enabled_(enabled)
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(true);
+   }
+
+   ~ScopedAgentExecution()
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(false);
+   }
 
    // non-copyable
    ScopedAgentExecution(const ScopedAgentExecution&) = delete;
    ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+
+private:
+   bool enabled_;
+};
+
+class ScopedConsoleOutputSuppression
+{
+public:
+   explicit ScopedConsoleOutputSuppression(bool enabled = true)
+      : enabled_(enabled), previous_(false)
+   {
+      if (enabled_)
+      {
+         previous_ = module_context::isConsoleOutputSuppressed();
+         module_context::setConsoleOutputSuppressed(true);
+      }
+   }
+
+   ~ScopedConsoleOutputSuppression()
+   {
+      if (enabled_)
+         module_context::setConsoleOutputSuppressed(previous_);
+   }
+
+   // non-copyable
+   ScopedConsoleOutputSuppression(const ScopedConsoleOutputSuppression&) = delete;
+   ScopedConsoleOutputSuppression& operator=(const ScopedConsoleOutputSuppression&) = delete;
+
+private:
+   bool enabled_;
+   bool previous_;
 };
 
 // Echo source code with prompts (like evaluate does)
@@ -592,6 +638,31 @@ void echoSourceCode(const std::string& code)
       inputData[kConsoleAgent] = true;
       ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
       module_context::enqueClientEvent(inputEvent);
+   }
+}
+
+void callExpressionBoundaryHook(const std::string& hookName,
+                                SEXP exprSEXP,
+                                SEXP valueSEXP,
+                                bool ok,
+                                bool visible,
+                                SEXP errorSEXP)
+{
+   if (hookName.empty())
+      return;
+
+   Error hookError = r::exec::RFunction(".rs.chat.callExpressionBoundaryHook")
+      .addParam("name", hookName)
+      .addQuotedParam("expr", exprSEXP)
+      .addParam("value", valueSEXP)
+      .addParam("ok", ok)
+      .addParam("visible", visible)
+      .addParam("error", errorSEXP)
+      .call();
+
+   if (hookError)
+   {
+      LOG_DEBUG_MESSAGE("Expression boundary hook failed: " + hookError.getMessage());
    }
 }
 
@@ -1204,6 +1275,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout);
 
 // Process pending execution requests from the queue
@@ -1211,7 +1284,7 @@ void processPendingExecution()
 {
    PendingExecutionRequest request(
       boost::weak_ptr<core::system::ProcessOperations>(),
-      json::Value(), "", "", false, false, 0);
+      json::Value(), "", "", false, false, false, "", 0);
 
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
@@ -1265,6 +1338,7 @@ void processPendingExecution()
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
+                   request.silentExecution, request.expressionBoundaryHook,
                    request.timeout);
 
    // Schedule next request if queued, or clear busy state
@@ -1325,10 +1399,23 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::Object options;
    json::readObject(params, "options", options);
    bool captureOutput = true, capturePlot = false;
+   std::string executionMode = "interactive";
+   std::string expressionBoundaryHook;
    int timeout = 30000;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
+   json::readObject(options, "executionMode", executionMode);
+   json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
    json::readObject(options, "timeout", timeout);
+
+   if (executionMode != "interactive" && executionMode != "silent")
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+         "Invalid executionMode: " + executionMode + ". Expected 'interactive' or 'silent'.");
+      return;
+   }
+
+   bool silentExecution = executionMode == "silent";
 
    // Check if R console is busy and log for debugging
    bool rIsBusy = console_input::executing() || r::session::isBusy();
@@ -1356,7 +1443,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
       s_pendingExecutionQueue.push(PendingExecutionRequest(
          ops.getWeakPtr(), requestId, code, trackingId,
-         captureOutput, capturePlot, timeout));
+         captureOutput, capturePlot, silentExecution, expressionBoundaryHook, timeout));
 
       if (!s_executionScheduled)
       {
@@ -1377,6 +1464,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout)
 {
    if (!pOps)
@@ -1428,6 +1517,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    // Error variable for R execution
    Error error;
+   std::string silentErrorOutput;
 
    // Create execution context with streaming support
    // Pass shared_ptr for safe access from background thread
@@ -1452,10 +1542,14 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Flag that we're executing agent code so console output/error events
    // emitted by R during evaluation get the agent metadata. Uses RAII to
    // guarantee the flag is cleared even if an exception occurs.
-   ScopedAgentExecution agentScope;
+   ScopedAgentExecution agentScope(!silentExecution);
+   ScopedConsoleOutputSuppression consoleOutputScope(silentExecution);
+   std::string activeExpressionBoundaryHook =
+      silentExecution ? std::string() : expressionBoundaryHook;
 
    // Echo source code with prompts (like evaluate does)
-   echoSourceCode(code);
+   if (!silentExecution)
+      echoSourceCode(code);
 
    // Evaluate the code. For multi-line code, we parse it into separate expressions
    // and evaluate each one, mimicking REPL behavior where each line is evaluated
@@ -1498,12 +1592,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
    {
       // Add code to console history so it appears in History tab
-      r::session::consoleHistory().add(code, false);
+      if (!silentExecution)
+         r::session::consoleHistory().add(code, false);
 
       // Fire events to notify modules that code is about to execute
       // (matches behavior of normal console input in SessionConsoleInput.cpp)
-      module_context::events().onBeforeExecute();
-      module_context::events().onConsoleInput(code);
+      if (!silentExecution)
+      {
+         module_context::events().onBeforeExecute();
+         module_context::events().onConsoleInput(code);
+      }
 
       numExpressions = Rf_length(parsedSEXP);
 
@@ -1586,6 +1684,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
             }
 
+            callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, R_NilValue,
+                                       false, false, evalResultSEXP);
+
             error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
          }
@@ -1626,7 +1727,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          bool exprVisible = (visibleValue == TRUE);
 
          // Print visible results immediately (mimics REPL)
-         if (exprVisible)
+         if (exprVisible && !silentExecution)
          {
             Error printError = r::exec::RFunction("print")
                .addParam(exprResult)
@@ -1645,6 +1746,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                module_context::consoleWriteError(userMsg);
             }
          }
+
+         callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
+                                    true, exprVisible, R_NilValue);
       }
    }
 
@@ -1711,26 +1815,36 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
       std::string errorOutput = errorMsg + "\n";
 
-      // Fire signal first so callback captures it
-      module_context::events().onConsoleOutput(
-         module_context::ConsoleOutputError, errorOutput);
+      if (silentExecution)
+      {
+         silentErrorOutput = errorOutput;
+      }
+      else
+      {
+         // Fire signal first so callback captures it
+         module_context::events().onConsoleOutput(
+            module_context::ConsoleOutputError, errorOutput);
 
-      // Send as kConsoleWritePendingError so the event queue's
-      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
-      // "Error" prefix). Clear the agent flag so the event goes through the
-      // plain string buffering path where annotation happens.
-      module_context::setAgentExecuting(false);
-      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
-      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
-      module_context::enqueClientEvent(errorEvent);
+         // Send as kConsoleWritePendingError so the event queue's
+         // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+         // "Error" prefix). Clear the agent flag so the event goes through the
+         // plain string buffering path where annotation happens.
+         module_context::setAgentExecuting(false);
+         console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+         ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+         module_context::enqueClientEvent(errorEvent);
+      }
    }
 
    // Close the agent output group started in echoSourceCode().
    // Clear the agent flag first so the group-end escape goes through the
    // plain string buffering path in the event queue, where it will also be
    // recorded in console actions (so the group close survives session reload).
-   module_context::setAgentExecuting(false);
-   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   if (!silentExecution)
+   {
+      module_context::setAgentExecuting(false);
+      module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   }
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics
@@ -1834,7 +1948,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Build response (same format as before)
    json::Object result;
    result["output"] = execContext.getOutput();
-   result["error"] = execContext.getError();
+   result["error"] = execContext.getError() + silentErrorOutput;
    result["canceled"] = wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;

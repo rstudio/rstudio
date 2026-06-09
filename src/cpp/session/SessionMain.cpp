@@ -1125,6 +1125,9 @@ void rConsoleWrite(const std::string& output, int otype)
          : module_context::ConsoleOutputNormal;
    module_context::events().onConsoleOutput(type, output);
 
+   if (module_context::isConsoleOutputSuppressed())
+      return;
+
    // add to event queue
    int event;
 

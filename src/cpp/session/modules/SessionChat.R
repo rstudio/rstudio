@@ -837,6 +837,23 @@
    })
 })
 
+.rs.addFunction("chat.callExpressionBoundaryHook", function(name, expr, value, ok, visible, error = NULL)
+{
+   if (!nzchar(name))
+      return(invisible(NULL))
+
+   hook <- get0(name, envir = globalenv(), inherits = FALSE)
+   if (!is.function(hook))
+      return(invisible(NULL))
+
+   tryCatch(
+      hook(expr = expr, value = value, ok = ok, visible = visible, error = error),
+      error = function(e) NULL
+   )
+
+   invisible(NULL)
+})
+
 # Helper function to capture a recorded plot as base64-encoded PNG
 .rs.addFunction("chat.capturePlotFromRecorded", function(recordedPlot)
 {
