@@ -8,4 +8,4 @@
 | RHEL 9 / 10, Fedora | [`rstudio-{{< var osVersion >}}-x86_64.rpm`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64.rpm) |
 | RHEL / Fedora (tar.gz) | [`rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz) |
 
-RHEL 8 users may install the RHEL 9 RPM. Ubuntu 20.04, OpenSUSE 15, and SLES 15 do not have a standalone desktop installer.
+Ubuntu 20.04, OpenSUSE 15, and SLES 15 do not have a standalone desktop installer.

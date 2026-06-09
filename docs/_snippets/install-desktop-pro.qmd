@@ -6,4 +6,4 @@
 | Ubuntu 22 / 24, Debian 12 / 13 | [`rstudio-pro-{{< var proVersion >}}-amd64.deb`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-pro-{{< var proVersion >}}-amd64.deb) |
 | RHEL 9 / 10 | [`rstudio-pro-{{< var proVersion >}}-x86_64.rpm`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-pro-{{< var proVersion >}}-x86_64.rpm) |
 
-RHEL 8 users may install the RHEL 9 RPM. Ubuntu 20.04, OpenSUSE 15, and SLES 15 do not have a standalone desktop installer.
+Ubuntu 20.04, OpenSUSE 15, and SLES 15 do not have a standalone desktop installer.
