@@ -135,5 +135,11 @@
   },
   "i18nManager": {
     "errorLocalizingDocument": "Erreur de localisation du document :"
+  },
+  "desktopBrowserWindowTs": {
+    "leavePageTitle": "Quitter la page ?",
+    "leavePageMessage": "Cette page vous demande de confirmer que vous souhaitez la quitter. Les informations saisies ou l’état d’une application en cours d’exécution risquent de ne pas être enregistrés.",
+    "leavePageLeaveButton": "Quitter",
+    "leavePageStayButton": "Rester"
   }
 }

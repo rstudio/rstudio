@@ -367,6 +367,10 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // can grab the splash window before the main app loads (see the
       // automation-bridge poll loop below).
       RS_NO_SPLASH: '1',
+      // Force window closes through even when a page's beforeunload handler
+      // prevents unload; the interactive path shows a native "Leave page?"
+      // dialog that automation cannot dismiss (rstudio#17439).
+      RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
       USERPROFILE: sharedUserHome(),
     },
   };
