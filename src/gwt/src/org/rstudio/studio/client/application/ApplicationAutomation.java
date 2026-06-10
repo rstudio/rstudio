@@ -151,7 +151,13 @@ public class ApplicationAutomation
    //     the actual suspend-for-restart, covering .rs.restartR / restartR
    //     command (kSuspendAndRestart on the server side).
    //   - DeferredInitCompletedEvent: fires once R's deferred init has run for
-   //     each session, signalling that R-to-GWT roundtrips are safe.
+   //     each session, signalling that R-to-GWT roundtrips are safe. NOTE this
+   //     is enqueued once per R *session* (SessionMain::rSessionInitHook), not
+   //     per client connect, so it does NOT re-fire on a re-join -- a page
+   //     reload that reconnects to an R session which already finished deferred
+   //     init (e.g. restoreDefaultPaneAndTabLayoutNoPrompt, which saves prefs
+   //     then WindowEx.reload()s). The re-join is covered separately below by
+   //     reading sessionInfo.deferred_init_completed (mirroring Packages.java).
    //   - OpenProjectErrorEvent: server-emitted client event when a project
    //     open/switch fails before reaching quit. Bridge callers preemptively
    //     reset ready in project.open() to close the kQuit-arrival window;
@@ -177,6 +183,17 @@ public class ApplicationAutomation
             setReadyFlag(false);
       });
       eventBus_.addHandler(OpenProjectErrorEvent.TYPE, event -> setReadyFlag(true));
+
+      // Re-join: a reload that reconnects to a still-running R session which has
+      // already completed its deferred init. kDeferredInitCompleted fired once
+      // for that session and won't fire again (see the event note above), so the
+      // handler is registered for the fresh-start / suspend-resume case while we
+      // recognize the re-join here from sessionInfo. Without this, ready would
+      // stay false forever after such a reload and any test gating on it in a
+      // beforeEach would time out. On a fresh start / suspend-resume the flag is
+      // still false at this point, so the event handler does the work as before.
+      if (session_.getSessionInfo().getDeferredInitCompleted())
+         setReadyFlag(true);
 
       readinessHandlersRegistered_ = true;
    }
