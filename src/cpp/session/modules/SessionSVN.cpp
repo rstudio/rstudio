@@ -15,6 +15,8 @@
 
 #include "SessionSVN.hpp"
 
+#include <algorithm>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
@@ -36,6 +38,7 @@
 #include <core/http/Header.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -547,9 +550,9 @@ void reaugmentSvnIgnore()
 void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
 {
    // close the window between initializeSvn() and file monitor start:
-   // if .positai appeared in that interval, augmentSvnIgnore wasn't aware
-   // of it. Re-run now that monitoring is live; augmentSvnIgnore is
-   // idempotent.
+   // if a Posit Assistant state directory appeared in that interval,
+   // augmentSvnIgnore wasn't aware of it. Re-run now that monitoring is
+   // live; augmentSvnIgnore is idempotent.
    reaugmentSvnIgnore();
 }
 
@@ -558,13 +561,20 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    if (s_workingDir.isEmpty())
       return;
 
-   std::string positaiAbsPath =
-         s_workingDir.completeChildPath(".positai").getAbsolutePath();
+   // re-augment svn:ignore when a Posit Assistant state directory is created
+   // mid-session. We also watch the parent of the nested ".posit/assistant"
+   // (i.e. ".posit") so creation is observed when both are created together;
+   // augmentSvnIgnore re-checks existence and is idempotent.
+   std::vector<std::string> watchPaths;
+   for (const std::string& dir : aiAssistantMonitorPaths())
+      watchPaths.push_back(s_workingDir.completeChildPath(dir).getAbsolutePath());
+
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
-      if (event.fileInfo().absolutePath() != positaiAbsPath)
+      if (std::find(watchPaths.begin(), watchPaths.end(),
+                    event.fileInfo().absolutePath()) == watchPaths.end())
          continue;
 
       reaugmentSvnIgnore();
@@ -1671,7 +1681,7 @@ Error setIgnores(const FilePath& filePath,
    // always remove the temporary file
    Error removeError = ignoresFile.remove();
    if (removeError)
-      LOG_ERROR(error);
+      LOG_ERROR(removeError);
 
    // return svn error status
    return error;
@@ -1805,22 +1815,78 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
    (*pFileObject)["svn_status"] = jsonStatus;
 }
 
+// Ensure `dir`'s svn:ignore property contains `entry`. Used for AI state dirs
+// whose svn:ignore must be set on a subdirectory rather than the working-dir
+// root (svn:ignore matches only immediate children of the directory it is set
+// on). A no-op if `entry` is already present; degrades gracefully (logs and
+// continues) if `dir` is not under version control.
+Error ensureSvnIgnoreEntry(const FilePath& dir, const std::string& entry)
+{
+   core::system::ProcessResult result;
+   Error error = getIgnores(dir, &result);
+   if (error)
+      return error;
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      // most likely `dir` (e.g. ".posit") is not under version control, so
+      // there is nothing to ignore in commits -- continue. svn folds stderr
+      // into stdout (getIgnores passes redirectStdErrToStdOut), so log stdOut.
+      LOG_ERROR_MESSAGE("svn:ignore propget on '" + dir.getAbsolutePath() +
+                        "' failed: " + result.stdOut);
+      return Success();
+   }
+   std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
+
+   boost::regex pattern(aiAssistantStateDirRegex(entry));
+   if (regex_utils::search(svnIgnore, pattern))
+      return Success();
+
+   if (!svnIgnore.empty())
+      svnIgnore += "\n";
+   svnIgnore += entry;
+
+   core::system::ProcessResult setResult;
+   error = setIgnores(dir, svnIgnore, &setResult);
+   if (error)
+      return error;
+   if (setResult.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE("svn:ignore propset on '" + dir.getAbsolutePath() +
+                        "' failed: " + setResult.stdOut);
+
+   return Success();
+}
+
 Error augmentSvnIgnore()
 {
-   // only add the .positai entry when the directory exists in the working
-   // dir. The existence check decouples this from the assistant
-   // preference: .positai belongs to a separate tool that may write it
-   // independent of RStudio's own AI integration state.
-   bool wantPositai = s_workingDir.completeChildPath(".positai").exists();
+   // Partition the present Posit Assistant state directories by where their
+   // svn:ignore entry must live. svn:ignore matches only immediate children of
+   // the directory it is set on, so the nested ".posit/assistant" is ignored
+   // by setting "assistant" on the ".posit" directory rather than at the
+   // working-dir root. The existence check decouples this from the assistant
+   // preference: these directories belong to a separate tool that may write
+   // them independent of RStudio's own AI integration state.
+   std::vector<std::string> rootAiDirs;
+   std::vector<std::pair<FilePath, std::string>> nestedAiDirs;
+   for (const std::string& dir : aiAssistantStateDirs())
+   {
+      FilePath dirPath = s_workingDir.completeChildPath(dir);
+      if (!dirPath.exists())
+         continue;
+      if (dirPath.getParent() == s_workingDir)
+         rootAiDirs.push_back(dir);
+      else
+         nestedAiDirs.push_back({ dirPath.getParent(), dirPath.getFilename() });
+   }
 
-   // check for existing svn:ignore
+   // check for existing svn:ignore on the working dir (svn folds stderr into
+   // stdout, so log stdOut on failure)
    core::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
    if (error)
       return error;
    if (result.exitStatus != EXIT_SUCCESS)
    {
-      LOG_ERROR_MESSAGE(result.stdErr);
+      LOG_ERROR_MESSAGE("svn:ignore propget on working dir failed: " + result.stdOut);
       return Success();
    }
    std::string svnIgnore = boost::algorithm::trim_copy(result.stdOut);
@@ -1833,39 +1899,51 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
-      if (wantPositai)
-         svnIgnore += ".positai\n";
+      for (const std::string& dir : rootAiDirs)
+         svnIgnore += dir + "\n";
+
+      core::system::ProcessResult setResult;
+      error = setIgnores(s_workingDir, svnIgnore, &setResult);
+      if (error)
+         return error;
+      if (setResult.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("svn:ignore propset on working dir failed: " + setResult.stdOut);
    }
    else
    {
-      bool addExtraNewline = svnIgnore.size() > 0
-                             && svnIgnore[svnIgnore.size() - 1] != '\n';
-      if (addExtraNewline)
-         svnIgnore += "\n";
-
       // Add missing entries
       std::string additions;
       if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          additions += ".Rproj.user\n";
-      bool positaiAlreadyInIgnore =
-            regex_utils::search(svnIgnore, boost::regex("^\\.positai$"));
-      if (wantPositai && !positaiAlreadyInIgnore)
-         additions += ".positai\n";
+      for (const std::string& dir : rootAiDirs)
+      {
+         boost::regex pattern(aiAssistantStateDirRegex(dir));
+         if (!regex_utils::search(svnIgnore, pattern))
+            additions += dir + "\n";
+      }
 
-      if (additions.empty())
-         return Success();
+      if (!additions.empty())
+      {
+         if (svnIgnore[svnIgnore.size() - 1] != '\n')
+            svnIgnore += "\n";
+         svnIgnore += additions;
 
-      svnIgnore += additions;
+         core::system::ProcessResult setResult;
+         error = setIgnores(s_workingDir, svnIgnore, &setResult);
+         if (error)
+            return error;
+         if (setResult.exitStatus != EXIT_SUCCESS)
+            LOG_ERROR_MESSAGE("svn:ignore propset on working dir failed: " + setResult.stdOut);
+      }
    }
 
-   // write back svn:ignore
-   core::system::ProcessResult setResult;
-   error = setIgnores(s_workingDir, svnIgnore, &setResult);
-   if (error)
-      return error;
-
-   if (setResult.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE(setResult.stdErr);
+   // nested AI dirs (e.g. ".posit/assistant"): set svn:ignore on the parent
+   for (const auto& nested : nestedAiDirs)
+   {
+      error = ensureSvnIgnoreEntry(nested.first, nested.second);
+      if (error)
+         return error;
+   }
 
    return Success();
 }
@@ -1879,8 +1957,9 @@ Error initialize()
                          boost::regex("^(.+): $"),
                          boost::bind(promptForPassword, _1, _2, _3, _4)));
 
-   // subscribe to project file monitor so we can update svn:ignore when
-   // .positai appears at the working dir root mid-session
+   // subscribe to project file monitor so we can update svn:ignore when a
+   // Posit Assistant state directory appears at the working dir root
+   // mid-session
    projects::FileMonitorCallbacks fileMonitorCallbacks;
    fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
    fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;

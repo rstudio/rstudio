@@ -47,6 +47,7 @@ call :del_if_exists "%localappdata%\R\crash-handler-permission"
 call :del_if_exists "%localappdata%\R\crash-handler.conf"
 call :rmdir_if_exists "%appdata%\R\rsconnect"
 call :rmdir_if_exists "%appdata%\R\config\R\rsconnect"
+call :rmdir_if_exists "%USERPROFILE%\.posit\assistant"
 call :rmdir_if_exists "%USERPROFILE%\.positai"
 
 for /f "tokens=*" %%i in ('powershell -NoProfile -Command "[System.Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)"') do set MyDocsDir=%%i

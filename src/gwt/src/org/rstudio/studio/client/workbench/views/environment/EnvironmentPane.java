@@ -247,9 +247,6 @@ public class EnvironmentPane extends WorkbenchPane
       ElementIds.assignElementId(environmentButton_, ElementIds.MB_ENVIRONMENT_LIST);
       toolbar.addLeftWidget(environmentButton_);
 
-      ThemeStyles styles = ThemeStyles.INSTANCE;
-      toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
-
       SearchWidget searchWidget = new SearchWidget(constants_.searchEnvironment(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)

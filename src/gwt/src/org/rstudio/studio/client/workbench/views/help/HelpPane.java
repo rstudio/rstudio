@@ -605,9 +605,6 @@ public class HelpPane extends WorkbenchPane
       title_.addStyleName(RES.styles().topicTitle());
       toolbar.addLeftPopupMenu(title_, history_.getMenu());
 
-      ThemeStyles styles = ThemeStyles.INSTANCE;
-      toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
-
       final SmallButton btnNext = new SmallButton("&gt;", true);
       btnNext.getElement().setAttribute("aria-label", constants_.findNextLabel());
       btnNext.setTitle(constants_.findNextLabel());

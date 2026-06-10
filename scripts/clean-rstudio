@@ -36,7 +36,9 @@ rm -rf ~/.config/R/rsconnect
 # Copilot, misc. cache
 rm -rf ~/.cache/rstudio
 
-# Posit-ai conversations and auth info
+# Posit Assistant conversations and auth info (.posit/assistant is the current
+# location; .positai is the legacy location)
+rm -rf ~/.posit/assistant
 rm -rf ~/.positai
 
 if [ "${PLATFORM}" = "Darwin" ]; then
