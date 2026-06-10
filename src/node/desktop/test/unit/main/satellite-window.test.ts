@@ -74,6 +74,53 @@ if (!isWindowsDocker()) {
       assert.isTrue(gwtCallbackStub.unregisterOwner.calledOnceWithExactly(win));
     });
 
+    it('prunes the main window satellite bookkeeping once the window is destroyed', async () => {
+      const mainWindowStub = createSinonStubInstance(MainWindow);
+      mainWindowStub.window = new BrowserWindow({ show: false });
+      mainWindowStub.executeJavaScript.resolves();
+
+      const browserWin = new BrowserWindow({ show: false });
+      const win = new SatelliteWindow(
+        mainWindowStub,
+        '_rstudio_satellite_shiny_foreground',
+        browserWin.webContents,
+      );
+
+      // a close attempt by itself must not prune; the close can still be
+      // cancelled by the page's beforeunload handler (rstudio#17439)
+      win.closeEvent({ preventDefault: sinon.stub() } as unknown as Electron.Event);
+      assert.isTrue(mainWindowStub.executeJavaScript.notCalled);
+
+      const closed = new Promise<void>((resolve) => {
+        win.window.once('closed', () => setImmediate(resolve));
+      });
+      win.window.destroy();
+      await closed;
+
+      assert.isTrue(mainWindowStub.executeJavaScript.calledOnce);
+      const script = mainWindowStub.executeJavaScript.firstCall.args[0];
+      assert.include(script, 'unregisterDesktopChildWindow');
+      assert.include(script, '"_rstudio_satellite_shiny_foreground"');
+    });
+
+    it('does not touch the main window when it has already been destroyed', async () => {
+      const mainWindowStub = createSinonStubInstance(MainWindow);
+      mainWindowStub.window = new BrowserWindow({ show: false });
+
+      const browserWin = new BrowserWindow({ show: false });
+      const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
+
+      mainWindowStub.window.destroy();
+
+      const closed = new Promise<void>((resolve) => {
+        win.window.once('closed', () => setImmediate(resolve));
+      });
+      win.window.destroy();
+      await closed;
+
+      assert.isTrue(mainWindowStub.executeJavaScript.notCalled);
+    });
+
     it('keeps a source window registered when the user cancels the close', async () => {
       const mainWindowStub = createSinonStubInstance(MainWindow);
       const gwtCallbackStub = createSinonStubInstance(GwtCallback);

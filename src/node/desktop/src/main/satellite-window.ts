@@ -50,6 +50,22 @@ export class SatelliteWindow extends GwtWindow {
     // https://github.com/rstudio/rstudio/issues/17439
     this.window.on('closed', () => {
       appState().gwtCallback?.unregisterOwner(this);
+
+      // also prune the main window's satellite bookkeeping. the satellite
+      // normally announces its own closure from a JS unload handler, but that
+      // notification can lose the race with window destruction, leaving a
+      // zombie entry in the GWT SatelliteManager -- a subsequent open of a
+      // satellite with the same name then tries to reactivate the dead window
+      // instead of creating a new one
+      const mainBrowserWindow = mainWindow.window as BrowserWindow | undefined;
+      if (mainBrowserWindow && !mainBrowserWindow.isDestroyed()) {
+        mainWindow
+          .executeJavaScript(
+            `if (window.unregisterDesktopChildWindow)
+               window.unregisterDesktopChildWindow(${JSON.stringify(name)});`,
+          )
+          .catch(logger().logError);
+      }
     });
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
