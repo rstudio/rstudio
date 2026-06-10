@@ -16,6 +16,7 @@ export class SourcePane extends PageObject {
   public nesDeletionMarker: Locator;
   public nesDiscard: Locator;
   public nesGutter: Locator;
+  public nesOffscreenGutter: Locator;
   public publishBtn: Locator;
   public formatOptions: Locator;
   public viewerPaneOption: Locator;
@@ -43,6 +44,9 @@ export class SourcePane extends PageObject {
     this.nesDiscard = page.locator("xpath=//*[text()='Discard']");
     this.nesDeletionMarker = page.locator('[class*=ace_next-edit-suggestion-deletion]');
     this.nesGutter = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[contains(@class,'ace_nes-gutter')]");
+    // Edge-pinned arrow shown in the gutter while an active suggestion is
+    // scrolled out of view; clicking it navigates to the suggestion.
+    this.nesOffscreenGutter = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[contains(@class,'ace_nes-offscreen-gutter')]");
     // The toolbar locators below scope to the visible tabpanel (same pattern as
     // contentPane / aceTextInput above). Each open editor tab renders its own
     // copy of these buttons; a plain page-wide locator triggers Playwright's

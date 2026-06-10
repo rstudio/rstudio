@@ -46,6 +46,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_multiline_diff.R`,
         `${prefix}_nes_multiline_apply.R`,
         `${prefix}_ghost_dismiss.R`,
+        `${prefix}_ghost_cursor_dismiss.R`,
         `${prefix}_nes_dismiss.R`,
         `${prefix}_nes_persist.R`,
         `${prefix}_nes_leak_a.R`,
@@ -389,6 +390,46 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
       }).toPass({ timeout: 15000 });
       console.log('  Ghost text dismissed with Escape');
+
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    });
+
+    test('ghost text dismissed when cursor moves away', async ({ rstudioPage: page }) => {
+      const fileName = `${prefix}_ghost_cursor_dismiss.R`;
+
+      const fileContent =
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
+
+      await sourceActions.createAndOpenFile(fileName, fileContent);
+      await sleep(1000);
+
+      await sourcePane.contentPane.click();
+      await sleep(500);
+
+      await page.keyboard.type('x <- func');
+
+      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      console.log('  Ghost text visible — moving cursor away');
+
+      // Moving the cursor away from the completion point should dismiss the
+      // ghost text (https://github.com/rstudio/rstudio/issues/17147). As in
+      // the Escape test above, gate on no in-flight completion request so a
+      // late response can't re-render ghost text after we check.
+      await expect(async () => {
+        await page.keyboard.press('ArrowLeft');
+        await expect(sourcePane.statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
+        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
+      console.log('  Ghost text dismissed by cursor movement');
+
+      // The typed text is intact and the suggestion was not inserted
+      const content = await sourceActions.getEditorContent();
+      expect(content).toContain('x <- func');
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
@@ -759,6 +800,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_multiline_diff.R`,
         `${prefix}_nes_multiline_apply.R`,
         `${prefix}_ghost_dismiss.R`,
+        `${prefix}_ghost_cursor_dismiss.R`,
         `${prefix}_nes_dismiss.R`,
         `${prefix}_nes_persist.R`,
         `${prefix}_nes_leak_a.R`,

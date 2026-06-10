@@ -318,6 +318,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
+   public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
@@ -2604,7 +2605,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".posit", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -4224,6 +4225,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   public PrefValue<Boolean> assistantUseSystemCa()
+   {
+      return bool(
+         "assistant_use_system_ca",
+         _constants.assistantUseSystemCaTitle(), 
+         _constants.assistantUseSystemCaDescription(), 
+         false);
+   }
+
+   /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
     */
    public PrefValue<Boolean> positAssistantTestManifest()
@@ -5065,6 +5078,8 @@ public class UserPrefsAccessor extends Prefs
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
+      if (source.hasKey("assistant_use_system_ca"))
+         assistantUseSystemCa().setValue(layer, source.getBool("assistant_use_system_ca"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
       if (source.hasKey("copilot_enabled"))
@@ -5381,6 +5396,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
+      prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());

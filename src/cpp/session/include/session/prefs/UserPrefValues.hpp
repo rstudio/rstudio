@@ -466,6 +466,7 @@ namespace prefs {
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
+#define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
@@ -2147,6 +2148,12 @@ public:
     */
    bool assistantToolbarButtonVisible();
    core::Error setAssistantToolbarButtonVisible(bool val);
+
+   /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   bool assistantUseSystemCa();
+   core::Error setAssistantUseSystemCa(bool val);
 
    /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.

@@ -57,7 +57,7 @@ export class ChatPaneActions {
    * Polls (a) clicking through any trust dialog that appears late and (b)
    * failing fast with an actionable message if a Sign-In button shows up,
    * since seeded credentials are the only auth path the test harness supports.
-   * The host's Posit Assistant rotates the refresh token in ~/.positai/store,
+   * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
    * so seeded copies can be invalidated between globalSetup and test
    * execution; surfacing that as "sign in on the host and re-run" is more
    * useful than the cryptic "input not editable after 15s" downstream timeout
@@ -104,13 +104,13 @@ export class ChatPaneActions {
 
     // Deadline expired -- pick the most actionable error message.
     // The Sign-In affordance can flash briefly during backend startup while
-    // credentials are still being loaded from ~/.positai/store, so we only
+    // credentials are still being loaded from ~/.posit/assistant/store, so we only
     // treat it as a hard failure when it's still visible at the end of the
     // polling window.
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
         'Posit Assistant requires sign-in despite seeded credentials. ' +
-        'Sign in on the host (~/.positai) and re-run.'
+        'Sign in on the host (~/.posit/assistant) and re-run.'
       );
     }
 

@@ -13,7 +13,7 @@ const PROVIDER_LABEL: Record<AIProvider, string> = {
 };
 
 const PROVIDER_HOST_PATH: Record<AIProvider, string> = {
-  positai: '~/.positai',
+  positai: '~/.posit/assistant or legacy ~/.positai',
   copilot: process.platform === 'win32'
     ? '%LOCALAPPDATA%\\github-copilot'
     : '~/.config/github-copilot',
