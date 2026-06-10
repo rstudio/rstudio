@@ -126,14 +126,14 @@
 }
 
 .replaceLabel {
-   margin-top: 1px;
+   margin-top: 2px;
    padding-right: 6px;
 }
 
 .replaceTextBox {
-   padding-top: 0;
-   padding-bottom: 0;
-   margin-top: 2px;
+   padding-top: 1px;
+   padding-bottom: 1px;
+   margin-top: 3px;
 }
 
 .rstudio-themes-dark .replaceTextBox {
