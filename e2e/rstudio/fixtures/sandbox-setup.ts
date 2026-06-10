@@ -19,6 +19,16 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  *   PW_SANDBOX_ROOT_CREATE         "1"/"true" to mkdir PW_SANDBOX_ROOT if
  *                                  missing. Default is to fail loudly on a
  *                                  missing parent so typos surface immediately.
+ *   PW_SEED_PAI                    Path to a Posit Assistant install directory
+ *                                  (e.g. ~/.local/share/rstudio/pai, as
+ *                                  produced by the assistant repo's
+ *                                  `npm run deploy:rstudio`). Copied into the
+ *                                  sandbox data-home so tests run against
+ *                                  that local build instead of downloading
+ *                                  the official package. The seeded build's
+ *                                  package.json version and protocol.json
+ *                                  must satisfy the IDE under test, or it
+ *                                  will be treated as needing an update.
  *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" to opt out of copying real AI
  *                                  credentials into the sandbox. By default,
  *                                  if the Posit Assistant state dir
@@ -73,6 +83,19 @@ export default async function globalSetup() {
   // on save) is one place that breaks under a path-form mismatch.
   const sandbox = fs.realpathSync(fs.mkdtempSync(path.join(parent, 'pw_sandbox_')));
   fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
+
+  // Seed a locally built Posit Assistant into the sandbox data-home so tests
+  // exercise it instead of downloading the official package.
+  const seedPai = process.env.PW_SEED_PAI;
+  if (seedPai) {
+    if (!fs.existsSync(path.join(seedPai, 'bin', 'package.json'))) {
+      throw new Error(
+        `PW_SEED_PAI="${seedPai}" does not look like a Posit Assistant install (missing bin/package.json)`,
+      );
+    }
+    fs.cpSync(seedPai, path.join(sandbox, 'data-home', 'pai'), { recursive: true });
+    console.log(`[sandbox] seeded data-home/pai from ${seedPai}`);
+  }
 
   const userHome = path.join(sandbox, 'user-home');
   fs.mkdirSync(userHome, { recursive: true });
