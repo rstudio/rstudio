@@ -112,7 +112,11 @@ public class FindOutputPane extends WorkbenchPane
       SecondaryToolbar replaceToolbar = new SecondaryToolbar(constants_.replaceLabel());
       replaceMode_ = true;
 
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      resources.styles().ensureInjected();
+
       replaceTextBox_ = new TextBox();
+      replaceTextBox_.addStyleName(resources.styles().replaceTextBox());
       ElementIds.assignElementId(replaceTextBox_, ElementIds.FIND_REPLACE_TEXT);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
@@ -122,6 +126,7 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
       FormLabel replaceLabel = new FormLabel(constants_.replaceWithLabel(), replaceTextBox_);
+      replaceLabel.addStyleName(resources.styles().replaceLabel());
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
 

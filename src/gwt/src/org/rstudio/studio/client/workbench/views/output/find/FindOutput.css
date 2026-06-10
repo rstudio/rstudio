@@ -6,6 +6,8 @@
 
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 @eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
 .findOutput {
    width: 100%;
@@ -121,4 +123,22 @@
 .editor_dark .findOutputReplace ins {
    background-color: #2D5E2D;
    color: #FFF;
+}
+
+.replaceLabel {
+   margin-top: 1px;
+   padding-right: 6px;
+}
+
+.replaceTextBox {
+   padding-top: 0;
+   padding-bottom: 0;
+   margin-top: 2px;
+}
+
+.rstudio-themes-dark .replaceTextBox {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border: 1px solid THEME_DARKGREY_BORDER;
+   color: #EEE;
+   color-scheme: dark;
 }
