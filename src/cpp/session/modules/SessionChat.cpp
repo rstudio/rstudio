@@ -3722,9 +3722,19 @@ void fetchManifestAsync(
          });
       };
 
+   // Trim the child's startup to the packages the download command actually uses.
+   // download.file lives in utils; everything else in the command (options,
+   // tempfile, readLines, cat) is base. --vanilla still loads R's full default
+   // package set; forcing R_DEFAULT_PACKAGES=utils skips the rest of it
+   // (methods/stats/graphics/grDevices/datasets) -- the bulk of cold R
+   // startup -- cutting spawn latency
+   // (the dominant cost of this fetch -- the manifest itself is tiny).
+   core::system::Options childEnv;
+   core::system::setenv(&childEnv, "R_DEFAULT_PACKAGES", "utils");
+
    boost::shared_ptr<ManifestDownload> pProc =
       boost::make_shared<ManifestDownload>(complete);
-   pProc->start(command.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
+   pProc->start(command.c_str(), childEnv, FilePath(), async_r::R_PROCESS_VANILLA);
 
    // Deadline (bounded by main-thread availability: like the completion, it fires
    // when the main thread next services its scheduled-work queue, so a main thread
