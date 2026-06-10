@@ -1329,6 +1329,18 @@
    clear = function() { .rs.clearUserPref("auto_run_setup_chunk") }
 )
 
+# Execute inline R code when previewing notebooks
+#
+# Whether to evaluate a notebook's inline R code in the current R session when
+# creating a notebook preview, so that inline code can use objects in the global
+# environment. When disabled, inline code is evaluated in the background
+# rendering process instead.
+.rs.uiPrefs$notebookExecuteInlineChunks <- list(
+   get = function() { .rs.getUserPref("notebook_execute_inline_chunks") },
+   set = function(value) { .rs.setUserPref("notebook_execute_inline_chunks", value) },
+   clear = function() { .rs.clearUserPref("notebook_execute_inline_chunks") }
+)
+
 # Hide console when running R Markdown chunks
 #
 # Whether to hide the R console when executing inline R Markdown chunks.

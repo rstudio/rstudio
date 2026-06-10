@@ -512,6 +512,84 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    result
 })
 
+.rs.addFunction("rnb.extractInlineRCode", function(contents)
+{
+   # remove lines within (or delimiting) fenced code blocks; knitr only
+   # evaluates inline R code within prose
+   fences <- grepl("^[\t >]*(```|~~~)", contents)
+   fenced <- (cumsum(fences) %% 2 == 1) | fences
+   prose <- contents[!fenced]
+
+   # use knitr's own parser to locate inline R code
+   parsed <- knitr:::parse_inline(prose, knitr::all_patterns$md)
+   unique(parsed$code)
+})
+
+#' Evaluate a document's inline R chunks in this session.
+#'
+#' Inline R code is evaluated against the global environment at render
+#' time, so it cannot be evaluated by the background process used to
+#' render a notebook from its chunk cache. Instead, the parent session
+#' evaluates inline chunks up front and passes their outputs to the
+#' child process, which installs them via an 'evaluate.inline' knit
+#' hook. See https://github.com/rstudio/rstudio/issues/17521.
+#'
+#' @param rmdPath Path to the R Markdown document.
+#' @param encoding The document's encoding.
+#'
+#' @return The path to an .rds file containing the inline chunk outputs,
+#'   or the empty string if the document has no inline chunks (or their
+#'   outputs could not be computed).
+.rs.addFunction("rnb.evaluateInlineChunks", function(rmdPath, encoding = "UTF-8")
+{
+   tryCatch(
+      .rs.rnb.evaluateInlineChunksImpl(rmdPath, encoding),
+      error = function(e) ""
+   )
+})
+
+.rs.addFunction("rnb.evaluateInlineChunksImpl", function(rmdPath, encoding)
+{
+   if (!requireNamespace("knitr", quietly = TRUE))
+      return("")
+
+   con <- file(rmdPath, encoding = encoding)
+   on.exit(close(con), add = TRUE)
+   contents <- readLines(con, warn = FALSE)
+
+   code <- .rs.rnb.extractInlineRCode(contents)
+   if (length(code) == 0)
+      return("")
+
+   # replicate what knitr's inline_exec() would do during an in-session
+   # render: evaluate each expression, then format the result with the
+   # inline hook so the child only needs to substitute a string
+   evaluateHook <- knitr::knit_hooks$get("evaluate.inline")
+   inlineHook <- knitr::knit_hooks$get("inline")
+
+   outputs <- lapply(code, function(snippet) {
+      tryCatch({
+         result <- evaluateHook(snippet, .GlobalEnv)
+         if (inherits(result, c("knit_asis", "knit_asis_url")))
+            result <- knitr:::sew(result, inline = TRUE)
+
+         text <- if (length(result))
+            paste(inlineHook(result), collapse = "")
+         else
+            ""
+
+         list(text = text)
+      }, error = function(e) {
+         list(error = conditionMessage(e))
+      })
+   })
+   names(outputs) <- code
+
+   cachePath <- tempfile("rstudio-notebook-inline-", fileext = ".rds")
+   saveRDS(outputs, file = cachePath)
+   cachePath
+})
+
 .rs.addFunction("rnb.readConsoleData", function(encodedData)
 {
    # read from CSV

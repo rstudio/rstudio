@@ -25,6 +25,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
@@ -591,6 +592,21 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
          encoding = pDoc->encoding();
    }
 
+   // inline R code is evaluated against the global environment at render
+   // time, which the child process cannot see; evaluate inline chunks here
+   // and pass their outputs to the child (#17521)
+   std::string inlineCachePath;
+   if (prefs::userPrefs().notebookExecuteInlineChunks())
+   {
+      r::exec::RFunction evaluateInlineChunks(".rs.rnb.evaluateInlineChunks");
+      evaluateInlineChunks.addParam(
+         string_utils::utf8ToSystem(rmdFile.getAbsolutePath()));
+      evaluateInlineChunks.addParam(encoding);
+      Error inlineError = evaluateInlineChunks.call(&inlineCachePath);
+      if (inlineError)
+         LOG_ERROR(inlineError);
+   }
+
    // spawn the async renderer
    NotebookCacheRenderer::render(
       rmdFile.getAbsolutePath(),
@@ -598,7 +614,8 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       outputFile.getAbsolutePath(),
       docId,
       rmdPath,
-      encoding);
+      encoding,
+      inlineCachePath);
 
    json::Object result;
    result["started"] = true;

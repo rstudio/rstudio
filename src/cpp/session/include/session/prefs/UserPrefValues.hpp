@@ -248,6 +248,7 @@ namespace prefs {
 #define kShowDocOutlineRmd "show_doc_outline_rmd"
 #define kDocumentOutlineFontSize "document_outline_font_size"
 #define kAutoRunSetupChunk "auto_run_setup_chunk"
+#define kNotebookExecuteInlineChunks "notebook_execute_inline_chunks"
 #define kHideConsoleOnChunkExecute "hide_console_on_chunk_execute"
 #define kExecutionBehavior "execution_behavior"
 #define kExecutionBehaviorLine "line"
@@ -1356,6 +1357,12 @@ public:
     */
    bool autoRunSetupChunk();
    core::Error setAutoRunSetupChunk(bool val);
+
+   /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   bool notebookExecuteInlineChunks();
+   core::Error setNotebookExecuteInlineChunks(bool val);
 
    /**
     * Whether to hide the R console when executing inline R Markdown chunks.

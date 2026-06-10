@@ -18,3 +18,67 @@ test_that("#| comments are removed by .rs.extractChunkInnerCode() (#11606)", {
    extract <- .rs.extractChunkInnerCode(code)
    expect_true(!any(grepl("#[|]", extract)))
 })
+
+test_that(".rs.rnb.extractInlineRCode() finds inline R code in prose only", {
+   contents <- c(
+      "---",
+      "title: test",
+      "output: html_notebook",
+      "---",
+      "",
+      "```{r}",
+      "x <- 42  # `r 1 + 1` within a chunk is not inline code",
+      "```",
+      "",
+      "The answer is `r 1 + 1`.",
+      "Today is `r Sys.Date()`."
+   )
+
+   code <- .rs.rnb.extractInlineRCode(contents)
+   expect_equal(code, c("1 + 1", "Sys.Date()"))
+})
+
+test_that(".rs.rnb.evaluateInlineChunks() evaluates inline chunks (#17521)", {
+   rmdPath <- tempfile(fileext = ".Rmd")
+   writeLines(c(
+      "---",
+      "title: test",
+      "output: html_notebook",
+      "---",
+      "",
+      "Value: `r .rs.test.inlineValue * 2`",
+      "Broken: `r .rs.test.noSuchObject`"
+   ), con = rmdPath)
+   on.exit(unlink(rmdPath), add = TRUE)
+
+   # inline chunks are evaluated against the global environment
+   assign(".rs.test.inlineValue", 21, envir = globalenv())
+   on.exit(rm(".rs.test.inlineValue", envir = globalenv()), add = TRUE)
+
+   cachePath <- .rs.rnb.evaluateInlineChunks(rmdPath)
+   expect_true(file.exists(cachePath))
+   on.exit(unlink(cachePath), add = TRUE)
+
+   outputs <- readRDS(cachePath)
+   expect_equal(outputs[[".rs.test.inlineValue * 2"]]$text, "42")
+   expect_match(outputs[[".rs.test.noSuchObject"]]$error, "not found")
+})
+
+test_that(".rs.rnb.evaluateInlineChunks() returns '' when no inline code present", {
+   rmdPath <- tempfile(fileext = ".Rmd")
+   writeLines(c(
+      "---",
+      "title: test",
+      "output: html_notebook",
+      "---",
+      "",
+      "Just prose; the chunk below is not inline code.",
+      "",
+      "```{r}",
+      "1 + 1",
+      "```"
+   ), con = rmdPath)
+   on.exit(unlink(rmdPath), add = TRUE)
+
+   expect_equal(.rs.rnb.evaluateInlineChunks(rmdPath), "")
+})

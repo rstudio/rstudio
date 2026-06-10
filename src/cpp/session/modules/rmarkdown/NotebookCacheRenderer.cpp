@@ -80,7 +80,8 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
                                    const std::string& outputPath,
                                    const std::string& docId,
                                    const std::string& docPath,
-                                   const std::string& encoding)
+                                   const std::string& encoding,
+                                   const std::string& inlineCachePath)
 {
    // cancel any in-progress render for the same document so we always
    // render the latest save; renders for other documents are left alone
@@ -118,6 +119,7 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
    core::system::setenv(&environment, "RS_NB_CACHE_PATH", cachePath);
    core::system::setenv(&environment, "RS_NB_OUTPUT_PATH", outputPath);
    core::system::setenv(&environment, "RS_NB_ENCODING", encoding);
+   core::system::setenv(&environment, "RS_NB_INLINE_CACHE", inlineCachePath);
 
    // store weak reference before starting (the process holds itself alive
    // via shared_from_this, but we want isRunning() to work immediately)

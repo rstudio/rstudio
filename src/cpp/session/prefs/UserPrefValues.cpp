@@ -1870,6 +1870,19 @@ core::Error UserPrefValues::setAutoRunSetupChunk(bool val)
 }
 
 /**
+ * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+ */
+bool UserPrefValues::notebookExecuteInlineChunks()
+{
+   return readPref<bool>("notebook_execute_inline_chunks");
+}
+
+core::Error UserPrefValues::setNotebookExecuteInlineChunks(bool val)
+{
+   return writePref("notebook_execute_inline_chunks", val);
+}
+
+/**
  * Whether to hide the R console when executing inline R Markdown chunks.
  */
 bool UserPrefValues::hideConsoleOnChunkExecute()
@@ -3990,6 +4003,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowDocOutlineRmd,
       kDocumentOutlineFontSize,
       kAutoRunSetupChunk,
+      kNotebookExecuteInlineChunks,
       kHideConsoleOnChunkExecute,
       kExecutionBehavior,
       kShowTerminalTab,

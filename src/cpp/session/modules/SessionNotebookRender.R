@@ -241,6 +241,27 @@
 
 # --- Main render (after SessionRmdNotebook.R is sourced) ------------------
 
+# Installs inline chunk outputs computed by the parent session (see
+# .rs.rnb.evaluateInlineChunks). Inline R code is evaluated against the
+# global environment at render time, which is not available in this child
+# process, so the parent evaluates inline chunks and passes their formatted
+# outputs along; we substitute them via the 'evaluate.inline' knit hook.
+.rs.addFunction("rnb.installInlineOutputs", function(cachePath)
+{
+   outputs <- readRDS(cachePath)
+   unlink(cachePath)
+
+   defaultHook <- knitr::knit_hooks$get("evaluate.inline")
+   knitr::knit_hooks$set(evaluate.inline = function(code, envir) {
+      cached <- outputs[[code]]
+      if (is.null(cached))
+         return(defaultHook(code, envir))
+      if (!is.null(cached$error))
+         stop(cached$error, call. = FALSE)
+      cached$text
+   })
+})
+
 .rs.addFunction("renderNotebookAsync", function()
 {
    rmdPath    <- Sys.getenv("RS_NB_RMD_PATH")
@@ -248,6 +269,17 @@
 
    if (nchar(rmdPath) == 0 || nchar(outputPath) == 0)
       stop("RS_NB_RMD_PATH and RS_NB_OUTPUT_PATH must be set")
+
+   inlinePath <- Sys.getenv("RS_NB_INLINE_CACHE")
+   if (nzchar(inlinePath) && file.exists(inlinePath))
+   {
+      # failure to install inline outputs is not fatal; the render
+      # proceeds and inline chunks are evaluated in this process
+      tryCatch(
+         .rs.rnb.installInlineOutputs(inlinePath),
+         error = function(e) message(e)
+      )
+   }
 
    tryCatch({
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)

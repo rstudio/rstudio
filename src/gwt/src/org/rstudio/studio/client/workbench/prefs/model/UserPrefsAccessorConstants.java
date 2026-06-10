@@ -1206,6 +1206,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoRunSetupChunkDescription();
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   @DefaultStringValue("Execute inline R code when previewing notebooks")
+   String notebookExecuteInlineChunksTitle();
+   @DefaultStringValue("Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.")
+   String notebookExecuteInlineChunksDescription();
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    @DefaultStringValue("Hide console when running R Markdown chunks")

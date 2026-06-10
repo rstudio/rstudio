@@ -982,6 +982,12 @@
             "title": "Automatically run Setup chunk when needed",
             "description": "Whether to automatically run an R Markdown document's Setup chunk before running other chunks."
         },
+        "notebook_execute_inline_chunks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Execute inline R code when previewing notebooks",
+            "description": "Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead."
+        },
         "hide_console_on_chunk_execute": {
             "type": "boolean",
             "default": true,
