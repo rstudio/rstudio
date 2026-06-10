@@ -1902,7 +1902,7 @@
         },
         "posit_assistant_update_check_interval_hours": {
             "type": "integer",
-            "default": 24,
+            "default": 2,
             "title": "Posit Assistant update check interval (hours)",
             "description": "The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time."
         },

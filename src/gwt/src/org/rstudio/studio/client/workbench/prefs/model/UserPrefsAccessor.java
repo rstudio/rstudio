@@ -4258,7 +4258,7 @@ public class UserPrefsAccessor extends Prefs
          "posit_assistant_update_check_interval_hours",
          _constants.positAssistantUpdateCheckIntervalHoursTitle(), 
          _constants.positAssistantUpdateCheckIntervalHoursDescription(), 
-         24);
+         2);
    }
 
    /**
