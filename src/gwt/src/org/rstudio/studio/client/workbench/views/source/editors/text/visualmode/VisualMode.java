@@ -65,6 +65,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.Source;
@@ -194,13 +195,15 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    @Inject
-   public void initialize(Commands commands, 
-                          UserPrefs prefs, 
-                          SourceServerOperations source)
+   public void initialize(Commands commands,
+                          UserPrefs prefs,
+                          SourceServerOperations source,
+                          Session session)
    {
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
+      session_ = session;
    }
    
    public void onDismiss()
@@ -1832,8 +1835,12 @@ public class VisualMode implements VisualModeEditorSync,
    
    
    private String validateActivation()
-   { 
-      if (this.docDisplay_.hasActiveCollabSession())
+   {
+      if (!VisualModeUtil.isVisualEditingEnabled(session_.getSessionInfo()))
+      {
+         return constants_.cantEnterVisualModeInUntrustedProject();
+      }
+      else if (this.docDisplay_.hasActiveCollabSession())
       {
          return constants_.cantEnterVisualModeUsingRealtime();
       }
@@ -1941,6 +1948,7 @@ public class VisualMode implements VisualModeEditorSync,
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;
+   private Session session_;
    private DocDisplay activeEditor_;  // the current embedded editor
    
    private final TextEditingTarget target_;

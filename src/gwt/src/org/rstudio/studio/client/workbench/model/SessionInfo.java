@@ -657,8 +657,22 @@ public class SessionInfo extends JavaScriptObject
       return this.trust_request;
    }-*/;
 
-   public final native boolean getStartupFilesSuppressed() /*-{
-      return this.startup_files_suppressed || false;
+   /**
+    * @return Whether the current project is untrusted (either explicitly, or
+    * because a trust decision is still pending). Untrusted projects run in
+    * restricted mode; see SessionTrust.hpp for the consequences.
+    */
+   public final native boolean getProjectUntrusted() /*-{
+      return this.project_untrusted || false;
+   }-*/;
+
+   /**
+    * Refreshes the cached trust state. Called on deferred init so that the
+    * client reflects the trust status of a restarted session (e.g. after the
+    * user grants or revokes trust for the project directory).
+    */
+   public final native void setProjectUntrusted(boolean untrusted) /*-{
+      this.project_untrusted = untrusted;
    }-*/;
 
    /**
