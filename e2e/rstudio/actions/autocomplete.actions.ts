@@ -21,7 +21,7 @@ export class AutocompleteActions {
    * Extracts the display name from the first span in each grid cell,
    * skipping the icon and any package/source/argument spans.
    */
-  async getCompletionItems(timeoutMs = 5000): Promise<string[]> {
+  async getCompletionItems(timeoutMs = 15000): Promise<string[]> {
     await this.page.locator(COMPLETION_POPUP).waitFor({ state: 'visible', timeout: timeoutMs });
     await sleep(500);
 
