@@ -450,6 +450,19 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
   );
 }
 
+// The bridge (and its prefs map) is transiently absent during session
+// restarts -- project open/close, Restart R -- and a preceding spec can hand
+// off the worker with such a reload still in flight. Mirror executeCommand's
+// guard: wait for the specific pref entry to land before touching it, so the
+// steady-state path adds no latency while the restart path stops racing.
+async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
+  await page.waitForFunction(
+    (prefName) => window.rstudio?.prefs?.[prefName] !== undefined,
+    camelName,
+    { timeout: 10000, polling: 50 },
+  );
+}
+
 /**
  * Set a user preference and persist it. Equivalent to
  * `.rs.api.writeRStudioPreference(name, value)` / `.rs.uiPrefs$<name>$set(value)`.
@@ -463,6 +476,7 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   await withBridgeLog('setPref', `${name}=${JSON.stringify(value)}`, async () => {
     const camel = snakeToCamel(name);
+    await waitForPrefEntry(page, camel);
     await page.evaluate(async ({ prefName, prefValue }) => {
       const r = window.rstudio;
       if (!r)
@@ -483,6 +497,7 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
 export async function clearPref(page: Page, name: string): Promise<void> {
   await withBridgeLog('clearPref', name, async () => {
     const camel = snakeToCamel(name);
+    await waitForPrefEntry(page, camel);
     await page.evaluate(async (prefName) => {
       const r = window.rstudio;
       if (!r)
