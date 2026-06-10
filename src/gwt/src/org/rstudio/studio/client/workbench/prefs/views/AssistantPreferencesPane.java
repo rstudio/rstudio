@@ -245,6 +245,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
       nvwAssistantUpdateCheckInterval_ = numericPref(
             prefsConstants_.positAssistantUpdateCheckIntervalHoursTitle(),
+            constants_.assistantUpdateCheckIntervalTooltip(),
             NumericValueWidget.ZeroMinimum,
             NumericValueWidget.NoMaximum,
             prefs_.positAssistantUpdateCheckIntervalHours());
