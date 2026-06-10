@@ -11,7 +11,7 @@ const CHAT_FRAME_SELECTOR = "iframe[title='Posit Assistant']";
 export class ChatPane extends FramePageObject {
   // Inside the chat iframe
   public chatRoot: Locator;
-  public chatTextarea: Locator;
+  public chatInput: Locator;
   public messageItem: Locator;
   public allowBtn: Locator;
   public allowDropdownTrigger: Locator;
@@ -45,7 +45,10 @@ export class ChatPane extends FramePageObject {
     super(page, CHAT_FRAME_SELECTOR);
 
     this.chatRoot = this.frame.locator('#root');
-    this.chatTextarea = this.frame.locator('textarea');
+    // PAI 0.4.6 (#1495) rebuilt the composer on TipTap/ProseMirror: the chat
+    // input is now a contenteditable <div class="tiptap-input-editor">, not a
+    // <textarea>. editor.setEditable() toggles its contenteditable attribute.
+    this.chatInput = this.frame.locator('.tiptap-input-editor');
     this.messageItem = this.frame.locator('[data-message-id]');
     this.allowBtn = this.frame.locator("button:has-text('Allow')");
     this.allowDropdownTrigger = this.frame.locator('button.rounded-l-none:has(svg.lucide-chevron-down)');
@@ -89,6 +92,29 @@ export class ChatPane extends FramePageObject {
 
   async isAllowDropdownVisible(): Promise<boolean> {
     return await this.allowDropdownTrigger.isVisible().catch(() => false);
+  }
+
+  /**
+   * The chat composer is ready when it's visible and editable. TipTap reflects
+   * its editable state via the contenteditable attribute (toggled by
+   * editor.setEditable), so we check that rather than isEnabled() -- a
+   * contenteditable <div> is not a form control and always reports "enabled".
+   */
+  async isChatInputReady(): Promise<boolean> {
+    if (!(await this.chatInput.isVisible().catch(() => false))) {
+      return false;
+    }
+    return (await this.chatInput.getAttribute('contenteditable').catch(() => null)) === 'true';
+  }
+
+  /**
+   * Type into the chat composer. Playwright's fill() is unreliable on a
+   * ProseMirror contenteditable (it bypasses the editor's input handling), so
+   * focus the editor and dispatch real key events instead.
+   */
+  async typeMessage(text: string): Promise<void> {
+    await this.chatInput.click();
+    await this.chatInput.pressSequentially(text);
   }
 
   /**

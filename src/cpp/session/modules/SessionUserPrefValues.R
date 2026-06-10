@@ -917,6 +917,16 @@
    clear = function() { .rs.clearUserPref("editor_theme") }
 )
 
+# Ignore project-specific appearance settings
+#
+# Whether to ignore appearance settings (such as the editor theme) configured at
+# the project level, always using the global settings instead.
+.rs.uiPrefs$ignoreProjectAppearance <- list(
+   get = function() { .rs.getUserPref("ignore_project_appearance") },
+   set = function(value) { .rs.setUserPref("ignore_project_appearance", value) },
+   clear = function() { .rs.clearUserPref("ignore_project_appearance") }
+)
+
 # Enable editor fonts on RStudio Server
 #
 # Whether to use a custom editor font in RStudio Server.
@@ -2551,6 +2561,18 @@
    get = function() { .rs.getUserPref("assistant_toolbar_button_visible") },
    set = function(value) { .rs.setUserPref("assistant_toolbar_button_visible", value) },
    clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
+)
+
+# Use the system certificate store (restart required)
+#
+# When enabled, the AI assistant agents trust the operating system certificate
+# store (e.g. the Windows Certificate Store or macOS Keychain) in addition to
+# Node.js's built-in certificate authorities. Useful behind a TLS-inspecting
+# proxy. Restart the R session for the change to take effect.
+.rs.uiPrefs$assistantUseSystemCa <- list(
+   get = function() { .rs.getUserPref("assistant_use_system_ca") },
+   set = function(value) { .rs.setUserPref("assistant_use_system_ca", value) },
+   clear = function() { .rs.clearUserPref("assistant_use_system_ca") }
 )
 
 # Use pre-release version of Posit Assistant (restart required)

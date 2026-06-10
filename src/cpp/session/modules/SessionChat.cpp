@@ -23,10 +23,12 @@
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
+#include "chat/ChatUpdateThrottle.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <ctime>
 #include <map>
 #include <queue>
 #include <set>
@@ -269,6 +271,11 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
+
+// Update throttle types used throughout
+using throttle::ManifestCheckRecord;
+using throttle::ResolvedBlock;
+using throttle::SuccessOutcome;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -3681,9 +3688,21 @@ bool s_checkInProgress = false;
 bool s_checkIncludesStartup = false;
 std::vector<boost::function<void()>> s_pendingCompletions;
 
+// Reset single-flight state and run queued completions. Swap first so a completion
+// that kicks a fresh check sees a clean queue. Main-thread only.
+void drainPendingCompletions()
+{
+   s_checkInProgress = false;
+   s_checkIncludesStartup = false;
+   std::vector<boost::function<void()>> completions;
+   completions.swap(s_pendingCompletions);
+   for (boost::function<void()>& completion : completions)
+      completion();
+}
+
 // Defined further below (after the manifest parse/check helpers); forward-declared
 // here so onDeferredInit's startup kickoff can reference startUpdateCheck.
-void startUpdateCheck(bool isStartup, boost::function<void()> onComplete);
+void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete);
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest);
 
 // Automation-only override for chatCheckForUpdates. When set (via the
@@ -3994,7 +4013,7 @@ void onDeferredInit(bool)
    {
       module_context::scheduleDelayedWork(
          boost::posix_time::seconds(1),
-         []() { startUpdateCheck(true, boost::function<void()>()); },
+         []() { startUpdateCheck(true, false, boost::function<void()>()); },
          true);  // idleOnly: run after R becomes idle (post client attach)
    }
 }
@@ -4424,6 +4443,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    std::string newVersion;
    std::string downloadUrl;
    std::string expectedSha256;
+   // Staged on the success path (authoritative record from buildSuccessOutcome).
+   // Left unset on every other exit, so finish() falls back to preserve-and-bump.
+   boost::optional<ManifestCheckRecord> recordToWrite;
    bool showVersionWarning = false;
    std::string recommendedVersion;
    std::string downloadPageUrl;
@@ -4453,21 +4475,51 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       if (showVersionWarning)
          showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
 
-      // Reset single-flight state and run queued completions. Swap first so a
-      // completion that kicks a fresh check sees a clean queue.
-      s_checkInProgress = false;
-      s_checkIncludesStartup = false;
-      std::vector<boost::function<void()>> completions;
-      completions.swap(s_pendingCompletions);
-      for (boost::function<void()>& completion : completions)
-         completion();
+      // Persist the attempt. The success path stages an authoritative record;
+      // every other exit leaves it unset and we preserve-and-bump (only a success
+      // may set or clear the persisted block). Every real attempt bumps the
+      // timestamp, so a bad manifest cannot bypass the throttle.
+      boost::optional<ManifestCheckRecord> prior =
+         throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+      ManifestCheckRecord record =
+         throttle::recordToPersist(recordToWrite, prior, std::time(nullptr));
+      Error writeError = throttle::writeManifestCheckRecord(
+         throttle::manifestCheckStatePath(), record);
+      if (writeError)
+         WLOG("Failed to persist manifest-check record: {}", writeError.getMessage());
+
+      drainPendingCompletions();
    };
 
    if (fetchError)
    {
       WLOG("Failed to download manifest: {}", fetchError.getMessage());
-      manifestUnavailable = true;
-      errorMessage = fetchError.getMessage();
+
+      bool isInstalled = (installedVersion != "0.0.0");
+      bool protocolMismatch = hasProtocolMismatch(installedVersion);
+      if (isInstalled && !protocolMismatch)
+      {
+         // Compatible install present: use it, surface no error. Reapply any
+         // persisted (manifest-only) unsupported block so a known-bad version
+         // stays blocked across the failure.
+         boost::optional<ManifestCheckRecord> prior =
+            throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+         if (prior)
+         {
+            ResolvedBlock block = throttle::resolvePersistedBlock(
+               *prior, installedVersion, kProtocolVersion);
+            unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+            unsupportedProtocol = block.unsupportedProtocol;
+         }
+      }
+      else
+      {
+         // Not installed, or protocol mismatch: cannot proceed -> block.
+         manifestUnavailable = true;
+         errorMessage = fetchError.getMessage();
+      }
+
+      // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
       finish();
       return;
    }
@@ -4488,8 +4540,19 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    // Protocol mismatch (file I/O, no lock held).
    bool protocolMismatch = hasProtocolMismatch(installedVersion);
    unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
-   unsupportedInstalledVersion =
-      isVersionUnsupported(installedVersion, unsupportedInfo) || protocolMismatch;
+   bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
+
+   // Split the live composite (for s_updateState) from the manifest-only record
+   // (persisted). The local protocol mismatch contributes to the live flag but is
+   // never persisted -- it is recomputed locally, and the reapply paths run only
+   // when there is no current mismatch. The manifest fetch succeeded, so this is
+   // the authoritative result for every remaining exit (including no-compatible-
+   // version): stage it now.
+   SuccessOutcome outcome = throttle::buildSuccessOutcome(
+      std::time(nullptr), installedVersion, kProtocolVersion,
+      versionUnsupported, protocolMismatch, unsupportedProtocol);
+   unsupportedInstalledVersion = outcome.liveUnsupportedInstalledVersion;
+   recordToWrite = outcome.record;
    DLOG("Unsupported check: protocol={}, installedVersion={}",
         unsupportedProtocol, unsupportedInstalledVersion);
 
@@ -4585,21 +4648,96 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    finish();
 }
 
+// Decide whether an automatic check must actually fetch the manifest. Always
+// fetches when nothing is installed or the installed protocol mismatches; otherwise
+// throttles to once per kManifestCheckThrottleSeconds. `force` (Retry / install)
+// always fetches. Main-thread only (reads the filesystem).
+bool shouldFetchManifest(bool force)
+{
+   std::string installed = getInstalledVersion();   // "" when not installed
+   bool isInstalled = !installed.empty();
+   bool mismatch = isInstalled && hasProtocolMismatch(installed);
+
+   boost::optional<ManifestCheckRecord> record =
+      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+   boost::optional<std::time_t> last;
+   if (record)
+      last = record->lastCheckTime;
+
+   return throttle::manifestCheckDue(
+      force, isInstalled, mismatch, last,
+      std::time(nullptr), throttle::kManifestCheckThrottleSeconds);
+}
+
+// Resolve the update state from the installed version without fetching the
+// manifest (throttled skip). Reached only when a compatible version is installed
+// (installed + no protocol mismatch), so the installed version is current and
+// usable. Reapplies any persisted (manifest-only) unsupported block, then drains
+// the single-flight queue. Does NOT write the record -- no attempt was made.
+void resolveWithoutManifestFetch()
+{
+   std::string installedVersion = getInstalledVersion();
+
+   bool unsupportedInstalledVersion = false;
+   bool unsupportedProtocol = false;
+   boost::optional<ManifestCheckRecord> record =
+      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+   if (record)
+   {
+      ResolvedBlock block = throttle::resolvePersistedBlock(
+         *record, installedVersion, kProtocolVersion);
+      unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+      unsupportedProtocol = block.unsupportedProtocol;
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.currentVersion = installedVersion;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage = "";
+      s_updateState.unsupportedProtocol = unsupportedProtocol;
+      s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
+      s_updateState.newVersion = "";
+      s_updateState.downloadUrl = "";
+      s_updateState.expectedSha256 = "";
+   }
+
+   if (isPositAssistantUnsupported())
+      assistant::stopAgentForUpdate();
+
+   drainPendingCompletions();
+}
+
 // Begin (or join) a manifest update check. onComplete (may be empty) runs once
 // the check finishes; overlapping callers (startup + pane-open + Retry) share a
 // single fetch. Ordering invariant: enqueue the completion BEFORE starting the
 // fetch, so the synchronous DEBUG-manifest path still drains it. Main-thread only.
-void startUpdateCheck(bool isStartup, boost::function<void()> onComplete)
+void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete)
 {
    if (onComplete)
       s_pendingCompletions.push_back(onComplete);
    if (isStartup)
       s_checkIncludesStartup = true;
 
+   // A caller that joins an in-flight check only enqueues its completion above;
+   // `force` is not re-evaluated here, so the in-flight check's own fetch-vs-skip
+   // decision governs. Benign today: throttled skips resolve synchronously and so
+   // never overlap a real fetch already in flight.
    if (s_checkInProgress)
       return;
 
    s_checkInProgress = true;
+
+   if (!shouldFetchManifest(force))
+   {
+      DLOG("Manifest check throttled; using installed version without fetching");
+      resolveWithoutManifestFetch();
+      return;
+   }
+
    fetchManifestAsync(&onUpdateCheckComplete);
 }
 
@@ -4955,6 +5093,8 @@ Error startChatBackend(bool resumeConversation)
    // this tells Node.js 22.21+ to route fetch() through the proxy.
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+
+   node_tools::applySystemCaOption(&environment, nodePath);
 
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
@@ -5322,7 +5462,7 @@ void chatCheckForUpdates(const json::JsonRpcRequest& request,
 
    // Otherwise kick (or join) an async check and resolve once it completes.
    DLOG("Update state not populated or recheck forced, performing async check");
-   startUpdateCheck(false, boost::bind(resolveWithUpdateState, cont));
+   startUpdateCheck(false, forceRecheck, boost::bind(resolveWithUpdateState, cont));
 }
 
 // Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
@@ -5607,7 +5747,7 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(false, boost::bind(performInstall, cont));
+      startUpdateCheck(false, true, boost::bind(performInstall, cont));
    }
 }
 

@@ -49,7 +49,7 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
 
     // --- Step 5: Type a message in chat and press Enter -- nothing should happen ---
     const messageCountBefore = await chatPane.getMessageCount();
-    await chatPane.chatTextarea.fill('This should not go through');
+    await chatPane.typeMessage('This should not go through');
     await chatPane.sendBtn.click({ timeout: 2000 }).catch(() => {
       // Send button may be disabled or unresponsive -- that's expected
     });

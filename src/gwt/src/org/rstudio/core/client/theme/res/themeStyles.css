@@ -8,6 +8,7 @@
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
 @external ace_active_debug_line, ace_next-edit-suggestion-background, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_replacement-clickable;
 @external ace_nes-gutter, ace_nes-gutter-background, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
+@external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
@@ -498,6 +499,46 @@ pre {
    background-image:
       radial-gradient(circle 1.5px at 12px 12px, #888888 100%, transparent 100%),
       radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
+}
+
+/* Edge-pinned gutter indicator pointing toward an off-screen suggestion */
+.ace_nes-offscreen-gutter .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_nes-offscreen-gutter .ace_gutter_annotation::before {
+   content: '';
+   position: absolute;
+   left: 1px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   border-radius: 3px;
+   cursor: pointer;
+   background-color: #1E77BC;
+}
+
+.ace_nes-offscreen-gutter .ace_gutter_annotation::after {
+   content: '';
+   position: absolute;
+   left: 5px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-left: 4px solid transparent;
+   border-right: 4px solid transparent;
+   cursor: pointer;
+}
+
+.ace_nes-offscreen-gutter-up .ace_gutter_annotation::after {
+   border-bottom: 5px solid white;
+}
+
+.ace_nes-offscreen-gutter-down .ace_gutter_annotation::after {
+   border-top: 5px solid white;
 }
 
 .ace_next-edit-suggestion-highlight {
@@ -1581,7 +1622,7 @@ body.windows .toolbar {
 
 .rstheme_secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: TABSTRIPHEIGHT !important;
+   height: 21px !important;
 }
 
 .secondaryToolbarPanel {
@@ -1591,10 +1632,6 @@ body.windows .toolbar {
 
 .rstudio-themes-dark .secondaryToolbarPanel {
    background: #6c7a86;
-}
-
-.rstheme_secondaryToolbar {
-   height: 21px !important;
 }
 
 .rstheme_secondaryToolbar img[src=""] {

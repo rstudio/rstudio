@@ -846,6 +846,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorThemeDescription();
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   @DefaultStringValue("Ignore project-specific appearance settings")
+   String ignoreProjectAppearanceTitle();
+   @DefaultStringValue("Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.")
+   String ignoreProjectAppearanceDescription();
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    @DefaultStringValue("Enable editor fonts on RStudio Server")
@@ -2290,6 +2298,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantToolbarButtonVisibleTitle();
    @DefaultStringValue("When enabled, the Posit Assistant button is displayed in the main toolbar.")
    String assistantToolbarButtonVisibleDescription();
+
+   /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   @DefaultStringValue("Use the system certificate store (restart required)")
+   String assistantUseSystemCaTitle();
+   @DefaultStringValue("When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.")
+   String assistantUseSystemCaDescription();
 
    /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.

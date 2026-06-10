@@ -66,17 +66,6 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
-      stopSearch_ = new ToolbarButton(
-            ToolbarButton.NoText,
-            constants_.stopFindInFilesTitle(),
-            commands_.interruptR().getImageResource());
-      toolbar.addRightWidget(stopSearch_);
-
-      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
-      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      toolbar.addRightWidget(refreshButton_);
-      setStopSearchButtonVisible(false);
-
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       ElementIds.assignElementId(showFindButton_, ElementIds.FIND_REPLACE_MODE_TOGGLE);
       showFindButton_.addClickHandler(new ClickHandler() {
@@ -101,6 +90,19 @@ public class FindOutputPane extends WorkbenchPane
       });
       toolbar.addRightWidget(showReplaceButton_);
 
+      toolbar.addRightSeparator();
+
+      stopSearch_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            constants_.stopFindInFilesTitle(),
+            commands_.interruptR().getImageResource());
+      toolbar.addRightWidget(stopSearch_);
+
+      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+      setStopSearchButtonVisible(false);
+
       return toolbar;
    }
 
@@ -110,7 +112,11 @@ public class FindOutputPane extends WorkbenchPane
       SecondaryToolbar replaceToolbar = new SecondaryToolbar(constants_.replaceLabel());
       replaceMode_ = true;
 
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      resources.styles().ensureInjected();
+
       replaceTextBox_ = new TextBox();
+      replaceTextBox_.addStyleName(resources.styles().replaceTextBox());
       ElementIds.assignElementId(replaceTextBox_, ElementIds.FIND_REPLACE_TEXT);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
@@ -120,6 +126,7 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
       FormLabel replaceLabel = new FormLabel(constants_.replaceWithLabel(), replaceTextBox_);
+      replaceLabel.addStyleName(resources.styles().replaceLabel());
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
 

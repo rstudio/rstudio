@@ -15,6 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <sys/stat.h>
 
@@ -32,6 +33,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionScopes.hpp>
 
@@ -380,31 +382,16 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // initialize members
+   //
+   // NOTE: the project directory is deliberately not canonicalized here.
+   // Canonicalizing rewrote user-visible paths (getwd(), here::here()) for
+   // projects opened via a symlinked path on macOS, and resolved mapped
+   // network drives to their UNC targets on Windows (#17865). The macOS
+   // file monitor maps FSEvents' canonical event paths back to the
+   // registered path form itself (#17909), so file change events compare
+   // equal to directory() without any canonicalization on our side.
    file_ = projectFile;
    directory_ = file_.getParent();
-
-   // Canonicalize the project directory so it matches what the file
-   // monitor will see (FSEvents on macOS reports canonical paths -- e.g.
-   // /private/tmp/foo rather than /tmp/foo). Without this, paths from
-   // file change events won't compare equal to directory() and any
-   // root-anchored matches downstream silently miss.
-   //
-   // This is gated to macOS on purpose. On Windows, getCanonicalPath()
-   // (boost::filesystem::canonical) resolves a mapped network drive back to
-   // its UNC target (e.g. S:/foo -> //server/share/foo), which then becomes
-   // the working directory and surfaces in user-facing paths such as
-   // here::here(); see https://github.com/rstudio/rstudio/issues/17865. R's
-   // own normalizePath deliberately avoids this by preferring the drive-letter
-   // form. The Win32 (GetLongPathName) and inotify file monitors don't report
-   // canonical paths anyway, so the macOS FSEvents mismatch is unique to macOS.
-#ifdef __APPLE__
-   if (directory_.exists())
-   {
-      std::string canonical = directory_.getCanonicalPath();
-      if (!canonical.empty())
-         directory_ = FilePath(canonical);
-   }
-#endif
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;
@@ -444,24 +431,26 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
 
-      const char * const kIgnorePositai = R"(^\.positai$)";
-      const char * const kIgnoreClaude = R"(^\.claude$)";
-
       // only add AI tool-state ignores when those directories actually
       // exist in the project. Decoupled from the assistant preference:
       // the directories belong to tools (Posit Assistant, Claude Code,
       // etc.) that may write them whether or not RStudio's own AI
       // integration is enabled.
-      bool wantPositai = directory().completeChildPath(".positai").exists();
-      bool wantClaude = directory().completeChildPath(".claude").exists();
+      std::vector<std::string> aiDirs = aiAssistantStateDirs();
+      aiDirs.push_back(".claude");
+
+      std::vector<std::string> aiPatterns;
+      for (const std::string& dir : aiDirs)
+      {
+         if (directory().completeChildPath(dir).exists())
+            aiPatterns.push_back(aiAssistantStateDirRegex(dir));
+      }
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
 
-      if (wantPositai)
-         ignoreLines += kIgnorePositai + newLine;
-      if (wantClaude)
-         ignoreLines += kIgnoreClaude + newLine;
+      for (const std::string& pattern : aiPatterns)
+         ignoreLines += pattern + newLine;
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -507,9 +496,21 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = !wantPositai || strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = !wantClaude || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
+
+         // AI tool-state patterns that are wanted (directory present) but not
+         // yet listed in the existing .Rbuildignore. The presence test is a
+         // plain substring search for the canonical anchored pattern we write
+         // (e.g. "^\.posit/assistant$"); this stays correct because no AI
+         // pattern is a substring of another (the "$" anchor keeps the shared
+         // ".posit" prefix from colliding "^\.positai$" with the assistant
+         // pattern). Revisit if a future entry breaks that invariant.
+         std::vector<std::string> missingAiPatterns;
+         for (const std::string& pattern : aiPatterns)
+         {
+            if (strIgnore.find(pattern) == std::string::npos)
+               missingAiPatterns.push_back(pattern);
+         }
 
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
@@ -520,10 +521,8 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
-         if (!hasPositai)
-            strIgnore += kIgnorePositai + newLine;
-         if (!hasClaude)
-            strIgnore += kIgnoreClaude + newLine;
+         for (const std::string& pattern : missingAiPatterns)
+            strIgnore += pattern + newLine;
 
          if (session::options().packageOutputInPackageFolder())
          {
@@ -552,7 +551,7 @@ void ProjectContext::augmentRbuildignore()
             }
          }
 
-         if (hasRProj && hasRProjUser && hasPositai && hasClaude && hasAllPackageExclusions)
+         if (hasRProj && hasRProjUser && missingAiPatterns.empty() && hasAllPackageExclusions)
             return;
 
          error = core::writeStringToFile(rbuildIgnorePath,
@@ -687,8 +686,14 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore contents of AI tool state directories. The trailing slash is
       // important: it excludes children but lets the directory entry itself
-      // ("/proj/.positai") pass through so the allowlist in fileMonitorFilter
-      // can react to its creation.
+      // ("/proj/.posit/assistant") pass through so the allowlist in
+      // fileMonitorFilter can react to its creation. Note we exclude only
+      // ".posit/assistant", not all of ".posit" -- the latter is shared with
+      // other Posit tools (e.g. the Publisher extension's ".posit/publisher",
+      // whose files are committed) and must stay monitored. ".positai" is the
+      // legacy Posit Assistant directory, retained so existing projects keep
+      // working.
+      "/.posit/assistant/",
       "/.positai/",
       "/.claude/",
 
@@ -811,9 +816,10 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
-   // re-augment .Rbuildignore to pick up any .positai/.claude that were
-   // created between project init and file monitor start (small but real
-   // window). augmentRbuildignore is idempotent.
+   // re-augment .Rbuildignore to pick up any AI tool-state directories
+   // (.posit/assistant, legacy .positai) that were created between project
+   // init and file monitor start (small but real window). augmentRbuildignore
+   // is idempotent.
    augmentRbuildignore();
 
    // notify subscribers
@@ -829,17 +835,20 @@ void ProjectContext::fileMonitorFilesChanged(
    // own handler
    onProjectFilesChanged(events);
 
-   // if .positai or .claude was added at the project root, augment
-   // .Rbuildignore now (we don't add these entries until the file exists)
+   // if an AI tool-state directory (or, for the nested ".posit/assistant", its
+   // parent ".posit") was added, augment .Rbuildignore now -- we don't add
+   // these entries until the directory exists. Reacting to ".posit" as well
+   // covers the case where ".posit" and ".posit/assistant" are created
+   // together: augmentRbuildignore re-checks existence and is idempotent.
+   std::vector<std::string> triggerPaths = aiAssistantMonitorPaths();
+   triggerPaths.push_back(".claude");
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
       FilePath path(event.fileInfo().absolutePath());
-      if (path.getParent() != directory())
-         continue;
-      std::string filename = path.getFilename();
-      if (filename == ".positai" || filename == ".claude")
+      std::string rel = path.getRelativePath(directory());
+      if (std::find(triggerPaths.begin(), triggerPaths.end(), rel) != triggerPaths.end())
       {
          augmentRbuildignore();
          break;
@@ -910,23 +919,34 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(absPath, component))
          return false;
 
-   // Allow .positai/.claude at the project root through the filter so we
-   // can react to their creation and update ignore files accordingly.
-   // This must run before the gitignore directory check below -- a global
-   // or parent gitignore that already covers .positai/.claude would
-   // otherwise drop the FileAdded event and prevent mid-session
-   // augmentation. fileListingFilter would also drop them as hidden.
+   // Allow AI tool-state directories through the filter so we can react to
+   // their creation and update ignore files accordingly. This must run before
+   // the gitignore directory check below -- a global or parent gitignore that
+   // already covers them would otherwise drop the FileAdded event and prevent
+   // mid-session augmentation. fileListingFilter would also drop them as
+   // hidden.
    //
-   // Use a cheap string-suffix check before constructing FilePath so we
-   // don't pay the allocation cost for the ~all files that don't match.
+   // The allowed paths include each state directory plus, for the nested
+   // ".posit/assistant", its parent ".posit" -- the parent must pass the
+   // filter so its (and the nested dir's) creation event is not dropped,
+   // letting us observe ".posit/assistant" being created. ".claude" is Claude
+   // Code's directory.
+   //
+   // Use a cheap basename check before constructing FilePath so we don't pay
+   // the allocation cost for the ~all files that don't match.
    std::size_t slashPos = absPath.find_last_of('/');
    const char* filename = (slashPos == std::string::npos)
          ? absPath.c_str()
          : absPath.c_str() + slashPos + 1;
-   if (std::strcmp(filename, ".positai") == 0 ||
+   if (std::strcmp(filename, ".posit") == 0 ||
+       std::strcmp(filename, "assistant") == 0 ||
+       std::strcmp(filename, kPositAssistantStateDirLegacy) == 0 ||
        std::strcmp(filename, ".claude") == 0)
    {
-      if (FilePath(absPath).getParent() == directory())
+      std::string rel = FilePath(absPath).getRelativePath(directory());
+      std::vector<std::string> allowed = aiAssistantMonitorPaths();
+      allowed.push_back(".claude");
+      if (std::find(allowed.begin(), allowed.end(), rel) != allowed.end())
          return true;
    }
 

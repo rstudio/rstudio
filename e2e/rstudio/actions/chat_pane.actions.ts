@@ -35,32 +35,32 @@ export class ChatPaneActions {
       await this.chatPane.installBtn.click();
       console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
-      await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 30000 });
+      await expect(this.chatPane.chatInput).toBeVisible({ timeout: 30000 });
     } else if (await this.chatPane.updateBtn.isVisible()) {
       await this.chatPane.updateBtn.click();
       console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
     }
 
-    // The TrustOverlay and the chat textarea both render asynchronously after
+    // The TrustOverlay and the chat input both render asynchronously after
     // the iframe loads; waitForChatReady polls for either path through the
-    // workspace-trust dialog or a clean ready textarea, so callers don't need
-    // to handle it themselves.
+    // workspace-trust dialog or a clean editable composer, so callers don't
+    // need to handle it themselves.
     await this.waitForChatReady();
   }
 
   /**
-   * Wait until the chat pane is actually usable -- i.e., the message textarea
-   * is enabled. Until that point, sending a message is a guaranteed failure
+   * Wait until the chat pane is actually usable -- i.e., the message composer
+   * is editable. Until that point, sending a message is a guaranteed failure
    * even when chatRoot is visible, so this is the only real "ready" signal.
    *
    * Polls (a) clicking through any trust dialog that appears late and (b)
    * failing fast with an actionable message if a Sign-In button shows up,
    * since seeded credentials are the only auth path the test harness supports.
-   * The host's Posit Assistant rotates the refresh token in ~/.positai/store,
+   * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
    * so seeded copies can be invalidated between globalSetup and test
    * execution; surfacing that as "sign in on the host and re-run" is more
-   * useful than the cryptic "textarea disabled after 15s" downstream timeout
+   * useful than the cryptic "input not editable after 15s" downstream timeout
    * each test would otherwise hit.
    *
    * The TrustOverlay component in databot renders as a role="dialog" with the
@@ -78,8 +78,8 @@ export class ChatPaneActions {
     while (Date.now() < deadline) {
       iter += 1;
 
-      if (await this.chatPane.chatTextarea.isEnabled().catch(() => false)) {
-        if (iter > 1) console.log(`waitForChatReady: textarea enabled after ${iter} iterations`);
+      if (await this.chatPane.isChatInputReady()) {
+        if (iter > 1) console.log(`waitForChatReady: input editable after ${iter} iterations`);
         return;
       }
 
@@ -104,18 +104,18 @@ export class ChatPaneActions {
 
     // Deadline expired -- pick the most actionable error message.
     // The Sign-In affordance can flash briefly during backend startup while
-    // credentials are still being loaded from ~/.positai/store, so we only
+    // credentials are still being loaded from ~/.posit/assistant/store, so we only
     // treat it as a hard failure when it's still visible at the end of the
     // polling window.
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
         'Posit Assistant requires sign-in despite seeded credentials. ' +
-        'Sign in on the host (~/.positai) and re-run.'
+        'Sign in on the host (~/.posit/assistant) and re-run.'
       );
     }
 
     throw new Error(
-      `waitForChatReady: chat textarea still disabled after ${timeout}ms ` +
+      `waitForChatReady: chat input still not editable after ${timeout}ms ` +
       `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
       `have stalled.`
     );
@@ -189,9 +189,10 @@ export class ChatPaneActions {
   }
 
   async sendChatMessage(text: string): Promise<void> {
-    await expect(this.chatPane.chatTextarea).toBeVisible({ timeout: 15000 });
-    await expect(this.chatPane.chatTextarea).toBeEnabled({ timeout: 15000 });
-    await this.chatPane.chatTextarea.fill(text);
+    await expect(this.chatPane.chatInput).toBeVisible({ timeout: 15000 });
+    await expect(this.chatPane.chatInput)
+      .toHaveAttribute('contenteditable', 'true', { timeout: 15000 });
+    await this.chatPane.typeMessage(text);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();

@@ -60,6 +60,13 @@ std::string chooseAppliedThemeName(const std::string& effectiveName,
                                    const std::set<std::string>& availableThemes,
                                    const std::string& defaultName);
 
+// Returns the editor theme name to treat as "effective": the global theme when
+// the user is ignoring project appearance settings (project layer excluded),
+// otherwise the project-effective value (which already reflects a project override).
+std::string chooseEffectiveThemeName(bool ignoreProjectAppearance,
+                                     const std::string& projectEffectiveName,
+                                     const std::string& globalName);
+
 core::Error initialize();
 
 } // namespace themes

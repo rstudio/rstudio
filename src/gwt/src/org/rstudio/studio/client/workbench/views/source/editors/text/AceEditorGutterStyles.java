@@ -31,4 +31,10 @@ public class AceEditorGutterStyles
    // NES gutter background style (darker blue background for all NES gutter cells)
    public static final String NES_GUTTER_BACKGROUND  = "ace_nes-gutter-background";
 
+   // Edge-pinned indicator pointing toward an active suggestion outside the viewport.
+   // Uses a distinct base class (not NES_GUTTER) so clicks navigate instead of accepting.
+   public static final String NES_GUTTER_OFFSCREEN      = "ace_nes-offscreen-gutter";
+   public static final String NES_GUTTER_OFFSCREEN_UP   = "ace_nes-offscreen-gutter ace_nes-offscreen-gutter-up";
+   public static final String NES_GUTTER_OFFSCREEN_DOWN = "ace_nes-offscreen-gutter ace_nes-offscreen-gutter-down";
+
 }

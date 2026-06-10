@@ -1071,3 +1071,88 @@ options(help_type = "html")
    
    paste(lines, collapse = "\n")
 })
+
+.rs.addFunction("exampleCodeLaunchesApp", function(code)
+{
+   # Returns TRUE if the supplied example/demo code appears to launch a blocking
+   # application (e.g. a Shiny app). Such code, when run inline by R's enhanced
+   # HTML help, locks up the session (issue #17178), so we run it in the console
+   # instead. We parse the code and inspect the function calls it makes, so that
+   # comments and strings mentioning these names don't trigger a false positive.
+   exprs <- tryCatch(
+      parse(text = code, keep.source = TRUE),
+      error = function(e) NULL
+   )
+
+   if (is.null(exprs))
+      return(FALSE)
+
+   parseData <- utils::getParseData(exprs)
+   if (is.null(parseData))
+      return(FALSE)
+
+   calls <- parseData$text[parseData$token == "SYMBOL_FUNCTION_CALL"]
+
+   launchers <- c(
+      "runApp", "runExample", "runGadget",
+      "runUrl", "runGist", "runGitHub",
+      "shinyApp", "shinyAppDir", "shinyAppFile",
+      "run_tutorial"
+   )
+
+   any(calls %in% launchers)
+})
+
+.rs.addFunction("helpExampleDivertCommand", function(type, package, topic)
+{
+   # Fetch the example (or demo) source without running it. Note that
+   # 'give.lines = TRUE' applies the same \dontrun{} / \donttest{} commenting
+   # as a real example() call, so a launcher living only inside \dontrun{}
+   # arrives commented out, doesn't trip detection, and isn't diverted --
+   # consistent with the diverted example() call below, which wouldn't have
+   # run it either.
+   code <- tryCatch(
+      suppressWarnings(
+         if (identical(type, "Demo"))
+            readLines(system.file("demo", paste0(topic, ".R"), package = package, mustWork = TRUE))
+         else
+            utils::example(
+               topic,
+               package = package,
+               character.only = TRUE,
+               give.lines = TRUE
+            )
+      ),
+      error = function(e) {
+         # Log before swallowing so a residual lockup stays debuggable.
+         msg <- sprintf(
+            "Error retrieving %s source for %s::%s: %s",
+            tolower(type), package, topic, conditionMessage(e)
+         )
+         .rs.logWarningMessage(msg)
+         NULL
+      }
+   )
+
+   # If we couldn't read the source, or it doesn't look like it launches a
+   # blocking application, let the normal (inline) help server path handle it.
+   if (is.null(code) || !.rs.exampleCodeLaunchesApp(code))
+      return(NULL)
+
+   sprintf(
+      "%s(%s, package = %s)",
+      if (identical(type, "Demo")) "demo" else "example",
+      deparse(topic),
+      deparse(package)
+   )
+})
+
+.rs.addFunction("runExampleInConsoleIfBlocking", function(type, package, topic)
+{
+   command <- .rs.helpExampleDivertCommand(type, package, topic)
+   if (is.null(command))
+      return(FALSE)
+
+   .rs.api.sendToConsole(command, echo = TRUE, execute = TRUE, focus = TRUE)
+   TRUE
+})

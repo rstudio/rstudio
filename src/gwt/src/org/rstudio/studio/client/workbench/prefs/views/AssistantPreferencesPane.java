@@ -105,7 +105,18 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
 
-      return super.onApply(prefs);
+      RestartRequirement restartRequirement = super.onApply(prefs);
+
+      // The system-CA checkbox value is applied by the base class (checkboxPref).
+      // The agents read NODE_OPTIONS only at launch, so a change requires an R
+      // session restart to take effect.
+      if (cbAssistantUseSystemCa_.getValue() != initialUseSystemCa_)
+      {
+         initialUseSystemCa_ = cbAssistantUseSystemCa_.getValue();
+         restartRequirement.setSessionRestartRequired(true);
+      }
+
+      return restartRequirement;
    }
 
    @Inject
@@ -222,6 +233,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
+      cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -351,6 +363,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       });
 
       add(cbAssistantToolbarButtonVisible_);
+      add(cbAssistantUseSystemCa_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -1228,6 +1241,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
+      initialUseSystemCa_ = prefs.assistantUseSystemCa().getGlobalValue();
+
       // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
       String assistant = prefs.assistant().getGlobalValue();
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_NONE) &&
@@ -1410,6 +1425,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    // State
    private String assistantStartupError_;
+   private boolean initialUseSystemCa_; // snapshot from initialize(); guards the session-restart trigger in onApply
    private HandlerRegistration assistantRuntimeStatusHandler_;
    private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
@@ -1437,6 +1453,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Spinner imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantToolbarButtonVisible_;
+   private final CheckBox cbAssistantUseSystemCa_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesCollapse_;
    private final List<SmallButton> statusButtons_;

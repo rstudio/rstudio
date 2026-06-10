@@ -971,8 +971,8 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
 
-   dataJson["startup_files_suppressed"] =
-      modules::trust::shouldSuppressStartupFiles();
+   dataJson["project_untrusted"] =
+      modules::trust::isProjectUntrusted();
    dataJson["trust_request"] = modules::trust::trustRequestData();
 
    // record that deferred init has completed for this R session, so that a
@@ -2031,7 +2031,16 @@ void initMonitorClient()
    // we handle monitor calls in a separate thread to ensure that calls
    // to the monitor (which are likely across machines and thus very expensive)
    // do not hamper the liveliness of the session as a whole
-   core::thread::safeLaunchThread(monitorWorkerThreadFunc);
+   //
+   // but do not start it when running unit tests: there is no rserver-monitor to
+   // connect to, so every async log/event would fail-fast and race the worker
+   // thread against the initiating thread on the same socket. The worker thread
+   // also never gets stopped on the test path (R exits via exit()), so it would
+   // race static destruction of s_monitorIoContext at process exit. Both produce
+   // intermittent SIGSEGVs. The client object is still initialized above so that
+  // monitor::client() stays valid; queued async ops are simply never processed.
+   if (!options().runTests())
+      core::thread::safeLaunchThread(monitorWorkerThreadFunc);
 }
 
 void beforeResume()
@@ -2305,7 +2314,7 @@ int main(int argc, char * const argv[])
       BOOST_SCOPE_EXIT_END
 
       // register monitor log writer (but not in standalone or verify installation mode)
-      if (!options.standalone() && !options.verifyInstallation())
+      if (!options.standalone() && !options.verifyInstallation() && !options.runTests())
       {
          core::log::addLogDestination(
             monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
