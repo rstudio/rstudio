@@ -28,8 +28,42 @@ async function launchShinyAppInWindow(page: Page, consoleActions: ConsolePaneAct
   return satellitePage;
 }
 
+// Interrupting a freshly-launched shiny app is racy: a SIGINT that lands
+// while shiny is servicing a request/callback is caught by shiny's error
+// handling, which bounces the websocket (so the disconnected client still
+// closes the window) without stopping runApp() -- leaving R busy forever and
+// starving every later console interaction. Once the app is idle a retried
+// interrupt always lands, so nudge until the console frees up.
+async function ensureConsoleIdle(page: Page) {
+  const interruptButton = page.locator("[id^='rstudio_tb_interruptr']");
+
+  // normal path: the app stopped and the console frees up on its own
+  try {
+    await expect(interruptButton).toBeHidden({ timeout: 3000 });
+    return;
+  } catch {
+    // still busy; fall through and nudge
+  }
+
+  // keep the nudges slow: the client counts interrupt requests while busy
+  // and escalates to a blocking "Terminate R" dialog on the third one
+  await expect(async () => {
+    if (await interruptButton.isVisible()) {
+      await executeCommand(page, 'interruptR');
+      throw new Error('console still busy; interrupt requested again');
+    }
+  }).toPass({ timeout: 15000, intervals: [2000] });
+}
+
 test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // a preceding spec can hand off the worker with a main-window reload
+    // still in flight (e.g. a project open/close); let it settle first
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+      timeout: 30000,
+      polling: 50,
+    });
+
     const consoleActions = new ConsolePaneActions(page);
     await setPref(page, 'shiny_viewer_type', 'window');
     await consoleActions.executeInConsole(
@@ -45,6 +79,10 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
+    // if a test failed mid-app, R may still be busy serving it; free the
+    // console before driving it
+    await ensureConsoleIdle(page);
+
     const consoleActions = new ConsolePaneActions(page);
     await consoleActions.executeInConsole(`unlink("${APP_DIR}", recursive = TRUE)`, {
       wait: true,
@@ -60,6 +98,11 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     const closePromise = satellitePage.waitForEvent('close', { timeout: 15000 });
     await executeCommand(page, 'interruptR');
     await closePromise;
+
+    // the window closing does not guarantee the app stopped (see
+    // ensureConsoleIdle); make sure R is back at the prompt so the next
+    // test's runApp doesn't sit queued behind a still-running app
+    await ensureConsoleIdle(page);
   });
 
   test('window closes while the app is running', async ({ rstudioPage: page }) => {
