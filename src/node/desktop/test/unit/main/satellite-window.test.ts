@@ -32,7 +32,13 @@ if (!isWindowsDocker()) {
       setApplication(new Application());
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+      // destroy any windows created by the test before clearing the
+      // application singleton; SatelliteWindow's 'closed' handler calls
+      // appState(), which throws once the singleton is gone
+      BrowserWindow.getAllWindows().forEach((window) => window.destroy());
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
       clearApplicationSingleton();
       sinon.restore();
     });
@@ -58,6 +64,39 @@ if (!isWindowsDocker()) {
       // a close attempt by itself must not unregister; the close can still be
       // cancelled by the page's beforeunload handler (rstudio#17439)
       win.closeEvent({ preventDefault: sinon.stub() } as unknown as Electron.Event);
+      assert.isTrue(gwtCallbackStub.unregisterOwner.notCalled);
+
+      const closed = new Promise<void>((resolve) => {
+        win.window.once('closed', () => setImmediate(resolve));
+      });
+      win.window.destroy();
+      await closed;
+      assert.isTrue(gwtCallbackStub.unregisterOwner.calledOnceWithExactly(win));
+    });
+
+    it('keeps a source window registered when the user cancels the close', async () => {
+      const mainWindowStub = createSinonStubInstance(MainWindow);
+      const gwtCallbackStub = createSinonStubInstance(GwtCallback);
+      appState().gwtCallback = gwtCallbackStub;
+
+      const browserWin = new BrowserWindow({ show: false });
+      const win = new SatelliteWindow(
+        mainWindowStub,
+        '_rstudio_satellite_source_window_test',
+        browserWin.webContents,
+      );
+
+      // simulate the page reporting it is not ready to close (e.g. the user
+      // cancelled an unsaved-changes prompt); the window stays open, so it
+      // must remain registered for desktop callbacks (rstudio#17439)
+      const executeStub = sinon.stub(win, 'executeJavaScript').resolves(false);
+      const preventDefault = sinon.stub();
+      win.closeEvent({ preventDefault } as unknown as Electron.Event);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      assert.isTrue(preventDefault.calledOnce);
+      assert.isTrue(executeStub.calledWith('window.rstudioCloseSourceWindow()'));
+      assert.strictEqual(win.closeStage, 'CloseStageOpen');
       assert.isTrue(gwtCallbackStub.unregisterOwner.notCalled);
 
       const closed = new Promise<void>((resolve) => {

@@ -82,9 +82,9 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
-    // simulate an app that prompts before leaving (e.g. via
-    // window.onbeforeunload in its UI); the user gesture (click) is required
-    // for Chromium to honor the handler
+    // simulate an app that prompts before leaving, as the app in
+    // rstudio#17502 does via window.onbeforeunload; the user gesture (click)
+    // is required for Chromium to honor the handler
     await satellitePage.frameLocator(APP_FRAME).locator('body').click();
     const appFrame = satellitePage.frames().find((f) => /127\.0\.0\.1:\d+\/?$/.test(f.url()));
     expect(appFrame).toBeTruthy();
@@ -98,7 +98,7 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     // without the will-prevent-unload handling (rstudio#17439), this close
     // is silently cancelled and the window is orphaned; the e2e harness runs
     // with RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD=1 so no native dialog shows.
-    // the beforeunload confirmation still surfaces as a CDP dialog, and
+    // the beforeunload confirmation can still surface as a CDP dialog, and
     // Playwright's default dismissal races the closing window -- handle it
     // ourselves and tolerate the window being gone by the time we respond
     satellitePage.on('dialog', (dialog) => {

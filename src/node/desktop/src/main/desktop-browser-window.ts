@@ -335,9 +335,12 @@ export class DesktopBrowserWindow extends EventEmitter {
     // https://github.com/rstudio/rstudio/issues/17439
     this.window.webContents.on('will-prevent-unload', (event: Electron.Event) => {
       if (getenv('RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD') === '1') {
+        logger().logDebug(`will-prevent-unload (${this.options.name}): forcing close (beforeunload ignored)`);
         event.preventDefault();
         return;
       }
+
+      logger().logDebug(`will-prevent-unload (${this.options.name}): asking user to confirm leaving page`);
 
       const choice = appState().modalTracker.trackElectronModalSync(() =>
         dialog.showMessageBoxSync(this.window, {
@@ -352,6 +355,8 @@ export class DesktopBrowserWindow extends EventEmitter {
           message: i18next.t('desktopBrowserWindowTs.leavePageMessage'),
         }),
       );
+
+      logger().logDebug(`will-prevent-unload (${this.options.name}): user chose ${choice === 0 ? 'leave' : 'stay'}`);
 
       if (choice === 0) {
         event.preventDefault();
