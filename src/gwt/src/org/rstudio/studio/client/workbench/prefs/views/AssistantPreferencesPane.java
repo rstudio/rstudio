@@ -119,6 +119,15 @@ public class AssistantPreferencesPane extends PreferencesPane
       return restartRequirement;
    }
 
+   @Override
+   public boolean validate()
+   {
+      // The update-check interval is always visible in the Chat section; reject a
+      // negative value here (its widget allows only digits) so an invalid interval
+      // cannot be saved.
+      return nvwAssistantUpdateCheckInterval_.validate();
+   }
+
    @Inject
    public AssistantPreferencesPane(EventBus events,
                                  Session session,
