@@ -16,6 +16,7 @@
 #include "ChatUpdateThrottle.hpp"
 
 #include <ctime>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -91,6 +92,36 @@ TEST(ChatUpdateThrottle, DueWhenLastCheckInFuture)
 {
    std::time_t future = kNow + kDay;
    EXPECT_TRUE(manifestCheckDue(false, true, false, future, kNow, kDay));
+}
+
+TEST(ChatUpdateThrottle, DueWhenThrottleZero)
+{
+   // A zero window means "always check": even a check made this instant is due.
+   EXPECT_TRUE(manifestCheckDue(false, true, false, kNow, kNow, 0));
+}
+
+// ---- throttleSecondsFromHours ----
+
+TEST(ChatUpdateThrottle, ThrottleZeroHoursMeansAlwaysCheck)
+{
+   EXPECT_EQ(throttleSecondsFromHours(0), 0);
+}
+
+TEST(ChatUpdateThrottle, ThrottleNegativeHoursClampedToAlwaysCheck)
+{
+   EXPECT_EQ(throttleSecondsFromHours(-5), 0);
+}
+
+TEST(ChatUpdateThrottle, ThrottlePositiveHoursConvertToSeconds)
+{
+   EXPECT_EQ(throttleSecondsFromHours(1), 3600);
+   EXPECT_EQ(throttleSecondsFromHours(24), kDay);
+}
+
+TEST(ChatUpdateThrottle, ThrottleHugeHoursCappedWithoutOverflow)
+{
+   EXPECT_EQ(throttleSecondsFromHours(std::numeric_limits<int>::max()),
+             std::numeric_limits<int>::max());
 }
 
 // ---- resolvePersistedBlock ----

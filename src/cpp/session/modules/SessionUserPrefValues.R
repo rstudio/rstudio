@@ -2585,6 +2585,16 @@
    clear = function() { .rs.clearUserPref("posit_assistant_test_manifest") }
 )
 
+# Posit Assistant update check interval (hours)
+#
+# The minimum number of hours between checks for a new version of the Posit
+# Assistant. Set to 0 to check every time.
+.rs.uiPrefs$positAssistantUpdateCheckIntervalHours <- list(
+   get = function() { .rs.getUserPref("posit_assistant_update_check_interval_hours") },
+   set = function(value) { .rs.setUserPref("posit_assistant_update_check_interval_hours", value) },
+   clear = function() { .rs.clearUserPref("posit_assistant_update_check_interval_hours") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.

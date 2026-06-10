@@ -16,6 +16,7 @@
 #include "ChatUpdateThrottle.hpp"
 #include "ChatLogging.hpp"
 
+#include <limits>
 #include <string>
 
 #include <shared_core/json/Json.hpp>
@@ -31,8 +32,6 @@ namespace session {
 namespace modules {
 namespace chat {
 namespace throttle {
-
-const int kManifestCheckThrottleSeconds = 24 * 60 * 60;
 
 core::FilePath manifestCheckStatePath()
 {
@@ -156,6 +155,16 @@ ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& 
                                     std::time_t now)
 {
    return staged ? *staged : bumpRecord(prior, now);
+}
+
+int throttleSecondsFromHours(int hours)
+{
+   if (hours <= 0)
+      return 0;
+   const int kMaxHours = std::numeric_limits<int>::max() / 3600;
+   if (hours >= kMaxHours)
+      return std::numeric_limits<int>::max();
+   return hours * 3600;
 }
 
 bool manifestCheckDue(bool force,

@@ -320,6 +320,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
+   public static final String POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS = "posit_assistant_update_check_interval_hours";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -4249,6 +4250,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   public PrefValue<Integer> positAssistantUpdateCheckIntervalHours()
+   {
+      return integer(
+         "posit_assistant_update_check_interval_hours",
+         _constants.positAssistantUpdateCheckIntervalHoursTitle(), 
+         _constants.positAssistantUpdateCheckIntervalHoursDescription(), 
+         24);
+   }
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -5082,6 +5095,8 @@ public class UserPrefsAccessor extends Prefs
          assistantUseSystemCa().setValue(layer, source.getBool("assistant_use_system_ca"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
+      if (source.hasKey("posit_assistant_update_check_interval_hours"))
+         positAssistantUpdateCheckIntervalHours().setValue(layer, source.getInteger("posit_assistant_update_check_interval_hours"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5398,6 +5413,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantToolbarButtonVisible());
       prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());
+      prefs.add(positAssistantUpdateCheckIntervalHours());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());
