@@ -234,6 +234,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
       cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
+      nvwAssistantUpdateCheckInterval_ = numericPref(
+            prefsConstants_.positAssistantUpdateCheckIntervalHoursTitle(),
+            NumericValueWidget.ZeroMinimum,
+            NumericValueWidget.NoMaximum,
+            prefs_.positAssistantUpdateCheckIntervalHours());
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -364,6 +369,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       add(cbAssistantToolbarButtonVisible_);
       add(cbAssistantUseSystemCa_);
+      add(nvwAssistantUpdateCheckInterval_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -1466,6 +1472,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SmallButton btnProjectOptions_;
    private final SmallButton btnInstall_;
    private final NumericValueWidget nvwAssistantCompletionsDelay_;
+   private final NumericValueWidget nvwAssistantUpdateCheckInterval_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final SelectWidget selChatProvider_;
