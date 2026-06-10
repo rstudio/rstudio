@@ -42,6 +42,16 @@ export class SatelliteWindow extends GwtWindow {
 
     appState().gwtCallback?.registerOwner(this);
 
+    // unregister only once the window has actually been destroyed; a close
+    // can be cancelled after closeEvent() runs (e.g. by a page's beforeunload
+    // handler), and unregistering eagerly would leave a live window unable to
+    // make desktop callbacks
+    //
+    // https://github.com/rstudio/rstudio/issues/17439
+    this.window.on('closed', () => {
+      appState().gwtCallback?.unregisterOwner(this);
+    });
+
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
   }
 
@@ -79,20 +89,16 @@ export class SatelliteWindow extends GwtWindow {
           if (readyToClose) {
             this.closeStage = 'CloseStageAccepted';
             this.window.close();
-            appState().gwtCallback?.unregisterOwner(this);
           } else {
             // not ready to close, revert close stage and take care of business
             this.closeStage = 'CloseStageOpen';
-            this.executeJavaScript('window.rstudioCloseSourceWindow()')
-              .then(() => appState().gwtCallback?.unregisterOwner(this))
-              .catch(logger().logError);
+            this.executeJavaScript('window.rstudioCloseSourceWindow()').catch(logger().logError);
           }
         })
         .catch(logger().logError);
     } else {
       // not a  source window, just close it
       this.closeSatellite(event);
-      appState().gwtCallback?.unregisterOwner(this);
     }
   }
 

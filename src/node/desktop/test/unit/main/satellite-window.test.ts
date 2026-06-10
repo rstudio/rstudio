@@ -22,7 +22,8 @@ import { BrowserWindow } from 'electron';
 
 import { SatelliteWindow } from '../../../src/main/satellite-window';
 import { MainWindow } from '../../../src/main/main-window';
-import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { GwtCallback } from '../../../src/main/gwt-callback';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
 
 if (!isWindowsDocker()) {
@@ -43,6 +44,28 @@ if (!isWindowsDocker()) {
       assert.isObject(win, 'failed isObject test');
       assert.isObject(win.window, 'failed has window test');
       assert.isFalse(win.window.isVisible(), 'failed window not visible test');
+    });
+
+    it('unregisters from GwtCallback only once the window is destroyed', async () => {
+      const mainWindowStub = createSinonStubInstance(MainWindow);
+      const gwtCallbackStub = createSinonStubInstance(GwtCallback);
+      appState().gwtCallback = gwtCallbackStub;
+
+      const browserWin = new BrowserWindow({ show: false });
+      const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
+      assert.isTrue(gwtCallbackStub.registerOwner.calledOnceWithExactly(win));
+
+      // a close attempt by itself must not unregister; the close can still be
+      // cancelled by the page's beforeunload handler (rstudio#17439)
+      win.closeEvent({ preventDefault: sinon.stub() } as unknown as Electron.Event);
+      assert.isTrue(gwtCallbackStub.unregisterOwner.notCalled);
+
+      const closed = new Promise<void>((resolve) => {
+        win.window.once('closed', () => setImmediate(resolve));
+      });
+      win.window.destroy();
+      await closed;
+      assert.isTrue(gwtCallbackStub.unregisterOwner.calledOnceWithExactly(win));
     });
   });
 }

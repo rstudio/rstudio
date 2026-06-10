@@ -15,8 +15,13 @@
 
 import { assert } from 'chai';
 import { describe } from 'mocha';
+import sinon from 'sinon';
+
+import { dialog } from 'electron';
 
 import { setVars } from '../../../src/core/environment';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { isWindowsDocker, restore, saveAndClear } from '../unit-utils';
 
@@ -111,6 +116,57 @@ if (!isWindowsDocker()) {
       const unsafeUrl = 'http://www.example.com/127.0.0.1:123';
 
       assert.isFalse(win.allowNavigation(unsafeUrl));
+    });
+
+    describe('will-prevent-unload handling', () => {
+      beforeEach(() => {
+        setApplication(new Application());
+      });
+
+      afterEach(() => {
+        clearApplicationSingleton();
+        sinon.restore();
+      });
+
+      function emitWillPreventUnload(win: DesktopBrowserWindow): boolean {
+        let prevented = false;
+        const event = {
+          preventDefault: () => {
+            prevented = true;
+          },
+        };
+        win.window.webContents.emit('will-prevent-unload', event);
+        return prevented;
+      }
+
+      it('forces close when user chooses to leave', () => {
+        const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync').returns(0);
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+
+        assert.isTrue(emitWillPreventUnload(win));
+        assert.isTrue(showMessageBox.calledOnce);
+      });
+
+      it('cancels close when user chooses to stay', () => {
+        const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync').returns(1);
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+
+        assert.isFalse(emitWillPreventUnload(win));
+        assert.isTrue(showMessageBox.calledOnce);
+      });
+
+      it('forces close without prompting when RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD is set', () => {
+        const showMessageBox = sinon.stub(dialog, 'showMessageBoxSync');
+        setVars({ RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1' });
+        try {
+          const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+
+          assert.isTrue(emitWillPreventUnload(win));
+          assert.isTrue(showMessageBox.notCalled);
+        } finally {
+          setVars({ RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '' });
+        }
+      });
     });
 
     it('set viewer URL checks for local URL', () => {
