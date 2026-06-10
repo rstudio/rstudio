@@ -1229,6 +1229,8 @@ Error startAgent(const std::string& assistantType = "")
 
    DLOG("Using node.js at '{}'.", nodePath.getAbsolutePath());
 
+   node_tools::applySystemCaOption(&environment, nodePath);
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;

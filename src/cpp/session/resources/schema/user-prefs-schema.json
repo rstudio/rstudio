@@ -1887,6 +1887,12 @@
             "title": "Show Posit Assistant button in toolbar",
             "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
         },
+        "assistant_use_system_ca": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use the system certificate store (restart required)",
+            "description": "When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect."
+        },
         "posit_assistant_test_manifest": {
             "type": "boolean",
             "default": false,

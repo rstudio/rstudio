@@ -4938,6 +4938,8 @@ Error startChatBackend(bool resumeConversation)
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
 
+   node_tools::applySystemCaOption(&environment, nodePath);
+
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
