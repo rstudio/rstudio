@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -26,6 +27,13 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 public class VisualModeUtil
 {
+   // Whether visual editing is available in this session. Only the source
+   // editor is available in untrusted projects.
+   public static boolean isVisualEditingEnabled(SessionInfo sessionInfo)
+   {
+      return !sessionInfo.getProjectUntrusted();
+   }
+
    public static String getEditorCode(TextEditingTarget.Display view)
    {
       TextEditorContainer editorContainer = view.editorContainer();
