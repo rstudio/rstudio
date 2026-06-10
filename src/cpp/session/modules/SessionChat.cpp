@@ -679,10 +679,12 @@ void callExpressionBoundaryHook(const std::string& hookName,
    if (hookName.empty())
       return;
 
+   // Quote expr and value so language objects are not re-evaluated during
+   // argument passing (see the deparse call in executeCodeImpl)
    Error hookError = r::exec::RFunction(".rs.chat.callExpressionBoundaryHook")
       .addParam("name", hookName)
       .addQuotedParam("expr", exprSEXP)
-      .addParam("value", valueSEXP)
+      .addQuotedParam("value", valueSEXP)
       .addParam("ok", ok)
       .addParam("visible", visible)
       .addParam("error", errorSEXP)
