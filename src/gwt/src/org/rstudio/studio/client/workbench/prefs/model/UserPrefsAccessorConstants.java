@@ -2316,6 +2316,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String positAssistantTestManifestDescription();
 
    /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   @DefaultStringValue("Posit Assistant update check interval (hours)")
+   String positAssistantUpdateCheckIntervalHoursTitle();
+   @DefaultStringValue("The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.")
+   String positAssistantUpdateCheckIntervalHoursDescription();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")

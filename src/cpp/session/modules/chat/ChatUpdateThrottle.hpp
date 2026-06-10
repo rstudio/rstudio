@@ -30,9 +30,6 @@ namespace modules {
 namespace chat {
 namespace throttle {
 
-// Default throttle window: 24 hours.
-extern const int kManifestCheckThrottleSeconds;
-
 // Persisted manifest-check record. The two bool flags store only MANIFEST-derived
 // decisions; the local protocol.json mismatch is never persisted (it is recomputed
 // at reapply time). installedVersion / rstudioProtocol record the context the flags
@@ -88,6 +85,12 @@ ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
 ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& staged,
                                     const boost::optional<ManifestCheckRecord>& prior,
                                     std::time_t now);
+
+// Pure: convert a throttle window expressed in whole hours to seconds, for use as
+// the throttleSeconds argument to manifestCheckDue(). A non-positive value yields 0
+// ("always check" -- manifestCheckDue treats a zero window as always due); a value
+// large enough to overflow int seconds is capped at INT_MAX.
+int throttleSecondsFromHours(int hours);
 
 // Pure: is a manifest fetch due now?
 //   force || !installed || protocolMismatch || !lastCheckTime ||

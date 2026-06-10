@@ -468,6 +468,7 @@ namespace prefs {
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
+#define kPositAssistantUpdateCheckIntervalHours "posit_assistant_update_check_interval_hours"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2160,6 +2161,12 @@ public:
     */
    bool positAssistantTestManifest();
    core::Error setPositAssistantTestManifest(bool val);
+
+   /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   int positAssistantUpdateCheckIntervalHours();
+   core::Error setPositAssistantUpdateCheckIntervalHours(int val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

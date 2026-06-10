@@ -4504,8 +4504,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 
 // Decide whether an automatic check must actually fetch the manifest. Always
 // fetches when nothing is installed or the installed protocol mismatches; otherwise
-// throttles to once per kManifestCheckThrottleSeconds. `force` (Retry / install)
-// always fetches. Main-thread only (reads the filesystem).
+// throttles to once per the posit_assistant_update_check_interval_hours preference
+// (0 hours = always check). `force` (Retry / install) always fetches. Main-thread
+// only (reads the filesystem).
 bool shouldFetchManifest(bool force)
 {
    std::string installed = getInstalledVersion();   // "" when not installed
@@ -4518,9 +4519,12 @@ bool shouldFetchManifest(bool force)
    if (record)
       last = record->lastCheckTime;
 
+   int throttleSeconds = throttle::throttleSecondsFromHours(
+      prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
+
    return throttle::manifestCheckDue(
       force, isInstalled, mismatch, last,
-      std::time(nullptr), throttle::kManifestCheckThrottleSeconds);
+      std::time(nullptr), throttleSeconds);
 }
 
 // Resolve the update state from the installed version without fetching the

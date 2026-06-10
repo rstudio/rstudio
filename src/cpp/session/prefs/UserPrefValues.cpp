@@ -3612,6 +3612,19 @@ core::Error UserPrefValues::setPositAssistantTestManifest(bool val)
 }
 
 /**
+ * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+ */
+int UserPrefValues::positAssistantUpdateCheckIntervalHours()
+{
+   return readPref<int>("posit_assistant_update_check_interval_hours");
+}
+
+core::Error UserPrefValues::setPositAssistantUpdateCheckIntervalHours(int val)
+{
+   return writePref("posit_assistant_update_check_interval_hours", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -4124,6 +4137,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantToolbarButtonVisible,
       kAssistantUseSystemCa,
       kPositAssistantTestManifest,
+      kPositAssistantUpdateCheckIntervalHours,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
