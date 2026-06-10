@@ -1,14 +1,19 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
-import { executeCommand, getPref, setPref, resetSourcePaneState } from '@utils/commands';
+import { documentOpen, executeCommand, getPref, setPref, resetSourcePaneState } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
+import { rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
 
 /**
  * Project Trust Dialog — rstudio/rstudio#17231, PR #17211
+ * Visual editor gating in untrusted projects — rstudio/rstudio#17912, PR #17913
  *
  * Tests the trust dialog that prompts before auto-executing risky startup
- * files (.Rprofile, .Renviron, .RData) in untrusted project directories.
+ * files (.Rprofile, .Renviron, .RData) in untrusted project directories, and
+ * the restrictions that apply while a project is untrusted (visual editor
+ * disabled; only the source editor is available for markdown documents).
  *
  * Requires project-trust-dialogs=1 in rsession.conf (Server/Workbench only —
  * Desktop passes --config-file none and has no Pro overlay to enable it).
@@ -30,11 +35,40 @@ const LOCK_ICON = '[title^="Restricted Mode"]';
 const HEADER_UNKNOWN = 'Do you trust this project?';
 const HEADER_RESTRICTED = 'This project is restricted';
 
+// Visual editor gating (#17912): the Visual toggle of the visible editor tab.
+// Its aria-pressed state syncs synchronously with the document's visual-mode
+// property when the markdown toolbar mounts, so it tells us which mode a
+// document opened in without waiting on panmirror.
+const VISUAL_TOGGLE =
+  "xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]" +
+  "//*[contains(concat(' ', normalize-space(@class), ' '), ' rstudio_visual_md_on ')]";
+const PROSE_MIRROR = '.ProseMirror';
+const VISUAL_BLOCKED_MSG = 'The visual editor is not available in untrusted projects.';
+
 // -- Constants ----------------------------------------------------------------
 
 const PROJECT_NAME = 'trust_test_project';
 const RPROFILE_MARKER = 'TRUST_MARKER <- TRUE';
 const PALETTE_LIST = '#rstudio_command_palette_list';
+
+const PLAIN_RMD_NAME = 'trust_plain.Rmd';
+const PLAIN_RMD = heredoc`
+  ---
+  title: Trust Test
+  ---
+
+  Some markdown content.
+`;
+
+const VISUAL_RMD_NAME = 'trust_visual.Rmd';
+const VISUAL_RMD = heredoc`
+  ---
+  title: Trust Test Visual
+  editor: visual
+  ---
+
+  Some markdown content.
+`;
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -151,6 +185,27 @@ async function writeRprofile(page: Page, dir: string, content: string): Promise<
     `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`,
     { wait: true },
   );
+}
+
+/** Write a file with the given content into the given directory. */
+async function writeProjectFile(page: Page, dir: string, name: string, content: string): Promise<void> {
+  const escaped = dir.replace(/\\/g, '/');
+  await executeInConsole(
+    page,
+    `writeLines(${rStringLiteral(content)}, file.path("${escaped}", "${name}"))`,
+    { wait: true },
+  );
+}
+
+/**
+ * Open the given markdown document and assert it landed in source mode:
+ * the Visual toggle is unlatched and no visual editor surface mounted.
+ */
+async function expectOpensInSourceMode(page: Page, path: string): Promise<void> {
+  await documentOpen(page, path);
+  await expect(page.locator(VISUAL_TOGGLE)).toBeVisible({ timeout: 10000 });
+  await expect(page.locator(VISUAL_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
 }
 
 /** Get the current working directory from R. */
@@ -412,7 +467,49 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 5: "Trust" restarts session and loads startup files
+  // Test 5: Visual mode toggle is blocked in restricted mode (#17912)
+  // Restricted mode is still active from test 4 (Escape, status "unknown").
+  // Attempting to switch a markdown document to visual mode is blocked with a
+  // warning bar and the document stays in source mode.
+  // ---------------------------------------------------------------------------
+  test('Visual mode toggle is blocked in restricted mode', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    // Restricted mode is active from the previous test
+    await expect(page.locator(LOCK_ICON)).toBeVisible();
+
+    await writeProjectFile(page, projectDir, PLAIN_RMD_NAME, PLAIN_RMD);
+    await expectOpensInSourceMode(page, `${projectDir}/${PLAIN_RMD_NAME}`);
+
+    // Attempt to switch to visual mode; blocked with a warning bar
+    await executeCommand(page, 'toggleRmdVisualMode');
+    await expect(page.getByText(VISUAL_BLOCKED_MSG)).toBeVisible({ timeout: 10000 });
+
+    // Still in source mode -- the visual editor never mounted
+    await expect(page.locator(VISUAL_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 6: YAML "editor: visual" is forced to source in restricted mode (#17912)
+  // A document that requests visual mode via YAML front matter opens in source
+  // mode while the project is untrusted.
+  // ---------------------------------------------------------------------------
+  test('YAML "editor: visual" is forced to source in restricted mode', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    await expect(page.locator(LOCK_ICON)).toBeVisible();
+
+    await writeProjectFile(page, projectDir, VISUAL_RMD_NAME, VISUAL_RMD);
+    await expectOpensInSourceMode(page, `${projectDir}/${VISUAL_RMD_NAME}`);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 7: "Trust" restarts session and loads startup files
   // Revoke trust so status becomes "untrusted" (different from lastTrustStatus_
   // "unknown"), which lets the restricted dialog appear. Clicking "Trust this
   // project" grants trust, restarts the session, and .Rprofile is sourced.
@@ -442,7 +539,47 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 6: renv carve-out — no dialog for safe .Rprofile
+  // Test 8: Revoking trust re-blocks the visual editor after restart (#17912)
+  // The project is trusted from test 7, so visual editing works (positive
+  // control). Revoking trust and restarting R must re-block it WITHOUT a page
+  // reload: the only thing refreshing the client's trust state on restart is
+  // the SessionInfo sync in TrustPresenter.onDeferredInitCompleted, and the
+  // failure direction is fail-open (visual editing stays available).
+  // ---------------------------------------------------------------------------
+  test('Revoking trust re-blocks the visual editor after restart', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    // Positive control: project is trusted, so the YAML "editor: visual"
+    // document opens in visual mode (not a user-initiated switch, so no
+    // confirmation dialog is raised).
+    await documentOpen(page, `${projectDir}/${VISUAL_RMD_NAME}`);
+    await expect(page.locator(PROSE_MIRROR).first()).toBeVisible({ timeout: 30000 });
+    await resetSourcePaneState(page);
+
+    // Revoke trust and restart R. The restricted dialog may or may not
+    // re-appear (the GWT-side lastTrustStatus_ suppresses it when the last
+    // shown status was also "untrusted" -- granting trust in test 7 restarts
+    // the R session without reloading the page); restricted mode applies
+    // either way, signalled by the lock icon via deferred init.
+    await revokeTrust(page, projectDir);
+    await restartRExpectingDialog(page);
+    if (await isTrustDialogVisible(page, 5000)) {
+      await page.locator(KEEP_RESTRICTED_BTN).click();
+      await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
+    }
+    await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 15000 });
+
+    // Visual editing must be blocked again, with no page reload in between
+    await expectOpensInSourceMode(page, `${projectDir}/${PLAIN_RMD_NAME}`);
+    await executeCommand(page, 'toggleRmdVisualMode');
+    await expect(page.getByText(VISUAL_BLOCKED_MSG)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 9: renv carve-out — no dialog for safe .Rprofile
   // A .Rprofile containing only source("renv/activate.R") is treated as safe
   // and doesn't trigger the trust dialog.
   // ---------------------------------------------------------------------------
@@ -479,7 +616,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 7: .RData triggers dialog when workspace restore is enabled
+  // Test 10: .RData triggers dialog when workspace restore is enabled
   // ---------------------------------------------------------------------------
   test('.RData triggers dialog when workspace restore is enabled', async ({ rstudioPage: page }) => {
     if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
@@ -516,18 +653,18 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 8: .RData does NOT trigger dialog when workspace restore is disabled
+  // Test 11: .RData does NOT trigger dialog when workspace restore is disabled
   // ---------------------------------------------------------------------------
   test('.RData does not trigger dialog when workspace restore is disabled', async ({ rstudioPage: page }) => {
     if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
 
-    // Reset trust (idempotent — already reset after test 7's Escape, but explicit for clarity)
+    // Reset trust (idempotent — already reset after test 10's Escape, but explicit for clarity)
     await resetTrust(page, projectDir);
 
     // Disable workspace restore
     await setPref(page, 'load_workspace', false);
 
-    // .RData still exists from test 7, renv .Rprofile from test 6
+    // .RData still exists from test 10, renv .Rprofile from test 9
     // With load_workspace=FALSE, .RData is not risky
     // renv .Rprofile is safe
     // No risky files → no dialog

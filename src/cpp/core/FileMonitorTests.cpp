@@ -21,6 +21,7 @@
 // per-platform conditional list.
 #ifdef __APPLE__
 
+#include <algorithm>
 #include <chrono>
 #include <cerrno>
 #include <thread>
@@ -56,14 +57,17 @@ struct CallbackState
    bool monitoringError = false;
    bool unregistered = false;
    system::file_monitor::Handle handle;
+   std::vector<std::string> registeredPaths;
    std::vector<system::FileChangeEvent> events;
 };
 
 void onRegistered(CallbackState* pState,
                   system::file_monitor::Handle handle,
-                  const tree<FileInfo>& /*files*/)
+                  const tree<FileInfo>& files)
 {
    pState->handle = handle;
+   for (auto it = files.begin(); it != files.end(); ++it)
+      pState->registeredPaths.push_back(it->absolutePath());
    pState->registered = true;
 }
 
@@ -154,7 +158,8 @@ system::file_monitor::Handle startMonitor(
       const FilePath& dir,
       CallbackState* pState,
       boost::function<bool(const FileInfo&)> filter =
-         boost::function<bool(const FileInfo&)>())
+         boost::function<bool(const FileInfo&)>(),
+      bool recursive = false)
 {
    using namespace boost::placeholders;
 
@@ -167,7 +172,7 @@ system::file_monitor::Handle startMonitor(
 
    system::file_monitor::registerMonitor(
       dir,
-      /*recursive=*/false,
+      recursive,
       filter,
       cb);
 
@@ -205,9 +210,10 @@ protected:
       Error error = created.ensureDirectory();
       ASSERT_FALSE(error) << error.asString();
 
-      // Use the canonical path; FSEvents reports paths in canonical form
-      // (e.g. /private/tmp/... rather than /tmp/...) and registerMonitor
-      // canonicalizes the rootPath internally before scanning the tree.
+      // Use the canonical path so expected paths in most tests are identical
+      // to what FSEvents reports (e.g. /private/tmp/... rather than
+      // /tmp/...). registerMonitor itself preserves whatever path form the
+      // caller passes; the Symlinked* tests below cover that mapping.
       std::string canonical = created.getCanonicalPath();
       ASSERT_FALSE(canonical.empty());
       tempDir_ = FilePath(canonical);
@@ -427,6 +433,108 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsSubdirectoryCreatedAfterStart)
    {
       EXPECT_NE(event.fileInfo().absolutePath(), nested.getAbsolutePath())
          << "Unexpected event for nested file under late-created subdir";
+   }
+
+   stopMonitor(handle, &state);
+}
+
+// Repro for #17909: watch a directory through a symlink. The registration
+// snapshot and all change events must come back in the link's path form --
+// the Files pane diffs the snapshot against a listing taken via the link
+// path, and the GWT client drops events whose parent doesn't match the
+// displayed directory. Canonical (target) path forms leaking out of the
+// monitor empty the pane.
+TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathForm)
+{
+   FilePath target = tempDir_.completeChildPath("real_dir");
+   ASSERT_FALSE(target.ensureDirectory());
+   ASSERT_TRUE(writeFile(target.completeChildPath("existing.txt"), "pre-existing"));
+
+   FilePath link = tempDir_.completeChildPath("link_dir");
+   ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(),
+                          link.getAbsolutePath().c_str()))
+      << "symlink() failed: errno=" << errno;
+
+   CallbackState state;
+   auto handle = startMonitor(link, &state);
+
+   // every path in the registration snapshot uses the link form
+   std::string linkPrefix = link.getAbsolutePath();
+   ASSERT_FALSE(state.registeredPaths.empty());
+   for (const auto& path : state.registeredPaths)
+   {
+      EXPECT_TRUE(path == linkPrefix ||
+                  boost::algorithm::starts_with(path, linkPrefix + "/"))
+         << "snapshot path not in link form: " << path;
+   }
+   EXPECT_TRUE(std::count(state.registeredPaths.begin(),
+                          state.registeredPaths.end(),
+                          link.completeChildPath("existing.txt").getAbsolutePath()) == 1);
+
+   // change events arrive in link form too, even though FSEvents reports
+   // them against the canonical target path
+   state.events.clear();
+   FilePath added = link.completeChildPath("added.txt");
+   ASSERT_TRUE(writeFile(added, "hello"));
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         added.getAbsolutePath());
+   }));
+
+   ASSERT_FALSE(added.remove());
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileRemoved,
+                         added.getAbsolutePath());
+   }));
+
+   for (const auto& event : state.events)
+   {
+      EXPECT_TRUE(boost::algorithm::starts_with(event.fileInfo().absolutePath(),
+                                                linkPrefix + "/"))
+         << "event path not in link form: " << event.fileInfo().absolutePath();
+   }
+
+   stopMonitor(handle, &state);
+}
+
+// The recursive branch goes through directory-granularity events and
+// discoverAndProcessFileChanges rather than the per-file path, so the
+// canonical-to-registered mapping needs separate coverage there.
+TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathFormRecursive)
+{
+   FilePath target = tempDir_.completeChildPath("real_dir");
+   FilePath subDir = target.completeChildPath("subdir");
+   ASSERT_FALSE(subDir.ensureDirectory());
+
+   FilePath link = tempDir_.completeChildPath("link_dir");
+   ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(),
+                          link.getAbsolutePath().c_str()))
+      << "symlink() failed: errno=" << errno;
+
+   CallbackState state;
+   auto handle = startMonitor(link, &state,
+                              boost::function<bool(const FileInfo&)>(),
+                              /*recursive=*/true);
+   state.events.clear();
+
+   FilePath nested = link.completeChildPath("subdir/nested.txt");
+   ASSERT_TRUE(writeFile(nested, "nested"));
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         nested.getAbsolutePath());
+   }));
+
+   // the recursive branch can also emit events for enclosing directories
+   // (e.g. a FileModified for subdir); every event must be in link form
+   std::string linkPrefix = link.getAbsolutePath();
+   for (const auto& event : state.events)
+   {
+      EXPECT_TRUE(boost::algorithm::starts_with(event.fileInfo().absolutePath(),
+                                                linkPrefix + "/"))
+         << "event path not in link form: " << event.fileInfo().absolutePath();
    }
 
    stopMonitor(handle, &state);

@@ -1024,6 +1024,14 @@
             "description": "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio."
          },
          {
+            "name": "project-trust-required",
+            "type": "bool",
+            "memberName": "projectTrustRequired_",
+            "defaultValue": false,
+            "implicitValue": true,
+            "description": "When enabled, projects are treated as untrusted by default: users are prompted to trust each project when it is opened (including projects in the user's home directory), even if it contains no auto-executing files. Projects that have not been explicitly trusted run in restricted mode. Setting this option implies project-trust-dialogs; if that option has been explicitly disabled, this option has no effect."
+         },
+         {
             "name": "preview-allowed-functions",
             "type": "string",
             "memberName": "previewAllowedFunctions_",

@@ -501,6 +501,9 @@ protected:
       ("project-trust-dialogs",
       value<int>(&projectTrustDialogs_)->default_value(-1),
       "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.")
+      ("project-trust-required",
+      value<bool>(&projectTrustRequired_)->default_value(false)->implicit_value(true),
+      "When enabled, projects are treated as untrusted by default: users are prompted to trust each project when it is opened (including projects in the user's home directory), even if it contains no auto-executing files. Projects that have not been explicitly trusted run in restricted mode. Setting this option implies project-trust-dialogs; if that option has been explicitly disabled, this option has no effect.")
       ("preview-allowed-functions",
       value<std::string>(&previewAllowedFunctions_)->default_value(""),
       "A comma- or space-separated list of additional function names (for example, 'mypkg::connect') that may be evaluated without prompting when resolving a file preview connection expression -- the SQL '-- !preview conn=' header or an r2d3 preview. Each listed name is treated as a trusted constructor; its arguments are still validated. Use this to allow connection helpers from internally-built packages.");
@@ -644,6 +647,7 @@ public:
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
+   bool projectTrustRequired() const { return projectTrustRequired_; }
    std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
 
 
@@ -780,6 +784,7 @@ protected:
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
    int projectTrustDialogs_;
+   bool projectTrustRequired_;
    std::string previewAllowedFunctions_;
    virtual bool allowOverlay() const { return false; };
 };

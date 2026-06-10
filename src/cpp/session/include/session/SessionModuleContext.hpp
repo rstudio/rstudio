@@ -1050,6 +1050,14 @@ bool navigateToRenderPreviewError(const core::FilePath& previewFile,
                                   const std::string& output,
                                   const std::string& allOutput);
 
+// Returns true if a website's output directory (outputDir, resolved relative
+// to base) should be excluded from Find in Files / code search. Returns false
+// when outputDir is empty, or when it resolves to base itself (e.g.
+// 'output-dir: .') -- ignoring base would drop all project content (#17900).
+// The comparison is by filesystem identity (boost::filesystem::equivalent via
+// FilePath::isEquivalentTo), so 'base/.' is recognized as base even though it
+// differs from base as a lexically-normal string.
+bool shouldIgnoreOutputDir(const core::FilePath& base, const std::string& outputDir);
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
 

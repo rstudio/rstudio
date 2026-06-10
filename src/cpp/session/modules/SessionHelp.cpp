@@ -972,6 +972,68 @@ void handleHttpdRequest(const std::string& location,
       return;
    }
 
+   // intercept "Run examples" (and "Run demo") links for examples that launch a
+   // blocking application such as a Shiny app. R's enhanced HTML help renders
+   // these inline by running the example on the R event loop while serving this
+   // request; a blocking runApp() there never returns, locking up the whole
+   // session (see issue #17178). When we detect such an example, run it in the
+   // console instead -- matching the behavior of example()/demo() at the prompt.
+   {
+      // these mirror the URL patterns recognized by tools:::httpd()
+      static const boost::regex reExample("^/library/([^/]+)/Example/(.+)$");
+      static const boost::regex reDemo("^/library/([^/]+)/Demo/([^/]+)$");
+
+      boost::smatch match;
+      bool isExample = boost::regex_match(path, match, reExample);
+      if (isExample || boost::regex_match(path, match, reDemo))
+      {
+         std::string package = match[1];
+         std::string topic = match[2];
+         std::string type = isExample ? "Example" : "Demo";
+
+         bool diverted = false;
+         Error error = r::exec::RFunction(".rs.runExampleInConsoleIfBlocking")
+               .addParam(type)
+               .addParam(package)
+               .addParam(topic)
+               .call(&diverted);
+         if (error)
+         {
+            error.addProperty("type", type);
+            error.addProperty("package", package);
+            error.addProperty("topic", topic);
+            LOG_ERROR(error);
+         }
+
+         if (diverted)
+         {
+            // for an example, the topic in the URL is the Rd file's first
+            // \alias, which usually -- but not always -- matches the Rd base
+            // name used in help page URLs (../html/<topic>.html), so this
+            // back-link is best-effort; for a demo, fall back to the package
+            // index
+            std::string label = isExample ? "example" : "demo";
+            std::string backUrl = isExample
+                  ? "../html/" + http::util::urlEncode(topic) + ".html"
+                  : "../html/00Index.html";
+            std::string backLabel = isExample ? "Back to help topic" : "Back to package index";
+
+            std::string html =
+                  "<!DOCTYPE html>\n"
+                  "<html>\n<head><meta charset=\"utf-8\"></head>\n<body>\n"
+                  "<p>Running " + label + " <code>" +
+                  string_utils::htmlEscape(topic) + "</code> in the R console.</p>\n"
+                  "<p><a href=\"" + backUrl + "\">" + backLabel + "</a></p>\n"
+                  "</body>\n</html>\n";
+
+            pResponse->setContentType("text/html");
+            pResponse->setNoCacheHeaders();
+            pResponse->setBody(html, filter);
+            return;
+         }
+      }
+   }
+
    // evaluate the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;

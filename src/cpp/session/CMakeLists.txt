@@ -188,6 +188,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
    modules/chat/ChatIntegrity.cpp
+   modules/chat/ChatUpdateThrottle.cpp
    modules/chat/ChatStaticFiles.cpp
    modules/SessionAssistant.cpp
    modules/SessionCodeSearch.cpp

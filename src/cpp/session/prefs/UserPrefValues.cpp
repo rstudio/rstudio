@@ -1285,6 +1285,19 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+ */
+bool UserPrefValues::ignoreProjectAppearance()
+{
+   return readPref<bool>("ignore_project_appearance");
+}
+
+core::Error UserPrefValues::setIgnoreProjectAppearance(bool val)
+{
+   return writePref("ignore_project_appearance", val);
+}
+
+/**
  * Whether to use a custom editor font in RStudio Server.
  */
 bool UserPrefValues::serverEditorFontEnabled()
@@ -3573,6 +3586,19 @@ core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
 }
 
 /**
+ * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+ */
+bool UserPrefValues::assistantUseSystemCa()
+{
+   return readPref<bool>("assistant_use_system_ca");
+}
+
+core::Error UserPrefValues::setAssistantUseSystemCa(bool val)
+{
+   return writePref("assistant_use_system_ca", val);
+}
+
+/**
  * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
  */
 bool UserPrefValues::positAssistantTestManifest()
@@ -3919,6 +3945,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEnableMousewheelZoom,
       kMousewheelZoomDebounceMs,
       kEditorTheme,
+      kIgnoreProjectAppearance,
       kServerEditorFontEnabled,
       kServerEditorFont,
       kDefaultEncoding,
@@ -4095,6 +4122,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesAutoshow,
       kAssistantShowMessages,
       kAssistantToolbarButtonVisible,
+      kAssistantUseSystemCa,
       kPositAssistantTestManifest,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,

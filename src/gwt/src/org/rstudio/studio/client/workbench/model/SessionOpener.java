@@ -200,22 +200,28 @@ public class SessionOpener
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
          private int retries_ = 0;
-         private boolean pingDelivered_ = false;
+         private boolean completed_ = false;
          private boolean pingInFlight_ = false;
          
          @Override
          public boolean execute()
          {
-            // if we've already delivered the ping, return false
-            if (pingDelivered_)
+            // if we've already completed, return false
+            if (completed_)
             {
                return false;
             }
             
-            // if we hit our retry count, give up
+            // if we hit our retry count, give up -- but still signal completion
+            // so callers (e.g. the restart flow) don't get stuck waiting forever
             if (retries_++ > maxRetries)
             {
                Debug.logWarning("Error connecting with session.");
+               completed_ = true;
+
+               if (onCompleted != null)
+                  onCompleted.execute();
+
                return false;
             }
             
@@ -229,11 +235,11 @@ public class SessionOpener
                   {
                      pingInFlight_ = false;
                      
-                     // if the ping was already handled separately, discard this
-                     if (pingDelivered_)
+                     // if completion was already signaled, discard this
+                     if (completed_)
                         return;
-                     
-                     pingDelivered_ = true;
+
+                     completed_ = true;
                      pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
                      
                      if (onCompleted != null)
@@ -244,18 +250,22 @@ public class SessionOpener
                   protected void onFailure()
                   {
                      pingInFlight_ = false;
-                     
-                     // if the ping was already handled separately, discard this
-                     if (pingDelivered_)
+
+                     // if completion was already signaled, discard this
+                     if (completed_)
                         return;
-                     
+
+                     // treat a failed ping as completion as well, but mark
+                     // ourselves completed so onCompleted fires only once
+                     completed_ = true;
+
                      if (onCompleted != null)
                         onCompleted.execute();
                   }
                });
             }
             
-            // keep trying until the ping is delivered
+            // keep trying until completion is signaled
             return true;
          }
          

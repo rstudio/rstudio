@@ -708,6 +708,12 @@
             "title": "Theme",
             "description": "The name of the color theme to apply to the text editor in RStudio."
         },
+        "ignore_project_appearance": {
+            "type": "boolean",
+            "default": false,
+            "title": "Ignore project-specific appearance settings",
+            "description": "Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead."
+        },
         "server_editor_font_enabled": {
             "type": "boolean",
             "default": false,
@@ -1720,7 +1726,7 @@
             "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",
             "type": "boolean",
-            "default": false
+            "default": true
         },
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
@@ -1881,6 +1887,12 @@
             "default": true,
             "title": "Show Posit Assistant button in toolbar",
             "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
+        },
+        "assistant_use_system_ca": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use the system certificate store (restart required)",
+            "description": "When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect."
         },
         "posit_assistant_test_manifest": {
             "type": "boolean",

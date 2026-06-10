@@ -940,3 +940,39 @@
 
    plotData
 })
+
+#' Build the R command run in a --vanilla child process to fetch the manifest.
+#'
+#' The parent session has already resolved download.file.* options (profile +
+#' runtime), so capture them here and inject them so the vanilla child reproduces
+#' the parent's proxy/method configuration. options(timeout = 30L) is the
+#' documented transfer-timeout knob; download.file() has no timeout argument.
+#'
+#' @param url The manifest URL to download.
+.rs.addFunction("chat.manifestDownloadCommand", function(url)
+{
+   serialize <- function(value) paste(deparse(value), collapse = " ")
+
+   args <- c(serialize(url), "destfile = tmp", "quiet = TRUE")
+
+   method <- getOption("download.file.method")
+   if (!is.null(method))
+      args <- c(args, sprintf("method = %s", serialize(method)))
+
+   extra <- getOption("download.file.extra")
+   if (!is.null(extra))
+      args <- c(args, sprintf("extra = %s", serialize(extra)))
+
+   # Propagate download failures as a non-zero process exit. Some methods return
+   # a non-zero status with only a warning (rather than erroring), so capture the
+   # status and stop() before reading the file -- the manifest subprocess
+   # contract is that a download failure surfaces as a non-zero exit status, not
+   # a clean exit with a partial/empty body on stdout.
+   # cat() with the default sep = " " would replace newlines with spaces; use
+   # sep = "\n" so the downloaded body round-trips verbatim on stdout rather than
+   # relying on JSON tolerating that substitution.
+   sprintf(
+      "{ options(timeout = 30L); tmp <- tempfile(); status <- download.file(%s); if (!isTRUE(status == 0)) stop(paste('download.file failed, status', status)); cat(readLines(tmp, warn = FALSE), sep = '\\n') }",
+      paste(args, collapse = ", ")
+   )
+})

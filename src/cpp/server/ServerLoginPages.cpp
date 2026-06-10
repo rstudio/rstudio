@@ -73,9 +73,18 @@ void fillLoginFields(const core::http::Request& request,
 
    // fill error
    std::string error = request.queryParamValue(kErrorParam);
-   variables[kErrorMessage] = loginErrorMessage(static_cast<ErrorType>(
-            core::safe_convert::stringTo<unsigned>(error, kErrorNone)));
+   ErrorType errorType = static_cast<ErrorType>(
+            core::safe_convert::stringTo<unsigned>(error, kErrorNone));
+   variables[kErrorMessage] = loginErrorMessage(errorType);
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
+
+   // Mark the credential fields invalid and associate them with the error text
+   // ONLY for credential/sign-in errors (wrong username/password). Other server
+   // problems (locked, unauthorized, license, system, SSO, etc.) leave the
+   // fields unmarked so screen readers do not describe them with irrelevant text.
+   bool isCredentialError = (errorType == kErrorInvalidLogin);
+   variables[kAriaInvalid] = isCredentialError ? "true" : "false";
+   variables[kAriaDescribedBy] = isCredentialError ? "errortext" : "";
 
    // get the application uri the user was on the way to (default to
    // root location if it isn't specified)

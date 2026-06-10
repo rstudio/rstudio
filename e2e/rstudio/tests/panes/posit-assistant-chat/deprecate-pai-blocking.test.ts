@@ -76,7 +76,7 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
     // Let Posit Assistant load normally first
     await chatActions.openChatPane();
     await chatActions.dismissSetupPrompts();
-    await expect(chatPane.chatTextarea).toBeVisible({ timeout: 60000 });
+    await expect(chatPane.chatInput).toBeVisible({ timeout: 60000 });
     await consoleActions.clearConsole();
   });
 

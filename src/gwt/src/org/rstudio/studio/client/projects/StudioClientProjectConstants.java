@@ -199,6 +199,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String markdownPerFileOptionsCaption();
     String visualModeZoteroCaption();
     String rMarkdownText();
+    String appearanceText();
+    String editorThemeFormLabel();
+    String appearanceIgnoredByGlobalText();
     String sharingText();
     String vcsSelectLabel();
     String originLabel();

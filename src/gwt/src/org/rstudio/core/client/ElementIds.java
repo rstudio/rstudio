@@ -770,6 +770,11 @@ public class ElementIds
    
    // ProjectGeneralPreferencesPane
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
+
+   // AppearancePreferencesPane / ProjectAppearancePreferencesPane (editor theme)
+   public final static String APPEARANCE_EDITOR_THEME = "appearance_editor_theme";
+   public final static String APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE = "appearance_editor_theme_project_override";
+   public final static String PROJECT_EDITOR_THEME = "project_editor_theme";
    
    // Data viewer
    public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
