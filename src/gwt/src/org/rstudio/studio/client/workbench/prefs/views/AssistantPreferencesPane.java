@@ -122,9 +122,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      // The update-check interval is always visible in the Chat section; reject a
-      // negative value here (its widget allows only digits) so an invalid interval
-      // cannot be saved.
+      // The update-check interval is always visible in the Chat section. Its
+      // validate() rejects non-digit input (including a typed or pasted negative)
+      // with a ^\d+$ check, so an invalid interval cannot be saved.
       return nvwAssistantUpdateCheckInterval_.validate();
    }
 
