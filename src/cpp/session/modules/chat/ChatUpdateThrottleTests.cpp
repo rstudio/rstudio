@@ -126,6 +126,15 @@ TEST(ChatUpdateThrottle, ThrottleMaxHoursConvertsExactlyWithoutClamping)
    EXPECT_EQ(throttleSecondsFromHours(maxHours), maxHours * 3600);
 }
 
+TEST(ChatUpdateThrottle, ThrottleFirstClampedHourReturnsMaxWithoutOverflow)
+{
+   // The first hour count past the exactly-representable maximum is where the
+   // clamp engages; it must return INT_MAX rather than overflow. This pins the
+   // boundary so a future > vs >= edit cannot slip past.
+   const int maxHours = std::numeric_limits<int>::max() / 3600;
+   EXPECT_EQ(throttleSecondsFromHours(maxHours + 1), std::numeric_limits<int>::max());
+}
+
 TEST(ChatUpdateThrottle, ThrottleHugeHoursCappedWithoutOverflow)
 {
    EXPECT_EQ(throttleSecondsFromHours(std::numeric_limits<int>::max()),
