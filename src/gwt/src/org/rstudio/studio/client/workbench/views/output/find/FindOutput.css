@@ -101,3 +101,24 @@
    background-color: #A81900;
    color: white;
 }
+
+.editor_dark .line {
+   color: #9E9E9E;
+}
+
+.editor_dark .findOutput strong {
+   color: #A0A0E0;
+}
+
+.editor_dark .findOutput mark,
+.editor_dark .findOutputReplace strong,
+.editor_dark .findOutputReplace del,
+.editor_dark .findOutputReplace mark {
+   background-color: #7A2D21;
+   color: #FFF;
+}
+
+.editor_dark .findOutputReplace ins {
+   background-color: #2D5E2D;
+   color: #FFF;
+}
