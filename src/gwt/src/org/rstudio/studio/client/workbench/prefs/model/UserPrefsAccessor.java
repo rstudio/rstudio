@@ -141,6 +141,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ENABLE_MOUSEWHEEL_ZOOM = "enable_mousewheel_zoom";
    public static final String MOUSEWHEEL_ZOOM_DEBOUNCE_MS = "mousewheel_zoom_debounce_ms";
    public static final String EDITOR_THEME = "editor_theme";
+   public static final String IGNORE_PROJECT_APPEARANCE = "ignore_project_appearance";
    public static final String SERVER_EDITOR_FONT_ENABLED = "server_editor_font_enabled";
    public static final String SERVER_EDITOR_FONT = "server_editor_font";
    public static final String DEFAULT_ENCODING = "default_encoding";
@@ -317,6 +318,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
+   public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
@@ -1743,6 +1745,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   public PrefValue<Boolean> ignoreProjectAppearance()
+   {
+      return bool(
+         "ignore_project_appearance",
+         _constants.ignoreProjectAppearanceTitle(), 
+         _constants.ignoreProjectAppearanceDescription(), 
+         false);
+   }
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    public PrefValue<Boolean> serverEditorFontEnabled()
@@ -2591,7 +2605,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".posit", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -3858,7 +3872,7 @@ public class UserPrefsAccessor extends Prefs
          "insert_native_pipe_operator",
          _constants.insertNativePipeOperatorTitle(), 
          _constants.insertNativePipeOperatorDescription(), 
-         false);
+         true);
    }
 
    /**
@@ -4208,6 +4222,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.assistantToolbarButtonVisibleTitle(), 
          _constants.assistantToolbarButtonVisibleDescription(), 
          true);
+   }
+
+   /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   public PrefValue<Boolean> assistantUseSystemCa()
+   {
+      return bool(
+         "assistant_use_system_ca",
+         _constants.assistantUseSystemCaTitle(), 
+         _constants.assistantUseSystemCaDescription(), 
+         false);
    }
 
    /**
@@ -4698,6 +4724,8 @@ public class UserPrefsAccessor extends Prefs
          mousewheelZoomDebounceMs().setValue(layer, source.getInteger("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("ignore_project_appearance"))
+         ignoreProjectAppearance().setValue(layer, source.getBool("ignore_project_appearance"));
       if (source.hasKey("server_editor_font_enabled"))
          serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
       if (source.hasKey("server_editor_font"))
@@ -5050,6 +5078,8 @@ public class UserPrefsAccessor extends Prefs
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
+      if (source.hasKey("assistant_use_system_ca"))
+         assistantUseSystemCa().setValue(layer, source.getBool("assistant_use_system_ca"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
       if (source.hasKey("copilot_enabled"))
@@ -5189,6 +5219,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(enableMousewheelZoom());
       prefs.add(mousewheelZoomDebounceMs());
       prefs.add(editorTheme());
+      prefs.add(ignoreProjectAppearance());
       prefs.add(serverEditorFontEnabled());
       prefs.add(serverEditorFont());
       prefs.add(defaultEncoding());
@@ -5365,6 +5396,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
+      prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());

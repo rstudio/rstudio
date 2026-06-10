@@ -16,6 +16,8 @@
 
 #include <gsl/gsl-lite.hpp>
 
+#include <algorithm>
+
 #include <signal.h>
 #include <sys/stat.h>
 
@@ -57,6 +59,7 @@
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
 
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -3054,14 +3057,18 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    FilePath repoRoot = gitIgnoreFile.getParent();
    libgit2::Git git(repoRoot);
 
-   // only add the .positai entry when the directory exists at the repo
-   // root AND isn't already covered by an existing ignore rule. The
-   // existence check decouples this from the assistant preference: .positai
-   // belongs to a separate tool that may write it independent of RStudio's
-   // own AI integration state.
-   bool positaiExists = repoRoot.completeChildPath(".positai").exists();
-   bool positaiAlreadyIgnored = positaiExists && git.isIgnored(".positai");
-   bool wantPositai = positaiExists && !positaiAlreadyIgnored;
+   // only add a Posit Assistant state directory (current ".posit/assistant" or
+   // the legacy ".positai") when it exists at the repo root AND isn't already
+   // covered by an existing ignore rule. The existence check decouples this
+   // from the assistant preference: these directories belong to a separate
+   // tool that may write them independent of RStudio's own AI integration
+   // state.
+   std::vector<std::string> aiDirsToIgnore;
+   for (const std::string& dir : aiAssistantStateDirs())
+   {
+      if (repoRoot.completeChildPath(dir).exists() && !git.isIgnored(dir))
+         aiDirsToIgnore.push_back(dir);
+   }
 
    // Add stuff to .gitignore
    std::vector<std::string> filesToIgnore;
@@ -3075,8 +3082,8 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
 
-      if (wantPositai)
-         filesToIgnore.push_back(".positai");
+      for (const std::string& dir : aiDirsToIgnore)
+         filesToIgnore.push_back(dir);
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -3110,8 +3117,8 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       if (!git.isIgnored(".Rproj.user"))
          filesToIgnore.push_back(".Rproj.user");
 
-      if (wantPositai)
-         filesToIgnore.push_back(".positai");
+      for (const std::string& dir : aiDirsToIgnore)
+         filesToIgnore.push_back(dir);
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -3262,9 +3269,9 @@ void reaugmentGitIgnore()
 void onMonitoringEnabled(const tree<core::FileInfo>& /*files*/)
 {
    // close the window between initializeGit() and file monitor start:
-   // if .positai appeared in that interval, augmentGitIgnore wasn't aware
-   // of it. Re-run now that monitoring is live; augmentGitIgnore is
-   // idempotent.
+   // if a Posit Assistant state directory appeared in that interval,
+   // augmentGitIgnore wasn't aware of it. Re-run now that monitoring is
+   // live; augmentGitIgnore is idempotent.
    reaugmentGitIgnore();
 }
 
@@ -3273,13 +3280,20 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    if (s_git_.root().isEmpty())
       return;
 
-   std::string positaiAbsPath =
-         s_git_.root().completeChildPath(".positai").getAbsolutePath();
+   // re-augment .gitignore when a Posit Assistant state directory is created
+   // mid-session. We also watch the parent of the nested ".posit/assistant"
+   // (i.e. ".posit") so creation is observed when both are created together;
+   // augmentGitIgnore re-checks existence and is idempotent.
+   std::vector<std::string> watchPaths;
+   for (const std::string& dir : aiAssistantMonitorPaths())
+      watchPaths.push_back(s_git_.root().completeChildPath(dir).getAbsolutePath());
+
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
-      if (event.fileInfo().absolutePath() != positaiAbsPath)
+      if (std::find(watchPaths.begin(), watchPaths.end(),
+                    event.fileInfo().absolutePath()) == watchPaths.end())
          continue;
 
       reaugmentGitIgnore();
@@ -3480,8 +3494,8 @@ core::Error initialize()
    // add settings changed handler
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
-   // subscribe to project file monitor so we can update .gitignore when
-   // .positai appears at the repo root mid-session
+   // subscribe to project file monitor so we can update .gitignore when a
+   // Posit Assistant state directory appears at the repo root mid-session
    projects::FileMonitorCallbacks fileMonitorCallbacks;
    fileMonitorCallbacks.onMonitoringEnabled = onMonitoringEnabled;
    fileMonitorCallbacks.onFilesChanged = onProjectFilesChanged;

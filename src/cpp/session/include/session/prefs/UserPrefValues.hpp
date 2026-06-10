@@ -185,6 +185,7 @@ namespace prefs {
 #define kEnableMousewheelZoom "enable_mousewheel_zoom"
 #define kMousewheelZoomDebounceMs "mousewheel_zoom_debounce_ms"
 #define kEditorTheme "editor_theme"
+#define kIgnoreProjectAppearance "ignore_project_appearance"
 #define kServerEditorFontEnabled "server_editor_font_enabled"
 #define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
@@ -465,6 +466,7 @@ namespace prefs {
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
+#define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
@@ -1084,6 +1086,12 @@ public:
     */
    std::string editorTheme();
    core::Error setEditorTheme(std::string val);
+
+   /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   bool ignoreProjectAppearance();
+   core::Error setIgnoreProjectAppearance(bool val);
 
    /**
     * Whether to use a custom editor font in RStudio Server.
@@ -2140,6 +2148,12 @@ public:
     */
    bool assistantToolbarButtonVisible();
    core::Error setAssistantToolbarButtonVisible(bool val);
+
+   /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   bool assistantUseSystemCa();
+   core::Error setAssistantUseSystemCa(bool val);
 
    /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
