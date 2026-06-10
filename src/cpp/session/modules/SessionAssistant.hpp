@@ -28,7 +28,26 @@ namespace modules {
 namespace assistant {
 
 int assistantRuntimeStatus();
+
+// Synchronously stop the assistant agent, waiting for the process to exit so
+// its file handles are released. Returns true if the agent stopped (or was not
+// running), false on timeout. Use before install/uninstall, which overwrite or
+// delete the agent's files on disk.
+//
+// Must NOT be called from within a process-supervisor poll (e.g. a manifest
+// fetch completion delivered inline on the main thread): the wait re-enters the
+// supervisor poll, whose re-entrancy guard makes the nested poll a no-op, so the
+// agent's exit is never observed and the wait runs its full timeout. Use
+// requestAgentStop() on those paths instead.
 bool stopAgentForUpdate();
+
+// Request that the assistant agent stop, without waiting for it to exit. The
+// process is terminated and reaped by normal background polling. Use when the
+// running agent has become unsupported and should no longer run; this is safe to
+// call from within a supervisor poll, where stopAgentForUpdate() would block for
+// its full timeout.
+void requestAgentStop();
+
 core::Error initialize();
 
 } // end namespace assistant
