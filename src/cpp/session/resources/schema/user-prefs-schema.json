@@ -1121,6 +1121,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".posit",
                 ".positai",
                 ".quartoignore",
                 ".r",

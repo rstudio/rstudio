@@ -21,7 +21,9 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  *                                  missing parent so typos surface immediately.
  *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" to opt out of copying real AI
  *                                  credentials into the sandbox. By default,
- *                                  if `~/.positai/` and/or the GitHub Copilot
+ *                                  if the Posit Assistant state dir
+ *                                  (`~/.posit/assistant` or legacy `~/.positai`)
+ *                                  and/or the GitHub Copilot
  *                                  config dir exist on the host, they're
  *                                  copied into the sandbox user-home so the
  *                                  matching @ai tests start authenticated.
@@ -106,23 +108,33 @@ export default async function globalSetup() {
   );
 
   if (!skipSeeding) {
-    const realPositai = path.join(os.homedir(), '.positai');
-    if (fs.existsSync(realPositai)) {
+    // Posit Assistant moved its state directory from ~/.positai to
+    // ~/.posit/assistant. Seed whichever the host has, preferring the new
+    // location, and mirror it at the same relative path inside the sandbox
+    // user-home so the under-test Assistant (which may recognize either)
+    // finds it.
+    const positaiCandidates = [path.join('.posit', 'assistant'), '.positai'];
+    const seededFrom = positaiCandidates
+      .map((rel) => ({ rel, abs: path.join(os.homedir(), rel) }))
+      .find(({ abs }) => fs.existsSync(abs));
+    if (seededFrom) {
       try {
-        fs.cpSync(realPositai, path.join(userHome, '.positai'), { recursive: true });
+        const dest = path.join(userHome, seededFrom.rel);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.cpSync(seededFrom.abs, dest, { recursive: true });
         process.env.PW_AI_SEEDED_POSITAI = '1';
-        console.log(`[sandbox] seeded user-home/.positai from ${realPositai}`);
+        console.log(`[sandbox] seeded user-home/${seededFrom.rel} from ${seededFrom.abs}`);
         console.warn(
-          `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.positai. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
+          `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ${seededFrom.abs}. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
         );
       } catch (err) {
         throw new Error(
-          `Failed copying ${realPositai} into sandbox: ${(err as Error).message}`,
+          `Failed copying ${seededFrom.abs} into sandbox: ${(err as Error).message}`,
         );
       }
     } else {
       console.log(
-        `[sandbox] no ~/.positai/ on host; @ai Posit Assistant tests will skip`,
+        `[sandbox] no Posit Assistant state dir (~/.posit/assistant or ~/.positai) on host; @ai Posit Assistant tests will skip`,
       );
     }
 
