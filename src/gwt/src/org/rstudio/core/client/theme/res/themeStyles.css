@@ -1581,7 +1581,7 @@ body.windows .toolbar {
 
 .rstheme_secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: TABSTRIPHEIGHT !important;
+   height: 21px !important;
 }
 
 .secondaryToolbarPanel {
@@ -1591,10 +1591,6 @@ body.windows .toolbar {
 
 .rstudio-themes-dark .secondaryToolbarPanel {
    background: #6c7a86;
-}
-
-.rstheme_secondaryToolbar {
-   height: 21px !important;
 }
 
 .rstheme_secondaryToolbar img[src=""] {

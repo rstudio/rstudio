@@ -10,6 +10,7 @@
 - ([#17912](https://github.com/rstudio/rstudio/issues/17912)): Add a `project-trust-required` session option (off by default) that treats all projects as untrusted by default -- including projects in the user's home directory -- prompting users to trust each project when opened even if it contains no auto-executing files. Additionally, the visual editor is now disabled in untrusted projects, whether or not this option is set; only the source editor is available for markdown documents.
 
 ### Fixed
+- ([#17501](https://github.com/rstudio/rstudio/issues/17501)): Fix the secondary toolbars in the Find in Files and Presentation panes rendering 2px shorter than the space reserved for them, which left a small dead strip below the toolbar border.
 - ([#17900](https://github.com/rstudio/rstudio/issues/17900)): Fix Find in Files (and project code search) returning no results in a Quarto or R Markdown website project whose output directory is set to the project directory itself (for example `output-dir: .` in `_quarto.yml`); the project root is no longer treated as ignored output content.
 - ([#14202](https://github.com/rstudio/rstudio/issues/14202)): Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.
 - ([#17701](https://github.com/rstudio/rstudio/issues/17701)): Honor newline characters in `rstudioapi::showDialog()` and `rstudioapi::showPrompt()` messages.
