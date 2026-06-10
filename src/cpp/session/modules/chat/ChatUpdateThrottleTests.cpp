@@ -118,6 +118,14 @@ TEST(ChatUpdateThrottle, ThrottlePositiveHoursConvertToSeconds)
    EXPECT_EQ(throttleSecondsFromHours(24), kDay);
 }
 
+TEST(ChatUpdateThrottle, ThrottleMaxHoursConvertsExactlyWithoutClamping)
+{
+   // The largest hour count whose seconds still fit in an int must convert
+   // exactly, not be clamped.
+   const int maxHours = std::numeric_limits<int>::max() / 3600;
+   EXPECT_EQ(throttleSecondsFromHours(maxHours), maxHours * 3600);
+}
+
 TEST(ChatUpdateThrottle, ThrottleHugeHoursCappedWithoutOverflow)
 {
    EXPECT_EQ(throttleSecondsFromHours(std::numeric_limits<int>::max()),

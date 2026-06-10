@@ -161,8 +161,10 @@ int throttleSecondsFromHours(int hours)
 {
    if (hours <= 0)
       return 0;
+   // kMaxHours * 3600 still fits in an int (integer division floors), so only a
+   // strictly larger value would overflow; cap those at INT_MAX.
    const int kMaxHours = std::numeric_limits<int>::max() / 3600;
-   if (hours >= kMaxHours)
+   if (hours > kMaxHours)
       return std::numeric_limits<int>::max();
    return hours * 3600;
 }
