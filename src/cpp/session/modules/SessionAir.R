@@ -68,9 +68,16 @@
    destfile <- tempfile(fileext = ".json")
    .rs.air.downloadFile(url, destfile)
 
-   contents <- readLines(destfile, warn = FALSE)
+   # .rs.fromJSON() takes a single string; readLines() on the pretty-printed
+   # response yields one element per line, so collapse before parsing.
+   contents <- paste(readLines(destfile, warn = FALSE), collapse = "\n")
    response <- .rs.fromJSON(contents)
-   response[["tag_name"]]
+
+   version <- response[["tag_name"]]
+   if (is.null(version))
+      stop(sprintf("Failed to determine latest Air version from '%s'.", url))
+
+   version
 })
 
 .rs.addFunction("air.ensureAvailable", function()

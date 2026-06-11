@@ -75,6 +75,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
  *   window.rstudio.project.isActive()   // boolean
+ *   window.rstudio.project.airTomlPath() // cached project-root air.toml path, or null
  *   window.rstudio.project.open(path)   // fire SwitchToProjectEvent; resets ready
  *
  *   window.rstudio.dialogs.numShowing()  // count of open modal dialogs
@@ -469,6 +470,15 @@ public class ApplicationAutomation
       return getActiveProjectPath() != null;
    }
 
+   // The cached project-root air.toml path maintained by Projects via
+   // FileChangeEvent. Exposed so tests that create or delete an air.toml on
+   // disk can wait for the file monitor to surface the change before
+   // exercising formatter paths that consult this cache.
+   private String getAirTomlPath()
+   {
+      return RStudioGinjector.INSTANCE.getProjects().getAirTomlPath();
+   }
+
    // forceSaveAll=true matches what tests want: the bridge caller owns the
    // document state going in, and a modal "save changes?" prompt would
    // deadlock automation. Going through SwitchToProjectEvent directly (rather
@@ -596,6 +606,11 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.project.isActive = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
+      });
+      // Cached project-root air.toml path (or null); tracks the file monitor,
+      // so tests can poll it after creating/deleting an air.toml on disk.
+      $wnd.rstudio.project.airTomlPath = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getAirTomlPath()();
       });
       // Reset ready synchronously before dispatching. The QuitEvent handler
       // will also reset it once kQuit lands, but resetting here closes the

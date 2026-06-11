@@ -30,6 +30,7 @@ namespace air {
 
 core::FilePath getAirTomlPath(const core::FilePath& projectPath);
 core::FilePath findAirTomlPath(const core::FilePath& documentPath);
+core::Error writeSynthesizedAirToml(const core::FilePath& tomlPath);
 
 core::Error initialize();
 

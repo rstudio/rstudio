@@ -284,7 +284,7 @@ The `window.rstudio` surface includes:
 - `window.rstudio.commands.<commandId>()` -- execute an AppCommand; `.isChecked()` / `.isEnabled()` query its state. `commands.list` is the array of all command ids.
 - `window.rstudio.prefs.<camelCaseName>.get()` / `.set(value)` / `.clear()` -- `set` and `clear` return a Promise that resolves once the `setUserPrefs` RPC has landed server-side.
 - `window.rstudio.documents` -- `active()`, `activeEditor()` (native Ace editor), `open(path, opts?)`, `closeAllNoSave()`, `resetToUntitled()`.
-- `window.rstudio.project` -- `path()`, `name()`, `isActive()`, `open(path)`.
+- `window.rstudio.project` -- `path()`, `name()`, `isActive()`, `open(path)`, `airTomlPath()` (cached project-root air.toml path, tracks the file monitor).
 - `window.rstudio.version` -- `{ rstudio, r }` version strings.
 - `window.rstudio.dialogs` -- `numShowing()`, `dismissAll()`.
 - `window.rstudio.layout.reset()` -- end any active pane/column zoom.

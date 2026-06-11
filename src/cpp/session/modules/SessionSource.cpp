@@ -129,12 +129,20 @@ Error prepareFormatData(
       }
 
       // Copy the air.toml file associated with the document, if one exists.
+      // Otherwise, synthesize one from the user's editor settings, so that
+      // Air's formatting matches the editor's indentation preferences.
       FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
       if (airTomlPath.exists())
       {
          Error copyError = airTomlPath.copy(codeDir.completePath("air.toml"), true);
          if (copyError)
             LOG_ERROR(copyError);
+      }
+      else if (!prefs::userPrefs().airFormatterRequireToml())
+      {
+         Error writeError = modules::air::writeSynthesizedAirToml(codeDir.completePath("air.toml"));
+         if (writeError)
+            LOG_ERROR(writeError);
       }
    }
 
