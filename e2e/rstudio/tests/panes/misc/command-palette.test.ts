@@ -16,6 +16,9 @@ const NATIVE_PIPE_CHECKBOX = '#rstudio_command_entry_user_pref_insert_native_pip
 const SOURCE_TABS = "[class*='rstudio_source_panel'] [role='tab']";
 
 test.describe('Command Palette', () => {
+  // No useSuiteSandbox() here: this spec only drives commands and prefs and
+  // writes nothing to disk, so it needs no per-spec workdir. Source-pane
+  // isolation comes from resetSourcePane() in beforeEach.
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 
