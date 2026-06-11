@@ -471,12 +471,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (lastActive != null)
          setActive(lastActive);
 
+      // if the persisted document is gone (e.g. it was closed before the
+      // reload), stay on the last active column; its currently selected tab
+      // still receives the initial selection (and onInitiallyLoaded())
       SourceColumn column = findByDocument(docId);
-      if (column == null)
-         return;
+      if (column != null)
+         setActive(column);
 
-      setActive(column);
-      column.initialSelect(docId);
+      getActive().initialSelect(docId);
    }
 
    public void setActive(int xpos)
