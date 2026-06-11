@@ -474,6 +474,7 @@ For branch naming:
 
 ## Issues
 
+- When instructed to investigate or fix a GitHub issue, update the Assignee to the current user (`gh api user --jq .login`), and check that the issue has been added to the RStudio IDE project with an "In Progress" status.
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
 - These labels apply to issues only, not to pull requests
