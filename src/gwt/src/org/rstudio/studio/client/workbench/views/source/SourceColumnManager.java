@@ -465,12 +465,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return new ColumnName(column.getName(), column.getAccessibleName());
    }
 
-   public void initialSelect(int index)
+   public void initialSelect(String docId)
    {
       SourceColumn lastActive = getByName(columnState_.getActiveColumn());
       if (lastActive != null)
-         setActive(getByName(columnState_.getActiveColumn()));
-      getActive().initialSelect(index);
+         setActive(lastActive);
+
+      SourceColumn column = findByDocument(docId);
+      if (column == null)
+         return;
+
+      setActive(column);
+      column.initialSelect(docId);
    }
 
    public void setActive(int xpos)

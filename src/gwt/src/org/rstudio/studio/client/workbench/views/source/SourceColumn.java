@@ -262,7 +262,21 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       display_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
 
-   public void initialSelect(int index)
+   // select the tab containing the given document at startup; this assumes
+   // no tabs have been reordered yet, so editors_ order matches tab order
+   public void initialSelect(String docId)
+   {
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         if (StringUtil.equals(editors_.get(i).getId(), docId))
+         {
+            initialSelect(i);
+            return;
+         }
+      }
+   }
+
+   private void initialSelect(int index)
    {
       if (index < 0)
          return;
