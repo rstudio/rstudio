@@ -170,6 +170,20 @@ test_that(".rs.rnb.installInlineOutputs() removes the cache file even on failure
    expect_false(file.exists(cachePath))
 })
 
+test_that(".rs.rnb.evaluateInlineChunks() returns '' when knitr lacks the evaluate.inline hook", {
+   rmdPath <- tempfile(fileext = ".Rmd")
+   writeLines("Value: `r 1 + 1`", con = rmdPath)
+   on.exit(unlink(rmdPath), add = TRUE)
+
+   # simulate an older knitr without the 'evaluate.inline' hook; setting a
+   # hook to NULL removes it, and we restore the original when done
+   defaultHook <- knitr::knit_hooks$get("evaluate.inline")
+   knitr::knit_hooks$set(evaluate.inline = NULL)
+   on.exit(knitr::knit_hooks$set(evaluate.inline = defaultHook), add = TRUE)
+
+   expect_equal(.rs.rnb.evaluateInlineChunks(rmdPath), "")
+})
+
 test_that(".rs.rnb.evaluateInlineChunks() returns '' when no inline code present", {
    rmdPath <- tempfile(fileext = ".Rmd")
    writeLines(c(

@@ -616,6 +616,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    evaluateHook <- knitr::knit_hooks$get("evaluate.inline")
    inlineHook <- knitr::knit_hooks$get("inline")
 
+   # older versions of knitr don't define the 'evaluate.inline' hook; fall
+   # back to in-child evaluation rather than capturing a spurious error for
+   # every expression (which the child would re-signal as a render failure)
+   if (!is.function(evaluateHook) || !is.function(inlineHook))
+      return("")
+
    outputs <- lapply(code, function(snippet) {
       tryCatch({
          result <- evaluateHook(snippet, .GlobalEnv)
