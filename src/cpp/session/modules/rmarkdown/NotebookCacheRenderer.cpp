@@ -173,6 +173,26 @@ void NotebookCacheRenderer::onCompleted(int exitStatus)
    result["doc_path"] = docPath_;
 
    std::string output = stdOut_.str();
+
+   // a failure to install the parent-evaluated inline chunk outputs is not
+   // fatal (the child falls back to evaluating inline code itself), but the
+   // fallback can produce different results since the child cannot see the
+   // user's global environment -- log the breadcrumb even when the render
+   // itself succeeds
+   std::string::size_type inlinePos = output.find("__INLINE_CACHE_ERROR__:");
+   if (inlinePos != std::string::npos)
+   {
+      std::string inlineError =
+         output.substr(inlinePos + strlen("__INLINE_CACHE_ERROR__:"));
+      std::string::size_type newline = inlineError.find('\n');
+      if (newline != std::string::npos)
+         inlineError = inlineError.substr(0, newline);
+
+      WLOGF("Failed to install notebook inline chunk outputs for '{}': {}",
+            docPath_,
+            string_utils::trimWhitespace(inlineError));
+   }
+
    bool succeeded = (exitStatus == 0) &&
                     (output.find("__RENDER_SUCCESS__") != std::string::npos);
 

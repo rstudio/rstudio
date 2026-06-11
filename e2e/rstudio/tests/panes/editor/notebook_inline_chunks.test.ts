@@ -129,7 +129,9 @@ test.describe('Notebook inline chunks', { tag: ['@parallel_safe'] }, () => {
 
       const consoleOutput = consoleActions.consolePane.consoleOutput;
       await expect(consoleOutput).toContainText('Error creating notebook', { timeout: 60000 });
-      await expect(consoleOutput).toContainText("'dfSamples' not found", { timeout: 5000 });
+      // match only the object name: the surrounding error wording belongs
+      // to R/knitr and may change across versions
+      await expect(consoleOutput).toContainText(/dfSamples/, { timeout: 5000 });
     } finally {
       await clearPref(page, 'notebook_execute_inline_chunks');
     }

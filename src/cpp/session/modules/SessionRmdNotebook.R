@@ -515,9 +515,45 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("rnb.extractInlineRCode", function(contents)
 {
    # remove lines within (or delimiting) fenced code blocks; knitr only
-   # evaluates inline R code within prose
-   fences <- grepl("^[\t >]*(```|~~~)", contents)
-   fenced <- (cumsum(fences) %% 2 == 1) | fences
+   # evaluates inline R code within prose. following CommonMark, a fence is
+   # closed only by a fence of the same character at least as long as the
+   # opening fence, so a display-only block delimited by 4+ markers can
+   # safely contain inner ``` fences without ending the block early
+   matches <- regmatches(contents, regexec("^[\t >]*(`{3,}|~{3,})[\t ]*(.*)$", contents))
+
+   fenced <- logical(length(contents))
+   fenceChar <- ""
+   fenceLength <- 0L
+
+   for (i in seq_along(contents)) {
+
+      match <- matches[[i]]
+      if (length(match) == 0) {
+         # not a fence-like line; part of prose unless inside an open fence
+         fenced[[i]] <- nzchar(fenceChar)
+         next
+      }
+
+      # all fence-like lines are excluded from prose
+      fenced[[i]] <- TRUE
+      marker <- match[[2]]
+      info <- match[[3]]
+
+      if (!nzchar(fenceChar)) {
+         # opening fence; remember its marker so we can match the close
+         fenceChar <- substring(marker, 1L, 1L)
+         fenceLength <- nchar(marker)
+      } else if (substring(marker, 1L, 1L) == fenceChar &&
+                 nchar(marker) >= fenceLength &&
+                 !nzchar(info)) {
+         # closing fence (closing fences cannot carry an info string)
+         fenceChar <- ""
+         fenceLength <- 0L
+      }
+
+      # otherwise, a fence-like line within the open block; leave it fenced
+   }
+
    prose <- contents[!fenced]
 
    # use knitr's own parser to locate inline R code
@@ -534,17 +570,30 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 #' child process, which installs them via an 'evaluate.inline' knit
 #' hook. See https://github.com/rstudio/rstudio/issues/17521.
 #'
+#' Note that outputs are formatted with this session's current knit hooks
+#' and options; a document whose setup chunk customizes the 'inline' hook
+#' or options such as 'digits' will be formatted with the defaults instead.
+#'
 #' @param rmdPath Path to the R Markdown document.
 #' @param encoding The document's encoding.
 #'
-#' @return The path to an .rds file containing the inline chunk outputs,
-#'   or the empty string if the document has no inline chunks (or their
-#'   outputs could not be computed).
+#' @return The path to an .rds file containing the inline chunk outputs
+#'   (per-expression evaluation errors are captured within that file, and
+#'   still produce a valid path), or the empty string if the document has
+#'   no inline chunks, knitr is not installed, or evaluation failed as a
+#'   whole. An empty string tells the child process to evaluate inline
+#'   chunks itself.
 .rs.addFunction("rnb.evaluateInlineChunks", function(rmdPath, encoding = "UTF-8")
 {
    tryCatch(
       .rs.rnb.evaluateInlineChunksImpl(rmdPath, encoding),
-      error = function(e) ""
+      error = function(e) {
+         # per-expression errors are captured in the implementation, so this
+         # only fires on infrastructure failures (e.g. a change in the knitr
+         # internals we rely on); log so the degradation is diagnosable
+         .rs.logErrorMessage("Error evaluating inline chunks: %s", conditionMessage(e))
+         ""
+      }
    )
 })
 
@@ -588,6 +637,38 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cachePath <- tempfile("rstudio-notebook-inline-", fileext = ".rds")
    saveRDS(outputs, file = cachePath)
    cachePath
+})
+
+#' Install inline chunk outputs computed by .rs.rnb.evaluateInlineChunks.
+#'
+#' This is the consumer half of the inline chunk handoff: it is invoked in
+#' the child rendering process (see SessionNotebookRender.R), where the
+#' user's global environment is not available, and installs an
+#' 'evaluate.inline' knit hook that substitutes the outputs the parent
+#' session already computed.
+#'
+#' @param cachePath Path to the .rds file written by
+#'   .rs.rnb.evaluateInlineChunks. The file is deleted once consumed.
+.rs.addFunction("rnb.installInlineOutputs", function(cachePath)
+{
+   # remove the cache file even if reading it fails; the parent session
+   # writes one file per render and nothing else cleans it up
+   on.exit(unlink(cachePath), add = TRUE)
+   outputs <- readRDS(cachePath)
+
+   defaultHook <- knitr::knit_hooks$get("evaluate.inline")
+   knitr::knit_hooks$set(evaluate.inline = function(code, envir) {
+      cached <- outputs[[code]]
+      if (is.null(cached))
+         return(defaultHook(code, envir))
+
+      # NOTE: only the original condition's message is re-signaled here;
+      # its class and other metadata are not preserved
+      if (!is.null(cached$error))
+         stop(cached$error, call. = FALSE)
+
+      cached$text
+   })
 })
 
 .rs.addFunction("rnb.readConsoleData", function(encodedData)

@@ -595,6 +595,10 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    // inline R code is evaluated against the global environment at render
    // time, which the child process cannot see; evaluate inline chunks here
    // and pass their outputs to the child (#17521)
+   //
+   // NOTE: this runs synchronously on the main R thread, so a document with
+   // long-running inline expressions will block the session for their
+   // duration (the rest of the render happens asynchronously in the child)
    std::string inlineCachePath;
    if (prefs::userPrefs().notebookExecuteInlineChunks())
    {
@@ -604,7 +608,13 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       evaluateInlineChunks.addParam(encoding);
       Error inlineError = evaluateInlineChunks.call(&inlineCachePath);
       if (inlineError)
+      {
          LOG_ERROR(inlineError);
+
+         // an empty path tells the child process to evaluate inline
+         // chunks itself
+         inlineCachePath.clear();
+      }
    }
 
    // spawn the async renderer
