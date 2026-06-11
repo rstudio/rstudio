@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 27 |
+| Files fully converted | 29 |
 | Files partially converted | 0 |
-| Files not started | 9 |
+| Files not started | 7 |
 
 ## Conversion Status
 
@@ -20,10 +20,10 @@ Target: `e2e/rstudio/tests/`
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
 | test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (to be scrapped) | Failed miserably (restart from scratch) | First attempt failed miserably: only 6 of 18 tests passing, a mid-session refactor regressed a 9-passing state, and Quarto never reaches visual mode. Scrapping the file and redoing the migration from scratch. |
-| test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Not started | |
+| test_desktop_Command_Palette.py | 2 | panes/misc/command-palette.test.ts (2) | Complete | Open/filter/run (Escape closes; "script" keeps R + SQL script, drops text file; Enter runs the front-loaded New R Script), and the inline native-pipe pref toggle (verified by inserting "\|>"). Both cross-mode. |
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
-| test_desktop_FindInFiles.py | 3 | panes/misc/find-in-files.test.ts (3) | Not started | |
+| test_desktop_FindInFiles.py | 3 | panes/misc/find_in_files_replace.test.ts (3) | Complete | Folded 2 new cross-mode tests into the existing spec: the search-options dialog (case/whole-word/regex), and a multi-file search (3 files, term in 2 of 3) with the search/replace toolbar toggle. The third method (Replace All) was already covered there. |
 | test_desktop_Package_Installation.py | 1 | panes/console/package_installation.test.ts (1) | Complete | |
 | test_desktop_PlotsPane.py | 11 | panes/plots/plots_pane.test.ts (11) | Complete | All 11 tests including the 3 that were commented out in the desktop source (export dropdown, save as image, save as PDF). Two-step save flow (OK + GWT file chooser) with R file-exists verification. Zoom and resize tests are @desktop_only. |
 | test_desktop_R.py | 1 | panes/editor/r_execution.test.ts (1) | Complete | |
