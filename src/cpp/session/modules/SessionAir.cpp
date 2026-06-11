@@ -24,6 +24,9 @@
 #include <core/FileInfo.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
+#include <r/RExec.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -35,6 +38,22 @@ namespace modules {
 namespace air {
 
 namespace {
+
+// Cached path to the air executable, so that the format-on-save path
+// can normally invoke air without calling back into R. See #17750.
+//
+// Note that the cache intentionally does not track 'rstudio.air.version',
+// the PATH, or copies of air installed mid-session; picking up a new
+// air binary in those cases may require a restart of RStudio.
+FilePath s_airExePath;
+
+void onUserPrefsChanged(const std::string& layer, const std::string& pref)
+{
+   // Drop the cached path when the formatter configuration changes, so
+   // that the next format request re-resolves air from scratch.
+   if (pref == kCodeFormatter || pref == kUseAirFormatter)
+      s_airExePath = FilePath();
+}
 
 FilePath getProjectAirTomlPath()
 {
@@ -63,6 +82,26 @@ void onClientInit()
 }
 
 } // end anonymous namespace
+
+Error executablePath(FilePath* pExePath)
+{
+   // Use the cached path if it still exists; the existence check lets us
+   // recover automatically if the cached binary has been removed.
+   if (!s_airExePath.isEmpty() && s_airExePath.exists())
+   {
+      *pExePath = s_airExePath;
+      return Success();
+   }
+
+   std::string exePath;
+   Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&exePath);
+   if (error)
+      return error;
+
+   s_airExePath = FilePath(exePath);
+   *pExePath = s_airExePath;
+   return Success();
+}
 
 FilePath getAirTomlPath(const FilePath& projectPath)
 {
@@ -136,6 +175,8 @@ core::Error initialize()
 
    // Subscribe to client init event to notify client of existing air.toml
    events().onClientInit.connect(onClientInit);
+
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

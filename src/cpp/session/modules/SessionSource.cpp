@@ -829,13 +829,13 @@ Error formatDocumentImpl(
          return Success();
       }
 
-      std::string airExePath;
-      Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+      FilePath airExePath;
+      Error error = modules::air::executablePath(&airExePath);
       if (error)
          return onError(error, ERROR_LOCATION);
 
       error = module_context::processSupervisor().runProgram(
-          airExePath,
+          airExePath.getAbsolutePath(),
           {"format", documentPath.getAbsolutePath()},
           options,
           callbacks);
