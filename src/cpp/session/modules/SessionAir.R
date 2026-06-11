@@ -28,15 +28,43 @@
    response[["tag_name"]]
 })
 
+.rs.addFunction("air.installedVersions", function()
+{
+   versions <- list.files(.rs.air.rootDir())
+   versions <- versions[file.exists(.rs.air.exePath(versions))]
+   if (length(versions) == 0L)
+      return(character())
+
+   parsed <- numeric_version(versions, strict = FALSE)
+   versions <- versions[!is.na(parsed)]
+   parsed <- parsed[!is.na(parsed)]
+
+   versions[order(parsed, decreasing = TRUE)]
+})
+
 .rs.addFunction("air.ensureAvailable", function()
 {
    # If air is on the PATH, use it
    exe <- Sys.which("air")
    if (nzchar(exe))
       return(normalizePath(exe))
-   
+
+   # Check for a user-requested version of air
+   version <- getOption("rstudio.air.version")
+
+   # Otherwise, prefer the newest already-installed copy of air, so that
+   # we can avoid querying GitHub for the latest release version
+   if (is.null(version))
+   {
+      installed <- .rs.air.installedVersions()
+      if (length(installed))
+         version <- installed[[1L]]
+   }
+
    # Otherwise, install and use our own copy of air
-   version <- .rs.air.defaultVersion()
+   if (is.null(version))
+      version <- .rs.air.defaultVersion()
+
    exe <- .rs.air.exePath(version)
    if (!file.exists(exe))
    {
@@ -51,7 +79,7 @@
    normalizePath(exe)
 })
 
-.rs.addFunction("air.binDir", function(version)
+.rs.addFunction("air.rootDir", function()
 {
    homeDir <- if (.rs.platform.isWindows)
    {
@@ -62,8 +90,12 @@
       Sys.getenv("HOME", unset = path.expand("~"))
    }
 
-   binDir <- sprintf("%s/.local/lib/air/%s/bin", homeDir, version)
-   chartr("\\", "/", binDir)
+   chartr("\\", "/", file.path(homeDir, ".local", "lib", "air"))
+})
+
+.rs.addFunction("air.binDir", function(version)
+{
+   file.path(.rs.air.rootDir(), version, "bin")
 })
 
 .rs.addFunction("air.exePath", function(version)
