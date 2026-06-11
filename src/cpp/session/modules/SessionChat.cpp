@@ -4323,8 +4323,13 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
          s_updateState.expectedSha256 = expectedSha256;
       }
 
+      // Non-blocking: this runs inline within a process-supervisor poll (the
+      // manifest fetch completion is delivered on the main thread), so a
+      // synchronous stop would block for its full timeout under the poll
+      // re-entrancy guard -- stalling the chat_check_for_updates RPC and the
+      // "Checking for Posit Assistant installation..." UI for ~10s.
       if (manifestUnavailable || isPositAssistantUnsupported())
-         assistant::stopAgentForUpdate();
+         assistant::requestAgentStop();
 
       if (showVersionWarning)
          showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
@@ -4563,8 +4568,11 @@ void resolveWithoutManifestFetch()
       s_updateState.expectedSha256 = "";
    }
 
+   // Non-blocking, like onUpdateCheckComplete: this resolves the
+   // chat_check_for_updates RPC, so it must not block the main thread waiting
+   // for the agent to exit. The terminated agent is reaped by background polling.
    if (isPositAssistantUnsupported())
-      assistant::stopAgentForUpdate();
+      assistant::requestAgentStop();
 
    drainPendingCompletions();
 }

@@ -2651,6 +2651,16 @@ bool stopAgentForUpdate()
    return stopAgentSync();
 }
 
+void requestAgentStop()
+{
+   // Non-blocking: terminate the agent and let normal background polling reap
+   // it via onExit. Callers on the update-check path may run inline within a
+   // process-supervisor poll, where the synchronous stopAgentSync() would block
+   // for its full timeout (the nested poll its wait relies on is a no-op under
+   // the supervisor's re-entrancy guard).
+   stopAgent();
+}
+
 Error initialize()
 {
    using boost::bind;
