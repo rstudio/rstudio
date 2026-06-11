@@ -118,10 +118,10 @@ test.describe('R Notebook', () => {
     // First preview: the chunk hasn't run, so there's no cached plot output --
     // the title renders but no image exists yet.
     const viewerFrame = switchToViewerFrame(page);
-    await expect(viewerFrame.locator(MAIN_CONTAINER)).toContainText('R Notebook', { timeout: 30000 });
+    await expect(viewerFrame.locator(MAIN_CONTAINER).first()).toContainText('R Notebook', { timeout: 30000 });
     // The body prose renders even before the chunk runs; the title only proves
     // the YAML header parsed, so assert the paragraph text too.
-    await expect(viewerFrame.locator(MAIN_CONTAINER)).toContainText('Friends, Romans, countrymen, lend me your ears');
+    await expect(viewerFrame.locator(MAIN_CONTAINER).first()).toContainText('Friends, Romans, countrymen, lend me your ears');
     await expect(viewerFrame.locator(CONTAINER_IMG)).toHaveCount(0);
 
     // Run the (only, unlabeled) chunk via the chunk-navigation commands.
@@ -135,9 +135,9 @@ test.describe('R Notebook', () => {
 
     // Preview again: the regenerated notebook now carries the cached plot.
     await previewUntil(page, sourceActions.sourcePane.previewBtn, async () => {
-      await expect(switchToViewerFrame(page).locator(CONTAINER_IMG)).toBeVisible({ timeout: 20000 });
+      await expect(switchToViewerFrame(page).locator(CONTAINER_IMG).first()).toBeVisible({ timeout: 20000 });
     });
-    await expect(switchToViewerFrame(page).locator(MAIN_CONTAINER)).toContainText('R Notebook');
+    await expect(switchToViewerFrame(page).locator(MAIN_CONTAINER).first()).toContainText('R Notebook');
 
     // Cleanup: close the tab, delete the .Rmd and the .nb.html preview artifact.
     await sourceActions.closeSourceAndDeleteFile(fileName);

@@ -6,6 +6,9 @@ import {
 } from '@pages/viewer_pane.page';
 
 test.describe('Viewer pane htmlwidgets', () => {
+  // No useSuiteSandbox()/resetSourcePane() here: this spec only drives the
+  // console and writes nothing to disk, so it needs no per-spec workdir or
+  // source-pane reset.
   let consoleActions: ConsolePaneActions;
   let missingPackages: string[] = [];
 

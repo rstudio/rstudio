@@ -86,8 +86,8 @@ test.describe('Markdown', () => {
     await expect(container).toContainText('Fillet of a fenny snake');
     await expect(container).toContainText('In the cauldron boil and bake.');
 
-    // Cleanup: close the tab, delete the .md and any generated .html.
+    // Cleanup: close the tab and delete the .md. previewHTML renders to a
+    // session tempfile, so there's no sibling .html next to the source to remove.
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    await consoleActions.executeInConsole(`unlink("${fileName.replace('.md', '.html')}")`, { wait: true });
   });
 });
