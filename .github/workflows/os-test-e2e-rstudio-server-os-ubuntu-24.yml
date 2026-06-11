@@ -284,6 +284,20 @@ jobs:
           logger-type=file
           EOF
 
+      # The Playwright e2e tests drive RStudio through the window.rstudio
+      # automation bridge, which is only exposed when rsession is started with
+      # --automation-agent. server.fixture.ts's "Forward --automation-agent to
+      # every rsession this server spawns" path applies when the fixture spawns
+      # its own rserver-dev; we instead connect to the systemd-managed
+      # rstudio-server installed from the .deb, so the flag has to come from
+      # rserver.conf. rserver reads it on startup and forwards it to every
+      # rsession it launches (server/session/ServerSessionManager.cpp:229).
+      # Safe to enable here because the runner is ephemeral; do NOT enable in
+      # production.
+      - name: Enable automation-agent for rsessions
+        run: |
+          echo 'automation-agent=1' | sudo tee -a /etc/rstudio/rserver.conf
+
       - name: Start RStudio Server
         run: |
           sudo systemctl start rstudio-server
