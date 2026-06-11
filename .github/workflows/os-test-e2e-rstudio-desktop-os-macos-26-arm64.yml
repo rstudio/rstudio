@@ -171,6 +171,7 @@ jobs:
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
 
       - name: Build RStudio Desktop (arm64)
+        id: build
         working-directory: package/osx
         env:
           RSTUDIO_VERSION_MAJOR: '99'
@@ -185,7 +186,7 @@ jobs:
           fi
 
       - name: Save GWT output
-        if: always()
+        if: steps.build.conclusion == 'success'
         uses: actions/cache/save@v4
         with:
           path: package/osx/build-arm64/gwt

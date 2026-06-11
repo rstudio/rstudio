@@ -93,6 +93,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write  # required in workflow_call context; job-level alone is capped by top-level
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -320,6 +321,7 @@ jobs:
       # includes rsession.exe, vcredist DLLs, GWT output, and all cmake-installed
       # resources -- unlike a raw electron-packager zip which is missing them.)
       - name: Build RStudio Desktop (x64)
+        id: build
         working-directory: package/win32
         shell: cmd
         env:
@@ -347,7 +349,7 @@ jobs:
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save GWT output
-        if: always()
+        if: steps.build.conclusion == 'success'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -474,14 +476,14 @@ jobs:
       # by the build job above. Runs the same /S silent install as the
       # daily-download path so RStudio lands at C:\Program Files\RStudio\.
       - name: Download RStudio Desktop artifact
-        if: inputs.build_from_source == true
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
         with:
           name: rstudio-app-windows-x64
           path: ${{ github.workspace }}
 
       - name: Install RStudio from artifact
-        if: inputs.build_from_source == true
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
           $ErrorActionPreference = 'Stop'
           $installer = "$env:GITHUB_WORKSPACE\RStudio-installer.exe"
@@ -500,8 +502,10 @@ jobs:
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
       # Daily-download path: resolve and install the latest (or specified) .exe.
+      # Also runs when build_from_source is true but rstudio_installer_url is set
+      # (mirrors macOS: the URL overrides the artifact path).
       - name: Resolve RStudio .exe URL
-        if: inputs.build_from_source == false
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
@@ -546,7 +550,7 @@ jobs:
           key: rstudio-installer-${{ steps.resolve.outputs.filename }}
 
       - name: Download RStudio .exe
-        if: inputs.build_from_source == false && steps.installer-cache.outputs.cache-hit != 'true'
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -558,7 +562,7 @@ jobs:
             -MaximumRetryCount 3 -RetryIntervalSec 5
 
       - name: Verify SHA-256
-        if: inputs.build_from_source == false && steps.resolve.outputs.sha256 != ''
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
         env:
           EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -573,7 +577,7 @@ jobs:
           Write-Host "SHA-256 OK: $actual"
 
       - name: Install RStudio from .exe
-        if: inputs.build_from_source == false
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
@@ -691,7 +695,7 @@ jobs:
   # (when post_pr_comment is set).
   e2e-merge:
     needs: [e2e-desktop-windows]
-    if: always() && needs.e2e-desktop-windows.result != 'skipped'
+    if: always() && needs.e2e-desktop-windows.result != 'skipped' && needs.e2e-desktop-windows.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -786,10 +790,15 @@ jobs:
           if-no-files-found: ignore
 
       - name: Post E2E results to PR
-        if: always() && inputs.post_pr_comment == true && github.event.pull_request.head.repo.fork == false
+        if: |
+          always() &&
+          inputs.post_pr_comment == true &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: e2e-windows-2025-results
+          GITHUB_TOKEN: ${{ github.token }}
           message: |
             ## 🪟 Windows Desktop E2E · Server 2025 x64
 

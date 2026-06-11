@@ -5,6 +5,8 @@ on:
     paths:
       - "src/**"
       - "dependencies/**"
+      - "cmake/**"
+      - "package/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-pr.yml"

@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import type { Page } from 'playwright';
+import * as os from 'os';
 
 async function waitForConsoleIdle(page: Page): Promise<void> {
   await page.waitForFunction(
@@ -59,7 +60,8 @@ test.describe('Python REPL completions', () => {
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
-    test.fixme(!popupVisible, 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
+    test.fixme(!popupVisible && os.platform() === 'win32', 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
+    if (!popupVisible) throw new Error('Python REPL completion popup did not appear');
 
     await page.keyboard.press('Tab');
     // Wait for the popup to close (Tab accepted the completion and the popup
