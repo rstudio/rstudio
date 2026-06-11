@@ -518,6 +518,11 @@ void consoleWriteError(const std::string& message);
 // frontend can style them differently
 void setAgentExecuting(bool executing);
 bool isAgentExecuting();
+
+// flag indicating whether console output should be captured by listeners
+// without being forwarded to the client console
+void setConsoleOutputSuppressed(bool suppressed);
+bool isConsoleOutputSuppressed();
    
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
@@ -1100,4 +1105,3 @@ core::Error sendSessionRequest(const std::string& uri,
 } // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_HPP
-

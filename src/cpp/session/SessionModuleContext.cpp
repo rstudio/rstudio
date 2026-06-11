@@ -2303,6 +2303,7 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 
 namespace {
 std::atomic<bool> s_agentExecuting{false};
+std::atomic<bool> s_consoleOutputSuppressed{false};
 } // anonymous namespace
 
 void setAgentExecuting(bool executing)
@@ -2313,6 +2314,16 @@ void setAgentExecuting(bool executing)
 bool isAgentExecuting()
 {
    return s_agentExecuting.load(std::memory_order_acquire);
+}
+
+void setConsoleOutputSuppressed(bool suppressed)
+{
+   s_consoleOutputSuppressed.store(suppressed, std::memory_order_release);
+}
+
+bool isConsoleOutputSuppressed()
+{
+   return s_consoleOutputSuppressed.load(std::memory_order_acquire);
 }
 
 void consoleWriteOutput(const std::string& output)
