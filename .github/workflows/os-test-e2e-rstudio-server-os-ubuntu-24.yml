@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       rstudio_installer_url:
-        description: "URL to a Server installer (.deb on Ubuntu, .rpm on RHEL/Fedora). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        description: "Optional .deb URL to test against (e.g. a specific daily from dailies.rstudio.com). Leave empty to build RStudio Server from this branch's source on the runner."
         type: string
         default: ""
       r_version:
@@ -28,9 +28,17 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
         type: string
-        default: ""
+        default: "@ai"
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        type: boolean
+        default: false
+      post_pr_comment:
+        description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       rstudio_installer_url:
@@ -53,17 +61,152 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: ""
+        default: "@ai"
+      build_only:
+        type: boolean
+        default: false
+      post_pr_comment:
+        type: boolean
+        default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
 
 permissions:
   contents: read
+  # Required so the e2e-merge job can post sticky PR comments via
+  # marocchino/sticky-pull-request-comment. GitHub validates ALL job-level
+  # permissions in a reusable workflow at call time, so this must be declared
+  # at the top level even though only e2e-merge uses it.
+  pull-requests: write
 
 jobs:
+  # Builds RStudio Server from this PR's source on the same runner image as
+  # the e2e job below, then uploads the .deb as an artifact for the e2e job to
+  # consume. Skipped when rstudio_installer_url is set, in which case the e2e
+  # job downloads the .deb from that URL instead.
+  build:
+    if: inputs.rstudio_installer_url == ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      # Redirect the dependency / package scripts' tool root to a
+      # workspace-local path so it can be cached without sudo.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/x86_64
+      # Pin R's user library to a workspace-local path so we can cache it.
+      R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
+      SCCACHE_ENABLED: '1'
+      # Route sccache to GitHub's built-in Actions cache API. The
+      # mozilla-actions/sccache-action step below installs sccache and exports
+      # ACTIONS_CACHE_URL + ACTIONS_RUNTIME_TOKEN so the sccache server uses
+      # the GHA backend. Cache hits are object-level (one entry per compiled
+      # .o), so PRs automatically inherit main's warm cache from the seed job
+      # without per-SHA tarball rotation. No AWS / S3 / secrets required.
+      # SCCACHE_GHA_ENABLED takes precedence over any SCCACHE_DIR that
+      # make-package may export internally, so we don't need to patch the
+      # build script.
+      SCCACHE_GHA_ENABLED: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
+      # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
+      - name: Cache rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          restore-keys: |
+            rstudio-tools-linux-x86_64-
+
+      # install-common (called by install-dependencies-noble) installs R
+      # packages (via install-packages) into R_LIBS_USER. Cache the whole
+      # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
+      - name: Cache build-time R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          restore-keys: |
+            rstudio-build-rlibs-linux-x86_64-
+
+      # GHA-backed sccache. Installs sccache on PATH and starts the sccache
+      # server with the GH Actions cache API as the storage backend (via
+      # SCCACHE_GHA_ENABLED=true above + ACTIONS_CACHE_URL / ACTIONS_RUNTIME_TOKEN
+      # which the action injects). Object-level cache hits, no per-SHA tarball,
+      # no AWS credentials. Repo-scoped so PRs inherit main's warm cache.
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+
+      # install-dependencies-noble: apt-get installs system packages (with sudo
+      # internally), then calls install-common which downloads Boost, SOCI,
+      # pandoc, quarto, node, panmirror, sccache, GWT jar, etc. into
+      # RSTUDIO_TOOLS_ROOT. The scripts are idempotent, so a cache hit on
+      # rstudio-tools-deps makes this a fast no-op for the heavy downloads.
+      - name: Install build dependencies
+        working-directory: dependencies/linux
+        run: ./install-dependencies-noble
+
+      - name: Zero sccache stats
+        run: sccache --zero-stats || true
+
+      - name: Build RStudio Server DEB
+        id: build
+        working-directory: package/linux
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
+        run: ./make-server-package DEB
+
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats || true
+
+      # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
+      # so packaging and uploading it would be pure waste.
+      - name: Package RStudio Server .deb
+        if: inputs.build_only != true
+        run: |
+          DEB=$(find package/linux/build-Server-DEB -maxdepth 1 -name '*.deb' | head -1)
+          if [ -z "$DEB" ]; then
+            echo "::error::No .deb found in package/linux/build-Server-DEB"
+            exit 1
+          fi
+          cp "$DEB" "${{ github.workspace }}/rstudio-server.deb"
+          echo "Packaged: $DEB"
+
+      - name: Upload RStudio Server .deb artifact
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-server-deb-ubuntu-24
+          path: rstudio-server.deb
+          retention-days: 7
+
   e2e-server-ubuntu:
+    needs: build
+    # build is skipped when rstudio_installer_url is set; allow this job to
+    # run in that case too (needs.build.result == 'skipped'). build_only seeds
+    # the build caches without running e2e, so skip here.
+    if: |
+      always() &&
+      inputs.build_only != true &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
+      PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +222,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb jq
 
+      # Ubuntu 24 restricts unprivileged user namespaces by default, which
+      # blocks Chrome's sandbox. Enable them before starting the server or
+      # launching any browser process.
+      - name: Allow unprivileged user namespaces (required by Playwright/Chrome)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: Install rig
         run: |
           curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
@@ -93,68 +242,35 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
-      - name: Resolve RStudio Server .deb URL
-        id: resolve
+      # PR-built artifact path (default). Pulled in when no installer URL is
+      # provided -- the build job above produced rstudio-server.deb for us.
+      - name: Download RStudio Server .deb artifact
+        if: inputs.rstudio_installer_url == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: rstudio-server-deb-ubuntu-24
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio Server from artifact
+        if: inputs.rstudio_installer_url == ''
+        run: |
+          sudo apt-get install -y "${{ github.workspace }}/rstudio-server.deb"
+          sudo systemctl stop rstudio-server
+          sudo rstudio-server verify-installation
+
+      # Override path: use a specific .deb URL when rstudio_installer_url is
+      # set. Useful for testing against a specific daily or past release.
+      - name: Download RStudio Server .deb
+        if: inputs.rstudio_installer_url != ''
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
-          URL="$INSTALLER_URL"
-          SHA=""
-          FILENAME=""
-          if [ -z "$URL" ]; then
-            MANIFEST=$(curl -fsSL https://dailies.rstudio.com/rstudio/latest/index.json)
-            URL=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".link')
-            SHA=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".sha256')
-            FILENAME=$(echo "$MANIFEST" | jq -er '.products.server.platforms."noble-amd64".filename')
-            echo "Auto-resolved latest noble-amd64 server daily:"
-            echo "  URL:      $URL"
-            echo "  SHA-256:  $SHA"
-            echo "  Filename: $FILENAME"
-          else
-            FILENAME=$(basename "${URL%%\?*}")
-            echo "Using override URL: $URL (SHA-256 verification skipped)"
-          fi
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
-          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+          FILENAME=$(basename "${INSTALLER_URL%%\?*}")
+          curl -fsSL --retry 3 --retry-delay 5 -o "$FILENAME" "$INSTALLER_URL"
+          echo "INSTALLER_FILENAME=$FILENAME" >> "$GITHUB_ENV"
 
-      # Cache the installer keyed on its resolved filename. On the daily
-      # auto-resolve path the filename embeds the version + build number, so
-      # the content is immutable per name: a new daily misses and downloads, a
-      # same-day rerun hits and skips the download (SHA-256 still verified
-      # below). Skip caching on the override path -- a user-supplied URL has no
-      # immutability guarantee and its SHA check is skipped, so a reused
-      # basename could otherwise serve stale, unverified bytes.
-      - name: Cache RStudio Server installer
-        if: inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-server-installer-${{ steps.resolve.outputs.filename }}
-
-      - name: Download RStudio Server .deb
-        if: steps.installer-cache.outputs.cache-hit != 'true'
-        env:
-          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
-          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
-        run: |
-          curl -fsSL --retry 3 --retry-delay 5 \
-            -o "$DOWNLOAD_FILENAME" \
-            "$DOWNLOAD_URL"
-
-      - name: Verify SHA-256
-        if: steps.resolve.outputs.sha256 != ''
-        env:
-          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
-          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
-        run: |
-          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" \
-            | sha256sum -c -
-
-      - name: Install RStudio Server
-        env:
-          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
+      - name: Install RStudio Server from .deb
+        if: inputs.rstudio_installer_url != ''
         run: |
           sudo apt-get install -y "./$INSTALLER_FILENAME"
           sudo systemctl stop rstudio-server
@@ -216,6 +332,11 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # Tells playwright.config.ts to switch to blob reporter for this shard.
+          PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard.
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: server-ubuntu24-${{ matrix.shard }}
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
@@ -230,23 +351,35 @@ jobs:
           if [ -n "$PW_GREP_INVERT" ]; then
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
+          ARGS+=(--shard="${{ matrix.shard }}/2")
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
 
-      - name: Upload Playwright report
+      - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
-          path: e2e/rstudio/playwright-report/
-          if-no-files-found: ignore
+          name: playwright-blob-report-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
+
+      # Preserved per-spec sandbox tree on failure -- includes rsession logs,
+      # the spec's RStudio config / data home, and per-test working dirs.
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox-${{ matrix.shard }}
+          path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
       - name: Capture rstudio-server logs and diagnostics on failure
@@ -268,8 +401,140 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: rstudio-server-logs
+          name: rstudio-server-logs-${{ matrix.shard }}
           path: |
             rstudio-server.log
             rstudio-var-log/
           if-no-files-found: ignore
+
+  # Merge per-shard blob reports into a single HTML report, parse aggregated
+  # counts, and post a sticky PR comment with pass/fail/skip totals
+  # (when post_pr_comment is set).
+  e2e-merge:
+    needs: [e2e-server-ubuntu]
+    if: always() && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        run: npm ci
+
+      - name: Download shard blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-blob-report-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge shard reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            exit 1
+          fi
+          cat > merge.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            reporter: [
+              ['html', { outputFolder: 'playwright-report', open: 'never' }],
+              ['json', { outputFile: 'playwright-report/test-results.json' }],
+            ],
+          });
+          EOF
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      - name: Parse aggregated results
+        id: summary
+        if: always()
+        run: |
+          FILE="e2e/rstudio/playwright-report/test-results.json"
+          if [ -f "$FILE" ]; then
+            if ! PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (PASSED)"; exit 1
+            fi
+            if ! FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (FAILED)"; exit 1
+            fi
+            if ! SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (SKIPPED)"; exit 1
+            fi
+            if ! FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE"); then
+              echo "::error::Failed to parse test-results.json (FLAKY)"; exit 1
+            fi
+          else
+            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
+          fi
+          TOTAL=$((PASSED + FAILED))
+          if [ "$TOTAL" -gt 0 ]; then
+            RATE=$(( (PASSED * 100) / TOTAL ))
+            FILLED=$(( (RATE * 20) / 100 ))
+            EMPTY=$(( 20 - FILLED ))
+            BAR=""
+            [ "$FILLED" -gt 0 ] && BAR=$(printf '█%.0s' $(seq 1 $FILLED))
+            [ "$EMPTY"  -gt 0 ] && BAR="${BAR}$(printf '░%.0s' $(seq 1 $EMPTY))"
+          else
+            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
+          fi
+          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
+          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
+          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Post E2E results to PR
+        if: |
+          always() &&
+          inputs.post_pr_comment == true &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: e2e-server-ubuntu24-results
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ## 🐧 Linux Server E2E · Ubuntu 24
+
+            ${{ needs.e2e-server-ubuntu.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>2 shards · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

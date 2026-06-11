@@ -1,0 +1,33 @@
+name: "Test: E2E Playwright RStudio (Server, Ubuntu 24, Open Source, PR-triggered)"
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "dependencies/**"
+      - "cmake/**"
+      - "package/**"
+      - "e2e/rstudio/**"
+      - ".github/actions/e2e-deps/**"
+      - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
+
+concurrency:
+  group: pw-pr-server-ubuntu24-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  run-server-ubuntu24:
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      project: server
+      r_version: "4.5.3"
+      # Skip @ai-tagged tests on PRs for now.
+      grep_invert: "@ai"
+      post_pr_comment: true
