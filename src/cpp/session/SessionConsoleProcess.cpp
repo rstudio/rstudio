@@ -15,6 +15,7 @@
 
 #include <sstream>
 
+#include <core/StringUtils.hpp>
 #include <core/system/Interrupts.hpp>
 
 #include <r/RExec.hpp>
@@ -705,11 +706,30 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    const std::string& output = rawOutput;
 #endif
 
+   // PTY reads are arbitrary byte windows over the child's UTF-8 stream, so a
+   // chunk can end in the middle of a multi-byte character. Hold the truncated
+   // trailing sequence back and prepend it to the next chunk: the websocket
+   // channel otherwise rejects the frame as invalid UTF-8 and the whole chunk
+   // is lost, and the RPC channel renders replacement characters at the seam.
+   std::string utf8Output;
+   utf8Output.swap(pendingUtf8Bytes_);
+   utf8Output.append(output);
+
+   std::size_t suffixLength = string_utils::utf8IncompleteSuffixLength(utf8Output);
+   if (suffixLength != 0)
+   {
+      pendingUtf8Bytes_.assign(utf8Output, utf8Output.size() - suffixLength, suffixLength);
+      utf8Output.erase(utf8Output.size() - suffixLength);
+   }
+
+   if (utf8Output.empty())
+      return;
+
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
 
    // copy to output buffer
-   procInfo_->appendToOutputBuffer(output);
+   procInfo_->appendToOutputBuffer(utf8Output);
 
    if (procInfo_->getAltBufferActive() != currentAltBufferStatus)
       saveConsoleProcesses();
@@ -717,12 +737,29 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
-   std::string trimmedOutput = output;
+   std::string trimmedOutput = utf8Output;
    string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
 
    if (procInfo_->getChannelMode() == Websocket)
    {
-      s_terminalSocket.sendText(procInfo_->getHandle(), output);
+      // boundary repair above handles split characters, but a program can
+      // also emit genuinely invalid UTF-8; scrub it rather than have
+      // websocketpp reject (and thereby drop) the whole text frame. log at
+      // debug level only, as a non-UTF-8 program can hit this on every chunk.
+      std::size_t numCharacters = 0;
+      Error utf8Error = string_utils::utf8Distance(
+               utf8Output.begin(), utf8Output.end(), &numCharacters);
+      if (utf8Error)
+      {
+         DLOGF("Terminal '{}': replacing invalid UTF-8 in output chunk",
+               procInfo_->getHandle());
+         string_utils::utf8Clean(utf8Output.begin(), utf8Output.end(), '?');
+      }
+
+      Error error = s_terminalSocket.sendText(procInfo_->getHandle(), utf8Output);
+      if (error)
+         LOG_ERROR(error);
+
       return;
    }
 
@@ -822,6 +859,15 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
 void ConsoleProcess::onExit(int exitCode)
 {
+   // a held-back partial UTF-8 character (see enqueOutputEvent) can no longer
+   // be completed; drop it, as it has no meaningful rendering on its own
+   if (!pendingUtf8Bytes_.empty())
+   {
+      DLOGF("Terminal '{}': dropping {} bytes of incomplete UTF-8 on exit",
+            procInfo_->getHandle(), pendingUtf8Bytes_.size());
+      pendingUtf8Bytes_.clear();
+   }
+
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
