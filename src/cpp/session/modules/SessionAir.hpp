@@ -28,6 +28,8 @@ namespace session {
 namespace modules {
 namespace air {
 
+core::Error executablePath(core::FilePath* pExePath);
+
 core::FilePath getAirTomlPath(const core::FilePath& projectPath);
 core::FilePath findAirTomlPath(const core::FilePath& documentPath);
 core::Error writeSynthesizedAirToml(const core::FilePath& tomlPath);
