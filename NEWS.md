@@ -52,6 +52,7 @@
 - ([#17830](https://github.com/rstudio/rstudio/issues/17830)): Fix the data viewer not clearing a data set's saved sorts and filters when its tab is explicitly closed, so reopening the data set no longer restores stale filters; the saved state still persists across a session suspend/restore or a page reload. Restored filters now also reveal the filter row, instead of being applied with no visible filter UI.
 - ([#17178](https://github.com/rstudio/rstudio/issues/17178)): Fix RStudio locking up when clicking "Run examples" in a help page whose examples launch a blocking application such as a Shiny app. Such examples now run in the console (like `example()`) instead of being rendered inline by the help server.
 - ([#17909](https://github.com/rstudio/rstudio/issues/17909)): Fix the Files pane on macOS briefly showing and then emptying the contents of a symlinked directory; file change events are now reported against the path the directory was opened as, rather than its resolved target. Opening a project via a symlinked path on macOS also no longer rewrites the project directory (as reported by `getwd()` and `here::here()`) to the symlink's target.
+- ([#17929](https://github.com/rstudio/rstudio/issues/17929)): Fix the "Show code suggestions after keyboard idle (ms)" field never appearing in the Assistant preferences pane (Global Options > Assistant), so the automatic code-completion delay can again be configured from the options UI.
 
 ### Dependencies
 - Ace 1.43.5

@@ -46,7 +46,8 @@ public class NumericValueWidget extends Composite
     *
     * @param label
     * @param minValue minimum, if null (ZeroMinimum), zero assumed
-    * @param maxValue maximum, if null (NoMaximum), no maximum assumed
+    * @param maxValue maximum, if null (NoMaximum), Integer.MAX_VALUE assumed
+    *                (the value backs an integer preference)
     */
    public NumericValueWidget(String label, Integer minValue, Integer maxValue)
    {
@@ -59,7 +60,8 @@ public class NumericValueWidget extends Composite
     * @param label
     * @param tooltip tooltip for the label
     * @param minValue minimum, if null (ZeroMinimum), zero assumed
-    * @param maxValue maximum, if null (NoMaximum), no maximum assumed
+    * @param maxValue maximum, if null (NoMaximum), Integer.MAX_VALUE assumed
+    *                (the value backs an integer preference)
     */
    public NumericValueWidget(String label, String tooltip, Integer minValue, Integer maxValue)
    {
@@ -132,8 +134,9 @@ public class NumericValueWidget extends Composite
    }
 
    /**
-    * Make sure field is a valid integer in the range [min, max]. If min or max
-    * are null, then 0 and infinity are assumed, respectively.
+    * Make sure field is a valid integer in the range [min, max]. If min is null,
+    * 0 is assumed. The value backs an integer preference, so if max is null the
+    * effective maximum is Integer.MAX_VALUE.
     */
    public boolean validate()
    {
@@ -148,26 +151,42 @@ public class NumericValueWidget extends Composite
                textBox_);
          return false;
       }
-      if (minValue_ != null || maxValue_ != null)
+
+      // value matched ^\d+$ above, so it is a non-negative integer string. Parse
+      // as long so a value that overflows int is compared as the large number it
+      // is rather than throwing; digits that overflow even a long are
+      // unambiguously larger than any maximum.
+      long intVal;
+      try
       {
-         int intVal = Integer.parseInt(value);
-         if (minValue_ != null && intVal < minValue_)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               constants_.errorCaption(),
-               constants_.rStudioGinjectorGreaterThanError(label_, minValue_),
-               textBox_);
-            return false;
-         }
-         if (maxValue_ != null && intVal > maxValue_)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               constants_.errorCaption(),
-               constants_.rStudioGinjectorLessThanError(label_, maxValue_),
-               textBox_);
-            return false;
-         }
+         intVal = Long.parseLong(value);
       }
+      catch (NumberFormatException e)
+      {
+         intVal = Long.MAX_VALUE;
+      }
+
+      if (minValue_ != null && intVal < minValue_)
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            constants_.errorCaption(),
+            constants_.rStudioGinjectorGreaterThanError(label_, minValue_),
+            textBox_);
+         return false;
+      }
+
+      // The value backs an integer preference, so it can never exceed
+      // Integer.MAX_VALUE even when no explicit maximum is set.
+      int effectiveMax = (maxValue_ != null) ? maxValue_ : Integer.MAX_VALUE;
+      if (intVal > effectiveMax)
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+            constants_.errorCaption(),
+            constants_.rStudioGinjectorLessThanError(label_, effectiveMax),
+            textBox_);
+         return false;
+      }
+
       return true;
    }
 

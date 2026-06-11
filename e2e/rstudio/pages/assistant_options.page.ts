@@ -19,7 +19,9 @@ export class AssistantOptions extends PageObject {
     this.assistantTab = page.locator('#rstudio_label_assistant_options');
     this.assistantPanel = page.locator('#rstudio_label_assistant_options_panel');
     this.codeAssistantSelect = page.locator("xpath=//label[contains(text(),'Use code assistant')]/following::select[1]");
-    this.showCodeSuggestionsSelect = page.locator("xpath=//label[contains(text(),'Show code suggestions')]/following::select[1]");
+    // Trailing colon disambiguates from the "Show code suggestions after
+    // keyboard idle (ms):" delay field, which shares the prefix but is an input.
+    this.showCodeSuggestionsSelect = page.locator("xpath=//label[contains(text(),'Show code suggestions:')]/following::select[1]");
     this.enableNesCheckbox = page.locator("xpath=//label[contains(text(),'Enable next edit suggestions')]/../input");
     this.chatProviderSelect = page.locator("xpath=//label[contains(text(),'Chat provider:')]/following::select[1]");
     this.optionsOkButton = page.locator('#rstudio_preferences_confirm');
