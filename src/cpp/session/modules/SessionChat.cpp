@@ -371,29 +371,12 @@ struct PendingExecutionRequest
    json::Value requestId;
    std::string code;
    std::string trackingId;
-   bool captureOutput;
-   bool capturePlot;
-   bool silentExecution;
+   bool captureOutput = true;
+   bool capturePlot = false;
+   bool silentExecution = false;
    std::string expressionBoundaryHook;
-   int timeout;
-   std::chrono::steady_clock::time_point queuedTime;
-
-   PendingExecutionRequest(
-      boost::weak_ptr<core::system::ProcessOperations> ops,
-      const json::Value& reqId,
-      const std::string& c,
-      const std::string& tid,
-      bool capture,
-      bool plot,
-      bool silent,
-      const std::string& hook,
-      int to)
-      : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), silentExecution(silent),
-        expressionBoundaryHook(hook), timeout(to),
-        queuedTime(std::chrono::steady_clock::now())
-   {
-   }
+   int timeout = 0;
+   std::chrono::steady_clock::time_point queuedTime = std::chrono::steady_clock::now();
 };
 
 static boost::mutex s_pendingExecutionMutex;
@@ -648,9 +631,10 @@ void echoSourceCode(const std::string& code)
    }
 }
 
-// Print warnings recorded by .rs.chat.safeEval for the expression that just
-// completed, mimicking the REPL's deferred warning output (safeEval muffles
-// warnings during evaluation, so they are only surfaced here).
+// Print warnings recorded by .rs.chat.safeEval for an expression, mimicking
+// the REPL's deferred warning output (safeEval muffles warnings during
+// evaluation, so they are only surfaced here). Called after each successful
+// expression and on the error path before execution stops.
 void writeWarningMessages(SEXP conditionsSEXP)
 {
    if (conditionsSEXP == R_NilValue)
@@ -698,9 +682,12 @@ void callExpressionBoundaryHook(const std::string& hookName,
       .addParam("conditions", conditionsSEXP)
       .call();
 
+   // The R wrapper swallows hook-author errors, so a failure here means the
+   // dispatch itself broke (helper not sourced, marshalling error) -- log at
+   // error level like the sibling writeWarningMessages.
    if (hookError)
    {
-      LOG_DEBUG_MESSAGE("Expression boundary hook failed: " + hookError.getMessage());
+      LOG_ERROR(hookError);
    }
 }
 
@@ -1320,9 +1307,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 // Process pending execution requests from the queue
 void processPendingExecution()
 {
-   PendingExecutionRequest request(
-      boost::weak_ptr<core::system::ProcessOperations>(),
-      json::Value(), "", "", false, false, false, "", 0);
+   PendingExecutionRequest request;
 
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
@@ -1479,9 +1464,16 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          return;
       }
 
-      s_pendingExecutionQueue.push(PendingExecutionRequest(
-         ops.getWeakPtr(), requestId, code, trackingId,
-         captureOutput, capturePlot, silentExecution, expressionBoundaryHook, timeout));
+      s_pendingExecutionQueue.push(PendingExecutionRequest{
+         .weakOps = ops.getWeakPtr(),
+         .requestId = requestId,
+         .code = code,
+         .trackingId = trackingId,
+         .captureOutput = captureOutput,
+         .capturePlot = capturePlot,
+         .silentExecution = silentExecution,
+         .expressionBoundaryHook = expressionBoundaryHook,
+         .timeout = timeout});
 
       if (!s_executionScheduled)
       {
@@ -1581,6 +1573,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // guarantee the flag is cleared even if an exception occurs.
    ScopedAgentExecution agentScope(!silentExecution);
    ScopedConsoleOutputSuppression consoleOutputScope(silentExecution);
+   // Silent executions are setup/teardown helpers that never need boundary
+   // notifications, so the hook is intentionally disabled (conditions they
+   // record are dropped along with the rest of their output).
    std::string activeExpressionBoundaryHook =
       silentExecution ? std::string() : expressionBoundaryHook;
 
@@ -1725,6 +1720,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                evalResultSEXP,
                Rf_install("assistant_conditions"));
 
+            // NOTE: this prints warnings before the error text (which is
+            // emitted after the loop), whereas the REPL prints the error
+            // first and then "In addition: Warning messages:".
             if (!silentExecution)
                writeWarningMessages(conditionsSEXP);
 

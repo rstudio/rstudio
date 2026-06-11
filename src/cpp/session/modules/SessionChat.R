@@ -846,18 +846,29 @@
          # Evaluate the provided code. Warnings are muffled after recording:
          # left alone, R defers them to the end of the whole batch and prints
          # them with the internal eval() call as context. The caller re-emits
-         # them per expression instead (see writeWarningMessages). With
-         # warn = 2 muffling would defeat the warning-to-error conversion,
-         # which happens after calling handlers run, so leave those alone.
+         # them per expression instead (see writeWarningMessages in
+         # SessionChat.cpp, fed by .rs.chat.formatWarningMessages below).
+         # Recording follows the REPL's warn option: with warn < 0 warnings
+         # are suppressed entirely, and with warn >= 2 muffling would defeat
+         # the warning-to-error conversion (which happens after calling
+         # handlers run) and the warning surfaces as the error itself, so
+         # neither is recorded for re-emission. (warn = 1's immediate
+         # printing becomes end-of-expression printing here -- a deliberate
+         # divergence that keeps output attached to its expression.)
          result <- withCallingHandlers(
             withVisible(eval(expr, envir = envir)),
             warning = function(w) {
-               conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
-                  type = "warning",
-                  text = conditionMessage(w)
-               )
-               if (getOption("warn", 0L) < 2L)
-                  invokeRestart("muffleWarning")
+               warnLevel <- getOption("warn", 0L)
+               if (warnLevel >= 2L)
+                  return()
+               if (warnLevel >= 0L)
+               {
+                  conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
+                     type = "warning",
+                     text = conditionMessage(w)
+                  )
+               }
+               invokeRestart("muffleWarning")
             },
             message = function(m) {
                conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
@@ -873,8 +884,10 @@
    )
 })
 
-# Format warnings recorded by chat.safeEval the way the REPL prints
-# deferred warnings after an expression completes.
+# Format warnings recorded by chat.safeEval approximately the way the REPL
+# prints deferred warnings after an expression completes. Only the message
+# text is recorded, so the REPL's "In <call> :" context and its ">50
+# warnings" collapsing are not reproduced.
 .rs.addFunction("chat.formatWarningMessages", function(conditions)
 {
    texts <- character(0)
@@ -904,6 +917,8 @@
    if (!is.function(hook))
       return(invisible(NULL))
 
+   # Swallow hook errors so a buggy hook can't abort the user's code, but
+   # log them -- otherwise a hook bug degrades interleaving with no signal.
    tryCatch(
       hook(
          expr = expr,
@@ -913,7 +928,12 @@
          error = error,
          conditions = conditions
       ),
-      error = function(e) NULL
+      error = function(e) {
+         .rs.logWarningMessage(paste0(
+            "expression boundary hook '", name, "' failed: ", conditionMessage(e)
+         ))
+         NULL
+      }
    )
 
    invisible(NULL)

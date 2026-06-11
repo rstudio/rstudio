@@ -79,6 +79,9 @@ test_that("manifestDownloadCommand emits the downloaded body with newlines intac
 
 test_that("chat.safeEval returns value and visibility with no conditions", {
    result <- .rs.chat.safeEval(quote(42))
+   # a plain list, not a condition: the C++ dispatch discriminates on class
+   expect_false(inherits(result, "error"))
+   expect_false(inherits(result, "interrupt"))
    expect_equal(result$value, 42)
    expect_true(result$visible)
    expect_equal(result$conditions, list())
@@ -95,15 +98,52 @@ test_that("chat.safeEval records and muffles warnings when warn < 2", {
    expect_equal(result$conditions, list(list(type = "warning", text = "beware")))
 })
 
+test_that("chat.safeEval records multiple warnings from one expression in order", {
+   expect_warning(
+      result <- .rs.chat.safeEval(quote({ warning("first"); warning("second") })),
+      regexp = NA
+   )
+   expect_equal(result$conditions, list(
+      list(type = "warning", text = "first"),
+      list(type = "warning", text = "second")
+   ))
+})
+
+test_that("chat.safeEval records interleaved messages and warnings in order", {
+   expect_warning(
+      expect_message(
+         result <- .rs.chat.safeEval(
+            quote({ message("m1"); warning("w1"); message("m2") })
+         ),
+         "m1"
+      ),
+      regexp = NA
+   )
+   expect_equal(result$conditions, list(
+      list(type = "message", text = "m1\n"),
+      list(type = "warning", text = "w1"),
+      list(type = "message", text = "m2\n")
+   ))
+})
+
+test_that("chat.safeEval does not record warnings when warn < 0 (REPL suppresses them)", {
+   withr::with_options(list(warn = -1), {
+      expect_warning(
+         result <- .rs.chat.safeEval(quote(warning("quiet"))),
+         regexp = NA
+      )
+   })
+   expect_equal(result$conditions, list())
+})
+
 test_that("chat.safeEval leaves warning-to-error conversion intact under warn = 2", {
    withr::with_options(list(warn = 2), {
       result <- .rs.chat.safeEval(quote(warning("beware")))
    })
    expect_true(inherits(result, "error"))
-   expect_equal(
-      attr(result, "assistant_conditions"),
-      list(list(type = "warning", text = "beware"))
-   )
+   # the warning surfaces as the error itself, so it is not also recorded
+   # for re-emission as a deferred warning
+   expect_equal(attr(result, "assistant_conditions"), list())
 })
 
 test_that("chat.safeEval returns errors with recorded conditions attached", {
@@ -145,6 +185,29 @@ test_that("chat.callExpressionBoundaryHook calls a hidden global hook with its a
 
    .rs.chat.callExpressionBoundaryHook(".test_boundary_hook", quote(1 + 1), 2, TRUE, TRUE)
    expect_equal(calls, list(list(value = 2, ok = TRUE, visible = TRUE)))
+})
+
+test_that("chat.callExpressionBoundaryHook passes expr unevaluated and forwards error/conditions", {
+   calls <- list()
+   assign(".test_full_hook", function(expr, value, ok, visible, error, conditions) {
+      calls[[length(calls) + 1L]] <<- list(
+         expr = expr, error = error, conditions = conditions
+      )
+   }, envir = globalenv())
+   on.exit(rm(".test_full_hook", envir = globalenv()), add = TRUE)
+
+   err <- simpleError("boom")
+   conditions <- list(list(type = "warning", text = "beware"))
+   # expr is stop("boom"): evaluating it anywhere in the dispatch would fail
+   .rs.chat.callExpressionBoundaryHook(
+      ".test_full_hook", quote(stop("boom")), NULL, FALSE, FALSE,
+      error = err, conditions = conditions
+   )
+
+   expect_length(calls, 1L)
+   expect_identical(calls[[1L]]$expr, quote(stop("boom")))
+   expect_identical(calls[[1L]]$error, err)
+   expect_identical(calls[[1L]]$conditions, conditions)
 })
 
 test_that("chat.callExpressionBoundaryHook is a no-op for missing or invalid hooks", {

@@ -25,10 +25,12 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  *                                  `npm run deploy:rstudio`). Copied into the
  *                                  sandbox data-home so tests run against
  *                                  that local build instead of downloading
- *                                  the official package. The seeded build's
- *                                  package.json version and protocol.json
- *                                  must satisfy the IDE under test, or it
- *                                  will be treated as needing an update.
+ *                                  the official package. Only the install
+ *                                  shape (bin/package.json present) is
+ *                                  validated here; version/protocol
+ *                                  compatibility is enforced by the IDE at
+ *                                  runtime, which treats an incompatible
+ *                                  seeded build as needing an update.
  *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" to opt out of copying real AI
  *                                  credentials into the sandbox. By default,
  *                                  if the Posit Assistant state dir

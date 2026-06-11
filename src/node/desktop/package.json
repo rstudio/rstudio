@@ -1,7 +1,7 @@
 {
   "name": "rstudio",
   "productName": "RStudio",
-  "version": "99.9.9-dev+999",
+  "version": "99.9.9",
   "description": "RStudio",
   "main": "./.webpack/main",
   "repository": "https://github.com/rstudio/rstudio",
