@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 29 |
+| Files fully converted | 30 |
 | Files partially converted | 0 |
-| Files not started | 7 |
+| Files not started | 6 |
 
 ## Conversion Status
 
@@ -50,7 +50,7 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_GlobalPrefAccessibility.py | 6 | — | Not started | Keyboard focus/tab-wrap navigation tests; medium complexity |
+| test_desktop_GlobalPrefAccessibility.py | 6 | preferences/global_prefs_accessibility.test.ts (6) | Complete | Keyboard a11y of the Global Options dialog: initial focus, Arrow-key section navigation, and Tab/Shift+Tab focus wrapping (including wrap-to-current-section after changing panes). Cross-mode. Fixed two latent Selenium assertion bugs (`assert focused, x` -> proper focus checks) and added the `console_options` tab selector. |
 | test_desktop_GlobalPrefAppearance.py | 1 | preferences/global_prefs_panels.test.ts (1) | Complete | |
 | test_desktop_GlobalPrefCode.py | 2 | preferences/global_prefs_panels.test.ts (2) | Complete | |
 | test_desktop_GlobalPrefGeneral.py | 3 | preferences/global_prefs_panels.test.ts (1) | Complete | 2 WIP methods were commented out in the Python source; not migrated |
