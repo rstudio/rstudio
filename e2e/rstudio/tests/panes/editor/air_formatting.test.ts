@@ -5,26 +5,38 @@
  * Bug: Air formatting was always used if air.toml was found, even if
  * the global option was turned off.
  *
- * Fix: PR #17202 — requires all three conditions for Air:
+ * Fix: PR #17202 — requires both conditions for Air:
  *   1. Formatter set to "none" (default)
  *   2. Air checkbox enabled
- *   3. air.toml present
+ *
+ * Since #17748, an air.toml is no longer required by default: with "Use Air"
+ * checked and no config present, the backend synthesizes an air.toml from the
+ * user's editor indentation settings (indent-style, indent-width), so Air
+ * matches the editor. With default editor settings this is identical to Air's
+ * own defaults. The old air.toml gate is available behind the opt-in "Only
+ * use Air when an air.toml file is found" checkbox.
  *
  * RStudio checks for both air.toml and .air.toml (hidden variant).
  *
- * Test matrix (10 cases):
+ * Test matrix:
  *   1.  unchecked + no config    + manual reformat  → built-in formatter
  *   2.  unchecked + air.toml     + manual reformat  → built-in formatter
  *   3.  unchecked + air.toml     + save              → code unchanged
  *   4.  checked   + air.toml     + manual reformat  → Air formatting
  *   5.  checked   + air.toml     + save              → Air formatting
- *   6.  checked   + no config    + manual reformat  → built-in formatter
+ *   6.  checked   + no config    + save              → Air (default settings)
  *   7.  unchecked + .air.toml    + manual reformat  → built-in formatter
  *   8.  unchecked + .air.toml    + save              → code unchanged
- *   9.  checked   + .air.toml    + manual reformat  → Air formatting
- *   10. checked   + .air.toml    + save              → Air formatting
+ *   9.  checked + require-toml + no config + manual reformat → built-in
+ *   10. checked + require-toml + air.toml  + manual reformat → Air formatting
+ *   11. checked + require-toml + no config + save             → code unchanged
+ *   12. checked + no config + editor indent width 4 + save    → Air honors
+ *       the synthesized indent-width
  *
- * Detection: air.toml uses 12-space indent — unmistakable signal.
+ * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
+ * default settings (case 6) is exercised via the save path, where the
+ * built-in formatter never runs (maybeFormatOnUserInitiatedSave skips it),
+ * so any formatting change on save proves Air ran.
  */
 
 import { expect } from '@playwright/test';
@@ -47,6 +59,7 @@ const DOT_AIR_TOML_FILE = '.air.toml';
 // Source: UserPrefsAccessorConstants_en.properties
 const AIR_CHECKBOX_LABEL = 'Use Air for code formatting';
 const REFORMAT_ON_SAVE_LABEL = 'Reformat documents on save';
+const AIR_REQUIRE_TOML_LABEL = 'Only use Air when an air.toml file is found';
 
 // Selectors derived from RStudio source (ElementIds.idFromLabel + SectionChooser)
 // Name "Code" → idSafeString → "code" → "rstudio_label_code" + "_options"
@@ -143,17 +156,20 @@ async function closeOptions(page: Page): Promise<void> {
 async function setAirPrefs(
   page: Page,
   useAir: boolean,
-  reformatOnSave: boolean
+  reformatOnSave: boolean,
+  requireToml: boolean = false
 ): Promise<void> {
   await openCodeOptions(page);
 
-  // "Use Air" must be set first -- "Reformat on save" is only visible when Air is checked.
-  // setCheckbox already polls for the click to land, so no extra wait needed.
+  // "Use Air" must be set first -- the other two checkboxes are only visible
+  // when Air is checked. setCheckbox already polls for the click to land, so
+  // no extra wait needed.
   await setCheckbox(page, AIR_CHECKBOX_LABEL, useAir);
 
   if (useAir) {
-    // Reformat on save checkbox is now visible
+    // The dependent checkboxes are now visible
     await setCheckbox(page, REFORMAT_ON_SAVE_LABEL, reformatOnSave);
+    await setCheckbox(page, AIR_REQUIRE_TOML_LABEL, requireToml);
   }
 
   await closeOptions(page);
@@ -163,7 +179,27 @@ async function setAirPrefs(
 async function resetAirPrefs(consoleActions: ConsolePaneActions): Promise<void> {
   await setPref(consoleActions.page, 'code_formatter', 'none');
   await setPref(consoleActions.page, 'use_air_formatter', false);
+  await setPref(consoleActions.page, 'air_formatter_require_toml', false);
   await setPref(consoleActions.page, 'reformat_on_save', false);
+}
+
+/**
+ * Wait for the GWT-side cached air.toml path (maintained from FileChangeEvents
+ * on Projects) to reflect the on-disk state. The formatter decision consults
+ * this cache, and the file monitor surfaces changes asynchronously -- without
+ * this wait, a save right after creating/deleting an air.toml can race the
+ * DELETE/ADD event and use the stale cached value.
+ */
+async function waitForAirTomlCache(page: Page, present: boolean): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const path = await page.evaluate(() => window.rstudio?.project?.airTomlPath() ?? null);
+        return path !== null;
+      },
+      { timeout: 10000 },
+    )
+    .toBe(present);
 }
 
 /** Create an Air config file in the working directory. */
@@ -172,6 +208,13 @@ async function createAirConfig(consoleActions: ConsolePaneActions, fileName: str
     `writeLines(c("[format]", "line-width = 20", "indent-width = 12", 'indent-style = "space"', "persistent-line-breaks = true", 'exclude = ["tmp/", ".git/", "renv/"]', "default-exclude = true"), "${fileName}")`,
     { wait: true },
   );
+  // The file monitor does not emit FileChangeEvents for hidden files, so the
+  // GWT cache never learns about .air.toml -- only wait for the visible
+  // variant. The hidden variant is still honored at format time through the
+  // format_context RPC, which consults the filesystem directly.
+  if (fileName === AIR_TOML_FILE) {
+    await waitForAirTomlCache(consoleActions.page, true);
+  }
 }
 
 /** Remove both air.toml and .air.toml if they exist. */
@@ -180,15 +223,18 @@ async function removeAirConfig(consoleActions: ConsolePaneActions): Promise<void
     `{ unlink("${AIR_TOML_FILE}"); unlink("${DOT_AIR_TOML_FILE}") }`,
     { wait: true },
   );
+  await waitForAirTomlCache(consoleActions.page, false);
 }
 
 /** Create the test R file with messy code and open it in the editor. */
 async function openTestFile(
   consoleActions: ConsolePaneActions,
-  sourceActions: SourcePaneActions
+  sourceActions: SourcePaneActions,
+  lines: string[] = ['x<-1+2+3', 'y<-list(a=1,b=2,c=3)']
 ): Promise<void> {
+  const quoted = lines.map((line) => `"${line}"`).join(', ');
   await consoleActions.executeInConsole(
-    `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${TEST_FILE}")`,
+    `writeLines(c(${quoted}), "${TEST_FILE}")`,
     { wait: true },
   );
   // openFile waits for the source-pane Ace instance to be reachable, not
@@ -315,7 +361,26 @@ function expectAirFormatted(content: string): void {
   expect(content).not.toContain('x<-1+2+3');
 }
 
-/** Built-in formatted: spaces added around operators, no 12-space indent. */
+/**
+ * Air formatted without an air.toml: the suite's 12-indent config is absent
+ * and the synthesized config carries the default editor settings, so the
+ * output looks like ordinary tidied code. Callers must only use this on the
+ * save path, where the built-in formatter cannot run -- there, any formatting
+ * change proves Air ran.
+ */
+function expectAirDefaultFormatted(content: string): void {
+  expect(content).toContain('x <- 1 + 2 + 3');
+  expect(content).toContain('y <- list(a = 1, b = 2, c = 3)');
+  expect(content).not.toContain('            '); // no 12 spaces
+}
+
+/**
+ * Built-in formatted: spaces added around operators, no 12-space indent.
+ * Note the built-in formatter and Air-with-default-settings produce identical
+ * output for this input, so this assertion cannot distinguish them; the
+ * save-path cases (where the built-in formatter never runs) are the tests
+ * that pin down *which* formatter ran.
+ */
 function expectBuiltinFormatted(content: string): void {
   expect(content).not.toContain('            '); // no 12 spaces
   expect(content).toContain('x <- 1 + 2 + 3');
@@ -336,22 +401,34 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
   // Whether the Air binary can be resolved on this machine. Computed once in
-  // beforeAll; the cases that actually exercise Air (4/5/6, all useAir=true)
-  // skip when it's false so a runner without Air doesn't report failures for
-  // an unavailable dependency. The useAir=false cases (1/2/3/7/8) need no Air
-  // and always run -- they are the core #16721 regression coverage.
+  // beforeAll; the cases that enable "Use Air" (4/5/6/9/10/11) skip when it's
+  // false so a runner without Air doesn't report failures for an unavailable
+  // dependency. The useAir=false cases (1/2/3/7/8) need no Air and always
+  // run -- they are the core #16721 regression coverage.
   let airAvailable = false;
 
   test.beforeAll(async ({ rstudioPage }) => {
     page = rstudioPage;
     // The save-triggered reformat path in TextEditingTarget.maybeFormatOnUserInitiatedSave
     // is gated on "file is inside the active project" -- without a project,
-    // reformat-on-save is skipped entirely, so cases 5/10 can't pass. Open a
+    // reformat-on-save is skipped entirely, so the save-path cases (5/6/11)
+    // can't pass. Open a
     // project inside the suite sandbox; the project open also re-`setwd`s into
     // the project dir, so relative paths still resolve consistently and air.toml
     // ends up alongside the file being formatted (which is what Air's ancestor
     // walk needs to find it).
-    await createAndOpenProject(page, sandbox.dir, 'air_formatting');
+    //
+    // The project declares a 4-space indent: with a project open the project
+    // layer supplies use_spaces_for_tab/num_spaces_for_tab unconditionally
+    // (ProjectContext::uiPrefs), so a user-level setPref can't reach the
+    // backend, and the config isn't reloaded if the .Rproj changes after
+    // open. Case 12 relies on this width to detect the synthesized air.toml;
+    // the other cases' inputs produce no indented lines, so it can't affect
+    // them.
+    await createAndOpenProject(page, sandbox.dir, 'air_formatting', [
+      'UseSpacesForTab: Yes',
+      'NumSpacesForTab: 4',
+    ]);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
     await consoleActions.resetSourcePane();
@@ -383,8 +460,9 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     // default, install) one. This mirrors exactly what the reformat path does
     // -- including autoinstall, so a sandbox where Air isn't on PATH but is
     // installable still reports available -- and treats any error as "not
-    // available". The Air-dependent cases (4/5/6) skip when this is false
-    // rather than failing on a dependency the runner genuinely can't provide.
+    // available". The Air-dependent cases (4/5/6/9/10/11) skip when this is
+    // false rather than failing on a dependency the runner genuinely can't
+    // provide.
     airAvailable =
       (await consoleActions.evalRLogical(
         'tryCatch(isTRUE(file.exists(.rs.air.ensureAvailable())), error = function(e) FALSE)',
@@ -453,18 +531,18 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     expectAirFormatted(content);
   });
 
-  test('6: checked, no config, manual reformat uses built-in formatter', async () => {
-    // Gated on Air availability too: although this case expects the built-in
-    // formatter, enabling "Use Air" routes through the server format path,
-    // which a runner without Air can't satisfy (observed failing on CI while
-    // passing locally where Air is installed).
+  test('6: checked, no config, save uses Air with default settings', async () => {
+    // #17748: no air.toml is required by default -- Air formats using a
+    // synthesized config carrying the editor settings (here, the defaults).
+    // Exercised via save, where the built-in formatter never runs, so the
+    // formatting change below can only come from Air.
     test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
-    await setAirPrefs(page, true, false);
+    await setAirPrefs(page, true, true);
     await removeAirConfig(consoleActions);
     await openTestFile(consoleActions, sourceActions);
-    await reformatCode(page, sourceActions);
+    await saveFile(page, sourceActions);
     const content = await sourceActions.getEditorContent();
-    expectBuiltinFormatted(content);
+    expectAirDefaultFormatted(content);
   });
 
   // --- .air.toml (hidden variant) tests ---
@@ -485,6 +563,60 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     await saveFile(page, sourceActions);
     const content = await sourceActions.getEditorContent();
     expectUnchanged(content);
+  });
+
+  // --- "Only use Air when an air.toml file is found" (#17748) ---
+
+  test('9: checked + require-toml, no config, manual reformat uses built-in formatter', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, false, true);
+    await removeAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions);
+    await reformatCode(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectBuiltinFormatted(content);
+  });
+
+  test('10: checked + require-toml, air.toml present, manual reformat uses Air', async () => {
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, false, true);
+    await createAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions);
+    await reformatCode(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirFormatted(content);
+  });
+
+  test('11: checked + require-toml, no config, save leaves code unchanged', async () => {
+    // The exact scenario from #17748, under the new opt-in gate: Air is
+    // enabled but gated on an air.toml that does not exist, and the built-in
+    // formatter never runs on save -- so saving changes nothing.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, true, true);
+    await removeAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions);
+    await saveFile(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectUnchanged(content);
+  });
+
+  // --- air.toml synthesis from editor settings (#17748) ---
+
+  test('12: checked, no config, save honors the editor indent width via synthesized air.toml', async () => {
+    // With no air.toml on disk, the backend synthesizes one carrying the
+    // effective editor indentation settings -- here the suite project's
+    // NumSpacesForTab: 4 (see beforeAll). The width is the discriminator:
+    // Air's own default is 2, so a 4-space function body proves the
+    // synthesized config was discovered -- not Air defaults, and not the
+    // built-in formatter (which never runs on the save path).
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, true);
+    await removeAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions, ['f<-function(){', '1+2', '}']);
+    await saveFile(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expect(content).toContain('f <- function() {');
+    expect(content).toContain('\n    1 + 2\n'); // 4-space indent from editor pref
   });
 
 });

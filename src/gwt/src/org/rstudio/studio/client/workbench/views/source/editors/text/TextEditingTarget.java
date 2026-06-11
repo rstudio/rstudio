@@ -4025,7 +4025,16 @@ public class TextEditingTarget implements
 
       if (prefs_.useAirFormatter().getValue())
       {
-         boolean hasAirToml = context.air != null && context.air.path != null;
+         // When no air.toml is available, the backend synthesizes one from
+         // the editor's indentation settings; users can opt in to requiring
+         // a real air.toml instead.
+         if (!prefs_.airFormatterRequireToml().getValue())
+            return false;
+
+         // The format_context RPC reports a missing air.toml as an empty
+         // path, while the client-side cache uses null -- treat both as
+         // absent.
+         boolean hasAirToml = context.air != null && !StringUtil.isNullOrEmpty(context.air.path);
          return !hasAirToml;
       }
 
@@ -4080,10 +4089,12 @@ public class TextEditingTarget implements
       // For project files we can usually answer from the cached air.toml
       // path on Projects, populated by FileChangeEvent. Two cases skip the
       // cache and fall through to an RPC for a fresh check:
-      //   (1) the cache is empty AND the user has Air enabled -- the file
-      //       monitor may not yet have surfaced an air.toml that was just
-      //       created in this session (e.g. via the editor or external
-      //       writeLines), so trust the filesystem over the cache;
+      //   (1) the cache is empty AND the air.toml presence actually gates
+      //       the formatter choice (Air enabled with "require air.toml"
+      //       set) -- the file monitor may not yet have surfaced an
+      //       air.toml that was just created in this session (e.g. via the
+      //       editor or external writeLines), so trust the filesystem over
+      //       the cache;
       //   (2) the file isn't inside the active project -- the cache is
       //       project-scoped and can't speak for ancestor-directory lookups.
       FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
@@ -4093,7 +4104,9 @@ public class TextEditingTarget implements
          if (path.startsWith(projectPath + "/") || path.equals(projectPath))
          {
             String cachedAirTomlPath = getAirTomlPath();
-            if (cachedAirTomlPath != null || !prefs_.useAirFormatter().getValue())
+            if (cachedAirTomlPath != null ||
+                !prefs_.useAirFormatter().getValue() ||
+                !prefs_.airFormatterRequireToml().getValue())
             {
                command.execute(createFormatContext(cachedAirTomlPath));
                return;

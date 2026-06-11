@@ -39,6 +39,13 @@ type ProjectInfo = {
   name(): string | null;
   isActive(): boolean;
   /**
+   * Cached project-root air.toml (or .air.toml) path, or null. Maintained by
+   * the GWT Projects singleton from FileChangeEvents, so it tracks the file
+   * monitor: poll it after creating or deleting an air.toml on disk to know
+   * when formatter paths that consult the cache will see the change.
+   */
+  airTomlPath(): string | null;
+  /**
    * Fire SwitchToProjectEvent on the GWT side, switching the session to the
    * project at `path`. Resets `window.rstudio.ready` to false synchronously
    * so a caller can poll for `ready === true` to wait for the new session's

@@ -337,6 +337,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CODE_FORMATTER_STYLER_STRICT = "code_formatter_styler_strict";
    public static final String CODE_FORMATTER_EXTERNAL_COMMAND = "code_formatter_external_command";
    public static final String USE_AIR_FORMATTER = "use_air_formatter";
+   public static final String AIR_FORMATTER_REQUIRE_TOML = "air_formatter_require_toml";
    public static final String REFORMAT_ON_SAVE = "reformat_on_save";
    public static final String PROJECT_USER_DATA_DIRECTORY = "project_user_data_directory";
    public static final String CONSOLE_HIGHLIGHT_CONDITIONS = "console_highlight_conditions";
@@ -4490,7 +4491,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    public PrefValue<Boolean> useAirFormatter()
    {
@@ -4498,6 +4499,18 @@ public class UserPrefsAccessor extends Prefs
          "use_air_formatter",
          _constants.useAirFormatterTitle(), 
          _constants.useAirFormatterDescription(), 
+         false);
+   }
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   public PrefValue<Boolean> airFormatterRequireToml()
+   {
+      return bool(
+         "air_formatter_require_toml",
+         _constants.airFormatterRequireTomlTitle(), 
+         _constants.airFormatterRequireTomlDescription(), 
          false);
    }
 
@@ -5142,6 +5155,8 @@ public class UserPrefsAccessor extends Prefs
          codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
       if (source.hasKey("use_air_formatter"))
          useAirFormatter().setValue(layer, source.getBool("use_air_formatter"));
+      if (source.hasKey("air_formatter_require_toml"))
+         airFormatterRequireToml().setValue(layer, source.getBool("air_formatter_require_toml"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
@@ -5445,6 +5460,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterStylerStrict());
       prefs.add(codeFormatterExternalCommand());
       prefs.add(useAirFormatter());
+      prefs.add(airFormatterRequireToml());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());

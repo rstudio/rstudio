@@ -22,6 +22,7 @@
 
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 #include <r/RExec.hpp>
@@ -166,6 +167,26 @@ FilePath findAirTomlPath(const core::FilePath& documentPath)
 
       parentPath = parentPath.getParent();
    }
+}
+
+Error writeSynthesizedAirToml(const FilePath& tomlPath)
+{
+   // Map the user's editor indentation settings onto Air's configuration,
+   // so that formatting without a project air.toml still honors them. The
+   // line width is deliberately left at Air's default, since margin_column
+   // only controls the editor's margin indicator.
+   std::string indentStyle = prefs::userPrefs().useSpacesForTab() ? "space" : "tab";
+
+   // Air accepts indent widths in the range [1, 24].
+   int indentWidth = prefs::userPrefs().numSpacesForTab();
+   indentWidth = std::max(1, std::min(indentWidth, 24));
+
+   std::string contents =
+      "[format]\n"
+      "indent-style = \"" + indentStyle + "\"\n"
+      "indent-width = " + std::to_string(indentWidth) + "\n";
+
+   return writeStringToFile(tomlPath, contents);
 }
 
 core::Error initialize()
