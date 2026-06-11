@@ -41,12 +41,16 @@ namespace {
 
 // Cached path to the air executable, so that the format-on-save path
 // can normally invoke air without calling back into R. See #17750.
+//
+// Note that the cache intentionally does not track 'rstudio.air.version',
+// the PATH, or copies of air installed mid-session; picking up a new
+// air binary in those cases may require a restart of RStudio.
 FilePath s_airExePath;
 
 void onUserPrefsChanged(const std::string& layer, const std::string& pref)
 {
-   // Changes to the formatter preferences might imply a different
-   // air binary should be used, so invalidate the cached path.
+   // Drop the cached path when the formatter configuration changes, so
+   // that the next format request re-resolves air from scratch.
    if (pref == kCodeFormatter || pref == kUseAirFormatter)
       s_airExePath = FilePath();
 }
@@ -172,7 +176,6 @@ core::Error initialize()
    // Subscribe to client init event to notify client of existing air.toml
    events().onClientInit.connect(onClientInit);
 
-   // Invalidate the cached air executable path when formatter prefs change
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    ExecBlock initBlock;

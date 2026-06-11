@@ -35,7 +35,9 @@
    if (length(versions) == 0L)
       return(character())
 
-   parsed <- numeric_version(versions, strict = FALSE)
+   # Tolerate a leading 'v' when parsing, in case Air switches to
+   # v-prefixed release tags; the directory name is still returned as-is.
+   parsed <- numeric_version(sub("^v", "", versions), strict = FALSE)
    versions <- versions[!is.na(parsed)]
    parsed <- parsed[!is.na(parsed)]
 
