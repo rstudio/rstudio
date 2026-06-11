@@ -25,6 +25,13 @@
   "config": {
     "forge": "./forge.config.js"
   },
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "tar": "^7.5.16",
+    "tmp": "^0.2.7",
+    "uuid": "$uuid",
+    "webpack-dev-server": "^5.2.4"
+  },
   "devDependencies": {
     "@electron-forge/cli": "7.11.1",
     "@electron-forge/plugin-webpack": "7.11.1",
