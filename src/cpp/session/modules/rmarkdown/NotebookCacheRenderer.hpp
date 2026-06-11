@@ -38,7 +38,8 @@ public:
                       const std::string& outputPath,
                       const std::string& docId,
                       const std::string& docPath,
-                      const std::string& encoding);
+                      const std::string& encoding,
+                      const std::string& inlineCachePath);
 
    static bool isRunning(const std::string& docPath);
 
