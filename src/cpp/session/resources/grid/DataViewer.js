@@ -2005,6 +2005,18 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
 var createFactorFilterUI = function(idx, col, onDismiss) {
    var ele = document.createElement("div");
    var input = createTextFilterBox(ele, idx, col, onDismiss);
+
+   // createTextFilterBox only restores "character|" values, so a recreated
+   // header (column scrolled back into view, or saved state restored) would
+   // show a blank box while a level filter is still applied server-side.
+   // Map the stored 1-based level index back to its level name.
+   var search = getColumnSearch(idx).split("|");
+   if (search.length > 1 && search[0] === "factor") {
+      var level = parseInt(search[1], 10);
+      if (level >= 1 && level <= col.col_vals.length)
+         input.value = col.col_vals[level - 1];
+   }
+
    input.addEventListener("keyup", function() {
       if (dismissActivePopup) dismissActivePopup(false);
    });
