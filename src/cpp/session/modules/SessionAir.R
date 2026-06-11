@@ -13,16 +13,61 @@
 #
 #
 
+.rs.addFunction("air.downloadFile", function(url, destfile)
+{
+   # Prefer the curl binary when available -- unlike download.file(), it can
+   # time out on inactivity rather than on total download time, so a slow but
+   # active download is not killed prematurely.
+   # https://github.com/rstudio/rstudio/issues/17746
+   curl <- Sys.which("curl")
+   if (nzchar(curl))
+      return(.rs.air.downloadFileWithCurl(curl, url, destfile))
+
+   # Otherwise, fall back to download.file(). The 'timeout' option caps the
+   # total download time for a single file, and the 60-second default has
+   # proven too short for slow connections, so bump it for this download.
+   timeout <- getOption("timeout", default = 60L)
+   options(timeout = max(300L, timeout))
+   on.exit(options(timeout = timeout), add = TRUE)
+
+   download.file(url, destfile = destfile, quiet = TRUE, mode = "wb")
+
+   invisible(destfile)
+})
+
+.rs.addFunction("air.downloadFileWithCurl", function(curl, url, destfile)
+{
+   args <- c(
+      "--fail", "--location", "--silent", "--show-error",
+      "--connect-timeout", "60",
+      "--speed-limit", "1",
+      "--speed-time", "60",
+      "--output", shQuote(destfile),
+      shQuote(url)
+   )
+
+   output <- suppressWarnings(system2(curl, args, stdout = TRUE, stderr = TRUE))
+
+   status <- attr(output, "status")
+   if (!is.null(status) && status != 0L)
+   {
+      fmt <- "Error downloading '%s' [exit code %d]:\n%s"
+      stop(sprintf(fmt, url, status, paste(output, collapse = "\n")))
+   }
+
+   invisible(destfile)
+})
+
 .rs.addFunction("air.defaultVersion", function()
 {
    version <- getOption("rstudio.air.version")
    if (!is.null(version))
       return(version)
-   
+
    url <- "https://api.github.com/repos/posit-dev/air/releases/latest"
    destfile <- tempfile(fileext = ".json")
-   download.file(url, destfile = destfile, quiet = TRUE)
-   
+   .rs.air.downloadFile(url, destfile)
+
    contents <- readLines(destfile, warn = FALSE)
    response <- .rs.fromJSON(contents)
    response[["tag_name"]]
@@ -88,7 +133,7 @@
       fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-pc-windows-msvc.zip"
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
-      download.file(url, destfile = destfile, mode = "wb")
+      .rs.air.downloadFile(url, destfile)
       unzip(destfile)
    }
    else if (.rs.platform.isMacos)
@@ -96,7 +141,7 @@
       fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-apple-darwin.tar.gz"
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
-      download.file(url, destfile = destfile)
+      .rs.air.downloadFile(url, destfile)
       untar(destfile)
    }
    else
@@ -104,7 +149,7 @@
       fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-unknown-linux-gnu.tar.gz"
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
-      download.file(url, destfile = destfile)
+      .rs.air.downloadFile(url, destfile)
       untar(destfile)
    }
    

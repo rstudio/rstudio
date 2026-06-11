@@ -21,6 +21,7 @@
 - ([#17729](https://github.com/rstudio/rstudio/issues/17729)): Show distinct copy in the Posit Assistant chat pane and preferences install prompt when the recommended Posit Assistant version is older than the installed one.
 - ([#17738](https://github.com/rstudio/rstudio/issues/17738)): Fix `file.edit()` (and other Source pane open events) silently dropping when invoked during an in-flight `closeAllSourceDocs`.
 - ([#17745](https://github.com/rstudio/rstudio/issues/17745)): Fix the bundled `air` formatter being copied without the `.exe` extension on Windows, which prevented format-on-save with Air from working.
+- ([#17746](https://github.com/rstudio/rstudio/issues/17746)): Fix the automatic download of the Air formatter failing on slow connections. The download now uses the `curl` binary when available, which only times out on inactivity rather than on total download time; when `curl` is unavailable, the `download.file()` fallback raises R's download timeout to at least 300 seconds for this download.
 - ([#17737](https://github.com/rstudio/rstudio/issues/17737)): Restore the "Show .Last.value in environment listing" preference, which had stopped surfacing `.Last.value` in the Environment pane.
 - ([#17743](https://github.com/rstudio/rstudio/issues/17743)): Fix the debugger failing to capture the browser environment for functions loaded by the `box` package.
 - ([#17712](https://github.com/rstudio/rstudio/issues/17712)): Fix Quarto rendering failing on Windows when the user's home folder path contains an ampersand.
