@@ -31,7 +31,6 @@ export const CODE_DIAGNOSTICS_PANEL = '#rstudio_editing_diagnostics_prefs_panel'
 
 // Console
 export const CONSOLE_TAB = '#rstudio_label_console_options';
-export const CONSOLE_PANEL = '#rstudio_label_console_options_panel';
 
 // General
 export const GENERAL_TAB = '#rstudio_label_general_options';

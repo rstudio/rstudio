@@ -16,7 +16,9 @@ import {
 // navigation of the section list, and Tab/Shift+Tab focus wrapping. The dialog
 // is a GWT widget that behaves identically on Desktop and Server, and the keys
 // used (Arrow / Tab / Shift+Tab) carry no platform variation -- so cross-mode
-// and cross-platform, no @desktop_only.
+// and cross-platform, no @desktop_only. No useSuiteSandbox() either: the spec
+// drives the dialog by keyboard only and never triggers Apply, so nothing
+// persists to disk.
 //
 // The section list is an ARIA tablist (SectionChooser): only the selected tab
 // is tabbable, Up/Down moves and activates sections, and the dialog traps focus
