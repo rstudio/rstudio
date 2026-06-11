@@ -2743,11 +2743,21 @@
 # Use Air for code formatting
 #
 # When set, RStudio will automatically select and use an appropriate version of
-# Air when formatting code in projects containing an air.toml file.
+# Air when formatting R code.
 .rs.uiPrefs$useAirFormatter <- list(
    get = function() { .rs.getUserPref("use_air_formatter") },
    set = function(value) { .rs.setUserPref("use_air_formatter", value) },
    clear = function() { .rs.clearUserPref("use_air_formatter") }
+)
+
+# Only use Air when an air.toml file is found
+#
+# When set, Air will only be used to format R documents located within a project
+# or directory containing an air.toml file.
+.rs.uiPrefs$airFormatterRequireToml <- list(
+   get = function() { .rs.getUserPref("air_formatter_require_toml") },
+   set = function(value) { .rs.setUserPref("air_formatter_require_toml", value) },
+   clear = function() { .rs.clearUserPref("air_formatter_require_toml") }
 )
 
 # Reformat documents on save
