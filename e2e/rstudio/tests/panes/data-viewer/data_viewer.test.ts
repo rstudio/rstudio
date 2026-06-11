@@ -857,6 +857,48 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // Adding a column flips the server-side column fingerprint, which discards
+  // the saved per-object UI state (it can no longer be trusted against the new
+  // column structure). The live sidebar choice must NOT be discarded with it:
+  // before the fix, the structure-changed refresh re-applied the
+  // data_viewer_show_summary preference default, silently re-opening a summary
+  // sidebar the user had just dismissed.
+  test('dismissed summary sidebar stays dismissed when a column is added', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_keep_df <- as.data.frame(matrix(0L, nrow = 10, ncol = 5)); View(.rs.sidebar_keep_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const sidebarPanel = dataViewer.frame.locator('#sidebarPanel');
+      const sidebarToggle = page.locator('#data_editing_toolbar .rstudio_dt_sidebar_toggle');
+
+      // The summary sidebar opens by default (data_viewer_show_summary).
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Dismiss it via the toolbar toggle; the latch reflects the new state
+      // once the iframe fires sidebarStateCallback back at the host.
+      await sidebarToggle.click();
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect(sidebarToggle).toHaveAttribute('aria-pressed', 'false');
+
+      // Add a column: the structure-changed refresh re-bootstraps the grid
+      // with a new column fingerprint, discarding the saved UI state.
+      await consoleActions.executeInConsole('.rs.sidebar_keep_df$added <- 1L');
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // The sidebar stays dismissed -- it must not snap back to the
+      // preference default. The host latch agrees.
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-pressed', 'false');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_keep_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   test('HTML-special column names render as text, not markup', async () => {
     await consoleActions.executeInConsole(
       '{ .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE); names(.rs.escape_hdr_df) <- "<b>&\\"\'"; View(.rs.escape_hdr_df) }',
