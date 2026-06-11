@@ -23,7 +23,10 @@ const PROJECT_SKILL_NAME = 'custom-data-summary';
 const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 
 // ---------------------------------------------------------------------------
-// User-level skill (lives in ~/.positai/skills/ under the user home dir).
+// User-level skill (lives in ~/.posit/assistant/skills/ under the user home
+// dir; the legacy ~/.positai/ location is only consulted when the new
+// directory does not exist, and the sandbox seeds ~/.posit/assistant with
+// the host's credentials).
 //
 // The Playwright sandbox redirects HOME / USERPROFILE for the rstudio child
 // process (and therefore Databot, which inherits its env) to
@@ -46,7 +49,7 @@ function userHome(): string {
   }
   return path.join(s, 'user-home').replace(/\\/g, '/');
 }
-const userSkillDir = () => `${userHome()}/.positai/skills/${USER_SKILL_NAME}`;
+const userSkillDir = () => `${userHome()}/.posit/assistant/skills/${USER_SKILL_NAME}`;
 const userSkillPath = () => `${userSkillDir()}/SKILL.md`;
 
 // ---------------------------------------------------------------------------
@@ -195,7 +198,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     // afterAll (registered by useSuiteSandbox) removes the entire sandbox
     // tree, so no explicit cleanup is needed for it here.
 
-    // Clean up only the specific user-level skill we created (leave ~/.positai/ intact)
+    // Clean up only the specific user-level skill we created (leave the rest
+    // of ~/.posit/assistant/ intact)
     await consoleActions.executeInConsole(
       `unlink("${userSkillDir()}", recursive = TRUE)`,
       { wait: true },
@@ -266,8 +270,9 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
 
     // Databot emits `skill: <name>` in the message when the model selects a
     // registered skill. That happens iff the skill was discovered at backend
-    // init -- which iff the SKILL.md was read from $HOME/.positai/skills/,
-    // which here is sandbox-redirected to $PW_SANDBOX/user-home/.positai/skills/.
+    // init -- which iff the SKILL.md was read from
+    // $HOME/.posit/assistant/skills/, which here is sandbox-redirected to
+    // $PW_SANDBOX/user-home/.posit/assistant/skills/.
     // We avoid asserting on the marker emitted inside the SKILL.md body because
     // LLMs are unreliable at reproducing long opaque tokens verbatim.
     const lastMessage = chatPane.messageItem.last();
