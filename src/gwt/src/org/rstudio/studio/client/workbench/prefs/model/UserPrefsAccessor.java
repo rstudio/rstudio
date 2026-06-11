@@ -186,6 +186,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SHOW_DOC_OUTLINE_RMD = "show_doc_outline_rmd";
    public static final String DOCUMENT_OUTLINE_FONT_SIZE = "document_outline_font_size";
    public static final String AUTO_RUN_SETUP_CHUNK = "auto_run_setup_chunk";
+   public static final String NOTEBOOK_EXECUTE_INLINE_CHUNKS = "notebook_execute_inline_chunks";
    public static final String HIDE_CONSOLE_ON_CHUNK_EXECUTE = "hide_console_on_chunk_execute";
    public static final String EXECUTION_BEHAVIOR = "execution_behavior";
    public static final String SHOW_TERMINAL_TAB = "show_terminal_tab";
@@ -2330,6 +2331,18 @@ public class UserPrefsAccessor extends Prefs
          "auto_run_setup_chunk",
          _constants.autoRunSetupChunkTitle(), 
          _constants.autoRunSetupChunkDescription(), 
+         true);
+   }
+
+   /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   public PrefValue<Boolean> notebookExecuteInlineChunks()
+   {
+      return bool(
+         "notebook_execute_inline_chunks",
+         _constants.notebookExecuteInlineChunksTitle(), 
+         _constants.notebookExecuteInlineChunksDescription(), 
          true);
    }
 
@@ -4827,6 +4840,8 @@ public class UserPrefsAccessor extends Prefs
          documentOutlineFontSize().setValue(layer, source.getInteger("document_outline_font_size"));
       if (source.hasKey("auto_run_setup_chunk"))
          autoRunSetupChunk().setValue(layer, source.getBool("auto_run_setup_chunk"));
+      if (source.hasKey("notebook_execute_inline_chunks"))
+         notebookExecuteInlineChunks().setValue(layer, source.getBool("notebook_execute_inline_chunks"));
       if (source.hasKey("hide_console_on_chunk_execute"))
          hideConsoleOnChunkExecute().setValue(layer, source.getBool("hide_console_on_chunk_execute"));
       if (source.hasKey("execution_behavior"))
@@ -5279,6 +5294,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showDocOutlineRmd());
       prefs.add(documentOutlineFontSize());
       prefs.add(autoRunSetupChunk());
+      prefs.add(notebookExecuteInlineChunks());
       prefs.add(hideConsoleOnChunkExecute());
       prefs.add(executionBehavior());
       prefs.add(showTerminalTab());
