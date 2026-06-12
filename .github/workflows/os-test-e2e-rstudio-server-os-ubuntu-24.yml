@@ -343,6 +343,18 @@ jobs:
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
+      # Playwright runs as $PW_RSTUDIO_SERVER_USER below (rsession's uid) so
+      # the test process and rsession share a uid -- the alternative is
+      # widespread EACCES failures whenever a test touches a workdir rsession
+      # created. To run as that user, make the runner-owned bits the test
+      # user needs to read or traverse accessible:
+      #   - the repo + node_modules + R-libs + ms-playwright (all under workspace)
+      #   - PW_SANDBOX_ROOT (chown so the test user owns its per-spec sandboxes)
+      - name: Prepare permissions for test-user-driven Playwright
+        run: |
+          sudo chmod -R a+rX "${{ github.workspace }}"
+          sudo install -d -o "$PW_RSTUDIO_SERVER_USER" -g "$PW_RSTUDIO_SERVER_USER" -m 0755 "$PW_SANDBOX_ROOT"
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -374,8 +386,27 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/2")
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+          # Run as the test user (same uid as rsession) so fs operations
+          # against rsession-created workdirs don't EACCES. sudo -E
+          # preserves the env; the explicit `env` after sets PATH (which
+          # sudo strips) and HOME (so xvfb-run and Playwright resolve their
+          # dotfiles under the test user's writable home).
+          sudo -E -u "$PW_RSTUDIO_SERVER_USER" \
+            env "PATH=$PATH" "HOME=/home/$PW_RSTUDIO_SERVER_USER" \
+            xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
+
+      # Artifacts produced by Playwright and rsession are owned by
+      # $PW_RSTUDIO_SERVER_USER. upload-artifact runs as runner -- chown
+      # back so it can read everything, including rsession-created files
+      # under pw-sandbox that may have restrictive (0600/0700) modes.
+      - name: Restore artifact ownership to runner
+        if: always()
+        run: |
+          sudo chown -R runner:runner \
+            e2e/rstudio/blob-report \
+            e2e/rstudio/test-results \
+            "$PW_SANDBOX_ROOT" 2>/dev/null || true
 
       - name: Upload blob report
         if: always()
