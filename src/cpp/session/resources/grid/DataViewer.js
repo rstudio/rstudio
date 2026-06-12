@@ -887,9 +887,18 @@ var hasHistogram = function(col) {
 // sidebar's frequency bars. The server only emits these below its bar
 // cutoff, so presence of the fields is the entire decision.
 var hasCategoryCounts = function(col) {
-   return col.col_cat_vals && col.col_cat_vals.length > 0 &&
-          col.col_cat_counts &&
-          col.col_cat_counts.length === col.col_cat_vals.length;
+   if (!col.col_cat_vals || col.col_cat_vals.length === 0)
+      return false;
+   if (!col.col_cat_counts ||
+       col.col_cat_counts.length !== col.col_cat_vals.length) {
+      // The fields only ship as a pair, so a mismatch means a server-side
+      // bug; leave a trace rather than silently dropping the sparkline.
+      console.warn("category values/counts mismatch for column '" +
+         col.col_name + "': " + col.col_cat_vals.length + " values, " +
+         (col.col_cat_counts ? col.col_cat_counts.length : 0) + " counts");
+      return false;
+   }
+   return true;
 };
 
 // Coarse category used to choose which summary stats to render in the sidebar.
@@ -2997,8 +3006,10 @@ var createSparkline = function(breaks, counts, labels) {
       var headline;
       if (labels) {
          // Categorical bar: the headline is the value itself, truncated so
-         // a long string can't blow the tooltip out to absurd widths.
-         headline = String(labels[bin]);
+         // a long string can't blow the tooltip out to absurd widths. An
+         // explicit NA factor level arrives as JSON null; label it "NA"
+         // rather than rendering the literal string "null".
+         headline = labels[bin] === null ? "NA" : String(labels[bin]);
          if (headline.length > 40)
             headline = headline.substring(0, 40) + "...";
       } else {
@@ -3355,20 +3366,24 @@ var initSidebar = function() {
 
       // Footer row: type-specific summary (left) + NA stat (right). Always
       // rendered so entries keep a uniform shape: the left slot may be empty
-      // (e.g. character columns have no compact summary), and the NA stat is
-      // always present, visually dimmed when the column has nothing missing.
+      // (e.g. Date / logical columns, or character columns too long for the
+      // server to count distinct values), and the NA stat is always
+      // present, visually dimmed when the column has nothing missing.
       var footer = document.createElement("div");
       footer.className = "sidebar-col-footer";
 
       // Type-specific summary (left). For numeric columns this is the actual
       // data range as a closed interval, [min, max], which doubles as the
-      // sparkline's (unticked) axis bounds; col_min/col_max may be absent on
-      // older servers, in which case the slot stays empty. The bracket and
-      // comma adornments are dimmed spans (see .range-punct) so they read
-      // as notation rather than data.
+      // sparkline's (unticked) axis bounds; the col_min/col_max checks are
+      // purely defensive (the fields ship with every histogram), keeping the
+      // slot empty rather than throwing mid-bootstrap if one were missing.
+      // The bracket and comma adornments are dimmed spans (see .range-punct)
+      // so they read as notation rather than data.
       var summaryEl = document.createElement("span");
       summaryEl.className = "sidebar-col-summary";
-      if (hasHistogram(col) && typeof col.col_min === "number") {
+      if (hasHistogram(col) &&
+          typeof col.col_min === "number" &&
+          typeof col.col_max === "number") {
          summaryEl.classList.add("range");
          appendRangePunct(summaryEl, "[");
          summaryEl.appendChild(
@@ -3635,12 +3650,6 @@ var buildSidebarHelpOverlay = function() {
    dialog.setAttribute("aria-modal", "true");
    dialog.setAttribute("aria-labelledby", "sidebarHelpTitle");
    dialog.setAttribute("tabindex", "-1");
-   dialog.addEventListener("keydown", function(evt) {
-      if (evt.key === "Escape") {
-         evt.stopPropagation();
-         hideSidebarHelp();
-      }
-   });
 
    var title = document.createElement("div");
    title.className = "sidebar-help-title";
@@ -3662,6 +3671,19 @@ var buildSidebarHelpOverlay = function() {
       }
    });
    dialog.appendChild(closeBtn);
+
+   dialog.addEventListener("keydown", function(evt) {
+      if (evt.key === "Escape") {
+         evt.stopPropagation();
+         hideSidebarHelp();
+      } else if (evt.key === "Tab") {
+         // Minimal focus trap, as aria-modal promises one: the close glyph
+         // is the dialog's only tabbable element, so park focus there
+         // rather than letting Tab walk into the grid behind the backdrop.
+         evt.preventDefault();
+         closeBtn.focus();
+      }
+   });
 
    var addSection = function(heading) {
       var section = document.createElement("div");
@@ -3707,7 +3729,8 @@ var buildSidebarHelpOverlay = function() {
    addLine(statsSec,
       "The numeric data range as [min, max], or the number of factor " +
       "levels / distinct values -- plus the most frequent value when " +
-      "there are too many to chart. The right-hand side shows the " +
+      "there are too many to chart. Distinct values are not counted for " +
+      "very large character columns. The right-hand side shows the " +
       "percentage of missing values.");
 
    var detailsSec = addSection("Details");

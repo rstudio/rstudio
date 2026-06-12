@@ -162,14 +162,21 @@ test.describe('Data Viewer', () => {
     await expect(dataViewer.sortStatus).toContainText('Sorted by: a (descending)');
     await expect(dataViewer.clearSortButton).toBeVisible();
 
+    // The summary sidebar mirrors the sort state on its own icon.
+    const sidebarSort = dataViewer.frame
+      .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+    await expect(sidebarSort).toHaveClass(/sorting_desc/);
+
     // Clicking the clear button restores the natural row order, clears the
-    // status text, hides the button, and resets the header indicator.
+    // status text, hides the button, and resets both the header indicator
+    // and the sidebar icon.
     await dataViewer.clearSortButton.click();
     await expect(firstRowA).toContainText('20');
     await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
     await expect(dataViewer.clearSortButton).toBeHidden();
     await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
     await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+    await expect(sidebarSort).not.toHaveClass(/sorting_asc|sorting_desc/);
 
     // The cleared sort must also persist: clearSort() saves sort: null, and a
     // restore-path regression that re-applied the stale sort on reload (the
@@ -185,12 +192,13 @@ test.describe('Data Viewer', () => {
     }, VIEWER_FRAME);
 
     // The rebuilt grid comes back unsorted: natural row order, no status
-    // text, no clear button, and a reset header indicator.
+    // text, no clear button, and reset header / sidebar indicators.
     await expect(firstRowA).toContainText('20');
     await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
     await expect(dataViewer.clearSortButton).toBeHidden();
     await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
     await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+    await expect(sidebarSort).not.toHaveClass(/sorting_asc|sorting_desc/);
   });
 
   // -----------------------------------------------------------------------

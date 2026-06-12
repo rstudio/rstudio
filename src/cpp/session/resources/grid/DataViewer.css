@@ -945,10 +945,11 @@ th.columnClickable div {
 
 /* --- Pin / sort icons (mirroring the grid header) --- */
 
-/* The shared .pin-icon class supplies the mask glyph plus the hidden-until-
-   hover and pinned-state opacities; these rules adapt it to the flex header
-   row. Unlike the grid's pin icon, the sidebar copies are focusable buttons,
-   so reveal them on keyboard focus too. */
+/* The shared .pin-icon class supplies the mask glyph and the pinned-state
+   opacity, but its hover reveal is scoped to th:hover, so the .sidebar-col
+   rule below re-creates it for the sidebar entries; the rest adapts the
+   icon to the flex header row. Unlike the grid's pin icon, the sidebar
+   copies are focusable buttons, so reveal them on keyboard focus too. */
 .sidebar-pin-icon {
    margin-right: 0;
    flex-shrink: 0;

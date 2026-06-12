@@ -203,8 +203,9 @@ test.describe('Data Viewer', () => {
     // Initial layout: rownames column (0), then mtcars columns 1..n in order.
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
 
-    // The pin icon is opacity:0 by default; clicking via locator dispatches
-    // a real click regardless of visibility.
+    // The pin icon is opacity:0 by default, which still passes Playwright's
+    // actionability visibility check (only display:none / visibility:hidden
+    // / an empty box fail it), so a locator click lands.
     const pinCol3 = dataViewer.frame.locator('th[data-col-idx="3"] .pin-icon');
     await pinCol3.click();
 
@@ -243,6 +244,11 @@ test.describe('Data Viewer', () => {
     await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_desc/);
     await expect(sidebarSort).toHaveClass(/sorting_desc/);
 
+    // The sort actually re-fetched the rows, not just flipped the arrows:
+    // mtcars' maximum mpg leads the grid when descending.
+    await expect(dataViewer.frame.locator('#gridBody td[data-col-pos="1"]').first())
+      .toHaveText('33.9');
+
     // Clearing the sort from the grid header (third cycle step) syncs back
     // into the sidebar icon.
     await dataViewer.frame.locator('th[data-col-idx="1"]').click();
@@ -250,7 +256,8 @@ test.describe('Data Viewer', () => {
 
     // Pin from the sidebar: the column moves to the pinned prefix and the
     // sidebar icon flips to its pinned state. (The icon is opacity:0 until
-    // hover, but locator clicks land regardless of visibility.)
+    // hover, which still passes Playwright's actionability visibility
+    // check -- only display:none / visibility:hidden / an empty box fail it.)
     await sidebarPin.click();
     await expect.poll(() => colHeaderClass(dataViewer, 3)).toMatch(/\bpinned\b/);
     expect((await colOrder(dataViewer)).slice(0, 3)).toEqual(['0', '3', '1']);
@@ -262,6 +269,51 @@ test.describe('Data Viewer', () => {
     await expect.poll(() => colHeaderClass(dataViewer, 3)).not.toMatch(/\bpinned\b/);
     await expect(sidebarPin).not.toHaveClass(/\bpinned\b/);
     await expect(sidebarPin).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  // The sidebar sort icon must work for a column whose <th> is virtualized
+  // out of the rendered window: handleSortClick keys off column state, not
+  // the rendered header (which the pre-sidebar implementation required).
+  test('sidebar sorts a column whose header is virtualized out of the grid', async () => {
+    // 300 columns so a full horizontal scroll evicts column 1's header from
+    // the DOM (same harness as the #17806 filter test). V1 holds descending
+    // values so an ascending sort visibly reverses the row order.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_virt_df <- as.data.frame(matrix(1:30000, nrow = 100, ncol = 300)); .rs.sidebar_virt_df[[1]] <- 100:1; View(.rs.sidebar_virt_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
+
+      // Scroll the column window fully right: column 1's header is evicted
+      // from the DOM, but its sidebar entry remains.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+        .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+
+      // The column window's right edge (V200; columns past 200 sit on the
+      // next column page) is now in view. Its first-row cell anchors the
+      // row-order assertions: V200 holds 19901..20000 in natural row order.
+      const lastColCell = dataViewer.frame.locator('#gridBody td[data-col-pos="200"]').first();
+      await expect(lastColCell).toHaveText('19901');
+
+      // Sort ascending from the sidebar: the icon reflects the new state
+      // with no <th> for the column in the document, and the rows actually
+      // reorder (V1 descends, so ascending brings the last row to the top).
+      const sidebarSort = dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+      await sidebarSort.click();
+      await expect(sidebarSort).toHaveClass(/sorting_asc/);
+      await expect(lastColCell).toHaveText('20000', { timeout: TIMEOUTS.fileOpen });
+
+      // Scroll back: the recreated header carries the sort state.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_asc/);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.sidebar_virt_df", envir = .GlobalEnv)');
+    }
   });
 
   // The sidebar footer is uniform across entries: numeric columns show the
@@ -443,6 +495,15 @@ test.describe('Data Viewer', () => {
         const c3 = await colHeaderClass(dataViewer, 3);
         return /sorting_desc/.test(c1) && /\bpinned\b/.test(c3);
       }).toBe(true);
+
+      // The restored state also re-applies to the rebuilt sidebar (the
+      // trailing updateSidebarColumnIndicators call in initSidebar).
+      await expect(dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon'))
+        .toHaveClass(/sorting_desc/);
+      await expect(dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="3"] .sidebar-pin-icon'))
+        .toHaveClass(/\bpinned\b/);
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.persist_test_df", envir = .GlobalEnv)',
