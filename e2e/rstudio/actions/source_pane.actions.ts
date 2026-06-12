@@ -5,7 +5,7 @@ import { ConsolePaneActions } from './console_pane.actions';
 import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
-import { executeCommand } from '../utils/commands';
+import { executeCommand, dismissAllModals } from '../utils/commands';
 import { openFile } from '../utils/files';
 import { Ace, AceEditorElement } from '../utils/ace';
 
@@ -253,15 +253,25 @@ export class SourcePaneActions {
       return;
     }
 
+    // Bring the source pane to the foreground before toggling. Per-test reset
+    // activates Environment + Files panes (added in #17950); on macOS 26 the
+    // visual toggle click otherwise races a delayed focus shift and panmirror
+    // never finishes mounting. Clicking the open tab is a cheap focus signal.
+    await this.sourcePane.selectedTab.click({ timeout: 2000 }).catch(() => {});
+
     await toggle.click();
     // The first switch to visual mode for a document can raise a confirmation.
     await clickConfirmIfVisible(this.page, 5000);
+    // Sweep any other modal that the toggle may have stacked underneath the
+    // confirmation (e.g. a "save changes?" or "convert to visual" follow-up).
+    // dismissAll is a no-op when nothing is showing.
+    await dismissAllModals(this.page).catch(() => {});
     // Wait for the visual editor to actually mount rather than sleeping a fixed
     // interval: converting a heavier document (a template with chunks/plots)
     // through pandoc takes longer than a blank one, and the old 2s sleep could
     // return before .ProseMirror existed -- leaving callers asserting against a
     // still-source-mode editor.
-    await proseMirror.first().waitFor({ state: 'visible', timeout: 120000 });
+    await proseMirror.first().waitFor({ state: 'visible', timeout: 180000 });
   }
 
   /**
