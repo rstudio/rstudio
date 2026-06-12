@@ -708,14 +708,22 @@ public class ChatPane
    private String generateNotInstalledWithInstallHTML(String newVersion,
                                                       boolean additionalProvidersAvailable)
    {
-      String description = isWorkbench() ?
-         constants_.chatNotInstalledDescriptionWorkbench() :
-         constants_.chatNotInstalledDescription();
+      String description;
+      if (isWorkbench())
+      {
+         description = constants_.chatNotInstalledDescriptionWorkbench();
+      }
+      else
+      {
+         description = constants_.chatNotInstalledDescription();
 
-      // The manifest can advertise additional providers for this build; when it
-      // does, extend the description with a sentence about that support.
-      if (additionalProvidersAvailable)
-         description += " " + constants_.chatNotInstalledAdditionalProviders();
+         // The manifest can advertise additional providers for this build; when
+         // it does, extend the description with a sentence about that support.
+         // Only the open-source (Posit AI) description is extended; the Workbench
+         // variant describes the organization's own provider and is left as-is.
+         if (additionalProvidersAvailable)
+            description += " " + constants_.chatNotInstalledAdditionalProviders();
+      }
 
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
