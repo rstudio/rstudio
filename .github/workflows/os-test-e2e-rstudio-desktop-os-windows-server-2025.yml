@@ -324,25 +324,54 @@ jobs:
       # The Electron packaging step runs `npm ci && electron-forge package`
       # inside src/node/desktop-build-AMD64. Because src/node/desktop ships a
       # binding.gyp, npm auto-runs `node-gyp rebuild` as the install lifecycle
-      # and uses npm's bundled node-gyp (v11.5.0 in node 22), which only knows
+      # and uses npm's bundled node-gyp (v11.5.0 in node 22). v11 only knows
       # VS 2017-2022 and aborts with "Could not find any Visual Studio
-      # installation to use" on the VS 2026 runner. node-gyp v12+ supports VS
-      # 2026; install it to a throwaway dir and point npm at it via
-      # npm_config_node_gyp -- npm picks that up for the install lifecycle
-      # regardless of which npm/node-gyp is otherwise in PATH.
-      - name: Install node-gyp v12 for VS 2026 support
+      # installation to use" on the VS 2026 runner. node-gyp v12+ supports
+      # VS 2026.
+      #
+      # npm_config_node_gyp would normally redirect this, but npm pre-injects
+      # its bundled node-gyp directory into PATH for lifecycle scripts; the
+      # env var is documented as "the command to run for npm rebuild when
+      # node-gyp isn't in the path", so the bundled v11 wins. The surgical
+      # fix is to physically replace node-gyp inside the bundled npm tree --
+      # same pattern this workflow already uses for yarn above.
+      - name: Replace bundled node-gyp with v12 for VS 2026 support
         run: |
           $ErrorActionPreference = 'Stop'
-          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
-          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
-          npm install --prefix "$gypInstallDir" node-gyp@^12
-          $gypPath = "$gypInstallDir\node_modules\node-gyp\bin\node-gyp.js"
-          if (-not (Test-Path $gypPath)) {
-            Write-Error "node-gyp not installed at $gypPath"
+          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
+            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
+          $bundledNodeDir = "$env:GITHUB_WORKSPACE\dependencies\common\node\$nodeVersion"
+          $bundledGypDir  = "$bundledNodeDir\node_modules\npm\node_modules\node-gyp"
+          if (-not (Test-Path $bundledGypDir)) {
+            Write-Error "Bundled node-gyp directory not found: $bundledGypDir"
             exit 1
           }
-          Write-Host "node-gyp installed: $gypPath"
-          "npm_config_node_gyp=$gypPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          # Install latest node-gyp v12 into a throwaway dir, then copy its
+          # contents over the bundled one. Use the bundled npm so the install
+          # uses an npm/node-gyp pair that matches the node version that will
+          # spawn it during the rebuild lifecycle.
+          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
+          if (Test-Path $gypInstallDir) { Remove-Item -Recurse -Force $gypInstallDir }
+          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
+          & "$bundledNodeDir\npm.cmd" install --prefix $gypInstallDir node-gyp@^12
+          if ($LASTEXITCODE -ne 0) { Write-Error "node-gyp v12 install failed"; exit $LASTEXITCODE }
+          $newGypDir = "$gypInstallDir\node_modules\node-gyp"
+          if (-not (Test-Path "$newGypDir\bin\node-gyp.js")) {
+            Write-Error "node-gyp v12 not installed at $newGypDir"
+            exit 1
+          }
+          $bundledVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
+          $newVersion     = (Get-Content "$newGypDir\package.json"     | ConvertFrom-Json).version
+          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion"
+          Remove-Item -Recurse -Force $bundledGypDir
+          Copy-Item -Recurse $newGypDir $bundledGypDir
+          # Sanity check: confirm the replacement took effect.
+          $finalVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
+          if ($finalVersion -notlike '12.*') {
+            Write-Error "Replacement failed: bundled node-gyp is still $finalVersion"
+            exit 1
+          }
+          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion"
 
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
       # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
