@@ -176,7 +176,11 @@ var initResizingWidth = null;
 var origTableWidth = null;
 var resizingBoundsExceeded = 0;
 var origColWidths = [];
-var manualWidths = [];
+// User-driven resize widths, keyed by absolute (col_index) column identity --
+// like pins/sort/filters -- so a width follows its column across column
+// pagination instead of landing on whatever column occupies the same position
+// in the next fetched window.
+var manualWidths = {};
 
 // Filter popup state
 var dismissActivePopup = null;
@@ -187,8 +191,14 @@ var activeColumnInfo = {};
 var onColumnOpen = null;
 var onColumnDismiss = null;
 
-// Bootstrapping flag
+// Bootstrapping flag, plus a generation token for the column fetch: each
+// bootstrap bumps the generation, and the fetchColumns callback only runs
+// initGrid when its captured generation is still current. Without this,
+// overlapping bootstraps (e.g. two rapid data refreshes) could apply stale
+// column metadata out of order, or run initGrid twice without an intervening
+// destroyGrid (orphaning the previous custom-scrollbar DOM).
 var bootstrapping = false;
+var bootstrapGeneration = 0;
 
 // Post-init deferred actions
 var postInitActions = {};
@@ -352,19 +362,39 @@ var debounce = function(wait, watch, func) {
       watch = null;
    }
 
-   var timeout;
+   var timeout = null;
+   var pendingContext = null, pendingArgs = null, pendingToken;
+
+   var fire = function() {
+      timeout = null;
+      var context = pendingContext, args = pendingArgs;
+      pendingContext = null;
+      pendingArgs = null;
+      if (watch && watch() !== pendingToken)
+         return;
+      func.apply(context, args);
+   };
+
    var debounced = function() {
-      var context = this, args = arguments;
-      var token = watch ? watch() : undefined;
+      pendingContext = this;
+      pendingArgs = arguments;
+      pendingToken = watch ? watch() : undefined;
       clearTimeout(timeout);
-      timeout = setTimeout(function() {
-         if (watch && watch() !== token)
-            return;
-         func.apply(context, args);
-      }, wait);
+      timeout = setTimeout(fire, wait);
    };
    debounced.cancel = function() {
       clearTimeout(timeout);
+      timeout = null;
+      pendingContext = null;
+      pendingArgs = null;
+   };
+   // Run a pending call now instead of waiting out the timer (no-op when
+   // nothing is pending). The staleness watch still applies, exactly as if
+   // the timer had fired at this moment.
+   debounced.flush = function() {
+      if (timeout === null) return;
+      clearTimeout(timeout);
+      fire();
    };
    return debounced;
 };
@@ -512,13 +542,17 @@ var fetchColumns = function(callback) {
       params += "&columns_requested=" + requestedColumns.join(",");
    }
 
+   // Errors are passed through to the callback rather than handled here so
+   // the caller can unwind its bootstrap state: initGrid surfaces
+   // result.error via showError and clears the bootstrapping flag, which
+   // would otherwise be stranded true and permanently disable column
+   // pagination after a transient failure (e.g. session busy).
    gridDataFetch(params)
       .then(function(result) {
-         if (result.error) { showError(result.error); return; }
          callback(result);
       })
       .catch(function(err) {
-         showError(err.message || "The object could not be displayed.");
+         callback({ error: (err && err.message) || "The object could not be displayed." });
       });
 };
 
@@ -567,7 +601,12 @@ var fetchRows = function(start, length, callback) {
 
    gridDataFetch(buildFormData(params), controller.signal)
       .then(function(result) {
-         pendingFetches.delete(key);
+         // Only clear our own bookkeeping entry: when invalidateCache aborts
+         // this request and a new fetch re-registers the same key before this
+         // (async) handler runs, deleting unconditionally would remove the
+         // new request's controller, breaking its abort and dedup.
+         if (pendingFetches.get(key) === controller)
+            pendingFetches.delete(key);
          // Discard responses for requests that started before the most recent
          // invalidate (sort, filter, search, column-frame change).
          // AbortController covers most cases, but races are still possible.
@@ -584,7 +623,8 @@ var fetchRows = function(start, length, callback) {
          updateInfoBar();
       })
       .catch(function(err) {
-         pendingFetches.delete(key);
+         if (pendingFetches.get(key) === controller)
+            pendingFetches.delete(key);
          if (err.name === "AbortError") return;
          // Surface every other failure (network errors, 500s, CORS
          // rejections, JSON-shaped {error: ...} payloads). Silent failures
@@ -608,18 +648,49 @@ var invalidateCache = function() {
 
 // Cap rowCache size so a long scroll through a multi-million-row dataset
 // can't accumulate the entire row set in memory. Trims by distance from the
-// current visible window: rows near the user's view are kept, rows far away
-// are evicted. Cheap O(n log n) when triggered, and the soft hysteresis
+// current visible window: blocks near the user's view are kept, blocks far
+// away are evicted. Cheap O(n log n) when triggered, and the soft hysteresis
 // (LIMIT vs TARGET) keeps the trigger rate low during steady scroll.
+//
+// Eviction MUST happen at whole-FETCH_SIZE-block granularity:
+// renderVisibleRows decides whether a block needs refetching by probing only
+// its first row (rowCache.has(blockStart)), so evicting part of a block would
+// leave rows that are gone from the cache but never refetched -- rendering as
+// a permanently blank band when the user scrolls back into them.
 var trimRowCache = function() {
    if (rowCache.size <= ROW_CACHE_LIMIT) return;
-   var center = (renderStart + renderEnd) / 2;
-   var keys = Array.from(rowCache.keys());
-   keys.sort(function(a, b) {
-      return Math.abs(a - center) - Math.abs(b - center);
+
+   // Group cached row keys by the fetch block that loaded them.
+   var blocks = new Map();
+   rowCache.forEach(function(value, key) {
+      var blockStart = Math.floor(key / FETCH_SIZE) * FETCH_SIZE;
+      var rows = blocks.get(blockStart);
+      if (!rows) {
+         rows = [];
+         blocks.set(blockStart, rows);
+      }
+      rows.push(key);
    });
-   for (var i = ROW_CACHE_TARGET; i < keys.length; i++) {
-      rowCache.delete(keys[i]);
+
+   // Keep the blocks nearest the visible window until the row budget is
+   // spent; evict the remaining blocks in their entirety.
+   var center = (renderStart + renderEnd) / 2;
+   var blockStarts = Array.from(blocks.keys());
+   blockStarts.sort(function(a, b) {
+      return Math.abs(a + FETCH_SIZE / 2 - center) -
+             Math.abs(b + FETCH_SIZE / 2 - center);
+   });
+
+   var kept = 0;
+   for (var i = 0; i < blockStarts.length; i++) {
+      var rows = blocks.get(blockStarts[i]);
+      if (kept + rows.length <= ROW_CACHE_TARGET) {
+         kept += rows.length;
+      } else {
+         for (var j = 0; j < rows.length; j++) {
+            rowCache.delete(rows[j]);
+         }
+      }
    }
 };
 
@@ -1618,9 +1689,10 @@ var autoSizeColumns = function() {
 
       // Manual widths (user resize) take precedence over computed widths.
       // Otherwise clamp to min/max -- allow wider max for character columns.
+      var manualW = manualWidths[absColIndex(colIdx)];
       var w;
-      if (typeof manualWidths[colIdx] === "number" && manualWidths[colIdx] > 0) {
-         w = manualWidths[colIdx];
+      if (typeof manualW === "number" && manualW > 0) {
+         w = manualW;
       } else {
          var upperBound = (col.col_type === "character") ? MAX_COL_WIDTH_CHAR : MAX_COL_WIDTH;
          w = Math.max(MIN_COL_WIDTH, Math.min(upperBound, maxW));
@@ -1751,7 +1823,7 @@ var applyResizeDelta = function(delta) {
    var th = getHeaderCell(resizingColIdx);
    if (th) {
       th.style.width = colWidth + "px";
-      manualWidths[resizingColIdx] = colWidth;
+      manualWidths[absColIndex(resizingColIdx)] = colWidth;
    }
 
    // Apply width to table
@@ -1790,6 +1862,12 @@ var createFilterUI = function(idx, col) {
       host.classList.remove("filtered");
       host.classList.add("unfiltered");
       clear.style.display = "none";
+
+      // The header now shows "All"; drop any debounced apply still pending
+      // from input typed just before the dismissal. The value-based watch
+      // alone can't catch this when no filter was ever committed (the slot
+      // is "" both when the apply was scheduled and now).
+      bumpColumnFilterEpoch(idx);
    };
 
    var onDismiss = function() {
@@ -1874,17 +1952,34 @@ var setColumnSearch = function(idx, val) {
    }
 };
 
+// Per-column dismissal epochs, keyed by absolute column index. Bumped when a
+// column's filter UI reverts to the unfiltered display (Escape, blur, the
+// clear X) so debounced applies scheduled before the dismissal are dropped
+// even when the stored search slot is unchanged -- which is exactly the case
+// when the user was typing a *first* filter into an unfiltered column (the
+// slot is "" at schedule time and still "" after the dismissal).
+var columnFilterEpochs = {};
+
+var bumpColumnFilterEpoch = function(idx) {
+   var absIdx = absColIndex(idx);
+   columnFilterEpochs[absIdx] = (columnFilterEpochs[absIdx] || 0) + 1;
+};
+
 // Watch a column's stored search value (debounce's watch argument): a
 // pending debounced filter apply is dropped if the filter was cleared or
 // rewritten underneath it -- e.g. the header X was clicked while the
 // clear's own blur fired a native "change" commit on the dirty input,
 // scheduling one last apply that would silently re-apply the old filter
-// with the header showing "All". Watching the slot the apply writes
-// (rather than a global invalidation counter) means applies racing
-// unrelated invalidations -- a sort, a search, another column's filter --
-// still run.
+// with the header showing "All". The dismissal epoch is folded into the
+// token so a dismissal also drops pending applies when the stored value
+// didn't change (see columnFilterEpochs). Watching per-column state (rather
+// than a global invalidation counter) means applies racing unrelated
+// invalidations -- a sort, a search, another column's filter -- still run.
 var watchColumnSearch = function(idx) {
-   return function() { return getColumnSearch(idx); };
+   return function() {
+      var absIdx = absColIndex(idx);
+      return (columnFilterEpochs[absIdx] || 0) + "#" + getColumnSearch(idx);
+   };
 };
 
 var applyFilters = function() {
@@ -1898,6 +1993,10 @@ var applyFilters = function() {
 
 var createNumericFilterUI = function(idx, col, onDismiss) {
    var ele = document.createElement("div");
+
+   // Set by buildPopup each time the popup opens; lets the dismiss wrapper
+   // below commit a brush/typed value still inside the debounce window.
+   var flushPendingApply = null;
 
    // Render the active numeric filter into the header label: "[15, 30]"
    // for a range, "[15]" for a single value, "[...]" while the popup is
@@ -1949,7 +2048,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       var RANGE_RE = new RegExp(
          "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
 
-      var updateView = debounce(TIMING.filterDebounce, watchColumnSearch(idx), function(v) {
+      var applyNumericFilter = function(v) {
          var searchText = "";
          v = v.replace(/[^-+0-9 .eE]/g, "");
          var digit = v.match(SINGLE_RE);
@@ -1968,14 +2067,44 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
          setColumnSearch(idx, searchText);
          applyFilters();
          renderActiveFilter();
-      });
+      };
 
-      numVal.addEventListener("change", function() { updateView(numVal.value); });
+      var updateView = debounce(
+         TIMING.filterDebounce, watchColumnSearch(idx), applyNumericFilter);
+      flushPendingApply = function() { updateView.flush(); };
+
+      // Dismissing the popup removes a focused, dirty input from the DOM,
+      // which replays a native "change". Suppressed once the keydown handler
+      // below has already committed (Enter) or cancelled (Escape) the value;
+      // otherwise that replay would schedule one more apply that lands after
+      // the popup is gone.
+      var suppressChange = false;
+      numVal.addEventListener("change", function() {
+         if (suppressChange) return;
+         updateView(numVal.value);
+      });
       numVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
       numVal.addEventListener("keydown", function(evt) {
          if (!dismissActivePopup) return;
-         if (evt.keyCode === 27) dismissActivePopup(false);
-         else if (evt.keyCode === 13) dismissActivePopup(true);
+         if (evt.keyCode === 27) {
+            // Escape cancels: drop any pending debounced apply rather than
+            // letting it land after the popup closes, and revert the header
+            // to "All" when no value was ever committed (matching the text
+            // filter's Escape behavior).
+            suppressChange = true;
+            updateView.cancel();
+            dismissActivePopup(false);
+            onDismiss();
+         } else if (evt.keyCode === 13) {
+            // Enter commits: apply synchronously so the value is stored
+            // before the dismissal's onDismiss inspects the search slot --
+            // a debounced apply would still be pending at that point and
+            // the column would wrongly revert to the unfiltered display.
+            suppressChange = true;
+            updateView.cancel();
+            applyNumericFilter(numVal.value);
+            dismissActivePopup(true);
+         }
       });
 
       var updateText = function(start, end) {
@@ -2002,7 +2131,14 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(numVal);
-   }, onDismiss);
+   }, function() {
+      // Light dismiss (click-away / Enter) commits a brush or typed value
+      // still inside the debounce window before onDismiss inspects the
+      // search slot -- it's user intent, not noise. Escape cancels the
+      // pending apply explicitly before this runs, so its flush is a no-op.
+      if (flushPendingApply) flushPendingApply();
+      onDismiss();
+   });
 
    renderActiveFilter();
    return ele;
@@ -2022,7 +2158,13 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
       applyFilters();
    });
 
-   input.addEventListener("keyup", function() { updateView(); });
+   input.addEventListener("keyup", function(evt) {
+      // Escape dismisses (handled on keydown below); its keyup must not
+      // schedule one more apply of the abandoned input, which would land
+      // after the dismissal with the header showing "All".
+      if (evt.keyCode === 27) return;
+      updateView();
+   });
    input.addEventListener("keydown", function(evt) {
       if (evt.keyCode === 27) onDismiss();
    });
@@ -2951,6 +3093,20 @@ var renderColumnStats = function(container, data, colType) {
    container.appendChild(table);
 };
 
+// Sidebar toggle handlers, module-scoped so re-registration in initSidebar
+// is idempotent (addEventListener dedupes on the same function reference).
+// #sidebarToggle is a static element that survives re-bootstraps; inline
+// closures here would stack one listener per bootstrap, so a single click
+// would toggle the sidebar multiple times after a data refresh.
+var onSidebarToggleActivate = function(evt) {
+   evt.preventDefault();
+   toggleSidebar();
+};
+
+var onSidebarToggleKeyDown = function(evt) {
+   if (evt.key === "Enter" || evt.key === " ") onSidebarToggleActivate(evt);
+};
+
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -2972,14 +3128,8 @@ var initSidebar = function() {
    toggleSpinner.id = "sidebarSpinner";
    toggle.appendChild(toggleSpinner);
 
-   var activateToggle = function(evt) {
-      evt.preventDefault();
-      toggleSidebar();
-   };
-   toggle.addEventListener("click", activateToggle);
-   toggle.addEventListener("keydown", function(evt) {
-      if (evt.key === "Enter" || evt.key === " ") activateToggle(evt);
-   });
+   toggle.addEventListener("click", onSidebarToggleActivate);
+   toggle.addEventListener("keydown", onSidebarToggleKeyDown);
 
    content.setAttribute("role", "list");
 
@@ -3959,6 +4109,10 @@ var destroyCustomScrollbars = function() {
 var initGrid = function(resCols, data) {
    if (resCols.error) {
       showError(resCols.error);
+
+      // Unwind the bootstrap: leaving the flag set would silently swallow
+      // every subsequent column-pagination action once the session recovers.
+      bootstrapping = false;
       return;
    }
 
@@ -4183,7 +4337,7 @@ var resetGridState = function() {
 
    // Column widths
    measuredWidths = [];
-   manualWidths = [];
+   manualWidths = {};
    origColWidths = [];
    totalTableWidth = 0;
 
@@ -4278,15 +4432,15 @@ var saveState = function() {
    // entry could never validate on reload. (saveState now also fires from scroll
    // settling and tab deactivation, either of which can race an early teardown.)
    if (!cols) return;
-   // pinnedColumns/sort/filters are stored by absolute column identity (1-based
-   // index in the full frame), so they survive column pagination. manualWidths
-   // remains positional within the current window.
+   // pinnedColumns/sort/filters/manualWidths are stored by absolute column
+   // identity (col_index in the full frame), so they survive column
+   // pagination.
    var state = {
       version: STATE_VERSION,
       columns: columnFingerprint(),
       pinnedColumns: Array.from(pinnedColumns),
       sidebarVisible: sidebarVisible,
-      manualWidths: manualWidths.slice(),
+      manualWidths: Object.assign({}, manualWidths),
       sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
       filters: Object.assign({}, cachedFilterValues),
       // Scroll offset, keyed to the unfiltered row count so a frame whose size
@@ -4427,11 +4581,19 @@ var applySavedState = function(state) {
       sidebarVisible = state.sidebarVisible;
    }
 
-   if (Array.isArray(state.manualWidths)) {
-      var colCount = cols.length;
-      for (var i = 0; i < state.manualWidths.length && i < colCount; i++) {
-         var w = state.manualWidths[i];
-         if (typeof w === "number" && w > 0) manualWidths[i] = w;
+   // manualWidths is keyed by absolute column index. Legacy array-shaped
+   // payloads were positional within a column page and could land widths on
+   // the wrong columns after pagination, so they're ignored rather than
+   // misapplied (the Array.isArray exclusion).
+   if (state.manualWidths &&
+       typeof state.manualWidths === "object" &&
+       !Array.isArray(state.manualWidths)) {
+      for (var key in state.manualWidths) {
+         if (!state.manualWidths.hasOwnProperty(key)) continue;
+         var absIdx = parseInt(key, 10);
+         var w = state.manualWidths[key];
+         if (!isNaN(absIdx) && absIdx >= 0 && typeof w === "number" && w > 0)
+            manualWidths[absIdx] = w;
       }
    }
 
@@ -4511,6 +4673,7 @@ var destroyGrid = function() {
 
 var bootstrap = function(data) {
    bootstrapping = true;
+   var generation = ++bootstrapGeneration;
 
    // Take ownership of any pending scroll-restore intent for this rebuild only.
    // Clearing the handoff slot here (rather than relying on the restore callback
@@ -4529,12 +4692,21 @@ var bootstrap = function(data) {
 
    if (!data) {
       fetchColumns(function(result) {
+         // A newer bootstrap superseded this one while the column fetch was
+         // in flight; let that bootstrap's own response drive initGrid.
+         if (generation !== bootstrapGeneration) return;
          initGrid(result);
       });
    } else {
       // Data provided directly (data import preview)
       if (data.columns) {
          initGrid(data.columns, data.data);
+      } else {
+         // Malformed or partial preview payload. destroyGrid() above already
+         // wiped the table, so surface an error rather than leaving a blank
+         // viewer (and a stranded bootstrapping flag) with no indication.
+         bootstrapping = false;
+         showError("The data preview is unavailable or could not be displayed.");
       }
    }
 };
