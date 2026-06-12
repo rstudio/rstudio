@@ -352,7 +352,18 @@ jobs:
       #   - PW_SANDBOX_ROOT (chown so the test user owns its per-spec sandboxes)
       - name: Prepare permissions for test-user-driven Playwright
         run: |
+          # /home/runner is mode 0750 by default on hosted Ubuntu runners
+          # (Ubuntu noble HOME_MODE=0750), so $PW_RSTUDIO_SERVER_USER -- which
+          # is not in the runner group -- can't traverse into any path under
+          # it. Without this, npm/node EACCES on chdir when it spawns
+          # subprocesses with an explicit cwd inside the workspace. Add o+x
+          # at each ancestor so the test user can search through to workspace.
+          sudo chmod o+x /home/runner /home/runner/work /home/runner/work/rstudio
+          # Read+traverse on everything inside the workspace (repo, node_modules,
+          # R-libs, ms-playwright browser cache, etc.).
           sudo chmod -R a+rX "${{ github.workspace }}"
+          # PW_SANDBOX_ROOT owned by the test user so per-spec sandboxes don't
+          # EACCES on first creation.
           sudo install -d -o "$PW_RSTUDIO_SERVER_USER" -g "$PW_RSTUDIO_SERVER_USER" -m 0755 "$PW_SANDBOX_ROOT"
 
       - name: Run Playwright tests
