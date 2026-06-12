@@ -8,10 +8,12 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
  *
  * The sandbox is the single rooted tree under which every test-side artifact
- * lives: per-spec config trees, R workdirs, the shared data-home
- * (RSTUDIO_DATA_HOME), and the shared user home (HOME/USERPROFILE). The
- * companion sandbox-teardown removes the subtree once the run finishes
- * (unless preserved by the rules in that file).
+ * lives: per-spec config trees (each carrying its own RSTUDIO_DATA_HOME --
+ * see desktop.fixture's createTempConfig), R workdirs, the sandbox-level
+ * data-home (the seeded-pai source; Desktop sessions do not use it as their
+ * data home), and the shared user home (HOME/USERPROFILE). The companion
+ * sandbox-teardown removes the subtree once the run finishes (unless
+ * preserved by the rules in that file).
  *
  * Env vars (all optional):
  *   PW_SANDBOX_ROOT                Parent dir for the sandbox subtree. Defaults
@@ -23,7 +25,8 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  *                                  (e.g. ~/.local/share/rstudio/pai, as
  *                                  produced by the assistant repo's
  *                                  `npm run deploy:rstudio`). Copied into the
- *                                  sandbox data-home so tests run against
+ *                                  sandbox data-home, from where each per-spec
+ *                                  data home links it, so tests run against
  *                                  that local build instead of downloading
  *                                  the official package. Only the install
  *                                  shape (bin/package.json present) is
@@ -87,7 +90,9 @@ export default async function globalSetup() {
   fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
 
   // Seed a locally built Posit Assistant into the sandbox data-home so tests
-  // exercise it instead of downloading the official package.
+  // exercise it instead of downloading the official package. Desktop launches
+  // use per-spec data homes; each links data-home/pai from here (see
+  // desktop.fixture's seedPaiIntoDataHome).
   const seedPai = process.env.PW_SEED_PAI;
   if (seedPai) {
     if (!fs.existsSync(path.join(seedPai, 'bin', 'package.json'))) {

@@ -29,6 +29,9 @@ export const CODE_COMPLETION_PANEL = '#rstudio_editing_completion_prefs_panel';
 export const CODE_DIAGNOSTICS_TAB = '#rstudio_editing_diagnostics_prefs_tab';
 export const CODE_DIAGNOSTICS_PANEL = '#rstudio_editing_diagnostics_prefs_panel';
 
+// Console
+export const CONSOLE_TAB = '#rstudio_label_console_options';
+
 // General
 export const GENERAL_TAB = '#rstudio_label_general_options';
 export const GENERAL_PANEL = '#rstudio_label_general_options_panel';

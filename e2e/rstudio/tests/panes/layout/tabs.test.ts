@@ -156,4 +156,28 @@ test.describe('Workbench tabs', () => {
     // triggering the HIDE-animation race (#17738) that breaks the next test.
     await resetSourcePaneState(page);
   });
+
+  // A pane can also be maximized at the WindowFrame level -- the pane header
+  // min/max buttons, or EnsureHeightEvent.MAXIMIZED fired when e.g. an R
+  // Notebook preview opens in the Viewer. That state is invisible to
+  // PaneManager's zoom tracking and persists across sessions via client state
+  // (windowlayoutstate), so a leak here once poisoned every later launch in a
+  // CI run: TabSet1 came up minimized with its real tab elements hidden, and
+  // every environment-pane test failed clicking a "not visible" tab.
+  // layout.reset (and with it the per-test reset) must clear it.
+  test('layout.reset clears a WindowFrame-level pane maximize', async ({ rstudioPage: page }) => {
+    const envTab = page.locator(TAB_ENVIRONMENT);
+
+    // Maximize TabSet2 (Files/Plots/Viewer/...); its sibling TabSet1 minimizes
+    // to a facsimile header strip, hiding the real Environment tab element.
+    await executeCommand(page, 'maximizeTabSet2');
+    await expect(envTab).toBeHidden();
+
+    await resetLayoutZoom(page);
+
+    // The real tab strip is back and clickable.
+    await expect(envTab).toBeVisible();
+    await envTab.click();
+    await expect(page.locator(ENV_PANEL)).toBeVisible();
+  });
 });
