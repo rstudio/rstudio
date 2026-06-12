@@ -35,19 +35,13 @@ test.describe('client exception capture', () => {
     await dismissAllModals(page);
   });
 
-  test('an uncaught client exception fails the test that raised it', async ({ rstudioPage: page }) => {
-    // The per-test fixture's drain is expected to fail this test in its
-    // teardown; test.fail() inverts that into the passing outcome, so a
-    // regression in the fail-on-exception machinery surfaces as "expected
-    // to fail, but passed".
-    test.fail();
-
-    await page.evaluate(() => window.rstudio!.errors.simulate('deliberate failure probe'));
-    await expect.poll(
-      () => page.evaluate(() => window.rstudio!.errors.list().length),
-    ).toBeGreaterThan(0);
-
-    // Dismiss the dialog but deliberately do NOT clear the record.
-    await dismissAllModals(page);
-  });
+  // NOTE: there is deliberately no self-test that leaves an exception in the
+  // record to prove the fixture fails the test. The fail-on-exception throw
+  // happens in the auto fixture's teardown (after use()), and Playwright's
+  // test.fail() does NOT invert fixture-teardown failures -- such a test
+  // reports as a hard failure, not an inverted pass. The fail-on-exception
+  // path is instead exercised for real whenever a product bug raises an
+  // uncaught exception during a test (it's how the AceEditorPreview detached
+  // -frame TypeError was caught), so a dedicated negative self-test would add
+  // a fragile, perpetually-red spec for no extra coverage.
 });

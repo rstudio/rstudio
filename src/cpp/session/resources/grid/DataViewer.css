@@ -138,34 +138,6 @@ th {
    user-select: none;
 }
 
-/* Virtual scroll spacer row. Diagonal stripes suggest pending/loading data. */
-tbody tr.spacer-row td,
-tbody tr.spacer-row:hover td {
-   padding: 0;
-   border: none;
-   background:
-      repeating-linear-gradient(
-         -45deg,
-         transparent,
-         transparent 20px,
-         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
-         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
-      );
-}
-
-/* Column-virtualization spacer cells: stand in for the horizontal space of
-   off-window columns. They must stay visually inert -- no borders, padding,
-   hover, or stripe -- so the gap they occupy reads as empty grid, and they
-   must never win the :not(.first-child) hover/stripe rules below. */
-td.col-spacer,
-th.col-spacer,
-tbody tr:hover td.col-spacer,
-tbody tr.odd-row td.col-spacer {
-   padding: 0;
-   border: none;
-   background: var(--grid-bg);
-}
-
 /* --- Data cells --- */
 
 td {
@@ -191,6 +163,39 @@ tbody tr.odd-row td:not(.first-child) {
 
 tbody tr.odd-row:hover td:not(.first-child) {
    background-color: var(--grid-row-hover-bg);
+}
+
+/* Virtual scroll spacer row. Diagonal stripes suggest pending/loading data.
+   NOTE: the spacer rules below tie the hover/stripe rules above on
+   specificity (0,2,3), so they must come later in the file to win the
+   source-order tiebreak -- otherwise hovering a spacer paints the row-hover
+   background behind the (transparent) striped gradient. */
+tbody tr.spacer-row td,
+tbody tr.spacer-row:hover td {
+   padding: 0;
+   border: none;
+   background:
+      repeating-linear-gradient(
+         -45deg,
+         transparent,
+         transparent 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
+      );
+}
+
+/* Column-virtualization spacer cells: stand in for the horizontal space of
+   off-window columns. They must stay visually inert -- no borders, padding,
+   hover, or stripe -- so the gap they occupy reads as empty grid, and they
+   must never win the :not(.first-child) hover/stripe rules above (same
+   source-order tiebreak as the spacer row). */
+td.col-spacer,
+th.col-spacer,
+tbody tr:hover td.col-spacer,
+tbody tr.odd-row td.col-spacer {
+   padding: 0;
+   border: none;
+   background: var(--grid-bg);
 }
 
 /* Active cell / header highlight (keyboard nav + click). The grid is a

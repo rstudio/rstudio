@@ -134,8 +134,15 @@
    as.character(col)
 })
 
-# Compact, collision-resistant hash of a frame's column names. Used as a
+# Compact, collision-resistant hash of a frame's column structure. Used as a
 # fingerprint to detect object reassignment between data viewer loads.
+#
+# The fingerprint covers column names, column classes, and factor levels --
+# not just names. Saved filters are typed (numeric ranges, factor level
+# indices), so a column changing type, or a factor being re-leveled, with
+# unchanged names must also invalidate saved state; otherwise a restored
+# filter is silently applied with the wrong semantics (an inexplicably empty
+# grid, or a factor filter matching the wrong level).
 #
 # Returns NA_character_ for empty / NULL names so the client can treat
 # "no anchor" as always-mismatch; without anchors there's no way to
@@ -148,7 +155,18 @@
    if (n == 0L)
       return(NA_character_)
 
-   paste0(n, ":", .rs.digest(nms))
+   sig <- list(names = nms)
+   if (is.list(x))
+   {
+      sig$types <- vapply(x, function(col) {
+         type <- paste(class(col), collapse = "/")
+         if (is.factor(col))
+            type <- paste(c(type, levels(col)), collapse = "/")
+         type
+      }, character(1), USE.NAMES = FALSE)
+   }
+
+   paste0(n, ":", .rs.digest(sig))
 })
 
 .rs.addFunction("describeCols", function(x,
@@ -353,7 +371,11 @@
             # implicitly remove those values); if that leaves us with nothing,
             # treat this column as untyped since we can do no meaningful filtering
             # on it
-            hist_vals <- x[[idx]][is.finite(x[[idx]])]
+            #
+            # coerce to double up front: integer columns whose range exceeds
+            # .Machine$integer.max otherwise overflow both in the range
+            # computation below and in hist()'s break selection (#17951)
+            hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
                # For whole-number columns spanning a small range, draw one

@@ -150,6 +150,30 @@ test_that(".rs.describeCols() fingerprint distinguishes hyphen-collisions", {
    expect_false(identical(fp1, fp2))
 })
 
+test_that(".rs.dataViewer.colsFingerprint() reflects column types and factor levels", {
+   # Saved filters are typed (numeric ranges, factor level indices), so a
+   # column changing type -- or a factor being re-leveled -- with unchanged
+   # names must change the fingerprint; otherwise a restored filter is
+   # silently applied with the wrong semantics.
+   numeric_x <- data.frame(a = 1:3, b = c(1.5, 2.5, 3.5))
+   character_x <- data.frame(a = as.character(1:3), b = c(1.5, 2.5, 3.5))
+   expect_false(identical(.rs.dataViewer.colsFingerprint(numeric_x),
+                          .rs.dataViewer.colsFingerprint(character_x)))
+
+   # Re-leveling a factor changes the meaning of a saved level-index filter.
+   levels_ab <- data.frame(f = factor(c("a", "b")))
+   levels_ba <- data.frame(f = factor(c("a", "b"), levels = c("b", "a")))
+   expect_false(identical(.rs.dataViewer.colsFingerprint(levels_ab),
+                          .rs.dataViewer.colsFingerprint(levels_ba)))
+
+   # Same names and same types -> stable fingerprint, even when values differ
+   # (saved state should survive plain data edits).
+   values_1 <- data.frame(a = 1:3, b = c("x", "y", "z"))
+   values_2 <- data.frame(a = 4:6, b = c("p", "q", "r"))
+   expect_identical(.rs.dataViewer.colsFingerprint(values_1),
+                    .rs.dataViewer.colsFingerprint(values_2))
+})
+
 test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
    # The client treats a null/missing fingerprint as always-mismatch and
    # discards any saved per-object state -- there's no anchor to align
@@ -407,6 +431,20 @@ test_that(".rs.describeCols() reports col_type as typeof() and col_class as clas
    expect_equal(first_class, c("numeric", "integer", "character", "logical", "factor", "list"))
 })
 
+test_that(".rs.describeCols() handles integer columns whose range overflows", {
+   # max_v - min_v overflows integer arithmetic here; the integer-breaks
+   # heuristic must compute the range in double precision rather than
+   # erroring with "missing value where TRUE/FALSE needed". See #17951.
+   df <- data.frame(id = c(-2000000000L, 2000000000L))
+
+   cols <- .rs.describeCols(df)
+
+   col <- cols[[2L]]
+   expect_equal(col$col_search_type, .rs.scalar("numeric"))
+   expect_true(length(col$col_breaks) > 1)
+   expect_equal(sum(col$col_counts), 2)
+})
+
 test_that(".rs.describeCols() reports a nested data.frame column faithfully", {
    df <- data.frame(a = 1:2)
    # a column that is itself a data.frame. describeCols does not flatten (that
@@ -438,6 +476,141 @@ test_that(".rs.applyTransform() does not error when sorting a list column", {
    # sorting an atomic column still works
    sorted <- .rs.applyTransform(df, character(), "", 1L, "asc")
    expect_equal(sorted$a, c(1L, 2L, 3L))
+})
+
+test_that(".rs.applyTransform() applies a character filter as case-insensitive substring", {
+   df <- data.frame(x = c("apple", "Grape", "pineapple", "cherry"),
+                    y = 1:4)
+
+   # substring match, not anchored to the start
+   out <- .rs.applyTransform(df, c("character|apple", ""), "", integer(), character())
+   expect_equal(out$x, c("apple", "pineapple"))
+
+   # case-insensitive
+   out <- .rs.applyTransform(df, c("character|GRAPE", ""), "", integer(), character())
+   expect_equal(out$x, "Grape")
+
+   # regex metacharacters are matched literally
+   df <- data.frame(x = c("a.b", "axb"))
+   out <- .rs.applyTransform(df, "character|a.b", "", integer(), character())
+   expect_equal(out$x, "a.b")
+})
+
+test_that(".rs.applyTransform() applies a factor filter by level index", {
+   df <- data.frame(f = factor(c("b", "a", "c", "a"), levels = c("a", "b", "c")),
+                    y = 1:4)
+
+   # "factor|1" selects the first level ("a"), not the first value
+   out <- .rs.applyTransform(df, c("factor|1", ""), "", integer(), character())
+   expect_equal(as.character(out$f), c("a", "a"))
+   expect_equal(out$y, c(2L, 4L))
+
+   # NA entries never match
+   df$f[1] <- NA
+   out <- .rs.applyTransform(df, c("factor|2", ""), "", integer(), character())
+   expect_equal(nrow(out), 0L)
+})
+
+test_that(".rs.applyTransform() applies numeric range and equality filters", {
+   df <- data.frame(x = c(1, 5, 10, NA, Inf, 7), y = 1:6)
+
+   # inclusive range; NA and infinite values are dropped implicitly
+   out <- .rs.applyTransform(df, c("numeric|5_10", ""), "", integer(), character())
+   expect_equal(out$x, c(5, 10, 7))
+
+   # single-value equality
+   out <- .rs.applyTransform(df, c("numeric|7", ""), "", integer(), character())
+   expect_equal(out$y, 6L)
+
+   # negative bounds
+   df <- data.frame(x = c(-10, -5, 0, 5))
+   out <- .rs.applyTransform(df, "numeric|-7_0", "", integer(), character())
+   expect_equal(out$x, c(-5, 0))
+})
+
+test_that(".rs.applyTransform() applies a boolean filter and drops NA rows", {
+   df <- data.frame(b = c(TRUE, FALSE, NA, TRUE), y = 1:4)
+
+   out <- .rs.applyTransform(df, c("boolean|TRUE", ""), "", integer(), character())
+   expect_equal(out$y, c(1L, 4L))
+
+   out <- .rs.applyTransform(df, c("boolean|FALSE", ""), "", integer(), character())
+   expect_equal(out$y, 2L)
+})
+
+test_that(".rs.applyTransform() ignores malformed and empty column filters", {
+   df <- data.frame(x = c("a", "b"), y = 1:2)
+
+   # no type prefix: skipped rather than applied or errored
+   out <- .rs.applyTransform(df, c("justtext", ""), "", integer(), character())
+   expect_equal(nrow(out), 2L)
+
+   # empty filter strings leave the frame untouched
+   out <- .rs.applyTransform(df, c("", ""), "", integer(), character())
+   expect_equal(nrow(out), 2L)
+})
+
+test_that(".rs.applyTransform() global search matches data and row names", {
+   df <- data.frame(x = c("apple", "banana"), y = c("zucchini", "apricot"),
+                    row.names = c("first", "second"))
+
+   # substring across all columns, case-insensitive
+   out <- .rs.applyTransform(df, character(2L), "AP", integer(), character())
+   expect_equal(rownames(out), c("first", "second"))
+
+   out <- .rs.applyTransform(df, character(2L), "zucc", integer(), character())
+   expect_equal(rownames(out), "first")
+
+   # matches against row names too
+   out <- .rs.applyTransform(df, character(2L), "second", integer(), character())
+   expect_equal(out$x, "banana")
+})
+
+test_that(".rs.applyTransform() column filters compose with search and sort", {
+   df <- data.frame(x = c("ab", "ab", "ab", "cd"),
+                    y = c("u", "v", "u", "u"),
+                    z = c(3, 1, 2, 0))
+
+   out <- .rs.applyTransform(df, c("character|ab", "", ""), "u", 3L, "desc")
+   expect_equal(out$z, c(3, 2))
+})
+
+test_that(".rs.applyTransform() sorts non-numeric column types in both directions", {
+   # character
+   df <- data.frame(x = c("pear", "apple", "fig"))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "asc")$x,
+                c("apple", "fig", "pear"))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "desc")$x,
+                c("pear", "fig", "apple"))
+
+   # factor: sorts by level order, not alphabetically
+   df <- data.frame(f = factor(c("high", "low", "mid"),
+                               levels = c("low", "mid", "high")))
+   expect_equal(as.character(.rs.applyTransform(df, character(), "", 1L, "asc")$f),
+                c("low", "mid", "high"))
+   expect_equal(as.character(.rs.applyTransform(df, character(), "", 1L, "desc")$f),
+                c("high", "mid", "low"))
+
+   # logical
+   df <- data.frame(b = c(TRUE, FALSE, TRUE))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "asc")$b,
+                c(FALSE, TRUE, TRUE))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "desc")$b,
+                c(TRUE, TRUE, FALSE))
+
+   # Date
+   df <- data.frame(d = as.Date(c("2024-06-01", "2023-01-15", "2025-12-31")))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "asc")$d,
+                sort(df$d))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "desc")$d,
+                sort(df$d, decreasing = TRUE))
+
+   # POSIXct
+   df <- data.frame(t = as.POSIXct(c("2024-06-01 12:00:00",
+                                     "2024-06-01 09:30:00",
+                                     "2024-06-01 23:59:59"), tz = "UTC"))
+   expect_equal(.rs.applyTransform(df, character(), "", 1L, "desc")$t,
+                sort(df$t, decreasing = TRUE))
 })
 
 test_that(".rs.applyTransform() applies every key in a multi-column sort", {
