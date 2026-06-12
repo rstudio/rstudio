@@ -1080,6 +1080,38 @@ var handleSortClick = function(colIdx, th) {
    saveState();
 };
 
+// Clear the active sort, restoring the frame's natural row order. Wired to
+// the info bar's clear-sort button at startup.
+var clearSort = function() {
+   if (sortColumn < 0 && !sortDirection) return;
+
+   sortColumn = -1;
+   sortDirection = "";
+
+   // Sort changes row identity at every index; clear the active cell so
+   // we don't re-highlight a different row at the old coordinate.
+   clearActiveCell();
+
+   // Reset the header arrows. applySortIndicators() only updates the arrow
+   // classes, so aria-sort must be cleared separately on every sortable
+   // header (mirroring handleSortClick).
+   applySortIndicators();
+   var thead = document.getElementById("data_cols");
+   if (thead) {
+      for (var i = 0; i < thead.children.length; i++) {
+         if (thead.children[i].hasAttribute("aria-sort"))
+            thead.children[i].setAttribute("aria-sort", "none");
+      }
+   }
+
+   // Re-fetch data
+   invalidateCache();
+   fetchRows(0, FETCH_SIZE, function() {
+      scrollToTop();
+   });
+   saveState();
+};
+
 // ==========================================================================
 // Column Pinning
 // ==========================================================================
@@ -2484,6 +2516,17 @@ var visibleBodyHeight = function(viewport) {
    return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 10 : 0));
 };
 
+// Update the "Sorted by" portion of the info bar. The text span and the
+// clear-sort button are static elements from gridviewer.html; toggle the
+// button's visibility rather than rebuilding it so the click listener
+// wired at startup survives updates.
+var setSortStatus = function(text) {
+   var textEl = document.getElementById("rsGridData_info_sort_text");
+   if (textEl) textEl.textContent = text;
+   var clearEl = document.getElementById("rsGridData_info_sort_clear");
+   if (clearEl) clearEl.style.display = text ? "inline-block" : "none";
+};
+
 var updateInfoBar = function() {
    updateAriaRowCount();
 
@@ -2495,18 +2538,17 @@ var updateInfoBar = function() {
    var info = document.getElementById("rsGridData_info");
    if (!info) return;
    var textEl = document.getElementById("rsGridData_info_text");
-   var sortEl = document.getElementById("rsGridData_info_sort");
 
    if (statusTextOverride) {
       if (textEl) textEl.textContent = statusTextOverride;
-      if (sortEl) sortEl.textContent = "";
+      setSortStatus("");
       return;
    }
 
    var activeRows = filteredRows;
    if (totalRows === 0) {
       if (textEl) textEl.textContent = "";
-      if (sortEl) sortEl.textContent = "";
+      setSortStatus("");
       return;
    }
 
@@ -2558,7 +2600,7 @@ var updateInfoBar = function() {
          sortText = "Sorted by: " + cols[sortPos].col_name + " (" + dirText + ")";
       }
    }
-   if (sortEl) sortEl.textContent = sortText;
+   setSortStatus(sortText);
 };
 
 var buildRow = function(r) {
@@ -4673,8 +4715,7 @@ var destroyGrid = function() {
 
    var infoText = document.getElementById("rsGridData_info_text");
    if (infoText) infoText.textContent = "";
-   var infoSort = document.getElementById("rsGridData_info_sort");
-   if (infoSort) infoSort.textContent = "";
+   setSortStatus("");
 
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
@@ -5113,6 +5154,12 @@ var loc = parseLocationUrl();
 var dataMode = loc.dataSource || "server";
 
 document.addEventListener("DOMContentLoaded", function() {
+   // #rsGridData_info_sort_clear is a static element that survives
+   // re-bootstraps, so wire its listener once here rather than per-grid.
+   var sortClear = document.getElementById("rsGridData_info_sort_clear");
+   if (sortClear)
+      sortClear.addEventListener("click", clearSort);
+
    if (dataMode === "server") {
       bootstrap();
    }
