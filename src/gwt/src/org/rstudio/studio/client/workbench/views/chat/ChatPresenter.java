@@ -107,7 +107,8 @@ public class ChatPresenter extends BasePresenter
       void setStatus(Status status);
       void showError(String errorMessage);
       void loadUrl(String url);
-      void showNotInstalledWithInstall(String newVersion);
+      void showNotInstalledWithInstall(String newVersion,
+                                       boolean additionalProvidersAvailable);
       void showUpdateAvailableWithVersions(String currentVersion, String newVersion,
                                             boolean isDowngrade);
       void showUpdatingStatus();
@@ -131,7 +132,8 @@ public class ChatPresenter extends BasePresenter
       void showPoppedOutPlaceholder();
       void hidePoppedOutPlaceholder();
 
-      String getNotInstalledWithInstallHTML(String newVersion);
+      String getNotInstalledWithInstallHTML(String newVersion,
+                                            boolean additionalProvidersAvailable);
       String getUpdateAvailableWithVersionsHTML(
          String currentVersion, String newVersion, boolean isDowngrade);
       String getMessageHTML(String message);
@@ -959,7 +961,8 @@ public class ChatPresenter extends BasePresenter
 
          @Override
          public void onUpdateAvailable(String currentVersion, String newVersion,
-                                       boolean isInitialInstall, boolean isDowngrade)
+                                       boolean isInitialInstall, boolean isDowngrade,
+                                       boolean additionalProvidersAvailable)
          {
             // Pausing for user action — do NOT start backend.
             // Backend starts after user clicks "Update/Install Now" and it
@@ -967,8 +970,10 @@ public class ChatPresenter extends BasePresenter
             if (isInitialInstall)
             {
                showInDisplayOrSatellite(
-                  display_.getNotInstalledWithInstallHTML(newVersion),
-                  () -> display_.showNotInstalledWithInstall(newVersion));
+                  display_.getNotInstalledWithInstallHTML(
+                     newVersion, additionalProvidersAvailable),
+                  () -> display_.showNotInstalledWithInstall(
+                     newVersion, additionalProvidersAvailable));
                setAutomationChatState("not-installed", true);
             }
             else

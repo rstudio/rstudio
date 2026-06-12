@@ -54,9 +54,13 @@ public class PositAiInstallManager
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        * @param isDowngrade True if the available version is older than the installed version
        *                    (only meaningful when isInitialInstall is false)
+       * @param additionalProvidersAvailable True if the manifest opts this build into
+       *                    the bring-your-own-key provider set (only reflected in the
+       *                    initial-install view)
        */
       void onUpdateAvailable(String currentVersion, String newVersion,
-                             boolean isInitialInstall, boolean isDowngrade);
+                             boolean isInitialInstall, boolean isDowngrade,
+                             boolean additionalProvidersAvailable);
 
       /**
        * Called when no compatible version of Posit Assistant is available for this RStudio version.
@@ -196,6 +200,13 @@ public class PositAiInstallManager
             Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
             boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
 
+            // getBoolean returns null when the field is absent (e.g. an older
+            // rsession); treat that as false. The backend owns what makes it true.
+            Boolean additionalProvidersBoxed =
+               result.getBoolean("additionalProvidersAvailable");
+            boolean additionalProvidersAvailable =
+               additionalProvidersBoxed != null && additionalProvidersBoxed;
+
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
             if (unsupportedVersion)
@@ -219,7 +230,8 @@ public class PositAiInstallManager
                String currentVersion = result.getString("currentVersion");
                String newVersion = result.getString("newVersion");
                callback.onUpdateAvailable(currentVersion, newVersion,
-                                          isInitialInstall, isDowngrade);
+                                          isInitialInstall, isDowngrade,
+                                          additionalProvidersAvailable);
             }
             else
             {
