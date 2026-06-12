@@ -595,14 +595,18 @@ th.columnClickable div {
    opacity: 1;
 }
 
-/* Clear filter icon as inline SVG */
+/* Clear filter icon as an inline-SVG mask so the color follows the theme
+   foreground */
 .clearFilter::after {
    content: '';
    display: block;
    width: 11px;
    height: 11px;
-   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
 }
 
 
@@ -666,6 +670,32 @@ th.columnClickable div {
 
 #rsGridData_info_sort {
    float: right;
+}
+
+/* Hidden by default; shown (inline-block) while a sort is active. Uses the
+   same X icon as .clearFilter, via mask-image so the color follows the
+   theme foreground. */
+#rsGridData_info_sort_clear {
+   display: none;
+   width: 11px;
+   height: 11px;
+   margin-left: 5px;
+   padding: 0;
+   border: none;
+   vertical-align: -1px;
+   cursor: pointer;
+   opacity: 0.5;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-repeat: no-repeat;
+   mask-position: center;
+}
+
+#rsGridData_info_sort_clear:hover {
+   opacity: 1;
 }
 
 #rsGridData_info_text {
