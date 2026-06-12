@@ -445,6 +445,88 @@ test_that(".rs.describeCols() handles integer columns whose range overflows", {
    expect_equal(sum(col$col_counts), 2)
 })
 
+test_that(".rs.describeCols() reports the data range for numeric columns", {
+   # col_min / col_max carry the actual finite data range (the histogram
+   # breaks are pretty()-ed and may extend past it); the sidebar displays
+   # them under the sparkline, which has no axis ticks. Non-numeric columns
+   # omit the fields entirely, as does a numeric column with too few finite
+   # values to summarize.
+   df <- data.frame(x = c(1.5, NA, 4.25, 3), y = letters[1:4], z = c(NA, NA, NA, 7))
+
+   cols <- .rs.describeCols(df)
+
+   x <- cols[[2L]]
+   expect_equal(x[["col_min"]], .rs.scalar(1.5))
+   expect_equal(x[["col_max"]], .rs.scalar(4.25))
+
+   # exact [[ indexing: $col_max would partial-match col_max_chars
+   expect_null(cols[[3L]][["col_min"]])
+   expect_null(cols[[3L]][["col_max"]])
+   expect_null(cols[[4L]][["col_min"]])
+   expect_null(cols[[4L]][["col_max"]])
+})
+
+test_that(".rs.describeCols() ships category counts for low-cardinality columns", {
+   df <- data.frame(
+      f = factor(c("a", "b", "b", NA), levels = c("a", "b", "c")),
+      s = c("x", "y", "y", "y"),
+      stringsAsFactors = FALSE)
+
+   cols <- .rs.describeCols(df)
+
+   # factors: one count per level, in level order (unused levels included,
+   # NA values excluded); col_vals (the filter dropdown's source) unchanged
+   f <- cols[[2L]]
+   expect_equal(f$col_vals, c("a", "b", "c"))
+   expect_equal(f[["col_cat_vals"]], c("a", "b", "c"))
+   expect_equal(f[["col_cat_counts"]], c(1L, 2L, 0L))
+
+   # characters: most frequent first, with the distinct-value count
+   s <- cols[[3L]]
+   expect_equal(s[["col_cat_vals"]], c("y", "x"))
+   expect_equal(s[["col_cat_counts"]], c(3L, 1L))
+   expect_equal(s[["col_n_unique"]], .rs.scalar(2L))
+})
+
+test_that(".rs.describeCols() falls back to a text summary above the bar cutoff", {
+   # 26 distinct values > the 24-bar cutoff (maxCategoryBars), so no
+   # category counts are shipped -- just the cardinality and the dominant
+   # value
+   df <- data.frame(
+      f = factor(rep(letters, times = c(3, rep(1, 25)))),
+      s = rep(LETTERS, times = c(3, rep(1, 25))),
+      stringsAsFactors = FALSE)
+
+   cols <- .rs.describeCols(df)
+
+   f <- cols[[2L]]
+   expect_null(f[["col_cat_counts"]])
+   expect_equal(f$col_vals, letters)
+   expect_equal(f[["col_top_value"]], .rs.scalar("a"))
+   expect_equal(f[["col_top_count"]], .rs.scalar(3L))
+
+   s <- cols[[3L]]
+   expect_null(s[["col_cat_counts"]])
+   expect_equal(s[["col_n_unique"]], .rs.scalar(26L))
+   expect_equal(s[["col_top_value"]], .rs.scalar("A"))
+   expect_equal(s[["col_top_count"]], .rs.scalar(3L))
+})
+
+test_that(".rs.describeCols() skips character categorization above the row limit", {
+   # table() over a long character column is not free, so categorization is
+   # gated on a row-count limit (default 1e6, here lowered for the test)
+   old <- options(rstudio.dataViewer.maxCategorizeRows = 2L)
+   on.exit(options(old), add = TRUE)
+
+   df <- data.frame(s = c("a", "b", "a"), stringsAsFactors = FALSE)
+   cols <- .rs.describeCols(df)
+
+   s <- cols[[2L]]
+   expect_null(s[["col_cat_counts"]])
+   expect_null(s[["col_n_unique"]])
+   expect_null(s[["col_top_value"]])
+})
+
 test_that(".rs.describeCols() reports a nested data.frame column faithfully", {
    df <- data.frame(a = 1:2)
    # a column that is itself a data.frame. describeCols does not flatten (that

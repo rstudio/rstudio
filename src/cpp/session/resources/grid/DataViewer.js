@@ -883,6 +883,15 @@ var hasHistogram = function(col) {
           col.col_counts && col.col_counts.length > 0;
 };
 
+// Whether a (factor / character) column ships per-category counts for the
+// sidebar's frequency bars. The server only emits these below its bar
+// cutoff, so presence of the fields is the entire decision.
+var hasCategoryCounts = function(col) {
+   return col.col_cat_vals && col.col_cat_vals.length > 0 &&
+          col.col_cat_counts &&
+          col.col_cat_counts.length === col.col_cat_vals.length;
+};
+
 // Coarse category used to choose which summary stats to render in the sidebar.
 // Anything not matched here (Date, POSIXct, ...) falls through to the generic
 // min/max stats in renderColumnStats.
@@ -997,7 +1006,7 @@ var createHeader = function(idx, col) {
       if (evt.target.className === "resizer") return;
       if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
       if (didResize) { didResize = false; return; }
-      if (sortable) handleSortClick(idx, th);
+      if (sortable) handleSortClick(idx);
       var displayIdx = columnOrder.indexOf(idx);
       if (displayIdx >= 0) setActiveHeader(displayIdx);
       focusGridViewport();
@@ -1021,10 +1030,7 @@ var sortAriaValue = function(dir) {
    return "none";
 };
 
-var handleSortClick = function(colIdx, th) {
-   var thead = document.getElementById("data_cols");
-   var headers = thead.children;
-
+var handleSortClick = function(colIdx) {
    // sortColumn is an absolute column identity, so translate the clicked
    // window position before comparing/storing.
    var absIdx = absColIndex(colIdx);
@@ -1049,28 +1055,11 @@ var handleSortClick = function(colIdx, th) {
    // we don't re-highlight a different row at the old coordinate.
    clearActiveCell();
 
-   // Update header classes and aria-sort. AT users hear "ascending" /
-   // "descending" / "none" in place of the visual arrow cue.
-   for (var i = 0; i < headers.length; i++) {
-      headers[i].classList.remove("sorting_asc", "sorting_desc");
-      if (!headers[i].classList.contains("sorting")) {
-         headers[i].classList.add("sorting");
-      }
-      if (headers[i].hasAttribute("aria-sort")) {
-         headers[i].setAttribute("aria-sort", "none");
-      }
-   }
-   if (newDir === "asc") {
-      th.classList.remove("sorting");
-      th.classList.add("sorting_asc");
-      th.setAttribute("aria-sort", "ascending");
-   } else if (newDir === "desc") {
-      th.classList.remove("sorting");
-      th.classList.add("sorting_desc");
-      th.setAttribute("aria-sort", "descending");
-   } else {
-      th.setAttribute("aria-sort", "none");
-   }
+   // Refresh the arrow classes and aria-sort on every rendered header, and
+   // mirror the new state into the sidebar's sort icons. AT users hear
+   // "ascending" / "descending" / "none" in place of the visual arrow cue.
+   applySortIndicators();
+   updateSidebarColumnIndicators();
 
    // Re-fetch data
    invalidateCache();
@@ -1092,17 +1081,9 @@ var clearSort = function() {
    // we don't re-highlight a different row at the old coordinate.
    clearActiveCell();
 
-   // Reset the header arrows. applySortIndicators() only updates the arrow
-   // classes, so aria-sort must be cleared separately on every sortable
-   // header (mirroring handleSortClick).
+   // Reset the header arrows + aria-sort and the sidebar's sort icons.
    applySortIndicators();
-   var thead = document.getElementById("data_cols");
-   if (thead) {
-      for (var i = 0; i < thead.children.length; i++) {
-         if (thead.children[i].hasAttribute("aria-sort"))
-            thead.children[i].setAttribute("aria-sort", "none");
-      }
-   }
+   updateSidebarColumnIndicators();
 
    // Re-fetch data
    invalidateCache();
@@ -1458,6 +1439,7 @@ var togglePinColumn = function(colIdx) {
    // refresh the custom scrollbars so the thumb size matches before the
    // user scrolls.
    updateCustomScrollbars();
+   updateSidebarColumnIndicators();
    saveState();
    if (headerOrigCol >= 0) {
       var newDisplayIdx = columnOrder.indexOf(headerOrigCol);
@@ -2916,8 +2898,14 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
 // approach put thousands of vector nodes on the page, and repainting them
 // during grid scroll caused multi-second stalls with the summary panel open
 // (#17806). A canvas is one raster element, far cheaper for the compositor.
-var createSparkline = function(breaks, counts) {
-   if (!breaks || !counts || counts.length === 0) return null;
+//
+// Two modes share the renderer: numeric histograms (breaks + counts) and
+// categorical frequency bars (labels + counts, breaks null). Categorical
+// bars draw in an alternate color with per-bar gaps, cueing that the x-axis
+// is a set of discrete values rather than a continuous range.
+var createSparkline = function(breaks, counts, labels) {
+   if (!counts || counts.length === 0) return null;
+   if (!breaks && !labels) return null;
 
    var max = 0;
    var total = 0;
@@ -2952,8 +2940,14 @@ var createSparkline = function(breaks, counts) {
 
    // Resolve the bar color from CSS so theming still applies; a canvas
    // can't pick up the old .sparkline-bar rule on its own.
-   var barColor = getComputedStyle(document.documentElement)
-      .getPropertyValue("--grid-focus-border").trim() || "#4d9de0";
+   var styles = getComputedStyle(document.documentElement);
+   var barColor = labels
+      ? (styles.getPropertyValue("--grid-spark-categorical").trim() || "#2ba36b")
+      : (styles.getPropertyValue("--grid-spark-numeric").trim() || "#4d9de0");
+
+   // Histogram bins tile seamlessly (contiguous ranges); categorical bars
+   // get a small gap so discrete values read as separate bars.
+   var barGap = labels ? Math.max(1, Math.round(dpr)) : 0;
 
    // Redraw all bars, drawing the hovered bar (if any) at full opacity to
    // mimic the per-bar :hover highlight the SVG version had. Cheap to call
@@ -2969,7 +2963,7 @@ var createSparkline = function(breaks, counts) {
          var x0 = Math.round((j / counts.length) * canvas.width);
          var x1 = Math.round(((j + 1) / counts.length) * canvas.width);
          ctx.globalAlpha = (j === highlightBin) ? 1 : 0.6;
-         ctx.fillRect(x0, canvas.height - h, Math.max(1, x1 - x0), h);
+         ctx.fillRect(x0, canvas.height - h, Math.max(1, x1 - x0 - barGap), h);
       }
    };
    drawBars(hoverBin);
@@ -2981,16 +2975,6 @@ var createSparkline = function(breaks, counts) {
    tooltip.className = "sparkline-tooltip";
    tooltip.style.display = "none";
    wrapper.appendChild(tooltip);
-
-   var formatNum = function(n) {
-      // Integer-valued breaks (including 0) render without a fractional
-      // part: "0" rather than "0.00", "5" rather than "5.0".
-      if (Number.isInteger(n)) return n.toLocaleString();
-      if (Math.abs(n) >= 100) return Math.round(n).toLocaleString();
-      if (Math.abs(n) >= 1) return n.toFixed(1);
-      if (Math.abs(n) >= 0.01) return n.toFixed(2);
-      return n.toPrecision(3);
-   };
 
    canvas.addEventListener("mousemove", function(evt) {
       // The canvas has no per-bar nodes, so derive the hovered bin from the
@@ -3007,26 +2991,37 @@ var createSparkline = function(breaks, counts) {
       // Repaint with the hovered bar highlighted when the bin changes.
       if (bin !== hoverBin) { hoverBin = bin; drawBars(hoverBin); }
 
-      // breaks arrive from R as strings (col_breaks is as.character'd
-      // server-side); coerce here so arithmetic doesn't fall into string
-      // concatenation via the `+` operator.
-      var lo = Number(breaks[bin]);
-      var hi = Number(breaks[bin + 1]);
       var count = counts[bin];
       var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
 
-      // For integer-binned histograms (server emits breaks like
-      // 0.5, 1.5, 2.5, ... so each bin holds one integer value), show the
-      // integer rather than the awkward "Range: 0.5 to 1.5".
-      var mid = (lo + hi) / 2;
-      var isIntegerBin = (hi - lo) === 1 && Number.isInteger(mid);
+      var headline;
+      if (labels) {
+         // Categorical bar: the headline is the value itself, truncated so
+         // a long string can't blow the tooltip out to absurd widths.
+         headline = String(labels[bin]);
+         if (headline.length > 40)
+            headline = headline.substring(0, 40) + "...";
+      } else {
+         // breaks arrive from R as strings (col_breaks is as.character'd
+         // server-side); coerce here so arithmetic doesn't fall into string
+         // concatenation via the `+` operator.
+         var lo = Number(breaks[bin]);
+         var hi = Number(breaks[bin + 1]);
+
+         // For integer-binned histograms (server emits breaks like
+         // 0.5, 1.5, 2.5, ... so each bin holds one integer value), show the
+         // integer rather than the awkward "Range: 0.5 to 1.5".
+         var mid = (lo + hi) / 2;
+         var isIntegerBin = (hi - lo) === 1 && Number.isInteger(mid);
+         headline = isIntegerBin
+            ? "Value: " + mid
+            : "Range: " + formatCompactNum(lo) + " to " + formatCompactNum(hi);
+      }
 
       // Build with DOM nodes rather than innerHTML so future format changes
       // can't accidentally interpret data values as markup.
       tooltip.textContent = "";
-      tooltip.appendChild(document.createTextNode(isIntegerBin
-         ? "Value: " + mid
-         : "Range: " + formatNum(lo) + " to " + formatNum(hi)));
+      tooltip.appendChild(document.createTextNode(headline));
       tooltip.appendChild(document.createElement("br"));
       tooltip.appendChild(document.createTextNode(
          "Count: " + count.toLocaleString() + " (" + pct + "%)"));
@@ -3067,6 +3062,28 @@ var typeLabel = function(col) {
       "raw": "raw"
    };
    return map[type] || type;
+};
+
+// Compact formatter for axis-style values (sparkline bin bounds, the
+// footer's min/max range). Integer values (including 0) render without a
+// fractional part: "0" rather than "0.00", "5" rather than "5.0".
+var formatCompactNum = function(n) {
+   if (Number.isInteger(n)) return n.toLocaleString();
+   if (Math.abs(n) >= 100) return Math.round(n).toLocaleString();
+   if (Math.abs(n) >= 1) return n.toFixed(1);
+   if (Math.abs(n) >= 0.01) return n.toFixed(2);
+   return n.toPrecision(3);
+};
+
+// Append one of the range interval's punctuation adornments ("[", ", ",
+// "]") to the footer summary as a dimmed span, visually separating the
+// notation from the numbers themselves (whose locale formatting may
+// include comma thousands separators).
+var appendRangePunct = function(el, text) {
+   var punct = document.createElement("span");
+   punct.className = "range-punct";
+   punct.textContent = text;
+   el.appendChild(punct);
 };
 
 var formatStatValue = function(val) {
@@ -3200,6 +3217,30 @@ var initSidebar = function() {
    toggleSpinner.id = "sidebarSpinner";
    toggle.appendChild(toggleSpinner);
 
+   // Help icon: opens a small dialog explaining the summary entries. Unlike
+   // the close glyph below, activation must NOT reach the toggle -- it opens
+   // the dialog rather than collapsing the panel -- so both handlers stop
+   // propagation. A real button (focusable, labelled), since it does
+   // something other than what the header announces.
+   var toggleHelp = document.createElement("span");
+   toggleHelp.className = "sidebar-toggle-help";
+   toggleHelp.textContent = "?";
+   toggleHelp.setAttribute("role", "button");
+   toggleHelp.setAttribute("tabindex", "0");
+   toggleHelp.setAttribute("aria-label", "About column summaries");
+   toggleHelp.title = "About column summaries";
+   var onToggleHelpActivate = function(evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      showSidebarHelp(toggleHelp);
+   };
+   toggleHelp.addEventListener("click", onToggleHelpActivate);
+   toggleHelp.addEventListener("keydown", function(evt) {
+      if (evt.key === "Enter" || evt.key === " ")
+         onToggleHelpActivate(evt);
+   });
+   toggle.appendChild(toggleHelp);
+
    // Decorative close glyph; clicks bubble to the toggle, which remains the
    // panel's single accessible control.
    var toggleClose = document.createElement("span");
@@ -3246,6 +3287,16 @@ var initSidebar = function() {
          "Toggle summary for column " + col.col_name);
       header.appendChild(expandBtn);
 
+      // Pin icon, mirroring the grid header's affordance: hidden until the
+      // entry is hovered, persistent while the column is pinned. State
+      // (pinned class, title, aria) is applied by
+      // updateSidebarColumnIndicators once all entries exist.
+      var pinIcon = document.createElement("span");
+      pinIcon.className = "pin-icon sidebar-pin-icon";
+      pinIcon.setAttribute("role", "button");
+      pinIcon.setAttribute("tabindex", "0");
+      header.appendChild(pinIcon);
+
       var name = document.createElement("span");
       name.className = "sidebar-col-name";
       name.textContent = col.col_name;
@@ -3257,11 +3308,29 @@ var initSidebar = function() {
       type.textContent = "<" + typeLabel(col) + ">";
       header.appendChild(type);
 
+      // Sort icon at the right edge, mirroring the grid header's indicator.
+      // Non-sortable columns (list / data.frame) keep an inert hidden
+      // placeholder so the type labels stay aligned across entries; when
+      // ordering is disabled for the whole grid no icon is created at all.
+      var sortIcon = null;
+      if (ordering) {
+         sortIcon = document.createElement("span");
+         sortIcon.className = "sidebar-sort-icon";
+         if (isColumnSortable(col)) {
+            sortIcon.setAttribute("role", "button");
+            sortIcon.setAttribute("tabindex", "0");
+         } else {
+            sortIcon.classList.add("disabled");
+         }
+         header.appendChild(sortIcon);
+      }
+
       entry.appendChild(header);
 
-      // Sparkline histogram for numeric columns. Create the (empty)
-      // container now but defer drawing the canvas until the panel is
-      // visible -- see renderPendingSparklines.
+      // Sparkline for numeric columns (histogram) and low-cardinality
+      // factor / character columns (per-category frequency bars). Create
+      // the (empty) container now but defer drawing the canvas until the
+      // panel is visible -- see renderPendingSparklines.
       if (hasHistogram(col)) {
          var sparkContainer = document.createElement("div");
          sparkContainer.className = "sidebar-sparkline";
@@ -3269,43 +3338,90 @@ var initSidebar = function() {
          pendingSparklines_.push({
             container: sparkContainer,
             breaks: col.col_breaks,
-            counts: col.col_counts
+            counts: col.col_counts,
+            labels: null
+         });
+      } else if (hasCategoryCounts(col)) {
+         var catContainer = document.createElement("div");
+         catContainer.className = "sidebar-sparkline";
+         entry.appendChild(catContainer);
+         pendingSparklines_.push({
+            container: catContainer,
+            breaks: null,
+            counts: col.col_cat_counts,
+            labels: col.col_cat_vals
          });
       }
 
-      // Footer row: type-specific summary + NA count
+      // Footer row: type-specific summary (left) + NA stat (right). Always
+      // rendered so entries keep a uniform shape: the left slot may be empty
+      // (e.g. character columns have no compact summary), and the NA stat is
+      // always present, visually dimmed when the column has nothing missing.
       var footer = document.createElement("div");
       footer.className = "sidebar-col-footer";
 
-      // Type-specific summary (left)
-      var summaryText = "";
-      if (isFactorColumn(col) && col.col_vals) {
-         summaryText = col.col_vals.length + " levels";
-      } else if (col.col_type === "logical") {
-         summaryText = "logical";
+      // Type-specific summary (left). For numeric columns this is the actual
+      // data range as a closed interval, [min, max], which doubles as the
+      // sparkline's (unticked) axis bounds; col_min/col_max may be absent on
+      // older servers, in which case the slot stays empty. The bracket and
+      // comma adornments are dimmed spans (see .range-punct) so they read
+      // as notation rather than data.
+      var summaryEl = document.createElement("span");
+      summaryEl.className = "sidebar-col-summary";
+      if (hasHistogram(col) && typeof col.col_min === "number") {
+         summaryEl.classList.add("range");
+         appendRangePunct(summaryEl, "[");
+         summaryEl.appendChild(
+            document.createTextNode(formatCompactNum(col.col_min)));
+         appendRangePunct(summaryEl, ", ");
+         summaryEl.appendChild(
+            document.createTextNode(formatCompactNum(col.col_max)));
+         appendRangePunct(summaryEl, "]");
+      } else {
+         // Categorical cardinality: level count for factors, distinct-value
+         // count for characters (absent when the server skipped counting,
+         // e.g. very long columns). Above the server's bar cutoff there is
+         // no category sparkline, so enrich the text with the dominant
+         // value instead -- but not when the top count is 1 (ID-like
+         // columns where every value is distinct, and "top" is noise).
+         var catText = "";
+         if (isFactorColumn(col) && col.col_vals) {
+            catText = col.col_vals.length.toLocaleString() + " levels";
+         } else if (typeof col.col_n_unique === "number") {
+            catText = col.col_n_unique.toLocaleString() + " unique";
+         }
+         if (catText &&
+             typeof col.col_top_count === "number" &&
+             col.col_top_count > 1 &&
+             totalRows > 0) {
+            var topPct = (col.col_top_count / totalRows) * 100;
+            catText += " \u00b7 top: " + col.col_top_value +
+               " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
+         }
+         summaryEl.textContent = catText;
+         // The top value is user data of arbitrary length; the summary
+         // ellipsizes, so expose the full text as a tooltip.
+         if (catText)
+            summaryEl.title = catText;
       }
-      if (summaryText) {
-         var summaryEl = document.createElement("span");
-         summaryEl.className = "sidebar-col-summary";
-         summaryEl.textContent = summaryText;
-         footer.appendChild(summaryEl);
-      }
+      footer.appendChild(summaryEl);
 
-      // NA count (right)
+      // NA stat (right)
       var naCount = col.col_na_count || 0;
+      var naEl = document.createElement("span");
+      naEl.className = "sidebar-col-na";
       if (naCount > 0 && totalRows > 0) {
          var naPct = ((naCount / totalRows) * 100);
-         var naText = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
-         var naEl = document.createElement("span");
-         naEl.className = "sidebar-col-na";
-         naEl.textContent = naText;
+         naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
          naEl.title = naCount.toLocaleString() + " missing values";
-         footer.appendChild(naEl);
+      } else {
+         naEl.textContent = "0% NA";
+         naEl.classList.add("zero");
+         naEl.title = "No missing values";
       }
+      footer.appendChild(naEl);
 
-      if (footer.childNodes.length > 0) {
-         entry.appendChild(footer);
-      }
+      entry.appendChild(footer);
 
       // Stats panel (hidden until expanded)
       var statsPanel = document.createElement("div");
@@ -3313,8 +3429,9 @@ var initSidebar = function() {
       statsPanel.style.display = "none";
       entry.appendChild(statsPanel);
 
-      // Click entry to scroll; click expand button to toggle stats
-      (function(colIdx, statsEl, btnEl, headerEl, colType) {
+      // Click entry to scroll; click expand button to toggle stats; pin and
+      // sort icons route into the same toggle/cycle paths as the grid header.
+      (function(colIdx, statsEl, btnEl, headerEl, pinEl, sortEl, colType) {
          var expanded = false;
          var loaded = false;
 
@@ -3363,6 +3480,28 @@ var initSidebar = function() {
             if (evt.key === "Enter" || evt.key === " ") toggleStats(evt);
          });
 
+         var togglePin = function(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            togglePinColumn(colIdx);
+         };
+         pinEl.addEventListener("click", togglePin);
+         pinEl.addEventListener("keydown", function(evt) {
+            if (evt.key === "Enter" || evt.key === " ") togglePin(evt);
+         });
+
+         if (sortEl && !sortEl.classList.contains("disabled")) {
+            var cycleSort = function(evt) {
+               evt.stopPropagation();
+               evt.preventDefault();
+               handleSortClick(colIdx);
+            };
+            sortEl.addEventListener("click", cycleSort);
+            sortEl.addEventListener("keydown", function(evt) {
+               if (evt.key === "Enter" || evt.key === " ") cycleSort(evt);
+            });
+         }
+
          var scrollToCol = function() { scrollToColumn(colIdx); };
          entry.addEventListener("click", scrollToCol);
          headerEl.addEventListener("keydown", function(evt) {
@@ -3372,10 +3511,14 @@ var initSidebar = function() {
                scrollToCol();
             }
          });
-      })(i, statsPanel, expandBtn, header, statsCategory(col));
+      })(i, statsPanel, expandBtn, header, pinIcon, sortIcon, statsCategory(col));
 
       content.appendChild(entry);
    }
+
+   // Apply the current (possibly restored-from-saved-state) pin and sort
+   // state to the icons just created.
+   updateSidebarColumnIndicators();
 
    // Apply initial sidebar visibility -- toggle authoritatively so a previous
    // "expanded" class from an earlier bootstrap doesn't override saved state.
@@ -3394,6 +3537,188 @@ var initSidebar = function() {
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
 
+// Sync the sidebar's pin and sort icons with the module pin/sort state.
+// Called after any pin or sort mutation -- whether it originated from the
+// grid header, the keyboard, or the sidebar icons themselves -- and at the
+// end of initSidebar to apply the initial (possibly restored) state.
+var updateSidebarColumnIndicators = function() {
+   var content = document.getElementById("sidebarContent");
+   if (!content || !cols) return;
+
+   var entries = content.querySelectorAll(".sidebar-col");
+   for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i];
+      var colIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+      var col = isNaN(colIdx) ? null : cols[colIdx];
+      if (!col) continue;
+
+      var pinEl = entry.querySelector(".sidebar-pin-icon");
+      if (pinEl) {
+         var pinned = pinnedColumns.has(absColIndex(colIdx));
+         pinEl.classList.toggle("pinned", pinned);
+         pinEl.title = pinned ? "Unpin column" : "Pin column";
+         pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
+         pinEl.setAttribute("aria-label",
+            (pinned ? "Unpin column " : "Pin column ") + col.col_name);
+      }
+
+      var sortEl = entry.querySelector(".sidebar-sort-icon");
+      if (sortEl && !sortEl.classList.contains("disabled")) {
+         var dir = (absColIndex(colIdx) === sortColumn) ? sortDirection : "";
+         sortEl.classList.toggle("sorting_asc", dir === "asc");
+         sortEl.classList.toggle("sorting_desc", dir === "desc");
+
+         // The label announces the next step in the sort cycle.
+         var action;
+         if (dir === "asc") {
+            action = "Sort column " + col.col_name + " descending";
+         } else if (dir === "desc") {
+            action = "Remove sort on column " + col.col_name;
+         } else {
+            action = "Sort column " + col.col_name + " ascending";
+         }
+         sortEl.title = action;
+         sortEl.setAttribute("aria-label", action);
+      }
+   }
+};
+
+// ==========================================================================
+// Sidebar help dialog
+// ==========================================================================
+
+// Element to restore focus to when the help dialog closes (the header's
+// help icon). Module-scoped: the dialog outlives sidebar rebuilds.
+var sidebarHelpReturnFocus_ = null;
+
+// Show the dialog explaining the structure of the sidebar's column
+// summaries, building it on first use. It is appended to <body> rather
+// than the sidebar so a data refresh (which rebuilds the sidebar DOM)
+// can't tear it down mid-read.
+var showSidebarHelp = function(returnFocusEl) {
+   var overlay = document.getElementById("sidebarHelpOverlay");
+   if (!overlay) {
+      overlay = buildSidebarHelpOverlay();
+      document.body.appendChild(overlay);
+   }
+   overlay.style.display = "";
+   sidebarHelpReturnFocus_ = returnFocusEl || null;
+
+   var dialog = overlay.querySelector(".sidebar-help-dialog");
+   if (dialog) dialog.focus();
+};
+
+var hideSidebarHelp = function() {
+   var overlay = document.getElementById("sidebarHelpOverlay");
+   if (overlay) overlay.style.display = "none";
+
+   // Restore focus to the opener if it's still in the document (the
+   // sidebar may have been rebuilt while the dialog was open).
+   if (sidebarHelpReturnFocus_ && sidebarHelpReturnFocus_.isConnected)
+      sidebarHelpReturnFocus_.focus();
+   sidebarHelpReturnFocus_ = null;
+};
+
+var buildSidebarHelpOverlay = function() {
+   var overlay = document.createElement("div");
+   overlay.id = "sidebarHelpOverlay";
+
+   // Dismiss on backdrop click; clicks inside the dialog hit the dialog
+   // node (or its children), not the overlay itself.
+   overlay.addEventListener("mousedown", function(evt) {
+      if (evt.target === overlay) hideSidebarHelp();
+   });
+
+   var dialog = document.createElement("div");
+   dialog.className = "sidebar-help-dialog";
+   dialog.setAttribute("role", "dialog");
+   dialog.setAttribute("aria-modal", "true");
+   dialog.setAttribute("aria-labelledby", "sidebarHelpTitle");
+   dialog.setAttribute("tabindex", "-1");
+   dialog.addEventListener("keydown", function(evt) {
+      if (evt.key === "Escape") {
+         evt.stopPropagation();
+         hideSidebarHelp();
+      }
+   });
+
+   var title = document.createElement("div");
+   title.className = "sidebar-help-title";
+   title.id = "sidebarHelpTitle";
+   title.textContent = "Column summaries";
+   dialog.appendChild(title);
+
+   var closeBtn = document.createElement("span");
+   closeBtn.className = "sidebar-help-close";
+   closeBtn.textContent = "\u00D7";
+   closeBtn.setAttribute("role", "button");
+   closeBtn.setAttribute("tabindex", "0");
+   closeBtn.setAttribute("aria-label", "Close");
+   closeBtn.addEventListener("click", hideSidebarHelp);
+   closeBtn.addEventListener("keydown", function(evt) {
+      if (evt.key === "Enter" || evt.key === " ") {
+         evt.preventDefault();
+         hideSidebarHelp();
+      }
+   });
+   dialog.appendChild(closeBtn);
+
+   var addSection = function(heading) {
+      var section = document.createElement("div");
+      section.className = "sidebar-help-section";
+      var head = document.createElement("div");
+      head.className = "sidebar-help-heading";
+      head.textContent = heading;
+      section.appendChild(head);
+      dialog.appendChild(section);
+      return section;
+   };
+
+   var addLine = function(section, text, swatchClass) {
+      var line = document.createElement("div");
+      line.className = "sidebar-help-line";
+      if (swatchClass) {
+         var swatch = document.createElement("span");
+         swatch.className = "sidebar-help-swatch " + swatchClass;
+         swatch.setAttribute("aria-hidden", "true");
+         line.appendChild(swatch);
+      }
+      line.appendChild(document.createTextNode(text));
+      section.appendChild(line);
+   };
+
+   var headerSec = addSection("Header");
+   addLine(headerSec,
+      "Each entry names a column and its type. Click an entry to scroll " +
+      "the grid to that column; the pin and sort icons work just like " +
+      "their counterparts in the grid header.");
+
+   var plotSec = addSection("Mini-plot");
+   addLine(plotSec,
+      "Numeric columns draw a histogram of their finite values.",
+      "numeric");
+   addLine(plotSec,
+      "Factor and character columns with few distinct values draw one " +
+      "bar per value: factors in level order, characters most frequent " +
+      "first. Hover a bar for details.",
+      "categorical");
+
+   var statsSec = addSection("Summary line");
+   addLine(statsSec,
+      "The numeric data range as [min, max], or the number of factor " +
+      "levels / distinct values -- plus the most frequent value when " +
+      "there are too many to chart. The right-hand side shows the " +
+      "percentage of missing values.");
+
+   var detailsSec = addSection("Details");
+   addLine(detailsSec,
+      "The triangle expands a panel of detailed statistics, computed " +
+      "on demand.");
+
+   overlay.appendChild(dialog);
+   return overlay;
+};
+
 // Draw any sparklines whose canvas hasn't been rendered yet. Idempotent and
 // cheap to call repeatedly -- once drained, subsequent calls are no-ops, so
 // it is safe to invoke on every panel-open.
@@ -3402,7 +3727,7 @@ var renderPendingSparklines = function() {
    var items = pendingSparklines_;
    pendingSparklines_ = [];
    for (var i = 0; i < items.length; i++) {
-      var spark = createSparkline(items[i].breaks, items[i].counts);
+      var spark = createSparkline(items[i].breaks, items[i].counts, items[i].labels);
       if (spark) {
          items[i].container.appendChild(spark);
       } else {
@@ -3778,8 +4103,7 @@ var onGridKeyDown = function(evt) {
       if (key === "Enter" || key === " ") {
          evt.preventDefault();
          if (ordering && isColumnSortable(col)) {
-            var th = getActiveHeaderTh();
-            if (th) handleSortClick(origCol, th);
+            handleSortClick(origCol);
          }
          return;
       }
@@ -4707,9 +5031,10 @@ var applySavedState = function(state) {
    return false;
 };
 
-// Apply asc/desc CSS classes on header cells based on current sort state.
-// Mirrors the inline class manipulation in handleSortClick, but works from
-// the cached sortColumn/sortDirection (used after restoring saved state).
+// Apply asc/desc CSS classes and aria-sort on header cells based on current
+// sort state. The single render path for sort indicators: used by
+// handleSortClick / clearSort and after the header window is rebuilt (e.g.
+// when restoring saved state).
 var applySortIndicators = function() {
    var thead = document.getElementById("data_cols");
    if (!thead) return;
@@ -4719,10 +5044,16 @@ var applySortIndicators = function() {
       // Skip spacer cells (col-spacer) that stand in for off-window columns.
       if (isNaN(colIdx)) continue;
       th.classList.remove("sorting", "sorting_asc", "sorting_desc");
-      if (absColIndex(colIdx) === sortColumn && sortDirection) {
+      var sorted = absColIndex(colIdx) === sortColumn && sortDirection;
+      if (sorted) {
          th.classList.add("sorting_" + sortDirection);
       } else {
          th.classList.add("sorting");
+      }
+      // Only sortable headers carry aria-sort (set in createHeader).
+      if (th.hasAttribute("aria-sort")) {
+         th.setAttribute("aria-sort",
+            sorted ? sortAriaValue(sortDirection) : "none");
       }
    }
 };
