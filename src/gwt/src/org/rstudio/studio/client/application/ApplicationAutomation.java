@@ -81,8 +81,9 @@ import com.google.inject.Singleton;
  *   window.rstudio.dialogs.numShowing()  // count of open modal dialogs
  *   window.rstudio.dialogs.dismissAll()  // hide every open modal dialog
  *
- *   window.rstudio.layout.reset()        // end any active pane/column zoom;
- *                                        // Promise resolves once layout settles
+ *   window.rstudio.layout.reset()        // end any active pane/column zoom or
+ *                                        // pane maximize; Promise resolves once
+ *                                        // layout settles
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -251,10 +252,10 @@ public class ApplicationAutomation
       registerLayoutObject();
    }
 
-   // End any pane/column zoom a prior test left active. No-op when nothing is
-   // zoomed, so a non-zoomed layout keeps its current column widths. onCompleted
-   // fires once the relayout has settled (see PaneManager.endZoomIfActive) so
-   // the JS side can await it.
+   // End any pane/column zoom or WindowFrame-level pane maximize a prior test
+   // left active. No-op when nothing is zoomed or maximized, so a normal layout
+   // keeps its current column widths. onCompleted fires once the relayout has
+   // settled (see PaneManager.endZoomIfActive) so the JS side can await it.
    private void resetLayoutZoom(JavaScriptObject onCompleted)
    {
       pPaneManager_.get().endZoomIfActive(() -> invokeCallback(onCompleted));
@@ -649,13 +650,13 @@ public class ApplicationAutomation
       });
    }-*/;
 
-   // End any pane/column zoom left active by a prior test (no-op otherwise).
-   // Lets a per-test reset clear leaked zoom state without reverse-engineering
-   // it from command checked-states -- PaneManager decides based on the live
-   // layout state it owns. Returns a Promise that resolves once the relayout
-   // has settled (the restore flushes on a later animation frame even under
-   // reduced_motion), so callers can await a stable layout before measuring or
-   // clicking panes.
+   // End any pane/column zoom or pane maximize left active by a prior test
+   // (no-op otherwise). Lets a per-test reset clear leaked zoom/maximize state
+   // without reverse-engineering it from command checked-states -- PaneManager
+   // decides based on the live layout state it owns. Returns a Promise that
+   // resolves once the relayout has settled (the restore flushes on a later
+   // animation frame even under reduced_motion), so callers can await a stable
+   // layout before measuring or clicking panes.
    private native final void registerLayoutObject() /*-{
       var self = this;
       $wnd.rstudio.layout = $wnd.rstudio.layout || {};

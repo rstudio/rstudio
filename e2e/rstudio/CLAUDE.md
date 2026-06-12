@@ -11,7 +11,7 @@ The `window.rstudio` surface includes:
 - `window.rstudio.project` -- `path()`, `name()`, `isActive()`, `open(path)`.
 - `window.rstudio.version` -- `{ rstudio, r }` version strings.
 - `window.rstudio.dialogs` -- `numShowing()`, `dismissAll()`.
-- `window.rstudio.layout.reset()` -- end any active pane/column zoom.
+- `window.rstudio.layout.reset()` -- end any active pane/column zoom or pane maximize.
 
 Commands and prefs are enumerated up front at agent init, so a missing-by-name lookup is a genuine "doesn't exist" rather than "not yet touched by GWT code".
 

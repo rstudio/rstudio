@@ -19,6 +19,8 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
   test('Desktop launch populates electron-userdata and creates data-home/user-home', async ({ rstudioPage }) => {
     void rstudioPage; // Triggers the worker-scoped launch.
 
+    // Sandbox-level dirs: user-home is shared; data-home is only the
+    // seeded-pai source (Desktop sessions get per-spec data homes below).
     expect(fs.existsSync(path.join(SANDBOX!, 'data-home'))).toBe(true);
     expect(fs.existsSync(path.join(SANDBOX!, 'user-home'))).toBe(true);
 
@@ -49,7 +51,25 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
         () => fs.existsSync(path.join(electronData, 'Local State')),
         { message: `${dir}: expected electron-userdata/Local State to exist` },
       ).toBe(true);
+
+      // Each config root carries its own isolated data home; a shared one
+      // let leaked client state (e.g. a maximized pane) poison every later
+      // launch in the run.
+      expect(
+        fs.existsSync(path.join(configRoot, 'data-home')),
+        `${dir}: expected per-spec data-home to exist`,
+      ).toBe(true);
     }
+
+    // The session persists its state under RSTUDIO_DATA_HOME; at least the
+    // current worker's launch must have written there. Catches the session
+    // relocating state writes off RSTUDIO_DATA_HOME (the rest of this suite
+    // would then silently lose its cross-restart persistence coverage).
+    await expect.poll(
+      () => configDirs.some(dir =>
+        fs.existsSync(path.join(SANDBOX!, dir, 'data-home', 'rstudio-desktop.json'))),
+      { message: 'expected at least one per-spec data-home to contain rstudio-desktop.json' },
+    ).toBe(true);
   });
 });
 
