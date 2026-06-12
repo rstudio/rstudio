@@ -1012,11 +1012,15 @@ test.describe('Data Viewer', () => {
       await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/);
       await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'false');
 
-      // ...and once more brings it back. The collapsed strip's hit target
-      // is partially overlaid by the grid panel, so Playwright's
-      // actionability check never sees it free; force the click -- what's
-      // under test is how many times the listener runs, not the hit target.
-      await sidebarToggle.click({ force: true });
+      // ...and once more brings it back. The collapsed #sidebarPanel is
+      // width:0 / overflow:hidden, so the toggle has no hit target at all --
+      // a forced click hit-tests to whatever is topmost at the zero-width
+      // box's center, which differs between retina (local) and 1x (CI)
+      // displays and landed on the grid panel on CI. Dispatch the click
+      // synthetically: what's under test is how many times the listener
+      // runs, not the hit target (re-expanding from the UI goes through the
+      // host toolbar's Summary button, covered elsewhere).
+      await sidebarToggle.dispatchEvent('click');
       await expect(sidebarPanel).toHaveClass(/\bexpanded\b/);
       await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'true');
     } finally {
