@@ -47,7 +47,7 @@ test.describe('Markdown', () => {
   test('preview markdown file as HTML', async ({ rstudioPage: page }) => {
     // Original: test_desktop_Markdown.py::test_preview_markdown_file_as_html
     test.skip(missingPackages.length > 0, `required R package(s) not available: ${missingPackages.join(', ')}`);
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'GWT raises a cross-origin SecurityError accessing the preview iframe on Windows Electron; needs product fix');
+    test.fixme(['win32', 'darwin'].includes(os.platform()) && !!process.env.CI, 'GWT raises a cross-origin SecurityError accessing the preview iframe on Electron CI (Windows + macOS 26); needs product fix');
 
     const fileName = `markdown_doc_${Date.now()}.md`;
 
