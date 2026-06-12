@@ -347,31 +347,45 @@ jobs:
             exit 1
           }
           # Install latest node-gyp v12 into a throwaway dir, then copy its
-          # contents over the bundled one. Use the bundled npm so the install
-          # uses an npm/node-gyp pair that matches the node version that will
-          # spawn it during the rebuild lifecycle.
+          # contents over the bundled one. --install-strategy=nested disables
+          # npm's default hoisting so node-gyp's transitive deps (undici,
+          # semver, tar, ...) land inside node-gyp/node_modules/. Without
+          # nested install, deps hoist to the prefix's top-level node_modules,
+          # the copy leaves them behind, and node-gyp v12 then dies at runtime
+          # with "Cannot find module 'undici'" (its new HTTP client dep).
+          # Use the bundled npm so the install runs under the same node
+          # version that will spawn node-gyp during the rebuild lifecycle.
           $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
           if (Test-Path $gypInstallDir) { Remove-Item -Recurse -Force $gypInstallDir }
           New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
-          & "$bundledNodeDir\npm.cmd" install --prefix $gypInstallDir node-gyp@^12
+          & "$bundledNodeDir\npm.cmd" install --install-strategy=nested --prefix $gypInstallDir node-gyp@^12
           if ($LASTEXITCODE -ne 0) { Write-Error "node-gyp v12 install failed"; exit $LASTEXITCODE }
           $newGypDir = "$gypInstallDir\node_modules\node-gyp"
           if (-not (Test-Path "$newGypDir\bin\node-gyp.js")) {
             Write-Error "node-gyp v12 not installed at $newGypDir"
             exit 1
           }
+          if (-not (Test-Path "$newGypDir\node_modules\undici")) {
+            Write-Error "Expected nested undici at $newGypDir\node_modules\undici but not found -- nested install did not behave as expected"
+            exit 1
+          }
           $bundledVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
           $newVersion     = (Get-Content "$newGypDir\package.json"     | ConvertFrom-Json).version
-          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion"
+          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion (nested deps included)"
           Remove-Item -Recurse -Force $bundledGypDir
           Copy-Item -Recurse $newGypDir $bundledGypDir
-          # Sanity check: confirm the replacement took effect.
+          # Sanity check: version is 12.x and undici is reachable where
+          # node-gyp's download.js does `require('undici')`.
           $finalVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
           if ($finalVersion -notlike '12.*') {
             Write-Error "Replacement failed: bundled node-gyp is still $finalVersion"
             exit 1
           }
-          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion"
+          if (-not (Test-Path "$bundledGypDir\node_modules\undici")) {
+            Write-Error "undici missing from $bundledGypDir\node_modules -- nested deps were lost in copy"
+            exit 1
+          }
+          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
 
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
       # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
