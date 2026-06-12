@@ -4,6 +4,8 @@ import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
 import { resetSourcePaneState } from '@utils/commands';
 
+const VIEWER_FRAME = '#rstudio_data_viewer_frame';
+
 // Tests from: electron-tests/EditorPane/test_desktop_DataViewer.py
 // Issues: https://github.com/rstudio/rstudio/issues/13220
 //         https://github.com/rstudio/rstudio/issues/13328
@@ -128,7 +130,7 @@ test.describe('Data Viewer', () => {
   // -----------------------------------------------------------------------
   // Clear-sort button in the status bar
   // -----------------------------------------------------------------------
-  test('clear-sort button in the status bar resets the sort', async () => {
+  test('clear-sort button in the status bar resets the sort', async ({ rstudioPage: page }) => {
     // Values chosen so no cell text is a substring of another -- a stale
     // sort can't false-pass a toContainText assertion.
     await consoleActions.executeInConsole(
@@ -156,6 +158,27 @@ test.describe('Data Viewer', () => {
     // Clicking the clear button restores the natural row order, clears the
     // status text, hides the button, and resets the header indicator.
     await dataViewer.clearSortButton.click();
+    await expect(firstRowA).toContainText('20');
+    await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
+    await expect(dataViewer.clearSortButton).toBeHidden();
+    await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
+    await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+
+    // The cleared sort must also persist: clearSort() saves sort: null, and a
+    // restore-path regression that re-applied the stale sort on reload (the
+    // filter analogue was #17950) would pass everything above. refreshData()
+    // synchronously clears the grid DOM, then re-fetches and re-applies the
+    // persisted state, so the reappearing first row gates the assertions.
+    await page.evaluate((sel: string) => {
+      const f = document.querySelector(sel) as HTMLIFrameElement | null;
+      const w = f?.contentWindow as unknown as { refreshData?: () => void } | undefined;
+      if (!w?.refreshData)
+        throw new Error('refreshData() not available on data viewer iframe');
+      w.refreshData();
+    }, VIEWER_FRAME);
+
+    // The rebuilt grid comes back unsorted: natural row order, no status
+    // text, no clear button, and a reset header indicator.
     await expect(firstRowA).toContainText('20');
     await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
     await expect(dataViewer.clearSortButton).toBeHidden();

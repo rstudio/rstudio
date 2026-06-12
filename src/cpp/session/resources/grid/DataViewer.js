@@ -1092,7 +1092,9 @@ var clearSort = function() {
    // we don't re-highlight a different row at the old coordinate.
    clearActiveCell();
 
-   // Reset the header arrows, and aria-sort on whichever header was sorted.
+   // Reset the header arrows. applySortIndicators() only updates the arrow
+   // classes, so aria-sort must be cleared separately on every sortable
+   // header (mirroring handleSortClick).
    applySortIndicators();
    var thead = document.getElementById("data_cols");
    if (thead) {
