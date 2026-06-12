@@ -1,4 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:desktop-dev)",
+      "Bash(npm run test:desktop-dev *)",
+      "Bash(./build/src/cpp/rstudio-tests *)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run typecheck *)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint *)",
+      "Bash(npm test)",
+      "Bash(npm test *)",
+      "Bash(gh search *)",
+      "Bash(gh run watch *)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
