@@ -668,6 +668,25 @@ th.columnClickable div {
    float: right;
 }
 
+/* Hidden by default; shown (inline-block) while a sort is active. Uses the
+   same inline-SVG X icon as .clearFilter. */
+#rsGridData_info_sort_clear {
+   display: none;
+   width: 11px;
+   height: 11px;
+   margin-left: 5px;
+   padding: 0;
+   border: none;
+   vertical-align: -1px;
+   cursor: pointer;
+   opacity: 0.5;
+   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat center;
+}
+
+#rsGridData_info_sort_clear:hover {
+   opacity: 1;
+}
+
 #rsGridData_info_text {
    overflow: hidden;
 }

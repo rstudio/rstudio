@@ -126,6 +126,44 @@ test.describe('Data Viewer', () => {
   });
 
   // -----------------------------------------------------------------------
+  // Clear-sort button in the status bar
+  // -----------------------------------------------------------------------
+  test('clear-sort button in the status bar resets the sort', async () => {
+    // Values chosen so no cell text is a substring of another -- a stale
+    // sort can't false-pass a toContainText assertion.
+    await consoleActions.executeInConsole(
+      'df <- data.frame(a = c(20, 10, 30))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+
+    // First row cells are [rowNum, a]; skip the virtual-scroll spacer row.
+    const firstRowA = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(2)');
+    await expect(firstRowA).toContainText('20');
+
+    // No sort active: the clear button is hidden.
+    await expect(dataViewer.clearSortButton).toBeHidden();
+
+    // Sort column 1 descending (click twice).
+    await dataViewer.columnHeader(1).click();
+    await dataViewer.columnHeader(1).click();
+    await expect(firstRowA).toContainText('30');
+    await expect(dataViewer.sortStatus).toContainText('Sorted by: a (descending)');
+    await expect(dataViewer.clearSortButton).toBeVisible();
+
+    // Clicking the clear button restores the natural row order, clears the
+    // status text, hides the button, and resets the header indicator.
+    await dataViewer.clearSortButton.click();
+    await expect(firstRowA).toContainText('20');
+    await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
+    await expect(dataViewer.clearSortButton).toBeHidden();
+    await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
+    await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+  });
+
+  // -----------------------------------------------------------------------
   // Issue 17863 - Clicking a list-column header must not error
   // -----------------------------------------------------------------------
   test('list columns are not sortable and clicking the header does not error (#17863)', async () => {
