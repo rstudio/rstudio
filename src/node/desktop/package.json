@@ -1,7 +1,7 @@
 {
   "name": "rstudio",
   "productName": "RStudio",
-  "version": "99.9.9-dev+999",
+  "version": "99.9.9",
   "description": "RStudio",
   "main": "./.webpack/main",
   "repository": "https://github.com/rstudio/rstudio",
@@ -25,6 +25,13 @@
   "config": {
     "forge": "./forge.config.js"
   },
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "tar": "^7.5.16",
+    "tmp": "^0.2.7",
+    "uuid": "$uuid",
+    "webpack-dev-server": "^5.2.4"
+  },
   "devDependencies": {
     "@electron-forge/cli": "7.11.1",
     "@electron-forge/plugin-webpack": "7.11.1",
@@ -46,7 +53,7 @@
     "chai": "6.2.2",
     "copy-webpack-plugin": "14.0.0",
     "css-loader": "7.1.4",
-    "electron": "41.7.0",
+    "electron": "41.7.2",
     "electron-mocha": "13.1.0",
     "eslint": "10.3.0",
     "fork-ts-checker-webpack-plugin": "9.1.0",

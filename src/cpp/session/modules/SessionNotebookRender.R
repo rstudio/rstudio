@@ -22,10 +22,13 @@
 # unavailable in the child process.
 #
 # Parameters are passed via environment variables:
-#   RS_NB_RMD_PATH    -- absolute path to the .Rmd file
-#   RS_NB_CACHE_PATH  -- absolute path to the chunk cache directory
-#   RS_NB_OUTPUT_PATH -- absolute path for the .nb.html output
-#   RS_NB_ENCODING    -- file encoding (e.g. "UTF-8")
+#   RS_NB_RMD_PATH     -- absolute path to the .Rmd file
+#   RS_NB_CACHE_PATH   -- absolute path to the chunk cache directory
+#   RS_NB_OUTPUT_PATH  -- absolute path for the .nb.html output
+#   RS_NB_ENCODING     -- file encoding (e.g. "UTF-8")
+#   RS_NB_INLINE_CACHE -- path to an .rds file of inline chunk outputs
+#                         computed by the parent session (empty or unset
+#                         means inline code is evaluated in this process)
 #
 
 # --- Override / define functions not available in augmented mode -----------
@@ -248,6 +251,23 @@
 
    if (nchar(rmdPath) == 0 || nchar(outputPath) == 0)
       stop("RS_NB_RMD_PATH and RS_NB_OUTPUT_PATH must be set")
+
+   inlinePath <- Sys.getenv("RS_NB_INLINE_CACHE")
+   if (nzchar(inlinePath) && file.exists(inlinePath))
+   {
+      # failure to install inline outputs is not fatal -- the render proceeds
+      # with inline chunks evaluated in this process -- but that fallback can
+      # produce different results since the user's global environment is not
+      # visible here. emit a marker on stdout so the parent can log the
+      # failure even when the render itself succeeds.
+      tryCatch(
+         .rs.rnb.installInlineOutputs(inlinePath),
+         error = function(e) {
+            msg <- gsub("\\s+", " ", conditionMessage(e))
+            cat(sprintf("__INLINE_CACHE_ERROR__:%s\n", msg))
+         }
+      )
+   }
 
    tryCatch({
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)

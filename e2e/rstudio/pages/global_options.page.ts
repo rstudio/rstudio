@@ -29,6 +29,9 @@ export const CODE_COMPLETION_PANEL = '#rstudio_editing_completion_prefs_panel';
 export const CODE_DIAGNOSTICS_TAB = '#rstudio_editing_diagnostics_prefs_tab';
 export const CODE_DIAGNOSTICS_PANEL = '#rstudio_editing_diagnostics_prefs_panel';
 
+// Console
+export const CONSOLE_TAB = '#rstudio_label_console_options';
+
 // General
 export const GENERAL_TAB = '#rstudio_label_general_options';
 export const GENERAL_PANEL = '#rstudio_label_general_options_panel';
@@ -80,6 +83,22 @@ export const PYTHON_INTERPRETERS_MODAL = '[aria-label="Python Interpreters"]';
 export const ASSISTANT_TAB = '#rstudio_label_assistant_options';
 export const ASSISTANT_PANEL = '#rstudio_label_assistant_options_panel';
 export const ASSISTANT_LABEL = 'Use code assistant:';
+// The completions-trigger selector and delay field render only once a code
+// assistant (not "None") is selected.
+export const ASSISTANT_CODE_ASSISTANT_SELECT =
+  "xpath=//label[contains(text(),'Use code assistant')]/following::select[1]";
+export const ASSISTANT_COMPLETIONS_TRIGGER_SELECT =
+  "xpath=//label[contains(text(),'Show code suggestions:')]/following::select[1]";
+export const ASSISTANT_COMPLETIONS_DELAY_LABEL = 'Show code suggestions after keyboard idle';
+// Relative to ASSISTANT_PANEL: the delay value input that follows its label.
+export const ASSISTANT_COMPLETIONS_DELAY_INPUT =
+  "xpath=.//*[contains(text(),'Show code suggestions after keyboard idle')]/following::input[1]";
+export const ASSISTANT_COPILOT_OPTION = 'GitHub Copilot';
+export const ASSISTANT_NONE_OPTION = '(None)';
+// Always-visible numeric field with no explicit maximum (Chat section).
+// Relative to ASSISTANT_PANEL: the value input that follows its label.
+export const ASSISTANT_UPDATE_CHECK_INPUT =
+  "xpath=.//*[contains(text(),'update check interval')]/following::input[1]";
 
 // Actions
 export async function openGlobalOptions(page: Page): Promise<void> {

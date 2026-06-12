@@ -195,6 +195,13 @@ var postInitActions = {};
 // Sidebar state
 var sidebarVisible = true;
 
+// True once the first bootstrap has resolved sidebarVisible from the URL
+// default / saved state. Later re-bootstraps (refresh after a data change,
+// column pagination) must not re-apply the URL default: the live in-memory
+// value reflects the user's most recent choice, even when a column-structure
+// change invalidated the saved state that recorded it.
+var sidebarDefaultResolved = false;
+
 // Marker class for the injected per-column filter widgets. Shared by
 // setFilterUIVisible (which injects them) and isFilterUIVisible (which reads
 // the recorded postInitActions entry keyed by this marker).
@@ -3949,21 +3956,23 @@ var initGrid = function(resCols, data) {
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
-   // Apply the data_viewer_show_summary preference as the default. When
-   // applySavedState will actually restore a saved sidebar choice (its
-   // fingerprint matches the current frame), skip this overwrite -- that's
-   // what keeps a dismissed sidebar dismissed across re-bootstraps from
-   // column pagination. On a fingerprint mismatch (e.g. object reassigned
-   // to a different column set) applySavedState drops the saved state
-   // without applying its sidebar choice, so the URL default is still
-   // needed.
+   // Apply the data_viewer_show_summary preference as the default, but only
+   // on the first bootstrap of this frame. When applySavedState will restore
+   // a saved sidebar choice (its fingerprint matches the current frame), skip
+   // the overwrite so the saved choice wins. Once the default has been
+   // resolved, never re-apply it: a re-bootstrap from a data refresh or
+   // column pagination must keep the user's live choice, even when a
+   // column-structure change (e.g. `df$new <- ...`) flipped the fingerprint
+   // and invalidated the saved state -- otherwise adding a column would
+   // silently toggle the sidebar back to the preference default.
    var savedState = pendingSavedState;
    var willRestoreSidebar = savedState &&
       typeof savedState.sidebarVisible === "boolean" &&
       savedState.columns === columnFingerprint();
-   if (!willRestoreSidebar) {
+   if (!willRestoreSidebar && !sidebarDefaultResolved) {
       sidebarVisible = loc.showSummary;
    }
+   sidebarDefaultResolved = true;
 
    // Validate the primed selection (pinned/sort/filters) against the fetched
    // columns and restore window-dependent saved state. Headers are built next,

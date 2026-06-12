@@ -13,10 +13,11 @@
  *
  */
 
-import { BrowserWindow, shell, WebContents } from 'electron';
+import { BrowserWindow, dialog, shell, WebContents } from 'electron';
 
 import path from 'path';
 import debounce from 'lodash/debounce';
+import i18next from 'i18next';
 
 import { EventEmitter } from 'stream';
 import { URL } from 'url';
@@ -320,6 +321,46 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.window.on('close', (event: Electron.Event) => {
       this.removeMenuEventListener();
       this.closeEvent(event);
+    });
+
+    // when a page registers a 'beforeunload' handler that prevents unload
+    // (e.g. a Shiny app warning that state will be lost on exit), Chromium
+    // cancels the window close with no UI at all, leaving the window
+    // seemingly impossible to close. mirror the browser behavior instead:
+    // ask the user, and force the close if they choose to leave.
+    //
+    // note that Chromium does not expose the page's custom beforeunload
+    // message, so a generic message is the best we can do here.
+    //
+    // https://github.com/rstudio/rstudio/issues/17439
+    this.window.webContents.on('will-prevent-unload', (event: Electron.Event) => {
+      if (getenv('RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD') === '1') {
+        logger().logDebug(`will-prevent-unload (${this.options.name}): forcing close (beforeunload ignored)`);
+        event.preventDefault();
+        return;
+      }
+
+      logger().logDebug(`will-prevent-unload (${this.options.name}): asking user to confirm leaving page`);
+
+      const choice = appState().modalTracker.trackElectronModalSync(() =>
+        dialog.showMessageBoxSync(this.window, {
+          type: 'question',
+          buttons: [
+            i18next.t('desktopBrowserWindowTs.leavePageLeaveButton'),
+            i18next.t('desktopBrowserWindowTs.leavePageStayButton'),
+          ],
+          defaultId: 0,
+          cancelId: 1,
+          title: i18next.t('desktopBrowserWindowTs.leavePageTitle'),
+          message: i18next.t('desktopBrowserWindowTs.leavePageMessage'),
+        }),
+      );
+
+      logger().logDebug(`will-prevent-unload (${this.options.name}): user chose ${choice === 0 ? 'leave' : 'stay'}`);
+
+      if (choice === 0) {
+        event.preventDefault();
+      }
     });
 
     this.window.on('closed', () => {

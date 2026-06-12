@@ -1870,6 +1870,19 @@ core::Error UserPrefValues::setAutoRunSetupChunk(bool val)
 }
 
 /**
+ * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+ */
+bool UserPrefValues::notebookExecuteInlineChunks()
+{
+   return readPref<bool>("notebook_execute_inline_chunks");
+}
+
+core::Error UserPrefValues::setNotebookExecuteInlineChunks(bool val)
+{
+   return writePref("notebook_execute_inline_chunks", val);
+}
+
+/**
  * Whether to hide the R console when executing inline R Markdown chunks.
  */
 bool UserPrefValues::hideConsoleOnChunkExecute()
@@ -3612,6 +3625,19 @@ core::Error UserPrefValues::setPositAssistantTestManifest(bool val)
 }
 
 /**
+ * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+ */
+int UserPrefValues::positAssistantUpdateCheckIntervalHours()
+{
+   return readPref<int>("posit_assistant_update_check_interval_hours");
+}
+
+core::Error UserPrefValues::setPositAssistantUpdateCheckIntervalHours(int val)
+{
+   return writePref("posit_assistant_update_check_interval_hours", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -3794,7 +3820,7 @@ core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
 }
 
 /**
- * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+ * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
  */
 bool UserPrefValues::useAirFormatter()
 {
@@ -3804,6 +3830,19 @@ bool UserPrefValues::useAirFormatter()
 core::Error UserPrefValues::setUseAirFormatter(bool val)
 {
    return writePref("use_air_formatter", val);
+}
+
+/**
+ * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+ */
+bool UserPrefValues::airFormatterRequireToml()
+{
+   return readPref<bool>("air_formatter_require_toml");
+}
+
+core::Error UserPrefValues::setAirFormatterRequireToml(bool val)
+{
+   return writePref("air_formatter_require_toml", val);
 }
 
 /**
@@ -3990,6 +4029,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowDocOutlineRmd,
       kDocumentOutlineFontSize,
       kAutoRunSetupChunk,
+      kNotebookExecuteInlineChunks,
       kHideConsoleOnChunkExecute,
       kExecutionBehavior,
       kShowTerminalTab,
@@ -4124,6 +4164,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantToolbarButtonVisible,
       kAssistantUseSystemCa,
       kPositAssistantTestManifest,
+      kPositAssistantUpdateCheckIntervalHours,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
@@ -4139,6 +4180,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
       kUseAirFormatter,
+      kAirFormatterRequireToml,
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,

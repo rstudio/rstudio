@@ -105,6 +105,11 @@ std::string utf8ToSystem(const std::string& str,
 std::string systemToUtf8(const std::string& str);
 std::string systemToUtf8(const std::string& str, int codepage);
 
+// Returns the length (0-3) of a truncated UTF-8 sequence at the end of the
+// string -- a lead byte promising more continuation bytes than remain. Returns
+// 0 for text ending on a character boundary or in an invalid sequence.
+std::size_t utf8IncompleteSuffixLength(const std::string& str);
+
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 std::string textToHtml(const std::string& str);

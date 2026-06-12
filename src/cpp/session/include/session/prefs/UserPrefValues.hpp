@@ -248,6 +248,7 @@ namespace prefs {
 #define kShowDocOutlineRmd "show_doc_outline_rmd"
 #define kDocumentOutlineFontSize "document_outline_font_size"
 #define kAutoRunSetupChunk "auto_run_setup_chunk"
+#define kNotebookExecuteInlineChunks "notebook_execute_inline_chunks"
 #define kHideConsoleOnChunkExecute "hide_console_on_chunk_execute"
 #define kExecutionBehavior "execution_behavior"
 #define kExecutionBehaviorLine "line"
@@ -468,6 +469,7 @@ namespace prefs {
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
+#define kPositAssistantUpdateCheckIntervalHours "posit_assistant_update_check_interval_hours"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -492,6 +494,7 @@ namespace prefs {
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kUseAirFormatter "use_air_formatter"
+#define kAirFormatterRequireToml "air_formatter_require_toml"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
 #define kConsoleHighlightConditions "console_highlight_conditions"
@@ -1358,6 +1361,12 @@ public:
    core::Error setAutoRunSetupChunk(bool val);
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   bool notebookExecuteInlineChunks();
+   core::Error setNotebookExecuteInlineChunks(bool val);
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    bool hideConsoleOnChunkExecute();
@@ -2162,6 +2171,12 @@ public:
    core::Error setPositAssistantTestManifest(bool val);
 
    /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   int positAssistantUpdateCheckIntervalHours();
+   core::Error setPositAssistantUpdateCheckIntervalHours(int val);
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    bool copilotEnabled();
@@ -2246,10 +2261,16 @@ public:
    core::Error setCodeFormatterExternalCommand(std::string val);
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    bool useAirFormatter();
    core::Error setUseAirFormatter(bool val);
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   bool airFormatterRequireToml();
+   core::Error setAirFormatterRequireToml(bool val);
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

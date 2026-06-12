@@ -982,6 +982,12 @@
             "title": "Automatically run Setup chunk when needed",
             "description": "Whether to automatically run an R Markdown document's Setup chunk before running other chunks."
         },
+        "notebook_execute_inline_chunks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Execute inline R code when previewing notebooks",
+            "description": "Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead."
+        },
         "hide_console_on_chunk_execute": {
             "type": "boolean",
             "default": true,
@@ -1900,6 +1906,12 @@
             "title": "Use pre-release version of Posit Assistant (restart required)",
             "description": "Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work."
         },
+        "posit_assistant_update_check_interval_hours": {
+            "type": "integer",
+            "default": 2,
+            "title": "Posit Assistant update check interval (hours)",
+            "description": "The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time."
+        },
         "copilot_enabled": {
             "type": "boolean",
             "default": false,
@@ -1994,7 +2006,13 @@
             "type": "boolean",
             "default": false,
             "title": "Use Air for code formatting",
-            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file."
+            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting R code."
+        },
+        "air_formatter_require_toml": {
+            "type": "boolean",
+            "default": false,
+            "title": "Only use Air when an air.toml file is found",
+            "description": "When set, Air will only be used to format R documents located within a project or directory containing an air.toml file."
         },
         "reformat_on_save": {
             "type": "boolean",

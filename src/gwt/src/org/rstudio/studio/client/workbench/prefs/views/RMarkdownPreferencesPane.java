@@ -181,6 +181,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             prefs_.hideConsoleOnChunkExecute());
       basic.add(notebookHideConsole);
 
+      // execute inline R code in this session when previewing notebooks
+      basic.add(checkboxPref(prefs_.notebookExecuteInlineChunks()));
+
       basic.add(spacedBefore(new HelpLink(constants_.helpRStudioLinkLabel(), "using_notebooks")));
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);

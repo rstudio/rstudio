@@ -12,6 +12,11 @@
   // Server prefs are server-side).
   "restore_source_documents": false,
 
+  // Don't check for RStudio updates at startup. CI runners have no route to
+  // the update server, so each check spawns a child R process that blocks in
+  // download.file() until the network timeout and then logs a jsonrpc error.
+  "check_for_updates": false,
+
   // Disable UI animations so pane minimize/maximize/zoom transitions apply
   // synchronously. The animated path (PaneManager + DualWindowLayoutPanel,
   // both already gate on this pref) runs an async onAnimationComplete that

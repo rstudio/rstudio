@@ -1206,6 +1206,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoRunSetupChunkDescription();
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   @DefaultStringValue("Execute inline R code when previewing notebooks")
+   String notebookExecuteInlineChunksTitle();
+   @DefaultStringValue("Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.")
+   String notebookExecuteInlineChunksDescription();
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    @DefaultStringValue("Hide console when running R Markdown chunks")
@@ -2316,6 +2324,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String positAssistantTestManifestDescription();
 
    /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   @DefaultStringValue("Posit Assistant update check interval (hours)")
+   String positAssistantUpdateCheckIntervalHoursTitle();
+   @DefaultStringValue("The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.")
+   String positAssistantUpdateCheckIntervalHoursDescription();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")
@@ -2446,12 +2462,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterExternalCommandDescription();
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    @DefaultStringValue("Use Air for code formatting")
    String useAirFormatterTitle();
-   @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.")
+   @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.")
    String useAirFormatterDescription();
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   @DefaultStringValue("Only use Air when an air.toml file is found")
+   String airFormatterRequireTomlTitle();
+   @DefaultStringValue("When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.")
+   String airFormatterRequireTomlDescription();
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

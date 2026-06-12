@@ -1329,6 +1329,18 @@
    clear = function() { .rs.clearUserPref("auto_run_setup_chunk") }
 )
 
+# Execute inline R code when previewing notebooks
+#
+# Whether to evaluate a notebook's inline R code in the current R session when
+# creating a notebook preview, so that inline code can use objects in the global
+# environment. When disabled, inline code is evaluated in the background
+# rendering process instead.
+.rs.uiPrefs$notebookExecuteInlineChunks <- list(
+   get = function() { .rs.getUserPref("notebook_execute_inline_chunks") },
+   set = function(value) { .rs.setUserPref("notebook_execute_inline_chunks", value) },
+   clear = function() { .rs.clearUserPref("notebook_execute_inline_chunks") }
+)
+
 # Hide console when running R Markdown chunks
 #
 # Whether to hide the R console when executing inline R Markdown chunks.
@@ -2585,6 +2597,16 @@
    clear = function() { .rs.clearUserPref("posit_assistant_test_manifest") }
 )
 
+# Posit Assistant update check interval (hours)
+#
+# The minimum number of hours between checks for a new version of the Posit
+# Assistant. Set to 0 to check every time.
+.rs.uiPrefs$positAssistantUpdateCheckIntervalHours <- list(
+   get = function() { .rs.getUserPref("posit_assistant_update_check_interval_hours") },
+   set = function(value) { .rs.setUserPref("posit_assistant_update_check_interval_hours", value) },
+   clear = function() { .rs.clearUserPref("posit_assistant_update_check_interval_hours") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -2721,11 +2743,21 @@
 # Use Air for code formatting
 #
 # When set, RStudio will automatically select and use an appropriate version of
-# Air when formatting code in projects containing an air.toml file.
+# Air when formatting R code.
 .rs.uiPrefs$useAirFormatter <- list(
    get = function() { .rs.getUserPref("use_air_formatter") },
    set = function(value) { .rs.setUserPref("use_air_formatter", value) },
    clear = function() { .rs.clearUserPref("use_air_formatter") }
+)
+
+# Only use Air when an air.toml file is found
+#
+# When set, Air will only be used to format R documents located within a project
+# or directory containing an air.toml file.
+.rs.uiPrefs$airFormatterRequireToml <- list(
+   get = function() { .rs.getUserPref("air_formatter_require_toml") },
+   set = function(value) { .rs.setUserPref("air_formatter_require_toml", value) },
+   clear = function() { .rs.clearUserPref("air_formatter_require_toml") }
 )
 
 # Reformat documents on save

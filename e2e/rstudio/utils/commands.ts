@@ -39,6 +39,13 @@ type ProjectInfo = {
   name(): string | null;
   isActive(): boolean;
   /**
+   * Cached project-root air.toml (or .air.toml) path, or null. Maintained by
+   * the GWT Projects singleton from FileChangeEvents, so it tracks the file
+   * monitor: poll it after creating or deleting an air.toml on disk to know
+   * when formatter paths that consult the cache will see the change.
+   */
+  airTomlPath(): string | null;
+  /**
    * Fire SwitchToProjectEvent on the GWT side, switching the session to the
    * project at `path`. Resets `window.rstudio.ready` to false synchronously
    * so a caller can poll for `ready === true` to wait for the new session's
@@ -156,6 +163,27 @@ type LayoutBridge = {
   reset(): Promise<void>;
 };
 
+/** One uncaught client exception recorded by the automation agent. */
+export type ClientException = {
+  message: string;
+  /**
+   * Cause chain + frames. Java names in draft / super-dev builds; best-effort
+   * (obfuscated) in optimized builds, where the message still identifies the
+   * failure.
+   */
+  stack: string;
+  /** Date.now() at record time. */
+  time: number;
+};
+
+type ErrorsBridge = {
+  /** Uncaught client exceptions recorded since the last clear(). */
+  list(): ClientException[];
+  clear(): void;
+  /** Raise a real uncaught exception from a scheduled context (self-test only). */
+  simulate(message: string): void;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
@@ -164,6 +192,7 @@ type RStudioBridge = {
   version: VersionInfo;
   dialogs: DialogsBridge;
   layout: LayoutBridge;
+  errors: ErrorsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -238,25 +267,49 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
 }
 
 /**
- * End any active pane/column zoom, restoring the default layout.
+ * End any active pane/column zoom or pane maximize, restoring the default
+ * layout.
  *
  * The automation session is worker-scoped, so a test that zooms a pane (e.g.
  * layoutZoomEnvironment) and fails before toggling it back off leaves the
  * layout maximized -- which squeezes every other pane to near-zero and makes
- * the next test's targets unclickable / invisible. This breaks the cascade by
- * ending any active zoom.
+ * the next test's targets unclickable / invisible. The same applies to a
+ * WindowFrame-level maximize (the pane header min/max buttons, or an R
+ * Notebook preview maximizing the Viewer), which additionally persists via
+ * client state. This breaks the cascade by ending either state.
  *
  * Delegates to the GWT bridge (window.rstudio.layout.reset), which decides
- * based on the live PaneManager state: it un-zooms only when something is
- * actually zoomed (so a non-zoomed layout keeps its column widths) and covers
- * both pane/window zoom and column zoom. The bridge returns a Promise that
- * resolves once the relayout has settled (the restore flushes on a later
- * animation frame even under reduced_motion), so awaiting this leaves the
- * layout stable before the caller measures or clicks panes. A no-op when the
- * bridge is absent.
+ * based on the live PaneManager state: it restores only when something is
+ * actually zoomed or maximized (so a normal layout keeps its column widths)
+ * and covers pane/window zoom, column zoom, and WindowFrame maximize. The
+ * bridge returns a Promise that resolves once the relayout has settled (the
+ * restore flushes on a later animation frame even under reduced_motion), so
+ * awaiting this leaves the layout stable before the caller measures or clicks
+ * panes. A no-op when the bridge is absent.
  */
 export async function resetLayoutZoom(page: Page): Promise<void> {
   await page.evaluate(() => window.rstudio?.layout?.reset());
+}
+
+/**
+ * Read and clear the uncaught-client-exception record kept by the automation
+ * agent (window.rstudio.errors). Returns [] when the bridge is absent (e.g.
+ * mid-restart) -- callers treat that as "nothing recorded" because a dead
+ * session fails loudly elsewhere.
+ *
+ * The per-test fixture drains this after every test and fails the test that
+ * produced exceptions; a leftover drained before the next test is logged but
+ * not attributed (it may belong to teardown or the gap between tests).
+ */
+export async function drainClientExceptions(page: Page): Promise<ClientException[]> {
+  return page.evaluate(() => {
+    const errors = window.rstudio?.errors;
+    if (!errors)
+      return [];
+    const items = errors.list();
+    errors.clear();
+    return items;
+  }).catch(() => []);
 }
 
 /**
@@ -451,6 +504,19 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
   );
 }
 
+// The bridge (and its prefs map) is transiently absent during session
+// restarts -- project open/close, Restart R -- and a preceding spec can hand
+// off the worker with such a reload still in flight. Mirror executeCommand's
+// guard: wait for the specific pref entry to land before touching it, so the
+// steady-state path adds no latency while the restart path stops racing.
+async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
+  await page.waitForFunction(
+    (prefName) => window.rstudio?.prefs?.[prefName] !== undefined,
+    camelName,
+    { timeout: 10000, polling: 50 },
+  );
+}
+
 /**
  * Set a user preference and persist it. Equivalent to
  * `.rs.api.writeRStudioPreference(name, value)` / `.rs.uiPrefs$<name>$set(value)`.
@@ -464,6 +530,7 @@ export async function getPref(page: Page, name: string): Promise<PrefValue | nul
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   await withBridgeLog('setPref', `${name}=${JSON.stringify(value)}`, async () => {
     const camel = snakeToCamel(name);
+    await waitForPrefEntry(page, camel);
     await page.evaluate(async ({ prefName, prefValue }) => {
       const r = window.rstudio;
       if (!r)
@@ -484,6 +551,7 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
 export async function clearPref(page: Page, name: string): Promise<void> {
   await withBridgeLog('clearPref', name, async () => {
     const camel = snakeToCamel(name);
+    await waitForPrefEntry(page, camel);
     await page.evaluate(async (prefName) => {
       const r = window.rstudio;
       if (!r)

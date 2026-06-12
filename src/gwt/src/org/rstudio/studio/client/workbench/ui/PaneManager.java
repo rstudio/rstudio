@@ -730,6 +730,17 @@ public class PaneManager
     * maximizedWindow_ / maximizedTab_; column zoom is reflected by
     * getZoomedColumn().
     *
+    * Quadrants can also be maximized without PaneManager's zoom tracking ever
+    * knowing: the pane-header min/max buttons and EnsureHeightEvent.MAXIMIZED
+    * (fired e.g. when an R Notebook preview opens in the Viewer) drive the
+    * WindowFrame state machine in DualWindowLayoutPanel directly, and that
+    * state persists across sessions via client state (windowlayoutstate). So
+    * when no tracked zoom is active, restore any MAXIMIZE-state quadrant to
+    * NORMAL -- which also restores its MINIMIZE-state sibling (see
+    * DualWindowLayoutPanel.WindowStateChangeManager). HIDE/EXCLUSIVE pairs are
+    * left alone; they encode the empty-source-pane layout owned by the
+    * source-document count logic.
+    *
     * The onComplete callback lets the bridge expose a Promise that resolves
     * only once the relayout has finished -- the relayout flushes on a later
     * animation frame (panel_.animate) even under reduced_motion, so a
@@ -742,10 +753,29 @@ public class PaneManager
           getZoomedColumn() != null)
       {
          restoreLayout(onComplete);
+         return;
       }
-      else if (onComplete != null)
+
+      boolean restored = false;
+      for (LogicalWindow window : panes_)
       {
-         onComplete.execute();
+         if (window.getState() == WindowState.MAXIMIZE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL, true));
+            restored = true;
+         }
+      }
+
+      if (onComplete != null)
+      {
+         // The DualWindowLayoutPanel defers its relayout (and the client
+         // state persist) to a scheduled command, so chain the callback
+         // behind that rather than firing it synchronously.
+         if (restored)
+            Scheduler.get().scheduleDeferred(onComplete::execute);
+         else
+            onComplete.execute();
       }
    }
 

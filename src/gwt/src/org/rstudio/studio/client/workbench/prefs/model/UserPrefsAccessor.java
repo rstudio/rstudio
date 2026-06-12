@@ -186,6 +186,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SHOW_DOC_OUTLINE_RMD = "show_doc_outline_rmd";
    public static final String DOCUMENT_OUTLINE_FONT_SIZE = "document_outline_font_size";
    public static final String AUTO_RUN_SETUP_CHUNK = "auto_run_setup_chunk";
+   public static final String NOTEBOOK_EXECUTE_INLINE_CHUNKS = "notebook_execute_inline_chunks";
    public static final String HIDE_CONSOLE_ON_CHUNK_EXECUTE = "hide_console_on_chunk_execute";
    public static final String EXECUTION_BEHAVIOR = "execution_behavior";
    public static final String SHOW_TERMINAL_TAB = "show_terminal_tab";
@@ -320,6 +321,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
+   public static final String POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS = "posit_assistant_update_check_interval_hours";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -335,6 +337,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CODE_FORMATTER_STYLER_STRICT = "code_formatter_styler_strict";
    public static final String CODE_FORMATTER_EXTERNAL_COMMAND = "code_formatter_external_command";
    public static final String USE_AIR_FORMATTER = "use_air_formatter";
+   public static final String AIR_FORMATTER_REQUIRE_TOML = "air_formatter_require_toml";
    public static final String REFORMAT_ON_SAVE = "reformat_on_save";
    public static final String PROJECT_USER_DATA_DIRECTORY = "project_user_data_directory";
    public static final String CONSOLE_HIGHLIGHT_CONDITIONS = "console_highlight_conditions";
@@ -2333,6 +2336,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   public PrefValue<Boolean> notebookExecuteInlineChunks()
+   {
+      return bool(
+         "notebook_execute_inline_chunks",
+         _constants.notebookExecuteInlineChunksTitle(), 
+         _constants.notebookExecuteInlineChunksDescription(), 
+         true);
+   }
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    public PrefValue<Boolean> hideConsoleOnChunkExecute()
@@ -4249,6 +4264,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   public PrefValue<Integer> positAssistantUpdateCheckIntervalHours()
+   {
+      return integer(
+         "posit_assistant_update_check_interval_hours",
+         _constants.positAssistantUpdateCheckIntervalHoursTitle(), 
+         _constants.positAssistantUpdateCheckIntervalHoursDescription(), 
+         2);
+   }
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -4464,7 +4491,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    public PrefValue<Boolean> useAirFormatter()
    {
@@ -4472,6 +4499,18 @@ public class UserPrefsAccessor extends Prefs
          "use_air_formatter",
          _constants.useAirFormatterTitle(), 
          _constants.useAirFormatterDescription(), 
+         false);
+   }
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   public PrefValue<Boolean> airFormatterRequireToml()
+   {
+      return bool(
+         "air_formatter_require_toml",
+         _constants.airFormatterRequireTomlTitle(), 
+         _constants.airFormatterRequireTomlDescription(), 
          false);
    }
 
@@ -4814,6 +4853,8 @@ public class UserPrefsAccessor extends Prefs
          documentOutlineFontSize().setValue(layer, source.getInteger("document_outline_font_size"));
       if (source.hasKey("auto_run_setup_chunk"))
          autoRunSetupChunk().setValue(layer, source.getBool("auto_run_setup_chunk"));
+      if (source.hasKey("notebook_execute_inline_chunks"))
+         notebookExecuteInlineChunks().setValue(layer, source.getBool("notebook_execute_inline_chunks"));
       if (source.hasKey("hide_console_on_chunk_execute"))
          hideConsoleOnChunkExecute().setValue(layer, source.getBool("hide_console_on_chunk_execute"));
       if (source.hasKey("execution_behavior"))
@@ -5082,6 +5123,8 @@ public class UserPrefsAccessor extends Prefs
          assistantUseSystemCa().setValue(layer, source.getBool("assistant_use_system_ca"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
+      if (source.hasKey("posit_assistant_update_check_interval_hours"))
+         positAssistantUpdateCheckIntervalHours().setValue(layer, source.getInteger("posit_assistant_update_check_interval_hours"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5112,6 +5155,8 @@ public class UserPrefsAccessor extends Prefs
          codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
       if (source.hasKey("use_air_formatter"))
          useAirFormatter().setValue(layer, source.getBool("use_air_formatter"));
+      if (source.hasKey("air_formatter_require_toml"))
+         airFormatterRequireToml().setValue(layer, source.getBool("air_formatter_require_toml"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
@@ -5264,6 +5309,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showDocOutlineRmd());
       prefs.add(documentOutlineFontSize());
       prefs.add(autoRunSetupChunk());
+      prefs.add(notebookExecuteInlineChunks());
       prefs.add(hideConsoleOnChunkExecute());
       prefs.add(executionBehavior());
       prefs.add(showTerminalTab());
@@ -5398,6 +5444,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantToolbarButtonVisible());
       prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());
+      prefs.add(positAssistantUpdateCheckIntervalHours());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());
@@ -5413,6 +5460,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterStylerStrict());
       prefs.add(codeFormatterExternalCommand());
       prefs.add(useAirFormatter());
+      prefs.add(airFormatterRequireToml());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());

@@ -69,24 +69,21 @@ FilePath getDatabaseFilePath(const std::string& databaseConfigFile)
    return optionsFile;
 }
 
-void setAutoCreateDatabaseOption(Settings& settings, const std::string& databaseProvider, const std::string& optionsFilePath)
+void warnIfAutoCreateSetForPostgresql(const Settings& settings, const std::string& databaseProvider, const std::string& optionsFilePath)
 {
-   if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
+   if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
-      // We create the internal database by default for SQLite
-      if (!settings.contains(kAutoCreateDatabase))
-      {
-         settings.set(kAutoCreateDatabase, true);
-      }
-   }
-   else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
-   {
-      // We never create the internal database automatically for PostgreSQL
       if (settings.getBool(kAutoCreateDatabase, false))
       {
-         LOG_INFO_MESSAGE("The internal database cannot be created automatically for PostgreSQL. \"" + std::string(kAutoCreateDatabase) + "\" in " + optionsFilePath + " will be ignored. To remove this warning, remove this setting and verify the database already exists in the PostgreSQL server.");
+         LOG_WARNING_MESSAGE("The internal database cannot be created automatically for PostgreSQL. \"" + std::string(kAutoCreateDatabase) + "\" in " + optionsFilePath + " will be ignored. To remove this warning, remove this setting and verify the database already exists in the PostgreSQL server.");
       }
-      settings.set(kAutoCreateDatabase, false);
+   }
+   else if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
+   {
+      if (!settings.getBool(kAutoCreateDatabase, true))
+      {
+         LOG_INFO_MESSAGE("\"" + std::string(kAutoCreateDatabase) + "\" is set to 0 for SQLite in " + optionsFilePath + ". The database will not be created automatically on first start. Ensure the database file already exists before starting rstudio-rserver.");
+      }
    }
 }
 
@@ -115,7 +112,7 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
    // If the database provider is not specified, use the default provider
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
 
-   setAutoCreateDatabaseOption(settings, databaseProvider, optionsFile.getAbsolutePath());
+   warnIfAutoCreateSetForPostgresql(settings, databaseProvider, optionsFile.getAbsolutePath());
 
    // Translate the Settings object to a database::ConnectionOptions object
    error = utils::applyOptionsFromSettings(settings, &options, defaultDatabaseName, databaseProvider);
@@ -165,7 +162,7 @@ Error readOptions(const std::string& databaseConfigFile,
    if (!forceDatabaseProvider.empty())
       databaseProvider = forceDatabaseProvider;
    
-   setAutoCreateDatabaseOption(settings, databaseProvider, optionsFile.getAbsolutePath());
+   warnIfAutoCreateSetForPostgresql(settings, databaseProvider, optionsFile.getAbsolutePath());
 
    // Translate the Settings object to a database::ConnectionOptions object
    error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, databaseProvider);

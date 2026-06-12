@@ -136,11 +136,17 @@ export async function waitForSessionRestart(page: Page): Promise<void> {
  * Returns the absolute project directory path. Callers must reconstruct any
  * page-action wrappers held over this call; the session restart invalidates
  * them.
+ *
+ * `extraRprojLines` are appended to the generated `.Rproj` -- use this for
+ * project-level settings (e.g. "NumSpacesForTab: 4") that must be present
+ * at open time, since the session does not reload the project config when the
+ * `.Rproj` file changes on disk.
  */
 export async function createAndOpenProject(
   page: Page,
   parentDir: string,
   name: string,
+  extraRprojLines: string[] = [],
 ): Promise<string> {
   // Guard against an unpopulated sandbox.dir: an empty parentDir would build
   // "/<name>/<name>.Rproj" (rooted at "/"), which dir.create can't make and
@@ -154,9 +160,11 @@ export async function createAndOpenProject(
 
   // Create the directory and .Rproj in a single console roundtrip so we only
   // wait for one prompt-return before driving the project switch.
+  const rprojLines = ['Version: 1.0', '', 'RestoreWorkspace: Default', 'SaveWorkspace: Default', ...extraRprojLines];
+  const rprojContent = rprojLines.map((line) => `"${line}"`).join(', ');
   await executeInConsole(
     page,
-    `{ dir.create("${projectDir}"); writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), "${rprojPath}") }`
+    `{ dir.create("${projectDir}"); writeLines(c(${rprojContent}), "${rprojPath}") }`
   );
   await waitForConsoleIdle(page);
 

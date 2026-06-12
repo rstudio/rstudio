@@ -42,10 +42,12 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *     against a stale state and getActiveDebugLineRow throws because the
  *     debug marker is in a hidden editor tab. Click Stop on the debug
  *     toolbar when it's visible.
- *   - **Pane zoom.** A previous test that maximized a pane (layoutZoom*) and
- *     failed before toggling it back leaves the layout zoomed, squeezing every
- *     other pane to near-zero so the next test can't click its targets. End the
- *     zoom when one is active (see resetLayoutZoom).
+ *   - **Pane zoom / maximize.** A previous test that zoomed a pane
+ *     (layoutZoom*) or left one maximized at the WindowFrame level (the pane
+ *     header min/max buttons, or a notebook preview maximizing the Viewer)
+ *     squeezes other panes to near-zero or hides their tab strips entirely,
+ *     so the next test can't click its targets. End either state when active
+ *     (see resetLayoutZoom).
  *   - **Source pane buffers.** Collapse to a single Untitled tab via the
  *     `resetToUntitled` bridge (kept-or-created untitled + close everything
  *     else). resetSourcePaneState specifically -- NOT closeAllSourceDocs --
@@ -100,6 +102,29 @@ export async function resetForNextTest(page: Page): Promise<void> {
   //    whole GWT modal stack (handles stacked + OK-only dialogs a single
   //    button click can't); it hides rather than answers, so a dirty doc's
   //    changes are discarded by resetSourcePaneState's revert in step 3.
+  //
+  //    Capture each dialog's contents BEFORE hiding it: a leaked modal is
+  //    often the only visible artifact of a real product error (e.g. the
+  //    uncaught-exception "Error" dialog GWT raises), and dismissing it
+  //    silently would bury the evidence -- the test that *caused* it can
+  //    pass, and the dialog only blocks some later test. The warning puts
+  //    the dialog text in the test output where CI failures can be triaged.
+  const leakedDialogs = await page.evaluate(() => {
+    const visible = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    };
+    return Array.from(document.querySelectorAll('.gwt-DialogBox'))
+      .filter(visible)
+      .map((el) => {
+        const label = el.getAttribute('aria-label') ?? 'dialog';
+        const text = ((el as HTMLElement).innerText ?? '').replace(/\s+/g, ' ').trim();
+        return `[${label}] ${text.slice(0, 400)}`;
+      });
+  }).catch(() => [] as string[]);
+  for (const dialog of leakedDialogs) {
+    console.warn(`[test-reset] dismissing leaked modal dialog -- ${dialog}`);
+  }
   await dismissAllModals(page);
   // Sentinel -1 (not 0) on a failed read: 0 would masquerade as "no modals
   // left" and suppress the very warning this block exists to emit.
@@ -138,13 +163,14 @@ export async function resetForNextTest(page: Page): Promise<void> {
     }
   }
 
-  // 3. End any active pane zoom. The session is worker-scoped, so a prior test
-  //    that zoomed a pane (e.g. layoutZoomEnvironment) and failed before
-  //    toggling it back off leaves the layout maximized -- which squeezes every
-  //    other pane to near-zero, so the next test's locator clicks land on a
-  //    zero-size element and time out as "not visible". resetLayoutZoom reads
-  //    the live zoom state and is a no-op (preserving any custom column widths)
-  //    when nothing is zoomed.
+  // 3. End any active pane zoom or pane maximize. The session is worker-scoped,
+  //    so a prior test that zoomed a pane (e.g. layoutZoomEnvironment) or left
+  //    one maximized at the WindowFrame level (e.g. an R Notebook preview
+  //    maximizes the Viewer, minimizing TabSet1 and hiding its tab strip)
+  //    leaves the next test's locator clicks landing on a zero-size or hidden
+  //    element, timing out as "not visible". resetLayoutZoom reads the live
+  //    layout state and is a no-op (preserving any custom column widths) when
+  //    nothing is zoomed or maximized.
   await resetLayoutZoom(page);
 
   // 4. Collapse source pane to a single Untitled tab. resetSourcePaneState

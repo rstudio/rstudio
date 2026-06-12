@@ -18,6 +18,8 @@
 #include <atomic>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
@@ -2301,6 +2303,7 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 
 namespace {
 std::atomic<bool> s_agentExecuting{false};
+std::atomic<bool> s_consoleOutputSuppressed{false};
 } // anonymous namespace
 
 void setAgentExecuting(bool executing)
@@ -2311,6 +2314,16 @@ void setAgentExecuting(bool executing)
 bool isAgentExecuting()
 {
    return s_agentExecuting.load(std::memory_order_acquire);
+}
+
+void setConsoleOutputSuppressed(bool suppressed)
+{
+   s_consoleOutputSuppressed.store(suppressed, std::memory_order_release);
+}
+
+bool isConsoleOutputSuppressed()
+{
+   return s_consoleOutputSuppressed.load(std::memory_order_acquire);
 }
 
 void consoleWriteOutput(const std::string& output)
@@ -2798,13 +2811,15 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
 
    if (useRHelpServer)
    {
-      boost::format fmt("http://localhost:%1%/session/%2%");
-      return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
+      // use the loopback IP address rather than 'localhost' here, since R's
+      // help server binds explicitly to 127.0.0.1 -- on machines where
+      // 'localhost' resolves elsewhere (e.g. only to '::1'), connections
+      // to the help server would otherwise fail (#17579)
+      return fmt::format("http://127.0.0.1:{}/session/{}", rLocalHelpPort(), sessionTempPath);
    }
    else
    {
-      boost::format fmt("session/%1%");
-      return boost::str(fmt % sessionTempPath);
+      return fmt::format("session/{}", sessionTempPath);
    }
 }
 

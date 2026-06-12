@@ -105,6 +105,12 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
 
+      // validate() only checks the completions-delay field while it is shown,
+      // but it may be hidden (manual trigger) or detached (another assistant
+      // selected) at apply time. Clamp it now, before super.onApply() below
+      // persists the field's value, so no out-of-range delay can be saved.
+      clampCompletionsDelay();
+
       RestartRequirement restartRequirement = super.onApply(prefs);
 
       // The system-CA checkbox value is applied by the base class (checkboxPref).
@@ -117,6 +123,26 @@ public class AssistantPreferencesPane extends PreferencesPane
       }
 
       return restartRequirement;
+   }
+
+   @Override
+   public boolean validate()
+   {
+      // The completions-delay field is only shown -- and only relevant -- when
+      // an assistant is selected and completions are triggered automatically.
+      // Validate it only while it is displayed, so a hidden value cannot block
+      // the dialog with an error pointing at a field the user cannot see.
+      if (nvwAssistantCompletionsDelay_.isAttached() &&
+          nvwAssistantCompletionsDelay_.isVisible() &&
+          !nvwAssistantCompletionsDelay_.validate())
+      {
+         return false;
+      }
+
+      // The update-check interval is always visible in the Chat section. Its
+      // validate() rejects non-digit input (including a typed or pasted negative)
+      // with a ^\d+$ check, so an invalid interval cannot be saved.
+      return nvwAssistantUpdateCheckInterval_.validate();
    }
 
    @Inject
@@ -234,6 +260,12 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
       cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
+      nvwAssistantUpdateCheckInterval_ = numericPref(
+            prefsConstants_.positAssistantUpdateCheckIntervalHoursTitle(),
+            constants_.assistantUpdateCheckIntervalTooltip(),
+            NumericValueWidget.ZeroMinimum,
+            NumericValueWidget.NoMaximum,
+            prefs_.positAssistantUpdateCheckIntervalHours());
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -268,8 +300,8 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       nvwAssistantCompletionsDelay_ = numericPref(
             constants_.assistantCompletionsDelayLabel(),
-            10,
-            5000,
+            COMPLETIONS_DELAY_MIN_MS,
+            COMPLETIONS_DELAY_MAX_MS,
             prefs_.assistantCompletionsDelay());
 
       cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
@@ -364,6 +396,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       add(cbAssistantToolbarButtonVisible_);
       add(cbAssistantUseSystemCa_);
+      add(nvwAssistantUpdateCheckInterval_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -621,10 +654,54 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Suggestions section
       panel.add(selAssistantCompletionsTrigger_);
+      panel.add(nvwAssistantCompletionsDelay_);
       panel.add(cbAssistantNesEnabled_);
       panel.add(cbAssistantNesCollapse_);
 
+      // Match the initial visibility the trigger selector's change handler
+      // maintains; the change handler does not fire until the value changes.
+      updateCompletionsDelayVisibility();
+
       return panel;
+   }
+
+   /**
+    * Shows the completions-delay field only when completions are triggered
+    * automatically; the delay is not used for manual completions.
+    */
+   private void updateCompletionsDelayVisibility()
+   {
+      boolean isAuto = selAssistantCompletionsTrigger_.getValue().equals(
+            UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO);
+      nvwAssistantCompletionsDelay_.setVisible(isAuto);
+
+      // Keep the hidden field's value in range so re-showing it (switching back
+      // to automatic) never surfaces a stale out-of-range entry. The persisted
+      // value is guarded separately, in onApply(), for any path that hides or
+      // detaches the field.
+      if (!isAuto)
+         clampCompletionsDelay();
+   }
+
+   /**
+    * Clamps the completions-delay field to its supported range, falling back to
+    * the saved value when the field does not contain a parseable int (empty or
+    * a digit string that overflows int).
+    */
+   private void clampCompletionsDelay()
+   {
+      int delay;
+      try
+      {
+         delay = Integer.parseInt(nvwAssistantCompletionsDelay_.getValue().trim());
+      }
+      catch (NumberFormatException e)
+      {
+         delay = prefs_.assistantCompletionsDelay().getGlobalValue();
+      }
+
+      delay = Math.max(COMPLETIONS_DELAY_MIN_MS, Math.min(COMPLETIONS_DELAY_MAX_MS, delay));
+      nvwAssistantCompletionsDelay_.setValue(delay + "");
    }
 
    private VerticalPanel createQuickReferencePanel()
@@ -674,15 +751,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onChange(ChangeEvent event)
          {
-            String value = selAssistantCompletionsTrigger_.getValue();
-            if (value == UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
-            {
-               nvwAssistantCompletionsDelay_.setVisible(true);
-            }
-            else
-            {
-               nvwAssistantCompletionsDelay_.setVisible(false);
-            }
+            updateCompletionsDelayVisibility();
          }
       });
       
@@ -1466,6 +1535,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SmallButton btnProjectOptions_;
    private final SmallButton btnInstall_;
    private final NumericValueWidget nvwAssistantCompletionsDelay_;
+   private final NumericValueWidget nvwAssistantUpdateCheckInterval_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final SelectWidget selChatProvider_;
@@ -1493,6 +1563,10 @@ public class AssistantPreferencesPane extends PreferencesPane
              container != null &&
              container.hasClassName("rstudio-themes-dark");
    }
+
+   // Supported range for the automatic completions delay, in milliseconds.
+   private static final int COMPLETIONS_DELAY_MIN_MS = 10;
+   private static final int COMPLETIONS_DELAY_MAX_MS = 5000;
 
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
