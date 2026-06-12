@@ -3140,7 +3140,8 @@ var initSidebar = function() {
    var toggleLabel = document.createElement("span");
    toggleLabel.className = "sidebar-toggle-label";
    if (totalCols > shownCols) {
-      // Column pagination is active; the sidebar lists the current page only.
+      // Fewer columns are loaded than the frame contains (e.g. only the
+      // current page of a paginated frame); the sidebar lists those only.
       toggleLabel.textContent = shownCols.toLocaleString() + " of " +
          totalCols.toLocaleString() + " columns";
    } else {

@@ -719,6 +719,9 @@ th.columnClickable div {
 }
 
 .sidebar-toggle-label {
+   /* min-width: 0 lets this flex child shrink below its content size when
+      the panel is narrow; without it the ellipsis can never trigger. */
+   min-width: 0;
    overflow: hidden;
    text-overflow: ellipsis;
 }

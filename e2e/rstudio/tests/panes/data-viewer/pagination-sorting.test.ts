@@ -51,6 +51,13 @@ test.describe('Data Viewer', () => {
     // Check initial column range
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
 
+    // The summary sidebar header counts the loaded page against the frame
+    // total; both sides must exclude the rowname column, so a miscount on
+    // either would surface here as an off-by-one (e.g. "201 of 500").
+    await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label')).toHaveText(
+      '200 of 500 columns',
+    );
+
     // Navigate forward one page
     await dataViewer.rightArrow.click();
     await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
