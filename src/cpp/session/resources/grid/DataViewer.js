@@ -2471,6 +2471,19 @@ var updateAriaRowCount = function() {
    }
 };
 
+// Height of the viewport area in which data rows are actually visible. The
+// viewport's full clientHeight overstates this: the sticky <thead> overlays
+// the top (while still contributing to scroll content height), and when
+// horizontal scroll is active the custom horizontal scrollbar overlays the
+// bottom 10px (see .custom-scrollbar.horizontal in DataViewer.css).
+var visibleBodyHeight = function(viewport) {
+   var headerEl = document.getElementById("data_cols");
+   var headerH = (headerEl && headerEl.parentElement)
+      ? headerEl.parentElement.offsetHeight : 0;
+   var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
+   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 10 : 0));
+};
+
 var updateInfoBar = function() {
    updateAriaRowCount();
 
@@ -2497,13 +2510,8 @@ var updateInfoBar = function() {
       return;
    }
 
-   // Count a row as "in view" when at least 50% of it is visible.
-   //
-   // The viewport's full height is not the same as the area in which data
-   // rows are actually visible: the sticky <thead> overlays the top, and
-   // when horizontal scroll is active the custom horizontal scrollbar
-   // overlays the bottom 10px. Compute an effective body-visible height
-   // and use that for the bottom edge.
+   // Count a row as "in view" when at least 50% of it is visible, using the
+   // effective body-visible height (visibleBodyHeight) for the bottom edge.
    //
    // Top edge: ceil((scrollTop + H/2) / H) is round-half-down of
    // scrollTop/H + 1, which keeps a row scrolled exactly halfway out in
@@ -2521,13 +2529,7 @@ var updateInfoBar = function() {
       last = 0;
    } else {
       var viewport = document.getElementById("gridViewport");
-      var viewportH = viewport ? viewport.clientHeight : 0;
-      var headerEl = document.getElementById("data_cols");
-      var headerH = (headerEl && headerEl.parentElement)
-         ? headerEl.parentElement.offsetHeight : 0;
-      var hasHScroll = viewport
-         ? viewport.scrollWidth > viewport.clientWidth + 1 : false;
-      var bodyH = Math.max(0, viewportH - headerH - (hasHScroll ? 10 : 0));
+      var bodyH = viewport ? visibleBodyHeight(viewport) : 0;
       first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
       last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
       // Clamp both bounds against the data extent. At max scroll on a
@@ -3497,14 +3499,22 @@ var ensureActiveCellVisible = function() {
    // Vertical: rows are uniform-height so we can compute target scrollTop
    // directly without consulting the DOM (the row may not be rendered yet
    // -- the scroll itself triggers the render).
+   //
+   // rowTop/rowBottom are offsets within the table body, which starts
+   // header-height px into the scroll content; setting scrollTop = rowTop
+   // therefore lands the row exactly below the sticky header. The bottom
+   // edge must use the body-visible height, not the raw clientHeight --
+   // the header (and the horizontal scrollbar overlay) occlude part of the
+   // viewport, and using clientHeight left bottom-edge scrolls short by the
+   // header height (#17958).
    var rowTop = activeRow * ROW_HEIGHT;
    var rowBottom = rowTop + ROW_HEIGHT;
    var viewTop = viewport.scrollTop;
-   var viewBottom = viewTop + viewport.clientHeight;
+   var bodyHeight = visibleBodyHeight(viewport);
    if (rowTop < viewTop) {
       viewport.scrollTop = rowTop;
-   } else if (rowBottom > viewBottom) {
-      viewport.scrollTop = rowBottom - viewport.clientHeight;
+   } else if (rowBottom > viewTop + bodyHeight) {
+      viewport.scrollTop = rowBottom - bodyHeight;
    }
 
    // Horizontal: the active column may be outside the rendered column window,
@@ -3789,15 +3799,17 @@ var onGridKeyDown = function(evt) {
    var pageRows = Math.max(
       1,
       Math.floor(document.getElementById("gridViewport").clientHeight / ROW_HEIGHT) - 1);
-   var jump = evt.ctrlKey || evt.metaKey;
 
+   // Home/End move vertically within the current column (with or without
+   // Ctrl), matching the pre-rewrite viewer where they scrolled the grid to
+   // the top/bottom without changing the horizontal position (#17958).
    switch (key) {
       case "ArrowUp":    r = r - 1; break;
       case "ArrowDown":  r = r + 1; break;
       case "ArrowLeft":  c = c - 1; break;
       case "ArrowRight": c = c + 1; break;
-      case "Home":       c = 0;      if (jump) r = 0;      break;
-      case "End":        c = maxCol; if (jump) r = maxRow; break;
+      case "Home":       r = 0;      break;
+      case "End":        r = maxRow; break;
       case "PageUp":     r = r - pageRows; break;
       case "PageDown":   r = r + pageRows; break;
    }
