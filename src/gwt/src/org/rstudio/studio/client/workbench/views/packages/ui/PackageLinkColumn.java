@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
@@ -81,10 +81,37 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
       private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
-         final Mutable<Boolean> didFindVulnerability = new Mutable<>(false);
-
          String name = value.getName();
          String version = value.getVersion();
+
+         List<PackageVulnerability> pvList = vulnerabilitiesForPackage(name, version);
+         if (pvList.isEmpty())
+         {
+            sb.append(TEMPLATES.renderIconPlaceholder(RESOURCES.styles().iconPlaceholder()));
+            return;
+         }
+
+         String vulnText = "";
+         for (PackageVulnerability pvItem : pvList)
+         {
+            vulnText += "\n- " + pvItem.id + ": " + pvItem.summary;
+         }
+
+         String title =
+            name + " " + version + " has the following known vulnerabilities:\n" + vulnText;
+
+         SafeUri uri = RESOURCES.iconWarning().getSafeUri();
+         sb.append(TEMPLATES.renderIcon(RESOURCES.styles().icon(), title, uri));
+      }
+
+      // collect the vulnerabilities affecting this specific (name, version)
+      // pair, sorted by id. each vuln carries its own versions map, so we
+      // drop the ones that don't apply to this row here. SessionPPM.R relies
+      // on this check when concatenating cached vuln lists across libraries
+      // without deduping (see ppm.aggregateVulnsByName).
+      private List<PackageVulnerability> vulnerabilitiesForPackage(String name, String version)
+      {
+         List<PackageVulnerability> result = new ArrayList<>();
 
          vulns_.forEach((String key) ->
          {
@@ -92,45 +119,25 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
             if (pvlMap == null || isArray(pvlMap) || !pvlMap.has(name))
                return;
 
-            String vulnText = "";
-            List<PackageVulnerability> pvList = pvlMap.get(name).asList();
-            pvList.sort(new Comparator<PackageVulnerability>() 
+            for (PackageVulnerability pvItem : pvlMap.get(name).asList())
             {
-               @Override
-               public int compare(PackageVulnerability o1, PackageVulnerability o2)
-               {
-                  return o1.id.compareToIgnoreCase(o2.id);
-               }
-            });
-
-            for (PackageVulnerability pvItem : pvList)
-            {
-               // per-row filter: each vuln carries its own versions map,
-               // so we drop the ones that don't apply to this (name,
-               // version) row here. SessionPPM.R relies on this check
-               // when concatenating cached vuln lists across libraries
-               // without deduping (see ppm.aggregateVulnsByName).
                if (pvItem.versions.has(version))
                {
-                  vulnText += "\n- " + pvItem.id + ": " + pvItem.summary;
+                  result.add(pvItem);
                }
             }
-            if (vulnText.isEmpty())
-               return;
-
-            String title =
-               name + " " + version + " has the following known vulnerabilities:\n" + vulnText;
-
-            SafeUri uri = RESOURCES.iconWarning().getSafeUri();
-            sb.append(TEMPLATES.renderIcon(RESOURCES.styles().icon(), title, uri));
-            didFindVulnerability.set(true);
-            return;
          });
 
-         if (!didFindVulnerability.get())
+         result.sort(new Comparator<PackageVulnerability>()
          {
-            sb.append(TEMPLATES.renderIconPlaceholder(RESOURCES.styles().iconPlaceholder()));
-         }
+            @Override
+            public int compare(PackageVulnerability o1, PackageVulnerability o2)
+            {
+               return o1.id.compareToIgnoreCase(o2.id);
+            }
+         });
+
+         return result;
       }
 
       // click event which occurs on the actual package link div
@@ -179,26 +186,13 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
          if (idx >= 0 && idx < dataProvider_.getList().size())
          {
             PackageInfo info = data.get(idx);
-            String name = info.getName();
-            vulns_.forEach((String key) ->
-            {
-               PackageVulnerabilityListMap pvlMap = vulns_.get(key);
-               if (pvlMap == null || isArray(pvlMap) || !pvlMap.has(name))
-                  return;
+            List<PackageVulnerability> pvList =
+               vulnerabilitiesForPackage(info.getName(), info.getVersion());
+            if (pvList.isEmpty())
+               return;
 
-               List<PackageVulnerability> pvList = pvlMap.get(name).asList();
-               pvList.sort(new Comparator<PackageVulnerability>()
-               {
-                  @Override
-                  public int compare(PackageVulnerability o1, PackageVulnerability o2)
-                  {
-                     return o1.id.compareToIgnoreCase(o2.id);
-                  }
-               });
-
-               PackageVulnerabilityModalDialog dialog = new PackageVulnerabilityModalDialog(info, pvList);
-               dialog.showModal();
-            });
+            PackageVulnerabilityModalDialog dialog = new PackageVulnerabilityModalDialog(info, pvList);
+            dialog.showModal();
          }
       }
 
