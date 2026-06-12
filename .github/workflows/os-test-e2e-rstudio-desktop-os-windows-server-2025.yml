@@ -277,10 +277,18 @@ jobs:
             Write-Host "Junction already exists: $junctionPath"
           }
 
+      # install-soci.R defaults its CMake generator to "Visual Studio 17 2022",
+      # which doesn't exist on windows-2025 once the image moves to VS 2026
+      # (CMake reports `could not find any instance of Visual Studio`). Pass the
+      # VS 2026 generator name explicitly so SOCI can configure and build.
+      # MSVC 14.x is binary-compatible, so the resulting libs link cleanly
+      # against the msvc143 Boost prebuilts that CMakeLists.txt falls back to.
       - name: Install build dependencies
         id: install-deps
         working-directory: dependencies/windows
         shell: cmd
+        env:
+          CMAKE_GENERATOR: Visual Studio 18 2026
         run: install-dependencies.cmd
 
       # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
