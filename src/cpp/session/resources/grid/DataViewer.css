@@ -748,6 +748,29 @@ th.columnClickable div {
    background-color: var(--grid-hover-bg);
 }
 
+.sidebar-toggle-label {
+   /* min-width: 0 lets this flex child shrink below its content size when
+      the panel is narrow; without it the ellipsis can never trigger. */
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+/* Right-aligned close affordance; purely visual (clicks bubble to
+   #sidebarToggle, which is the accessible control). */
+.sidebar-toggle-close {
+   margin-left: auto;
+   padding-left: 8px;
+   font-size: 14px;
+   font-weight: normal;
+   line-height: 1;
+   opacity: 0.6;
+}
+
+#sidebarToggle:hover .sidebar-toggle-close {
+   opacity: 1;
+}
+
 #sidebarContent {
    flex: 1;
    overflow-y: auto;
