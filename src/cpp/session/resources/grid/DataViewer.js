@@ -76,6 +76,7 @@ var MISSING_FINGERPRINT_SENTINEL =
 
 // User-facing timings, all in milliseconds. Tweak together when tuning feel.
 var TIMING = {
+   debounceDefault: 200,        // debounce() wait when none given
    filterDebounce: 200,         // numeric/text filter input -> applyFilters
    searchDebounce: 100,         // global search input -> applyFilters
    infoBarDebounce: 150,        // "Showing X to Y" text update during scroll
@@ -334,12 +335,31 @@ var persistWarned = false;
 // Utilities
 // ==========================================================================
 
-var debounce = function(func, wait) {
+// debounce(wait?, watch?, func) -- the debounced function comes last so call
+// sites can end with the closure body. wait defaults to
+// TIMING.debounceDefault when omitted. watch (optional) is a getter sampled
+// when a call is scheduled and again when the timer fires; the pending call
+// is dropped if the watched value changed in between (see watchColumnSearch
+// for the rationale).
+var debounce = function(wait, watch, func) {
+   if (func === undefined) {
+      if (watch === undefined) {
+         func = wait;
+         wait = TIMING.debounceDefault;
+      } else {
+         func = watch;
+      }
+      watch = null;
+   }
+
    var timeout;
    var debounced = function() {
       var context = this, args = arguments;
+      var token = watch ? watch() : undefined;
       clearTimeout(timeout);
       timeout = setTimeout(function() {
+         if (watch && watch() !== token)
+            return;
          func.apply(context, args);
       }, wait);
    };
@@ -1854,6 +1874,19 @@ var setColumnSearch = function(idx, val) {
    }
 };
 
+// Watch a column's stored search value (debounce's watch argument): a
+// pending debounced filter apply is dropped if the filter was cleared or
+// rewritten underneath it -- e.g. the header X was clicked while the
+// clear's own blur fired a native "change" commit on the dirty input,
+// scheduling one last apply that would silently re-apply the old filter
+// with the header showing "All". Watching the slot the apply writes
+// (rather than a global invalidation counter) means applies racing
+// unrelated invalidations -- a sort, a search, another column's filter --
+// still run.
+var watchColumnSearch = function(idx) {
+   return function() { return getColumnSearch(idx); };
+};
+
 var applyFilters = function() {
    clearActiveCell();
    invalidateCache();
@@ -1916,7 +1949,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       var RANGE_RE = new RegExp(
          "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
 
-      var updateView = debounce(function(v) {
+      var updateView = debounce(TIMING.filterDebounce, watchColumnSearch(idx), function(v) {
          var searchText = "";
          v = v.replace(/[^-+0-9 .eE]/g, "");
          var digit = v.match(SINGLE_RE);
@@ -1935,7 +1968,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
          setColumnSearch(idx, searchText);
          applyFilters();
          renderActiveFilter();
-      }, TIMING.filterDebounce);
+      });
 
       numVal.addEventListener("change", function() { updateView(numVal.value); });
       numVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
@@ -1984,10 +2017,10 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
    if (search.length > 1 && search[0] === "character")
       input.value = decodeURIComponent(search[1]);
 
-   var updateView = debounce(function() {
+   var updateView = debounce(TIMING.filterDebounce, watchColumnSearch(idx), function() {
       setColumnSearch(idx, "character|" + encodeURIComponent(input.value));
       applyFilters();
-   }, TIMING.filterDebounce);
+   });
 
    input.addEventListener("keyup", function() { updateView(); });
    input.addEventListener("keydown", function(evt) {
@@ -2593,7 +2626,7 @@ var renderVisibleRows = function(forceRebuild) {
 // Info bar update is debounced separately at a longer interval -- reading
 // scrollTop for the "Showing X to Y" text forces style+layout recalc,
 // which is expensive during fast scrolling.
-var debouncedInfoBar = debounce(updateInfoBar, TIMING.infoBarDebounce);
+var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 
 // RAF-throttle scroll (via pendingScrollRaf): render at most once per
 // animation frame so virtual scroll updates happen during the scroll,
@@ -2664,7 +2697,7 @@ var onScrollEnd = function() {
 // Window resize handler: debounce wrapper is created once here so its
 // internal timer state survives across bootstraps and addEventListener
 // stays idempotent.
-var onResize = debounce(function() {
+var onResize = debounce(TIMING.resizeDebounce, function() {
    applyPinnedColumns();
    renderVisibleRows(true);
    updateInfoBar();
@@ -2675,7 +2708,7 @@ var onResize = debounce(function() {
    // affordance reflects the new layout. update() above leaves non-scrollable
    // axes hidden, so this only reveals bars that actually overflow.
    showScrollbars();
-}, TIMING.resizeDebounce);
+});
 
 // ==========================================================================
 // Sidebar
@@ -4666,7 +4699,15 @@ window.toggleSidebar = function() {
    toggleSidebar();
 };
 
-var debouncedSearch = debounce(function(text) {
+// Same staleness rule as the column filters (see watchColumnSearch): drop a
+// pending search apply when the search it would overwrite was changed
+// externally after scheduling (resetGridState clears cachedSearch on
+// refresh/teardown).
+var watchGlobalSearch = function() {
+   return cachedSearch;
+};
+
+var debouncedSearch = debounce(TIMING.searchDebounce, watchGlobalSearch, function(text) {
    if (text !== cachedSearch) {
       cachedSearch = text;
       clearActiveCell();
@@ -4675,7 +4716,7 @@ var debouncedSearch = debounce(function(text) {
          scrollToTop();
       });
    }
-}, TIMING.searchDebounce);
+});
 
 window.applySearch = function(text) {
    debouncedSearch(text);
