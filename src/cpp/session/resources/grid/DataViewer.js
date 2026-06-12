@@ -3420,12 +3420,6 @@ var scrollToColumn = function(colIdx) {
 // Active Cell / Keyboard Navigation
 // ==========================================================================
 
-// Pinned-row offset accounted for in vertical-scroll math. Headers are
-// outside #gridViewport (separate sticky thead row in the same scrolling
-// table) so we don't need to subtract a pinned-row band, but the
-// horizontal scrollbar at the bottom can occlude the last row -- the
-// visible test below uses clientHeight which already excludes the
-// scrollbar track.
 var getActiveCellTd = function() {
    if (activeRow < 0 || activeCol < 0) return null;
    var tr = renderedRowElements.get(activeRow);

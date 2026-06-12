@@ -850,11 +850,22 @@ test.describe('Data Viewer', () => {
       expect(cellBox!.y + cellBox!.height)
         .toBeLessThanOrEqual(viewportBox!.y + viewportBox!.height + 0.5);
 
+      // The info bar's "Showing X to Y" range shares visibleBodyHeight with
+      // the scroll math; at max scroll it must count the last row in view.
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+
       // Home returns to the top of the same column.
       await page.keyboard.press('Home');
       await expect(dataViewer.frame.locator('#rsGridCell_0_1'))
         .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
       await expect.poll(() => dataViewer.viewport.evaluate((el) => el.scrollTop)).toBe(0);
+
+      // Plain End (no modifier) behaves identically -- it was the keystroke
+      // in the original report.
+      await page.keyboard.press('End');
+      await expect(lastCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      expect(await dataViewer.viewport.evaluate((el) => el.scrollLeft)).toBe(0);
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.ctrl_end_df", envir = .GlobalEnv)',
