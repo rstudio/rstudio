@@ -505,3 +505,11 @@ TEST(ChatIntegrity, GetPackageInfoIgnoresNonArrayProviders)
    EXPECT_FALSE(error);
    EXPECT_TRUE(providers.empty());
 }
+
+TEST(ChatIntegrity, AdvertisesByokProvider)
+{
+   EXPECT_TRUE(advertisesByokProvider({"pai", "byok"}));
+   EXPECT_TRUE(advertisesByokProvider({"byok"}));
+   EXPECT_FALSE(advertisesByokProvider({"pai"}));
+   EXPECT_FALSE(advertisesByokProvider({}));
+}

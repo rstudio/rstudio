@@ -3629,8 +3629,9 @@ struct UpdateState
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
    bool manifestUnavailable;
-   // Whether the manifest entry for our protocol advertises additional
-   // (non-default) providers, used to vary the not-installed view's copy.
+   // Whether the manifest entry for our protocol opts into the bring-your-own-key
+   // provider set (its "providers" array contains "byok"), used to vary the
+   // not-installed view's copy.
    bool additionalProvidersAvailable;
    std::string currentVersion;
    std::string newVersion;
@@ -4599,11 +4600,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       return;
    }
 
-   // The manifest's "providers" array marks the protocol entry as advertising an
-   // additional provider set beyond the default; the not-installed view varies its
-   // copy when that set is offered.
-   additionalProvidersAvailable =
-      std::find(providers.begin(), providers.end(), "byok") != providers.end();
+   // When the manifest opts this build into the bring-your-own-key provider set,
+   // the not-installed view appends a sentence about it.
+   additionalProvidersAvailable = integrity::advertisesByokProvider(providers);
 
    // Compare versions - offer install if versions differ (upgrade or downgrade).
    if (shouldInstallVersion(installedVersion, packageVersion))

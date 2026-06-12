@@ -17,6 +17,7 @@
 #include "ChatLogging.hpp"
 #include "ChatTypes.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 
 #include <boost/algorithm/string.hpp>
@@ -78,35 +79,6 @@ std::string::size_type endOfFirstJsonObject(const std::string& s)
 }
 
 } // anonymous namespace
-
-// Read an optional array-of-strings field into `out`. Absent field -> empty;
-// non-array or non-string entries are skipped with a warning (lenient, matching
-// the manifest's other optional arrays).
-void readStringArray(const json::Object& obj,
-                     const std::string& key,
-                     std::vector<std::string>* out)
-{
-   out->clear();
-   json::Object::Iterator it = obj.find(key);
-   if (it == obj.end())
-      return;
-
-   json::Value value = (*it).getValue();
-   if (!value.isArray())
-   {
-      WLOG("Manifest field '{}' is not an array; ignoring", key);
-      return;
-   }
-
-   json::Array arr = value.getArray();
-   for (const json::Value& entry : arr)
-   {
-      if (entry.isString())
-         out->push_back(entry.getString());
-      else
-         WLOG("Skipping non-string entry in manifest field '{}'", key);
-   }
-}
 
 Error getPackageInfoFromManifest(
     const json::Object& manifest,
@@ -208,7 +180,7 @@ Error getPackageInfoFromManifest(
 
       // Read optional providers field (advertised provider identifiers)
       std::vector<std::string> providers;
-      readStringArray(versionInfo, "providers", &providers);
+      json::readObject(versionInfo, "providers", providers); // ignore error - field is optional
 
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)
@@ -244,6 +216,14 @@ Error getPackageInfoFromManifest(
         bestSha256.empty() ? "(none)" : bestSha256);
 
    return Success();
+}
+
+bool advertisesByokProvider(const std::vector<std::string>& providers)
+{
+   // The manifest opts a build's protocol entry into the bring-your-own-key
+   // provider set by listing "byok" among its providers. Other identifiers
+   // (e.g. "pai") do not trip this.
+   return std::find(providers.begin(), providers.end(), "byok") != providers.end();
 }
 
 Error verifyPackageSha256(const FilePath& packagePath,

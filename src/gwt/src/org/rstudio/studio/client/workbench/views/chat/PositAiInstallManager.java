@@ -54,8 +54,9 @@ public class PositAiInstallManager
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        * @param isDowngrade True if the available version is older than the installed version
        *                    (only meaningful when isInitialInstall is false)
-       * @param additionalProvidersAvailable True if the manifest advertises additional
-       *                    providers for this build (only reflected in the initial-install view)
+       * @param additionalProvidersAvailable True if the manifest opts this build into
+       *                    the bring-your-own-key provider set (only reflected in the
+       *                    initial-install view)
        */
       void onUpdateAvailable(String currentVersion, String newVersion,
                              boolean isInitialInstall, boolean isDowngrade,
@@ -199,8 +200,8 @@ public class PositAiInstallManager
             Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
             boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
 
-            // Also default to false when omitted (older rsession or a manifest
-            // entry without a "providers" array).
+            // getBoolean returns null when the field is absent (e.g. an older
+            // rsession); treat that as false. The backend owns what makes it true.
             Boolean additionalProvidersBoxed =
                result.getBoolean("additionalProvidersAvailable");
             boolean additionalProvidersAvailable =

@@ -58,6 +58,19 @@ core::Error getPackageInfoFromManifest(
     std::vector<std::string>* pProviders = nullptr);
 
 /**
+ * Whether a manifest entry's provider identifiers opt the build into the
+ * bring-your-own-key provider set.
+ *
+ * Returns true only when "byok" is present; other identifiers (e.g. "pai")
+ * are ignored. "byok" is a string contract shared with the manifest producer.
+ *
+ * @param providers The provider identifiers from a manifest entry's
+ *                  "providers" array (e.g. as returned via getPackageInfoFromManifest).
+ * @return true if the bring-your-own-key provider is advertised.
+ */
+bool advertisesByokProvider(const std::vector<std::string>& providers);
+
+/**
  * Verify SHA-256 hash of a downloaded package file.
  *
  * @param packagePath Path to the downloaded package file
