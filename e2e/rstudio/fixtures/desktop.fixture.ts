@@ -28,7 +28,11 @@ function sandboxRoot(): string {
   }
   return s;
 }
-const sharedDataHome = () => path.join(sandboxRoot(), 'data-home');
+// Sandbox-level data-home: NOT used as RSTUDIO_DATA_HOME for Desktop launches
+// (each launch gets its own data home under its config root -- see
+// createTempConfig), only as the source of the seeded Posit Assistant build
+// (data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is set).
+const sandboxDataHome = () => path.join(sandboxRoot(), 'data-home');
 const sharedUserHome = () => path.join(sandboxRoot(), 'user-home');
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
@@ -164,6 +168,7 @@ interface TempConfig {
   configHome: string;
   configDir: string;
   electronUserData: string;
+  dataHome: string;
 }
 
 /**
@@ -171,7 +176,9 @@ interface TempConfig {
  * built by merging fixtures/base-prefs.jsonc with an optional override
  * from PW_RSTUDIO_PREFS_OVERRIDE. Plumbed into RStudio via
  * RSTUDIO_CONFIG_* env vars at spawn time so the user's real profile
- * is untouched.
+ * is untouched. Also carries a per-spec data home (RSTUDIO_DATA_HOME)
+ * so persisted client state -- window layout, pane sizes, source docs --
+ * can't leak between specs or workers.
  *
  * Desktop only -- Server mode doesn't spawn RStudio, so this mechanism
  * doesn't apply directly. See https://github.com/rstudio/rstudio/issues/17520
@@ -182,9 +189,11 @@ function createTempConfig(): TempConfig {
   const configHome = path.join(root, 'config-home');
   const configDir = path.join(root, 'config-dir');
   const electronUserData = path.join(root, 'electron-userdata');
-  for (const d of [configHome, configDir, electronUserData]) {
+  const dataHome = path.join(root, 'data-home');
+  for (const d of [configHome, configDir, electronUserData, dataHome]) {
     fs.mkdirSync(d, { recursive: true });
   }
+  seedPaiIntoDataHome(dataHome);
 
   const basePrefs = readPrefsFile(BASE_PREFS_PATH, 'base');
   const overridePath = process.env[OVERRIDE_PREFS_ENV];
@@ -215,7 +224,28 @@ function createTempConfig(): TempConfig {
     ),
   );
 
-  return { root, configHome, configDir, electronUserData };
+  return { root, configHome, configDir, electronUserData, dataHome };
+}
+
+/**
+ * Link the seeded Posit Assistant build (sandbox data-home/pai, populated by
+ * sandbox-setup.ts when PW_SEED_PAI is set) into a per-spec data home so the
+ * session under test finds it at RSTUDIO_DATA_HOME/pai. A symlink (junction
+ * on Windows, which needs no elevation) avoids copying the install once per
+ * spec. The uninstall flow deletes pai via boost::filesystem::remove_all,
+ * which removes the link itself without following it, so an uninstall test
+ * can't destroy the shared seed. Writes into pai (e.g. manifest-check.json)
+ * do go through the link to the seed -- same exposure as the previous fully
+ * shared data home, now scoped to pai only. No-op when nothing was seeded or
+ * the link already exists (config-root reuse across a restart).
+ */
+function seedPaiIntoDataHome(dataHome: string): void {
+  const seed = path.join(sandboxDataHome(), 'pai');
+  const dest = path.join(dataHome, 'pai');
+  if (!fs.existsSync(seed) || fs.existsSync(dest)) {
+    return;
+  }
+  fs.symlinkSync(seed, dest, process.platform === 'win32' ? 'junction' : 'dir');
 }
 
 // Cold CI runners can take longer than a developer machine to clear the
@@ -304,11 +334,13 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       configHome: path.join(existingConfigRoot, 'config-home'),
       configDir: path.join(existingConfigRoot, 'config-dir'),
       electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
+      dataHome: path.join(existingConfigRoot, 'data-home'),
     };
     // Defensively recreate child dirs in case anything cleared them between runs
-    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData]) {
+    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData, tempConfig.dataHome]) {
       fs.mkdirSync(d, { recursive: true });
     }
+    seedPaiIntoDataHome(tempConfig.dataHome);
   } else {
     tempConfig = createTempConfig();
   }
@@ -357,7 +389,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
-      RSTUDIO_DATA_HOME: sharedDataHome(),
+      // Per-spec, not shared: RSTUDIO_DATA_HOME is where the session persists
+      // client state (data-home/pcs/*.pper -- window layout, pane sizes,
+      // source docs, ...). Sharing it across workers let one spec's leaked
+      // state (e.g. a maximized Viewer pane from a notebook preview) poison
+      // every later launch in the run, including fresh retry workers. Tied to
+      // the config root so a deliberate quit-and-restart (which reuses the
+      // config root) still sees its persisted state.
+      RSTUDIO_DATA_HOME: tempConfig.dataHome,
       RSTUDIO_DISABLE_WHATS_NEW: '1',
       // Under PW_DEBUG, have the launched app open Chromium DevTools on
       // startup so the renderer's Performance profiler is ready before
