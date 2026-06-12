@@ -407,6 +407,20 @@ test_that(".rs.describeCols() reports col_type as typeof() and col_class as clas
    expect_equal(first_class, c("numeric", "integer", "character", "logical", "factor", "list"))
 })
 
+test_that(".rs.describeCols() handles integer columns whose range overflows", {
+   # max_v - min_v overflows integer arithmetic here; the integer-breaks
+   # heuristic must compute the range in double precision rather than
+   # erroring with "missing value where TRUE/FALSE needed". See #17951.
+   df <- data.frame(id = c(-2000000000L, 2000000000L))
+
+   cols <- .rs.describeCols(df)
+
+   col <- cols[[2L]]
+   expect_equal(col$col_search_type, .rs.scalar("numeric"))
+   expect_true(length(col$col_breaks) > 1)
+   expect_equal(sum(col$col_counts), 2)
+})
+
 test_that(".rs.describeCols() reports a nested data.frame column faithfully", {
    df <- data.frame(a = 1:2)
    # a column that is itself a data.frame. describeCols does not flatten (that

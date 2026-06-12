@@ -353,7 +353,11 @@
             # implicitly remove those values); if that leaves us with nothing,
             # treat this column as untyped since we can do no meaningful filtering
             # on it
-            hist_vals <- x[[idx]][is.finite(x[[idx]])]
+            #
+            # coerce to double up front: integer columns whose range exceeds
+            # .Machine$integer.max otherwise overflow both in the range
+            # computation below and in hist()'s break selection (#17951)
+            hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
                # For whole-number columns spanning a small range, draw one
