@@ -362,6 +362,12 @@ jobs:
           # Read+traverse on everything inside the workspace (repo, node_modules,
           # R-libs, ms-playwright browser cache, etc.).
           sudo chmod -R a+rX "${{ github.workspace }}"
+          # Playwright creates output dirs (test-results/, blob-report/, etc.)
+          # under e2e/rstudio at runtime; chown that single directory to the
+          # test user so mkdir/write succeeds. Existing contents (node_modules,
+          # sources) stay owned by runner and remain readable via the a+rX
+          # bits above -- only the *directory entry* changes owner.
+          sudo chown "$PW_RSTUDIO_SERVER_USER":"$PW_RSTUDIO_SERVER_USER" "${{ github.workspace }}/e2e/rstudio"
           # PW_SANDBOX_ROOT owned by the test user so per-spec sandboxes don't
           # EACCES on first creation.
           sudo install -d -o "$PW_RSTUDIO_SERVER_USER" -g "$PW_RSTUDIO_SERVER_USER" -m 0755 "$PW_SANDBOX_ROOT"
