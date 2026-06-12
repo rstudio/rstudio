@@ -11,16 +11,85 @@
   <div class="feature-section">
     <h2>New Features</h2>
     <ul>
-      <li>Feature description here</li>
+      <li><strong>Re-enable the missing-package banner:</strong> A new Code menu and command-palette entry re-enables the editor's missing-package banner for a file after it has been dismissed, and the banner's dismissal label is now "Don't show for this file" to make the per-file scope explicit.</li>
+      <li><strong>Unicode section delimiters:</strong> Em dashes and box-drawing characters are now supported as native R code section delimiters.</li>
+      <li><strong>Mouse-wheel tab switching preference:</strong> A new "Change active editor tab with mouse wheel" preference (General &gt; Basic &gt; Other) disables switching the active editor tab by scrolling the mouse wheel over the tab bar.</li>
+      <li><strong>Project-specific editor themes:</strong> A new Appearance pane in Project Options sets a project-specific editor theme; leaving it at "(Default)" uses the global theme. A new "Ignore project-specific appearance settings" option (Global Options &gt; Appearance) keeps the global editor theme even when a project sets its own.</li>
+      <li><strong>Posit Assistant &mdash; incremental code execution:</strong> Posit Assistant now runs R code expression by expression, interleaving each expression with its output in the chat pane, rather than running the whole block at once and showing all output at the end.</li>
+      <li><strong>Native pipe by default:</strong> The Insert Pipe Operator command (Ctrl+Shift+M / Cmd+Shift+M) now inserts the native R pipe operator <code>|&gt;</code> by default; the magrittr pipe <code>%&gt;%</code> can be restored via the "Use R's native pipe operator, |&gt;" preference.</li>
+      <li><strong>Find in Files toolbar refinements:</strong> The Find in Files refresh button has moved to the right side of the toolbar, matching the convention used by other panes, and the replace preview's match highlight colors are now theme-aware so they no longer look out of place under dark editor themes.</li>
+      <li><strong>Stricter project trust:</strong> A new <code>project-trust-required</code> session option (off by default) treats all projects as untrusted by default &mdash; including projects in the user's home directory &mdash; prompting users to trust each project when opened even if it contains no auto-executing files. The visual editor is now disabled in untrusted projects, whether or not this option is set; only the source editor is available for markdown documents.</li>
+      <li><strong>Air formatting without air.toml:</strong> When "Use Air for code formatting" is enabled, Air now formats R documents even when no <code>air.toml</code> file is present, using the editor's indentation settings (indent style and width). The previous behavior of formatting only in projects containing an <code>air.toml</code> can be restored with the new "Only use Air when an air.toml file is found" option (Global Options &gt; Code &gt; Formatting).</li>
     </ul>
   </div>
 
   <div class="feature-section">
-    <h2>Fixes</h2>
-    <p>
-      For a full list of bug fixes in this release, see the
-      <a href="https://www.rstudio.org/links/release_notes#rstudio-2026.06.0">release notes</a>.
-    </p>
+    <h2>Bug Fixes</h2>
+    <ul>
+      <li>Fixed the Source pane occasionally restoring the wrong active tab after a reload or session restart when tabs had been drag-reordered or documents opened mid-session; the active document is now remembered by ID rather than by tab position.</li>
+      <li>Fixed R Notebook previews failing with "object not found" when the document contains inline R code referencing objects in the global environment; inline chunks are now evaluated in the user's R session and their outputs passed to the background notebook render. This can be disabled with the new "Execute inline R code when previewing notebooks" preference (Global Options &gt; R Markdown).</li>
+      <li>Fixed the secondary toolbars in the Find in Files and Presentation panes rendering 2px shorter than the space reserved for them, which left a small dead strip below the toolbar border.</li>
+      <li>Added a "Use the system certificate store" option (Tools &gt; Global Options &gt; Assistant) so the GitHub Copilot agent and Posit Assistant trust the operating system certificate store (Windows Certificate Store, macOS Keychain) when connecting &mdash; useful behind a TLS-inspecting proxy on RStudio Desktop.</li>
+      <li>Recognize the Posit Assistant's <code>.posit/assistant</code> project-state directory (in addition to the legacy <code>.positai</code>) when updating a project's <code>.gitignore</code>, <code>.Rbuildignore</code>, and <code>svn:ignore</code> files, so it is ignored automatically once it appears. The rest of <code>.posit</code> &mdash; such as the Posit Publisher extension's <code>.posit/publisher</code> &mdash; is left tracked.</li>
+      <li>Fixed code suggestions being silently accepted off-screen. Inline (at-cursor) ghost text is now dismissed when the cursor moves elsewhere; accepting a next edit suggestion that is scrolled out of view first navigates to it, with a second key press accepting it; an arrow indicator pinned to the edge of the gutter now points toward an active off-screen suggestion, and clicking it navigates there.</li>
+      <li>Fixed Find in Files (and project code search) returning no results in a Quarto or R Markdown website project whose output directory is set to the project directory itself (for example <code>output-dir: .</code> in <code>_quarto.yml</code>); the project root is no longer treated as ignored output content.</li>
+      <li>Fixed an issue where RStudio Desktop could hang on startup when offline or on an unreliable network connection.</li>
+      <li>Honor newline characters in <code>rstudioapi::showDialog()</code> and <code>rstudioapi::showPrompt()</code> messages.</li>
+      <li>Show distinct copy in the Posit Assistant chat pane and preferences install prompt when the recommended Posit Assistant version is older than the installed one.</li>
+      <li>Fixed <code>file.edit()</code> (and other Source pane open events) silently dropping when invoked during an in-flight <code>closeAllSourceDocs</code>.</li>
+      <li>Fixed the bundled <code>air</code> formatter being copied without the <code>.exe</code> extension on Windows, which prevented format-on-save with Air from working.</li>
+      <li>Cache the resolved path to the Air formatter, and prefer an already-installed copy of Air over querying GitHub for the latest release, so format-on-save with the auto-installed Air no longer pings GitHub (a delay of 600ms or more) on every save.</li>
+      <li>Fixed the automatic download of the Air formatter failing on slow connections. The download now uses the <code>curl</code> binary when available, which only times out on inactivity rather than on total download time; when <code>curl</code> is unavailable, the <code>download.file()</code> fallback raises R's download timeout to at least 300 seconds for this download.</li>
+      <li>Restored the "Show .Last.value in environment listing" preference, which had stopped surfacing <code>.Last.value</code> in the Environment pane.</li>
+      <li>Fixed the debugger failing to capture the browser environment for functions loaded by the <code>box</code> package.</li>
+      <li>Fixed Quarto rendering failing on Windows when the user's home folder path contains an ampersand.</li>
+      <li>Avoid re-scanning the watched directory on every Files pane notification on macOS by enabling FSEvents per-file event reporting for non-recursive watches.</li>
+      <li>Handle the ANSI cursor-movement escape sequences cursor-up (CSI A), cursor-down (CSI B), cursor-next-line (CSI E), cursor-previous-line (CSI F), and cursor-horizontal-absolute (CSI G) in the console so that multiple <code>cli</code> progress bars render on separate lines instead of overwriting each other.</li>
+      <li>Fixed duplicate entries appearing in the recent projects list when the same project was recorded under both aliased (<code>~/...</code>) and absolute path forms.</li>
+      <li>Fixed "Import Dataset" from the Environment pane failing with "could not find function '.rs.digest'" when previewing a CSV (or other readr/readxl/haven source).</li>
+      <li>The Windows terminal now uses the native Windows pseudoconsole (ConPTY) instead of the legacy winpty library, improving Ctrl+C handling in console programs.</li>
+      <li>Fixed the data viewer's horizontal scrollbar staying hidden after returning to the tab, and fixed Ctrl+C/Cmd+C copying only the active cell instead of the user's multi-cell text selection.</li>
+      <li>Restored the data viewer's End and Ctrl+End behavior: they once again scroll to the last row of the current column instead of jumping to the last column, and the jump now lands with the last row fully visible rather than stopping a header-height short of the bottom.</li>
+      <li>Fixed the data viewer becoming slow to open, scroll, and search &mdash; and freezing for several seconds when opening very wide data frames &mdash; when there are many columns or the summary panel is shown. The grid now renders only the rows and columns currently in view.</li>
+      <li>Fixed a pinned column in the data viewer jumping to a different column after paging to another set of columns in a very wide data frame; the pinned column now stays visible and tracks its original column across column pagination.</li>
+      <li>Preserve the data viewer's scroll position when the displayed data is refreshed in place &mdash; for example after adding or removing a column, or changing values in an existing column &mdash; so the grid no longer jumps back to the first row. The view still returns to the top when the underlying row count changes (the data was subset, reassigned, or had rows added or removed). Adding a column to a viewed data frame now also displays the new column, instead of keeping the previous set of columns.</li>
+      <li>Fixed a <code>data.table</code> returned invisibly from a <code>:=</code> update (e.g. <code>dt[, x := y]</code>) being auto-printed in notebook chunks, when its output should be suppressed as it is in the console.</li>
+      <li>Fixed the "Run Tests" button modifying the active test file's timestamp even when the file had no unsaved changes.</li>
+      <li>Hide the redundant column-summary sidebar in the data frame preview shown in the Help pane.</li>
+      <li>Fixed the Assistant preferences pane showing a stale code-assistant account after switching back and forth between GitHub Copilot and Posit Assistant.</li>
+      <li>On RStudio Desktop, serve Viewer pane content via <code>127.0.0.1</code> instead of <code>localhost</code>, so HTML files and htmlwidgets display on systems where <code>localhost</code> does not resolve to the IPv4 loopback address that R's help server binds to.</li>
+      <li>Stop requesting code completions and next-edit suggestions while editing in visual mode, where suggestions aren't shown, so document contents are no longer sent to the completion backend for suggestions there.</li>
+      <li>Fixed the comment/uncomment shortcut inserting the comment character at the start of an empty indented line instead of after the indent.</li>
+      <li>Restrict the Python help URL handler (<code>/python/</code>) to valid help-topic names, accepting only plain dotted qualified names.</li>
+      <li>Fixed saving a file silently appearing to succeed when the write actually failed (for example, when the disk is full or a disk quota is exceeded); such failures are now reported and the document keeps its unsaved state.</li>
+      <li>Fixed Find in Files "Replace All" overwriting a source file with truncated or empty contents when the write failed (for example, when the disk is full or a disk quota is exceeded); the replacement is now written atomically and durably, so on failure the original file is left untouched and the error is reported.</li>
+      <li>Fixed the Data Viewer entering a "Failed to fetch" error state when clicking the header of a list column to sort it; such columns are no longer sortable.</li>
+      <li>Fixed the Render button reusing a running Quarto preview and ignoring changes to project options in <code>_quarto.yml</code> / <code>_quarto.yaml</code> (for example <code>pdf-engine</code>); RStudio now restarts the preview when the project config changes so the new options take effect.</li>
+      <li>Fixed a newly added file appearing at the bottom of the Files pane instead of in its sorted position when the pane is sorted by a column.</li>
+      <li>Fixed the Shiny app window (Run App &gt; Run in Window) becoming impossible to close &mdash; and staying orphaned in a grayed-out state across subsequent runs &mdash; when the app registers a <code>beforeunload</code> handler that prevents unload. RStudio Desktop now shows a "Leave page?" confirmation (mirroring browser behavior) and closes the window when the user confirms.</li>
+      <li>Fixed project paths on a mapped network drive (e.g. <code>S:</code>) being resolved to their UNC target (e.g. <code>\\server\share</code>) on Windows, which caused functions such as <code>here::here()</code> and <code>getwd()</code> to report the UNC path instead of the mapped drive.</li>
+      <li>Fixed an uncaught "Object has been destroyed" error in RStudio Desktop when quitting with a plot zoom (or other child) window still open.</li>
+      <li>Fixed the data viewer not clearing a data set's saved sorts and filters when its tab is explicitly closed, so reopening the data set no longer restores stale filters; the saved state still persists across a session suspend/restore or a page reload. Restored filters now also reveal the filter row, instead of being applied with no visible filter UI.</li>
+      <li>Fixed RStudio locking up when clicking "Run examples" in a help page whose examples launch a blocking application such as a Shiny app. Such examples now run in the console (like <code>example()</code>) instead of being rendered inline by the help server.</li>
+      <li>Fixed the Files pane on macOS briefly showing and then emptying the contents of a symlinked directory; file change events are now reported against the path the directory was opened as, rather than its resolved target. Opening a project via a symlinked path on macOS also no longer rewrites the project directory (as reported by <code>getwd()</code> and <code>here::here()</code>) to the symlink's target.</li>
+      <li>Fixed the "Show code suggestions after keyboard idle (ms)" field never appearing in the Assistant preferences pane (Global Options &gt; Assistant), so the automatic code-completion delay can again be configured from the options UI.</li>
+      <li>Fixed the Data Viewer's Summary sidebar visibility resetting to the preference default when the viewed object's columns changed (for example, after adding a column from the console).</li>
+      <li>Fixed the terminal silently dropping entire output chunks when a multi-byte UTF-8 character was split across PTY reads and the terminal was connected over WebSockets (the default), which severely corrupted the output of programs emitting non-ASCII output at volume (modern TUIs, R packages printing Unicode). A split character is now reassembled across chunks, which also fixes the stray replacement characters previously seen at chunk boundaries when the "Connect with WebSockets" option was disabled.</li>
+      <li>Fixed <code>View()</code> failing with "missing value where TRUE/FALSE needed" on data frames containing an integer column whose range exceeds <code>.Machine$integer.max</code> (for example, values spanning -2000000000 to 2000000000).</li>
+      <li>Fixed data viewer column filters being silently re-applied after being dismissed &mdash; a value typed or brushed just before pressing Escape, clicking the clear button, or clicking away could land after the header had reverted to "All", leaving the grid filtered with no visible filter. A factor filter restored when its column scrolls back into view now displays its level name instead of a blank box, and pressing Enter in the numeric filter popup now applies the typed value immediately.</li>
+    </ul>
+  </div>
+
+  <div class="feature-section">
+    <h2>Dependencies</h2>
+    <ul>
+      <li>Ace 1.43.5</li>
+      <li>Copilot Language Server 1.500.0</li>
+      <li>Electron 41.7.2</li>
+      <li>Node.js 22.22.2 (copilot, Posit AI)</li>
+      <li>Quarto 1.9.38</li>
+      <li>xterm.js 6.0.0</li>
+    </ul>
   </div>
 </body>
 </html>
