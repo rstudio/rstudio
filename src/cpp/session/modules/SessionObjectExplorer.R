@@ -777,32 +777,47 @@
    children <- NULL
    if (context$recursive)
    {
-      names <- names(object)
       indices <- .rs.slice(seq_along(object), context$start, context$end)
       context$more <- length(object) > context$end
-      
+
       # iterate over children and inspect
       children <- lapply(indices, function(i)
       {
-         if (is.null(names) || !nzchar(names[[i]]))
-         {
-            name <- sprintf("[[%i]]", i)
-            access <- sprintf("#[[%i]]", i)
-            tags <- .rs.explorer.tags$VIRTUAL
-         }
-         else
-         {
-            name <- names[[i]]
-            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
-            tags <- character()
-         }
-         
-         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         childContext <- .rs.explorer.childContextForElement(context, object, i)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
    }
-   
+
    .rs.explorer.createInspectionResult(object, context, children)
+})
+
+# Create a child context for the i-th element of an object, using
+# access-by-name only when that name uniquely identifies the element.
+# Duplicated names must be accessed by index, as access-by-name would
+# always retrieve the first matching element (#17937).
+.rs.addFunction("explorer.childContextForElement", function(context, object, i)
+{
+   names <- names(object)
+   name <- if (is.null(names)) "" else names[[i]]
+
+   if (is.na(name) || !nzchar(name))
+   {
+      name <- sprintf("[[%i]]", i)
+      access <- sprintf("#[[%i]]", i)
+      tags <- .rs.explorer.tags$VIRTUAL
+   }
+   else if (sum(names == name, na.rm = TRUE) > 1L)
+   {
+      access <- sprintf("#[[%i]]", i)
+      tags <- character()
+   }
+   else
+   {
+      access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
+      tags <- character()
+   }
+
+   .rs.explorer.createChildContext(context, name, access, tags)
 })
 
 .rs.addFunction("explorer.inspectEnvironment", function(object,
@@ -904,27 +919,13 @@
    children <- NULL
    if (context$recursive && !is.null(names(object)))
    {
-      names <- names(object)
       indices <- .rs.slice(seq_along(object), context$start, context$end)
       context$more <- length(object) > context$end
-      
+
       # iterate over children and inspect
       children <- lapply(indices, function(i)
       {
-         if (is.null(names) || !nzchar(names[[i]]))
-         {
-            name <- sprintf("[[%i]]", i)
-            access <- sprintf("#[[%i]]", i)
-            tags <- .rs.explorer.tags$VIRTUAL
-         }
-         else
-         {
-            name <- names[[i]]
-            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
-            tags <- character()
-         }
-         
-         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         childContext <- .rs.explorer.childContextForElement(context, object, i)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
    }
