@@ -17,6 +17,7 @@
 #define SESSION_CHAT_INTEGRITY_HPP
 
 #include <string>
+#include <vector>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
@@ -43,6 +44,9 @@ namespace integrity {
  * @param pPackageVersion Output: the package version string
  * @param pDownloadUrl Output: the package download URL
  * @param pSha256 Output: the SHA-256 hash (optional, may be nullptr)
+ * @param pProviders Output: the provider identifiers advertised for the
+ *                   selected protocol entry, or empty when the entry has no
+ *                   "providers" array (optional, may be nullptr)
  * @return Success() or an error if no compatible version is found
  */
 core::Error getPackageInfoFromManifest(
@@ -50,7 +54,8 @@ core::Error getPackageInfoFromManifest(
     const std::string& protocolVersion,
     std::string* pPackageVersion,
     std::string* pDownloadUrl,
-    std::string* pSha256 = nullptr);
+    std::string* pSha256 = nullptr,
+    std::vector<std::string>* pProviders = nullptr);
 
 /**
  * Verify SHA-256 hash of a downloaded package file.

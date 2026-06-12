@@ -79,12 +79,42 @@ std::string::size_type endOfFirstJsonObject(const std::string& s)
 
 } // anonymous namespace
 
+// Read an optional array-of-strings field into `out`. Absent field -> empty;
+// non-array or non-string entries are skipped with a warning (lenient, matching
+// the manifest's other optional arrays).
+void readStringArray(const json::Object& obj,
+                     const std::string& key,
+                     std::vector<std::string>* out)
+{
+   out->clear();
+   json::Object::Iterator it = obj.find(key);
+   if (it == obj.end())
+      return;
+
+   json::Value value = (*it).getValue();
+   if (!value.isArray())
+   {
+      WLOG("Manifest field '{}' is not an array; ignoring", key);
+      return;
+   }
+
+   json::Array arr = value.getArray();
+   for (const json::Value& entry : arr)
+   {
+      if (entry.isString())
+         out->push_back(entry.getString());
+      else
+         WLOG("Skipping non-string entry in manifest field '{}'", key);
+   }
+}
+
 Error getPackageInfoFromManifest(
     const json::Object& manifest,
     const std::string& protocolVersion,
     std::string* pPackageVersion,
     std::string* pDownloadUrl,
-    std::string* pSha256)
+    std::string* pSha256,
+    std::vector<std::string>* pProviders)
 {
    if (!pPackageVersion || !pDownloadUrl)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
@@ -116,6 +146,7 @@ Error getPackageInfoFromManifest(
    std::string bestPackageVersion;
    std::string bestDownloadUrl;
    std::string bestSha256;
+   std::vector<std::string> bestProviders;
    bool foundCompatible = false;
 
    for (const auto& entry : versions)
@@ -175,6 +206,10 @@ Error getPackageInfoFromManifest(
       std::string sha256;
       json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
 
+      // Read optional providers field (advertised provider identifiers)
+      std::vector<std::string> providers;
+      readStringArray(versionInfo, "providers", &providers);
+
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)
       {
@@ -182,6 +217,7 @@ Error getPackageInfoFromManifest(
          bestPackageVersion = packageVersion;
          bestDownloadUrl = downloadUrl;
          bestSha256 = sha256;
+         bestProviders = providers;
          foundCompatible = true;
          DLOG("Found compatible protocol {}.{} with package version {}",
               manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
@@ -200,6 +236,8 @@ Error getPackageInfoFromManifest(
    *pDownloadUrl = bestDownloadUrl;
    if (pSha256)
       *pSha256 = bestSha256;
+   if (pProviders)
+      *pProviders = bestProviders;
 
    DLOG("Selected best compatible protocol {}.{}: package version={}, url={}, sha256={}",
         bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl,

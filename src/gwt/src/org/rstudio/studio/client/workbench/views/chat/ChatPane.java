@@ -682,9 +682,11 @@ public class ChatPane
    }
 
    @Override
-   public void showNotInstalledWithInstall(String newVersion)
+   public void showNotInstalledWithInstall(String newVersion,
+                                           boolean additionalProvidersAvailable)
    {
-      String html = generateNotInstalledWithInstallHTML(newVersion);
+      String html = generateNotInstalledWithInstallHTML(
+         newVersion, additionalProvidersAvailable);
       updateFrameContent(html);
    }
 
@@ -703,11 +705,17 @@ public class ChatPane
              !Desktop.isDesktop();
    }
 
-   private String generateNotInstalledWithInstallHTML(String newVersion)
+   private String generateNotInstalledWithInstallHTML(String newVersion,
+                                                      boolean additionalProvidersAvailable)
    {
       String description = isWorkbench() ?
          constants_.chatNotInstalledDescriptionWorkbench() :
          constants_.chatNotInstalledDescription();
+
+      // The manifest can advertise additional providers for this build; when it
+      // does, extend the description with a sentence about that support.
+      if (additionalProvidersAvailable)
+         description += " " + constants_.chatNotInstalledAdditionalProviders();
 
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
@@ -1143,9 +1151,11 @@ public class ChatPane
    }
 
    @Override
-   public String getNotInstalledWithInstallHTML(String newVersion)
+   public String getNotInstalledWithInstallHTML(String newVersion,
+                                                boolean additionalProvidersAvailable)
    {
-      return generateNotInstalledWithInstallHTML(newVersion);
+      return generateNotInstalledWithInstallHTML(
+         newVersion, additionalProvidersAvailable);
    }
 
    @Override

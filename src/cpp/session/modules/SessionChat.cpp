@@ -3629,6 +3629,9 @@ struct UpdateState
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
    bool manifestUnavailable;
+   // Whether the manifest entry for our protocol advertises additional
+   // (non-default) providers, used to vary the not-installed view's copy.
+   bool additionalProvidersAvailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -3654,6 +3657,7 @@ struct UpdateState
         unsupportedInstalledVersion(false),
         unsupportedProtocol(false),
         manifestUnavailable(false),
+        additionalProvidersAvailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -4446,6 +4450,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    bool unsupportedProtocol = false;
    bool unsupportedInstalledVersion = false;
    bool noCompatibleVersion = false;
+   bool additionalProvidersAvailable = false;
    bool updateAvailable = false;
    bool isDowngrade = false;
    std::string newVersion;
@@ -4470,6 +4475,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
          s_updateState.unsupportedProtocol = unsupportedProtocol;
          s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
          s_updateState.noCompatibleVersion = noCompatibleVersion;
+         s_updateState.additionalProvidersAvailable = additionalProvidersAvailable;
          s_updateState.updateAvailable = updateAvailable;
          s_updateState.isDowngrade = isDowngrade;
          s_updateState.newVersion = newVersion;
@@ -4573,8 +4579,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    std::string packageVersion;
    std::string pkgDownloadUrl;
    std::string sha256;
+   std::vector<std::string> providers;
    error = integrity::getPackageInfoFromManifest(
-      manifest, kProtocolVersion, &packageVersion, &pkgDownloadUrl, &sha256);
+      manifest, kProtocolVersion, &packageVersion, &pkgDownloadUrl, &sha256,
+      &providers);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4590,6 +4598,12 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       finish();
       return;
    }
+
+   // The manifest's "providers" array marks the protocol entry as advertising an
+   // additional provider set beyond the default; the not-installed view varies its
+   // copy when that set is offered.
+   additionalProvidersAvailable =
+      std::find(providers.begin(), providers.end(), "byok") != providers.end();
 
    // Compare versions - offer install if versions differ (upgrade or downgrade).
    if (shouldInstallVersion(installedVersion, packageVersion))
@@ -4715,6 +4729,7 @@ void resolveWithoutManifestFetch()
       s_updateState.unsupportedProtocol = unsupportedProtocol;
       s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
       s_updateState.noCompatibleVersion = false;
+      s_updateState.additionalProvidersAvailable = false;
       s_updateState.updateAvailable = false;
       s_updateState.isDowngrade = false;
       s_updateState.newVersion = "";
@@ -5402,6 +5417,7 @@ void buildUpdateStateResult(json::Object* pResult)
    (*pResult)["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    (*pResult)["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
    (*pResult)["manifestUnavailable"] = s_updateState.manifestUnavailable;
+   (*pResult)["additionalProvidersAvailable"] = s_updateState.additionalProvidersAvailable;
    (*pResult)["errorMessage"] = s_updateState.errorMessage;
    (*pResult)["currentVersion"] = s_updateState.currentVersion;
    (*pResult)["newVersion"] = s_updateState.newVersion;
