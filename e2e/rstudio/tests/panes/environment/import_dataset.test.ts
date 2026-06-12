@@ -47,7 +47,7 @@ async function awaitPreviewOrSkip(
     .catch(() => false);
   if (!previewReady) {
     await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-    test.fixme(os.platform() === 'win32', 'readr CSV preview subprocess did not load on Windows CI');
+    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'readr CSV preview subprocess did not load on Windows CI');
     throw new Error('readr CSV preview did not produce column headers within 45 s');
   }
 }

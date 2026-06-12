@@ -187,7 +187,7 @@ jobs:
             src/gwt/www
             src/gwt/bin
             src/gwt/extras
-          key: rstudio-gwt-win64-${{ hashFiles('src/gwt/src/**/*.java', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-win64-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-win64-
 
@@ -278,6 +278,7 @@ jobs:
           }
 
       - name: Install build dependencies
+        id: install-deps
         working-directory: dependencies/windows
         shell: cmd
         run: install-dependencies.cmd
@@ -340,7 +341,7 @@ jobs:
           )
 
       - name: Save rstudio-tools cache
-        if: always()
+        if: steps.install-deps.conclusion == 'success'
         uses: actions/cache/save@v4
         with:
           path: |

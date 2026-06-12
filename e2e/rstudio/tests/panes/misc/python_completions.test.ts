@@ -60,7 +60,7 @@ test.describe('Python REPL completions', () => {
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
-    test.fixme(!popupVisible && os.platform() === 'win32', 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
+    test.fixme(!popupVisible && os.platform() === 'win32' && !!process.env.CI, 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
     if (!popupVisible) throw new Error('Python REPL completion popup did not appear');
 
     await page.keyboard.press('Tab');
