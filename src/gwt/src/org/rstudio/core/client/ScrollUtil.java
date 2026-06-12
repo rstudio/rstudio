@@ -34,34 +34,44 @@ public class ScrollUtil
             if (retries_ > MAX_SCROLL_RETRIES)
                return false;
 
-            // wait for a document to become available in the frame
-            if (frame.getIFrame() == null)
-               return true;
-            
-            if (frame.getIFrame().getContentDocument() == null)
-               return true;
+            try
+            {
+               // wait for a document to become available in the frame
+               if (frame.getIFrame() == null)
+                  return true;
 
-            // wait for the document to finish loading
-            Document doc = frame.getIFrame().getContentDocument();
-            String readyState = getDocumentReadyState(doc);
-            if (readyState == null)
-               return true;
-            
-            if (!readyState.equals("complete"))
-               return true;
-            
-            // wait for a real document to load (about:blank may be intermediate)
-            if (doc.getScrollTop() > 0)
-               return true;
+               if (frame.getIFrame().getContentDocument() == null)
+                  return true;
 
-            if (doc.getURL() == URIConstants.ABOUT_BLANK)
-               return true;
-            
-            // restore scroll position
-            if (scrollPosition > 0)
-               doc.setScrollTop(scrollPosition);
+               // wait for the document to finish loading
+               Document doc = frame.getIFrame().getContentDocument();
+               String readyState = getDocumentReadyState(doc);
+               if (readyState == null)
+                  return true;
 
-            return false;
+               if (!readyState.equals("complete"))
+                  return true;
+
+               // wait for a real document to load (about:blank may be intermediate)
+               if (doc.getScrollTop() > 0)
+                  return true;
+
+               if (doc.getURL() == URIConstants.ABOUT_BLANK)
+                  return true;
+
+               // restore scroll position
+               if (scrollPosition > 0)
+                  doc.setScrollTop(scrollPosition);
+
+               return false;
+            }
+            catch (Exception e)
+            {
+               // reading the frame's document can throw (e.g. the browser
+               // considers the frame a different origin while a navigation
+               // is in flight); treat it as not loaded yet and keep polling
+               return true;
+            }
          }
          
          private int retries_ = 0;
