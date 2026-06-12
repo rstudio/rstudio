@@ -3129,8 +3129,24 @@ var initSidebar = function() {
    toggle.setAttribute("aria-controls", "sidebarContent");
    toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    toggle.setAttribute("aria-label", "Toggle column summary panel");
+   // The host toolbar's Summary button already names the panel, so the
+   // header shows the column count instead of repeating "Summary".
+   var shownCols = 0;
+   for (var ci = 0; ci < cols.length; ci++) {
+      if (!isRownameColumn(cols[ci]))
+         shownCols++;
+   }
+
    var toggleLabel = document.createElement("span");
-   toggleLabel.textContent = "Summary";
+   toggleLabel.className = "sidebar-toggle-label";
+   if (totalCols > shownCols) {
+      // Column pagination is active; the sidebar lists the current page only.
+      toggleLabel.textContent = shownCols.toLocaleString() + " of " +
+         totalCols.toLocaleString() + " columns";
+   } else {
+      toggleLabel.textContent = shownCols.toLocaleString() +
+         (shownCols === 1 ? " column" : " columns");
+   }
    toggle.appendChild(toggleLabel);
 
    var toggleSpinner = document.createElement("span");
@@ -3138,6 +3154,14 @@ var initSidebar = function() {
    toggleSpinner.style.display = "none";
    toggleSpinner.id = "sidebarSpinner";
    toggle.appendChild(toggleSpinner);
+
+   // Decorative close glyph; clicks bubble to the toggle, which remains the
+   // panel's single accessible control.
+   var toggleClose = document.createElement("span");
+   toggleClose.className = "sidebar-toggle-close";
+   toggleClose.setAttribute("aria-hidden", "true");
+   toggleClose.textContent = "\u00D7";
+   toggle.appendChild(toggleClose);
 
    toggle.addEventListener("click", onSidebarToggleActivate);
    toggle.addEventListener("keydown", onSidebarToggleKeyDown);
