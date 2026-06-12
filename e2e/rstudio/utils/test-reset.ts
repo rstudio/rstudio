@@ -102,6 +102,29 @@ export async function resetForNextTest(page: Page): Promise<void> {
   //    whole GWT modal stack (handles stacked + OK-only dialogs a single
   //    button click can't); it hides rather than answers, so a dirty doc's
   //    changes are discarded by resetSourcePaneState's revert in step 3.
+  //
+  //    Capture each dialog's contents BEFORE hiding it: a leaked modal is
+  //    often the only visible artifact of a real product error (e.g. the
+  //    uncaught-exception "Error" dialog GWT raises), and dismissing it
+  //    silently would bury the evidence -- the test that *caused* it can
+  //    pass, and the dialog only blocks some later test. The warning puts
+  //    the dialog text in the test output where CI failures can be triaged.
+  const leakedDialogs = await page.evaluate(() => {
+    const visible = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    };
+    return Array.from(document.querySelectorAll('.gwt-DialogBox'))
+      .filter(visible)
+      .map((el) => {
+        const label = el.getAttribute('aria-label') ?? 'dialog';
+        const text = ((el as HTMLElement).innerText ?? '').replace(/\s+/g, ' ').trim();
+        return `[${label}] ${text.slice(0, 400)}`;
+      });
+  }).catch(() => [] as string[]);
+  for (const dialog of leakedDialogs) {
+    console.warn(`[test-reset] dismissing leaked modal dialog -- ${dialog}`);
+  }
   await dismissAllModals(page);
   // Sentinel -1 (not 0) on a failed read: 0 would masquerade as "no modals
   // left" and suppress the very warning this block exists to emit.

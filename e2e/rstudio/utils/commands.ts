@@ -163,6 +163,27 @@ type LayoutBridge = {
   reset(): Promise<void>;
 };
 
+/** One uncaught client exception recorded by the automation agent. */
+export type ClientException = {
+  message: string;
+  /**
+   * Cause chain + frames. Java names in draft / super-dev builds; best-effort
+   * (obfuscated) in optimized builds, where the message still identifies the
+   * failure.
+   */
+  stack: string;
+  /** Date.now() at record time. */
+  time: number;
+};
+
+type ErrorsBridge = {
+  /** Uncaught client exceptions recorded since the last clear(). */
+  list(): ClientException[];
+  clear(): void;
+  /** Raise a real uncaught exception from a scheduled context (self-test only). */
+  simulate(message: string): void;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
@@ -171,6 +192,7 @@ type RStudioBridge = {
   version: VersionInfo;
   dialogs: DialogsBridge;
   layout: LayoutBridge;
+  errors: ErrorsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -267,6 +289,27 @@ export async function isCommandEnabled(page: Page, commandId: string): Promise<b
  */
 export async function resetLayoutZoom(page: Page): Promise<void> {
   await page.evaluate(() => window.rstudio?.layout?.reset());
+}
+
+/**
+ * Read and clear the uncaught-client-exception record kept by the automation
+ * agent (window.rstudio.errors). Returns [] when the bridge is absent (e.g.
+ * mid-restart) -- callers treat that as "nothing recorded" because a dead
+ * session fails loudly elsewhere.
+ *
+ * The per-test fixture drains this after every test and fails the test that
+ * produced exceptions; a leftover drained before the next test is logged but
+ * not attributed (it may belong to teardown or the gap between tests).
+ */
+export async function drainClientExceptions(page: Page): Promise<ClientException[]> {
+  return page.evaluate(() => {
+    const errors = window.rstudio?.errors;
+    if (!errors)
+      return [];
+    const items = errors.list();
+    errors.clear();
+    return items;
+  }).catch(() => []);
 }
 
 /**
