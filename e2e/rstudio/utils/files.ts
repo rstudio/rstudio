@@ -9,14 +9,35 @@ import { resetSourcePaneState } from './commands';
 import { assertAbsolutePath } from './paths';
 
 /**
+ * True when the current process can create/modify entries in `dir`. Detects
+ * three distinct cases where the Node-side fast path is unsafe:
+ *   - `dir` doesn't exist (ENOENT)
+ *   - `dir` lives on a remote rsession host (also ENOENT from here)
+ *   - `dir` exists locally but was created by a different uid (Server-on-Linux:
+ *     test runner is `runner`, rsession is `pw_*` -- fs.existsSync returns
+ *     true via traversal, but writes EACCES)
+ * Callers fall back to R-side operations (executed by rsession, same uid as
+ * the workdir owner) when this returns false.
+ */
+function canWriteDir(dir: string): boolean {
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Write `content` to `fileName` in the per-spec sandbox workdir and open it
  * via `file.edit()`, bypassing the R-side `writeLines` escape gauntlet.
  *
- * The Node-side write only works when the workdir is local to the runner
- * (Desktop, or Server pointed at the same machine). When the workdir lives
- * on a remote rsession host, falls back to R-side writeLines with escaped
- * content -- callers that hit this path still have to deal with backslash
- * doubling for content that contains backslashes.
+ * The Node-side write only works when the workdir is writable by the test
+ * process. When it isn't -- the workdir lives on a remote rsession host, or
+ * lives locally but is owned by a different uid (Server-on-Linux) -- falls
+ * back to R-side writeLines with escaped content. Callers that hit the
+ * fallback still have to deal with backslash doubling for content that
+ * contains backslashes.
  *
  * All R-side operations use the absolute sandbox path, so they work even if
  * R's working directory has drifted away from the suite sandbox (e.g. a
@@ -30,12 +51,44 @@ export async function writeAndOpenFile(
 ): Promise<void> {
   assertAbsolutePath(sandboxDir, `writeAndOpenFile(fileName=${JSON.stringify(fileName)}): sandboxDir`);
   const fullPath = path.join(sandboxDir, fileName);
-  if (fs.existsSync(sandboxDir)) {
+  if (canWriteDir(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
     await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
   }
   await openFile(page, fullPath);
+}
+
+/**
+ * Create `relativePath` (with its parent directories) under `sandboxDir` and
+ * write `content` to it. Same write-or-fallback heuristic as
+ * `writeAndOpenFile`, but for cases where the test needs to seed a file
+ * deeper than the sandbox root (e.g. `tests/testthat/test-foo.R` inside a
+ * project skeleton). Does NOT open the file in the IDE -- callers open it
+ * separately via `documentOpen` / `openFile` once the test setup is ready.
+ */
+export async function seedSandboxFile(
+  page: Page,
+  sandboxDir: string,
+  relativePath: string,
+  content: string,
+): Promise<string> {
+  assertAbsolutePath(sandboxDir, `seedSandboxFile(relativePath=${JSON.stringify(relativePath)}): sandboxDir`);
+  const fullPath = path.join(sandboxDir, relativePath);
+  const parentDir = path.dirname(fullPath);
+  if (canWriteDir(sandboxDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+    fs.writeFileSync(fullPath, content);
+  } else {
+    // R-side mkdir + write executes as rsession's uid -- same owner as the
+    // sandbox -- so it sidesteps the cross-uid EACCES.
+    await executeInConsole(
+      page,
+      `dir.create(${rPathLiteral(parentDir)}, recursive = TRUE, showWarnings = FALSE)`,
+    );
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
+  }
+  return fullPath;
 }
 
 /**
@@ -128,7 +181,7 @@ export async function closeAndDeleteSandboxFiles(
   // "File Deleted" prompt and a "Save File" (system error 2) error whose glass
   // panels then block the next test's first action.
   await resetSourcePaneState(page);
-  if (fs.existsSync(sandboxDir)) {
+  if (canWriteDir(sandboxDir)) {
     for (const fileName of fileNames) {
       try {
         fs.rmSync(path.join(sandboxDir, fileName), { force: true });
@@ -137,7 +190,8 @@ export async function closeAndDeleteSandboxFiles(
       }
     }
   } else {
-    // Remote workdir -- fall back to R-side unlink with absolute paths.
+    // Workdir not writable from here (remote rsession host, or local but
+    // cross-uid as on Server-on-Linux) -- fall back to R-side unlink.
     const vec = fileNames.map((f) => rPathLiteral(path.join(sandboxDir, f))).join(', ');
     await executeInConsole(page, `unlink(c(${vec}))`);
   }
