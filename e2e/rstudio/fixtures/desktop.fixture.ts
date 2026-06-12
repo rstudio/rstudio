@@ -205,20 +205,21 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
-  // Pre-seed electron-store's config.json with explicit windowBounds. The
-  // schema default (1200x900) gets clamped by positionAndEnsureVisible to the
-  // workArea of whatever display is attached -- on macOS GH Actions runners
-  // that's around 1024x645, which is small enough that the left column's
-  // source pane drops under DualWindowLayoutPanel's 60px snap threshold and
-  // the Console gets promoted to MAXIMIZE state. Locking the renderer at
-  // 1400x900 keeps both panes comfortably above the snap threshold.
-  // Requested bounds that intersect any display.workArea are used as-is
-  // (window-utils.ts:191), so a 1400x900 rect at the origin sticks even on
-  // narrower virtual displays.
+  // Pre-seed electron-store's config.json with explicit windowBounds, pinned
+  // to ONE geometry that both local machines and CI render identically:
+  // 1024x645, the macOS GH Actions runner's display workArea. Asking for
+  // anything taller is silently clamped to that on CI (macOS constrains
+  // windows to the visible frame regardless of the requested rect), so the
+  // previous 1400x900 request meant local runs tested a different layout
+  // than CI -- and geometry-sensitive bugs (the Viewer's ensure-height
+  // escalating to a pane maximize, the Plots-pane ImageFrame TypeError)
+  // surfaced only on CI. 800x600 was evaluated and rejected: it genuinely
+  // cramps layouts (fewer data-viewer columns visible, the Import Dataset
+  // dialog doesn't fit) and broke 7 tests.
   fs.writeFileSync(
     path.join(electronUserData, 'config.json'),
     JSON.stringify(
-      { view: { windowBounds: { x: 0, y: 0, width: 1400, height: 900, maximized: false } } },
+      { view: { windowBounds: { x: 0, y: 0, width: 1024, height: 645, maximized: false } } },
       null,
       2,
     ),

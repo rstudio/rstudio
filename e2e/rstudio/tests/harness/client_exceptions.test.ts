@@ -1,0 +1,53 @@
+import { test, expect } from '@fixtures/rstudio.fixture';
+import { dismissAllModals } from '@utils/commands';
+
+/**
+ * Harness self-test for uncaught-client-exception capture (#17952 follow-up).
+ *
+ * The automation agent wraps GWT's uncaught-exception handler and records
+ * {message, stack, time} into window.rstudio.errors; the per-test fixture
+ * drains the record after every test and fails the test that raised one.
+ * `errors.simulate()` throws from a scheduled ($entry-wrapped) context, so
+ * the exception takes the real uncaught-handler path -- the same one a
+ * product bug (e.g. the Plots-pane ImageFrame TypeError) takes.
+ */
+test.describe('client exception capture', () => {
+  test('simulated uncaught exceptions are recorded with a stack', async ({ rstudioPage: page }) => {
+    await page.evaluate(() => window.rstudio!.errors.simulate('automation capture probe'));
+
+    // The simulated throw is scheduled; poll until the recorder sees it.
+    await expect.poll(
+      () => page.evaluate(
+        () => window.rstudio!.errors.list().map((e) => e.message).join('|'),
+      ),
+    ).toContain('automation capture probe');
+
+    const errors = await page.evaluate(() => window.rstudio!.errors.list());
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    // Stack content varies by build (Java names in draft, obfuscated when
+    // optimized); assert presence, not shape.
+    expect(typeof errors[0].stack).toBe('string');
+
+    // Clean up: clear the record so the per-test drain doesn't fail this
+    // test, and dismiss the Error dialog the (delegated-to) default handler
+    // showed for the simulated exception.
+    await page.evaluate(() => window.rstudio!.errors.clear());
+    await dismissAllModals(page);
+  });
+
+  test('an uncaught client exception fails the test that raised it', async ({ rstudioPage: page }) => {
+    // The per-test fixture's drain is expected to fail this test in its
+    // teardown; test.fail() inverts that into the passing outcome, so a
+    // regression in the fail-on-exception machinery surfaces as "expected
+    // to fail, but passed".
+    test.fail();
+
+    await page.evaluate(() => window.rstudio!.errors.simulate('deliberate failure probe'));
+    await expect.poll(
+      () => page.evaluate(() => window.rstudio!.errors.list().length),
+    ).toBeGreaterThan(0);
+
+    // Dismiss the dialog but deliberately do NOT clear the record.
+    await dismissAllModals(page);
+  });
+});
