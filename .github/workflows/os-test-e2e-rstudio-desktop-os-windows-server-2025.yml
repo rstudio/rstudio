@@ -321,6 +321,29 @@ jobs:
           Copy-Item -Recurse $yarnSrc $yarnDest
           Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
 
+      # The Electron packaging step runs `npm ci && electron-forge package`
+      # inside src/node/desktop-build-AMD64. Because src/node/desktop ships a
+      # binding.gyp, npm auto-runs `node-gyp rebuild` as the install lifecycle
+      # and uses npm's bundled node-gyp (v11.5.0 in node 22), which only knows
+      # VS 2017-2022 and aborts with "Could not find any Visual Studio
+      # installation to use" on the VS 2026 runner. node-gyp v12+ supports VS
+      # 2026; install it to a throwaway dir and point npm at it via
+      # npm_config_node_gyp -- npm picks that up for the install lifecycle
+      # regardless of which npm/node-gyp is otherwise in PATH.
+      - name: Install node-gyp v12 for VS 2026 support
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
+          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
+          npm install --prefix "$gypInstallDir" node-gyp@^12
+          $gypPath = "$gypInstallDir\node_modules\node-gyp\bin\node-gyp.js"
+          if (-not (Test-Path $gypPath)) {
+            Write-Error "node-gyp not installed at $gypPath"
+            exit 1
+          }
+          Write-Host "node-gyp installed: $gypPath"
+          "npm_config_node_gyp=$gypPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
       # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
       # miss (first run, or after GWT source changes) a full GWT build runs and
