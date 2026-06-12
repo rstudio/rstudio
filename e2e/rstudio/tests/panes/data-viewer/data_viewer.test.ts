@@ -927,4 +927,156 @@ test.describe('Data Viewer', () => {
       );
     }
   });
+
+  // The saved-state fingerprint covers column types and factor levels, not
+  // just names. A column changing type with unchanged names must discard the
+  // saved per-object state: a numeric filter restored onto a now-character
+  // column would otherwise be applied with the wrong semantics server-side
+  // (is.finite() on character is all-FALSE), silently showing an empty grid.
+  test('a saved numeric filter is discarded when the column type changes', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.type_change_df <- data.frame(x = 1:20); View(.rs.type_change_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Reveal the filter row and apply a numeric range filter to column 1.
+      await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+      const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(colFilter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await colFilter.getByText('All').click();
+
+      const numBox = dataViewer.frame.locator('.filterPopup .numValueBox');
+      await numBox.fill('5 - 10');
+      await numBox.dispatchEvent('change');
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+      const excludedCell = dataViewer.frame
+        .locator('#gridBody td')
+        .filter({ hasText: /^15$/ });
+      await expect(excludedCell).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(dataViewer.frame.locator('.filterPopup')).toHaveCount(0);
+
+      // Change the column's type without renaming it, then refresh in place.
+      // (The console mutation may also trigger an automatic refresh; the
+      // explicit call just makes the re-bootstrap deterministic.)
+      await consoleActions.executeInConsole(
+        '.rs.type_change_df$x <- as.character(.rs.type_change_df$x)',
+      );
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { refreshData?: () => void } | undefined;
+        if (!w?.refreshData) throw new Error('refreshData() not available on data viewer iframe');
+        w.refreshData();
+      }, VIEWER_FRAME);
+
+      // The fingerprint mismatch discards the stale filter: all rows return
+      // (including the value the range had excluded) and nothing reports as
+      // filtered. Pre-fix, the names-only fingerprint validated and the
+      // restored filter emptied the grid.
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 20 entries', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+      await expect(excludedCell.first()).toBeVisible();
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.type_change_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // initSidebar runs on every bootstrap and re-registers the toggle's
+  // listeners on the persistent #sidebarToggle element. Pre-fix it added a
+  // fresh closure each time, so after one refresh a single click ran two
+  // toggles -- a visible no-op. The in-grid toggle (inside the iframe, as
+  // opposed to the host toolbar's latching button) must keep working after
+  // a data refresh.
+  test('the in-grid Summary toggle still works after a data refresh', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.toggle_df <- as.data.frame(matrix(0L, nrow = 10, ncol = 5)); View(.rs.toggle_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const sidebarPanel = dataViewer.frame.locator('#sidebarPanel');
+      const sidebarToggle = dataViewer.frame.locator('#sidebarToggle');
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Add a column: the resulting in-place refresh re-bootstraps the grid
+      // (re-running initSidebar); the column count is the completion gate.
+      await consoleActions.executeInConsole('.rs.toggle_df$added <- 1L');
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // One click flips the sidebar exactly once...
+      await sidebarToggle.click();
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'false');
+
+      // ...and once more brings it back. The collapsed strip's hit target
+      // is partially overlaid by the grid panel, so Playwright's
+      // actionability check never sees it free; force the click -- what's
+      // under test is how many times the listener runs, not the hit target.
+      await sidebarToggle.click({ force: true });
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'true');
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.toggle_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // Manual (drag-resized) column widths are keyed by absolute column
+  // identity, like pins/sort/filters. Pre-fix they were positional within
+  // the fetched window, so paging to the next set of columns re-applied a
+  // saved width to whatever column occupied the same position -- and the
+  // resized column lost its width.
+  test('a manually resized width follows its column across column pagination', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '.rs.width_df <- as.data.frame(matrix(1:4000, nrow = 10, ncol = 400))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(.rs.width_df)');
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      // Let the post-first-fetch auto-size pass settle before measuring.
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
+
+      const col1 = dataViewer.frame.locator('th[data-col-idx="1"]');
+      const before = (await col1.boundingBox())!;
+
+      // Drag column 1's resize handle 150px to the right.
+      const handle = col1.locator('.resizer');
+      const hb = (await handle.boundingBox())!;
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(hb.x + hb.width / 2 + 150, hb.y + hb.height / 2, { steps: 10 });
+      await page.mouse.up();
+
+      await expect.poll(async () => (await col1.boundingBox())!.width)
+        .toBeGreaterThan(before.width + 100);
+      const resizedWidth = (await col1.boundingBox())!.width;
+
+      // Page forward: the column occupying the same position (201) must
+      // keep its own auto-sized width, not inherit column 1's. Note
+      // data-col-idx is a position within the fetched window, so on page 2
+      // the header for column 201 is found by its absolute title instead.
+      await expect(dataViewer.rightArrow).toBeVisible();
+      await dataViewer.rightArrow.click();
+      await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+      const col201 = dataViewer.columnHeader(201);
+      await expect(col201).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(async () => (await col201.boundingBox())!.width)
+        .toBeLessThan(resizedWidth - 50);
+
+      // Page back: column 1 still carries the manual width.
+      await dataViewer.leftArrow.click();
+      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      await expect.poll(async () =>
+        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())!.width,
+      { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(before.width + 100);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.width_df", envir = .GlobalEnv)');
+    }
+  });
 });

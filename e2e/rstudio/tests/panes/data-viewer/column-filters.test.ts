@@ -8,7 +8,7 @@
 // restore across column virtualization), the boolean filter, and the
 // inert "All" chip shown for column types with no filter support (Date).
 
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
@@ -57,6 +57,16 @@ test.describe('Data Viewer column filters', () => {
       .toBeVisible({ timeout: TIMEOUTS.fileOpen });
   }
 
+  // Body cells (rownames + values) whose full text is exactly `text`.
+  // Complements the info-bar count assertions: the count is server-reported,
+  // so also check the rendered rows -- excluded values must actually leave
+  // the grid, and surviving values must actually be shown.
+  function gridCells(text: string): Locator {
+    return dataViewer.frame
+      .locator('#gridBody td')
+      .filter({ hasText: new RegExp(`^${text}$`) });
+  }
+
   test('numeric filter applies a typed range, narrows to equality, and clears', async ({
     rstudioPage: page,
   }) => {
@@ -85,8 +95,11 @@ test.describe('Data Viewer column filters', () => {
     await expect(dataViewer.gridInfo)
       .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
 
-    // The header label renders the active range.
+    // The header label renders the active range, an excluded value is gone
+    // from the rendered rows, and a surviving value remains.
     await expect(colFilter).toContainText('[5, 10]');
+    await expect(gridCells('15')).toHaveCount(0);
+    await expect(gridCells('7').first()).toBeVisible();
 
     // Narrow to a single-value equality filter ("numeric|7").
     await numBox.fill('7');
@@ -94,6 +107,8 @@ test.describe('Data Viewer column filters', () => {
     await expect(dataViewer.gridInfo)
       .toContainText('of 1 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
     await expect(colFilter).toContainText('[7]');
+    await expect(gridCells('10')).toHaveCount(0);
+    await expect(gridCells('7').first()).toBeVisible();
 
     // Dismiss the popup, then clear the filter from the header.
     await page.keyboard.press('Escape');
@@ -102,6 +117,74 @@ test.describe('Data Viewer column filters', () => {
     await expect(dataViewer.gridInfo).toContainText('of 20 entries');
     await expect(dataViewer.gridInfo).not.toContainText('filtered from');
     await expect(colFilter).toHaveClass(/unfiltered/);
+    await expect(gridCells('15').first()).toBeVisible();
+  });
+
+  // The numeric value box fires no native "change" until the popup is
+  // dismissed, so a typed (not brushed) value is still uncommitted when the
+  // Enter keydown runs. Pre-fix, Enter dismissed the popup first: the column
+  // reverted to "All", and the value only landed via a debounced apply
+  // ~200ms later -- the grid filtered with no visible filter. Enter now
+  // commits the typed value synchronously.
+  test('numeric filter commits a typed value on Enter, with the header label in sync', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    await colFilter.getByText('All').click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+
+    // fill() sets the value without firing "change", mirroring the
+    // type-then-Enter user path.
+    const numBox = popup.locator('.numValueBox');
+    await numBox.fill('5 - 10');
+    await numBox.press('Enter');
+    await expect(popup).toHaveCount(0);
+
+    // The filter applies AND the header reflects it -- both halves matter:
+    // the bug produced a filtered grid behind an "All" header.
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+    await expect(colFilter).toContainText('[5, 10]');
+    await expect(colFilter).toHaveClass(/filtered/);
+    await expect(gridCells('15')).toHaveCount(0);
+    await expect(gridCells('7').first()).toBeVisible();
+  });
+
+  // Escape is a cancel: the typed value must not be applied late by the
+  // debounced apply (or by the native "change" the dismissal replays on the
+  // dirty input), and the column reverts to its unfiltered chip.
+  test('numeric filter Escape cancels a typed value instead of applying it late', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    await colFilter.getByText('All').click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+
+    const numBox = popup.locator('.numValueBox');
+    await numBox.fill('5 - 10');
+    await numBox.press('Escape');
+    await expect(popup).toHaveCount(0);
+
+    // No value was ever committed, so the column reverts to "All".
+    await expect(colFilter).toHaveClass(/unfiltered/);
+    await expect(colFilter).toContainText('All');
+
+    // ...and stays unfiltered past the debounce window. Asserting that
+    // nothing happens needs a bounded wait: 400ms comfortably covers
+    // TIMING.filterDebounce (200ms), after which a late apply would have
+    // already landed.
+    await page.waitForTimeout(400);
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(colFilter).toHaveClass(/unfiltered/);
+    // A value the cancelled range would have excluded is still rendered.
+    await expect(gridCells('15').first()).toBeVisible();
   });
 
   test('factor filter applies a clicked level and shows it in the filter box', async ({
@@ -127,9 +210,13 @@ test.describe('Data Viewer column filters', () => {
     await expect(popup).toHaveCount(0);
 
     // The filter box shows the selected level, and the header is latched
-    // into its filtered state.
+    // into its filtered state. Excluded levels leave the rendered rows;
+    // the selected one remains.
     await expect(colFilter.locator('.textFilterBox')).toHaveValue('beta');
     await expect(colFilter).toHaveClass(/filtered/);
+    await expect(gridCells('alpha')).toHaveCount(0);
+    await expect(gridCells('gamma')).toHaveCount(0);
+    await expect(gridCells('beta').first()).toBeVisible();
   });
 
   // Column virtualization destroys and recreates a header as it scrolls out
@@ -152,6 +239,9 @@ test.describe('Data Viewer column filters', () => {
     await popup.locator('.choiceListItem', { hasText: 'beta' }).click();
     await expect(dataViewer.gridInfo)
       .toContainText('filtered from 100', { timeout: TIMEOUTS.fileOpen });
+    // The excluded level is gone from the rendered rows (only column 1
+    // holds factor values, so "alpha" can't appear anywhere else).
+    await expect(gridCells('alpha')).toHaveCount(0);
 
     // Evict column 1 from the DOM with a full horizontal scroll, then bring
     // it back.
@@ -184,10 +274,13 @@ test.describe('Data Viewer column filters', () => {
     await expect(dataViewer.gridInfo)
       .toContainText('of 7 entries (filtered from 10', { timeout: TIMEOUTS.fileOpen });
     await expect(colFilter).toContainText('TRUE');
+    await expect(gridCells('FALSE')).toHaveCount(0);
+    await expect(gridCells('TRUE').first()).toBeVisible();
 
     await colFilter.locator('.clearFilter').click();
     await expect(dataViewer.gridInfo).toContainText('of 10 entries');
     await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(gridCells('FALSE').first()).toBeVisible();
   });
 
   // Date columns get no col_search_type from the backend, so the filter row

@@ -432,6 +432,17 @@ var showError = function(msg) {
    if (grid) grid.style.display = "none";
 };
 
+// Reverse of showError, run when a bootstrap succeeds: without this, a grid
+// that recovers from a transient failure (e.g. session busy during a refresh)
+// rebuilds underneath a stuck error mask and stays hidden until a full page
+// reload.
+var hideError = function() {
+   document.getElementById("errorWrapper").style.display = "none";
+   document.getElementById("errorMask").style.display = "none";
+   var grid = document.getElementById("rsGridData");
+   if (grid) grid.style.display = "";
+};
+
 var parseLocationUrl = function() {
    var result = {
       env: "", obj: "", cacheKey: "", id: "", dataSource: "",
@@ -4116,6 +4127,10 @@ var initGrid = function(resCols, data) {
       return;
    }
 
+   // This bootstrap succeeded; clear any error overlay left by a previously
+   // failed one so the rebuilt grid is actually visible.
+   hideError();
+
    // R serializes col_breaks via as.character() to preserve full numeric
    // precision over the JSON wire (avoiding the precision loss that an R
    // double -> JSON-number round-trip can introduce). Convert back to
@@ -4792,6 +4807,18 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 
 var columnNav = function(newOffset) {
    if (bootstrapping) return;
+
+   // A failed bootstrap leaves no grid (cols === null, only possible here
+   // when not bootstrapping) and an unknown totalCols (0), so the clamp
+   // below would pin every request back to offset 0 and conclude there's
+   // nothing to do. Treat any nav action on a dead grid as "retry at the
+   // current offset": the bootstrap re-fetches this window and repopulates
+   // totalCols, and the next click pages normally.
+   if (cols === null) {
+      bootstrap();
+      return;
+   }
+
    newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns, newOffset));
    if (columnOffset !== newOffset) {
       columnOffset = newOffset;
@@ -5033,6 +5060,14 @@ window.lastColumnPage = function() {
 
 window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    if (bootstrapping) return;
+
+   // Same dead-grid recovery rule as columnNav: with totalCols unknown (0)
+   // after a failed bootstrap, the guards below would swallow every request.
+   if (cols === null) {
+      bootstrap();
+      return;
+   }
+
    if (newOffset >= totalCols) return;
    if (newOffset >= 0) columnOffset = newOffset;
    // Always clamp maxDisplayColumns to the remaining column count: when
