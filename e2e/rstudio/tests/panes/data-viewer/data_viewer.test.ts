@@ -811,6 +811,68 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/17958
+  //
+  // Two regressions from the vanilla-JS grid rewrite: (1) End/Ctrl+End jumped
+  // to the last *column* (Excel semantics) instead of scrolling to the bottom
+  // of the current column like the pre-rewrite viewer; (2) the bottom-edge
+  // math in ensureActiveCellVisible used the raw viewport clientHeight,
+  // ignoring the sticky header inside it, so the jump landed a header-height
+  // short and the target row stayed hidden below the fold.
+  test('End scrolls to the last row of the current column, fully visible (#17958)', async ({ rstudioPage: page }) => {
+    // 500 rows forces vertical virtual scrolling; 30 columns force horizontal
+    // overflow so a wrong jump-to-last-column would visibly move scrollLeft.
+    await consoleActions.executeInConsole(
+      '{ .rs.ctrl_end_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.ctrl_end_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Click the first data cell: sets the active cell to (0, 1) and focuses
+      // the viewport so the grid keydown handler receives the End press.
+      await dataViewer.frame.locator('#gridBody tr[data-row="0"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_0_1')).toHaveClass(/\bactiveCell\b/);
+
+      await page.keyboard.press('ControlOrMeta+End');
+
+      // The active cell lands on the last row of the *same* column -- not the
+      // bottom-right corner -- and the viewport does not scroll horizontally.
+      const lastCell = dataViewer.frame.locator('#rsGridCell_499_1');
+      await expect(lastCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      expect(await dataViewer.viewport.evaluate((el) => el.scrollLeft)).toBe(0);
+
+      // The last row must be *fully* visible; before the fix the scroll
+      // stopped a header-height short, leaving it below the bottom edge.
+      const viewportBox = await dataViewer.viewport.boundingBox();
+      const cellBox = await lastCell.boundingBox();
+      expect(viewportBox).not.toBeNull();
+      expect(cellBox).not.toBeNull();
+      expect(cellBox!.y + cellBox!.height)
+        .toBeLessThanOrEqual(viewportBox!.y + viewportBox!.height + 0.5);
+
+      // The info bar's "Showing X to Y" range shares visibleBodyHeight with
+      // the scroll math; at max scroll it must count the last row in view.
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+
+      // Home returns to the top of the same column.
+      await page.keyboard.press('Home');
+      await expect(dataViewer.frame.locator('#rsGridCell_0_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => dataViewer.viewport.evaluate((el) => el.scrollTop)).toBe(0);
+
+      // Plain End (no modifier) behaves identically -- it was the keystroke
+      // in the original report.
+      await page.keyboard.press('End');
+      await expect(lastCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      expect(await dataViewer.viewport.evaluate((el) => el.scrollLeft)).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.ctrl_end_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of
