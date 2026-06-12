@@ -150,6 +150,30 @@ test_that(".rs.describeCols() fingerprint distinguishes hyphen-collisions", {
    expect_false(identical(fp1, fp2))
 })
 
+test_that(".rs.dataViewer.colsFingerprint() reflects column types and factor levels", {
+   # Saved filters are typed (numeric ranges, factor level indices), so a
+   # column changing type -- or a factor being re-leveled -- with unchanged
+   # names must change the fingerprint; otherwise a restored filter is
+   # silently applied with the wrong semantics.
+   numeric_x <- data.frame(a = 1:3, b = c(1.5, 2.5, 3.5))
+   character_x <- data.frame(a = as.character(1:3), b = c(1.5, 2.5, 3.5))
+   expect_false(identical(.rs.dataViewer.colsFingerprint(numeric_x),
+                          .rs.dataViewer.colsFingerprint(character_x)))
+
+   # Re-leveling a factor changes the meaning of a saved level-index filter.
+   levels_ab <- data.frame(f = factor(c("a", "b")))
+   levels_ba <- data.frame(f = factor(c("a", "b"), levels = c("b", "a")))
+   expect_false(identical(.rs.dataViewer.colsFingerprint(levels_ab),
+                          .rs.dataViewer.colsFingerprint(levels_ba)))
+
+   # Same names and same types -> stable fingerprint, even when values differ
+   # (saved state should survive plain data edits).
+   values_1 <- data.frame(a = 1:3, b = c("x", "y", "z"))
+   values_2 <- data.frame(a = 4:6, b = c("p", "q", "r"))
+   expect_identical(.rs.dataViewer.colsFingerprint(values_1),
+                    .rs.dataViewer.colsFingerprint(values_2))
+})
+
 test_that(".rs.dataViewer.colsFingerprint() returns NA for empty/NULL names", {
    # The client treats a null/missing fingerprint as always-mismatch and
    # discards any saved per-object state -- there's no anchor to align
