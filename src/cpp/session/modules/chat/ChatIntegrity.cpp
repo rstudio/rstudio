@@ -178,9 +178,13 @@ Error getPackageInfoFromManifest(
       std::string sha256;
       json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
 
-      // Read optional providers field (advertised provider identifiers)
+      // Read optional providers field (advertised provider identifiers). On any
+      // error -- absent, not an array, or a non-string element -- treat the entry
+      // as having no providers. readObject appends valid elements before failing
+      // on a bad one, so reset to avoid an order-dependent partial result.
       std::vector<std::string> providers;
-      json::readObject(versionInfo, "providers", providers); // ignore error - field is optional
+      if (json::readObject(versionInfo, "providers", providers))
+         providers.clear();
 
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)

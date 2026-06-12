@@ -506,6 +506,34 @@ TEST(ChatIntegrity, GetPackageInfoIgnoresNonArrayProviders)
    EXPECT_TRUE(providers.empty());
 }
 
+TEST(ChatIntegrity, GetPackageInfoIgnoresMalformedProviderArray)
+{
+   // A providers array with a non-string element is treated as no providers,
+   // regardless of where the bad element sits (no order-dependent partial read).
+   json::Array bad;
+   bad.push_back("pai");
+   bad.push_back(123);
+   bad.push_back("byok");
+
+   json::Object versionInfo;
+   versionInfo["version"] = "2.0.0";
+   versionInfo["url"] = "https://example.com/pkg.zip";
+   versionInfo["providers"] = bad;
+
+   json::Object versions;
+   versions["1.0"] = versionInfo;
+   json::Object manifest;
+   manifest["versions"] = versions;
+
+   std::string packageVersion, downloadUrl, sha256;
+   std::vector<std::string> providers{"stale"};
+   Error error = getPackageInfoFromManifest(
+      manifest, "1.0", &packageVersion, &downloadUrl, &sha256, &providers);
+
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(providers.empty());
+}
+
 TEST(ChatIntegrity, AdvertisesByokProvider)
 {
    EXPECT_TRUE(advertisesByokProvider({"pai", "byok"}));
