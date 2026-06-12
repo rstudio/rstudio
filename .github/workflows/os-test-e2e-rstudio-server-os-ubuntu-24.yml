@@ -286,17 +286,25 @@ jobs:
 
       # The Playwright e2e tests drive RStudio through the window.rstudio
       # automation bridge, which is only exposed when rsession is started with
-      # --automation-agent. server.fixture.ts's "Forward --automation-agent to
-      # every rsession this server spawns" path applies when the fixture spawns
-      # its own rserver-dev; we instead connect to the systemd-managed
+      # --automation-agent. server.fixture.ts forwards this flag when it
+      # spawns its own rserver-dev; we instead use the systemd-managed
       # rstudio-server installed from the .deb, so the flag has to come from
-      # rserver.conf. rserver reads it on startup and forwards it to every
-      # rsession it launches (server/session/ServerSessionManager.cpp:229).
-      # Safe to enable here because the runner is ephemeral; do NOT enable in
-      # production.
+      # the service unit. The option is registered in the pAutomation
+      # program_options group, which feeds the CLI parser only -- writing
+      # `automation-agent=1` into /etc/rstudio/rserver.conf is rejected
+      # ("unrecognised option"). Add the flag via a systemd drop-in that
+      # overrides ExecStart, and reload systemd before the Start step.
+      # Safe to enable here because the runner is ephemeral; do NOT enable
+      # in production.
       - name: Enable automation-agent for rsessions
         run: |
-          echo 'automation-agent=1' | sudo tee -a /etc/rstudio/rserver.conf
+          sudo mkdir -p /etc/systemd/system/rstudio-server.service.d
+          sudo tee /etc/systemd/system/rstudio-server.service.d/automation-agent.conf >/dev/null <<'EOF'
+          [Service]
+          ExecStart=
+          ExecStart=/usr/lib/rstudio-server/bin/rserver --automation-agent
+          EOF
+          sudo systemctl daemon-reload
 
       - name: Start RStudio Server
         run: |
