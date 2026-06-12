@@ -48,6 +48,9 @@ const DEBUG_STOP_BTN = `${DEBUG_TOOLBAR} [title^="Stop"]`;
  *     squeezes other panes to near-zero or hides their tab strips entirely,
  *     so the next test can't click its targets. End either state when active
  *     (see resetLayoutZoom).
+ *   - **Tabset selection.** Restore the default Environment (TabSet1) and
+ *     Files (TabSet2) tabs, so a prior test that selected a different tab in
+ *     either column doesn't leave the next test acting on a hidden pane.
  *   - **Source pane buffers.** Collapse to a single Untitled tab via the
  *     `resetToUntitled` bridge (kept-or-created untitled + close everything
  *     else). resetSourcePaneState specifically -- NOT closeAllSourceDocs --
@@ -173,16 +176,27 @@ export async function resetForNextTest(page: Page): Promise<void> {
   //    nothing is zoomed or maximized.
   await resetLayoutZoom(page);
 
-  // 4. Collapse source pane to a single Untitled tab. resetSourcePaneState
+  // 4. Restore the default tabset selection. A prior test that selected a
+  //    different tab in TabSet1 (History/Connections) or TabSet2
+  //    (Plots/Help/Viewer/...) leaves that selection in place; the next test
+  //    expecting the default Environment/Files tabs would then act on a
+  //    hidden pane. activateEnvironment selects Environment in TabSet1 and
+  //    activateFiles selects Files in TabSet2 (distinct columns, so both
+  //    hold); console focus is re-established in step 6. Each is a cheap
+  //    no-op when the tab is already selected.
+  await executeCommand(page, 'activateEnvironment');
+  await executeCommand(page, 'activateFiles');
+
+  // 5. Collapse source pane to a single Untitled tab. resetSourcePaneState
   //    waits for the async close chain to drain before returning, so lingering
   //    tabs (and their hidden Ace editors) can't bleed state into the next
   //    test -- stale `.ace_active_debug_line` markers, gutter breakpoints, etc.
   await resetSourcePaneState(page);
 
-  // 5. Restore focus to the console so tests start from a deterministic
+  // 6. Restore focus to the console so tests start from a deterministic
   //    focus state. resetToUntitled's handler moves focus to the kept /
-  //    newly-created Untitled tab; without this, the first test action
-  //    that needs console focus (e.g. clearConsole, executeInConsole) has
-  //    to race the in-flight focus shift.
+  //    newly-created Untitled tab, and the tab activations in step 4 focus
+  //    their panes; without this, the first test action that needs console
+  //    focus (e.g. clearConsole, executeInConsole) has to race that.
   await executeCommand(page, 'activateConsole');
 }

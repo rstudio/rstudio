@@ -1026,8 +1026,11 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          @Override
          public void onUpdateAvailable(String currentVersion, String newVersion,
-                                       boolean isInitialInstall, boolean isDowngrade)
+                                       boolean isInitialInstall, boolean isDowngrade,
+                                       boolean additionalProvidersAvailable)
          {
+            // additionalProvidersAvailable only varies the chat pane's not-installed
+            // view; the preferences install prompt does not show that description.
             showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
                forAssistant, previousAssistantValue, previousChatProviderValue);
          }

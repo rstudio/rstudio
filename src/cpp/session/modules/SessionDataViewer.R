@@ -134,8 +134,15 @@
    as.character(col)
 })
 
-# Compact, collision-resistant hash of a frame's column names. Used as a
+# Compact, collision-resistant hash of a frame's column structure. Used as a
 # fingerprint to detect object reassignment between data viewer loads.
+#
+# The fingerprint covers column names, column classes, and factor levels --
+# not just names. Saved filters are typed (numeric ranges, factor level
+# indices), so a column changing type, or a factor being re-leveled, with
+# unchanged names must also invalidate saved state; otherwise a restored
+# filter is silently applied with the wrong semantics (an inexplicably empty
+# grid, or a factor filter matching the wrong level).
 #
 # Returns NA_character_ for empty / NULL names so the client can treat
 # "no anchor" as always-mismatch; without anchors there's no way to
@@ -148,7 +155,18 @@
    if (n == 0L)
       return(NA_character_)
 
-   paste0(n, ":", .rs.digest(nms))
+   sig <- list(names = nms)
+   if (is.list(x))
+   {
+      sig$types <- vapply(x, function(col) {
+         type <- paste(class(col), collapse = "/")
+         if (is.factor(col))
+            type <- paste(c(type, levels(col)), collapse = "/")
+         type
+      }, character(1), USE.NAMES = FALSE)
+   }
+
+   paste0(n, ":", .rs.digest(sig))
 })
 
 .rs.addFunction("describeCols", function(x,
@@ -198,6 +216,19 @@
    # sampling the visible rows instead.
    maxCharsCap <- 200L
    computeMaxChars <- ncol(x) > 0 && ncol(x) <= maxCharsCap
+
+   # Maximum number of distinct values for which the summary sidebar draws
+   # one frequency bar per category; above this, a factor / character column
+   # gets a text summary (count of uniques + dominant value) instead.
+   maxCategoryBars <- 24L
+
+   # Character columns are only categorized (a full table() hash) when they
+   # have at most this many rows. The option is user-supplied, so validate
+   # it here; a malformed value (NA, wrong length, non-numeric) must not be
+   # able to break the whole describe call.
+   maxCategorizeRows <- getOption("rstudio.dataViewer.maxCategorizeRows", 1e6)
+   if (!is.numeric(maxCategorizeRows) || length(maxCategorizeRows) != 1 || is.na(maxCategorizeRows))
+      maxCategorizeRows <- 1e6
 
    # Cheap upper bound on the displayed character count for a column.
    # Only handles types where the bound is a property of range/levels/type
@@ -300,8 +331,15 @@
       col_class <- class(x[[idx]])
       col_breaks <- c()
       col_counts <- c()
+      col_min <- NULL
+      col_max <- NULL
       col_vals <- ""
       col_search_type <- ""
+      col_cat_vals <- NULL
+      col_cat_counts <- NULL
+      col_n_unique <- NULL
+      col_top_value <- NULL
+      col_top_count <- NULL
       
       # extract label, if any, or use global label, if any
       label <- attr(x[[idx]], "label", exact = TRUE)
@@ -343,6 +381,47 @@
             # https://github.com/rstudio/rstudio/issues/14113
             col_search_type <- "factor"
             col_vals <- levels(val)
+
+            # per-level counts for the sidebar's category mini-plot: cheap
+            # via tabulate() on the underlying integer codes. at most
+            # maxCategoryBars bars are drawn (in level order, preserving
+            # ordinal structure); above that the sidebar falls back to a
+            # text summary, so only the dominant level is shipped.
+            #
+            # gate on the column type, not val: list columns whose first
+            # element is a factor reach this branch, and as.integer() on a
+            # list is an error. the counts are decorative (the client
+            # degrades gracefully without them), so any failure just drops
+            # them instead of failing the whole describe call
+            status <- .rs.tryCatch({
+               if (is.factor(x[[idx]]) && length(col_vals) > 0)
+               {
+                  counts <- tabulate(as.integer(x[[idx]]), nbins = length(col_vals))
+                  if (length(col_vals) <= maxCategoryBars)
+                  {
+                     col_cat_vals <- col_vals
+                     col_cat_counts <- counts
+                  }
+                  else if (any(counts > 0))
+                  {
+                     top <- which.max(counts)
+                     col_top_value <- col_vals[[top]]
+                     col_top_count <- counts[[top]]
+                  }
+               }
+            })
+
+            if (inherits(status, "error"))
+            {
+               col_cat_vals <- NULL
+               col_cat_counts <- NULL
+               col_top_value <- NULL
+               col_top_count <- NULL
+               .rs.logErrorMessage(
+                  "Error computing level counts for column '%s': %s",
+                  col_name,
+                  conditionMessage(status))
+            }
          }
          # for histograms, we support only the base R numeric class and its derivatives;
          # is.numeric can return true for values that can only be manipulated using
@@ -353,7 +432,11 @@
             # implicitly remove those values); if that leaves us with nothing,
             # treat this column as untyped since we can do no meaningful filtering
             # on it
-            hist_vals <- x[[idx]][is.finite(x[[idx]])]
+            #
+            # coerce to double up front: integer columns whose range exceeds
+            # .Machine$integer.max otherwise overflow both in the range
+            # computation below and in hist()'s break selection (#17951)
+            hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
                # For whole-number columns spanning a small range, draw one
@@ -378,6 +461,13 @@
                col_breaks <- h$breaks
                col_counts <- h$counts
 
+               # the actual (finite) data range; the histogram breaks can
+               # extend past it (pretty()-ed for default binning, padded by
+               # 0.5 on each side for integer bins). shown in the column
+               # summary sidebar, where the sparkline has no axis ticks
+               col_min <- min_v
+               col_max <- max_v
+
                # record search type
                col_search_type <- "numeric"
             }
@@ -389,6 +479,52 @@
          else if (is.character(val))
          {
             col_search_type <- "character"
+
+            # category counts for the sidebar mini-plot. unlike factors this
+            # costs a full hash of the column (table()), so very long columns
+            # skip it and the sidebar shows no categorical summary. at most
+            # maxCategoryBars distinct values draws one bar per value, most
+            # frequent first (no natural order to preserve); above that only
+            # the text summary fields (count of uniques, dominant value) are
+            # shipped.
+            #
+            # gate on the column type, not val: list columns whose first
+            # element is a character vector reach this branch, and table()
+            # on a list either errors (ragged elements) or counts the wrong
+            # thing. decorative only, so any failure just drops the fields
+            # instead of failing the whole describe call
+            status <- .rs.tryCatch({
+               if (is.character(x[[idx]]) && length(x[[idx]]) <= maxCategorizeRows)
+               {
+                  counts <- table(x[[idx]], useNA = "no")
+                  col_n_unique <- length(counts)
+                  if (col_n_unique > 0 && col_n_unique <= maxCategoryBars)
+                  {
+                     counts <- sort(counts, decreasing = TRUE)
+                     col_cat_vals <- names(counts)
+                     col_cat_counts <- as.integer(counts)
+                  }
+                  else if (col_n_unique > 0)
+                  {
+                     top <- which.max(counts)
+                     col_top_value <- names(counts)[[top]]
+                     col_top_count <- as.integer(counts[[top]])
+                  }
+               }
+            })
+
+            if (inherits(status, "error"))
+            {
+               col_cat_vals <- NULL
+               col_cat_counts <- NULL
+               col_n_unique <- NULL
+               col_top_value <- NULL
+               col_top_count <- NULL
+               .rs.logErrorMessage(
+                  "Error computing category counts for column '%s': %s",
+                  col_name,
+                  conditionMessage(status))
+            }
          }
          else if (is.logical(val))
          {
@@ -410,6 +546,27 @@
          col_na_count    = .rs.scalar(col_na_count),
          col_index       = .rs.scalar(as.integer(colIndices[idx]))
       )
+
+      # data range, present only for histogram-summarized numeric columns
+      if (!is.null(col_min)) {
+         result$col_min <- .rs.scalar(col_min)
+         result$col_max <- .rs.scalar(col_max)
+      }
+
+      # category metadata for the sidebar: bar values/counts at or below
+      # the maxCategoryBars cutoff, dominant-value fields above it; the
+      # distinct-value count ships whenever it was computed (character
+      # columns within the row gate), regardless of the cutoff
+      if (!is.null(col_cat_counts)) {
+         result$col_cat_vals <- as.character(col_cat_vals)
+         result$col_cat_counts <- as.integer(col_cat_counts)
+      }
+      if (!is.null(col_n_unique))
+         result$col_n_unique <- .rs.scalar(as.integer(col_n_unique))
+      if (!is.null(col_top_value)) {
+         result$col_top_value <- .rs.scalar(col_top_value)
+         result$col_top_count <- .rs.scalar(as.integer(col_top_count))
+      }
 
       # Optionally include a cheap upper bound on displayed character count.
       # The client uses this for initial column width sizing instead of

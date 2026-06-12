@@ -17,6 +17,7 @@
 #include "ChatLogging.hpp"
 #include "ChatTypes.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 
 #include <boost/algorithm/string.hpp>
@@ -84,7 +85,8 @@ Error getPackageInfoFromManifest(
     const std::string& protocolVersion,
     std::string* pPackageVersion,
     std::string* pDownloadUrl,
-    std::string* pSha256)
+    std::string* pSha256,
+    std::vector<std::string>* pProviders)
 {
    if (!pPackageVersion || !pDownloadUrl)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
@@ -116,6 +118,7 @@ Error getPackageInfoFromManifest(
    std::string bestPackageVersion;
    std::string bestDownloadUrl;
    std::string bestSha256;
+   std::vector<std::string> bestProviders;
    bool foundCompatible = false;
 
    for (const auto& entry : versions)
@@ -175,6 +178,14 @@ Error getPackageInfoFromManifest(
       std::string sha256;
       json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
 
+      // Read optional providers field (advertised provider identifiers). On any
+      // error -- absent, not an array, or a non-string element -- treat the entry
+      // as having no providers. readObject appends valid elements before failing
+      // on a bad one, so reset to avoid an order-dependent partial result.
+      std::vector<std::string> providers;
+      if (json::readObject(versionInfo, "providers", providers))
+         providers.clear();
+
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)
       {
@@ -182,6 +193,7 @@ Error getPackageInfoFromManifest(
          bestPackageVersion = packageVersion;
          bestDownloadUrl = downloadUrl;
          bestSha256 = sha256;
+         bestProviders = providers;
          foundCompatible = true;
          DLOG("Found compatible protocol {}.{} with package version {}",
               manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
@@ -200,12 +212,22 @@ Error getPackageInfoFromManifest(
    *pDownloadUrl = bestDownloadUrl;
    if (pSha256)
       *pSha256 = bestSha256;
+   if (pProviders)
+      *pProviders = bestProviders;
 
    DLOG("Selected best compatible protocol {}.{}: package version={}, url={}, sha256={}",
         bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl,
         bestSha256.empty() ? "(none)" : bestSha256);
 
    return Success();
+}
+
+bool advertisesByokProvider(const std::vector<std::string>& providers)
+{
+   // The manifest opts a build's protocol entry into the bring-your-own-key
+   // provider set by listing "byok" among its providers. Other identifiers
+   // (e.g. "pai") do not trip this.
+   return std::find(providers.begin(), providers.end(), "byok") != providers.end();
 }
 
 Error verifyPackageSha256(const FilePath& packagePath,

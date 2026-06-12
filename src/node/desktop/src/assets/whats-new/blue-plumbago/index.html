@@ -11,7 +11,15 @@
   <div class="feature-section">
     <h2>New Features</h2>
     <ul>
-      <li>Feature description here</li>
+      <li><strong>Re-enable the missing-package banner:</strong> A new Code menu and command-palette entry re-enables the editor's missing-package banner for a file after it has been dismissed, and the banner's dismissal label is now "Don't show for this file" to make the per-file scope explicit.</li>
+      <li><strong>Unicode section delimiters:</strong> Em dashes and box-drawing characters are now supported as native R code section delimiters.</li>
+      <li><strong>Mouse-wheel tab switching preference:</strong> A new "Change active editor tab with mouse wheel" preference (General &gt; Basic &gt; Other) disables switching the active editor tab by scrolling the mouse wheel over the tab bar.</li>
+      <li><strong>Project-specific editor themes:</strong> A new Appearance pane in Project Options sets a project-specific editor theme; leaving it at "(Default)" uses the global theme. A new "Ignore project-specific appearance settings" option (Global Options &gt; Appearance) keeps the global editor theme even when a project sets its own.</li>
+      <li><strong>Posit Assistant &mdash; incremental code execution:</strong> Posit Assistant now runs R code expression by expression, interleaving each expression with its output in the chat pane, rather than running the whole block at once and showing all output at the end.</li>
+      <li><strong>Native pipe by default:</strong> The Insert Pipe Operator command (Ctrl+Shift+M / Cmd+Shift+M) now inserts the native R pipe operator <code>|&gt;</code> by default; the magrittr pipe <code>%&gt;%</code> can be restored via the "Use R's native pipe operator, |&gt;" preference.</li>
+      <li><strong>Find in Files toolbar refinements:</strong> The Find in Files refresh button has moved to the right side of the toolbar, matching the convention used by other panes, and the replace preview's match highlight colors are now theme-aware so they no longer look out of place under dark editor themes.</li>
+      <li><strong>Stricter project trust:</strong> A new <code>project-trust-required</code> session option (off by default) treats all projects as untrusted by default &mdash; including projects in the user's home directory &mdash; prompting users to trust each project when opened even if it contains no auto-executing files. The visual editor is now disabled in untrusted projects, whether or not this option is set; only the source editor is available for markdown documents.</li>
+      <li><strong>Air formatting without air.toml:</strong> When "Use Air for code formatting" is enabled, Air now formats R documents even when no <code>air.toml</code> file is present, using the editor's indentation settings (indent style and width). The previous behavior of formatting only in projects containing an <code>air.toml</code> can be restored with the new "Only use Air when an air.toml file is found" option (Global Options &gt; Code &gt; Formatting).</li>
     </ul>
   </div>
 
@@ -22,5 +30,6 @@
       <a href="https://www.rstudio.org/links/release_notes#rstudio-2026.06.0">release notes</a>.
     </p>
   </div>
+
 </body>
 </html>

@@ -28,6 +28,13 @@
    --grid-na-color: var(--rstudio-disabledForeground, #b0b0b0);
    --grid-focus-border: var(--rstudio-focusBorder, #4d9de0);
 
+   /* Sidebar sparkline bar colors (read from JS when painting the canvas).
+      Numeric histograms follow the theme accent; categorical frequency
+      bars use a deliberately different hue as a visual cue that the
+      x-axis is discrete values, not a numeric range. */
+   --grid-spark-numeric: var(--grid-focus-border);
+   --grid-spark-categorical: #2ba36b;
+
    /* Computed mix shades -- keep these in one place so theme tweaks land
       consistently across hover/stripe rules. */
    --grid-row-hover-bg:  color-mix(in srgb, var(--grid-bg), var(--grid-fg) 10%);
@@ -138,34 +145,6 @@ th {
    user-select: none;
 }
 
-/* Virtual scroll spacer row. Diagonal stripes suggest pending/loading data. */
-tbody tr.spacer-row td,
-tbody tr.spacer-row:hover td {
-   padding: 0;
-   border: none;
-   background:
-      repeating-linear-gradient(
-         -45deg,
-         transparent,
-         transparent 20px,
-         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
-         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
-      );
-}
-
-/* Column-virtualization spacer cells: stand in for the horizontal space of
-   off-window columns. They must stay visually inert -- no borders, padding,
-   hover, or stripe -- so the gap they occupy reads as empty grid, and they
-   must never win the :not(.first-child) hover/stripe rules below. */
-td.col-spacer,
-th.col-spacer,
-tbody tr:hover td.col-spacer,
-tbody tr.odd-row td.col-spacer {
-   padding: 0;
-   border: none;
-   background: var(--grid-bg);
-}
-
 /* --- Data cells --- */
 
 td {
@@ -193,6 +172,39 @@ tbody tr.odd-row:hover td:not(.first-child) {
    background-color: var(--grid-row-hover-bg);
 }
 
+/* Virtual scroll spacer row. Diagonal stripes suggest pending/loading data.
+   NOTE: the spacer rules below tie the hover/stripe rules above on
+   specificity (0,2,3), so they must come later in the file to win the
+   source-order tiebreak -- otherwise hovering a spacer paints the row-hover
+   background behind the (transparent) striped gradient. */
+tbody tr.spacer-row td,
+tbody tr.spacer-row:hover td {
+   padding: 0;
+   border: none;
+   background:
+      repeating-linear-gradient(
+         -45deg,
+         transparent,
+         transparent 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 20px,
+         color-mix(in srgb, var(--grid-fg), transparent 95%) 40px
+      );
+}
+
+/* Column-virtualization spacer cells: stand in for the horizontal space of
+   off-window columns. They must stay visually inert -- no borders, padding,
+   hover, or stripe -- so the gap they occupy reads as empty grid, and they
+   must never win the :not(.first-child) hover/stripe rules above (same
+   source-order tiebreak as the spacer row). */
+td.col-spacer,
+th.col-spacer,
+tbody tr:hover td.col-spacer,
+tbody tr.odd-row td.col-spacer {
+   padding: 0;
+   border: none;
+   background: var(--grid-bg);
+}
+
 /* Active cell / header highlight (keyboard nav + click). The grid is a
    single tabstop on #gridViewport; one cell or header carries the
    active-descendant outline at any time. Outline draws outside the box
@@ -202,12 +214,13 @@ tbody tr.odd-row:hover td:not(.first-child) {
    to the toolbar) -- otherwise it would look like keyboard focus is
    in two places.
 
-   Note: th and .pin-icon intentionally have no :focus / :focus-visible
-   styling of their own. Neither element is individually focusable now;
-   the only visible focus indicator inside the grid is the .activeCell /
-   .activeHeader outline below, driven by aria-activedescendant. Adding
-   per-element focus rings here would re-introduce the dual-focus look
-   this design eliminated. */
+   Note: th and the grid header's .pin-icon intentionally have no :focus /
+   :focus-visible styling of their own. Neither element is individually
+   focusable inside the grid; the only visible focus indicator there is
+   the .activeCell / .activeHeader outline below, driven by
+   aria-activedescendant. Adding per-element focus rings here would
+   re-introduce the dual-focus look this design eliminated. (The sidebar
+   reuses .pin-icon on real focusable buttons -- see .sidebar-pin-icon.) */
 #gridViewport:focus-within td.activeCell,
 #gridViewport:focus-within th.activeHeader {
    outline: 2px solid var(--grid-focus-border);
@@ -590,14 +603,18 @@ th.columnClickable div {
    opacity: 1;
 }
 
-/* Clear filter icon as inline SVG */
+/* Clear filter icon as an inline-SVG mask so the color follows the theme
+   foreground */
 .clearFilter::after {
    content: '';
    display: block;
    width: 11px;
    height: 11px;
-   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
 }
 
 
@@ -663,6 +680,32 @@ th.columnClickable div {
    float: right;
 }
 
+/* Hidden by default; shown (inline-block) while a sort is active. Uses the
+   same X icon as .clearFilter, via mask-image so the color follows the
+   theme foreground. */
+#rsGridData_info_sort_clear {
+   display: none;
+   width: 11px;
+   height: 11px;
+   margin-left: 5px;
+   padding: 0;
+   border: none;
+   vertical-align: -1px;
+   cursor: pointer;
+   opacity: 0.5;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-repeat: no-repeat;
+   mask-position: center;
+}
+
+#rsGridData_info_sort_clear:hover {
+   opacity: 1;
+}
+
 #rsGridData_info_text {
    overflow: hidden;
 }
@@ -711,6 +754,139 @@ th.columnClickable div {
 
 #sidebarToggle:hover {
    background-color: var(--grid-hover-bg);
+}
+
+.sidebar-toggle-label {
+   /* min-width: 0 lets this flex child shrink below its content size when
+      the panel is narrow; without it the ellipsis can never trigger. */
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+/* Help affordance; owns the auto margin that pushes it (and the close
+   glyph after it) to the right edge. A real button, unlike the decorative
+   close glyph: activating it opens the help dialog rather than collapsing
+   the panel. */
+.sidebar-toggle-help {
+   margin-left: auto;
+   width: 13px;
+   height: 12px;
+   opacity: 0.6;
+   font-size: 12px;
+   font-weight: normal;
+   text-align: center;
+   font-family: monospace;
+   cursor: pointer;
+   flex-shrink: 0;
+}
+
+.sidebar-toggle-help:hover,
+.sidebar-toggle-help:focus-visible {
+   opacity: 1;
+}
+
+/* Close affordance; purely visual (clicks bubble to #sidebarToggle, which
+   is the accessible control). */
+.sidebar-toggle-close {
+   padding-left: 8px;
+   font-size: 14px;
+   font-weight: normal;
+   line-height: 1;
+   opacity: 0.6;
+}
+
+#sidebarToggle:hover .sidebar-toggle-close {
+   opacity: 1;
+}
+
+/* ...but not while the help icon is hovered: a click there opens the help
+   dialog instead of reaching the toggle, so the close affordance should
+   not light up as if the header were about to collapse. (The close glyph
+   is a following sibling of the help icon, hence the ~ combinator.) */
+#sidebarToggle .sidebar-toggle-help:hover ~ .sidebar-toggle-close {
+   opacity: 0.6;
+}
+
+/* --- Help dialog --- */
+
+#sidebarHelpOverlay {
+   position: fixed;
+   inset: 0;
+   z-index: 100;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background-color: rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-help-dialog {
+   position: relative;
+   width: 340px;
+   max-width: calc(100vw - 40px);
+   max-height: calc(100vh - 40px);
+   overflow-y: auto;
+   padding: 12px 16px 14px;
+   background-color: var(--grid-bg);
+   color: var(--grid-fg);
+   border: 1px solid var(--grid-border);
+   border-radius: 6px;
+   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+   font-size: 12px;
+   line-height: 1.5;
+   /* The dialog takes programmatic focus on open; the dimmed backdrop is
+      indication enough, so suppress the focus ring. */
+   outline: none;
+}
+
+.sidebar-help-title {
+   font-size: 13px;
+   font-weight: bold;
+   margin-bottom: 2px;
+}
+
+.sidebar-help-close {
+   position: absolute;
+   top: 10px;
+   right: 12px;
+   font-size: 14px;
+   line-height: 1;
+   cursor: pointer;
+   opacity: 0.6;
+}
+
+.sidebar-help-close:hover,
+.sidebar-help-close:focus-visible {
+   opacity: 1;
+}
+
+.sidebar-help-section {
+   margin-top: 8px;
+}
+
+.sidebar-help-heading {
+   font-weight: bold;
+}
+
+.sidebar-help-line + .sidebar-help-line {
+   margin-top: 4px;
+}
+
+/* Legend swatches matching the sparkline bar colors. */
+.sidebar-help-swatch {
+   display: inline-block;
+   width: 9px;
+   height: 9px;
+   margin-right: 5px;
+   border-radius: 2px;
+}
+
+.sidebar-help-swatch.numeric {
+   background-color: var(--grid-spark-numeric);
+}
+
+.sidebar-help-swatch.categorical {
+   background-color: var(--grid-spark-categorical);
 }
 
 #sidebarContent {
@@ -767,6 +943,78 @@ th.columnClickable div {
    font-family: monospace;
 }
 
+/* --- Pin / sort icons (mirroring the grid header) --- */
+
+/* The shared .pin-icon class supplies the mask glyph and the pinned-state
+   opacity, but its hover reveal is scoped to th:hover, so the .sidebar-col
+   rule below re-creates it for the sidebar entries; the rest adapts the
+   icon to the flex header row. Unlike the grid's pin icon, the sidebar
+   copies are focusable buttons, so reveal them on keyboard focus too. */
+.sidebar-pin-icon {
+   margin-right: 0;
+   flex-shrink: 0;
+   align-self: center;
+}
+
+.sidebar-col:hover .pin-icon {
+   opacity: 0.6;
+}
+
+.sidebar-pin-icon:focus-visible {
+   opacity: 0.8;
+}
+
+/* Same arrow glyphs as the th.sorting* rules, as a standalone element
+   rather than a ::after (the icon doubles as a click/keyboard target). */
+.sidebar-sort-icon {
+   width: 10px;
+   height: 10px;
+   /* Keep clear of the floating sidebar scrollbar, which overlays the
+      panel's right edge. */
+   margin-right: 4px;
+   flex-shrink: 0;
+   align-self: center;
+   cursor: pointer;
+   opacity: 0.4;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+   /* Both arrows (unsorted) */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 1L8 4H2z'/%3E%3Cpath d='M5 9L2 6h6z'/%3E%3C/svg%3E");
+}
+
+.sidebar-sort-icon:hover,
+.sidebar-sort-icon:focus-visible {
+   opacity: 0.8;
+}
+
+.sidebar-sort-icon.sorting_asc {
+   /* Up arrow */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 2L8 6H2z'/%3E%3C/svg%3E");
+   opacity: 0.8;
+}
+
+.sidebar-sort-icon.sorting_desc {
+   /* Down arrow */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M5 8L2 4h6z'/%3E%3C/svg%3E");
+   opacity: 0.8;
+}
+
+/* Inert placeholder for non-sortable (list / data.frame) columns; keeps
+   the type labels right-aligned consistently across entries. */
+.sidebar-sort-icon.disabled {
+   visibility: hidden;
+   cursor: default;
+}
+
+
 /* --- Sparkline histogram --- */
 
 .sidebar-sparkline {
@@ -808,15 +1056,53 @@ th.columnClickable div {
    margin-top: 2px;
 }
 
+/* Extra 2px of breathing room between a sparkline histogram and the
+   summary row below it. Set here rather than as margin-bottom on
+   .sidebar-sparkline, which would collapse into the footer's own
+   margin-top and add nothing. */
+.sidebar-sparkline + .sidebar-col-footer {
+   margin-top: 4px;
+}
+
 .sidebar-col-summary {
    font-size: 10px;
    color: var(--grid-na-color);
+   /* The categorical summary can embed an arbitrary user value ("top: ...");
+      ellipsize rather than wrap or push the NA stat out of the row. */
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   min-width: 0;
+}
+
+/* The numeric range carries actual data, so its numbers use the regular
+   foreground -- the muted summary color is hard to read in light themes. */
+.sidebar-col-summary.range {
+   color: var(--grid-fg);
+}
+
+/* The [ , ] adornments of the numeric range read as notation, not data:
+   dimming them (relative to the numbers, whose color they inherit) keeps
+   the numbers prominent and stops a locale's comma thousands separators
+   from blending into the interval's delimiter. */
+.sidebar-col-summary .range-punct {
+   opacity: 0.6;
 }
 
 .sidebar-col-na {
    font-size: 10px;
    color: var(--grid-na-color);
    font-style: italic;
+   flex-shrink: 0;
+   /* Keep clear of the floating sidebar scrollbar, which overlays the
+      panel's right edge (matching .sidebar-sort-icon). */
+   margin-right: 4px;
+}
+
+/* The NA stat is always rendered for a uniform footer; dim the zero case
+   so columns with real missingness stand out when scanning the list. */
+.sidebar-col-na.zero {
+   opacity: 0.5;
 }
 
 /* --- Expand button --- */

@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.dom.DocumentEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
@@ -129,6 +131,15 @@ public class AceEditorPreview extends DynamicIFrame
                         {
                            Scheduler.get().scheduleFixedDelay(() ->
                            {
+                              // Stop if the preview was detached before this
+                              // timer fired (e.g. the preferences dialog was
+                              // closed, or a pane relayout reparented us).
+                              // setLineHeight would otherwise dereference the
+                              // now-null iframe contentWindow and raise an
+                              // uncaught exception.
+                              if (!isAttached())
+                                 return false;
+
                               if (div.hasClassName("ace_editor"))
                               {
                                  setLineHeight(lineHeight_);
@@ -138,7 +149,7 @@ public class AceEditorPreview extends DynamicIFrame
                               {
                                  return true;
                               }
-                              
+
                            }, 100);
                         }
                      }
@@ -181,11 +192,23 @@ public class AceEditorPreview extends DynamicIFrame
       lineHeight_ = lineHeight;
       if (!isFrameLoaded_)
          return;
-      
-      Element editorEl = getDocument().getElementById("editor");
+
+      // Defensive: this is reachable from a deferred timer (see onFrameLoaded),
+      // by which point the frame may be detached -- its contentWindow null, or
+      // the window present but its document not yet/no longer available. Either
+      // dereference would raise an uncaught TypeError.
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
+         return;
+
+      Element editorEl = doc.getElementById("editor");
       if (editorEl == null)
          return;
-      
+
       editorEl.getStyle().setLineHeight(lineHeight, Unit.PCT);
    }
 
