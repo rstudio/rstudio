@@ -691,10 +691,6 @@ var fetchFilteredSummaries = function(callback) {
       });
 };
 
-// Rebuild the sidebar against the current filter state: fetch filtered
-// summaries first when a filter/search is active, otherwise clear them and
-// render the full-frame metadata. Debounced calls during rapid filter typing
-// coalesce via the drawCounter staleness check below.
 // Rebuild the sidebar, preserving its scroll position across the teardown.
 var rebuildSidebarPreservingScroll = function() {
    var sidebarContent = document.getElementById("sidebarContent");
@@ -705,6 +701,10 @@ var rebuildSidebarPreservingScroll = function() {
       sidebarContent.scrollTop = scrollTop;
 };
 
+// Rebuild the sidebar against the current filter state: fetch filtered
+// summaries first when a filter/search is active, otherwise clear them and
+// render the full-frame metadata. Debounced calls during rapid filter typing
+// coalesce via the drawCounter staleness check below.
 var refreshSidebarSummaries = function() {
    // Lazily-fetched off-window summaries reflect the previous filter state;
    // drop them so they're refetched for the new one.
@@ -3807,7 +3807,7 @@ var flushSidebarPendingFetch = debounce(120, function() {
 // Fill an entry's summary content (sparkline + footer range/NA/unique) from a
 // describe descriptor. Idempotent: skips entries already populated (so a
 // double IntersectionObserver fire or a seed+observe race can't duplicate the
-// sparkline). The entry's identity column is read back from data-col-abs.
+// sparkline). The column summary is supplied directly via the summary parameter.
 var populateEntrySummary = function(entry, summary) {
    if (entry.getAttribute("data-summary-loaded") === "1")
       return;
@@ -6073,6 +6073,20 @@ var applyColumnWindowUpdate = function(resCols, options) {
    // Carry cached rows over to the new column alignment, then retire the
    // old window's in-flight fetches: their rows would land misaligned.
    remapRowCache(oldCols, cols);
+
+   // Drop every block signature that doesn't match the new window. remapRowCache
+   // wipes a remapped block's non-overlap cells but leaves its stored signature
+   // alone; without this purge a jump-away-and-back gesture (window A -> B -> A)
+   // restores the original colsSig, so a block wiped during the round trip would
+   // read as current (blockColsSig === colsSig) while holding undefined cells --
+   // rendering a permanently blank band until an unrelated invalidateCache.
+   // Removing the non-matching entry forces such blocks to refetch when scrolled
+   // back into view (the remapped rows stay in rowCache for skeleton rendering).
+   blockColsSig.forEach(function(sig, blockStart) {
+      if (sig !== colsSig)
+         blockColsSig.delete(blockStart);
+   });
+
    pendingFetches.forEach(function(controller) { controller.abort(); });
    pendingFetches.clear();
    drawCounter++;
@@ -6203,7 +6217,16 @@ var slideColumnWindow = function(options) {
       if (slideInFlightGen === generation)
          slideInFlightGen = 0;
       if (generation !== bootstrapGeneration) return;
-      if (result.error) { showError(result.error); return; }
+      if (result.error) {
+         // The slide advanced columnOffset before fetching; on failure roll it
+         // back to the still-current fetched window. Otherwise columnOffset and
+         // fetchedWindowStart stay desynced and maybeSlideForScroll's
+         // "newOffset === columnOffset" guard treats an identical retry as a
+         // no-op, leaving the viewport parked over blank span columns.
+         columnOffset = fetchedWindowStart - 1;
+         showError(result.error);
+         return;
+      }
       hideError();
       applyColumnWindowUpdate(result, options);
    });
@@ -6253,9 +6276,9 @@ var maybeSlideForScroll = function() {
 };
 
 // Jump to an absolute (1-based) column. A column already in the fetched set
-// scrolls into view directly; anything else slides the window so the target
-// becomes its first column and lands at the viewport's left edge. Either way
-// the landing header flashes briefly.
+// scrolls into view directly; anything else slides the window to contain the
+// target (centered, clamping the window start at the end of the frame) and
+// centers it in the viewport. Either way the landing header flashes briefly.
 var goToColumn = function(column) {
    if (bootstrapping) return;
 

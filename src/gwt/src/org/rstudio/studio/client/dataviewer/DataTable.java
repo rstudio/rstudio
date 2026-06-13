@@ -322,6 +322,12 @@ public class DataTable
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
+            // A fresh keystroke starts a new query, so clear any selection
+            // guard left over from a mouse-picked suggestion (which fires a
+            // SelectionEvent but no SelectionCommitEvent to consume the flag).
+            // Without this the next Enter would be swallowed by the stale flag.
+            gotoColumnSelectionHandled_ = false;
+
             matchColumns(getWindow(), request.getQuery(), (matches) ->
             {
                ArrayList<Suggestion> suggestions = new ArrayList<>();
@@ -386,7 +392,21 @@ public class DataTable
             }
             else if (query.matches("^\\d+$"))
             {
-               jumpToColumn(Integer.parseInt(query));
+               // The regex admits digit strings beyond int (or even long)
+               // range, which Integer.parseInt would throw on. Parse as long
+               // and clamp; goToColumn clamps to the real column count, and on
+               // a dead grid any value just triggers the bootstrap-retry, so
+               // the exact magnitude is irrelevant.
+               long parsed;
+               try
+               {
+                  parsed = Long.parseLong(query);
+               }
+               catch (NumberFormatException e)
+               {
+                  parsed = Integer.MAX_VALUE;
+               }
+               jumpToColumn((int) Math.min(parsed, Integer.MAX_VALUE));
             }
          });
       });
