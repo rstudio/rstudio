@@ -846,6 +846,12 @@
          result$min <- .rs.scalar(.rs.tryOr(NULL, as.character(min(nonNa))))
          result$max <- .rs.scalar(.rs.tryOr(NULL, as.character(max(nonNa))))
       }
+
+      # Surface the display timezone (POSIXct only) so the expanded summary can
+      # show it alongside min/max.
+      tz <- .rs.dataViewer.columnTimezone(col)
+      if (nzchar(tz))
+         result$tz <- .rs.scalar(tz)
    }
 
    result

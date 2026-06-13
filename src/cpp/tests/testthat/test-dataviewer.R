@@ -375,6 +375,15 @@ test_that(".rs.summarizeColumn() summarizes POSIXct columns", {
    r <- .rs.summarizeColumn(df, 1)
    expect_match(.rs.summarize.bare(r$min), "^2024-01-01")
    expect_match(.rs.summarize.bare(r$max), "^2024-06-15")
+   # The display timezone is surfaced for the expanded summary.
+   expect_equal(.rs.summarize.bare(r$tz), "UTC")
+})
+
+test_that(".rs.summarizeColumn() omits tz for Date columns", {
+   df <- data.frame(x = as.Date(c("2024-01-01", "2024-06-15")))
+   r <- .rs.summarizeColumn(df, 1)
+   expect_match(.rs.summarize.bare(r$min), "^2024-01-01")
+   expect_null(r$tz)
 })
 
 test_that(".rs.summarizeColumn() returns base stats for unsupported column types", {

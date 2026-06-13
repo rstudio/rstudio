@@ -3796,6 +3796,47 @@ var appendRangePunct = function(el, text) {
    el.appendChild(punct);
 };
 
+// Render a Date/POSIXct min/max range into the sidebar footer, compactly:
+//   - Date columns (labels carry no time part): "[min, max]".
+//   - POSIXct spanning multiple days: dates only, "[minDate, maxDate]".
+//   - POSIXct within a single day: the date once, then the times,
+//     "<date> [minTime, maxTime]".
+// When time precision is dropped, the full labels go in a title tooltip.
+// Labels are R's format() output ("YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"), so the
+// first space separates the date from the time.
+var appendDateRangeSummary = function(el, minLabel, maxLabel) {
+   var minSp = minLabel.indexOf(" ");
+   var maxSp = maxLabel.indexOf(" ");
+
+   if (minSp < 0 || maxSp < 0) {
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minLabel));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxLabel));
+      appendRangePunct(el, "]");
+      return;
+   }
+
+   var minDate = minLabel.substring(0, minSp), minTime = minLabel.substring(minSp + 1);
+   var maxDate = maxLabel.substring(0, maxSp), maxTime = maxLabel.substring(maxSp + 1);
+   el.title = minLabel + " to " + maxLabel;
+
+   if (minDate === maxDate) {
+      el.appendChild(document.createTextNode(minDate + " "));
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minTime));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxTime));
+      appendRangePunct(el, "]");
+   } else {
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minDate));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxDate));
+      appendRangePunct(el, "]");
+   }
+};
+
 var formatStatValue = function(val) {
    if (val === null || val === undefined) return "--";
    if (typeof val === "number") {
@@ -3857,6 +3898,8 @@ var renderColumnStats = function(container, data, colType) {
       // Date/datetime
       addRow("Min", data.min);
       addRow("Max", data.max);
+      // Timezone (POSIXct only; absent for Date and tz-less columns).
+      if (data.tz) addRow("Timezone", data.tz);
    }
 
    // If no type-specific stats were added (unsupported column type, or a
@@ -4177,13 +4220,10 @@ var populateEntrySummary = function(entry, summary) {
       appendRangePunct(summaryEl, "]");
    } else if (summary.col_min_label && summary.col_max_label) {
       // Date/datetime range: the min/max arrive pre-formatted (col_min/col_max
-      // are deliberately omitted for dates so the numeric branch above is skipped).
+      // are deliberately omitted for dates so the numeric branch above is
+      // skipped). Rendered compactly -- see appendDateRangeSummary.
       summaryEl.classList.add("range");
-      appendRangePunct(summaryEl, "[");
-      summaryEl.appendChild(document.createTextNode(summary.col_min_label));
-      appendRangePunct(summaryEl, ", ");
-      summaryEl.appendChild(document.createTextNode(summary.col_max_label));
-      appendRangePunct(summaryEl, "]");
+      appendDateRangeSummary(summaryEl, summary.col_min_label, summary.col_max_label);
    } else {
       // Factor level count is structural (read from the summary's col_vals);
       // distinct-value count is data-dependent. Enrich with the dominant
