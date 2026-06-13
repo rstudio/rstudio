@@ -397,6 +397,18 @@ th.highlight-flash {
    animation: column-flash 1s ease-out;
 }
 
+/* Sidebar entry flash on a go-to-column jump -- mirrors the header flash so
+   the summary panel tracks the jump. Fades from the selection tint back to
+   the entry's normal (transparent) background. */
+@keyframes sidebar-col-flash {
+   0%   { background-color: var(--grid-selection-bg); }
+   100% { background-color: transparent; }
+}
+
+.sidebar-col.highlight-flash {
+   animation: sidebar-col-flash 1s ease-out;
+}
+
 /* --- Sort indicators -- use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,

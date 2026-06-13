@@ -4308,6 +4308,29 @@ var flashColumnHeader = function(colIdx) {
    }, TIMING.columnFlash);
 };
 
+// Scroll a column's sidebar entry into view and flash it, mirroring the
+// header flash on a go-to-column jump so the summary panel tracks the jump
+// (the inverse of clicking a sidebar entry, which scrolls the grid). No-op
+// when the panel is collapsed or the entry isn't present. Deliberately does
+// NOT move keyboard focus -- the jump leaves focus on the grid so arrow keys
+// drive the data. colIdx is the position in `cols` (the sidebar entry's
+// data-col-idx).
+var flashSidebarColumn = function(colIdx) {
+   if (!sidebarVisible) return;
+   var content = document.getElementById("sidebarContent");
+   if (!content) return;
+   var entry = content.querySelector('.sidebar-col[data-col-idx="' + colIdx + '"]');
+   if (!entry) return;
+
+   if (entry.scrollIntoView) entry.scrollIntoView({ block: "nearest" });
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
+
+   entry.classList.add("highlight-flash");
+   setTimeout(function() {
+      entry.classList.remove("highlight-flash");
+   }, TIMING.columnFlash);
+};
+
 // ==========================================================================
 // Active Cell / Keyboard Navigation
 // ==========================================================================
@@ -5933,11 +5956,14 @@ var applyColumnWindowUpdate = function(resCols, options) {
    updateCustomScrollbars();
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
 
-   // A targeted jump flashes its landing column so the user can spot it.
+   // A targeted jump flashes its landing column (header + sidebar entry) so
+   // the user can spot where it landed.
    if (targetAbs > 0) {
       var targetPos = posForAbsColIndex(targetAbs);
-      if (targetPos >= 0)
+      if (targetPos >= 0) {
          flashColumnHeader(targetPos);
+         flashSidebarColumn(targetPos);
+      }
    }
 
    // The user may have kept scrolling while this window was in flight;
@@ -6077,6 +6103,7 @@ var revealColumnCentered = function(colIdx) {
       }
    }
    flashColumnHeader(colIdx);
+   flashSidebarColumn(colIdx);
 };
 
 // ==========================================================================

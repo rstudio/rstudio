@@ -430,6 +430,52 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // A go-to-column jump scrolls the target's sidebar entry into view (the
+  // inverse of clicking a sidebar entry, which scrolls the grid), without
+  // moving keyboard focus off the grid.
+  test('go to column scrolls the sidebar entry into view, keeping grid focus', async () => {
+    // Enough columns that the sidebar list overflows -- a late column's entry
+    // starts well below the fold.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_goto_df <- as.data.frame(matrix(1:600, nrow = 10, ncol = 60)); View(.rs.sidebar_goto_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Whether column `idx`'s sidebar entry is within the scrolled viewport
+      // of the (live) sidebar list. Read through the viewport's own document
+      // to pin to the frame in view (see the filtered-summary test).
+      const entryVisible = (idx: number) => dataViewer.viewport.evaluate((vp, i) => {
+        const doc = vp.ownerDocument;
+        const content = doc.getElementById('sidebarContent');
+        const entry = doc.querySelector(`.sidebar-col[data-col-idx="${i}"]`) as HTMLElement | null;
+        if (!content || !entry) return null;
+        const top = entry.offsetTop;
+        return top + entry.offsetHeight > content.scrollTop &&
+               top < content.scrollTop + content.clientHeight;
+      }, idx);
+
+      // Column 58's entry exists but starts below the fold.
+      await expect.poll(() => entryVisible(58), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+
+      // Jump to it via the go-to-column box.
+      await dataViewer.goToColumn(58);
+
+      // Its sidebar entry scrolls into view...
+      await expect.poll(() => entryVisible(58), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+      // ...but focus stays on the grid viewport (so arrow keys drive the
+      // data), not anywhere in the sidebar.
+      const focusOnGrid = await dataViewer.viewport.evaluate(
+        (vp) => vp.ownerDocument.activeElement === vp);
+      expect(focusOnGrid).toBe(true);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_goto_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // Low-cardinality factor / character columns get a categorical frequency
   // sparkline (one bar per distinct value, capped server-side at 24 bars);
   // above the cutoff the sidebar falls back to a text summary with the
