@@ -647,6 +647,14 @@ var sidebarColumnsFetching = false;
 // (refreshSidebarSummaries) and on bootstrap.
 var sidebarLazySummaries = {};
 
+// Full-frame column descriptors (abs index -> describe result) for the sidebar
+// filter popups, fetched on demand when the icon is clicked. Kept separate from
+// sidebarLazySummaries because those are computed over the FILTERED rows when a
+// filter is active, whereas a filter brush must span the whole column's range
+// (matching the header popups, which read full-frame `cols`). Cleared when the
+// column set / fingerprint changes (alongside sidebarLazySummaries).
+var filterDescriptors = {};
+
 // IntersectionObserver watching sidebar entries; abs indices it has queued for
 // the next (debounced) lazy summary fetch. Both reset per sidebar rebuild.
 var sidebarObserver = null;
@@ -1001,7 +1009,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
 
    // Column-specific search highlighting (skip if global search already highlighted)
    if (!didHighlight) {
-      var colSearch = getColumnSearch(colIdx);
+      var colSearch = getColumnSearch(absColIndex(colIdx));
       if (colSearch && colSearch.indexOf("character|") === 0) {
          var term = decodeURIComponent(parseSearchString(colSearch));
          var colIdx2 = data.toLowerCase().indexOf(term.toLowerCase());
@@ -2319,6 +2327,29 @@ var applyResizeDelta = function(delta) {
 // Filter UI
 // ==========================================================================
 
+// Column search types that have a typed filter widget. The rownames column and
+// unsupported types (list, data.frame) have none.
+var isFilterableSearchType = function(searchType) {
+   return searchType === "numeric" || searchType === "date" ||
+          searchType === "character" || searchType === "factor" ||
+          searchType === "boolean";
+};
+
+// Build the typed filter widget for a column, dispatching on its search type.
+// `idx` is the ABSOLUTE column index. `anchor`, when given, is the element the
+// popup attaches to (and whose click toggles it) instead of the widget's own
+// display element -- used by the sidebar to anchor the popup under its filter
+// icon. Returns the widget's display element (with a `dvFilterController`
+// property exposing { open, dismiss } for popup-backed types), or null.
+var buildTypedFilterUI = function(idx, col, onDismiss, anchor) {
+   if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "date") return createDateFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss, anchor);
+   return null;
+};
+
 var createFilterUI = function(idx, col) {
    if (idx < 1) return null;
 
@@ -2369,12 +2400,7 @@ var createFilterUI = function(idx, col) {
    val.textContent = "All";
 
    var buildTypedUI = function() {
-      if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "date") return createDateFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss);
-      return null;
+      return buildTypedFilterUI(idx, col, onDismiss);
    };
 
    // Swap the "All" placeholder for the typed filter widget and mark the host
@@ -2415,14 +2441,15 @@ var createFilterUI = function(idx, col) {
    return host;
 };
 
-// idx is a position in the current window; cachedFilterValues is keyed by
-// absolute column identity so a filter follows its column across pagination.
-var getColumnSearch = function(idx) {
-   return cachedFilterValues[absColIndex(idx)] || "";
+// Keyed by ABSOLUTE column index (cachedFilterValues' key), so a filter follows
+// its column across pagination and can be driven from either the header (which
+// passes col_index) or the sidebar (which works in absolute indices). Callers
+// holding a window position must convert via absColIndex() first.
+var getColumnSearch = function(absIdx) {
+   return cachedFilterValues[absIdx] || "";
 };
 
-var setColumnSearch = function(idx, val) {
-   var absIdx = absColIndex(idx);
+var setColumnSearch = function(absIdx, val) {
    if (val) {
       cachedFilterValues[absIdx] = val;
    } else {
@@ -2453,8 +2480,7 @@ var describeFilterValue = function(raw) {
 // slot is "" at schedule time and still "" after the dismissal).
 var columnFilterEpochs = {};
 
-var bumpColumnFilterEpoch = function(idx) {
-   var absIdx = absColIndex(idx);
+var bumpColumnFilterEpoch = function(absIdx) {
    columnFilterEpochs[absIdx] = (columnFilterEpochs[absIdx] || 0) + 1;
 };
 
@@ -2468,10 +2494,9 @@ var bumpColumnFilterEpoch = function(idx) {
 // didn't change (see columnFilterEpochs). Watching per-column state (rather
 // than a global invalidation counter) means applies racing unrelated
 // invalidations -- a sort, a search, another column's filter -- still run.
-var watchColumnSearch = function(idx) {
+var watchColumnSearch = function(absIdx) {
    return function() {
-      var absIdx = absColIndex(idx);
-      return (columnFilterEpochs[absIdx] || 0) + "#" + getColumnSearch(idx);
+      return (columnFilterEpochs[absIdx] || 0) + "#" + getColumnSearch(absIdx);
    };
 };
 
@@ -2490,7 +2515,7 @@ var applyFilters = function() {
    saveState();
 };
 
-var createNumericFilterUI = function(idx, col, onDismiss) {
+var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
 
    // Set by buildPopup each time the popup opens; lets the dismiss wrapper
@@ -2516,7 +2541,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       }
    };
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       popup.classList.add("numericFilterPopup");
       var min = col.col_breaks[0].toString();
       var max = col.col_breaks[col.col_breaks.length - 1].toString();
@@ -2649,7 +2674,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
 // formatted dates. The serialized filter value is "date|<lo>_<hi>" -- two ISO
 // strings the backend parses on the native Date/POSIXct scale. Range-only: a
 // single instant isn't a useful datetime filter.
-var createDateFilterUI = function(idx, col, onDismiss) {
+var createDateFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
 
    // Set by buildPopup each time the popup opens; lets the dismiss wrapper
@@ -2688,7 +2713,7 @@ var createDateFilterUI = function(idx, col, onDismiss) {
       }
    };
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       popup.classList.add("numericFilterPopup");
 
       var lo = fullMin, hi = fullMax;
@@ -2812,7 +2837,7 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
    return input;
 };
 
-var createFactorFilterUI = function(idx, col, onDismiss) {
+var createFactorFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
    var input = createTextFilterBox(ele, idx, col, onDismiss);
 
@@ -2837,7 +2862,7 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
       if (dismissActivePopup) dismissActivePopup(false);
    });
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       var list = document.createElement("div");
       list.className = "choiceList";
 
@@ -2860,8 +2885,21 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
    return ele;
 };
 
-var createTextFilterUI = function(idx, col, onDismiss) {
+var createTextFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
+
+   // Alternate location (sidebar): the character filter is normally an inline
+   // header input, but with an anchor we present the same text box inside a
+   // popup attached to the trigger (the sidebar filter icon).
+   if (anchor) {
+      ele.dvFilterController = invokeFilterPopup(anchor, function(popup) {
+         popup.classList.add("textFilterPopup");
+         var input = createTextFilterBox(popup, idx, col, onDismiss);
+         setTimeout(function() { input.focus(); }, 0);
+      }, onDismiss);
+      return ele;
+   }
+
    var input = createTextFilterBox(ele, idx, col, onDismiss);
    input.addEventListener("blur", function() {
       onDismiss();
@@ -2873,7 +2911,7 @@ var createTextFilterUI = function(idx, col, onDismiss) {
    return ele;
 };
 
-var createBooleanFilterUI = function(idx, col, onDismiss) {
+var createBooleanFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
    var display = document.createElement("span");
    display.innerHTML = "&nbsp;";
@@ -2887,7 +2925,7 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
       display.textContent = boolSearch[1];
    }
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       var list = document.createElement("div");
       list.className = "choiceList";
       var values = ["TRUE", "FALSE"];
@@ -2939,36 +2977,46 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
       if (popup && evt.keyCode === 27) dismissPopup(true);
    };
 
-   ele.addEventListener("click", function(evt) {
+   // Open the popup (or toggle it closed if already open), anchored under
+   // `ele`. Dismisses any other open filter popup first. Exposed on the
+   // returned controller so callers (e.g. the sidebar filter icon) can open it
+   // programmatically rather than only via the bound click.
+   var openPopup = function() {
       if (dismissActivePopup && dismissActivePopup !== dismissPopup) {
          dismissActivePopup(true);
       }
       if (popup) {
          dismissPopup(true);
-      } else {
-         popup = document.createElement("div");
-         popup.className = "filterPopup";
-         var popupInfo = buildPopup(popup);
-         document.body.appendChild(popup);
-
-         var rect = ele.getBoundingClientRect();
-         var top = rect.bottom + (!popupInfo ? 0 : (popupInfo.top || 0));
-         var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
-
-         if (popup.offsetWidth + left > document.body.offsetWidth) {
-            left = document.body.offsetWidth - popup.offsetWidth;
-         }
-
-         popup.style.top = top + "px";
-         popup.style.left = left + "px";
-
-         document.body.addEventListener("click", checkLightDismiss);
-         document.body.addEventListener("keydown", checkEscDismiss);
-         dismissActivePopup = dismissPopup;
+         return;
       }
+      popup = document.createElement("div");
+      popup.className = "filterPopup";
+      var popupInfo = buildPopup(popup);
+      document.body.appendChild(popup);
+
+      var rect = ele.getBoundingClientRect();
+      var top = rect.bottom + (!popupInfo ? 0 : (popupInfo.top || 0));
+      var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
+
+      if (popup.offsetWidth + left > document.body.offsetWidth) {
+         left = document.body.offsetWidth - popup.offsetWidth;
+      }
+
+      popup.style.top = top + "px";
+      popup.style.left = left + "px";
+
+      document.body.addEventListener("click", checkLightDismiss);
+      document.body.addEventListener("keydown", checkEscDismiss);
+      dismissActivePopup = dismissPopup;
+   };
+
+   ele.addEventListener("click", function(evt) {
+      openPopup();
       evt.preventDefault();
       evt.stopPropagation();
    });
+
+   return { open: openPopup, dismiss: dismissPopup };
 };
 
 // ==========================================================================
@@ -3940,6 +3988,88 @@ var fetchSidebarSummaries = function(absList, callback) {
       });
 };
 
+// Fetch a single column's FULL-FRAME describe descriptor (no filter applied)
+// for its sidebar filter popup, caching it in filterDescriptors. Unlike the
+// lazy sidebar summaries this never sends the active filter, so the brush spans
+// the column's whole range.
+var fetchFilterDescriptor = function(absIdx, callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      max_rows: maxRows,
+      columns_requested: String(absIdx)
+   };
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (result && !result.error && result.length) {
+            prepareColumnResponse(result);
+            for (var i = 0; i < result.length; i++) {
+               var entry = result[i];
+               if (typeof entry.col_index === "number" && entry.col_index >= 1)
+                  filterDescriptors[entry.col_index] = entry;
+            }
+         }
+         callback(filterDescriptors[absIdx] || null);
+      })
+      .catch(function(err) {
+         console.warn("fetchFilterDescriptor failed:", err);
+         callback(null);
+      });
+};
+
+// Resolve a column's full-frame filter descriptor: from the fetched grid window
+// (`cols`, which always describes the full frame) when present, else the cache,
+// else a fetch. Invokes callback with the descriptor (or null).
+var resolveFilterDescriptor = function(absIdx, callback) {
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0 && cols[pos]) {
+      callback(cols[pos]);
+      return;
+   }
+   if (filterDescriptors[absIdx]) {
+      callback(filterDescriptors[absIdx]);
+      return;
+   }
+   fetchFilterDescriptor(absIdx, callback);
+};
+
+// Open a column's filter popup from its sidebar icon. The first activation
+// resolves the descriptor and builds the typed widget anchored to the icon
+// (binding the icon's click to the popup via invokeFilterPopup); once wired,
+// subsequent clicks toggle through that bound handler, so this is a no-op then.
+var openColumnFilterFromSidebar = function(icon, absIdx) {
+   // Already wired: toggle through the widget's own popup controller.
+   if (icon.dvFilterController) {
+      icon.dvFilterController.open();
+      return;
+   }
+   // A descriptor fetch from a prior click is still in flight.
+   if (icon.dvFilterWiring)
+      return;
+
+   icon.dvFilterWiring = true;
+   resolveFilterDescriptor(absIdx, function(desc) {
+      icon.dvFilterWiring = false;
+      if (!desc || !isFilterableSearchType(desc.col_search_type))
+         return;
+
+      var widget = buildTypedFilterUI(absIdx, desc, function() {
+         // On dismiss, re-sync the icon's active state with the filter store.
+         updateSidebarColumnIndicators();
+      }, icon);
+
+      var ctrl = widget && widget.dvFilterController;
+      if (!ctrl)
+         return;
+
+      icon.dvFilterController = ctrl;
+      ctrl.open();
+   });
+};
+
 // Debounced flush of the IntersectionObserver's queued abs indices: fetch the
 // ones still missing a summary, then populate their (still-present) entries.
 var flushSidebarPendingFetch = debounce(120, function() {
@@ -4232,20 +4362,25 @@ var initSidebar = function() {
       pinIcon.setAttribute("tabindex", "0");
       header.appendChild(pinIcon);
 
+      // Filter icon (funnel): always shown, with an "active" style when the
+      // column has a filter. Clicking it opens the column's filter popup below
+      // the icon (the same typed widgets the header uses). Placed in the left
+      // action cluster (beside the pin) -- away from the panel's right edge,
+      // where the floating scrollbar and column splitter would overlay it.
+      // Active state (the "active" class, title, aria) is applied by
+      // updateSidebarColumnIndicators.
+      var filterIcon = document.createElement("span");
+      filterIcon.className = "sidebar-filter-icon";
+      filterIcon.setAttribute("role", "button");
+      filterIcon.setAttribute("tabindex", "0");
+      filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
+      header.appendChild(filterIcon);
+
       var name = document.createElement("span");
       name.className = "sidebar-col-name";
       name.textContent = col.col_name;
       name.title = col.col_name;
       header.appendChild(name);
-
-      // Filter indicator (funnel): shown only when this column has an active
-      // filter. Indicator-only for now, but a real element so it can later
-      // become an interactive filter affordance. State (the "active" class,
-      // title, aria) is applied by updateSidebarColumnIndicators.
-      var filterIcon = document.createElement("span");
-      filterIcon.className = "sidebar-filter-icon";
-      filterIcon.setAttribute("aria-hidden", "true");
-      header.appendChild(filterIcon);
 
       // Type label, with the timezone appended for POSIXct columns (so two
       // datetime columns in different zones don't read identically).
@@ -4297,7 +4432,7 @@ var initSidebar = function() {
       // Click entry to navigate; expand button toggles detail stats; pin and
       // sort icons route into the same paths as the grid header (all keyed by
       // absolute index, so they work for off-window columns too).
-      (function(abs, statsEl, btnEl, headerEl, pinEl, sortEl, colType) {
+      (function(abs, statsEl, btnEl, headerEl, pinEl, sortEl, filterEl, colType) {
          var expanded = false;
          var loaded = false;
 
@@ -4368,6 +4503,26 @@ var initSidebar = function() {
             });
          }
 
+         // Filter icon: open/toggle this column's filter popup, anchored under
+         // it. stopPropagation keeps the click off the entry's navigate handler.
+         // The first activation builds the widget (which binds the icon's click
+         // via invokeFilterPopup); from then on a mouse click toggles through
+         // that bound handler, so the click path here only kicks off the initial
+         // build. The keydown path drives the controller directly (there's no
+         // bound keydown), so the keyboard can toggle too.
+         filterEl.addEventListener("click", function(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            if (filterEl.dvFilterController) return;
+            openColumnFilterFromSidebar(filterEl, abs);
+         });
+         filterEl.addEventListener("keydown", function(evt) {
+            if (evt.key !== "Enter" && evt.key !== " ") return;
+            evt.stopPropagation();
+            evt.preventDefault();
+            openColumnFilterFromSidebar(filterEl, abs);
+         });
+
          // Navigate to the column (works whether or not it's in the fetched
          // window; goToColumn slides the window for off-window targets).
          var navigate = function() { goToColumn(abs); };
@@ -4379,7 +4534,7 @@ var initSidebar = function() {
                navigate();
             }
          });
-      })(absIdx, statsPanel, expandBtn, header, pinIcon, sortIcon, statsCategory(col));
+      })(absIdx, statsPanel, expandBtn, header, pinIcon, sortIcon, filterIcon, statsCategory(col));
 
       // Populate the summary now if it's already cached; otherwise observe the
       // entry so it loads lazily when scrolled into view.
@@ -4465,9 +4620,10 @@ var updateSidebarColumnIndicators = function() {
          sortEl.setAttribute("aria-label", action);
       }
 
-      // Filter indicator: lit when the column has an active filter. Keyed by
-      // the same absolute index as the filter store, so this stays correct for
-      // off-window columns too.
+      // Filter icon: lit when the column has an active filter. Keyed by the
+      // same absolute index as the filter store, so this stays correct for
+      // off-window columns too. The icon is always an interactive button, so it
+      // keeps a label in both states.
       var filterEl = entry.querySelector(".sidebar-filter-icon");
       if (filterEl) {
          var filterRaw = cachedFilterValues[absIdx];
@@ -4477,10 +4633,10 @@ var updateSidebarColumnIndicators = function() {
             var desc = describeFilterValue(filterRaw);
             filterEl.title = desc ? "Filtered: " + desc : "Filtered";
             filterEl.setAttribute("aria-label",
-               "Column " + colName + " is filtered" + (desc ? ": " + desc : ""));
+               "Edit filter for column " + colName + (desc ? " (" + desc + ")" : ""));
          } else {
-            filterEl.removeAttribute("title");
-            filterEl.removeAttribute("aria-label");
+            filterEl.title = "Filter column";
+            filterEl.setAttribute("aria-label", "Filter column " + colName);
          }
       }
    }
@@ -5812,6 +5968,7 @@ var resetGridState = function() {
    sidebarColumns = null;
    sidebarColumnsFetching = false;
    sidebarLazySummaries = {};
+   filterDescriptors = {};
    sidebarPendingFetch = {};
    if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
 
@@ -6668,12 +6825,10 @@ window.setFilterUIVisible = function(visible) {
    return setHeaderUIVisible(
       visible,
       function(th, col, i) {
-         if (col.col_search_type === "numeric" ||
-             col.col_search_type === "date" ||
-             col.col_search_type === "character" ||
-             col.col_search_type === "factor" ||
-             col.col_search_type === "boolean") {
-            return createFilterUI(i, col);
+         if (isFilterableSearchType(col.col_search_type)) {
+            // createFilterUI keys off the absolute column index (col_index),
+            // not the window position `i`.
+            return createFilterUI(col.col_index, col);
          }
          return null;
       },

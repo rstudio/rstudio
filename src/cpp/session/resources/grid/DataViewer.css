@@ -1034,19 +1034,19 @@ th.columnClickable div {
    cursor: default;
 }
 
-/* Filter indicator (funnel glyph). Indicator-only today: lit when the column
-   has an active filter. Mirrors the sort icon's mask/opacity treatment, but
-   uses display:none when inactive (rather than reserving space like pin/sort)
-   so it only draws on filtered columns. The element is sized as a future
-   click target should it become interactive. */
+/* Filter icon (funnel glyph). Always shown; faint when inactive, fully opaque
+   when the column has an active filter -- the same opacity-based active/idle
+   treatment as the pin and sort icons. Clicking it opens the column's filter
+   popup (see openColumnFilterFromSidebar). */
 .sidebar-filter-icon {
-   display: none;
-   width: 9px;
-   height: 9px;
+   display: inline-block;
+   width: 10px;
+   height: 10px;
    margin-left: 2px;
    flex-shrink: 0;
    align-self: center;
-   opacity: 0.7;
+   cursor: pointer;
+   opacity: 0.3;
    background-color: var(--grid-fg);
    -webkit-mask-repeat: no-repeat;
    -webkit-mask-position: center;
@@ -1058,8 +1058,18 @@ th.columnClickable div {
    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
 }
 
+.sidebar-col:hover .sidebar-filter-icon,
+.sidebar-filter-icon:focus-visible {
+   opacity: 0.6;
+}
+
 .sidebar-filter-icon.active {
-   display: inline-block;
+   opacity: 0.9;
+}
+
+.sidebar-filter-icon.active:hover,
+.sidebar-filter-icon.active:focus-visible {
+   opacity: 1;
 }
 
 
