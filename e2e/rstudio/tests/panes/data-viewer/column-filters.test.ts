@@ -383,5 +383,13 @@ test.describe('Data Viewer column filters', () => {
     await expect(filterIcon).toHaveClass(/active/);
     await expect(gridCells('15')).toHaveCount(0);
     await expect(gridCells('7').first()).toBeVisible();
+
+    // Clear via the popup's "x" -- the sidebar has no header clear chip, so this
+    // is the way to remove the filter. The popup is still open from the apply.
+    await popup.locator('.filterPopupClear').click();
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(popup).toHaveCount(0);
+    await expect(entry.locator('.sidebar-filter-icon')).not.toHaveClass(/active/);
   });
 });

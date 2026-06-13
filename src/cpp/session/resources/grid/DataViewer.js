@@ -2522,6 +2522,30 @@ var applyFilters = function() {
    saveState();
 };
 
+// Append a clear-filter "x" to the top-right of a numeric/date filter popup.
+// onClear should drop the column's stored filter and re-render; the popup is
+// then dismissed. The header chip has its own clear X, but a sidebar-opened
+// popup has no chip, so this is the discoverable way to clear from there.
+var appendPopupClearButton = function(popup, onClear) {
+   var clear = document.createElement("span");
+   clear.className = "filterPopupClear";
+   clear.title = "Clear filter";
+   clear.setAttribute("role", "button");
+   clear.setAttribute("tabindex", "0");
+   clear.setAttribute("aria-label", "Clear filter");
+   var run = function(evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      onClear();
+      if (dismissActivePopup) dismissActivePopup(true);
+   };
+   clear.addEventListener("click", run);
+   clear.addEventListener("keydown", function(evt) {
+      if (evt.key === "Enter" || evt.key === " ") run(evt);
+   });
+   popup.appendChild(clear);
+};
+
 var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
 
@@ -2662,6 +2686,12 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(numVal);
+      appendPopupClearButton(popup, function() {
+         updateView.cancel();
+         setColumnSearch(idx, "");
+         applyFilters();
+         renderActiveFilter();
+      });
    }, function() {
       // Light dismiss (click-away / Enter) commits a brush or typed value
       // still inside the debounce window before onDismiss inspects the
@@ -2803,6 +2833,12 @@ var createDateFilterUI = function(idx, col, onDismiss, anchor) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(dateVal);
+      appendPopupClearButton(popup, function() {
+         updateView.cancel();
+         setColumnSearch(idx, "");
+         applyFilters();
+         renderActiveFilter();
+      });
    }, function() {
       if (flushPendingApply) flushPendingApply();
       onDismiss();
@@ -3006,9 +3042,20 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
       var top = rect.bottom + (!popupInfo ? 0 : (popupInfo.top || 0));
       var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
 
-      if (popup.offsetWidth + left > document.body.offsetWidth) {
-         left = document.body.offsetWidth - popup.offsetWidth;
+      // When opened from the summary sidebar, center the popup within the
+      // sidebar column rather than anchoring to the narrow, right-aligned icon
+      // (which pushed it against the panel's right edge).
+      var sidebarPanel = ele.closest ? ele.closest("#sidebarPanel") : null;
+      if (sidebarPanel) {
+         var sb = sidebarPanel.getBoundingClientRect();
+         left = sb.left + (sb.width - popup.offsetWidth) / 2;
       }
+
+      // Keep the popup fully on-screen on both edges.
+      if (popup.offsetWidth + left > document.body.offsetWidth)
+         left = document.body.offsetWidth - popup.offsetWidth;
+      if (left < 0)
+         left = 0;
 
       popup.style.top = top + "px";
       popup.style.left = left + "px";
@@ -3705,19 +3752,24 @@ var createSparkline = function(breaks, counts, labels, breakLabels) {
       var count = counts[bin];
       var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
 
-      var headline;
+      var headlineLines;
       if (labels) {
          // Categorical bar: the headline is the value itself, truncated so
          // a long string can't blow the tooltip out to absurd widths. An
          // explicit NA factor level arrives as JSON null; label it "NA"
          // rather than rendering the literal string "null".
-         headline = labels[bin] === null ? "NA" : String(labels[bin]);
-         if (headline.length > 40)
-            headline = headline.substring(0, 40) + "...";
+         var lbl = labels[bin] === null ? "NA" : String(labels[bin]);
+         if (lbl.length > 40)
+            lbl = lbl.substring(0, 40) + "...";
+         headlineLines = [lbl];
       } else if (breakLabels && breakLabels.length > bin + 1) {
-         // Date/datetime histogram: the numeric breaks are epoch values, so
-         // show the formatted bin bounds rather than the raw epoch numbers.
-         headline = "Range: " + breakLabels[bin] + " to " + breakLabels[bin + 1];
+         // Date/datetime histogram: the numeric breaks are epoch values. Show
+         // the formatted bin bounds on their own Start/End lines -- a single
+         // "Range: lo to hi" line gets over-long once times are included.
+         headlineLines = [
+            "Start: " + breakLabels[bin],
+            "End: " + breakLabels[bin + 1]
+         ];
       } else {
          // breaks arrive from R as strings (col_breaks is as.character'd
          // server-side); coerce here so arithmetic doesn't fall into string
@@ -3730,16 +3782,18 @@ var createSparkline = function(breaks, counts, labels, breakLabels) {
          // integer rather than the awkward "Range: 0.5 to 1.5".
          var mid = (lo + hi) / 2;
          var isIntegerBin = (hi - lo) === 1 && Number.isInteger(mid);
-         headline = isIntegerBin
+         headlineLines = [isIntegerBin
             ? "Value: " + mid
-            : "Range: " + formatCompactNum(lo) + " to " + formatCompactNum(hi);
+            : "Range: " + formatCompactNum(lo) + " to " + formatCompactNum(hi)];
       }
 
       // Build with DOM nodes rather than innerHTML so future format changes
       // can't accidentally interpret data values as markup.
       tooltip.textContent = "";
-      tooltip.appendChild(document.createTextNode(headline));
-      tooltip.appendChild(document.createElement("br"));
+      for (var li = 0; li < headlineLines.length; li++) {
+         tooltip.appendChild(document.createTextNode(headlineLines[li]));
+         tooltip.appendChild(document.createElement("br"));
+      }
       tooltip.appendChild(document.createTextNode(
          "Count: " + count.toLocaleString() + " (" + pct + "%)"));
       tooltip.style.display = "";

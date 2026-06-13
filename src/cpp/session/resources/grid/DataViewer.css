@@ -550,7 +550,9 @@ th.columnClickable div {
 .filterPopup {
    position: absolute;
    overflow: hidden;
-   z-index: 25;
+   /* Above the sidebar chrome (floating scrollbar, panel) so a popup opened
+      from a sidebar filter icon is never partly occluded by the panel. */
+   z-index: 35;
    font-size: 11px;
    background-color: var(--grid-bg);
    border: 1px solid var(--grid-border);
@@ -558,8 +560,39 @@ th.columnClickable div {
 }
 
 .numericFilterPopup {
-   padding: 4px;
-   padding-bottom: 8px;
+   /* Extra top padding leaves room for the clear-filter "x" in the corner. */
+   padding: 16px 4px 8px;
+}
+
+/* Clear-filter "x" inside the numeric/date filter popup -- a discoverable way
+   to remove the filter, especially from the sidebar (which has no header clear
+   chip). Reuses the .clearFilter glyph treatment. */
+.filterPopupClear {
+   position: absolute;
+   top: 3px;
+   right: 3px;
+   width: 11px;
+   height: 11px;
+   cursor: pointer;
+   opacity: 0.5;
+   z-index: 1;
+}
+
+.filterPopupClear:hover,
+.filterPopupClear:focus-visible {
+   opacity: 1;
+}
+
+.filterPopupClear::after {
+   content: '';
+   display: block;
+   width: 11px;
+   height: 11px;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
 }
 
 .choiceList {
@@ -638,7 +671,7 @@ th.columnClickable div {
    ========================================================================== */
 
 .numHist {
-   width: 80px;
+   width: 130px;
    height: 80px;
    margin: 4px 7px 10px 7px;
    padding: 10px;
@@ -668,7 +701,10 @@ th.columnClickable div {
    border-radius: 2px;
    margin-left: 5px;
    margin-right: 5px;
-   width: 100px;
+   /* Fill the popup width (set by the histogram) rather than a fixed 100px, so
+      a date range gets more room before it overflows the input. */
+   width: calc(100% - 10px);
+   box-sizing: border-box;
    background-color: var(--grid-bg);
    color: var(--grid-fg);
 }
