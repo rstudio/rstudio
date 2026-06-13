@@ -3584,6 +3584,7 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
    applyPinnedColumns();
    renderVisibleRows(true);
    updateInfoBar();
+   updateSidebarOverscroll();
    updateCustomScrollbars();
 
    // A resize can change whether (and how far) the grid scrolls horizontally
@@ -4638,8 +4639,10 @@ var initSidebar = function() {
    // they stay pending until the first time the user opens the panel.
    if (sidebarVisible) renderPendingSparklines();
 
-   // Attach the floating sidebar scrollbar after the content is in place
-   // (so its initial measurement reflects the populated entries).
+   // Pad the bottom for overscroll, then attach the floating scrollbar after
+   // the content is in place (so its initial measurement reflects the populated
+   // entries plus the overscroll padding).
+   updateSidebarOverscroll();
    attachSidebarScrollbar();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
@@ -4902,6 +4905,7 @@ var toggleSidebar = function() {
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
+      updateSidebarOverscroll();
       updateCustomScrollbars();
    }, TIMING.sidebarTransition);
    saveState();
@@ -5652,6 +5656,26 @@ var onSidebarScroll = function() {
 
 // Vertical scrollbar for the Summary sidebar. Appended below the toggle
 // label so the bar tracks only the scrollable content list.
+// Vertical overscroll for the summary sidebar: pad the bottom so the last
+// entry can be scrolled up toward the top of the panel instead of bottoming
+// out at the panel's lower edge. Only applied when the content actually
+// overflows, so a short column list doesn't gain phantom scroll space.
+// Recomputed on structural changes (content build, sidebar open, resize) --
+// deliberately NOT on scroll, where resetting the padding to re-measure would
+// force a reflow every frame.
+var updateSidebarOverscroll = function() {
+   var content = document.getElementById("sidebarContent");
+   if (!content) return;
+
+   // Re-measure the natural content height with our own padding removed.
+   content.style.paddingBottom = "0px";
+   var lastEntry = content.querySelector(".sidebar-col:last-child");
+   var pad = (lastEntry && content.scrollHeight > content.clientHeight)
+      ? Math.max(0, content.clientHeight - lastEntry.offsetHeight)
+      : 0;
+   content.style.paddingBottom = pad + "px";
+};
+
 var attachSidebarScrollbar = function() {
    var sidebarPanel = document.getElementById("sidebarPanel");
    var sidebarContent = document.getElementById("sidebarContent");
