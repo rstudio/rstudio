@@ -150,11 +150,21 @@ var lastScrollLeft = 0;
 var pendingScrollRestore = null;
 var activeScrollRestore = null;
 
-// Row data cache
+// Row data cache. Each entry is an array aligned 1:1 with the current `cols`
+// (rowname at position 0, then the fetched columns in fetch order).
 var rowCache = new Map();
 var totalRows = 0;
 var filteredRows = 0;
 var drawCounter = 0;
+
+// Column signature of the current `cols` (comma-joined absolute indices) and,
+// per FETCH_SIZE-aligned block, the signature its cached rows were fetched
+// with. A block whose stored signature differs from colsSig is "incomplete":
+// its rows were remapped from a previous column window (see remapRowCache)
+// and may carry undefined cells, so it is refetched when it next becomes
+// visible. Cleared with rowCache in invalidateCache.
+var colsSig = "";
+var blockColsSig = new Map();
 
 // In-flight fetch requests
 var pendingFetches = new Map(); // key: "start-length" -> AbortController
@@ -585,11 +595,12 @@ var fetchRows = function(start, length, callback) {
       "search[value]": cachedSearch
    };
 
-   // Request exactly the columns we display (pinned first, then the window),
-   // by absolute index. An empty list means the whole frame.
-   var requestedColumns = buildRequestedColumns();
+   // Request exactly the columns of the current `cols` so the returned rows
+   // are always aligned 1:1 with it (an empty list means the whole frame).
+   var requestedColumns = colsRequestList();
+   var requestSig = requestedColumns.join(",");
    if (requestedColumns.length > 0) {
-      params["columns_requested"] = requestedColumns.join(",");
+      params["columns_requested"] = requestSig;
    }
 
    // Add sort parameters (order[0][column] is an absolute column index)
@@ -628,6 +639,10 @@ var fetchRows = function(start, length, callback) {
          for (var i = 0; i < result.data.length; i++) {
             rowCache.set(start + i, result.data[i]);
          }
+         // Record the column signature these rows carry. `start` is always
+         // FETCH_SIZE-aligned (every caller fetches whole blocks), so this
+         // marks exactly the block the rows landed in.
+         blockColsSig.set(start, requestSig);
          trimRowCache();
          if (callback) callback();
          renderVisibleRows(true);
@@ -647,6 +662,7 @@ var fetchRows = function(start, length, callback) {
 
 var invalidateCache = function() {
    rowCache.clear();
+   blockColsSig.clear();
    // Abort all pending fetches
    pendingFetches.forEach(function(controller) { controller.abort(); });
    pendingFetches.clear();
@@ -655,6 +671,14 @@ var invalidateCache = function() {
    // Bump the staleness token so any in-flight responses that slip past
    // AbortController are discarded by fetchRows' response handler.
    drawCounter++;
+};
+
+// Whether a block's cached rows are present AND complete for the current
+// column set. A block remapped from a previous column window keeps its old
+// signature (its rows have undefined cells for newly entered columns), so it
+// reads as needing a refetch while still rendering its overlap data.
+var blockIsCurrent = function(blockStart) {
+   return rowCache.has(blockStart) && blockColsSig.get(blockStart) === colsSig;
 };
 
 // Cap rowCache size so a long scroll through a multi-million-row dataset
@@ -701,8 +725,41 @@ var trimRowCache = function() {
          for (var j = 0; j < rows.length; j++) {
             rowCache.delete(rows[j]);
          }
+         blockColsSig.delete(blockStarts[i]);
       }
    }
+};
+
+// Remap every cached row from the old `cols` alignment to the new one,
+// keyed by absolute column identity (col_index). Cells for columns present
+// in both windows (rownames, pinned columns, any overlap) carry over; cells
+// for newly entered columns become undefined and render blank until the
+// block's refetch lands (blocks keep their old signature, so blockIsCurrent
+// reports them as needing that refetch). This is what lets a column-window
+// slide show row skeletons immediately instead of a blank grid.
+var remapRowCache = function(oldCols, newCols) {
+   if (rowCache.size === 0 || !oldCols)
+      return;
+
+   var oldPosByAbs = {};
+   for (var i = 0; i < oldCols.length; i++) {
+      oldPosByAbs[oldCols[i].col_index] = i;
+   }
+
+   var srcFor = new Array(newCols.length);
+   for (var j = 0; j < newCols.length; j++) {
+      var src = oldPosByAbs[newCols[j].col_index];
+      srcFor[j] = (typeof src === "number") ? src : -1;
+   }
+
+   rowCache.forEach(function(row, key) {
+      var newRow = new Array(newCols.length);
+      for (var k = 0; k < newCols.length; k++) {
+         if (srcFor[k] >= 0)
+            newRow[k] = row[srcFor[k]];
+      }
+      rowCache.set(key, newRow);
+   });
 };
 
 // ==========================================================================
@@ -1173,6 +1230,25 @@ var buildRequestedColumns = function() {
    return requested;
 };
 
+// The ordered list of absolute column indices to request for ROW data. Once
+// `cols` exists this derives from it -- not from buildRequestedColumns -- so
+// returned rows are always aligned 1:1 with `cols`, even when the desired
+// window has drifted from the fetched one (e.g. unpinning an out-of-window
+// column changes buildRequestedColumns before the metadata is re-fetched).
+// An empty list means "the whole frame" (no column windowing configured).
+var colsRequestList = function() {
+   if (effectiveMaxDisplayColumns() <= 0)
+      return [];
+   if (cols && cols.length > 1) {
+      var list = [];
+      for (var i = 1; i < cols.length; i++) {
+         list.push(typeof cols[i].col_index === "number" ? cols[i].col_index : i);
+      }
+      return list;
+   }
+   return buildRequestedColumns();
+};
+
 // The number of display columns in the current window, resolved from the
 // module state if known or from the URL parameters otherwise (the module
 // value isn't set until initGrid, but the column fetch runs before that).
@@ -1454,6 +1530,14 @@ var togglePinColumn = function(colIdx) {
       var newDisplayIdx = columnOrder.indexOf(headerOrigCol);
       if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx);
    }
+
+   // Unpinning a column that lies outside the current window removes it from
+   // the desired fetch set, leaving `cols` (and the rows aligned to it) with
+   // a column the window no longer wants. Re-sync the fetched window in
+   // place; in-window pin toggles don't change the requested set, so this is
+   // a no-op for them.
+   if (buildRequestedColumns().join(",") !== colsRequestList().join(","))
+      slideColumnWindow();
 };
 
 // Rebuild headers in the current column order (pinned first, then unpinned).
@@ -1703,8 +1787,12 @@ var autoSizeColumns = function() {
       // present this catches cases where the avg-char-width estimate
       // under-counts (e.g., a column of unusually wide glyphs); when it
       // isn't, this is the sole source of width data for the column.
-      var sampleSize = Math.min(rowCache.size, 100);
-      for (var r = 0; r < sampleSize; r++) {
+      // Sample from the current render window rather than row 0: after a
+      // column-window slide the cache holds the rows around the viewport,
+      // which may be nowhere near the top.
+      var sampleStart = Math.max(0, renderStart);
+      var sampleEnd = sampleStart + Math.min(rowCache.size, 100);
+      for (var r = sampleStart; r < sampleEnd; r++) {
          var row = rowCache.get(r);
          if (!row) continue;
          var cellVal = row[colIdx];
@@ -2691,17 +2779,19 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Check if we need to fetch more data
+   // Check if we need to fetch more data. A block is fetched when absent
+   // from the cache OR present but incomplete for the current column set
+   // (remapped across a column-window slide; see blockIsCurrent).
    var firstBlock = Math.floor(newStart / FETCH_SIZE) * FETCH_SIZE;
    for (var blockStart = firstBlock; blockStart <= newEnd; blockStart += FETCH_SIZE) {
-      if (!rowCache.has(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
+      if (!blockIsCurrent(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
          fetchRows(blockStart, FETCH_SIZE);
       }
    }
 
    // Prefetch ahead
    var aheadStart = Math.floor(newEnd / FETCH_SIZE) * FETCH_SIZE + FETCH_SIZE;
-   if (aheadStart < activeRows && !rowCache.has(aheadStart)) {
+   if (aheadStart < activeRows && !blockIsCurrent(aheadStart)) {
       fetchRows(aheadStart, FETCH_SIZE);
    }
 
@@ -4537,6 +4627,22 @@ var destroyCustomScrollbars = function() {
 // Grid Lifecycle
 // ==========================================================================
 
+// Normalize a fetched column-metadata response in place. R serializes
+// col_breaks via as.character() to preserve full numeric precision over the
+// JSON wire (avoiding the precision loss that an R double -> JSON-number
+// round-trip can introduce). Convert back to numbers here so the rest of the
+// client can do arithmetic on them.
+var prepareColumnResponse = function(resCols) {
+   for (var i = 0; i < resCols.length; i++) {
+      if (resCols[i].col_breaks) {
+         for (var j = 0; j < resCols[i].col_breaks.length; j++) {
+            if (typeof resCols[i].col_breaks[j] === "string")
+               resCols[i].col_breaks[j] = parseFloat(resCols[i].col_breaks[j]);
+         }
+      }
+   }
+};
+
 var initGrid = function(resCols, data) {
    if (resCols.error) {
       showError(resCols.error);
@@ -4551,20 +4657,10 @@ var initGrid = function(resCols, data) {
    // failed one so the rebuilt grid is actually visible.
    hideError();
 
-   // R serializes col_breaks via as.character() to preserve full numeric
-   // precision over the JSON wire (avoiding the precision loss that an R
-   // double -> JSON-number round-trip can introduce). Convert back to
-   // numbers here so the rest of the client can do arithmetic on them.
-   for (var i = 0; i < resCols.length; i++) {
-      if (resCols[i].col_breaks) {
-         for (var j = 0; j < resCols[i].col_breaks.length; j++) {
-            if (typeof resCols[i].col_breaks[j] === "string")
-               resCols[i].col_breaks[j] = parseFloat(resCols[i].col_breaks[j]);
-         }
-      }
-   }
+   prepareColumnResponse(resCols);
 
    cols = resCols;
+   colsSig = colsRequestList().join(",");
 
    var loc = parseLocationUrl();
 
@@ -4732,6 +4828,12 @@ var initWithData = function(data) {
       rowCache.set(r, row);
    }
 
+   // Preview mode never fetches; mark every block complete for the current
+   // column set so blockIsCurrent doesn't report them as needing one.
+   for (var b = 0; b < numRows; b += FETCH_SIZE) {
+      blockColsSig.set(b, colsSig);
+   }
+
    renderVisibleRows();
    updateInfoBar();
 };
@@ -4749,6 +4851,7 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   colsSig = "";
    // Invalidate the cached column count. buildRequestedColumns clamps the
    // requested window to totalCols, so a stale value left over from the
    // previous frame would cap the fetch at the old column count and drop any
@@ -5228,8 +5331,115 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 };
 
 // ==========================================================================
-// Column Pagination
+// Column Window Sliding (pagination without a rebuild)
 // ==========================================================================
+
+// Swap the grid over to a freshly fetched column window without tearing the
+// grid down. Everything a bootstrap would reset survives: scroll position,
+// pins/sort/filters (live state, not re-read from storage), the sidebar's
+// visibility, header-attached UI, and the row cache (remapped so overlap
+// columns -- rownames, pinned, any shared window -- render immediately while
+// the new columns' data is refetched).
+var applyColumnWindowUpdate = function(resCols) {
+   prepareColumnResponse(resCols);
+
+   // Capture active cell/header identity before swapping `cols`
+   // (absColIndex resolves through it); remapped to the new window below.
+   var activeCellAbs = (activeRow >= 0 && activeCol >= 0)
+      ? absColIndex(columnOrder[activeCol]) : -1;
+   var activeHeaderAbs = (activeHeaderCol >= 0)
+      ? absColIndex(columnOrder[activeHeaderCol]) : -1;
+
+   var oldCols = cols;
+   cols = resCols;
+   colsSig = colsRequestList().join(",");
+
+   var resTotalCols = cols[0].total_cols;
+   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
+   if (cols[0].total_rows > 0)
+      totalRows = cols[0].total_rows;
+
+   // Carry cached rows over to the new column alignment, then retire the
+   // old window's in-flight fetches: their rows would land misaligned.
+   remapRowCache(oldCols, cols);
+   pendingFetches.forEach(function(controller) { controller.abort(); });
+   pendingFetches.clear();
+   drawCounter++;
+
+   columnOrder = getColumnOrder();
+   invalidatePinnedOffsets();
+
+   // Re-resolve the active cell/header in the new window; columns that
+   // slid out of the fetched set lose their highlight.
+   var remapDisplayIdx = function(absIdx) {
+      if (absIdx < 0) return -1;
+      var pos = posForAbsColIndex(absIdx);
+      return pos >= 0 ? columnOrder.indexOf(pos) : -1;
+   };
+   activeCol = remapDisplayIdx(activeCellAbs);
+   if (activeCol < 0) activeRow = -1;
+   activeHeaderCol = remapDisplayIdx(activeHeaderAbs);
+
+   // The header row must be rebuilt for the new window, but autoSizeColumns
+   // defers the rebuild while a filter editor is open (to protect it from
+   // teardown mid-edit). Close any open editor instead -- its column may not
+   // even exist in the new window.
+   if (dismissActivePopup) dismissActivePopup(true);
+   var activeEl = document.activeElement;
+   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
+      activeEl.blur();
+   deferredHeaderRebuild = false;
+
+   // Rebuild layout for the new window: widths, headers (autoSizeColumns
+   // re-injects any active header UI), pinned offsets, and the sidebar.
+   autoSizeColumns();
+   applyPinnedColumns();
+   initSidebar();
+
+   // Sync the viewport's aria-activedescendant with the remapped active
+   // cell/header (cleared when neither survived the slide).
+   if (activeRow >= 0 && activeCol >= 0) {
+      setViewportActiveDescendant(activeCellId(activeRow, activeCol));
+   } else {
+      var activeTh = getActiveHeaderTh();
+      setViewportActiveDescendant(activeTh ? activeTh.id : null);
+   }
+
+   // Refetch the first visible block with a width-refinement callback (the
+   // initial autoSize above could only sample overlap cells), then render
+   // the remapped skeleton; renderVisibleRows issues fetches for any other
+   // incomplete visible blocks.
+   var viewport = document.getElementById("gridViewport");
+   var scrollTop = viewport ? viewport.scrollTop : 0;
+   var firstVisible = Math.floor(scrollTop / ROW_HEIGHT);
+   var blockStart =
+      Math.floor(Math.max(0, firstVisible - BUFFER_ROWS) / FETCH_SIZE) * FETCH_SIZE;
+   fetchRows(blockStart, FETCH_SIZE, function() {
+      autoSizeColumns();
+      applyPinnedColumns();
+   });
+
+   renderVisibleRows(true);
+   updateInfoBar();
+   updateCustomScrollbars();
+   window.columnFrameCallback(columnOffset, maxDisplayColumns);
+};
+
+// Fetch column metadata for the current columnOffset/maxDisplayColumns and
+// apply it incrementally. Shares the bootstrap generation token so a slide
+// superseded by a newer slide or a full bootstrap (data refresh) is dropped.
+var slideColumnWindow = function() {
+   if (bootstrapping || cols === null)
+      return;
+
+   var generation = ++bootstrapGeneration;
+   fetchColumns(function(result) {
+      if (generation !== bootstrapGeneration) return;
+      if (result.error) { showError(result.error); return; }
+      hideError();
+      applyColumnWindowUpdate(result);
+   });
+};
 
 var columnNav = function(newOffset) {
    if (bootstrapping) return;
@@ -5248,7 +5458,13 @@ var columnNav = function(newOffset) {
    newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns, newOffset));
    if (columnOffset !== newOffset) {
       columnOffset = newOffset;
-      bootstrap();
+
+      // A new page starts at its left edge (vertical position is kept).
+      var viewport = document.getElementById("gridViewport");
+      if (viewport) viewport.scrollLeft = 0;
+      lastScrollLeft = 0;
+
+      slideColumnWindow();
    }
 };
 
@@ -5506,13 +5722,14 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    } else {
       maxDisplayColumns = Math.min(cap, maxDisplayColumns);
    }
-   // Column window changed -- the active cell or header's display index
-   // may now refer to a different column; clear before bootstrap rebuilds
-   // DOM. (bootstrap -> destroyGrid -> resetGridState clears these too,
-   // but doing it explicitly keeps the local invariant obvious.)
-   clearActiveCell();
-   clearActiveHeader();
-   bootstrap();
+
+   // Slide to the new window in place. The active cell/header is remapped
+   // by identity (or cleared when its column left the fetched set), and the
+   // new window starts at its left edge.
+   var viewport = document.getElementById("gridViewport");
+   if (viewport) viewport.scrollLeft = 0;
+   lastScrollLeft = 0;
+   slideColumnWindow();
 };
 
 window.isLimitedColumnFrame = function() {
