@@ -1065,7 +1065,11 @@ th.columnClickable div {
    margin-right: 4px;
 }
 
-.sidebar-col:hover .sidebar-filter-icon,
+/* Brighten only on direct hover/focus of the icon itself -- not on
+   .sidebar-col:hover (that's the pin icon's reveal-on-entry-hover pattern,
+   which would light the always-visible funnel whenever the mouse is anywhere
+   over the entry). Matches the sort icon's :hover rule. */
+.sidebar-filter-icon:hover,
 .sidebar-filter-icon:focus-visible {
    opacity: 0.6;
 }
