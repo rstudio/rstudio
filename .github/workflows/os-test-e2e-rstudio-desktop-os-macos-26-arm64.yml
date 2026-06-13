@@ -153,9 +153,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: package/osx/build-arm64/gwt
-          key: rstudio-gwt-arm64-${{ hashFiles('src/gwt/src/**/*.java', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-arm64-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-arm64-
+            rstudio-gwt-arm64-v2-
       # install-dependencies-osx (the entry-point script) builds both arm64
       # and x86_64 dependencies on an M1 Mac, which we don't need. Call the
       # per-arch script directly to install only arm64 brew formulae; that
