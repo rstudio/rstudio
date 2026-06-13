@@ -162,7 +162,10 @@ test.describe('SQL Preview security (rstudio-pro#10981)', () => {
     // Consenting evaluates the expression (which here writes the sentinel and
     // then fails to produce a real connection, surfacing an error dialog we
     // dismiss). The point is that evaluation now happens only after consent.
-    await expect(page.locator(CONFIRM_BTN)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    // Server can take longer to surface the error dialog because the
+    // expression evaluation round-trips through rsession; use a generous
+    // wait rather than the file-open default.
+    await expect(page.locator(CONFIRM_BTN)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
     await page.locator(CONFIRM_BTN).click();
 
     expect(await sentinelExists(page, sentinel)).toBe(true);
