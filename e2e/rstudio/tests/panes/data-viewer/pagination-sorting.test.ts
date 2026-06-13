@@ -47,7 +47,7 @@ test.describe('Data Viewer', () => {
     // The go-to-column jump box appears for frames wider than one fetch
     // window (the pagination arrows are gone -- the grid scrolls
     // continuously through every column).
-    await expect(dataViewer.gotoColumnButton).toBeVisible();
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
 
     // The summary sidebar header counts the loaded window against the frame
     // total; both sides must exclude the rowname column, so a miscount on
@@ -88,7 +88,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.gotoColumnButton).toBeVisible();
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
 
     // A target past the end of the frame clamps to the last column.
     await dataViewer.goToColumn(9999);
@@ -162,34 +162,36 @@ test.describe('Data Viewer', () => {
 
     // The slide recenters the fetched window on the visible columns. The
     // exact landing column depends on measured widths, so assert
-    // structurally: poll until the leftmost rendered data column's header
-    // resolves to an absolute index thousands of columns in, then check its
-    // first-row value matches matrix(1:100000)'s column-major fill
-    // ((k-1)*10 + 1 for column k).
-    const leftmostAbs = async (): Promise<{ pos: number; abs: number }> => {
-      const posAttr = await dataViewer.frame
-        .locator('#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])')
-        .first()
-        .getAttribute('data-col-pos');
-      const pos = parseInt(posAttr ?? '0', 10);
-      if (pos <= 0)
-        return { pos: 0, abs: 0 };
-      const headerTitle = await dataViewer.frame
-        .locator(`th[data-col-idx="${pos}"]`)
-        .getAttribute('title');
-      const abs = parseInt((headerTitle ?? '').replace(/^column (\d+):.*$/, '$1'), 10);
-      return { pos, abs: isNaN(abs) ? 0 : abs };
+    // structurally: poll until the leftmost rendered data column resolves to
+    // an absolute index thousands of columns in, then check its first-row
+    // value matches matrix(1:100000)'s column-major fill ((k-1)*10 + 1).
+    //
+    // Resolve the leftmost cell, its header, and the cell's text in a SINGLE
+    // DOM read (one evaluate inside the iframe): a window slide can re-render
+    // between separate reads, so split reads race the relayout and a stale
+    // locator throws out of the poll instead of retrying. Returns abs 0 when
+    // not yet settled so the poll keeps trying.
+    const leftmostAbs = async (): Promise<{ abs: number; text: string }> => {
+      return await dataViewer.viewport.evaluate((vp) => {
+        const doc = vp.ownerDocument!;
+        const cell = doc.querySelector(
+          '#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])');
+        if (!cell) return { abs: 0, text: '' };
+        const pos = cell.getAttribute('data-col-pos');
+        const th = doc.querySelector(`th[data-col-idx="${pos}"]`);
+        const title = th?.getAttribute('title') ?? '';
+        const m = title.match(/^column (\d+):/);
+        return { abs: m ? parseInt(m[1], 10) : 0, text: cell.textContent ?? '' };
+      });
     };
 
     await expect
       .poll(async () => (await leftmostAbs()).abs, { timeout: 15000 })
       .toBeGreaterThan(4000);
 
-    const { pos, abs } = await leftmostAbs();
+    const { abs, text } = await leftmostAbs();
     expect(abs).toBeGreaterThan(4000);
-    await expect(
-      dataViewer.frame.locator(`#gridBody tr[data-row="0"] td[data-col-pos="${pos}"]`),
-    ).toHaveText(String((abs - 1) * 10 + 1), { timeout: 15000 });
+    expect(text).toBe(String((abs - 1) * 10 + 1));
   });
 
   // -----------------------------------------------------------------------
@@ -335,15 +337,18 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     // Jump beyond the fetched window via the go-to-column box.
-    await expect(dataViewer.gotoColumnButton).toBeVisible();
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
     await dataViewer.goToColumn(201);
     await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 
-    // Column 201 is the first data column of the new window. Address it by
-    // its columnOrder position (data-col-pos) rather than DOM position: each
-    // row leads with the rownames cell and a width-bearing spacer standing in
-    // for the unfetched columns to the left of the window.
-    const firstRowCol201 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td[data-col-pos="1"]');
+    // Address V201's cell by its columnOrder position (data-col-pos), not
+    // DOM position -- rows lead with the rownames cell and a width-bearing
+    // spacer for the unfetched span. The jump centers the fetched window on
+    // the target, so resolve the position from V201's header (with no pins,
+    // a header's data-col-idx equals its cells' data-col-pos).
+    const colPos = await dataViewer.columnHeader(201).getAttribute('data-col-idx');
+    const firstRowCol201 = dataViewer.frame.locator(
+      `#rsGridData tbody tr[data-row="0"] td[data-col-pos="${colPos}"]`);
 
     // Sort column 201 descending (click twice)
     await dataViewer.columnHeader(201).click();

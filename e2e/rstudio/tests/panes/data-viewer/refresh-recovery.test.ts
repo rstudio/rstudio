@@ -55,7 +55,7 @@ test.describe('Data Viewer refresh recovery', () => {
     try {
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await expect(dataViewer.gotoColumnButton).toBeVisible();
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
 
@@ -88,12 +88,15 @@ test.describe('Data Viewer refresh recovery', () => {
         await page.unroute(GRID_DATA);
       }
 
-      // Column navigation must still respond. On a dead grid the Go to
-      // Column button doesn't open its popup -- the click retries the
-      // bootstrap at the current offset instead: the grid comes back and
-      // the error overlay clears. Pre-fix the action was silently
-      // swallowed and the viewer stayed an error mask until a full reload.
-      await dataViewer.gotoColumnButton.click();
+      // Column navigation must still respond. On a dead grid the box has no
+      // matches to offer, so Enter falls back to a direct index jump, which
+      // retries the bootstrap: the grid comes back and the error overlay
+      // clears. Pre-fix the action was silently swallowed and the viewer
+      // stayed an error mask until a full reload. (Type with raw key
+      // presses and skip the suggestion wait -- there are none to wait for.)
+      await dataViewer.gotoColumnInput.click();
+      await dataViewer.gotoColumnInput.pressSequentially('201');
+      await dataViewer.gotoColumnInput.press('Enter');
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await expect(dataViewer.frame.locator('#errorWrapper')).toBeHidden();

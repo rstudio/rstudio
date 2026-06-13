@@ -2,15 +2,14 @@ import type { Page, Locator, FrameLocator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 
 export class DataViewerPane extends PageObject {
-  // Toolbar elements (outside iframe)
-  public gotoColumnButton: Locator;
+  // Toolbar elements (outside iframe): the "Go to column" typeahead box
+  // (shown when columns overflow the viewport) and its suggestion entries
+  // (a GWT SuggestBox popup attached to the main document body).
+  public gotoColumnInput: Locator;
+  public gotoColumnSuggestions: Locator;
 
   // Iframe accessor
   public frame: FrameLocator;
-
-  // The go-to-column popup's input, inside the iframe (present only while
-  // the popup is open).
-  public gotoColumnInput: Locator;
 
   // Elements inside the iframe
   public gridInfo: Locator;
@@ -22,13 +21,11 @@ export class DataViewerPane extends PageObject {
   constructor(page: Page) {
     super(page);
 
-    // The "Go to Column..." toolbar button (only shown for frames wider
-    // than one fetch window). Opens a typeahead popup inside the iframe.
-    this.gotoColumnButton = page.locator('#data-viewer-goto-column');
+    this.gotoColumnInput = page.locator('#data-viewer-goto-column input');
+    this.gotoColumnSuggestions = page.locator('.gwt-SuggestBoxPopup .item');
 
     // The data grid renders inside an iframe
     this.frame = page.frameLocator('[title="Data Browser"]');
-    this.gotoColumnInput = this.frame.locator('#gotoColumnInput');
     this.gridInfo = this.frame.locator('#rsGridData_info');
     // "Sorted by: <col>" status at the right of the info bar, with its
     // clear-sort button (hidden while no sort is active).
@@ -46,16 +43,18 @@ export class DataViewerPane extends PageObject {
   }
 
   /**
-   * Jump to a column via the Go to Column popup: open it from the toolbar
-   * button, type a column index or name, and press Enter to accept the
-   * first/active suggestion.
+   * Jump to a column via the toolbar's Go to column box: type a column
+   * index or name and press Enter to accept the top suggestion. Types with
+   * pressSequentially -- the GWT SuggestBox queries its oracle from key
+   * events, which fill() doesn't generate.
    */
   async goToColumn(column: number | string): Promise<void> {
-    await this.gotoColumnButton.click();
-    await this.gotoColumnInput.fill(String(column));
-    // Wait for a suggestion to materialize -- Enter on an empty list is a
-    // no-op (e.g. name matches require the async column-name fetch).
-    await this.frame.locator('.goto-column-item').first().waitFor({ state: 'visible' });
+    await this.gotoColumnInput.click();
+    await this.gotoColumnInput.fill('');
+    await this.gotoColumnInput.pressSequentially(String(column));
+    // Wait for a suggestion before committing -- name matches require the
+    // async column-name fetch on first use.
+    await this.gotoColumnSuggestions.first().waitFor({ state: 'visible' });
     await this.gotoColumnInput.press('Enter');
   }
 

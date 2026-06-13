@@ -1313,7 +1313,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(.rs.width_df)');
     try {
       await waitForViewer(dataViewer);
-      await expect(dataViewer.gotoColumnButton).toBeVisible();
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
       // Let the post-first-fetch auto-size pass settle before measuring.
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
@@ -1337,7 +1337,7 @@ test.describe('Data Viewer', () => {
       // must keep its own auto-sized width, not inherit column 1's. Note
       // data-col-idx is a position within the fetched window, so after the
       // jump the header for column 201 is found by its absolute title.
-      await expect(dataViewer.gotoColumnButton).toBeVisible();
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
       await dataViewer.goToColumn(201);
       // The post-slide width-refinement pass rebuilds the header row, which
       // can momentarily detach the <th> between poll iterations -- treat a
