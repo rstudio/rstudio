@@ -54,7 +54,11 @@ export async function writeAndOpenFile(
   if (canWriteDir(sandboxDir)) {
     fs.writeFileSync(fullPath, content);
   } else {
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
+    // sep="" + useBytes=TRUE keeps writeLines byte-identical to Node's
+    // fs.writeFileSync. Default sep="\n" would append an extra trailing
+    // newline that the original Node write doesn't, breaking content-equality
+    // assertions (toBe / toContain) in tests that round-trip the file.
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
   }
   await openFile(page, fullPath);
 }
@@ -86,7 +90,11 @@ export async function seedSandboxFile(
       page,
       `dir.create(${rPathLiteral(parentDir)}, recursive = TRUE, showWarnings = FALSE)`,
     );
-    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)})`);
+    // sep="" + useBytes=TRUE keeps writeLines byte-identical to Node's
+    // fs.writeFileSync. Default sep="\n" would append an extra trailing
+    // newline that the original Node write doesn't, breaking content-equality
+    // assertions (toBe / toContain) in tests that round-trip the file.
+    await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
   }
   return fullPath;
 }
@@ -152,6 +160,27 @@ export async function openFile(
     { expectedFullPath, basename },
     { timeout: TIMEOUTS.fileOpen, polling: 50 },
   );
+}
+
+/**
+ * Best-effort remove a single file by absolute path. Mirrors the write
+ * fallback in seedSandboxFile / writeAndOpenFile: when the parent directory
+ * isn't writable from the test process (Server-on-Linux: file owned by
+ * rsession's uid), unlink via R so the rsession-side uid does the delete.
+ * Errors are swallowed -- callers treat removal as cleanup, not a
+ * verification point.
+ */
+export async function removeSandboxFile(page: Page, fullPath: string): Promise<void> {
+  assertAbsolutePath(fullPath, 'removeSandboxFile: fullPath');
+  if (canWriteDir(path.dirname(fullPath))) {
+    try {
+      fs.rmSync(fullPath, { force: true });
+    } catch {
+      // best effort
+    }
+  } else {
+    await executeInConsole(page, `unlink(${rPathLiteral(fullPath)})`);
+  }
 }
 
 /**

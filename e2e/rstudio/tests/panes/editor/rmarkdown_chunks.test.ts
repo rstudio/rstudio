@@ -20,6 +20,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, isCommandEnabled } from '@utils/commands';
+import { removeSandboxFile } from '@utils/files';
 import { waitForConsoleBusy, waitForConsoleIdle } from '@pages/console_pane.page';
 
 /**
@@ -485,6 +486,9 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
     await expect.poll(() => fs.existsSync(nbHtmlPath), { timeout: 30000, intervals: [500] }).toBe(true);
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
-    fs.unlinkSync(nbHtmlPath);
+    // nb.html is written by rsession; on Server-on-Linux the test runner's
+    // uid can't unlink it directly. removeSandboxFile detects that and
+    // delegates to R-side unlink.
+    await removeSandboxFile(page, nbHtmlPath);
   });
 });

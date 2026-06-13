@@ -7,7 +7,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { writeAndOpenFile, closeAndDeleteSandboxFiles, removeSandboxFile } from '@utils/files';
 import { executeCommand } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import * as fs from 'fs';
@@ -93,7 +93,10 @@ test.describe('Custom knit render confirmation', () => {
     // The custom function returns no output file, so RStudio may surface a
     // render error; clear any such modal before continuing.
     await page.keyboard.press('Escape');
-    fs.rmSync(markerPath, { force: true });
+    // marker is written by the custom knit function running in rsession;
+    // delegate the unlink via removeSandboxFile so it works whether the
+    // sandbox is local-writable or owned by a different uid.
+    await removeSandboxFile(page, markerPath);
 
     // 3) Knit again -> the approval is remembered for the session, so no
     //    prompt appears and the command runs without a click. Re-issue knit
