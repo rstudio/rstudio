@@ -4382,14 +4382,14 @@ var initSidebar = function() {
       name.title = col.col_name;
       header.appendChild(name);
 
-      // Type label, with the timezone appended for POSIXct columns (so two
-      // datetime columns in different zones don't read identically).
+      // Type label. For POSIXct columns the timezone goes in a hover tooltip
+      // rather than inline (a full zone name like "America/New_York" would eat
+      // the row width); the grid header tooltip still shows it too.
       var type = document.createElement("span");
       type.className = "sidebar-col-type";
-      var typeText = typeLabel(col);
+      type.textContent = "<" + typeLabel(col) + ">";
       if (col.col_tz)
-         typeText += " " + col.col_tz;
-      type.textContent = "<" + typeText + ">";
+         type.title = "Timezone: " + col.col_tz;
       header.appendChild(type);
 
       // Filter icon (funnel): always shown, with an "active" style when the
