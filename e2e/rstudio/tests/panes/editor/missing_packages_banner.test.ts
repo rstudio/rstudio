@@ -76,9 +76,11 @@ test.describe('Missing-package banner', () => {
 
       // Re-enable via the AppCommand: clears the suppression property and
       // re-runs discovery, so the banner returns. available.packages() is
-      // cached by this point in the session, so this discovery is fast.
+      // cached by this point in the session, so this discovery is fast on
+      // Desktop -- but on Server the discovery RPC + UI update takes longer
+      // than 10s, so use a more generous timeout.
       await executeCommand(page, 'toggleDetectMissingPackages');
-      await expect(banner).toBeVisible({ timeout: 10000 });
+      await expect(banner).toBeVisible({ timeout: 30000 });
       expect(await isCommandChecked(page, 'toggleDetectMissingPackages')).toBe(true);
     });
 });

@@ -43,12 +43,21 @@ test.describe('Help > Release Notes - #17330', { tag: ['@parallel_safe'] }, () =
 
     const newPage = await newPagePromise;
     const initialUrl = newPage.url();
-    expect(initialUrl).toContain(BASE_URL);
+    // Two valid paths to the release notes page:
+    //   1) IDE opens the rstudio.org short link, which 302's to docs.posit.co
+    //   2) IDE links straight to docs.posit.co (current PR-built rserver
+    //      behaviour -- the short-link hop was removed)
+    // Either is correct user-facing behaviour, so accept either.
+    const FINAL_URL_HOST = 'docs.posit.co/ide/news/';
+    expect(
+      initialUrl.includes(BASE_URL) || initialUrl.includes(FINAL_URL_HOST),
+      `expected initialUrl to be either BASE_URL or ${FINAL_URL_HOST}; got ${initialUrl}`,
+    ).toBe(true);
 
-    // Verify the redirect lands on the Posit docs release notes page
+    // Verify the page (after any redirect) lands on the Posit docs release notes page
     await newPage.waitForLoadState('load', { timeout: 15000 });
     const finalUrl = newPage.url();
-    expect(finalUrl).toContain('docs.posit.co/ide/news/');
+    expect(finalUrl).toContain(FINAL_URL_HOST);
 
     // If the initial URL had a version fragment, verify it survived the redirect
     const fragment = new URL(initialUrl).hash;

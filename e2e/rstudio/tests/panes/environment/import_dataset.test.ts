@@ -86,6 +86,21 @@ test.describe('Import Dataset (readr)', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
+    // Pre-install readr (and pillar, which the importer also needs) into
+    // rsession's own R library before the first test runs. On Desktop the
+    // test process and rsession share an R library, so installDepIfPrompted
+    // covered the missing-package case. On Server, rsession runs as a
+    // different uid with its own empty user library; the install-prompt
+    // path is fragile from there, and the import dialog can race past
+    // TIMEOUTS.fileOpen waiting for it. Pre-installing keeps the test on
+    // the happy path (readr is already there, no prompt, dialog opens
+    // promptly) on both modes.
+    await consoleActions.executeInConsole(
+      'if (!requireNamespace("readr", quietly = TRUE)) ' +
+        'install.packages("readr", ' +
+        'repos = "https://packagemanager.posit.co/cran/latest")',
+      { wait: true },
+    );
   });
 
   // https://github.com/rstudio/rstudio/issues/17777

@@ -608,7 +608,16 @@ test.describe('R debugger', () => {
 
       // Click the "fr_g" frame label. The call frames render inside the
       // Environment workbench panel; we click the first matching text node.
-      await envPane.callFrameByText('fr_g').first().click();
+      // On Server, the call stack pane can render the frames a few seconds
+      // after waitForDebugMode resolves -- wait for the specific frame to
+      // become visible before clicking. Even once visible, Playwright's
+      // actionability checks (stable, no pointer-event blocker) time out
+      // intermittently on Server during the debugger handoff; force-click
+      // bypasses those checks. The post-click env assertion below catches
+      // any case where the click didn't actually land.
+      const frGLabel = envPane.callFrameByText('fr_g').first();
+      await expect(frGLabel).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await frGLabel.click({ force: true });
 
       // After switching to fr_g's frame, marker_g becomes the visible local.
       await expect.poll(
