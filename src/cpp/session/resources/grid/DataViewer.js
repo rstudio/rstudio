@@ -3742,6 +3742,16 @@ var createSparkline = function(breaks, counts, labels, breakLabels) {
       tooltip.appendChild(document.createTextNode(
          "Count: " + count.toLocaleString() + " (" + pct + "%)"));
       tooltip.style.display = "";
+
+      // Keep a wide tooltip (date ranges especially) from being clipped at the
+      // viewport's right edge: anchored at the wrapper's left by default, but
+      // nudged left by however much it overflows. Reset first so each bin
+      // re-measures from the default anchor.
+      tooltip.style.left = "0px";
+      var docWidth = document.documentElement.clientWidth;
+      var overflowRight = tooltip.getBoundingClientRect().right - (docWidth - 4);
+      if (overflowRight > 0)
+         tooltip.style.left = (-overflowRight) + "px";
    });
 
    canvas.addEventListener("mouseleave", function() {
