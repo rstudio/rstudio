@@ -102,6 +102,20 @@ var columnOffset = 0;
 // Maximum columns to display at once
 var maxDisplayColumns = -1;
 
+// Bounds of the currently FETCHED column window (absolute, 1-based,
+// inclusive), captured when `cols` is established. Layout math (the
+// unfetched-span widths, content-x mapping) keys off these rather than
+// columnOffset so it stays self-consistent while a slide is in flight
+// (columnOffset already points at the next window then).
+// fetchedWindowEnd === 0 means "unknown" (no grid yet).
+var fetchedWindowStart = 1;
+var fetchedWindowEnd = 0;
+
+// Non-zero while a column-window slide's metadata fetch is in flight
+// (holds that slide's generation token). Gates scroll-driven slides so
+// fast horizontal scrubbing issues at most one metadata fetch at a time.
+var slideInFlightGen = 0;
+
 // Maximum rows to display (-1 = all)
 var maxRows = -1;
 
@@ -301,6 +315,12 @@ var measuredWidths = [];
 // rendered row in appendWindowedCells -- recomputing an O(columns) prefix sum
 // for every row of a wide frame was a measurable share of render cost (#17806).
 var columnOffsetsCache = null;
+
+// Cached widths of the unfetched column spans flanking the fetched window
+// (see leftSpanWidth / rightSpanWidth). -1 = needs recompute; shares the
+// invalidation point of the other layout caches (invalidatePinnedOffsets).
+var leftSpanWidthCache = -1;
+var rightSpanWidthCache = -1;
 
 // Authoritative table content width; mirrors the sum of measuredWidths after
 // autoSizeColumns. Prefer this over deriving content width from
@@ -1327,6 +1347,124 @@ var columnOffsets = function() {
    return offs;
 };
 
+// ----------------------------------------------------------------------------
+// Unfetched column spans. The table's layout covers the WHOLE frame: pinned
+// columns, then a left span standing in for the unfetched columns before the
+// fetched window, the fetched window itself, and a right span for the
+// unfetched columns after it. Span columns are billed at DEFAULT_COL_WIDTH (no
+// metadata exists for them yet); the discrepancy against their real widths is
+// absorbed when a slide lands (anchor-based scroll compensation in
+// applyColumnWindowUpdate). This is what gives the horizontal scrollbar the
+// full frame's range, so the user scrolls -- rather than paginates -- through
+// columns.
+// ----------------------------------------------------------------------------
+
+// Number of pinned columns whose absolute index falls in [lo, hi].
+var countPinnedInRange = function(lo, hi) {
+   if (lo > hi) return 0;
+   var n = 0;
+   pinnedColumns.forEach(function(abs) {
+      if (abs >= lo && abs <= hi) n++;
+   });
+   return n;
+};
+
+// Unpinned column counts in the spans. Pinned columns are excluded: they are
+// always fetched and rendered sticky at the front, so they occupy no span
+// space. fetchedWindowEnd === 0 (no grid yet) yields empty spans.
+var leftSpanCols = function() {
+   var hi = fetchedWindowStart - 1;
+   if (fetchedWindowEnd <= 0 || hi < 1) return 0;
+   return hi - countPinnedInRange(1, hi);
+};
+
+var rightSpanCols = function() {
+   if (fetchedWindowEnd <= 0 || fetchedWindowEnd >= totalCols) return 0;
+   var lo = fetchedWindowEnd + 1;
+   return (totalCols - lo + 1) - countPinnedInRange(lo, totalCols);
+};
+
+var leftSpanWidth = function() {
+   if (leftSpanWidthCache < 0)
+      leftSpanWidthCache = leftSpanCols() * DEFAULT_COL_WIDTH;
+   return leftSpanWidthCache;
+};
+
+var rightSpanWidth = function() {
+   if (rightSpanWidthCache < 0)
+      rightSpanWidthCache = rightSpanCols() * DEFAULT_COL_WIDTH;
+   return rightSpanWidthCache;
+};
+
+// The k-th (0-based) unpinned absolute column index at or after startAbs.
+// Walks the (small, sorted) pinned set to skip over pinned indices.
+var nthUnpinnedAbs = function(startAbs, k) {
+   var sorted = Array.from(pinnedColumns).sort(function(a, b) { return a - b; });
+   var abs = startAbs + k;
+   for (var i = 0; i < sorted.length; i++) {
+      if (sorted[i] >= startAbs && sorted[i] <= abs) abs++;
+   }
+   return Math.max(1, Math.min(abs, totalCols));
+};
+
+// Map a content x-coordinate (px from the table's left edge) to the absolute
+// index of the unpinned column at that position, across all three layout
+// segments (left span / fetched window / right span).
+var absColAtContentX = function(x) {
+   var offs = columnOffsets();
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   if (lastPos < 0 || offs.length === 0) return 1;
+
+   var spanBase = offs[firstUnpinned]; // pinned block width
+   var leftW = leftSpanWidth();
+
+   if (x < spanBase + leftW) {
+      var k = Math.max(0, Math.floor((x - spanBase) / DEFAULT_COL_WIDTH));
+      return nthUnpinnedAbs(1, k);
+   }
+
+   var fx = x - leftW;
+   for (var i = firstUnpinned; i <= lastPos; i++) {
+      if (fx < offs[i + 1]) return absColIndex(columnOrder[i]);
+   }
+
+   var rx = x - (offs[lastPos + 1] + leftW);
+   var k2 = Math.max(0, Math.floor(rx / DEFAULT_COL_WIDTH));
+   return nthUnpinnedAbs(fetchedWindowEnd + 1, k2);
+};
+
+// Inverse of absColAtContentX: the layout x of a column's left edge, by
+// absolute index. Fetched columns resolve through the measured prefix sums;
+// span columns through the DEFAULT_COL_WIDTH estimate.
+var layoutXOfAbs = function(absIdx) {
+   var offs = columnOffsets();
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   if (lastPos < 0 || offs.length === 0) return 0;
+
+   var leftW = leftSpanWidth();
+
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0) {
+      var orderPos = columnOrder.indexOf(pos);
+      if (orderPos >= 0) {
+         return orderPos < firstUnpinned
+            ? offs[orderPos]               // pinned: sticky at the front
+            : offs[orderPos] + leftW;      // fetched window
+      }
+   }
+
+   if (absIdx < fetchedWindowStart) {
+      var k = (absIdx - 1) - countPinnedInRange(1, absIdx - 1);
+      return offs[firstUnpinned] + Math.max(0, k) * DEFAULT_COL_WIDTH;
+   }
+
+   var lo = fetchedWindowEnd + 1;
+   var k2 = (absIdx - lo) - countPinnedInRange(lo, absIdx - 1);
+   return offs[lastPos + 1] + leftW + Math.max(0, k2) * DEFAULT_COL_WIDTH;
+};
+
 // Compute the visible unpinned column window for a given horizontal scroll
 // position. Returns columnOrder positions { start, end } (inclusive) covering
 // the unpinned columns whose x-range intersects the viewport plus BUFFER_COLS
@@ -1344,19 +1482,29 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
    var visLeft = scrollLeft;
    var visRight = scrollLeft + clientWidth;
 
+   // Fetched columns sit to the right of the left unfetched span; shift
+   // their layout positions accordingly.
+   var shift = leftSpanWidth();
+
    var start = -1, end = -1;
    for (var i = firstUnpinned; i <= lastPos; i++) {
-      var colLeft = offs[i];
-      var colRight = offs[i + 1];
+      var colLeft = offs[i] + shift;
+      var colRight = offs[i + 1] + shift;
       if (colRight > visLeft && colLeft < visRight) {
          if (start === -1) start = i;
          end = i;
       }
    }
 
-   // Nothing intersected (e.g. scrolled past the end during a transient
-   // layout); fall back to the last column so we never render an empty body.
-   if (start === -1) { start = lastPos; end = lastPos; }
+   // Nothing intersected: the viewport is over an unfetched span (or past the
+   // end during a transient layout). Keep the nearest edge column rendered so
+   // we never produce an empty body.
+   if (start === -1) {
+      var nearest = (visRight <= offs[firstUnpinned] + shift)
+         ? firstUnpinned : lastPos;
+      start = nearest;
+      end = nearest;
+   }
 
    start = Math.max(firstUnpinned, start - BUFFER_COLS);
    end = Math.min(lastPos, end + BUFFER_COLS);
@@ -1414,15 +1562,18 @@ var appendWindowedCells = function(parent, makeCell, spacerTag) {
       winEnd = lastPos;
    }
 
+   // The spacers absorb both the off-window fetched columns AND the unfetched
+   // spans flanking the fetched window, so the table's total width spans the
+   // whole frame and the horizontal scrollbar covers every column.
    var offs = columnOffsets();
-   var leftW = offs[winStart] - offs[firstUnpinned];
+   var leftW = (offs[winStart] - offs[firstUnpinned]) + leftSpanWidth();
    if (leftW > 0) parent.appendChild(colSpacerCell(spacerTag, leftW));
 
    for (var p = winStart; p <= winEnd; p++) {
       parent.appendChild(makeCell(p));
    }
 
-   var rightW = offs[lastPos + 1] - offs[winEnd + 1];
+   var rightW = (offs[lastPos + 1] - offs[winEnd + 1]) + rightSpanWidth();
    if (rightW > 0) parent.appendChild(colSpacerCell(spacerTag, rightW));
 };
 
@@ -1442,9 +1593,11 @@ var renderedColumnCount = function() {
       winEnd = lastPos;
    }
    var offs = columnOffsets();
-   if (offs[winStart] - offs[firstUnpinned] > 0) count++;       // left spacer
+   if (offs[winStart] - offs[firstUnpinned] + leftSpanWidth() > 0)
+      count++;                                                  // left spacer
    count += (winEnd - winStart + 1);                            // window cells
-   if (offs[lastPos + 1] - offs[winEnd + 1] > 0) count++;       // right spacer
+   if (offs[lastPos + 1] - offs[winEnd + 1] + rightSpanWidth() > 0)
+      count++;                                                  // right spacer
    return count || 1;
 };
 
@@ -1568,6 +1721,8 @@ var rebuildHeaders = function() {
 var invalidatePinnedOffsets = function() {
    pinnedOffsetsCache = null;
    columnOffsetsCache = null;
+   leftSpanWidthCache = -1;
+   rightSpanWidthCache = -1;
 };
 
 var getPinnedOffsets = function() {
@@ -1643,9 +1798,12 @@ var applyPinnedColumns = function() {
       // columnOrder places pinned columns before unpinned, so the last entry
       // being unpinned is sufficient to confirm an unpinned column exists.
       if (lastIdx >= 0 && !isColumnPinned(columnOrder[lastIdx])) {
-         // The last column may be outside the rendered window; use its
-         // measured width rather than a (possibly absent) rendered <th>.
-         var lastUnpinnedWidth = measuredWidths[lastIdx] || 0;
+         // The last LAYOUT column may be an unfetched span column (billed at
+         // the default estimate) or a fetched column outside the rendered
+         // window; use the appropriate width rather than a rendered <th>.
+         var lastUnpinnedWidth = rightSpanWidth() > 0
+            ? DEFAULT_COL_WIDTH
+            : (measuredWidths[lastIdx] || 0);
          overscroll = Math.max(0,
             viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
       }
@@ -1823,6 +1981,14 @@ var autoSizeColumns = function() {
       totalWidth += w;
    }
 
+   // The table spans the WHOLE frame: measured widths for the fetched
+   // columns plus the estimated unfetched spans on either side, so the
+   // horizontal scrollbar's range covers every column. Invalidate the layout
+   // caches first -- the span widths depend on the (possibly just-changed)
+   // fetched window bounds.
+   invalidatePinnedOffsets();
+   totalWidth += leftSpanWidth() + rightSpanWidth();
+
    var table = document.getElementById("rsGridData");
    if (table) {
       table.style.width = totalWidth + "px";
@@ -1830,7 +1996,6 @@ var autoSizeColumns = function() {
    }
 
    totalTableWidth = totalWidth;
-   invalidatePinnedOffsets();
 
    // Recompute the visible column window against the new widths and (re)build
    // the windowed header row, which applies per-column widths to the rendered
@@ -2928,6 +3093,10 @@ var onScroll = function() {
       }
       renderVisibleRows(colsChanged);
       debouncedInfoBar();
+
+      // Horizontal scroll may have moved the viewport near (or past) the
+      // fetched window's edge; recenter the window on it when so.
+      maybeSlideForScroll();
    });
 };
 onScroll.cancel = function() {
@@ -2965,6 +3134,7 @@ var onScrollEnd = function() {
    renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
+   maybeSlideForScroll();
 
    // Persist the settled scroll position so it survives a close/reopen reload,
    // alongside pins/sort/filters. scrollend fires once per gesture (including
@@ -3886,10 +4056,11 @@ var scrollToColumn = function(colIdx) {
 
    // The target header may be outside the current column window (so not in the
    // DOM); derive its geometry from measuredWidths instead of a rendered <th>.
+   // Unpinned columns sit to the right of the left unfetched span.
    var pos = columnOrder.indexOf(colIdx);
    if (pos < 0) return;
    var offs = columnOffsets();
-   var colLeft = offs[pos];
+   var colLeft = offs[pos] + (pos >= firstUnpinnedPos() ? leftSpanWidth() : 0);
    var colWidth = measuredWidths[pos] || 0;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
@@ -4018,9 +4189,11 @@ var ensureActiveCellVisible = function() {
 
    // Horizontal: the active column may be outside the rendered column window,
    // so derive its geometry from measuredWidths rather than a rendered <th>.
+   // Unpinned columns sit to the right of the left unfetched span.
    if (activeCol < 0 || activeCol >= columnOrder.length) return;
    var offs = columnOffsets();
-   var colLeft = offs[activeCol];
+   var colLeft = offs[activeCol] +
+      (activeCol >= firstUnpinnedPos() ? leftSpanWidth() : 0);
    var colWidth = measuredWidths[activeCol] || 0;
    var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
@@ -4099,9 +4272,11 @@ var ensureActiveHeaderVisible = function() {
    if (activeHeaderCol < 0 || activeHeaderCol >= columnOrder.length) return;
 
    // The active header may be outside the rendered window; derive geometry
-   // from measuredWidths rather than a rendered <th>.
+   // from measuredWidths rather than a rendered <th>. Unpinned columns sit
+   // to the right of the left unfetched span.
    var offs = columnOffsets();
-   var colLeft = offs[activeHeaderCol];
+   var colLeft = offs[activeHeaderCol] +
+      (activeHeaderCol >= firstUnpinnedPos() ? leftSpanWidth() : 0);
    var colWidth = measuredWidths[activeHeaderCol] || 0;
    var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
@@ -4683,6 +4858,12 @@ var initGrid = function(resCols, data) {
    var resTotalRows = cols[0].total_rows;
    if (resTotalRows > 0) totalRows = resTotalRows;
 
+   // Record the fetched window bounds the span layout derives from.
+   fetchedWindowStart = columnOffset + 1;
+   fetchedWindowEnd = maxDisplayColumns > 0
+      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
+      : totalCols;
+
    window.dataTableMaxColumns = totalCols;
    window.dataTableColumnOffset = 0;
 
@@ -4860,6 +5041,9 @@ var resetGridState = function() {
    // Reset here (rather than in invalidateCache) because resetGridState only
    // runs from bootstrap, which always re-fetches columns and repopulates this.
    totalCols = 0;
+   fetchedWindowStart = 1;
+   fetchedWindowEnd = 0;
+   slideInFlightGen = 0;
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";
@@ -5334,14 +5518,41 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 // Column Window Sliding (pagination without a rebuild)
 // ==========================================================================
 
+// Capture the column under the viewport's left edge (and its on-screen pixel
+// offset) so a relayout can restore the user's visual position even though
+// column widths -- estimated for unfetched spans, measured for fetched ones --
+// change as the window slides.
+var captureScrollAnchor = function() {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport || !cols) return null;
+   var pinnedW = getPinnedOffsets().totalWidth;
+   var abs = absColAtContentX(viewport.scrollLeft + pinnedW);
+   return { abs: abs, offsetPx: layoutXOfAbs(abs) - viewport.scrollLeft };
+};
+
+var restoreScrollAnchor = function(anchor) {
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport || !anchor) return;
+   viewport.scrollLeft = Math.max(0, layoutXOfAbs(anchor.abs) - anchor.offsetPx);
+   lastScrollLeft = viewport.scrollLeft;
+};
+
 // Swap the grid over to a freshly fetched column window without tearing the
 // grid down. Everything a bootstrap would reset survives: scroll position,
 // pins/sort/filters (live state, not re-read from storage), the sidebar's
 // visibility, header-attached UI, and the row cache (remapped so overlap
 // columns -- rownames, pinned, any shared window -- render immediately while
 // the new columns' data is refetched).
-var applyColumnWindowUpdate = function(resCols) {
+//
+// options.targetAbs, when given, scrolls the viewport so that absolute column
+// lands at the left edge (just right of the pinned block) -- used by the
+// pagination buttons. Otherwise the current visual position is preserved via
+// a scroll anchor.
+var applyColumnWindowUpdate = function(resCols, options) {
    prepareColumnResponse(resCols);
+
+   var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
+   var anchor = targetAbs > 0 ? null : captureScrollAnchor();
 
    // Capture active cell/header identity before swapping `cols`
    // (absColIndex resolves through it); remapped to the new window below.
@@ -5358,6 +5569,12 @@ var applyColumnWindowUpdate = function(resCols) {
    totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
    if (cols[0].total_rows > 0)
       totalRows = cols[0].total_rows;
+
+   // Record the fetched window bounds the span layout derives from.
+   fetchedWindowStart = columnOffset + 1;
+   fetchedWindowEnd = maxDisplayColumns > 0
+      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
+      : totalCols;
 
    // Carry cached rows over to the new column alignment, then retire the
    // old window's in-flight fetches: their rows would land misaligned.
@@ -5391,10 +5608,34 @@ var applyColumnWindowUpdate = function(resCols) {
    deferredHeaderRebuild = false;
 
    // Rebuild layout for the new window: widths, headers (autoSizeColumns
-   // re-injects any active header UI), pinned offsets, and the sidebar.
+   // re-injects any active header UI), pinned offsets, and the sidebar
+   // (preserving its scroll position across the rebuild).
    autoSizeColumns();
    applyPinnedColumns();
+   var sidebarContent = document.getElementById("sidebarContent");
+   var sidebarScrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
    initSidebar();
+   if (sidebarContent)
+      sidebarContent.scrollTop = sidebarScrollTop;
+
+   // Restore the user's visual position against the new layout: either pin
+   // the requested column to the left edge (pagination buttons) or re-derive
+   // scrollLeft from the anchor captured before the relayout. Then recompute
+   // the render window against the settled scroll position.
+   var viewport = document.getElementById("gridViewport");
+   if (targetAbs > 0 && viewport) {
+      var pinnedW = getPinnedOffsets().totalWidth;
+      viewport.scrollLeft = Math.max(0, layoutXOfAbs(targetAbs) - pinnedW);
+      lastScrollLeft = viewport.scrollLeft;
+   } else if (!anyScrollbarDragging()) {
+      // Don't fight an in-progress scrollbar drag for the scroll position;
+      // the drag is the user's statement of where they want to be.
+      restoreScrollAnchor(anchor);
+   }
+   if (computeColumnWindow()) {
+      rebuildHeaderWindow();
+      applyPinnedColumns();
+   }
 
    // Sync the viewport's aria-activedescendant with the remapped active
    // cell/header (cleared when neither survived the slide).
@@ -5409,7 +5650,6 @@ var applyColumnWindowUpdate = function(resCols) {
    // initial autoSize above could only sample overlap cells), then render
    // the remapped skeleton; renderVisibleRows issues fetches for any other
    // incomplete visible blocks.
-   var viewport = document.getElementById("gridViewport");
    var scrollTop = viewport ? viewport.scrollTop : 0;
    var firstVisible = Math.floor(scrollTop / ROW_HEIGHT);
    var blockStart =
@@ -5423,22 +5663,74 @@ var applyColumnWindowUpdate = function(resCols) {
    updateInfoBar();
    updateCustomScrollbars();
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
+
+   // The user may have kept scrolling while this window was in flight;
+   // immediately evaluate whether another slide is already warranted.
+   maybeSlideForScroll();
 };
 
 // Fetch column metadata for the current columnOffset/maxDisplayColumns and
 // apply it incrementally. Shares the bootstrap generation token so a slide
 // superseded by a newer slide or a full bootstrap (data refresh) is dropped.
-var slideColumnWindow = function() {
+var slideColumnWindow = function(options) {
    if (bootstrapping || cols === null)
       return;
 
    var generation = ++bootstrapGeneration;
+   slideInFlightGen = generation;
    fetchColumns(function(result) {
+      // Clear the in-flight gate before the staleness check so a superseded
+      // or failed slide can't permanently block scroll-driven slides.
+      if (slideInFlightGen === generation)
+         slideInFlightGen = 0;
       if (generation !== bootstrapGeneration) return;
       if (result.error) { showError(result.error); return; }
       hideError();
-      applyColumnWindowUpdate(result);
+      applyColumnWindowUpdate(result, options);
    });
+};
+
+// Scroll-driven sliding: when the visible column range pokes outside the
+// fetched window (i.e. unfetched span columns are on screen), recenter the
+// window on the viewport. Called from the scroll handlers and again when a
+// slide lands. At most one metadata fetch is in flight at a time
+// (slideInFlightGen); the landing slide re-evaluates, so fast scrubbing
+// converges on the final position with a short chain of fetches rather than
+// one per scroll event.
+//
+// The trigger is deliberately strict -- visible range OUTSIDE the window, not
+// merely near its edge -- so that a pagination jump (which lands the view
+// exactly at the window's left edge by design) doesn't immediately recenter
+// itself away from the page the user asked for.
+var maybeSlideForScroll = function() {
+   if (!cols || bootstrapping || slideInFlightGen || dataMode !== "server")
+      return;
+   if (totalCols <= 0 || maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
+      return;
+   // Layout (and thus the x -> column mapping) isn't meaningful until the
+   // first width measurement has run.
+   if (measuredWidths.length === 0)
+      return;
+
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport) return;
+
+   var pinnedW = getPinnedOffsets().totalWidth;
+   var vLo = absColAtContentX(viewport.scrollLeft + pinnedW);
+   var vHi = absColAtContentX(viewport.scrollLeft + viewport.clientWidth);
+
+   var needSlide =
+      (vLo < fetchedWindowStart && fetchedWindowStart > 1) ||
+      (vHi > fetchedWindowEnd && fetchedWindowEnd < totalCols);
+   if (!needSlide) return;
+
+   var center = Math.round((vLo + vHi) / 2);
+   var newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns,
+      center - Math.floor(maxDisplayColumns / 2) - 1));
+   if (newOffset === columnOffset) return;
+
+   columnOffset = newOffset;
+   slideColumnWindow();
 };
 
 var columnNav = function(newOffset) {
@@ -5459,12 +5751,9 @@ var columnNav = function(newOffset) {
    if (columnOffset !== newOffset) {
       columnOffset = newOffset;
 
-      // A new page starts at its left edge (vertical position is kept).
-      var viewport = document.getElementById("gridViewport");
-      if (viewport) viewport.scrollLeft = 0;
-      lastScrollLeft = 0;
-
-      slideColumnWindow();
+      // Scroll the new page's first column to the left edge once the window
+      // lands (vertical position is kept).
+      slideColumnWindow({ targetAbs: newOffset + 1 });
    }
 };
 
@@ -5725,11 +6014,8 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
 
    // Slide to the new window in place. The active cell/header is remapped
    // by identity (or cleared when its column left the fetched set), and the
-   // new window starts at its left edge.
-   var viewport = document.getElementById("gridViewport");
-   if (viewport) viewport.scrollLeft = 0;
-   lastScrollLeft = 0;
-   slideColumnWindow();
+   // new window's first column scrolls to the left edge.
+   slideColumnWindow({ targetAbs: columnOffset + 1 });
 };
 
 window.isLimitedColumnFrame = function() {

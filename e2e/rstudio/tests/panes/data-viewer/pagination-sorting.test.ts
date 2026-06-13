@@ -104,6 +104,45 @@ test.describe('Data Viewer', () => {
   });
 
   // -----------------------------------------------------------------------
+  // Continuous column virtualization: the horizontal scrollbar spans the
+  // whole frame, and scrolling past the fetched window slides it in place
+  // (no pagination clicks required to reach any column).
+  // -----------------------------------------------------------------------
+  test('horizontal scroll slides the column window to the last column', async () => {
+    await consoleActions.executeInConsole(
+      'df <- data.frame(matrix(1:50000, nrow=100, ncol=500))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+
+    // Scroll fully right. The viewport lands on unfetched span columns,
+    // which triggers a window slide centered on the visible range; the
+    // frame's last column arrives without any pagination clicks.
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+
+    // The toolbar's window indicator follows the slide (clamped at the end
+    // of the frame), and the last column's data is real: V500 holds
+    // 49901..50000, so row 0 reads 49901. data-col-pos 200 is V500's
+    // position within the [301, 500] window (rownames at 0).
+    await expect(dataViewer.columnNumberInput).toHaveValue('301 - 500');
+    await expect(
+      dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="200"]'),
+    ).toHaveText('49901', { timeout: 15000 });
+
+    // Scrolling back to the far left slides the window home again.
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+    await expect(
+      dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'),
+    ).toHaveText('1', { timeout: 15000 });
+  });
+
+  // -----------------------------------------------------------------------
   // Sorting
   // -----------------------------------------------------------------------
   test('column sorting - descending order', async () => {
@@ -252,9 +291,11 @@ test.describe('Data Viewer', () => {
     await dataViewer.rightArrow.click();
     await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
 
-    // Column 201 is the first data column on page 2: td:nth-child(2).
-    // Use data-row to skip the virtual-scroll spacer row.
-    const firstRowCol201 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(2)');
+    // Column 201 is the first data column of the new window. Address it by
+    // its columnOrder position (data-col-pos) rather than DOM position: each
+    // row leads with the rownames cell and a width-bearing spacer standing in
+    // for the unfetched columns to the left of the window.
+    const firstRowCol201 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td[data-col-pos="1"]');
 
     // Sort column 201 descending (click twice)
     await dataViewer.columnHeader(201).click();

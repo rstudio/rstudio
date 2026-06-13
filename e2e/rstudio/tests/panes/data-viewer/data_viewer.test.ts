@@ -285,17 +285,28 @@ test.describe('Data Viewer', () => {
       await waitForViewer(dataViewer);
       await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
 
-      // Scroll the column window fully right: column 1's header is evicted
-      // from the DOM, but its sidebar entry remains.
-      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+      // Scroll the rendered column window right far enough that column 1's
+      // header is evicted from the DOM, but not so far that the viewport
+      // leaves the fetched window (which would slide it and re-key the
+      // sidebar). Its sidebar entry remains either way.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 2000; });
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
 
-      // The column window's right edge (V200; columns past 200 sit on the
-      // next column page) is now in view. Its first-row cell anchors the
-      // row-order assertions: V200 holds 19901..20000 in natural row order.
-      const lastColCell = dataViewer.frame.locator('#gridBody td[data-col-pos="200"]').first();
-      await expect(lastColCell).toHaveText('19901');
+      // Anchor the row-order assertions on whichever data column is rendered
+      // at the scrolled-to position (the exact column depends on measured
+      // widths). With no pins a cell's data-col-pos equals its column index
+      // k, and Vk holds (k-1)*100+1 .. k*100 in natural row order.
+      const row0 = dataViewer.frame.locator('#gridBody tr[data-row="0"]');
+      await expect(row0).toBeVisible();
+      const posAttr = await row0
+        .locator('td[data-col-pos]:not([data-col-pos="0"])')
+        .last()
+        .getAttribute('data-col-pos');
+      const k = parseInt(posAttr ?? '0', 10);
+      expect(k).toBeGreaterThan(1);
+      const anchorCell = row0.locator(`td[data-col-pos="${k}"]`);
+      await expect(anchorCell).toHaveText(String((k - 1) * 100 + 1));
 
       // Sort ascending from the sidebar: the icon reflects the new state
       // with no <th> for the column in the document, and the rows actually
@@ -304,7 +315,7 @@ test.describe('Data Viewer', () => {
         .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
       await sidebarSort.click();
       await expect(sidebarSort).toHaveClass(/sorting_asc/);
-      await expect(lastColCell).toHaveText('20000', { timeout: TIMEOUTS.fileOpen });
+      await expect(anchorCell).toHaveText(String(k * 100), { timeout: TIMEOUTS.fileOpen });
 
       // Scroll back: the recreated header carries the sort state.
       await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
