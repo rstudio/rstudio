@@ -34,9 +34,10 @@ var BUFFER_ROWS = 25;
 // visible window plus the buffer above.
 var FETCH_SIZE = 500;
 
-// Pixel distance from the viewport edge at which we trigger the next
-// row-fetch ahead of the user's scroll.
-var FETCH_THRESHOLD = 100;
+// Row prefetch is currently one FETCH_SIZE block ahead of the visible window
+// (see renderVisibleRows). If that proves too coarse for fast scrolling, a
+// pixel-distance-from-edge threshold could be reintroduced here to trigger the
+// next fetch earlier.
 
 // rowCache eviction. Holding ~20k rows in memory comfortably covers any
 // reasonable visible-window-plus-prefetch; once we exceed the limit we
