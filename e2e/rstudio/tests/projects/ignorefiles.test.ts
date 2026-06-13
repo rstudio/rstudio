@@ -115,14 +115,14 @@ test.describe('Project ignore files', () => {
       await expect.poll(() => fs.existsSync(gitignorePath), {
         timeout: TIMEOUTS.consoleReady,
       }).toBe(true);
-      expect(fs.readFileSync(gitignorePath, 'utf8').split('\n')).not.toContain(dir);
+      expect(fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/)).not.toContain(dir);
 
       // Create the directory via rsession so the file monitor picks it up
       // (recursive so the nested ".posit/assistant" case creates ".posit" too).
       await consoleActions.executeInConsole(`dir.create("${projectDir}/${dir}", recursive = TRUE)`);
 
       await expect
-        .poll(() => fs.readFileSync(gitignorePath, 'utf8').split('\n').includes(dir), {
+        .poll(() => fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/).includes(dir), {
           timeout: TIMEOUTS.consoleReady,
         })
         .toBe(true);
@@ -139,7 +139,7 @@ test.describe('Project ignore files', () => {
         );
         // give the file monitor a beat to (not) react to the publisher dir
         await waitForConsoleIdle(page);
-        const lines = fs.readFileSync(gitignorePath, 'utf8').split('\n');
+        const lines = fs.readFileSync(gitignorePath, 'utf8').split(/\r?\n/);
         expect(lines).not.toContain(parent);
         expect(lines).not.toContain(`${parent}/`);
         expect(lines).not.toContain(`${parent}/publisher`);

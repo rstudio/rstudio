@@ -88,7 +88,16 @@ runs:
     - name: Install npm dependencies
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: npm ci
+      run: |
+        for i in 1 2 3; do
+          npm ci && break
+          if [ "$i" -eq 3 ]; then
+            echo "npm ci failed after 3 attempts"
+            exit 1
+          fi
+          echo "npm ci attempt $i failed, retrying in 10s..."
+          sleep 10
+        done
 
     - name: Cache Playwright browsers
       uses: actions/cache@v4

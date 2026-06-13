@@ -93,16 +93,17 @@ jobs:
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
-          Invoke-WebRequest `
-            -Uri 'https://github.com/r-lib/rig/releases/download/latest/rig-windows-latest.exe' `
-            -OutFile rig-setup.exe `
-            -MaximumRetryCount 3 -RetryIntervalSec 5
-          $p = Start-Process -FilePath .\rig-setup.exe -ArgumentList '/VERYSILENT','/NORESTART' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Write-Error "rig installer exited $($p.ExitCode)"; exit 1 }
-          $rigExe = 'C:\Program Files\rig\rig.exe'
-          if (-not (Test-Path $rigExe)) {
-            Write-Error "rig binary not found at $rigExe after install."
-            exit 1
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
           }
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
 
