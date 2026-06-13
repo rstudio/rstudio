@@ -177,6 +177,10 @@ test.describe('Data Viewer', () => {
         const cell = doc.querySelector(
           '#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])');
         if (!cell) return { abs: 0, text: '' };
+        // data-col-pos is a columnOrder position; data-col-idx is a cols-array
+        // index. They coincide only because nothing is pinned here (columnOrder
+        // is the identity permutation) -- map through columnOrder if a pin is
+        // ever added to this test.
         const pos = cell.getAttribute('data-col-pos');
         const th = doc.querySelector(`th[data-col-idx="${pos}"]`);
         const title = th?.getAttribute('title') ?? '';
@@ -192,6 +196,64 @@ test.describe('Data Viewer', () => {
     const { abs, text } = await leftmostAbs();
     expect(abs).toBeGreaterThan(4000);
     expect(text).toBe(String((abs - 1) * 10 + 1));
+  });
+
+  test('an off-screen row block survives a column-window round trip', async () => {
+    // Regression guard for the blockColsSig round-trip bug. Sliding the column
+    // window away (A -> B) and back (B -> A) remaps the row cache by identity,
+    // wiping each block's non-overlap cells. A block cached outside the
+    // visible+prefetch vertical range during the round trip used to keep its
+    // old signature, so on return (colsSig back to A) it read as "current"
+    // while holding undefined cells -- rendering a permanently blank band with
+    // no refetch. The slide now purges signatures that don't match the new
+    // window, forcing such blocks to refetch when scrolled back into view.
+    //
+    // 1500 rows -> three FETCH_SIZE(500) row-blocks; 500 columns force the
+    // window to slide. matrix() fills column-major, so V1's row r (0-based)
+    // holds r + 1. Row 1200 sits in the third block [1000, 1499], which is
+    // outside row 0's prefetch-ahead (that only reaches block [500, 999]).
+    await consoleActions.executeInConsole(
+      'df <- data.frame(matrix(1:750000, nrow=1500, ncol=500))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    const ROW = 1200;
+
+    // Scroll to a vertical row and read V1's cell text there, re-applying the
+    // scroll on every poll iteration. A single scrollTop set can be undone by
+    // the grid's deferred relayout/refetch, and rendering lands a frame later
+    // than the set, so we keep forcing the position until the row renders.
+    // Returns "" when the row isn't rendered or its data cell is still blank.
+    const readV1AtRow = async (row: number): Promise<string> => {
+      return await dataViewer.viewport.evaluate((el, r) => {
+        el.scrollTop = r * 23;
+        const cell = el.ownerDocument!.querySelector(
+          `#gridBody tr[data-row="${r}"] td[data-col-pos="1"]`);
+        return cell?.textContent ?? '';
+      }, row);
+    };
+
+    // Cache the lower block in column window A by scrolling it into view.
+    await expect.poll(() => readV1AtRow(ROW), { timeout: 20000 }).toBe(String(ROW + 1));
+
+    // Park back at the top so the lower block sits outside the
+    // visible+prefetch range and isn't refetched during the slides below.
+    await expect.poll(() => readV1AtRow(0), { timeout: 15000 }).toBe('1');
+
+    // Slide the column window away (scroll fully right) and back (fully left).
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    // Scroll the lower block back into view: its cells must be refetched, not
+    // rendered blank from the wiped-but-stale-signature cache. Without the
+    // blockColsSig purge this stays blank ("") and the poll times out.
+    await expect.poll(() => readV1AtRow(ROW), { timeout: 20000 }).toBe(String(ROW + 1));
   });
 
   // -----------------------------------------------------------------------
