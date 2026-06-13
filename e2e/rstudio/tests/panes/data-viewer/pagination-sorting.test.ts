@@ -35,7 +35,7 @@ test.describe('Data Viewer', () => {
   // -----------------------------------------------------------------------
   // Issue 13220 - Large data frame navigation
   // -----------------------------------------------------------------------
-  test('large data frame - navigation arrows and column pagination', async () => {
+  test('large data frame - go to column jumps anywhere in the frame', async () => {
     await consoleActions.executeInConsole(
       'df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))',
       { wait: true },
@@ -44,42 +44,43 @@ test.describe('Data Viewer', () => {
 
     await expect(sourcePane.selectedTab).toContainText('df');
 
-    // Verify navigation arrows are visible
-    await expect(dataViewer.rightArrow).toBeVisible();
-    await expect(dataViewer.leftArrow).toBeVisible();
-    await expect(dataViewer.rightDoubleArrow).toBeVisible();
-    await expect(dataViewer.leftDoubleArrow).toBeVisible();
+    // The go-to-column jump box appears for frames wider than one fetch
+    // window (the pagination arrows are gone -- the grid scrolls
+    // continuously through every column).
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
 
-    // Check initial column range
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
-
-    // The summary sidebar header counts the loaded page against the frame
-    // total; both sides must exclude the rowname column, so a miscount on
-    // either would surface here as an off-by-one (e.g. "201 of 500").
+    // The summary sidebar lists every column of the frame (lazy-loading their
+    // stats), so its header reports the frame total -- not the loaded window.
+    // It settles on "500 columns" once the complete column index loads.
     await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label')).toHaveText(
-      '200 of 500 columns',
+      '500 columns', { timeout: 15000 },
     );
 
-    // Navigate forward one page
-    await dataViewer.rightArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+    // Jump beyond the fetched window, to the last column, and back home.
+    await dataViewer.goToColumn(201);
+    await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 
-    // Jump to last page
-    await dataViewer.rightDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('301 - 500');
+    await dataViewer.goToColumn(500);
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
 
-    // Jump back to first page
-    await dataViewer.leftDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    // Jump by column NAME: the popup matches against the whole frame's
+    // names (fetched separately), not just the loaded window.
+    await dataViewer.goToColumn('X450');
+    await expect(dataViewer.columnHeader(450)).toBeVisible({ timeout: 15000 });
 
-    // Verify grid info inside iframe (visible row count depends on pane height)
+    await dataViewer.goToColumn(1);
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    // Verify grid info inside iframe (visible row count depends on pane
+    // height); wide frames report the visible column range there.
     await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 100,000 entries/);
+    await expect(dataViewer.gridInfo).toContainText(/columns 1 to \d+ of 500/);
   });
 
   // -----------------------------------------------------------------------
-  // Odd-numbered columns (edge case for pagination)
+  // Odd-numbered columns (edge case: jump targets clamp to the frame)
   // -----------------------------------------------------------------------
-  test('odd-numbered column count - pagination edge case', async () => {
+  test('odd-numbered column count - jump targets clamp to the frame', async () => {
     await consoleActions.executeInConsole(
       'df <- data.frame(matrix(1:1000000, nrow=1000, ncol=227))',
       { wait: true },
@@ -87,20 +88,172 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
 
-    // The viewer's column-number input renders before the navigation
-    // arrows do; wait for the specific arrow to be visible before clicking.
-    await expect(dataViewer.rightDoubleArrow).toBeVisible();
-    await dataViewer.rightDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('28 - 227');
+    // A target past the end of the frame clamps to the last column.
+    await dataViewer.goToColumn(9999);
+    await expect(dataViewer.columnHeader(227)).toBeVisible({ timeout: 15000 });
 
-    // Jump back to first page
-    await dataViewer.leftDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    // Jump back to the first column.
+    await dataViewer.goToColumn(1);
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
     // Verify grid info (visible row count depends on pane height)
     await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 1,000 entries/);
+  });
+
+  // -----------------------------------------------------------------------
+  // Continuous column virtualization: the horizontal scrollbar spans the
+  // whole frame, and scrolling past the fetched window slides it in place
+  // (no pagination clicks required to reach any column).
+  // -----------------------------------------------------------------------
+  test('horizontal scroll slides the column window to the last column', async () => {
+    await consoleActions.executeInConsole(
+      'df <- data.frame(matrix(1:50000, nrow=100, ncol=500))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    // Scroll fully right. The viewport lands on unfetched span columns,
+    // which triggers a window slide centered on the visible range; the
+    // frame's last column arrives without any pagination clicks.
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+
+    // The last column's data is real: V500 holds 49901..50000, so row 0
+    // reads 49901. data-col-pos 200 is V500's position within the
+    // [301, 500] window (rownames at 0; the slide's recenter offset clamps
+    // to the end of the frame).
+    await expect(
+      dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="200"]'),
+    ).toHaveText('49901', { timeout: 15000 });
+
+    // Scrolling back to the far left slides the window home again.
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+    await expect(
+      dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'),
+    ).toHaveText('1', { timeout: 15000 });
+  });
+
+  test('very wide frame - scroll-driven slides reach an arbitrary column', async () => {
+    // 10,000 columns: the unfetched spans dominate the layout (the fetched
+    // window is 2% of the frame), so this exercises the span math and the
+    // x -> column mapping at a scale where estimate drift would show.
+    await consoleActions.executeInConsole(
+      'df <- as.data.frame(matrix(1:100000, nrow=10, ncol=10000))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    // Jump to ~60% of the frame via the scrollbar (a track click in real
+    // usage). The window slides to the viewport, several thousand columns
+    // away from anything fetched.
+    await dataViewer.viewport.evaluate((el) => {
+      el.scrollLeft = Math.round((el.scrollWidth - el.clientWidth) * 0.6);
+    });
+
+    // The slide recenters the fetched window on the visible columns. The
+    // exact landing column depends on measured widths, so assert
+    // structurally: poll until the leftmost rendered data column resolves to
+    // an absolute index thousands of columns in, then check its first-row
+    // value matches matrix(1:100000)'s column-major fill ((k-1)*10 + 1).
+    //
+    // Resolve the leftmost cell, its header, and the cell's text in a SINGLE
+    // DOM read (one evaluate inside the iframe): a window slide can re-render
+    // between separate reads, so split reads race the relayout and a stale
+    // locator throws out of the poll instead of retrying. Returns abs 0 when
+    // not yet settled so the poll keeps trying.
+    const leftmostAbs = async (): Promise<{ abs: number; text: string }> => {
+      return await dataViewer.viewport.evaluate((vp) => {
+        const doc = vp.ownerDocument!;
+        const cell = doc.querySelector(
+          '#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])');
+        if (!cell) return { abs: 0, text: '' };
+        // data-col-pos is a columnOrder position; data-col-idx is a cols-array
+        // index. They coincide only because nothing is pinned here (columnOrder
+        // is the identity permutation) -- map through columnOrder if a pin is
+        // ever added to this test.
+        const pos = cell.getAttribute('data-col-pos');
+        const th = doc.querySelector(`th[data-col-idx="${pos}"]`);
+        const title = th?.getAttribute('title') ?? '';
+        const m = title.match(/^column (\d+):/);
+        return { abs: m ? parseInt(m[1], 10) : 0, text: cell.textContent ?? '' };
+      });
+    };
+
+    await expect
+      .poll(async () => (await leftmostAbs()).abs, { timeout: 15000 })
+      .toBeGreaterThan(4000);
+
+    const { abs, text } = await leftmostAbs();
+    expect(abs).toBeGreaterThan(4000);
+    expect(text).toBe(String((abs - 1) * 10 + 1));
+  });
+
+  test('an off-screen row block survives a column-window round trip', async () => {
+    // Regression guard for the blockColsSig round-trip bug. Sliding the column
+    // window away (A -> B) and back (B -> A) remaps the row cache by identity,
+    // wiping each block's non-overlap cells. A block cached outside the
+    // visible+prefetch vertical range during the round trip used to keep its
+    // old signature, so on return (colsSig back to A) it read as "current"
+    // while holding undefined cells -- rendering a permanently blank band with
+    // no refetch. The slide now purges signatures that don't match the new
+    // window, forcing such blocks to refetch when scrolled back into view.
+    //
+    // 1500 rows -> three FETCH_SIZE(500) row-blocks; 500 columns force the
+    // window to slide. matrix() fills column-major, so V1's row r (0-based)
+    // holds r + 1. Row 1200 sits in the third block [1000, 1499], which is
+    // outside row 0's prefetch-ahead (that only reaches block [500, 999]).
+    await consoleActions.executeInConsole(
+      'df <- data.frame(matrix(1:750000, nrow=1500, ncol=500))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    const ROW = 1200;
+
+    // Scroll to a vertical row and read V1's cell text there, re-applying the
+    // scroll on every poll iteration. A single scrollTop set can be undone by
+    // the grid's deferred relayout/refetch, and rendering lands a frame later
+    // than the set, so we keep forcing the position until the row renders.
+    // Returns "" when the row isn't rendered or its data cell is still blank.
+    const readV1AtRow = async (row: number): Promise<string> => {
+      return await dataViewer.viewport.evaluate((el, r) => {
+        el.scrollTop = r * 23;
+        const cell = el.ownerDocument!.querySelector(
+          `#gridBody tr[data-row="${r}"] td[data-col-pos="1"]`);
+        return cell?.textContent ?? '';
+      }, row);
+    };
+
+    // Cache the lower block in column window A by scrolling it into view.
+    await expect.poll(() => readV1AtRow(ROW), { timeout: 20000 }).toBe(String(ROW + 1));
+
+    // Park back at the top so the lower block sits outside the
+    // visible+prefetch range and isn't refetched during the slides below.
+    await expect.poll(() => readV1AtRow(0), { timeout: 15000 }).toBe('1');
+
+    // Slide the column window away (scroll fully right) and back (fully left).
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+    await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+    // Scroll the lower block back into view: its cells must be refetched, not
+    // rendered blank from the wiped-but-stale-signature cache. Without the
+    // blockColsSig purge this stays blank ("") and the poll times out.
+    await expect.poll(() => readV1AtRow(ROW), { timeout: 20000 }).toBe(String(ROW + 1));
   });
 
   // -----------------------------------------------------------------------
@@ -245,16 +398,19 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('df <- as.data.frame(data)', { wait: true });
     await consoleActions.executeInConsole('View(df)');
 
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    // Jump beyond the fetched window via the go-to-column box.
+    await expect(dataViewer.gotoColumnInput).toBeVisible();
+    await dataViewer.goToColumn(201);
+    await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 
-    // Wait for the navigation arrow to render before clicking it.
-    await expect(dataViewer.rightArrow).toBeVisible();
-    await dataViewer.rightArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
-
-    // Column 201 is the first data column on page 2: td:nth-child(2).
-    // Use data-row to skip the virtual-scroll spacer row.
-    const firstRowCol201 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(2)');
+    // Address V201's cell by its columnOrder position (data-col-pos), not
+    // DOM position -- rows lead with the rownames cell and a width-bearing
+    // spacer for the unfetched span. The jump centers the fetched window on
+    // the target, so resolve the position from V201's header (with no pins,
+    // a header's data-col-idx equals its cells' data-col-pos).
+    const colPos = await dataViewer.columnHeader(201).getAttribute('data-col-idx');
+    const firstRowCol201 = dataViewer.frame.locator(
+      `#rsGridData tbody tr[data-row="0"] td[data-col-pos="${colPos}"]`);
 
     // Sort column 201 descending (click twice)
     await dataViewer.columnHeader(201).click();

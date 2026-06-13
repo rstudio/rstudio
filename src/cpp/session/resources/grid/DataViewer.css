@@ -31,9 +31,12 @@
    /* Sidebar sparkline bar colors (read from JS when painting the canvas).
       Numeric histograms follow the theme accent; categorical frequency
       bars use a deliberately different hue as a visual cue that the
-      x-axis is discrete values, not a numeric range. */
+      x-axis is discrete values, not a numeric range; date/time histograms
+      use a third (mauve) hue so a temporal axis reads distinctly from a
+      plain numeric one. */
    --grid-spark-numeric: var(--grid-focus-border);
    --grid-spark-categorical: #2ba36b;
+   --grid-spark-date: #9575cd;
 
    /* Computed mix shades -- keep these in one place so theme tweaks land
       consistently across hover/stripe rules. */
@@ -397,6 +400,18 @@ th.highlight-flash {
    animation: column-flash 1s ease-out;
 }
 
+/* Sidebar entry flash on a go-to-column jump -- mirrors the header flash so
+   the summary panel tracks the jump. Fades from the selection tint back to
+   the entry's normal (transparent) background. */
+@keyframes sidebar-col-flash {
+   0%   { background-color: var(--grid-selection-bg); }
+   100% { background-color: transparent; }
+}
+
+.sidebar-col.highlight-flash {
+   animation: sidebar-col-flash 1s ease-out;
+}
+
 /* --- Sort indicators -- use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,
@@ -535,7 +550,9 @@ th.columnClickable div {
 .filterPopup {
    position: absolute;
    overflow: hidden;
-   z-index: 25;
+   /* Above the sidebar chrome (floating scrollbar, panel) so a popup opened
+      from a sidebar filter icon is never partly occluded by the panel. */
+   z-index: 35;
    font-size: 11px;
    background-color: var(--grid-bg);
    border: 1px solid var(--grid-border);
@@ -543,8 +560,39 @@ th.columnClickable div {
 }
 
 .numericFilterPopup {
-   padding: 4px;
-   padding-bottom: 8px;
+   /* Extra top padding leaves room for the clear-filter "x" in the corner. */
+   padding: 16px 4px 8px;
+}
+
+/* Clear-filter "x" inside the numeric/date filter popup -- a discoverable way
+   to remove the filter, especially from the sidebar (which has no header clear
+   chip). Reuses the .clearFilter glyph treatment. */
+.filterPopupClear {
+   position: absolute;
+   top: 3px;
+   right: 3px;
+   width: 11px;
+   height: 11px;
+   cursor: pointer;
+   opacity: 0.5;
+   z-index: 1;
+}
+
+.filterPopupClear:hover,
+.filterPopupClear:focus-visible {
+   opacity: 1;
+}
+
+.filterPopupClear::after {
+   content: '';
+   display: block;
+   width: 11px;
+   height: 11px;
+   background-color: var(--grid-fg);
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
 }
 
 .choiceList {
@@ -623,7 +671,7 @@ th.columnClickable div {
    ========================================================================== */
 
 .numHist {
-   width: 80px;
+   width: 130px;
    height: 80px;
    margin: 4px 7px 10px 7px;
    padding: 10px;
@@ -653,7 +701,10 @@ th.columnClickable div {
    border-radius: 2px;
    margin-left: 5px;
    margin-right: 5px;
-   width: 100px;
+   /* Fill the popup width (set by the histogram) rather than a fixed 100px, so
+      a date range gets more room before it overflows the input. */
+   width: calc(100% - 10px);
+   box-sizing: border-box;
    background-color: var(--grid-bg);
    color: var(--grid-fg);
 }
@@ -762,6 +813,14 @@ th.columnClickable div {
    min-width: 0;
    overflow: hidden;
    text-overflow: ellipsis;
+}
+
+/* "(filtered)" qualifier appended to the column count when the summaries
+   describe a filtered subset rather than the whole frame. Dimmed + italic so
+   it reads as an annotation on the count, not part of it. */
+.sidebar-toggle-filtered {
+   font-style: italic;
+   opacity: 0.7;
 }
 
 /* Help affordance; owns the auto margin that pushes it (and the close
@@ -1012,6 +1071,55 @@ th.columnClickable div {
 .sidebar-sort-icon.disabled {
    visibility: hidden;
    cursor: default;
+}
+
+/* Filter icon (funnel glyph). Always shown; faint when inactive, fully opaque
+   when the column has an active filter -- the same opacity-based active/idle
+   treatment as the pin and sort icons. Clicking it opens the column's filter
+   popup (see openColumnFilterFromSidebar). */
+.sidebar-filter-icon {
+   display: inline-block;
+   width: 10px;
+   height: 10px;
+   margin-left: 2px;
+   flex-shrink: 0;
+   align-self: center;
+   cursor: pointer;
+   opacity: 0.3;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+}
+
+/* When ordering is disabled there is no sort icon, so the funnel is the last
+   element in the header row -- give it the same right margin the sort icon
+   uses to clear the floating scrollbar that overlays the panel's right edge. */
+.sidebar-filter-icon:last-child {
+   margin-right: 4px;
+}
+
+/* Brighten only on direct hover/focus of the icon itself -- not on
+   .sidebar-col:hover (that's the pin icon's reveal-on-entry-hover pattern,
+   which would light the always-visible funnel whenever the mouse is anywhere
+   over the entry). Matches the sort icon's :hover rule. */
+.sidebar-filter-icon:hover,
+.sidebar-filter-icon:focus-visible {
+   opacity: 0.6;
+}
+
+.sidebar-filter-icon.active {
+   opacity: 0.9;
+}
+
+.sidebar-filter-icon.active:hover,
+.sidebar-filter-icon.active:focus-visible {
+   opacity: 1;
 }
 
 

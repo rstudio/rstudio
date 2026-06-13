@@ -285,17 +285,28 @@ test.describe('Data Viewer', () => {
       await waitForViewer(dataViewer);
       await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
 
-      // Scroll the column window fully right: column 1's header is evicted
-      // from the DOM, but its sidebar entry remains.
-      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+      // Scroll the rendered column window right far enough that column 1's
+      // header is evicted from the DOM, but not so far that the viewport
+      // leaves the fetched window (which would slide it and re-key the
+      // sidebar). Its sidebar entry remains either way.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 2000; });
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
 
-      // The column window's right edge (V200; columns past 200 sit on the
-      // next column page) is now in view. Its first-row cell anchors the
-      // row-order assertions: V200 holds 19901..20000 in natural row order.
-      const lastColCell = dataViewer.frame.locator('#gridBody td[data-col-pos="200"]').first();
-      await expect(lastColCell).toHaveText('19901');
+      // Anchor the row-order assertions on whichever data column is rendered
+      // at the scrolled-to position (the exact column depends on measured
+      // widths). With no pins a cell's data-col-pos equals its column index
+      // k, and Vk holds (k-1)*100+1 .. k*100 in natural row order.
+      const row0 = dataViewer.frame.locator('#gridBody tr[data-row="0"]');
+      await expect(row0).toBeVisible();
+      const posAttr = await row0
+        .locator('td[data-col-pos]:not([data-col-pos="0"])')
+        .last()
+        .getAttribute('data-col-pos');
+      const k = parseInt(posAttr ?? '0', 10);
+      expect(k).toBeGreaterThan(1);
+      const anchorCell = row0.locator(`td[data-col-pos="${k}"]`);
+      await expect(anchorCell).toHaveText(String((k - 1) * 100 + 1));
 
       // Sort ascending from the sidebar: the icon reflects the new state
       // with no <th> for the column in the document, and the rows actually
@@ -304,7 +315,7 @@ test.describe('Data Viewer', () => {
         .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
       await sidebarSort.click();
       await expect(sidebarSort).toHaveClass(/sorting_asc/);
-      await expect(lastColCell).toHaveText('20000', { timeout: TIMEOUTS.fileOpen });
+      await expect(anchorCell).toHaveText(String(k * 100), { timeout: TIMEOUTS.fileOpen });
 
       // Scroll back: the recreated header carries the sort state.
       await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
@@ -345,6 +356,184 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.sidebar_footer_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // The sidebar summaries describe the rows currently in view: applying a
+  // filter or search recomputes the histograms, ranges, and NA stats over the
+  // filtered subset (and a "(filtered)" tag appears), reverting when cleared.
+  test('sidebar summaries reflect the filtered rows, not the whole frame', async ({ rstudioPage: page }) => {
+    // alpha rows have num 1..4 (no NA); beta rows include the only NA. So a
+    // search that keeps only the alpha rows shifts num's range 1..80 -> 1..4
+    // and its NA 13% -> 0% -- both visible, both computed over filtered rows.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_filt_df <- data.frame(' +
+        'grp = rep(c("alpha", "beta"), each = 4), ' +
+        'num = c(1, 2, 3, 4, 50, 60, NA, 80)); View(.rs.sidebar_filt_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Read the num column's sidebar summary from the LIVE data-browser
+      // document via the viewport element. During a View() tab swap two
+      // iframes briefly share the "Data Browser" title, and a plain
+      // frameLocator can resolve to the outgoing (stale) one; going through
+      // the viewport's ownerDocument pins reads to the frame actually in view.
+      const readNum = () => dataViewer.viewport.evaluate((vp) => {
+        const doc = vp.ownerDocument;
+        const sum = doc.querySelector('.sidebar-col[data-col-idx="2"] .sidebar-col-summary');
+        const na = doc.querySelector('.sidebar-col[data-col-idx="2"] .sidebar-col-na');
+        return {
+          summary: sum ? sum.textContent : null,
+          na: na ? na.textContent : null,
+          naZero: !!(na && na.classList.contains('zero')),
+          filtered: !!doc.querySelector('.sidebar-toggle-filtered'),
+        };
+      });
+
+      // Whole-frame summary to start: full range, NA over all 8 rows, no tag.
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 80]');
+      await expect.poll(async () => (await readNum()).na, { timeout: TIMEOUTS.fileOpen })
+        .toBe('13% NA');
+      expect((await readNum()).filtered).toBe(false);
+
+      // Search to the alpha rows. (getByLabel reaches the search input via its
+      // hidden "Search data table" label, regardless of GWT class names.)
+      const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
+      await search.click();
+      await page.keyboard.type('alpha');
+
+      // The grid confirms the filter landed; the sidebar then describes only
+      // the 4 matching rows: range 1..4, no missing values, with the tag shown.
+      await expect(dataViewer.gridInfo).toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 4]');
+      const filtered = await readNum();
+      expect(filtered.na).toBe('0% NA');
+      expect(filtered.naZero).toBe(true);
+      expect(filtered.filtered).toBe(true);
+
+      // Clearing the search reverts the summaries to the whole frame.
+      for (let i = 0; i < 'alpha'.length; i++)
+        await search.press('Backspace');
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 80]');
+      const reverted = await readNum();
+      expect(reverted.na).toBe('13% NA');
+      expect(reverted.filtered).toBe(false);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_filt_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // A go-to-column jump scrolls the target's sidebar entry into view (the
+  // inverse of clicking a sidebar entry, which scrolls the grid), without
+  // moving keyboard focus off the grid.
+  test('go to column scrolls the sidebar entry into view, keeping grid focus', async () => {
+    // Enough columns that the sidebar list overflows -- a late column's entry
+    // starts well below the fold.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_goto_df <- as.data.frame(matrix(1:600, nrow = 10, ncol = 60)); View(.rs.sidebar_goto_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Fractional position of column `idx`'s sidebar entry center within the
+      // scrolled viewport of the (live) sidebar list: < 0 above the fold, > 1
+      // below it, ~0.5 centered. Read through the viewport's own document to
+      // pin to the frame in view (see the filtered-summary test).
+      const entryCenterRatio = (idx: number) => dataViewer.viewport.evaluate((vp, i) => {
+        const doc = vp.ownerDocument;
+        const content = doc.getElementById('sidebarContent');
+        const entry = doc.querySelector(`.sidebar-col[data-col-idx="${i}"]`) as HTMLElement | null;
+        if (!content || !entry || content.clientHeight === 0) return null;
+        const center = entry.offsetTop + entry.offsetHeight / 2;
+        return (center - content.scrollTop) / content.clientHeight;
+      }, idx);
+
+      // Column 40 (mid-list) starts below the fold, and far enough from the
+      // ends that centering isn't clamped.
+      await expect.poll(() => entryCenterRatio(40), { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(1);
+
+      // Jump to it via the go-to-column box.
+      await dataViewer.goToColumn(40);
+
+      // Its sidebar entry scrolls to roughly the center of the list (not flush
+      // against the bottom edge, which "nearest" alignment would produce).
+      await expect.poll(() => entryCenterRatio(40), { timeout: TIMEOUTS.fileOpen })
+        .toBeLessThan(0.7);
+      expect(await entryCenterRatio(40)).toBeGreaterThan(0.3);
+
+      // ...but focus stays on the grid viewport (so arrow keys drive the
+      // data), not anywhere in the sidebar.
+      const focusOnGrid = await dataViewer.viewport.evaluate(
+        (vp) => vp.ownerDocument.activeElement === vp);
+      expect(focusOnGrid).toBe(true);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_goto_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // The sidebar is a complete index: it lists every column of a wide frame
+  // (not just the fetched window), lazy-loads an off-window column's summary
+  // when it scrolls into view, and lets you pin/sort an off-window column
+  // straight from its entry.
+  test('sidebar lists all columns of a wide frame and acts on off-window ones', async () => {
+    // 300 columns: wider than the ~200-column fetched window, so late columns
+    // are off-window. Column 250 holds a known range for the summary check.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_all_df <- as.data.frame(matrix(1:3000, nrow = 10, ncol = 300)); View(.rs.sidebar_all_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // The header reports the frame total once the complete index loads, and
+      // an entry exists for a column well past the fetched window.
+      await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label'))
+        .toHaveText('300 columns', { timeout: TIMEOUTS.fileOpen });
+      const entry250 = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"]');
+      await expect(entry250).toHaveCount(1);
+
+      // Its summary is initially unpopulated (off-window, not yet fetched);
+      // scrolling it into view lazy-loads the range. matrix(1:3000) is
+      // column-major with 10 rows, so column 250 holds 2491..2500.
+      await entry250.scrollIntoViewIfNeeded();
+      await expect(entry250.locator('.sidebar-col-summary'))
+        .toHaveText('[2,491, 2,500]', { timeout: TIMEOUTS.fileOpen });
+
+      // Sort descending from the off-window entry (two clicks). Sorting alone
+      // doesn't scroll the column into view, so confirm via the entry's icon,
+      // then jump to the column and confirm the grid actually reordered: 2500
+      // (its max) lands in the first row.
+      const sortIcon = entry250.locator('.sidebar-sort-icon');
+      await sortIcon.click();
+      await sortIcon.click();
+      await expect(sortIcon).toHaveClass(/sorting_desc/, { timeout: TIMEOUTS.fileOpen });
+
+      await dataViewer.goToColumn(250);
+      await expect(dataViewer.columnHeader(250)).toBeVisible({ timeout: 15000 });
+      const headerPos = await dataViewer.columnHeader(250).getAttribute('data-col-idx');
+      await expect(
+        dataViewer.frame.locator(`#gridBody tr[data-row="0"] td[data-col-pos="${headerPos}"]`),
+      ).toHaveText('2500', { timeout: 15000 });
+
+      // Pin the off-window-origin column from its (now rebuilt) entry; it
+      // becomes pinned (sticky) and the entry's pin icon reflects it.
+      const pinIcon = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"] .sidebar-pin-icon');
+      await pinIcon.click();
+      await expect(pinIcon).toHaveClass(/pinned/, { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('th[data-col-idx] .pin-icon.pinned'))
+        .toHaveCount(1, { timeout: 15000 });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_all_df", envir = .GlobalEnv)',
       );
     }
   });
@@ -1302,7 +1491,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(.rs.width_df)');
     try {
       await waitForViewer(dataViewer);
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
       // Let the post-first-fetch auto-size pass settle before measuring.
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
@@ -1322,23 +1511,25 @@ test.describe('Data Viewer', () => {
         .toBeGreaterThan(before.width + 100);
       const resizedWidth = (await col1.boundingBox())!.width;
 
-      // Page forward: the column occupying the same position (201) must
-      // keep its own auto-sized width, not inherit column 1's. Note
-      // data-col-idx is a position within the fetched window, so on page 2
-      // the header for column 201 is found by its absolute title instead.
-      await expect(dataViewer.rightArrow).toBeVisible();
-      await dataViewer.rightArrow.click();
-      await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+      // Jump forward: the column occupying the same window position (201)
+      // must keep its own auto-sized width, not inherit column 1's. Note
+      // data-col-idx is a position within the fetched window, so after the
+      // jump the header for column 201 is found by its absolute title.
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
+      await dataViewer.goToColumn(201);
+      // The post-slide width-refinement pass rebuilds the header row, which
+      // can momentarily detach the <th> between poll iterations -- treat a
+      // null boundingBox as "retry", not an error.
       const col201 = dataViewer.columnHeader(201);
       await expect(col201).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await expect.poll(async () => (await col201.boundingBox())!.width)
+      await expect.poll(async () =>
+        (await col201.boundingBox())?.width ?? Number.MAX_SAFE_INTEGER)
         .toBeLessThan(resizedWidth - 50);
 
-      // Page back: column 1 still carries the manual width.
-      await dataViewer.leftArrow.click();
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      // Jump back: column 1 still carries the manual width.
+      await dataViewer.goToColumn(1);
       await expect.poll(async () =>
-        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())!.width,
+        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())?.width ?? 0,
       { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(before.width + 100);
     } finally {
       await consoleActions.executeInConsole('rm(".rs.width_df", envir = .GlobalEnv)');

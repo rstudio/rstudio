@@ -19,7 +19,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
-import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -34,21 +33,22 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.widget.CheckableMenuItem;
-import org.rstudio.core.client.widget.DataTableColumnWidget;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SearchWidget;
-import org.rstudio.core.client.widget.SimpleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -58,6 +58,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -148,6 +149,7 @@ public class DataTable
                   new Response(new ArrayList<>()));
          }
       });
+      searchWidget_.setPlaceholderText(constants_.searchPlaceholder());
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -262,91 +264,167 @@ public class DataTable
       }
    }
 
-   private ClickHandler[] getColumnViewClickHandlers() {
-      ClickHandler handlers[] = {
-         new ClickHandler()
+   // A single column match from the grid's window.matchColumns: the
+   // column's (1-based) index, its name, and whether the entry is a direct
+   // index jump offered for a numeric query.
+   private static class ColumnMatch extends JavaScriptObject
+   {
+      protected ColumnMatch() {}
+      public final native String getName() /*-{ return this.name || ""; }-*/;
+      public final native int getIndex() /*-{ return this.idx || 0; }-*/;
+      public final native boolean getIsIndexJump() /*-{ return !!this.isIndexJump; }-*/;
+   }
+
+   private static class ColumnSuggestion implements SuggestOracle.Suggestion
+   {
+      ColumnSuggestion(ColumnMatch match)
+      {
+         match_ = match;
+      }
+
+      public int getIndex()
+      {
+         return match_.getIndex();
+      }
+
+      @Override
+      public String getDisplayString()
+      {
+         String name = match_.getName();
+         String label = match_.getIsIndexJump()
+               ? "Column " + match_.getIndex() + (name.isEmpty() ? "" : ": " + name)
+               : name;
+         return SafeHtmlUtils.htmlEscape(label) +
+               " <span style=\"opacity: 0.6;\">#" + match_.getIndex() + "</span>";
+      }
+
+      @Override
+      public String getReplacementString()
+      {
+         return match_.getIsIndexJump()
+               ? String.valueOf(match_.getIndex())
+               : match_.getName();
+      }
+
+      private final ColumnMatch match_;
+   }
+
+   private void addColumnControls(Toolbar toolbar)
+   {
+      // A "Go to column" typeahead in the spirit of Go to File/Function:
+      // type a column name or 1-based index, pick a suggestion (or press
+      // Enter for the top match) to jump there. The grid scrolls
+      // continuously through every column, so this jump is the only piece
+      // of column navigation that still needs a control: a scrollbar can't
+      // land on a specific column precisely in wide frames.
+      SuggestOracle oracle = new SuggestOracle()
+      {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
          {
-            @Override
-            public void onClick(ClickEvent event)
+            // A fresh keystroke starts a new query, so clear any selection
+            // guard left over from a mouse-picked suggestion (which fires a
+            // SelectionEvent but no SelectionCommitEvent to consume the flag).
+            // Without this the next Enter would be swallowed by the stale flag.
+            gotoColumnSelectionHandled_ = false;
+
+            matchColumns(getWindow(), request.getQuery(), (matches) ->
             {
-               firstColumnPage();
-            }
-         },
-         new ClickHandler()
+               ArrayList<Suggestion> suggestions = new ArrayList<>();
+               if (matches != null)
+               {
+                  for (int i = 0; i < matches.length(); i++)
+                     suggestions.add(new ColumnSuggestion(matches.get(i)));
+               }
+               callback.onSuggestionsReady(request, new Response(suggestions));
+            });
+         }
+
+         @Override
+         public boolean isDisplayStringHTML()
          {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               prevColumnPage();
-            }
-         },
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               nextColumnPage();
-            }
-         },
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               lastColumnPage();
-            }
+            return true;
          }
       };
 
-      return handlers;
-   }
-   private void addColumnControls(Toolbar toolbar)
-   {
-      colsLabel_ = new ToolbarLabel(constants_.colsLabel());
-      colsLabel_.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
-      colsLabel_.setVisible(false);
-      toolbar.addLeftWidget(colsLabel_);
+      gotoColumnWidget_ = new SearchWidget(constants_.goToColumnTitle(), oracle);
+      gotoColumnWidget_.setPlaceholderText(constants_.goToColumnTitle());
+      // Use the "go to" arrow (shared with Go to File/Function) rather than
+      // the search magnifying glass, so the box reads as navigation and is
+      // visually distinct from the data-table search box beside it.
+      gotoColumnWidget_.setIcon(new ImageResource2x(CodeSearchResources.INSTANCE.gotoFunction2x()));
+      gotoColumnWidget_.getElement().setId("data-viewer-goto-column");
+      gotoColumnWidget_.setVisible(false);
 
-      ClickHandler[] clickHandlers = getColumnViewClickHandlers();
-      SimpleButton columnButton;
-      columnViewButtons_ = new ArrayList<>();
-
-      for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
+      // A suggestion picked from the list (mouse, or Enter on a highlighted
+      // entry) jumps directly and consumes the deferred Enter commit below.
+      gotoColumnWidget_.addSelectionHandler((event) ->
       {
-         columnButton = new SimpleButton(COLUMN_VIEW_BUTTONS[i], true);
-         columnButton.addClickHandler(clickHandlers[i]);
-         columnButton.setVisible(false);
-         toolbar.addLeftWidget(columnButton);
-         columnViewButtons_.add(columnButton);
-
-         if (i == 1)
+         SuggestOracle.Suggestion suggestion = event.getSelectedItem();
+         if (suggestion instanceof ColumnSuggestion)
          {
-            columnTextWidget_ = new DataTableColumnWidget(this::setOffsetAndMaxColumns);
-            columnTextWidget_.getElement().setId("data-viewer-column-input");
-            columnTextWidget_.setVisible(false);
-            toolbar.addLeftWidget(columnTextWidget_);
+            gotoColumnSelectionHandled_ = true;
+            jumpToColumn(((ColumnSuggestion) suggestion).getIndex());
          }
-      }
+      });
+
+      // Enter without an explicit selection jumps to the top match; for a
+      // numeric query with no matches (e.g. a dead grid after a failed
+      // refresh), fall back to a direct index jump, which doubles as the
+      // grid's bootstrap-retry path.
+      gotoColumnWidget_.addSelectionCommitHandler((event) ->
+      {
+         if (gotoColumnSelectionHandled_)
+         {
+            gotoColumnSelectionHandled_ = false;
+            return;
+         }
+
+         String query = StringUtil.notNull(event.getSelectedItem()).trim();
+         if (query.isEmpty())
+            return;
+
+         matchColumns(getWindow(), query, (matches) ->
+         {
+            if (matches != null && matches.length() > 0)
+            {
+               jumpToColumn(matches.get(0).getIndex());
+            }
+            else if (query.matches("^\\d+$"))
+            {
+               // The regex admits digit strings beyond int (or even long)
+               // range, which Integer.parseInt would throw on. Parse as long
+               // and clamp; goToColumn clamps to the real column count, and on
+               // a dead grid any value just triggers the bootstrap-retry, so
+               // the exact magnitude is irrelevant.
+               long parsed;
+               try
+               {
+                  parsed = Long.parseLong(query);
+               }
+               catch (NumberFormatException e)
+               {
+                  parsed = Integer.MAX_VALUE;
+               }
+               jumpToColumn((int) Math.min(parsed, Integer.MAX_VALUE));
+            }
+         });
+      });
+
+      toolbar.addLeftWidget(gotoColumnWidget_);
+   }
+
+   private void jumpToColumn(int column)
+   {
+      goToColumn(getWindow(), column);
+      // Reset the box for the next jump; the grid takes focus itself.
+      gotoColumnWidget_.setText("", false);
    }
 
    private void setColumnControlVisibility(boolean visible)
    {
       colsSeparator_.setVisible(visible);
-      colsLabel_.setVisible(visible);
-      for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
-      {
-         columnViewButtons_.get(i).setVisible(visible);
-      }
-      columnTextWidget_.setVisible(visible);
-   }
-
-   private CommandWith2Args<Double, Double> getDataTableColumnCallback()
-   {
-      return (offset, max) ->
-      {
-         columnTextWidget_.setValue((offset + 1) + " - " + (offset + max));
-         setColumnControlVisibility(isLimitedColumnFrame());
-      };
+      gotoColumnWidget_.setVisible(visible);
    }
 
    private WindowEx getWindow()
@@ -412,9 +490,17 @@ public class DataTable
       setListViewerCallback(getWindow(), listCallback);
    }
 
-   public void setColumnFrameCallback()
+   public void setColumnOverflowCallback()
    {
-      setColumnFrameCallback(getWindow(), getDataTableColumnCallback());
+      // The grid pushes whether its columns overflow the viewport (which can
+      // change on resize, sidebar toggle, column resize, pins, or a data
+      // refresh); the go-to-column box only shows when there's somewhere to
+      // jump that isn't already on screen.
+      setColumnOverflowCallback(getWindow(), new CommandWithArg<Boolean>() {
+         public void execute(Boolean overflow) {
+            setColumnControlVisibility(overflow != null && overflow);
+         }
+      });
    }
 
    public void setSidebarStateCallback()
@@ -533,8 +619,6 @@ public class DataTable
       removeLocalStorageItem(stateKey_);
    }
 
-   private boolean isLimitedColumnFrame() { return isLimitedColumnFrame(getWindow()); }
-
    // Surface "frame is here but the method we expected is missing" so the
    // mismatch shows up in dev logs instead of a silent no-op. The
    // frame-absent case is normal during teardown and intentionally quiet.
@@ -607,70 +691,26 @@ public class DataTable
          @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("onDismiss");
    }-*/;
 
-   private static final native boolean isLimitedColumnFrame(WindowEx frame) /*-{
-      if (!frame) return false;
-      if (frame.isLimitedColumnFrame)
-          return frame.isLimitedColumnFrame();
-      @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("isLimitedColumnFrame");
-      return false;
+   private static final native void goToColumn(WindowEx frame, int column) /*-{
+      if (!frame) return;
+      if (frame.goToColumn)
+         frame.goToColumn(column);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("goToColumn");
    }-*/;
 
-   private void nextColumnPage()
-   {
-      nextColumnPage(getWindow());
-   }
-   private void prevColumnPage()
-   {
-      prevColumnPage(getWindow());
-   }
-   private void firstColumnPage()
-   {
-      firstColumnPage(getWindow());
-   }
-   private void lastColumnPage()
-   {
-      lastColumnPage(getWindow());
-   }
-   private void setOffsetAndMaxColumns(int offset, int max)
-   {
-      setOffsetAndMaxColumns(getWindow(), offset, max);
-   }
-
-   private static final native void nextColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.nextColumnPage)
-         frame.nextColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("nextColumnPage");
-   }-*/;
-   private static final native void prevColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.prevColumnPage)
-         frame.prevColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("prevColumnPage");
-   }-*/;
-   private static final native void firstColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.firstColumnPage)
-         frame.firstColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("firstColumnPage");
-   }-*/;
-   private static final native void lastColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.lastColumnPage)
-         frame.lastColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("lastColumnPage");
-   }-*/;
-
-   private static final native void setOffsetAndMaxColumns(WindowEx frame, int offset, int max) /*-{
-      if (!frame) return;
-      if (frame.setOffsetAndMaxColumns)
-         frame.setOffsetAndMaxColumns(offset, max);
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setOffsetAndMaxColumns");
+   private static final native void matchColumns(WindowEx frame,
+                                                 String query,
+                                                 CommandWithArg<JsArray<ColumnMatch>> callback) /*-{
+      if (!frame || !frame.matchColumns) {
+         if (frame)
+            @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("matchColumns");
+         callback.@org.rstudio.core.client.CommandWithArg::execute(*)(null);
+         return;
+      }
+      frame.matchColumns(query, $entry(function(matches) {
+         callback.@org.rstudio.core.client.CommandWithArg::execute(*)(matches);
+      }));
    }-*/;
    private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(
@@ -688,11 +728,11 @@ public class DataTable
          }));
    }-*/;
 
-   private static final native void setColumnFrameCallback(WindowEx frame, CommandWith2Args<Double, Double> columnFrameCallback) /*-{
+   private static final native void setColumnOverflowCallback(WindowEx frame, CommandWithArg<Boolean> overflowCallback) /*-{
       frame.setOption(
-         "columnFrameCallback",
-         $entry(function(offset, max) {
-            columnFrameCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(offset, max);
+         "columnOverflowCallback",
+         $entry(function(overflow) {
+            overflowCallback.@org.rstudio.core.client.CommandWithArg::execute(*)(@java.lang.Boolean::valueOf(Z)(!!overflow));
          }));
    }-*/;
 
@@ -735,23 +775,15 @@ public class DataTable
    private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;
    private CheckableMenuItem showSummaryItem_;
-   private DataTableColumnWidget columnTextWidget_;
+   private SearchWidget gotoColumnWidget_;
+   private boolean gotoColumnSelectionHandled_ = false;
    private Widget colsSeparator_;
-   private ToolbarLabel colsLabel_;
-   private ArrayList<SimpleButton> columnViewButtons_;
    private SearchWidget searchWidget_;
    private boolean filtered_ = false;
 
    // localStorage key for this object's persisted UI state, reported by the
    // iframe via stateKeyCallback; used to clear it host-side on close (#17830).
    private String stateKey_ = null;
-
-   private static String COLUMN_VIEW_BUTTONS[] = {
-      "<i class=\"icon-angle-double-left \"></i>",
-      "<i class=\"icon-angle-left \"></i>",
-      "<i class=\"icon-angle-right \"></i>",
-      "<i class=\"icon-angle-double-right \"></i>"
-   };
 
    private static final DataViewerConstants constants_ = GWT.create(DataViewerConstants.class);
 }
