@@ -1122,6 +1122,17 @@ var isNumericColumn = function(col) {
           colHasClass(col, "integer64");
 };
 
+// Date / datetime columns. They get a brushable histogram + range filter like
+// numerics, but their col_breaks are epoch values (days for Date, seconds for
+// POSIXct) paired with formatted col_break_labels for display, and they carry
+// an optional col_tz. Kept distinct from isNumericColumn so dates aren't
+// right-aligned or fed to the numeric stats/footer paths.
+var isDateColumn = function(col) {
+   return colHasClass(col, "Date") ||
+          colHasClass(col, "POSIXct") ||
+          colHasClass(col, "POSIXlt");
+};
+
 // Whether the backend computed histogram data for this column. col_breaks /
 // col_counts are populated only for base-numeric columns; other data columns
 // carry empty arrays and the rownames column omits the fields entirely. Both
@@ -1220,7 +1231,12 @@ var createHeader = function(idx, col) {
       th.title = "row names";
    } else {
       th.title = "column " + absColIndex(idx) + ": " + col.col_type;
-      if (hasHistogram(col)) {
+      if (col.col_tz)
+         th.title += "\ntimezone: " + col.col_tz;
+      if (isDateColumn(col) && col.col_min_label && col.col_max_label) {
+         // col_breaks are raw epoch values for dates; show the formatted range.
+         th.title += "\nrange: " + col.col_min_label + " to " + col.col_max_label;
+      } else if (hasHistogram(col)) {
          th.title += " with range " + col.col_breaks[0] +
             " - " + col.col_breaks[col.col_breaks.length - 1];
       } else if (isFactorColumn(col) && col.col_vals) {
@@ -2354,6 +2370,7 @@ var createFilterUI = function(idx, col) {
 
    var buildTypedUI = function() {
       if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss);
+      if (col.col_search_type === "date") return createDateFilterUI(idx, col, onDismiss);
       if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss);
       if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss);
       if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss);
@@ -2413,6 +2430,21 @@ var setColumnSearch = function(idx, val) {
    }
 };
 
+// Human-readable summary of a stored filter value ("type|value"), for the
+// sidebar filter indicator's tooltip. Range filters (numeric / date) read as
+// "lo to hi"; everything else shows the raw value.
+var describeFilterValue = function(raw) {
+   if (!raw) return "";
+   var pipe = raw.indexOf("|");
+   var type = pipe > 0 ? raw.substring(0, pipe) : "";
+   var value = parseSearchString(raw);
+   if ((type === "numeric" || type === "date") && value.indexOf("_") > 0) {
+      var parts = value.split("_");
+      return parts[0] + " to " + parts[1];
+   }
+   return value;
+};
+
 // Per-column dismissal epochs, keyed by absolute column index. Bumped when a
 // column's filter UI reverts to the unfiltered display (Escape, blur, the
 // clear X) so debounced applies scheduled before the dismissal are dropped
@@ -2452,6 +2484,9 @@ var applyFilters = function() {
    // The sidebar summaries describe the filtered rows; recompute them (or
    // restore the whole-frame ones when the last filter was cleared).
    refreshSidebarSummaries();
+   // Light the sidebar filter indicators immediately (the summary refresh is
+   // async; this reflects the new filter state without waiting for it).
+   updateSidebarColumnIndicators();
    saveState();
 };
 
@@ -2600,6 +2635,142 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       // still inside the debounce window before onDismiss inspects the
       // search slot -- it's user intent, not noise. Escape cancels the
       // pending apply explicitly before this runs, so its flush is a no-op.
+      if (flushPendingApply) flushPendingApply();
+      onDismiss();
+   });
+
+   renderActiveFilter();
+   return ele;
+};
+
+// Date / datetime range filter. Reuses the numeric filter's brushable
+// histogram (and its CSS), but the histogram breaks are epoch values paired
+// with formatted col_break_labels, so the brush and the text box operate in
+// formatted dates. The serialized filter value is "date|<lo>_<hi>" -- two ISO
+// strings the backend parses on the native Date/POSIXct scale. Range-only: a
+// single instant isn't a useful datetime filter.
+var createDateFilterUI = function(idx, col, onDismiss) {
+   var ele = document.createElement("div");
+
+   // Set by buildPopup each time the popup opens; lets the dismiss wrapper
+   // commit a brush/typed value still inside the debounce window.
+   var flushPendingApply = null;
+
+   var labels = col.col_break_labels || [];
+   var fullMin = labels.length > 0 ? labels[0] : "";
+   var fullMax = labels.length > 0 ? labels[labels.length - 1] : "";
+
+   // Map an epoch break value (what hist.js hands back) to its formatted
+   // label by locating it in col_breaks; nearest wins if precision drifts.
+   var labelForBreak = function(v) {
+      var best = 0;
+      for (var i = 0; i < col.col_breaks.length; i++) {
+         if (Math.abs(col.col_breaks[i] - v) < Math.abs(col.col_breaks[best] - v))
+            best = i;
+      }
+      return labels[best] !== undefined ? labels[best] : String(v);
+   };
+
+   // Render the active filter into the header label: "[lo, hi]", or "[...]"
+   // while the popup is open with nothing applied yet.
+   var renderActiveFilter = function() {
+      var raw = parseSearchString(getColumnSearch(idx));
+      if (raw.length === 0) {
+         ele.textContent = "[...]";
+         return;
+      }
+      var sep = raw.indexOf("_");
+      if (sep > 0) {
+         ele.textContent = "[" + raw.substring(0, sep) +
+                           ", " + raw.substring(sep + 1) + "]";
+      } else {
+         ele.textContent = "[" + raw + "]";
+      }
+   };
+
+   invokeFilterPopup(ele, function(popup) {
+      popup.classList.add("numericFilterPopup");
+
+      var lo = fullMin, hi = fullMax;
+      var val = parseSearchString(getColumnSearch(idx));
+      if (val.indexOf("_") > 0) {
+         var range = val.split("_");
+         lo = range[0]; hi = range[1];
+      }
+
+      var filterFromRange = function(s, e) {
+         if (s === e) return "" + s;
+         return s + " - " + e;
+      };
+
+      var dateVal = document.createElement("input");
+      dateVal.type = "text";
+      dateVal.className = "numValueBox";
+      dateVal.style.textAlign = "center";
+      dateVal.value = filterFromRange(lo, hi);
+
+      var applyDateFilter = function(v) {
+         var searchText = "";
+         var parts = v.split(" - ");
+         var a = parts[0] ? parts[0].trim() : "";
+         var b = (parts.length > 1 && parts[1]) ? parts[1].trim() : a;
+         // Only treat it as a filter when it narrows the full range; an
+         // untouched [min, max] selection clears the filter.
+         if (a.length > 0 && b.length > 0 && (a !== fullMin || b !== fullMax))
+            searchText = "date|" + a + "_" + b;
+         setColumnSearch(idx, searchText);
+         applyFilters();
+         renderActiveFilter();
+      };
+
+      var updateView = debounce(
+         TIMING.filterDebounce, watchColumnSearch(idx), applyDateFilter);
+      flushPendingApply = function() { updateView.flush(); };
+
+      // Dismissing a focused, dirty input replays a native "change"; suppress
+      // it once the keydown handler has committed (Enter) or cancelled (Escape).
+      var suppressChange = false;
+      dateVal.addEventListener("change", function() {
+         if (suppressChange) return;
+         updateView(dateVal.value);
+      });
+      dateVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
+      dateVal.addEventListener("keydown", function(evt) {
+         if (!dismissActivePopup) return;
+         if (evt.keyCode === 27) {
+            suppressChange = true;
+            updateView.cancel();
+            dismissActivePopup(false);
+            onDismiss();
+         } else if (evt.keyCode === 13) {
+            suppressChange = true;
+            updateView.cancel();
+            applyDateFilter(dateVal.value);
+            dismissActivePopup(true);
+         }
+      });
+
+      var updateText = function(start, end) {
+         dateVal.value = filterFromRange(labelForBreak(start), labelForBreak(end));
+         updateView(dateVal.value);
+      };
+
+      var histBrush = document.createElement("div");
+      histBrush.className = "numHist";
+
+      // Seed the brushed bins from the active filter's labels (if any).
+      var binStart = 0;
+      var binEnd = col.col_breaks.length - 2;
+      var loIdx = labels.indexOf(lo);
+      var hiIdx = labels.indexOf(hi);
+      if (loIdx >= 0) binStart = loIdx;
+      if (hiIdx >= 1) binEnd = hiIdx - 1;
+      if (binEnd < binStart) binStart = binEnd;
+
+      hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
+      popup.appendChild(histBrush);
+      popup.appendChild(dateVal);
+   }, function() {
       if (flushPendingApply) flushPendingApply();
       onDismiss();
    });
@@ -3380,7 +3551,7 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
 // categorical frequency bars (labels + counts, breaks null). Categorical
 // bars draw in an alternate color with per-bar gaps, cueing that the x-axis
 // is a set of discrete values rather than a continuous range.
-var createSparkline = function(breaks, counts, labels) {
+var createSparkline = function(breaks, counts, labels, breakLabels) {
    if (!counts || counts.length === 0) return null;
    if (!breaks && !labels) return null;
 
@@ -3480,6 +3651,10 @@ var createSparkline = function(breaks, counts, labels) {
          headline = labels[bin] === null ? "NA" : String(labels[bin]);
          if (headline.length > 40)
             headline = headline.substring(0, 40) + "...";
+      } else if (breakLabels && breakLabels.length > bin + 1) {
+         // Date/datetime histogram: the numeric breaks are epoch values, so
+         // show the formatted bin bounds rather than the raw epoch numbers.
+         headline = "Range: " + breakLabels[bin] + " to " + breakLabels[bin + 1];
       } else {
          // breaks arrive from R as strings (col_breaks is as.character'd
          // server-side); coerce here so arithmetic doesn't fall into string
@@ -3830,7 +4005,8 @@ var populateEntrySummary = function(entry, summary) {
          container: sparkContainer,
          breaks: summary.col_breaks,
          counts: summary.col_counts,
-         labels: null
+         labels: null,
+         breakLabels: summary.col_break_labels || null
       });
    } else if (hasCategoryCounts(summary)) {
       var catContainer = document.createElement("div");
@@ -3854,6 +4030,15 @@ var populateEntrySummary = function(entry, summary) {
       summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_min)));
       appendRangePunct(summaryEl, ", ");
       summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_max)));
+      appendRangePunct(summaryEl, "]");
+   } else if (summary.col_min_label && summary.col_max_label) {
+      // Date/datetime range: the min/max arrive pre-formatted (col_min/col_max
+      // are deliberately omitted for dates so the numeric branch above is skipped).
+      summaryEl.classList.add("range");
+      appendRangePunct(summaryEl, "[");
+      summaryEl.appendChild(document.createTextNode(summary.col_min_label));
+      appendRangePunct(summaryEl, ", ");
+      summaryEl.appendChild(document.createTextNode(summary.col_max_label));
       appendRangePunct(summaryEl, "]");
    } else {
       // Factor level count is structural (read from the summary's col_vals);
@@ -4053,9 +4238,23 @@ var initSidebar = function() {
       name.title = col.col_name;
       header.appendChild(name);
 
+      // Filter indicator (funnel): shown only when this column has an active
+      // filter. Indicator-only for now, but a real element so it can later
+      // become an interactive filter affordance. State (the "active" class,
+      // title, aria) is applied by updateSidebarColumnIndicators.
+      var filterIcon = document.createElement("span");
+      filterIcon.className = "sidebar-filter-icon";
+      filterIcon.setAttribute("aria-hidden", "true");
+      header.appendChild(filterIcon);
+
+      // Type label, with the timezone appended for POSIXct columns (so two
+      // datetime columns in different zones don't read identically).
       var type = document.createElement("span");
       type.className = "sidebar-col-type";
-      type.textContent = "<" + typeLabel(col) + ">";
+      var typeText = typeLabel(col);
+      if (col.col_tz)
+         typeText += " " + col.col_tz;
+      type.textContent = "<" + typeText + ">";
       header.appendChild(type);
 
       // Sort icon at the right edge, mirroring the grid header's indicator.
@@ -4265,6 +4464,25 @@ var updateSidebarColumnIndicators = function() {
          sortEl.title = action;
          sortEl.setAttribute("aria-label", action);
       }
+
+      // Filter indicator: lit when the column has an active filter. Keyed by
+      // the same absolute index as the filter store, so this stays correct for
+      // off-window columns too.
+      var filterEl = entry.querySelector(".sidebar-filter-icon");
+      if (filterEl) {
+         var filterRaw = cachedFilterValues[absIdx];
+         var filtered = !!filterRaw;
+         filterEl.classList.toggle("active", filtered);
+         if (filtered) {
+            var desc = describeFilterValue(filterRaw);
+            filterEl.title = desc ? "Filtered: " + desc : "Filtered";
+            filterEl.setAttribute("aria-label",
+               "Column " + colName + " is filtered" + (desc ? ": " + desc : ""));
+         } else {
+            filterEl.removeAttribute("title");
+            filterEl.removeAttribute("aria-label");
+         }
+      }
    }
 };
 
@@ -4420,7 +4638,8 @@ var renderPendingSparklines = function() {
    var items = pendingSparklines_;
    pendingSparklines_ = [];
    for (var i = 0; i < items.length; i++) {
-      var spark = createSparkline(items[i].breaks, items[i].counts, items[i].labels);
+      var spark = createSparkline(items[i].breaks, items[i].counts,
+                                  items[i].labels, items[i].breakLabels);
       if (spark) {
          items[i].container.appendChild(spark);
       } else {
@@ -6450,6 +6669,7 @@ window.setFilterUIVisible = function(visible) {
       visible,
       function(th, col, i) {
          if (col.col_search_type === "numeric" ||
+             col.col_search_type === "date" ||
              col.col_search_type === "character" ||
              col.col_search_type === "factor" ||
              col.col_search_type === "boolean") {
@@ -6466,6 +6686,7 @@ window.setFilterUIVisible = function(visible) {
             // Filters cleared: restore the whole-frame summaries (search may
             // still be active, in which case this re-fetches for it).
             refreshSidebarSummaries();
+            updateSidebarColumnIndicators();
             saveState();
          }
       },

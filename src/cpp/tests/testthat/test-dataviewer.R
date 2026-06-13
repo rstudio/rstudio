@@ -466,6 +466,51 @@ test_that(".rs.describeCols() reports the data range for numeric columns", {
    expect_null(cols[[4L]][["col_max"]])
 })
 
+test_that(".rs.describeCols() builds a date histogram and search type for Date columns", {
+   df <- data.frame(d = as.Date("2024-01-01") + 0:120)
+
+   cols <- .rs.describeCols(df)
+   col <- cols[[2L]]
+
+   expect_equal(col[["col_search_type"]], .rs.scalar("date"))
+   expect_true(length(col[["col_breaks"]]) > 1)
+   expect_equal(sum(col[["col_counts"]]), 121)
+
+   # break labels are parallel to the (numeric epoch) breaks, formatted as dates
+   expect_equal(length(col[["col_break_labels"]]), length(col[["col_breaks"]]))
+   expect_match(col[["col_break_labels"]][[1]], "^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+
+   # the formatted data range is shipped for the sidebar footer; the numeric
+   # col_min / col_max are omitted so the client takes the date footer path
+   expect_equal(col[["col_min_label"]], .rs.scalar("2024-01-01"))
+   expect_equal(col[["col_max_label"]], .rs.scalar("2024-04-30"))
+   expect_null(col[["col_min"]])
+   expect_null(col[["col_max"]])
+
+   # Date columns carry no timezone
+   expect_null(col[["col_tz"]])
+})
+
+test_that(".rs.describeCols() reports the timezone for POSIXct columns", {
+   df <- data.frame(t = as.POSIXct("2024-01-01 00:00:00", tz = "America/New_York") +
+                        (0:99) * 3600)
+
+   cols <- .rs.describeCols(df)
+   col <- cols[[2L]]
+
+   expect_equal(col[["col_search_type"]], .rs.scalar("date"))
+   expect_equal(col[["col_tz"]], .rs.scalar("America/New_York"))
+
+   # datetime break labels include a time component
+   expect_match(col[["col_break_labels"]][[1]],
+                "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
+
+   # the min/max labels are formatted in the column's own timezone, so they
+   # match how the cells render (the first value is the column min)
+   expect_equal(col[["col_min_label"]], .rs.scalar("2024-01-01 00:00:00"))
+   expect_equal(col[["col_max_label"]], .rs.scalar("2024-01-05 03:00:00"))
+})
+
 test_that(".rs.describeCols() excludes infinite values from the data range", {
    # the range is computed over finite values only (matching the histogram);
    # an Inf endpoint would not survive JSON serialization as a number and
@@ -698,6 +743,42 @@ test_that(".rs.applyTransform() applies numeric range and equality filters", {
    df <- data.frame(x = c(-10, -5, 0, 5))
    out <- .rs.applyTransform(df, "numeric|-7_0", "", integer(), character())
    expect_equal(out$x, c(-5, 0))
+})
+
+test_that(".rs.applyTransform() applies a date range filter", {
+   df <- data.frame(d = as.Date("2024-01-01") + 0:9, y = 1:10)
+
+   # inclusive range on the native Date scale; the client sends the formatted
+   # endpoints it displays, separated by "_"
+   out <- .rs.applyTransform(
+      df, c("date|2024-01-03_2024-01-06", ""), "", integer(), character())
+   expect_equal(out$y, 3:6)
+
+   # an NA date is dropped rather than kept
+   df2 <- data.frame(d = c(as.Date("2024-01-05"), NA, as.Date("2024-01-09")), y = 1:3)
+   out <- .rs.applyTransform(
+      df2, c("date|2024-01-01_2024-01-31", ""), "", integer(), character())
+   expect_equal(out$y, c(1L, 3L))
+})
+
+test_that(".rs.applyTransform() applies a datetime range filter in the column's tz", {
+   t0 <- as.POSIXct("2024-01-01 00:00:00", tz = "America/New_York")
+   df <- data.frame(t = t0 + (0:9) * 3600, y = 1:10)
+
+   out <- .rs.applyTransform(
+      df,
+      c("date|2024-01-01 02:00:00_2024-01-01 05:00:00", ""),
+      "", integer(), character())
+   expect_equal(out$y, 3:6)
+})
+
+test_that(".rs.applyTransform() ignores an unparseable date filter", {
+   df <- data.frame(d = as.Date("2024-01-01") + 0:4, y = 1:5)
+
+   # a bad endpoint must leave the frame unchanged, not drop every row
+   out <- .rs.applyTransform(
+      df, c("date|not-a-date_2024-01-03", ""), "", integer(), character())
+   expect_equal(out$y, 1:5)
 })
 
 test_that(".rs.applyTransform() applies a boolean filter and drops NA rows", {

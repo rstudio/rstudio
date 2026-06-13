@@ -1034,6 +1034,34 @@ th.columnClickable div {
    cursor: default;
 }
 
+/* Filter indicator (funnel glyph). Indicator-only today: lit when the column
+   has an active filter. Mirrors the sort icon's mask/opacity treatment, but
+   uses display:none when inactive (rather than reserving space like pin/sort)
+   so it only draws on filtered columns. The element is sized as a future
+   click target should it become interactive. */
+.sidebar-filter-icon {
+   display: none;
+   width: 9px;
+   height: 9px;
+   margin-left: 2px;
+   flex-shrink: 0;
+   align-self: center;
+   opacity: 0.7;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+}
+
+.sidebar-filter-icon.active {
+   display: inline-block;
+}
+
 
 /* --- Sparkline histogram --- */
 
