@@ -1381,7 +1381,21 @@ Error startAgent(const std::string& assistantType = "")
          LOG_ERROR(error);
          return;
       }
-      
+
+      // If this continuation was cancelled (e.g. the user switched assistants
+      // before 'initialize' completed), bail out now. Otherwise, the messages
+      // below would be delivered to the newly-running agent, double-initializing
+      // it with the old assistant's configuration.
+      if (pResponse != nullptr && pResponse->result().isObject())
+      {
+         json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
+         if (cancelledJson.isBool() && cancelledJson.getBool())
+         {
+            DLOG("Ignoring cancelled 'initialize' response for '{}' agent.", assistant);
+            return;
+         }
+      }
+
       // newer versions of Assistant require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
