@@ -142,6 +142,50 @@ test.describe('Data Viewer', () => {
     ).toHaveText('1', { timeout: 15000 });
   });
 
+  test('very wide frame - scroll-driven slides reach an arbitrary column', async () => {
+    // 10,000 columns: the unfetched spans dominate the layout (the fetched
+    // window is 2% of the frame), so this exercises the span math and the
+    // x -> column mapping at a scale where estimate drift would show.
+    await consoleActions.executeInConsole(
+      'df <- as.data.frame(matrix(1:100000, nrow=10, ncol=10000))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+
+    // Jump to ~60% of the frame via the scrollbar (a track click in real
+    // usage). The window slides to the viewport, several thousand columns
+    // away from anything fetched.
+    await dataViewer.viewport.evaluate((el) => {
+      el.scrollLeft = Math.round((el.scrollWidth - el.clientWidth) * 0.6);
+    });
+
+    // The slide recenters the fetched window on the visible columns; the
+    // toolbar's window indicator leaving "1 - 200" marks its arrival. The
+    // exact landing column depends on measured widths, so assert
+    // structurally: the leftmost rendered data column is thousands of
+    // columns in, and its first-row value matches matrix(1:100000)'s
+    // column-major fill ((k-1)*10 + 1 for column k).
+    await expect(dataViewer.columnNumberInput).not.toHaveValue('1 - 200', { timeout: 15000 });
+
+    const posAttr = await dataViewer.frame
+      .locator('#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])')
+      .first()
+      .getAttribute('data-col-pos');
+    const pos = parseInt(posAttr ?? '0', 10);
+    expect(pos).toBeGreaterThan(0);
+    const headerTitle = await dataViewer.frame
+      .locator(`th[data-col-idx="${pos}"]`)
+      .getAttribute('title');
+    const abs = parseInt((headerTitle ?? '').replace(/^column (\d+):.*$/, '$1'), 10);
+    expect(abs).toBeGreaterThan(4000);
+    await expect(
+      dataViewer.frame.locator(`#gridBody tr[data-row="0"] td[data-col-pos="${pos}"]`),
+    ).toHaveText(String((abs - 1) * 10 + 1), { timeout: 15000 });
+  });
+
   // -----------------------------------------------------------------------
   // Sorting
   // -----------------------------------------------------------------------
