@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import * as os from 'os';
 import { AceEditor } from '@pages/ace_editor.page';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
@@ -189,11 +188,6 @@ test.describe('RMarkdown', () => {
   });
 
   test('spellcheck in visual mode', async ({ rstudioPage: page }) => {
-    // macOS CI: panmirror visual mode never mounts on macOS 26 ARM64 after
-    // #17950 added activateEnvironment + activateFiles to the per-test
-    // reset. Reproduced with 180s timeout, source-pane refocus, and modal
-    // sweep -- editor stays on the spinner. Tracking on the reset PR.
-    test.fixme(os.platform() === 'darwin' && !!process.env.CI, 'panmirror visual mode never mounts on macOS 26 ARM64 e2e CI -- see #17950 per-test reset activations');
     // Original: test_desktop_RMarkdown.py::test_rmd_spellcheck_in_editor_and_visual_mode (part 2)
     const fileName = `rmarkdown_spelling_vis_${Date.now()}.Rmd`;
 
@@ -218,12 +212,6 @@ test.describe('RMarkdown', () => {
   });
 
   test('rmd templates display', async ({ rstudioPage: page }) => {
-    // macOS CI: panmirror visual mode never mounts on macOS 26 ARM64 after
-    // #17950 added activateEnvironment + activateFiles to the per-test
-    // reset. The thematic + bslib pre-install (this suite's beforeAll)
-    // suppresses the "Package thematic required" banner, but the editor
-    // still sits on its loading spinner. Tracking on the reset PR.
-    test.fixme(os.platform() === 'darwin' && !!process.env.CI, 'panmirror visual mode never mounts on macOS 26 ARM64 e2e CI -- see #17950 per-test reset activations');
     // Original: test_desktop_RMarkdown.py::test_rmd_templates_displays
 
     // Open New R Markdown dialog
