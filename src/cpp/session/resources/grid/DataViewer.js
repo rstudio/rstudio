@@ -283,8 +283,10 @@ var primedPinnedCount = 0;
 
 // Pinned-column layout cache. cachedPinnedOffsets[colIdx] -> px offset
 // from the viewport's left edge; the more elaborate pinnedOffsetsCache
-// also tracks total pinned width. Both are invalidated by mutations
-// affecting widths or pinning (invalidatePinnedOffsets()).
+// also tracks total pinned width. pinnedOffsetsCache is dropped by
+// invalidatePinnedOffsets() on width/pinning changes; cachedPinnedOffsets
+// is refreshed in renderVisibleRows (forced render) and reset in
+// resetGridState.
 var cachedPinnedOffsets = {};
 var pinnedOffsetsCache = null;
 
@@ -6039,9 +6041,9 @@ var restoreScrollAnchor = function(anchor) {
 // the new columns' data is refetched).
 //
 // options.targetAbs, when given, scrolls the viewport so that absolute column
-// lands at the left edge (just right of the pinned block) -- used by the
-// pagination buttons. Otherwise the current visual position is preserved via
-// a scroll anchor.
+// is centered in the unpinned viewport region -- used by the pagination
+// buttons and go-to-column. Otherwise the current visual position is preserved
+// via a scroll anchor.
 var applyColumnWindowUpdate = function(resCols, options) {
    prepareColumnResponse(resCols);
 
@@ -6133,9 +6135,9 @@ var applyColumnWindowUpdate = function(resCols, options) {
       refreshSidebarSummaries();
 
    // Restore the user's visual position against the new layout: either pin
-   // the requested column to the left edge (pagination buttons) or re-derive
-   // scrollLeft from the anchor captured before the relayout. Then recompute
-   // the render window against the settled scroll position.
+   // the requested column centered in the unpinned region (pagination buttons)
+   // or re-derive scrollLeft from the anchor captured before the relayout. Then
+   // recompute the render window against the settled scroll position.
    var viewport = document.getElementById("gridViewport");
    if (targetAbs > 0 && viewport) {
       // Center the target in the unpinned viewport region (matching
