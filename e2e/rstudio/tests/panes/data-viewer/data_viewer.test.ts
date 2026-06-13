@@ -360,6 +360,76 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // The sidebar summaries describe the rows currently in view: applying a
+  // filter or search recomputes the histograms, ranges, and NA stats over the
+  // filtered subset (and a "(filtered)" tag appears), reverting when cleared.
+  test('sidebar summaries reflect the filtered rows, not the whole frame', async ({ rstudioPage: page }) => {
+    // alpha rows have num 1..4 (no NA); beta rows include the only NA. So a
+    // search that keeps only the alpha rows shifts num's range 1..80 -> 1..4
+    // and its NA 13% -> 0% -- both visible, both computed over filtered rows.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_filt_df <- data.frame(' +
+        'grp = rep(c("alpha", "beta"), each = 4), ' +
+        'num = c(1, 2, 3, 4, 50, 60, NA, 80)); View(.rs.sidebar_filt_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Read the num column's sidebar summary from the LIVE data-browser
+      // document via the viewport element. During a View() tab swap two
+      // iframes briefly share the "Data Browser" title, and a plain
+      // frameLocator can resolve to the outgoing (stale) one; going through
+      // the viewport's ownerDocument pins reads to the frame actually in view.
+      const readNum = () => dataViewer.viewport.evaluate((vp) => {
+        const doc = vp.ownerDocument;
+        const sum = doc.querySelector('.sidebar-col[data-col-idx="2"] .sidebar-col-summary');
+        const na = doc.querySelector('.sidebar-col[data-col-idx="2"] .sidebar-col-na');
+        return {
+          summary: sum ? sum.textContent : null,
+          na: na ? na.textContent : null,
+          naZero: !!(na && na.classList.contains('zero')),
+          filtered: !!doc.querySelector('.sidebar-toggle-filtered'),
+        };
+      });
+
+      // Whole-frame summary to start: full range, NA over all 8 rows, no tag.
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 80]');
+      await expect.poll(async () => (await readNum()).na, { timeout: TIMEOUTS.fileOpen })
+        .toBe('13% NA');
+      expect((await readNum()).filtered).toBe(false);
+
+      // Search to the alpha rows. (getByLabel reaches the search input via its
+      // hidden "Search data table" label, regardless of GWT class names.)
+      const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
+      await search.click();
+      await page.keyboard.type('alpha');
+
+      // The grid confirms the filter landed; the sidebar then describes only
+      // the 4 matching rows: range 1..4, no missing values, with the tag shown.
+      await expect(dataViewer.gridInfo).toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 4]');
+      const filtered = await readNum();
+      expect(filtered.na).toBe('0% NA');
+      expect(filtered.naZero).toBe(true);
+      expect(filtered.filtered).toBe(true);
+
+      // Clearing the search reverts the summaries to the whole frame.
+      for (let i = 0; i < 'alpha'.length; i++)
+        await search.press('Backspace');
+      await expect.poll(async () => (await readNum()).summary, { timeout: TIMEOUTS.fileOpen })
+        .toBe('[1, 80]');
+      const reverted = await readNum();
+      expect(reverted.na).toBe('13% NA');
+      expect(reverted.filtered).toBe(false);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_filt_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // Low-cardinality factor / character columns get a categorical frequency
   // sparkline (one bar per distinct value, capped server-side at 24 bars);
   // above the cutoff the sidebar falls back to a text summary with the

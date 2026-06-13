@@ -553,11 +553,55 @@ var gridDataFetch = function(body, signal) {
    });
 };
 
-var fetchColumnSummary = function(columnIndex, callback) {
-   var params = "show=column_summary&column=" + columnIndex +
-      "&" + window.location.search.substring(1);
+// Whether any column filter or global search is active. Sort is excluded: it
+// reorders rows but doesn't change the set, so it leaves summaries unchanged.
+// This is the gate for showing filtered (vs. whole-frame) summaries.
+var hasActiveRowFilter = function() {
+   if (cachedSearch && cachedSearch.length > 0)
+      return true;
+   for (var k in cachedFilterValues) {
+      if (cachedFilterValues.hasOwnProperty(k) && cachedFilterValues[k])
+         return true;
+   }
+   return false;
+};
 
-   gridDataFetch(params)
+// Add the active filter/search/sort to a request params object, in the
+// DataTables wire form the backend parses. Shared by the row, summary, and
+// detail fetches so they all resolve to the same filtered/sorted frame.
+var appendTransformParams = function(params) {
+   params["search[value]"] = cachedSearch;
+
+   if (sortColumn >= 0 && sortDirection) {
+      params["order[0][column]"] = sortColumn;
+      params["order[0][dir]"] = sortDirection;
+   }
+
+   for (var absIdx in cachedFilterValues) {
+      if (!cachedFilterValues.hasOwnProperty(absIdx))
+         continue;
+      var filterVal = cachedFilterValues[absIdx];
+      if (filterVal)
+         params["columns[" + absIdx + "][search][value]"] = filterVal;
+   }
+   return params;
+};
+
+var fetchColumnSummary = function(columnIndex, callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "column_summary",
+      column: columnIndex,
+      max_rows: maxRows
+   };
+   // Detail stats describe the same rows the grid shows: send the active
+   // filter/search/sort so the backend computes them over the filtered frame.
+   appendTransformParams(params);
+
+   gridDataFetch(buildFormData(params))
       .then(function(result) { if (callback) callback(result); })
       .catch(function(err) {
          if (err && err.name === "AbortError") {
@@ -571,6 +615,93 @@ var fetchColumnSummary = function(columnIndex, callback) {
          // forever. Pass through the server-formatted message when available.
          if (callback) callback({ error: (err && err.message) || "Failed to load summary." });
       });
+};
+
+// Per-column summary stats for the sidebar, computed over the filtered rows
+// (show=cols&filtered=1). Keyed by absolute column index; null when no filter
+// is active (the sidebar then renders from the full-frame `cols` metadata).
+// Separate from `cols` on purpose: `cols` keeps describing the full frame so
+// the filter popups' brush histogram and factor levels stay full-range.
+var filteredSummaries = null;
+
+// Filtered row count reported alongside filteredSummaries (the rownames entry's
+// total_rows), used as the percentage denominator when rendering them. Avoids
+// racing the row fetch that updates filteredRows.
+var filteredSummariesRowCount = 0;
+
+var fetchFilteredSummaries = function(callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      filtered: 1,
+      max_rows: maxRows
+   };
+
+   // Describe the same columns the sidebar lists (the fetched window).
+   var requestedColumns = colsRequestList();
+   if (requestedColumns.length > 0)
+      params["columns_requested"] = requestedColumns.join(",");
+
+   appendTransformParams(params);
+
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (!result || result.error || !result.length) {
+            callback(null, 0);
+            return;
+         }
+         prepareColumnResponse(result);
+         var map = {};
+         var rowCount = 0;
+         for (var i = 0; i < result.length; i++) {
+            var entry = result[i];
+            if (typeof entry.total_rows === "number" && entry.total_rows >= 0)
+               rowCount = entry.total_rows;
+            if (typeof entry.col_index === "number" && entry.col_index >= 1)
+               map[entry.col_index] = entry;
+         }
+         callback(map, rowCount);
+      })
+      .catch(function(err) {
+         console.warn("fetchFilteredSummaries failed:", err);
+         callback(null, 0);
+      });
+};
+
+// Rebuild the sidebar against the current filter state: fetch filtered
+// summaries first when a filter/search is active, otherwise clear them and
+// render the full-frame metadata. Debounced calls during rapid filter typing
+// coalesce via the drawCounter staleness check below.
+// Rebuild the sidebar, preserving its scroll position across the teardown.
+var rebuildSidebarPreservingScroll = function() {
+   var sidebarContent = document.getElementById("sidebarContent");
+   var scrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
+   initSidebar();
+   sidebarContent = document.getElementById("sidebarContent");
+   if (sidebarContent)
+      sidebarContent.scrollTop = scrollTop;
+};
+
+var refreshSidebarSummaries = function() {
+   if (!hasActiveRowFilter()) {
+      filteredSummaries = null;
+      filteredSummariesRowCount = 0;
+      rebuildSidebarPreservingScroll();
+      return;
+   }
+
+   var startToken = drawCounter;
+   fetchFilteredSummaries(function(map, rowCount) {
+      // Drop a response superseded by a newer filter/search/refresh.
+      if (startToken !== drawCounter)
+         return;
+      filteredSummaries = map;
+      filteredSummariesRowCount = rowCount;
+      rebuildSidebarPreservingScroll();
+   });
 };
 
 // Column names for the WHOLE frame (the fetched window only covers a slice),
@@ -638,8 +769,7 @@ var fetchRows = function(start, length, callback) {
       start: start,
       length: length,
       draw: startToken,
-      max_rows: maxRows,
-      "search[value]": cachedSearch
+      max_rows: maxRows
    };
 
    // Request exactly the columns of the current `cols` so the returned rows
@@ -650,20 +780,8 @@ var fetchRows = function(start, length, callback) {
       params["columns_requested"] = requestSig;
    }
 
-   // Add sort parameters (order[0][column] is an absolute column index)
-   if (sortColumn >= 0 && sortDirection) {
-      params["order[0][column]"] = sortColumn;
-      params["order[0][dir]"] = sortDirection;
-   }
-
-   // Add column filter parameters, keyed by absolute column index
-   for (var absIdx in cachedFilterValues) {
-      if (!cachedFilterValues.hasOwnProperty(absIdx))
-         continue;
-      var filterVal = cachedFilterValues[absIdx];
-      if (filterVal)
-         params["columns[" + absIdx + "][search][value]"] = filterVal;
-   }
+   // Filter/search/sort parameters (all keyed by absolute column index).
+   appendTransformParams(params);
 
    var controller = new AbortController();
    pendingFetches.set(key, controller);
@@ -2302,6 +2420,9 @@ var applyFilters = function() {
    fetchRows(0, FETCH_SIZE, function() {
       scrollToTop();
    });
+   // The sidebar summaries describe the filtered rows; recompute them (or
+   // restore the whole-frame ones when the last filter was cleared).
+   refreshSidebarSummaries();
    saveState();
 };
 
@@ -3540,6 +3661,18 @@ var initSidebar = function() {
    }
    toggle.appendChild(toggleLabel);
 
+   // When the summaries describe a filtered subset rather than the whole
+   // frame, say so -- the histograms/ranges/NA% otherwise look like they
+   // describe the full object. (filteredSummaries is set only while a column
+   // filter or global search is active.)
+   if (filteredSummaries !== null) {
+      var filteredTag = document.createElement("span");
+      filteredTag.className = "sidebar-toggle-filtered";
+      filteredTag.textContent = " (filtered)";
+      filteredTag.title = "Summaries reflect the current filter and search";
+      toggleLabel.appendChild(filteredTag);
+   }
+
    var toggleSpinner = document.createElement("span");
    toggleSpinner.className = "sidebar-spinner";
    toggleSpinner.style.display = "none";
@@ -3589,9 +3722,28 @@ var initSidebar = function() {
    // containers were just removed by the innerHTML reset above.
    pendingSparklines_ = [];
 
+   // Whether the summaries describe filtered rows; picks the percentage
+   // denominator and the "(filtered)" affordance below. The whole-frame
+   // denominator comes from the column metadata's row count rather than the
+   // live `totalRows`: invalidateCache (fired on filter/search apply, before
+   // the row re-fetch lands) transiently zeroes totalRows, and a sidebar
+   // rebuilt in that window would otherwise divide by zero and show 0% NA.
+   var summariesFiltered = filteredSummaries !== null;
+   var frameRowCount =
+      (cols[0] && typeof cols[0].total_rows === "number" && cols[0].total_rows > 0)
+         ? cols[0].total_rows
+         : totalRows;
+   var summaryRowCount = summariesFiltered ? filteredSummariesRowCount : frameRowCount;
+
    for (var i = 0; i < cols.length; i++) {
       var col = cols[i];
       if (isRownameColumn(col)) continue;
+
+      // The distribution shown (histogram, category bars, range, NA%, unique/
+      // top) comes from the filtered summary when one is active; identity
+      // (name, type, sortability, factor levels) always comes from `col`, the
+      // full-frame metadata. They diverge only while a filter/search is on.
+      var summary = (filteredSummaries && filteredSummaries[absColIndex(i)]) || col;
 
       var entry = document.createElement("div");
       entry.className = "sidebar-col";
@@ -3660,25 +3812,25 @@ var initSidebar = function() {
       // factor / character columns (per-category frequency bars). Create
       // the (empty) container now but defer drawing the canvas until the
       // panel is visible -- see renderPendingSparklines.
-      if (hasHistogram(col)) {
+      if (hasHistogram(summary)) {
          var sparkContainer = document.createElement("div");
          sparkContainer.className = "sidebar-sparkline";
          entry.appendChild(sparkContainer);
          pendingSparklines_.push({
             container: sparkContainer,
-            breaks: col.col_breaks,
-            counts: col.col_counts,
+            breaks: summary.col_breaks,
+            counts: summary.col_counts,
             labels: null
          });
-      } else if (hasCategoryCounts(col)) {
+      } else if (hasCategoryCounts(summary)) {
          var catContainer = document.createElement("div");
          catContainer.className = "sidebar-sparkline";
          entry.appendChild(catContainer);
          pendingSparklines_.push({
             container: catContainer,
             breaks: null,
-            counts: col.col_cat_counts,
-            labels: col.col_cat_vals
+            counts: summary.col_cat_counts,
+            labels: summary.col_cat_vals
          });
       }
 
@@ -3699,36 +3851,37 @@ var initSidebar = function() {
       // so they read as notation rather than data.
       var summaryEl = document.createElement("span");
       summaryEl.className = "sidebar-col-summary";
-      if (hasHistogram(col) &&
-          typeof col.col_min === "number" &&
-          typeof col.col_max === "number") {
+      if (hasHistogram(summary) &&
+          typeof summary.col_min === "number" &&
+          typeof summary.col_max === "number") {
          summaryEl.classList.add("range");
          appendRangePunct(summaryEl, "[");
          summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(col.col_min)));
+            document.createTextNode(formatCompactNum(summary.col_min)));
          appendRangePunct(summaryEl, ", ");
          summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(col.col_max)));
+            document.createTextNode(formatCompactNum(summary.col_max)));
          appendRangePunct(summaryEl, "]");
       } else {
-         // Categorical cardinality: level count for factors, distinct-value
-         // count for characters (absent when the server skipped counting,
-         // e.g. very long columns). Above the server's bar cutoff there is
-         // no category sparkline, so enrich the text with the dominant
-         // value instead -- but not when the top count is 1 (ID-like
-         // columns where every value is distinct, and "top" is noise).
+         // Categorical cardinality: level count for factors (a structural
+         // property, so always from `col`), distinct-value count for
+         // characters (data-dependent, so from the filtered summary; absent
+         // when the server skipped counting, e.g. very long columns). Above
+         // the server's bar cutoff there is no category sparkline, so enrich
+         // the text with the dominant value instead -- but not when the top
+         // count is 1 (ID-like columns where every value is distinct).
          var catText = "";
          if (isFactorColumn(col) && col.col_vals) {
             catText = col.col_vals.length.toLocaleString() + " levels";
-         } else if (typeof col.col_n_unique === "number") {
-            catText = col.col_n_unique.toLocaleString() + " unique";
+         } else if (typeof summary.col_n_unique === "number") {
+            catText = summary.col_n_unique.toLocaleString() + " unique";
          }
          if (catText &&
-             typeof col.col_top_count === "number" &&
-             col.col_top_count > 1 &&
-             totalRows > 0) {
-            var topPct = (col.col_top_count / totalRows) * 100;
-            catText += " \u00b7 top: " + col.col_top_value +
+             typeof summary.col_top_count === "number" &&
+             summary.col_top_count > 1 &&
+             summaryRowCount > 0) {
+            var topPct = (summary.col_top_count / summaryRowCount) * 100;
+            catText += " \u00b7 top: " + summary.col_top_value +
                " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
          }
          summaryEl.textContent = catText;
@@ -3739,12 +3892,12 @@ var initSidebar = function() {
       }
       footer.appendChild(summaryEl);
 
-      // NA stat (right)
-      var naCount = col.col_na_count || 0;
+      // NA stat (right) -- over the filtered rows when a filter is active.
+      var naCount = summary.col_na_count || 0;
       var naEl = document.createElement("span");
       naEl.className = "sidebar-col-na";
-      if (naCount > 0 && totalRows > 0) {
-         var naPct = ((naCount / totalRows) * 100);
+      if (naCount > 0 && summaryRowCount > 0) {
+         var naPct = ((naCount / summaryRowCount) * 100);
          naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
          naEl.title = naCount.toLocaleString() + " missing values";
       } else {
@@ -5015,6 +5168,10 @@ var initGrid = function(resCols, data) {
          autoSizeColumns();
          applyPinnedColumns();
          restoreScrollAfterRefresh();
+         // Saved state may have restored filters/search; the sidebar built
+         // above shows whole-frame stats, so refresh it to the filtered view.
+         if (hasActiveRowFilter())
+            refreshSidebarSummaries();
       });
    }
 
@@ -5191,6 +5348,10 @@ var resetGridState = function() {
    activeColumnInfo = {};
    // A refresh can rename columns; refetch names next time they're needed.
    columnNamesCache = null;
+   // Filtered summaries are recomputed on the next filter/search after the
+   // rebuild; start clean so a stale map can't drive the fresh sidebar.
+   filteredSummaries = null;
+   filteredSummariesRowCount = 0;
 
    // Sidebar
    pendingSummaryFetches = 0;
@@ -5711,6 +5872,12 @@ var applyColumnWindowUpdate = function(resCols, options) {
    if (sidebarContent)
       sidebarContent.scrollTop = sidebarScrollTop;
 
+   // The new window's columns aren't in the filtered-summary map yet; refetch
+   // them so their sidebar entries reflect the active filter rather than
+   // briefly falling back to whole-frame stats.
+   if (hasActiveRowFilter())
+      refreshSidebarSummaries();
+
    // Restore the user's visual position against the new layout: either pin
    // the requested column to the left edge (pagination buttons) or re-derive
    // scrollLeft from the anchor captured before the relayout. Then recompute
@@ -6026,6 +6193,9 @@ window.setFilterUIVisible = function(visible) {
          if (hadFilters) {
             invalidateCache();
             fetchRows(0, FETCH_SIZE);
+            // Filters cleared: restore the whole-frame summaries (search may
+            // still be active, in which case this re-fetches for it).
+            refreshSidebarSummaries();
             saveState();
          }
       },
@@ -6085,6 +6255,8 @@ var debouncedSearch = debounce(TIMING.searchDebounce, watchGlobalSearch, functio
       fetchRows(0, FETCH_SIZE, function() {
          scrollToTop();
       });
+      // Search narrows the rows the summaries describe; recompute them.
+      refreshSidebarSummaries();
    }
 });
 

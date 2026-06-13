@@ -764,6 +764,14 @@ th.columnClickable div {
    text-overflow: ellipsis;
 }
 
+/* "(filtered)" qualifier appended to the column count when the summaries
+   describe a filtered subset rather than the whole frame. Dimmed + italic so
+   it reads as an annotation on the count, not part of it. */
+.sidebar-toggle-filtered {
+   font-style: italic;
+   opacity: 0.7;
+}
+
 /* Help affordance; owns the auto margin that pushes it (and the close
    glyph after it) to the right edge. A real button, unlike the decorative
    close glyph: activating it opens the help dialog rather than collapsing
