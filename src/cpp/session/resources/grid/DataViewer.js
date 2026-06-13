@@ -3643,11 +3643,17 @@ var createSparkline = function(breaks, counts, labels, breakLabels) {
    if (!ctx) return null;
 
    // Resolve the bar color from CSS so theming still applies; a canvas
-   // can't pick up the old .sparkline-bar rule on its own.
+   // can't pick up the old .sparkline-bar rule on its own. Categorical bars
+   // (labels), date/time histograms (numeric breaks + breakLabels), and plain
+   // numeric histograms each get a distinct hue.
    var styles = getComputedStyle(document.documentElement);
-   var barColor = labels
-      ? (styles.getPropertyValue("--grid-spark-categorical").trim() || "#2ba36b")
-      : (styles.getPropertyValue("--grid-spark-numeric").trim() || "#4d9de0");
+   var barColor;
+   if (labels)
+      barColor = styles.getPropertyValue("--grid-spark-categorical").trim() || "#2ba36b";
+   else if (breakLabels)
+      barColor = styles.getPropertyValue("--grid-spark-date").trim() || "#9575cd";
+   else
+      barColor = styles.getPropertyValue("--grid-spark-numeric").trim() || "#4d9de0";
 
    // Histogram bins tile seamlessly (contiguous ranges); categorical bars
    // get a small gap so discrete values read as separate bars.
@@ -4812,7 +4818,9 @@ var buildSidebarHelpOverlay = function() {
    addLine(headerSec,
       "Each entry names a column and its type. Click an entry to scroll " +
       "the grid to that column; the pin and sort icons work just like " +
-      "their counterparts in the grid header.");
+      "their counterparts in the grid header. The funnel icon opens this " +
+      "column's filter. For date and date-time columns, hover the type " +
+      "label to see the timezone.");
 
    var plotSec = addSection("Mini-plot");
    addLine(plotSec,
@@ -4826,16 +4834,17 @@ var buildSidebarHelpOverlay = function() {
 
    var statsSec = addSection("Summary line");
    addLine(statsSec,
-      "The numeric data range as [min, max], or the number of factor " +
-      "levels / distinct values -- plus the most frequent value when " +
-      "there are too many to chart. Distinct values are not counted for " +
-      "very large character columns. The right-hand side shows the " +
-      "percentage of missing values.");
+      "The numeric or date/time data range as [min, max] (a date-time range " +
+      "within a single day shows the date once with a time range), or the " +
+      "number of factor levels / distinct values -- plus the most frequent " +
+      "value when there are too many to chart. Distinct values are not " +
+      "counted for very large character columns. The right-hand side shows " +
+      "the percentage of missing values.");
 
    var detailsSec = addSection("Details");
    addLine(detailsSec,
       "The triangle expands a panel of detailed statistics, computed " +
-      "on demand.");
+      "on demand; for date-time columns this includes the timezone.");
 
    overlay.appendChild(dialog);
    return overlay;

@@ -31,9 +31,12 @@
    /* Sidebar sparkline bar colors (read from JS when painting the canvas).
       Numeric histograms follow the theme accent; categorical frequency
       bars use a deliberately different hue as a visual cue that the
-      x-axis is discrete values, not a numeric range. */
+      x-axis is discrete values, not a numeric range; date/time histograms
+      use a third (mauve) hue so a temporal axis reads distinctly from a
+      plain numeric one. */
    --grid-spark-numeric: var(--grid-focus-border);
    --grid-spark-categorical: #2ba36b;
+   --grid-spark-date: #9575cd;
 
    /* Computed mix shades -- keep these in one place so theme tweaks land
       consistently across hover/stripe rules. */
