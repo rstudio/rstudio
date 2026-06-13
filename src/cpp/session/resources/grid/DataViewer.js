@@ -573,6 +573,33 @@ var fetchColumnSummary = function(columnIndex, callback) {
       });
 };
 
+// Column names for the WHOLE frame (the fetched window only covers a slice),
+// backing the go-to-column popup. Fetched lazily on first use and cached;
+// invalidated on bootstrap (a data refresh can rename columns).
+var columnNamesCache = null;
+
+var fetchColumnNames = function(callback) {
+   if (columnNamesCache) {
+      callback(columnNamesCache);
+      return;
+   }
+
+   var params = "show=colnames&" + window.location.search.substring(1);
+   gridDataFetch(params)
+      .then(function(result) {
+         if (result && !result.error && result.names) {
+            columnNamesCache = result.names;
+            callback(columnNamesCache);
+         } else {
+            callback(null);
+         }
+      })
+      .catch(function(err) {
+         console.warn("fetchColumnNames failed:", err);
+         callback(null);
+      });
+};
+
 var fetchColumns = function(callback) {
    var params = "show=cols&" + window.location.search.substring(1);
 
@@ -5134,6 +5161,9 @@ var resetGridState = function() {
    dismissActivePopup = null;
    columnsPopup = null;
    activeColumnInfo = {};
+   closeGoToColumnPopup();
+   // A refresh can rename columns; refetch names next time they're needed.
+   columnNamesCache = null;
 
    // Sidebar
    pendingSummaryFetches = 0;
@@ -5810,6 +5840,246 @@ var goToColumn = function(column) {
 };
 
 // ==========================================================================
+// Go To Column popup
+// ==========================================================================
+//
+// A light-dismiss typeahead (in the spirit of Go to File/Function): a small
+// floating panel with an input that accepts a column name or a 1-based
+// index, suggestions underneath, Up/Down + Enter keyboard navigation, and
+// Escape / click-away / focus-loss dismissal. Spawned from the host
+// toolbar's "Go to Column..." button via window.showGoToColumn().
+
+var GOTO_MAX_RESULTS = 12;
+
+// Root element of the open popup, or null. Module-scoped so toggling,
+// teardown (resetGridState), and the dismissal paths all agree.
+var gotoColumnPopup = null;
+
+var closeGoToColumnPopup = function() {
+   if (!gotoColumnPopup) return;
+   var popup = gotoColumnPopup;
+   gotoColumnPopup = null;
+   if (popup.parentNode)
+      popup.parentNode.removeChild(popup);
+};
+
+// Match a query against the frame's column names: numeric queries offer a
+// direct index jump first; name matches rank prefix matches ahead of
+// substring matches, in column order, capped at GOTO_MAX_RESULTS.
+var buildGoToMatches = function(query, names) {
+   var matches = [];
+   var q = query.trim();
+   if (q.length === 0)
+      return matches;
+
+   if (/^\d+$/.test(q)) {
+      var idx = parseInt(q, 10);
+      if (idx >= 1) {
+         if (totalCols > 0)
+            idx = Math.min(idx, totalCols);
+         var idxName = (names && names[idx - 1]) || "";
+         matches.push({ idx: idx, name: idxName, isIndexJump: true });
+      }
+   }
+
+   if (names) {
+      var qLower = q.toLowerCase();
+      var starts = [], contains = [];
+      for (var i = 0; i < names.length; i++) {
+         if (starts.length >= GOTO_MAX_RESULTS)
+            break;
+         var nm = names[i];
+         if (!nm) continue;
+         var at = String(nm).toLowerCase().indexOf(qLower);
+         if (at === 0)
+            starts.push({ idx: i + 1, name: nm });
+         else if (at > 0 && contains.length < GOTO_MAX_RESULTS)
+            contains.push({ idx: i + 1, name: nm });
+      }
+      var byName = starts.concat(contains);
+      for (var j = 0; j < byName.length && matches.length < GOTO_MAX_RESULTS; j++) {
+         matches.push(byName[j]);
+      }
+   }
+   return matches;
+};
+
+var showGoToColumnPopup = function() {
+   // Toggle: a second invocation (e.g. clicking the toolbar button again)
+   // closes the open popup.
+   if (gotoColumnPopup) {
+      closeGoToColumnPopup();
+      return;
+   }
+
+   // Dead grid (a failed bootstrap left cols null): treat the action as a
+   // retry, like the other nav entry points, rather than opening a popup
+   // there's no grid to jump within.
+   if (cols === null) {
+      if (!bootstrapping)
+         bootstrap();
+      return;
+   }
+
+   var popup = document.createElement("div");
+   popup.className = "goto-column-popup";
+
+   var input = document.createElement("input");
+   input.type = "text";
+   input.id = "gotoColumnInput";
+   input.className = "goto-column-input";
+   input.setAttribute("role", "combobox");
+   input.setAttribute("aria-expanded", "true");
+   input.setAttribute("aria-controls", "gotoColumnList");
+   input.setAttribute("aria-autocomplete", "list");
+   input.setAttribute("aria-label", "Go to column (name or number)");
+   input.placeholder = "Column name or number";
+   popup.appendChild(input);
+
+   var list = document.createElement("div");
+   list.id = "gotoColumnList";
+   list.className = "goto-column-list";
+   list.setAttribute("role", "listbox");
+   popup.appendChild(list);
+
+   var names = columnNamesCache;
+   var matches = [];
+   var activeIdx = -1;
+
+   var optionId = function(i) { return "gotoColumnOption_" + i; };
+
+   var setActive = function(i) {
+      var items = list.querySelectorAll(".goto-column-item");
+      for (var k = 0; k < items.length; k++) {
+         items[k].classList.toggle("active", k === i);
+      }
+      activeIdx = i;
+      if (i >= 0 && items[i]) {
+         input.setAttribute("aria-activedescendant", optionId(i));
+         if (items[i].scrollIntoView)
+            items[i].scrollIntoView({ block: "nearest" });
+      } else {
+         input.removeAttribute("aria-activedescendant");
+      }
+   };
+
+   var jumpTo = function(match) {
+      closeGoToColumnPopup();
+      goToColumn(match.idx);
+      focusGridViewport();
+   };
+
+   var renderHint = function(text) {
+      list.innerHTML = "";
+      var hint = document.createElement("div");
+      hint.className = "goto-column-hint";
+      hint.textContent = text;
+      list.appendChild(hint);
+      activeIdx = -1;
+      input.removeAttribute("aria-activedescendant");
+   };
+
+   var renderMatches = function() {
+      if (input.value.trim().length === 0) {
+         renderHint(names === null
+            ? "Loading column names..."
+            : "Type a column name or number");
+         matches = [];
+         return;
+      }
+
+      matches = buildGoToMatches(input.value, names);
+      if (matches.length === 0) {
+         renderHint(names === null ? "Loading column names..." : "No matching columns");
+         return;
+      }
+
+      list.innerHTML = "";
+      for (var i = 0; i < matches.length; i++) {
+         var item = document.createElement("div");
+         item.className = "goto-column-item";
+         item.id = optionId(i);
+         item.setAttribute("role", "option");
+
+         var label = document.createElement("span");
+         label.className = "goto-column-name";
+         label.textContent = matches[i].isIndexJump
+            ? "Column " + matches[i].idx.toLocaleString() +
+              (matches[i].name ? ": " + matches[i].name : "")
+            : matches[i].name;
+         item.appendChild(label);
+
+         var idxEl = document.createElement("span");
+         idxEl.className = "goto-column-index";
+         idxEl.textContent = "#" + matches[i].idx.toLocaleString();
+         item.appendChild(idxEl);
+
+         (function(m, pos) {
+            // mousedown would blur the input and light-dismiss the popup
+            // before the click lands; suppress it and act on click.
+            item.addEventListener("mousedown", function(evt) { evt.preventDefault(); });
+            item.addEventListener("click", function() { jumpTo(m); });
+            item.addEventListener("mousemove", function() {
+               if (activeIdx !== pos) setActive(pos);
+            });
+         })(matches[i], i);
+
+         list.appendChild(item);
+      }
+      setActive(0);
+   };
+
+   input.addEventListener("input", renderMatches);
+   input.addEventListener("keydown", function(evt) {
+      if (evt.key === "Escape") {
+         evt.preventDefault();
+         evt.stopPropagation();
+         closeGoToColumnPopup();
+         focusGridViewport();
+      } else if (evt.key === "ArrowDown") {
+         evt.preventDefault();
+         if (matches.length > 0)
+            setActive(Math.min(matches.length - 1, activeIdx + 1));
+      } else if (evt.key === "ArrowUp") {
+         evt.preventDefault();
+         if (matches.length > 0)
+            setActive(Math.max(0, activeIdx - 1));
+      } else if (evt.key === "Enter") {
+         evt.preventDefault();
+         var pick = activeIdx >= 0 ? matches[activeIdx] : matches[0];
+         if (pick) jumpTo(pick);
+      }
+   });
+
+   // Light dismiss: losing focus to anything outside the popup closes it.
+   // Deferred a tick so focus moving WITHIN the popup (option mousedown is
+   // already suppressed, but be safe) doesn't dismiss.
+   input.addEventListener("blur", function() {
+      setTimeout(function() {
+         if (gotoColumnPopup === popup &&
+             !popup.contains(document.activeElement)) {
+            closeGoToColumnPopup();
+         }
+      }, 0);
+   });
+
+   gotoColumnPopup = popup;
+   document.body.appendChild(popup);
+   renderMatches();
+   input.focus();
+
+   // Resolve names lazily; re-render once they arrive (unless the popup was
+   // dismissed -- or reopened -- while the fetch was in flight).
+   if (names === null) {
+      fetchColumnNames(function(fetched) {
+         if (gotoColumnPopup !== popup) return;
+         names = fetched;
+         renderMatches();
+      });
+   }
+};
+
+// ==========================================================================
 // Window API Exports
 // ==========================================================================
 
@@ -6027,6 +6297,10 @@ window.getActiveColumn = function() {
 
 window.goToColumn = function(column) {
    goToColumn(column);
+};
+
+window.showGoToColumn = function() {
+   showGoToColumnPopup();
 };
 
 window.setOffsetAndMaxColumns = function(newOffset, newMax) {

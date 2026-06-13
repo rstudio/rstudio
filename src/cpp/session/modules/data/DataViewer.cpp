@@ -986,6 +986,35 @@ Error getGridData(const http::Request& request,
          {
             result = getData(dataSEXP, maxRows, maxCols, fields);
          }
+         else if (show == "colnames")
+         {
+            // Lightweight request backing the go-to-column popup: the full
+            // frame's column names (no per-column statistics), so the client
+            // can match a typed name against columns far outside the
+            // currently fetched window.
+            SEXP namesSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.dataViewer.columnNames")
+                  .addParam(dataSEXP)
+                  .call(&namesSEXP, &protect);
+
+            json::Value namesJSON;
+            if (!error)
+               error = r::json::jsonValueFromVector(namesSEXP, &namesJSON);
+
+            if (error)
+            {
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to retrieve column names.";
+               result = err;
+            }
+            else
+            {
+               json::Object names;
+               names["names"] = namesJSON;
+               result = names;
+            }
+         }
          else if (show == "column_summary")
          {
             int column = http::util::fieldValue<int>(fields, "column", 0);

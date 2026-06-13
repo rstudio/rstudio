@@ -47,7 +47,7 @@ test.describe('Data Viewer', () => {
     // The go-to-column jump box appears for frames wider than one fetch
     // window (the pagination arrows are gone -- the grid scrolls
     // continuously through every column).
-    await expect(dataViewer.columnNumberInput).toBeVisible();
+    await expect(dataViewer.gotoColumnButton).toBeVisible();
 
     // The summary sidebar header counts the loaded window against the frame
     // total; both sides must exclude the rowname column, so a miscount on
@@ -62,6 +62,11 @@ test.describe('Data Viewer', () => {
 
     await dataViewer.goToColumn(500);
     await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+
+    // Jump by column NAME: the popup matches against the whole frame's
+    // names (fetched separately), not just the loaded window.
+    await dataViewer.goToColumn('X450');
+    await expect(dataViewer.columnHeader(450)).toBeVisible({ timeout: 15000 });
 
     await dataViewer.goToColumn(1);
     await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
@@ -83,7 +88,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.columnNumberInput).toBeVisible();
+    await expect(dataViewer.gotoColumnButton).toBeVisible();
 
     // A target past the end of the frame clamps to the last column.
     await dataViewer.goToColumn(9999);
@@ -330,7 +335,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     // Jump beyond the fetched window via the go-to-column box.
-    await expect(dataViewer.columnNumberInput).toBeVisible();
+    await expect(dataViewer.gotoColumnButton).toBeVisible();
     await dataViewer.goToColumn(201);
     await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 

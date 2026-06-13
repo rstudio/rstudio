@@ -3,10 +3,14 @@ import { PageObject } from './page_object_base_classes';
 
 export class DataViewerPane extends PageObject {
   // Toolbar elements (outside iframe)
-  public columnNumberInput: Locator;
+  public gotoColumnButton: Locator;
 
   // Iframe accessor
   public frame: FrameLocator;
+
+  // The go-to-column popup's input, inside the iframe (present only while
+  // the popup is open).
+  public gotoColumnInput: Locator;
 
   // Elements inside the iframe
   public gridInfo: Locator;
@@ -18,12 +22,13 @@ export class DataViewerPane extends PageObject {
   constructor(page: Page) {
     super(page);
 
-    // The "go to column" jump box in the RStudio toolbar (only shown for
-    // frames wider than one fetch window).
-    this.columnNumberInput = page.locator('#data-viewer-column-input');
+    // The "Go to Column..." toolbar button (only shown for frames wider
+    // than one fetch window). Opens a typeahead popup inside the iframe.
+    this.gotoColumnButton = page.locator('#data-viewer-goto-column');
 
     // The data grid renders inside an iframe
     this.frame = page.frameLocator('[title="Data Browser"]');
+    this.gotoColumnInput = this.frame.locator('#gotoColumnInput');
     this.gridInfo = this.frame.locator('#rsGridData_info');
     // "Sorted by: <col>" status at the right of the info bar, with its
     // clear-sort button (hidden while no sort is active).
@@ -40,10 +45,18 @@ export class DataViewerPane extends PageObject {
     return this.frame.locator(`[title^='column ${colNumber}:']`);
   }
 
-  /** Jump to an absolute (1-based) column via the toolbar's jump box. */
-  async goToColumn(column: number): Promise<void> {
-    await this.columnNumberInput.fill(String(column));
-    await this.columnNumberInput.press('Enter');
+  /**
+   * Jump to a column via the Go to Column popup: open it from the toolbar
+   * button, type a column index or name, and press Enter to accept the
+   * first/active suggestion.
+   */
+  async goToColumn(column: number | string): Promise<void> {
+    await this.gotoColumnButton.click();
+    await this.gotoColumnInput.fill(String(column));
+    // Wait for a suggestion to materialize -- Enter on an empty list is a
+    // no-op (e.g. name matches require the async column-name fetch).
+    await this.frame.locator('.goto-column-item').first().waitFor({ state: 'visible' });
+    await this.gotoColumnInput.press('Enter');
   }
 
   /** Get all number cells in the grid (inside iframe). */

@@ -169,6 +169,26 @@
    paste0(n, ":", .rs.digest(sig))
 })
 
+#' Column Names
+#'
+#' Return the column names of a data object as a character vector, for the
+#' data viewer's go-to-column popup. Lightweight by design: no per-column
+#' statistics, just names -- the popup needs every column of the frame, not
+#' only the fetched window. Unnamed or missing entries come back as empty
+#' strings so positions stay aligned with column indices.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnNames", function(x)
+{
+   nms <- colnames(x)
+   if (is.null(nms))
+      nms <- character(.rs.ncol(x))
+
+   nms <- as.character(nms)
+   nms[is.na(nms)] <- ""
+   nms
+})
+
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,

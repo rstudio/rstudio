@@ -34,7 +34,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.widget.CheckableMenuItem;
-import org.rstudio.core.client.widget.DataTableColumnWidget;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -263,36 +262,38 @@ public class DataTable
 
    private void addColumnControls(Toolbar toolbar)
    {
-      // A single "go to column" jump box. The grid scrolls continuously
-      // through every column (the column window slides with the scroll
-      // position), so the old page-navigation arrows and window-range
-      // readout are gone; jumping to a specific column is the part of
-      // column navigation a scrollbar can't do precisely on wide frames.
-      colsLabel_ = new ToolbarLabel(constants_.goToColumnLabel());
-      colsLabel_.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
-      colsLabel_.setVisible(false);
-      toolbar.addLeftWidget(colsLabel_);
-
-      columnTextWidget_ = new DataTableColumnWidget(this::goToColumn);
-      columnTextWidget_.getElement().setId("data-viewer-column-input");
-      columnTextWidget_.setTitle(constants_.goToColumnTitle());
-      columnTextWidget_.getElement().setAttribute(
-            "aria-label", constants_.goToColumnTitle());
-      columnTextWidget_.setVisible(false);
-      toolbar.addLeftWidget(columnTextWidget_);
+      // "Go to Column..." opens a light-dismiss typeahead popup inside the
+      // grid (in the spirit of Go to File/Function) accepting a column name
+      // or index. The grid scrolls continuously through every column (the
+      // column window slides with the scroll position), so this jump is the
+      // only piece of column navigation that still needs a control: a
+      // scrollbar can't land on a specific column precisely in wide frames.
+      gotoColumnButton_ = new ToolbarButton(
+            constants_.goToColumnButtonText(),
+            constants_.goToColumnTitle(),
+            (ImageResource) null,
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  showGoToColumn(getWindow());
+               }
+            });
+      gotoColumnButton_.getElement().setId("data-viewer-goto-column");
+      gotoColumnButton_.setVisible(false);
+      toolbar.addLeftWidget(gotoColumnButton_);
    }
 
    private void setColumnControlVisibility(boolean visible)
    {
       colsSeparator_.setVisible(visible);
-      colsLabel_.setVisible(visible);
-      columnTextWidget_.setVisible(visible);
+      gotoColumnButton_.setVisible(visible);
    }
 
    private CommandWith2Args<Double, Double> getDataTableColumnCallback()
    {
       // Fired by the grid whenever the fetched column window changes; the
-      // jump box only appears for frames wider than one window (narrower
+      // jump button only appears for frames wider than one window (narrower
       // frames scroll without any fetching, so there's nothing to jump).
       return (offset, max) -> setColumnControlVisibility(isLimitedColumnFrame());
    }
@@ -563,17 +564,12 @@ public class DataTable
       return false;
    }-*/;
 
-   private void goToColumn(int column)
-   {
-      goToColumn(getWindow(), column);
-   }
-
-   private static final native void goToColumn(WindowEx frame, int column) /*-{
+   private static final native void showGoToColumn(WindowEx frame) /*-{
       if (!frame) return;
-      if (frame.goToColumn)
-         frame.goToColumn(column);
+      if (frame.showGoToColumn)
+         frame.showGoToColumn();
       else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("goToColumn");
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("showGoToColumn");
    }-*/;
    private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(
@@ -638,9 +634,8 @@ public class DataTable
    private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;
    private CheckableMenuItem showSummaryItem_;
-   private DataTableColumnWidget columnTextWidget_;
+   private ToolbarButton gotoColumnButton_;
    private Widget colsSeparator_;
-   private ToolbarLabel colsLabel_;
    private SearchWidget searchWidget_;
    private boolean filtered_ = false;
 
