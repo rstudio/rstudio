@@ -1058,6 +1058,13 @@ th.columnClickable div {
    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
 }
 
+/* When ordering is disabled there is no sort icon, so the funnel is the last
+   element in the header row -- give it the same right margin the sort icon
+   uses to clear the floating scrollbar that overlays the panel's right edge. */
+.sidebar-filter-icon:last-child {
+   margin-right: 4px;
+}
+
 .sidebar-col:hover .sidebar-filter-icon,
 .sidebar-filter-icon:focus-visible {
    opacity: 0.6;

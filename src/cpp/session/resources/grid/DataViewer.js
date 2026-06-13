@@ -4376,20 +4376,6 @@ var initSidebar = function() {
       pinIcon.setAttribute("tabindex", "0");
       header.appendChild(pinIcon);
 
-      // Filter icon (funnel): always shown, with an "active" style when the
-      // column has a filter. Clicking it opens the column's filter popup below
-      // the icon (the same typed widgets the header uses). Placed in the left
-      // action cluster (beside the pin) -- away from the panel's right edge,
-      // where the floating scrollbar and column splitter would overlay it.
-      // Active state (the "active" class, title, aria) is applied by
-      // updateSidebarColumnIndicators.
-      var filterIcon = document.createElement("span");
-      filterIcon.className = "sidebar-filter-icon";
-      filterIcon.setAttribute("role", "button");
-      filterIcon.setAttribute("tabindex", "0");
-      filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
-      header.appendChild(filterIcon);
-
       var name = document.createElement("span");
       name.className = "sidebar-col-name";
       name.textContent = col.col_name;
@@ -4405,6 +4391,21 @@ var initSidebar = function() {
          typeText += " " + col.col_tz;
       type.textContent = "<" + typeText + ">";
       header.appendChild(type);
+
+      // Filter icon (funnel): always shown, with an "active" style when the
+      // column has a filter. Clicking it opens the column's filter popup below
+      // the icon (the same typed widgets the header uses). Grouped with the
+      // sort icon as the column's data-operation actions (type, filter, sort).
+      // The sort icon to its right keeps the margin that clears the floating
+      // scrollbar, so the funnel isn't at the panel's overlaid right edge.
+      // Active state (the "active" class, title, aria) is applied by
+      // updateSidebarColumnIndicators.
+      var filterIcon = document.createElement("span");
+      filterIcon.className = "sidebar-filter-icon";
+      filterIcon.setAttribute("role", "button");
+      filterIcon.setAttribute("tabindex", "0");
+      filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
+      header.appendChild(filterIcon);
 
       // Sort icon at the right edge, mirroring the grid header's indicator.
       // Non-sortable columns (list / data.frame) keep an inert hidden
