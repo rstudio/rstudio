@@ -20,11 +20,19 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
+/**
+ * "Go to column" jump box for the data viewer toolbar. Pressing Enter parses
+ * the contents as a 1-based column index and invokes the supplied callback;
+ * non-numeric input is ignored. (Pre column-virtualization this widget showed
+ * and edited the paginated column window's range; with the grid scrolling
+ * continuously through every column, jumping is the part still worth a
+ * dedicated control.)
+ */
 public class DataTableColumnWidget extends TextBox
 {
-   public DataTableColumnWidget(BiConsumer<Integer, Integer> onEnter)
+   public DataTableColumnWidget(Consumer<Integer> onEnter)
    {
       onEnterFunction_ = onEnter;
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
@@ -35,42 +43,23 @@ public class DataTableColumnWidget extends TextBox
    }
 
    /**
-    * Parse the contents of getValue() and return an array with offset and max
-    * Valid values of the textbox are either a single integer or two integers separated by a dash, spaces are trimmed
-    * Any other values of the textbox are ignored
-    * @return int[offset, max]
+    * Parse the contents of getValue() as a 1-based column index.
+    * @return the column index, or -1 when the contents aren't a number
     */
-   private int[] getValueOffsetAndMax()
+   private int getValueColumn()
    {
-      int[] offsetAndMax = {-1, -1};
-
       String value = getValue();
-      if (value == null || value.length() < 1) { return offsetAndMax; }
+      if (value == null)
+         return -1;
 
-      String[] values = value.split("-");
       try
       {
-         // starting at column 1 means no offset
-         offsetAndMax[0] = Integer.parseInt(values[0].trim()) - 1;
+         return Integer.parseInt(value.trim());
       }
       catch (NumberFormatException e)
       {
-         return offsetAndMax;
+         return -1;
       }
-
-      if (values.length > 1)
-      {
-         try
-         {
-            int endIndex = Integer.parseInt(values[1].trim());
-            offsetAndMax[1] = endIndex - offsetAndMax[0];
-         } catch (NumberFormatException e)
-         {
-            return offsetAndMax;
-         }
-      }
-
-      return offsetAndMax;
    }
 
    private void init()
@@ -93,8 +82,9 @@ public class DataTableColumnWidget extends TextBox
             char charCode = event.getCharCode();
             if (charCode == KeyCodes.KEY_ENTER)
             {
-               int[] values = tb.getValueOffsetAndMax();
-               onEnterFunction_.accept(values[0], values[1]);
+               int column = tb.getValueColumn();
+               if (column >= 1)
+                  onEnterFunction_.accept(column);
 
                tb.setFocus(false);
             }
@@ -102,5 +92,5 @@ public class DataTableColumnWidget extends TextBox
       });
    }
 
-   private BiConsumer<Integer, Integer> onEnterFunction_;
+   private Consumer<Integer> onEnterFunction_;
 }

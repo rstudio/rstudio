@@ -35,7 +35,7 @@ test.describe('Data Viewer', () => {
   // -----------------------------------------------------------------------
   // Issue 13220 - Large data frame navigation
   // -----------------------------------------------------------------------
-  test('large data frame - navigation arrows and column pagination', async () => {
+  test('large data frame - go to column jumps anywhere in the frame', async () => {
     await consoleActions.executeInConsole(
       'df <- data.frame(matrix(1:1000000, nrow=100000, ncol=500))',
       { wait: true },
@@ -44,42 +44,38 @@ test.describe('Data Viewer', () => {
 
     await expect(sourcePane.selectedTab).toContainText('df');
 
-    // Verify navigation arrows are visible
-    await expect(dataViewer.rightArrow).toBeVisible();
-    await expect(dataViewer.leftArrow).toBeVisible();
-    await expect(dataViewer.rightDoubleArrow).toBeVisible();
-    await expect(dataViewer.leftDoubleArrow).toBeVisible();
+    // The go-to-column jump box appears for frames wider than one fetch
+    // window (the pagination arrows are gone -- the grid scrolls
+    // continuously through every column).
+    await expect(dataViewer.columnNumberInput).toBeVisible();
 
-    // Check initial column range
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
-
-    // The summary sidebar header counts the loaded page against the frame
+    // The summary sidebar header counts the loaded window against the frame
     // total; both sides must exclude the rowname column, so a miscount on
     // either would surface here as an off-by-one (e.g. "201 of 500").
     await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label')).toHaveText(
       '200 of 500 columns',
     );
 
-    // Navigate forward one page
-    await dataViewer.rightArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+    // Jump beyond the fetched window, to the last column, and back home.
+    await dataViewer.goToColumn(201);
+    await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 
-    // Jump to last page
-    await dataViewer.rightDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('301 - 500');
+    await dataViewer.goToColumn(500);
+    await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
 
-    // Jump back to first page
-    await dataViewer.leftDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    await dataViewer.goToColumn(1);
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
-    // Verify grid info inside iframe (visible row count depends on pane height)
+    // Verify grid info inside iframe (visible row count depends on pane
+    // height); wide frames report the visible column range there.
     await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 100,000 entries/);
+    await expect(dataViewer.gridInfo).toContainText(/columns 1 to \d+ of 500/);
   });
 
   // -----------------------------------------------------------------------
-  // Odd-numbered columns (edge case for pagination)
+  // Odd-numbered columns (edge case: jump targets clamp to the frame)
   // -----------------------------------------------------------------------
-  test('odd-numbered column count - pagination edge case', async () => {
+  test('odd-numbered column count - jump targets clamp to the frame', async () => {
     await consoleActions.executeInConsole(
       'df <- data.frame(matrix(1:1000000, nrow=1000, ncol=227))',
       { wait: true },
@@ -87,17 +83,15 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    await expect(dataViewer.columnNumberInput).toBeVisible();
 
-    // The viewer's column-number input renders before the navigation
-    // arrows do; wait for the specific arrow to be visible before clicking.
-    await expect(dataViewer.rightDoubleArrow).toBeVisible();
-    await dataViewer.rightDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('28 - 227');
+    // A target past the end of the frame clamps to the last column.
+    await dataViewer.goToColumn(9999);
+    await expect(dataViewer.columnHeader(227)).toBeVisible({ timeout: 15000 });
 
-    // Jump back to first page
-    await dataViewer.leftDoubleArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    // Jump back to the first column.
+    await dataViewer.goToColumn(1);
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
     // Verify grid info (visible row count depends on pane height)
     await expect(dataViewer.gridInfo).toContainText(/Showing 1 to [1-9]\d* of 1,000 entries/);
@@ -116,7 +110,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
     // Scroll fully right. The viewport lands on unfetched span columns,
     // which triggers a window slide centered on the visible range; the
@@ -125,11 +119,10 @@ test.describe('Data Viewer', () => {
 
     await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
 
-    // The toolbar's window indicator follows the slide (clamped at the end
-    // of the frame), and the last column's data is real: V500 holds
-    // 49901..50000, so row 0 reads 49901. data-col-pos 200 is V500's
-    // position within the [301, 500] window (rownames at 0).
-    await expect(dataViewer.columnNumberInput).toHaveValue('301 - 500');
+    // The last column's data is real: V500 holds 49901..50000, so row 0
+    // reads 49901. data-col-pos 200 is V500's position within the
+    // [301, 500] window (rownames at 0; the slide's recenter offset clamps
+    // to the end of the frame).
     await expect(
       dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="200"]'),
     ).toHaveText('49901', { timeout: 15000 });
@@ -153,7 +146,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(df)');
 
     await expect(sourcePane.selectedTab).toContainText('df');
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
     // Jump to ~60% of the frame via the scrollbar (a track click in real
     // usage). The window slides to the viewport, several thousand columns
@@ -162,24 +155,32 @@ test.describe('Data Viewer', () => {
       el.scrollLeft = Math.round((el.scrollWidth - el.clientWidth) * 0.6);
     });
 
-    // The slide recenters the fetched window on the visible columns; the
-    // toolbar's window indicator leaving "1 - 200" marks its arrival. The
+    // The slide recenters the fetched window on the visible columns. The
     // exact landing column depends on measured widths, so assert
-    // structurally: the leftmost rendered data column is thousands of
-    // columns in, and its first-row value matches matrix(1:100000)'s
-    // column-major fill ((k-1)*10 + 1 for column k).
-    await expect(dataViewer.columnNumberInput).not.toHaveValue('1 - 200', { timeout: 15000 });
+    // structurally: poll until the leftmost rendered data column's header
+    // resolves to an absolute index thousands of columns in, then check its
+    // first-row value matches matrix(1:100000)'s column-major fill
+    // ((k-1)*10 + 1 for column k).
+    const leftmostAbs = async (): Promise<{ pos: number; abs: number }> => {
+      const posAttr = await dataViewer.frame
+        .locator('#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])')
+        .first()
+        .getAttribute('data-col-pos');
+      const pos = parseInt(posAttr ?? '0', 10);
+      if (pos <= 0)
+        return { pos: 0, abs: 0 };
+      const headerTitle = await dataViewer.frame
+        .locator(`th[data-col-idx="${pos}"]`)
+        .getAttribute('title');
+      const abs = parseInt((headerTitle ?? '').replace(/^column (\d+):.*$/, '$1'), 10);
+      return { pos, abs: isNaN(abs) ? 0 : abs };
+    };
 
-    const posAttr = await dataViewer.frame
-      .locator('#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])')
-      .first()
-      .getAttribute('data-col-pos');
-    const pos = parseInt(posAttr ?? '0', 10);
-    expect(pos).toBeGreaterThan(0);
-    const headerTitle = await dataViewer.frame
-      .locator(`th[data-col-idx="${pos}"]`)
-      .getAttribute('title');
-    const abs = parseInt((headerTitle ?? '').replace(/^column (\d+):.*$/, '$1'), 10);
+    await expect
+      .poll(async () => (await leftmostAbs()).abs, { timeout: 15000 })
+      .toBeGreaterThan(4000);
+
+    const { pos, abs } = await leftmostAbs();
     expect(abs).toBeGreaterThan(4000);
     await expect(
       dataViewer.frame.locator(`#gridBody tr[data-row="0"] td[data-col-pos="${pos}"]`),
@@ -328,12 +329,10 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('df <- as.data.frame(data)', { wait: true });
     await consoleActions.executeInConsole('View(df)');
 
-    await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
-
-    // Wait for the navigation arrow to render before clicking it.
-    await expect(dataViewer.rightArrow).toBeVisible();
-    await dataViewer.rightArrow.click();
-    await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+    // Jump beyond the fetched window via the go-to-column box.
+    await expect(dataViewer.columnNumberInput).toBeVisible();
+    await dataViewer.goToColumn(201);
+    await expect(dataViewer.columnHeader(201)).toBeVisible({ timeout: 15000 });
 
     // Column 201 is the first data column of the new window. Address it by
     // its columnOrder position (data-col-pos) rather than DOM position: each

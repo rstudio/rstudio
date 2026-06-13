@@ -38,7 +38,6 @@ import org.rstudio.core.client.widget.DataTableColumnWidget;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SearchWidget;
-import org.rstudio.core.client.widget.SimpleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -262,91 +261,40 @@ public class DataTable
       }
    }
 
-   private ClickHandler[] getColumnViewClickHandlers() {
-      ClickHandler handlers[] = {
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               firstColumnPage();
-            }
-         },
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               prevColumnPage();
-            }
-         },
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               nextColumnPage();
-            }
-         },
-         new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               lastColumnPage();
-            }
-         }
-      };
-
-      return handlers;
-   }
    private void addColumnControls(Toolbar toolbar)
    {
-      colsLabel_ = new ToolbarLabel(constants_.colsLabel());
+      // A single "go to column" jump box. The grid scrolls continuously
+      // through every column (the column window slides with the scroll
+      // position), so the old page-navigation arrows and window-range
+      // readout are gone; jumping to a specific column is the part of
+      // column navigation a scrollbar can't do precisely on wide frames.
+      colsLabel_ = new ToolbarLabel(constants_.goToColumnLabel());
       colsLabel_.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
       colsLabel_.setVisible(false);
       toolbar.addLeftWidget(colsLabel_);
 
-      ClickHandler[] clickHandlers = getColumnViewClickHandlers();
-      SimpleButton columnButton;
-      columnViewButtons_ = new ArrayList<>();
-
-      for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
-      {
-         columnButton = new SimpleButton(COLUMN_VIEW_BUTTONS[i], true);
-         columnButton.addClickHandler(clickHandlers[i]);
-         columnButton.setVisible(false);
-         toolbar.addLeftWidget(columnButton);
-         columnViewButtons_.add(columnButton);
-
-         if (i == 1)
-         {
-            columnTextWidget_ = new DataTableColumnWidget(this::setOffsetAndMaxColumns);
-            columnTextWidget_.getElement().setId("data-viewer-column-input");
-            columnTextWidget_.setVisible(false);
-            toolbar.addLeftWidget(columnTextWidget_);
-         }
-      }
+      columnTextWidget_ = new DataTableColumnWidget(this::goToColumn);
+      columnTextWidget_.getElement().setId("data-viewer-column-input");
+      columnTextWidget_.setTitle(constants_.goToColumnTitle());
+      columnTextWidget_.getElement().setAttribute(
+            "aria-label", constants_.goToColumnTitle());
+      columnTextWidget_.setVisible(false);
+      toolbar.addLeftWidget(columnTextWidget_);
    }
 
    private void setColumnControlVisibility(boolean visible)
    {
       colsSeparator_.setVisible(visible);
       colsLabel_.setVisible(visible);
-      for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
-      {
-         columnViewButtons_.get(i).setVisible(visible);
-      }
       columnTextWidget_.setVisible(visible);
    }
 
    private CommandWith2Args<Double, Double> getDataTableColumnCallback()
    {
-      return (offset, max) ->
-      {
-         columnTextWidget_.setValue((offset + 1) + " - " + (offset + max));
-         setColumnControlVisibility(isLimitedColumnFrame());
-      };
+      // Fired by the grid whenever the fetched column window changes; the
+      // jump box only appears for frames wider than one window (narrower
+      // frames scroll without any fetching, so there's nothing to jump).
+      return (offset, max) -> setColumnControlVisibility(isLimitedColumnFrame());
    }
 
    private WindowEx getWindow()
@@ -615,62 +563,17 @@ public class DataTable
       return false;
    }-*/;
 
-   private void nextColumnPage()
+   private void goToColumn(int column)
    {
-      nextColumnPage(getWindow());
-   }
-   private void prevColumnPage()
-   {
-      prevColumnPage(getWindow());
-   }
-   private void firstColumnPage()
-   {
-      firstColumnPage(getWindow());
-   }
-   private void lastColumnPage()
-   {
-      lastColumnPage(getWindow());
-   }
-   private void setOffsetAndMaxColumns(int offset, int max)
-   {
-      setOffsetAndMaxColumns(getWindow(), offset, max);
+      goToColumn(getWindow(), column);
    }
 
-   private static final native void nextColumnPage(WindowEx frame) /*-{
+   private static final native void goToColumn(WindowEx frame, int column) /*-{
       if (!frame) return;
-      if (frame.nextColumnPage)
-         frame.nextColumnPage();
+      if (frame.goToColumn)
+         frame.goToColumn(column);
       else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("nextColumnPage");
-   }-*/;
-   private static final native void prevColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.prevColumnPage)
-         frame.prevColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("prevColumnPage");
-   }-*/;
-   private static final native void firstColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.firstColumnPage)
-         frame.firstColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("firstColumnPage");
-   }-*/;
-   private static final native void lastColumnPage(WindowEx frame) /*-{
-      if (!frame) return;
-      if (frame.lastColumnPage)
-         frame.lastColumnPage();
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("lastColumnPage");
-   }-*/;
-
-   private static final native void setOffsetAndMaxColumns(WindowEx frame, int offset, int max) /*-{
-      if (!frame) return;
-      if (frame.setOffsetAndMaxColumns)
-         frame.setOffsetAndMaxColumns(offset, max);
-      else
-         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setOffsetAndMaxColumns");
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("goToColumn");
    }-*/;
    private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(
@@ -738,20 +641,12 @@ public class DataTable
    private DataTableColumnWidget columnTextWidget_;
    private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;
-   private ArrayList<SimpleButton> columnViewButtons_;
    private SearchWidget searchWidget_;
    private boolean filtered_ = false;
 
    // localStorage key for this object's persisted UI state, reported by the
    // iframe via stateKeyCallback; used to clear it host-side on close (#17830).
    private String stateKey_ = null;
-
-   private static String COLUMN_VIEW_BUTTONS[] = {
-      "<i class=\"icon-angle-double-left \"></i>",
-      "<i class=\"icon-angle-left \"></i>",
-      "<i class=\"icon-angle-right \"></i>",
-      "<i class=\"icon-angle-double-right \"></i>"
-   };
 
    private static final DataViewerConstants constants_ = GWT.create(DataViewerConstants.class);
 }

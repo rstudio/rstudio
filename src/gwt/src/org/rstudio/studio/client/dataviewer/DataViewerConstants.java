@@ -16,7 +16,8 @@ package org.rstudio.studio.client.dataviewer;
 import com.google.gwt.i18n.client.Constants;
 
 public interface DataViewerConstants extends Constants {
-    String colsLabel();
+    String goToColumnLabel();
+    String goToColumnTitle();
     String filterButtonText();
     String sidebarButtonText();
     String searchWidgetLabel();

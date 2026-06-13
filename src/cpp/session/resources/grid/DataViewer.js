@@ -2771,6 +2771,31 @@ var setSortStatus = function(text) {
    if (clearEl) clearEl.style.display = text ? "inline-block" : "none";
 };
 
+// ", columns X to Y of N" for the (unpinned) columns currently in view, or
+// "" when the frame doesn't column-slide (it fits in one fetch window) or
+// the layout isn't measured yet -- callers fall back to the total-only
+// form. The range exists to keep the user oriented during long-range
+// horizontal scrolling; for a frame that's merely clipped by the viewport,
+// the plain total reads better and stays stable.
+var visibleColumnRangeText = function() {
+   if (!cols || measuredWidths.length === 0 || totalCols <= 0)
+      return "";
+   if (maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
+      return "";
+   var viewport = document.getElementById("gridViewport");
+   if (!viewport)
+      return "";
+
+   var pinnedW = getPinnedOffsets().totalWidth;
+   var vLo = absColAtContentX(lastScrollLeft + pinnedW);
+   var vHi = absColAtContentX(lastScrollLeft + viewport.clientWidth);
+   if (vLo <= 1 && vHi >= totalCols)
+      return "";
+
+   return ", columns " + vLo.toLocaleString() + " to " + vHi.toLocaleString() +
+          " of " + totalCols.toLocaleString();
+};
+
 var updateInfoBar = function() {
    updateAriaRowCount();
 
@@ -2831,8 +2856,14 @@ var updateInfoBar = function() {
       text += " (filtered from " + totalRows.toLocaleString() + " total entries)";
    }
    if (totalCols > 0) {
-      text += ", " + totalCols.toLocaleString() +
-         (totalCols === 1 ? " total column" : " total columns");
+      // When the frame is wider than the viewport, orient the user with the
+      // visible column range (the toolbar no longer carries a column-window
+      // readout); otherwise just report the total.
+      var colRange = visibleColumnRangeText();
+      text += colRange !== ""
+         ? colRange
+         : ", " + totalCols.toLocaleString() +
+           (totalCols === 1 ? " total column" : " total columns");
    }
    if (textEl) textEl.textContent = text;
 
@@ -4083,13 +4114,18 @@ var scrollToColumn = function(colIdx) {
    }
 
    // Briefly highlight the column header (if it's now rendered).
+   flashColumnHeader(colIdx);
+};
+
+// Briefly highlight a column's header so the user can spot where a jump
+// landed. No-op when the header isn't rendered.
+var flashColumnHeader = function(colIdx) {
    var th = getHeaderCell(colIdx);
-   if (th) {
-      th.classList.add("highlight-flash");
-      setTimeout(function() {
-         th.classList.remove("highlight-flash");
-      }, TIMING.columnFlash);
-   }
+   if (!th) return;
+   th.classList.add("highlight-flash");
+   setTimeout(function() {
+      th.classList.remove("highlight-flash");
+   }, TIMING.columnFlash);
 };
 
 // ==========================================================================
@@ -5664,6 +5700,13 @@ var applyColumnWindowUpdate = function(resCols, options) {
    updateCustomScrollbars();
    window.columnFrameCallback(columnOffset, maxDisplayColumns);
 
+   // A targeted jump flashes its landing column so the user can spot it.
+   if (targetAbs > 0) {
+      var targetPos = posForAbsColIndex(targetAbs);
+      if (targetPos >= 0)
+         flashColumnHeader(targetPos);
+   }
+
    // The user may have kept scrolling while this window was in flight;
    // immediately evaluate whether another slide is already warranted.
    maybeSlideForScroll();
@@ -5733,28 +5776,37 @@ var maybeSlideForScroll = function() {
    slideColumnWindow();
 };
 
-var columnNav = function(newOffset) {
+// Jump to an absolute (1-based) column. A column already in the fetched set
+// scrolls into view directly; anything else slides the window so the target
+// becomes its first column and lands at the viewport's left edge. Either way
+// the landing header flashes briefly.
+var goToColumn = function(column) {
    if (bootstrapping) return;
 
    // A failed bootstrap leaves no grid (cols === null, only possible here
-   // when not bootstrapping) and an unknown totalCols (0), so the clamp
-   // below would pin every request back to offset 0 and conclude there's
-   // nothing to do. Treat any nav action on a dead grid as "retry at the
-   // current offset": the bootstrap re-fetches this window and repopulates
-   // totalCols, and the next click pages normally.
+   // when not bootstrapping) and an unknown totalCols (0). Treat any nav
+   // action on a dead grid as "retry": the bootstrap re-fetches the current
+   // window and repopulates totalCols.
    if (cols === null) {
       bootstrap();
       return;
    }
 
-   newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns, newOffset));
-   if (columnOffset !== newOffset) {
-      columnOffset = newOffset;
+   var abs = Math.round(column);
+   if (!isFinite(abs) || abs < 1) return;
+   if (totalCols > 0) abs = Math.min(abs, totalCols);
 
-      // Scroll the new page's first column to the left edge once the window
-      // lands (vertical position is kept).
-      slideColumnWindow({ targetAbs: newOffset + 1 });
+   // Already fetched: scroll straight to it (scrollToColumn handles the
+   // render-window update and the highlight flash).
+   var pos = posForAbsColIndex(abs);
+   if (pos >= 0) {
+      scrollToColumn(pos);
+      return;
    }
+
+   if (maxDisplayColumns <= 0) return;
+   columnOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns, abs - 1));
+   slideColumnWindow({ targetAbs: abs });
 };
 
 // ==========================================================================
@@ -5973,26 +6025,14 @@ window.getActiveColumn = function() {
    return activeColumnInfo;
 };
 
-window.nextColumnPage = function() {
-   columnNav(columnOffset + maxDisplayColumns);
-};
-
-window.prevColumnPage = function() {
-   columnNav(columnOffset - maxDisplayColumns);
-};
-
-window.firstColumnPage = function() {
-   columnNav(0);
-};
-
-window.lastColumnPage = function() {
-   columnNav(totalCols - maxDisplayColumns);
+window.goToColumn = function(column) {
+   goToColumn(column);
 };
 
 window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    if (bootstrapping) return;
 
-   // Same dead-grid recovery rule as columnNav: with totalCols unknown (0)
+   // Same dead-grid recovery rule as goToColumn: with totalCols unknown (0)
    // after a failed bootstrap, the guards below would swallow every request.
    if (cols === null) {
       bootstrap();

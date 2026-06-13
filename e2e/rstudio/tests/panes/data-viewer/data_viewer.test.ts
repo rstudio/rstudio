@@ -1313,7 +1313,7 @@ test.describe('Data Viewer', () => {
     await consoleActions.executeInConsole('View(.rs.width_df)');
     try {
       await waitForViewer(dataViewer);
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      await expect(dataViewer.columnNumberInput).toBeVisible();
       // Let the post-first-fetch auto-size pass settle before measuring.
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
@@ -1333,23 +1333,25 @@ test.describe('Data Viewer', () => {
         .toBeGreaterThan(before.width + 100);
       const resizedWidth = (await col1.boundingBox())!.width;
 
-      // Page forward: the column occupying the same position (201) must
-      // keep its own auto-sized width, not inherit column 1's. Note
-      // data-col-idx is a position within the fetched window, so on page 2
-      // the header for column 201 is found by its absolute title instead.
-      await expect(dataViewer.rightArrow).toBeVisible();
-      await dataViewer.rightArrow.click();
-      await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+      // Jump forward: the column occupying the same window position (201)
+      // must keep its own auto-sized width, not inherit column 1's. Note
+      // data-col-idx is a position within the fetched window, so after the
+      // jump the header for column 201 is found by its absolute title.
+      await expect(dataViewer.columnNumberInput).toBeVisible();
+      await dataViewer.goToColumn(201);
+      // The post-slide width-refinement pass rebuilds the header row, which
+      // can momentarily detach the <th> between poll iterations -- treat a
+      // null boundingBox as "retry", not an error.
       const col201 = dataViewer.columnHeader(201);
       await expect(col201).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await expect.poll(async () => (await col201.boundingBox())!.width)
+      await expect.poll(async () =>
+        (await col201.boundingBox())?.width ?? Number.MAX_SAFE_INTEGER)
         .toBeLessThan(resizedWidth - 50);
 
-      // Page back: column 1 still carries the manual width.
-      await dataViewer.leftArrow.click();
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      // Jump back: column 1 still carries the manual width.
+      await dataViewer.goToColumn(1);
       await expect.poll(async () =>
-        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())!.width,
+        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())?.width ?? 0,
       { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(before.width + 100);
     } finally {
       await consoleActions.executeInConsole('rm(".rs.width_df", envir = .GlobalEnv)');
