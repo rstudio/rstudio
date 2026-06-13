@@ -189,6 +189,37 @@
    nms
 })
 
+#' Column Index
+#'
+#' Return lightweight identity for every column of a data object -- name,
+#' typeof, and class -- for the data viewer's summary sidebar, which lists all
+#' columns of the frame and lazy-loads the (expensive) per-column statistics
+#' as entries scroll into view. Deliberately cheap: no histograms, ranges, or
+#' factor levels, so this scales to very wide frames where describeCols would
+#' not. The result is a list with one entry per column, parallel to the
+#' frame's columns.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnIndex", function(x)
+{
+   nms <- .rs.dataViewer.columnNames(x)
+
+   # A non-list object (matrix, atomic vector coerced to a frame upstream) has
+   # no per-column classes to report; treat every column as the object's own
+   # class so the client's type predicates still resolve.
+   columns <- lapply(seq_along(nms), function(idx) {
+      col <- if (is.list(x)) x[[idx]] else x
+      list(
+         col_name  = .rs.scalar(nms[[idx]]),
+         col_type  = .rs.scalar(typeof(col)),
+         col_class = as.character(class(col)),
+         col_index = .rs.scalar(as.integer(idx))
+      )
+   })
+
+   columns
+})
+
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,

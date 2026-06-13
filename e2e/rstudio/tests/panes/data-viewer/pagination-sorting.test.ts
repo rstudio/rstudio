@@ -49,11 +49,11 @@ test.describe('Data Viewer', () => {
     // continuously through every column).
     await expect(dataViewer.gotoColumnInput).toBeVisible();
 
-    // The summary sidebar header counts the loaded window against the frame
-    // total; both sides must exclude the rowname column, so a miscount on
-    // either would surface here as an off-by-one (e.g. "201 of 500").
+    // The summary sidebar lists every column of the frame (lazy-loading their
+    // stats), so its header reports the frame total -- not the loaded window.
+    // It settles on "500 columns" once the complete column index loads.
     await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label')).toHaveText(
-      '200 of 500 columns',
+      '500 columns', { timeout: 15000 },
     );
 
     // Jump beyond the fetched window, to the last column, and back home.

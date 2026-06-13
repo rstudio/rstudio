@@ -481,6 +481,63 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // The sidebar is a complete index: it lists every column of a wide frame
+  // (not just the fetched window), lazy-loads an off-window column's summary
+  // when it scrolls into view, and lets you pin/sort an off-window column
+  // straight from its entry.
+  test('sidebar lists all columns of a wide frame and acts on off-window ones', async () => {
+    // 300 columns: wider than the ~200-column fetched window, so late columns
+    // are off-window. Column 250 holds a known range for the summary check.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_all_df <- as.data.frame(matrix(1:3000, nrow = 10, ncol = 300)); View(.rs.sidebar_all_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // The header reports the frame total once the complete index loads, and
+      // an entry exists for a column well past the fetched window.
+      await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label'))
+        .toHaveText('300 columns', { timeout: TIMEOUTS.fileOpen });
+      const entry250 = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"]');
+      await expect(entry250).toHaveCount(1);
+
+      // Its summary is initially unpopulated (off-window, not yet fetched);
+      // scrolling it into view lazy-loads the range. matrix(1:3000) is
+      // column-major with 10 rows, so column 250 holds 2491..2500.
+      await entry250.scrollIntoViewIfNeeded();
+      await expect(entry250.locator('.sidebar-col-summary'))
+        .toHaveText('[2,491, 2,500]', { timeout: TIMEOUTS.fileOpen });
+
+      // Sort descending from the off-window entry (two clicks). Sorting alone
+      // doesn't scroll the column into view, so confirm via the entry's icon,
+      // then jump to the column and confirm the grid actually reordered: 2500
+      // (its max) lands in the first row.
+      const sortIcon = entry250.locator('.sidebar-sort-icon');
+      await sortIcon.click();
+      await sortIcon.click();
+      await expect(sortIcon).toHaveClass(/sorting_desc/, { timeout: TIMEOUTS.fileOpen });
+
+      await dataViewer.goToColumn(250);
+      await expect(dataViewer.columnHeader(250)).toBeVisible({ timeout: 15000 });
+      const headerPos = await dataViewer.columnHeader(250).getAttribute('data-col-idx');
+      await expect(
+        dataViewer.frame.locator(`#gridBody tr[data-row="0"] td[data-col-pos="${headerPos}"]`),
+      ).toHaveText('2500', { timeout: 15000 });
+
+      // Pin the off-window-origin column from its (now rebuilt) entry; it
+      // becomes pinned (sticky) and the entry's pin icon reflects it.
+      const pinIcon = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"] .sidebar-pin-icon');
+      await pinIcon.click();
+      await expect(pinIcon).toHaveClass(/pinned/, { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('th[data-col-idx] .pin-icon.pinned'))
+        .toHaveCount(1, { timeout: 15000 });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_all_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // Low-cardinality factor / character columns get a categorical frequency
   // sparkline (one bar per distinct value, capped server-side at 24 bars);
   // above the cutoff the sidebar falls back to a text summary with the

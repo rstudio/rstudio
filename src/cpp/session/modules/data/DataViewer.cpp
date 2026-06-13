@@ -1073,6 +1073,35 @@ Error getGridData(const http::Request& request,
                result = names;
             }
          }
+         else if (show == "column_index")
+         {
+            // Lightweight per-column identity (name/typeof/class) for every
+            // column, backing the summary sidebar's complete column list. No
+            // statistics, so it scales to very wide frames; the sidebar
+            // lazy-loads the real summaries (show=cols) as entries scroll in.
+            SEXP indexSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.dataViewer.columnIndex")
+                  .addParam(dataSEXP)
+                  .call(&indexSEXP, &protect);
+
+            json::Value columnsJSON;
+            if (!error)
+               error = r::json::jsonValueFromList(indexSEXP, &columnsJSON);
+
+            if (error)
+            {
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to retrieve column index.";
+               result = err;
+            }
+            else
+            {
+               json::Object index;
+               index["columns"] = columnsJSON;
+               result = index;
+            }
+         }
          else if (show == "column_summary")
          {
             int column = http::util::fieldValue<int>(fields, "column", 0);

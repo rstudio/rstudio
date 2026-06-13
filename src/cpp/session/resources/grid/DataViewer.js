@@ -629,6 +629,26 @@ var filteredSummaries = null;
 // racing the row fetch that updates filteredRows.
 var filteredSummariesRowCount = 0;
 
+// Complete per-column identity (col_name/col_type/col_class/col_index) for
+// EVERY column, backing the sidebar's full column list (show=column_index).
+// null until loaded, when the sidebar falls back to the fetched grid window.
+// Cleared on bootstrap (a refresh can rename/retype columns).
+var sidebarColumns = null;
+var sidebarColumnsFetching = false;
+
+// Lazily-fetched summary descriptors (breaks/counts/range/NA/...) for columns
+// OUTSIDE the fetched grid window, keyed by absolute index. Window columns get
+// their summaries from `cols` (or filteredSummaries when filtered); this
+// covers the rest, populated by the sidebar's IntersectionObserver as off-
+// window entries scroll into view. Cleared when the filter state changes
+// (refreshSidebarSummaries) and on bootstrap.
+var sidebarLazySummaries = {};
+
+// IntersectionObserver watching sidebar entries; abs indices it has queued for
+// the next (debounced) lazy summary fetch. Both reset per sidebar rebuild.
+var sidebarObserver = null;
+var sidebarPendingFetch = {};
+
 var fetchFilteredSummaries = function(callback) {
    var loc = parseLocationUrl();
    var params = {
@@ -686,6 +706,10 @@ var rebuildSidebarPreservingScroll = function() {
 };
 
 var refreshSidebarSummaries = function() {
+   // Lazily-fetched off-window summaries reflect the previous filter state;
+   // drop them so they're refetched for the new one.
+   sidebarLazySummaries = {};
+
    if (!hasActiveRowFilter()) {
       filteredSummaries = null;
       filteredSummariesRowCount = 0;
@@ -1170,7 +1194,7 @@ var createHeader = function(idx, col) {
       pinIcon.addEventListener("click", function(evt) {
          evt.stopPropagation();
          evt.preventDefault();
-         togglePinColumn(idx);
+         togglePinColumn(absColIndex(idx));
          // Focus the viewport and mark the column the user just pinned
          // as the active header so subsequent keyboard nav routes to
          // the grid and starts from this column. displayIdx can be -1
@@ -1237,7 +1261,7 @@ var createHeader = function(idx, col) {
       if (evt.target.className === "resizer") return;
       if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
       if (didResize) { didResize = false; return; }
-      if (sortable) handleSortClick(idx);
+      if (sortable) handleSortClick(absColIndex(idx));
       var displayIdx = columnOrder.indexOf(idx);
       if (displayIdx >= 0) setActiveHeader(displayIdx);
       focusGridViewport();
@@ -1261,11 +1285,11 @@ var sortAriaValue = function(dir) {
    return "none";
 };
 
-var handleSortClick = function(colIdx) {
-   // sortColumn is an absolute column identity, so translate the clicked
-   // window position before comparing/storing.
-   var absIdx = absColIndex(colIdx);
-
+// absIdx is the absolute (1-based) column index, which is how sortColumn is
+// stored -- so this works for any column, including one not in the fetched
+// window (e.g. sorted from its sidebar entry). Callers holding a window
+// position translate via absColIndex first.
+var handleSortClick = function(absIdx) {
    // Cycle: unsorted -> asc -> desc -> unsorted
    var newDir = "";
    if (sortColumn !== absIdx) {
@@ -1796,9 +1820,11 @@ var rebuildHeaderWindow = function() {
    }
 };
 
-var togglePinColumn = function(colIdx) {
-   // pinnedColumns tracks absolute column identities, not window positions.
-   var absIdx = absColIndex(colIdx);
+// absIdx is the absolute (1-based) column index; pinnedColumns tracks absolute
+// identities, so this works for any column, including one not in the fetched
+// window (e.g. pinned from its sidebar entry). Callers holding a window
+// position translate via absColIndex first.
+var togglePinColumn = function(absIdx) {
    if (pinnedColumns.has(absIdx)) {
       pinnedColumns.delete(absIdx);
    } else {
@@ -3629,6 +3655,240 @@ var onSidebarToggleKeyDown = function(evt) {
    if (evt.key === "Enter" || evt.key === " ") onSidebarToggleActivate(evt);
 };
 
+// The columns the sidebar lists: the complete index once loaded, otherwise
+// the fetched grid window (identity only) as a fast first paint. Both yield
+// items carrying col_name/col_type/col_class/col_index, so entry construction
+// is uniform. Rownames (col 0 of the grid window) is excluded.
+var sidebarColumnList = function() {
+   if (sidebarColumns)
+      return sidebarColumns;
+   var list = [];
+   if (cols) {
+      for (var i = 1; i < cols.length; i++)
+         list.push(cols[i]);
+   }
+   return list;
+};
+
+// Fetch the whole frame's lightweight column index once, then rebuild the
+// sidebar so it lists every column (not just the fetched window). Cheap
+// enough for very wide frames; the per-column summaries stay lazy.
+var ensureSidebarColumns = function() {
+   if (sidebarColumns || sidebarColumnsFetching || dataMode !== "server")
+      return;
+   sidebarColumnsFetching = true;
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "column_index"
+   };
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         sidebarColumnsFetching = false;
+         if (result && !result.error && result.columns && result.columns.length) {
+            sidebarColumns = result.columns;
+            rebuildSidebarPreservingScroll();
+         }
+      })
+      .catch(function(err) {
+         sidebarColumnsFetching = false;
+         console.warn("fetchColumnIndex failed:", err);
+      });
+};
+
+// The summary descriptor for a column (absolute index) matching the current
+// filter state, or null if not yet loaded. Window columns resolve from the
+// grid metadata (filteredSummaries when filtered, else `cols`); off-window
+// columns from the lazy cache.
+var getSidebarSummary = function(absIdx) {
+   if (filteredSummaries) {
+      if (filteredSummaries[absIdx])
+         return filteredSummaries[absIdx];
+   } else {
+      var pos = posForAbsColIndex(absIdx);
+      if (pos >= 0)
+         return cols[pos];
+   }
+   return sidebarLazySummaries[absIdx] || null;
+};
+
+// Percentage denominator for the sidebar summaries: the filtered row count
+// when a filter is active, otherwise the whole-frame row count (from the
+// metadata, not the transiently-zeroed totalRows -- see initSidebar).
+var sidebarSummaryRowCount = function() {
+   if (filteredSummaries)
+      return filteredSummariesRowCount;
+   return (cols && cols[0] && typeof cols[0].total_rows === "number" &&
+           cols[0].total_rows > 0)
+      ? cols[0].total_rows
+      : totalRows;
+};
+
+// Fetch summary descriptors for a set of absolute column indices (matching
+// the current filter state) and stash them in the lazy cache, then invoke
+// the callback. Reuses show=cols (the same describe the grid window uses).
+var fetchSidebarSummaries = function(absList, callback) {
+   if (absList.length === 0) { callback(); return; }
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      max_rows: maxRows,
+      columns_requested: absList.join(",")
+   };
+   if (hasActiveRowFilter()) {
+      params["filtered"] = 1;
+      appendTransformParams(params);
+   }
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (result && !result.error && result.length) {
+            prepareColumnResponse(result);
+            for (var i = 0; i < result.length; i++) {
+               var entry = result[i];
+               if (typeof entry.col_index === "number" && entry.col_index >= 1)
+                  sidebarLazySummaries[entry.col_index] = entry;
+            }
+         }
+         callback();
+      })
+      .catch(function(err) {
+         console.warn("fetchSidebarSummaries failed:", err);
+         callback();
+      });
+};
+
+// Debounced flush of the IntersectionObserver's queued abs indices: fetch the
+// ones still missing a summary, then populate their (still-present) entries.
+var flushSidebarPendingFetch = debounce(120, function() {
+   var content = document.getElementById("sidebarContent");
+   if (!content) { sidebarPendingFetch = {}; return; }
+
+   var want = [];
+   for (var key in sidebarPendingFetch) {
+      if (!sidebarPendingFetch.hasOwnProperty(key)) continue;
+      var abs = parseInt(key, 10);
+      if (!getSidebarSummary(abs))
+         want.push(abs);
+   }
+   sidebarPendingFetch = {};
+   if (want.length === 0)
+      return;
+
+   var token = drawCounter;
+   fetchSidebarSummaries(want, function() {
+      // A filter/search/refresh since we issued the fetch invalidated the
+      // cache keying; the rebuild it triggered will re-observe and refetch.
+      if (token !== drawCounter)
+         return;
+      var liveContent = document.getElementById("sidebarContent");
+      if (!liveContent)
+         return;
+      for (var i = 0; i < want.length; i++) {
+         var summary = getSidebarSummary(want[i]);
+         if (!summary)
+            continue;
+         var entry = liveContent.querySelector(
+            '.sidebar-col[data-col-idx="' + want[i] + '"]');
+         if (entry)
+            populateEntrySummary(entry, summary);
+      }
+      // The entries just populated registered sparklines; draw them (the
+      // panel is open, since the observer only fires for visible entries).
+      if (sidebarVisible) renderPendingSparklines();
+      if (sidebarScrollbar_) sidebarScrollbar_.update();
+   });
+});
+
+// Fill an entry's summary content (sparkline + footer range/NA/unique) from a
+// describe descriptor. Idempotent: skips entries already populated (so a
+// double IntersectionObserver fire or a seed+observe race can't duplicate the
+// sparkline). The entry's identity column is read back from data-col-abs.
+var populateEntrySummary = function(entry, summary) {
+   if (entry.getAttribute("data-summary-loaded") === "1")
+      return;
+   entry.setAttribute("data-summary-loaded", "1");
+
+   var rowCount = sidebarSummaryRowCount();
+   var footer = entry.querySelector(".sidebar-col-footer");
+
+   // Sparkline (numeric histogram or categorical bars): inserted before the
+   // footer. Deferred-drawn via pendingSparklines_ + renderPendingSparklines,
+   // which the caller flushes when the panel is visible.
+   if (hasHistogram(summary)) {
+      var sparkContainer = document.createElement("div");
+      sparkContainer.className = "sidebar-sparkline";
+      entry.insertBefore(sparkContainer, footer);
+      pendingSparklines_.push({
+         container: sparkContainer,
+         breaks: summary.col_breaks,
+         counts: summary.col_counts,
+         labels: null
+      });
+   } else if (hasCategoryCounts(summary)) {
+      var catContainer = document.createElement("div");
+      catContainer.className = "sidebar-sparkline";
+      entry.insertBefore(catContainer, footer);
+      pendingSparklines_.push({
+         container: catContainer,
+         breaks: null,
+         counts: summary.col_cat_counts,
+         labels: summary.col_cat_vals
+      });
+   }
+
+   // Footer: type-specific summary (left) + NA stat (right).
+   var summaryEl = footer.querySelector(".sidebar-col-summary");
+   if (hasHistogram(summary) &&
+       typeof summary.col_min === "number" &&
+       typeof summary.col_max === "number") {
+      summaryEl.classList.add("range");
+      appendRangePunct(summaryEl, "[");
+      summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_min)));
+      appendRangePunct(summaryEl, ", ");
+      summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_max)));
+      appendRangePunct(summaryEl, "]");
+   } else {
+      // Factor level count is structural (read from the summary's col_vals);
+      // distinct-value count is data-dependent. Enrich with the dominant
+      // value when there's no category sparkline and "top" isn't every-row.
+      var catText = "";
+      if (isFactorColumn(summary) && summary.col_vals) {
+         catText = summary.col_vals.length.toLocaleString() + " levels";
+      } else if (typeof summary.col_n_unique === "number") {
+         catText = summary.col_n_unique.toLocaleString() + " unique";
+      }
+      if (catText &&
+          typeof summary.col_top_count === "number" &&
+          summary.col_top_count > 1 &&
+          rowCount > 0) {
+         var topPct = (summary.col_top_count / rowCount) * 100;
+         catText += " · top: " + summary.col_top_value +
+            " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
+      }
+      summaryEl.textContent = catText;
+      if (catText)
+         summaryEl.title = catText;
+   }
+
+   var naEl = footer.querySelector(".sidebar-col-na");
+   var naCount = summary.col_na_count || 0;
+   if (naCount > 0 && rowCount > 0) {
+      var naPct = (naCount / rowCount) * 100;
+      naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
+      naEl.title = naCount.toLocaleString() + " missing values";
+      naEl.classList.remove("zero");
+   } else {
+      naEl.textContent = "0% NA";
+      naEl.classList.add("zero");
+      naEl.title = "No missing values";
+   }
+};
+
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -3640,24 +3900,22 @@ var initSidebar = function() {
    toggle.setAttribute("aria-controls", "sidebarContent");
    toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    toggle.setAttribute("aria-label", "Toggle column summary panel");
-   // The host toolbar's Summary button already names the panel, so the
-   // header shows the column count instead of repeating "Summary".
-   var shownCols = 0;
-   for (var ci = 0; ci < cols.length; ci++) {
-      if (!isRownameColumn(cols[ci]))
-         shownCols++;
-   }
+   // The host toolbar's Summary button already names the panel, so the header
+   // shows the column count instead of repeating "Summary". The sidebar lists
+   // every column of the frame, so the count is the frame total. While the
+   // complete index is still loading it falls back to the fetched window, so
+   // show "N of M" during that brief transient (and for the rare frame whose
+   // index failed to load).
+   var listedCols = sidebarColumnList().length;
 
    var toggleLabel = document.createElement("span");
    toggleLabel.className = "sidebar-toggle-label";
-   if (totalCols > shownCols) {
-      // Fewer columns are loaded than the frame contains (e.g. only the
-      // current page of a paginated frame); the sidebar lists those only.
-      toggleLabel.textContent = shownCols.toLocaleString() + " of " +
+   if (sidebarColumns === null && totalCols > listedCols) {
+      toggleLabel.textContent = listedCols.toLocaleString() + " of " +
          totalCols.toLocaleString() + " columns";
    } else {
-      toggleLabel.textContent = shownCols.toLocaleString() +
-         (shownCols === 1 ? " column" : " columns");
+      toggleLabel.textContent = totalCols.toLocaleString() +
+         (totalCols === 1 ? " column" : " columns");
    }
    toggle.appendChild(toggleLabel);
 
@@ -3722,41 +3980,50 @@ var initSidebar = function() {
    // containers were just removed by the innerHTML reset above.
    pendingSparklines_ = [];
 
-   // Whether the summaries describe filtered rows; picks the percentage
-   // denominator and the "(filtered)" affordance below. The whole-frame
-   // denominator comes from the column metadata's row count rather than the
-   // live `totalRows`: invalidateCache (fired on filter/search apply, before
-   // the row re-fetch lands) transiently zeroes totalRows, and a sidebar
-   // rebuilt in that window would otherwise divide by zero and show 0% NA.
-   var summariesFiltered = filteredSummaries !== null;
-   var frameRowCount =
-      (cols[0] && typeof cols[0].total_rows === "number" && cols[0].total_rows > 0)
-         ? cols[0].total_rows
-         : totalRows;
-   var summaryRowCount = summariesFiltered ? filteredSummariesRowCount : frameRowCount;
+   // Reset the lazy-load machinery for this rebuild: a fresh observer (the old
+   // one's targets were just removed) and an empty pending-fetch queue.
+   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
+   sidebarPendingFetch = {};
+   if (typeof IntersectionObserver !== "undefined") {
+      sidebarObserver = new IntersectionObserver(function(entries) {
+         var queued = false;
+         for (var e = 0; e < entries.length; e++) {
+            if (!entries[e].isIntersecting) continue;
+            var abs = parseInt(entries[e].target.getAttribute("data-col-idx"), 10);
+            if (isNaN(abs) || getSidebarSummary(abs)) continue;
+            sidebarPendingFetch[abs] = true;
+            queued = true;
+         }
+         if (queued) flushSidebarPendingFetch();
+      }, { root: content });
+   }
 
-   for (var i = 0; i < cols.length; i++) {
-      var col = cols[i];
+   // List every column of the frame (or the fetched window until the complete
+   // index loads). Each entry is built as a shell -- identity (name, type,
+   // pin/sort icons) is always available; the summary content (sparkline,
+   // range, NA%) is populated from the cache if present, otherwise lazily as
+   // the entry scrolls into view (IntersectionObserver above).
+   var listCols = sidebarColumnList();
+   for (var i = 0; i < listCols.length; i++) {
+      var col = listCols[i];
       if (isRownameColumn(col)) continue;
-
-      // The distribution shown (histogram, category bars, range, NA%, unique/
-      // top) comes from the filtered summary when one is active; identity
-      // (name, type, sortability, factor levels) always comes from `col`, the
-      // full-frame metadata. They diverge only while a filter/search is on.
-      var summary = (filteredSummaries && filteredSummaries[absColIndex(i)]) || col;
+      var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
 
       var entry = document.createElement("div");
       entry.className = "sidebar-col";
-      entry.setAttribute("data-col-idx", i);
+      // data-col-idx holds the ABSOLUTE column index (1-based). For an
+      // unpaginated frame this equals the entry's position, matching the
+      // historical meaning; for a windowed frame it identifies the column
+      // across the whole frame, which the handlers and lazy loader rely on.
+      entry.setAttribute("data-col-idx", absIdx);
       entry.setAttribute("role", "listitem");
 
-      // Header row: expand button + name + type
+      // Header row: expand button + pin + name + type + sort
       var header = document.createElement("div");
       header.className = "sidebar-col-header";
       header.setAttribute("role", "button");
       header.setAttribute("tabindex", "0");
-      header.setAttribute("aria-label",
-         "Scroll to column " + col.col_name);
+      header.setAttribute("aria-label", "Scroll to column " + col.col_name);
 
       var expandBtn = document.createElement("span");
       expandBtn.className = "sidebar-expand-btn";
@@ -3764,8 +4031,7 @@ var initSidebar = function() {
       expandBtn.setAttribute("role", "button");
       expandBtn.setAttribute("tabindex", "0");
       expandBtn.setAttribute("aria-expanded", "false");
-      expandBtn.setAttribute("aria-label",
-         "Toggle summary for column " + col.col_name);
+      expandBtn.setAttribute("aria-label", "Toggle summary for column " + col.col_name);
       header.appendChild(expandBtn);
 
       // Pin icon, mirroring the grid header's affordance: hidden until the
@@ -3808,105 +4074,16 @@ var initSidebar = function() {
 
       entry.appendChild(header);
 
-      // Sparkline for numeric columns (histogram) and low-cardinality
-      // factor / character columns (per-category frequency bars). Create
-      // the (empty) container now but defer drawing the canvas until the
-      // panel is visible -- see renderPendingSparklines.
-      if (hasHistogram(summary)) {
-         var sparkContainer = document.createElement("div");
-         sparkContainer.className = "sidebar-sparkline";
-         entry.appendChild(sparkContainer);
-         pendingSparklines_.push({
-            container: sparkContainer,
-            breaks: summary.col_breaks,
-            counts: summary.col_counts,
-            labels: null
-         });
-      } else if (hasCategoryCounts(summary)) {
-         var catContainer = document.createElement("div");
-         catContainer.className = "sidebar-sparkline";
-         entry.appendChild(catContainer);
-         pendingSparklines_.push({
-            container: catContainer,
-            breaks: null,
-            counts: summary.col_cat_counts,
-            labels: summary.col_cat_vals
-         });
-      }
-
-      // Footer row: type-specific summary (left) + NA stat (right). Always
-      // rendered so entries keep a uniform shape: the left slot may be empty
-      // (e.g. Date / logical columns, or character columns too long for the
-      // server to count distinct values), and the NA stat is always
-      // present, visually dimmed when the column has nothing missing.
+      // Footer shell (summary left, NA right); populateEntrySummary fills it,
+      // and inserts the sparkline before it, once a descriptor is available.
       var footer = document.createElement("div");
       footer.className = "sidebar-col-footer";
-
-      // Type-specific summary (left). For numeric columns this is the actual
-      // data range as a closed interval, [min, max], which doubles as the
-      // sparkline's (unticked) axis bounds; the col_min/col_max checks are
-      // purely defensive (the fields ship with every histogram), keeping the
-      // slot empty rather than throwing mid-bootstrap if one were missing.
-      // The bracket and comma adornments are dimmed spans (see .range-punct)
-      // so they read as notation rather than data.
       var summaryEl = document.createElement("span");
       summaryEl.className = "sidebar-col-summary";
-      if (hasHistogram(summary) &&
-          typeof summary.col_min === "number" &&
-          typeof summary.col_max === "number") {
-         summaryEl.classList.add("range");
-         appendRangePunct(summaryEl, "[");
-         summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(summary.col_min)));
-         appendRangePunct(summaryEl, ", ");
-         summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(summary.col_max)));
-         appendRangePunct(summaryEl, "]");
-      } else {
-         // Categorical cardinality: level count for factors (a structural
-         // property, so always from `col`), distinct-value count for
-         // characters (data-dependent, so from the filtered summary; absent
-         // when the server skipped counting, e.g. very long columns). Above
-         // the server's bar cutoff there is no category sparkline, so enrich
-         // the text with the dominant value instead -- but not when the top
-         // count is 1 (ID-like columns where every value is distinct).
-         var catText = "";
-         if (isFactorColumn(col) && col.col_vals) {
-            catText = col.col_vals.length.toLocaleString() + " levels";
-         } else if (typeof summary.col_n_unique === "number") {
-            catText = summary.col_n_unique.toLocaleString() + " unique";
-         }
-         if (catText &&
-             typeof summary.col_top_count === "number" &&
-             summary.col_top_count > 1 &&
-             summaryRowCount > 0) {
-            var topPct = (summary.col_top_count / summaryRowCount) * 100;
-            catText += " \u00b7 top: " + summary.col_top_value +
-               " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
-         }
-         summaryEl.textContent = catText;
-         // The top value is user data of arbitrary length; the summary
-         // ellipsizes, so expose the full text as a tooltip.
-         if (catText)
-            summaryEl.title = catText;
-      }
       footer.appendChild(summaryEl);
-
-      // NA stat (right) -- over the filtered rows when a filter is active.
-      var naCount = summary.col_na_count || 0;
       var naEl = document.createElement("span");
       naEl.className = "sidebar-col-na";
-      if (naCount > 0 && summaryRowCount > 0) {
-         var naPct = ((naCount / summaryRowCount) * 100);
-         naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
-         naEl.title = naCount.toLocaleString() + " missing values";
-      } else {
-         naEl.textContent = "0% NA";
-         naEl.classList.add("zero");
-         naEl.title = "No missing values";
-      }
       footer.appendChild(naEl);
-
       entry.appendChild(footer);
 
       // Stats panel (hidden until expanded)
@@ -3915,9 +4092,10 @@ var initSidebar = function() {
       statsPanel.style.display = "none";
       entry.appendChild(statsPanel);
 
-      // Click entry to scroll; click expand button to toggle stats; pin and
-      // sort icons route into the same toggle/cycle paths as the grid header.
-      (function(colIdx, statsEl, btnEl, headerEl, pinEl, sortEl, colType) {
+      // Click entry to navigate; expand button toggles detail stats; pin and
+      // sort icons route into the same paths as the grid header (all keyed by
+      // absolute index, so they work for off-window columns too).
+      (function(abs, statsEl, btnEl, headerEl, pinEl, sortEl, colType) {
          var expanded = false;
          var loaded = false;
 
@@ -3934,7 +4112,7 @@ var initSidebar = function() {
                   var spinner = document.getElementById("sidebarSpinner");
                   pendingSummaryFetches++;
                   if (spinner) spinner.style.display = "";
-                  fetchColumnSummary(absColIndex(colIdx), function(data) {
+                  fetchColumnSummary(abs, function(data) {
                      pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
                      if (spinner && pendingSummaryFetches === 0) {
                         spinner.style.display = "none";
@@ -3969,7 +4147,7 @@ var initSidebar = function() {
          var togglePin = function(evt) {
             evt.stopPropagation();
             evt.preventDefault();
-            togglePinColumn(colIdx);
+            togglePinColumn(abs);
          };
          pinEl.addEventListener("click", togglePin);
          pinEl.addEventListener("keydown", function(evt) {
@@ -3980,7 +4158,7 @@ var initSidebar = function() {
             var cycleSort = function(evt) {
                evt.stopPropagation();
                evt.preventDefault();
-               handleSortClick(colIdx);
+               handleSortClick(abs);
             };
             sortEl.addEventListener("click", cycleSort);
             sortEl.addEventListener("keydown", function(evt) {
@@ -3988,19 +4166,34 @@ var initSidebar = function() {
             });
          }
 
-         var scrollToCol = function() { scrollToColumn(colIdx); };
-         entry.addEventListener("click", scrollToCol);
+         // Navigate to the column (works whether or not it's in the fetched
+         // window; goToColumn slides the window for off-window targets).
+         var navigate = function() { goToColumn(abs); };
+         entry.addEventListener("click", navigate);
          headerEl.addEventListener("keydown", function(evt) {
             if (evt.target !== headerEl) return;
             if (evt.key === "Enter" || evt.key === " ") {
                evt.preventDefault();
-               scrollToCol();
+               navigate();
             }
          });
-      })(i, statsPanel, expandBtn, header, pinIcon, sortIcon, statsCategory(col));
+      })(absIdx, statsPanel, expandBtn, header, pinIcon, sortIcon, statsCategory(col));
+
+      // Populate the summary now if it's already cached; otherwise observe the
+      // entry so it loads lazily when scrolled into view.
+      var seeded = getSidebarSummary(absIdx);
+      if (seeded) {
+         populateEntrySummary(entry, seeded);
+      } else if (sidebarObserver) {
+         sidebarObserver.observe(entry);
+      }
 
       content.appendChild(entry);
    }
+
+   // Kick off loading the complete column index if we're still showing only
+   // the fetched window; it rebuilds the sidebar when it lands.
+   ensureSidebarColumns();
 
    // Apply the current (possibly restored-from-saved-state) pin and sort
    // state to the icons just created.
@@ -4029,39 +4222,42 @@ var initSidebar = function() {
 // end of initSidebar to apply the initial (possibly restored) state.
 var updateSidebarColumnIndicators = function() {
    var content = document.getElementById("sidebarContent");
-   if (!content || !cols) return;
+   if (!content) return;
 
    var entries = content.querySelectorAll(".sidebar-col");
    for (var i = 0; i < entries.length; i++) {
       var entry = entries[i];
-      var colIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
-      var col = isNaN(colIdx) ? null : cols[colIdx];
-      if (!col) continue;
+      // data-col-idx is the absolute column index; the column name comes from
+      // the entry's own DOM (an off-window column isn't in `cols`).
+      var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+      if (isNaN(absIdx)) continue;
+      var nameEl = entry.querySelector(".sidebar-col-name");
+      var colName = nameEl ? nameEl.textContent : "";
 
       var pinEl = entry.querySelector(".sidebar-pin-icon");
       if (pinEl) {
-         var pinned = pinnedColumns.has(absColIndex(colIdx));
+         var pinned = pinnedColumns.has(absIdx);
          pinEl.classList.toggle("pinned", pinned);
          pinEl.title = pinned ? "Unpin column" : "Pin column";
          pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
          pinEl.setAttribute("aria-label",
-            (pinned ? "Unpin column " : "Pin column ") + col.col_name);
+            (pinned ? "Unpin column " : "Pin column ") + colName);
       }
 
       var sortEl = entry.querySelector(".sidebar-sort-icon");
       if (sortEl && !sortEl.classList.contains("disabled")) {
-         var dir = (absColIndex(colIdx) === sortColumn) ? sortDirection : "";
+         var dir = (absIdx === sortColumn) ? sortDirection : "";
          sortEl.classList.toggle("sorting_asc", dir === "asc");
          sortEl.classList.toggle("sorting_desc", dir === "desc");
 
          // The label announces the next step in the sort cycle.
          var action;
          if (dir === "asc") {
-            action = "Sort column " + col.col_name + " descending";
+            action = "Sort column " + colName + " descending";
          } else if (dir === "desc") {
-            action = "Remove sort on column " + col.col_name;
+            action = "Remove sort on column " + colName;
          } else {
-            action = "Sort column " + col.col_name + " ascending";
+            action = "Sort column " + colName + " ascending";
          }
          sortEl.title = action;
          sortEl.setAttribute("aria-label", action);
@@ -4642,13 +4838,13 @@ var onGridKeyDown = function(evt) {
       if (key === "Enter" || key === " ") {
          evt.preventDefault();
          if (ordering && isColumnSortable(col)) {
-            handleSortClick(origCol);
+            handleSortClick(absColIndex(origCol));
          }
          return;
       }
       if (key === "p" || key === "P") {
          evt.preventDefault();
-         if (!isRownames) togglePinColumn(origCol);
+         if (!isRownames) togglePinColumn(absColIndex(origCol));
          return;
       }
    }
@@ -5387,6 +5583,15 @@ var resetGridState = function() {
    // rebuild; start clean so a stale map can't drive the fresh sidebar.
    filteredSummaries = null;
    filteredSummariesRowCount = 0;
+
+   // Complete-index sidebar state: the column set and any lazily-fetched
+   // summaries belong to the previous frame; drop them and tear down the
+   // observer so the rebuilt sidebar re-fetches and re-observes cleanly.
+   sidebarColumns = null;
+   sidebarColumnsFetching = false;
+   sidebarLazySummaries = {};
+   sidebarPendingFetch = {};
+   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
 
    // Sidebar
    pendingSummaryFetches = 0;
