@@ -4322,7 +4322,19 @@ var flashSidebarColumn = function(colIdx) {
    var entry = content.querySelector('.sidebar-col[data-col-idx="' + colIdx + '"]');
    if (!entry) return;
 
-   if (entry.scrollIntoView) entry.scrollIntoView({ block: "nearest" });
+   // Center the entry in the list, but only when it isn't already fully
+   // visible -- so a jump to a nearby, already-on-screen column doesn't jolt
+   // the list. Mirrors revealColumnCentered's handling of the grid viewport
+   // (and beats scrollIntoView's "nearest", which lands a below-fold entry
+   // flush against the bottom edge). offsetTop is relative to #sidebarContent
+   // (the scroll container), matching content.scrollTop.
+   var top = entry.offsetTop;
+   var height = entry.offsetHeight;
+   var viewTop = content.scrollTop;
+   var viewH = content.clientHeight;
+   if (top < viewTop || top + height > viewTop + viewH) {
+      content.scrollTop = Math.max(0, top - Math.max(0, (viewH - height) / 2));
+   }
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 
    entry.classList.add("highlight-flash");

@@ -442,27 +442,32 @@ test.describe('Data Viewer', () => {
     try {
       await waitForViewer(dataViewer);
 
-      // Whether column `idx`'s sidebar entry is within the scrolled viewport
-      // of the (live) sidebar list. Read through the viewport's own document
-      // to pin to the frame in view (see the filtered-summary test).
-      const entryVisible = (idx: number) => dataViewer.viewport.evaluate((vp, i) => {
+      // Fractional position of column `idx`'s sidebar entry center within the
+      // scrolled viewport of the (live) sidebar list: < 0 above the fold, > 1
+      // below it, ~0.5 centered. Read through the viewport's own document to
+      // pin to the frame in view (see the filtered-summary test).
+      const entryCenterRatio = (idx: number) => dataViewer.viewport.evaluate((vp, i) => {
         const doc = vp.ownerDocument;
         const content = doc.getElementById('sidebarContent');
         const entry = doc.querySelector(`.sidebar-col[data-col-idx="${i}"]`) as HTMLElement | null;
-        if (!content || !entry) return null;
-        const top = entry.offsetTop;
-        return top + entry.offsetHeight > content.scrollTop &&
-               top < content.scrollTop + content.clientHeight;
+        if (!content || !entry || content.clientHeight === 0) return null;
+        const center = entry.offsetTop + entry.offsetHeight / 2;
+        return (center - content.scrollTop) / content.clientHeight;
       }, idx);
 
-      // Column 58's entry exists but starts below the fold.
-      await expect.poll(() => entryVisible(58), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+      // Column 40 (mid-list) starts below the fold, and far enough from the
+      // ends that centering isn't clamped.
+      await expect.poll(() => entryCenterRatio(40), { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(1);
 
       // Jump to it via the go-to-column box.
-      await dataViewer.goToColumn(58);
+      await dataViewer.goToColumn(40);
 
-      // Its sidebar entry scrolls into view...
-      await expect.poll(() => entryVisible(58), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+      // Its sidebar entry scrolls to roughly the center of the list (not flush
+      // against the bottom edge, which "nearest" alignment would produce).
+      await expect.poll(() => entryCenterRatio(40), { timeout: TIMEOUTS.fileOpen })
+        .toBeLessThan(0.7);
+      expect(await entryCenterRatio(40)).toBeGreaterThan(0.3);
 
       // ...but focus stays on the grid viewport (so arrow keys drive the
       // data), not anywhere in the sidebar.
