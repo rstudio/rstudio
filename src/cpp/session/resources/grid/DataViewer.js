@@ -2577,10 +2577,13 @@ var updateInfoBar = function() {
    if (filteredRows < totalRows) {
       text += " (filtered from " + totalRows.toLocaleString() + " total entries)";
    }
-   if (totalCols > 0) {
-      text += ", " + totalCols.toLocaleString() +
-         (totalCols === 1 ? " total column" : " total columns");
-   }
+   // Always append the column count. totalCols == 0 only means "unknown"
+   // between resetGridState and the bootstrap column fetch, and in that
+   // window totalRows is also 0 (invalidateCache), so the early return
+   // above blanks the bar; whenever this line is reached, totalCols holds
+   // a real count and 0 means a genuinely zero-column object.
+   text += ", " + totalCols.toLocaleString() +
+      (totalCols === 1 ? " total column" : " total columns");
    if (textEl) textEl.textContent = text;
 
    var sortText = "";
