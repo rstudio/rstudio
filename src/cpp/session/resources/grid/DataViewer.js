@@ -286,8 +286,8 @@ var primedPinnedCount = 0;
 // from the viewport's left edge; the more elaborate pinnedOffsetsCache
 // also tracks total pinned width. pinnedOffsetsCache is dropped by
 // invalidatePinnedOffsets() on width/pinning changes; cachedPinnedOffsets
-// is refreshed in renderVisibleRows (forced render) and reset in
-// resetGridState.
+// is refreshed in renderVisibleRows whenever the row window is (re)rendered,
+// and reset in resetGridState.
 var cachedPinnedOffsets = {};
 var pinnedOffsetsCache = null;
 
@@ -1134,11 +1134,13 @@ var isNumericColumn = function(col) {
 // numerics, but their col_breaks are epoch values (days for Date, seconds for
 // POSIXct) paired with formatted col_break_labels for display, and they carry
 // an optional col_tz. Kept distinct from isNumericColumn so dates aren't
-// right-aligned or fed to the numeric stats/footer paths.
+// right-aligned or fed to the numeric stats/footer paths. Only Date and
+// POSIXct are matched -- the backend emits the date metadata for exactly those
+// (a data.frame coerces POSIXlt to POSIXct), so matching POSIXlt here too would
+// claim columns the server never marked up.
 var isDateColumn = function(col) {
    return colHasClass(col, "Date") ||
-          colHasClass(col, "POSIXct") ||
-          colHasClass(col, "POSIXlt");
+          colHasClass(col, "POSIXct");
 };
 
 // Whether the backend computed histogram data for this column. col_breaks /
@@ -2459,7 +2461,10 @@ var setColumnSearch = function(absIdx, val) {
 
 // Human-readable summary of a stored filter value ("type|value"), for the
 // sidebar filter indicator's tooltip. Range filters (numeric / date) read as
-// "lo to hi"; everything else shows the raw value.
+// "lo to hi". Factor values are a stored level INDEX, not the label, so they'd
+// read as a meaningless number ("Filtered: 3") -- return "" for them so the
+// caller shows a generic "Filtered" instead. Everything else (character,
+// boolean) is already human-readable.
 var describeFilterValue = function(raw) {
    if (!raw) return "";
    var pipe = raw.indexOf("|");
@@ -2469,6 +2474,8 @@ var describeFilterValue = function(raw) {
       var parts = value.split("_");
       return parts[0] + " to " + parts[1];
    }
+   if (type === "factor")
+      return "";
    return value;
 };
 
@@ -2672,8 +2679,9 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
 // histogram (and its CSS), but the histogram breaks are epoch values paired
 // with formatted col_break_labels, so the brush and the text box operate in
 // formatted dates. The serialized filter value is "date|<lo>_<hi>" -- two ISO
-// strings the backend parses on the native Date/POSIXct scale. Range-only: a
-// single instant isn't a useful datetime filter.
+// strings the backend parses on the native Date/POSIXct scale. The brush always
+// produces a range; a single typed value is accepted as a one-instant range
+// (lo === hi), which for a Date is that whole day.
 var createDateFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
 
@@ -4053,6 +4061,12 @@ var openColumnFilterFromSidebar = function(icon, absIdx) {
    icon.dvFilterWiring = true;
    resolveFilterDescriptor(absIdx, function(desc) {
       icon.dvFilterWiring = false;
+
+      // A sidebar rebuild / resetGridState may have detached this icon while
+      // the descriptor fetch was in flight; anchoring a popup to an off-DOM
+      // node would position it at (0,0). Bail rather than open a stray popup.
+      if (!icon.isConnected)
+         return;
       if (!desc || !isFilterableSearchType(desc.col_search_type))
          return;
 
@@ -6826,9 +6840,12 @@ window.setFilterUIVisible = function(visible) {
       visible,
       function(th, col, i) {
          if (isFilterableSearchType(col.col_search_type)) {
-            // createFilterUI keys off the absolute column index (col_index),
-            // not the window position `i`.
-            return createFilterUI(col.col_index, col);
+            // createFilterUI keys off the absolute column index, not the window
+            // position `i`. Route through absColIndex(i) (= col.col_index, with
+            // the documented fallback to `i` when col_index is unavailable)
+            // rather than reading col.col_index raw, so a missing col_index
+            // can't collapse columns onto cachedFilterValues[undefined].
+            return createFilterUI(absColIndex(i), col);
          }
          return null;
       },
