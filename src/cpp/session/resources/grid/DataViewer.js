@@ -83,7 +83,7 @@ var TIMING = {
    infoBarDebounce: 150,        // "Showing X to Y" text update during scroll
    resizeDebounce: 75,          // window resize -> relayout
    sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
-   columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
+   columnFlash: 1000,           // duration of the column highlight-flash on a go-to-column jump
    scrollbarHide: 1200          // delay before custom scrollbars fade out
 };
 
@@ -1849,6 +1849,20 @@ var rebuildHeaderWindow = function() {
    }
 };
 
+// Recompute the rendered column window from the current scroll position; if it
+// changed, rebuild the windowed header and re-apply pinned styling. Returns
+// whether the window changed, so callers can decide how to re-render rows (a
+// changed window forces a full row rebuild -- existing rows carry the old
+// window's cells). Shared by the scroll handlers, the keyboard / go-to scroll-
+// into-view paths, and the column-window slide.
+var syncColumnWindow = function() {
+   if (!computeColumnWindow())
+      return false;
+   rebuildHeaderWindow();
+   applyPinnedColumns();
+   return true;
+};
+
 // absIdx is the absolute (1-based) column index; pinnedColumns tracks absolute
 // identities, so this works for any column, including one not in the fetched
 // window (e.g. pinned from its sidebar entry). Callers holding a window
@@ -2553,17 +2567,28 @@ var appendPopupActions = function(popup, onApply, onClear) {
    addButton("filterPopupClear", "Clear filter", onClear);
 };
 
-var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
+// Shared brushable range-filter widget for numeric and date/datetime columns.
+// Both render a histogram (hist.js) with a draggable brush plus a text box, and
+// share all the popup wiring -- debounced apply, Enter/Escape commit/cancel, the
+// change-replay suppression, and the apply/clear buttons. The `spec` supplies
+// the type-specific pieces:
+//   initialRange()        -> { lo, hi } seed values for the box and brush
+//   filterFromRange(s, e) -> the box's display string for a [s, e] selection
+//   textFromBrush(s, e)   -> the box value for a brush move (raw break values)
+//   binsFor(lo, hi)       -> { start, end } brushed histogram bins
+//   applyFilter(boxValue) -> parse the box, store the search, applyFilters()
+// The header label rendering ("[lo, hi]" / "[v]" / "[...]") is identical for
+// both types, so it lives here.
+var createRangeFilterUI = function(idx, col, onDismiss, anchor, spec) {
    var ele = document.createElement("div");
 
    // Set by buildPopup each time the popup opens; lets the dismiss wrapper
    // below commit a brush/typed value still inside the debounce window.
    var flushPendingApply = null;
 
-   // Render the active numeric filter into the header label: "[15, 30]"
-   // for a range, "[15]" for a single value, "[...]" while the popup is
-   // open with no value yet. Keeps the user oriented on what's filtered
-   // without having to reopen the popup.
+   // Render the active filter into the header label: "[15, 30]" for a range,
+   // "[15]" for a single value, "[...]" while the popup is open with no value
+   // yet. Keeps the user oriented on what's filtered without reopening it.
    var renderActiveFilter = function() {
       var raw = parseSearchString(getColumnSearch(idx));
       if (raw.length === 0) {
@@ -2581,58 +2606,24 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
 
    ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       popup.classList.add("numericFilterPopup");
-      var min = col.col_breaks[0].toString();
-      var max = col.col_breaks[col.col_breaks.length - 1].toString();
-      var val = parseSearchString(getColumnSearch(idx));
-      if (val.indexOf("_") > 0) {
-         var range = val.split("_");
-         min = range[0]; max = range[1];
-      } else if (!isNaN(parseFloat(val)) && val.length > 0) {
-         min = parseFloat(val); max = parseFloat(val);
-      }
 
-      var filterFromRange = function(s, e) {
-         if (Math.abs(s - e) === 0) return "" + s;
-         return s + " - " + e;
-      };
+      var init = spec.initialRange();
 
-      var numVal = document.createElement("input");
-      numVal.type = "text";
-      numVal.className = "numValueBox";
-      numVal.style.textAlign = "center";
-      numVal.value = filterFromRange(min, max);
+      var valBox = document.createElement("input");
+      valBox.type = "text";
+      valBox.className = "numValueBox";
+      valBox.style.textAlign = "center";
+      valBox.value = spec.filterFromRange(init.lo, init.hi);
 
-      // Numeric tokens accept optional scientific-notation suffix (1e10,
-      // 2.5e-5). The range separator is `-` surrounded by required
-      // whitespace, which disambiguates from a leading negative sign.
-      var NUM = "-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?";
-      var SINGLE_RE = new RegExp("^\\s*" + NUM + "\\s*$");
-      var RANGE_RE = new RegExp(
-         "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
-
-      var applyNumericFilter = function(v) {
-         var searchText = "";
-         v = v.replace(/[^-+0-9 .eE]/g, "");
-         var digit = v.match(SINGLE_RE);
-         if (digit !== null) {
-            searchText = digit[0].trim();
-         } else {
-            var matches = v.match(RANGE_RE);
-            if (matches !== null && matches.length > 2) {
-               if (Math.abs(parseFloat(matches[1]) - col.col_breaks[0]) !== 0 ||
-                   Math.abs(parseFloat(matches[2]) - col.col_breaks[col.col_breaks.length - 1]) !== 0) {
-                  searchText = matches[1] + "_" + matches[2];
-               }
-            }
-         }
-         if (searchText.length > 0) searchText = "numeric|" + searchText;
-         setColumnSearch(idx, searchText);
-         applyFilters();
+      // Commit the current box value: spec.applyFilter parses it and stores the
+      // search (or clears it for a full-range selection), then refresh the label.
+      var applyValue = function() {
+         spec.applyFilter(valBox.value);
          renderActiveFilter();
       };
 
       var updateView = debounce(
-         TIMING.filterDebounce, watchColumnSearch(idx), applyNumericFilter);
+         TIMING.filterDebounce, watchColumnSearch(idx), applyValue);
       flushPendingApply = function() { updateView.flush(); };
 
       // Dismissing the popup removes a focused, dirty input from the DOM,
@@ -2641,12 +2632,12 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
       // otherwise that replay would schedule one more apply that lands after
       // the popup is gone.
       var suppressChange = false;
-      numVal.addEventListener("change", function() {
+      valBox.addEventListener("change", function() {
          if (suppressChange) return;
-         updateView(numVal.value);
+         updateView();
       });
-      numVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
-      numVal.addEventListener("keydown", function(evt) {
+      valBox.addEventListener("click", function(evt) { evt.stopPropagation(); });
+      valBox.addEventListener("keydown", function(evt) {
          if (!dismissActivePopup) return;
          if (evt.keyCode === 27) {
             // Escape cancels: drop any pending debounced apply rather than
@@ -2664,15 +2655,10 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
             // the column would wrongly revert to the unfiltered display.
             suppressChange = true;
             updateView.cancel();
-            applyNumericFilter(numVal.value);
+            applyValue();
             dismissActivePopup(true);
          }
       });
-
-      var updateText = function(start, end) {
-         numVal.value = filterFromRange(start, end);
-         updateView(numVal.value);
-      };
 
       var histBrush = document.createElement("div");
       histBrush.className = "numHist";
@@ -2681,29 +2667,25 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
       // (the value box already stops its own clicks for the same reason).
       histBrush.addEventListener("click", function(evt) { evt.stopPropagation(); });
 
-      var binStart = 0;
-      var binEnd = col.col_breaks.length - 2;
+      var bins = spec.binsFor(init.lo, init.hi);
 
-      for (var i = 0; i < col.col_breaks.length; i++) {
-         if (Math.abs(col.col_breaks[i] - min) < Math.abs(col.col_breaks[binStart] - min))
-            binStart = i;
-         if (i === 0) continue;
-         if (Math.abs(col.col_breaks[i] - max) < Math.abs(col.col_breaks[binEnd] - max))
-            binEnd = i - 1;
-      }
-      if (binEnd < binStart) binStart = binEnd;
+      // Use the existing hist.js for interactive histogram. A brush move sets
+      // the box value from the (raw) break values and schedules an apply.
+      hist(histBrush, col.col_breaks, col.col_counts, bins.start, bins.end,
+         function(start, end) {
+            valBox.value = spec.textFromBrush(start, end);
+            updateView();
+         });
 
-      // Use the existing hist.js for interactive histogram
-      hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
-      popup.appendChild(numVal);
+      popup.appendChild(valBox);
       appendPopupActions(popup, function() {
          // Apply: commit the current box value (no-op filter if it's the full
          // range). suppressChange stops the input's removal-triggered change
          // from scheduling a second, late apply.
          suppressChange = true;
          updateView.cancel();
-         applyNumericFilter(numVal.value);
+         applyValue();
       }, function() {
          suppressChange = true;
          updateView.cancel();
@@ -2724,6 +2706,73 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
    return ele;
 };
 
+var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
+   var fullMin = col.col_breaks[0];
+   var fullMax = col.col_breaks[col.col_breaks.length - 1];
+
+   var filterFromRange = function(s, e) {
+      if (Math.abs(s - e) === 0) return "" + s;
+      return s + " - " + e;
+   };
+
+   // Numeric tokens accept optional scientific-notation suffix (1e10,
+   // 2.5e-5). The range separator is `-` surrounded by required
+   // whitespace, which disambiguates from a leading negative sign.
+   var NUM = "-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?";
+   var SINGLE_RE = new RegExp("^\\s*" + NUM + "\\s*$");
+   var RANGE_RE = new RegExp(
+      "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
+
+   return createRangeFilterUI(idx, col, onDismiss, anchor, {
+      initialRange: function() {
+         var val = parseSearchString(getColumnSearch(idx));
+         if (val.indexOf("_") > 0) {
+            var range = val.split("_");
+            return { lo: range[0], hi: range[1] };
+         }
+         if (!isNaN(parseFloat(val)) && val.length > 0) {
+            var n = parseFloat(val);
+            return { lo: n, hi: n };
+         }
+         return { lo: fullMin.toString(), hi: fullMax.toString() };
+      },
+      filterFromRange: filterFromRange,
+      textFromBrush: filterFromRange,
+      binsFor: function(lo, hi) {
+         var binStart = 0;
+         var binEnd = col.col_breaks.length - 2;
+         for (var i = 0; i < col.col_breaks.length; i++) {
+            if (Math.abs(col.col_breaks[i] - lo) < Math.abs(col.col_breaks[binStart] - lo))
+               binStart = i;
+            if (i === 0) continue;
+            if (Math.abs(col.col_breaks[i] - hi) < Math.abs(col.col_breaks[binEnd] - hi))
+               binEnd = i - 1;
+         }
+         if (binEnd < binStart) binStart = binEnd;
+         return { start: binStart, end: binEnd };
+      },
+      applyFilter: function(v) {
+         var searchText = "";
+         v = v.replace(/[^-+0-9 .eE]/g, "");
+         var digit = v.match(SINGLE_RE);
+         if (digit !== null) {
+            searchText = digit[0].trim();
+         } else {
+            var matches = v.match(RANGE_RE);
+            if (matches !== null && matches.length > 2) {
+               if (Math.abs(parseFloat(matches[1]) - col.col_breaks[0]) !== 0 ||
+                   Math.abs(parseFloat(matches[2]) - col.col_breaks[col.col_breaks.length - 1]) !== 0) {
+                  searchText = matches[1] + "_" + matches[2];
+               }
+            }
+         }
+         if (searchText.length > 0) searchText = "numeric|" + searchText;
+         setColumnSearch(idx, searchText);
+         applyFilters();
+      }
+   });
+};
+
 // Date / datetime range filter. Reuses the numeric filter's brushable
 // histogram (and its CSS), but the histogram breaks are epoch values paired
 // with formatted col_break_labels, so the brush and the text box operate in
@@ -2732,12 +2781,6 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
 // produces a range; a single typed value is accepted as a one-instant range
 // (lo === hi), which for a Date is that whole day.
 var createDateFilterUI = function(idx, col, onDismiss, anchor) {
-   var ele = document.createElement("div");
-
-   // Set by buildPopup each time the popup opens; lets the dismiss wrapper
-   // commit a brush/typed value still inside the debounce window.
-   var flushPendingApply = null;
-
    var labels = col.col_break_labels || [];
    var fullMin = labels.length > 0 ? labels[0] : "";
    var fullMax = labels.length > 0 ? labels[labels.length - 1] : "";
@@ -2753,45 +2796,36 @@ var createDateFilterUI = function(idx, col, onDismiss, anchor) {
       return labels[best] !== undefined ? labels[best] : String(v);
    };
 
-   // Render the active filter into the header label: "[lo, hi]", or "[...]"
-   // while the popup is open with nothing applied yet.
-   var renderActiveFilter = function() {
-      var raw = parseSearchString(getColumnSearch(idx));
-      if (raw.length === 0) {
-         ele.textContent = "[...]";
-         return;
-      }
-      var sep = raw.indexOf("_");
-      if (sep > 0) {
-         ele.textContent = "[" + raw.substring(0, sep) +
-                           ", " + raw.substring(sep + 1) + "]";
-      } else {
-         ele.textContent = "[" + raw + "]";
-      }
+   var filterFromRange = function(s, e) {
+      if (s === e) return "" + s;
+      return s + " - " + e;
    };
 
-   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
-      popup.classList.add("numericFilterPopup");
-
-      var lo = fullMin, hi = fullMax;
-      var val = parseSearchString(getColumnSearch(idx));
-      if (val.indexOf("_") > 0) {
-         var range = val.split("_");
-         lo = range[0]; hi = range[1];
-      }
-
-      var filterFromRange = function(s, e) {
-         if (s === e) return "" + s;
-         return s + " - " + e;
-      };
-
-      var dateVal = document.createElement("input");
-      dateVal.type = "text";
-      dateVal.className = "numValueBox";
-      dateVal.style.textAlign = "center";
-      dateVal.value = filterFromRange(lo, hi);
-
-      var applyDateFilter = function(v) {
+   return createRangeFilterUI(idx, col, onDismiss, anchor, {
+      initialRange: function() {
+         var val = parseSearchString(getColumnSearch(idx));
+         if (val.indexOf("_") > 0) {
+            var range = val.split("_");
+            return { lo: range[0], hi: range[1] };
+         }
+         return { lo: fullMin, hi: fullMax };
+      },
+      filterFromRange: filterFromRange,
+      textFromBrush: function(start, end) {
+         return filterFromRange(labelForBreak(start), labelForBreak(end));
+      },
+      binsFor: function(lo, hi) {
+         // Seed the brushed bins from the active filter's labels (if any).
+         var binStart = 0;
+         var binEnd = col.col_breaks.length - 2;
+         var loIdx = labels.indexOf(lo);
+         var hiIdx = labels.indexOf(hi);
+         if (loIdx >= 0) binStart = loIdx;
+         if (hiIdx >= 1) binEnd = hiIdx - 1;
+         if (binEnd < binStart) binStart = binEnd;
+         return { start: binStart, end: binEnd };
+      },
+      applyFilter: function(v) {
          var searchText = "";
          var parts = v.split(" - ");
          var a = parts[0] ? parts[0].trim() : "";
@@ -2802,81 +2836,8 @@ var createDateFilterUI = function(idx, col, onDismiss, anchor) {
             searchText = "date|" + a + "_" + b;
          setColumnSearch(idx, searchText);
          applyFilters();
-         renderActiveFilter();
-      };
-
-      var updateView = debounce(
-         TIMING.filterDebounce, watchColumnSearch(idx), applyDateFilter);
-      flushPendingApply = function() { updateView.flush(); };
-
-      // Dismissing a focused, dirty input replays a native "change"; suppress
-      // it once the keydown handler has committed (Enter) or cancelled (Escape).
-      var suppressChange = false;
-      dateVal.addEventListener("change", function() {
-         if (suppressChange) return;
-         updateView(dateVal.value);
-      });
-      dateVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
-      dateVal.addEventListener("keydown", function(evt) {
-         if (!dismissActivePopup) return;
-         if (evt.keyCode === 27) {
-            suppressChange = true;
-            updateView.cancel();
-            dismissActivePopup(false);
-            onDismiss();
-         } else if (evt.keyCode === 13) {
-            suppressChange = true;
-            updateView.cancel();
-            applyDateFilter(dateVal.value);
-            dismissActivePopup(true);
-         }
-      });
-
-      var updateText = function(start, end) {
-         dateVal.value = filterFromRange(labelForBreak(start), labelForBreak(end));
-         updateView(dateVal.value);
-      };
-
-      var histBrush = document.createElement("div");
-      histBrush.className = "numHist";
-      // A click inside the histogram adjusts the brush; stop it from bubbling
-      // to the body-level light-dismiss handler, which would close the popup
-      // (the value box already stops its own clicks for the same reason).
-      histBrush.addEventListener("click", function(evt) { evt.stopPropagation(); });
-
-      // Seed the brushed bins from the active filter's labels (if any).
-      var binStart = 0;
-      var binEnd = col.col_breaks.length - 2;
-      var loIdx = labels.indexOf(lo);
-      var hiIdx = labels.indexOf(hi);
-      if (loIdx >= 0) binStart = loIdx;
-      if (hiIdx >= 1) binEnd = hiIdx - 1;
-      if (binEnd < binStart) binStart = binEnd;
-
-      hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
-      popup.appendChild(histBrush);
-      popup.appendChild(dateVal);
-      appendPopupActions(popup, function() {
-         // Apply: commit the current box value (no-op filter if it's the full
-         // range). suppressChange stops the input's removal-triggered change
-         // from scheduling a second, late apply.
-         suppressChange = true;
-         updateView.cancel();
-         applyDateFilter(dateVal.value);
-      }, function() {
-         suppressChange = true;
-         updateView.cancel();
-         setColumnSearch(idx, "");
-         applyFilters();
-         renderActiveFilter();
-      });
-   }, function() {
-      if (flushPendingApply) flushPendingApply();
-      onDismiss();
+      }
    });
-
-   renderActiveFilter();
-   return ele;
 };
 
 var createTextFilterBox = function(ele, idx, col, onDismiss) {
@@ -3157,6 +3118,25 @@ var scrollToTop = function() {
    if (viewport) viewport.scrollTop = 0;
 };
 
+// Single funnel for programmatic horizontal scroll changes (reveals, anchor /
+// saved-state restores, column-window slides). Sets viewport.scrollLeft and
+// keeps lastScrollLeft -- the module's mirror of the live scroll position, read
+// by saveState / onActivate / the info bar's column range -- in sync
+// synchronously, rather than relying on the async scroll event to heal it.
+// Clamps negatives, and records the browser's (possibly clamped) resulting
+// scrollLeft so the mirror reflects reality even when the request overshoots.
+// Returns true when the request differed from the current position. Live-gesture
+// scrolling (native wheel, custom scrollbar drag) is mirrored by onScroll
+// instead; those are not routed through here.
+var setViewportScrollLeft = function(viewport, left) {
+   left = Math.max(0, left);
+   if (viewport.scrollLeft === left)
+      return false;
+   viewport.scrollLeft = left;
+   lastScrollLeft = viewport.scrollLeft;
+   return true;
+};
+
 // Snapshot the live scroll position (and the current unfiltered row count) so a
 // refresh triggered by an in-place data change can restore the user's position
 // after the grid is torn down and rebuilt. Must run before bootstrap() (whose
@@ -3210,9 +3190,8 @@ var restoreScrollAfterRefresh = function() {
       if (!viewport)
          return;
       viewport.scrollTop = restore.top;
-      viewport.scrollLeft = restore.left;
+      setViewportScrollLeft(viewport, restore.left);
       lastScrollTop = viewport.scrollTop;
-      lastScrollLeft = viewport.scrollLeft;
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
@@ -3602,11 +3581,7 @@ var onScroll = function() {
       // the header for the new window and force a full row rebuild (existing
       // rows carry the old window's cells). Vertical-only scroll keeps the
       // cheap incremental row path.
-      var colsChanged = computeColumnWindow();
-      if (colsChanged) {
-         rebuildHeaderWindow();
-         applyPinnedColumns();
-      }
+      var colsChanged = syncColumnWindow();
       renderVisibleRows(colsChanged);
       debouncedInfoBar();
 
@@ -3642,11 +3617,7 @@ var onScrollEnd = function() {
    if (!viewport) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
-   var colsChanged = computeColumnWindow();
-   if (colsChanged) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-   }
+   var colsChanged = syncColumnWindow();
    renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
@@ -5011,41 +4982,44 @@ var toggleSidebar = function() {
    if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
 };
 
-var scrollToColumn = function(colIdx) {
+// Scroll the viewport so the column at columnOrder position `pos` is visible.
+// Geometry is derived from measuredWidths (not a rendered <th>), so this works
+// for columns outside the current render window; unpinned columns sit to the
+// right of the left unfetched span. With `center`, the column is scrolled to
+// the middle of the unpinned viewport region (go-to-column jumps want context
+// on both sides); otherwise it's the minimal scroll that brings an off-edge
+// column flush with the nearest edge, accounting for the sticky pinned columns
+// occluding the left. Returns true (and updates lastScrollLeft) when it
+// actually scrolls; a no-op when the column is already where it needs to be.
+var scrollColumnPosIntoView = function(pos, center) {
    var viewport = document.getElementById("gridViewport");
-   var thead = document.getElementById("data_cols");
-   if (!viewport || !thead) return;
+   if (!viewport || pos < 0 || pos >= columnOrder.length) return false;
 
-   // The target header may be outside the current column window (so not in the
-   // DOM); derive its geometry from measuredWidths instead of a rendered <th>.
-   // Unpinned columns sit to the right of the left unfetched span.
-   var pos = columnOrder.indexOf(colIdx);
-   if (pos < 0) return;
    var offs = columnOffsets();
    var colLeft = offs[pos] + (pos >= firstUnpinnedPos() ? leftSpanWidth() : 0);
    var colWidth = measuredWidths[pos] || 0;
+   var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
 
-   // Account for the sticky pinned columns occluding the left edge.
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
+   var newLeft = viewLeft;
+   if (center) {
+      var fullyVisible = colLeft >= viewLeft + pinnedWidth &&
+                         colLeft + colWidth <= viewLeft + viewWidth;
+      if (!fullyVisible) {
+         var region = Math.max(0, viewWidth - pinnedWidth);
+         newLeft = Math.max(0,
+            colLeft - pinnedWidth - Math.max(0, (region - colWidth) / 2));
+      }
+   } else if (colLeft < viewLeft + pinnedWidth) {
+      newLeft = Math.max(0, colLeft - pinnedWidth);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
+      newLeft = colLeft + colWidth - viewWidth;
    }
 
-   // Bring the new window into the DOM synchronously so the header exists to
-   // flash (the scroll event's re-window is async via requestAnimationFrame).
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
-
-   // Briefly highlight the column header (if it's now rendered).
-   flashColumnHeader(colIdx);
+   if (newLeft === viewLeft) return false;
+   setViewportScrollLeft(viewport, newLeft);
+   return true;
 };
 
 // Briefly highlight a column's header so the user can spot where a jump
@@ -5189,30 +5163,14 @@ var ensureActiveCellVisible = function() {
       viewport.scrollTop = rowBottom - bodyHeight;
    }
 
-   // Horizontal: the active column may be outside the rendered column window,
-   // so derive its geometry from measuredWidths rather than a rendered <th>.
-   // Unpinned columns sit to the right of the left unfetched span.
+   // Horizontal: scroll the active column flush with the nearest edge if it's
+   // off-screen (no-op when already visible).
    if (activeCol < 0 || activeCol >= columnOrder.length) return;
-   var offs = columnOffsets();
-   var colLeft = offs[activeCol] +
-      (activeCol >= firstUnpinnedPos() ? leftSpanWidth() : 0);
-   var colWidth = measuredWidths[activeCol] || 0;
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-   var viewLeft = viewport.scrollLeft;
-   var viewWidth = viewport.clientWidth;
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
-   } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
-   }
+   scrollColumnPosIntoView(activeCol, false);
 
    // Bring the (possibly new) column window into the DOM synchronously so the
    // active cell is rendered for the caller to mark and for screen readers.
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
+   if (syncColumnWindow()) renderVisibleRows(true);
 };
 
 var setActiveCell = function(row, col) {
@@ -5273,27 +5231,11 @@ var ensureActiveHeaderVisible = function() {
    if (!viewport) return;
    if (activeHeaderCol < 0 || activeHeaderCol >= columnOrder.length) return;
 
-   // The active header may be outside the rendered window; derive geometry
-   // from measuredWidths rather than a rendered <th>. Unpinned columns sit
-   // to the right of the left unfetched span.
-   var offs = columnOffsets();
-   var colLeft = offs[activeHeaderCol] +
-      (activeHeaderCol >= firstUnpinnedPos() ? leftSpanWidth() : 0);
-   var colWidth = measuredWidths[activeHeaderCol] || 0;
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-   var viewLeft = viewport.scrollLeft;
-   var viewWidth = viewport.clientWidth;
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
-   } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
-   }
+   // Scroll the active header flush with the nearest edge if it's off-screen
+   // (no-op when already visible).
+   scrollColumnPosIntoView(activeHeaderCol, false);
 
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
+   if (syncColumnWindow()) renderVisibleRows(true);
 };
 
 var setActiveHeader = function(col) {
@@ -6603,8 +6545,7 @@ var captureScrollAnchor = function() {
 var restoreScrollAnchor = function(anchor) {
    var viewport = document.getElementById("gridViewport");
    if (!viewport || !anchor) return;
-   viewport.scrollLeft = Math.max(0, layoutXOfAbs(anchor.abs) - anchor.offsetPx);
-   lastScrollLeft = viewport.scrollLeft;
+   setViewportScrollLeft(viewport, layoutXOfAbs(anchor.abs) - anchor.offsetPx);
 };
 
 // Swap the grid over to a freshly fetched column window without tearing the
@@ -6723,18 +6664,14 @@ var applyColumnWindowUpdate = function(resCols, options) {
          ? (measuredWidths[tOrderPos] || DEFAULT_COL_WIDTH)
          : DEFAULT_COL_WIDTH;
       var region = Math.max(0, viewport.clientWidth - pinnedW);
-      viewport.scrollLeft = Math.max(0,
+      setViewportScrollLeft(viewport,
          layoutXOfAbs(targetAbs) - pinnedW - Math.max(0, (region - tWidth) / 2));
-      lastScrollLeft = viewport.scrollLeft;
    } else if (!anyScrollbarDragging()) {
       // Don't fight an in-progress scrollbar drag for the scroll position;
       // the drag is the user's statement of where they want to be.
       restoreScrollAnchor(anchor);
    }
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-   }
+   syncColumnWindow();
 
    // Sync the viewport's aria-activedescendant with the remapped active
    // cell/header (cleared when neither survived the slide).
@@ -6893,30 +6830,13 @@ var goToColumn = function(column) {
 // of the unpinned viewport region (a jump wants context on both sides --
 // the same convention as go-to-line in editors).
 var revealColumnCentered = function(colIdx) {
-   var viewport = document.getElementById("gridViewport");
    var pos = columnOrder.indexOf(colIdx);
-   if (!viewport || pos < 0) return;
+   if (pos < 0) return;
 
-   var offs = columnOffsets();
-   var shift = pos >= firstUnpinnedPos() ? leftSpanWidth() : 0;
-   var colLeft = offs[pos] + shift;
-   var colWidth = measuredWidths[pos] || 0;
-   var pinnedW = getPinnedOffsets().totalWidth;
-   var viewLeft = viewport.scrollLeft;
-   var viewWidth = viewport.clientWidth;
-
-   var fullyVisible = colLeft >= viewLeft + pinnedW &&
-                      colLeft + colWidth <= viewLeft + viewWidth;
-   if (!fullyVisible) {
-      var region = Math.max(0, viewWidth - pinnedW);
-      viewport.scrollLeft = Math.max(0,
-         colLeft - pinnedW - Math.max(0, (region - colWidth) / 2));
-      lastScrollLeft = viewport.scrollLeft;
-      if (computeColumnWindow()) {
-         rebuildHeaderWindow();
-         applyPinnedColumns();
-         renderVisibleRows(true);
-      }
+   // Center the column in the unpinned viewport region (no-op when it's
+   // already fully visible); bring the new window into the DOM when it scrolls.
+   if (scrollColumnPosIntoView(pos, true)) {
+      if (syncColumnWindow()) renderVisibleRows(true);
    }
    flashColumnHeader(colIdx);
    flashSidebarColumn(colIdx);
@@ -7115,7 +7035,7 @@ window.onActivate = function() {
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
       viewport.scrollTop = lastScrollTop;
-      viewport.scrollLeft = lastScrollLeft;
+      setViewportScrollLeft(viewport, lastScrollLeft);
    }
 
    // Re-run auto-sizing if the initial sizing happened while the tab
