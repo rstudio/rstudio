@@ -166,14 +166,20 @@ var pendingScrollRestore = null;
 var activeScrollRestore = null;
 
 // Row data cache. Each entry is an array aligned 1:1 with the current `cols`
-// (rowname at position 0, then the fetched columns in fetch order). The cache
-// is cleared whenever the fetched column window changes (see
-// applyColumnWindowUpdate), so every cached row is always aligned to the
-// current `cols`; a block is therefore complete iff its first row is present.
+// (rowname at position 0, then the fetched columns in fetch order).
 var rowCache = new Map();
 var totalRows = 0;
 var filteredRows = 0;
 var drawCounter = 0;
+
+// Column signature of the current `cols` (comma-joined absolute indices) and,
+// per FETCH_SIZE-aligned block, the signature its cached rows were fetched
+// with. A block whose stored signature differs from colsSig is "incomplete":
+// its rows were remapped from a previous column window (see remapRowCache)
+// and may carry undefined cells, so it is refetched when it next becomes
+// visible. Cleared with rowCache in invalidateCache.
+var colsSig = "";
+var blockColsSig = new Map();
 
 // In-flight fetch requests
 var pendingFetches = new Map(); // key: "start-length" -> AbortController
@@ -833,6 +839,10 @@ var fetchRows = function(start, length, callback) {
          for (var i = 0; i < result.data.length; i++) {
             rowCache.set(start + i, result.data[i]);
          }
+         // Record the column signature these rows carry. `start` is always
+         // FETCH_SIZE-aligned (every caller fetches whole blocks), so this
+         // marks exactly the block the rows landed in.
+         blockColsSig.set(start, requestSig);
          trimRowCache();
          if (callback) callback();
          renderVisibleRows(true);
@@ -852,6 +862,7 @@ var fetchRows = function(start, length, callback) {
 
 var invalidateCache = function() {
    rowCache.clear();
+   blockColsSig.clear();
    // Abort all pending fetches
    pendingFetches.forEach(function(controller) { controller.abort(); });
    pendingFetches.clear();
@@ -860,6 +871,14 @@ var invalidateCache = function() {
    // Bump the staleness token so any in-flight responses that slip past
    // AbortController are discarded by fetchRows' response handler.
    drawCounter++;
+};
+
+// Whether a block's cached rows are present AND complete for the current
+// column set. A block remapped from a previous column window keeps its old
+// signature (its rows have undefined cells for newly entered columns), so it
+// reads as needing a refetch while still rendering its overlap data.
+var blockIsCurrent = function(blockStart) {
+   return rowCache.has(blockStart) && blockColsSig.get(blockStart) === colsSig;
 };
 
 // Cap rowCache size so a long scroll through a multi-million-row dataset
@@ -906,8 +925,41 @@ var trimRowCache = function() {
          for (var j = 0; j < rows.length; j++) {
             rowCache.delete(rows[j]);
          }
+         blockColsSig.delete(blockStarts[i]);
       }
    }
+};
+
+// Remap every cached row from the old `cols` alignment to the new one,
+// keyed by absolute column identity (col_index). Cells for columns present
+// in both windows (rownames, pinned columns, any overlap) carry over; cells
+// for newly entered columns become undefined and render blank until the
+// block's refetch lands (blocks keep their old signature, so blockIsCurrent
+// reports them as needing that refetch). This is what lets a column-window
+// slide show row skeletons immediately instead of a blank grid.
+var remapRowCache = function(oldCols, newCols) {
+   if (rowCache.size === 0 || !oldCols)
+      return;
+
+   var oldPosByAbs = {};
+   for (var i = 0; i < oldCols.length; i++) {
+      oldPosByAbs[oldCols[i].col_index] = i;
+   }
+
+   var srcFor = new Array(newCols.length);
+   for (var j = 0; j < newCols.length; j++) {
+      var src = oldPosByAbs[newCols[j].col_index];
+      srcFor[j] = (typeof src === "number") ? src : -1;
+   }
+
+   rowCache.forEach(function(row, key) {
+      var newRow = new Array(newCols.length);
+      for (var k = 0; k < newCols.length; k++) {
+         if (srcFor[k] >= 0)
+            newRow[k] = row[srcFor[k]];
+      }
+      rowCache.set(key, newRow);
+   });
 };
 
 // ==========================================================================
@@ -3401,19 +3453,19 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Check if we need to fetch more data. A block is fetched when its first
-   // row is absent from the cache (the cache is cleared on every column-window
-   // change, so a present block is always aligned to the current `cols`).
+   // Check if we need to fetch more data. A block is fetched when absent
+   // from the cache OR present but incomplete for the current column set
+   // (remapped across a column-window slide; see blockIsCurrent).
    var firstBlock = Math.floor(newStart / FETCH_SIZE) * FETCH_SIZE;
    for (var blockStart = firstBlock; blockStart <= newEnd; blockStart += FETCH_SIZE) {
-      if (!rowCache.has(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
+      if (!blockIsCurrent(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
          fetchRows(blockStart, FETCH_SIZE);
       }
    }
 
    // Prefetch ahead
    var aheadStart = Math.floor(newEnd / FETCH_SIZE) * FETCH_SIZE + FETCH_SIZE;
-   if (aheadStart < activeRows && !rowCache.has(aheadStart)) {
+   if (aheadStart < activeRows && !blockIsCurrent(aheadStart)) {
       fetchRows(aheadStart, FETCH_SIZE);
    }
 
@@ -5802,6 +5854,7 @@ var installColumnResponse = function(resCols) {
    prepareColumnResponse(resCols);
 
    cols = resCols;
+   colsSig = colsRequestList().join(",");
 
    var resTotalCols = cols[0].total_cols;
    totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
@@ -5990,6 +6043,12 @@ var initWithData = function(data) {
       rowCache.set(r, row);
    }
 
+   // Preview mode never fetches; mark every block complete for the current
+   // column set so blockIsCurrent doesn't report them as needing one.
+   for (var b = 0; b < numRows; b += FETCH_SIZE) {
+      blockColsSig.set(b, colsSig);
+   }
+
    renderVisibleRows();
    updateInfoBar();
 };
@@ -6007,6 +6066,7 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   colsSig = "";
    // Invalidate the cached column count. buildRequestedColumns clamps the
    // requested window to totalCols, so a stale value left over from the
    // previous frame would cap the fetch at the old column count and drop any
@@ -6550,17 +6610,26 @@ var applyColumnWindowUpdate = function(resCols, options) {
    var activeHeaderAbs = (activeHeaderCol >= 0)
       ? absColIndex(columnOrder[activeHeaderCol]) : -1;
 
+   var oldCols = cols;
    installColumnResponse(resCols);
 
-   // Every cached row was aligned to the old column window, so drop the cache
-   // and refetch against the new one: the visible block is refetched below and
-   // renderVisibleRows issues fetches for any other visible blocks. (Carrying
-   // overlap cells over to skeleton the slide was tried and removed -- the
-   // per-block column-signature bookkeeping it required was a recurring source
-   // of blank-band bugs and the slide trigger is strict enough that slides are
-   // infrequent.) Then retire the old window's in-flight fetches, whose rows
-   // would land misaligned.
-   rowCache.clear();
+   // Carry cached rows over to the new column alignment, then retire the
+   // old window's in-flight fetches: their rows would land misaligned.
+   remapRowCache(oldCols, cols);
+
+   // Drop every block signature that doesn't match the new window. remapRowCache
+   // wipes a remapped block's non-overlap cells but leaves its stored signature
+   // alone; without this purge a jump-away-and-back gesture (window A -> B -> A)
+   // restores the original colsSig, so a block wiped during the round trip would
+   // read as current (blockColsSig === colsSig) while holding undefined cells --
+   // rendering a permanently blank band until an unrelated invalidateCache.
+   // Removing the non-matching entry forces such blocks to refetch when scrolled
+   // back into view (the remapped rows stay in rowCache for skeleton rendering).
+   blockColsSig.forEach(function(sig, blockStart) {
+      if (sig !== colsSig)
+         blockColsSig.delete(blockStart);
+   });
+
    pendingFetches.forEach(function(controller) { controller.abort(); });
    pendingFetches.clear();
    drawCounter++;
