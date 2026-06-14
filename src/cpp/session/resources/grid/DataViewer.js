@@ -3115,7 +3115,7 @@ var createColumnTypesUI = function(th, idx, col) {
 
 var scrollToTop = function() {
    var viewport = document.getElementById("gridViewport");
-   if (viewport) viewport.scrollTop = 0;
+   if (viewport) setViewportScrollTop(viewport, 0);
 };
 
 // Single funnel for programmatic horizontal scroll changes (reveals, anchor /
@@ -3134,6 +3134,21 @@ var setViewportScrollLeft = function(viewport, left) {
       return false;
    viewport.scrollLeft = left;
    lastScrollLeft = viewport.scrollLeft;
+   return true;
+};
+
+// Vertical counterpart to setViewportScrollLeft: applies a programmatic
+// scrollTop and keeps lastScrollTop -- the mirror read by saveState / onActivate
+// / the info bar's "Showing X to Y" range -- in sync synchronously. The scroll
+// math that decides the target row lives in the callers (e.g.
+// ensureActiveCellVisible); this only applies it and records the (possibly
+// clamped) result. Live-gesture scrolling is mirrored by onScroll instead.
+var setViewportScrollTop = function(viewport, top) {
+   top = Math.max(0, top);
+   if (viewport.scrollTop === top)
+      return false;
+   viewport.scrollTop = top;
+   lastScrollTop = viewport.scrollTop;
    return true;
 };
 
@@ -3189,9 +3204,8 @@ var restoreScrollAfterRefresh = function() {
       var viewport = document.getElementById("gridViewport");
       if (!viewport)
          return;
-      viewport.scrollTop = restore.top;
+      setViewportScrollTop(viewport, restore.top);
       setViewportScrollLeft(viewport, restore.left);
-      lastScrollTop = viewport.scrollTop;
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
@@ -5158,9 +5172,9 @@ var ensureActiveCellVisible = function() {
    var viewTop = viewport.scrollTop;
    var bodyHeight = visibleBodyHeight(viewport);
    if (rowTop < viewTop) {
-      viewport.scrollTop = rowTop;
+      setViewportScrollTop(viewport, rowTop);
    } else if (rowBottom > viewTop + bodyHeight) {
-      viewport.scrollTop = rowBottom - bodyHeight;
+      setViewportScrollTop(viewport, rowBottom - bodyHeight);
    }
 
    // Horizontal: scroll the active column flush with the nearest edge if it's
@@ -7034,7 +7048,7 @@ window.onActivate = function() {
    // Restore scroll position and re-render
    var viewport = document.getElementById("gridViewport");
    if (viewport) {
-      viewport.scrollTop = lastScrollTop;
+      setViewportScrollTop(viewport, lastScrollTop);
       setViewportScrollLeft(viewport, lastScrollLeft);
    }
 
