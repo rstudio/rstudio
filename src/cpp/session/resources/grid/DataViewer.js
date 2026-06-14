@@ -2198,45 +2198,43 @@ var autoSizeColumns = function() {
          ? TD_DATA_EXTRA : TD_EXTRA;
       cellExtra += rowNamesPad;
 
-      // Fixed-glyph fast paths. Columns that render from a small, known glyph
-      // set can be sized from metadata alone, with no per-cell sampling:
-      //   - logical: only TRUE / FALSE / NA, so the widest literal is the width.
-      //   - numeric / Date / POSIXct: only digits and separators, so the
-      //     server's col_max_chars hint (computed over ALL rows) times the
-      //     widest-digit width is a safe upper bound. This is both cheaper than
-      //     sampling AND more accurate -- the 100-row sample could miss the
-      //     widest value, whereas col_max_chars cannot.
-      // Row names take the sampling path (their values are JSON-encoded and
-      // need decoding before measuring).
+      // Fixed-glyph columns (numeric, Date, POSIXct) render only digits and
+      // separators ('-', ':', '.', ' '), none wider than a digit; logical
+      // columns render only TRUE / FALSE / NA. Neither needs text measured per
+      // cell. Row names are excluded: their values are JSON-encoded and
+      // proportional, so they take the generic measureText sampling path.
+      var isFixedGlyph = !isRowNames && (isNumericColumn(col) || isDateColumn(col));
+
+      // Fast paths that size a column with no per-cell sampling at all.
       var sized = false;
-      if (!isRowNames) {
-         if (col.col_type === "logical") {
-            var lw = logicalCellWidth() + cellExtra;
-            if (lw > maxW) maxW = lw;
-            sized = true;
-         } else if ((isNumericColumn(col) || isDateColumn(col)) &&
-                    typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
-            var nw = Math.ceil(col.col_max_chars * digitWidth()) + cellExtra;
-            if (nw > maxW) maxW = nw;
-            sized = true;
-         }
+      if (col.col_type === "logical") {
+         // Only TRUE / FALSE / NA: the widest literal is the column's cell width.
+         var lw = logicalCellWidth() + cellExtra;
+         if (lw > maxW) maxW = lw;
+         sized = true;
+      } else if (isFixedGlyph &&
+                 typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+         // The server's col_max_chars hint is computed over ALL rows, so
+         // col_max_chars x widest-digit width is an exact upper bound -- cheaper
+         // AND more accurate than sampling (which could miss the widest value).
+         var nw = Math.ceil(col.col_max_chars * digitWidth()) + cellExtra;
+         if (nw > maxW) maxW = nw;
+         sized = true;
       }
 
       if (!sized) {
-         // If the server provided a max-chars hint, derive a baseline cell
-         // width from it (avgCharWidth x N + chrome). For character/factor this
-         // is exact-by-bound (max nchar across values); some column types ship
-         // no hint at all. We still sample below -- the hint is a baseline, not
-         // a ceiling.
-         if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+         // No usable metadata hint. For character/factor the rendered width is
+         // proportional and must be measured; for fixed-glyph columns without a
+         // hint (non-integral doubles, which the server declines to bound) the
+         // cells are still digit-only, so the longest sampled string x digit
+         // width bounds them -- a cheap string-length scan rather than a
+         // measureText per cell.
+         if (!isFixedGlyph &&
+             typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
             var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
             if (hintW > maxW) maxW = hintW;
          }
 
-         // Measure a sample of cell values from the cache. When the hint is
-         // present this catches cases where the avg-char-width estimate
-         // under-counts (e.g., a column of unusually wide glyphs); when it
-         // isn't, this is the sole source of width data for the column.
          // Sample from the current render window rather than row 0: after a
          // column-window slide the cache holds the rows around the viewport,
          // which may be nowhere near the top.
@@ -2251,16 +2249,23 @@ var autoSizeColumns = function() {
                cellVal = "NA";
             }
             var cellText = String(cellVal);
-            // For row names (col 0), the value is JSON-encoded
-            if (isRowNames) {
-               try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+
+            var cellW;
+            if (isFixedGlyph) {
+               // Digit-bounded: char count x widest digit, no text measurement.
+               cellW = Math.ceil(cellText.length * digitWidth()) + cellExtra;
+            } else {
+               // For row names (col 0), the value is JSON-encoded.
+               if (isRowNames) {
+                  try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+               }
+               var textW = cellWidthMemo.get(cellText);
+               if (textW === undefined) {
+                  textW = measureTextWidth(cellText, false);
+                  cellWidthMemo.set(cellText, textW);
+               }
+               cellW = textW + cellExtra;
             }
-            var textW = cellWidthMemo.get(cellText);
-            if (textW === undefined) {
-               textW = measureTextWidth(cellText, false);
-               cellWidthMemo.set(cellText, textW);
-            }
-            var cellW = textW + cellExtra;
             if (cellW > maxW) maxW = cellW;
          }
       }
