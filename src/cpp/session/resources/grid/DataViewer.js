@@ -243,11 +243,6 @@ var sidebarDefaultResolved = false;
 // the recorded postInitActions entry keyed by this marker).
 var FILTER_UI_MARKER = "filter-injected-ui";
 
-// In-flight column-summary fetches; the shared sidebar spinner only
-// hides when this drops back to zero so partial completion doesn't yank
-// it out from under still-pending fetches.
-var pendingSummaryFetches = 0;
-
 // Active cell coordinates. activeRow is the 0-based index into the
 // currently displayed (filtered/sorted) rows; activeCol is the 0-based
 // position in columnOrder (display order, accounting for pinning).
@@ -665,10 +660,25 @@ var sidebarLazySummaries = {};
 // column set / fingerprint changes (alongside sidebarLazySummaries).
 var filterDescriptors = {};
 
-// IntersectionObserver watching sidebar entries; abs indices it has queued for
-// the next (debounced) lazy summary fetch. Both reset per sidebar rebuild.
-var sidebarObserver = null;
+// Abs indices queued for the next (debounced) lazy summary fetch, populated as
+// entries are built into the virtual window. Reset per sidebar rebuild.
 var sidebarPendingFetch = {};
+
+// Summary-sidebar virtualization. Like the grid rows, only the entries whose
+// vertical band intersects the panel viewport are built; everything else is
+// stood in for by two spacer divs sized from the constant entry height. This
+// keeps initSidebar O(visible) rather than O(all columns). See initSidebar and
+// renderSidebarWindow.
+var SIDEBAR_ENTRY_HEIGHT = 78;   // keep in sync with --sidebar-entry-height
+var SIDEBAR_BUFFER_ENTRIES = 5;  // extra entries kept built on each side
+var sidebarListCols = [];        // listed column descriptors (rowname excluded)
+var sidebarRenderTop = null;     // top spacer div
+var sidebarRenderMid = null;     // container holding the currently built entries
+var sidebarRenderBottom = null;  // bottom spacer div (includes overscroll tail)
+var sidebarWinStart = -1;        // first built virtual index (inclusive)
+var sidebarWinEnd = -1;          // last built virtual index (inclusive)
+var sidebarIndexByAbs = {};      // abs column index -> virtual index in sidebarListCols
+var sidebarScrollRaf = 0;        // rAF handle coalescing scroll-driven re-renders
 
 var fetchFilteredSummaries = function(callback) {
    var loc = parseLocationUrl();
@@ -718,8 +728,12 @@ var rebuildSidebarPreservingScroll = function() {
    var scrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
    initSidebar();
    sidebarContent = document.getElementById("sidebarContent");
-   if (sidebarContent)
+   if (sidebarContent) {
       sidebarContent.scrollTop = scrollTop;
+      // initSidebar built the window for scrollTop 0; rebuild it for the
+      // restored position so the visible entries match where we scrolled back to.
+      renderSidebarWindow(true);
+   }
 };
 
 // Rebuild the sidebar against the current filter state: fetch filtered
@@ -3739,7 +3753,9 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
    applyPinnedColumns();
    renderVisibleRows(true);
    updateInfoBar();
-   updateSidebarOverscroll();
+   // A resize changes the panel's clientHeight (and thus how many entries fit
+   // and the overscroll tail), so rebuild the sidebar's visible window.
+   renderSidebarWindow(true);
    updateCustomScrollbars();
 
    // A resize can change whether (and how far) the grid scrolls horizontally
@@ -4380,26 +4396,22 @@ var populateEntrySummary = function(entry, summary) {
    var rowCount = sidebarSummaryRowCount();
    var footer = entry.querySelector(".sidebar-col-footer");
 
-   // Sparkline (numeric histogram or categorical bars): inserted before the
-   // footer. Deferred-drawn via pendingSparklines_ + renderPendingSparklines,
-   // which the caller flushes when the panel is visible.
-   if (hasHistogram(summary)) {
-      var sparkContainer = document.createElement("div");
-      sparkContainer.className = "sidebar-sparkline";
-      entry.insertBefore(sparkContainer, footer);
+   // Sparkline (numeric histogram or categorical bars) drawn into the entry's
+   // reserved fixed-height slot (kept empty for columns without one, so the
+   // entry stays the constant height the virtualizer assumes). Deferred-drawn
+   // via pendingSparklines_ + renderPendingSparklines.
+   var sparkSlot = entry.querySelector(".sidebar-sparkline");
+   if (sparkSlot && hasHistogram(summary)) {
       pendingSparklines_.push({
-         container: sparkContainer,
+         container: sparkSlot,
          breaks: summary.col_breaks,
          counts: summary.col_counts,
          labels: null,
          breakLabels: summary.col_break_labels || null
       });
-   } else if (hasCategoryCounts(summary)) {
-      var catContainer = document.createElement("div");
-      catContainer.className = "sidebar-sparkline";
-      entry.insertBefore(catContainer, footer);
+   } else if (sparkSlot && hasCategoryCounts(summary)) {
       pendingSparklines_.push({
-         container: catContainer,
+         container: sparkSlot,
          breaks: null,
          counts: summary.col_cat_counts,
          labels: summary.col_cat_vals
@@ -4460,6 +4472,422 @@ var populateEntrySummary = function(entry, summary) {
    }
 };
 
+// Apply the current pin/sort/filter indicator state to a single built entry.
+// Shared by buildSidebarEntry (at build time) and updateSidebarColumnIndicators
+// (when state changes), keyed off the entry's absolute data-col-idx.
+var applySidebarEntryIndicators = function(entry) {
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+   var nameEl = entry.querySelector(".sidebar-col-name");
+   var colName = nameEl ? nameEl.textContent : "";
+
+   var pinEl = entry.querySelector(".sidebar-pin-icon");
+   if (pinEl) {
+      var pinned = pinnedColumns.has(absIdx);
+      pinEl.classList.toggle("pinned", pinned);
+      pinEl.title = pinned ? "Unpin column" : "Pin column";
+      pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
+      pinEl.setAttribute("aria-label",
+         (pinned ? "Unpin column " : "Pin column ") + colName);
+   }
+
+   var sortEl = entry.querySelector(".sidebar-sort-icon");
+   if (sortEl && !sortEl.classList.contains("disabled")) {
+      var dir = (absIdx === sortColumn) ? sortDirection : "";
+      sortEl.classList.toggle("sorting_asc", dir === "asc");
+      sortEl.classList.toggle("sorting_desc", dir === "desc");
+      var action;
+      if (dir === "asc") {
+         action = "Sort column " + colName + " descending";
+      } else if (dir === "desc") {
+         action = "Remove sort on column " + colName;
+      } else {
+         action = "Sort column " + colName + " ascending";
+      }
+      sortEl.title = action;
+      sortEl.setAttribute("aria-label", action);
+   }
+
+   var filterEl = entry.querySelector(".sidebar-filter-icon");
+   if (filterEl) {
+      var filterRaw = cachedFilterValues[absIdx];
+      var filtered = !!filterRaw;
+      filterEl.classList.toggle("active", filtered);
+      if (filtered) {
+         var desc = describeFilterValue(filterRaw);
+         filterEl.title = desc ? "Filtered: " + desc : "Filtered";
+         filterEl.setAttribute("aria-label",
+            "Edit filter for column " + colName + (desc ? " (" + desc + ")" : ""));
+      } else {
+         filterEl.title = "Filter column";
+         filterEl.setAttribute("aria-label", "Filter column " + colName);
+      }
+   }
+};
+
+// Build one sidebar entry's DOM. No per-entry listeners -- those are delegated
+// to the content container. Identity (name, type, pin/sort/filter icons) is
+// always present; the summary (sparkline + range/NA) is seeded from cache if
+// available, else queued for the debounced lazy fetch. The sparkline lives in a
+// fixed-height slot reserved up front so every entry is the constant
+// --sidebar-entry-height the virtualizer assumes.
+var buildSidebarEntry = function(col, absIdx, virtIndex) {
+   var entry = document.createElement("div");
+   entry.className = "sidebar-col";
+   // data-col-idx is the ABSOLUTE column index (1-based); the delegated handlers
+   // and summary loader key off it (it identifies the column across the whole
+   // frame, not its position in the fetched window).
+   entry.setAttribute("data-col-idx", absIdx);
+   entry.setAttribute("role", "listitem");
+   // The list is virtualized, so only the visible entries are in the DOM;
+   // setsize/posinset tell assistive tech the true list length and this entry's
+   // place in it rather than just "N of <visible-count>".
+   entry.setAttribute("aria-setsize", sidebarListCols.length);
+   entry.setAttribute("aria-posinset", virtIndex + 1);
+   // Stash the stats category so the delegated expand handler can pass it to the
+   // stats popover without re-deriving it from `col`.
+   entry.setAttribute("data-stats-cat", statsCategory(col));
+
+   var header = document.createElement("div");
+   header.className = "sidebar-col-header";
+   header.setAttribute("role", "button");
+   header.setAttribute("tabindex", "0");
+   header.setAttribute("aria-label", "Scroll to column " + col.col_name);
+
+   var expandBtn = document.createElement("span");
+   expandBtn.className = "sidebar-expand-btn";
+   expandBtn.title = "Show column summary";
+   expandBtn.setAttribute("role", "button");
+   expandBtn.setAttribute("tabindex", "0");
+   expandBtn.setAttribute("aria-expanded", "false");
+   expandBtn.setAttribute("aria-label", "Toggle summary for column " + col.col_name);
+   header.appendChild(expandBtn);
+
+   var pinIcon = document.createElement("span");
+   pinIcon.className = "pin-icon sidebar-pin-icon";
+   pinIcon.setAttribute("role", "button");
+   pinIcon.setAttribute("tabindex", "0");
+   header.appendChild(pinIcon);
+
+   var name = document.createElement("span");
+   name.className = "sidebar-col-name";
+   name.textContent = col.col_name;
+   name.title = col.col_name;
+   header.appendChild(name);
+
+   var type = document.createElement("span");
+   type.className = "sidebar-col-type";
+   type.textContent = "<" + typeLabel(col) + ">";
+   if (col.col_tz)
+      type.title = "Timezone: " + col.col_tz;
+   header.appendChild(type);
+
+   var filterIcon = document.createElement("span");
+   filterIcon.className = "sidebar-filter-icon";
+   filterIcon.setAttribute("role", "button");
+   filterIcon.setAttribute("tabindex", "0");
+   filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
+   header.appendChild(filterIcon);
+
+   // Sort icon at the right edge. Non-sortable columns (list / data.frame) keep
+   // an inert disabled placeholder so the type labels stay aligned; when
+   // ordering is disabled for the whole grid no icon is created.
+   if (ordering) {
+      var sortIcon = document.createElement("span");
+      sortIcon.className = "sidebar-sort-icon";
+      if (isColumnSortable(col)) {
+         sortIcon.setAttribute("role", "button");
+         sortIcon.setAttribute("tabindex", "0");
+      } else {
+         sortIcon.classList.add("disabled");
+      }
+      header.appendChild(sortIcon);
+   }
+
+   entry.appendChild(header);
+
+   // Reserved sparkline slot (always present so the entry stays the constant
+   // height, whether or not the column has -- or has loaded -- a sparkline).
+   var spark = document.createElement("div");
+   spark.className = "sidebar-sparkline";
+   entry.appendChild(spark);
+
+   var footer = document.createElement("div");
+   footer.className = "sidebar-col-footer";
+   var summaryEl = document.createElement("span");
+   summaryEl.className = "sidebar-col-summary";
+   footer.appendChild(summaryEl);
+   var naEl = document.createElement("span");
+   naEl.className = "sidebar-col-na";
+   footer.appendChild(naEl);
+   entry.appendChild(footer);
+
+   applySidebarEntryIndicators(entry);
+
+   var seeded = getSidebarSummary(absIdx);
+   if (seeded)
+      populateEntrySummary(entry, seeded);
+   else
+      sidebarPendingFetch[absIdx] = true;
+
+   return entry;
+};
+
+// Build (only) the sidebar entries whose vertical band intersects the panel
+// viewport, sizing the off-window range with the top/bottom spacers. The grid-
+// row analogue is renderVisibleRows. Cheap: the one forced layout is reading the
+// panel's own clientHeight, and at most ~visible+buffer entries are built.
+var renderSidebarWindow = function(force) {
+   var content = document.getElementById("sidebarContent");
+   if (!content || !sidebarRenderMid) return;
+
+   var n = sidebarListCols.length;
+   var H = SIDEBAR_ENTRY_HEIGHT;
+   var scrollTop = content.scrollTop;
+   var clientH = content.clientHeight;
+
+   var first, last;
+   if (n === 0) {
+      first = 0;
+      last = -1;
+   } else {
+      first = Math.floor(scrollTop / H) - SIDEBAR_BUFFER_ENTRIES;
+      last = Math.ceil((scrollTop + clientH) / H) + SIDEBAR_BUFFER_ENTRIES;
+      if (first < 0) first = 0;
+      if (last > n - 1) last = n - 1;
+   }
+
+   if (!force && first === sidebarWinStart && last === sidebarWinEnd)
+      return;
+   sidebarWinStart = first;
+   sidebarWinEnd = last;
+
+   // The stats popover is anchored to an entry we're about to destroy; close it
+   // so it can't float detached over the rebuilt list. (Filter popups are NOT
+   // dismissed here: a filter's own apply triggers a sidebar refresh/rebuild,
+   // and the popup is expected to stay open through that -- it self-heals on
+   // light-dismiss if its anchor later scrolls away.)
+   if (sidebarStatsPopup) dismissSidebarStats();
+
+   // Spacers stand in for the off-window entries; the bottom one adds an
+   // overscroll tail so the last entry can be scrolled toward the top of the
+   // panel rather than bottoming out at its lower edge. Only when the list
+   // actually overflows -- otherwise a short list would gain phantom scroll
+   // space past its end (matching the old overflow-only overscroll padding).
+   var overscroll = (n * H > clientH) ? Math.max(0, clientH - H) : 0;
+   var tail = (last < 0) ? n : (n - 1 - last);
+   sidebarRenderTop.style.height = (first * H) + "px";
+   sidebarRenderBottom.style.height = (Math.max(0, tail) * H + overscroll) + "px";
+
+   // Drop sparklines queued for the entries we're about to destroy; the rebuilt
+   // entries re-queue their own (otherwise renderPendingSparklines could draw
+   // into a now-detached slot).
+   pendingSparklines_ = [];
+
+   sidebarRenderMid.innerHTML = "";
+   if (last >= first) {
+      var frag = document.createDocumentFragment();
+      for (var i = first; i <= last; i++) {
+         var col = sidebarListCols[i];
+         var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
+         frag.appendChild(buildSidebarEntry(col, absIdx, i));
+      }
+      sidebarRenderMid.appendChild(frag);
+   }
+
+   // Draw the seeded sparklines and fetch any summaries the new entries queued.
+   if (sidebarVisible) renderPendingSparklines();
+   flushSidebarPendingFetch();
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
+};
+
+// The virtual index (position in sidebarListCols) of an absolute column index,
+// or -1 if it isn't listed. Used by flashSidebarColumn to scroll to a column
+// whose entry may not currently be built.
+var sidebarVirtIndexForAbs = function(absIdx) {
+   var idx = sidebarIndexByAbs[absIdx];
+   return (typeof idx === "number") ? idx : -1;
+};
+
+// --- Delegated sidebar entry interactions --------------------------------
+// Built entries come and go as the window scrolls, so a single set of handlers
+// lives on the persistent content container and dispatches by the closest
+// affordance + the entry's absolute index.
+
+var onSidebarContentClick = function(evt) {
+   var t = evt.target;
+   if (!t || !t.closest) return;
+   var entry = t.closest(".sidebar-col");
+   if (!entry || !sidebarRenderMid || !sidebarRenderMid.contains(entry)) return;
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+
+   var expandEl = t.closest(".sidebar-expand-btn");
+   if (expandEl) {
+      evt.stopPropagation(); evt.preventDefault();
+      openSidebarStats(expandEl, absIdx, entry.getAttribute("data-stats-cat"));
+      return;
+   }
+   if (t.closest(".sidebar-pin-icon")) {
+      evt.stopPropagation(); evt.preventDefault();
+      togglePinColumn(absIdx);
+      return;
+   }
+   var sortEl = t.closest(".sidebar-sort-icon");
+   if (sortEl) {
+      if (sortEl.classList.contains("disabled")) return;
+      evt.stopPropagation(); evt.preventDefault();
+      handleSortClick(absIdx);
+      return;
+   }
+   var filterEl = t.closest(".sidebar-filter-icon");
+   if (filterEl) {
+      evt.stopPropagation(); evt.preventDefault();
+      // The first activation builds the widget (which binds the icon's own
+      // click via invokeFilterPopup); once bound, that handler toggles it, so
+      // this path only kicks off the initial build.
+      if (filterEl.dvFilterController) return;
+      openColumnFilterFromSidebar(filterEl, absIdx);
+      return;
+   }
+   // Anywhere else in the entry: navigate to the column.
+   goToColumn(absIdx);
+};
+
+var onSidebarContentKeydown = function(evt) {
+   if (evt.key !== "Enter" && evt.key !== " ") return;
+   var t = evt.target;
+   if (!t || !t.classList || !t.closest) return;
+   var entry = t.closest(".sidebar-col");
+   if (!entry || !sidebarRenderMid || !sidebarRenderMid.contains(entry)) return;
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+
+   if (t.classList.contains("sidebar-expand-btn")) {
+      evt.preventDefault(); evt.stopPropagation();
+      openSidebarStats(t, absIdx, entry.getAttribute("data-stats-cat"));
+   } else if (t.classList.contains("sidebar-pin-icon")) {
+      evt.preventDefault(); evt.stopPropagation();
+      togglePinColumn(absIdx);
+   } else if (t.classList.contains("sidebar-sort-icon")) {
+      if (t.classList.contains("disabled")) return;
+      evt.preventDefault(); evt.stopPropagation();
+      handleSortClick(absIdx);
+   } else if (t.classList.contains("sidebar-filter-icon")) {
+      evt.preventDefault(); evt.stopPropagation();
+      openColumnFilterFromSidebar(t, absIdx);
+   } else if (t.classList.contains("sidebar-col-header")) {
+      evt.preventDefault();
+      goToColumn(absIdx);
+   }
+};
+
+// --- Detailed-stats popover ----------------------------------------------
+// Expanding a column's stats opens a floating popover anchored to its expand
+// button rather than growing the entry inline -- which keeps every entry the
+// constant height the virtualizer requires. One open at a time; it cooperates
+// with the filter popups through dismissActivePopup.
+var sidebarStatsPopup = null;   // the open popover element, or null
+var sidebarStatsAbs = -1;       // absolute column index it is showing
+
+var dismissSidebarStats = function() {
+   if (!sidebarStatsPopup) return false;
+   if (sidebarStatsPopup.parentNode)
+      document.body.removeChild(sidebarStatsPopup);
+   document.body.removeEventListener("click", sidebarStatsLightDismiss);
+   document.body.removeEventListener("keydown", sidebarStatsEscDismiss);
+   sidebarStatsPopup = null;
+   sidebarStatsAbs = -1;
+   if (dismissActivePopup === dismissSidebarStats)
+      dismissActivePopup = null;
+   // Clear the expanded state on whichever expand button is currently built
+   // (the original anchor may have scrolled out of the window).
+   var content = document.getElementById("sidebarContent");
+   if (content) {
+      var open = content.querySelectorAll(".sidebar-expand-btn.expanded");
+      for (var i = 0; i < open.length; i++) {
+         open[i].classList.remove("expanded");
+         open[i].setAttribute("aria-expanded", "false");
+      }
+   }
+   return true;
+};
+
+var sidebarStatsLightDismiss = function(evt) {
+   if (sidebarStatsPopup && sidebarStatsPopup.contains(evt.target))
+      return;
+   dismissSidebarStats();
+};
+
+var sidebarStatsEscDismiss = function(evt) {
+   if (evt.keyCode === 27) dismissSidebarStats();
+};
+
+// Position a body-appended popover just under `anchorEl`, centered within the
+// sidebar panel and clamped on-screen (mirrors invokeFilterPopup's placement).
+var positionSidebarPopover = function(popup, anchorEl) {
+   var rect = anchorEl.getBoundingClientRect();
+   var left = rect.left - 4;
+   var panel = anchorEl.closest ? anchorEl.closest("#sidebarPanel") : null;
+   if (panel) {
+      var sb = panel.getBoundingClientRect();
+      left = sb.left + (sb.width - popup.offsetWidth) / 2;
+   }
+   if (popup.offsetWidth + left > document.body.offsetWidth)
+      left = document.body.offsetWidth - popup.offsetWidth;
+   if (left < 0) left = 0;
+
+   // The stats popover can be tall (numeric/factor); for an anchor low in the
+   // panel, opening downward would run it off the bottom of the viewport. Flip
+   // it above the anchor when it doesn't fit below, then clamp to the top edge.
+   var viewH = document.documentElement.clientHeight || document.body.offsetHeight;
+   var top = rect.bottom + 2;
+   if (top + popup.offsetHeight > viewH) {
+      var above = rect.top - 2 - popup.offsetHeight;
+      top = (above >= 0) ? above : Math.max(0, viewH - popup.offsetHeight);
+   }
+
+   popup.style.top = top + "px";
+   popup.style.left = left + "px";
+};
+
+var openSidebarStats = function(anchorEl, absIdx, colType) {
+   // Toggle closed if it's already open for this column.
+   if (sidebarStatsPopup && sidebarStatsAbs === absIdx) {
+      dismissSidebarStats();
+      return;
+   }
+   // Dismiss any other open popup (a filter popup, or stats for another column).
+   if (dismissActivePopup) dismissActivePopup(true);
+   dismissSidebarStats();
+
+   var popup = document.createElement("div");
+   popup.className = "filterPopup sidebar-stats-popup";
+   var loading = document.createElement("div");
+   loading.className = "stats-empty";
+   loading.textContent = "Loading...";
+   popup.appendChild(loading);
+   document.body.appendChild(popup);
+   sidebarStatsPopup = popup;
+   sidebarStatsAbs = absIdx;
+   positionSidebarPopover(popup, anchorEl);
+
+   anchorEl.classList.add("expanded");
+   anchorEl.setAttribute("aria-expanded", "true");
+
+   document.body.addEventListener("click", sidebarStatsLightDismiss);
+   document.body.addEventListener("keydown", sidebarStatsEscDismiss);
+   dismissActivePopup = dismissSidebarStats;
+
+   fetchColumnSummary(absIdx, function(data) {
+      // Superseded or dismissed while the fetch was in flight.
+      if (sidebarStatsPopup !== popup) return;
+      if (data === null) { dismissSidebarStats(); return; }
+      renderColumnStats(popup, data, colType);
+      positionSidebarPopover(popup, anchorEl);
+   });
+};
+
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -4501,12 +4929,6 @@ var initSidebar = function() {
       filteredTag.title = "Summaries reflect the current filter and search";
       toggleLabel.appendChild(filteredTag);
    }
-
-   var toggleSpinner = document.createElement("span");
-   toggleSpinner.className = "sidebar-spinner";
-   toggleSpinner.style.display = "none";
-   toggleSpinner.id = "sidebarSpinner";
-   toggle.appendChild(toggleSpinner);
 
    // Help icon: opens a small dialog explaining the summary entries. Unlike
    // the close glyph below, activation must NOT reach the toggle -- it opens
@@ -4551,280 +4973,63 @@ var initSidebar = function() {
    // containers were just removed by the innerHTML reset above.
    pendingSparklines_ = [];
 
-   // Reset the lazy-load machinery for this rebuild: a fresh observer (the old
-   // one's targets were just removed) and an empty pending-fetch queue.
-   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
+   // Reset the lazy summary-fetch queue for this rebuild.
    sidebarPendingFetch = {};
-   if (typeof IntersectionObserver !== "undefined") {
-      sidebarObserver = new IntersectionObserver(function(entries) {
-         var queued = false;
-         for (var e = 0; e < entries.length; e++) {
-            if (!entries[e].isIntersecting) continue;
-            var abs = parseInt(entries[e].target.getAttribute("data-col-idx"), 10);
-            if (isNaN(abs) || getSidebarSummary(abs)) continue;
-            sidebarPendingFetch[abs] = true;
-            queued = true;
-         }
-         if (queued) flushSidebarPendingFetch();
-      }, { root: content });
+
+   // Snapshot the listed columns (rowname excluded) with an abs-index lookup,
+   // then build the virtualized structure: a top spacer, a container for the
+   // entries currently in the visible window, and a bottom spacer (which also
+   // carries the overscroll tail). renderSidebarWindow fills the container with
+   // only the entries whose vertical band intersects the panel viewport, so
+   // initSidebar is O(visible) rather than O(all columns).
+   sidebarListCols = [];
+   sidebarIndexByAbs = {};
+   var allSidebarCols = sidebarColumnList();
+   for (var si = 0; si < allSidebarCols.length; si++) {
+      var sc = allSidebarCols[si];
+      if (isRownameColumn(sc)) continue;
+      var scAbs = (typeof sc.col_index === "number")
+         ? sc.col_index : sidebarListCols.length + 1;
+      sidebarIndexByAbs[scAbs] = sidebarListCols.length;
+      sidebarListCols.push(sc);
    }
 
-   // List every column of the frame (or the fetched window until the complete
-   // index loads). Each entry is built as a shell -- identity (name, type,
-   // pin/sort icons) is always available; the summary content (sparkline,
-   // range, NA%) is populated from the cache if present, otherwise lazily as
-   // the entry scrolls into view (IntersectionObserver above).
-   var listCols = sidebarColumnList();
-   for (var i = 0; i < listCols.length; i++) {
-      var col = listCols[i];
-      if (isRownameColumn(col)) continue;
-      var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
+   sidebarRenderTop = document.createElement("div");
+   sidebarRenderTop.className = "sidebar-virt-spacer";
+   sidebarRenderTop.setAttribute("aria-hidden", "true");
+   sidebarRenderMid = document.createElement("div");
+   sidebarRenderBottom = document.createElement("div");
+   sidebarRenderBottom.className = "sidebar-virt-spacer";
+   sidebarRenderBottom.setAttribute("aria-hidden", "true");
+   content.appendChild(sidebarRenderTop);
+   content.appendChild(sidebarRenderMid);
+   content.appendChild(sidebarRenderBottom);
+   sidebarWinStart = -1;
+   sidebarWinEnd = -1;
 
-      var entry = document.createElement("div");
-      entry.className = "sidebar-col";
-      // data-col-idx holds the ABSOLUTE column index (1-based). For an
-      // unpaginated frame this equals the entry's position, matching the
-      // historical meaning; for a windowed frame it identifies the column
-      // across the whole frame, which the handlers and lazy loader rely on.
-      entry.setAttribute("data-col-idx", absIdx);
-      entry.setAttribute("role", "listitem");
-
-      // Header row: expand button + pin + name + type + sort
-      var header = document.createElement("div");
-      header.className = "sidebar-col-header";
-      header.setAttribute("role", "button");
-      header.setAttribute("tabindex", "0");
-      header.setAttribute("aria-label", "Scroll to column " + col.col_name);
-
-      var expandBtn = document.createElement("span");
-      expandBtn.className = "sidebar-expand-btn";
-      expandBtn.title = "Show column summary";
-      expandBtn.setAttribute("role", "button");
-      expandBtn.setAttribute("tabindex", "0");
-      expandBtn.setAttribute("aria-expanded", "false");
-      expandBtn.setAttribute("aria-label", "Toggle summary for column " + col.col_name);
-      header.appendChild(expandBtn);
-
-      // Pin icon, mirroring the grid header's affordance: hidden until the
-      // entry is hovered, persistent while the column is pinned. State
-      // (pinned class, title, aria) is applied by
-      // updateSidebarColumnIndicators once all entries exist.
-      var pinIcon = document.createElement("span");
-      pinIcon.className = "pin-icon sidebar-pin-icon";
-      pinIcon.setAttribute("role", "button");
-      pinIcon.setAttribute("tabindex", "0");
-      header.appendChild(pinIcon);
-
-      var name = document.createElement("span");
-      name.className = "sidebar-col-name";
-      name.textContent = col.col_name;
-      name.title = col.col_name;
-      header.appendChild(name);
-
-      // Type label. For POSIXct columns the timezone goes in a hover tooltip
-      // rather than inline (a full zone name like "America/New_York" would eat
-      // the row width); the grid header tooltip still shows it too.
-      var type = document.createElement("span");
-      type.className = "sidebar-col-type";
-      type.textContent = "<" + typeLabel(col) + ">";
-      if (col.col_tz)
-         type.title = "Timezone: " + col.col_tz;
-      header.appendChild(type);
-
-      // Filter icon (funnel): always shown, with an "active" style when the
-      // column has a filter. Clicking it opens the column's filter popup below
-      // the icon (the same typed widgets the header uses). Grouped with the
-      // sort icon as the column's data-operation actions (type, filter, sort).
-      // The sort icon to its right keeps the margin that clears the floating
-      // scrollbar, so the funnel isn't at the panel's overlaid right edge.
-      // Active state (the "active" class, title, aria) is applied by
-      // updateSidebarColumnIndicators.
-      var filterIcon = document.createElement("span");
-      filterIcon.className = "sidebar-filter-icon";
-      filterIcon.setAttribute("role", "button");
-      filterIcon.setAttribute("tabindex", "0");
-      filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
-      header.appendChild(filterIcon);
-
-      // Sort icon at the right edge, mirroring the grid header's indicator.
-      // Non-sortable columns (list / data.frame) keep an inert hidden
-      // placeholder so the type labels stay aligned across entries; when
-      // ordering is disabled for the whole grid no icon is created at all.
-      var sortIcon = null;
-      if (ordering) {
-         sortIcon = document.createElement("span");
-         sortIcon.className = "sidebar-sort-icon";
-         if (isColumnSortable(col)) {
-            sortIcon.setAttribute("role", "button");
-            sortIcon.setAttribute("tabindex", "0");
-         } else {
-            sortIcon.classList.add("disabled");
-         }
-         header.appendChild(sortIcon);
-      }
-
-      entry.appendChild(header);
-
-      // Footer shell (summary left, NA right); populateEntrySummary fills it,
-      // and inserts the sparkline before it, once a descriptor is available.
-      var footer = document.createElement("div");
-      footer.className = "sidebar-col-footer";
-      var summaryEl = document.createElement("span");
-      summaryEl.className = "sidebar-col-summary";
-      footer.appendChild(summaryEl);
-      var naEl = document.createElement("span");
-      naEl.className = "sidebar-col-na";
-      footer.appendChild(naEl);
-      entry.appendChild(footer);
-
-      // Stats panel (hidden until expanded)
-      var statsPanel = document.createElement("div");
-      statsPanel.className = "sidebar-stats";
-      statsPanel.style.display = "none";
-      entry.appendChild(statsPanel);
-
-      // Click entry to navigate; expand button toggles detail stats; pin and
-      // sort icons route into the same paths as the grid header (all keyed by
-      // absolute index, so they work for off-window columns too).
-      (function(abs, statsEl, btnEl, headerEl, pinEl, sortEl, filterEl, colType) {
-         var expanded = false;
-         var loaded = false;
-
-         var toggleStats = function(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            expanded = !expanded;
-            btnEl.classList.toggle("expanded", expanded);
-            btnEl.setAttribute("aria-expanded", expanded ? "true" : "false");
-
-            if (expanded) {
-               if (!loaded) {
-                  // Show spinner while at least one summary fetch is in flight
-                  var spinner = document.getElementById("sidebarSpinner");
-                  pendingSummaryFetches++;
-                  if (spinner) spinner.style.display = "";
-                  fetchColumnSummary(abs, function(data) {
-                     pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
-                     if (spinner && pendingSummaryFetches === 0) {
-                        spinner.style.display = "none";
-                     }
-                     // Aborted requests pass null -- leave loaded=false so a
-                     // re-expand can retry.
-                     if (data === null) return;
-                     // Errors render the message but also leave loaded=false
-                     // so collapsing and re-expanding the entry kicks off a
-                     // fresh fetch (instead of pinning the user on a stale
-                     // error until full reload).
-                     renderColumnStats(statsEl, data, colType);
-                     statsEl.style.display = "";
-                     if (sidebarScrollbar_) sidebarScrollbar_.update();
-                     if (!data.error) loaded = true;
-                  });
-               } else {
-                  statsEl.style.display = "";
-                  if (sidebarScrollbar_) sidebarScrollbar_.update();
-               }
-            } else {
-               statsEl.style.display = "none";
-               if (sidebarScrollbar_) sidebarScrollbar_.update();
-            }
-         };
-
-         btnEl.addEventListener("click", toggleStats);
-         btnEl.addEventListener("keydown", function(evt) {
-            if (evt.key === "Enter" || evt.key === " ") toggleStats(evt);
-         });
-
-         var togglePin = function(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            togglePinColumn(abs);
-         };
-         pinEl.addEventListener("click", togglePin);
-         pinEl.addEventListener("keydown", function(evt) {
-            if (evt.key === "Enter" || evt.key === " ") togglePin(evt);
-         });
-
-         if (sortEl && !sortEl.classList.contains("disabled")) {
-            var cycleSort = function(evt) {
-               evt.stopPropagation();
-               evt.preventDefault();
-               handleSortClick(abs);
-            };
-            sortEl.addEventListener("click", cycleSort);
-            sortEl.addEventListener("keydown", function(evt) {
-               if (evt.key === "Enter" || evt.key === " ") cycleSort(evt);
-            });
-         }
-
-         // Filter icon: open/toggle this column's filter popup, anchored under
-         // it. stopPropagation keeps the click off the entry's navigate handler.
-         // The first activation builds the widget (which binds the icon's click
-         // via invokeFilterPopup); from then on a mouse click toggles through
-         // that bound handler, so the click path here only kicks off the initial
-         // build. The keydown path drives the controller directly (there's no
-         // bound keydown), so the keyboard can toggle too.
-         filterEl.addEventListener("click", function(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            if (filterEl.dvFilterController) return;
-            openColumnFilterFromSidebar(filterEl, abs);
-         });
-         filterEl.addEventListener("keydown", function(evt) {
-            if (evt.key !== "Enter" && evt.key !== " ") return;
-            evt.stopPropagation();
-            evt.preventDefault();
-            openColumnFilterFromSidebar(filterEl, abs);
-         });
-
-         // Navigate to the column (works whether or not it's in the fetched
-         // window; goToColumn slides the window for off-window targets).
-         var navigate = function() { goToColumn(abs); };
-         entry.addEventListener("click", navigate);
-         headerEl.addEventListener("keydown", function(evt) {
-            if (evt.target !== headerEl) return;
-            if (evt.key === "Enter" || evt.key === " ") {
-               evt.preventDefault();
-               navigate();
-            }
-         });
-      })(absIdx, statsPanel, expandBtn, header, pinIcon, sortIcon, filterIcon, statsCategory(col));
-
-      // Populate the summary now if it's already cached; otherwise observe the
-      // entry so it loads lazily when scrolled into view.
-      var seeded = getSidebarSummary(absIdx);
-      if (seeded) {
-         populateEntrySummary(entry, seeded);
-      } else if (sidebarObserver) {
-         sidebarObserver.observe(entry);
-      }
-
-      content.appendChild(entry);
-   }
+   // Entry interactions are delegated to the persistent content container
+   // (built entries come and go as the window scrolls). addEventListener is
+   // idempotent for these module-scoped handlers across rebuilds.
+   content.addEventListener("click", onSidebarContentClick);
+   content.addEventListener("keydown", onSidebarContentKeydown);
 
    // Kick off loading the complete column index if we're still showing only
    // the fetched window; it rebuilds the sidebar when it lands.
    ensureSidebarColumns();
 
-   // Apply the current (possibly restored-from-saved-state) pin and sort
-   // state to the icons just created.
-   updateSidebarColumnIndicators();
-
-   // Apply initial sidebar visibility -- toggle authoritatively so a previous
-   // "expanded" class from an earlier bootstrap doesn't override saved state.
+   // Apply initial sidebar visibility before measuring so renderSidebarWindow
+   // reads the real (expanded) clientHeight.
    var panel = document.getElementById("sidebarPanel");
    if (panel) {
       panel.classList.toggle("expanded", sidebarVisible);
    }
 
-   // Draw the sparklines only if the panel is starting out visible; otherwise
-   // they stay pending until the first time the user opens the panel.
-   if (sidebarVisible) renderPendingSparklines();
+   // Build the initial visible window. Reading clientHeight here forces a
+   // layout, but only of the two spacers plus the handful of visible entries
+   // (not every column) -- which is the whole point of the virtualization.
+   renderSidebarWindow(true);
 
-   // Pad the bottom for overscroll, then attach the floating scrollbar after
-   // the content is in place (so its initial measurement reflects the populated
-   // entries plus the overscroll padding).
-   updateSidebarOverscroll();
+   // Attach the floating scrollbar after the spacers establish the scroll range.
    attachSidebarScrollbar();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
@@ -4833,69 +5038,17 @@ var initSidebar = function() {
 // Called after any pin or sort mutation -- whether it originated from the
 // grid header, the keyboard, or the sidebar icons themselves -- and at the
 // end of initSidebar to apply the initial (possibly restored) state.
+// Re-apply pin/sort/filter indicator state to the currently-built entries.
+// With virtualization only the visible window exists in the DOM; off-window
+// entries pick up the current state when they are next built (buildSidebarEntry
+// calls applySidebarEntryIndicators). The per-entry logic is shared with that
+// build path via applySidebarEntryIndicators.
 var updateSidebarColumnIndicators = function() {
    var content = document.getElementById("sidebarContent");
    if (!content) return;
-
    var entries = content.querySelectorAll(".sidebar-col");
-   for (var i = 0; i < entries.length; i++) {
-      var entry = entries[i];
-      // data-col-idx is the absolute column index; the column name comes from
-      // the entry's own DOM (an off-window column isn't in `cols`).
-      var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
-      if (isNaN(absIdx)) continue;
-      var nameEl = entry.querySelector(".sidebar-col-name");
-      var colName = nameEl ? nameEl.textContent : "";
-
-      var pinEl = entry.querySelector(".sidebar-pin-icon");
-      if (pinEl) {
-         var pinned = pinnedColumns.has(absIdx);
-         pinEl.classList.toggle("pinned", pinned);
-         pinEl.title = pinned ? "Unpin column" : "Pin column";
-         pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
-         pinEl.setAttribute("aria-label",
-            (pinned ? "Unpin column " : "Pin column ") + colName);
-      }
-
-      var sortEl = entry.querySelector(".sidebar-sort-icon");
-      if (sortEl && !sortEl.classList.contains("disabled")) {
-         var dir = (absIdx === sortColumn) ? sortDirection : "";
-         sortEl.classList.toggle("sorting_asc", dir === "asc");
-         sortEl.classList.toggle("sorting_desc", dir === "desc");
-
-         // The label announces the next step in the sort cycle.
-         var action;
-         if (dir === "asc") {
-            action = "Sort column " + colName + " descending";
-         } else if (dir === "desc") {
-            action = "Remove sort on column " + colName;
-         } else {
-            action = "Sort column " + colName + " ascending";
-         }
-         sortEl.title = action;
-         sortEl.setAttribute("aria-label", action);
-      }
-
-      // Filter icon: lit when the column has an active filter. Keyed by the
-      // same absolute index as the filter store, so this stays correct for
-      // off-window columns too. The icon is always an interactive button, so it
-      // keeps a label in both states.
-      var filterEl = entry.querySelector(".sidebar-filter-icon");
-      if (filterEl) {
-         var filterRaw = cachedFilterValues[absIdx];
-         var filtered = !!filterRaw;
-         filterEl.classList.toggle("active", filtered);
-         if (filtered) {
-            var desc = describeFilterValue(filterRaw);
-            filterEl.title = desc ? "Filtered: " + desc : "Filtered";
-            filterEl.setAttribute("aria-label",
-               "Edit filter for column " + colName + (desc ? " (" + desc + ")" : ""));
-         } else {
-            filterEl.title = "Filter column";
-            filterEl.setAttribute("aria-label", "Filter column " + colName);
-         }
-      }
-   }
+   for (var i = 0; i < entries.length; i++)
+      applySidebarEntryIndicators(entries[i]);
 };
 
 // ==========================================================================
@@ -5068,12 +5221,9 @@ var renderPendingSparklines = function() {
                                   items[i].labels, items[i].breakLabels);
       if (spark) {
          items[i].container.appendChild(spark);
-      } else {
-         // No drawable histogram (e.g. all-equal values, or no 2D context):
-         // remove the empty placeholder rather than leave it reserving space.
-         var empty = items[i].container;
-         if (empty.parentNode) empty.parentNode.removeChild(empty);
       }
+      // No drawable histogram (all-equal values, or no 2D context): leave the
+      // reserved slot empty so the entry keeps its constant height.
    }
 };
 
@@ -5098,7 +5248,9 @@ var toggleSidebar = function() {
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
-      updateSidebarOverscroll();
+      // Opening the panel gives it a real clientHeight; (re)build its visible
+      // entry window now that the transition has settled.
+      renderSidebarWindow(true);
       updateCustomScrollbars();
    }, TIMING.sidebarTransition);
    saveState();
@@ -5156,35 +5308,38 @@ var flashColumnHeader = function(colIdx) {
    }, TIMING.columnFlash);
 };
 
-// Scroll a column's sidebar entry into view and flash it, mirroring the
-// header flash on a go-to-column jump so the summary panel tracks the jump
-// (the inverse of clicking a sidebar entry, which scrolls the grid). No-op
-// when the panel is collapsed or the entry isn't present. Deliberately does
-// NOT move keyboard focus -- the jump leaves focus on the grid so arrow keys
-// drive the data. colIdx is the position in `cols` (the sidebar entry's
-// data-col-idx).
-var flashSidebarColumn = function(colIdx) {
+// Scroll a column's sidebar entry into view and flash it, mirroring the header
+// flash on a go-to-column jump so the summary panel tracks the jump (the inverse
+// of clicking a sidebar entry, which scrolls the grid). No-op when the panel is
+// collapsed or the column isn't listed. Deliberately does NOT move keyboard
+// focus -- the jump leaves focus on the grid so arrow keys drive the data.
+// absIdx is the ABSOLUTE column index.
+var flashSidebarColumn = function(absIdx) {
    if (!sidebarVisible) return;
    var content = document.getElementById("sidebarContent");
    if (!content) return;
-   var entry = content.querySelector('.sidebar-col[data-col-idx="' + colIdx + '"]');
-   if (!entry) return;
 
-   // Center the entry in the list, but only when it isn't already fully
-   // visible -- so a jump to a nearby, already-on-screen column doesn't jolt
-   // the list. Mirrors revealColumnCentered's handling of the grid viewport
-   // (and beats scrollIntoView's "nearest", which lands a below-fold entry
-   // flush against the bottom edge). offsetTop is relative to #sidebarContent
-   // (the scroll container), matching content.scrollTop.
-   var top = entry.offsetTop;
-   var height = entry.offsetHeight;
+   // The target entry may not currently be built; resolve its virtual index and
+   // compute its offset from the constant entry height.
+   var idx = sidebarVirtIndexForAbs(absIdx);
+   if (idx < 0) return;
+   var H = SIDEBAR_ENTRY_HEIGHT;
+   var top = idx * H;
    var viewTop = content.scrollTop;
    var viewH = content.clientHeight;
-   if (top < viewTop || top + height > viewTop + viewH) {
-      content.scrollTop = Math.max(0, top - Math.max(0, (viewH - height) / 2));
+
+   // Center the entry, but only when it isn't already fully visible -- so a jump
+   // to a nearby, already-on-screen column doesn't jolt the list.
+   if (top < viewTop || top + H > viewTop + viewH) {
+      content.scrollTop = Math.max(0, top - Math.max(0, (viewH - H) / 2));
    }
+
+   // Build the window at the new scroll position so the entry exists to flash.
+   renderSidebarWindow(false);
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 
+   var entry = content.querySelector('.sidebar-col[data-col-idx="' + absIdx + '"]');
+   if (!entry) return;
    entry.classList.add("highlight-flash");
    setTimeout(function() {
       entry.classList.remove("highlight-flash");
@@ -5813,33 +5968,24 @@ var createCustomScrollbars = function() {
 // is idempotent across re-bootstraps. Reads sidebarScrollbar_ at call time
 // so it's safe to register before/after attachCustomScrollbar fires.
 var onSidebarScroll = function() {
-   if (!sidebarScrollbar_) return;
-   sidebarScrollbar_.show();
-   sidebarScrollbar_.update();
+   // A stats popover is anchored to a (now-moving) entry; dismiss it on scroll.
+   if (sidebarStatsPopup) dismissSidebarStats();
+   if (sidebarScrollbar_) {
+      sidebarScrollbar_.show();
+      sidebarScrollbar_.update();
+   }
+   // Re-render the virtual entry window, coalesced to one pass per frame.
+   if (sidebarScrollRaf) return;
+   sidebarScrollRaf = requestAnimationFrame(function() {
+      sidebarScrollRaf = 0;
+      renderSidebarWindow(false);
+   });
 };
 
 // Vertical scrollbar for the Summary sidebar. Appended below the toggle
-// label so the bar tracks only the scrollable content list.
-// Vertical overscroll for the summary sidebar: pad the bottom so the last
-// entry can be scrolled up toward the top of the panel instead of bottoming
-// out at the panel's lower edge. Only applied when the content actually
-// overflows, so a short column list doesn't gain phantom scroll space.
-// Recomputed on structural changes (content build, sidebar open, resize) --
-// deliberately NOT on scroll, where resetting the padding to re-measure would
-// force a reflow every frame.
-var updateSidebarOverscroll = function() {
-   var content = document.getElementById("sidebarContent");
-   if (!content) return;
-
-   // Re-measure the natural content height with our own padding removed.
-   content.style.paddingBottom = "0px";
-   var lastEntry = content.querySelector(".sidebar-col:last-child");
-   var pad = (lastEntry && content.scrollHeight > content.clientHeight)
-      ? Math.max(0, content.clientHeight - lastEntry.offsetHeight)
-      : 0;
-   content.style.paddingBottom = pad + "px";
-};
-
+// label so the bar tracks only the scrollable content list. The scroll range
+// (and thus the overscroll past the last entry) is set by the virtualizer's
+// top/bottom spacers, so there is no padding to recompute here.
 var attachSidebarScrollbar = function() {
    var sidebarPanel = document.getElementById("sidebarPanel");
    var sidebarContent = document.getElementById("sidebarContent");
@@ -6229,17 +6375,14 @@ var resetGridState = function() {
    filteredSummariesRowCount = 0;
 
    // Complete-index sidebar state: the column set and any lazily-fetched
-   // summaries belong to the previous frame; drop them and tear down the
-   // observer so the rebuilt sidebar re-fetches and re-observes cleanly.
+   // summaries belong to the previous frame; drop them so the rebuilt sidebar
+   // re-fetches cleanly.
    sidebarColumns = null;
    sidebarColumnsFetching = false;
    sidebarLazySummaries = {};
    filterDescriptors = {};
    sidebarPendingFetch = {};
-   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
-
-   // Sidebar
-   pendingSummaryFetches = 0;
+   if (sidebarStatsPopup) dismissSidebarStats();
 };
 
 // ==========================================================================
@@ -6836,7 +6979,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
       var targetPos = posForAbsColIndex(targetAbs);
       if (targetPos >= 0) {
          flashColumnHeader(targetPos);
-         flashSidebarColumn(targetPos);
+         flashSidebarColumn(targetAbs);
       }
    }
 
@@ -6969,7 +7112,9 @@ var revealColumnCentered = function(colIdx) {
       if (syncColumnWindow()) renderVisibleRows(true);
    }
    flashColumnHeader(colIdx);
-   flashSidebarColumn(colIdx);
+   // flashSidebarColumn keys off the absolute index; colIdx here is a cols
+   // position, so map it through absColIndex.
+   flashSidebarColumn(absColIndex(colIdx));
 };
 
 // ==========================================================================
@@ -7177,6 +7322,10 @@ window.onActivate = function() {
    }
 
    renderVisibleRows(true);
+   // The sidebar's visible-entry window is computed from the panel's
+   // clientHeight; if the grid bootstrapped while hidden that was 0 and only a
+   // stub window was built, so rebuild it now that the tab has real layout.
+   renderSidebarWindow(true);
    updateInfoBar();
    updateCustomScrollbars();
 

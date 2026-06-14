@@ -47,6 +47,11 @@
    --row-height: 23px;
    --sidebar-width: 240px;
    --info-bar-height: 25px;
+   /* Fixed height of a summary-sidebar entry. The sidebar is virtualized like
+      the grid rows (only the visible window is built), which requires every
+      entry to be the same height so an entry's vertical offset is index x this.
+      Keep in sync with SIDEBAR_ENTRY_HEIGHT in DataViewer.js. */
+   --sidebar-entry-height: 78px;
 }
 
 
@@ -1014,6 +1019,12 @@ th.columnClickable div {
    padding: 6px 8px;
    border-bottom: 1px solid var(--grid-border);
    cursor: pointer;
+   /* Fixed height so the virtualized sidebar can place each entry at
+      index x --sidebar-entry-height without measuring. box-sizing keeps the
+      padding inside that height; overflow stays visible so the sparkline's
+      hover tooltip can escape downward. */
+   box-sizing: border-box;
+   height: var(--sidebar-entry-height);
 }
 
 .sidebar-col:hover {
@@ -1168,6 +1179,10 @@ th.columnClickable div {
 
 .sidebar-sparkline {
    margin-top: 3px;
+   /* Always reserve the sparkline's vertical space, even for columns without a
+      histogram/category bars (or before the summary loads), so every entry is
+      the constant --sidebar-entry-height the virtualizer assumes. */
+   height: 24px;
 }
 
 .sidebar-sparkline canvas {
@@ -1284,33 +1299,15 @@ th.columnClickable div {
    opacity: 0.6;
 }
 
-/* --- Stats panel --- */
+/* --- Stats popover --- */
 
-.sidebar-stats {
-   margin-top: 4px;
-   padding-top: 4px;
-   border-top: 1px solid var(--grid-border);
-}
-
-.sidebar-spinner {
-   display: inline-block;
-   width: 10px;
-   height: 10px;
-   margin-left: 6px;
-   vertical-align: middle;
-   border: 1.5px solid var(--grid-border);
-   border-top-color: var(--grid-fg);
-   border-radius: 50%;
-   animation: spin 0.6s linear infinite, fade-in 1s ease 0.2s both;
-}
-
-@keyframes fade-in {
-   from { opacity: 0; }
-   to   { opacity: 1; }
-}
-
-@keyframes spin {
-   to { transform: rotate(360deg); }
+/* Detailed stats open in a floating popover (anchored to the entry's expand
+   button) rather than growing the entry inline -- which keeps every entry the
+   constant height the virtualized sidebar requires. Reuses the .filterPopup box
+   chrome; this just supplies the padding and a sensible minimum width. */
+.sidebar-stats-popup {
+   padding: 6px 8px;
+   min-width: 140px;
 }
 
 .sidebar-stats-table {

@@ -455,10 +455,11 @@ test.describe('Data Viewer', () => {
         return (center - content.scrollTop) / content.clientHeight;
       }, idx);
 
-      // Column 40 (mid-list) starts below the fold, and far enough from the
-      // ends that centering isn't clamped.
-      await expect.poll(() => entryCenterRatio(40), { timeout: TIMEOUTS.fileOpen })
-        .toBeGreaterThan(1);
+      // Column 40 (mid-list) starts below the fold. The sidebar is virtualized,
+      // so a below-fold entry isn't built at all -- its absence is how we know
+      // it's off-screen (entryCenterRatio returns null when the entry is absent).
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="40"]'))
+        .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
 
       // Jump to it via the go-to-column box.
       await dataViewer.goToColumn(40);
@@ -494,17 +495,29 @@ test.describe('Data Viewer', () => {
     try {
       await waitForViewer(dataViewer);
 
-      // The header reports the frame total once the complete index loads, and
-      // an entry exists for a column well past the fetched window.
+      // The header reports the frame total once the complete index loads.
       await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label'))
         .toHaveText('300 columns', { timeout: TIMEOUTS.fileOpen });
-      const entry250 = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"]');
-      await expect(entry250).toHaveCount(1);
 
-      // Its summary is initially unpopulated (off-window, not yet fetched);
-      // scrolling it into view lazy-loads the range. matrix(1:3000) is
+      // The sidebar is virtualized, so a far-off column's entry isn't built
+      // until it scrolls into the window. Scroll the list to column 250 (entry
+      // height from the CSS var; the rowname is excluded so abs N sits at index
+      // N-1), after which its entry exists.
+      const scrollSidebarToCol = (abs: number) => dataViewer.viewport.evaluate((vp, a) => {
+        const doc = vp.ownerDocument!;
+        const content = doc.getElementById('sidebarContent');
+        if (!content) return;
+        const h = parseInt(
+          getComputedStyle(doc.documentElement).getPropertyValue('--sidebar-entry-height'),
+          10) || 78;
+        content.scrollTop = (a - 1) * h;
+      }, abs);
+      await scrollSidebarToCol(250);
+      const entry250 = dataViewer.frame.locator('.sidebar-col[data-col-idx="250"]');
+      await expect(entry250).toHaveCount(1, { timeout: TIMEOUTS.fileOpen });
+
+      // Its summary lazy-loads once the entry is built. matrix(1:3000) is
       // column-major with 10 rows, so column 250 holds 2491..2500.
-      await entry250.scrollIntoViewIfNeeded();
       await expect(entry250.locator('.sidebar-col-summary'))
         .toHaveText('[2,491, 2,500]', { timeout: TIMEOUTS.fileOpen });
 
@@ -563,13 +576,15 @@ test.describe('Data Viewer', () => {
       await expect(fctEntry.locator('.sidebar-col-summary')).toHaveText('3 levels');
 
       // 25 distinct values (> 24): no sparkline; the text summary names the
-      // dominant value with its share of all rows (6 of 30).
-      await expect(rptEntry.locator('.sidebar-sparkline')).toHaveCount(0);
+      // dominant value with its share of all rows (6 of 30). The entry keeps an
+      // empty reserved sparkline slot (constant height for the virtualizer), so
+      // assert there is no drawn canvas in it rather than no slot at all.
+      await expect(rptEntry.locator('.sidebar-sparkline canvas')).toHaveCount(0);
       await expect(rptEntry.locator('.sidebar-col-summary'))
         .toHaveText('25 unique \u00b7 top: dom (20%)');
 
       // All-distinct (ID-like): cardinality only, no "top".
-      await expect(idsEntry.locator('.sidebar-sparkline')).toHaveCount(0);
+      await expect(idsEntry.locator('.sidebar-sparkline canvas')).toHaveCount(0);
       await expect(idsEntry.locator('.sidebar-col-summary')).toHaveText('30 unique');
     } finally {
       await consoleActions.executeInConsole(
