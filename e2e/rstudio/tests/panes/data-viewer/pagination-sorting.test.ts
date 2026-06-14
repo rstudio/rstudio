@@ -199,14 +199,14 @@ test.describe('Data Viewer', () => {
   });
 
   test('an off-screen row block survives a column-window round trip', async () => {
-    // Regression guard for the blockColsSig round-trip bug. Sliding the column
-    // window away (A -> B) and back (B -> A) remaps the row cache by identity,
-    // wiping each block's non-overlap cells. A block cached outside the
-    // visible+prefetch vertical range during the round trip used to keep its
-    // old signature, so on return (colsSig back to A) it read as "current"
-    // while holding undefined cells -- rendering a permanently blank band with
-    // no refetch. The slide now purges signatures that don't match the new
-    // window, forcing such blocks to refetch when scrolled back into view.
+    // Regression guard for column-window row-cache correctness. Sliding the
+    // column window (A -> B -> A) clears the row cache each time, so a row block
+    // cached outside the visible+prefetch vertical range during the round trip
+    // is gone and must be refetched -- with its cells aligned to the current
+    // window -- when scrolled back into view. An earlier design instead remapped
+    // the cache in place and tracked per-block column signatures, which left
+    // off-screen blocks rendering a permanently blank band on return; this
+    // guards against any regression back into that class of bug.
     //
     // 1500 rows -> three FETCH_SIZE(500) row-blocks; 500 columns force the
     // window to slide. matrix() fills column-major, so V1's row r (0-based)
@@ -250,9 +250,9 @@ test.describe('Data Viewer', () => {
     await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
     await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
 
-    // Scroll the lower block back into view: its cells must be refetched, not
-    // rendered blank from the wiped-but-stale-signature cache. Without the
-    // blockColsSig purge this stays blank ("") and the poll times out.
+    // Scroll the lower block back into view: it was cleared during the round
+    // trip, so it must be refetched and render the correct value. If a stale or
+    // misaligned cache ever rendered it blank instead, this stays "" and times out.
     await expect.poll(() => readV1AtRow(ROW), { timeout: 20000 }).toBe(String(ROW + 1));
   });
 
