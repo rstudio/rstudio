@@ -5844,6 +5844,30 @@ var prepareColumnResponse = function(resCols) {
    }
 };
 
+// Install a freshly fetched column-metadata response as the current `cols`:
+// refine it, recompute the column signature, the frame totals, and the fetched-
+// window bounds the span layout derives from. Shared by the bootstrap (initGrid)
+// and the in-place column-window slide (applyColumnWindowUpdate) so those two
+// paths can't drift. Assumes columnOffset and maxDisplayColumns are already set
+// for the window being installed.
+var installColumnResponse = function(resCols) {
+   prepareColumnResponse(resCols);
+
+   cols = resCols;
+   colsSig = colsRequestList().join(",");
+
+   var resTotalCols = cols[0].total_cols;
+   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
+   if (cols[0].total_rows > 0)
+      totalRows = cols[0].total_rows;
+
+   // Record the fetched window bounds the span layout derives from.
+   fetchedWindowStart = columnOffset + 1;
+   fetchedWindowEnd = maxDisplayColumns > 0
+      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
+      : totalCols;
+};
+
 var initGrid = function(resCols, data) {
    if (resCols.error) {
       showError(resCols.error);
@@ -5858,40 +5882,23 @@ var initGrid = function(resCols, data) {
    // failed one so the rebuilt grid is actually visible.
    hideError();
 
-   prepareColumnResponse(resCols);
-
-   cols = resCols;
-   colsSig = colsRequestList().join(",");
-
    var loc = parseLocationUrl();
 
-   // Determine max display columns
+   // Determine max display columns. Resolved before installColumnResponse so the
+   // column signature and fetched-window bounds it computes use the final value.
    if (loc.maxCols) {
-      maxDisplayColumns = loc.maxCols > 0 ? loc.maxCols : cols.length;
+      maxDisplayColumns = loc.maxCols > 0 ? loc.maxCols : resCols.length;
    } else if (loc.maxDisplayColumns > 0) {
       maxDisplayColumns = loc.maxDisplayColumns;
    } else {
-      maxDisplayColumns = cols.length;
+      maxDisplayColumns = resCols.length;
    }
 
    if (loc.maxRows > 0) {
       maxRows = loc.maxRows;
    }
 
-   // Total columns/rows from rownames metadata
-   var resTotalCols = cols[0].total_cols;
-   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
-   var resTotalRows = cols[0].total_rows;
-   if (resTotalRows > 0) totalRows = resTotalRows;
-
-   // Record the fetched window bounds the span layout derives from.
-   fetchedWindowStart = columnOffset + 1;
-   fetchedWindowEnd = maxDisplayColumns > 0
-      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
-      : totalCols;
-
-   window.dataTableMaxColumns = totalCols;
-   window.dataTableColumnOffset = 0;
+   installColumnResponse(resCols);
 
    // Apply the data_viewer_show_summary preference as the default, but only
    // on the first bootstrap of this frame. When applySavedState will restore
@@ -5984,9 +5991,6 @@ var initGrid = function(resCols, data) {
    // Resize handler -- recompute pinned overscroll padding too, since it
    // depends on viewport width.
    window.addEventListener("resize", onResize);
-
-   // Update column frame callback
-   window.columnFrameCallback(columnOffset, maxDisplayColumns);
 
    // Sync the host's latched-state mirror with sidebarVisible after URL
    // params + saved state have both resolved -- the callback may have
@@ -6594,32 +6598,20 @@ var restoreScrollAnchor = function(anchor) {
 // buttons and go-to-column. Otherwise the current visual position is preserved
 // via a scroll anchor.
 var applyColumnWindowUpdate = function(resCols, options) {
-   prepareColumnResponse(resCols);
-
    var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
    var anchor = targetAbs > 0 ? null : captureScrollAnchor();
 
    // Capture active cell/header identity before swapping `cols`
    // (absColIndex resolves through it); remapped to the new window below.
+   // installColumnResponse refines resCols but doesn't touch the active `cols`,
+   // so these captures still read the old window.
    var activeCellAbs = (activeRow >= 0 && activeCol >= 0)
       ? absColIndex(columnOrder[activeCol]) : -1;
    var activeHeaderAbs = (activeHeaderCol >= 0)
       ? absColIndex(columnOrder[activeHeaderCol]) : -1;
 
    var oldCols = cols;
-   cols = resCols;
-   colsSig = colsRequestList().join(",");
-
-   var resTotalCols = cols[0].total_cols;
-   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
-   if (cols[0].total_rows > 0)
-      totalRows = cols[0].total_rows;
-
-   // Record the fetched window bounds the span layout derives from.
-   fetchedWindowStart = columnOffset + 1;
-   fetchedWindowEnd = maxDisplayColumns > 0
-      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
-      : totalCols;
+   installColumnResponse(resCols);
 
    // Carry cached rows over to the new column alignment, then retire the
    // old window's in-flight fetches: their rows would land misaligned.
@@ -6748,7 +6740,6 @@ var applyColumnWindowUpdate = function(resCols, options) {
    renderVisibleRows(true);
    updateInfoBar();
    updateCustomScrollbars();
-   window.columnFrameCallback(columnOffset, maxDisplayColumns);
 
    // A targeted jump flashes its landing column (header + sidebar entry) so
    // the user can spot where it landed.
@@ -7156,9 +7147,6 @@ window.setOption = function(option, value) {
       case "listViewerCallback":
          window.listViewerCallback = value;
          break;
-      case "columnFrameCallback":
-         window.columnFrameCallback = value;
-         break;
       case "columnOverflowCallback":
          window.columnOverflowCallback = value;
          // Push the current state immediately when known; registration can
@@ -7201,8 +7189,6 @@ window.listViewerCallback = function(row, col) {
    alert("No viewer for list at " + col + ", " + row + ".");
 };
 
-window.columnFrameCallback = function() {};
-
 window.getActiveColumn = function() {
    return activeColumnInfo;
 };
@@ -7219,6 +7205,11 @@ window.matchColumns = function(query, callback) {
    matchColumnsAsync(query, callback);
 };
 
+// Slide the fetched column window to an explicit offset/size. No production
+// caller remains (the old column-pagination UI was replaced by scroll-driven
+// sliding), but this is retained as an automation hook: it is the only way to
+// position the window at an exact offset, which the e2e pin-across-pagination
+// test relies on to page a pinned column out of the fetched set deterministically.
 window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    if (bootstrapping) return;
 
@@ -7247,10 +7238,6 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    // new window's first column scrolls to the left edge.
    slideColumnWindow({ targetAbs: columnOffset + 1 });
 };
-
-// Expose these for GWT interop (DataTable.java sets them)
-window.dataTableMaxColumns = 0;
-window.dataTableColumnOffset = 0;
 
 // ==========================================================================
 // Initialization
