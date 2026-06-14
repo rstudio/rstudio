@@ -189,6 +189,36 @@ test.describe('Data Viewer column filters', () => {
     await expect(gridCells('15').first()).toBeVisible();
   });
 
+  // The popup's apply (checkmark) commits the current value. Applying an
+  // untouched popup is a no-op (the box holds the full range, which sets no
+  // filter), distinguishing "opened but unchanged" from a real selection.
+  test('numeric filter popup apply commits a value and is a no-op when untouched', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    const popup = dataViewer.frame.locator('.filterPopup');
+
+    // Apply without changing anything: the full-range box is a no-op.
+    await colFilter.getByText('All').click();
+    await expect(popup).toBeVisible();
+    await popup.locator('.filterPopupApply').click();
+    await expect(popup).toHaveCount(0);
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(colFilter).toHaveClass(/unfiltered/);
+
+    // Type a range and apply: the value commits and the popup closes.
+    await colFilter.getByText('All').click();
+    await expect(popup).toBeVisible();
+    await popup.locator('.numValueBox').fill('5 - 10');
+    await popup.locator('.filterPopupApply').click();
+    await expect(popup).toHaveCount(0);
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+    await expect(colFilter).toContainText('[5, 10]');
+  });
+
   test('factor filter applies a clicked level and shows it in the filter box', async ({
     rstudioPage: page,
   }) => {

@@ -2522,28 +2522,35 @@ var applyFilters = function() {
    saveState();
 };
 
-// Append a clear-filter "x" to the top-right of a numeric/date filter popup.
-// onClear should drop the column's stored filter and re-render; the popup is
-// then dismissed. The header chip has its own clear X, but a sidebar-opened
-// popup has no chip, so this is the discoverable way to clear from there.
-var appendPopupClearButton = function(popup, onClear) {
-   var clear = document.createElement("span");
-   clear.className = "filterPopupClear";
-   clear.title = "Clear filter";
-   clear.setAttribute("role", "button");
-   clear.setAttribute("tabindex", "0");
-   clear.setAttribute("aria-label", "Clear filter");
-   var run = function(evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-      onClear();
-      if (dismissActivePopup) dismissActivePopup(true);
+// Append apply (checkmark) and clear (x) buttons to the top-right of a
+// numeric/date filter popup. onApply commits the current value -- an unchanged
+// / full-range selection yields no filter (applyNumericFilter/applyDateFilter
+// only store a filter when the value narrows the range), so applying a freshly
+// opened popup does nothing. onClear drops the filter. Both then dismiss. The
+// header chip has its own clear X, but a sidebar-opened popup has neither, so
+// these are its only apply/clear affordances.
+var appendPopupActions = function(popup, onApply, onClear) {
+   var addButton = function(cls, label, handler) {
+      var btn = document.createElement("span");
+      btn.className = cls;
+      btn.title = label;
+      btn.setAttribute("role", "button");
+      btn.setAttribute("tabindex", "0");
+      btn.setAttribute("aria-label", label);
+      var run = function(evt) {
+         evt.stopPropagation();
+         evt.preventDefault();
+         handler();
+         if (dismissActivePopup) dismissActivePopup(true);
+      };
+      btn.addEventListener("click", run);
+      btn.addEventListener("keydown", function(evt) {
+         if (evt.key === "Enter" || evt.key === " ") run(evt);
+      });
+      popup.appendChild(btn);
    };
-   clear.addEventListener("click", run);
-   clear.addEventListener("keydown", function(evt) {
-      if (evt.key === "Enter" || evt.key === " ") run(evt);
-   });
-   popup.appendChild(clear);
+   addButton("filterPopupApply", "Apply filter", onApply);
+   addButton("filterPopupClear", "Clear filter", onClear);
 };
 
 var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
@@ -2686,7 +2693,15 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(numVal);
-      appendPopupClearButton(popup, function() {
+      appendPopupActions(popup, function() {
+         // Apply: commit the current box value (no-op filter if it's the full
+         // range). suppressChange stops the input's removal-triggered change
+         // from scheduling a second, late apply.
+         suppressChange = true;
+         updateView.cancel();
+         applyNumericFilter(numVal.value);
+      }, function() {
+         suppressChange = true;
          updateView.cancel();
          setColumnSearch(idx, "");
          applyFilters();
@@ -2833,7 +2848,15 @@ var createDateFilterUI = function(idx, col, onDismiss, anchor) {
       hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
       popup.appendChild(dateVal);
-      appendPopupClearButton(popup, function() {
+      appendPopupActions(popup, function() {
+         // Apply: commit the current box value (no-op filter if it's the full
+         // range). suppressChange stops the input's removal-triggered change
+         // from scheduling a second, late apply.
+         suppressChange = true;
+         updateView.cancel();
+         applyDateFilter(dateVal.value);
+      }, function() {
+         suppressChange = true;
          updateView.cancel();
          setColumnSearch(idx, "");
          applyFilters();
@@ -2932,13 +2955,15 @@ var createFactorFilterUI = function(idx, col, onDismiss, anchor) {
 var createTextFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
 
-   // Alternate location (sidebar): the character filter is normally an inline
-   // header input, but with an anchor we present the same text box inside a
-   // popup attached to the trigger (the sidebar filter icon).
+   // Alternate location (sidebar): the character filter is normally a bare
+   // inline header input, but with an anchor we present a padded text box with
+   // placeholder guidance inside a popup attached to the trigger (the sidebar
+   // filter icon) -- the divergence from the inline header widget is intended.
    if (anchor) {
       ele.dvFilterController = invokeFilterPopup(anchor, function(popup) {
          popup.classList.add("textFilterPopup");
          var input = createTextFilterBox(popup, idx, col, onDismiss);
+         input.placeholder = "Filter " + col.col_name;
          setTimeout(function() { input.focus(); }, 0);
       }, onDismiss);
       return ele;
@@ -3039,7 +3064,8 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
       document.body.appendChild(popup);
 
       var rect = ele.getBoundingClientRect();
-      var top = rect.bottom + (!popupInfo ? 0 : (popupInfo.top || 0));
+      // +2px gap so the popup sits just below the trigger rather than flush.
+      var top = rect.bottom + 2 + (!popupInfo ? 0 : (popupInfo.top || 0));
       var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
 
       // When opened from the summary sidebar, center the popup within the

@@ -564,13 +564,14 @@ th.columnClickable div {
    padding: 16px 4px 8px;
 }
 
-/* Clear-filter "x" inside the numeric/date filter popup -- a discoverable way
-   to remove the filter, especially from the sidebar (which has no header clear
-   chip). Reuses the .clearFilter glyph treatment. */
-.filterPopupClear {
+/* Apply (checkmark) and clear (x) buttons inside the numeric/date filter popup
+   -- discoverable apply/clear affordances, especially from the sidebar (which
+   has no header clear chip). The clear reuses the .clearFilter glyph; the apply
+   sits just to its left. */
+.filterPopupClear,
+.filterPopupApply {
    position: absolute;
    top: 3px;
-   right: 3px;
    width: 11px;
    height: 11px;
    cursor: pointer;
@@ -578,21 +579,40 @@ th.columnClickable div {
    z-index: 1;
 }
 
+.filterPopupClear {
+   right: 3px;
+}
+
+.filterPopupApply {
+   right: 19px;
+}
+
 .filterPopupClear:hover,
-.filterPopupClear:focus-visible {
+.filterPopupClear:focus-visible,
+.filterPopupApply:hover,
+.filterPopupApply:focus-visible {
    opacity: 1;
 }
 
-.filterPopupClear::after {
+.filterPopupClear::after,
+.filterPopupApply::after {
    content: '';
    display: block;
    width: 11px;
    height: 11px;
    background-color: var(--grid-fg);
-   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
-   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
    -webkit-mask-repeat: no-repeat;
    mask-repeat: no-repeat;
+}
+
+.filterPopupClear::after {
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.filterPopupApply::after {
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 6L4.5 8.5L9 2.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 6L4.5 8.5L9 2.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 .choiceList {
@@ -637,6 +657,21 @@ th.columnClickable div {
    outline: none;
 }
 
+/* Sidebar character filter: a padded panel around a bordered input (the inline
+   header variant stays bare -- see createTextFilterUI). */
+.textFilterPopup {
+   padding: 8px;
+}
+
+.textFilterPopup .textFilterBox {
+   width: 180px;
+   height: auto;
+   box-sizing: border-box;
+   padding: 4px 6px;
+   border: 1px solid var(--grid-border);
+   border-radius: 2px;
+}
+
 .clearFilter {
    position: absolute;
    top: 2px;
@@ -673,7 +708,9 @@ th.columnClickable div {
 .numHist {
    width: 130px;
    height: 80px;
-   margin: 4px 7px 10px 7px;
+   /* auto side margins center the fixed-width histogram within the popup,
+      which may be wider than the histogram (the value box can be wider). */
+   margin: 4px auto 10px auto;
    padding: 10px;
    position: relative;
 }
