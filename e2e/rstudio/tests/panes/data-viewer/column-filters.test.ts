@@ -219,6 +219,29 @@ test.describe('Data Viewer column filters', () => {
     await expect(colFilter).toContainText('[5, 10]');
   });
 
+  // Clicking a histogram bar adjusts the brush; that click must not bubble to
+  // the body-level light-dismiss handler and close the popup (only click-away
+  // should dismiss).
+  test('clicking a histogram bar adjusts the filter without dismissing the popup', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+
+    await colFilter.getByText('All').click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+
+    const bars = popup.locator('.numHist .histBack');
+    const n = await bars.count();
+    await bars.nth(Math.floor(n / 2)).click();
+
+    // The popup stays open and the single-bar selection filtered the grid.
+    await expect(popup).toBeVisible();
+    await expect(dataViewer.gridInfo)
+      .toContainText('filtered from 20', { timeout: TIMEOUTS.fileOpen });
+  });
+
   test('factor filter applies a clicked level and shows it in the filter box', async ({
     rstudioPage: page,
   }) => {

@@ -2676,6 +2676,10 @@ var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
 
       var histBrush = document.createElement("div");
       histBrush.className = "numHist";
+      // A click inside the histogram adjusts the brush; stop it from bubbling
+      // to the body-level light-dismiss handler, which would close the popup
+      // (the value box already stops its own clicks for the same reason).
+      histBrush.addEventListener("click", function(evt) { evt.stopPropagation(); });
 
       var binStart = 0;
       var binEnd = col.col_breaks.length - 2;
@@ -2835,6 +2839,10 @@ var createDateFilterUI = function(idx, col, onDismiss, anchor) {
 
       var histBrush = document.createElement("div");
       histBrush.className = "numHist";
+      // A click inside the histogram adjusts the brush; stop it from bubbling
+      // to the body-level light-dismiss handler, which would close the popup
+      // (the value box already stops its own clicks for the same reason).
+      histBrush.addEventListener("click", function(evt) { evt.stopPropagation(); });
 
       // Seed the brushed bins from the active filter's labels (if any).
       var binStart = 0;
