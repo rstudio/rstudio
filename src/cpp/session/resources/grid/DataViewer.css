@@ -1008,6 +1008,13 @@ th.columnClickable div {
    /* Same rationale as #gridViewport: known content height, so suppress
       the bounce and prevent scroll chaining. */
    overscroll-behavior: none;
+   /* The entry list is virtualized: renderSidebarWindow replaces ALL visible
+      entries (and resizes the top spacer) on every window change. With scroll
+      anchoring enabled the browser would adjust scrollTop to compensate for
+      that wholesale content shift, which re-fires the scroll handler and
+      re-renders -- a self-sustaining scroll loop. The virtualizer manages the
+      scroll position itself via the spacers, so opt out of anchoring. */
+   overflow-anchor: none;
 }
 #sidebarContent::-webkit-scrollbar {
    display: none;                        /* Chromium */

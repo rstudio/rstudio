@@ -482,6 +482,44 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // Regression: the virtualized sidebar replaces all visible entries on every
+  // scroll-driven render. With browser scroll anchoring enabled, that wholesale
+  // content shift made the browser re-adjust scrollTop, which re-fired the
+  // scroll handler -- a self-sustaining "runaway scroll" that kept paging
+  // through columns after the user stopped. #sidebarContent now sets
+  // overflow-anchor:none. Only real wheel events reproduce it (a programmatic
+  // scrollTop set does not), so drive the wheel and assert the scroll settles.
+  test('summary sidebar scroll settles instead of running away', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_scroll_df <- as.data.frame(matrix(1:6000, nrow = 10, ncol = 600)); View(.rs.sidebar_scroll_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      const content = dataViewer.frame.locator('#sidebarContent');
+      await expect(content).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // Wheel over the sidebar, then confirm it scrolled.
+      const box = await content.boundingBox();
+      if (!box) throw new Error('sidebar content has no bounding box');
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.wheel(0, 600);
+      const readTop = () => content.evaluate((el) => el.scrollTop);
+      await expect.poll(readTop, { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+
+      // It must SETTLE: two reads a few hundred ms apart are identical. With the
+      // anchoring loop, scrollTop kept changing on its own and these differ.
+      await page.waitForTimeout(500);
+      const t1 = await readTop();
+      await page.waitForTimeout(400);
+      const t2 = await readTop();
+      expect(t2).toBe(t1);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_scroll_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // The sidebar is a complete index: it lists every column of a wide frame
   // (not just the fetched window), lazy-loads an off-window column's summary
   // when it scrolls into view, and lets you pin/sort an off-window column
