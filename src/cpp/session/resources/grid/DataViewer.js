@@ -4639,8 +4639,9 @@ var buildSidebarEntry = function(col, absIdx, virtIndex) {
 
 // Fixed entry height the virtualizer's offset math (offset = index x H) relies
 // on. Read once from the --sidebar-entry-height CSS custom property so the value
-// has a single source of truth (the .sidebar-col rule), rather than a JS literal
-// that must be kept in sync with the CSS. Falls back to 78 if unavailable.
+// has a single source of truth (the :root rule in DataViewer.css), rather than a
+// JS literal that must be kept in sync with the CSS. Falls back to 78 if
+// unavailable.
 var sidebarEntryHeightCache = 0;
 var sidebarEntryHeight = function() {
    if (!sidebarEntryHeightCache) {
