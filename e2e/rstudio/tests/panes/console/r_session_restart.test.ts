@@ -3,7 +3,16 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 let consoleActions: ConsolePaneActions;
 
-test.describe.serial('R session restart', { tag: ['@serial'] }, () => {
+// TODO(aza): file a follow-up issue to unblock on Server.
+// Server-on-Linux: ConsolePaneActions.restartSession() relies on the
+// `__RESTART_<ts>__DONE` marker being printed cleanly via afterRestart's
+// cat(). On Server the post-restart console fills with what look like
+// terminal-escape-rendered glyphs (long runs of `ה`/`X`) instead of the
+// marker, so toContainText(marker) never matches. Likely the IDE's
+// post-restart render writes ANSI sequences the helper isn't decoding.
+// Skip on Server until the helper handles the post-restart console state
+// correctly. Related: package_installation.test.ts uses the same helper.
+test.describe.serial('R session restart', { tag: ['@serial', '@desktop_only'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.closeAllBuffersWithoutSaving();

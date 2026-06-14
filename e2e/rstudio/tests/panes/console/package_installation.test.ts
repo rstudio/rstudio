@@ -6,7 +6,15 @@ let consoleActions: ConsolePaneActions;
 
 const PACKAGES = ['meditations', 'titanic', 'rtrek'] as const;
 
-test.describe.serial('Package installation', { tag: ['@serial'] }, () => {
+// TODO(aza): file a follow-up issue to unblock on Server.
+// Server-on-Linux: this suite calls ConsolePaneActions.restartSession(),
+// which is broken on Server -- the post-restart console fills with
+// escape-sequence glyphs instead of the expected `__RESTART_<ts>__DONE`
+// marker, so the helper's toContainText(marker) times out. Same root cause
+// as the r_session_restart.test.ts skip; tag this preventively until the
+// helper is fixed (we got lucky on the most recent run, but sharding is
+// not stable, so leaving it untagged would re-introduce flakiness).
+test.describe.serial('Package installation', { tag: ['@serial', '@desktop_only'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.closeAllBuffersWithoutSaving();
