@@ -411,6 +411,15 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
       RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // Dev mode runs `npm run start` (electron-forge), whose webpack dev-server
+      // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
+      // from the per-worker CDP port so concurrent workers -- and a developer's
+      // own manually-launched dev instance on the defaults -- don't collide.
+      // forge.config.js reads these; ignored by the installed-binary path.
+      ...(DEV_MODE ? {
+        RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
+        RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
+      } : {}),
       USERPROFILE: sharedUserHome(),
     },
   };

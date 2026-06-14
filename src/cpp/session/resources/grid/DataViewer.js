@@ -4224,13 +4224,33 @@ var flushSidebarPendingFetch = debounce(120, function() {
    if (!content) { sidebarPendingFetch = {}; return; }
 
    var want = [];
+   var populatedAny = false;
    for (var key in sidebarPendingFetch) {
       if (!sidebarPendingFetch.hasOwnProperty(key)) continue;
       var abs = parseInt(key, 10);
-      if (!getSidebarSummary(abs))
+      var have = getSidebarSummary(abs);
+      if (have) {
+         // Summary already on hand -- typically a column that slid into the
+         // fetched window after its (shell) entry was built. Populate it
+         // directly rather than refetching; this is the in-place equivalent of
+         // the re-seed the full sidebar rebuild used to do on every slide.
+         var readyEntry = content.querySelector(
+            '.sidebar-col[data-col-idx="' + abs + '"]');
+         if (readyEntry) {
+            populateEntrySummary(readyEntry, have);
+            populatedAny = true;
+         }
+      } else {
          want.push(abs);
+      }
    }
    sidebarPendingFetch = {};
+
+   if (populatedAny) {
+      if (sidebarVisible) renderPendingSparklines();
+      if (sidebarScrollbar_) sidebarScrollbar_.update();
+   }
+
    if (want.length === 0)
       return;
 
@@ -6647,19 +6667,35 @@ var applyColumnWindowUpdate = function(resCols, options) {
    deferredHeaderRebuild = false;
 
    // Rebuild layout for the new window: widths, headers (autoSizeColumns
-   // re-injects any active header UI), pinned offsets, and the sidebar
-   // (preserving its scroll position across the rebuild).
+   // re-injects any active header UI) and pinned offsets.
    autoSizeColumns();
    applyPinnedColumns();
-   var sidebarContent = document.getElementById("sidebarContent");
-   var sidebarScrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
-   initSidebar();
-   if (sidebarContent)
-      sidebarContent.scrollTop = sidebarScrollTop;
 
-   // The new window's columns aren't in the filtered-summary map yet; refetch
-   // them so their sidebar entries reflect the active filter rather than
-   // briefly falling back to whole-frame stats.
+   // The sidebar is a complete index of the WHOLE frame (sidebarColumns), so a
+   // window slide does NOT change which entries it lists -- only which columns
+   // now have window-backed summaries, and for unfiltered data those are
+   // identical to the lazily-cached summaries the entries already show. Once the
+   // complete index has loaded, rebuilding the entire entry list (initSidebar)
+   // on every slide is pure DOM churn and a real scroll-time cost (it dominated
+   // slide profiles), so skip it: pin/sort/filter indicators are frame-global
+   // and unchanged by a scroll, and entries that slid into the window are filled
+   // in lazily as they scroll into the sidebar viewport (flushSidebarPendingFetch
+   // now populates already-available summaries, not just freshly-fetched ones).
+   //
+   // The full rebuild is still required before the index loads, when the listed
+   // entries ARE the fetched window and therefore change with the slide.
+   if (sidebarColumns === null) {
+      var sidebarContent = document.getElementById("sidebarContent");
+      var sidebarScrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
+      initSidebar();
+      if (sidebarContent)
+         sidebarContent.scrollTop = sidebarScrollTop;
+   }
+
+   // When a filter is active the new window's columns aren't in the filtered-
+   // summary map yet; refetch so their sidebar entries reflect the filter rather
+   // than whole-frame stats. This rebuilds the sidebar asynchronously when the
+   // summaries land, so it never blocks the slide.
    if (hasActiveRowFilter())
       refreshSidebarSummaries();
 
