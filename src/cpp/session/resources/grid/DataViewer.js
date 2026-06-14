@@ -333,9 +333,19 @@ var rightSpanWidthCache = -1;
 var totalTableWidth = 0;
 
 // Canvas-based text measurer. Lazily initialized so a non-DOM context
-// (tests) doesn't pay the canvas allocation up front.
+// (tests) doesn't pay the canvas allocation up front. measureCtxFont tracks
+// the font currently assigned to the context: reassigning canvas .font reparses
+// the shorthand and dominates the autoSizeColumns measure loop, so we set it
+// only when it actually changes (the loop alternates between just two fonts).
 var measureCanvas = null;
 var measureCtx = null;
+var measureCtxFont = "";
+
+// The two fonts measureTextWidth uses: regular for data cells, bold for
+// headers. Same size/family; only the weight differs.
+var MEASURE_FONT =
+   "11px 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif";
+var MEASURE_FONT_BOLD = "bold " + MEASURE_FONT;
 
 // Cached "1 character width" derived from AVG_CHAR_REF_STRING. Invalid
 // until a measureTextWidth call has populated it; reset to 0 to force
@@ -2036,9 +2046,13 @@ var measureTextWidth = function(text, bold) {
    if (!measureCtx) {
       measureCanvas = document.createElement("canvas");
       measureCtx = measureCanvas.getContext("2d");
+      measureCtxFont = "";
    }
-   measureCtx.font = (bold ? "bold " : "") +
-      "11px 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif";
+   var font = bold ? MEASURE_FONT_BOLD : MEASURE_FONT;
+   if (font !== measureCtxFont) {
+      measureCtx.font = font;
+      measureCtxFont = font;
+   }
    return Math.ceil(measureCtx.measureText(text).width);
 };
 
@@ -2052,6 +2066,39 @@ var avgCharWidth = function() {
          measureTextWidth(AVG_CHAR_REF_STRING, false) / AVG_CHAR_REF_STRING.length;
    }
    return avgCharWidthCache;
+};
+
+// Width of the widest digit at the cell font. Numeric and ISO date/time cells
+// render only digits and separators ('-', ':', '.', ' '), and every separator
+// is narrower than a digit, so col_max_chars * this is a safe upper bound on
+// such a column's rendered width -- letting autoSizeColumns size those columns
+// from the (whole-column-accurate) col_max_chars hint without sampling cells.
+// Cached; the font never changes.
+var digitWidthCache = 0;
+var digitWidth = function() {
+   if (!digitWidthCache) {
+      var w = 0;
+      for (var d = 0; d <= 9; d++) {
+         var dw = measureTextWidth(String(d), false);
+         if (dw > w) w = dw;
+      }
+      digitWidthCache = w;
+   }
+   return digitWidthCache;
+};
+
+// Width of the widest logical literal at the cell font. Logical cells render
+// only TRUE / FALSE / NA, so this sizes a logical column exactly without
+// sampling. Cached; the font never changes.
+var logicalCellWidthCache = 0;
+var logicalCellWidth = function() {
+   if (!logicalCellWidthCache) {
+      logicalCellWidthCache = Math.max(
+         measureTextWidth("TRUE", false),
+         measureTextWidth("FALSE", false),
+         measureTextWidth("NA", false));
+   }
+   return logicalCellWidthCache;
 };
 
 // Compute column widths by measuring header text and a sample of cached cell
@@ -2109,6 +2156,13 @@ var autoSizeColumns = function() {
    measuredWidths = [];
    var totalWidth = 0;
 
+   // Memoize cell-text measurements for this pass. Sampled columns are often
+   // low-cardinality (logical, factor, repeated integers), so the same string
+   // is measured many times across the up-to-100-row sample; caching collapses
+   // that to one measureText per distinct value. Lives for one pass only, so it
+   // can't go stale and is bounded by the sample size.
+   var cellWidthMemo = new Map();
+
    // CSS-derived chrome added beyond the measured text width:
    //   td/th: padding 5px each side + 1px border-right = 11px
    //   .dataCell/.listCell: padding-right overridden to 16px (= 22px chrome)
@@ -2144,41 +2198,71 @@ var autoSizeColumns = function() {
          ? TD_DATA_EXTRA : TD_EXTRA;
       cellExtra += rowNamesPad;
 
-      // If the server provided a max-chars hint, derive a baseline cell
-      // width from it (avgCharWidth x N + chrome). This is exact for
-      // numeric/integer/Date/POSIXct/logical columns, exact-by-bound for
-      // character/factor (max nchar across values), and absent for column
-      // types whose accurate length would require expensive formatting.
-      // We still sample below -- the hint is a baseline, not a ceiling.
-      if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
-         var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
-         if (hintW > maxW) maxW = hintW;
+      // Fixed-glyph fast paths. Columns that render from a small, known glyph
+      // set can be sized from metadata alone, with no per-cell sampling:
+      //   - logical: only TRUE / FALSE / NA, so the widest literal is the width.
+      //   - numeric / Date / POSIXct: only digits and separators, so the
+      //     server's col_max_chars hint (computed over ALL rows) times the
+      //     widest-digit width is a safe upper bound. This is both cheaper than
+      //     sampling AND more accurate -- the 100-row sample could miss the
+      //     widest value, whereas col_max_chars cannot.
+      // Row names take the sampling path (their values are JSON-encoded and
+      // need decoding before measuring).
+      var sized = false;
+      if (!isRowNames) {
+         if (col.col_type === "logical") {
+            var lw = logicalCellWidth() + cellExtra;
+            if (lw > maxW) maxW = lw;
+            sized = true;
+         } else if ((isNumericColumn(col) || isDateColumn(col)) &&
+                    typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+            var nw = Math.ceil(col.col_max_chars * digitWidth()) + cellExtra;
+            if (nw > maxW) maxW = nw;
+            sized = true;
+         }
       }
 
-      // Measure a sample of cell values from the cache. When the hint is
-      // present this catches cases where the avg-char-width estimate
-      // under-counts (e.g., a column of unusually wide glyphs); when it
-      // isn't, this is the sole source of width data for the column.
-      // Sample from the current render window rather than row 0: after a
-      // column-window slide the cache holds the rows around the viewport,
-      // which may be nowhere near the top.
-      var sampleStart = Math.max(0, renderStart);
-      var sampleEnd = sampleStart + Math.min(rowCache.size, 100);
-      for (var r = sampleStart; r < sampleEnd; r++) {
-         var row = rowCache.get(r);
-         if (!row) continue;
-         var cellVal = row[colIdx];
-         if (cellVal === 0 || cellVal === null || cellVal === undefined) {
-            // NA -- short
-            cellVal = "NA";
+      if (!sized) {
+         // If the server provided a max-chars hint, derive a baseline cell
+         // width from it (avgCharWidth x N + chrome). For character/factor this
+         // is exact-by-bound (max nchar across values); some column types ship
+         // no hint at all. We still sample below -- the hint is a baseline, not
+         // a ceiling.
+         if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+            var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
+            if (hintW > maxW) maxW = hintW;
          }
-         var cellText = String(cellVal);
-         // For row names (col 0), the value is JSON-encoded
-         if (isRowNames) {
-            try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+
+         // Measure a sample of cell values from the cache. When the hint is
+         // present this catches cases where the avg-char-width estimate
+         // under-counts (e.g., a column of unusually wide glyphs); when it
+         // isn't, this is the sole source of width data for the column.
+         // Sample from the current render window rather than row 0: after a
+         // column-window slide the cache holds the rows around the viewport,
+         // which may be nowhere near the top.
+         var sampleStart = Math.max(0, renderStart);
+         var sampleEnd = sampleStart + Math.min(rowCache.size, 100);
+         for (var r = sampleStart; r < sampleEnd; r++) {
+            var row = rowCache.get(r);
+            if (!row) continue;
+            var cellVal = row[colIdx];
+            if (cellVal === 0 || cellVal === null || cellVal === undefined) {
+               // NA -- short
+               cellVal = "NA";
+            }
+            var cellText = String(cellVal);
+            // For row names (col 0), the value is JSON-encoded
+            if (isRowNames) {
+               try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+            }
+            var textW = cellWidthMemo.get(cellText);
+            if (textW === undefined) {
+               textW = measureTextWidth(cellText, false);
+               cellWidthMemo.set(cellText, textW);
+            }
+            var cellW = textW + cellExtra;
+            if (cellW > maxW) maxW = cellW;
          }
-         var cellW = measureTextWidth(cellText, false) + cellExtra;
-         if (cellW > maxW) maxW = cellW;
       }
 
       // Manual widths (user resize) take precedence over computed widths.
