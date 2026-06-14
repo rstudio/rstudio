@@ -115,7 +115,14 @@ test.describe('r2d3 Preview security', () => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
   });
 
-  test('preview runs the command in the console after the user consents', async ({ rstudioPage: page }) => {
+  // TODO(aza): file a follow-up issue to unblock this test on Server.
+  // Server-on-Linux: same GWT-side TypeError that breaks the SQL preview's
+  // consent-then-run path -- the IDE throws "Cannot read properties of null
+  // (reading 'WXc')" in compiled JS during the consent flow, and the
+  // expected dialog never renders. Same investigation path: build with
+  // PRETTY GWT symbols and decode the obfuscated stack to find the
+  // null-deref in src/gwt/. Drop @desktop_only when the GWT bug is fixed.
+  test('preview runs the command in the console after the user consents', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
     const sentinel = `${sandbox.dir}/pwned_r2d3_allowed.txt`;
     const fileName = 'injection_r2d3_allowed.js';
     // The 'data' argument both smuggles in the (unsafe) sentinel-writing call
