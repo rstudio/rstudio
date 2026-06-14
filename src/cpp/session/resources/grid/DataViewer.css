@@ -50,7 +50,8 @@
    /* Fixed height of a summary-sidebar entry. The sidebar is virtualized like
       the grid rows (only the visible window is built), which requires every
       entry to be the same height so an entry's vertical offset is index x this.
-      Keep in sync with SIDEBAR_ENTRY_HEIGHT in DataViewer.js. */
+      Single source of truth: DataViewer.js reads it via getComputedStyle
+      (sidebarEntryHeight). */
    --sidebar-entry-height: 78px;
 }
 

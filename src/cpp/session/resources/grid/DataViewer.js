@@ -669,7 +669,6 @@ var sidebarPendingFetch = {};
 // stood in for by two spacer divs sized from the constant entry height. This
 // keeps initSidebar O(visible) rather than O(all columns). See initSidebar and
 // renderSidebarWindow.
-var SIDEBAR_ENTRY_HEIGHT = 78;   // keep in sync with --sidebar-entry-height
 var SIDEBAR_BUFFER_ENTRIES = 5;  // extra entries kept built on each side
 var sidebarListCols = [];        // listed column descriptors (rowname excluded)
 var sidebarRenderTop = null;     // top spacer div
@@ -2267,6 +2266,11 @@ var autoSizeColumns = function() {
             var cellW;
             if (isFixedGlyph) {
                // Digit-bounded: char count x widest digit, no text measurement.
+               // The non-finite literals Inf/-Inf/NaN contain letters that can
+               // be slightly wider than a digit, so an all-non-finite column
+               // (no col_max_chars) could be under-sized by a few px -- harmless
+               // here since those tokens are short and MIN_COL_WIDTH (plus the
+               // header text width) dominates.
                cellW = Math.ceil(cellText.length * digitWidth()) + cellExtra;
             } else {
                // For row names (col 0), the value is JSON-encoded.
@@ -4633,6 +4637,20 @@ var buildSidebarEntry = function(col, absIdx, virtIndex) {
    return entry;
 };
 
+// Fixed entry height the virtualizer's offset math (offset = index x H) relies
+// on. Read once from the --sidebar-entry-height CSS custom property so the value
+// has a single source of truth (the .sidebar-col rule), rather than a JS literal
+// that must be kept in sync with the CSS. Falls back to 78 if unavailable.
+var sidebarEntryHeightCache = 0;
+var sidebarEntryHeight = function() {
+   if (!sidebarEntryHeightCache) {
+      var v = parseInt(getComputedStyle(document.documentElement)
+         .getPropertyValue("--sidebar-entry-height"), 10);
+      sidebarEntryHeightCache = (v > 0) ? v : 78;
+   }
+   return sidebarEntryHeightCache;
+};
+
 // Build (only) the sidebar entries whose vertical band intersects the panel
 // viewport, sizing the off-window range with the top/bottom spacers. The grid-
 // row analogue is renderVisibleRows. Cheap: the one forced layout is reading the
@@ -4642,7 +4660,7 @@ var renderSidebarWindow = function(force) {
    if (!content || !sidebarRenderMid) return;
 
    var n = sidebarListCols.length;
-   var H = SIDEBAR_ENTRY_HEIGHT;
+   var H = sidebarEntryHeight();
    var scrollTop = content.scrollTop;
    var clientH = content.clientHeight;
 
@@ -4695,9 +4713,16 @@ var renderSidebarWindow = function(force) {
       sidebarRenderMid.appendChild(frag);
    }
 
-   // Draw the seeded sparklines and fetch any summaries the new entries queued.
-   if (sidebarVisible) renderPendingSparklines();
-   flushSidebarPendingFetch();
+   // Draw the seeded sparklines and fetch any summaries the new entries queued
+   // -- but only while the panel is shown. A collapsed panel can still have a
+   // non-zero clientHeight, so fetching here would eagerly pull a screenful of
+   // summaries the user can't see; toggleSidebar/onActivate rebuild on open and
+   // fetch then (matching the old IntersectionObserver, which never fired for a
+   // hidden panel).
+   if (sidebarVisible) {
+      renderPendingSparklines();
+      flushSidebarPendingFetch();
+   }
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
 
@@ -5323,7 +5348,7 @@ var flashSidebarColumn = function(absIdx) {
    // compute its offset from the constant entry height.
    var idx = sidebarVirtIndexForAbs(absIdx);
    if (idx < 0) return;
-   var H = SIDEBAR_ENTRY_HEIGHT;
+   var H = sidebarEntryHeight();
    var top = idx * H;
    var viewTop = content.scrollTop;
    var viewH = content.clientHeight;
