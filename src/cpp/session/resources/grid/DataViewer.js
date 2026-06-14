@@ -4919,14 +4919,17 @@ var buildSidebarHelpOverlay = function() {
    addLine(headerSec,
       "Each entry names a column and its type. Click an entry to scroll " +
       "the grid to that column; the pin and sort icons work just like " +
-      "their counterparts in the grid header. The funnel icon opens this " +
-      "column's filter. For date and date-time columns, hover the type " +
-      "label to see the timezone.");
+      "their counterparts in the grid header, and the funnel icon filters " +
+      "the column (see Filter below). For date and date-time columns, hover " +
+      "the type label to see the timezone.");
 
    var plotSec = addSection("Mini-plot");
    addLine(plotSec,
       "Numeric columns draw a histogram of their finite values.",
       "numeric");
+   addLine(plotSec,
+      "Date and date-time columns draw a histogram over time.",
+      "date");
    addLine(plotSec,
       "Factor and character columns with few distinct values draw one " +
       "bar per value: factors in level order, characters most frequent " +
@@ -4941,6 +4944,14 @@ var buildSidebarHelpOverlay = function() {
       "value when there are too many to chart. Distinct values are not " +
       "counted for very large character columns. The right-hand side shows " +
       "the percentage of missing values.");
+
+   var filterSec = addSection("Filter");
+   addLine(filterSec,
+      "The funnel icon opens a filter for the column. Numeric and date/time " +
+      "columns brush a range on the histogram (or type one); factor, logical, " +
+      "and text columns pick or match a value. The grid updates as you adjust " +
+      "the filter. Use the checkmark to confirm and close, or the x to clear " +
+      "it; clicking away leaves the filter in place.");
 
    var detailsSec = addSection("Details");
    addLine(detailsSec,

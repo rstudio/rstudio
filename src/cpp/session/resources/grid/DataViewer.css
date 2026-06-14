@@ -918,7 +918,7 @@ th.columnClickable div {
 
 .sidebar-help-dialog {
    position: relative;
-   width: 340px;
+   width: 400px;
    max-width: calc(100vw - 40px);
    max-height: calc(100vh - 40px);
    overflow-y: auto;
@@ -983,6 +983,10 @@ th.columnClickable div {
 
 .sidebar-help-swatch.categorical {
    background-color: var(--grid-spark-categorical);
+}
+
+.sidebar-help-swatch.date {
+   background-color: var(--grid-spark-date);
 }
 
 #sidebarContent {
