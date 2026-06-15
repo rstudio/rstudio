@@ -10,6 +10,7 @@ import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
+import { trackForReaping } from './process-reaper';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
@@ -138,6 +139,13 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     cwd: path.dirname(path.dirname(rserverBin)), // build/src/cpp -- rserver-dev runs here
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+
+  // Backstop: if the worker exits without running shutdownServer (e.g. an
+  // interrupted run whose graceful teardown was skipped), SIGTERM rserver on
+  // the way out so it isn't orphaned. SIGTERM (not SIGKILL) so rserver runs
+  // its own shutdown and reaps its rsession children -- a killed rserver would
+  // leave those behind.
+  trackForReaping(proc, () => proc.kill('SIGTERM'));
 
   // Surface server logs prefixed for triage. Captured but not failing the
   // test directly -- the URL probe below decides whether the server is up.
