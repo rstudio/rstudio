@@ -1110,7 +1110,7 @@ var createCell = function(data, colIdx, rowData, clazz) {
    // arrive as JSON strings whose first character is a double-quote; skip
    // parse when the value is already the plain numeric form.
    if (rowNumbers && colIdx === 0 && typeof data === "string" &&
-       (data[0] !== '"') && data.length > 1) {
+       data[0] === '"') {
       try { td.title = String(JSON.parse(data)); } catch(e) { td.title = data; }
    } else if (typeof data === "string") {
       td.title = data;
