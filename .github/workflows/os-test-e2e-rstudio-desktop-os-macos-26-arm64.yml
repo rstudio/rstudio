@@ -236,14 +236,6 @@ jobs:
       # (PW_SANDBOX_ROOT_CREATE=1).
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
-      # Promote the 1Password service-account token to the job env so the
-      # "Load secrets from 1Password" step below can be guarded with
-      # `if: env.OP_SERVICE_ACCOUNT_TOKEN != ''` (the `secrets` context is not
-      # available in step-level `if:` expressions). Empty on fork PRs and on
-      # repos that haven't configured the secret; the dependent step is then
-      # skipped and downstream features degrade gracefully (reporter warns,
-      # @ai tests skip with reason).
-      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -335,21 +327,43 @@ jobs:
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
+      # Probe whether the 1Password service-account token is configured without
+      # exposing the secret value to the job env -- the `secrets` context is
+      # not available in step-level `if:` expressions, so we surface a plain
+      # boolean output instead. Empty on fork PRs and on repos that haven't
+      # configured the secret; the Load step below is then skipped and
+      # downstream features degrade gracefully (reporter warns, @ai tests
+      # skip with reason).
+      - name: Check for 1Password token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # Fetch CONNECT_API_KEY (E2E Test Insights reporter) and the Posit AI
       # account creds (email/password consumed by @ai-tagged tests) from
       # 1Password. The GitHub secret holds only the 1Password service account
       # token; the dashboard key and account creds live in 1Password so they
       # can be rotated without re-issuing GitHub secrets. `export-env: true`
       # exposes each entry as an env var of the same name to subsequent steps
-      # (and masks them in logs). Skipped on fork PRs / runs without the token
-      # -- downstream steps treat the missing values as "no creds available"
-      # (reporter uploads warn but never fail; @ai tests skip with reason).
+      # (and masks them in logs).
+      #
+      # OP_SERVICE_ACCOUNT_TOKEN is scoped to this step only -- it's a vault
+      # credential with broader reach than the per-entry secrets it fetches,
+      # so we keep it out of the job env to avoid surfacing it to later
+      # steps that execute PR-controlled code (the Playwright test runner).
       - name: Load secrets from 1Password
-        if: env.OP_SERVICE_ACCOUNT_TOKEN != ''
+        if: steps.op_token_check.outputs.present == 'true'
         uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
         with:
           export-env: true
         env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           # E2E Test Insights reporter (posts results to the Connect dashboard).
           # TODO: replace with the real 1Password reference once the CONNECT_API_KEY
           # item is added to the "RStudio OSS GitHub Actions" vault.
