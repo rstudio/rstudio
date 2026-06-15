@@ -704,10 +704,21 @@ var fetchFilteredSummaries = function(callback) {
 
    appendTransformParams(params);
 
+   // callback(map, rowCount, ok): ok is false only on a hard failure (the fetch
+   // rejected, or the server reported an error). An empty-but-successful result
+   // is reported as ok with a null map -- the caller treats that as "no filtered
+   // summaries to show" rather than a failure. Note a filter matching zero rows
+   // still returns one entry per column (with total_rows 0), so it lands in the
+   // success branch below, not the empty branch.
    gridDataFetch(buildFormData(params))
       .then(function(result) {
-         if (!result || result.error || !result.length) {
-            callback(null, 0);
+         if (result && result.error) {
+            console.warn("fetchFilteredSummaries failed:", result.error);
+            callback(null, 0, false);
+            return;
+         }
+         if (!result || !result.length) {
+            callback(null, 0, true);
             return;
          }
          prepareColumnResponse(result);
@@ -720,11 +731,11 @@ var fetchFilteredSummaries = function(callback) {
             if (typeof entry.col_index === "number" && entry.col_index >= 1)
                map[entry.col_index] = entry;
          }
-         callback(map, rowCount);
+         callback(map, rowCount, true);
       })
       .catch(function(err) {
          console.warn("fetchFilteredSummaries failed:", err);
-         callback(null, 0);
+         callback(null, 0, false);
       });
 };
 
@@ -759,9 +770,15 @@ var refreshSidebarSummaries = function() {
    }
 
    var startToken = drawCounter;
-   fetchFilteredSummaries(function(map, rowCount) {
+   fetchFilteredSummaries(function(map, rowCount, ok) {
       // Drop a response superseded by a newer filter/search/refresh.
       if (startToken !== drawCounter)
+         return;
+      // On a hard failure, keep whatever summaries we already had rather than
+      // reverting to whole-frame stats: that would silently drop the
+      // "(filtered)" tag and relabel full-object numbers as the filtered view.
+      // The failure is logged; a later successful refresh corrects the panel.
+      if (!ok)
          return;
       filteredSummaries = map;
       filteredSummariesRowCount = rowCount;
@@ -6904,9 +6921,8 @@ var restoreScrollAnchor = function(anchor) {
 // the new columns' data is refetched).
 //
 // options.targetAbs, when given, scrolls the viewport so that absolute column
-// is centered in the unpinned viewport region -- used by the pagination
-// buttons and go-to-column. Otherwise the current visual position is preserved
-// via a scroll anchor.
+// is centered in the unpinned viewport region -- used by go-to-column jumps.
+// Otherwise the current visual position is preserved via a scroll anchor.
 var applyColumnWindowUpdate = function(resCols, options) {
    var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
    var anchor = targetAbs > 0 ? null : captureScrollAnchor();
@@ -7002,7 +7018,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
       refreshSidebarSummaries();
 
    // Restore the user's visual position against the new layout: either pin
-   // the requested column centered in the unpinned region (pagination buttons)
+   // the requested column centered in the unpinned region (go-to-column jumps)
    // or re-derive scrollLeft from the anchor captured before the relayout. Then
    // recompute the render window against the settled scroll position.
    var viewport = domViewport;
@@ -7558,7 +7574,7 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
 
    // Slide to the new window in place. The active cell/header is remapped
    // by identity (or cleared when its column left the fetched set), and the
-   // new window's first column scrolls to the left edge.
+   // new window's first column is centered in the unpinned viewport region.
    slideColumnWindow({ targetAbs: columnOffset + 1 });
 };
 

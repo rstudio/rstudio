@@ -189,17 +189,6 @@
    nms
 })
 
-#' Column Index
-#'
-#' Return lightweight identity for every column of a data object -- name,
-#' typeof, and class -- for the data viewer's summary sidebar, which lists all
-#' columns of the frame and lazy-loads the (expensive) per-column statistics
-#' as entries scroll into view. Deliberately cheap: no histograms, ranges, or
-#' factor levels, so this scales to very wide frames where describeCols would
-#' not. The result is a list with one entry per column, parallel to the
-#' frame's columns.
-#'
-#' @param x The data object being viewed.
 # The timezone a POSIXct column is displayed in. Returns "" for non-POSIXct
 # columns. An absent or empty tzone attribute means the column is shown in the
 # session's local timezone, so resolve that to a concrete name (Sys.timezone())
@@ -220,6 +209,17 @@
    tz
 })
 
+#' Column Index
+#'
+#' Return lightweight identity for every column of a data object -- name,
+#' typeof, and class -- for the data viewer's summary sidebar, which lists all
+#' columns of the frame and lazy-loads the (expensive) per-column statistics
+#' as entries scroll into view. Deliberately cheap: no histograms, ranges, or
+#' factor levels, so this scales to very wide frames where describeCols would
+#' not. The result is a list with one entry per column, parallel to the
+#' frame's columns.
+#'
+#' @param x The data object being viewed.
 .rs.addFunction("dataViewer.columnIndex", function(x)
 {
    nms <- .rs.dataViewer.columnNames(x)

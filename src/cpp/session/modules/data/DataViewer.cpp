@@ -489,9 +489,16 @@ json::Value getCols(SEXP dataSEXP,
          err["error"] = "Failed to retrieve column definitions for data.";
       result = err;
    }
-   else 
+   else
    {
-      r::json::jsonValueFromList(colsSEXP, &result);
+      Error jsonError = r::json::jsonValueFromList(colsSEXP, &result);
+      if (jsonError)
+      {
+         LOG_ERROR(jsonError);
+         json::Object err;
+         err["error"] = "Failed to retrieve column definitions for data.";
+         result = err;
+      }
    }
    return result;
 }
@@ -547,9 +554,16 @@ json::Value getColsByIndex(SEXP dataSEXP,
          err["error"] = "Failed to retrieve column definitions for the data slice.";
       result = err;
    }
-   else 
+   else
    {
-      r::json::jsonValueFromList(colsSEXP, &result);
+      Error jsonError = r::json::jsonValueFromList(colsSEXP, &result);
+      if (jsonError)
+      {
+         LOG_ERROR(jsonError);
+         json::Object err;
+         err["error"] = "Failed to retrieve column definitions for the data slice.";
+         result = err;
+      }
    }
    return result;
 }
@@ -1025,6 +1039,16 @@ Error getGridData(const http::Request& request,
                }
                int viewNcol = safeDim(framesSEXP, DIM_COLS);
                ViewTransformParams params = parseViewTransformParams(fields, viewNcol);
+
+               // applyViewTransform shares the per-cacheKey working-copy cache
+               // with the grid's data path. That is safe only while this path
+               // resolves to the SAME filtered frame the grid does: today the
+               // client sends max_rows/max_cols == -1 here, so .rs.subsetData
+               // is a no-op and the transform recomputes from the identical
+               // full frame. If this path ever passes a finite row/col subset,
+               // recompute would assign a subset as the shared working data and
+               // corrupt the grid's getData; give it a distinct cache key (or
+               // subset rows after the transform) before doing so.
                framesSEXP = applyViewTransform(framesSEXP, cacheKey, params, nullptr, protect);
             }
 
