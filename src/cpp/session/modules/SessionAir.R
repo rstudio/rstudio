@@ -68,9 +68,32 @@
    destfile <- tempfile(fileext = ".json")
    .rs.air.downloadFile(url, destfile)
 
-   contents <- readLines(destfile, warn = FALSE)
+   # .rs.fromJSON() takes a single string; readLines() on the pretty-printed
+   # response yields one element per line, so collapse before parsing.
+   contents <- paste(readLines(destfile, warn = FALSE), collapse = "\n")
    response <- .rs.fromJSON(contents)
-   response[["tag_name"]]
+
+   version <- response[["tag_name"]]
+   if (is.null(version))
+      stop(sprintf("Failed to determine latest Air version from '%s'.", url))
+
+   version
+})
+
+.rs.addFunction("air.installedVersions", function()
+{
+   versions <- list.files(.rs.air.rootDir())
+   versions <- versions[file.exists(.rs.air.exePath(versions))]
+   if (length(versions) == 0L)
+      return(character())
+
+   # Tolerate a leading 'v' when parsing, in case Air switches to
+   # v-prefixed release tags; the directory name is still returned as-is.
+   parsed <- numeric_version(sub("^v", "", versions), strict = FALSE)
+   versions <- versions[!is.na(parsed)]
+   parsed <- parsed[!is.na(parsed)]
+
+   versions[order(parsed, decreasing = TRUE)]
 })
 
 .rs.addFunction("air.ensureAvailable", function()
@@ -79,9 +102,23 @@
    exe <- Sys.which("air")
    if (nzchar(exe))
       return(normalizePath(exe))
-   
+
+   # Check for a user-requested version of air
+   version <- getOption("rstudio.air.version")
+
+   # Otherwise, prefer the newest already-installed copy of air, so that
+   # we can avoid querying GitHub for the latest release version
+   if (is.null(version))
+   {
+      installed <- .rs.air.installedVersions()
+      if (length(installed))
+         version <- installed[[1L]]
+   }
+
    # Otherwise, install and use our own copy of air
-   version <- .rs.air.defaultVersion()
+   if (is.null(version))
+      version <- .rs.air.defaultVersion()
+
    exe <- .rs.air.exePath(version)
    if (!file.exists(exe))
    {
@@ -96,7 +133,7 @@
    normalizePath(exe)
 })
 
-.rs.addFunction("air.binDir", function(version)
+.rs.addFunction("air.rootDir", function()
 {
    homeDir <- if (.rs.platform.isWindows)
    {
@@ -107,8 +144,12 @@
       Sys.getenv("HOME", unset = path.expand("~"))
    }
 
-   binDir <- sprintf("%s/.local/lib/air/%s/bin", homeDir, version)
-   chartr("\\", "/", binDir)
+   chartr("\\", "/", file.path(homeDir, ".local", "lib", "air"))
+})
+
+.rs.addFunction("air.binDir", function(version)
+{
+   file.path(.rs.air.rootDir(), version, "bin")
 })
 
 .rs.addFunction("air.exePath", function(version)

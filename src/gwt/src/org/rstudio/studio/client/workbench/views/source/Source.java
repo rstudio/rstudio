@@ -108,7 +108,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
@@ -535,14 +535,17 @@ public class Source implements InsertSourceEvent.Handler,
          activeTabKey += "SourceWindow" +
             pWindowManager_.get().getSourceWindowOrdinal();
 
-      new IntStateValue(MODULE_SOURCE, activeTabKey,
+      // the active document is persisted by ID rather than tab index, as the
+      // physical tab order in the session can differ from the order in which
+      // documents are restored on reload (see #17944)
+      new StringStateValue(MODULE_SOURCE, activeTabKey,
          ClientState.PROJECT_PERSISTENT,
          session_.getSessionInfo().getClientState())
       {
          @Override
-         protected void onInit(Integer value)
+         protected void onInit(String value)
          {
-            if (value == null)
+            if (StringUtil.isNullOrEmpty(value))
                return;
 
             columnManager_.initialSelect(value);
@@ -552,9 +555,9 @@ public class Source implements InsertSourceEvent.Handler,
          }
 
          @Override
-         protected Integer getValue()
+         protected String getValue()
          {
-            return columnManager_.getPhysicalTabIndex();
+            return columnManager_.getActiveDocId();
          }
       };
 
@@ -3408,7 +3411,7 @@ public class Source implements InsertSourceEvent.Handler,
    private boolean suspendSourceNavigationAdding_;
 
    private static final String MODULE_SOURCE = "source-pane";
-   private static final String KEY_ACTIVETAB = "activeTab";
+   private static final String KEY_ACTIVETAB = "activeTabDocId";
    private boolean initialized_;
 
    private final Provider<SourceWindowManager> pWindowManager_;

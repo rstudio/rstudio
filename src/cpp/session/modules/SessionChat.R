@@ -817,24 +817,126 @@
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
-   tryCatch(error = identity, interrupt = identity, {
+   conditionState <- new.env(parent = emptyenv())
+   conditionState$conditions <- list()
 
-      # Register cleanup first so bindings are restored even if
-      # injectBindings() itself errors partway through
-      on.exit({
-         tryCatch(
-            .rs.chat.restoreBindings(),
-            error = function(e) {
-               warning("failed to restore bindings: ", conditionMessage(e))
+   tryCatch(
+      error = function(e) {
+         attr(e, "assistant_conditions") <- conditionState$conditions
+         e
+      },
+      interrupt = function(e) {
+         attr(e, "assistant_conditions") <- conditionState$conditions
+         e
+      },
+      {
+
+         # Register cleanup first so bindings are restored even if
+         # injectBindings() itself errors partway through
+         on.exit({
+            tryCatch(
+               .rs.chat.restoreBindings(),
+               error = function(e) {
+                  warning("failed to restore bindings: ", conditionMessage(e))
+               }
+            )
+         }, add = TRUE)
+         .rs.chat.injectBindings()
+
+         # Evaluate the provided code. Warnings are muffled after recording:
+         # left alone, R defers them to the end of the whole batch and prints
+         # them with the internal eval() call as context. The caller re-emits
+         # them per expression instead (see writeWarningMessages in
+         # SessionChat.cpp, fed by .rs.chat.formatWarningMessages below).
+         # Recording follows the REPL's warn option: with warn < 0 warnings
+         # are suppressed entirely, and with warn >= 2 muffling would defeat
+         # the warning-to-error conversion (which happens after calling
+         # handlers run) and the warning surfaces as the error itself, so
+         # neither is recorded for re-emission. (warn = 1's immediate
+         # printing becomes end-of-expression printing here -- a deliberate
+         # divergence that keeps output attached to its expression.)
+         result <- withCallingHandlers(
+            withVisible(eval(expr, envir = envir)),
+            warning = function(w) {
+               warnLevel <- getOption("warn", 0L)
+               if (warnLevel >= 2L)
+                  return()
+               if (warnLevel >= 0L)
+               {
+                  conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
+                     type = "warning",
+                     text = conditionMessage(w)
+                  )
+               }
+               invokeRestart("muffleWarning")
+            },
+            message = function(m) {
+               conditionState$conditions[[length(conditionState$conditions) + 1L]] <- list(
+                  type = "message",
+                  text = conditionMessage(m)
+               )
             }
          )
-      }, add = TRUE)
-      .rs.chat.injectBindings()
-      
-      # Evaluate the provided code
-      withVisible(eval(expr, envir = envir))
+         result$conditions <- conditionState$conditions
+         result
 
-   })
+      }
+   )
+})
+
+# Format warnings recorded by chat.safeEval approximately the way the REPL
+# prints deferred warnings after an expression completes. Only the message
+# text is recorded, so the REPL's "In <call> :" context and its ">50
+# warnings" collapsing are not reproduced.
+.rs.addFunction("chat.formatWarningMessages", function(conditions)
+{
+   texts <- character(0)
+   for (condition in conditions)
+   {
+      if (identical(condition$type, "warning"))
+         texts <- c(texts, condition$text)
+   }
+
+   if (length(texts) == 0L)
+      ""
+   else if (length(texts) == 1L)
+      paste0("Warning message:\n", texts, "\n")
+   else
+      paste0(
+         "Warning messages:\n",
+         paste0(seq_along(texts), ": ", texts, "\n", collapse = "")
+      )
+})
+
+.rs.addFunction("chat.callExpressionBoundaryHook", function(name, expr, value, ok, visible, error = NULL, conditions = list())
+{
+   if (!nzchar(name))
+      return(invisible(NULL))
+
+   hook <- get0(name, envir = globalenv(), inherits = FALSE)
+   if (!is.function(hook))
+      return(invisible(NULL))
+
+   # Swallow hook errors so a buggy hook can't abort the user's code, but
+   # log them -- otherwise a hook bug degrades interleaving with no signal.
+   tryCatch(
+      hook(
+         expr = expr,
+         value = value,
+         ok = ok,
+         visible = visible,
+         error = error,
+         conditions = conditions
+      ),
+      error = function(e) {
+         .rs.logWarningMessage(paste0(
+            "expression boundary hook '", name, "' failed: ", conditionMessage(e)
+         ))
+         NULL
+      }
+   )
+
+   invisible(NULL)
 })
 
 # Helper function to capture a recorded plot as base64-encoded PNG

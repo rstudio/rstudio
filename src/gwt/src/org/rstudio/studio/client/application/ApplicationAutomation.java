@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application;
 import java.util.Map;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogTracker;
@@ -41,7 +42,9 @@ import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -75,13 +78,22 @@ import com.google.inject.Singleton;
  *   window.rstudio.project.path()       // active project file path, or null
  *   window.rstudio.project.name()       // active project display name, or null
  *   window.rstudio.project.isActive()   // boolean
+ *   window.rstudio.project.airTomlPath() // cached project-root air.toml path, or null
  *   window.rstudio.project.open(path)   // fire SwitchToProjectEvent; resets ready
  *
  *   window.rstudio.dialogs.numShowing()  // count of open modal dialogs
  *   window.rstudio.dialogs.dismissAll()  // hide every open modal dialog
  *
- *   window.rstudio.layout.reset()        // end any active pane/column zoom;
- *                                        // Promise resolves once layout settles
+ *   window.rstudio.layout.reset()        // end any active pane/column zoom or
+ *                                        // pane maximize; Promise resolves once
+ *                                        // layout settles
+ *
+ *   window.rstudio.errors.list()         // uncaught client exceptions recorded
+ *                                        // since the last clear(): message,
+ *                                        // stack, time
+ *   window.rstudio.errors.clear()        // empty the record
+ *   window.rstudio.errors.simulate(msg)  // raise a real uncaught exception
+ *                                        // (harness self-test only)
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -134,6 +146,7 @@ public class ApplicationAutomation
       registerChat();
       registerDialogs();
       registerLayout();
+      registerErrors();
       registerReadinessHandlers();
    }
 
@@ -250,10 +263,74 @@ public class ApplicationAutomation
       registerLayoutObject();
    }
 
-   // End any pane/column zoom a prior test left active. No-op when nothing is
-   // zoomed, so a non-zoomed layout keeps its current column widths. onCompleted
-   // fires once the relayout has settled (see PaneManager.endZoomIfActive) so
-   // the JS side can await it.
+   // Record uncaught client exceptions where the automation harness can see
+   // them. The default ApplicationUncaughtExceptionHandler shows an "Error"
+   // dialog (message only -- no stack) and best-effort logs to the server,
+   // neither of which a test run can reliably observe or attribute. Wrap the
+   // current handler with one that first records {message, stack, time} into
+   // window.rstudio.errors, then delegates so the existing dialog/server
+   // behavior is unchanged. The harness drains the buffer after every test
+   // and fails the test that produced an exception, with the stack in the
+   // failure output.
+   private void registerErrors()
+   {
+      registerErrorsObject();
+
+      final GWT.UncaughtExceptionHandler previousHandler =
+            GWT.getUncaughtExceptionHandler();
+
+      GWT.setUncaughtExceptionHandler((e) ->
+      {
+         try
+         {
+            recordClientException(StringUtil.notNull(e.toString()), stackString(e));
+         }
+         catch (Throwable ignored)
+         {
+            // never let recording break the real handler
+         }
+
+         if (previousHandler != null)
+            previousHandler.onUncaughtException(e);
+      });
+   }
+
+   // Render the throwable (and its cause chain) as a readable stack string.
+   // In draft / super-dev builds the frames carry Java names; in optimized
+   // builds they are best-effort (obfuscated JS identifiers), but the
+   // message and cause chain still identify the failure.
+   private static String stackString(Throwable e)
+   {
+      StringBuilder sb = new StringBuilder();
+      for (Throwable t = e; t != null; t = t.getCause())
+      {
+         if (t != e)
+            sb.append("Caused by: ");
+         sb.append(t.toString()).append("\n");
+
+         StackTraceElement[] stack = t.getStackTrace();
+         int limit = Math.min(stack.length, 50);
+         for (int i = 0; i < limit; i++)
+            sb.append("    at ").append(stack[i]).append("\n");
+      }
+      return sb.toString();
+   }
+
+   // Throw from a scheduled (i.e. $entry-wrapped) context so the exception
+   // takes the real uncaught-handler path. Exists so the harness can
+   // regression-test the capture chain end-to-end; not for product use.
+   private void simulateUncaughtException(String message)
+   {
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         throw new RuntimeException(message);
+      });
+   }
+
+   // End any pane/column zoom or WindowFrame-level pane maximize a prior test
+   // left active. No-op when nothing is zoomed or maximized, so a normal layout
+   // keeps its current column widths. onCompleted fires once the relayout has
+   // settled (see PaneManager.endZoomIfActive) so the JS side can await it.
    private void resetLayoutZoom(JavaScriptObject onCompleted)
    {
       pPaneManager_.get().endZoomIfActive(() -> invokeCallback(onCompleted));
@@ -469,6 +546,15 @@ public class ApplicationAutomation
       return getActiveProjectPath() != null;
    }
 
+   // The cached project-root air.toml path maintained by Projects via
+   // FileChangeEvent. Exposed so tests that create or delete an air.toml on
+   // disk can wait for the file monitor to surface the change before
+   // exercising formatter paths that consult this cache.
+   private String getAirTomlPath()
+   {
+      return RStudioGinjector.INSTANCE.getProjects().getAirTomlPath();
+   }
+
    // forceSaveAll=true matches what tests want: the bridge caller owns the
    // document state going in, and a modal "save changes?" prompt would
    // deadlock automation. Going through SwitchToProjectEvent directly (rather
@@ -597,6 +683,11 @@ public class ApplicationAutomation
       $wnd.rstudio.project.isActive = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isProjectActive()();
       });
+      // Cached project-root air.toml path (or null); tracks the file monitor,
+      // so tests can poll it after creating/deleting an air.toml on disk.
+      $wnd.rstudio.project.airTomlPath = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::getAirTomlPath()();
+      });
       // Reset ready synchronously before dispatching. The QuitEvent handler
       // will also reset it once kQuit lands, but resetting here closes the
       // gap between this call returning and the server-emitted kQuit -- a
@@ -634,13 +725,39 @@ public class ApplicationAutomation
       });
    }-*/;
 
-   // End any pane/column zoom left active by a prior test (no-op otherwise).
-   // Lets a per-test reset clear leaked zoom state without reverse-engineering
-   // it from command checked-states -- PaneManager decides based on the live
-   // layout state it owns. Returns a Promise that resolves once the relayout
-   // has settled (the restore flushes on a later animation frame even under
-   // reduced_motion), so callers can await a stable layout before measuring or
-   // clicking panes.
+   // End any pane/column zoom or pane maximize left active by a prior test
+   // (no-op otherwise). Lets a per-test reset clear leaked zoom/maximize state
+   // without reverse-engineering it from command checked-states -- PaneManager
+   // decides based on the live layout state it owns. Returns a Promise that
+   // resolves once the relayout has settled (the restore flushes on a later
+   // animation frame even under reduced_motion), so callers can await a stable
+   // layout before measuring or clicking panes.
+   // window.rstudio.errors: a drainable record of uncaught client exceptions.
+   //   list()           -> [{ message, stack, time }] (copy)
+   //   clear()          -> empty the record
+   //   simulate(message)-> throw an uncaught exception from a scheduled
+   //                       context (harness self-test only)
+   private native final void registerErrorsObject() /*-{
+      var self = this;
+      $wnd.rstudio.errors = $wnd.rstudio.errors || {};
+      $wnd.rstudio.errors._items = [];
+      $wnd.rstudio.errors.list = $entry(function() {
+         return $wnd.rstudio.errors._items.slice();
+      });
+      $wnd.rstudio.errors.clear = $entry(function() {
+         $wnd.rstudio.errors._items = [];
+      });
+      $wnd.rstudio.errors.simulate = $entry(function(message) {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::simulateUncaughtException(Ljava/lang/String;)(message);
+      });
+   }-*/;
+
+   private native void recordClientException(String message, String stack) /*-{
+      var errors = $wnd.rstudio && $wnd.rstudio.errors;
+      if (errors && errors._items)
+         errors._items.push({ message: message, stack: stack, time: Date.now() });
+   }-*/;
+
    private native final void registerLayoutObject() /*-{
       var self = this;
       $wnd.rstudio.layout = $wnd.rstudio.layout || {};

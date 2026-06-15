@@ -371,24 +371,12 @@ struct PendingExecutionRequest
    json::Value requestId;
    std::string code;
    std::string trackingId;
-   bool captureOutput;
-   bool capturePlot;
-   int timeout;
-   std::chrono::steady_clock::time_point queuedTime;
-
-   PendingExecutionRequest(
-      boost::weak_ptr<core::system::ProcessOperations> ops,
-      const json::Value& reqId,
-      const std::string& c,
-      const std::string& tid,
-      bool capture,
-      bool plot,
-      int to)
-      : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), timeout(to),
-        queuedTime(std::chrono::steady_clock::now())
-   {
-   }
+   bool captureOutput = true;
+   bool capturePlot = false;
+   bool silentExecution = false;
+   std::string expressionBoundaryHook;
+   int timeout = 0;
+   std::chrono::steady_clock::time_point queuedTime = std::chrono::steady_clock::now();
 };
 
 static boost::mutex s_pendingExecutionMutex;
@@ -546,12 +534,53 @@ private:
 class ScopedAgentExecution
 {
 public:
-   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
-   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+   explicit ScopedAgentExecution(bool enabled = true)
+      : enabled_(enabled)
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(true);
+   }
+
+   ~ScopedAgentExecution()
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(false);
+   }
 
    // non-copyable
    ScopedAgentExecution(const ScopedAgentExecution&) = delete;
    ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+
+private:
+   bool enabled_;
+};
+
+class ScopedConsoleOutputSuppression
+{
+public:
+   explicit ScopedConsoleOutputSuppression(bool enabled = true)
+      : enabled_(enabled), previous_(false)
+   {
+      if (enabled_)
+      {
+         previous_ = module_context::isConsoleOutputSuppressed();
+         module_context::setConsoleOutputSuppressed(true);
+      }
+   }
+
+   ~ScopedConsoleOutputSuppression()
+   {
+      if (enabled_)
+         module_context::setConsoleOutputSuppressed(previous_);
+   }
+
+   // non-copyable
+   ScopedConsoleOutputSuppression(const ScopedConsoleOutputSuppression&) = delete;
+   ScopedConsoleOutputSuppression& operator=(const ScopedConsoleOutputSuppression&) = delete;
+
+private:
+   bool enabled_;
+   bool previous_;
 };
 
 // Echo source code with prompts (like evaluate does)
@@ -599,6 +628,66 @@ void echoSourceCode(const std::string& code)
       inputData[kConsoleAgent] = true;
       ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
       module_context::enqueClientEvent(inputEvent);
+   }
+}
+
+// Print warnings recorded by .rs.chat.safeEval for an expression, mimicking
+// the REPL's deferred warning output (safeEval muffles warnings during
+// evaluation, so they are only surfaced here). Called after each successful
+// expression and on the error path before execution stops.
+void writeWarningMessages(SEXP conditionsSEXP)
+{
+   if (conditionsSEXP == R_NilValue)
+      return;
+
+   std::string warningOutput;
+   Error error = r::exec::RFunction(".rs.chat.formatWarningMessages")
+      .addParam(conditionsSEXP)
+      .call(&warningOutput);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (warningOutput.empty())
+      return;
+
+   // Fire signal first so callback captures it, then write to console UI
+   module_context::events().onConsoleOutput(
+      module_context::ConsoleOutputError, warningOutput);
+   module_context::consoleWriteError(warningOutput);
+}
+
+void callExpressionBoundaryHook(const std::string& hookName,
+                                SEXP exprSEXP,
+                                SEXP valueSEXP,
+                                bool ok,
+                                bool visible,
+                                SEXP errorSEXP,
+                                SEXP conditionsSEXP)
+{
+   if (hookName.empty())
+      return;
+
+   // Quote expr and value so language objects are not re-evaluated during
+   // argument passing (see the deparse call in executeCodeImpl)
+   Error hookError = r::exec::RFunction(".rs.chat.callExpressionBoundaryHook")
+      .addParam("name", hookName)
+      .addQuotedParam("expr", exprSEXP)
+      .addQuotedParam("value", valueSEXP)
+      .addParam("ok", ok)
+      .addParam("visible", visible)
+      .addParam("error", errorSEXP)
+      .addParam("conditions", conditionsSEXP)
+      .call();
+
+   // The R wrapper swallows hook-author errors, so a failure here means the
+   // dispatch itself broke (helper not sourced, marshalling error) -- log at
+   // error level like the sibling writeWarningMessages.
+   if (hookError)
+   {
+      LOG_ERROR(hookError);
    }
 }
 
@@ -1211,14 +1300,14 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout);
 
 // Process pending execution requests from the queue
 void processPendingExecution()
 {
-   PendingExecutionRequest request(
-      boost::weak_ptr<core::system::ProcessOperations>(),
-      json::Value(), "", "", false, false, 0);
+   PendingExecutionRequest request;
 
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
@@ -1272,6 +1361,7 @@ void processPendingExecution()
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
+                   request.silentExecution, request.expressionBoundaryHook,
                    request.timeout);
 
    // Schedule next request if queued, or clear busy state
@@ -1332,10 +1422,23 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::Object options;
    json::readObject(params, "options", options);
    bool captureOutput = true, capturePlot = false;
+   std::string executionMode = "interactive";
+   std::string expressionBoundaryHook;
    int timeout = 30000;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
+   json::readObject(options, "executionMode", executionMode);
+   json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
    json::readObject(options, "timeout", timeout);
+
+   if (executionMode != "interactive" && executionMode != "silent")
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+         "Invalid executionMode: " + executionMode + ". Expected 'interactive' or 'silent'.");
+      return;
+   }
+
+   bool silentExecution = executionMode == "silent";
 
    // Check if R console is busy and log for debugging
    bool rIsBusy = console_input::executing() || r::session::isBusy();
@@ -1361,9 +1464,16 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          return;
       }
 
-      s_pendingExecutionQueue.push(PendingExecutionRequest(
-         ops.getWeakPtr(), requestId, code, trackingId,
-         captureOutput, capturePlot, timeout));
+      s_pendingExecutionQueue.push(PendingExecutionRequest{
+         .weakOps = ops.getWeakPtr(),
+         .requestId = requestId,
+         .code = code,
+         .trackingId = trackingId,
+         .captureOutput = captureOutput,
+         .capturePlot = capturePlot,
+         .silentExecution = silentExecution,
+         .expressionBoundaryHook = expressionBoundaryHook,
+         .timeout = timeout});
 
       if (!s_executionScheduled)
       {
@@ -1384,6 +1494,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout)
 {
    if (!pOps)
@@ -1459,10 +1571,17 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Flag that we're executing agent code so console output/error events
    // emitted by R during evaluation get the agent metadata. Uses RAII to
    // guarantee the flag is cleared even if an exception occurs.
-   ScopedAgentExecution agentScope;
+   ScopedAgentExecution agentScope(!silentExecution);
+   ScopedConsoleOutputSuppression consoleOutputScope(silentExecution);
+   // Silent executions are setup/teardown helpers that never need boundary
+   // notifications, so the hook is intentionally disabled (conditions they
+   // record are dropped along with the rest of their output).
+   std::string activeExpressionBoundaryHook =
+      silentExecution ? std::string() : expressionBoundaryHook;
 
    // Echo source code with prompts (like evaluate does)
-   echoSourceCode(code);
+   if (!silentExecution)
+      echoSourceCode(code);
 
    // Evaluate the code. For multi-line code, we parse it into separate expressions
    // and evaluate each one, mimicking REPL behavior where each line is evaluated
@@ -1505,12 +1624,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
    {
       // Add code to console history so it appears in History tab
-      r::session::consoleHistory().add(code, false);
+      if (!silentExecution)
+         r::session::consoleHistory().add(code, false);
 
       // Fire events to notify modules that code is about to execute
       // (matches behavior of normal console input in SessionConsoleInput.cpp)
-      module_context::events().onBeforeExecute();
-      module_context::events().onConsoleInput(code);
+      if (!silentExecution)
+      {
+         module_context::events().onBeforeExecute();
+         module_context::events().onConsoleInput(code);
+      }
 
       numExpressions = Rf_length(parsedSEXP);
 
@@ -1593,6 +1716,19 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
             }
 
+            SEXP conditionsSEXP = Rf_getAttrib(
+               evalResultSEXP,
+               Rf_install("assistant_conditions"));
+
+            // NOTE: this prints warnings before the error text (which is
+            // emitted after the loop), whereas the REPL prints the error
+            // first and then "In addition: Warning messages:".
+            if (!silentExecution)
+               writeWarningMessages(conditionsSEXP);
+
+            callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, R_NilValue,
+                                       false, false, evalResultSEXP, conditionsSEXP);
+
             error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
          }
@@ -1610,6 +1746,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Extract result and visibility
          SEXP exprResult = VECTOR_ELT(evalResultSEXP, 0);
          SEXP visibleSEXP = VECTOR_ELT(evalResultSEXP, 1);
+         SEXP conditionsSEXP = Rf_length(evalResultSEXP) >= 3
+            ? VECTOR_ELT(evalResultSEXP, 2)
+            : R_NilValue;
 
          // Validate visibility flag
          if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
@@ -1633,7 +1772,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          bool exprVisible = (visibleValue == TRUE);
 
          // Print visible results immediately (mimics REPL)
-         if (exprVisible)
+         if (exprVisible && !silentExecution)
          {
             Error printError = r::exec::RFunction("print")
                .addParam(exprResult)
@@ -1652,6 +1791,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                module_context::consoleWriteError(userMsg);
             }
          }
+
+         // Print deferred warnings after the expression's result (mimics REPL)
+         if (!silentExecution)
+            writeWarningMessages(conditionsSEXP);
+
+         callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
+                                    true, exprVisible, R_NilValue, conditionsSEXP);
       }
    }
 
@@ -1678,9 +1824,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             SEXP failedExprSEXP = VECTOR_ELT(parsedSEXP, currentExpressionIndex);
             SEXP deparsedSEXP = R_NilValue;
 
-            // Try to deparse - if it fails, that's okay, we'll just skip the text
+            // Try to deparse - if it fails, that's okay, we'll just skip the text.
+            // IMPORTANT: Use addQuotedParam so the failing expression is not
+            // re-evaluated during argument passing (see safeEval call above).
             Error deparseError = r::exec::RFunction("deparse")
-               .addParam(failedExprSEXP)
+               .addQuotedParam(failedExprSEXP)
                .addParam("width.cutoff", 80)
                .call(&deparsedSEXP, &protect);
 
@@ -1722,22 +1870,28 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Send as kConsoleWritePendingError so the event queue's
-      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
-      // "Error" prefix). Clear the agent flag so the event goes through the
-      // plain string buffering path where annotation happens.
-      module_context::setAgentExecuting(false);
-      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
-      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
-      module_context::enqueClientEvent(errorEvent);
+      if (!silentExecution)
+      {
+         // Send as kConsoleWritePendingError so the event queue's
+         // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+         // "Error" prefix). Clear the agent flag so the event goes through the
+         // plain string buffering path where annotation happens.
+         module_context::setAgentExecuting(false);
+         console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+         ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+         module_context::enqueClientEvent(errorEvent);
+      }
    }
 
    // Close the agent output group started in echoSourceCode().
    // Clear the agent flag first so the group-end escape goes through the
    // plain string buffering path in the event queue, where it will also be
    // recorded in console actions (so the group close survives session reload).
-   module_context::setAgentExecuting(false);
-   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   if (!silentExecution)
+   {
+      module_context::setAgentExecuting(false);
+      module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   }
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics
@@ -3475,6 +3629,10 @@ struct UpdateState
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
    bool manifestUnavailable;
+   // Whether the manifest entry for our protocol opts into the bring-your-own-key
+   // provider set (its "providers" array contains "byok"), used to vary the
+   // not-installed view's copy.
+   bool additionalProvidersAvailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -3500,6 +3658,7 @@ struct UpdateState
         unsupportedInstalledVersion(false),
         unsupportedProtocol(false),
         manifestUnavailable(false),
+        additionalProvidersAvailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -4292,6 +4451,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    bool unsupportedProtocol = false;
    bool unsupportedInstalledVersion = false;
    bool noCompatibleVersion = false;
+   bool additionalProvidersAvailable = false;
    bool updateAvailable = false;
    bool isDowngrade = false;
    std::string newVersion;
@@ -4316,6 +4476,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
          s_updateState.unsupportedProtocol = unsupportedProtocol;
          s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
          s_updateState.noCompatibleVersion = noCompatibleVersion;
+         s_updateState.additionalProvidersAvailable = additionalProvidersAvailable;
          s_updateState.updateAvailable = updateAvailable;
          s_updateState.isDowngrade = isDowngrade;
          s_updateState.newVersion = newVersion;
@@ -4419,8 +4580,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    std::string packageVersion;
    std::string pkgDownloadUrl;
    std::string sha256;
+   std::vector<std::string> providers;
    error = integrity::getPackageInfoFromManifest(
-      manifest, kProtocolVersion, &packageVersion, &pkgDownloadUrl, &sha256);
+      manifest, kProtocolVersion, &packageVersion, &pkgDownloadUrl, &sha256,
+      &providers);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
@@ -4436,6 +4599,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       finish();
       return;
    }
+
+   // When the manifest opts this build into the bring-your-own-key provider set,
+   // the not-installed view appends a sentence about it.
+   additionalProvidersAvailable = integrity::advertisesByokProvider(providers);
 
    // Compare versions - offer install if versions differ (upgrade or downgrade).
    if (shouldInstallVersion(installedVersion, packageVersion))
@@ -4561,6 +4728,7 @@ void resolveWithoutManifestFetch()
       s_updateState.unsupportedProtocol = unsupportedProtocol;
       s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
       s_updateState.noCompatibleVersion = false;
+      s_updateState.additionalProvidersAvailable = false;
       s_updateState.updateAvailable = false;
       s_updateState.isDowngrade = false;
       s_updateState.newVersion = "";
@@ -5248,6 +5416,7 @@ void buildUpdateStateResult(json::Object* pResult)
    (*pResult)["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    (*pResult)["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
    (*pResult)["manifestUnavailable"] = s_updateState.manifestUnavailable;
+   (*pResult)["additionalProvidersAvailable"] = s_updateState.additionalProvidersAvailable;
    (*pResult)["errorMessage"] = s_updateState.errorMessage;
    (*pResult)["currentVersion"] = s_updateState.currentVersion;
    (*pResult)["newVersion"] = s_updateState.newVersion;

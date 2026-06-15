@@ -465,12 +465,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return new ColumnName(column.getName(), column.getAccessibleName());
    }
 
-   public void initialSelect(int index)
+   public void initialSelect(String docId)
    {
       SourceColumn lastActive = getByName(columnState_.getActiveColumn());
       if (lastActive != null)
-         setActive(getByName(columnState_.getActiveColumn()));
-      getActive().initialSelect(index);
+         setActive(lastActive);
+
+      // if the persisted document is gone (e.g. it was closed before the
+      // reload), stay on the last active column; its currently selected tab
+      // still receives the initial selection (and onInitiallyLoaded())
+      SourceColumn column = findByDocument(docId);
+      if (column != null)
+         setActive(column);
+
+      getActive().initialSelect(docId);
    }
 
    public void setActive(int xpos)

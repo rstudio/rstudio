@@ -15,9 +15,11 @@ test.describe('Environment pane', () => {
     await consoleActions.resetSourcePane();
   });
 
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ rstudioPage: page }) => {
     // Every test operates on the Environment tab; make it active first.
-    await envPane.tab.click();
+    // Using the bridge command avoids actionability-check timeouts that occur
+    // when another element overlaps the tab's click target in the full suite.
+    await executeCommand(page, 'activateEnvironment');
   });
 
   test('toolbar elements are displayed', async () => {

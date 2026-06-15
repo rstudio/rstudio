@@ -3820,7 +3820,7 @@ core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
 }
 
 /**
- * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+ * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
  */
 bool UserPrefValues::useAirFormatter()
 {
@@ -3830,6 +3830,19 @@ bool UserPrefValues::useAirFormatter()
 core::Error UserPrefValues::setUseAirFormatter(bool val)
 {
    return writePref("use_air_formatter", val);
+}
+
+/**
+ * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+ */
+bool UserPrefValues::airFormatterRequireToml()
+{
+   return readPref<bool>("air_formatter_require_toml");
+}
+
+core::Error UserPrefValues::setAirFormatterRequireToml(bool val)
+{
+   return writePref("air_formatter_require_toml", val);
 }
 
 /**
@@ -4167,6 +4180,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
       kUseAirFormatter,
+      kAirFormatterRequireToml,
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,

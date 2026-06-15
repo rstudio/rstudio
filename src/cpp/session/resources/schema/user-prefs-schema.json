@@ -2006,7 +2006,13 @@
             "type": "boolean",
             "default": false,
             "title": "Use Air for code formatting",
-            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file."
+            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting R code."
+        },
+        "air_formatter_require_toml": {
+            "type": "boolean",
+            "default": false,
+            "title": "Only use Air when an air.toml file is found",
+            "description": "When set, Air will only be used to format R documents located within a project or directory containing an air.toml file."
         },
         "reformat_on_save": {
             "type": "boolean",

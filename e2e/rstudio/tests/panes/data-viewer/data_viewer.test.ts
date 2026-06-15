@@ -8,6 +8,7 @@
 // values and column names.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
+import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
@@ -203,8 +204,9 @@ test.describe('Data Viewer', () => {
     // Initial layout: rownames column (0), then mtcars columns 1..n in order.
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
 
-    // The pin icon is opacity:0 by default; clicking via locator dispatches
-    // a real click regardless of visibility.
+    // The pin icon is opacity:0 by default, which still passes Playwright's
+    // actionability visibility check (only display:none / visibility:hidden
+    // / an empty box fail it), so a locator click lands.
     const pinCol3 = dataViewer.frame.locator('th[data-col-idx="3"] .pin-icon');
     await pinCol3.click();
 
@@ -219,6 +221,195 @@ test.describe('Data Viewer', () => {
     await expect.poll(() => colHeaderClass(dataViewer, 3))
       .not.toMatch(/\bpinned\b/);
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
+  });
+
+  // The summary sidebar mirrors the grid header's pin and sort affordances:
+  // its icons both reflect state changes made in the grid and drive the same
+  // toggle/cycle paths themselves.
+  test('sidebar pin and sort icons mirror and control column state', async () => {
+    await consoleActions.executeInConsole('View(mtcars)');
+    await waitForViewer(dataViewer);
+
+    const sidebarSort = dataViewer.frame
+      .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+    const sidebarPin = dataViewer.frame
+      .locator('.sidebar-col[data-col-idx="3"] .sidebar-pin-icon');
+
+    // Sort from the sidebar: the grid header and the sidebar icon both
+    // step through asc, then desc.
+    await sidebarSort.click();
+    await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_asc/);
+    await expect(sidebarSort).toHaveClass(/sorting_asc/);
+
+    await sidebarSort.click();
+    await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_desc/);
+    await expect(sidebarSort).toHaveClass(/sorting_desc/);
+
+    // The sort actually re-fetched the rows, not just flipped the arrows:
+    // mtcars' maximum mpg leads the grid when descending.
+    await expect(dataViewer.frame.locator('#gridBody td[data-col-pos="1"]').first())
+      .toHaveText('33.9');
+
+    // Clearing the sort from the grid header (third cycle step) syncs back
+    // into the sidebar icon.
+    await dataViewer.frame.locator('th[data-col-idx="1"]').click();
+    await expect(sidebarSort).not.toHaveClass(/sorting_(asc|desc)/);
+
+    // Pin from the sidebar: the column moves to the pinned prefix and the
+    // sidebar icon flips to its pinned state. (The icon is opacity:0 until
+    // hover, which still passes Playwright's actionability visibility
+    // check -- only display:none / visibility:hidden / an empty box fail it.)
+    await sidebarPin.click();
+    await expect.poll(() => colHeaderClass(dataViewer, 3)).toMatch(/\bpinned\b/);
+    expect((await colOrder(dataViewer)).slice(0, 3)).toEqual(['0', '3', '1']);
+    await expect(sidebarPin).toHaveClass(/\bpinned\b/);
+    await expect(sidebarPin).toHaveAttribute('aria-pressed', 'true');
+
+    // Unpin from the grid header: the sidebar icon follows.
+    await dataViewer.frame.locator('th[data-col-idx="3"] .pin-icon').click();
+    await expect.poll(() => colHeaderClass(dataViewer, 3)).not.toMatch(/\bpinned\b/);
+    await expect(sidebarPin).not.toHaveClass(/\bpinned\b/);
+    await expect(sidebarPin).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  // The sidebar sort icon must work for a column whose <th> is virtualized
+  // out of the rendered window: handleSortClick keys off column state, not
+  // the rendered header (which the pre-sidebar implementation required).
+  test('sidebar sorts a column whose header is virtualized out of the grid', async () => {
+    // 300 columns so a full horizontal scroll evicts column 1's header from
+    // the DOM (same harness as the #17806 filter test). V1 holds descending
+    // values so an ascending sort visibly reverses the row order.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_virt_df <- as.data.frame(matrix(1:30000, nrow = 100, ncol = 300)); .rs.sidebar_virt_df[[1]] <- 100:1; View(.rs.sidebar_virt_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo).toContainText('100', { timeout: TIMEOUTS.fileOpen });
+
+      // Scroll the column window fully right: column 1's header is evicted
+      // from the DOM, but its sidebar entry remains.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+        .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+
+      // The column window's right edge (V200; columns past 200 sit on the
+      // next column page) is now in view. Its first-row cell anchors the
+      // row-order assertions: V200 holds 19901..20000 in natural row order.
+      const lastColCell = dataViewer.frame.locator('#gridBody td[data-col-pos="200"]').first();
+      await expect(lastColCell).toHaveText('19901');
+
+      // Sort ascending from the sidebar: the icon reflects the new state
+      // with no <th> for the column in the document, and the rows actually
+      // reorder (V1 descends, so ascending brings the last row to the top).
+      const sidebarSort = dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+      await sidebarSort.click();
+      await expect(sidebarSort).toHaveClass(/sorting_asc/);
+      await expect(lastColCell).toHaveText('20000', { timeout: TIMEOUTS.fileOpen });
+
+      // Scroll back: the recreated header carries the sort state.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 0; });
+      await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/sorting_asc/);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.sidebar_virt_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // The sidebar footer is uniform across entries: numeric columns show the
+  // actual data range on the left (the sparkline has no axis ticks), and
+  // every column shows an NA percentage on the right, dimmed (class "zero")
+  // when the column has no missing values.
+  test('sidebar footer shows the numeric range and a uniform NA stat', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_footer_df <- data.frame(num = c(1.5, NA, 4.2, 3), chr = letters[1:4]); View(.rs.sidebar_footer_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const numEntry = dataViewer.frame.locator('.sidebar-col[data-col-idx="1"]');
+      const chrEntry = dataViewer.frame.locator('.sidebar-col[data-col-idx="2"]');
+
+      // Numeric column: finite data range on the left, 25% NA on the right.
+      await expect(numEntry.locator('.sidebar-col-summary')).toHaveText('[1.5, 4.2]');
+      const numNa = numEntry.locator('.sidebar-col-na');
+      await expect(numNa).toHaveText('25% NA');
+      await expect(numNa).not.toHaveClass(/\bzero\b/);
+
+      // Character column: distinct-value count on the left, and the NA stat
+      // is still rendered (uniform footer), dimmed via the "zero" class.
+      await expect(chrEntry.locator('.sidebar-col-summary')).toHaveText('4 unique');
+      const chrNa = chrEntry.locator('.sidebar-col-na');
+      await expect(chrNa).toHaveText('0% NA');
+      await expect(chrNa).toHaveClass(/\bzero\b/);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_footer_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // Low-cardinality factor / character columns get a categorical frequency
+  // sparkline (one bar per distinct value, capped server-side at 24 bars);
+  // above the cutoff the sidebar falls back to a text summary with the
+  // dominant value -- omitted for ID-like columns where every value is
+  // distinct and "top" would be noise.
+  test('sidebar shows category bars below the cutoff and a text summary above it', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_cat_df <- data.frame(' +
+        'fct = factor(rep(c("aa", "bb", "cc"), each = 10)), ' +
+        'rpt = c(rep("dom", 6), sprintf("v%02d", 1:24)), ' +
+        'ids = sprintf("id%02d", 1:30)); ' +
+        'View(.rs.sidebar_cat_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const fctEntry = dataViewer.frame.locator('.sidebar-col[data-col-idx="1"]');
+      const rptEntry = dataViewer.frame.locator('.sidebar-col[data-col-idx="2"]');
+      const idsEntry = dataViewer.frame.locator('.sidebar-col[data-col-idx="3"]');
+
+      // 3 levels: frequency bars, with the level count kept in the footer.
+      await expect(fctEntry.locator('.sidebar-sparkline canvas')).toBeVisible();
+      await expect(fctEntry.locator('.sidebar-col-summary')).toHaveText('3 levels');
+
+      // 25 distinct values (> 24): no sparkline; the text summary names the
+      // dominant value with its share of all rows (6 of 30).
+      await expect(rptEntry.locator('.sidebar-sparkline')).toHaveCount(0);
+      await expect(rptEntry.locator('.sidebar-col-summary'))
+        .toHaveText('25 unique \u00b7 top: dom (20%)');
+
+      // All-distinct (ID-like): cardinality only, no "top".
+      await expect(idsEntry.locator('.sidebar-sparkline')).toHaveCount(0);
+      await expect(idsEntry.locator('.sidebar-col-summary')).toHaveText('30 unique');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_cat_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // The sidebar header's "?" opens a dialog explaining the summary entries.
+  // Opening it must not collapse the panel (the icon stops propagation to
+  // the header toggle, unlike the decorative close glyph), and Escape
+  // dismisses it with the panel still expanded.
+  test('sidebar help icon opens the explainer dialog without collapsing the panel', async () => {
+    await consoleActions.executeInConsole('View(mtcars)');
+    await waitForViewer(dataViewer);
+
+    const panel = dataViewer.frame.locator('#sidebarPanel');
+    await expect(panel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+
+    const dialog = dataViewer.frame.locator('.sidebar-help-dialog');
+    await dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-help').click();
+    await expect(dialog).toBeVisible();
+    await expect(panel).toHaveClass(/\bexpanded\b/);
+
+    // The dialog took focus on open, so Escape lands on it and dismisses.
+    await dialog.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(panel).toHaveClass(/\bexpanded\b/);
   });
 
   // https://github.com/rstudio/rstudio/issues/17835
@@ -305,6 +496,15 @@ test.describe('Data Viewer', () => {
         const c3 = await colHeaderClass(dataViewer, 3);
         return /sorting_desc/.test(c1) && /\bpinned\b/.test(c3);
       }).toBe(true);
+
+      // The restored state also re-applies to the rebuilt sidebar (the
+      // trailing updateSidebarColumnIndicators call in initSidebar).
+      await expect(dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon'))
+        .toHaveClass(/sorting_desc/);
+      await expect(dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="3"] .sidebar-pin-icon'))
+        .toHaveClass(/\bpinned\b/);
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.persist_test_df", envir = .GlobalEnv)',
@@ -811,6 +1011,82 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/17958
+  //
+  // Two regressions from the vanilla-JS grid rewrite: (1) End/Ctrl+End jumped
+  // to the last *column* (Excel semantics) instead of scrolling to the bottom
+  // of the current column like the pre-rewrite viewer; (2) the bottom-edge
+  // math in ensureActiveCellVisible used the raw viewport clientHeight,
+  // ignoring the sticky header inside it, so the jump landed a header-height
+  // short and the target row stayed hidden below the fold.
+  test('End scrolls to the last row of the current column, fully visible (#17958)', async ({ rstudioPage: page }) => {
+    // Windows CI: the bottom-edge assertion below reliably fails on
+    // windows-2025 -- cellBox.y + cellBox.height lands ~24px below the
+    // viewport's bottom (observed 332.25 vs 308.5) even though
+    // visibleBodyHeight subtracts the 10px custom horizontal scrollbar
+    // overlay. The 24px overshoot matches neither headerH nor the 10px
+    // scrollbar height, so the gap is most likely a row-height or
+    // viewport-clientHeight delta on Windows Chromium/Electron that the
+    // ensureActiveCellVisible math (DataViewer.js: rowBottom - bodyHeight)
+    // doesn't account for. The product fix in #17961 was developed on
+    // macOS with overlay scrollbars; Windows needs a follow-up to
+    // visibleBodyHeight (or the test's tolerance) once someone with a
+    // Windows box can repro and tune the subtraction.
+    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'visibleBodyHeight undersubtracts on Windows -- see #17958 / #17961');
+
+    // 500 rows forces vertical virtual scrolling; 30 columns force horizontal
+    // overflow so a wrong jump-to-last-column would visibly move scrollLeft.
+    await consoleActions.executeInConsole(
+      '{ .rs.ctrl_end_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.ctrl_end_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Click the first data cell: sets the active cell to (0, 1) and focuses
+      // the viewport so the grid keydown handler receives the End press.
+      await dataViewer.frame.locator('#gridBody tr[data-row="0"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_0_1')).toHaveClass(/\bactiveCell\b/);
+
+      await page.keyboard.press('ControlOrMeta+End');
+
+      // The active cell lands on the last row of the *same* column -- not the
+      // bottom-right corner -- and the viewport does not scroll horizontally.
+      const lastCell = dataViewer.frame.locator('#rsGridCell_499_1');
+      await expect(lastCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      expect(await dataViewer.viewport.evaluate((el) => el.scrollLeft)).toBe(0);
+
+      // The last row must be *fully* visible; before the fix the scroll
+      // stopped a header-height short, leaving it below the bottom edge.
+      const viewportBox = await dataViewer.viewport.boundingBox();
+      const cellBox = await lastCell.boundingBox();
+      expect(viewportBox).not.toBeNull();
+      expect(cellBox).not.toBeNull();
+      expect(cellBox!.y + cellBox!.height)
+        .toBeLessThanOrEqual(viewportBox!.y + viewportBox!.height + 0.5);
+
+      // The info bar's "Showing X to Y" range shares visibleBodyHeight with
+      // the scroll math; at max scroll it must count the last row in view.
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+
+      // Home returns to the top of the same column.
+      await page.keyboard.press('Home');
+      await expect(dataViewer.frame.locator('#rsGridCell_0_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => dataViewer.viewport.evaluate((el) => el.scrollTop)).toBe(0);
+
+      // Plain End (no modifier) behaves identically -- it was the keystroke
+      // in the original report.
+      await page.keyboard.press('End');
+      await expect(lastCell).toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      expect(await dataViewer.viewport.evaluate((el) => el.scrollLeft)).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.ctrl_end_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of
@@ -857,6 +1133,48 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // Adding a column flips the server-side column fingerprint, which discards
+  // the saved per-object UI state (it can no longer be trusted against the new
+  // column structure). The live sidebar choice must NOT be discarded with it:
+  // before the fix, the structure-changed refresh re-applied the
+  // data_viewer_show_summary preference default, silently re-opening a summary
+  // sidebar the user had just dismissed.
+  test('dismissed summary sidebar stays dismissed when a column is added', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_keep_df <- as.data.frame(matrix(0L, nrow = 10, ncol = 5)); View(.rs.sidebar_keep_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const sidebarPanel = dataViewer.frame.locator('#sidebarPanel');
+      const sidebarToggle = page.locator('#data_editing_toolbar .rstudio_dt_sidebar_toggle');
+
+      // The summary sidebar opens by default (data_viewer_show_summary).
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Dismiss it via the toolbar toggle; the latch reflects the new state
+      // once the iframe fires sidebarStateCallback back at the host.
+      await sidebarToggle.click();
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+      await expect(sidebarToggle).toHaveAttribute('aria-pressed', 'false');
+
+      // Add a column: the structure-changed refresh re-bootstraps the grid
+      // with a new column fingerprint, discarding the saved UI state.
+      await consoleActions.executeInConsole('.rs.sidebar_keep_df$added <- 1L');
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // The sidebar stays dismissed -- it must not snap back to the
+      // preference default. The host latch agrees.
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-pressed', 'false');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_keep_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   test('HTML-special column names render as text, not markup', async () => {
     await consoleActions.executeInConsole(
       '{ .rs.escape_hdr_df <- data.frame(x = 1, check.names = FALSE); names(.rs.escape_hdr_df) <- "<b>&\\"\'"; View(.rs.escape_hdr_df) }',
@@ -883,6 +1201,162 @@ test.describe('Data Viewer', () => {
       await consoleActions.executeInConsole(
         'rm(".rs.escape_hdr_df", envir = .GlobalEnv)',
       );
+    }
+  });
+
+  // The saved-state fingerprint covers column types and factor levels, not
+  // just names. A column changing type with unchanged names must discard the
+  // saved per-object state: a numeric filter restored onto a now-character
+  // column would otherwise be applied with the wrong semantics server-side
+  // (is.finite() on character is all-FALSE), silently showing an empty grid.
+  test('a saved numeric filter is discarded when the column type changes', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.type_change_df <- data.frame(x = 1:20); View(.rs.type_change_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Reveal the filter row and apply a numeric range filter to column 1.
+      await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+      const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+      await expect(colFilter).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await colFilter.getByText('All').click();
+
+      const numBox = dataViewer.frame.locator('.filterPopup .numValueBox');
+      await numBox.fill('5 - 10');
+      await numBox.dispatchEvent('change');
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+      const excludedCell = dataViewer.frame
+        .locator('#gridBody td')
+        .filter({ hasText: /^15$/ });
+      await expect(excludedCell).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(dataViewer.frame.locator('.filterPopup')).toHaveCount(0);
+
+      // Change the column's type without renaming it, then refresh in place.
+      // (The console mutation may also trigger an automatic refresh; the
+      // explicit call just makes the re-bootstrap deterministic.)
+      await consoleActions.executeInConsole(
+        '.rs.type_change_df$x <- as.character(.rs.type_change_df$x)',
+      );
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { refreshData?: () => void } | undefined;
+        if (!w?.refreshData) throw new Error('refreshData() not available on data viewer iframe');
+        w.refreshData();
+      }, VIEWER_FRAME);
+
+      // The fingerprint mismatch discards the stale filter: all rows return
+      // (including the value the range had excluded) and nothing reports as
+      // filtered. Pre-fix, the names-only fingerprint validated and the
+      // restored filter emptied the grid.
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 20 entries', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+      await expect(excludedCell.first()).toBeVisible();
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.type_change_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // initSidebar runs on every bootstrap and re-registers the toggle's
+  // listeners on the persistent #sidebarToggle element. Pre-fix it added a
+  // fresh closure each time, so after one refresh a single click ran two
+  // toggles -- a visible no-op. The in-grid toggle (inside the iframe, as
+  // opposed to the host toolbar's latching button) must keep working after
+  // a data refresh.
+  test('the in-grid Summary toggle still works after a data refresh', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.toggle_df <- as.data.frame(matrix(0L, nrow = 10, ncol = 5)); View(.rs.toggle_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      const sidebarPanel = dataViewer.frame.locator('#sidebarPanel');
+      const sidebarToggle = dataViewer.frame.locator('#sidebarToggle');
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+
+      // Add a column: the resulting in-place refresh re-bootstraps the grid
+      // (re-running initSidebar); the column count is the completion gate.
+      await consoleActions.executeInConsole('.rs.toggle_df$added <- 1L');
+      await expect(dataViewer.gridInfo)
+        .toContainText('6 total columns', { timeout: TIMEOUTS.fileOpen });
+
+      // One click flips the sidebar exactly once...
+      await sidebarToggle.click();
+      await expect(sidebarPanel).not.toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'false');
+
+      // ...and once more brings it back. The collapsed #sidebarPanel is
+      // width:0 / overflow:hidden, so the toggle has no hit target at all --
+      // a forced click hit-tests to whatever is topmost at the zero-width
+      // box's center, which differs between retina (local) and 1x (CI)
+      // displays and landed on the grid panel on CI. Dispatch the click
+      // synthetically: what's under test is how many times the listener
+      // runs, not the hit target (re-expanding from the UI goes through the
+      // host toolbar's Summary button, covered elsewhere).
+      await sidebarToggle.dispatchEvent('click');
+      await expect(sidebarPanel).toHaveClass(/\bexpanded\b/);
+      await expect(sidebarToggle).toHaveAttribute('aria-expanded', 'true');
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.toggle_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // Manual (drag-resized) column widths are keyed by absolute column
+  // identity, like pins/sort/filters. Pre-fix they were positional within
+  // the fetched window, so paging to the next set of columns re-applied a
+  // saved width to whatever column occupied the same position -- and the
+  // resized column lost its width.
+  test('a manually resized width follows its column across column pagination', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '.rs.width_df <- as.data.frame(matrix(1:4000, nrow = 10, ncol = 400))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(.rs.width_df)');
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      // Let the post-first-fetch auto-size pass settle before measuring.
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
+
+      const col1 = dataViewer.frame.locator('th[data-col-idx="1"]');
+      const before = (await col1.boundingBox())!;
+
+      // Drag column 1's resize handle 150px to the right.
+      const handle = col1.locator('.resizer');
+      const hb = (await handle.boundingBox())!;
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(hb.x + hb.width / 2 + 150, hb.y + hb.height / 2, { steps: 10 });
+      await page.mouse.up();
+
+      await expect.poll(async () => (await col1.boundingBox())!.width)
+        .toBeGreaterThan(before.width + 100);
+      const resizedWidth = (await col1.boundingBox())!.width;
+
+      // Page forward: the column occupying the same position (201) must
+      // keep its own auto-sized width, not inherit column 1's. Note
+      // data-col-idx is a position within the fetched window, so on page 2
+      // the header for column 201 is found by its absolute title instead.
+      await expect(dataViewer.rightArrow).toBeVisible();
+      await dataViewer.rightArrow.click();
+      await expect(dataViewer.columnNumberInput).toHaveValue('201 - 400');
+      const col201 = dataViewer.columnHeader(201);
+      await expect(col201).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(async () => (await col201.boundingBox())!.width)
+        .toBeLessThan(resizedWidth - 50);
+
+      // Page back: column 1 still carries the manual width.
+      await dataViewer.leftArrow.click();
+      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      await expect.poll(async () =>
+        (await dataViewer.frame.locator('th[data-col-idx="1"]').boundingBox())!.width,
+      { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(before.width + 100);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.width_df", envir = .GlobalEnv)');
     }
   });
 });

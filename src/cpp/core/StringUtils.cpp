@@ -395,6 +395,41 @@ std::string systemToUtf8(const std::string& str)
    return systemToUtf8(str, CP_ACP);
 }
 
+std::size_t utf8IncompleteSuffixLength(const std::string& str)
+{
+   // a UTF-8 sequence is at most 4 bytes, so a truncated one occupies at most
+   // the last 3 bytes; walk back over trailing continuation bytes (10xxxxxx)
+   // to the candidate lead byte
+   std::size_t n = str.size();
+   std::size_t i = n;
+   while (i > 0 && n - i < 3 &&
+          (static_cast<unsigned char>(str[i - 1]) & 0xC0) == 0x80)
+   {
+      i--;
+   }
+
+   if (i == 0)
+      return 0;
+
+   // determine how many bytes the lead byte promises; anything else (ASCII,
+   // a stray continuation byte, or an invalid byte) is not a truncated
+   // sequence
+   unsigned char lead = static_cast<unsigned char>(str[i - 1]);
+   std::size_t expected;
+   if ((lead & 0xE0) == 0xC0)
+      expected = 2;
+   else if ((lead & 0xF0) == 0xE0)
+      expected = 3;
+   else if ((lead & 0xF8) == 0xF0)
+      expected = 4;
+   else
+      return 0;
+
+   // the sequence is truncated only if fewer bytes remain than promised
+   std::size_t available = n - i + 1;
+   return (available < expected) ? available : 0;
+}
+
 // https://en.cppreference.com/w/cpp/string/byte/toupper#Notes
 std::string toUpper(const std::string& str)
 {

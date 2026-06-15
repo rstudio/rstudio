@@ -273,6 +273,11 @@ private:
    std::chrono::steady_clock::time_point restartClearDeadline_;
 #endif
 
+   // Trailing bytes of a UTF-8 character split across PTY output chunks, held
+   // back until the rest of the character arrives in the next chunk (see
+   // enqueOutputEvent).
+   std::string pendingUtf8Bytes_;
+
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_ = kIgnoreSequence;

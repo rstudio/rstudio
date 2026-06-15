@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand } from '@utils/commands';
 import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -10,6 +11,12 @@ import { TIMEOUTS } from '@utils/constants';
 
 // Find in Files results pane (workbench_panel_ + idSafeString("Find in Files")).
 const FIND_PANE = '#rstudio_workbench_panel_find_in_files';
+// The Find in Files dialog and its three search-option checkboxes
+// (ElementIds.FIND_FILES_CASE / FIND_FILES_WHOLE_WORD / FIND_FILES_REGEX).
+const FIND_DIALOG = 'div.gwt-DialogBox[aria-label="Find in Files"]';
+const CASE_CHECKBOX = '#rstudio_find_files_case';
+const WHOLE_WORD_CHECKBOX = '#rstudio_find_files_whole_word';
+const REGEX_CHECKBOX = '#rstudio_find_files_regex';
 // Search-pattern box in the Find in Files dialog (ElementIds.FIND_FILES_TEXT).
 const SEARCH_INPUT = '#rstudio_find_files_text';
 // Replace-mode toggle, replace box, and Replace All button in the find pane
@@ -17,11 +24,98 @@ const SEARCH_INPUT = '#rstudio_find_files_text';
 const REPLACE_MODE_TOGGLE = '#rstudio_find_replace_mode_toggle';
 const REPLACE_INPUT = '#rstudio_find_replace_text';
 const REPLACE_ALL_BTN = '#rstudio_find_replace_all';
+// Find pane toolbars and their run/stop controls (aria-labels).
+const SEARCH_TOOLBAR = 'div[aria-label="Find Output Tab"]';
+const REPLACE_TOOLBAR = 'div[aria-label="Replace"]';
+const REFRESH_BTN = 'button[aria-label="Refresh Find in Files results"]';
+const STOP_SEARCH_BTN = 'button[aria-label="Stop find in files"]';
+const STOP_REPLACE_BTN = 'button[aria-label="Stop replace"]';
 // Standard modal buttons (pages/modals.page.ts).
 const FIND_OK_BTN = '#rstudio_dlg_ok';
+const FIND_CANCEL_BTN = '#rstudio_dlg_cancel';
 const CONFIRM_YES_BTN = '#rstudio_dlg_yes';
 
 const sandbox = useSuiteSandbox();
+
+// General Find in Files behavior: the search-options dialog, and a real
+// multi-file search with the search/replace toolbar toggle. Cross-mode -- file
+// creation goes through the R console and every assertion is on the UI, so
+// there's no Node-fs dependency (unlike the disk-reading Replace All test below).
+test.describe('Find in Files', () => {
+  test.afterAll(async ({ rstudioPage: page }) => {
+    await closeProjectIfOpen(page);
+  });
+
+  test('dialog exposes the case, whole-word, and regex options', async ({ rstudioPage: page }) => {
+    // Original: test_desktop_FindInFiles.py::test_show_modal
+    await executeCommand(page, 'findInFiles');
+    await expect(page.locator(FIND_DIALOG)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(CASE_CHECKBOX)).toBeVisible();
+    await expect(page.locator(WHOLE_WORD_CHECKBOX)).toBeVisible();
+    await expect(page.locator(REGEX_CHECKBOX)).toBeVisible();
+
+    await page.locator(FIND_CANCEL_BTN).click();
+    await expect(page.locator(FIND_DIALOG)).toBeHidden();
+  });
+
+  test('searches across multiple files and toggles the replace toolbar', async ({ rstudioPage: page }) => {
+    // Original: test_desktop_FindInFiles.py::test_show_pane +
+    // test_create_file_and_perform_search (the single-file Selenium versions).
+    const consoleActions = new ConsolePaneActions(page);
+
+    // Open a project so the dialog defaults its search scope to the project dir
+    // (avoids driving the read-only native directory chooser). Opening the
+    // project sets R's working directory to the project root, so the relative
+    // writeLines paths below land inside the searched scope.
+    await createAndOpenProject(page, sandbox.dir, 'find_multi_file_project');
+
+    // Macbeth's dagger soliloquy (Act 2, Sc 1), one file per fragment. "dagger"
+    // appears in the first and third but not the second, so the search must
+    // return hits in two files and correctly skip the middle one.
+    await consoleActions.executeInConsole(
+      `writeLines(c("Is this a dagger which I see before me,", "The handle toward my hand? Come, let me clutch thee."), con = "soliloquy_1.txt")`,
+      { wait: true },
+    );
+    await consoleActions.executeInConsole(
+      `writeLines(c("I have thee not, and yet I see thee still.", "Art thou not, fatal vision, sensible", "To feeling as to sight?"), con = "soliloquy_2.txt")`,
+      { wait: true },
+    );
+    await consoleActions.executeInConsole(
+      `writeLines(c("Or art thou but", "A dagger of the mind, a false creation", "Proceeding from the heat-oppressed brain?"), con = "soliloquy_3.txt")`,
+      { wait: true },
+    );
+
+    // Search the project for "dagger".
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await searchInput.click();
+    await searchInput.pressSequentially('dagger');
+    await page.locator(FIND_OK_BTN).click();
+
+    // Results span the two matching files and exclude the third. Waiting for
+    // both matches confirms the search finished before the absence assertion.
+    const findPane = page.locator(FIND_PANE);
+    await expect(findPane).toContainText('soliloquy_1.txt', { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).toContainText('soliloquy_3.txt');
+    await expect(findPane).not.toContainText('soliloquy_2.txt');
+
+    // The pane opens in search mode: search toolbar shown, replace toolbar
+    // hidden, refresh available, and the search isn't still running.
+    await expect(page.locator(SEARCH_TOOLBAR)).toBeVisible();
+    await expect(page.locator(REPLACE_TOOLBAR)).toBeHidden();
+    await expect(page.locator(REFRESH_BTN)).toBeVisible();
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden();
+
+    // Toggling replace mode reveals the replace toolbar and Replace All, while
+    // the search toolbar stays put.
+    await page.locator(REPLACE_MODE_TOGGLE).click();
+    await expect(page.locator(SEARCH_TOOLBAR)).toBeVisible();
+    await expect(page.locator(REPLACE_TOOLBAR)).toBeVisible();
+    await expect(page.locator(REPLACE_ALL_BTN)).toBeVisible();
+    await expect(page.locator(STOP_REPLACE_BTN)).toBeHidden();
+  });
+});
 
 // Regression test for #17845: a Find in Files "Replace All" must rewrite the
 // file with every match replaced -- and must not leave it truncated/emptied.

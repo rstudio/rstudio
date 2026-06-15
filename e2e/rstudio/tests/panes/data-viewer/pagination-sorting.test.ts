@@ -4,6 +4,8 @@ import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
 import { resetSourcePaneState } from '@utils/commands';
 
+const VIEWER_FRAME = '#rstudio_data_viewer_frame';
+
 // Tests from: electron-tests/EditorPane/test_desktop_DataViewer.py
 // Issues: https://github.com/rstudio/rstudio/issues/13220
 //         https://github.com/rstudio/rstudio/issues/13328
@@ -50,6 +52,13 @@ test.describe('Data Viewer', () => {
 
     // Check initial column range
     await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+
+    // The summary sidebar header counts the loaded page against the frame
+    // total; both sides must exclude the rowname column, so a miscount on
+    // either would surface here as an off-by-one (e.g. "201 of 500").
+    await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label')).toHaveText(
+      '200 of 500 columns',
+    );
 
     // Navigate forward one page
     await dataViewer.rightArrow.click();
@@ -123,6 +132,73 @@ test.describe('Data Viewer', () => {
 
     // After descending sort, first row of X2 should be 200 (max value)
     await expect(firstRowX2).toContainText('200');
+  });
+
+  // -----------------------------------------------------------------------
+  // Clear-sort button in the status bar
+  // -----------------------------------------------------------------------
+  test('clear-sort button in the status bar resets the sort', async ({ rstudioPage: page }) => {
+    // Values chosen so no cell text is a substring of another -- a stale
+    // sort can't false-pass a toContainText assertion.
+    await consoleActions.executeInConsole(
+      'df <- data.frame(a = c(20, 10, 30))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(df)');
+
+    await expect(sourcePane.selectedTab).toContainText('df');
+
+    // First row cells are [rowNum, a]; skip the virtual-scroll spacer row.
+    const firstRowA = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(2)');
+    await expect(firstRowA).toContainText('20');
+
+    // No sort active: the clear button is hidden.
+    await expect(dataViewer.clearSortButton).toBeHidden();
+
+    // Sort column 1 descending (click twice).
+    await dataViewer.columnHeader(1).click();
+    await dataViewer.columnHeader(1).click();
+    await expect(firstRowA).toContainText('30');
+    await expect(dataViewer.sortStatus).toContainText('Sorted by: a (descending)');
+    await expect(dataViewer.clearSortButton).toBeVisible();
+
+    // The summary sidebar mirrors the sort state on its own icon.
+    const sidebarSort = dataViewer.frame
+      .locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+    await expect(sidebarSort).toHaveClass(/sorting_desc/);
+
+    // Clicking the clear button restores the natural row order, clears the
+    // status text, hides the button, and resets both the header indicator
+    // and the sidebar icon.
+    await dataViewer.clearSortButton.click();
+    await expect(firstRowA).toContainText('20');
+    await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
+    await expect(dataViewer.clearSortButton).toBeHidden();
+    await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
+    await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+    await expect(sidebarSort).not.toHaveClass(/sorting_asc|sorting_desc/);
+
+    // The cleared sort must also persist: clearSort() saves sort: null, and a
+    // restore-path regression that re-applied the stale sort on reload (the
+    // filter analogue was #17950) would pass everything above. refreshData()
+    // synchronously clears the grid DOM, then re-fetches and re-applies the
+    // persisted state, so the reappearing first row gates the assertions.
+    await page.evaluate((sel: string) => {
+      const f = document.querySelector(sel) as HTMLIFrameElement | null;
+      const w = f?.contentWindow as unknown as { refreshData?: () => void } | undefined;
+      if (!w?.refreshData)
+        throw new Error('refreshData() not available on data viewer iframe');
+      w.refreshData();
+    }, VIEWER_FRAME);
+
+    // The rebuilt grid comes back unsorted: natural row order, no status
+    // text, no clear button, and reset header / sidebar indicators.
+    await expect(firstRowA).toContainText('20');
+    await expect(dataViewer.sortStatus).not.toContainText('Sorted by');
+    await expect(dataViewer.clearSortButton).toBeHidden();
+    await expect(dataViewer.columnHeader(1)).not.toHaveClass(/sorting_asc|sorting_desc/);
+    await expect(dataViewer.columnHeader(1)).toHaveAttribute('aria-sort', 'none');
+    await expect(sidebarSort).not.toHaveClass(/sorting_asc|sorting_desc/);
   });
 
   // -----------------------------------------------------------------------

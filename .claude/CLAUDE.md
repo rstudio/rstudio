@@ -276,22 +276,7 @@ To build the Electron application / desktop components, you can use:
 
 ## Writing Automated Tests
 
-End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`. The rsession is started with `--automation-agent`, which causes the GWT frontend to install a JS automation bridge at `window.rstudio` (see `ApplicationAutomation.java`). The Playwright command helpers in `e2e/rstudio/utils/commands.ts` drive the IDE through this bridge instead of the R console, avoiding the focus-shift and pane-collapse pitfalls of the console path.
-
-The `window.rstudio` surface includes:
-
-- `window.rstudio.ready` -- boolean flipped to `true` once R's deferred init has run; the canonical "automation can start" signal (reset to `false` on restart or project open/close).
-- `window.rstudio.commands.<commandId>()` -- execute an AppCommand; `.isChecked()` / `.isEnabled()` query its state. `commands.list` is the array of all command ids.
-- `window.rstudio.prefs.<camelCaseName>.get()` / `.set(value)` / `.clear()` -- `set` and `clear` return a Promise that resolves once the `setUserPrefs` RPC has landed server-side.
-- `window.rstudio.documents` -- `active()`, `activeEditor()` (native Ace editor), `open(path, opts?)`, `closeAllNoSave()`, `resetToUntitled()`.
-- `window.rstudio.project` -- `path()`, `name()`, `isActive()`, `open(path)`.
-- `window.rstudio.version` -- `{ rstudio, r }` version strings.
-- `window.rstudio.dialogs` -- `numShowing()`, `dismissAll()`.
-- `window.rstudio.layout.reset()` -- end any active pane/column zoom.
-
-Commands and prefs are enumerated up front at agent init, so a missing-by-name lookup is a genuine "doesn't exist" rather than "not yet touched by GWT code".
-
-See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.
+End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`. They drive the IDE through a JS automation bridge at `window.rstudio`, documented in `e2e/rstudio/CLAUDE.md`. See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.
 
 
 ## Testing
@@ -299,9 +284,10 @@ See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guida
 
 ### C++ and R Tests
 
-Both are run through `rstudio-tests`:
+Both are run through `rstudio-tests`, generated into the build directory
+(from `src/cpp/rstudio-tests.in`):
 
-    ./rstudio-tests --scope <scope> --filter <pattern>
+    ./build/src/cpp/rstudio-tests --scope <scope> --filter <pattern>
 
 The `core`, `rserver`, and `rsession` scopes run the C++ Google Test suites.
 The `r` scope runs the R `testthat` suite under `src/cpp/tests/testthat/`
@@ -474,6 +460,7 @@ For branch naming:
 
 ## Issues
 
+- When instructed to investigate or fix a GitHub issue, update the Assignee to the current user (`gh api user --jq .login`), and check that the issue has been added to the RStudio IDE project with an "In Progress" status.
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
 - These labels apply to issues only, not to pull requests

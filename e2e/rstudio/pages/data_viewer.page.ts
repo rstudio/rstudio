@@ -14,6 +14,8 @@ export class DataViewerPane extends PageObject {
 
   // Elements inside the iframe
   public gridInfo: Locator;
+  public sortStatus: Locator;
+  public clearSortButton: Locator;
   public viewport: Locator;
   public horizontalScrollbar: Locator;
 
@@ -30,6 +32,10 @@ export class DataViewerPane extends PageObject {
     // The data grid renders inside an iframe
     this.frame = page.frameLocator('[title="Data Browser"]');
     this.gridInfo = this.frame.locator('#rsGridData_info');
+    // "Sorted by: <col>" status at the right of the info bar, with its
+    // clear-sort button (hidden while no sort is active).
+    this.sortStatus = this.frame.locator('#rsGridData_info_sort');
+    this.clearSortButton = this.frame.locator('#rsGridData_info_sort_clear');
     this.viewport = this.frame.locator('#gridViewport');
     // Custom auto-hide overlay scrollbar for the horizontal axis. Carries the
     // "visible" class while shown; the class is removed when it fades out.
