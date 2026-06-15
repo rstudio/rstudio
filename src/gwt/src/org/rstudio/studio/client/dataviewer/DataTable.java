@@ -22,16 +22,14 @@ import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-
-import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -49,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -569,7 +568,13 @@ public class DataTable
    
    public void onActivate()
    {
-      onActivate(getWindow());
+      // onActivate gets invoked before the active iframe window has
+      // actually been updated in the host frame, so we defer delegating
+      // the activation event until we know the host frame's been updated
+      Scheduler.get().scheduleFinally(() ->
+      {
+         onActivate(getWindow());
+      });
    }
    
    public void onDeactivate()
