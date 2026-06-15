@@ -336,7 +336,7 @@ var measureCanvas = null;
 var measureCtx = null;
 var measureCtxFont = "";
 
-// DOM element cache — populated in initGrid, cleared in destroyGrid.
+// DOM element cache -- populated in initGrid, cleared in destroyGrid.
 // Avoids document.getElementById calls on every scroll frame.
 var domViewport = null;
 var domTbody = null;
@@ -6145,6 +6145,8 @@ var installColumnResponse = function(resCols) {
 
 var initGrid = function(resCols, data) {
    // Cache DOM element references so render-path code can skip re-querying.
+   // The individual references are captured here once and used by the many
+   // render-path functions that reference the cached variables directly.
    domViewport = document.getElementById("gridViewport");
    domTbody = document.getElementById("gridBody");
    domThead = document.getElementById("data_cols");
@@ -6700,7 +6702,8 @@ var destroyGrid = function() {
    invalidateCache();
    destroyCustomScrollbars();
 
-   // Clear DOM cache — it will be re-populated by the next initGrid.
+   // Clear DOM cache at the end, after all cleanup that depends on the
+   // cached references has run.  The next initGrid re-populates them.
    domViewport = null;
    domTbody = null;
    domThead = null;
