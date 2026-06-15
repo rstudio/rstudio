@@ -1,4 +1,4 @@
-name: "Test: E2E Playwright RStudio (Desktop, PR-triggered)"
+name: "Test: E2E Playwright RStudio (PR-triggered)"
 
 on:
   pull_request:
@@ -10,9 +10,10 @@ on:
       - "package/**"
       - "e2e/rstudio/**"
       - ".github/actions/e2e-deps/**"
-      - ".github/workflows/os-test-e2e-rstudio-desktop-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+      - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
 
 concurrency:
   group: pw-pr-${{ github.event.pull_request.number }}
@@ -23,10 +24,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Single change-detection job shared by both platforms. Checks if C++,
-  # CMake, build scripts, or dependencies changed. When only e2e tests or
-  # CI workflows changed, both platforms skip the ~60 min source build and
-  # use the latest daily installer instead.
+  # Single change-detection job shared by all e2e platforms (Windows Desktop,
+  # macOS Desktop, Linux Server). Checks if C++, CMake, build scripts, or
+  # dependencies changed. When only e2e tests or CI workflows changed, every
+  # platform skips its source build and uses the latest daily installer
+  # instead -- one shared check rather than three duplicate ones.
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -77,6 +79,18 @@ jobs:
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
       project: desktop
+      r_version: "4.5.3"
+      grep_invert: "@ai"
+      post_pr_comment: true
+
+  linux-server:
+    needs: detect-changes
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      project: server
       r_version: "4.5.3"
       grep_invert: "@ai"
       post_pr_comment: true

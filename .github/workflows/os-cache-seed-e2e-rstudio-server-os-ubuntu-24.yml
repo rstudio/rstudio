@@ -1,4 +1,4 @@
-name: "Cache: Seed Server Ubuntu 24 build caches"
+name: "Cache Seed: E2E Playwright RStudio (Server, Ubuntu 24, Open Source)"
 
 # Seeds the build caches (rstudio-tools, build-time R packages, and the GHA
 # sccache object cache) on the default branch so that PR builds start warm.
@@ -22,7 +22,7 @@ on:
     paths:
       - "dependencies/**"
       - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
-      - ".github/workflows/os-cache-seed-e2e-ubuntu-24.yml"
+      - ".github/workflows/os-cache-seed-e2e-rstudio-server-os-ubuntu-24.yml"
   # Nightly re-seed keeps the GHA sccache object cache recent on main so PR
   # builds get a high compile-cache hit rate. GitHub evicts cache entries that
   # haven't been accessed in 7 days.

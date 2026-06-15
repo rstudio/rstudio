@@ -3,8 +3,12 @@ name: "Test: E2E Playwright RStudio (Server, Ubuntu 24, Open Source)"
 on:
   workflow_dispatch:
     inputs:
+      build_from_source:
+        description: "Build RStudio Server from this branch's source. When false, downloads the latest daily .deb installer (or the URL in rstudio_installer_url, if provided)."
+        type: boolean
+        default: true
       rstudio_installer_url:
-        description: "Optional .deb URL to test against (e.g. a specific daily from dailies.rstudio.com). Leave empty to build RStudio Server from this branch's source on the runner."
+        description: "Optional .deb URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
         default: ""
       r_version:
@@ -41,6 +45,9 @@ on:
         default: false
   workflow_call:
     inputs:
+      build_from_source:
+        type: boolean
+        default: true
       rstudio_installer_url:
         type: string
         default: ""
@@ -84,10 +91,10 @@ permissions:
 jobs:
   # Builds RStudio Server from this PR's source on the same runner image as
   # the e2e job below, then uploads the .deb as an artifact for the e2e job to
-  # consume. Skipped when rstudio_installer_url is set, in which case the e2e
-  # job downloads the .deb from that URL instead.
+  # consume. Skipped when build_from_source is false, in which case the e2e
+  # job downloads the daily .deb (or rstudio_installer_url) instead.
   build:
-    if: inputs.rstudio_installer_url == ''
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -107,6 +114,11 @@ jobs:
       # make-package may export internally, so we don't need to patch the
       # build script.
       SCCACHE_GHA_ENABLED: 'true'
+      # Quiet npm during install-common's panmirror build and any other
+      # transitive npm step -- avoids dumping the progress bar + audit
+      # report into the build log on every PR run.
+      NPM_CONFIG_LOGLEVEL: error
+      NPM_CONFIG_AUDIT: 'false'
 
     steps:
       - uses: actions/checkout@v4
@@ -132,6 +144,23 @@ jobs:
           key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
           restore-keys: |
             rstudio-build-rlibs-linux-x86_64-
+
+      # Cache compiled GWT output (package/linux/build-Server-DEB/gwt/{bin,www,extras}).
+      # GWT compilation is the single most expensive JS step (~15-30 min). When
+      # GWT Java sources / build scripts haven't changed, make-server-package
+      # can skip the recompile entirely. The Linux build script does this via
+      # the NO_REBUILD env var (sets GWT_BUILD=no, which becomes -DGWT_BUILD=no
+      # to cmake) -- see package/linux/make-package lines 226-235. Restore-only
+      # here; the matching Save step runs after the build with a success gate
+      # so a failed mid-compile run can't poison the cache.
+      - name: Restore GWT output
+        id: gwt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: package/linux/build-Server-DEB/gwt
+          key: rstudio-gwt-linux-x86_64-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          restore-keys: |
+            rstudio-gwt-linux-x86_64-v1-
 
       # GHA-backed sccache. Installs sccache on PATH and starts the sccache
       # server with the GH Actions cache API as the storage backend (via
@@ -161,11 +190,33 @@ jobs:
           RSTUDIO_VERSION_MINOR: '9'
           RSTUDIO_VERSION_PATCH: '9'
           RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
-        run: ./make-server-package DEB
+        run: |
+          # NO_REBUILD=1 (see package/linux/make-package) tells the script to
+          # set GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake, so the
+          # cached GWT bin/www/extras under build-Server-DEB/gwt are reused
+          # instead of recompiled (~15-30 min saved when sources unchanged).
+          if [ "${{ steps.gwt-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "GWT cache hit -- skipping GWT compile"
+            NO_REBUILD=1 ./make-server-package DEB
+          else
+            echo "GWT cache miss -- compiling GWT from scratch"
+            ./make-server-package DEB
+          fi
 
       - name: Show sccache stats
         if: always()
         run: sccache --show-stats || true
+
+      # Save GWT output only when the build succeeded. A failed mid-compile
+      # run could otherwise write partial GWT output to the cache, and every
+      # future restore would silently ship a broken frontend until the
+      # hashFiles key rotates. Same poison-resistance pattern macOS uses.
+      - name: Save GWT output
+        if: steps.build.conclusion == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: package/linux/build-Server-DEB/gwt
+          key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
       # so packaging and uploading it would be pure waste.
@@ -190,9 +241,9 @@ jobs:
 
   e2e-server-ubuntu:
     needs: build
-    # build is skipped when rstudio_installer_url is set; allow this job to
-    # run in that case too (needs.build.result == 'skipped'). build_only seeds
-    # the build caches without running e2e, so skip here.
+    # build is skipped when build_from_source is false; allow this job to run
+    # in that case too (needs.build.result == 'skipped' on the daily-download
+    # path). build_only seeds the build caches without running e2e, so skip.
     if: |
       always() &&
       inputs.build_only != true &&
@@ -252,35 +303,97 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
-      # PR-built artifact path (default). Pulled in when no installer URL is
-      # provided -- the build job above produced rstudio-server.deb for us.
+      # Build-from-source path: extract the .deb artifact produced by the
+      # build job above and install it.
       - name: Download RStudio Server .deb artifact
-        if: inputs.rstudio_installer_url == ''
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
         with:
           name: rstudio-server-deb-ubuntu-24
           path: ${{ github.workspace }}
 
       - name: Install RStudio Server from artifact
-        if: inputs.rstudio_installer_url == ''
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
           sudo apt-get install -y "${{ github.workspace }}/rstudio-server.deb"
           sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
 
-      # Override path: use a specific .deb URL when rstudio_installer_url is
-      # set. Useful for testing against a specific daily or past release.
-      - name: Download RStudio Server .deb
-        if: inputs.rstudio_installer_url != ''
+      # Daily-download path: resolve and install the latest (or specified)
+      # .deb. Runs when build_from_source is false (auto-resolve the daily
+      # via dailies.rstudio.com/rstudio/latest/index.json) or when an
+      # explicit rstudio_installer_url is provided (use that URL verbatim).
+      - name: Resolve RStudio Server .deb URL
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
         run: |
-          FILENAME=$(basename "${INSTALLER_URL%%\?*}")
-          curl -fsSL --retry 3 --retry-delay 5 -o "$FILENAME" "$INSTALLER_URL"
-          echo "INSTALLER_FILENAME=$FILENAME" >> "$GITHUB_ENV"
+          URL="$INSTALLER_URL"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            URL=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].filename // empty')
+            if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
+              echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            fi
+            echo "Auto-resolved latest noble-amd64 server daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "${URL%%\?*}")
+            if [ -z "$FILENAME" ]; then
+              echo "::error::Could not derive filename from rstudio_installer_url='$URL'."
+              exit 1
+            fi
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL"           >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+      # Cache the daily installer keyed on its resolved filename. Filenames
+      # embed the version + build number on the auto-resolve path so the
+      # content is immutable per name: new daily misses and downloads, same
+      # day re-run hits and skips (SHA still verified below). Skip caching
+      # on the override path -- a user-supplied URL has no immutability
+      # guarantee and its SHA check is skipped, so a reused basename could
+      # otherwise serve stale, unverified bytes.
+      - name: Cache RStudio Server installer
+        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
+        id: installer-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.resolve.outputs.filename }}
+          key: rstudio-server-installer-${{ steps.resolve.outputs.filename }}
+
+      - name: Download RStudio Server .deb
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
+
+      - name: Verify SHA-256
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" | sha256sum -c -
 
       - name: Install RStudio Server from .deb
-        if: inputs.rstudio_installer_url != ''
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           sudo apt-get install -y "./$INSTALLER_FILENAME"
           sudo systemctl stop rstudio-server
@@ -410,7 +523,7 @@ jobs:
           if [ -n "$PW_GREP_INVERT" ]; then
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
-          ARGS+=(--shard="${{ matrix.shard }}/2")
+          ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
 
@@ -489,7 +602,11 @@ jobs:
 
       - name: Install Playwright
         working-directory: e2e/rstudio
-        run: npm ci
+        # --ignore-scripts skips the postinstall that downloads browser
+        # binaries; the merge job only invokes `playwright merge-reports`,
+        # which doesn't need Chromium. Saves ~30s + ~150MB of downloads per
+        # merge job invocation.
+        run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
