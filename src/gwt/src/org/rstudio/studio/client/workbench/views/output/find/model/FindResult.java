@@ -116,6 +116,17 @@ public class FindResult extends JavaScriptObject
       return getJavaStringArray("errors");
    }
 
+   // Reports whether a single literal match is a no-op: the matched span equals
+   // the replacement, so applying the replacement would change nothing. Spans
+   // that cannot be cleanly evaluated are treated as real changes (not no-ops).
+   private static boolean isLiteralNoOpMatch(String line, int on, int off, String replace)
+   {
+      if (on < 0 || off > line.length() || on > off)
+         return false;
+
+      return line.substring(on, off).equals(replace);
+   }
+
    // For a literal (non-regex) replace preview, reports whether at least one
    // match would actually change under the current replacement -- i.e. some
    // matched text differs from the replacement. A line with no such match is a
@@ -128,14 +139,7 @@ public class FindResult extends JavaScriptObject
       ArrayList<Integer> off = getMatchOffs();
       for (int i = 0; i < on.size() && i < off.size(); i++)
       {
-         int o = on.get(i);
-         int f = off.get(i);
-
-         // anything we can't cleanly evaluate is treated as a real change
-         if (o < 0 || f > line.length() || o > f)
-            return true;
-
-         if (!line.substring(o, f).equals(replace))
+         if (!isLiteralNoOpMatch(line, on.get(i), off.get(i), replace))
             return true;
       }
       return false;
@@ -181,9 +185,7 @@ public class FindResult extends JavaScriptObject
                {
                   int o = on.get(i);
                   int f = off.get(i);
-                  boolean noOp = o >= 0 && f <= lineVal.length() && o <= f &&
-                                 lineVal.substring(o, f).equals(replaceVal);
-                  if (!noOp)
+                  if (!isLiteralNoOpMatch(lineVal, o, f, replaceVal))
                   {
                      keptOn.add(o);
                      keptOff.add(f);
