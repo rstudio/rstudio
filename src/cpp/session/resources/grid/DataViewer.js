@@ -6715,6 +6715,11 @@ var destroyGrid = function() {
    }
    onScroll.cancel();
    onResize.cancel();
+   // Cancel global debounced timers so they don't fire after the grid
+   // is torn down and attempt to operate on a destroyed state.
+   debouncedInfoBar.cancel();
+   flushSidebarPendingFetch.cancel();
+   debouncedSearch.cancel();
 };
 
 var bootstrap = function(data) {
