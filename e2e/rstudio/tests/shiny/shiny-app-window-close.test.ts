@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand, setPref } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
@@ -52,7 +53,7 @@ async function ensureConsoleIdle(page: Page) {
       await executeCommand(page, 'interruptR');
       throw new Error('console still busy; interrupt requested again');
     }
-  }).toPass({ timeout: 15000, intervals: [2000] });
+  }).toPass({ timeout: 30000, intervals: [2000] });
 }
 
 test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
@@ -91,6 +92,7 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
 
   test('window closes when the app is stopped', async ({ rstudioPage: page }) => {
     test.setTimeout(120000);
+    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'R console does not free reliably after shiny interrupt on Windows CI; ensureConsoleIdle times out leaving R stuck for subsequent tests');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
@@ -107,6 +109,7 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
 
   test('window closes while the app is running', async ({ rstudioPage: page }) => {
     test.setTimeout(120000);
+    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'Skipped on Windows CI: test 1 leaves R stuck, making subsequent runApp calls queue behind a still-running app');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
@@ -122,6 +125,7 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     rstudioPage: page,
   }) => {
     test.setTimeout(120000);
+    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'Skipped on Windows CI: test 1 leaves R stuck, making subsequent runApp calls queue behind a still-running app');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 

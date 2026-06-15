@@ -515,7 +515,9 @@ if(APPLE)
 
 endif()
 
-# If enabled, use caching for the build
-if(SCCACHE_ENABLED)
+# If enabled, use caching for the build.
+# Accept both -DSCCACHE_ENABLED=1 (CMake variable) and the SCCACHE_ENABLED
+# environment variable so CI can enable sccache without modifying build scripts.
+if(SCCACHE_ENABLED OR "$ENV{SCCACHE_ENABLED}")
    include(sccache)
 endif()
