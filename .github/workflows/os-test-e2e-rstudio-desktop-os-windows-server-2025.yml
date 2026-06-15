@@ -414,6 +414,33 @@ jobs:
             make-package.bat nozip
           )
 
+      # Diagnostic: confirm sccache is actually wired into the CXX compile
+      # rules. After cmake configure, build.ninja should contain compile rules
+      # whose `command =` line starts with sccache (... cl.exe ...). If it
+      # only contains cl.exe directly, the launcher never reached ninja and
+      # every C++ file is compiled unwrapped -- which is what made
+      # `sccache --show-stats` consistently report 0 compile requests before
+      # this fix. Always runs so we can inspect failures too.
+      - name: Verify sccache is wired into build.ninja
+        if: always()
+        shell: cmd
+        run: |
+          set NINJA_FILE=package\win32\build\build.ninja
+          if not exist "%NINJA_FILE%" (
+            echo No build.ninja at %NINJA_FILE% -- configure step did not produce one.
+            exit /b 0
+          )
+          echo --- First 5 CXX compile-rule command lines from build.ninja ---
+          findstr /R "^  command = .*cl\.exe" "%NINJA_FILE%" > "%TEMP%\ninja_cxx_rules.txt" 2>nul
+          if exist "%TEMP%\ninja_cxx_rules.txt" (
+            for /f "tokens=1,* delims=:" %%A in ('findstr /N "." "%TEMP%\ninja_cxx_rules.txt"') do (
+              if %%A LEQ 5 echo %%B
+            )
+            del "%TEMP%\ninja_cxx_rules.txt"
+          ) else (
+            echo No CXX compile rules matched -- check the regex or that the build ran.
+          )
+
       - name: Save rstudio-tools cache
         if: steps.install-deps.conclusion == 'success'
         uses: actions/cache/save@v4
