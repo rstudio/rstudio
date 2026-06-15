@@ -1006,9 +1006,12 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       data = (data === null || data === undefined) ? "" : String(data);
    }
 
-   // Row name column: parse JSON to unwrap quoted character row names; numeric
-   // automatic row names parse to a number whose toString matches the wire form.
-   if (rowNumbers && colIdx === 0) {
+   // Row name column: unwrap JSON-encoded character row names; numeric
+   // automatic row names arrive as plain numeric strings and need no
+   // decoding.  Character row names always arrive as JSON strings whose
+   // first character is a double-quote, so checking for it avoids the
+   // JSON.parse cost (parse + toString) when the value is already final.
+   if (rowNumbers && colIdx === 0 && typeof data === "string" && data[0] === '"') {
       try { data = String(JSON.parse(data)); } catch(e) { /* leave as-is */ }
    }
 
@@ -1103,9 +1106,11 @@ var createCell = function(data, colIdx, rowData, clazz) {
    renderCellContents(td, data, colIdx, rowData, clazz);
 
    // Tooltip: for the row-names column, unwrap the JSON-encoded form so the
-   // tooltip shows `foo` rather than `"foo"`. Other columns pass through;
-   // non-strings (numbers, NA sentinels) intentionally get no tooltip.
-   if (rowNumbers && colIdx === 0 && typeof data === "string") {
+   // tooltip shows `foo` rather than `"foo"`.  Character row names always
+   // arrive as JSON strings whose first character is a double-quote; skip
+   // parse when the value is already the plain numeric form.
+   if (rowNumbers && colIdx === 0 && typeof data === "string" &&
+       (data[0] !== '"') && data.length > 1) {
       try { td.title = String(JSON.parse(data)); } catch(e) { td.title = data; }
    } else if (typeof data === "string") {
       td.title = data;
@@ -2273,8 +2278,11 @@ var autoSizeColumns = function() {
                // header text width) dominates.
                cellW = Math.ceil(cellText.length * digitWidth()) + cellExtra;
             } else {
-               // For row names (col 0), the value is JSON-encoded.
-               if (isRowNames) {
+               // For row names (col 0), character names arrive as JSON-encoded
+               // strings (first char is a double-quote); numeric auto row names
+               // are plain strings and need no decoding.
+               if (isRowNames && typeof cellText === "string" &&
+                   cellText[0] === '"') {
                   try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
                }
                var textW = cellWidthMemo.get(cellText);
