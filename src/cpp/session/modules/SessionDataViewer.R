@@ -458,6 +458,17 @@
                   if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
                      int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
 
+                  # at very large magnitudes (abs value >= ~2^52) the unit
+                  # step and 0.5 offsets fall below the floating-point
+                  # resolution, collapsing the sequence to a single value;
+                  # hist() would then treat it as a scalar bin count -- which
+                  # errors outright ("invalid number of 'breaks'") for large
+                  # negative values, and is meaningless for positive ones. Drop
+                  # the integer breaks in that case and fall back to default
+                  # binning. https://github.com/rstudio/rstudio/issues/17990
+                  if (length(int_breaks) < 2L)
+                     int_breaks <- NULL
+
                   # create histogram for brushing -- suppress warnings as in rare cases
                   # an otherwise benign integer overflow can occurs; see
                   # https://github.com/rstudio/rstudio/issues/3232

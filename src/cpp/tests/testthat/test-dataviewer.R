@@ -445,6 +445,24 @@ test_that(".rs.describeCols() handles integer columns whose range overflows", {
    expect_equal(sum(col$col_counts), 2)
 })
 
+test_that(".rs.describeCols() summarizes large-magnitude whole-number columns", {
+   # Whole-number doubles at very large magnitudes (here ~ -2^53) within a
+   # narrow range trip the integer-breaks heuristic, but seq(min - 0.5, max +
+   # 0.5, by = 1) collapses to a single value at that floating-point
+   # resolution. hist() then treats the lone break as a scalar bin count and
+   # errors with "invalid number of 'breaks'" (negative values are < 1),
+   # which previously aborted the whole describe call and broke the data
+   # viewer. We now fall back to default binning instead. See #17990.
+   df <- data.frame(id = c(-2^53, -2^53 + 2, -2^53 + 4))
+
+   cols <- .rs.describeCols(df)
+
+   col <- cols[[2L]]
+   expect_equal(col$col_search_type, .rs.scalar("numeric"))
+   expect_true(length(col$col_breaks) > 1)
+   expect_equal(sum(col$col_counts), 3)
+})
+
 test_that(".rs.describeCols() reports the data range for numeric columns", {
    # col_min / col_max carry the actual finite data range (the histogram
    # breaks can extend past it: pretty()-ed for default binning, padded by
