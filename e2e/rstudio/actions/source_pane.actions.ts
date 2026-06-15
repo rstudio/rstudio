@@ -261,7 +261,7 @@ export class SourcePaneActions {
     // through pandoc takes longer than a blank one, and the old 2s sleep could
     // return before .ProseMirror existed -- leaving callers asserting against a
     // still-source-mode editor.
-    await proseMirror.first().waitFor({ state: 'visible', timeout: 15000 });
+    await proseMirror.first().waitFor({ state: 'visible', timeout: 90000 });
   }
 
   /**

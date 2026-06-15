@@ -1,0 +1,92 @@
+name: "Test: E2E Playwright RStudio (Desktop, PR-triggered)"
+
+on:
+  pull_request:
+    paths:
+      - "CMakeLists.txt"
+      - "src/**"
+      - "dependencies/**"
+      - "cmake/**"
+      - "package/**"
+      - "e2e/rstudio/**"
+      - ".github/actions/e2e-deps/**"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-pr.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+
+concurrency:
+  group: pw-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Single change-detection job shared by both platforms. Checks if C++,
+  # CMake, build scripts, or dependencies changed. When only e2e tests or
+  # CI workflows changed, both platforms skip the ~60 min source build and
+  # use the latest daily installer instead.
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build_from_source: ${{ steps.check.outputs.build_from_source }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for source changes requiring a build
+        id: check
+        run: |
+          BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+          CHANGED=$(git diff --name-only "$BASE" HEAD)
+          echo "Changed files vs merge base with ${{ github.base_ref }}:"
+          echo "$CHANGED"
+          # Build from source when C++, GWT, CMake, build scripts, or
+          # dependencies changed — anything that ends up in the compiled binary.
+          # Matches all of package/ (CMakeLists.txt at the root, and every
+          # per-platform subdir) plus the repo-root CMakeLists.txt so a
+          # packaging or top-level cmake change can't silently fall through
+          # to running tests against a daily.
+          if echo "$CHANGED" | grep -qE '^(CMakeLists\.txt$|src/|package/|dependencies/|cmake/)'; then
+            echo "Source files changed — building from source"
+            echo "build_from_source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No source files changed — using daily installer"
+            echo "build_from_source=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    needs: detect-changes
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      # The Windows reusable now sources CONNECT_API_KEY and the @ai-test creds
+      # from 1Password; the GitHub secret it expects is the service-account
+      # token. Fork PRs don't receive it -- the 1Password step is then skipped
+      # and downstream features degrade gracefully (reporter warns, @ai tests
+      # skip with reason).
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      project: desktop
+      r_version: "4.5.3"
+      grep_invert: "@ai"
+      post_pr_comment: true
+
+  macos:
+    needs: detect-changes
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      # The macOS reusable now sources CONNECT_API_KEY and the @ai-test creds
+      # from 1Password; the GitHub secret it expects is the service-account
+      # token. Fork PRs don't receive it -- the 1Password step is then skipped
+      # and downstream features degrade gracefully (reporter warns, @ai tests
+      # skip with reason).
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      project: desktop
+      r_version: "4.5.3"
+      grep_invert: "@ai"
+      post_pr_comment: true

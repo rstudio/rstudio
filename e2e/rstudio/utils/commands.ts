@@ -463,8 +463,9 @@ export async function waitForSourcePaneReset(page: Page, timeout = 10000): Promi
  * `.rs.api.documentOpen(...)`, `file.edit(...)`, and other open-by-path flows.
  *
  * On case-insensitive filesystems (macOS HFS+, NTFS) the comparison ignores
- * case so callers can pass the same string they handed to R without worrying
- * about case-folding round-trips.
+ * case. On Windows, backslashes and forward slashes are treated as equivalent
+ * so callers can pass Node.js path.join results regardless of whether RStudio
+ * normalizes separators.
  */
 export async function waitForActiveDocument(
   page: Page,
@@ -475,7 +476,7 @@ export async function waitForActiveDocument(
     (target) => {
       const doc = window.rstudio?.documents.active() ?? null;
       return doc !== null && doc.path !== null
-        && doc.path.toLowerCase() === target.toLowerCase();
+        && doc.path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
     },
     expectedPath,
     { timeout, polling: 100 },
@@ -679,7 +680,7 @@ export async function openProject(
       await page.waitForFunction(
         (target) => {
           const path = window.rstudio?.project.path() ?? null;
-          return path !== null && path.toLowerCase() === target.toLowerCase();
+          return path !== null && path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
         },
         projectFilePath,
         { timeout, polling: 100 },
