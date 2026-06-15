@@ -245,7 +245,6 @@ namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
-using chat_constants::kProtocolVersionFileName;
 using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
@@ -271,6 +270,7 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
+using chat_installation::writeProtocolVersionFileIfMissing;
 
 // Update throttle types used throughout
 using throttle::ManifestCheckRecord;
@@ -4410,13 +4410,9 @@ Error installPackage(const FilePath& packagePath)
       }
    }
 
-   // Write protocol.json so future update checks can detect mismatches
-   core::FilePath protoFile =
-      aiDir.completeChildPath(kProtocolVersionFileName);
-   json::Object protoJson;
-   protoJson["protocol"] = kProtocolVersion;
-   Error protoError = core::writeStringToFile(
-      protoFile, protoJson.write());
+   // Write protocol.json so future update checks can detect mismatches, unless
+   // the package already shipped one (newer packages bundle protocol.json).
+   Error protoError = writeProtocolVersionFileIfMissing(aiDir);
    if (protoError)
    {
       return protoError;
