@@ -164,6 +164,57 @@ test.describe('Find in Files', () => {
     await expect(findPane).toContainText('real_change.txt', { timeout: TIMEOUTS.fileOpen });
     await expect(findPane).not.toContainText('noop_only.txt');
   });
+
+  test('literal replace preview omits matches whose replacement is identical', async ({ rstudioPage: page }) => {
+    // The same no-op omission must also apply to literal (non-regex) searches,
+    // whose replace preview is rendered client-side rather than server-side. A
+    // case-insensitive search for "cat" matches both "cat" and "Cat"; replacing
+    // with "cat" leaves "cat" unchanged (no-op) but rewrites "Cat".
+    const consoleActions = new ConsolePaneActions(page);
+    await createAndOpenProject(page, sandbox.dir, 'find_literal_noop_project');
+
+    // mixed.txt has one no-op ("cat") and one real change ("Cat") on one line;
+    // allnoop.txt has only no-op matches.
+    await consoleActions.executeInConsole(
+      `writeLines("cat Cat", con = "mixed.txt")`,
+      { wait: true },
+    );
+    await consoleActions.executeInConsole(
+      `writeLines(c("cat", "cat cat"), con = "allnoop.txt")`,
+      { wait: true },
+    );
+
+    // Literal, case-insensitive search for "cat" (regex and case-sensitive both
+    // off). Uncheck regex defensively in case a prior test left it on.
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await page.locator(REGEX_CHECKBOX).uncheck();
+    await page.locator(CASE_CHECKBOX).uncheck();
+    await searchInput.click();
+    await searchInput.pressSequentially('cat');
+    await page.locator(FIND_OK_BTN).click();
+
+    // In plain search mode both files match and are shown.
+    const findPane = page.locator(FIND_PANE);
+    await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).toContainText('allnoop.txt');
+
+    // Switch to replace mode and enter the replacement; the literal preview is
+    // painted client-side from the cached search results.
+    await page.locator(REPLACE_MODE_TOGGLE).click();
+    const replaceInput = page.locator(REPLACE_INPUT);
+    await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await replaceInput.click();
+    await replaceInput.pressSequentially('cat');
+
+    // mixed.txt stays (its "Cat" match changes) but allnoop.txt is dropped
+    // entirely. The preview inserts (<ins>) exactly one replacement -- for the
+    // "Cat" match -- and not for either no-op "cat".
+    await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).not.toContainText('allnoop.txt');
+    await expect(findPane.locator('ins')).toHaveCount(1);
+  });
 });
 
 // Regression test for #17845: a Find in Files "Replace All" must rewrite the
