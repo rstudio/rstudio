@@ -115,6 +115,55 @@ test.describe('Find in Files', () => {
     await expect(page.locator(REPLACE_ALL_BTN)).toBeVisible();
     await expect(page.locator(STOP_REPLACE_BTN)).toBeHidden();
   });
+
+  test('regex replace preview omits matches whose replacement is identical', async ({ rstudioPage: page }) => {
+    // A regex replace can produce a replacement that is identical to the matched
+    // text (e.g. "cat" matched by "c.t" and replaced with "cat"). Such matches
+    // are no-ops and should not be presented as replacement candidates: a line
+    // whose every match is a no-op is omitted from the preview entirely.
+    const consoleActions = new ConsolePaneActions(page);
+    await createAndOpenProject(page, sandbox.dir, 'find_noop_preview_project');
+
+    // Search "c.t" matches cat/cot/cut; replacing with "cat" leaves "cat"
+    // unchanged (no-op) but rewrites "cot"/"cut". noop_only.txt therefore has
+    // nothing to replace, while real_change.txt does.
+    await consoleActions.executeInConsole(
+      `writeLines(c("cat", "cat cat"), con = "noop_only.txt")`,
+      { wait: true },
+    );
+    await consoleActions.executeInConsole(
+      `writeLines(c("cot", "cut"), con = "real_change.txt")`,
+      { wait: true },
+    );
+
+    // Regex search for "c.t" -- regex mode is required for the live replace
+    // preview (PreviewReplaceEvent only fires when the search was a regex).
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await page.locator(REGEX_CHECKBOX).check();
+    await searchInput.click();
+    await searchInput.pressSequentially('c.t');
+    await page.locator(FIND_OK_BTN).click();
+
+    // In plain search mode both files match and are shown.
+    const findPane = page.locator(FIND_PANE);
+    await expect(findPane).toContainText('noop_only.txt', { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).toContainText('real_change.txt');
+
+    // Switch to replace mode and enter the replacement; this triggers the regex
+    // replace preview (debounced) which re-runs the search server-side.
+    await page.locator(REPLACE_MODE_TOGGLE).click();
+    const replaceInput = page.locator(REPLACE_INPUT);
+    await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await replaceInput.click();
+    await replaceInput.pressSequentially('cat');
+
+    // The preview keeps real_change.txt (its matches change) but drops
+    // noop_only.txt entirely, since every match there would be a no-op.
+    await expect(findPane).toContainText('real_change.txt', { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).not.toContainText('noop_only.txt');
+  });
 });
 
 // Regression test for #17845: a Find in Files "Replace All" must rewrite the

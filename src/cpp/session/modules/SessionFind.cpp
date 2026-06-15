@@ -702,6 +702,17 @@ private:
          subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
+   void erasePositionsFromArray(json::Array* pArray, const std::set<size_t>& positions)
+   {
+      json::Array filtered;
+      for (size_t i = 0; i < pArray->getSize(); i++)
+      {
+         if (positions.count(i) == 0)
+            filtered.push_back(pArray->getValueAt(i));
+      }
+      *pArray = filtered;
+   }
+
    void writeToFile(
          const std::string& line,
          const std::string& lineLeftContents,
@@ -756,6 +767,7 @@ private:
                         LineInfo* pLineInfo,
                         json::Array* pReplaceMatchOn,
                         json::Array* pReplaceMatchOff,
+                        std::set<size_t>* pNoOpPositions,
                         std::set<std::string>* pErrorMessage)
    {
       std::string line;
@@ -797,6 +809,7 @@ private:
                const size_t matchSize = matchOff - matchOn;
                size_t replaceMatchOff = matchOff;
                Error error;
+               bool isNoOp = false;
                Replacer replacer(findResults().ignoreCase(), encoding_);
 
                eMatchOn =
@@ -824,7 +837,8 @@ private:
                if (findResults().preview())
                {
                   error = replacer.replacePreview(matchOn, matchOff, eMatchOn, eMatchOff,
-                      &pLineInfo->encodedContents, &pLineInfo->decodedContents, &replaceMatchOff);
+                      &pLineInfo->encodedContents, &pLineInfo->decodedContents, &replaceMatchOff,
+                      &isNoOp);
                   if (error)
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                         pReplaceMatchOff, &lineSuccess);
@@ -833,12 +847,19 @@ private:
                {
                   pProgress->addUnits(1);
 
+                  // if the replacement leaves the line unchanged, the matched
+                  // text and the replacement are identical: treat it as a no-op
+                  std::string beforeReplace = pLineInfo->encodedContents;
+
                   if (findResults().regex())
                      error = replacer.replaceRegex(eMatchOn, eMatchOff, searchPattern,
                         replacePattern, &pLineInfo->encodedContents, &replaceMatchOff);
                   else
                      replacer.replaceLiteral(eMatchOn, eMatchOff, replacePattern,
                            &pLineInfo->encodedContents, &replaceMatchOff);
+
+                  if (!error)
+                     isNoOp = (pLineInfo->encodedContents == beforeReplace);
 
                   // calculate utf8 matchOff
                   size_t utf8Length;
@@ -853,6 +874,15 @@ private:
                                                      pLineInfo->decodedContents.end(),
                                                      &newUtf8Length);
                   replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
+               }
+
+               // when the replacement is identical to the matched text, omit
+               // this match so it is not presented as a replacement candidate
+               if (isNoOp)
+               {
+                  pNoOpPositions->insert(static_cast<size_t>(pos));
+                  pos--;
+                  continue;
                }
 
                // Handle side-effects when replace is successful
@@ -1042,13 +1072,32 @@ private:
                }
                else
                {
-                   processReplace(lineNum,
-                                  matchOn, matchOff,
-                                  &lineInfo,
-                                  &replaceMatchOn, &replaceMatchOff,
-                                  &errorMessage);
+                  std::set<size_t> noOpPositions;
+                  processReplace(lineNum,
+                                 matchOn, matchOff,
+                                 &lineInfo,
+                                 &replaceMatchOn, &replaceMatchOff,
+                                 &noOpPositions,
+                                 &errorMessage);
+
+                  // drop matches whose replacement was identical to the matched
+                  // text so the find highlights stay paired with the (filtered)
+                  // replace highlights
+                  size_t originalMatchCount = matchOn.getSize();
+                  if (!noOpPositions.empty())
+                  {
+                     erasePositionsFromArray(&matchOn, noOpPositions);
+                     erasePositionsFromArray(&matchOff, noOpPositions);
+                  }
+
+                  // if every match on this line was a no-op, the line is left
+                  // unchanged: omit it from the results entirely
+                  if (errorMessage.empty() && noOpPositions.size() == originalMatchCount)
+                     continue;
+
                   lineInfo.decodedPreview = lineInfo.decodedContents;
-                  adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
+                  if (replaceMatchOn.getSize() > 0)
+                     adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
                }
             }
 
@@ -1848,8 +1897,11 @@ boost::regex getColorEncodingRegex(bool isGitGrep)
 Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                                size_t eMatchOn, size_t eMatchOff,
                                std::string* pEncodedLine, std::string* pDecodedLine,
-                               size_t* pReplaceMatchOff) const
+                               size_t* pReplaceMatchOff, bool* pIsNoOp) const
 {
+   if (pIsNoOp != nullptr)
+      *pIsNoOp = false;
+
    // attempt to perform the replace based on the encoded data
    std::string previewLine(*pEncodedLine);
    std::string originalValue = previewLine.substr(eMatchOn, eMatchOff  - eMatchOn);
@@ -1858,13 +1910,24 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                               findResults().replacePattern(),
                               &previewLine,
                               pReplaceMatchOff);
-   
+
    // Concatenate the replace string to the matched string and insert this into the original line
    // so it contains the before and after.
    // The preview string is always returned in the decoded string.
    if (!error)
    {
       std::string replaceString = previewLine.substr(eMatchOn, *pReplaceMatchOff - eMatchOn);
+
+      // when the replacement is identical to the matched text, this match is a
+      // no-op; leave the line untouched and report it so the caller can omit it
+      if (replaceString == originalValue)
+      {
+         if (pIsNoOp != nullptr)
+            *pIsNoOp = true;
+         *pReplaceMatchOff = dMatchOff;
+         return error;
+      }
+
       replaceString.insert(0, originalValue);
       replaceLiteral(eMatchOn, eMatchOff, replaceString, pEncodedLine, pReplaceMatchOff);
 

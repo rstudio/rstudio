@@ -48,10 +48,14 @@ public:
    {
    }
 
+   // Computes the preview text for a single match. When the proposed replacement
+   // is identical to the matched text, the line is left untouched and *pIsNoOp
+   // (if provided) is set to true so the caller can omit it as a replacement
+   // candidate.
    core::Error replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                               size_t eMatchOn, size_t eMatchOff,
                               std::string* pEncodedLine, std::string* pDecodedLine,
-                              size_t* pReplaceMatchOff) const;
+                              size_t* pReplaceMatchOff, bool* pIsNoOp = nullptr) const;
 
    void replaceLiteral(size_t matchOn, size_t matchOff,
                        const std::string& replaceLiteral, std::string* pLine,
