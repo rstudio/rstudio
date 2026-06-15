@@ -23,7 +23,7 @@ const VIEWER_FRAME = '#rstudio_data_viewer_frame';
 // the rendered column window, so we wait for any column header instead of
 // requiring column 1 specifically.
 async function waitForViewer(dataViewer: DataViewerPane): Promise<void> {
-  await expect(dataViewer.frame.locator('th[data-col-idx][title]'))
+  await expect(dataViewer.frame.locator('th[data-col-idx][title]').first())
     .toBeVisible({ timeout: TIMEOUTS.fileOpen });
 }
 
