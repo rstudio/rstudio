@@ -320,17 +320,23 @@ jobs:
       # Seed R packages into the SYSTEM R library (/usr/lib/R/site-library)
       # so rsession's R -- which runs as $PW_RSTUDIO_SERVER_USER with an
       # empty user library -- can resolve them without an install-prompt
-      # roundtrip during tests. Without this, rmarkdown / knitr / fortunes
-      # tests fail intermittently when an in-test ensurePackages or
-      # auto-prompt fires under load. .Library is /usr/lib/R/library which
-      # is on every R session's libPaths by default, regardless of HOME.
-      # Posit Package Manager (PPM) serves prebuilt binaries for noble so
-      # this is a quick download, not a source compile.
+      # roundtrip during tests. Without this, rmarkdown / knitr tests fail
+      # intermittently when an in-test ensurePackages or auto-prompt fires
+      # under load. .Library is /usr/lib/R/library which is on every R
+      # session's libPaths by default, regardless of HOME. Posit Package
+      # Manager (PPM) serves prebuilt binaries for noble so this is a quick
+      # download, not a source compile.
+      #
+      # NOTE: do NOT add "fortunes" to this list. The missing_packages_banner
+      # test uses fortunes as its "package not yet installed" subject and
+      # calls remove.packages() on it in its beforeAll -- pre-seeding into
+      # root-owned .Library would make that uninstall fail with EACCES and
+      # the test would error out at setup before exercising the banner.
       - name: Seed R packages into system library for rsession
         run: |
           sudo R --vanilla -s -e '
             install.packages(
-              c("rmarkdown", "knitr", "readr", "fortunes",
+              c("rmarkdown", "knitr", "readr",
                 "shiny", "testthat", "tidyverse"),
               repos = "https://packagemanager.posit.co/cran/latest",
               lib = .Library
