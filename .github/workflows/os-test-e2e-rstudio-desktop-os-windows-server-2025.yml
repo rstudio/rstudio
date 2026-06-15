@@ -415,49 +415,70 @@ jobs:
           )
 
       # Diagnostic: confirm sccache is actually wired into the CXX compile
-      # rules. After cmake configure, build.ninja should contain compile rules
-      # whose `command =` line begins with sccache (... cl.exe ...). If those
-      # lines only have cl.exe directly, the launcher never reached ninja and
-      # every C++ file is compiled unwrapped -- which is what makes
-      # `sccache --show-stats` report 0 compile requests at the end of the
-      # build. PowerShell instead of cmd findstr because cmd's regex is too
-      # limited to handle the full Ninja rule paths reliably.
+      # rules. CMake's Ninja generator factors rule templates into
+      # `CMakeFiles\rules.ninja` (included from build.ninja); per-target
+      # variables like LAUNCHER live in build.ninja next to each `build`
+      # statement, and the rule's `command =` line in rules.ninja references
+      # `$LAUNCHER` to apply it. If the rule template doesn't actually use
+      # `$LAUNCHER`, sccache is wired in vain and `sccache --show-stats`
+      # reports 0 compile requests despite the cache variable being set.
       - name: Verify sccache is wired into build.ninja
         if: always()
         shell: pwsh
         run: |
-          $ninja = 'package/win32/build/build.ninja'
-          if (-not (Test-Path $ninja)) {
-            Write-Host "No build.ninja at $ninja -- configure step did not produce one."
+          $build = 'package/win32/build/build.ninja'
+          $rules = 'package/win32/build/CMakeFiles/rules.ninja'
+          if (-not (Test-Path $build)) {
+            Write-Host "No build.ninja at $build -- configure step did not produce one."
             exit 0
           }
-          Write-Host "=== build.ninja size: $((Get-Item $ninja).Length) bytes ==="
+          Write-Host "=== build.ninja size: $((Get-Item $build).Length) bytes ==="
+          Write-Host "=== rules.ninja size: $(if (Test-Path $rules) { (Get-Item $rules).Length } else { 'MISSING' }) bytes ==="
           Write-Host ""
-          Write-Host "=== Any rules whose name starts with CXX_COMPILER ==="
-          Select-String -Path $ninja -Pattern '^rule CXX_COMPILER' -SimpleMatch | ForEach-Object { $_.Line }
+          Write-Host "=== LAUNCHER per-target settings in build.ninja (count + sample) ==="
+          $launchers = Select-String -Path $build -Pattern 'LAUNCHER\s*=.*sccache'
+          Write-Host "  Found $($launchers.Count) LAUNCHER lines pointing at sccache"
+          $launchers | Select-Object -First 2 | ForEach-Object { Write-Host "  $($_.Line.Trim())" }
           Write-Host ""
-          Write-Host "=== First 3 'command = ...' lines that mention cl (sccache wrapping should make these `sccache ... cl ...`) ==="
-          Select-String -Path $ninja -Pattern '^\s*command\s*=.*\bcl(\.exe)?\b' | Select-Object -First 3 | ForEach-Object { $_.Line }
-          Write-Host ""
-          Write-Host "=== Any 'command = ...' lines that mention sccache ==="
-          Select-String -Path $ninja -Pattern '^\s*command\s*=.*sccache' | Select-Object -First 3 | ForEach-Object { $_.Line }
-          Write-Host ""
-          Write-Host "=== Diagnostic summary ==="
-          $hasSccacheInRule = (Select-String -Path $ninja -Pattern 'command\s*=.*sccache' -Quiet)
-          if ($hasSccacheInRule) {
-            Write-Host "OK: sccache appears in at least one compile rule's command line."
-          } else {
-            Write-Host "PROBLEM: build.ninja contains no compile rule with sccache. Launcher did not reach the generator."
+          if (Test-Path $rules) {
+            Write-Host "=== Rule definitions in rules.ninja that mention CXX_COMPILER ==="
+            Select-String -Path $rules -Pattern '^rule CXX_COMPILER' -SimpleMatch | ForEach-Object { Write-Host "  $($_.Line)" }
+            Write-Host ""
+            Write-Host "=== First CXX rule's `command =` line (does it reference \$LAUNCHER?) ==="
+            $lines = Get-Content $rules
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+              if ($lines[$i] -match '^rule CXX_COMPILER') {
+                $name = $lines[$i]
+                Write-Host "  --> $name"
+                for ($j = $i+1; $j -lt $lines.Count -and $j -lt $i+8; $j++) {
+                  if ($lines[$j] -match '^rule ') { break }
+                  Write-Host "  $($lines[$j])"
+                }
+                break
+              }
+            }
+            Write-Host ""
+            Write-Host "=== Diagnostic summary ==="
+            $ruleRefsLauncher = (Select-String -Path $rules -Pattern '\$LAUNCHER' -Quiet)
+            $ruleHasSccacheLiteral = (Select-String -Path $rules -Pattern 'sccache' -Quiet)
+            if ($ruleRefsLauncher) {
+              Write-Host "OK: rules.ninja references \$LAUNCHER -- the per-target sccache path WILL be invoked."
+            } elseif ($ruleHasSccacheLiteral) {
+              Write-Host "OK: rules.ninja references sccache literally."
+            } else {
+              Write-Host "PROBLEM: rules.ninja CXX compile rules do NOT reference \$LAUNCHER or sccache. Per-target LAUNCHER lines in build.ninja are dead. sccache will never be called."
+            }
           }
 
-      # Upload build.ninja so we can analyze it offline when the inline
-      # diagnostic isn't enough. Tiny artifact (single text file), no cost.
-      - name: Upload build.ninja for offline diagnosis
+      # Upload both ninja files so we can inspect compile-rule wiring offline.
+      - name: Upload ninja files for offline diagnosis
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-ninja-win
-          path: package/win32/build/build.ninja
+          path: |
+            package/win32/build/build.ninja
+            package/win32/build/CMakeFiles/rules.ninja
           if-no-files-found: ignore
           retention-days: 3
 
