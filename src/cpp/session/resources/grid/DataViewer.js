@@ -6705,6 +6705,7 @@ var destroyGrid = function() {
       pendingScrollbarRaf = 0;
    }
    onScroll.cancel();
+   onResize.cancel();
 };
 
 var bootstrap = function(data) {
