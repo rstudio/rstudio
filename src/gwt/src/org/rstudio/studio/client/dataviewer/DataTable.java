@@ -568,9 +568,9 @@ public class DataTable
    
    public void onActivate()
    {
-      // onActivate gets invoked before the active iframe window has
-      // actually been updated in the host frame, so we defer delegating
-      // the activation event until we know the host frame's been updated
+      // When activated, the tab is still hidden (not yet selected), so
+      // its iframe has no layout; defer until selectTab() makes the tab
+      // visible and the iframe's onActivate() can run with real dimensions
       Scheduler.get().scheduleFinally(() ->
       {
          onActivate(getWindow());
