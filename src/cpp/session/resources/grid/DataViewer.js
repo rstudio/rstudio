@@ -196,6 +196,7 @@ var bottomSpacerRow = null;
 // Column resize state
 var didResize = false;
 var resizingColIdx = null;
+var resizingHeaderTh = null;
 var initResizeX = null;
 var initResizingWidth = null;
 var origTableWidth = null;
@@ -2352,9 +2353,9 @@ var initResizeHandlers = function() {
       initResizeX = evt.clientX;
       resizingBoundsExceeded = 0;
 
-      var th = getHeaderCell(resizingColIdx);
-      if (th) {
-         initResizingWidth = th.offsetWidth;
+      resizingHeaderTh = getHeaderCell(resizingColIdx);
+      if (resizingHeaderTh) {
+         initResizingWidth = resizingHeaderTh.offsetWidth;
          origTableWidth = totalTableWidth;
          if (typeof origColWidths[resizingColIdx] === "undefined") {
             origColWidths[resizingColIdx] = initResizingWidth;
@@ -2388,6 +2389,7 @@ var initResizeHandlers = function() {
       document.body.classList.remove("col-resizing");
       if (resizingColIdx === null) return;
       resizingColIdx = null;
+      resizingHeaderTh = null;
       saveState();
       // applyResizeDelta updates totalTableWidth on every mousemove but
       // skips applyPinnedColumns/updateCustomScrollbars to avoid jank
@@ -2441,10 +2443,10 @@ var applyResizeDelta = function(delta) {
       colWidth = initResizingWidth + delta;
    }
 
-   // Apply width to header
-   var th = getHeaderCell(resizingColIdx);
-   if (th) {
-      th.style.width = colWidth + "px";
+   // Apply width to header -- use the cached <th> from the mousedown init
+   // to avoid a per-mousemove querySelector during a 1-2s drag.
+   if (resizingHeaderTh) {
+      resizingHeaderTh.style.width = colWidth + "px";
       manualWidths[absColIndex(resizingColIdx)] = colWidth;
    }
 
