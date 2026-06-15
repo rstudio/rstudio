@@ -3672,6 +3672,14 @@ boost::mutex s_updateStateMutex;
 const char* const kManifestUrl     = "https://cdn.posit.co/posit-ai/manifest.json";
 const char* const kManifestTestUrl = "https://cdn.posit.co/posit-ai/manifest-test.json";
 
+// Whether Posit Assistant is opted into the pre-release (test) manifest, via
+// either the command-line/session option or the user preference.
+bool isUsingTestManifest()
+{
+   return options().positAssistantTestManifest() ||
+          prefs::userPrefs().positAssistantTestManifest();
+}
+
 // Wall-clock bound for a manifest fetch; a stalled child is terminated and the
 // check fails (manifestUnavailable) after this long.
 const int kManifestDeadlineSeconds = 30;
@@ -3832,11 +3840,8 @@ void fetchManifestAsync(
    }
 #endif
 
-   // Get download URI; use test manifest when opted in via either the
-   // command-line/session option or the user preference.
-   bool useTestManifest = options().positAssistantTestManifest() ||
-                          prefs::userPrefs().positAssistantTestManifest();
-   std::string url = useTestManifest ? kManifestTestUrl : kManifestUrl;
+   // Get download URI; use test manifest when opted in.
+   std::string url = isUsingTestManifest() ? kManifestTestUrl : kManifestUrl;
    DLOG("Fetching manifest from: {}", url);
 
    // Build the child command in the parent session so the --vanilla child
@@ -4009,8 +4014,7 @@ void showTestManifestWarning()
 
 void onDeferredInit(bool)
 {
-   if (options().positAssistantTestManifest() ||
-       prefs::userPrefs().positAssistantTestManifest())
+   if (isUsingTestManifest())
    {
       showTestManifestWarning();
    }
@@ -4673,8 +4677,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 // Decide whether an automatic check must actually fetch the manifest. Always
 // fetches when nothing is installed or the installed protocol mismatches; otherwise
 // throttles to once per the posit_assistant_update_check_interval_hours preference
-// (0 hours = always check). `force` (Retry / install) always fetches. Main-thread
-// only (reads the filesystem).
+// (0 hours = always check). The test manifest is opt-in for pre-release testing,
+// so throttling is disabled there (every check fetches, as if the interval were 0).
+// `force` (Retry / install) always fetches. Main-thread only (reads the filesystem).
 bool shouldFetchManifest(bool force)
 {
    std::string installed = getInstalledVersion();   // "" when not installed
@@ -4687,8 +4692,10 @@ bool shouldFetchManifest(bool force)
    if (record)
       last = record->lastCheckTime;
 
-   int throttleSeconds = throttle::throttleSecondsFromHours(
-      prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
+   int throttleSeconds = isUsingTestManifest()
+      ? 0
+      : throttle::throttleSecondsFromHours(
+           prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
 
    return throttle::manifestCheckDue(
       force, isInstalled, mismatch, last,
