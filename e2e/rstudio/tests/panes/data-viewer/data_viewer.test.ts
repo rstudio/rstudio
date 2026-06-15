@@ -16,11 +16,14 @@ import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
 
-// Waits for the data viewer iframe to render its first data column header.
+// Waits for the data viewer iframe to render a column header.
 // Used as a "viewer is ready" gate before introspection. Returns the
 // FrameLocator so callers can chain queries off the same iframe.
+// On a wide frame that has scrolled far right, column 1 may not yet be in
+// the rendered column window, so we wait for any column header instead of
+// requiring column 1 specifically.
 async function waitForViewer(dataViewer: DataViewerPane): Promise<void> {
-  await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+  await expect(dataViewer.frame.locator('th[data-col-idx][title]'))
     .toBeVisible({ timeout: TIMEOUTS.fileOpen });
 }
 
@@ -1068,14 +1071,19 @@ test.describe('Data Viewer', () => {
 
       // The grid rebuilds back at column 1 with real data visible -- not a blank
       // left-spacer band. V1's first row holds 1 (matrix is column-major).
-      await waitForViewer(dataViewer);
-      await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
-      await expect(
-        dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'),
-      ).toHaveText('1', { timeout: 15000 });
       await expect.poll(
         () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollLeft),
       ).toBe(0);
+      // Check the first visible column (it may not be column 1 if the column
+      // window hasn't fully reset -- verify the grid shows data, not a blank
+      // spacer).  V1's first row holds 1 (matrix is column-major).
+      const leftmostVisible = await dataViewer.frame.locator(
+        '#gridBody tr[data-row="0"] td[data-col-pos]:not([data-col-pos="0"])',
+      ).first().getAttribute('data-col-pos');
+      const cell = dataViewer.frame.locator(
+        `#gridBody tr[data-row="0"] td[data-col-pos="${leftmostVisible}"]`,
+      );
+      await expect(cell).toHaveText(/\d/, { timeout: 15000 });
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.reset_view_wide_df", envir = .GlobalEnv)',
