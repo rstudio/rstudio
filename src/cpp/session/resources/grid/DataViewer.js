@@ -336,6 +336,12 @@ var measureCanvas = null;
 var measureCtx = null;
 var measureCtxFont = "";
 
+// DOM element cache — populated in initGrid, cleared in destroyGrid.
+// Avoids document.getElementById calls on every scroll frame.
+var domViewport = null;
+var domTbody = null;
+var domThead = null;
+
 // The two fonts measureTextWidth uses: regular for data cells, bold for
 // headers. Same size/family; only the weight differs.
 var MEASURE_FONT =
@@ -1740,7 +1746,7 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
 // Recompute the rendered column window from the current horizontal scroll
 // position. Returns true if the window changed (so callers can rebuild).
 var computeColumnWindow = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    var sl = viewport ? viewport.scrollLeft : 0;
    var cw = viewport ? viewport.clientWidth : 0;
    var win = getColumnWindow(sl, cw);
@@ -1849,7 +1855,7 @@ var reinjectHeaderUI = function(th, colIdx, col) {
 // spacer, the windowed headers (with widths + any active header UI), and a
 // right spacer. Cheap to call on every horizontal-window change.
 var rebuildHeaderWindow = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead || !cols || !columnOrder.length) return;
 
    thead.innerHTML = "";
@@ -1939,7 +1945,7 @@ var togglePinColumn = function(absIdx) {
 // Reorder existing <th> elements rather than recreating them so any attached
 // filter UI / popup state is preserved across pin toggles.
 var rebuildHeaders = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead || !cols) return;
 
    // Recompute the pinned/unpinned order, then let autoSizeColumns rebuild the
@@ -1989,7 +1995,7 @@ var getPinnedOffsets = function() {
 
 // Apply pinned styling to header cells
 var applyPinnedColumns = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead) return;
 
    // No-op if column widths haven't been measured yet (e.g. autoSizeColumns
@@ -2032,7 +2038,7 @@ var applyPinnedColumns = function() {
    // unpinned column off-screen (issue #17612). If every column is pinned
    // (or none exist) there is nothing to scroll past, so we skip the padding
    // to avoid a phantom scrollbar over empty space.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
       var overscroll = 0;
@@ -2149,7 +2155,7 @@ var flushDeferredHeaderRebuild = function() {
 };
 
 var autoSizeColumns = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    // Widths are computed from columnOrder + data (below), so headers need not
    // exist yet -- this is also the path that first builds the windowed header.
    if (!thead || !cols || !columnOrder.length) return;
@@ -2157,7 +2163,7 @@ var autoSizeColumns = function() {
    // If the viewport isn't visible (e.g. background tab), measurements
    // will be wrong. Flag and bail; onActivate will re-run sizing once the
    // tab has real layout.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport && viewport.offsetHeight === 0) {
       needsAutoSize = true;
       return;
@@ -2411,7 +2417,7 @@ var initResizeHandlers = function() {
 };
 
 var getHeaderCell = function(colIdx) {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead) return null;
    return thead.querySelector('th[data-col-idx="' + colIdx + '"]');
 };
@@ -3229,7 +3235,7 @@ var createColumnTypesUI = function(th, idx, col) {
 // ==========================================================================
 
 var scrollToTop = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) setViewportScrollTop(viewport, 0);
 };
 
@@ -3272,7 +3278,7 @@ var setViewportScrollTop = function(viewport, top) {
 // after the grid is torn down and rebuilt. Must run before bootstrap() (whose
 // destroyGrid zeroes the viewport and lastScroll* state).
 var captureScrollForRefresh = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    var top = viewport ? viewport.scrollTop : 0;
    var left = viewport ? viewport.scrollLeft : 0;
    // If the refresh fired while the tab was inactive, the live scrollTop may
@@ -3316,7 +3322,7 @@ var restoreScrollAfterRefresh = function() {
    requestAnimationFrame(function() {
       if (restoreToken !== drawCounter)
          return;
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       if (!viewport)
          return;
       setViewportScrollTop(viewport, restore.top);
@@ -3346,7 +3352,7 @@ var updateAriaRowCount = function() {
 // horizontal scroll is active the custom horizontal scrollbar overlays the
 // bottom 10px (see .custom-scrollbar.horizontal in DataViewer.css).
 var visibleBodyHeight = function(viewport) {
-   var headerEl = document.getElementById("data_cols");
+   var headerEl = domThead;
    var headerH = (headerEl && headerEl.parentElement)
       ? headerEl.parentElement.offsetHeight : 0;
    var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
@@ -3375,7 +3381,7 @@ var visibleColumnRangeText = function() {
       return "";
    if (maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
       return "";
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport)
       return "";
 
@@ -3432,7 +3438,7 @@ var updateInfoBar = function() {
       first = 0;
       last = 0;
    } else {
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       var bodyH = viewport ? visibleBodyHeight(viewport) : 0;
       first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
       last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
@@ -3539,8 +3545,8 @@ var updateSpacerRowHeight = function(spacerTr, heightPx) {
 //     Required after fetches, sort/filter, sidebar toggle, resize, etc. --
 //     anything that invalidates row content or window layout.
 var renderVisibleRows = function(forceRebuild) {
-   var viewport = document.getElementById("gridViewport");
-   var tbody = document.getElementById("gridBody");
+   var viewport = domViewport;
+   var tbody = domTbody;
    if (!viewport || !tbody || !cols) return;
 
    var scrollTop = viewport.scrollTop;
@@ -3702,7 +3708,7 @@ var onScroll = function() {
    if (pendingScrollRaf) return;
    pendingScrollRaf = requestAnimationFrame(function() {
       pendingScrollRaf = 0;
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       if (!viewport) return;
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
@@ -3742,7 +3748,7 @@ var onScrollbarUpdate = function() {
 var onScrollEnd = function() {
    if (anyScrollbarDragging()) return;
    onScroll.cancel();
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
@@ -5301,7 +5307,7 @@ var toggleSidebar = function() {
 // occluding the left. Returns true (and updates lastScrollLeft) when it
 // actually scrolls; a no-op when the column is already where it needs to be.
 var scrollColumnPosIntoView = function(pos, center) {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport || pos < 0 || pos >= columnOrder.length) return false;
 
    var offs = columnOffsets();
@@ -5415,7 +5421,7 @@ var getActiveHeaderTh = function() {
 // follow virtual focus into the grid. The viewport is the focused
 // element; the active cell or header is its activedescendant.
 var setViewportActiveDescendant = function(id) {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    if (id) {
       viewport.setAttribute("aria-activedescendant", id);
@@ -5428,7 +5434,7 @@ var setViewportActiveDescendant = function(id) {
 // grid -- without it, subsequent keystrokes would route to whatever was
 // focused before the click instead of onGridKeyDown.
 var focusGridViewport = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport && viewport.focus) viewport.focus({ preventScroll: true });
 };
 
@@ -5451,7 +5457,7 @@ var clearActiveHeader = function() {
 };
 
 var ensureActiveCellVisible = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
 
    // Vertical: rows are uniform-height so we can compute target scrollTop
@@ -5539,7 +5545,7 @@ var setActiveCell = function(row, col) {
 };
 
 var ensureActiveHeaderVisible = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    if (activeHeaderCol < 0 || activeHeaderCol >= columnOrder.length) return;
 
@@ -5727,7 +5733,7 @@ var onGridKeyDown = function(evt) {
    var c = activeCol;
    var pageRows = Math.max(
       1,
-      Math.floor(document.getElementById("gridViewport").clientHeight / ROW_HEIGHT) - 1);
+      Math.floor(domViewport.clientHeight / ROW_HEIGHT) - 1);
 
    // Home/End move vertically within the current column (with or without
    // Ctrl), matching the pre-rewrite viewer where they scrolled the grid to
@@ -5966,12 +5972,12 @@ var anyScrollbarDragging = function() {
 
 var createCustomScrollbars = function() {
    var gridPanel = document.getElementById("gridPanel");
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!gridPanel || !viewport) return;
 
    gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanel, "vertical", {
       getInsets: function() {
-         var thead = document.getElementById("data_cols");
+         var thead = domThead;
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
          var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
@@ -6062,7 +6068,7 @@ var lastColumnOverflow = null;
 var updateColumnOverflowState = function() {
    if (!cols || totalTableWidth <= 0)
       return;
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport)
       return;
 
@@ -6138,6 +6144,11 @@ var installColumnResponse = function(resCols) {
 };
 
 var initGrid = function(resCols, data) {
+   // Cache DOM element references so render-path code can skip re-querying.
+   domViewport = document.getElementById("gridViewport");
+   domTbody = document.getElementById("gridBody");
+   domThead = document.getElementById("data_cols");
+
    if (resCols.error) {
       showError(resCols.error);
 
@@ -6208,7 +6219,7 @@ var initGrid = function(resCols, data) {
    // It re-runs after the first row fetch below to refine widths with real
    // cell values.
    columnOrder = getColumnOrder();
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    thead.innerHTML = "";
    autoSizeColumns();
 
@@ -6236,7 +6247,7 @@ var initGrid = function(resCols, data) {
    // Set up scroll handler. addEventListener is idempotent on the same
    // function reference, so the module-scoped listeners declared below can
    // be re-registered safely even if a previous bootstrap is still in flight.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       viewport.addEventListener("scroll", onScroll);
       viewport.addEventListener("scroll", onScrollbarUpdate);
@@ -6248,7 +6259,7 @@ var initGrid = function(resCols, data) {
       viewport.setAttribute("tabindex", "0");
       viewport.addEventListener("keydown", onGridKeyDown);
    }
-   var gridBody = document.getElementById("gridBody");
+   var gridBody = domTbody;
    if (gridBody) {
       gridBody.addEventListener("click", onGridCellClick);
    }
@@ -6662,7 +6673,7 @@ var applySavedState = function(state) {
 // handleSortClick / clearSort and after the header window is rebuilt (e.g.
 // when restoring saved state).
 var applySortIndicators = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead) return;
    for (var i = 0; i < thead.children.length; i++) {
       var th = thead.children[i];
@@ -6689,17 +6700,22 @@ var destroyGrid = function() {
    invalidateCache();
    destroyCustomScrollbars();
 
+   // Clear DOM cache — it will be re-populated by the next initGrid.
+   domViewport = null;
+   domTbody = null;
+   domThead = null;
+
    // Clear DOM
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (thead) thead.innerHTML = "";
-   var tbody = document.getElementById("gridBody");
+   var tbody = domTbody;
    if (tbody) { tbody.innerHTML = ""; }
 
    var infoText = document.getElementById("rsGridData_info_text");
    if (infoText) infoText.textContent = "";
    setSortStatus("");
 
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       viewport.removeEventListener("scroll", onScroll);
       viewport.removeEventListener("scroll", onScrollbarUpdate);
@@ -6776,7 +6792,7 @@ var bootstrap = function(data) {
 // setFilterUIVisible(true) doesn't get clobbered by a queued
 // setColumnDefinitionsUIVisible(true).
 var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
 
    // Record the desired visibility so it's reapplied after a bootstrap
    // (column pagination / refresh): initGrid replays postInitActions, which is
@@ -6846,7 +6862,7 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 // column widths -- estimated for unfetched spans, measured for fetched ones --
 // change as the window slides.
 var captureScrollAnchor = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport || !cols) return null;
    var pinnedW = getPinnedOffsets().totalWidth;
    var abs = absColAtContentX(viewport.scrollLeft + pinnedW);
@@ -6854,7 +6870,7 @@ var captureScrollAnchor = function() {
 };
 
 var restoreScrollAnchor = function(anchor) {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport || !anchor) return;
    setViewportScrollLeft(viewport, layoutXOfAbs(anchor.abs) - anchor.offsetPx);
 };
@@ -6968,7 +6984,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
    // the requested column centered in the unpinned region (pagination buttons)
    // or re-derive scrollLeft from the anchor captured before the relayout. Then
    // recompute the render window against the settled scroll position.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (targetAbs > 0 && viewport) {
       // Center the target in the unpinned viewport region (matching
       // revealColumnCentered for already-fetched targets).
@@ -7081,7 +7097,7 @@ var maybeSlideForScroll = function() {
    if (measuredWidths.length === 0)
       return;
 
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
 
    var pinnedW = getPinnedOffsets().totalWidth;
@@ -7355,7 +7371,7 @@ window.applySearch = function(text) {
 
 window.onActivate = function() {
    // Restore scroll position and re-render
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       setViewportScrollTop(viewport, lastScrollTop);
       setViewportScrollLeft(viewport, lastScrollLeft);
@@ -7387,7 +7403,7 @@ window.onActivate = function() {
 
 window.onDeactivate = function() {
    // Save scroll position
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
