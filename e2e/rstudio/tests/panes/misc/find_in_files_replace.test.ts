@@ -90,6 +90,7 @@ test.describe('Find in Files', () => {
     const searchInput = page.locator(SEARCH_INPUT);
     await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await searchInput.click();
+    await expect(searchInput).toBeFocused();
     await searchInput.pressSequentially('dagger');
     await page.locator(FIND_OK_BTN).click();
 
@@ -143,6 +144,7 @@ test.describe('Find in Files', () => {
     await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await page.locator(REGEX_CHECKBOX).check();
     await searchInput.click();
+    await expect(searchInput).toBeFocused();
     await searchInput.pressSequentially('c.t');
     await page.locator(FIND_OK_BTN).click();
 
@@ -157,6 +159,7 @@ test.describe('Find in Files', () => {
     const replaceInput = page.locator(REPLACE_INPUT);
     await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await replaceInput.click();
+    await expect(replaceInput).toBeFocused();
     await replaceInput.pressSequentially('cat');
 
     // The preview keeps real_change.txt (its matches change) but drops
@@ -192,6 +195,7 @@ test.describe('Find in Files', () => {
     await page.locator(REGEX_CHECKBOX).uncheck();
     await page.locator(CASE_CHECKBOX).uncheck();
     await searchInput.click();
+    await expect(searchInput).toBeFocused();
     await searchInput.pressSequentially('cat');
     await page.locator(FIND_OK_BTN).click();
 
@@ -206,6 +210,7 @@ test.describe('Find in Files', () => {
     const replaceInput = page.locator(REPLACE_INPUT);
     await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await replaceInput.click();
+    await expect(replaceInput).toBeFocused();
     await replaceInput.pressSequentially('cat');
 
     // mixed.txt stays (its "Cat" match changes) but allnoop.txt is dropped
@@ -213,6 +218,47 @@ test.describe('Find in Files', () => {
     // "Cat" match -- and not for either no-op "cat".
     await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
     await expect(findPane).not.toContainText('allnoop.txt');
+    await expect(findPane.locator('ins')).toHaveCount(1);
+  });
+
+  test('regex replace preview retains a line mixing no-op and real matches', async ({ rstudioPage: page }) => {
+    // Exercises the server-side path where a single line has both a no-op and a
+    // real match. The backend erases the no-op match from the find-highlight
+    // arrays to keep them paired with the (partial) replace-highlight arrays; a
+    // miscount there would mis-highlight the surviving match without dropping
+    // the line. The line must be retained with only the real match decorated.
+    const consoleActions = new ConsolePaneActions(page);
+    await createAndOpenProject(page, sandbox.dir, 'find_regex_mixed_project');
+
+    // Regex "c.t" matches both "cat" and "cot" on the one line; replacing with
+    // "cat" leaves "cat" unchanged (no-op) but rewrites "cot".
+    await consoleActions.executeInConsole(
+      `writeLines("cat cot", con = "mixed_regex.txt")`,
+      { wait: true },
+    );
+
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await page.locator(REGEX_CHECKBOX).check();
+    await searchInput.click();
+    await expect(searchInput).toBeFocused();
+    await searchInput.pressSequentially('c.t');
+    await page.locator(FIND_OK_BTN).click();
+
+    const findPane = page.locator(FIND_PANE);
+    await expect(findPane).toContainText('mixed_regex.txt', { timeout: TIMEOUTS.fileOpen });
+
+    await page.locator(REPLACE_MODE_TOGGLE).click();
+    const replaceInput = page.locator(REPLACE_INPUT);
+    await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await replaceInput.click();
+    await expect(replaceInput).toBeFocused();
+    await replaceInput.pressSequentially('cat');
+
+    // The line is kept (it has a real change) and exactly one replacement is
+    // previewed -- for "cot", not the no-op "cat".
+    await expect(findPane).toContainText('mixed_regex.txt', { timeout: TIMEOUTS.fileOpen });
     await expect(findPane.locator('ins')).toHaveCount(1);
   });
 });
@@ -244,6 +290,7 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
     const searchInput = page.locator(SEARCH_INPUT);
     await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await searchInput.click();
+    await expect(searchInput).toBeFocused();
     await searchInput.pressSequentially('hello');
     await page.locator(FIND_OK_BTN).click();
 
@@ -256,6 +303,7 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
     const replaceInput = page.locator(REPLACE_INPUT);
     await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
     await replaceInput.click();
+    await expect(replaceInput).toBeFocused();
     await replaceInput.pressSequentially('goodbye');
 
     await page.locator(REPLACE_ALL_BTN).click();
@@ -266,5 +314,52 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
     await expect
       .poll(() => fs.readFileSync(helloPath, 'utf8').trim(), { timeout: TIMEOUTS.fileOpen })
       .toBe('goodbye goodbye goodbye');
+  });
+
+  test('omits all-no-op lines from the results and leaves them unchanged on disk', async ({ rstudioPage: page }) => {
+    // The no-op omission also applies to the actual Replace All, not just the
+    // preview: a line whose every match is a no-op is dropped from the results
+    // (and excluded from the replacement count), while still being written back
+    // to disk unchanged.
+    const projectDir = await createAndOpenProject(page, sandbox.dir, 'find_replace_noop_project');
+
+    // Under a regex "c.t" -> "cat" replace, noop.txt's matches are all no-ops
+    // ("cat" -> "cat") while real.txt changes ("cot" -> "cat").
+    const noopPath = path.join(projectDir, 'noop.txt');
+    const realPath = path.join(projectDir, 'real.txt');
+    fs.writeFileSync(noopPath, 'cat cat\n');
+    fs.writeFileSync(realPath, 'cot\n');
+
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await page.locator(REGEX_CHECKBOX).check();
+    await searchInput.click();
+    await expect(searchInput).toBeFocused();
+    await searchInput.pressSequentially('c.t');
+    await page.locator(FIND_OK_BTN).click();
+
+    const findPane = page.locator(FIND_PANE);
+    await expect(findPane).toContainText('real.txt', { timeout: TIMEOUTS.fileOpen });
+
+    await page.locator(REPLACE_MODE_TOGGLE).click();
+    const replaceInput = page.locator(REPLACE_INPUT);
+    await replaceInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await replaceInput.click();
+    await expect(replaceInput).toBeFocused();
+    await replaceInput.pressSequentially('cat');
+
+    await page.locator(REPLACE_ALL_BTN).click();
+    await page.locator(CONFIRM_YES_BTN).click();
+
+    // real.txt is rewritten; noop.txt is left untouched on disk (no data loss).
+    await expect
+      .poll(() => fs.readFileSync(realPath, 'utf8').trim(), { timeout: TIMEOUTS.fileOpen })
+      .toBe('cat');
+    expect(fs.readFileSync(noopPath, 'utf8').trim()).toBe('cat cat');
+
+    // The all-no-op file is omitted from the replace results entirely.
+    await expect(findPane).toContainText('real.txt');
+    await expect(findPane).not.toContainText('noop.txt');
   });
 });
