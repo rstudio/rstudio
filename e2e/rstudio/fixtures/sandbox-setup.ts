@@ -162,9 +162,22 @@ export default async function globalSetup() {
           `Failed copying ${seededFrom.abs} into sandbox: ${(err as Error).message}`,
         );
       }
+    } else if (process.env.POSIT_AI_EMAIL && process.env.POSIT_AI_PASSWORD) {
+      // CI path: no host state dir, but the workflow loaded an account email
+      // + password from 1Password (see the "Load secrets from 1Password" step
+      // in .github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml).
+      // Mark the provider as seeded so @ai tests run; they perform the
+      // email/password sign-in themselves (using getPositAiAccount() from
+      // utils/ai-credentials.ts) at first chat-pane open. No file copy is
+      // needed -- the tokens land in the sandbox user-home once the IDE
+      // completes the sign-in.
+      process.env.PW_AI_SEEDED_POSITAI = '1';
+      console.log(
+        '[sandbox] Posit AI: using POSIT_AI_EMAIL/POSIT_AI_PASSWORD from env; tests will sign in at first chat-pane open',
+      );
     } else {
       console.log(
-        `[sandbox] no Posit Assistant state dir (~/.posit/assistant or ~/.positai) on host; @ai Posit Assistant tests will skip`,
+        `[sandbox] no Posit Assistant state dir (~/.posit/assistant or ~/.positai) on host and no POSIT_AI_EMAIL/POSIT_AI_PASSWORD in env; @ai Posit Assistant tests will skip`,
       );
     }
 

@@ -25,6 +25,29 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
 };
 
 /**
+ * Posit AI account credentials sourced from env vars (populated in CI by the
+ * "Load secrets from 1Password" workflow step; set manually for local dev).
+ * Returns null when either var is missing -- callers should fall back to the
+ * file-based seeded path (~/.posit/assistant) in that case.
+ *
+ * Marked optional in CI on fork PRs (no 1Password service-account token); the
+ * matching @ai tests then skip via requireAiCredentials.
+ */
+export interface PositAiAccount {
+  email: string;
+  password: string;
+}
+
+export function getPositAiAccount(): PositAiAccount | null {
+  const email = process.env.POSIT_AI_EMAIL;
+  const password = process.env.POSIT_AI_PASSWORD;
+  if (!email || !password) {
+    return null;
+  }
+  return { email, password };
+}
+
+/**
  * Gate the surrounding describe block on having real credentials seeded for
  * `provider`. Each test inside the describe is marked skipped (with reason)
  * when the matching PW_AI_SEEDED_* env var is unset, which happens when the
