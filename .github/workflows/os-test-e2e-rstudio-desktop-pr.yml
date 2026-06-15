@@ -44,7 +44,10 @@ jobs:
           echo "$CHANGED"
           # Build from source when C++, GWT, CMake, build scripts, or
           # dependencies changed — anything that ends up in the compiled binary.
-          if echo "$CHANGED" | grep -qE '^(src/|package/win32/|package/osx/|dependencies/|cmake/)'; then
+          # Matches all of package/ (CMakeLists.txt at the root, and every
+          # per-platform subdir) so a packaging change can't silently fall
+          # through to running tests against a daily.
+          if echo "$CHANGED" | grep -qE '^(src/|package/|dependencies/|cmake/)'; then
             echo "Source files changed — building from source"
             echo "build_from_source=true" >> "$GITHUB_OUTPUT"
           else
