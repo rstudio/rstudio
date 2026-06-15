@@ -3,6 +3,7 @@ name: "Test: E2E Playwright RStudio (Desktop, PR-triggered)"
 on:
   pull_request:
     paths:
+      - "CMakeLists.txt"
       - "src/**"
       - "dependencies/**"
       - "cmake/**"
@@ -45,9 +46,10 @@ jobs:
           # Build from source when C++, GWT, CMake, build scripts, or
           # dependencies changed — anything that ends up in the compiled binary.
           # Matches all of package/ (CMakeLists.txt at the root, and every
-          # per-platform subdir) so a packaging change can't silently fall
-          # through to running tests against a daily.
-          if echo "$CHANGED" | grep -qE '^(src/|package/|dependencies/|cmake/)'; then
+          # per-platform subdir) plus the repo-root CMakeLists.txt so a
+          # packaging or top-level cmake change can't silently fall through
+          # to running tests against a daily.
+          if echo "$CHANGED" | grep -qE '^(CMakeLists\.txt$|src/|package/|dependencies/|cmake/)'; then
             echo "Source files changed — building from source"
             echo "build_from_source=true" >> "$GITHUB_OUTPUT"
           else

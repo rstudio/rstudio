@@ -713,7 +713,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-blob-report-${{ matrix.shard }}
+          name: playwright-blob-report-win-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -793,7 +793,7 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
         with:
-          pattern: playwright-blob-report-*
+          pattern: playwright-blob-report-win-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
@@ -859,7 +859,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-win
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
