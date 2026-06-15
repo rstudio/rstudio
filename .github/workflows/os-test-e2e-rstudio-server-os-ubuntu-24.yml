@@ -220,7 +220,17 @@ jobs:
       - name: Install OS dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb jq
+          # xvfb + jq: virtual display for Playwright/Chrome, JSON parsing.
+          # pandoc: needed by rsession's rmarkdown rendering. The rstudio-server
+          # .deb may bundle a pandoc, but installing system pandoc is a
+          # belt-and-suspenders measure -- we point RSTUDIO_PANDOC at it below.
+          # Several R packages installed below also have system-library
+          # dependencies: libfreetype6 / libfontconfig1 (ragg, systemfonts),
+          # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime
+          # libs (not the -dev variants) so rsession's R can load these
+          # packages without source compile.
+          sudo apt-get install -y xvfb jq pandoc \
+            libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
       # Ubuntu 24 restricts unprivileged user namespaces by default, which
       # blocks Chrome's sandbox. Enable them before starting the server or
@@ -303,8 +313,29 @@ jobs:
           [Service]
           ExecStart=
           ExecStart=/usr/lib/rstudio-server/bin/rserver --automation-agent
+          Environment=RSTUDIO_PANDOC=/usr/bin/pandoc
           EOF
           sudo systemctl daemon-reload
+
+      # Seed R packages into the SYSTEM R library (/usr/lib/R/site-library)
+      # so rsession's R -- which runs as $PW_RSTUDIO_SERVER_USER with an
+      # empty user library -- can resolve them without an install-prompt
+      # roundtrip during tests. Without this, rmarkdown / knitr / fortunes
+      # tests fail intermittently when an in-test ensurePackages or
+      # auto-prompt fires under load. .Library is /usr/lib/R/library which
+      # is on every R session's libPaths by default, regardless of HOME.
+      # Posit Package Manager (PPM) serves prebuilt binaries for noble so
+      # this is a quick download, not a source compile.
+      - name: Seed R packages into system library for rsession
+        run: |
+          sudo R --vanilla -s -e '
+            install.packages(
+              c("rmarkdown", "knitr", "readr", "fortunes",
+                "shiny", "testthat", "tidyverse"),
+              repos = "https://packagemanager.posit.co/cran/latest",
+              lib = .Library
+            )
+          '
 
       - name: Start RStudio Server
         run: |
