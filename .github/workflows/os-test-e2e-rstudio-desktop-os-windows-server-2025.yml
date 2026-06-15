@@ -715,8 +715,6 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           # E2E Test Insights reporter (posts results to the Connect dashboard).
-          # TODO: replace with the real 1Password reference once the CONNECT_API_KEY
-          # item is added to the "RStudio OSS GitHub Actions" vault.
           CONNECT_API_KEY: "op://RStudio OSS GitHub Actions/CONNECT_API_KEY/credential"
           # Posit AI account credentials used by @ai-tagged Playwright tests.
           # Account: posit-ai-test-rstudio@posit.co (https://posit.ai).

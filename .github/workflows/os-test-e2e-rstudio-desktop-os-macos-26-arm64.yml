@@ -300,14 +300,17 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
-            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
-            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
+            # The daily manifest publishes a single universal macOS build
+            # under the "macos" platform key (architecture: universal). There
+            # are no separate "mac-arm64" / "mac" entries.
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1
             fi
-            echo "Auto-resolved latest macOS ARM64 daily:"
+            echo "Auto-resolved latest macOS daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
@@ -413,8 +416,6 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           # E2E Test Insights reporter (posts results to the Connect dashboard).
-          # TODO: replace with the real 1Password reference once the CONNECT_API_KEY
-          # item is added to the "RStudio OSS GitHub Actions" vault.
           CONNECT_API_KEY: "op://RStudio OSS GitHub Actions/CONNECT_API_KEY/credential"
           # Posit AI account credentials used by @ai-tagged Playwright tests.
           # Account: posit-ai-test-rstudio@posit.co (https://posit.ai).
