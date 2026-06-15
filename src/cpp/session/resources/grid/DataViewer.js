@@ -6720,12 +6720,6 @@ var destroyGrid = function() {
    invalidateCache();
    destroyCustomScrollbars();
 
-   // Clear DOM cache at the end, after all cleanup that depends on the
-   // cached references has run.  The next initGrid re-populates them.
-   domViewport = null;
-   domTbody = null;
-   domThead = null;
-
    // Clear DOM
    var thead = domThead;
    if (thead) thead.innerHTML = "";
@@ -6757,6 +6751,12 @@ var destroyGrid = function() {
    debouncedInfoBar.cancel();
    flushSidebarPendingFetch.cancel();
    debouncedSearch.cancel();
+
+   // Clear DOM cache at the end, after all cleanup that depends on the
+   // cached references has run.  The next initGrid re-populates them.
+   domViewport = null;
+   domTbody = null;
+   domThead = null;
 };
 
 var bootstrap = function(data) {
