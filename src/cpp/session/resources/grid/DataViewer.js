@@ -3309,8 +3309,24 @@ var captureScrollForRefresh = function() {
 var restoreScrollAfterRefresh = function() {
    var restore = activeScrollRestore;
    activeScrollRestore = null;
-   if (!restore || restore.rows !== totalRows)
+   if (!restore) {
+      // No capture was made (e.g. no refresh path was taken). Nothing to do.
       return;
+   }
+   if (restore.rows !== totalRows) {
+      // The row count changed: the previous position no longer maps meaningfully
+      // to the new data, so reset to the top rather than restoring a stale offset.
+      requestAnimationFrame(function() {
+         var viewport = domViewport;
+         if (!viewport)
+            return;
+         setViewportScrollTop(viewport, 0);
+         renderVisibleRows(true);
+         updateInfoBar();
+         updateCustomScrollbars();
+      });
+      return;
+   }
 
    // Guard against a rapid second refresh landing in the gap before this frame
    // paints: capture the current draw and bail if another fetch has superseded
