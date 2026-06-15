@@ -1040,6 +1040,49 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // Reset View must also return to the FIRST COLUMN on a wide frame. After a
+  // horizontal scroll slides the fetched column window (columnOffset > 0), Reset
+  // View clears the scroll position; if it didn't also reset columnOffset, the
+  // window would stay parked far right while the viewport sat at scrollLeft 0
+  // over the blank left spacer span -- a blank grid until the user scrolled.
+  test('Reset View returns to the first column on a wide frame', async ({ rstudioPage: page }) => {
+    // 500 columns exceeds the ~200-column fetched window, so scrolling slides it.
+    await consoleActions.executeInConsole(
+      '{ .rs.reset_view_wide_df <- as.data.frame(matrix(1:5000, nrow = 10, ncol = 500)); View(.rs.reset_view_wide_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+
+      // Scroll fully right so the window slides far from column 1.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+      await expect(dataViewer.columnHeader(500)).toBeVisible({ timeout: 15000 });
+
+      // Reset View (the same iframe method the toolbar option invokes).
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { refreshAndReset?: () => void } | undefined;
+        if (!w?.refreshAndReset) throw new Error('refreshAndReset() not available on data viewer iframe');
+        w.refreshAndReset();
+      }, VIEWER_FRAME);
+
+      // The grid rebuilds back at column 1 with real data visible -- not a blank
+      // left-spacer band. V1's first row holds 1 (matrix is column-major).
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: 15000 });
+      await expect(
+        dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'),
+      ).toHaveText('1', { timeout: 15000 });
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollLeft),
+      ).toBe(0);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.reset_view_wide_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // The scroll position is part of the per-object UI state persisted to
   // localStorage (alongside sorts/filters/pins), so it survives a close/reopen
   // reload the same way they do. A page/iframe reload preserves saved state

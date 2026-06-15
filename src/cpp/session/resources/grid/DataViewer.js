@@ -7299,6 +7299,13 @@ window.refreshAndReset = function() {
    // Reset View deliberately returns to the top, so drop any captured position.
    clearSavedState();
    pendingScrollRestore = null;
+   // Also return to the first column. bootstrap()/resetGridState don't touch
+   // columnOffset (a plain refresh keeps the horizontal position and restores
+   // scrollLeft), but Reset View clears the scroll position, so a stale offset
+   // would leave the fetched window parked far right while the viewport sits at
+   // scrollLeft 0 over the blank left spacer span -- a blank grid until the
+   // user scrolls. Reset it so the window and the viewport both start at column 1.
+   columnOffset = 0;
    bootstrap();
 };
 
