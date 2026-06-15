@@ -6704,6 +6704,7 @@ var destroyGrid = function() {
       viewport.removeEventListener("scroll", onScroll);
       viewport.removeEventListener("scroll", onScrollbarUpdate);
       viewport.removeEventListener("scrollend", onScrollEnd);
+      viewport.removeEventListener("keydown", onGridKeyDown);
       viewport.scrollTop = 0;
       viewport.scrollLeft = 0;
    }
