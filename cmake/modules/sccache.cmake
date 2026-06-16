@@ -50,21 +50,6 @@ if(CCACHE_PROGRAM)
             cmake_policy(SET CMP0141 NEW)
             set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded" CACHE STRING "" FORCE)
         endif()
-
-        # Disable C++20 module-dependency scanning. CMake 3.28+ on MSVC + Ninja
-        # with -std:c++20 auto-generates two compile rules per target -- a
-        # `_scanned_` rule that adds `@$DYNDEP_MODULE_MAP_FILE` to the cl.exe
-        # command line, and a regular `_unscanned_` rule. sccache 0.15.x doesn't
-        # understand the dyndep response-file argument and silently bails to
-        # direct compilation without registering the request, so every CXX
-        # compile bypasses the cache and `sccache --show-stats` reports
-        # `Compile requests: 0` despite the launcher being wired correctly.
-        # RStudio doesn't actually use C++20 modules, so the scanner only ever
-        # confirms "no modules here" -- turning it off has no functional impact
-        # but unblocks sccache. macOS is unaffected because it builds with
-        # C++17 and never gets the dyndep rules.
-        set(CMAKE_CXX_SCAN_FOR_MODULES OFF CACHE BOOL "Disable C++20 module scanning so sccache can wrap cl.exe" FORCE)
-        message(STATUS "sccache CMAKE_CXX_SCAN_FOR_MODULES: OFF (avoids @DYNDEP_MODULE_MAP_FILE which sccache 0.15.x can't handle)")
     endif()
 endif()
 

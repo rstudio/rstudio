@@ -405,6 +405,15 @@ jobs:
           RSTUDIO_VERSION_PATCH: '9'
           RSTUDIO_VERSION_SUFFIX: '-pr+${{ github.run_number }}'
           GWT_CACHE_HIT: ${{ steps.gwt-cache.outputs.cache-hit }}
+          # Diagnostic: route sccache's own logs to a file. The build is still
+          # reporting `Compile requests: 0` even though the LAUNCHER variable
+          # is wired correctly in build.ninja's per-target settings and the
+          # rules.ninja `command =` line references `${LAUNCHER}`. That means
+          # ninja either never executes sccache.exe, or sccache.exe runs and
+          # silently bails out before incrementing any stats counter. Verbose
+          # logs distinguish those two cases.
+          SCCACHE_LOG: info
+          SCCACHE_ERROR_LOG: ${{ github.workspace }}\sccache-error.log
         run: |
           if "%GWT_CACHE_HIT%"=="true" (
             echo GWT cache hit -- using nogwt flag
@@ -413,6 +422,18 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
+
+      # Upload sccache's own log so we can see, per compile, whether sccache
+      # was invoked, which compiler it identified, and whether it fell back
+      # to direct compilation. Always runs.
+      - name: Upload sccache error log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sccache-error-log-win
+          path: ${{ github.workspace }}\sccache-error.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       # Diagnostic: confirm sccache is actually wired into the CXX compile
       # rules. CMake's Ninja generator factors rule templates into
