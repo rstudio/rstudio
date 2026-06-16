@@ -376,7 +376,9 @@ json::Object makeDataItem(SEXP dataSEXP,
       http::util::urlEncode(cacheKey, true) + "&max_display_columns=" +
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns()) +
       "&show_summary=" +
-      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0");
+      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0") +
+      "&show_filters=" +
+      (prefs::userPrefs().dataViewerShowFilters() ? "1" : "0");
    dataItem["preview"] = preview;
 
    return dataItem;

@@ -2780,6 +2780,19 @@ core::Error UserPrefValues::setDataViewerShowSummary(bool val)
 }
 
 /**
+ * Whether the filter bar is shown by default when opening the data viewer.
+ */
+bool UserPrefValues::dataViewerShowFilters()
+{
+   return readPref<bool>("data_viewer_show_filters");
+}
+
+core::Error UserPrefValues::setDataViewerShowFilters(bool val)
+{
+   return writePref("data_viewer_show_filters", val);
+}
+
+/**
  * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()

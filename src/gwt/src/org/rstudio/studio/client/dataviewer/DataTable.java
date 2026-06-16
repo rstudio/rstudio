@@ -37,9 +37,9 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
-import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback;
@@ -52,6 +52,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -157,10 +158,8 @@ public class DataTable
          }
       });
 
-      // Refresh + options dropdown -- mirrors the pattern used in
-      // EnvironmentPane (refresh button followed by a NoText
-      // ToolbarMenuButton whose dropdown arrow opens a popup of
-      // related options).
+      // Refresh + options -- the options (gear) button sits to the left
+      // of the refresh button; its dropdown contains the preference toggles.
       refreshButton_ = new ToolbarButton(
          ToolbarButton.NoText,
          constants_.refreshButtonTitle(),
@@ -172,16 +171,34 @@ public class DataTable
             }
          });
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      refreshButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
 
-      // Refresh the show-summary item's checked state every time the
-      // popup is about to open, in case the pref was changed elsewhere
-      // (global Options dialog, another open data viewer) since we last
-      // showed it.
-      optionsMenu_ = new ToolbarPopupMenu() {
+      // Options (gear) button -- positioned to the left of the refresh
+      // button.  A no-text ToolbarButton using the existing options2x
+      // icon, which opens a ToolbarPopupMenu containing the preference
+      // toggles and a "Reset View" action.
+      optionsGearButton_ = new ToolbarButton(
+              constants_.optionsButtonLabel(),
+              constants_.optionsButtonTitle(),
+              new ImageResource2x(StandardIcons.INSTANCE.options2x()),
+              new ClickHandler() {
+                 public void onClick(ClickEvent event)
+                 {
+                    optionsMenu_.showRelativeTo(optionsGearButton_);
+                 }
+              });
+
+      // Refresh the show-summary and show-filters items' checked states
+      // every time the popup is about to open, in case the pref was
+      // changed elsewhere (global Options dialog, another open data viewer)
+      // since we last showed it.
+      optionsMenu_ = new ToolbarPopupMenu()
+      {
          @Override
-         public void getDynamicPopupMenu(
-               ToolbarPopupMenu.DynamicPopupMenuCallback callback) {
+         public void getDynamicPopupMenu(ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+         {
             if (showSummaryItem_ != null) showSummaryItem_.onStateChanged();
+            if (showFiltersItem_ != null) showFiltersItem_.onStateChanged();
             super.getDynamicPopupMenu(callback);
          }
       };
@@ -215,6 +232,36 @@ public class DataTable
             onStateChanged();
          }
       };
+
+      // Filter bar preference -- mirrors the summary panel toggle.
+      showFiltersItem_ = new CheckableMenuItem(constants_.optionsShowFiltersDefault())
+      {
+         @Override
+         public String getLabel()
+         {
+            return constants_.optionsShowFiltersDefault();
+         }
+
+         @Override
+         public boolean isChecked()
+         {
+            return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .dataViewerShowFilters().getGlobalValue();
+         }
+
+         @Override
+         public void onInvoked()
+         {
+            UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+            prefs.dataViewerShowFilters().setGlobalValue(!isChecked());
+            prefs.writeUserPrefs();
+            onStateChanged();
+         }
+      };
+      optionsMenu_.addItem(showSummaryItem_);
+      optionsMenu_.addItem(showFiltersItem_);
+      optionsMenu_.addSeparator();
+
       // Format the label through formatMenuLabel (with a null icon) so it
       // carries the same 25px icon column that AppCommand- and
       // CheckableMenuItem-backed items use; otherwise this plain MenuItem's
@@ -223,21 +270,14 @@ public class DataTable
             AppCommand.formatMenuLabel(constants_.optionsResetView()),
             true,
             () -> refreshAndReset()));
-      optionsMenu_.addSeparator();
-      optionsMenu_.addItem(showSummaryItem_);
-      optionsMenuButton_ = new ToolbarMenuButton(
-            ToolbarButton.NoText,
-            constants_.optionsButtonTitle(),
-            optionsMenu_,
-            false);
 
       // Right-side layout:
-      //    [search] | [summary] | [refresh] [options]
+      //    [search] | [summary] | [options] | [refresh]
       // Search widget anchors the right edge. The summary toggle sits
-      // in the middle on its own; the options dropdown trails the
-      // refresh button so we don't have to deal with the visual
-      // mismatch between a latched LatchingToolbarButton and an
-      // adjacent ToolbarMenuButton.
+      // in the middle on its own.  The gear (options) button sits next
+      // to the refresh button -- clicking it opens the preference
+      // popup; a separate no-text ToolbarMenuButton trails refresh
+      // so the old "options-arrow" fallback is still supported.
       toolbar.addRightWidget(searchWidget_);
       searchWidget_.setVisible(!isPreview);
 
@@ -245,13 +285,16 @@ public class DataTable
       toolbar.addRightWidget(sidebarButton_);
       sidebarButton_.setVisible(!isPreview);
 
+      Widget optionsSeparator = toolbar.addRightSeparator();
+      toolbar.addRightWidget(optionsGearButton_);
+      optionsGearButton_.setVisible(!isPreview);
+
       Widget refreshSeparator = toolbar.addRightSeparator();
       toolbar.addRightWidget(refreshButton_);
       refreshButton_.setVisible(!isPreview);
-      toolbar.addRightWidget(optionsMenuButton_);
-      optionsMenuButton_.setVisible(!isPreview);
 
       summarySeparator.setVisible(!isPreview);
+      optionsSeparator.setVisible(!isPreview);
       refreshSeparator.setVisible(!isPreview);
 
       if (isPreview)
@@ -776,10 +819,11 @@ public class DataTable
    private Host host_;
    private LatchingToolbarButton filterButton_;
    private LatchingToolbarButton sidebarButton_;
+   private ToolbarButton optionsGearButton_;
    private ToolbarButton refreshButton_;
-   private ToolbarMenuButton optionsMenuButton_;
    private ToolbarPopupMenu optionsMenu_;
    private CheckableMenuItem showSummaryItem_;
+   private CheckableMenuItem showFiltersItem_;
    private SearchWidget gotoColumnWidget_;
    private boolean gotoColumnSelectionHandled_ = false;
    private Widget colsSeparator_;

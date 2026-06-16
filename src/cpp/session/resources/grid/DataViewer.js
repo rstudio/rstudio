@@ -494,7 +494,10 @@ var parseLocationUrl = function() {
       maxDisplayColumns: -1, maxCols: 0, maxRows: 0,
       // Default true so the sidebar shows when the param is absent (e.g.
       // older callers that don't pass it).
-      showSummary: true
+      showSummary: true,
+      // Default false: the filter bar is hidden by default until the user
+      // explicitly shows it or restores saved filter values.
+      showFilters: false
    };
    var query = window.location.search.substring(1);
    var vars = query.split("&");
@@ -510,6 +513,7 @@ var parseLocationUrl = function() {
       else if (key === "max_cols") result.maxCols = parseInt(val, 10);
       else if (key === "max_rows") result.maxRows = parseInt(val, 10);
       else if (key === "show_summary") result.showSummary = (val === "1" || val === "true");
+      else if (key === "show_filters") result.showFilters = (val === "1" || val === "true");
    }
    return result;
 };
@@ -6317,10 +6321,12 @@ var initGrid = function(resCols, data) {
    // Reveal the filter row when saved state restored active per-column filters,
    // so they're visible and editable instead of being applied with no UI
    // (#17830). Filter-row visibility itself isn't persisted -- it's derived
-   // from whether any filter values came back. setFilterUIVisible records a
+   // from whether any filter values came back, or when the
+   // data_viewer_show_filters preference is true. setFilterUIVisible records a
    // post-init action, so this also survives column-pagination re-bootstraps;
    // the replay loop below applies it once the headers are built.
-   if (Object.keys(cachedFilterValues).length > 0) {
+   if (Object.keys(cachedFilterValues).length > 0 ||
+       loc.showFilters) {
       window.setFilterUIVisible(true);
    }
 

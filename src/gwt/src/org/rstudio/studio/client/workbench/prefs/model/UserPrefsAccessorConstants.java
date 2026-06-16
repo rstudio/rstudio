@@ -1780,6 +1780,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerShowSummaryDescription();
 
    /**
+    * Whether the filter bar is shown by default when opening the data viewer.
+    */
+   @DefaultStringValue("Show data viewer filter bar by default")
+   String dataViewerShowFiltersTitle();
+   @DefaultStringValue("Whether the filter bar is shown by default when opening the data viewer.")
+   String dataViewerShowFiltersDescription();
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    @DefaultStringValue("Enable support for screen readers")

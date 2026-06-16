@@ -358,6 +358,7 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kDataViewerMaxCellSize "data_viewer_max_cell_size"
 #define kDataViewerShowSummary "data_viewer_show_summary"
+#define kDataViewerShowFilters "data_viewer_show_filters"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -1779,6 +1780,12 @@ public:
     */
    bool dataViewerShowSummary();
    core::Error setDataViewerShowSummary(bool val);
+
+   /**
+    * Whether the filter bar is shown by default when opening the data viewer.
+    */
+   bool dataViewerShowFilters();
+   core::Error setDataViewerShowFilters(bool val);
 
    /**
     * Support accessibility aids such as screen readers.
