@@ -378,7 +378,9 @@ json::Object makeDataItem(SEXP dataSEXP,
       "&show_summary=" +
       (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0") +
       "&show_filters=" +
-      (prefs::userPrefs().dataViewerShowFilters() ? "1" : "0");
+      (prefs::userPrefs().dataViewerShowFilters() ? "1" : "0") +
+      "&use_overlay_scrollbars=" +
+      (prefs::userPrefs().dataViewerUseOverlayScrollbars() ? "1" : "0");
    dataItem["preview"] = preview;
 
    return dataItem;

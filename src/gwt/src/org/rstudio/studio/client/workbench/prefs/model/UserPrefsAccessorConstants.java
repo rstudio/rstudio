@@ -1788,6 +1788,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerShowFiltersDescription();
 
    /**
+    * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+    */
+   @DefaultStringValue("Use overlay scrollbars in the data viewer")
+   String dataViewerUseOverlayScrollbarsTitle();
+   @DefaultStringValue("Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.")
+   String dataViewerUseOverlayScrollbarsDescription();
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    @DefaultStringValue("Enable support for screen readers")

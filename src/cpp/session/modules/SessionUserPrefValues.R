@@ -1986,6 +1986,25 @@
    clear = function() { .rs.clearUserPref("data_viewer_show_summary") }
 )
 
+# Show data viewer filter bar by default
+#
+# Whether the filter bar is shown by default when opening the data viewer.
+.rs.uiPrefs$dataViewerShowFilters <- list(
+   get = function() { .rs.getUserPref("data_viewer_show_filters") },
+   set = function(value) { .rs.setUserPref("data_viewer_show_filters", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_show_filters") }
+)
+
+# Use overlay scrollbars in the data viewer
+#
+# Whether the data viewer draws its own overlay scrollbars; when disabled, native
+# scrollbars are used instead.
+.rs.uiPrefs$dataViewerUseOverlayScrollbars <- list(
+   get = function() { .rs.getUserPref("data_viewer_use_overlay_scrollbars") },
+   set = function(value) { .rs.setUserPref("data_viewer_use_overlay_scrollbars", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_use_overlay_scrollbars") }
+)
+
 # Enable support for screen readers
 #
 # Support accessibility aids such as screen readers.

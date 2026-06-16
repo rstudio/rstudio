@@ -29,4 +29,5 @@ public interface DataViewerConstants extends Constants
     String optionsResetView();
     String optionsShowSummaryDefault();
     String optionsShowFiltersDefault();
+    String optionsUseOverlayScrollbars();
 }

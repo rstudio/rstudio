@@ -370,6 +370,13 @@ var gridScrollbarV_ = null;
 var gridScrollbarH_ = null;
 var sidebarScrollbar_ = null;
 
+// Whether the grid draws its own overlay scrollbars (true) or relies on the
+// native scrollbars (false). Resolved from the use_overlay_scrollbars URL
+// param at bootstrap and updated live by setOption when the
+// data_viewer_use_overlay_scrollbars preference changes; applyScrollbarMode
+// reconciles the DOM (body class + overlay lifecycle) with this flag.
+var useOverlayScrollbars = true;
+
 // Sparklines whose container has been created but whose (relatively
 // expensive) canvas has not been drawn yet. Populated by initSidebar and
 // flushed by renderPendingSparklines once the summary panel is actually
@@ -497,7 +504,10 @@ var parseLocationUrl = function() {
       showSummary: true,
       // Default false: the filter bar is hidden by default until the user
       // explicitly shows it or restores saved filter values.
-      showFilters: false
+      showFilters: false,
+      // Default true: draw the custom overlay scrollbars. When false, the
+      // native scrollbars are shown instead (data_viewer_use_overlay_scrollbars).
+      useOverlayScrollbars: true
    };
    var query = window.location.search.substring(1);
    var vars = query.split("&");
@@ -514,6 +524,7 @@ var parseLocationUrl = function() {
       else if (key === "max_rows") result.maxRows = parseInt(val, 10);
       else if (key === "show_summary") result.showSummary = (val === "1" || val === "true");
       else if (key === "show_filters") result.showFilters = (val === "1" || val === "true");
+      else if (key === "use_overlay_scrollbars") result.useOverlayScrollbars = (val === "1" || val === "true");
    }
    return result;
 };
@@ -5349,6 +5360,15 @@ var scrollColumnPosIntoView = function(pos, center) {
    var viewport = domViewport;
    if (!viewport || pos < 0 || pos >= columnOrder.length) return false;
 
+   // Pinned columns are sticky -- always visible at the left edge regardless
+   // of scroll position -- so there's nothing to scroll into view. Bail before
+   // the math below, which for a pinned column (small colLeft, large
+   // pinnedWidth) would compute a negative target and clamp it to 0, snapping
+   // the horizontal scroll back to the start. This is what reset the scroll
+   // when pinning a column scrolled into view, since the pin click sets the
+   // freshly pinned column as the active header and scrolls it into view.
+   if (pos < firstUnpinnedPos()) return false;
+
    var offs = columnOffsets();
    var colLeft = offs[pos] + (pos >= firstUnpinnedPos() ? leftSpanWidth() : 0);
    var colWidth = measuredWidths[pos] || 0;
@@ -6079,14 +6099,48 @@ var attachSidebarScrollbar = function() {
       sidebarScrollbar_ = null;
    }
 
+   // The scroll listener drives the sidebar's entry virtualization (not just
+   // the overlay scrollbar), so it must be attached in both scrollbar modes.
+   // addEventListener with the module-scoped handler is idempotent.
+   sidebarContent.addEventListener("scroll", onSidebarScroll);
+
+   // In native-scrollbar mode there is no overlay to create; the native
+   // scrollbar is revealed by the absence of the overlay-scrollbars body class.
+   if (!useOverlayScrollbars) return;
+
    sidebarScrollbar_ = attachCustomScrollbar(
       sidebarContent, sidebarPanel, "vertical", {
          getInsets: function() {
             return { top: sidebarToggle ? sidebarToggle.offsetHeight : 0 };
          }
       });
+};
 
-   sidebarContent.addEventListener("scroll", onSidebarScroll);
+// Reconcile the DOM with the current useOverlayScrollbars flag: toggle the
+// body class that gates the native-scrollbar-hiding CSS, and create or destroy
+// the overlay scrollbars to match. Safe to call repeatedly and whether or not
+// the grid/sidebar DOM exists yet (the create/attach helpers no-op then).
+var applyScrollbarMode = function() {
+   document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
+
+   if (useOverlayScrollbars) {
+      if (!gridScrollbarV_)
+         createCustomScrollbars();
+      // Recreate the sidebar overlay when the sidebar DOM is present.
+      if (document.getElementById("sidebarContent"))
+         attachSidebarScrollbar();
+      updateCustomScrollbars();
+   } else {
+      // Drop the overlay scrollbars but leave the sidebar scroll listener in
+      // place (attachSidebarScrollbar owns it) so virtualization keeps working.
+      if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
+      if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
+      if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
+      // Native scrollbars take up viewport width, which can change whether the
+      // columns overflow; re-evaluate so the "Go to column" control stays in
+      // sync. (The scrollbar updates inside are no-ops now they're destroyed.)
+      updateCustomScrollbars();
+   }
 };
 
 var updateCustomScrollbars = function() {
@@ -6205,6 +6259,12 @@ var initGrid = function(resCols, data) {
 
    var loc = parseLocationUrl();
 
+   // Resolve the scrollbar mode before initSidebar/createCustomScrollbars run,
+   // so attachSidebarScrollbar and the body class reflect the right mode from
+   // the first paint. applyScrollbarMode below reconciles the overlays.
+   useOverlayScrollbars = loc.useOverlayScrollbars;
+   document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
+
    // Determine max display columns. Resolved before installColumnResponse so the
    // column signature and fetched-window bounds it computes use the final value.
    if (loc.maxCols) {
@@ -6305,9 +6365,9 @@ var initGrid = function(resCols, data) {
       gridBody.addEventListener("click", onGridCellClick);
    }
 
-   // Create custom scrollbars
-   createCustomScrollbars();
-   updateCustomScrollbars();
+   // Create the overlay scrollbars (overlay mode) or leave the native ones in
+   // place (native mode), per the resolved useOverlayScrollbars flag.
+   applyScrollbarMode();
 
    // Resize handler -- recompute pinned overscroll padding too, since it
    // depends on viewport width.
@@ -7485,6 +7545,12 @@ window.setOption = function(option, value) {
          break;
       case "rowNumbers":
          rowNumbers = value === "true";
+         break;
+      case "useOverlayScrollbars":
+         // Sent by the host when the data_viewer_use_overlay_scrollbars
+         // preference changes, so the open grid switches modes live.
+         useOverlayScrollbars = (value === true || value === "true");
+         applyScrollbarMode();
          break;
       case "dataViewerCallback":
          window.dataViewerCallback = value;

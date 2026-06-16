@@ -1464,6 +1464,12 @@
             "title": "Show data viewer filter bar by default",
             "description": "Whether the filter bar is shown by default when opening the data viewer."
         },
+        "data_viewer_use_overlay_scrollbars": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use overlay scrollbars in the data viewer",
+            "description": "Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead."
+        },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,

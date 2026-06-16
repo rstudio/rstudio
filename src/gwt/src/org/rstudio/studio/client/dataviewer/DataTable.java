@@ -58,6 +58,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -199,6 +200,7 @@ public class DataTable
          {
             if (showSummaryItem_ != null) showSummaryItem_.onStateChanged();
             if (showFiltersItem_ != null) showFiltersItem_.onStateChanged();
+            if (useOverlayScrollbarsItem_ != null) useOverlayScrollbarsItem_.onStateChanged();
             super.getDynamicPopupMenu(callback);
          }
       };
@@ -258,8 +260,51 @@ public class DataTable
             onStateChanged();
          }
       };
+      // Scrollbar preference -- toggles between the custom overlay scrollbars
+      // and the native scrollbars. Unlike the summary/filter toggles (which
+      // only affect newly opened viewers via URL params), this is pushed into
+      // the live grid: a value-change handler registered below calls
+      // setUseOverlayScrollbars so the open table switches modes immediately.
+      useOverlayScrollbarsItem_ = new CheckableMenuItem(constants_.optionsUseOverlayScrollbars())
+      {
+         @Override
+         public String getLabel()
+         {
+            return constants_.optionsUseOverlayScrollbars();
+         }
+
+         @Override
+         public boolean isChecked()
+         {
+            return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .dataViewerUseOverlayScrollbars().getGlobalValue();
+         }
+
+         @Override
+         public void onInvoked()
+         {
+            UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+            prefs.dataViewerUseOverlayScrollbars().setGlobalValue(!isChecked());
+            prefs.writeUserPrefs();
+            onStateChanged();
+         }
+      };
+
+      // Push preference changes into the open grid so the scrollbar mode
+      // updates live -- whether the change came from the toggle above, the
+      // global Options dialog, or another open data viewer.
+      scrollbarPrefReg_ = RStudioGinjector.INSTANCE.getUserPrefs().dataViewerUseOverlayScrollbars()
+            .addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  setUseOverlayScrollbars(getWindow(), event.getValue());
+               }
+            });
+
       optionsMenu_.addItem(showSummaryItem_);
       optionsMenu_.addItem(showFiltersItem_);
+      optionsMenu_.addItem(useOverlayScrollbarsItem_);
       optionsMenu_.addSeparator();
 
       // Format the label through formatMenuLabel (with a null icon) so it
@@ -635,6 +680,14 @@ public class DataTable
 
    public void onDismiss()
    {
+      // Stop listening for scrollbar-mode pref changes; this viewer is going
+      // away and its frame should no longer be updated.
+      if (scrollbarPrefReg_ != null)
+      {
+         scrollbarPrefReg_.removeHandler();
+         scrollbarPrefReg_ = null;
+      }
+
       try
       {
          // Authoritative clear: the iframe is usually already detached by the
@@ -808,6 +861,14 @@ public class DataTable
          }));
    }-*/;
 
+   private static final native void setUseOverlayScrollbars(WindowEx frame, boolean useOverlay) /*-{
+      if (!frame) return;
+      if (frame.setOption)
+         frame.setOption("useOverlayScrollbars", useOverlay);
+      else
+         @org.rstudio.studio.client.dataviewer.DataTable::logMissingFrameMethod(Ljava/lang/String;)("setOption");
+   }-*/;
+
    private static final native void removeLocalStorageItem(String key) /*-{
       try {
          $wnd.localStorage.removeItem(key);
@@ -824,6 +885,11 @@ public class DataTable
    private ToolbarPopupMenu optionsMenu_;
    private CheckableMenuItem showSummaryItem_;
    private CheckableMenuItem showFiltersItem_;
+   private CheckableMenuItem useOverlayScrollbarsItem_;
+
+   // Registration for the live scrollbar-mode pref handler; removed on dismiss
+   // so a closed viewer's handler doesn't outlive its frame.
+   private HandlerRegistration scrollbarPrefReg_;
    private SearchWidget gotoColumnWidget_;
    private boolean gotoColumnSelectionHandled_ = false;
    private Widget colsSeparator_;

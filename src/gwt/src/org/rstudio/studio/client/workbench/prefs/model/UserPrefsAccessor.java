@@ -257,6 +257,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DATA_VIEWER_MAX_CELL_SIZE = "data_viewer_max_cell_size";
    public static final String DATA_VIEWER_SHOW_SUMMARY = "data_viewer_show_summary";
    public static final String DATA_VIEWER_SHOW_FILTERS = "data_viewer_show_filters";
+   public static final String DATA_VIEWER_USE_OVERLAY_SCROLLBARS = "data_viewer_use_overlay_scrollbars";
    public static final String ENABLE_SCREEN_READER = "enable_screen_reader";
    public static final String TYPING_STATUS_DELAY_MS = "typing_status_delay_ms";
    public static final String REDUCED_MOTION = "reduced_motion";
@@ -3338,6 +3339,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+    */
+   public PrefValue<Boolean> dataViewerUseOverlayScrollbars()
+   {
+      return bool(
+         "data_viewer_use_overlay_scrollbars",
+         _constants.dataViewerUseOverlayScrollbarsTitle(), 
+         _constants.dataViewerUseOverlayScrollbarsDescription(), 
+         true);
+   }
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    public PrefValue<Boolean> enableScreenReader()
@@ -5008,6 +5021,8 @@ public class UserPrefsAccessor extends Prefs
          dataViewerShowSummary().setValue(layer, source.getBool("data_viewer_show_summary"));
       if (source.hasKey("data_viewer_show_filters"))
          dataViewerShowFilters().setValue(layer, source.getBool("data_viewer_show_filters"));
+      if (source.hasKey("data_viewer_use_overlay_scrollbars"))
+         dataViewerUseOverlayScrollbars().setValue(layer, source.getBool("data_viewer_use_overlay_scrollbars"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -5395,6 +5410,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(dataViewerMaxCellSize());
       prefs.add(dataViewerShowSummary());
       prefs.add(dataViewerShowFilters());
+      prefs.add(dataViewerUseOverlayScrollbars());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());

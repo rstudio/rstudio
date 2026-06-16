@@ -110,14 +110,20 @@ html, body {
       to repaint on every scroll frame (#17806). Filter popups are attached
       to document.body, so they are unaffected by this clip. */
    contain: layout paint;
-   /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
-   scrollbar-width: none;                /* Firefox */
    /* Suppress the rubber-band/bounce effect at the scroll boundary; the table
       has known dimensions, so the boundary is already obvious without it.
       Also prevents scroll chaining out of the iframe. */
    overscroll-behavior: none;
 }
-#gridViewport::-webkit-scrollbar {
+/* Hide native scrollbars only in overlay-scrollbar mode -- the custom
+   scrollbars are rendered as sibling divs. The body carries the
+   .overlay-scrollbars class by default; the host removes it (and these rules
+   stop applying, revealing the native scrollbars) when the
+   data_viewer_use_overlay_scrollbars preference is off. */
+body.overlay-scrollbars #gridViewport {
+   scrollbar-width: none;                /* Firefox */
+}
+body.overlay-scrollbars #gridViewport::-webkit-scrollbar {
    display: none;                        /* Chromium */
 }
 
@@ -472,7 +478,15 @@ th.sorting_desc .headerCell::after {
    width: 7px;
    height: 100%;
    cursor: ew-resize;
-   z-index: 16;
+   /* Must sit below the pinned header (thead th.pinned is z-index 15) so a
+      pinned column occludes -- and wins the hit-test against -- the resizers of
+      unpinned columns scrolled behind it; otherwise those hidden resizers would
+      still grab the mouse. A pinned column's own resizer is unaffected: the
+      pinned th establishes its own stacking context, so its resizer stays on
+      top within the pinned column. The resizer still outranks neighboring
+      unpinned headers (auto z-index in the thead context), so it remains
+      grabbable wherever the column is actually visible. */
+   z-index: 14;
 }
 
 .resizer:hover {
@@ -1003,9 +1017,6 @@ th.columnClickable div {
       sidebar's sparklines off the root layer so a grid scroll cannot
       trigger their repaint (#17806). */
    contain: layout paint;
-   /* Hide native scrollbar -- a custom floating one is rendered inside
-      #sidebarPanel by attachSidebarScrollbar. */
-   scrollbar-width: none;                /* Firefox */
    /* Same rationale as #gridViewport: known content height, so suppress
       the bounce and prevent scroll chaining. */
    overscroll-behavior: none;
@@ -1017,7 +1028,13 @@ th.columnClickable div {
       scroll position itself via the spacers, so opt out of anchoring. */
    overflow-anchor: none;
 }
-#sidebarContent::-webkit-scrollbar {
+/* Hide native scrollbar only in overlay-scrollbar mode -- a custom floating
+   one is rendered inside #sidebarPanel by attachSidebarScrollbar. See the
+   #gridViewport rules above for how the .overlay-scrollbars class is toggled. */
+body.overlay-scrollbars #sidebarContent {
+   scrollbar-width: none;                /* Firefox */
+}
+body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
    display: none;                        /* Chromium */
 }
 
