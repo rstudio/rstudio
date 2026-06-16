@@ -175,9 +175,9 @@ public class DataTable
       refreshButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
 
       // Options (gear) button -- positioned to the left of the refresh
-      // button.  A no-text ToolbarButton using the existing options2x
-      // icon, which opens a ToolbarPopupMenu containing the preference
-      // toggles and a "Reset View" action.
+      // button.  A labeled ToolbarButton ("Settings") with the existing
+      // options2x icon, which opens a ToolbarPopupMenu containing the
+      // preference toggles and a "Reset View" action.
       optionsGearButton_ = new ToolbarButton(
               constants_.optionsButtonLabel(),
               constants_.optionsButtonTitle(),
@@ -188,6 +188,10 @@ public class DataTable
                     optionsMenu_.showRelativeTo(optionsGearButton_);
                  }
               });
+      // Stable class id so e2e tests and styling can target the gear button
+      // (the 4-arg ToolbarButton constructor takes no class id, unlike the
+      // sibling sidebar button).
+      ClassIds.assignClassId(optionsGearButton_, ClassIds.DATA_TABLE_OPTIONS);
 
       // Refresh the show-summary and show-filters items' checked states
       // every time the popup is about to open, in case the pref was
@@ -320,9 +324,7 @@ public class DataTable
       //    [search] | [summary] | [options] | [refresh]
       // Search widget anchors the right edge. The summary toggle sits
       // in the middle on its own.  The gear (options) button sits next
-      // to the refresh button -- clicking it opens the preference
-      // popup; a separate no-text ToolbarMenuButton trails refresh
-      // so the old "options-arrow" fallback is still supported.
+      // to the refresh button -- clicking it opens the preference popup.
       toolbar.addRightWidget(searchWidget_);
       searchWidget_.setVisible(!isPreview);
 

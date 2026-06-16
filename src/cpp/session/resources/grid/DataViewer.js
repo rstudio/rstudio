@@ -1961,7 +1961,13 @@ var rebuildHeaderWindow = function() {
    appendUnpinnedWindowedCells(thead, makeHeader, "th");
 
    applySortIndicators();
-   syncHeaderHeights();
+   // syncHeaderHeights is intentionally NOT called here: rebuildHeaderWindow
+   // runs on every horizontal-window slide, and a layout-flushing offsetHeight
+   // read per slide is wasted work since the header height only changes on
+   // filter show/hide and pin/unpin. The explicit tr height set by the last
+   // sync persists across these rebuilds (innerHTML replaces cells, not the
+   // tr's style), so the panes stay aligned. The height-changing callers
+   // (autoSizeColumns, setHeaderUIVisible) call syncHeaderHeights themselves.
 
    // Headers are recreated as the window slides, so re-apply the active-header
    // highlight if its column landed in the new window (the active cell is
@@ -2441,6 +2447,10 @@ var autoSizeColumns = function() {
    // headers. Widths now exist for every column, so the window is accurate.
    computeColumnWindow();
    rebuildHeaderWindow();
+   // Re-align the two panes' header heights here (and in setHeaderUIVisible),
+   // rather than on every windowed-header rebuild -- this covers the initial
+   // build, width changes, and pin/unpin (via rebuildHeaders).
+   syncHeaderHeights();
 };
 
 // ==========================================================================
@@ -3892,11 +3902,11 @@ var renderVisibleRows = function(forceRebuild) {
 var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 
 // Mirror the unpinned (master) pane's vertical scroll onto the frozen pinned
-// pane so their rows stay aligned. The pinned pane has overflow: hidden (no
-// scrollbar of its own) but is still programmatically scrollable. Run
-// synchronously on every scroll event -- it's a single property write -- so
-// the panes never lag a frame apart. Horizontal scroll never touches the
-// pinned pane (it has no horizontal overflow).
+// pane so their rows stay aligned. The pinned pane's own scrollbar is hidden
+// but it is still programmatically scrollable. Run synchronously on every
+// scroll event -- it's a single property write -- so the panes never lag a
+// frame apart. Horizontal scroll never touches the pinned pane (it has no
+// horizontal overflow).
 var syncPinnedScrollTop = function() {
    if (domPinnedPane && domViewport)
       domPinnedPane.scrollTop = domViewport.scrollTop;
@@ -3910,8 +3920,20 @@ var syncPinnedScrollTop = function() {
 // its current value fires no scroll event).
 var onPinnedScroll = function() {
    if (!domPinnedPane || !domViewport) return;
-   if (domViewport.scrollTop !== domPinnedPane.scrollTop)
-      domViewport.scrollTop = domPinnedPane.scrollTop;
+   if (domViewport.scrollTop === domPinnedPane.scrollTop) return;
+   // In native-scrollbar mode the viewport's horizontal scrollbar shrinks its
+   // clientHeight, so the viewport can scroll slightly lower than the
+   // (scrollbar-free) frozen pane. When the viewport is ahead but the frozen
+   // pane is already clamped at its own bottom, that gap is just the clamp --
+   // not a user scroll of the frozen pane -- so leave the viewport alone rather
+   // than yanking it back up (which snapped the bottom edge). The scrollHeight
+   // read is reached only in this descending/bottom case, not on the common
+   // synced-echo path above.
+   if (domViewport.scrollTop > domPinnedPane.scrollTop) {
+      var pinnedMax = domPinnedPane.scrollHeight - domPinnedPane.clientHeight;
+      if (domPinnedPane.scrollTop >= pinnedMax) return;
+   }
+   domViewport.scrollTop = domPinnedPane.scrollTop;
 };
 
 // The frozen pane has no horizontal scroll of its own (its table is exactly the
@@ -3977,6 +3999,10 @@ var autoScrollTick = function() {
    if (!autoScrollActive || !domViewport) return;
    var vx = autoScrollAxisVelocity(autoScrollPointerX - autoScrollAnchorX);
    var vy = autoScrollAxisVelocity(autoScrollPointerY - autoScrollAnchorY);
+   // Inside the deadzone (e.g. sticky mode with the pointer parked): pause the
+   // loop rather than burning a frame callback every tick; onAutoScrollMove
+   // resumes it when the pointer moves back out.
+   if (!vx && !vy) return;
    if (vx) domViewport.scrollLeft += vx;
    if (vy) domViewport.scrollTop += vy;   // syncs to the frozen pane via onScroll
    autoScrollRaf = requestAnimationFrame(autoScrollTick);
@@ -3988,6 +4014,9 @@ var onAutoScrollMove = function(evt) {
    if (Math.abs(evt.clientX - autoScrollAnchorX) > AUTOSCROLL_DEADZONE ||
        Math.abs(evt.clientY - autoScrollAnchorY) > AUTOSCROLL_DEADZONE)
       autoScrollMoved = true;
+   // Resume the loop if it paused while the pointer sat inside the deadzone.
+   if (autoScrollActive && !autoScrollRaf)
+      autoScrollRaf = requestAnimationFrame(autoScrollTick);
 };
 
 var onAutoScrollMouseDown = function(evt) {
@@ -4048,14 +4077,13 @@ var stopAutoScroll = function() {
 
 var onPinnedMouseDown = function(evt) {
    if (evt.button !== 1) return;   // middle button only
-   // Block native autoscroll (which can't pan the frozen pane horizontally)
-   // and run our own, which drives the master pane on both axes. A press while
-   // already active toggles it off.
+   // Block native autoscroll (which can't pan the frozen pane horizontally) and
+   // run our own, which drives the master pane on both axes. While autoscroll
+   // is already active, the document-level capture handler (onAutoScrollMouseDown)
+   // intercepts the press and stops it before it reaches here, so this only ever
+   // runs to start a fresh autoscroll.
    evt.preventDefault();
-   if (autoScrollActive)
-      stopAutoScroll();
-   else
-      startAutoScroll(evt.clientX, evt.clientY);
+   startAutoScroll(evt.clientX, evt.clientY);
 };
 
 // RAF-throttle scroll (via pendingScrollRaf): render at most once per

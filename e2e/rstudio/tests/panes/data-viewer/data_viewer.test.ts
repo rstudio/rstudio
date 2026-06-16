@@ -1705,4 +1705,47 @@ test.describe('Data Viewer', () => {
       await consoleActions.executeInConsole('rm(".rs.pin_resize_df", envir = .GlobalEnv)');
     }
   });
+
+  // Pinning/unpinning is a reorder, not a navigation: a mouse/sidebar toggle
+  // must not scroll the viewport, even when the toggled column is the active
+  // header (which togglePinColumn restores). Regression: unpinning re-applied
+  // the active header via setActiveHeader, scrolling the column into view at
+  // its new location. Single-fetch frame (<= maxDisplayColumns) so no column-
+  // window slide perturbs the scroll position.
+  test('pin/unpin via the sidebar does not scroll the viewport', async () => {
+    await consoleActions.executeInConsole(
+      '.rs.pin_noscroll_df <- as.data.frame(matrix(1:4000, nrow = 100, ncol = 40))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(.rs.pin_noscroll_df)');
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 100 entries', { timeout: TIMEOUTS.fileOpen });
+
+      // Pin column 2 via its grid pin icon, which also makes it the active
+      // header (the condition under which the scroll-on-unpin bug fired).
+      const gridPin2 = dataViewer.frame.locator('th[data-col-idx="2"] .pin-icon');
+      await gridPin2.click();
+      await expect.poll(() => colHeaderClass(dataViewer, 2)).toMatch(/\bpinned\b/);
+
+      // Scroll the unpinned pane right so column 2's unpinned location (far
+      // left) is off-screen.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 500; });
+      const scrollBefore = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(scrollBefore).toBeGreaterThan(0);
+
+      // Unpin from the sidebar; the viewport must stay put (the old code
+      // scrolled column 2 back into view at its new, far-left location).
+      const sidebarPin2 = dataViewer.frame
+        .locator('.sidebar-col[data-col-idx="2"] .sidebar-pin-icon');
+      await sidebarPin2.click();
+      await expect.poll(() => colHeaderClass(dataViewer, 2)).not.toMatch(/\bpinned\b/);
+
+      const scrollAfter = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThan(3);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.pin_noscroll_df", envir = .GlobalEnv)');
+    }
+  });
 });
