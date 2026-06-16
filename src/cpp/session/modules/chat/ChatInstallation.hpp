@@ -17,6 +17,7 @@
 #define SESSION_CHAT_INSTALLATION_HPP
 
 #include <string>
+#include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
 namespace rstudio {
@@ -75,6 +76,19 @@ std::string getInstalledVersion();
  * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
  */
 std::string getInstalledProtocolVersion();
+
+/**
+ * Ensure a protocol.json file exists in the given installation directory.
+ *
+ * Newer Posit Assistant packages bundle their own protocol.json. To avoid
+ * clobbering the version the package declares, RStudio's compiled-in protocol
+ * version is written only when the file is absent (e.g. older packages that
+ * predate protocol.json).
+ *
+ * @param positAiPath Path to the AI installation directory
+ * @return Success, or an error if the file was missing and could not be written
+ */
+core::Error writeProtocolVersionFileIfMissing(const core::FilePath& positAiPath);
 
 } // namespace installation
 } // namespace chat

@@ -197,12 +197,40 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
 
+      # Pre-start the sccache server. Ninja runs parallel cl.exe compiles
+      # through `sccache.exe cl.exe ...`; on Windows each sccache.exe
+      # invocation tries to start a TCP server on 127.0.0.1:4226 if no
+      # server is running. With N parallel compiles, N processes race to
+      # bind that port -- one wins, the rest exit with os error 10048
+      # ("Only one usage of each socket address... is normally permitted"),
+      # which ninja treats as a compile failure and aborts the whole
+      # build. Starting the server explicitly here means all subsequent
+      # sccache.exe invocations connect to it instead of racing.
+      # Set SCCACHE_IDLE_TIMEOUT=0 so the server stays alive for the
+      # whole build (default is 600s and the build phase is longer).
+      - name: Start sccache server
+        shell: cmd
+        env:
+          SCCACHE_IDLE_TIMEOUT: '0'
+        run: sccache --start-server
+
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
+          # Drop the `msstore` winget source before installing. msstore needs
+          # the runner's 2-letter geographic region, which GHA does not send;
+          # winget's implicit `source update` then fails with 0x8a15000f
+          # ("Data required by the source is missing"), and that failure
+          # aborts the whole `winget install` even though Posit.rig lives in
+          # the community `winget` source rather than msstore. Removing
+          # msstore leaves the community source untouched. Best-effort: if
+          # msstore is already absent on this runner image, the remove exits
+          # non-zero, which we swallow.
+          winget source remove --name msstore --disable-interactivity 2>$null
+          $LASTEXITCODE = 0
           $maxAttempts = 3
           for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
+            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
             if ($LASTEXITCODE -eq 0) { break }
             if ($i -lt $maxAttempts) {
               Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
@@ -514,9 +542,20 @@ jobs:
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
+          # Drop the `msstore` winget source before installing. msstore needs
+          # the runner's 2-letter geographic region, which GHA does not send;
+          # winget's implicit `source update` then fails with 0x8a15000f
+          # ("Data required by the source is missing"), and that failure
+          # aborts the whole `winget install` even though Posit.rig lives in
+          # the community `winget` source rather than msstore. Removing
+          # msstore leaves the community source untouched. Best-effort: if
+          # msstore is already absent on this runner image, the remove exits
+          # non-zero, which we swallow.
+          winget source remove --name msstore --disable-interactivity 2>$null
+          $LASTEXITCODE = 0
           $maxAttempts = 3
           for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
+            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
             if ($LASTEXITCODE -eq 0) { break }
             if ($i -lt $maxAttempts) {
               Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."

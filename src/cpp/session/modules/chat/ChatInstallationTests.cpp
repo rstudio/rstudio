@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
+#include <shared_core/json/Json.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::installation;
@@ -263,6 +264,56 @@ TEST(ChatInstallation, GetInstalledProtocolVersionReturnsCorrectVersion)
       system::setenv("RSTUDIO_POSIT_AI_PATH", originalPath);
    else
       system::unsetenv("RSTUDIO_POSIT_AI_PATH");
+
+   tempDir.removeIfExists();
+}
+
+TEST(ChatInstallation, WriteProtocolVersionFileWritesWhenMissing)
+{
+   FilePath tempDir;
+   FilePath::tempFilePath(tempDir);
+   tempDir.ensureDirectory();
+
+   FilePath protoFile = tempDir.completeChildPath(kProtocolVersionFileName);
+   EXPECT_FALSE(protoFile.exists());
+
+   Error error = writeProtocolVersionFileIfMissing(tempDir);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(protoFile.exists());
+
+   // The written file records RStudio's compiled-in protocol version.
+   std::string content;
+   error = readStringFromFile(protoFile, &content);
+   EXPECT_FALSE(error);
+
+   json::Value value;
+   Error parseError = value.parse(content);
+   EXPECT_FALSE(parseError);
+   ASSERT_TRUE(value.isObject());
+   EXPECT_EQ(value.getObject()["protocol"].getString(), std::string(kProtocolVersion));
+
+   tempDir.removeIfExists();
+}
+
+TEST(ChatInstallation, WriteProtocolVersionFilePreservesPackageProvidedFile)
+{
+   FilePath tempDir;
+   FilePath::tempFilePath(tempDir);
+   tempDir.ensureDirectory();
+
+   // Simulate a package that bundled its own protocol.json.
+   FilePath protoFile = tempDir.completeChildPath(kProtocolVersionFileName);
+   std::string packageContent = "{\"protocol\": \"99.0\"}";
+   writeStringToFile(protoFile, packageContent);
+
+   Error error = writeProtocolVersionFileIfMissing(tempDir);
+   EXPECT_FALSE(error);
+
+   // The package-provided file is left untouched.
+   std::string content;
+   error = readStringFromFile(protoFile, &content);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(content, packageContent);
 
    tempDir.removeIfExists();
 }
