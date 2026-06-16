@@ -197,6 +197,23 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
 
+      # Pre-start the sccache server. Ninja runs parallel cl.exe compiles
+      # through `sccache.exe cl.exe ...`; on Windows each sccache.exe
+      # invocation tries to start a TCP server on 127.0.0.1:4226 if no
+      # server is running. With N parallel compiles, N processes race to
+      # bind that port -- one wins, the rest exit with os error 10048
+      # ("Only one usage of each socket address... is normally permitted"),
+      # which ninja treats as a compile failure and aborts the whole
+      # build. Starting the server explicitly here means all subsequent
+      # sccache.exe invocations connect to it instead of racing.
+      # Set SCCACHE_IDLE_TIMEOUT=0 so the server stays alive for the
+      # whole build (default is 600s and the build phase is longer).
+      - name: Start sccache server
+        shell: cmd
+        env:
+          SCCACHE_IDLE_TIMEOUT: '0'
+        run: sccache --start-server
+
       - name: Install rig
         run: |
           $ErrorActionPreference = 'Stop'
