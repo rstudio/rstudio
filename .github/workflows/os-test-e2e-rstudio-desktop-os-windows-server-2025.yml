@@ -480,7 +480,7 @@ jobs:
           Write-Host ""
           if (Test-Path $rules) {
             Write-Host "=== Rule definitions in rules.ninja that mention CXX_COMPILER ==="
-            Select-String -Path $rules -Pattern '^rule CXX_COMPILER' -SimpleMatch | ForEach-Object { Write-Host "  $($_.Line)" }
+            Select-String -Path $rules -Pattern '^rule CXX_COMPILER' | ForEach-Object { Write-Host "  $($_.Line)" }
             Write-Host ""
             Write-Host "=== First CXX rule's `command =` line (does it reference \$LAUNCHER?) ==="
             $lines = Get-Content $rules
