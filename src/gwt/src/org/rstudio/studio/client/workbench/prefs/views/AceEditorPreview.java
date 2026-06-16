@@ -68,24 +68,38 @@ public class AceEditorPreview extends DynamicIFrame
       {
          public void onLoaded()
          {
-            if (getDocument() != doc) 
+            // Bail if the preview was detached while ace.js was loading
+            // (Global Options dismissed, pane relayout, etc.) -- getDocument()
+            // here goes through getWindow().getDocument() and a detached frame
+            // has a null contentWindow, so the JSNI body would raise an
+            // uncaught "Cannot read properties of null (reading 'document')"
+            // TypeError that surfaces as an Error dialog.
+            if (!isAttached())
+               return;
+
+            if (getDocument() != doc)
             {
                onFrameLoaded();
                return;
             }
-            
+
             new ExternalJavaScriptLoader(getDocument(), AceResources.INSTANCE.acesupportjs().getSafeUri().asString())
                   .addCallback(new Callback()
                   {
                      public void onLoaded()
                      {
-                        
+                        // Same detached-frame guard as the outer callback:
+                        // acesupport.js can finish loading after the preview
+                        // has been removed from the DOM.
+                        if (!isAttached())
+                           return;
+
                         if (getDocument() != doc)
                         {
                            onFrameLoaded();
                            return;
                         }
-                        
+
                         final Document doc = getDocument();
                         final BodyElement body = doc.getBody();
                         
