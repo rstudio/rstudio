@@ -549,17 +549,25 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.shard }}
+          # Platform-prefixed for the same reason as the blob report above:
+          # macOS uploads test-results-${{ matrix.shard }} too, so under the
+          # combined PR orchestrator the two would collide and upload-artifact
+          # would reject the second one. -linux- matches the -mac- / -win-
+          # convention the Desktop workflows already use.
+          name: test-results-linux-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
       # Preserved per-spec sandbox tree on failure -- includes rsession logs,
       # the spec's RStudio config / data home, and per-test working dirs.
+      # Platform-prefixed name to avoid colliding with the macOS Desktop
+      # workflow's identically-named pw-sandbox-${{ matrix.shard }} when both
+      # platforms run under the combined PR orchestrator.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pw-sandbox-${{ matrix.shard }}
+          name: pw-sandbox-linux-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
@@ -690,7 +698,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          # Match the -mac / -win suffix the Desktop workflows already use
+          # for their merged reports. Avoids a future collision if the bare
+          # `playwright-report` name is ever introduced by another callee.
+          name: playwright-report-linux
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
