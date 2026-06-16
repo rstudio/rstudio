@@ -251,7 +251,13 @@
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
-   <property name="panmirror.build.dir" value="./www/js/panmirror"/>
+   <!-- write panmirror to ${www.dir} so it tracks the same output tree as every
+        other ant target. When cmake overrides www.dir to the build tree (e.g.
+        macOS sets -Dwww.dir=<build>/gwt/www), panmirror lands inside the cached
+        gwt output directory; with the previous hardcoded ./www path it stayed
+        in the source tree and dropped out of the gwt cache, so subsequent
+        --build-gwt=0 runs shipped a package missing panmirror.js. -->
+   <property name="panmirror.build.dir" value="${www.dir}/js/panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
 

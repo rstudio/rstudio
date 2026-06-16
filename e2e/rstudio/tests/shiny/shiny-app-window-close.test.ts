@@ -26,34 +26,44 @@ async function launchShinyAppInWindow(page: Page, consoleActions: ConsolePaneAct
     satellitePage.frameLocator(APP_FRAME).locator(`body:has-text("${APP_MARKER}")`),
   ).toBeVisible({ timeout: 30000 });
 
+  // The marker being visible only proves the first render landed; shiny may
+  // still be mid-binding (input/output reactives running their initial pass)
+  // and an interrupt that arrives during that window is caught by shiny's
+  // error handling instead of stopping runApp(). Wait until shiny is actually
+  // idle -- it sets html.shiny-busy while servicing requests and clears it
+  // once the queue drains. Caller-side `executeCommand(page, 'interruptR')`
+  // then lands cleanly on the first try.
+  await waitForShinyIdle(satellitePage);
+
   return satellitePage;
 }
 
-// Interrupting a freshly-launched shiny app is racy: a SIGINT that lands
-// while shiny is servicing a request/callback is caught by shiny's error
-// handling, which bounces the websocket (so the disconnected client still
-// closes the window) without stopping runApp() -- leaving R busy forever and
-// starving every later console interaction. Once the app is idle a retried
-// interrupt always lands, so nudge until the console frees up.
+async function waitForShinyIdle(satellitePage: Page) {
+  const html = satellitePage.frameLocator(APP_FRAME).locator('html');
+  await expect(html).not.toHaveClass(/\bshiny-busy\b/, { timeout: 15000 });
+  // Initial binding flips shiny-busy on/off as each widget registers; sample
+  // again after a short dwell so we don't catch the gap between two render
+  // passes and proceed before the second pass starts.
+  await satellitePage.waitForTimeout(500);
+  await expect(html).not.toHaveClass(/\bshiny-busy\b/);
+}
+
+// Defense in depth after the launcher waits for shiny idle. If a previous
+// test left R busy (e.g. interrupt landed mid-callback) the interrupt button
+// stays visible -- send one nudge and bail. Re-spamming interruptR every 2s
+// makes the IDE stack "Terminate R" confirmation dialogs (one per request
+// while R is unresponsive), which is what the historical 30s-toPass loop
+// produced when it ran past the third interrupt.
 async function ensureConsoleIdle(page: Page) {
   const interruptButton = page.locator("[id^='rstudio_tb_interruptr']");
-
-  // normal path: the app stopped and the console frees up on its own
   try {
     await expect(interruptButton).toBeHidden({ timeout: 3000 });
     return;
   } catch {
-    // still busy; fall through and nudge
+    // still busy; fall through and try one more interrupt
   }
-
-  // keep the nudges slow: the client counts interrupt requests while busy
-  // and escalates to a blocking "Terminate R" dialog on the third one
-  await expect(async () => {
-    if (await interruptButton.isVisible()) {
-      await executeCommand(page, 'interruptR');
-      throw new Error('console still busy; interrupt requested again');
-    }
-  }).toPass({ timeout: 30000, intervals: [2000] });
+  await executeCommand(page, 'interruptR');
+  await expect(interruptButton).toBeHidden({ timeout: 10000 });
 }
 
 test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
