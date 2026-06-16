@@ -1304,9 +1304,11 @@ var createHeader = function(idx, col) {
          // the grid and starts from this column. displayIdx can be -1
          // when the column lives past maxDisplayColumns and the unpin
          // pushed it out of the visible window -- in that case we just
-         // focus the grid without setting an active header.
+         // focus the grid without setting an active header. Pass
+         // scrollIntoView=false: a mouse pin click shouldn't scroll the
+         // viewport to the column's new location (only keyboard nav should).
          var displayIdx = columnOrder.indexOf(idx);
-         if (displayIdx >= 0) setActiveHeader(displayIdx);
+         if (displayIdx >= 0) setActiveHeader(displayIdx, false);
          focusGridViewport();
       });
       interior.appendChild(pinIcon);
@@ -2005,7 +2007,12 @@ var syncColumnWindow = function() {
 // identities, so this works for any column, including one not in the fetched
 // window (e.g. pinned from its sidebar entry). Callers holding a window
 // position translate via absColIndex first.
-var togglePinColumn = function(absIdx) {
+// scrollActiveHeader: when true (keyboard P), the restored active header is
+// scrolled back into view so the keyboard cursor stays visible after the
+// reorder. Mouse/sidebar toggles leave it false -- pinning is a reorder, not a
+// navigation, so it must not move the viewport (which would otherwise scroll
+// the just-unpinned column into view at its new location).
+var togglePinColumn = function(absIdx, scrollActiveHeader) {
    if (pinnedColumns.has(absIdx)) {
       pinnedColumns.delete(absIdx);
    } else {
@@ -2033,7 +2040,7 @@ var togglePinColumn = function(absIdx) {
    saveState();
    if (headerOrigCol >= 0) {
       var newDisplayIdx = columnOrder.indexOf(headerOrigCol);
-      if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx);
+      if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx, !!scrollActiveHeader);
    }
 
    // Unpinning a column that lies outside the current window removes it from
@@ -3937,6 +3944,120 @@ var onPinnedWheel = function(evt) {
    evt.preventDefault();
 };
 
+// ----- Middle-click autoscroll over the frozen pane -----
+// Native middle-click autoscroll only pans axes the element under the pointer
+// can actually scroll, and the frozen pane has no horizontal overflow (its
+// table is exactly the pane width), so there it pans only vertically.
+// Reimplement it: a middle-click (drag, or click-then-move "sticky" mode) over
+// the frozen pane pans BOTH axes of the unpinned (master) pane -- moving the
+// unpinned columns horizontally while the pinned columns stay frozen, with the
+// vertical component syncing back to the frozen pane via onScroll.
+var autoScrollActive = false;
+var autoScrollAnchorX = 0;
+var autoScrollAnchorY = 0;
+var autoScrollPointerX = 0;
+var autoScrollPointerY = 0;
+var autoScrollRaf = 0;
+var autoScrollMoved = false;
+var autoScrollAnchorEl = null;
+
+var AUTOSCROLL_DEADZONE = 10;   // px of slack around the anchor before scrolling
+var AUTOSCROLL_SPEED = 0.18;    // master px per frame per px of pointer offset
+
+var autoScrollAxisVelocity = function(offset) {
+   if (offset > AUTOSCROLL_DEADZONE)
+      return (offset - AUTOSCROLL_DEADZONE) * AUTOSCROLL_SPEED;
+   if (offset < -AUTOSCROLL_DEADZONE)
+      return (offset + AUTOSCROLL_DEADZONE) * AUTOSCROLL_SPEED;
+   return 0;
+};
+
+var autoScrollTick = function() {
+   autoScrollRaf = 0;
+   if (!autoScrollActive || !domViewport) return;
+   var vx = autoScrollAxisVelocity(autoScrollPointerX - autoScrollAnchorX);
+   var vy = autoScrollAxisVelocity(autoScrollPointerY - autoScrollAnchorY);
+   if (vx) domViewport.scrollLeft += vx;
+   if (vy) domViewport.scrollTop += vy;   // syncs to the frozen pane via onScroll
+   autoScrollRaf = requestAnimationFrame(autoScrollTick);
+};
+
+var onAutoScrollMove = function(evt) {
+   autoScrollPointerX = evt.clientX;
+   autoScrollPointerY = evt.clientY;
+   if (Math.abs(evt.clientX - autoScrollAnchorX) > AUTOSCROLL_DEADZONE ||
+       Math.abs(evt.clientY - autoScrollAnchorY) > AUTOSCROLL_DEADZONE)
+      autoScrollMoved = true;
+};
+
+var onAutoScrollMouseDown = function(evt) {
+   // Any button press while autoscroll is active exits it (matches the native
+   // click-to-release behavior).
+   stopAutoScroll();
+   evt.preventDefault();
+   evt.stopPropagation();
+};
+
+var onAutoScrollMouseUp = function(evt) {
+   if (evt.button !== 1) return;
+   // Press-drag: releasing after moving past the deadzone ends autoscroll. A
+   // clean click (no movement) leaves it active in "sticky" mode until the
+   // next button press.
+   if (autoScrollMoved) stopAutoScroll();
+};
+
+var onAutoScrollKey = function(evt) {
+   if (evt.key === "Escape") stopAutoScroll();
+};
+
+var startAutoScroll = function(x, y) {
+   autoScrollActive = true;
+   autoScrollAnchorX = autoScrollPointerX = x;
+   autoScrollAnchorY = autoScrollPointerY = y;
+   autoScrollMoved = false;
+
+   document.body.classList.add("auto-scrolling");
+   autoScrollAnchorEl = document.createElement("div");
+   autoScrollAnchorEl.className = "autoscroll-anchor";
+   autoScrollAnchorEl.style.left = x + "px";
+   autoScrollAnchorEl.style.top = y + "px";
+   document.body.appendChild(autoScrollAnchorEl);
+
+   // Capture phase so we intercept before the grid's own handlers.
+   document.addEventListener("mousemove", onAutoScrollMove, true);
+   document.addEventListener("mousedown", onAutoScrollMouseDown, true);
+   document.addEventListener("mouseup", onAutoScrollMouseUp, true);
+   document.addEventListener("keydown", onAutoScrollKey, true);
+
+   if (!autoScrollRaf) autoScrollRaf = requestAnimationFrame(autoScrollTick);
+};
+
+var stopAutoScroll = function() {
+   if (!autoScrollActive) return;
+   autoScrollActive = false;
+   document.body.classList.remove("auto-scrolling");
+   if (autoScrollRaf) { cancelAnimationFrame(autoScrollRaf); autoScrollRaf = 0; }
+   if (autoScrollAnchorEl && autoScrollAnchorEl.parentNode)
+      autoScrollAnchorEl.parentNode.removeChild(autoScrollAnchorEl);
+   autoScrollAnchorEl = null;
+   document.removeEventListener("mousemove", onAutoScrollMove, true);
+   document.removeEventListener("mousedown", onAutoScrollMouseDown, true);
+   document.removeEventListener("mouseup", onAutoScrollMouseUp, true);
+   document.removeEventListener("keydown", onAutoScrollKey, true);
+};
+
+var onPinnedMouseDown = function(evt) {
+   if (evt.button !== 1) return;   // middle button only
+   // Block native autoscroll (which can't pan the frozen pane horizontally)
+   // and run our own, which drives the master pane on both axes. A press while
+   // already active toggles it off.
+   evt.preventDefault();
+   if (autoScrollActive)
+      stopAutoScroll();
+   else
+      startAutoScroll(evt.clientX, evt.clientY);
+};
+
 // RAF-throttle scroll (via pendingScrollRaf): render at most once per
 // animation frame so virtual scroll updates happen during the scroll,
 // not 16ms after it stops.
@@ -5801,7 +5922,12 @@ var ensureActiveHeaderVisible = function() {
    if (syncColumnWindow()) renderVisibleRows(true);
 };
 
-var setActiveHeader = function(col) {
+// scrollIntoView (default true): also scroll the header into view. Pass false
+// to mark it active without moving the viewport -- e.g. when restoring the
+// active header after a mouse/sidebar pin reorder, where scrolling would be
+// unwanted. Keyboard-driven changes keep the default so the active header (the
+// keyboard cursor) stays visible.
+var setActiveHeader = function(col, scrollIntoView) {
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
    col = Math.max(0, Math.min(maxCol, col));
@@ -5833,7 +5959,7 @@ var setActiveHeader = function(col) {
    if (prevTh) prevTh.classList.remove("activeHeader");
 
    activeHeaderCol = col;
-   ensureActiveHeaderVisible();
+   if (scrollIntoView !== false) ensureActiveHeaderVisible();
 
    var nextTh = getActiveHeaderTh();
    if (nextTh) {
@@ -5904,7 +6030,9 @@ var onGridKeyDown = function(evt) {
       }
       if (key === "p" || key === "P") {
          evt.preventDefault();
-         if (!isRownames) togglePinColumn(absColIndex(origCol));
+         // Keyboard toggle: keep the active header (the keyboard cursor)
+         // visible by scrolling it back into view after the reorder.
+         if (!isRownames) togglePinColumn(absColIndex(origCol), true);
          return;
       }
    }
@@ -6558,6 +6686,8 @@ var initGrid = function(resCols, data) {
    if (domPinnedPane) {
       domPinnedPane.addEventListener("scroll", onPinnedScroll);
       domPinnedPane.addEventListener("wheel", onPinnedWheel, { passive: false });
+      // Middle-click autoscroll (custom, so it can pan horizontally too).
+      domPinnedPane.addEventListener("mousedown", onPinnedMouseDown);
    }
    var gridBody = domTbody;
    if (gridBody) {
@@ -7036,8 +7166,12 @@ var destroyGrid = function() {
    if (domPinnedPane) {
       domPinnedPane.removeEventListener("scroll", onPinnedScroll);
       domPinnedPane.removeEventListener("wheel", onPinnedWheel);
+      domPinnedPane.removeEventListener("mousedown", onPinnedMouseDown);
       domPinnedPane.scrollTop = 0;
    }
+   // Tear down any in-progress middle-click autoscroll (its listeners live on
+   // document, and the anchor element on body).
+   stopAutoScroll();
    window.removeEventListener("resize", onResize);
    if (pendingScrollbarRaf) {
       cancelAnimationFrame(pendingScrollbarRaf);

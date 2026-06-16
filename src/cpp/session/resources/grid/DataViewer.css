@@ -78,6 +78,25 @@ html, body {
    background: var(--grid-selection-bg);
 }
 
+/* Middle-click autoscroll over the frozen pane (driven from DataViewer.js).
+   While active, show the omnidirectional cursor and a small anchor marker at
+   the click point so the interaction reads like the browser's native one. */
+body.auto-scrolling {
+   cursor: all-scroll;
+}
+.autoscroll-anchor {
+   position: fixed;
+   width: 26px;
+   height: 26px;
+   margin: -13px 0 0 -13px;              /* center on the click point */
+   border: 1px solid var(--grid-fg);
+   border-radius: 50%;
+   background-color: var(--grid-bg);
+   opacity: 0.45;
+   pointer-events: none;
+   z-index: 1000;
+}
+
 
 /* ==========================================================================
    Layout
