@@ -57,6 +57,22 @@ test.describe.serial('ProjectId in .Rproj', () => {
   let rprojLit = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // Make the precondition for the "fresh .Rproj has no ProjectId" check
+    // deterministic. openProject() runs the IDE's ProjectContext::startup(),
+    // which calls readProjectFile() with buildDefaults(); when our minimal
+    // hand-written .Rproj is missing fields (everything beyond the four
+    // lines we write below), `providedDefaults` becomes true and the IDE
+    // re-writes the file with the full defaults filled in -- including a
+    // freshly-generated `ProjectId: <uuid>` line whenever
+    // getCustomUserDataDir() is non-empty (SessionProjectContext.cpp:1175).
+    // That helper reads `project_user_data_directory` (user pref) first,
+    // falling back to `session-project-user-data-dir` (admin option). A
+    // leftover non-empty value from a prior interaction in the same worker
+    // (or a non-default value baked into a hosted rstudio-server install)
+    // therefore writes ProjectId into the freshly-opened .Rproj and breaks
+    // the baseline. Setting the user pref empty here pins the pref side of
+    // the lookup; the admin side defaults to empty in stock builds.
+    await setPref(page, 'project_user_data_directory', '');
     projectDir = await createAndOpenProject(page, sandbox.dir, 'ProjectId');
     rprojLit = rPathLiteral(`${projectDir}/ProjectId.Rproj`);
   });
