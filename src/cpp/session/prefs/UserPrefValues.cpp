@@ -2780,7 +2780,7 @@ core::Error UserPrefValues::setDataViewerShowSummary(bool val)
 }
 
 /**
- * Whether the filter bar is shown by default when opening the data viewer.
+ * Whether the data viewer filter UI is shown by default when opening the data viewer.
  */
 bool UserPrefValues::dataViewerShowFilters()
 {

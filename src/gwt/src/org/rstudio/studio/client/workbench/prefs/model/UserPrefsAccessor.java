@@ -3327,7 +3327,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether the filter bar is shown by default when opening the data viewer.
+    * Whether the data viewer filter UI is shown by default when opening the data viewer.
     */
    public PrefValue<Boolean> dataViewerShowFilters()
    {

@@ -1461,8 +1461,8 @@
         "data_viewer_show_filters": {
             "type": "boolean",
             "default": false,
-            "title": "Show data viewer filter bar by default",
-            "description": "Whether the filter bar is shown by default when opening the data viewer."
+            "title": "Show data viewer filter UI by default",
+            "description": "Whether the data viewer filter UI is shown by default when opening the data viewer."
         },
         "data_viewer_use_overlay_scrollbars": {
             "type": "boolean",

@@ -1986,9 +1986,10 @@
    clear = function() { .rs.clearUserPref("data_viewer_show_summary") }
 )
 
-# Show data viewer filter bar by default
+# Show data viewer filter UI by default
 #
-# Whether the filter bar is shown by default when opening the data viewer.
+# Whether the data viewer filter UI is shown by default when opening the data
+# viewer.
 .rs.uiPrefs$dataViewerShowFilters <- list(
    get = function() { .rs.getUserPref("data_viewer_show_filters") },
    set = function(value) { .rs.setUserPref("data_viewer_show_filters", value) },
