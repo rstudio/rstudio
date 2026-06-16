@@ -199,7 +199,12 @@ var resizingColIdx = null;
 var resizingHeaderTh = null;
 var initResizeX = null;
 var initResizingWidth = null;
+// Width of the table being resized at drag start: the pinned table for a
+// pinned column, otherwise the unpinned (#rsGridData) table. origResizePinned
+// records which, so applyResizeDelta grows the right pane and resizing a pinned
+// column never disturbs the unpinned pane's scroll position.
 var origTableWidth = null;
+var origResizePinned = false;
 var resizingBoundsExceeded = 0;
 var origColWidths = [];
 // User-driven resize widths, keyed by absolute (col_index) column identity --
@@ -278,13 +283,9 @@ var pendingSavedState = null;
 // initGrid re-bootstraps once after clearing the stale selection.
 var primedPinnedCount = 0;
 
-// Pinned-column layout cache. cachedPinnedOffsets[colIdx] -> px offset
-// from the viewport's left edge; the more elaborate pinnedOffsetsCache
-// also tracks total pinned width. pinnedOffsetsCache is dropped by
-// invalidatePinnedOffsets() on width/pinning changes; cachedPinnedOffsets
-// is refreshed in renderVisibleRows whenever the row window is (re)rendered,
-// and reset in resetGridState.
-var cachedPinnedOffsets = {};
+// Pinned-block width cache (pinnedOffsetsCache.totalWidth), dropped by
+// invalidatePinnedOffsets() on width/pinning changes. The pinned columns now
+// render in their own pane, so no per-column sticky offset cache is needed.
 var pinnedOffsetsCache = null;
 
 // Current column display order (pinned first, then unpinned), recomputed
@@ -311,8 +312,8 @@ var measuredWidths = [];
 // Cached cumulative column offsets (see columnOffsets). Derived purely from
 // columnOrder + measuredWidths, so it shares their invalidation point
 // (invalidatePinnedOffsets). Memoized because columnOffsets is called once per
-// rendered row in appendWindowedCells -- recomputing an O(columns) prefix sum
-// for every row of a wide frame was a measurable share of render cost (#17806).
+// rendered row while building cells -- recomputing an O(columns) prefix sum for
+// every row of a wide frame was a measurable share of render cost (#17806).
 var columnOffsetsCache = null;
 
 // Cached widths of the unfetched column spans flanking the fetched window
@@ -339,9 +340,16 @@ var measureCtxFont = "";
 
 // DOM element cache -- populated in initGrid, cleared in destroyGrid.
 // Avoids document.getElementById calls on every scroll frame.
+// domViewport/domThead/domTbody refer to the scrollable UNPINNED pane; the
+// pinned (frozen) pane has its own table whose vertical scroll mirrors the
+// unpinned pane (see syncPinnedScrollTop). The pinned pane never scrolls
+// horizontally and has no spacers/window -- it renders only pinned columns.
 var domViewport = null;
 var domTbody = null;
 var domThead = null;
+var domPinnedPane = null;
+var domPinnedThead = null;
+var domPinnedTbody = null;
 
 // The two fonts measureTextWidth uses: regular for data cells, bold for
 // headers. Same size/family; only the weight differs.
@@ -482,6 +490,8 @@ var showError = function(msg) {
    document.getElementById("error").textContent = msg;
    var grid = document.getElementById("rsGridData");
    if (grid) grid.style.display = "none";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.display = "none";
 };
 
 // Reverse of showError, run when a bootstrap succeeds: without this, a grid
@@ -493,6 +503,8 @@ var hideError = function() {
    document.getElementById("errorMask").style.display = "none";
    var grid = document.getElementById("rsGridData");
    if (grid) grid.style.display = "";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.display = "";
 };
 
 var parseLocationUrl = function() {
@@ -1132,9 +1144,10 @@ var createCell = function(data, colIdx, rowData, clazz) {
    var td = document.createElement("td");
 
    var classes = [clazz];
+   // Pinned cells render in the frozen pane's own table (not sticky), so they
+   // need no inline left offset; the .pinned class is kept as a styling hook.
    if (isColumnPinned(colIdx)) {
       classes.push("pinned");
-      td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
    if (colIdx === 0 && rowNumbers) classes.push("first-child");
    // Long cells get a max-width + ellipsis treatment via .largeCell so they
@@ -1612,6 +1625,16 @@ var columnOffsets = function() {
    return offs;
 };
 
+// Total width of the pinned block (sum of pinned column widths). This is the
+// width of the frozen #pinnedPane, and the offset between the full-layout x
+// (columnOffsets, which sums pinned columns first) and the UNPINNED-pane
+// coordinate space the scroll math works in (where x = 0 is the unpinned
+// pane's left edge). absColAtContentX / layoutXOfAbs convert across the two.
+var pinnedBlockWidth = function() {
+   var offs = columnOffsets();
+   return offs[firstUnpinnedPos()] || 0;
+};
+
 // ----------------------------------------------------------------------------
 // Unfetched column spans. The table's layout covers the WHOLE frame: pinned
 // columns, then a left span standing in for the unfetched columns before the
@@ -1681,6 +1704,11 @@ var absColAtContentX = function(x) {
    var lastPos = columnOrder.length - 1;
    if (lastPos < 0 || offs.length === 0) return 1;
 
+   // `x` arrives in unpinned-pane coordinates (0 = the unpinned pane's left
+   // edge); the prefix-sum math below works in full-layout coordinates (which
+   // start with the pinned block), so shift across.
+   x += pinnedBlockWidth();
+
    var spanBase = offs[firstUnpinned]; // pinned block width
    var leftW = leftSpanWidth();
 
@@ -1709,25 +1737,30 @@ var layoutXOfAbs = function(absIdx) {
    if (lastPos < 0 || offs.length === 0) return 0;
 
    var leftW = leftSpanWidth();
+   // Returned x is in unpinned-pane coordinates (0 = unpinned pane's left
+   // edge); the full-layout prefix sums start with the pinned block, so
+   // subtract it. Pinned columns aren't scrolled (callers no-op for them), so
+   // their negative result is never used for positioning.
+   var pinnedW = pinnedBlockWidth();
 
    var pos = posForAbsColIndex(absIdx);
    if (pos >= 0) {
       var orderPos = columnOrder.indexOf(pos);
       if (orderPos >= 0) {
          return orderPos < firstUnpinned
-            ? offs[orderPos]               // pinned: sticky at the front
-            : offs[orderPos] + leftW;      // fetched window
+            ? offs[orderPos] - pinnedW              // pinned (unused for scroll)
+            : offs[orderPos] + leftW - pinnedW;     // fetched window
       }
    }
 
    if (absIdx < fetchedWindowStart) {
       var k = (absIdx - 1) - countPinnedInRange(1, absIdx - 1);
-      return offs[firstUnpinned] + Math.max(0, k) * DEFAULT_COL_WIDTH;
+      return offs[firstUnpinned] - pinnedW + Math.max(0, k) * DEFAULT_COL_WIDTH;
    }
 
    var lo = fetchedWindowEnd + 1;
    var k2 = (absIdx - lo) - countPinnedInRange(lo, absIdx - 1);
-   return offs[lastPos + 1] + leftW + Math.max(0, k2) * DEFAULT_COL_WIDTH;
+   return offs[lastPos + 1] + leftW - pinnedW + Math.max(0, k2) * DEFAULT_COL_WIDTH;
 };
 
 // Compute the visible unpinned column window for a given horizontal scroll
@@ -1747,9 +1780,11 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
    var visLeft = scrollLeft;
    var visRight = scrollLeft + clientWidth;
 
-   // Fetched columns sit to the right of the left unfetched span; shift
-   // their layout positions accordingly.
-   var shift = leftSpanWidth();
+   // scrollLeft is in unpinned-pane coordinates. A fetched unpinned column at
+   // columnOrder position i sits at unpinned-pane x = offs[i] - pinnedBlock +
+   // leftSpan (the pinned block is a separate pane; the left unfetched span
+   // precedes the fetched window). Fold both terms into one shift.
+   var shift = leftSpanWidth() - pinnedBlockWidth();
 
    var start = -1, end = -1;
    for (var i = firstUnpinned; i <= lastPos; i++) {
@@ -1804,19 +1839,28 @@ var colSpacerCell = function(tag, widthPx) {
    return c;
 };
 
-// Append the windowed cell sequence to `parent`: all pinned cells, a left
-// spacer, the visible column window, and a right spacer. `makeCell(pos)`
-// builds the cell for columnOrder position `pos`. Shared by the header and
-// body so their column structure stays identical (required for table-layout:
-// fixed to keep columns aligned).
-var appendWindowedCells = function(parent, makeCell, spacerTag) {
+// Append the pinned cells to `parent` (one per pinned columnOrder position,
+// which are all at the front). Used to populate the frozen pinned pane's
+// header row and body rows. `makeCell(pos)` builds the cell for position `pos`.
+var appendPinnedCells = function(parent, makeCell) {
    var firstUnpinned = firstUnpinnedPos();
-   var lastPos = columnOrder.length - 1;
-
-   // Pinned columns are always rendered (they're sticky).
    for (var p = 0; p < firstUnpinned; p++) {
       parent.appendChild(makeCell(p));
    }
+};
+
+// Append the windowed unpinned cell sequence to `parent`: a left spacer, the
+// visible column window, and a right spacer. `makeCell(pos)` builds the cell
+// for columnOrder position `pos`. Used to populate the scrollable unpinned
+// pane's header row and body rows. The spacers absorb both the off-window
+// fetched columns AND the unfetched spans flanking the fetched window, so the
+// unpinned table's total width spans the whole (unpinned) frame and the
+// horizontal scrollbar covers every column. Pinned/unpinned headers and body
+// rows are built by the same makeCell logic so columns stay aligned under
+// table-layout: fixed within each pane.
+var appendUnpinnedWindowedCells = function(parent, makeCell, spacerTag) {
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
    if (firstUnpinned > lastPos) return;
 
    // Clamp the window to the unpinned range; fall back to the full range if it
@@ -1827,9 +1871,6 @@ var appendWindowedCells = function(parent, makeCell, spacerTag) {
       winEnd = lastPos;
    }
 
-   // The spacers absorb both the off-window fetched columns AND the unfetched
-   // spans flanking the fetched window, so the table's total width spans the
-   // whole frame and the horizontal scrollbar covers every column.
    var offs = columnOffsets();
    var leftW = (offs[winStart] - offs[firstUnpinned]) + leftSpanWidth();
    if (leftW > 0) parent.appendChild(colSpacerCell(spacerTag, leftW));
@@ -1842,15 +1883,20 @@ var appendWindowedCells = function(parent, makeCell, spacerTag) {
    if (rightW > 0) parent.appendChild(colSpacerCell(spacerTag, rightW));
 };
 
-// Number of cells appendWindowedCells emits per row (pinned + optional left
-// spacer + window + optional right spacer). The vertical spacer row's td must
-// use exactly this as its colSpan: an oversized colspan would force the table
-// to that many columns and break table-layout: fixed width distribution.
-var renderedColumnCount = function() {
+// Cell count emitted by appendPinnedCells -- the pinned pane's spacer-row
+// colSpan. Clamped to >= 1 so an empty colspan can't collapse the spacer.
+var pinnedColumnCount = function() {
+   return firstUnpinnedPos() || 1;
+};
+
+// Cell count emitted by appendUnpinnedWindowedCells (optional left spacer +
+// window + optional right spacer) -- the unpinned pane's spacer-row colSpan.
+// An oversized colspan would force the table to that many columns and break
+// table-layout: fixed width distribution, so it must match exactly.
+var unpinnedRenderedColumnCount = function() {
    var firstUnpinned = firstUnpinnedPos();
    var lastPos = columnOrder.length - 1;
-   var count = firstUnpinned; // pinned cells (always rendered)
-   if (firstUnpinned > lastPos) return count || 1;
+   if (firstUnpinned > lastPos) return 1;
 
    var winStart = colWinStart, winEnd = colWinEnd;
    if (winEnd < winStart || winStart < firstUnpinned || winEnd > lastPos) {
@@ -1858,6 +1904,7 @@ var renderedColumnCount = function() {
       winEnd = lastPos;
    }
    var offs = columnOffsets();
+   var count = 0;
    if (offs[winStart] - offs[firstUnpinned] + leftSpanWidth() > 0)
       count++;                                                  // left spacer
    count += (winEnd - winStart + 1);                            // window cells
@@ -1891,21 +1938,28 @@ var rebuildHeaderWindow = function() {
    var thead = domThead;
    if (!thead || !cols || !columnOrder.length) return;
 
+   var makeHeader = function(pos) {
+      var colIdx = columnOrder[pos];
+      var th = createHeader(colIdx, cols[colIdx]);
+      if (typeof measuredWidths[pos] === "number") {
+         th.style.width = measuredWidths[pos] + "px";
+      }
+      reinjectHeaderUI(th, colIdx, cols[colIdx]);
+      return th;
+   };
+
+   // Pinned headers go in the frozen pane's thead (no spacers/window); the
+   // unpinned windowed headers go in the scrollable pane's thead.
+   if (domPinnedThead) {
+      domPinnedThead.innerHTML = "";
+      appendPinnedCells(domPinnedThead, makeHeader);
+   }
+
    thead.innerHTML = "";
-   appendWindowedCells(
-      thead,
-      function(pos) {
-         var colIdx = columnOrder[pos];
-         var th = createHeader(colIdx, cols[colIdx]);
-         if (typeof measuredWidths[pos] === "number") {
-            th.style.width = measuredWidths[pos] + "px";
-         }
-         reinjectHeaderUI(th, colIdx, cols[colIdx]);
-         return th;
-      },
-      "th"
-   );
+   appendUnpinnedWindowedCells(thead, makeHeader, "th");
+
    applySortIndicators();
+   syncHeaderHeights();
 
    // Headers are recreated as the window slides, so re-apply the active-header
    // highlight if its column landed in the new window (the active cell is
@@ -1913,6 +1967,23 @@ var rebuildHeaderWindow = function() {
    if (activeHeaderCol >= 0 && activeHeaderCol < columnOrder.length) {
       var activeTh = getHeaderCell(columnOrder[activeHeaderCol]);
       if (activeTh) activeTh.classList.add("activeHeader");
+   }
+};
+
+// Keep the two panes' header rows the same height. They are separate sticky
+// theads, and only some columns carry the (taller) filter row -- e.g. the
+// rownames header has no filter while unpinned data headers do -- so their
+// natural heights can differ, which would offset the body rows below them and
+// break the vertical alignment the synced scroll relies on. Force both to the
+// taller of the two. A no-op when both are naturally equal (no filter row).
+var syncHeaderHeights = function() {
+   if (!domThead || !domPinnedThead) return;
+   domThead.style.height = "";
+   domPinnedThead.style.height = "";
+   var h = Math.max(domThead.offsetHeight, domPinnedThead.offsetHeight);
+   if (h > 0) {
+      domThead.style.height = h + "px";
+      domPinnedThead.style.height = h + "px";
    }
 };
 
@@ -1990,15 +2061,9 @@ var rebuildHeaders = function() {
    applyPinnedColumns();
 };
 
-// Compute the cumulative left offset for each pinned column based on render order.
-// Returns { offsets: { colIdx: leftPx, ... }, totalWidth: number }.
-//
-// Result is cached in pinnedOffsetsCache (declared with the rest of the
-// state). Each entry costs an offsetWidth read which forces layout, and
-// this function is called from renderVisibleRows on every scroll.
-// Callers that change column widths or pinning must invalidate via
-// invalidatePinnedOffsets(). This also drops columnOffsetsCache, which is
-// derived from the same columnOrder + measuredWidths state.
+// Drop the derived layout caches. Callers that change column widths or pinning
+// must invalidate so columnOffsets / span widths (and the pinned-block width
+// derived from them) recompute from the current columnOrder + measuredWidths.
 var invalidatePinnedOffsets = function() {
    pinnedOffsetsCache = null;
    columnOffsetsCache = null;
@@ -2006,27 +2071,7 @@ var invalidatePinnedOffsets = function() {
    rightSpanWidthCache = -1;
 };
 
-var getPinnedOffsets = function() {
-   if (pinnedOffsetsCache !== null) return pinnedOffsetsCache;
-
-   var offsets = {};
-   var cumulative = 0;
-
-   // Derive pinned offsets from measuredWidths rather than reading rendered
-   // <th> offsetWidths: with column virtualization the pinned headers are
-   // always present, but keying off measuredWidths avoids a per-call layout
-   // flush and stays correct regardless of what else is in the DOM.
-   for (var i = 0; i < columnOrder.length; i++) {
-      var colIdx = columnOrder[i];
-      if (!isColumnPinned(colIdx)) break; // pinned columns are all at the front
-      offsets[colIdx] = cumulative;
-      cumulative += measuredWidths[i] || 0;
-   }
-   pinnedOffsetsCache = { offsets: offsets, totalWidth: cumulative };
-   return pinnedOffsetsCache;
-};
-
-// Apply pinned styling to header cells
+// Apply pinned styling to header cells and size the frozen pinned pane.
 var applyPinnedColumns = function() {
    var thead = domThead;
    if (!thead) return;
@@ -2037,40 +2082,42 @@ var applyPinnedColumns = function() {
    // wait for the next autoSizeColumns + applyPinnedColumns pair instead.
    if (totalTableWidth === 0) return;
 
-   var pinned = getPinnedOffsets();
+   // Size the frozen pane (and its table) to the pinned block width. Pinned
+   // columns are ordinary cells in #pinnedTable now -- no sticky offsets.
+   var pinnedW = pinnedBlockWidth();
+   if (domPinnedPane) domPinnedPane.style.width = pinnedW + "px";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.width = pinnedW + "px";
 
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer): they carry no data-col-idx and are
-      // never pinned. With column virtualization thead.children no longer maps
-      // 1:1 to columnOrder, so read the column index off the header itself.
-      if (isNaN(colIdx)) continue;
-      var pinIcon = th.querySelector(".pin-icon");
-      var nowPinned = isColumnPinned(colIdx);
-
-      if (nowPinned) {
-         th.classList.add("pinned");
-         th.style.left = (pinned.offsets[colIdx] || 0) + "px";
-      } else {
-         th.classList.remove("pinned");
-         th.style.left = "";
-      }
-      if (pinIcon) {
-         if (nowPinned) pinIcon.classList.add("pinned");
-         else pinIcon.classList.remove("pinned");
-         pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
+   // Toggle the .pinned class + pin-icon state across both panes' headers.
+   var theads = [domThead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var th0 = theads[t];
+      if (!th0) continue;
+      for (var i = 0; i < th0.children.length; i++) {
+         var th = th0.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer): no data-col-idx, never pinned.
+         if (isNaN(colIdx)) continue;
+         var pinIcon = th.querySelector(".pin-icon");
+         var nowPinned = isColumnPinned(colIdx);
+         if (nowPinned) th.classList.add("pinned");
+         else th.classList.remove("pinned");
+         if (pinIcon) {
+            if (nowPinned) pinIcon.classList.add("pinned");
+            else pinIcon.classList.remove("pinned");
+            pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
+         }
       }
    }
 
-   // Horizontal overscroll: lets the user scroll the rightmost column to sit
-   // just past the pinned columns for side-by-side context. Applied even when
-   // all columns fit in the viewport so horizontal scrolling is consistently
-   // available. We reserve room for the rightmost column so it stays visible
-   // at maximum scroll; without this reservation the user can scroll every
-   // unpinned column off-screen (issue #17612). If every column is pinned
-   // (or none exist) there is nothing to scroll past, so we skip the padding
-   // to avoid a phantom scrollbar over empty space.
+   // Horizontal overscroll: lets the user scroll the rightmost column to sit at
+   // the left of the unpinned pane for side-by-side context with the pinned
+   // columns. Applied even when all columns fit so horizontal scrolling is
+   // consistently available. We reserve room for the rightmost column so it
+   // stays visible at maximum scroll; without this the user could scroll every
+   // unpinned column off-screen (issue #17612). The unpinned pane's clientWidth
+   // already excludes the pinned block (separate pane), so no pinned term here.
    var viewport = domViewport;
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
@@ -2086,7 +2133,7 @@ var applyPinnedColumns = function() {
             ? DEFAULT_COL_WIDTH
             : (measuredWidths[lastIdx] || 0);
          overscroll = Math.max(0,
-            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+            viewport.clientWidth - lastUnpinnedWidth);
       }
       table.style.paddingRight = overscroll + "px";
    }
@@ -2357,13 +2404,30 @@ var autoSizeColumns = function() {
    invalidatePinnedOffsets();
    totalWidth += leftSpanWidth() + rightSpanWidth();
 
+   // Split the layout across the two panes: the frozen pinned table holds the
+   // pinned block; the scrollable table holds everything else (fetched unpinned
+   // columns plus the estimated unfetched spans), so its horizontal scrollbar
+   // covers every unpinned column. totalTableWidth tracks the UNPINNED table
+   // width -- it's what updateColumnOverflowState compares against the unpinned
+   // pane's clientWidth, and what an unpinned-column resize grows.
+   var pinnedW = pinnedBlockWidth();
+   var unpinnedW = Math.max(0, totalWidth - pinnedW);
+
    var table = document.getElementById("rsGridData");
    if (table) {
-      table.style.width = totalWidth + "px";
+      table.style.width = unpinnedW + "px";
       table.style.tableLayout = "fixed";
    }
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) {
+      pinnedTable.style.width = pinnedW + "px";
+      pinnedTable.style.tableLayout = "fixed";
+   }
+   // Size the frozen pane now (applyPinnedColumns re-affirms it later) so it
+   // isn't briefly clipped to zero width between here and that call.
+   if (domPinnedPane) domPinnedPane.style.width = pinnedW + "px";
 
-   totalTableWidth = totalWidth;
+   totalTableWidth = unpinnedW;
 
    // Recompute the visible column window against the new widths and (re)build
    // the windowed header row, which applies per-column widths to the rendered
@@ -2388,7 +2452,11 @@ var initResizeHandlers = function() {
       resizingHeaderTh = getHeaderCell(resizingColIdx);
       if (resizingHeaderTh) {
          initResizingWidth = resizingHeaderTh.offsetWidth;
-         origTableWidth = totalTableWidth;
+         // Base the table-width math on the pane that actually grows: the
+         // frozen pinned table for a pinned column, the scrollable table
+         // otherwise. (totalTableWidth tracks only the unpinned table.)
+         origResizePinned = isColumnPinned(resizingColIdx);
+         origTableWidth = origResizePinned ? pinnedBlockWidth() : totalTableWidth;
          if (typeof origColWidths[resizingColIdx] === "undefined") {
             origColWidths[resizingColIdx] = initResizingWidth;
          }
@@ -2451,9 +2519,13 @@ var initResizeHandlers = function() {
 };
 
 var getHeaderCell = function(colIdx) {
-   var thead = domThead;
-   if (!thead) return null;
-   return thead.querySelector('th[data-col-idx="' + colIdx + '"]');
+   // A header lives in either the pinned pane's thead or the unpinned pane's
+   // thead depending on whether its column is pinned; check both.
+   var sel = 'th[data-col-idx="' + colIdx + '"]';
+   var th = domThead ? domThead.querySelector(sel) : null;
+   if (!th && domPinnedThead)
+      th = domPinnedThead.querySelector(sel);
+   return th;
 };
 
 var applyResizeDelta = function(delta) {
@@ -2482,11 +2554,21 @@ var applyResizeDelta = function(delta) {
       manualWidths[absColIndex(resizingColIdx)] = colWidth;
    }
 
-   // Apply width to table
-   var table = document.getElementById("rsGridData");
-   if (table) {
-      table.style.width = (origTableWidth + delta) + "px";
-      totalTableWidth = origTableWidth + delta;
+   // Apply width to the table being resized. A pinned column grows the frozen
+   // pinned table (and its pane), widening the frozen region without touching
+   // the unpinned pane's scroll position. An unpinned column grows the
+   // scrollable table as before.
+   var newW = origTableWidth + delta;
+   if (origResizePinned) {
+      var pinnedTable = document.getElementById("pinnedTable");
+      if (pinnedTable) pinnedTable.style.width = newW + "px";
+      if (domPinnedPane) domPinnedPane.style.width = newW + "px";
+   } else {
+      var table = document.getElementById("rsGridData");
+      if (table) {
+         table.style.width = newW + "px";
+         totalTableWidth = newW;
+      }
    }
 
    invalidatePinnedOffsets();
@@ -3304,6 +3386,9 @@ var setViewportScrollTop = function(viewport, top) {
       return false;
    viewport.scrollTop = top;
    lastScrollTop = viewport.scrollTop;
+   // Keep the frozen pane aligned immediately (the scroll event would also do
+   // this, but it fires asynchronously).
+   syncPinnedScrollTop();
    return true;
 };
 
@@ -3435,8 +3520,10 @@ var visibleColumnRangeText = function() {
    if (!viewport)
       return "";
 
-   var pinnedW = getPinnedOffsets().totalWidth;
-   var vLo = absColAtContentX(lastScrollLeft + pinnedW);
+   // The unpinned pane scrolls independently; its left edge (scrollLeft) is the
+   // first visible unpinned column, its right edge the last. Pinned columns are
+   // always visible and excluded from this range readout.
+   var vLo = absColAtContentX(lastScrollLeft);
    var vHi = absColAtContentX(lastScrollLeft + viewport.clientWidth);
    if (vLo <= 1 && vHi >= totalCols)
       return "";
@@ -3527,10 +3614,9 @@ var updateInfoBar = function() {
    setSortStatus(sortText);
 };
 
-var buildRow = function(r) {
-   var rowData = rowCache.get(r);
-   if (!rowData) return null;
-
+// Create the <tr> shell for data row `r` (shared by the pinned and unpinned
+// panes; both panes render a row per data row so they stay vertically aligned).
+var makeBodyTr = function(r) {
    var tr = document.createElement("tr");
    tr.setAttribute("data-row", r);
    tr.setAttribute("role", "row");
@@ -3540,34 +3626,44 @@ var buildRow = function(r) {
    // contains a leading spacer row plus only the virtual window of data rows,
    // so :nth-child would flip the stripe pattern as the window slides.
    if (r % 2 === 1) tr.classList.add("odd-row");
-
-   // Render only the pinned columns plus the visible column window (with
-   // left/right spacers for the rest) -- see "Column virtualization". `pos`
-   // is the columnOrder position, matching activeCol's coordinate space.
-   appendWindowedCells(
-      tr,
-      function(pos) {
-         var colIdx = columnOrder[pos];
-         var clazz = getColClass(cols[colIdx]);
-         var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
-         td.setAttribute("role", "gridcell");
-         // Record the columnOrder position so click handling can map a cell
-         // back to its column without relying on DOM position (spacer cells
-         // make tr.children non-1:1 with columnOrder).
-         td.setAttribute("data-col-pos", pos);
-         if (r === activeRow && pos === activeCol) {
-            td.classList.add("activeCell");
-            // Stable id so the viewport's aria-activedescendant can refer
-            // to this cell. Re-applied here because rows are recreated
-            // when they scroll back into view.
-            td.id = activeCellId(r, pos);
-         }
-         return td;
-      },
-      "td"
-   );
-
    return tr;
+};
+
+// Build the pinned-pane and unpinned-pane <tr> for data row `r`. Returns
+// { pinned, unpinned } (or null when the row isn't cached yet). `pos` is the
+// columnOrder position, matching activeCol's coordinate space; the same
+// makeCell logic feeds both panes, so the active-cell check naturally lands in
+// whichever pane the active column belongs to.
+var buildRow = function(r) {
+   var rowData = rowCache.get(r);
+   if (!rowData) return null;
+
+   var makeCell = function(pos) {
+      var colIdx = columnOrder[pos];
+      var clazz = getColClass(cols[colIdx]);
+      var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
+      td.setAttribute("role", "gridcell");
+      // Record the columnOrder position so click handling can map a cell
+      // back to its column without relying on DOM position (spacer cells
+      // make tr.children non-1:1 with columnOrder).
+      td.setAttribute("data-col-pos", pos);
+      if (r === activeRow && pos === activeCol) {
+         td.classList.add("activeCell");
+         // Stable id so the viewport's aria-activedescendant can refer to this
+         // cell. Re-applied here because rows are recreated when they scroll
+         // back into view.
+         td.id = activeCellId(r, pos);
+      }
+      return td;
+   };
+
+   var pinnedTr = makeBodyTr(r);
+   appendPinnedCells(pinnedTr, makeCell);
+
+   var unpinnedTr = makeBodyTr(r);
+   appendUnpinnedWindowedCells(unpinnedTr, makeCell, "td");
+
+   return { pinned: pinnedTr, unpinned: unpinnedTr };
 };
 
 var createSpacerRow = function(colSpan) {
@@ -3599,12 +3695,15 @@ var renderVisibleRows = function(forceRebuild) {
    var tbody = domTbody;
    if (!viewport || !tbody || !cols) return;
 
+   var pinnedTbody = domPinnedTbody;
+
    var scrollTop = viewport.scrollTop;
    var viewportH = viewport.clientHeight;
    var activeRows = filteredRows;
 
    if (activeRows === 0) {
       tbody.innerHTML = "";
+      if (pinnedTbody) pinnedTbody.innerHTML = "";
       renderedRowElements.clear();
       topSpacerRow = null;
       bottomSpacerRow = null;
@@ -3640,22 +3739,25 @@ var renderVisibleRows = function(forceRebuild) {
       fetchRows(aheadStart, FETCH_SIZE);
    }
 
-   // Recompute pinned offsets for data cells
-   cachedPinnedOffsets = getPinnedOffsets().offsets;
-
-   // Spacer rows span exactly the windowed cell count (pinned + spacers +
-   // window), not the full column count -- see renderedColumnCount.
-   var colSpan = renderedColumnCount();
+   // Spacer rows span exactly the windowed cell count for their pane, not the
+   // full column count -- see pinnedColumnCount / unpinnedRenderedColumnCount.
+   var pinnedColSpan = pinnedColumnCount();
+   var unpinnedColSpan = unpinnedRenderedColumnCount();
 
    // --- Full rebuild (force, or no existing spacers) ---
    if (forceRebuild || !topSpacerRow || !bottomSpacerRow) {
       renderedRowElements.clear();
 
-      // Build into a fragment so the tbody only takes a single layout hit
-      // for the whole rebuild rather than one per row.
-      var fragment = document.createDocumentFragment();
-      topSpacerRow = createSpacerRow(colSpan);
-      fragment.appendChild(topSpacerRow);
+      // Build into fragments so each tbody takes a single layout hit for the
+      // whole rebuild rather than one per row.
+      var fragU = document.createDocumentFragment();
+      var fragP = document.createDocumentFragment();
+      topSpacerRow = {
+         unpinned: createSpacerRow(unpinnedColSpan),
+         pinned: createSpacerRow(pinnedColSpan)
+      };
+      fragU.appendChild(topSpacerRow.unpinned);
+      fragP.appendChild(topSpacerRow.pinned);
 
       // Render only the contiguous prefix from newStart. If a row is missing
       // from cache (out-of-order fetch), stop here -- the unrendered tail
@@ -3663,68 +3765,95 @@ var renderVisibleRows = function(forceRebuild) {
       // gap don't get displayed at the wrong vertical position.
       var lastRendered = newStart - 1;
       for (var r = newStart; r <= newEnd; r++) {
-         var tr = buildRow(r);
-         if (!tr) break;
-         fragment.appendChild(tr);
-         renderedRowElements.set(r, tr);
+         var pair = buildRow(r);
+         if (!pair) break;
+         fragU.appendChild(pair.unpinned);
+         fragP.appendChild(pair.pinned);
+         renderedRowElements.set(r, pair);
          lastRendered = r;
       }
 
-      bottomSpacerRow = createSpacerRow(colSpan);
-      fragment.appendChild(bottomSpacerRow);
+      bottomSpacerRow = {
+         unpinned: createSpacerRow(unpinnedColSpan),
+         pinned: createSpacerRow(pinnedColSpan)
+      };
+      fragU.appendChild(bottomSpacerRow.unpinned);
+      fragP.appendChild(bottomSpacerRow.pinned);
 
       tbody.innerHTML = "";
-      tbody.appendChild(fragment);
+      tbody.appendChild(fragU);
+      if (pinnedTbody) {
+         pinnedTbody.innerHTML = "";
+         pinnedTbody.appendChild(fragP);
+      }
 
-      updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-      updateSpacerRowHeight(bottomSpacerRow,
-         Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT);
+      var topH = newStart * ROW_HEIGHT;
+      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT;
+      updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+      updateSpacerRowHeight(topSpacerRow.pinned, topH);
+      updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+      updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
 
       renderStart = newStart;
       renderEnd = newEnd;
       return;
    }
 
-   // --- Incremental update ---
+   // --- Incremental update (both panes in lockstep) ---
 
    // Remove rows that are no longer in the window
    // Scrolling down: remove from top (renderStart .. newStart-1)
    // Scrolling up: remove from bottom (newEnd+1 .. renderEnd)
    for (var r = renderStart; r < newStart; r++) {
       var el = renderedRowElements.get(r);
-      if (el) { el.remove(); renderedRowElements.delete(r); }
+      if (el) {
+         if (el.unpinned) el.unpinned.remove();
+         if (el.pinned) el.pinned.remove();
+         renderedRowElements.delete(r);
+      }
    }
    for (var r = newEnd + 1; r <= renderEnd; r++) {
       var el = renderedRowElements.get(r);
-      if (el) { el.remove(); renderedRowElements.delete(r); }
-   }
-
-   // Add new rows at the top (newStart .. renderStart-1)
-   // Insert before the first data row (right after topSpacerRow). If a row
-   // is missing from cache, bail out and re-enter via the full-rebuild
-   // path so the contiguous-prefix logic can position rows correctly --
-   // skipping rows here would leave subsequent ones at the wrong offset.
-   var missingRow = false;
-   var insertBeforeTop = topSpacerRow.nextSibling;
-   for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
-      if (!renderedRowElements.has(r)) {
-         var tr = buildRow(r);
-         if (!tr) { missingRow = true; break; }
-         tbody.insertBefore(tr, insertBeforeTop);
-         renderedRowElements.set(r, tr);
-         insertBeforeTop = tr;
+      if (el) {
+         if (el.unpinned) el.unpinned.remove();
+         if (el.pinned) el.pinned.remove();
+         renderedRowElements.delete(r);
       }
    }
 
-   // Add new rows at the bottom (renderEnd+1 .. newEnd), insert before the
-   // bottom spacer. Same fall-back rule as the top edge.
+   // Add new rows at the top (newStart .. renderStart-1), inserted right after
+   // each pane's top spacer. If a row is missing from cache, bail out and
+   // re-enter via the full-rebuild path so the contiguous-prefix logic can
+   // position rows correctly -- skipping rows here would leave subsequent ones
+   // at the wrong offset.
+   var missingRow = false;
+   var insertBeforeTopU = topSpacerRow.unpinned.nextSibling;
+   var insertBeforeTopP = topSpacerRow.pinned ? topSpacerRow.pinned.nextSibling : null;
+   for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
+      if (!renderedRowElements.has(r)) {
+         var pair = buildRow(r);
+         if (!pair) { missingRow = true; break; }
+         tbody.insertBefore(pair.unpinned, insertBeforeTopU);
+         insertBeforeTopU = pair.unpinned;
+         if (pinnedTbody) {
+            pinnedTbody.insertBefore(pair.pinned, insertBeforeTopP);
+            insertBeforeTopP = pair.pinned;
+         }
+         renderedRowElements.set(r, pair);
+      }
+   }
+
+   // Add new rows at the bottom (renderEnd+1 .. newEnd), inserted before each
+   // pane's bottom spacer. Same fall-back rule as the top edge.
    if (!missingRow) {
       for (var r = Math.max(renderEnd + 1, newStart); r <= newEnd; r++) {
          if (!renderedRowElements.has(r)) {
-            var tr = buildRow(r);
-            if (!tr) { missingRow = true; break; }
-            tbody.insertBefore(tr, bottomSpacerRow);
-            renderedRowElements.set(r, tr);
+            var pair = buildRow(r);
+            if (!pair) { missingRow = true; break; }
+            tbody.insertBefore(pair.unpinned, bottomSpacerRow.unpinned);
+            if (pinnedTbody)
+               pinnedTbody.insertBefore(pair.pinned, bottomSpacerRow.pinned);
+            renderedRowElements.set(r, pair);
          }
       }
    }
@@ -3738,9 +3867,13 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Update spacer heights
-   updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-   updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1) * ROW_HEIGHT);
+   // Update spacer heights (both panes stay aligned)
+   var topH = newStart * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT;
+   updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+   updateSpacerRowHeight(topSpacerRow.pinned, topH);
+   updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+   updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
 
    renderStart = newStart;
    renderEnd = newEnd;
@@ -3751,10 +3884,64 @@ var renderVisibleRows = function(forceRebuild) {
 // which is expensive during fast scrolling.
 var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 
+// Mirror the unpinned (master) pane's vertical scroll onto the frozen pinned
+// pane so their rows stay aligned. The pinned pane has overflow: hidden (no
+// scrollbar of its own) but is still programmatically scrollable. Run
+// synchronously on every scroll event -- it's a single property write -- so
+// the panes never lag a frame apart. Horizontal scroll never touches the
+// pinned pane (it has no horizontal overflow).
+var syncPinnedScrollTop = function() {
+   if (domPinnedPane && domViewport)
+      domPinnedPane.scrollTop = domViewport.scrollTop;
+};
+
+// The frozen pane is itself vertically scrollable (so wheel / middle-click over
+// it work), but the unpinned pane is the master that drives rendering and holds
+// the visible scrollbar. Mirror the frozen pane's scroll onto the master, which
+// re-renders and mirrors back via onScroll -> syncPinnedScrollTop. The equality
+// guards make this converge without an event ping-pong (setting scrollTop to
+// its current value fires no scroll event).
+var onPinnedScroll = function() {
+   if (!domPinnedPane || !domViewport) return;
+   if (domViewport.scrollTop !== domPinnedPane.scrollTop)
+      domViewport.scrollTop = domPinnedPane.scrollTop;
+};
+
+// The frozen pane has no horizontal scroll of its own (its table is exactly the
+// pane width), but a horizontal wheel/trackpad gesture over it should still pan
+// the unpinned columns. Intercept clearly-horizontal gestures (and shift+wheel)
+// and apply them to the master pane's scrollLeft; leave vertical gestures to
+// the pane's native (smooth) scroll, which syncs via onPinnedScroll. Only the
+// horizontal-dominant case is consumed so a mostly-vertical gesture with slight
+// horizontal drift still scrolls vertically and smoothly.
+var onPinnedWheel = function(evt) {
+   if (!domViewport) return;
+   var dx = evt.deltaX;
+   var dy = evt.deltaY;
+   var horizontal = 0;
+   if (evt.shiftKey) {
+      // Shift+wheel means horizontal intent; Chromium puts the delta on
+      // deltaX in some configs and deltaY in others, so take whichever is set.
+      horizontal = dx || dy;
+   } else if (Math.abs(dx) > Math.abs(dy)) {
+      // A clearly-horizontal trackpad gesture. (A vertical scroll with slight
+      // horizontal drift stays vertical and scrolls the pane natively/smoothly.)
+      horizontal = dx;
+   }
+   if (horizontal === 0) return;
+   // Honor the wheel delta mode (Chromium reports pixels; line/page modes need
+   // scaling so the step isn't a near-no-op).
+   var scale = evt.deltaMode === 1 ? ROW_HEIGHT
+             : evt.deltaMode === 2 ? domViewport.clientWidth : 1;
+   domViewport.scrollLeft += horizontal * scale;
+   evt.preventDefault();
+};
+
 // RAF-throttle scroll (via pendingScrollRaf): render at most once per
 // animation frame so virtual scroll updates happen during the scroll,
 // not 16ms after it stops.
 var onScroll = function() {
+   syncPinnedScrollTop();
    if (pendingScrollRaf) return;
    pendingScrollRaf = requestAnimationFrame(function() {
       pendingScrollRaf = 0;
@@ -5353,40 +5540,35 @@ var toggleSidebar = function() {
 // right of the left unfetched span. With `center`, the column is scrolled to
 // the middle of the unpinned viewport region (go-to-column jumps want context
 // on both sides); otherwise it's the minimal scroll that brings an off-edge
-// column flush with the nearest edge, accounting for the sticky pinned columns
-// occluding the left. Returns true (and updates lastScrollLeft) when it
-// actually scrolls; a no-op when the column is already where it needs to be.
+// column flush with the nearest edge. Operates entirely in the unpinned pane's
+// own scroll space. Returns true (and updates lastScrollLeft) when it actually
+// scrolls; a no-op when the column is already where it needs to be.
 var scrollColumnPosIntoView = function(pos, center) {
    var viewport = domViewport;
    if (!viewport || pos < 0 || pos >= columnOrder.length) return false;
 
-   // Pinned columns are sticky -- always visible at the left edge regardless
-   // of scroll position -- so there's nothing to scroll into view. Bail before
-   // the math below, which for a pinned column (small colLeft, large
-   // pinnedWidth) would compute a negative target and clamp it to 0, snapping
-   // the horizontal scroll back to the start. This is what reset the scroll
-   // when pinning a column scrolled into view, since the pin click sets the
-   // freshly pinned column as the active header and scrolls it into view.
+   // Pinned columns live in the frozen pane -- always visible regardless of the
+   // unpinned pane's scroll position -- so there's nothing to scroll into view.
    if (pos < firstUnpinnedPos()) return false;
 
    var offs = columnOffsets();
-   var colLeft = offs[pos] + (pos >= firstUnpinnedPos() ? leftSpanWidth() : 0);
+   // Unpinned-pane x of the column's left edge: drop the pinned block (separate
+   // pane) and add the left unfetched span that precedes the fetched window.
+   var colLeft = offs[pos] + leftSpanWidth() - pinnedBlockWidth();
    var colWidth = measuredWidths[pos] || 0;
-   var pinnedWidth = getPinnedOffsets().totalWidth;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
 
    var newLeft = viewLeft;
    if (center) {
-      var fullyVisible = colLeft >= viewLeft + pinnedWidth &&
+      var fullyVisible = colLeft >= viewLeft &&
                          colLeft + colWidth <= viewLeft + viewWidth;
       if (!fullyVisible) {
-         var region = Math.max(0, viewWidth - pinnedWidth);
          newLeft = Math.max(0,
-            colLeft - pinnedWidth - Math.max(0, (region - colWidth) / 2));
+            colLeft - Math.max(0, (viewWidth - colWidth) / 2));
       }
-   } else if (colLeft < viewLeft + pinnedWidth) {
-      newLeft = Math.max(0, colLeft - pinnedWidth);
+   } else if (colLeft < viewLeft) {
+      newLeft = Math.max(0, colLeft);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
       newLeft = colLeft + colWidth - viewWidth;
    }
@@ -5451,17 +5633,21 @@ var flashSidebarColumn = function(absIdx) {
 
 var getActiveCellTd = function() {
    if (activeRow < 0 || activeCol < 0) return null;
-   var tr = renderedRowElements.get(activeRow);
+   var pair = renderedRowElements.get(activeRow);
+   if (!pair) return null;
+   // The active cell lives in the pinned pane's row when its column is pinned
+   // (columnOrder position < firstUnpinnedPos), otherwise in the unpinned row.
+   var tr = activeCol < firstUnpinnedPos() ? pair.pinned : pair.unpinned;
    if (!tr) return null;
-   // Can't index by activeCol: tr.children is the windowed cell set (pinned +
-   // spacers + window), not 1:1 with columnOrder. Every rendered cell records
-   // its columnOrder position in data-col-pos (set by buildRow), so match on
-   // that. We must NOT look up by the activeCell id here: buildRow assigns that
-   // id only to the cell that is *already* active, so a freshly clicked or
-   // navigated-to cell would not have it yet and setActiveCell could never find
-   // the cell to mark -- the highlight would only appear after a later render
-   // pass rebuilt the row. Returns null when the column is outside the rendered
-   // window (caller handles the absent case).
+   // Can't index by activeCol: tr.children is the windowed cell set (spacers +
+   // window for the unpinned pane), not 1:1 with columnOrder. Every rendered
+   // cell records its columnOrder position in data-col-pos (set by buildRow),
+   // so match on that. We must NOT look up by the activeCell id here: buildRow
+   // assigns that id only to the cell that is *already* active, so a freshly
+   // clicked or navigated-to cell would not have it yet and setActiveCell could
+   // never find the cell to mark -- the highlight would only appear after a
+   // later render pass rebuilt the row. Returns null when the column is outside
+   // the rendered window (caller handles the absent case).
    return tr.querySelector('[data-col-pos="' + activeCol + '"]');
 };
 
@@ -6030,34 +6216,37 @@ var anyScrollbarDragging = function() {
 };
 
 var createCustomScrollbars = function() {
-   var gridPanel = document.getElementById("gridPanel");
+   // Host the overlay bars on #gridPanes (the row holding both panes); it sits
+   // above the info bar and spans the full pane width, so the vertical bar
+   // lands at the right edge of the unpinned pane and the horizontal bar starts
+   // after the frozen pinned pane. Both reflect the unpinned pane's scroll.
+   var gridPanes = document.getElementById("gridPanes");
    var viewport = domViewport;
-   if (!gridPanel || !viewport) return;
+   if (!gridPanes || !viewport) return;
 
-   gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanel, "vertical", {
+   gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanes, "vertical", {
       getInsets: function() {
          var thead = domThead;
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
          var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-         // The bar's host is #gridPanel, which includes the info bar
-         // below the scrollable viewport. Add its height to the bottom
-         // inset so the bar doesn't extend over the info bar area.
-         var infoBar = document.getElementById("rsGridData_info");
-         var infoBarH = infoBar ? infoBar.offsetHeight : 0;
+         // #gridPanes excludes the info bar, so no info-bar inset is needed;
+         // just leave room for the horizontal bar when it's present.
          return {
             top: headerH,
-            bottom: infoBarH + (hasHScroll ? 10 : 0)
+            bottom: hasHScroll ? 10 : 0
          };
       },
       onDragEnd: updateInfoBar
    });
 
-   gridScrollbarH_ = attachCustomScrollbar(viewport, gridPanel, "horizontal", {
+   gridScrollbarH_ = attachCustomScrollbar(viewport, gridPanes, "horizontal", {
       getInsets: function() {
-         var pinnedWidth = getPinnedOffsets().totalWidth;
+         // The frozen pinned pane occupies the left of #gridPanes; start the
+         // horizontal bar after it so it tracks only the unpinned pane.
+         var pinnedW = domPinnedPane ? domPinnedPane.offsetWidth : 0;
          var hasVScroll = viewport.scrollHeight > viewport.clientHeight + 1;
-         return { left: pinnedWidth, right: hasVScroll ? 10 : 0 };
+         return { left: pinnedW, right: hasVScroll ? 10 : 0 };
       },
       onDragEnd: updateInfoBar
    });
@@ -6165,10 +6354,10 @@ var updateColumnOverflowState = function() {
    if (!viewport)
       return;
 
-   // totalTableWidth is the frame's full content width (fetched columns
-   // plus estimated unfetched spans). Compare against the viewport rather
-   // than scrollWidth, which includes the overscroll padding and would
-   // read as "overflowing" for every frame.
+   // totalTableWidth is the unpinned content width (fetched unpinned columns
+   // plus estimated unfetched spans); domViewport is the unpinned pane. Compare
+   // against clientWidth rather than scrollWidth, which includes the overscroll
+   // padding and would read as "overflowing" for every frame.
    var overflow = totalTableWidth > viewport.clientWidth + 1;
    if (overflow !== lastColumnOverflow) {
       lastColumnOverflow = overflow;
@@ -6243,6 +6432,9 @@ var initGrid = function(resCols, data) {
    domViewport = document.getElementById("gridViewport");
    domTbody = document.getElementById("gridBody");
    domThead = document.getElementById("data_cols");
+   domPinnedPane = document.getElementById("pinnedPane");
+   domPinnedThead = document.getElementById("pinned_cols");
+   domPinnedTbody = document.getElementById("pinnedBody");
 
    if (resCols.error) {
       showError(resCols.error);
@@ -6360,9 +6552,22 @@ var initGrid = function(resCols, data) {
       viewport.setAttribute("tabindex", "0");
       viewport.addEventListener("keydown", onGridKeyDown);
    }
+   // Forward wheel / middle-click scrolling done over the frozen pane onto the
+   // master pane (idempotent on the same function reference). The wheel handler
+   // is non-passive so it can preventDefault to consume horizontal gestures.
+   if (domPinnedPane) {
+      domPinnedPane.addEventListener("scroll", onPinnedScroll);
+      domPinnedPane.addEventListener("wheel", onPinnedWheel, { passive: false });
+   }
    var gridBody = domTbody;
    if (gridBody) {
       gridBody.addEventListener("click", onGridCellClick);
+   }
+   // The frozen pane's cells need the same click-to-activate handling; clicks
+   // there resolve their column via data-col-pos and route focus back to the
+   // (single, focusable) unpinned viewport, so keyboard nav keeps working.
+   if (domPinnedTbody) {
+      domPinnedTbody.addEventListener("click", onGridCellClick);
    }
 
    // Create the overlay scrollbars (overlay mode) or leave the native ones in
@@ -6493,7 +6698,6 @@ var resetGridState = function() {
    renderedRowElements.clear();
    topSpacerRow = null;
    bottomSpacerRow = null;
-   cachedPinnedOffsets = {};
    invalidatePinnedOffsets();
    needsAutoSize = false;
    deferredHeaderRebuild = false;
@@ -6505,6 +6709,7 @@ var resetGridState = function() {
    initResizeX = null;
    initResizingWidth = null;
    origTableWidth = null;
+   origResizePinned = false;
    resizingBoundsExceeded = 0;
    if (typeof document !== "undefined" && document.body) {
       document.body.classList.remove("col-resizing");
@@ -6776,24 +6981,28 @@ var applySavedState = function(state) {
 // handleSortClick / clearSort and after the header window is rebuilt (e.g.
 // when restoring saved state).
 var applySortIndicators = function() {
-   var thead = domThead;
-   if (!thead) return;
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer) that stand in for off-window columns.
-      if (isNaN(colIdx)) continue;
-      th.classList.remove("sorting", "sorting_asc", "sorting_desc");
-      var sorted = absColIndex(colIdx) === sortColumn && sortDirection;
-      if (sorted) {
-         th.classList.add("sorting_" + sortDirection);
-      } else {
-         th.classList.add("sorting");
-      }
-      // Only sortable headers carry aria-sort (set in createHeader).
-      if (th.hasAttribute("aria-sort")) {
-         th.setAttribute("aria-sort",
-            sorted ? sortAriaValue(sortDirection) : "none");
+   // Headers live in two theads now (pinned pane + unpinned pane); apply to both.
+   var theads = [domThead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var thead = theads[t];
+      if (!thead) continue;
+      for (var i = 0; i < thead.children.length; i++) {
+         var th = thead.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer) that stand in for off-window columns.
+         if (isNaN(colIdx)) continue;
+         th.classList.remove("sorting", "sorting_asc", "sorting_desc");
+         var sorted = absColIndex(colIdx) === sortColumn && sortDirection;
+         if (sorted) {
+            th.classList.add("sorting_" + sortDirection);
+         } else {
+            th.classList.add("sorting");
+         }
+         // Only sortable headers carry aria-sort (set in createHeader).
+         if (th.hasAttribute("aria-sort")) {
+            th.setAttribute("aria-sort",
+               sorted ? sortAriaValue(sortDirection) : "none");
+         }
       }
    }
 };
@@ -6803,11 +7012,13 @@ var destroyGrid = function() {
    invalidateCache();
    destroyCustomScrollbars();
 
-   // Clear DOM
+   // Clear DOM (both the unpinned and the frozen pinned pane)
    var thead = domThead;
    if (thead) thead.innerHTML = "";
    var tbody = domTbody;
    if (tbody) { tbody.innerHTML = ""; }
+   if (domPinnedThead) domPinnedThead.innerHTML = "";
+   if (domPinnedTbody) domPinnedTbody.innerHTML = "";
 
    var infoText = document.getElementById("rsGridData_info_text");
    if (infoText) infoText.textContent = "";
@@ -6821,6 +7032,11 @@ var destroyGrid = function() {
       viewport.removeEventListener("keydown", onGridKeyDown);
       viewport.scrollTop = 0;
       viewport.scrollLeft = 0;
+   }
+   if (domPinnedPane) {
+      domPinnedPane.removeEventListener("scroll", onPinnedScroll);
+      domPinnedPane.removeEventListener("wheel", onPinnedWheel);
+      domPinnedPane.scrollTop = 0;
    }
    window.removeEventListener("resize", onResize);
    if (pendingScrollbarRaf) {
@@ -6840,6 +7056,9 @@ var destroyGrid = function() {
    domViewport = null;
    domTbody = null;
    domThead = null;
+   domPinnedPane = null;
+   domPinnedThead = null;
+   domPinnedTbody = null;
 };
 
 var bootstrap = function(data) {
@@ -6922,35 +7141,47 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
       delete activeHeaderUIs[markerClass];
    }
 
-   if (!visible && hide) {
-      hide(thead);
-      if (dismissActivePopup) dismissActivePopup(true);
-   }
+   // Apply to both panes' headers: a pinned data column is just as filterable
+   // as an unpinned one, and its header lives in the frozen pane's thead.
+   var theads = [thead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var th0 = theads[t];
+      if (!th0) continue;
 
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer), which stand in for off-window columns
-      // and carry no data-col-idx.
-      if (isNaN(colIdx)) continue;
-      var col = cols[colIdx];
-
-      // Always strip any existing instances of this marker first so
-      // visible=true is idempotent and visible=false fully cleans up
-      // (querySelector would have only handled one match).
-      var existing = th.querySelectorAll("." + markerClass);
-      for (var k = 0; k < existing.length; k++) {
-         th.removeChild(existing[k]);
+      if (!visible && hide) {
+         hide(th0);
       }
 
-      if (visible) {
-         var el = initialize(th, col, colIdx);
-         if (el) {
-            el.classList.add(markerClass);
-            th.appendChild(el);
+      for (var i = 0; i < th0.children.length; i++) {
+         var th = th0.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer), which stand in for off-window
+         // columns and carry no data-col-idx.
+         if (isNaN(colIdx)) continue;
+         var col = cols[colIdx];
+
+         // Always strip any existing instances of this marker first so
+         // visible=true is idempotent and visible=false fully cleans up
+         // (querySelector would have only handled one match).
+         var existing = th.querySelectorAll("." + markerClass);
+         for (var k = 0; k < existing.length; k++) {
+            th.removeChild(existing[k]);
+         }
+
+         if (visible) {
+            var el = initialize(th, col, colIdx);
+            if (el) {
+               el.classList.add(markerClass);
+               th.appendChild(el);
+            }
          }
       }
    }
+
+   if (!visible && hide && dismissActivePopup) dismissActivePopup(true);
+
+   // The filter row changes header height; keep both panes' headers aligned.
+   syncHeaderHeights();
 
    renderVisibleRows(true);
    updateCustomScrollbars();
@@ -6968,8 +7199,9 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 var captureScrollAnchor = function() {
    var viewport = domViewport;
    if (!viewport || !cols) return null;
-   var pinnedW = getPinnedOffsets().totalWidth;
-   var abs = absColAtContentX(viewport.scrollLeft + pinnedW);
+   // scrollLeft is already the unpinned pane's left edge (the pinned pane is
+   // separate), so it maps straight to the leftmost visible unpinned column.
+   var abs = absColAtContentX(viewport.scrollLeft);
    return { abs: abs, offsetPx: layoutXOfAbs(abs) - viewport.scrollLeft };
 };
 
@@ -7089,17 +7321,17 @@ var applyColumnWindowUpdate = function(resCols, options) {
    // recompute the render window against the settled scroll position.
    var viewport = domViewport;
    if (targetAbs > 0 && viewport) {
-      // Center the target in the unpinned viewport region (matching
-      // revealColumnCentered for already-fetched targets).
-      var pinnedW = getPinnedOffsets().totalWidth;
+      // Center the target in the unpinned pane (matching revealColumnCentered
+      // for already-fetched targets). layoutXOfAbs is already in unpinned-pane
+      // coordinates, and the pane's clientWidth is the region to center within.
       var tPos = posForAbsColIndex(targetAbs);
       var tOrderPos = tPos >= 0 ? columnOrder.indexOf(tPos) : -1;
       var tWidth = tOrderPos >= 0
          ? (measuredWidths[tOrderPos] || DEFAULT_COL_WIDTH)
          : DEFAULT_COL_WIDTH;
-      var region = Math.max(0, viewport.clientWidth - pinnedW);
+      var region = Math.max(0, viewport.clientWidth);
       setViewportScrollLeft(viewport,
-         layoutXOfAbs(targetAbs) - pinnedW - Math.max(0, (region - tWidth) / 2));
+         layoutXOfAbs(targetAbs) - Math.max(0, (region - tWidth) / 2));
    } else if (!anyScrollbarDragging()) {
       // Don't fight an in-progress scrollbar drag for the scroll position;
       // the drag is the user's statement of where they want to be.
@@ -7203,8 +7435,9 @@ var maybeSlideForScroll = function() {
    var viewport = domViewport;
    if (!viewport) return;
 
-   var pinnedW = getPinnedOffsets().totalWidth;
-   var vLo = absColAtContentX(viewport.scrollLeft + pinnedW);
+   // The unpinned pane scrolls on its own; scrollLeft is the leftmost visible
+   // unpinned column, scrollLeft + clientWidth the rightmost.
+   var vLo = absColAtContentX(viewport.scrollLeft);
    var vHi = absColAtContentX(viewport.scrollLeft + viewport.clientWidth);
 
    var needSlide =

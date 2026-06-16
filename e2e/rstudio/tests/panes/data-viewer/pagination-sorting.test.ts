@@ -272,11 +272,11 @@ test.describe('Data Viewer', () => {
 
     await expect(sourcePane.selectedTab).toContainText('df');
 
-    // matrix() fills column-major, so X2 holds 101..200. First row cells are
-    // [rowNum, X1, X2, X3, ...] -- X2 is td:nth-child(3). tbody starts with a
-    // virtual-scroll spacer row; select the first data row by its data-row
-    // attribute instead of :first-child.
-    const firstRowX2 = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(3)');
+    // matrix() fills column-major, so X2 holds 101..200. Locate it by its
+    // columnOrder position (data-col-pos) rather than DOM position: rownames
+    // render in the separate frozen pane, and virtual-scroll spacer cells make
+    // nth-child non-1:1 with columns. X2 is the 2nd data column (pos 2).
+    const firstRowX2 = dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="2"]');
     await expect(firstRowX2).toContainText('101');
 
     // Click column 2 header twice for descending sort
@@ -301,8 +301,10 @@ test.describe('Data Viewer', () => {
 
     await expect(sourcePane.selectedTab).toContainText('df');
 
-    // First row cells are [rowNum, a]; skip the virtual-scroll spacer row.
-    const firstRowA = dataViewer.frame.locator('#rsGridData tbody tr[data-row="0"] td:nth-child(2)');
+    // Column "a" is the first (and only) data column -- columnOrder position 1
+    // (rownames is the pinned position 0, in the separate frozen pane). Locate
+    // by data-col-pos rather than DOM position.
+    const firstRowA = dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]');
     await expect(firstRowA).toContainText('20');
 
     // No sort active: the clear button is hidden.

@@ -38,9 +38,12 @@ async function colHeaderClass(dataViewer: DataViewerPane, colIdx: number): Promi
 
 // Returns the data-col-idx of every column header in left-to-right order.
 // Used to assert pin reordering: pinning column 3 should shift it just
-// after the rownames column (idx 0).
+// after the rownames column (idx 0). Pinned headers render in the frozen
+// pane's thead (#pinned_cols), unpinned ones in the scrollable pane's thead
+// (#data_cols); #pinned_cols precedes #data_cols in the DOM, so the comma
+// selector yields them in visual left-to-right order.
 async function colOrder(dataViewer: DataViewerPane): Promise<string[]> {
-  return dataViewer.frame.locator('#data_cols th').evaluateAll((ths) =>
+  return dataViewer.frame.locator('#pinned_cols th, #data_cols th').evaluateAll((ths) =>
     (ths as HTMLElement[]).map((th) => th.getAttribute('data-col-idx') ?? ''),
   );
 }
@@ -1652,6 +1655,54 @@ test.describe('Data Viewer', () => {
       { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(before.width + 100);
     } finally {
       await consoleActions.executeInConsole('rm(".rs.width_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // Pinned columns render in a separate frozen pane, so resizing one only
+  // grows that pane -- it must NOT disturb the independent horizontal scroll
+  // position of the unpinned pane. (Regression: the old single-table sticky
+  // layout snapped the unpinned scroll back to the start when a pinned column
+  // was widened.)
+  test('resizing a pinned column preserves the unpinned scroll position', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '.rs.pin_resize_df <- as.data.frame(matrix(1:40000, nrow = 100, ncol = 400))',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole('View(.rs.pin_resize_df)');
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.gridInfo)
+        .toContainText('of 100 entries', { timeout: TIMEOUTS.fileOpen });
+
+      // Pin column 1 -- it moves into the frozen pane.
+      const pinCol1 = dataViewer.frame.locator('th[data-col-idx="1"] .pin-icon');
+      await pinCol1.click();
+      await expect.poll(() => colHeaderClass(dataViewer, 1)).toMatch(/\bpinned\b/);
+
+      // Scroll the unpinned pane well to the right.
+      await dataViewer.viewport.evaluate((el) => { el.scrollLeft = 600; });
+      const scrollBefore = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(scrollBefore).toBeGreaterThan(0);
+
+      // Drag the pinned column's resize handle (in the frozen pane) to widen it.
+      const col1 = dataViewer.frame.locator('th[data-col-idx="1"]');
+      const beforeW = (await col1.boundingBox())!.width;
+      const handle = col1.locator('.resizer');
+      const hb = (await handle.boundingBox())!;
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(hb.x + hb.width / 2 + 120, hb.y + hb.height / 2, { steps: 10 });
+      await page.mouse.up();
+
+      // The pinned column grew...
+      await expect.poll(async () => (await col1.boundingBox())!.width)
+        .toBeGreaterThan(beforeW + 80);
+
+      // ...and the unpinned pane's horizontal scroll did not reset.
+      const scrollAfter = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThan(3);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.pin_resize_df", envir = .GlobalEnv)');
     }
   });
 });

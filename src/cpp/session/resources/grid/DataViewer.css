@@ -99,8 +99,47 @@ html, body {
    position: relative;
 }
 
+/* The panes row holds the frozen pinned pane and the scrollable unpinned pane
+   side by side; it fills the vertical space above the info bar and anchors the
+   floating overlay scrollbars (position: relative). */
+#gridPanes {
+   flex: 1;
+   display: flex;
+   min-height: 0;
+   min-width: 0;
+   position: relative;
+}
+
+/* Frozen pinned columns (rownames + pinned). Fixed width set inline to the
+   pinned block width by applyPinnedColumns; never scrolls horizontally. Its
+   vertical scroll is driven programmatically to mirror #gridViewport so the
+   two panes' rows stay aligned (overflow: hidden elements are still
+   programmatically scrollable). */
+#pinnedPane {
+   flex: 0 0 auto;
+   width: 0;                             /* set inline by applyPinnedColumns */
+   /* Vertically scrollable so wheel and middle-click auto-scroll work when the
+      pointer is over the frozen pane (overflow: hidden would block both). The
+      scrollbar itself is always hidden -- the unpinned (master) pane carries
+      the only visible vertical scrollbar, and onPinnedScroll mirrors this
+      pane's scroll position onto it (and vice versa). Never scrolls
+      horizontally (its table is exactly the pane width). */
+   overflow-x: hidden;
+   overflow-y: auto;
+   scrollbar-width: none;                /* Firefox */
+   overscroll-behavior: none;
+   position: relative;
+   /* Separator between the frozen pane and the scrolling columns. */
+   border-right: 1px solid var(--grid-border);
+   contain: layout paint;
+}
+#pinnedPane::-webkit-scrollbar {
+   display: none;                        /* Chromium */
+}
+
 #gridViewport {
    flex: 1;
+   min-width: 0;
    overflow: auto;
    position: relative;
    /* Establish a paint/layout containment boundary so the frequent DOM
@@ -132,7 +171,8 @@ body.overlay-scrollbars #gridViewport::-webkit-scrollbar {
    Table
    ========================================================================== */
 
-#rsGridData {
+#rsGridData,
+#pinnedTable {
    border-collapse: separate;
    border-spacing: 0;
 }
@@ -253,21 +293,12 @@ tbody tr.odd-row td.col-spacer {
    Pinned Columns
    ========================================================================== */
 
-th.pinned {
-   position: sticky;
-   /* left is set dynamically via inline style */
-   z-index: 5;
-   background-color: var(--grid-header-bg);
-}
+/* Pinned columns (rownames + pinned) render in their own #pinnedTable inside
+   the frozen #pinnedPane -- they are ordinary, non-sticky cells there, so they
+   need no position/z-index/left of their own (the pane is what freezes them).
+   The .pinned class is retained only as a styling hook. */
 
-td.pinned {
-   position: sticky;
-   /* left is set dynamically via inline style */
-   z-index: 5;
-   background-color: var(--grid-bg);
-}
-
-/* Row names column (always first pinned).
+/* Row names column (always the first pinned column).
    Background color comes from GridViewerStyles.getCustomStyle() which
    injects theme-specific rules for td.first-child. */
 th.pinned:first-child,
@@ -276,11 +307,6 @@ td.pinned:first-child {
    border-left: none;
    padding-left: 9px;
    padding-right: 9px;
-}
-
-/* Pinned header cells sit above pinned data cells */
-thead th.pinned {
-   z-index: 15;
 }
 
 /* --- Pin icon --- */
@@ -478,14 +504,11 @@ th.sorting_desc .headerCell::after {
    width: 7px;
    height: 100%;
    cursor: ew-resize;
-   /* Must sit below the pinned header (thead th.pinned is z-index 15) so a
-      pinned column occludes -- and wins the hit-test against -- the resizers of
-      unpinned columns scrolled behind it; otherwise those hidden resizers would
-      still grab the mouse. A pinned column's own resizer is unaffected: the
-      pinned th establishes its own stacking context, so its resizer stays on
-      top within the pinned column. The resizer still outranks neighboring
-      unpinned headers (auto z-index in the thead context), so it remains
-      grabbable wherever the column is actually visible. */
+   /* Above the sticky header content within its own table's stacking context
+      (thead is z-index 10) so the grip stays grabbable. Pinned and unpinned
+      columns now live in separate tables/panes, so a pinned column can no
+      longer occlude an unpinned column's resizer -- the earlier cross-column
+      z-index workaround is no longer needed. */
    z-index: 14;
 }
 
@@ -1428,9 +1451,11 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 /* ==========================================================================
    Custom Scrollbars
 
-   Rendered as absolutely-positioned divs inside #gridPanel. The vertical
-   bar starts below the sticky header; the horizontal bar starts after
-   the pinned columns. Position offsets are set dynamically from JS.
+   Rendered as absolutely-positioned divs inside #gridPanes (the row holding
+   the frozen pinned pane and the scrolling unpinned pane). The vertical bar
+   starts below the sticky header; the horizontal bar starts after the pinned
+   pane and tracks the unpinned pane. Position offsets are set dynamically
+   from JS.
    ========================================================================== */
 
 .custom-scrollbar {
@@ -1452,7 +1477,7 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 }
 
 .custom-scrollbar.horizontal {
-   bottom: var(--info-bar-height);
+   bottom: 0;                            /* #gridPanes sits above the info bar */
    height: 10px;
    /* left and width set from JS */
 }

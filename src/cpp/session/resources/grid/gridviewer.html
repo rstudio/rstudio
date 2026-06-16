@@ -15,13 +15,23 @@
 
     <div id="gridContainer">
         <div id="gridPanel">
-            <div id="gridViewport">
-                <table id="rsGridData" class="autoSize" role="grid">
-                    <thead>
-                        <tr id="data_cols" role="row"></tr>
-                    </thead>
-                    <tbody id="gridBody"></tbody>
-                </table>
+            <div id="gridPanes">
+                <div id="pinnedPane">
+                    <table id="pinnedTable" class="autoSize" role="presentation">
+                        <thead>
+                            <tr id="pinned_cols" role="row"></tr>
+                        </thead>
+                        <tbody id="pinnedBody"></tbody>
+                    </table>
+                </div>
+                <div id="gridViewport">
+                    <table id="rsGridData" class="autoSize" role="grid">
+                        <thead>
+                            <tr id="data_cols" role="row"></tr>
+                        </thead>
+                        <tbody id="gridBody"></tbody>
+                    </table>
+                </div>
             </div>
             <div id="rsGridData_info" aria-live="polite" aria-atomic="true">
                 <div id="rsGridData_info_sort">
