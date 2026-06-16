@@ -1,0 +1,40 @@
+name: "Cache: Seed Windows Server 2025 x64 build caches"
+
+# Seeds the build caches (rstudio-tools, sccache, and GWT output) on the
+# default branch so that PR builds start warm. GitHub Actions caches are
+# scoped per-branch: a cache can only be restored from the same branch, the
+# PR's base branch, or the default branch. By running the build job on main,
+# the caches it saves land in main's scope, which every PR (based on main)
+# can then restore via the restore-keys prefixes. Without this, every new PR
+# branch starts 100% cold and pays the full GWT + C++ compilation cost.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dependencies/**"
+      - "src/gwt/src/**"
+      - "src/gwt/build.xml"
+      - "src/gwt/conf/**"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
+      - ".github/workflows/os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml"
+  workflow_dispatch:
+
+# Don't stack expensive Windows builds; the latest seed run wins.
+concurrency:
+  group: cache-seed-windows-server-2025
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # Required for call-time validation: the called workflow's e2e-merge job
+  # declares pull-requests: write. GitHub validates all declared permissions at
+  # call time even for jobs that will be skipped (build_only=true skips e2e-merge).
+  pull-requests: write
+
+jobs:
+  seed:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    with:
+      build_from_source: true
+      build_only: true
+      r_version: "release"
