@@ -1964,9 +1964,10 @@ var rebuildHeaderWindow = function() {
    // syncHeaderHeights is intentionally NOT called here: rebuildHeaderWindow
    // runs on every horizontal-window slide, and a layout-flushing offsetHeight
    // read per slide is wasted work since the header height only changes on
-   // filter show/hide and pin/unpin. The explicit tr height set by the last
-   // sync persists across these rebuilds (innerHTML replaces cells, not the
-   // tr's style), so the panes stay aligned. The height-changing callers
+   // filter show/hide and pin/unpin. The explicit height set on the thead by
+   // the last sync persists across these rebuilds (innerHTML replaces the
+   // thead's children, not the thead's own style), so the panes stay aligned.
+   // The height-changing callers
    // (autoSizeColumns, setHeaderUIVisible) call syncHeaderHeights themselves.
 
    // Headers are recreated as the window slides, so re-apply the active-header
