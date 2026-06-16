@@ -527,11 +527,20 @@ jobs:
           xvfb-run -a --server-args="-screen 0 1920x1080x24" \
             npx playwright test "${ARGS[@]}"
 
+      # Platform-prefixed artifact name. When this Linux workflow runs from
+      # the same parent PR run as the Desktop platforms (via the combined
+      # os-test-e2e-rstudio-pr.yml orchestrator), all three platforms upload
+      # to the same artifact namespace. macOS uses `-mac-`, Windows uses
+      # `-win-`; matching them with `-linux-` keeps each platform's merge
+      # job downloading ONLY its own shard reports. Without the prefix, the
+      # Linux merge job globs `playwright-blob-report-*` and silently
+      # ingests every platform's blobs, reporting combined totals under the
+      # Linux Server sticky comment header.
       - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-blob-report-${{ matrix.shard }}
+          name: playwright-blob-report-linux-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -611,7 +620,11 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
         with:
-          pattern: playwright-blob-report-*
+          # Linux-only glob: in the combined PR orchestrator, macOS and
+          # Windows shards also publish under the same artifact namespace
+          # (playwright-blob-report-mac-* and playwright-blob-report-win-*).
+          # A bare `playwright-blob-report-*` would sweep all three.
+          pattern: playwright-blob-report-linux-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
