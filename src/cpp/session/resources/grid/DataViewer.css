@@ -1491,13 +1491,13 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 
 .custom-scrollbar.vertical {
    right: 0;
-   width: 10px;
+   width: 11px;
    /* top and height set from JS */
 }
 
 .custom-scrollbar.horizontal {
    bottom: 0;                            /* #gridPanes sits above the info bar */
-   height: 10px;
+   height: 11px;
    /* left and width set from JS */
 }
 
@@ -1523,7 +1523,7 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 }
 
 .custom-scrollbar.vertical .scrollbar-thumb {
-   width: 7px;
+   width: 8px;
    right: 1px;
    left: 1px;
    min-height: 20px;
@@ -1531,7 +1531,7 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 }
 
 .custom-scrollbar.horizontal .scrollbar-thumb {
-   height: 7px;
+   height: 8px;
    bottom: 1px;
    top: 1px;
    min-width: 20px;

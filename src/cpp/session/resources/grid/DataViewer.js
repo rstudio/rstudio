@@ -3503,13 +3503,13 @@ var updateAriaRowCount = function() {
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
 // the top (while still contributing to scroll content height), and when
 // horizontal scroll is active the custom horizontal scrollbar overlays the
-// bottom 10px (see .custom-scrollbar.horizontal in DataViewer.css).
+// bottom 11px (see .custom-scrollbar.horizontal in DataViewer.css).
 var visibleBodyHeight = function(viewport) {
    var headerEl = domThead;
    var headerH = (headerEl && headerEl.parentElement)
       ? headerEl.parentElement.offsetHeight : 0;
    var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 10 : 0));
+   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 11 : 0));
 };
 
 // Update the "Sorted by" portion of the info bar. The text span and the
@@ -6391,7 +6391,7 @@ var createCustomScrollbars = function() {
          // just leave room for the horizontal bar when it's present.
          return {
             top: headerH,
-            bottom: hasHScroll ? 10 : 0
+            bottom: hasHScroll ? 11 : 0
          };
       },
       onDragEnd: updateInfoBar
@@ -6403,7 +6403,7 @@ var createCustomScrollbars = function() {
          // horizontal bar after it so it tracks only the unpinned pane.
          var pinnedW = domPinnedPane ? domPinnedPane.offsetWidth : 0;
          var hasVScroll = viewport.scrollHeight > viewport.clientHeight + 1;
-         return { left: pinnedW, right: hasVScroll ? 10 : 0 };
+         return { left: pinnedW, right: hasVScroll ? 11 : 0 };
       },
       onDragEnd: updateInfoBar
    });
