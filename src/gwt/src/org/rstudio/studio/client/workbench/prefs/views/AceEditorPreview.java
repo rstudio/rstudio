@@ -175,30 +175,43 @@ public class AceEditorPreview extends DynamicIFrame
    public void setTheme(String themeUrl)
    {
       themeUrl_ = themeUrl;
-      if (!isFrameLoaded_)
+      if (!isFrameLoaded_ || !isAttached())
+         return;
+
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
          return;
 
       if (currentStyleLink_ != null)
          currentStyleLink_.removeFromParent();
 
-      Document doc = getDocument();
       currentStyleLink_ = doc.createLinkElement();
       currentStyleLink_.setRel("stylesheet");
       currentStyleLink_.setType("text/css");
       currentStyleLink_.setHref(themeUrl);
       doc.getBody().appendChild(currentStyleLink_);
    }
-   
+
    public void setFontSize(double fontSize)
    {
       fontSize_ = fontSize;
-      if (!isFrameLoaded_)
+      if (!isFrameLoaded_ || !isAttached())
+         return;
+
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(), fontSize_, lineHeight_);
+         FontSizer.setNormalFontSize(doc, fontSize_, lineHeight_);
       else
-         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_, lineHeight_);
+         FontSizer.setNormalFontSize(doc, fontSize_ * zoomLevel_, lineHeight_);
    }
    
    public void setLineHeight(double lineHeight)
@@ -230,7 +243,14 @@ public class AceEditorPreview extends DynamicIFrame
    {
       final String STYLE_EL_ID = "__rstudio_font_family";
       final String LINK_EL_ID = "__rstudio_font_link";
-      Document document = getDocument();
+      if (!isAttached())
+         return;
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx document = window.getDocument();
+      if (document == null)
+         return;
 
       Element oldStyle = document.getElementById(STYLE_EL_ID);
       Element oldLink = document.getElementById(LINK_EL_ID);

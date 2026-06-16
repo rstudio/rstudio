@@ -422,15 +422,6 @@ jobs:
           RSTUDIO_VERSION_PATCH: '9'
           RSTUDIO_VERSION_SUFFIX: '-pr+${{ github.run_number }}'
           GWT_CACHE_HIT: ${{ steps.gwt-cache.outputs.cache-hit }}
-          # Diagnostic: route sccache's own logs to a file. The build is still
-          # reporting `Compile requests: 0` even though the LAUNCHER variable
-          # is wired correctly in build.ninja's per-target settings and the
-          # rules.ninja `command =` line references `${LAUNCHER}`. That means
-          # ninja either never executes sccache.exe, or sccache.exe runs and
-          # silently bails out before incrementing any stats counter. Verbose
-          # logs distinguish those two cases.
-          SCCACHE_LOG: info
-          SCCACHE_ERROR_LOG: ${{ github.workspace }}\sccache-error.log
         run: |
           if "%GWT_CACHE_HIT%"=="true" (
             echo GWT cache hit -- using nogwt flag
@@ -439,86 +430,6 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
-
-      # Upload sccache's own log so we can see, per compile, whether sccache
-      # was invoked, which compiler it identified, and whether it fell back
-      # to direct compilation. Always runs.
-      - name: Upload sccache error log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sccache-error-log-win
-          path: ${{ github.workspace }}\sccache-error.log
-          if-no-files-found: ignore
-          retention-days: 3
-
-      # Diagnostic: confirm sccache is actually wired into the CXX compile
-      # rules. CMake's Ninja generator factors rule templates into
-      # `CMakeFiles\rules.ninja` (included from build.ninja); per-target
-      # variables like LAUNCHER live in build.ninja next to each `build`
-      # statement, and the rule's `command =` line in rules.ninja references
-      # `$LAUNCHER` to apply it. If the rule template doesn't actually use
-      # `$LAUNCHER`, sccache is wired in vain and `sccache --show-stats`
-      # reports 0 compile requests despite the cache variable being set.
-      - name: Verify sccache is wired into build.ninja
-        if: always()
-        shell: pwsh
-        run: |
-          $build = 'package/win32/build/build.ninja'
-          $rules = 'package/win32/build/CMakeFiles/rules.ninja'
-          if (-not (Test-Path $build)) {
-            Write-Host "No build.ninja at $build -- configure step did not produce one."
-            exit 0
-          }
-          Write-Host "=== build.ninja size: $((Get-Item $build).Length) bytes ==="
-          Write-Host "=== rules.ninja size: $(if (Test-Path $rules) { (Get-Item $rules).Length } else { 'MISSING' }) bytes ==="
-          Write-Host ""
-          Write-Host "=== LAUNCHER per-target settings in build.ninja (count + sample) ==="
-          $launchers = Select-String -Path $build -Pattern 'LAUNCHER\s*=.*sccache'
-          Write-Host "  Found $($launchers.Count) LAUNCHER lines pointing at sccache"
-          $launchers | Select-Object -First 2 | ForEach-Object { Write-Host "  $($_.Line.Trim())" }
-          Write-Host ""
-          if (Test-Path $rules) {
-            Write-Host "=== Rule definitions in rules.ninja that mention CXX_COMPILER ==="
-            Select-String -Path $rules -Pattern '^rule CXX_COMPILER' | ForEach-Object { Write-Host "  $($_.Line)" }
-            Write-Host ""
-            Write-Host "=== First CXX rule's `command =` line (does it reference \$LAUNCHER?) ==="
-            $lines = Get-Content $rules
-            for ($i = 0; $i -lt $lines.Count; $i++) {
-              if ($lines[$i] -match '^rule CXX_COMPILER') {
-                $name = $lines[$i]
-                Write-Host "  --> $name"
-                for ($j = $i+1; $j -lt $lines.Count -and $j -lt $i+8; $j++) {
-                  if ($lines[$j] -match '^rule ') { break }
-                  Write-Host "  $($lines[$j])"
-                }
-                break
-              }
-            }
-            Write-Host ""
-            Write-Host "=== Diagnostic summary ==="
-            $ruleRefsLauncher = (Select-String -Path $rules -Pattern '\$LAUNCHER' -Quiet)
-            $ruleHasSccacheLiteral = (Select-String -Path $rules -Pattern 'sccache' -Quiet)
-            if ($ruleRefsLauncher) {
-              Write-Host "OK: rules.ninja references \$LAUNCHER -- the per-target sccache path WILL be invoked."
-            } elseif ($ruleHasSccacheLiteral) {
-              Write-Host "OK: rules.ninja references sccache literally."
-            } else {
-              Write-Host "PROBLEM: rules.ninja CXX compile rules do NOT reference \$LAUNCHER or sccache. Per-target LAUNCHER lines in build.ninja are dead. sccache will never be called."
-            }
-          }
-
-      # Upload both ninja files so we can inspect compile-rule wiring offline.
-      - name: Upload ninja files for offline diagnosis
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-ninja-win
-          path: |
-            package/win32/build/build.ninja
-            package/win32/build/CMakeFiles/rules.ninja
-          if-no-files-found: ignore
-          retention-days: 3
 
       - name: Save rstudio-tools cache
         if: steps.install-deps.conclusion == 'success'
