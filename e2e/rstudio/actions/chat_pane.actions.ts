@@ -76,7 +76,7 @@ export class ChatPaneActions {
    * blocker) and fall back to any visible match.
    */
   async waitForChatReady(timeout: number = 30000): Promise<void> {
-    const deadline = Date.now() + timeout;
+    let deadline = Date.now() + timeout;
     const overlayTrustBtn = this.chatPane.frame.locator(
       "[role='dialog'] button:has-text('Trust this workspace')"
     );
@@ -97,6 +97,12 @@ export class ChatPaneActions {
             console.log('waitForChatReady: driving device-code sign-in with env credentials');
             signInAttempted = true;
             await this.signInWith(account);
+            // signInWith can take 30-50s (waiting for the IDE's device-code
+            // round-trip, then driving the posit.cloud form). After it
+            // returns, give a fresh budget for the IDE-polling phase that
+            // converts "authorized on posit.cloud" into "chat composer is
+            // truly clickable" -- that polling needs its own time.
+            deadline = Math.max(deadline, Date.now() + 30_000);
             await sleep(500);
             continue;
           }
@@ -167,6 +173,22 @@ export class ChatPaneActions {
    * redesigns that flow, this method needs to be updated.
    */
   async signInWith(account: PositAiAccount): Promise<void> {
+    // The chat pane initially shows "Sign in with Posit AI to get started"
+    // with a Sign-In button. Clicking it triggers the IDE's device-code
+    // request to posit.cloud; the pane then transitions to a "Complete
+    // Authentication in Browser" view that renders the user_code and an
+    // "Open Browser to Authorize" button. The code does not exist before
+    // this click.
+    console.log('signInWith: clicking Sign-In to request a device code');
+    await this.chatPane.signInBtn.first().click();
+
+    // Wait for the device-code screen. The "Open Browser to Authorize" button
+    // is the clear signal that the user_code is rendered. Use a generous
+    // timeout -- the IDE has to round-trip with posit.cloud's backend.
+    await this.chatPane.frame
+      .getByRole('button', { name: /Open Browser to Authorize/i })
+      .waitFor({ state: 'visible', timeout: 30_000 });
+
     const userCode = await this.extractVerificationCode();
     const url = buildPositVerificationUrl(userCode);
     console.log(`signInWith: opening posit.cloud at user_code=${userCode}`);
