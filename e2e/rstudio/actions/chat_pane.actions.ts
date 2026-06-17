@@ -86,10 +86,34 @@ export class ChatPaneActions {
     while (Date.now() < deadline) {
       iter += 1;
 
-      // Check Sign-In first: the pre-sign-in welcome state renders the
-      // tiptap composer with contenteditable=true even though a z-40 overlay
-      // intercepts pointer events. isChatInputReady would otherwise return
-      // true here and short-circuit the loop before sign-in could happen.
+      // Dismiss the Trust Workspace modal first. It renders as a real
+      // aria-modal="true" dialog overlaying the chat iframe; while it's up,
+      // every element behind it (including signInBtn) reports `isVisible`
+      // but is unclickable -- clicks get intercepted by the modal's "Open
+      // in restricted mode" button. Must clear the modal before anything
+      // else can be acted on.
+      if (await overlayTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking trust overlay button');
+        await overlayTrustBtn.click({ timeout: 5000 });
+        // Let the overlay tear down before re-polling
+        await sleep(500);
+        continue;
+      }
+
+      const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
+      if (await anyTrustBtn.isVisible().catch(() => false)) {
+        console.log('waitForChatReady: clicking fallback trust button');
+        await anyTrustBtn.click({ timeout: 5000 });
+        await sleep(500);
+        continue;
+      }
+
+      // With the trust modal cleared, Sign-In becomes actually clickable.
+      // Check it before isChatInputReady because the pre-sign-in welcome
+      // state renders the tiptap composer with contenteditable=true even
+      // though the welcome panel intercepts pointer events; isChatInputReady
+      // would otherwise return true here and short-circuit the loop before
+      // sign-in could happen.
       if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
         if (!signInAttempted) {
           const account = getPositAiAccount();
@@ -109,22 +133,6 @@ export class ChatPaneActions {
         }
         // No creds (or sign-in already tried and didn't clear the button).
         // Let the deadline expire and the final error message handle it.
-        await sleep(500);
-        continue;
-      }
-
-      if (await overlayTrustBtn.isVisible().catch(() => false)) {
-        console.log('waitForChatReady: clicking trust overlay button');
-        await overlayTrustBtn.click({ timeout: 5000 });
-        // Let the overlay tear down before re-polling
-        await sleep(500);
-        continue;
-      }
-
-      const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
-      if (await anyTrustBtn.isVisible().catch(() => false)) {
-        console.log('waitForChatReady: clicking fallback trust button');
-        await anyTrustBtn.click({ timeout: 5000 });
         await sleep(500);
         continue;
       }
