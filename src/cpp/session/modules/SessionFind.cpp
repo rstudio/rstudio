@@ -847,9 +847,12 @@ private:
                {
                   pProgress->addUnits(1);
 
-                  // if the replacement leaves the line unchanged, the matched
-                  // text and the replacement are identical: treat it as a no-op
+                  // snapshot the line before replacement so we can detect
+                  // whether the replace actually changed anything
                   std::string beforeReplace = pLineInfo->encodedContents;
+
+                  // Note: utf8Distance errors are not checked here; they are
+                  // pre-existing and do not affect the no-op detection logic.
 
                   if (findResults().regex())
                      error = replacer.replaceRegex(eMatchOn, eMatchOff, searchPattern,
@@ -858,6 +861,8 @@ private:
                      replacer.replaceLiteral(eMatchOn, eMatchOff, replacePattern,
                            &pLineInfo->encodedContents, &replaceMatchOff);
 
+                  // when the replacement leaves the line unchanged, the matched
+                  // text and the replacement are identical: treat it as a no-op
                   if (!error)
                      isNoOp = (pLineInfo->encodedContents == beforeReplace);
 
@@ -866,6 +871,9 @@ private:
                   error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
                                                      pLineInfo->decodedContents.end(),
                                                      &utf8Length);
+                  if (error)
+                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                                            pReplaceMatchOff, &lineSuccess);
                   pLineInfo->decodedContents =
                      replacer.decode(pLineInfo->encodedContents);
 
@@ -873,6 +881,9 @@ private:
                   error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
                                                      pLineInfo->decodedContents.end(),
                                                      &newUtf8Length);
+                  if (error)
+                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                                            pReplaceMatchOff, &lineSuccess);
                   replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
                }
 
@@ -1925,7 +1936,7 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
          if (pIsNoOp != nullptr)
             *pIsNoOp = true;
          *pReplaceMatchOff = dMatchOff;
-         return error;
+         return Success(); // no-op: replacement is identical to matched text
       }
 
       replaceString.insert(0, originalValue);
@@ -1937,6 +1948,8 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
       error = string_utils::utf8Distance(pDecodedLine->begin(),
                                          pDecodedLine->end(),
                                          &originalDecodedSize);
+      if (error)
+         logError(error, "Failed to compute UTF-8 distance in replace preview");
 
       *pDecodedLine = decode(*pEncodedLine);
 
@@ -1944,6 +1957,8 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
       error = string_utils::utf8Distance(pDecodedLine->begin(),
                                          pDecodedLine->end(),
                                          &newDecodedSize);
+      if (error)
+         logError(error, "Failed to compute UTF-8 distance in replace preview");
 
       *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
    }
@@ -2060,6 +2075,20 @@ std::string Replacer::decode(const std::string& encoded, const std::string& enco
    return decoded;
 }
 
+#ifdef SESSION_FIND_TESTS
+// Test-only: configure the global FindInFilesState so that
+// Replacer::replacePreview can be exercised in unit tests.
+void setFindResultsForTest(const std::string& searchPattern,
+                           const std::string& replacePattern,
+                           bool regex,
+                           bool ignoreCase)
+{
+   findResults().clear();
+   findResults().onFindBegin("test-handle", searchPattern, "",
+                              regex, ignoreCase, false);
+   findResults().onReplaceBegin("test-handle", true, replacePattern, nullptr);
+}
+#endif
 
 } // namespace find
 } // namespace modules
