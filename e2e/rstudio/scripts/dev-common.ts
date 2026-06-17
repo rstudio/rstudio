@@ -187,14 +187,27 @@ export function checkGwtBuildReady(tag: string): void {
   );
 }
 
+// Grace period between asking Playwright to stop and force-killing it, so a
+// single Ctrl-C reliably ends even a wedged run. Generous because a graceful
+// stop has to quit RStudio (shutdownRStudio waits up to ~8s) before the child
+// exits on its own -- which usually happens well inside this window, tripping
+// child.on('exit') long before the timer fires. Overridable for tuning/tests.
+const STOP_GRACE_MS = Number(process.env.PW_STOP_GRACE_MS) || 30000;
+
 // Spawn `npx playwright test ...` with the supplied args appended and the
 // supplied env merged on top of process.env. Inherits stdio so the user
 // sees the live test output, and propagates the playwright exit code.
 //
-// Logs the Playwright launcher PID up front so a stuck run is easy to
-// abort -- `kill <pid>` on this PID tears down the launcher, the per-test
-// worker, the dev-build Electron process, and the in-tree rsession in
-// one shot.
+// Signal handling: a terminal Ctrl-C, or `kill <pid>` on the launcher PID we
+// log below, must tear down the whole run -- the worker, the dev-build
+// Electron process / in-tree rserver, and their rsession children -- not just
+// this launcher. On POSIX the child is spawned in its own process group so the
+// launcher is the sole signal coordinator: it forwards a graceful SIGINT to
+// the child's group (the only signal Playwright treats as a cancellation),
+// then escalates to SIGKILL if the run doesn't wind down within STOP_GRACE_MS.
+// We never signal RStudio directly -- SIGINT to an rsession merely interrupts
+// R; the actual shutdown is Playwright's worker-fixture teardown, which quits
+// RStudio cleanly (q(save="no") then a SIGTERM-based process-tree kill).
 export function runPlaywright(
   tag: string,
   extraArgs: string[],
@@ -232,17 +245,63 @@ export function runPlaywright(
     : path.resolve(userReportDir);
   const reportEnv = manageReportDir ? { PLAYWRIGHT_HTML_OUTPUT_DIR: reportDir } : {};
 
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const isWindows = process.platform === 'win32';
+  const npx = isWindows ? 'npx.cmd' : 'npx';
   const args = ['playwright', 'test', ...outputArgs, ...extraArgs];
 
   const child = spawn(npx, args, {
     stdio: 'inherit',
     env: { ...process.env, ...reportEnv, ...env },
+    // POSIX: give the child its own process group so a terminal Ctrl-C is
+    // delivered only to this launcher, not also straight to the child group.
+    // The launcher then forwards a single, well-timed signal (see below)
+    // instead of racing the kernel's group delivery. Windows lacks POSIX
+    // process groups, so the child stays in ours there and we signal it
+    // directly.
+    detached: !isWindows,
   });
 
   if (child.pid !== undefined) {
     console.log(`[${tag}] Playwright launcher PID: ${child.pid} (kill this to abort the run)`);
   }
+
+  // Deliver a signal to the child -- to its whole process group on POSIX (so
+  // npx, Playwright, and the test workers all receive it), or directly on
+  // Windows.
+  const signalChild = (signal: NodeJS.Signals): void => {
+    if (child.pid === undefined)
+      return;
+    try {
+      if (!isWindows)
+        process.kill(-child.pid, signal);
+      else
+        child.kill(signal);
+    } catch {
+      // Child / group already gone.
+    }
+  };
+
+  // On the first interrupt, forward a graceful SIGINT and arm a hard-kill
+  // fallback; on a repeat (impatient second Ctrl-C, or the run wedging), kill
+  // immediately. The launcher stays alive throughout so the inherited stdio
+  // and foreground pipeline survive until Playwright finishes tearing down --
+  // child.on('exit') below is what actually ends the launcher.
+  let stopRequested = false;
+  const requestStop = (): void => {
+    if (!stopRequested) {
+      stopRequested = true;
+      signalChild('SIGINT');
+
+      const timer = setTimeout(() => signalChild('SIGKILL'), STOP_GRACE_MS);
+      timer.unref();
+    } else {
+      signalChild('SIGKILL');
+    }
+  };
+
+  process.on('SIGINT', requestStop);
+  process.on('SIGTERM', requestStop);
+  process.on('SIGHUP', requestStop);
 
   // stdio:'inherit' keeps Node's event loop alive until the child exits, so
   // we don't need to await here. Propagate the exit status when the child

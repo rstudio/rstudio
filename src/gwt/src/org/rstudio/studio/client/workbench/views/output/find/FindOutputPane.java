@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -254,7 +255,24 @@ public class FindOutputPane extends WorkbenchPane
       table_.clear();
       matchCount_ = 0;
       context_.updateFileMatches(value);
-      addMatches(context_.getFindResults());
+
+      ArrayList<FindResult> results = context_.getFindResults();
+
+      // for a literal (non-regex) replace preview, omit lines whose every match
+      // is a no-op (the matched text already equals the replacement); when the
+      // replacement is empty we are clearing the preview, so show everything
+      if (!StringUtil.isNullOrEmpty(value))
+      {
+         ArrayList<FindResult> effective = new ArrayList<>();
+         for (FindResult fr : results)
+         {
+            if (fr.hasEffectiveLiteralReplacement())
+               effective.add(fr);
+         }
+         results = effective;
+      }
+
+      addMatches(results);
    }
 
    @Override

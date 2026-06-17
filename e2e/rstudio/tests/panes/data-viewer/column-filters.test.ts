@@ -1,12 +1,14 @@
 // Per-column filter widget tests for the data viewer.
 //
-// The viewer builds one of four typed filter UIs per column based on the
+// The viewer builds one of five typed filter UIs per column based on the
 // backend's col_search_type (DataViewer.js: createNumericFilterUI,
-// createFactorFilterUI, createTextFilterUI, createBooleanFilterUI). The
-// text filter is covered in data_viewer.test.ts; these tests cover the
-// numeric range filter, the factor level filter (including its display
-// restore across column virtualization), the boolean filter, and the
-// inert "All" chip shown for column types with no filter support (Date).
+// createDateFilterUI, createFactorFilterUI, createTextFilterUI,
+// createBooleanFilterUI). The text filter is covered in data_viewer.test.ts;
+// these tests cover the numeric range filter, the date range filter, the
+// factor level filter (including its display restore across column
+// virtualization), the boolean filter, the absence of a widget for
+// unsupported column types (list), and the summary sidebar's filter-icon entry
+// point into the same widgets.
 
 import type { Locator, Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -187,6 +189,59 @@ test.describe('Data Viewer column filters', () => {
     await expect(gridCells('15').first()).toBeVisible();
   });
 
+  // The popup's apply (checkmark) commits the current value. Applying an
+  // untouched popup is a no-op (the box holds the full range, which sets no
+  // filter), distinguishing "opened but unchanged" from a real selection.
+  test('numeric filter popup apply commits a value and is a no-op when untouched', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    const popup = dataViewer.frame.locator('.filterPopup');
+
+    // Apply without changing anything: the full-range box is a no-op.
+    await colFilter.getByText('All').click();
+    await expect(popup).toBeVisible();
+    await popup.locator('.filterPopupApply').click();
+    await expect(popup).toHaveCount(0);
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(colFilter).toHaveClass(/unfiltered/);
+
+    // Type a range and apply: the value commits and the popup closes.
+    await colFilter.getByText('All').click();
+    await expect(popup).toBeVisible();
+    await popup.locator('.numValueBox').fill('5 - 10');
+    await popup.locator('.filterPopupApply').click();
+    await expect(popup).toHaveCount(0);
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+    await expect(colFilter).toContainText('[5, 10]');
+  });
+
+  // Clicking a histogram bar adjusts the brush; that click must not bubble to
+  // the body-level light-dismiss handler and close the popup (only click-away
+  // should dismiss).
+  test('clicking a histogram bar adjusts the filter without dismissing the popup', async ({
+    rstudioPage: page,
+  }) => {
+    await openWithFilterRow(page, 'View(data.frame(x = 1:20))', 20);
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+
+    await colFilter.getByText('All').click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+
+    const bars = popup.locator('.numHist .histBack');
+    const n = await bars.count();
+    await bars.nth(Math.floor(n / 2)).click();
+
+    // The popup stays open and the single-bar selection filtered the grid.
+    await expect(popup).toBeVisible();
+    await expect(dataViewer.gridInfo)
+      .toContainText('filtered from 20', { timeout: TIMEOUTS.fileOpen });
+  });
+
   test('factor filter applies a clicked level and shows it in the filter box', async ({
     rstudioPage: page,
   }) => {
@@ -283,29 +338,111 @@ test.describe('Data Viewer column filters', () => {
     await expect(gridCells('FALSE').first()).toBeVisible();
   });
 
-  // Date columns get no col_search_type from the backend, so the filter row
-  // renders no filter UI for them at all (setFilterUIVisible only builds a
-  // widget for the four supported search types). This pins the intended
-  // behavior so a future date filter updates the test rather than the gap
-  // regressing silently into "filtering looks broken".
-  test('columns without filter support get no filter widget', async ({
-    rstudioPage: page,
-  }) => {
-    // Column 1 is a Date (unsupported); gate the filter row on column 2.
+  // Date / POSIXct columns get a brushable histogram + range filter, mirroring
+  // the numeric widget but operating in formatted date strings (the wire value
+  // is "date|<lo>_<hi>", parsed on the native Date scale server-side).
+  test('date filter applies a typed range and clears', async ({ rstudioPage: page }) => {
     await openWithFilterRow(
       page,
-      'View(data.frame(d = as.Date("2026-01-01") + 1:5, x = 1:5))',
-      5,
+      'View(data.frame(d = as.Date("2026-01-01") + 0:19))',
+      20,
+    );
+
+    const colFilter = dataViewer.frame.locator('th[data-col-idx="1"] .colFilter');
+    await colFilter.getByText('All').click();
+
+    // The date filter reuses the numeric histogram brush (the .numHist class).
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+    await expect(popup.locator('.numHist')).toBeVisible();
+
+    // Type an inclusive date range; same change-commit path as the numeric box.
+    const dateBox = popup.locator('.numValueBox');
+    await dateBox.fill('2026-01-05 - 2026-01-10');
+    await dateBox.dispatchEvent('change');
+
+    // Jan 5..10 inclusive: 6 of 20 rows. The header shows the active range.
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+    await expect(colFilter).toContainText('[2026-01-05, 2026-01-10]');
+    await expect(gridCells('2026-01-15')).toHaveCount(0);
+    await expect(gridCells('2026-01-07').first()).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(popup).toHaveCount(0);
+    await colFilter.locator('.clearFilter').click();
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(gridCells('2026-01-15').first()).toBeVisible();
+  });
+
+  // List columns have no col_search_type, so the filter row builds no widget
+  // for them (setFilterUIVisible only handles the supported search types).
+  test('list columns get no filter widget', async ({ rstudioPage: page }) => {
+    // Column 1 is a list (unsupported); gate the filter row on column 2.
+    await openWithFilterRow(
+      page,
+      'View(data.frame(x = I(list(1, 2, 3)), y = 1:3))',
+      3,
       2,
     );
 
-    // The Date column has no filter chip while its numeric neighbor does.
     await expect(dataViewer.frame.locator('th[data-col-idx="1"] .colFilter'))
       .toHaveCount(0);
 
-    // The numeric column right next to it still filters normally.
     const numFilter = dataViewer.frame.locator('th[data-col-idx="2"] .colFilter');
     await numFilter.getByText('All').click();
     await expect(dataViewer.frame.locator('.filterPopup')).toBeVisible();
+  });
+
+  // The summary sidebar exposes the same typed filter widgets via a per-column
+  // funnel icon: clicking it opens the column's filter popup anchored under the
+  // icon (no header filter row needed), and the icon lights up when active.
+  test('sidebar filter icon opens a column filter and reflects active state', async ({
+    rstudioPage: page,
+  }) => {
+    await consoleActions.executeInConsole('View(data.frame(x = 1:20))');
+    await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
+      .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 20', { timeout: TIMEOUTS.fileOpen });
+
+    // Ensure the summary sidebar is open. It defaults to expanded, so toggling
+    // unconditionally would close it; only click the toggle when collapsed.
+    const panel = dataViewer.frame.locator('#sidebarPanel');
+    await expect(panel).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    if (!(await panel.evaluate((el) => el.classList.contains('expanded')))) {
+      await dataViewer.frame.locator('#sidebarToggle').click();
+    }
+    await expect(panel).toHaveClass(/\bexpanded\b/);
+
+    const entry = dataViewer.frame.locator('.sidebar-col[data-col-idx="1"]');
+    await expect(entry).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    // Click the column's filter icon: its popup opens with the numeric brush.
+    const filterIcon = entry.locator('.sidebar-filter-icon');
+    await filterIcon.click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+    await expect(popup.locator('.numHist')).toBeVisible();
+
+    const numBox = popup.locator('.numValueBox');
+    await numBox.fill('5 - 10');
+    await numBox.dispatchEvent('change');
+
+    // The filter applies and the icon latches into its active state.
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 6 entries (filtered from 20', { timeout: TIMEOUTS.fileOpen });
+    await expect(filterIcon).toHaveClass(/active/);
+    await expect(gridCells('15')).toHaveCount(0);
+    await expect(gridCells('7').first()).toBeVisible();
+
+    // Clear via the popup's "x" -- the sidebar has no header clear chip, so this
+    // is the way to remove the filter. The popup is still open from the apply.
+    await popup.locator('.filterPopupClear').click();
+    await expect(dataViewer.gridInfo).toContainText('of 20 entries');
+    await expect(dataViewer.gridInfo).not.toContainText('filtered from');
+    await expect(popup).toHaveCount(0);
+    await expect(entry.locator('.sidebar-filter-icon')).not.toHaveClass(/active/);
   });
 });
