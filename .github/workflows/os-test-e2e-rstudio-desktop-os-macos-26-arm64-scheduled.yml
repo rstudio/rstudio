@@ -18,4 +18,3 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
