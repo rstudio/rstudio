@@ -32,10 +32,20 @@ export function fail(tag: string, msg: string): never {
 
 // Point the stable HTML_REPORT_LINK symlink at the run's timestamped report
 // dir. Replaces whatever is already there -- an older symlink, or a real
-// directory left by the previous (single-folder) scheme. Best-effort: a
-// failure here (e.g. Windows without symlink privilege) is reported but never
-// fails the run, since the timestamped dir is always printed too.
-export function updateReportSymlink(tag: string, reportDir: string): void {
+// directory left by the previous (single-folder) scheme. Returns true once the
+// link points at reportDir. Best-effort: any failure (e.g. Windows without
+// symlink privilege) is reported and returns false, but never fails the run,
+// since the timestamped dir is always printed too.
+export function updateReportSymlink(tag: string, reportDir: string): boolean {
+  // A Windows junction requires the target to already exist, and a symlink to a
+  // missing dir is useless on any platform. If the run produced no report (e.g.
+  // Playwright errored before the html reporter wrote anything), leave the
+  // existing link alone rather than dangling it or noisily failing.
+  if (!fs.existsSync(reportDir)) {
+    console.log(`[${tag}] note: ${reportDir} not found; leaving playwright-report symlink unchanged`);
+    return false;
+  }
+
   try {
     let existing: fs.Stats | undefined;
     try {
@@ -56,19 +66,24 @@ export function updateReportSymlink(tag: string, reportDir: string): void {
     const isWin = process.platform === 'win32';
     const target = isWin ? reportDir : path.basename(reportDir);
     fs.symlinkSync(target, HTML_REPORT_LINK, isWin ? 'junction' : 'dir');
+    return true;
   } catch (e) {
     console.log(`[${tag}] note: could not update playwright-report symlink (${(e as Error).message})`);
+    return false;
   }
 }
 
 // Print where to find the results after a run. The HTML report is the richest
 // view (per-test steps, traces, screenshots); `npm run test:report` opens it.
 // Printed on every run, pass or fail, since the report is most useful when
-// something failed.
-export function printReportLocation(tag: string, reportDir: string): void {
+// something failed. The `latest ->` line is shown only when the symlink was
+// actually pointed at this run's dir -- otherwise it would advertise a stale
+// target (a caller-supplied report dir, or a run that produced no report).
+export function printReportLocation(tag: string, reportDir: string, symlinked: boolean): void {
   step(tag, 'Test summary (HTML report):');
   console.log(`    ${reportDir}`);
-  console.log(`    latest -> ${HTML_REPORT_LINK}`);
+  if (symlinked)
+    console.log(`    latest -> ${HTML_REPORT_LINK}`);
   console.log('    open with: npm run test:report   (npx playwright show-report)');
 }
 
@@ -233,9 +248,8 @@ export function runPlaywright(
   // we don't need to await here. Propagate the exit status when the child
   // does finish.
   child.on('exit', (code, signal) => {
-    if (manageReportDir)
-      updateReportSymlink(tag, reportDir);
-    printReportLocation(tag, reportDir);
+    const symlinked = manageReportDir && updateReportSymlink(tag, reportDir);
+    printReportLocation(tag, reportDir, symlinked);
     process.exit(signal !== null ? 128 + (signalNumber(signal) ?? 1) : (code ?? 1));
   });
 }
