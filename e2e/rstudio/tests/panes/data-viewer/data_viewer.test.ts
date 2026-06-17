@@ -1742,7 +1742,11 @@ test.describe('Data Viewer', () => {
       const sidebarPin2 = dataViewer.frame
         .locator('.sidebar-col[data-col-idx="2"] .sidebar-pin-icon');
       await sidebarPin2.click();
-      await expect.poll(() => colHeaderClass(dataViewer, 2)).not.toMatch(/\bpinned\b/);
+      // Confirm the unpin via the sidebar pin icon, NOT column 2's header:
+      // once unpinned, column 2 returns to its far-left position, which is
+      // scrolled out of the virtualized column window and has no rendered
+      // <th>, so colHeaderClass(2) would block on a missing element.
+      await expect(sidebarPin2).not.toHaveClass(/\bpinned\b/);
 
       const scrollAfter = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
       expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThan(3);

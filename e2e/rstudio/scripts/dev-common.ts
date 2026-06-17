@@ -208,12 +208,69 @@ const STOP_GRACE_MS = Number(process.env.PW_STOP_GRACE_MS) || 30000;
 // We never signal RStudio directly -- SIGINT to an rsession merely interrupts
 // R; the actual shutdown is Playwright's worker-fixture teardown, which quits
 // RStudio cleanly (q(save="no") then a SIGTERM-based process-tree kill).
+// Parse a human-friendly duration into milliseconds. Accepts a bare number
+// (already ms, matching Playwright's native --timeout), or a value suffixed
+// with ms / s / m. Returns null for anything unparseable so the caller can
+// pass it through untouched and let Playwright surface its own error.
+export function parseDurationMs(value: string): number | null {
+  const m = /^(\d+(?:\.\d+)?)(ms|s|m)?$/.exec(value.trim());
+  if (!m)
+    return null;
+
+  const n = parseFloat(m[1]);
+  switch (m[2]) {
+    case 's': return Math.round(n * 1000);
+    case 'm': return Math.round(n * 60000);
+    // Bare number and explicit "ms" are both already milliseconds.
+    default: return Math.round(n);
+  }
+}
+
+// Playwright's --timeout takes raw milliseconds. Rewrite --timeout=<dur> and
+// --timeout <dur> so callers can also write 30s / 1m / 2000ms. Bare-number and
+// unparseable values pass through unchanged.
+function normalizeTimeoutArgs(tag: string, args: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    let raw: string | null = null;
+    let spaced = false;
+    if (a.startsWith('--timeout=')) {
+      raw = a.slice('--timeout='.length);
+    } else if (a === '--timeout' && i + 1 < args.length) {
+      raw = args[i + 1];
+      spaced = true;
+    }
+
+    if (raw === null) {
+      out.push(a);
+      continue;
+    }
+
+    const ms = parseDurationMs(raw);
+    if (ms === null) {
+      // Leave it for Playwright to reject with its own message.
+      out.push(a);
+      if (spaced) out.push(args[++i]);
+      continue;
+    }
+
+    if (String(ms) !== raw.trim())
+      console.log(`[${tag}] --timeout ${raw} -> ${ms}ms`);
+    out.push(`--timeout=${ms}`);
+    if (spaced) i++;
+  }
+  return out;
+}
+
 export function runPlaywright(
   tag: string,
   extraArgs: string[],
   env: Record<string, string> = {},
 ): void {
   step(tag, 'Running Playwright tests...');
+
+  extraArgs = normalizeTimeoutArgs(tag, extraArgs);
 
   // Give each dev run its own timestamped artifact directory. Playwright wipes
   // the --output dir at the start of every run, so with the default
