@@ -166,14 +166,13 @@ export default async function globalSetup() {
       // CI path: no host state dir, but the workflow loaded an account email
       // + password from 1Password (see the "Load secrets from 1Password" step
       // in .github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml).
-      // The credentials are plumbed and reachable via getPositAiAccount()
-      // from utils/ai-credentials.ts, but the in-IDE sign-in click flow is
-      // not yet wired (chat_pane.actions.ts still throws on a visible Sign-In
-      // button). Keep PW_AI_SEEDED_POSITAI unset so @ai tests continue to
-      // skip cleanly until that follow-up lands -- otherwise they'd unskip
-      // here and fail at waitForChatReady with a misleading error.
+      // waitForChatReady() in chat_pane.actions.ts detects the Sign-In button
+      // on first chat-pane open and drives the device-code OAuth flow against
+      // login.posit.cloud using these credentials, so @ai tests can run
+      // unattended.
+      process.env.PW_AI_SEEDED_POSITAI = '1';
       console.log(
-        '[sandbox] Posit AI: POSIT_AI_EMAIL/POSIT_AI_PASSWORD present but sign-in flow not yet wired; @ai tests will skip',
+        '[sandbox] Posit AI: using POSIT_AI_EMAIL/POSIT_AI_PASSWORD from env; tests will sign in at first chat-pane open',
       );
     } else {
       console.log(

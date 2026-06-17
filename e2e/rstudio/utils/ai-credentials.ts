@@ -48,6 +48,22 @@ export function getPositAiAccount(): PositAiAccount | null {
 }
 
 /**
+ * Build the login.posit.cloud verification URL for a Posit Assistant device
+ * authorization flow. The IDE displays a `XXXX-XXXX` user_code in the chat
+ * pane and (when the user clicks "Open Browser to Authorize") opens this URL
+ * in the system browser. Driving the browser side from Playwright requires
+ * constructing the URL directly.
+ *
+ * Strips whitespace from the input so the visually-spaced form ("N V J S - V
+ * L M N") and the compact form ("NVJS-VLMN") both work.
+ */
+export function buildPositVerificationUrl(userCode: string): string {
+  const compact = userCode.replace(/\s+/g, '').toUpperCase();
+  const redirect = `/oauth/device?user_code=${compact}`;
+  return `https://login.posit.cloud/login?redirect=${encodeURIComponent(redirect)}`;
+}
+
+/**
  * Gate the surrounding describe block on having real credentials seeded for
  * `provider`. Each test inside the describe is marked skipped (with reason)
  * when the matching PW_AI_SEEDED_* env var is unset, which happens when the

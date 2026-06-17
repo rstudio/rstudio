@@ -4,6 +4,11 @@ import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
 import { executeCommand } from '../utils/commands';
+import {
+  buildPositVerificationUrl,
+  getPositAiAccount,
+  type PositAiAccount,
+} from '../utils/ai-credentials';
 
 export class ChatPaneActions {
   readonly page: Page;
@@ -54,14 +59,16 @@ export class ChatPaneActions {
    * is editable. Until that point, sending a message is a guaranteed failure
    * even when chatRoot is visible, so this is the only real "ready" signal.
    *
-   * Polls (a) clicking through any trust dialog that appears late and (b)
-   * failing fast with an actionable message if a Sign-In button shows up,
-   * since seeded credentials are the only auth path the test harness supports.
-   * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
-   * so seeded copies can be invalidated between globalSetup and test
-   * execution; surfacing that as "sign in on the host and re-run" is more
-   * useful than the cryptic "input not editable after 15s" downstream timeout
-   * each test would otherwise hit.
+   * Polls (a) clicking through any trust dialog that appears late, (b)
+   * driving the device-code OAuth flow when a Sign-In button shows up and
+   * POSIT_AI_EMAIL/POSIT_AI_PASSWORD are available, and (c) failing with an
+   * actionable error if Sign-In is still visible without creds available to
+   * drive it. The host's Posit Assistant rotates the refresh token in
+   * ~/.posit/assistant/store, so seeded copies can be invalidated between
+   * globalSetup and test execution; surfacing that as "sign in on the host or
+   * provide POSIT_AI_EMAIL/POSIT_AI_PASSWORD" is more useful than the cryptic
+   * "input not editable after 15s" downstream timeout each test would
+   * otherwise hit.
    *
    * The TrustOverlay component in databot renders as a role="dialog" with the
    * primary button; the RestrictedModeBadge also has a "Trust this workspace"
@@ -75,6 +82,7 @@ export class ChatPaneActions {
     );
 
     let iter = 0;
+    let signInAttempted = false;
     while (Date.now() < deadline) {
       iter += 1;
 
@@ -99,6 +107,23 @@ export class ChatPaneActions {
         continue;
       }
 
+      // If we see Sign-In and have env creds, drive the device-code OAuth
+      // flow once. Subsequent iterations poll for chat-input-ready while the
+      // IDE's polling picks up the freshly issued token.
+      if (
+        !signInAttempted &&
+        await this.chatPane.signInBtn.first().isVisible().catch(() => false)
+      ) {
+        const account = getPositAiAccount();
+        if (account) {
+          console.log('waitForChatReady: driving device-code sign-in with env credentials');
+          signInAttempted = true;
+          await this.signInWith(account);
+          await sleep(500);
+          continue;
+        }
+      }
+
       await sleep(500);
     }
 
@@ -109,8 +134,9 @@ export class ChatPaneActions {
     // polling window.
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
-        'Posit Assistant requires sign-in despite seeded credentials. ' +
-        'Sign in on the host (~/.posit/assistant) and re-run.'
+        'Posit Assistant requires sign-in but no credentials are available. ' +
+        'Either sign in on the host (~/.posit/assistant) or set ' +
+        'POSIT_AI_EMAIL / POSIT_AI_PASSWORD and re-run.'
       );
     }
 
@@ -119,6 +145,69 @@ export class ChatPaneActions {
       `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
       `have stalled.`
     );
+  }
+
+  /**
+   * Drive the Posit device-code OAuth flow at login.posit.cloud using the
+   * supplied account credentials. Extracts the user_code displayed in the
+   * chat pane, opens login.posit.cloud in a separate Playwright page (in the
+   * same browser context), fills email + password, and authorizes the device.
+   * Returns once the post-authorize "Access Authorized" page is visible; the
+   * IDE-side polling will detect the new token within a few seconds and the
+   * caller's waitForChatReady loop will see the composer become editable.
+   *
+   * Selectors are pinned to login.posit.cloud's current UI -- if Posit
+   * redesigns that flow, this method needs to be updated.
+   */
+  async signInWith(account: PositAiAccount): Promise<void> {
+    const userCode = await this.extractVerificationCode();
+    const url = buildPositVerificationUrl(userCode);
+    console.log(`signInWith: opening posit.cloud at user_code=${userCode}`);
+
+    const popup = await this.page.context().newPage();
+    try {
+      await popup.goto(url, { waitUntil: 'domcontentloaded' });
+
+      await popup.getByRole('textbox', { name: 'Email' }).fill(account.email);
+      await popup.getByRole('button', { name: 'Continue' }).click();
+
+      await popup.getByRole('textbox', { name: 'Password' }).fill(account.password);
+      await popup.getByRole('button', { name: 'Log in' }).click();
+
+      // Some posit.cloud sessions show an intermediate "Continue" step
+      // (account selection / consent) before the device-authorize page.
+      // Click it only if it appears.
+      const intermediateContinue = popup.getByRole('button', { name: 'Continue' });
+      if (await intermediateContinue.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await intermediateContinue.click();
+      }
+
+      await popup.getByRole('button', { name: 'Authorize' }).click();
+      await expect(popup.getByRole('heading', { name: 'Access Authorized' }))
+        .toBeVisible({ timeout: 15_000 });
+    } finally {
+      await popup.close();
+    }
+  }
+
+  /**
+   * Read the XXXX-XXXX device-flow user_code displayed in the chat pane.
+   * The chat pane lays out the code with extra spaces between characters
+   * for readability ("N V J S - V L M N"), so we collapse whitespace and
+   * regex-match the canonical 4-4 form.
+   */
+  private async extractVerificationCode(): Promise<string> {
+    const text = (await this.chatPane.chatRoot.textContent()) ?? '';
+    const compact = text.replace(/\s+/g, '');
+    const match = compact.match(/[A-Z0-9]{4}-[A-Z0-9]{4}/i);
+    if (!match) {
+      throw new Error(
+        'signInWith: could not find an XXXX-XXXX user_code in the chat pane. ' +
+        'Either the IDE is on a different sign-in screen, or login.posit.cloud ' +
+        'changed the displayed code format.'
+      );
+    }
+    return match[0].toUpperCase();
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
