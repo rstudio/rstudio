@@ -188,6 +188,24 @@ std::string getInstalledProtocolVersion()
    return version;
 }
 
+core::Error writeProtocolVersionFileIfMissing(const core::FilePath& positAiPath)
+{
+   core::FilePath protoFile =
+      positAiPath.completeChildPath(kProtocolVersionFileName);
+
+   // Newer packages bundle their own protocol.json; preserve it so we record
+   // the protocol the package actually declares rather than RStudio's default.
+   if (protoFile.exists())
+   {
+      DLOG("protocol.json already present; leaving package-provided file intact");
+      return core::Success();
+   }
+
+   core::json::Object protoJson;
+   protoJson["protocol"] = kProtocolVersion;
+   return core::writeStringToFile(protoFile, protoJson.write());
+}
+
 } // namespace installation
 } // namespace chat
 } // namespace modules

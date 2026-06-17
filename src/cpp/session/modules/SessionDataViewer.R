@@ -439,37 +439,69 @@
             hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
-               # For whole-number columns spanning a small range, draw one
-               # bar per integer value (so e.g. a 1-5 Likert column shows 5
-               # distinct bars rather than Sturges' default binning, which
-               # smears the discrete structure). Gaps in the range get a
-               # zero-height bar, which is itself informative.
-               int_breaks <- NULL
-               min_v <- min(hist_vals)
-               max_v <- max(hist_vals)
-               n_distinct <- max_v - min_v + 1
-               if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
-                  int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
+               # hist() can fail outright on some pathological numeric data
+               # (e.g. it errors when its chosen breaks do not span the data
+               # range), so guard the whole computation: a failure here should
+               # just leave the column without a histogram, not abort the
+               # describe call and render the data viewer unusable.
+               # https://github.com/rstudio/rstudio/issues/17990
+               status <- .rs.tryCatch({
+                  # For whole-number columns spanning a small range, draw one
+                  # bar per integer value (so e.g. a 1-5 Likert column shows 5
+                  # distinct bars rather than Sturges' default binning, which
+                  # smears the discrete structure). Gaps in the range get a
+                  # zero-height bar, which is itself informative.
+                  int_breaks <- NULL
+                  min_v <- min(hist_vals)
+                  max_v <- max(hist_vals)
+                  n_distinct <- max_v - min_v + 1
+                  if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
+                     int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
 
-               # create histogram for brushing -- suppress warnings as in rare cases
-               # an otherwise benign integer overflow can occurs; see
-               # https://github.com/rstudio/rstudio/issues/3232
-               h <- if (is.null(int_breaks))
-                  suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
-               else
-                  suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
-               col_breaks <- h$breaks
-               col_counts <- h$counts
+                  # at very large magnitudes (abs value >= ~2^52) the unit
+                  # step and 0.5 offsets fall below the floating-point
+                  # resolution, collapsing the sequence to a single value;
+                  # hist() would then treat it as a scalar bin count -- which
+                  # errors outright ("invalid number of 'breaks'") for large
+                  # negative values, and is meaningless for positive ones. Drop
+                  # the integer breaks in that case and fall back to default
+                  # binning. https://github.com/rstudio/rstudio/issues/17990
+                  if (length(int_breaks) < 2L)
+                     int_breaks <- NULL
 
-               # the actual (finite) data range; the histogram breaks can
-               # extend past it (pretty()-ed for default binning, padded by
-               # 0.5 on each side for integer bins). shown in the column
-               # summary sidebar, where the sparkline has no axis ticks
-               col_min <- min_v
-               col_max <- max_v
+                  # create histogram for brushing -- suppress warnings as in rare cases
+                  # an otherwise benign integer overflow can occurs; see
+                  # https://github.com/rstudio/rstudio/issues/3232
+                  h <- if (is.null(int_breaks))
+                     suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
+                  else
+                     suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
 
-               # record search type
-               col_search_type <- "numeric"
+                  # the actual (finite) data range; the histogram breaks can
+                  # extend past it (pretty()-ed for default binning, padded by
+                  # 0.5 on each side for integer bins). shown in the column
+                  # summary sidebar, where the sparkline has no axis ticks
+                  col_min <- min_v
+                  col_max <- max_v
+
+                  # record search type
+                  col_search_type <- "numeric"
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_min <- NULL
+                  col_max <- NULL
+                  col_search_type <- ""
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
             }
          }
          else if (inherits(x[[idx]], "integer64"))
