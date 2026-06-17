@@ -851,9 +851,6 @@ private:
                   // whether the replace actually changed anything
                   std::string beforeReplace = pLineInfo->encodedContents;
 
-                  // Note: utf8Distance errors are not checked here; they are
-                  // pre-existing and do not affect the no-op detection logic.
-
                   if (findResults().regex())
                      error = replacer.replaceRegex(eMatchOn, eMatchOff, searchPattern,
                         replacePattern, &pLineInfo->encodedContents, &replaceMatchOff);
@@ -872,8 +869,14 @@ private:
                                                      pLineInfo->decodedContents.end(),
                                                      &utf8Length);
                   if (error)
+                  {
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                                             pReplaceMatchOff, &lineSuccess);
+                     pLineInfo->decodedContents =
+                        replacer.decode(pLineInfo->encodedContents);
+                     pos--;
+                     continue;
+                  }
                   pLineInfo->decodedContents =
                      replacer.decode(pLineInfo->encodedContents);
 
@@ -882,8 +885,12 @@ private:
                                                      pLineInfo->decodedContents.end(),
                                                      &newUtf8Length);
                   if (error)
+                  {
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                                             pReplaceMatchOff, &lineSuccess);
+                     pos--;
+                     continue;
+                  }
                   replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
                }
 
