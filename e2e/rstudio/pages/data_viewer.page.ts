@@ -2,12 +2,11 @@ import type { Page, Locator, FrameLocator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 
 export class DataViewerPane extends PageObject {
-  // Toolbar elements (outside iframe)
-  public rightArrow: Locator;
-  public leftArrow: Locator;
-  public rightDoubleArrow: Locator;
-  public leftDoubleArrow: Locator;
-  public columnNumberInput: Locator;
+  // Toolbar elements (outside iframe): the "Go to column" typeahead box
+  // (shown when columns overflow the viewport) and its suggestion entries
+  // (a GWT SuggestBox popup attached to the main document body).
+  public gotoColumnInput: Locator;
+  public gotoColumnSuggestions: Locator;
 
   // Iframe accessor
   public frame: FrameLocator;
@@ -22,12 +21,8 @@ export class DataViewerPane extends PageObject {
   constructor(page: Page) {
     super(page);
 
-    // Navigation arrows and column input are in the RStudio toolbar
-    this.rightArrow = page.locator("[class*='icon-angle-right']");
-    this.leftArrow = page.locator("[class*='icon-angle-left']");
-    this.rightDoubleArrow = page.locator("[class*='icon-angle-double-right']");
-    this.leftDoubleArrow = page.locator("[class*='icon-angle-double-left']");
-    this.columnNumberInput = page.locator('#data-viewer-column-input');
+    this.gotoColumnInput = page.locator('#data-viewer-goto-column input');
+    this.gotoColumnSuggestions = page.locator('.gwt-SuggestBoxPopup .item');
 
     // The data grid renders inside an iframe
     this.frame = page.frameLocator('[title="Data Browser"]');
@@ -45,6 +40,22 @@ export class DataViewerPane extends PageObject {
   /** Get a column header locator by column number (inside iframe). */
   columnHeader(colNumber: number): Locator {
     return this.frame.locator(`[title^='column ${colNumber}:']`);
+  }
+
+  /**
+   * Jump to a column via the toolbar's Go to column box: type a column
+   * index or name and press Enter to accept the top suggestion. Types with
+   * pressSequentially -- the GWT SuggestBox queries its oracle from key
+   * events, which fill() doesn't generate.
+   */
+  async goToColumn(column: number | string): Promise<void> {
+    await this.gotoColumnInput.click();
+    await this.gotoColumnInput.fill('');
+    await this.gotoColumnInput.pressSequentially(String(column));
+    // Wait for a suggestion before committing -- name matches require the
+    // async column-name fetch on first use.
+    await this.gotoColumnSuggestions.first().waitFor({ state: 'visible' });
+    await this.gotoColumnInput.press('Enter');
   }
 
   /** Get all number cells in the grid (inside iframe). */

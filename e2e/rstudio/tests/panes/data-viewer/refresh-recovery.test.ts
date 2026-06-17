@@ -4,9 +4,9 @@
 //
 // 1. A failed bootstrap must not strand the iframe's `bootstrapping` guard
 //    flag: pre-fix it was only cleared at the end of a successful initGrid,
-//    so after one failed refresh every column-pagination click was silently
-//    swallowed (`if (bootstrapping) return;`) -- the toolbar arrows appeared
-//    dead until a full reload.
+//    so after one failed refresh every column-navigation action was silently
+//    swallowed (`if (bootstrapping) return;`) -- the go-to-column box
+//    appeared dead until a full reload.
 // 2. A bootstrap that succeeds after a failure must clear the error overlay:
 //    pre-fix showError() was never undone, so the recovered grid rebuilt
 //    underneath a stuck error mask.
@@ -55,7 +55,7 @@ test.describe('Data Viewer refresh recovery', () => {
     try {
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
 
@@ -88,23 +88,23 @@ test.describe('Data Viewer refresh recovery', () => {
         await page.unroute(GRID_DATA);
       }
 
-      // Column pagination must still respond. The first nav action on a
-      // dead grid retries the bootstrap at the current offset (totalCols is
-      // unknown after the failure, so it can't page yet): the grid comes
-      // back and the error overlay clears. Pre-fix the click was silently
-      // swallowed and the viewer stayed an error mask until a full reload.
-      await dataViewer.rightArrow.click();
+      // Column navigation must still respond. On a dead grid the box has no
+      // matches to offer, so Enter falls back to a direct index jump, which
+      // retries the bootstrap: the grid comes back and the error overlay
+      // clears. Pre-fix the action was silently swallowed and the viewer
+      // stayed an error mask until a full reload. (Type with raw key
+      // presses and skip the suggestion wait -- there are none to wait for.)
+      await dataViewer.gotoColumnInput.click();
+      await dataViewer.gotoColumnInput.pressSequentially('201');
+      await dataViewer.gotoColumnInput.press('Enter');
       await expect(dataViewer.frame.locator('th[data-col-idx="1"]'))
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await expect(dataViewer.columnNumberInput).toHaveValue('1 - 200');
       await expect(dataViewer.frame.locator('#errorWrapper')).toBeHidden();
       await expect(dataViewer.gridInfo)
         .toContainText('of 10 entries', { timeout: TIMEOUTS.fileOpen });
 
-      // With the grid recovered, the next click pages normally.
-      await dataViewer.rightArrow.click();
-      await expect(dataViewer.columnNumberInput)
-        .toHaveValue('201 - 400', { timeout: TIMEOUTS.fileOpen });
+      // With the grid recovered, the next jump lands normally.
+      await dataViewer.goToColumn(201);
       await expect(dataViewer.columnHeader(201))
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
     } finally {

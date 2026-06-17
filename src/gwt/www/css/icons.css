@@ -19,16 +19,3 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-.icon-angle-double-left:before {
-  content: "\f100";
-}
-.icon-angle-double-right:before {
-  content: "\f101";
-}
-.icon-angle-left:before {
-  content: "\f104";
-}
-.icon-angle-right:before {
-  content: "\f105";
-}

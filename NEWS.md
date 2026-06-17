@@ -13,6 +13,12 @@
 - ([#17748](https://github.com/rstudio/rstudio/issues/17748)): When "Use Air for code formatting" is enabled, Air now formats R documents even when no `air.toml` file is present, using the editor's indentation settings (indent style and width). The previous behavior of formatting only in projects containing an `air.toml` can be restored with the new "Only use Air when an air.toml file is found" option (Global Options > Code > Formatting).
 
 ### Fixed
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer now scrolls continuously through the columns of a very wide data frame instead of paging through fixed blocks of columns, so a column's filter, sort, and pin are no longer limited to (or lost when leaving) the currently visible set of columns.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's column-pagination arrows are replaced by a "Go to column" box in the toolbar that jumps to a column by name or number.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's summary sidebar now lists every column of the frame, loading each column's summary as it scrolls into view.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's summary sidebar now reflects the active filter and search, rather than always describing the whole frame.
+- ([#17979](https://github.com/rstudio/rstudio/issues/17979)): Add a "Show Filter UI by default" toggle to the data viewer's Settings menu. When enabled, the filter bar is shown automatically each time a data frame is opened, instead of requiring a click to reveal it.
+- ([#17993](https://github.com/rstudio/rstudio/issues/17993)): Add a "Use overlay scrollbars" toggle to the data viewer's Settings menu. When disabled, the data viewer uses native, always-visible scrollbars instead of the auto-hiding overlay scrollbars.
 
 ### Dependencies
 - Ace 1.43.5

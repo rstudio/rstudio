@@ -10,6 +10,7 @@ import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
+import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
@@ -411,6 +412,19 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
       RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // Dev mode runs `npm run start` (electron-forge), whose webpack dev-server
+      // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
+      // from the per-worker CDP port so concurrent workers -- and a developer's
+      // own manually-launched dev instance on the defaults -- don't collide.
+      // The +1000/+2000 offsets exceed CDP_PORT's spread (9231 + 0..68, a span
+      // of 68 << 1000), so the CDP / dev / logger bands never overlap across
+      // workers; the only residual collision is two workers drawing the same
+      // CDP_PORT, which already conflicts on CDP itself.
+      // forge.config.js reads these; ignored by the installed-binary path.
+      ...(DEV_MODE ? {
+        RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
+        RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
+      } : {}),
       USERPROFILE: sharedUserHome(),
     },
   };
@@ -439,6 +453,11 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
   }
   const rstudioProcess = spawn(spawnCmd, spawnArgs, spawnOptions);
+  // Backstop: if the worker exits without running shutdownRStudio (e.g. an
+  // interrupted run whose graceful teardown was skipped), force-kill the
+  // RStudio process tree on the way out so it isn't orphaned. The dev-mode
+  // tree is detached into its own group and would otherwise survive the run.
+  trackForReaping(rstudioProcess, () => killProcessTree(rstudioProcess));
   const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
