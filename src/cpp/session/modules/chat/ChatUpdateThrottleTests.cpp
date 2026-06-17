@@ -202,6 +202,82 @@ TEST(ChatUpdateThrottle, OutcomeCarriesContext)
    EXPECT_TRUE(o.record.unsupportedProtocol);
 }
 
+// ---- carryPendingUpdateThroughSkip ----
+
+TEST(ChatUpdateThrottle, ThrottledSkipPreservesPendingUpdateWhenInstalledUnchanged)
+{
+   // A prior fetch found an available upgrade (0.5.0 installed -> 0.5.1 offered).
+   // A later throttled check does not re-fetch and the install is unchanged, so it
+   // learns nothing new and must not discard that pending update -- otherwise a
+   // click on "Update" afterwards hits "No update available".
+   PendingUpdate prior;
+   prior.updateAvailable = true;
+   prior.isDowngrade = false;
+   prior.newVersion = "0.5.1";
+   prior.downloadUrl = "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.1.zip";
+   prior.expectedSha256 = "695adb72723a3bb6d69c3e1cafd439f953e68f9ae3e5c0a10265a4314013cbcc";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.0", "0.5.0");
+
+   EXPECT_TRUE(out.updateAvailable);
+   EXPECT_FALSE(out.isDowngrade);
+   EXPECT_EQ(out.newVersion, "0.5.1");
+   EXPECT_EQ(out.downloadUrl, "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.1.zip");
+   EXPECT_EQ(out.expectedSha256, "695adb72723a3bb6d69c3e1cafd439f953e68f9ae3e5c0a10265a4314013cbcc");
+}
+
+TEST(ChatUpdateThrottle, ThrottledSkipPreservesDowngradeClassificationWhenInstalledUnchanged)
+{
+   // A pending downgrade offer must survive a skip with its isDowngrade flag
+   // intact, not just an upgrade -- guards against a future edit that hardcodes
+   // isDowngrade in the carry path instead of returning the prior verbatim.
+   PendingUpdate prior;
+   prior.updateAvailable = true;
+   prior.isDowngrade = true;
+   prior.newVersion = "0.4.8";
+   prior.downloadUrl = "https://cdn.posit.co/posit-ai/assistant-rstudio-0.4.8.zip";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.0", "0.5.0");
+
+   EXPECT_TRUE(out.updateAvailable);
+   EXPECT_TRUE(out.isDowngrade);
+   EXPECT_EQ(out.newVersion, "0.4.8");
+}
+
+TEST(ChatUpdateThrottle, ThrottledSkipClearsWhenNoPriorUpdate)
+{
+   // No pending update from the last check: a skip must not resurrect one from
+   // stale leftover fields.
+   PendingUpdate prior;
+   prior.updateAvailable = false;
+   prior.newVersion = "0.5.1";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.0", "0.5.0");
+
+   EXPECT_FALSE(out.updateAvailable);
+   EXPECT_TRUE(out.newVersion.empty());
+}
+
+TEST(ChatUpdateThrottle, ThrottledSkipClearsWhenInstalledChanged)
+{
+   // The installed version changed out of band since the check that produced the
+   // pending update (a manual or parallel install, or the update was applied).
+   // The skip must clear rather than carry a stale target and downgrade
+   // classification; the next due fetch recomputes against the current install.
+   PendingUpdate prior;
+   prior.updateAvailable = true;
+   prior.isDowngrade = true;
+   prior.newVersion = "0.5.0";
+   prior.downloadUrl = "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.0.zip";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.1", "0.4.0");
+
+   EXPECT_FALSE(out.updateAvailable);
+   EXPECT_FALSE(out.isDowngrade);
+   EXPECT_TRUE(out.newVersion.empty());
+   EXPECT_TRUE(out.downloadUrl.empty());
+}
+
 // ---- bumpRecord ----
 
 TEST(ChatUpdateThrottle, BumpPreservesPriorAndBumpsTime)
