@@ -1,7 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand, setPref } from '@utils/commands';
+import { executeCommand, setPref, stopForegroundShinyApp } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import type { Page } from '@playwright/test';
 
@@ -26,34 +25,57 @@ async function launchShinyAppInWindow(page: Page, consoleActions: ConsolePaneAct
     satellitePage.frameLocator(APP_FRAME).locator(`body:has-text("${APP_MARKER}")`),
   ).toBeVisible({ timeout: 30000 });
 
+  // The marker being visible only proves the first render landed; shiny may
+  // still be mid-binding (input/output reactives running their initial pass)
+  // and an interrupt that arrives during that window is caught by shiny's
+  // error handling instead of stopping runApp(). Wait until shiny is actually
+  // idle -- it sets html.shiny-busy while servicing requests and clears it
+  // once the queue drains. Caller-side `executeCommand(page, 'interruptR')`
+  // then lands cleanly on the first try.
+  await waitForShinyIdle(satellitePage);
+
   return satellitePage;
 }
 
-// Interrupting a freshly-launched shiny app is racy: a SIGINT that lands
-// while shiny is servicing a request/callback is caught by shiny's error
-// handling, which bounces the websocket (so the disconnected client still
-// closes the window) without stopping runApp() -- leaving R busy forever and
-// starving every later console interaction. Once the app is idle a retried
-// interrupt always lands, so nudge until the console frees up.
+async function waitForShinyIdle(satellitePage: Page) {
+  const html = satellitePage.frameLocator(APP_FRAME).locator('html');
+  // html.shiny-busy is the canonical idle signal: shiny adds the class while
+  // servicing a request/render and removes it once the queue drains. Initial
+  // binding flips it on/off as widgets register, so a single "not busy"
+  // sample can land in the gap between two render passes -- require N
+  // consecutive clear samples before declaring shiny stably idle. This is a
+  // measurable-condition poll, not a fixed dwell.
+  let stableClearSamples = 0;
+  await expect
+    .poll(
+      async () => {
+        const busy = await html.evaluate((el) =>
+          el.classList.contains('shiny-busy'),
+        );
+        stableClearSamples = busy ? 0 : stableClearSamples + 1;
+        return stableClearSamples;
+      },
+      { timeout: 15000, intervals: [100] },
+    )
+    .toBeGreaterThanOrEqual(5);
+}
+
+// Defense in depth after the launcher waits for shiny idle. If a previous
+// test left R busy (e.g. interrupt landed mid-callback) the interrupt button
+// stays visible -- send one nudge and bail. Re-spamming interruptR every 2s
+// makes the IDE stack "Terminate R" confirmation dialogs (one per request
+// while R is unresponsive), which is what the historical 30s-toPass loop
+// produced when it ran past the third interrupt.
 async function ensureConsoleIdle(page: Page) {
   const interruptButton = page.locator("[id^='rstudio_tb_interruptr']");
-
-  // normal path: the app stopped and the console frees up on its own
   try {
     await expect(interruptButton).toBeHidden({ timeout: 3000 });
     return;
   } catch {
-    // still busy; fall through and nudge
+    // still busy; fall through and try one more interrupt
   }
-
-  // keep the nudges slow: the client counts interrupt requests while busy
-  // and escalates to a blocking "Terminate R" dialog on the third one
-  await expect(async () => {
-    if (await interruptButton.isVisible()) {
-      await executeCommand(page, 'interruptR');
-      throw new Error('console still busy; interrupt requested again');
-    }
-  }).toPass({ timeout: 30000, intervals: [2000] });
+  await executeCommand(page, 'interruptR');
+  await expect(interruptButton).toBeHidden({ timeout: 10000 });
 }
 
 test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
@@ -81,35 +103,48 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
 
   test.afterAll(async ({ rstudioPage: page }) => {
     // if a test failed mid-app, R may still be busy serving it; free the
-    // console before driving it
-    await ensureConsoleIdle(page);
-
-    const consoleActions = new ConsolePaneActions(page);
-    await consoleActions.executeInConsole(`unlink("${APP_DIR}", recursive = TRUE)`, {
-      wait: true,
-    });
+    // console before driving it. Wrap in try/finally so a still-busy console
+    // can't leak the temp app dir into the next worker -- the unlink is the
+    // important side effect here, not the idle assertion.
+    try {
+      await ensureConsoleIdle(page);
+    } finally {
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions
+        .executeInConsole(`unlink("${APP_DIR}", recursive = TRUE)`, { wait: true })
+        .catch((err) => {
+          console.warn(
+            `[shiny-app-window-close] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
+          );
+        });
+    }
   });
 
   test('window closes when the app is stopped', async ({ rstudioPage: page }) => {
     test.setTimeout(120000);
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'R console does not free reliably after shiny interrupt on Windows CI; ensureConsoleIdle times out leaving R stuck for subsequent tests');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
-    // stopping the app disconnects the satellite, which should close itself
+    // stopping the app disconnects the satellite, which should close itself.
+    // Use the automation bridge (shiny::stopApp via stop_shiny_app RPC)
+    // instead of the interrupt button: interrupt sends CTRL_BREAK_EVENT on
+    // Windows and R's R_interrupts_pending flag is only polled at certain
+    // points inside runApp's event loop, so the signal can be swallowed --
+    // the historical Windows fixme on this test was the symptom. The RPC
+    // goes through shiny's normal shutdown on every platform and returns
+    // once R has exited runApp.
     const closePromise = satellitePage.waitForEvent('close', { timeout: 15000 });
-    await executeCommand(page, 'interruptR');
+    await stopForegroundShinyApp(page);
     await closePromise;
 
-    // the window closing does not guarantee the app stopped (see
-    // ensureConsoleIdle); make sure R is back at the prompt so the next
-    // test's runApp doesn't sit queued behind a still-running app
-    await ensureConsoleIdle(page);
+    // closePromise resolving means the satellite closed, but the rsession
+    // RPC also waits for R to exit runApp -- so the interrupt button (R's
+    // busy indicator) should already be hidden. Sanity-check it.
+    await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeHidden({ timeout: 5000 });
   });
 
   test('window closes while the app is running', async ({ rstudioPage: page }) => {
     test.setTimeout(120000);
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'Skipped on Windows CI: test 1 leaves R stuck, making subsequent runApp calls queue behind a still-running app');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
@@ -125,7 +160,6 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     rstudioPage: page,
   }) => {
     test.setTimeout(120000);
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'Skipped on Windows CI: test 1 leaves R stuck, making subsequent runApp calls queue behind a still-running app');
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 

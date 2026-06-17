@@ -184,6 +184,17 @@ type ErrorsBridge = {
   simulate(message: string): void;
 };
 
+type ShinyBridge = {
+  /**
+   * Stop the running foreground shiny app via shiny::stopApp() on rsession.
+   * Resolves once the RPC has landed and R has exited runApp. Tests use this
+   * instead of driving the interrupt button: interrupt depends on a signal
+   * landing inside runApp's event loop, which is unreliable on Windows where
+   * the OS-level signal mechanism differs from Unix.
+   */
+  stopForegroundApp(): Promise<void>;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
@@ -193,6 +204,8 @@ type RStudioBridge = {
   dialogs: DialogsBridge;
   layout: LayoutBridge;
   errors: ErrorsBridge;
+  /** Shiny-app automation surface. */
+  shiny?: ShinyBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -588,6 +601,27 @@ export async function dismissAllModals(page: Page): Promise<void> {
       if (!r)
         throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
       r.dialogs.dismissAll();
+    });
+  });
+}
+
+/**
+ * Stop the running foreground shiny app via shiny::stopApp() on the rsession
+ * side. Cleaner than driving the interrupt button: interrupt relies on R's
+ * R_interrupts_pending flag being checked inside runApp's event loop, which
+ * is unreliable on Windows where the OS uses CTRL_BREAK_EVENT rather than
+ * SIGINT. The RPC goes through shiny's own shutdown path on every platform.
+ * Resolves once R has returned from runApp.
+ */
+export async function stopForegroundShinyApp(page: Page): Promise<void> {
+  await withBridgeLog('stopForegroundShinyApp', '', async () => {
+    await page.evaluate(() => {
+      const stop = window.rstudio?.shiny?.stopForegroundApp;
+      if (!stop)
+        throw new Error(
+          'window.rstudio.shiny.stopForegroundApp missing; launch RStudio with --automation-agent',
+        );
+      return stop();
     });
   });
 }
