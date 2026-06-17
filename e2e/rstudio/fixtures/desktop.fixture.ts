@@ -10,6 +10,7 @@ import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
+import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
@@ -452,6 +453,11 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
   }
   const rstudioProcess = spawn(spawnCmd, spawnArgs, spawnOptions);
+  // Backstop: if the worker exits without running shutdownRStudio (e.g. an
+  // interrupted run whose graceful teardown was skipped), force-kill the
+  // RStudio process tree on the way out so it isn't orphaned. The dev-mode
+  // tree is detached into its own group and would otherwise survive the run.
+  trackForReaping(rstudioProcess, () => killProcessTree(rstudioProcess));
   const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
