@@ -13,6 +13,7 @@
 - ([#17748](https://github.com/rstudio/rstudio/issues/17748)): When "Use Air for code formatting" is enabled, Air now formats R documents even when no `air.toml` file is present, using the editor's indentation settings (indent style and width). The previous behavior of formatting only in projects containing an `air.toml` can be restored with the new "Only use Air when an air.toml file is found" option (Global Options > Code > Formatting).
 
 ### Fixed
+- ([#18003](https://github.com/rstudio/rstudio/issues/18003)): Fixed an issue where reformat-on-save with Air configured as an external formatter ignored the project's air.toml configuration.
 - ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer now scrolls continuously through the columns of a very wide data frame instead of paging through fixed blocks of columns, so a column's filter, sort, and pin are no longer limited to (or lost when leaving) the currently visible set of columns.
 - ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's column-pagination arrows are replaced by a "Go to column" box in the toolbar that jumps to a column by name or number.
 - ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's summary sidebar now lists every column of the frame, loading each column's summary as it scrolls into view.

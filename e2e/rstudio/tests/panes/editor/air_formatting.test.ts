@@ -32,6 +32,8 @@
  *   11. checked + require-toml + no config + save             → code unchanged
  *   12. checked + no config + editor indent width 4 + save    → Air honors
  *       the synthesized indent-width
+ *   13. external "air format" + air.toml + save               → Air honors the
+ *       project air.toml (#18003)
  *
  * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
  * default settings (case 6) is exercised via the save path, where the
@@ -181,6 +183,24 @@ async function resetAirPrefs(consoleActions: ConsolePaneActions): Promise<void> 
   await setPref(consoleActions.page, 'use_air_formatter', false);
   await setPref(consoleActions.page, 'air_formatter_require_toml', false);
   await setPref(consoleActions.page, 'reformat_on_save', false);
+  await setPref(consoleActions.page, 'code_formatter_external_command', '');
+}
+
+/**
+ * Resolve the path to the Air binary, mirroring the reformat path's own lookup
+ * (.rs.air.ensureAvailable). The marker is split across two string literals so
+ * the echoed command line can't false-match -- only the assembled output line
+ * contains "AIR_PATH=". Returns null if the path couldn't be read.
+ */
+async function readAirPath(consoleActions: ConsolePaneActions): Promise<string | null> {
+  await consoleActions.clearConsole();
+  await consoleActions.executeInConsole(
+    'cat(paste0("AIR", "_PATH=", .rs.air.ensureAvailable()), "\\n")',
+    { wait: true },
+  );
+  const output = await consoleActions.consolePane.consoleOutput.innerText();
+  const match = output.match(/AIR_PATH=([^\n]+)/);
+  return match ? match[1].trim() : null;
 }
 
 /**
@@ -617,6 +637,32 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     const content = await sourceActions.getEditorContent();
     expect(content).toContain('f <- function() {');
     expect(content).toContain('\n    1 + 2\n'); // 4-space indent from editor pref
+  });
+
+  // --- External "air format" command respects project air.toml (#18003) ---
+
+  test('13: external "air format" command, air.toml present, save respects air.toml', async () => {
+    // The configuration the Air documentation recommends for format-on-save:
+    // Code formatter = External, Reformat command = "air format". RStudio
+    // formats a copy of the document in a temporary directory, and Air resolves
+    // its configuration relative to the file being formatted -- so the project
+    // air.toml must be copied next to that temp file, or Air falls back to its
+    // 2-space default (#18003). The suite air.toml uses a 12-space indent,
+    // which is neither Air's default (2) nor the project pref (4), so a 12-space
+    // indent proves the project air.toml was honored.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+
+    const airPath = await readAirPath(consoleActions);
+    expect(airPath).not.toBeNull();
+    await setPref(page, 'code_formatter', 'external');
+    await setPref(page, 'code_formatter_external_command', `"${airPath}" format`);
+    await setPref(page, 'reformat_on_save', true);
+
+    await createAirConfig(consoleActions);
+    await openTestFile(consoleActions, sourceActions);
+    await saveFile(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirFormatted(content);
   });
 
 });
