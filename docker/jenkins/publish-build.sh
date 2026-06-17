@@ -216,6 +216,7 @@ payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$ba
 echo "Sending to Github: $payload"
 httpCode=$(curl \
    -X PUT \
+   -w %{http_code} \
    -o $curlOutFname \
    -H "Accept: application/vnd.github.v3+json" \
    -H "Authorization: token $pat" \
@@ -243,6 +244,7 @@ if [[ $httpCode -eq 422 ]]; then
    
    httpCode=$(curl \
       -X PUT \
+      -w %{http_code} \
       -o $curlOutFname \
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
@@ -267,6 +269,7 @@ if [[ $httpCode -eq 409 ]]; then
 
        httpCode=$(curl \
         -X PUT \
+        -w %{http_code} \
         -o $curlOutFname \
         -H "Accept: application/vnd.github.v3+json" \
         -H "Authorization: token $pat" \
