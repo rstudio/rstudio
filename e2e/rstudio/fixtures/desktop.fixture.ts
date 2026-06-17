@@ -84,7 +84,19 @@ export const RSTUDIO_PATH = process.platform === 'win32'
   : process.platform === 'darwin'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
-export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
+// Deterministic per-worker CDP port: each parallel worker gets its own fixed
+// port (base + parallel index) so concurrent workers never collide. A random
+// port would, with a handful of workers, occasionally have two workers draw the
+// same value -- and the per-launch `lsof :PORT | kill` cleanup would then kill
+// another worker's RStudio. The dev/logger ports derive from this (+1000/+2000),
+// so a small index keeps all three bands disjoint. PW_CDP_PORT overrides for
+// single-instance debugging.
+const CDP_PORT_BASE = 9231;
+function defaultCdpPort(): number {
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  return CDP_PORT_BASE + idx;
+}
+export const CDP_PORT = Number(process.env.PW_CDP_PORT) || defaultCdpPort();
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
 
 // PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
@@ -312,9 +324,10 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
 }
 
 async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
-  // Clean up any existing RStudio on our specific CDP port. The port is
-  // random per worker (9231-9299), so a collision is rare -- only happens
-  // when an orphaned process from a prior interrupted run is still bound.
+  // Clean up any existing RStudio on our specific CDP port. The port is fixed
+  // per worker (base + parallel index), so this only ever reclaims an orphaned
+  // process from a prior interrupted run on this worker's own port -- never a
+  // sibling worker's live instance.
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
@@ -440,10 +453,9 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
       // from the per-worker CDP port so concurrent workers -- and a developer's
       // own manually-launched dev instance on the defaults -- don't collide.
-      // The +1000/+2000 offsets exceed CDP_PORT's spread (9231 + 0..68, a span
-      // of 68 << 1000), so the CDP / dev / logger bands never overlap across
-      // workers; the only residual collision is two workers drawing the same
-      // CDP_PORT, which already conflicts on CDP itself.
+      // CDP ports are now fixed per worker (base + parallel index), so with a
+      // realistic worker count the CDP / dev (+1000) / logger (+2000) bands stay
+      // disjoint and no two workers share a port.
       // forge.config.js reads these; ignored by the installed-binary path.
       ...(DEV_MODE ? {
         RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
