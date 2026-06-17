@@ -3,6 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
+import { ConsolePaneActions } from '../actions/console_pane.actions';
+import { AssistantOptionsActions } from '../actions/assistant_options.actions';
+import { ChatPaneActions } from '../actions/chat_pane.actions';
+import { CHAT_PROVIDERS } from '../utils/constants';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -237,6 +241,40 @@ export default async function globalSetup() {
     const t0 = Date.now();
     try {
       const session = await launchRStudio();
+
+      // If we seeded the Posit AI env path (no host state dir, but
+      // POSIT_AI_EMAIL/POSIT_AI_PASSWORD set), drive the device-code OAuth
+      // flow once during warmup so the token lands in the shared sandbox
+      // user-home/.posit/assistant/ before any spec runs. Per-spec IDE
+      // relaunches inherit that user-home, so specs that never open the
+      // chat pane (e.g. tests/panes/editor/code_suggestions.test.ts) still
+      // get a fully authenticated Posit AI for code completions.
+      const seededViaEnv =
+        process.env.PW_AI_SEEDED_POSITAI === '1' &&
+        !!process.env.POSIT_AI_EMAIL &&
+        !!process.env.POSIT_AI_PASSWORD;
+      if (seededViaEnv) {
+        console.log('[sandbox] warmup: driving Posit AI device-code OAuth');
+        try {
+          const consoleActions = new ConsolePaneActions(session.page);
+          const assistantActions = new AssistantOptionsActions(session.page, consoleActions);
+          const chatActions = new ChatPaneActions(session.page, consoleActions);
+          await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+          await chatActions.openChatPane();
+          await chatActions.dismissSetupPrompts();
+          console.log('[sandbox] warmup: Posit AI signed in; tokens seeded into user-home');
+        } catch (err) {
+          // OAuth failure shouldn't break the whole run -- mark the env path
+          // as not seeded so @ai tests skip cleanly rather than every spec
+          // failing the same way at first chat-pane open.
+          delete process.env.PW_AI_SEEDED_POSITAI;
+          console.warn(
+            `[sandbox] warmup OAuth sign-in failed: ${(err as Error).message}. ` +
+            `Clearing PW_AI_SEEDED_POSITAI so @ai tests skip instead of failing.`,
+          );
+        }
+      }
+
       await shutdownRStudio(session);
       console.log(`[sandbox] warmup launch complete in ${Date.now() - t0}ms`);
     } catch (err) {

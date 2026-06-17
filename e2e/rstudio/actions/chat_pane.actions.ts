@@ -86,9 +86,25 @@ export class ChatPaneActions {
     while (Date.now() < deadline) {
       iter += 1;
 
-      if (await this.chatPane.isChatInputReady()) {
-        if (iter > 1) console.log(`waitForChatReady: input editable after ${iter} iterations`);
-        return;
+      // Check Sign-In first: the pre-sign-in welcome state renders the
+      // tiptap composer with contenteditable=true even though a z-40 overlay
+      // intercepts pointer events. isChatInputReady would otherwise return
+      // true here and short-circuit the loop before sign-in could happen.
+      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+        if (!signInAttempted) {
+          const account = getPositAiAccount();
+          if (account) {
+            console.log('waitForChatReady: driving device-code sign-in with env credentials');
+            signInAttempted = true;
+            await this.signInWith(account);
+            await sleep(500);
+            continue;
+          }
+        }
+        // No creds (or sign-in already tried and didn't clear the button).
+        // Let the deadline expire and the final error message handle it.
+        await sleep(500);
+        continue;
       }
 
       if (await overlayTrustBtn.isVisible().catch(() => false)) {
@@ -107,21 +123,9 @@ export class ChatPaneActions {
         continue;
       }
 
-      // If we see Sign-In and have env creds, drive the device-code OAuth
-      // flow once. Subsequent iterations poll for chat-input-ready while the
-      // IDE's polling picks up the freshly issued token.
-      if (
-        !signInAttempted &&
-        await this.chatPane.signInBtn.first().isVisible().catch(() => false)
-      ) {
-        const account = getPositAiAccount();
-        if (account) {
-          console.log('waitForChatReady: driving device-code sign-in with env credentials');
-          signInAttempted = true;
-          await this.signInWith(account);
-          await sleep(500);
-          continue;
-        }
+      if (await this.chatPane.isChatInputReady()) {
+        if (iter > 1) console.log(`waitForChatReady: input editable after ${iter} iterations`);
+        return;
       }
 
       await sleep(500);
