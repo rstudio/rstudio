@@ -116,8 +116,16 @@ PW_RSTUDIO_EDITION=pro \
 After a test run, open the HTML report with:
 
 ```bash
-npx playwright show-report
+npx playwright show-report   # or: npm run test:report
 ```
+
+Each run (via the `npm run test:*` scripts) writes its HTML report to a
+timestamped folder, `playwright-report-<timestamp>/`, so re-running tests never
+clobbers an earlier report. `playwright-report` is a symlink kept pointing at
+the most recent run, which is what `show-report` opens by default. The runners
+print the full path to both on exit. All of these are gitignored; prune old
+ones with `rm -rf playwright-report-*` (and `rm -rf test-results/*` for traces
+and screenshots).
 
 ### Profiling a slow test
 
