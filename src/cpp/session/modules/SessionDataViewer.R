@@ -595,31 +595,51 @@
             epoch <- as.numeric(col_obj[is.finite(col_obj)])
             if (length(epoch) > 1)
             {
-               h <- suppressWarnings(graphics::hist(epoch, plot = FALSE))
-               col_breaks <- h$breaks
-               col_counts <- h$counts
-               col_search_type <- "date"
+               # hist() and format() can fail on pathological date data,
+               # just like the numeric branch. Guard the whole computation
+               # so a failure leaves the column without a histogram rather
+               # than aborting the describe call.
+               status <- .rs.tryCatch({
+                  h <- suppressWarnings(graphics::hist(epoch, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
+                  col_search_type <- "date"
 
-               # Format the breaks and the true data range in one pass, using
-               # the column's own class/timezone so the labels match how the
-               # cells render. col_min/col_max are left NULL (the numeric
-               # footer path keys off their being numbers); the date footer
-               # uses col_min_label/col_max_label instead.
-               vals <- c(min(epoch), max(epoch), col_breaks)
-               labels <- if (inherits(col_obj, "Date"))
-                  # as.numeric(Date) is whole days since 1970-01-01; days carry
-                  # no timezone, so the origin idiom is unambiguous here.
-                  format(as.Date(vals, origin = "1970-01-01"))
-               else
-                  # as.numeric(POSIXct) is seconds since the 1970 UTC epoch.
-                  # .POSIXct() builds directly from those seconds (no origin
-                  # string to be misparsed in local time), tagging the given
-                  # tzone for display.
-                  format(.POSIXct(vals, tz = if (nzchar(col_tz)) col_tz else ""))
+                  # Format the breaks and the true data range in one pass, using
+                  # the column's own class/timezone so the labels match how the
+                  # cells render. col_min/col_max are left NULL (the numeric
+                  # footer path keys off their being numbers); the date footer
+                  # uses col_min_label/col_max_label instead.
+                  vals <- c(min(epoch), max(epoch), col_breaks)
+                  labels <- if (inherits(col_obj, "Date"))
+                     # as.numeric(Date) is whole days since 1970-01-01; days carry
+                     # no timezone, so the origin idiom is unambiguous here.
+                     format(as.Date(vals, origin = "1970-01-01"))
+                  else
+                     # as.numeric(POSIXct) is seconds since the 1970 UTC epoch.
+                     # .POSIXct() builds directly from those seconds (no origin
+                     # string to be misparsed in local time), tagging the given
+                     # tzone for display.
+                     format(.POSIXct(vals, tz = if (nzchar(col_tz)) col_tz else ""))
 
-               col_min_label <- labels[[1]]
-               col_max_label <- labels[[2]]
-               col_break_labels <- labels[-(1:2)]
+                  col_min_label <- labels[[1]]
+                  col_max_label <- labels[[2]]
+                  col_break_labels <- labels[-(1:2)]
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_search_type <- ""
+                  col_min_label <- NULL
+                  col_max_label <- NULL
+                  col_break_labels <- c()
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
             }
          }
          else if (inherits(x[[idx]], "integer64"))

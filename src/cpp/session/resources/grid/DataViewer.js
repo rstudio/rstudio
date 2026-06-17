@@ -698,6 +698,18 @@ var filterDescriptors = {};
 // entries are built into the virtual window. Reset per sidebar rebuild.
 var sidebarPendingFetch = {};
 
+// Abs indices with a lazy summary fetch currently in flight (set -> true), so an
+// entry scrubbed out of and back into the window before its fetch lands does not
+// queue a duplicate show=cols request. Cleared when each batch settles, and
+// wholesale when the filter state or frame changes.
+var sidebarInflight = {};
+
+// Abs indices whose lazy summary fetch failed (set -> true). Their entries get a
+// one-shot "unavailable" marker rather than re-queuing a fetch on every
+// re-observe (which would retry forever with no user-visible signal). Cleared
+// when the filter state or frame changes, giving the columns a fresh attempt.
+var sidebarFailed = {};
+
 // Summary-sidebar virtualization. Like the grid rows, only the entries whose
 // vertical band intersects the panel viewport are built; everything else is
 // stood in for by two spacer divs sized from the constant entry height. This
@@ -786,8 +798,13 @@ var rebuildSidebarPreservingScroll = function() {
 // coalesce via the drawCounter staleness check below.
 var refreshSidebarSummaries = function() {
    // Lazily-fetched off-window summaries reflect the previous filter state;
-   // drop them so they're refetched for the new one.
+   // drop them so they're refetched for the new one. Also drop the in-flight
+   // and failed tracking: any in-flight fetch is for the old filter state (and
+   // will be ignored on arrival by the drawCounter check), and failed columns
+   // get a fresh attempt under the new state.
    sidebarLazySummaries = {};
+   sidebarInflight = {};
+   sidebarFailed = {};
 
    if (!hasActiveRowFilter()) {
       filteredSummaries = null;
@@ -3385,11 +3402,16 @@ var scrollToTop = function() {
 // instead; those are not routed through here.
 var setViewportScrollLeft = function(viewport, left) {
    left = Math.max(0, left);
-   if (viewport.scrollLeft === left)
-      return false;
-   viewport.scrollLeft = left;
+   var changed = viewport.scrollLeft !== left;
+   if (changed)
+      viewport.scrollLeft = left;
+   // Sync the mirror to the live (possibly clamped) position even when no write
+   // was needed: the DOM scrollLeft can have drifted from the mirror since it
+   // was last set (e.g. an inactive tab reads 0 while lastScrollLeft is
+   // non-zero), and saveState / onActivate / the info bar read the mirror as the
+   // source of truth.
    lastScrollLeft = viewport.scrollLeft;
-   return true;
+   return changed;
 };
 
 // Vertical counterpart to setViewportScrollLeft: applies a programmatic
@@ -3400,14 +3422,17 @@ var setViewportScrollLeft = function(viewport, left) {
 // clamped) result. Live-gesture scrolling is mirrored by onScroll instead.
 var setViewportScrollTop = function(viewport, top) {
    top = Math.max(0, top);
-   if (viewport.scrollTop === top)
-      return false;
-   viewport.scrollTop = top;
+   var changed = viewport.scrollTop !== top;
+   if (changed) {
+      viewport.scrollTop = top;
+      // Keep the frozen pane aligned immediately (the scroll event would also do
+      // this, but it fires asynchronously).
+      syncPinnedScrollTop();
+   }
+   // Sync the mirror to the live (possibly clamped) position even when no write
+   // was needed; see setViewportScrollLeft.
    lastScrollTop = viewport.scrollTop;
-   // Keep the frozen pane aligned immediately (the scroll event would also do
-   // this, but it fires asynchronously).
-   syncPinnedScrollTop();
-   return true;
+   return changed;
 };
 
 // Snapshot the live scroll position (and the current unfiltered row count) so a
@@ -4631,11 +4656,14 @@ var fetchSidebarSummaries = function(absList, callback) {
                   sidebarLazySummaries[entry.col_index] = entry;
             }
          }
-         callback();
+         // ok = the request itself succeeded; a column that simply isn't in the
+         // result (no error) is left to retry on a later re-observe, but an
+         // actual error marks the batch failed so callers can stop retrying.
+         callback(!!(result && !result.error));
       })
       .catch(function(err) {
          console.warn("fetchSidebarSummaries failed:", err);
-         callback();
+         callback(false);
       });
 };
 
@@ -4750,7 +4778,9 @@ var flushSidebarPendingFetch = debounce(120, function() {
             populateEntrySummary(readyEntry, have);
             populatedAny = true;
          }
-      } else {
+      } else if (!sidebarInflight[abs]) {
+         // Skip columns already being fetched: the in-flight batch's callback
+         // will populate this (still-present) entry by query when it lands.
          want.push(abs);
       }
    }
@@ -4765,7 +4795,11 @@ var flushSidebarPendingFetch = debounce(120, function() {
       return;
 
    var token = drawCounter;
-   fetchSidebarSummaries(want, function() {
+   for (var w = 0; w < want.length; w++)
+      sidebarInflight[want[w]] = true;
+   fetchSidebarSummaries(want, function(ok) {
+      for (var c = 0; c < want.length; c++)
+         delete sidebarInflight[want[c]];
       // A filter/search/refresh since we issued the fetch invalidated the
       // cache keying; the rebuild it triggered will re-observe and refetch.
       if (token !== drawCounter)
@@ -4775,12 +4809,18 @@ var flushSidebarPendingFetch = debounce(120, function() {
          return;
       for (var i = 0; i < want.length; i++) {
          var summary = getSidebarSummary(want[i]);
-         if (!summary)
-            continue;
          var entry = liveContent.querySelector(
             '.sidebar-col[data-col-idx="' + want[i] + '"]');
-         if (entry)
+         if (!entry)
+            continue;
+         if (summary) {
             populateEntrySummary(entry, summary);
+         } else if (!ok) {
+            // The fetch errored; mark the column so its entry shows a static
+            // "unavailable" footer instead of re-queueing on every re-observe.
+            sidebarFailed[want[i]] = true;
+            markEntrySummaryUnavailable(entry);
+         }
       }
       // The entries just populated registered sparklines; draw them (the
       // panel is open, since the observer only fires for visible entries).
@@ -4788,6 +4828,24 @@ var flushSidebarPendingFetch = debounce(120, function() {
       if (sidebarScrollbar_) sidebarScrollbar_.update();
    });
 });
+
+// One-shot "summary unavailable" state for an entry whose lazy fetch failed.
+// Marks the entry loaded (so populateEntrySummary and the build path both skip
+// it) and shows a static footer marker rather than leaving an empty shell that
+// re-queues a fetch on every re-observe.
+var markEntrySummaryUnavailable = function(entry) {
+   if (entry.getAttribute("data-summary-loaded") === "1")
+      return;
+   entry.setAttribute("data-summary-loaded", "1");
+   entry.setAttribute("data-summary-failed", "1");
+
+   var footer = entry.querySelector(".sidebar-col-footer");
+   if (!footer)
+      return;
+   var summaryEl = footer.querySelector(".sidebar-col-summary");
+   if (summaryEl)
+      summaryEl.textContent = "Summary unavailable";
+};
 
 // Fill an entry's summary content (sparkline + footer range/NA/unique) from a
 // describe descriptor. Idempotent: skips entries already populated (so a
@@ -5032,6 +5090,8 @@ var buildSidebarEntry = function(col, absIdx, virtIndex) {
    var seeded = getSidebarSummary(absIdx);
    if (seeded)
       populateEntrySummary(entry, seeded);
+   else if (sidebarFailed[absIdx])
+      markEntrySummaryUnavailable(entry);
    else
       sidebarPendingFetch[absIdx] = true;
 
@@ -6894,6 +6954,8 @@ var resetGridState = function() {
    sidebarLazySummaries = {};
    filterDescriptors = {};
    sidebarPendingFetch = {};
+   sidebarInflight = {};
+   sidebarFailed = {};
    if (sidebarStatsPopup) dismissSidebarStats();
 };
 

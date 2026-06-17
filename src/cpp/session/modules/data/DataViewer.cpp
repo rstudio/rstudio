@@ -1137,6 +1137,16 @@ Error getGridData(const http::Request& request,
             // Compute the detail stats over the same rows the grid shows: a
             // no-op when no filter/search is active (matching the historical
             // whole-column behavior), otherwise the filtered working copy.
+            //
+            // applyViewTransform shares the per-cacheKey working-copy cache with
+            // the grid's data path, which writes a max_rows/max_cols-subset frame
+            // into that cache before transforming. Transforming the FULL frame
+            // here under the same key is correct only because the client sends
+            // max_rows/max_cols == -1, so the grid's working copy is the full
+            // frame too and n/mean/median compute over the complete column. If a
+            // finite row subset is ever wired up here, this would silently
+            // summarize a truncated set (and could corrupt the grid's cached
+            // working data); give summary requests a distinct cache key first.
             int viewNcol = safeDim(dataSEXP, DIM_COLS);
             ViewTransformParams params = parseViewTransformParams(fields, viewNcol);
             SEXP frameSEXP = applyViewTransform(dataSEXP, cacheKey, params, nullptr, protect);
