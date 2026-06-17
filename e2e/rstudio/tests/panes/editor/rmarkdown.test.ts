@@ -20,6 +20,9 @@ test.describe('RMarkdown', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache package install can outlast the global per-test timeout;
+    // keep the headroom this install hook's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 

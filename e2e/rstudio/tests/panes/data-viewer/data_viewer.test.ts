@@ -702,7 +702,9 @@ test.describe('Data Viewer', () => {
       const pinnedHeader = dataViewer.frame.locator('th[data-col-idx="1"]');
       await expect(pinnedHeader).toHaveClass(/\bpinned\b/);
       await expect(pinnedHeader).toHaveAttribute('title', /^column 1:/);
-      await expect(dataViewer.frame.locator('#gridBody td.pinned', { hasText: 'PINSENTINEL' }).first())
+      // Pinned body cells render in the frozen pane's own table (#pinnedBody),
+      // not the scrollable #gridBody, since #17977 split the panes.
+      await expect(dataViewer.frame.locator('#pinnedBody td.pinned', { hasText: 'PINSENTINEL' }).first())
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await consoleActions.executeInConsole('rm(".rs.pin_paginate_df", envir = .GlobalEnv)');

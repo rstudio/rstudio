@@ -139,7 +139,11 @@ export default defineConfig<{}, ProjectOptions>({
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
   fullyParallel: false,
   workers: 1,
-  timeout: 300000,
+  // Global per-test budget. Kept low so a hung test fails fast rather than
+  // parking a worker for minutes; individual slow tests opt up with
+  // test.setTimeout() (e.g. package installs in a beforeAll), and slow
+  // individual actions pass their own { timeout } (see TIMEOUTS).
+  timeout: 120000,
   // On CI a single transient launch flake (e.g. GWT app slow to reach
   // ready under cold disk caches on a fresh runner) can otherwise turn
   // the whole suite red. One retry absorbs that without rerunning by hand.
