@@ -109,18 +109,23 @@ Error prepareFormatData(
    if (error)
       return error;
 
-   // Figure out if we're going to use the air formatter.
+   // Figure out if we're going to use the built-in air formatter.
    bool usingAirFormatter =
       prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
       prefs::userPrefs().useAirFormatter();
-   
-   // Preserve the common indent if we're using the air formatter.
+
+   // Air can also be invoked through an external "air format" command; this is
+   // the configuration recommended by the Air documentation for format-on-save.
+   bool usingExternalFormatter =
+      prefs::userPrefs().codeFormatter() == kCodeFormatterExternal;
+
    std::string indent;
-   if (usingAirFormatter)
+   if (usingAirFormatter || usingExternalFormatter)
    {
+      // Preserve the common indent if we're using the built-in air formatter.
       // Compute the common prefix for this code, and then trim
       // non-whitespace characters from the end.
-      if (computeIndent)
+      if (usingAirFormatter && computeIndent)
       {
          indent = string_utils::getCommonPrefix(code);
          auto it = indent.find_first_not_of(" \t");
@@ -128,9 +133,12 @@ Error prepareFormatData(
             indent = indent.substr(0, it);
       }
 
-      // Copy the air.toml file associated with the document, if one exists.
-      // Otherwise, synthesize one from the user's editor settings, so that
-      // Air's formatting matches the editor's indentation preferences.
+      // Copy the air.toml file associated with the document, if one exists,
+      // next to the code we're about to format. We format a copy of the
+      // document in a temporary directory, and Air resolves its configuration
+      // relative to the file being formatted -- so without this, the project's
+      // air.toml would not be discovered. This matters for both the built-in
+      // air formatter and an external "air format" command. See #18003.
       FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
       if (airTomlPath.exists())
       {
@@ -138,8 +146,11 @@ Error prepareFormatData(
          if (copyError)
             LOG_ERROR(copyError);
       }
-      else if (!prefs::userPrefs().airFormatterRequireToml())
+      else if (usingAirFormatter && !prefs::userPrefs().airFormatterRequireToml())
       {
+         // No project air.toml: synthesize one from the user's editor settings
+         // so that the built-in air formatter's output matches the editor's
+         // indentation preferences.
          Error writeError = modules::air::writeSynthesizedAirToml(codeDir.completePath("air.toml"));
          if (writeError)
             LOG_ERROR(writeError);

@@ -3,6 +3,7 @@
 ### New
 
 ### Fixed
+- ([#18003](https://github.com/rstudio/rstudio/issues/18003)): Fixed an issue where reformat-on-save with Air configured as an external formatter ignored the project's air.toml configuration.
 
 ### Dependencies
 - Ace 1.43.5
