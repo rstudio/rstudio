@@ -110,14 +110,12 @@ private:
 // Test-only helper: configure the global FindInFilesState so that
 // Replacer::replacePreview can be exercised in unit tests without
 // driving the full session-layer handlers.
-#ifdef SESSION_FIND_TESTS
 namespace find {
 void setFindResultsForTest(const std::string& searchPattern,
                            const std::string& replacePattern,
                            bool regex,
                            bool ignoreCase);
 } // namespace find
-#endif
 
 } // namespace modules
 } // namespace session

@@ -1956,7 +1956,7 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                                          pDecodedLine->end(),
                                          &originalDecodedSize);
       if (error)
-         logError(error, "Failed to compute UTF-8 distance in replace preview");
+         LOG_ERROR(error);
 
       *pDecodedLine = decode(*pEncodedLine);
 
@@ -1965,7 +1965,7 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                                          pDecodedLine->end(),
                                          &newDecodedSize);
       if (error)
-         logError(error, "Failed to compute UTF-8 distance in replace preview");
+         LOG_ERROR(error);
 
       *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
    }
@@ -2082,7 +2082,6 @@ std::string Replacer::decode(const std::string& encoded, const std::string& enco
    return decoded;
 }
 
-#ifdef SESSION_FIND_TESTS
 // Test-only: configure the global FindInFilesState so that
 // Replacer::replacePreview can be exercised in unit tests.
 void setFindResultsForTest(const std::string& searchPattern,
@@ -2095,7 +2094,6 @@ void setFindResultsForTest(const std::string& searchPattern,
                               regex, ignoreCase, false);
    findResults().onReplaceBegin("test-handle", true, replacePattern, nullptr);
 }
-#endif
 
 } // namespace find
 } // namespace modules
