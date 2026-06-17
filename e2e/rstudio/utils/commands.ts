@@ -235,7 +235,7 @@ function snakeToCamel(s: string): string {
 /** Run an AppCommand by id (no console roundtrip). */
 export async function executeCommand(page: Page, commandId: string): Promise<void> {
   await withBridgeLog('executeCommand', commandId, async () => {
-    // Wait for the command to exist AND be enabled before dispatching:
+    // Wait for the command to exist AND be ready to dispatch:
     //  - existence covers the bridge being transiently absent during session
     //    restarts (project open/close, Restart R);
     //  - enabled-state covers the brief command-state lag after a focus or
@@ -247,12 +247,20 @@ export async function executeCommand(page: Page, commandId: string): Promise<voi
     // absorbs the lag and, on timeout, names the offending command. When the
     // command is already up and enabled the condition is true on the first
     // poll, so this adds no measurable latency to the steady-state path.
+    //
+    // isEnabled() is `enabled_ && isVisible()` (AppCommand.isEnabled), but
+    // doExecute() only requires `enabled_`. Invisible programmatic commands
+    // (visible="false", e.g. restoreDefaultPaneAndTabLayoutNoPrompt) are
+    // therefore always reported disabled yet dispatch fine, so the gate would
+    // block them forever. Bypass the enabled-wait for invisible commands --
+    // their enabled_ flag isn't observable from JS, and they are not the
+    // focus/cursor-lag case this gate exists for.
     const ENABLE_TIMEOUT = 10000;
     try {
       await page.waitForFunction(
         (id) => {
-          const cmd = (window.rstudio?.commands as Record<string, ((() => void) & { isEnabled(): boolean }) | undefined> | undefined)?.[id];
-          return typeof cmd === 'function' && cmd.isEnabled();
+          const cmd = (window.rstudio?.commands as Record<string, ((() => void) & { isEnabled(): boolean; isVisible(): boolean }) | undefined> | undefined)?.[id];
+          return typeof cmd === 'function' && (cmd.isEnabled() || !cmd.isVisible());
         },
         commandId,
         { timeout: ENABLE_TIMEOUT, polling: 50 },

@@ -404,6 +404,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@pro_only` | Test requires RStudio Pro |
 | `@os_only` | Test only applies to open-source RStudio |
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
+| `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
 
 ### Filtering by Tag
 
@@ -412,6 +413,7 @@ The config defines two **projects** -- `desktop` and `server` -- each with a `gr
 - **OS**: `desktop` excludes OS-only tags that don't match the host (`os.platform()`); `server` always excludes `@windows_only|@macos_only` (server targets Linux).
 - **Edition**: `PW_RSTUDIO_EDITION=os` (default) excludes `@pro_only`; `PW_RSTUDIO_EDITION=pro` excludes `@os_only`.
 - **Mode**: each project also excludes the opposite mode's tag (`@server_only` from `desktop`, `@desktop_only` from `server`).
+- **Smoke**: `@smoke` is excluded from both projects by default; set `PW_RUN_SMOKE=1` to include it.
 
 Select a project with `--project`:
 
