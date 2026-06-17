@@ -10,6 +10,17 @@ import * as path from 'node:path';
 export const REPO_ROOT = path.resolve(__dirname, '../../..');
 export const BUILD_DIR = path.join(REPO_ROOT, 'build');
 
+// The e2e/rstudio directory (where the npm scripts run and where Playwright
+// writes its reports). Resolved from this script's location so it's correct
+// regardless of the caller's cwd.
+export const E2E_DIR = path.resolve(__dirname, '..');
+
+// Stable, well-known path that always points at the most recent HTML report.
+// We keep it as a symlink into the timestamped per-run report dir (see
+// runPlaywright) so re-running tests never clobbers an earlier report, while
+// `npm run test:report` / `npx playwright show-report` still find the latest.
+export const HTML_REPORT_LINK = path.join(E2E_DIR, 'playwright-report');
+
 export function step(tag: string, msg: string): void {
   console.log(`\n[${tag}] ${msg}`);
 }
@@ -17,6 +28,63 @@ export function step(tag: string, msg: string): void {
 export function fail(tag: string, msg: string): never {
   console.error(`\n[${tag}] error: ${msg}`);
   process.exit(1);
+}
+
+// Point the stable HTML_REPORT_LINK symlink at the run's timestamped report
+// dir. Replaces whatever is already there -- an older symlink, or a real
+// directory left by the previous (single-folder) scheme. Returns true once the
+// link points at reportDir. Best-effort: any failure (e.g. Windows without
+// symlink privilege) is reported and returns false, but never fails the run,
+// since the timestamped dir is always printed too.
+export function updateReportSymlink(tag: string, reportDir: string): boolean {
+  // A Windows junction requires the target to already exist, and a symlink to a
+  // missing dir is useless on any platform. If the run produced no report (e.g.
+  // Playwright errored before the html reporter wrote anything), leave the
+  // existing link alone rather than dangling it or noisily failing.
+  if (!fs.existsSync(reportDir)) {
+    console.log(`[${tag}] note: ${reportDir} not found; leaving playwright-report symlink unchanged`);
+    return false;
+  }
+
+  try {
+    let existing: fs.Stats | undefined;
+    try {
+      existing = fs.lstatSync(HTML_REPORT_LINK);
+    } catch {
+      // nothing there yet
+    }
+
+    if (existing) {
+      if (existing.isDirectory() && !existing.isSymbolicLink())
+        fs.rmSync(HTML_REPORT_LINK, { recursive: true, force: true });
+      else
+        fs.unlinkSync(HTML_REPORT_LINK);
+    }
+
+    // Junctions on Windows need an absolute target; a relative target keeps the
+    // link portable on POSIX (it stays valid if the dir is moved wholesale).
+    const isWin = process.platform === 'win32';
+    const target = isWin ? reportDir : path.basename(reportDir);
+    fs.symlinkSync(target, HTML_REPORT_LINK, isWin ? 'junction' : 'dir');
+    return true;
+  } catch (e) {
+    console.log(`[${tag}] note: could not update playwright-report symlink (${(e as Error).message})`);
+    return false;
+  }
+}
+
+// Print where to find the results after a run. The HTML report is the richest
+// view (per-test steps, traces, screenshots); `npm run test:report` opens it.
+// Printed on every run, pass or fail, since the report is most useful when
+// something failed. The `latest ->` line is shown only when the symlink was
+// actually pointed at this run's dir -- otherwise it would advertise a stale
+// target (a caller-supplied report dir, or a run that produced no report).
+export function printReportLocation(tag: string, reportDir: string, symlinked: boolean): void {
+  step(tag, 'Test summary (HTML report):');
+  console.log(`    ${reportDir}`);
+  if (symlinked)
+    console.log(`    latest -> ${HTML_REPORT_LINK}`);
+  console.log('    open with: npm run test:report   (npx playwright show-report)');
 }
 
 // Configure the build directory if it has never been initialized. Presence
@@ -164,13 +232,26 @@ export function runPlaywright(
     console.log(`[${tag}] artifacts -> test-results/${runId} (prior runs preserved)`);
   }
 
+  // Same idea for the HTML report: the 'html' reporter wipes its output folder
+  // at the start of each run, so a single fixed folder loses the previous
+  // report on re-run. Point it at a per-run folder via PLAYWRIGHT_HTML_OUTPUT_DIR
+  // and keep the stable playwright-report symlink pointing at the latest (see
+  // updateReportSymlink). A caller-set PLAYWRIGHT_HTML_OUTPUT_DIR wins, in which
+  // case we leave the symlink alone and just report their folder.
+  const userReportDir = env.PLAYWRIGHT_HTML_OUTPUT_DIR ?? process.env.PLAYWRIGHT_HTML_OUTPUT_DIR;
+  const manageReportDir = userReportDir === undefined;
+  const reportDir = manageReportDir
+    ? path.join(E2E_DIR, `playwright-report-${runId}`)
+    : path.resolve(userReportDir);
+  const reportEnv = manageReportDir ? { PLAYWRIGHT_HTML_OUTPUT_DIR: reportDir } : {};
+
   const isWindows = process.platform === 'win32';
   const npx = isWindows ? 'npx.cmd' : 'npx';
   const args = ['playwright', 'test', ...outputArgs, ...extraArgs];
 
   const child = spawn(npx, args, {
     stdio: 'inherit',
-    env: { ...process.env, ...env },
+    env: { ...process.env, ...reportEnv, ...env },
     // POSIX: give the child its own process group so a terminal Ctrl-C is
     // delivered only to this launcher, not also straight to the child group.
     // The launcher then forwards a single, well-timed signal (see below)
@@ -226,6 +307,8 @@ export function runPlaywright(
   // we don't need to await here. Propagate the exit status when the child
   // does finish.
   child.on('exit', (code, signal) => {
+    const symlinked = manageReportDir && updateReportSymlink(tag, reportDir);
+    printReportLocation(tag, reportDir, symlinked);
     process.exit(signal !== null ? 128 + (signalNumber(signal) ?? 1) : (code ?? 1));
   });
 }
