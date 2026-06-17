@@ -1,12 +1,27 @@
 
 const process = require("process");
 
+// The webpack dev-server and its multi-logger listen on fixed ports (the
+// electron-forge defaults are 3000 and 9000). Allow both to be overridden via
+// environment variables so an automated run -- e.g. the Playwright e2e harness,
+// which launches its own `npm run start` -- can pick distinct ports and not
+// collide with a developer's manually-launched dev instance. Unset leaves the
+// option undefined, which the webpack plugin treats as "use the default".
+const devServerPort = process.env.RSTUDIO_DESKTOP_DEV_PORT
+  ? Number(process.env.RSTUDIO_DESKTOP_DEV_PORT)
+  : undefined;
+const devLoggerPort = process.env.RSTUDIO_DESKTOP_LOGGER_PORT
+  ? Number(process.env.RSTUDIO_DESKTOP_LOGGER_PORT)
+  : undefined;
+
 const config = {
   plugins: [
     {
       name: '@electron-forge/plugin-webpack',
       config: {
         mainConfig: './webpack.main.config.js',
+        port: devServerPort,
+        loggerPort: devLoggerPort,
         renderer: {
           config: './webpack.renderer.config.js',
           entryPoints: [
@@ -58,9 +73,6 @@ const config = {
           ],
         },
       }
-          // uncoment and change these ports to launch multiple debug instances
-          // port: 3000,
-          // loggerPort: 9000,
     },
   ],
 
