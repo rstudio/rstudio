@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { expect } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
@@ -154,11 +154,14 @@ export class ChatPaneActions {
   /**
    * Drive the Posit device-code OAuth flow at login.posit.cloud using the
    * supplied account credentials. Extracts the user_code displayed in the
-   * chat pane, opens login.posit.cloud in a separate Playwright page (in the
-   * same browser context), fills email + password, and authorizes the device.
-   * Returns once the post-authorize "Access Authorized" page is visible; the
-   * IDE-side polling will detect the new token within a few seconds and the
-   * caller's waitForChatReady loop will see the composer become editable.
+   * chat pane, launches a separate Chromium browser (necessary because
+   * Electron's CDP context doesn't support Target.createTarget, so
+   * page.context().newPage() throws "Not supported" -- the IDE is attached
+   * to Electron over CDP and we can't add a sibling page inside it), drives
+   * the form, and authorizes the device. Returns once the post-authorize
+   * "Access Authorized" page is visible; the IDE-side polling will detect
+   * the new token within a few seconds and the caller's waitForChatReady
+   * loop will see the composer become editable.
    *
    * Selectors are pinned to login.posit.cloud's current UI -- if Posit
    * redesigns that flow, this method needs to be updated.
@@ -168,8 +171,11 @@ export class ChatPaneActions {
     const url = buildPositVerificationUrl(userCode);
     console.log(`signInWith: opening posit.cloud at user_code=${userCode}`);
 
-    const popup = await this.page.context().newPage();
+    const browser = await chromium.launch();
     try {
+      const context = await browser.newContext();
+      const popup = await context.newPage();
+
       await popup.goto(url, { waitUntil: 'domcontentloaded' });
 
       await popup.getByRole('textbox', { name: 'Email' }).fill(account.email);
@@ -190,7 +196,7 @@ export class ChatPaneActions {
       await expect(popup.getByRole('heading', { name: 'Access Authorized' }))
         .toBeVisible({ timeout: 15_000 });
     } finally {
-      await popup.close();
+      await browser.close();
     }
   }
 
@@ -198,20 +204,30 @@ export class ChatPaneActions {
    * Read the XXXX-XXXX device-flow user_code displayed in the chat pane.
    * The chat pane lays out the code with extra spaces between characters
    * for readability ("N V J S - V L M N"), so we collapse whitespace and
-   * regex-match the canonical 4-4 form.
+   * search specifically next to the "authentication code:" label rather
+   * than the whole pane text (the pane includes sandbox paths and other
+   * incidental hyphenated tokens like USER-HOME that would otherwise
+   * regex-match first).
    */
   private async extractVerificationCode(): Promise<string> {
     const text = (await this.chatPane.chatRoot.textContent()) ?? '';
-    const compact = text.replace(/\s+/g, '');
-    const match = compact.match(/[A-Z0-9]{4}-[A-Z0-9]{4}/i);
-    if (!match) {
-      throw new Error(
-        'signInWith: could not find an XXXX-XXXX user_code in the chat pane. ' +
-        'Either the IDE is on a different sign-in screen, or login.posit.cloud ' +
-        'changed the displayed code format.'
-      );
+    // Match "authentication code" label, then capture the next visible XXXX-XXXX
+    // group (allowing intervening whitespace because the IDE spaces the code
+    // characters out visually).
+    const labelMatch = text.match(
+      /authentication\s+code\s*:?\s*([A-Z0-9](?:\s*[A-Z0-9]){3}\s*-\s*[A-Z0-9](?:\s*[A-Z0-9]){3})/i,
+    );
+    if (labelMatch) {
+      const code = labelMatch[1].replace(/\s+/g, '').toUpperCase();
+      if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+        return code;
+      }
     }
-    return match[0].toUpperCase();
+    throw new Error(
+      'signInWith: could not find an "authentication code: XXXX-XXXX" pattern in the chat pane. ' +
+      'Either the IDE is on a different sign-in screen, or login.posit.cloud ' +
+      'changed the displayed code format.'
+    );
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
