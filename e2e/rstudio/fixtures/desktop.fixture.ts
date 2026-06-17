@@ -9,7 +9,7 @@ import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
-import { rLibsUserTemplate } from './r-libs-setup';
+import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
 
@@ -34,7 +34,29 @@ function sandboxRoot(): string {
 // createTempConfig), only as the source of the seeded Posit Assistant build
 // (data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is set).
 const sandboxDataHome = () => path.join(sandboxRoot(), 'data-home');
-const sharedUserHome = () => path.join(sandboxRoot(), 'user-home');
+
+// HOME / USERPROFILE for the current worker. Single-worker runs (the default)
+// use the seeded template home directly -- byte-for-byte the historical
+// behavior. Parallel runs give every worker its own copy of the template,
+// keyed on the stable parallel index, so concurrent workers never write the
+// same HOME (RStudio user state, command history, AI credentials, ...). The
+// copy is lazy and idempotent; the template carries the seeded AI credentials
+// and Windows AppData scaffold, so each worker's copy starts authenticated.
+function workerUserHome(): string {
+  const template = path.join(sandboxRoot(), 'user-home');
+
+  const totalWorkers = Number(process.env.PW_TOTAL_WORKERS ?? '1');
+  if (!Number.isFinite(totalWorkers) || totalWorkers <= 1) {
+    return template;
+  }
+
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  const home = path.join(sandboxRoot(), `user-home-${idx}`);
+  if (!fs.existsSync(home)) {
+    fs.cpSync(template, home, { recursive: true });
+  }
+  return home;
+}
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
   let raw: string;
@@ -382,12 +404,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
-      HOME: sharedUserHome(),
+      HOME: workerUserHome(),
       // R expands %p / %v at startup; the resolved path is the same one
       // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
       // this explicitly is necessary because HOME is redirected -- without it,
-      // R derives an empty default library inside the per-run sandbox.
-      R_LIBS_USER: rLibsUserTemplate(),
+      // R derives an empty default library inside the per-run sandbox. Under
+      // parallel runs this resolves to a per-worker hermetic clone of that
+      // library so concurrent installs/removes can't race or leak.
+      R_LIBS_USER: workerRLibsUser(),
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
@@ -425,7 +449,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
         RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
         RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
       } : {}),
-      USERPROFILE: sharedUserHome(),
+      USERPROFILE: workerUserHome(),
     },
   };
   if (DEV_MODE) {

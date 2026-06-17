@@ -25,6 +25,15 @@ import { heredoc } from '../utils/heredoc';
 const RSTUDIO_R_LIBS_USER_ENV = 'PW_RSTUDIO_R_LIBS_USER';
 const RSTUDIO_R_LIBS_SKIP_PREP_ENV = 'PW_RSTUDIO_R_LIBS_SKIP_PREP';
 
+// globalSetup exports the concrete (token-expanded) path of the prebuilt
+// "template" library here, so workers can clone it without re-running the
+// Rscript expansion. Empty/unset when prep was skipped or expansion failed --
+// callers then fall back to the shared template path (single-worker behavior).
+const RSTUDIO_R_LIBS_TEMPLATE_ENV = 'PW_R_LIBS_TEMPLATE';
+// globalSetup exports the resolved worker count so the per-worker partitioning
+// below activates only when actually running in parallel.
+const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
+
 /**
  * Packages every Playwright run should be able to find without paying the
  * lazy-install tax inside an individual test. The list intentionally mirrors
@@ -147,13 +156,13 @@ function expandRLibsUserTemplate(template: string): string | null {
  * for runs against an external R install that already has everything, or to
  * debug the redirected-empty-lib behavior on purpose.
  */
-export async function prepareRLibs(): Promise<void> {
+export async function prepareRLibs(): Promise<string | null> {
   const skip = ['1', 'true'].includes(
     (process.env[RSTUDIO_R_LIBS_SKIP_PREP_ENV] ?? '').toLowerCase(),
   );
   if (skip) {
     console.log(`[r-libs] skipping prep (${RSTUDIO_R_LIBS_SKIP_PREP_ENV} set)`);
-    return;
+    return null;
   }
 
   const template = rLibsUserTemplate();
@@ -162,7 +171,7 @@ export async function prepareRLibs(): Promise<void> {
     console.warn(
       `[r-libs] could not expand R_LIBS_USER template "${template}" via Rscript; skipping pre-population. Is Rscript on PATH?`,
     );
-    return;
+    return null;
   }
 
   fs.mkdirSync(expanded, { recursive: true });
@@ -209,4 +218,86 @@ export async function prepareRLibs(): Promise<void> {
       `[r-libs] Rscript exited ${res.status}; some packages may be missing. Tests that need them will fall back to per-test ensurePackages().`,
     );
   }
+
+  return expanded;
+}
+
+/**
+ * Recursively clone a directory tree using hardlinks for regular files. Files
+ * share the source inode (so the clone is near-instant and costs almost no
+ * disk), but they are independent directory entries: deleting one (as
+ * remove.packages does) leaves the other intact, and installing a new package
+ * writes a brand-new inode -- so a worker mutating its own library clone never
+ * touches the template or another worker's clone.
+ *
+ * Cross-platform: fs.linkSync maps to CreateHardLinkW on Windows/NTFS, which
+ * needs no elevation (unlike symlinks). Hardlinks cannot span filesystems, so
+ * src and dst must live on the same volume -- callers keep the clone beside the
+ * template to guarantee that. Symlinks in the tree (rare in an R library) are
+ * recreated as symlinks rather than hardlinked.
+ */
+function cloneTreeHardlinks(src: string, dst: string): void {
+  fs.mkdirSync(dst, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dst, entry.name);
+    if (entry.isDirectory()) {
+      cloneTreeHardlinks(s, d);
+    } else if (entry.isSymbolicLink()) {
+      fs.symlinkSync(fs.readlinkSync(s), d);
+    } else {
+      fs.linkSync(s, d);
+    }
+  }
+}
+
+/**
+ * Resolve the R_LIBS_USER value for the current worker.
+ *
+ * Single-worker runs (the default) return the shared template token unchanged
+ * -- byte-for-byte the historical behavior, with installs persisting in the
+ * per-host library across runs.
+ *
+ * Parallel runs give every worker its own hermetic library: a full hardlink
+ * clone of the prebuilt template, keyed on the (stable, bounded) parallel
+ * index and persisted beside the template. Because the clone is the only entry
+ * on the library path -- the shared template is NOT layered in -- a test can
+ * freely install or remove packages (e.g. the praise / DBI uninstall tests)
+ * without the package reappearing from a shared lib or leaking to other
+ * workers. Clones are reused across runs; delete the `*-w<N>` siblings of the
+ * template to force a refresh (e.g. after growing REQUIRED_PACKAGES).
+ *
+ * Falls back to the template token when the template path is unavailable
+ * (prep skipped or expansion failed), so parallel runs still launch -- just
+ * without the hermetic guarantee.
+ */
+export function workerRLibsUser(): string {
+  const template = rLibsUserTemplate();
+
+  const totalWorkers = Number(process.env[TOTAL_WORKERS_ENV] ?? '1');
+  if (!Number.isFinite(totalWorkers) || totalWorkers <= 1) {
+    return template;
+  }
+
+  const templateExpanded = process.env[RSTUDIO_R_LIBS_TEMPLATE_ENV];
+  if (!templateExpanded) {
+    return template;
+  }
+
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  // Sibling of the (R-version-specific) template path, so the clone is on the
+  // same volume and implicitly carries the right platform/R version.
+  const clone = `${templateExpanded}-w${idx}`;
+  if (!fs.existsSync(clone)) {
+    console.log(`[r-libs] cloning template into per-worker library: ${clone}`);
+    // Clone into a temp sibling and atomically rename, so a crash mid-clone
+    // can't leave a partial directory that later reads as a complete library.
+    // The parallel index is exclusive to one worker process at a time, so the
+    // temp name only needs to be unique against a prior aborted attempt.
+    const tmp = `${clone}.partial`;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    cloneTreeHardlinks(templateExpanded, tmp);
+    fs.renameSync(tmp, clone);
+  }
+  return clone;
 }
