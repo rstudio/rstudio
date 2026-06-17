@@ -31,9 +31,12 @@
    /* Sidebar sparkline bar colors (read from JS when painting the canvas).
       Numeric histograms follow the theme accent; categorical frequency
       bars use a deliberately different hue as a visual cue that the
-      x-axis is discrete values, not a numeric range. */
+      x-axis is discrete values, not a numeric range; date/time histograms
+      use a third (mauve) hue so a temporal axis reads distinctly from a
+      plain numeric one. */
    --grid-spark-numeric: var(--grid-focus-border);
    --grid-spark-categorical: #2ba36b;
+   --grid-spark-date: #9575cd;
 
    /* Computed mix shades -- keep these in one place so theme tweaks land
       consistently across hover/stripe rules. */
@@ -44,6 +47,12 @@
    --row-height: 23px;
    --sidebar-width: 240px;
    --info-bar-height: 25px;
+   /* Fixed height of a summary-sidebar entry. The sidebar is virtualized like
+      the grid rows (only the visible window is built), which requires every
+      entry to be the same height so an entry's vertical offset is index x this.
+      Single source of truth: DataViewer.js reads it via getComputedStyle
+      (sidebarEntryHeight). */
+   --sidebar-entry-height: 78px;
 }
 
 
@@ -69,6 +78,25 @@ html, body {
    background: var(--grid-selection-bg);
 }
 
+/* Middle-click autoscroll over the frozen pane (driven from DataViewer.js).
+   While active, show the omnidirectional cursor and a small anchor marker at
+   the click point so the interaction reads like the browser's native one. */
+body.auto-scrolling {
+   cursor: all-scroll;
+}
+.autoscroll-anchor {
+   position: fixed;
+   width: 26px;
+   height: 26px;
+   margin: -13px 0 0 -13px;              /* center on the click point */
+   border: 1px solid var(--grid-fg);
+   border-radius: 50%;
+   background-color: var(--grid-bg);
+   opacity: 0.45;
+   pointer-events: none;
+   z-index: 1000;
+}
+
 
 /* ==========================================================================
    Layout
@@ -90,8 +118,47 @@ html, body {
    position: relative;
 }
 
+/* The panes row holds the frozen pinned pane and the scrollable unpinned pane
+   side by side; it fills the vertical space above the info bar and anchors the
+   floating overlay scrollbars (position: relative). */
+#gridPanes {
+   flex: 1;
+   display: flex;
+   min-height: 0;
+   min-width: 0;
+   position: relative;
+}
+
+/* Frozen pinned columns (rownames + pinned). Fixed width set inline to the
+   pinned block width by applyPinnedColumns; never scrolls horizontally. Its
+   vertical scroll is driven programmatically to mirror #gridViewport so the
+   two panes' rows stay aligned (overflow: hidden elements are still
+   programmatically scrollable). */
+#pinnedPane {
+   flex: 0 0 auto;
+   width: 0;                             /* set inline by applyPinnedColumns */
+   /* Vertically scrollable so wheel and middle-click auto-scroll work when the
+      pointer is over the frozen pane (overflow: hidden would block both). The
+      scrollbar itself is always hidden -- the unpinned (master) pane carries
+      the only visible vertical scrollbar, and onPinnedScroll mirrors this
+      pane's scroll position onto it (and vice versa). Never scrolls
+      horizontally (its table is exactly the pane width). */
+   overflow-x: hidden;
+   overflow-y: auto;
+   scrollbar-width: none;                /* Firefox */
+   overscroll-behavior: none;
+   position: relative;
+   /* Separator between the frozen pane and the scrolling columns. */
+   border-right: 1px solid var(--grid-border);
+   contain: layout paint;
+}
+#pinnedPane::-webkit-scrollbar {
+   display: none;                        /* Chromium */
+}
+
 #gridViewport {
    flex: 1;
+   min-width: 0;
    overflow: auto;
    position: relative;
    /* Establish a paint/layout containment boundary so the frequent DOM
@@ -101,14 +168,20 @@ html, body {
       to repaint on every scroll frame (#17806). Filter popups are attached
       to document.body, so they are unaffected by this clip. */
    contain: layout paint;
-   /* Hide native scrollbars -- custom scrollbars are rendered as sibling divs */
-   scrollbar-width: none;                /* Firefox */
    /* Suppress the rubber-band/bounce effect at the scroll boundary; the table
       has known dimensions, so the boundary is already obvious without it.
       Also prevents scroll chaining out of the iframe. */
    overscroll-behavior: none;
 }
-#gridViewport::-webkit-scrollbar {
+/* Hide native scrollbars only in overlay-scrollbar mode -- the custom
+   scrollbars are rendered as sibling divs. The body carries the
+   .overlay-scrollbars class by default; the host removes it (and these rules
+   stop applying, revealing the native scrollbars) when the
+   data_viewer_use_overlay_scrollbars preference is off. */
+body.overlay-scrollbars #gridViewport {
+   scrollbar-width: none;                /* Firefox */
+}
+body.overlay-scrollbars #gridViewport::-webkit-scrollbar {
    display: none;                        /* Chromium */
 }
 
@@ -117,7 +190,8 @@ html, body {
    Table
    ========================================================================== */
 
-#rsGridData {
+#rsGridData,
+#pinnedTable {
    border-collapse: separate;
    border-spacing: 0;
 }
@@ -238,21 +312,12 @@ tbody tr.odd-row td.col-spacer {
    Pinned Columns
    ========================================================================== */
 
-th.pinned {
-   position: sticky;
-   /* left is set dynamically via inline style */
-   z-index: 5;
-   background-color: var(--grid-header-bg);
-}
+/* Pinned columns (rownames + pinned) render in their own #pinnedTable inside
+   the frozen #pinnedPane -- they are ordinary, non-sticky cells there, so they
+   need no position/z-index/left of their own (the pane is what freezes them).
+   The .pinned class is retained only as a styling hook. */
 
-td.pinned {
-   position: sticky;
-   /* left is set dynamically via inline style */
-   z-index: 5;
-   background-color: var(--grid-bg);
-}
-
-/* Row names column (always first pinned).
+/* Row names column (always the first pinned column).
    Background color comes from GridViewerStyles.getCustomStyle() which
    injects theme-specific rules for td.first-child. */
 th.pinned:first-child,
@@ -261,11 +326,6 @@ td.pinned:first-child {
    border-left: none;
    padding-left: 9px;
    padding-right: 9px;
-}
-
-/* Pinned header cells sit above pinned data cells */
-thead th.pinned {
-   z-index: 15;
 }
 
 /* --- Pin icon --- */
@@ -397,6 +457,18 @@ th.highlight-flash {
    animation: column-flash 1s ease-out;
 }
 
+/* Sidebar entry flash on a go-to-column jump -- mirrors the header flash so
+   the summary panel tracks the jump. Fades from the selection tint back to
+   the entry's normal (transparent) background. */
+@keyframes sidebar-col-flash {
+   0%   { background-color: var(--grid-selection-bg); }
+   100% { background-color: transparent; }
+}
+
+.sidebar-col.highlight-flash {
+   animation: sidebar-col-flash 1s ease-out;
+}
+
 /* --- Sort indicators -- use mask-image so color follows the theme --- */
 
 th.sorting .headerCell::after,
@@ -451,7 +523,12 @@ th.sorting_desc .headerCell::after {
    width: 7px;
    height: 100%;
    cursor: ew-resize;
-   z-index: 16;
+   /* Above the sticky header content within its own table's stacking context
+      (thead is z-index 10) so the grip stays grabbable. Pinned and unpinned
+      columns now live in separate tables/panes, so a pinned column can no
+      longer occlude an unpinned column's resizer -- the earlier cross-column
+      z-index workaround is no longer needed. */
+   z-index: 14;
 }
 
 .resizer:hover {
@@ -535,7 +612,9 @@ th.columnClickable div {
 .filterPopup {
    position: absolute;
    overflow: hidden;
-   z-index: 25;
+   /* Above the sidebar chrome (floating scrollbar, panel) so a popup opened
+      from a sidebar filter icon is never partly occluded by the panel. */
+   z-index: 35;
    font-size: 11px;
    background-color: var(--grid-bg);
    border: 1px solid var(--grid-border);
@@ -543,8 +622,59 @@ th.columnClickable div {
 }
 
 .numericFilterPopup {
-   padding: 4px;
-   padding-bottom: 8px;
+   /* Extra top padding leaves room for the clear-filter "x" in the corner. */
+   padding: 16px 4px 8px;
+}
+
+/* Apply (checkmark) and clear (x) buttons inside the numeric/date filter popup
+   -- discoverable apply/clear affordances, especially from the sidebar (which
+   has no header clear chip). The clear reuses the .clearFilter glyph; the apply
+   sits just to its left. */
+.filterPopupClear,
+.filterPopupApply {
+   position: absolute;
+   top: 3px;
+   width: 11px;
+   height: 11px;
+   cursor: pointer;
+   opacity: 0.5;
+   z-index: 1;
+}
+
+.filterPopupClear {
+   right: 3px;
+}
+
+.filterPopupApply {
+   right: 19px;
+}
+
+.filterPopupClear:hover,
+.filterPopupClear:focus-visible,
+.filterPopupApply:hover,
+.filterPopupApply:focus-visible {
+   opacity: 1;
+}
+
+.filterPopupClear::after,
+.filterPopupApply::after {
+   content: '';
+   display: block;
+   width: 11px;
+   height: 11px;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+}
+
+.filterPopupClear::after {
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 2L9 9M9 2L2 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.filterPopupApply::after {
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 6L4.5 8.5L9 2.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11'%3E%3Cpath d='M2 6L4.5 8.5L9 2.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 .choiceList {
@@ -589,6 +719,21 @@ th.columnClickable div {
    outline: none;
 }
 
+/* Sidebar character filter: a padded panel around a bordered input (the inline
+   header variant stays bare -- see createTextFilterUI). */
+.textFilterPopup {
+   padding: 8px;
+}
+
+.textFilterPopup .textFilterBox {
+   width: 180px;
+   height: auto;
+   box-sizing: border-box;
+   padding: 4px 6px;
+   border: 1px solid var(--grid-border);
+   border-radius: 2px;
+}
+
 .clearFilter {
    position: absolute;
    top: 2px;
@@ -623,9 +768,11 @@ th.columnClickable div {
    ========================================================================== */
 
 .numHist {
-   width: 80px;
+   width: 130px;
    height: 80px;
-   margin: 4px 7px 10px 7px;
+   /* auto side margins center the fixed-width histogram within the popup,
+      which may be wider than the histogram (the value box can be wider). */
+   margin: 4px auto 10px auto;
    padding: 10px;
    position: relative;
 }
@@ -653,7 +800,10 @@ th.columnClickable div {
    border-radius: 2px;
    margin-left: 5px;
    margin-right: 5px;
-   width: 100px;
+   /* Fill the popup width (set by the histogram) rather than a fixed 100px, so
+      a date range gets more room before it overflows the input. */
+   width: calc(100% - 10px);
+   box-sizing: border-box;
    background-color: var(--grid-bg);
    color: var(--grid-fg);
 }
@@ -764,6 +914,14 @@ th.columnClickable div {
    text-overflow: ellipsis;
 }
 
+/* "(filtered)" qualifier appended to the column count when the summaries
+   describe a filtered subset rather than the whole frame. Dimmed + italic so
+   it reads as an annotation on the count, not part of it. */
+.sidebar-toggle-filtered {
+   font-style: italic;
+   opacity: 0.7;
+}
+
 /* Help affordance; owns the auto margin that pushes it (and the close
    glyph after it) to the right edge. A real button, unlike the decorative
    close glyph: activating it opens the help dialog rather than collapsing
@@ -822,7 +980,7 @@ th.columnClickable div {
 
 .sidebar-help-dialog {
    position: relative;
-   width: 340px;
+   width: 400px;
    max-width: calc(100vw - 40px);
    max-height: calc(100vh - 40px);
    overflow-y: auto;
@@ -889,6 +1047,10 @@ th.columnClickable div {
    background-color: var(--grid-spark-categorical);
 }
 
+.sidebar-help-swatch.date {
+   background-color: var(--grid-spark-date);
+}
+
 #sidebarContent {
    flex: 1;
    overflow-y: auto;
@@ -897,14 +1059,24 @@ th.columnClickable div {
       sidebar's sparklines off the root layer so a grid scroll cannot
       trigger their repaint (#17806). */
    contain: layout paint;
-   /* Hide native scrollbar -- a custom floating one is rendered inside
-      #sidebarPanel by attachSidebarScrollbar. */
-   scrollbar-width: none;                /* Firefox */
    /* Same rationale as #gridViewport: known content height, so suppress
       the bounce and prevent scroll chaining. */
    overscroll-behavior: none;
+   /* The entry list is virtualized: renderSidebarWindow replaces ALL visible
+      entries (and resizes the top spacer) on every window change. With scroll
+      anchoring enabled the browser would adjust scrollTop to compensate for
+      that wholesale content shift, which re-fires the scroll handler and
+      re-renders -- a self-sustaining scroll loop. The virtualizer manages the
+      scroll position itself via the spacers, so opt out of anchoring. */
+   overflow-anchor: none;
 }
-#sidebarContent::-webkit-scrollbar {
+/* Hide native scrollbar only in overlay-scrollbar mode -- a custom floating
+   one is rendered inside #sidebarPanel by attachSidebarScrollbar. See the
+   #gridViewport rules above for how the .overlay-scrollbars class is toggled. */
+body.overlay-scrollbars #sidebarContent {
+   scrollbar-width: none;                /* Firefox */
+}
+body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
    display: none;                        /* Chromium */
 }
 
@@ -914,6 +1086,12 @@ th.columnClickable div {
    padding: 6px 8px;
    border-bottom: 1px solid var(--grid-border);
    cursor: pointer;
+   /* Fixed height so the virtualized sidebar can place each entry at
+      index x --sidebar-entry-height without measuring. box-sizing keeps the
+      padding inside that height; overflow stays visible so the sparkline's
+      hover tooltip can escape downward. */
+   box-sizing: border-box;
+   height: var(--sidebar-entry-height);
 }
 
 .sidebar-col:hover {
@@ -1014,11 +1192,64 @@ th.columnClickable div {
    cursor: default;
 }
 
+/* Filter icon (funnel glyph). Always shown; faint when inactive, fully opaque
+   when the column has an active filter -- the same opacity-based active/idle
+   treatment as the pin and sort icons. Clicking it opens the column's filter
+   popup (see openColumnFilterFromSidebar). */
+.sidebar-filter-icon {
+   display: inline-block;
+   width: 10px;
+   height: 10px;
+   margin-left: 2px;
+   flex-shrink: 0;
+   align-self: center;
+   cursor: pointer;
+   opacity: 0.3;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 2L9 2L6 5L6 9L4 8L4 5Z'/%3E%3C/svg%3E");
+}
+
+/* When ordering is disabled there is no sort icon, so the funnel is the last
+   element in the header row -- give it the same right margin the sort icon
+   uses to clear the floating scrollbar that overlays the panel's right edge. */
+.sidebar-filter-icon:last-child {
+   margin-right: 4px;
+}
+
+/* Brighten only on direct hover/focus of the icon itself -- not on
+   .sidebar-col:hover (that's the pin icon's reveal-on-entry-hover pattern,
+   which would light the always-visible funnel whenever the mouse is anywhere
+   over the entry). Matches the sort icon's :hover rule. */
+.sidebar-filter-icon:hover,
+.sidebar-filter-icon:focus-visible {
+   opacity: 0.6;
+}
+
+.sidebar-filter-icon.active {
+   opacity: 0.9;
+}
+
+.sidebar-filter-icon.active:hover,
+.sidebar-filter-icon.active:focus-visible {
+   opacity: 1;
+}
+
 
 /* --- Sparkline histogram --- */
 
 .sidebar-sparkline {
    margin-top: 3px;
+   /* Always reserve the sparkline's vertical space, even for columns without a
+      histogram/category bars (or before the summary loads), so every entry is
+      the constant --sidebar-entry-height the virtualizer assumes. */
+   height: 24px;
 }
 
 .sidebar-sparkline canvas {
@@ -1135,33 +1366,15 @@ th.columnClickable div {
    opacity: 0.6;
 }
 
-/* --- Stats panel --- */
+/* --- Stats popover --- */
 
-.sidebar-stats {
-   margin-top: 4px;
-   padding-top: 4px;
-   border-top: 1px solid var(--grid-border);
-}
-
-.sidebar-spinner {
-   display: inline-block;
-   width: 10px;
-   height: 10px;
-   margin-left: 6px;
-   vertical-align: middle;
-   border: 1.5px solid var(--grid-border);
-   border-top-color: var(--grid-fg);
-   border-radius: 50%;
-   animation: spin 0.6s linear infinite, fade-in 1s ease 0.2s both;
-}
-
-@keyframes fade-in {
-   from { opacity: 0; }
-   to   { opacity: 1; }
-}
-
-@keyframes spin {
-   to { transform: rotate(360deg); }
+/* Detailed stats open in a floating popover (anchored to the entry's expand
+   button) rather than growing the entry inline -- which keeps every entry the
+   constant height the virtualized sidebar requires. Reuses the .filterPopup box
+   chrome; this just supplies the padding and a sensible minimum width. */
+.sidebar-stats-popup {
+   padding: 6px 8px;
+   min-width: 140px;
 }
 
 .sidebar-stats-table {
@@ -1257,9 +1470,11 @@ th.columnClickable div {
 /* ==========================================================================
    Custom Scrollbars
 
-   Rendered as absolutely-positioned divs inside #gridPanel. The vertical
-   bar starts below the sticky header; the horizontal bar starts after
-   the pinned columns. Position offsets are set dynamically from JS.
+   Rendered as absolutely-positioned divs inside #gridPanes (the row holding
+   the frozen pinned pane and the scrolling unpinned pane). The vertical bar
+   starts below the sticky header; the horizontal bar starts after the pinned
+   pane and tracks the unpinned pane. Position offsets are set dynamically
+   from JS.
    ========================================================================== */
 
 .custom-scrollbar {
@@ -1276,13 +1491,13 @@ th.columnClickable div {
 
 .custom-scrollbar.vertical {
    right: 0;
-   width: 10px;
+   width: 11px;
    /* top and height set from JS */
 }
 
 .custom-scrollbar.horizontal {
-   bottom: var(--info-bar-height);
-   height: 10px;
+   bottom: 0;                            /* #gridPanes sits above the info bar */
+   height: 11px;
    /* left and width set from JS */
 }
 
@@ -1308,7 +1523,7 @@ th.columnClickable div {
 }
 
 .custom-scrollbar.vertical .scrollbar-thumb {
-   width: 7px;
+   width: 8px;
    right: 1px;
    left: 1px;
    min-height: 20px;
@@ -1316,7 +1531,7 @@ th.columnClickable div {
 }
 
 .custom-scrollbar.horizontal .scrollbar-thumb {
-   height: 7px;
+   height: 8px;
    bottom: 1px;
    top: 1px;
    min-width: 20px;
