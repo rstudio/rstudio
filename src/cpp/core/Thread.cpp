@@ -95,6 +95,8 @@ bool joinOrAbandonThread(boost::thread& thread,
       }
       catch (...)
       {
+         // Intentionally empty: a throwing detach() here is unrecoverable
+         // mid-teardown, and we must not let an exception escape (see above).
       }
       return false;
    }

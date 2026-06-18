@@ -135,6 +135,10 @@ public:
    
    ~ConsoleInputService()
    {
+      // seconds(1) is a real 1-second bound. This replaced a prior bare
+      // timed_join(1), which boost interprets as 1 nanosecond -- effectively no
+      // wait, which left the thread joinable and could std::terminate from this
+      // destructor. The worker polls boost interruption points, so interrupt.
       core::thread::joinOrAbandonThread(
             thread_,
             "console input service thread",
