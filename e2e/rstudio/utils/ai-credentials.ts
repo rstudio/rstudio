@@ -89,7 +89,16 @@ export function requireAiCredentials(
   test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
-  test.beforeEach(() => {
+  // Skip in beforeAll, not beforeEach: every @ai describe registers a
+  // beforeAll that opens the chat pane and drives sign-in, and Playwright
+  // runs beforeAll *before* beforeEach. A beforeEach-based skip would let
+  // setup run (and OAuth fail) before the skip ever fired. Calling
+  // test.skip from beforeAll aborts the whole suite, including the
+  // sibling beforeAll hooks that follow this one -- which only works if
+  // requireAiCredentials is invoked *before* the spec's own beforeAll
+  // registration (the established pattern: first call inside the
+  // describe body).
+  test.beforeAll(() => {
     // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
     // seeded. sandbox-setup.ts clears these at start of run and sets "1"
     // only on a successful copy, so any other value is treated as unseeded.

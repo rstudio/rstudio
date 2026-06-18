@@ -1,5 +1,8 @@
 import type { Page } from 'playwright';
 import { chromium, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
@@ -196,17 +199,44 @@ export class ChatPaneActions {
     console.log(`signInWith: opening posit.cloud at user_code=${userCode}`);
 
     const browser = await chromium.launch();
-    try {
-      const context = await browser.newContext();
-      const popup = await context.newPage();
+    // login.posit.cloud returns a 400 "Invalid request" page when the
+    // request comes from a default Playwright UA (it includes
+    // "HeadlessChrome", which the login backend rejects as a bot). With a
+    // realistic Chrome UA the page renders the actual Log In form. Pin
+    // the UA here -- not via the global config -- because this is the
+    // only place we touch a third-party site; rstudioPage shouldn't
+    // masquerade as a browser version it isn't.
+    const context = await browser.newContext({
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+    });
+    // Record a trace + console so we can see exactly what login.posit.cloud
+    // served when a step times out in CI. Without this we get a bare
+    // "locator.fill timeout" with no insight into the popup -- this form
+    // of OAuth automation has been hard to debug because the popup is a
+    // sibling browser, not the main rstudioPage that test fixtures
+    // already trace.
+    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+    const popupConsole: string[] = [];
+    const popup = await context.newPage();
+    popup.on('console', (msg) => popupConsole.push(`[${msg.type()}] ${msg.text()}`));
 
+    try {
       await popup.goto(url, { waitUntil: 'domcontentloaded' });
 
-      await popup.getByRole('textbox', { name: 'Email' }).fill(account.email);
+      // The Email and Password inputs on login.posit.cloud are
+      // <input placeholder="..."> with no aria-label / <label>, so they
+      // have no accessible name -- getByRole('textbox', { name: 'Email' })
+      // matches nothing. getByPlaceholder is the supported selector for
+      // this form.
+      await popup.getByPlaceholder('Email').fill(account.email);
       await popup.getByRole('button', { name: 'Continue' }).click();
 
-      await popup.getByRole('textbox', { name: 'Password' }).fill(account.password);
-      await popup.getByRole('button', { name: 'Log in' }).click();
+      await popup.getByPlaceholder('Password').fill(account.password);
+      // exact:true so we don't match the "Log in with Google / GitHub /
+      // Clever" buttons that share the same prefix on the email step.
+      await popup.getByRole('button', { name: 'Log in', exact: true }).click();
 
       // Some posit.cloud sessions show an intermediate "Continue" step
       // (account selection / consent) before the device-authorize page.
@@ -219,9 +249,52 @@ export class ChatPaneActions {
       await popup.getByRole('button', { name: 'Authorize' }).click();
       await expect(popup.getByRole('heading', { name: 'Access Authorized' }))
         .toBeVisible({ timeout: 15_000 });
+
+      await context.tracing.stop();
+    } catch (err) {
+      await this.dumpPopupDiagnostics(popup, context, popupConsole, userCode).catch(() => {});
+      throw err;
     } finally {
       await browser.close();
     }
+  }
+
+  /**
+   * On signInWith failure, capture everything we can about the popup's
+   * state -- screenshot, HTML, URL, console log, and the in-progress
+   * trace -- under PW_SANDBOX/oauth-debug/ (or os.tmpdir() as fallback).
+   * The sandbox dir is uploaded as a workflow artifact on failure, so
+   * these files end up downloadable from the run.
+   */
+  private async dumpPopupDiagnostics(
+    popup: import('playwright').Page,
+    context: import('playwright').BrowserContext,
+    popupConsole: string[],
+    userCode: string,
+  ): Promise<void> {
+    const root = process.env.PW_SANDBOX
+      ? path.join(process.env.PW_SANDBOX, 'oauth-debug')
+      : path.join(os.tmpdir(), 'rstudio-pw-oauth-debug');
+    fs.mkdirSync(root, { recursive: true });
+    const stamp = `${Date.now()}-${userCode}`;
+
+    const screenshotPath = path.join(root, `popup-${stamp}.png`);
+    const htmlPath = path.join(root, `popup-${stamp}.html`);
+    const consolePath = path.join(root, `popup-${stamp}.console.log`);
+    const tracePath = path.join(root, `popup-${stamp}-trace.zip`);
+
+    try { await popup.screenshot({ path: screenshotPath, fullPage: true }); } catch {}
+    try { fs.writeFileSync(htmlPath, await popup.content()); } catch {}
+    try {
+      const url = popup.url();
+      fs.writeFileSync(
+        consolePath,
+        `popup url: ${url}\nuser_code: ${userCode}\n\n--- console ---\n${popupConsole.join('\n')}\n`,
+      );
+    } catch {}
+    try { await context.tracing.stop({ path: tracePath }); } catch {}
+
+    console.warn(`signInWith: dumped popup diagnostics to ${root}`);
   }
 
   /**
