@@ -200,12 +200,17 @@ ProgramStatus Options::read(int argc,
    optionsDesc.commandLine.add(automation).add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
  
-   // read options
+   // read options; pass deferCheckConfig=true so that a clean --check-config
+   // result returns run() rather than exitSuccess(), allowing ServerMain to
+   // run extended file-path and R-installation checks before exiting.
    bool help = false;
    ProgramStatus status = core::program_options::read(optionsDesc,
                                                       argc,
                                                       argv,
-                                                      &help);
+                                                      &help,
+                                                      false /* allowUnregisteredConfigOptions */,
+                                                      false /* configFileHasPrecedence */,
+                                                      true  /* deferCheckConfig */);
 
    // terminate if this was a help request
    if (help)

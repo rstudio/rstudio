@@ -108,23 +108,33 @@ struct OptionsDescription
 };
 
 
+// Primary overload.  When deferCheckConfig is true and --check-config (or the
+// deprecated --test-config alias) is present, the function performs the syntax
+// parse and prints the per-file [PASS]/[FAIL] line but, on a clean result,
+// returns ProgramStatus::run() instead of exitSuccess so that the caller can
+// run additional extended checks before exiting.  When deferCheckConfig is
+// false (the default) the original behaviour is preserved: a clean check
+// returns exitSuccess immediately.
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    const char * const argv[],
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
                    bool allowUnregisteredConfigOptions = false,
-                   bool configFileHasPrecedence = false);
+                   bool configFileHasPrecedence = false,
+                   bool deferCheckConfig = false);
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           const char * const argv[],
                           bool* pHelp,
                           bool allowUnregisteredConfigOptions = false,
-                          bool configFileHasPrecedence = false)
+                          bool configFileHasPrecedence = false,
+                          bool deferCheckConfig = false)
 {
    return read(optionsDescription, argc, argv, NULL, pHelp,
-               allowUnregisteredConfigOptions, configFileHasPrecedence);
+               allowUnregisteredConfigOptions, configFileHasPrecedence,
+               deferCheckConfig);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
@@ -132,22 +142,26 @@ inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           const char * const argv[],
                           std::vector<std::string>* pUnrecognized,
                           bool allowUnregisteredConfigOptions = false,
-                          bool configFileHasPrecedence = false)
+                          bool configFileHasPrecedence = false,
+                          bool deferCheckConfig = false)
 {
    bool help;
    return read(optionsDescription, argc, argv, pUnrecognized, &help,
-               allowUnregisteredConfigOptions, configFileHasPrecedence);
+               allowUnregisteredConfigOptions, configFileHasPrecedence,
+               deferCheckConfig);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           const char * const argv[],
                           bool allowUnregisteredConfigOptions = false,
-                          bool configFileHasPrecedence = false)
+                          bool configFileHasPrecedence = false,
+                          bool deferCheckConfig = false)
 {
    bool help;
    return read(optionsDescription, argc, argv, &help,
-               allowUnregisteredConfigOptions, configFileHasPrecedence);
+               allowUnregisteredConfigOptions, configFileHasPrecedence,
+               deferCheckConfig);
 }
 
 void reportError(const Error& error,
