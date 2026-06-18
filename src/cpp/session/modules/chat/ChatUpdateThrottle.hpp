@@ -60,6 +60,18 @@ struct SuccessOutcome
    ManifestCheckRecord record;
 };
 
+// The pending-update fields of the update state: what the last completed manifest
+// check found, and what an install would act on. These are carried across a
+// throttled skip (a check that does not re-fetch the manifest).
+struct PendingUpdate
+{
+   bool updateAvailable = false;
+   bool isDowngrade = false;
+   std::string newVersion;
+   std::string downloadUrl;
+   std::string expectedSha256;
+};
+
 // Path of the persisted record: <userDataDir>/pai/manifest-check.json.
 core::FilePath manifestCheckStatePath();
 
@@ -121,6 +133,17 @@ SuccessOutcome buildSuccessOutcome(std::time_t now,
                                    bool versionUnsupported,
                                    bool protocolMismatch,
                                    bool unsupportedProtocol);
+
+// Pure: the pending update to keep after a throttled skip (a check that does not
+// re-fetch the manifest). A skip learns nothing new, so the prior fetch's result
+// remains authoritative and must not be discarded -- but only while the installed
+// version is unchanged from the check that produced it (priorInstalledVersion).
+// If it changed out of band (a manual or parallel install, or the update itself
+// was applied), the pending target and its upgrade/downgrade classification are
+// stale, so the pending update is cleared and the next due fetch recomputes it.
+PendingUpdate carryPendingUpdateThroughSkip(const PendingUpdate& prior,
+                                            const std::string& priorInstalledVersion,
+                                            const std::string& installedVersion);
 
 } // namespace throttle
 } // namespace chat
