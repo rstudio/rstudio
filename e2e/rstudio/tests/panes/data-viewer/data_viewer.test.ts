@@ -702,7 +702,9 @@ test.describe('Data Viewer', () => {
       const pinnedHeader = dataViewer.frame.locator('th[data-col-idx="1"]');
       await expect(pinnedHeader).toHaveClass(/\bpinned\b/);
       await expect(pinnedHeader).toHaveAttribute('title', /^column 1:/);
-      await expect(dataViewer.frame.locator('#gridBody td.pinned', { hasText: 'PINSENTINEL' }).first())
+      // Pinned body cells render in the frozen pane's own table (#pinnedBody),
+      // not the scrollable #gridBody, since #17977 split the panes.
+      await expect(dataViewer.frame.locator('#pinnedBody td.pinned', { hasText: 'PINSENTINEL' }).first())
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await consoleActions.executeInConsole('rm(".rs.pin_paginate_df", envir = .GlobalEnv)');
@@ -1740,7 +1742,11 @@ test.describe('Data Viewer', () => {
       const sidebarPin2 = dataViewer.frame
         .locator('.sidebar-col[data-col-idx="2"] .sidebar-pin-icon');
       await sidebarPin2.click();
-      await expect.poll(() => colHeaderClass(dataViewer, 2)).not.toMatch(/\bpinned\b/);
+      // Confirm the unpin via the sidebar pin icon, NOT column 2's header:
+      // once unpinned, column 2 returns to its far-left position, which is
+      // scrolled out of the virtualized column window and has no rendered
+      // <th>, so colHeaderClass(2) would block on a missing element.
+      await expect(sidebarPin2).not.toHaveClass(/\bpinned\b/);
 
       const scrollAfter = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
       expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThan(3);

@@ -13,6 +13,9 @@ test.describe('Viewer pane htmlwidgets', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache install can outlast the global per-test timeout; keep the
+    // headroom this hook's 600s ensurePackages() budget assumes.
+    test.setTimeout(600000);
     consoleActions = new ConsolePaneActions(page);
     // plotly pulls a large dependency tree; allow plenty of install time.
     missingPackages = await consoleActions.ensurePackages(['plotly'], 600_000);
