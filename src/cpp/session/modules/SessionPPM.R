@@ -409,6 +409,7 @@
          "(?<platform>[^/]+)/",             # platform for binaries
       ")?",                                 # end optional binary parts
       "(?<snapshot>[^/]+)",                 # snapshot
+      "/?",                                 # tolerate a trailing slash
       "$"
    )
    

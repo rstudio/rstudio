@@ -498,6 +498,21 @@ test_that("fromRepositoryUrl classifies a plain PPM repo URL", {
    expect_false(nzchar(parts[["binary"]]))
 })
 
+test_that("fromRepositoryUrl tolerates a trailing slash", {
+   # RStudio's own CRAN-mirror UI normalizes the repo URL with a trailing slash,
+   # so a UI-configured PPM repo lands in options(repos) as ".../latest/". Both
+   # forms must be detected as the same repo, or such users silently get no
+   # vulnerability badges (rstudio#18018).
+   bare <- .rs.ppm.fromRepositoryUrl("https://packagemanager.posit.co/cran/latest")
+   slash <- .rs.ppm.fromRepositoryUrl("https://packagemanager.posit.co/cran/latest/")
+   expect_false(is.null(slash))
+   expect_equal(slash[["root"]], "https://packagemanager.posit.co")
+   expect_equal(slash[["repos"]], "cran")
+   expect_equal(slash[["snapshot"]], "latest")
+   # the snapshot must not absorb the trailing slash
+   expect_equal(slash[["snapshot"]], bare[["snapshot"]])
+})
+
 test_that("fromRepositoryUrl extracts the optional binary / platform parts", {
    parts <- .rs.ppm.fromRepositoryUrl(
       "https://packagemanager.posit.co/cran/__linux__/jammy/2024-01-01"
