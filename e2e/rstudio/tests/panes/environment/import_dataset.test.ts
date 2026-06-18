@@ -41,13 +41,27 @@ async function awaitPreviewOrSkip(
   previewFrame: FrameLocator,
 ): Promise<void> {
   const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
+
+  // Wait for the preview to show its first column header. If it times out,
+  // check for an error indicator to provide a more specific diagnostic.
   const previewReady = await firstColHeader
     .waitFor({ state: 'visible', timeout: 45000 })
     .then(() => true)
-    .catch(() => false);
+    .catch(async () => {
+      // Header never appeared -- check for an error message in the dialog
+      // to include in the diagnostic. The error indicator uses the progress
+      // indicator's error label (shown when getErrorMessage returns a value).
+      const errorLabels = await dialog.locator('.gwt-Label').allTextContents().catch(() => []);
+      const errorMessage = errorLabels.find((t) => t.includes('valid CSV file') || t.includes('error'));
+      if (errorMessage) {
+        test.fixme(os.platform() === 'win32' && !!process.env.CI, `readr CSV preview failed on Windows CI: ${errorMessage.trim()}`);
+      } else {
+        test.fixme(os.platform() === 'win32' && !!process.env.CI, 'readr CSV preview subprocess did not load on Windows CI');
+      }
+      return false;
+    });
   if (!previewReady) {
     await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'readr CSV preview subprocess did not load on Windows CI');
     throw new Error('readr CSV preview did not produce column headers within 45 s');
   }
 }

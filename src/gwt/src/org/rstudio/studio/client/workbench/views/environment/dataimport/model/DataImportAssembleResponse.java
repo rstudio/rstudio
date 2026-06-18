@@ -24,7 +24,10 @@ public class DataImportAssembleResponse extends JavaScriptObject
    }
    
    public final native String getErrorMessage() /*-{
-      return this.error ? this.error.message.join(' ') : null;
+      if (!this.error || !this.error.message)
+         return null;
+      var msg = this.error.message;
+      return (msg instanceof Array) ? msg.join(' ') : String(msg);
    }-*/;
    
    public final native String getPreviewCode() /*-{

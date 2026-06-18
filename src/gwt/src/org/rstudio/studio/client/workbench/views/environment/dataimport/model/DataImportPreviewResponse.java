@@ -24,7 +24,12 @@ public class DataImportPreviewResponse extends JavaScriptObject
    }
    
    public final native String getErrorMessage() /*-{
-      return (this.error && this.error.message) ? this.error.message.join(' ') : null;
+      if (!this.error || !this.error.message)
+         return null;
+      // The message may be a string (from C++ subprocess errors) or an array
+      // (from R-side errors). Handle both defensively.
+      var msg = this.error.message;
+      return (msg instanceof Array) ? msg.join(' ') : String(msg);
    }-*/;
    
    public final native int getParsingErrors() /*-{
