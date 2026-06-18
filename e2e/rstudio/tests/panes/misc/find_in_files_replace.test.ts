@@ -154,6 +154,10 @@ test.describe('Find in Files', () => {
     await expect(findPane).toContainText('noop_only.txt', { timeout: TIMEOUTS.fileOpen });
     await expect(findPane).toContainText('real_change.txt');
 
+    // The replace-mode toggle is disabled until the find finishes (the stop-
+    // search button is hidden when it has); wait for that before toggling.
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+
     // Switch to replace mode and enter the replacement; this triggers the regex
     // replace preview (debounced) which re-runs the search server-side.
     await page.locator(REPLACE_MODE_TOGGLE).click();
@@ -208,6 +212,9 @@ test.describe('Find in Files', () => {
     await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
     await expect(findPane).toContainText('allnoop.txt');
 
+    // wait for the find to finish (toggle is disabled until then)
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+
     // Switch to replace mode and enter the replacement; the literal preview is
     // painted client-side from the cached search results.
     await page.locator(REPLACE_MODE_TOGGLE).click();
@@ -252,6 +259,9 @@ test.describe('Find in Files', () => {
 
     const findPane = page.locator(FIND_PANE);
     await expect(findPane).toContainText('mixed_regex.txt', { timeout: TIMEOUTS.fileOpen });
+
+    // wait for the find to finish (toggle is disabled until then)
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
 
     await page.locator(REPLACE_MODE_TOGGLE).click();
     const replaceInput = page.locator(REPLACE_INPUT);
