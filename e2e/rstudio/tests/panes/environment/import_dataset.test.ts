@@ -22,6 +22,7 @@ import { executeCommand } from '@utils/commands';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
+import { rPathLiteral } from '@utils/r';
 
 // The dialog's aria-label comes from the caption passed to the
 // ModalDialog ctor in DataImportPresenter (constants_.importTextData()).
@@ -59,9 +60,12 @@ async function openReadrCsvPreview(
 ): Promise<{ dialog: Locator; previewFrame: FrameLocator }> {
   // Write the CSV via the R session so the path is valid on the rsession host
   // (matters for Server mode where runner and session can be on different
-  // machines).
+  // machines). rPathLiteral normalizes Windows backslashes to forward slashes
+  // before quoting -- raw interpolation of a Windows path here trips R's
+  // "unrecognized escape" parser on sequences like `\p`, `\a`, `\r`, which
+  // leaves the file uncreated and the readr preview hanging.
   await consoleActions.executeInConsole(
-    `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
+    `writeLines(c("a,b,c","1,2,3","4,5,6"), ${rPathLiteral(csvPath)})`,
     { wait: true },
   );
 
