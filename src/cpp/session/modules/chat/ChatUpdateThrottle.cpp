@@ -220,6 +220,26 @@ SuccessOutcome buildSuccessOutcome(std::time_t now,
    return out;
 }
 
+PendingUpdate carryPendingUpdateThroughSkip(const PendingUpdate& prior,
+                                            const std::string& priorInstalledVersion,
+                                            const std::string& installedVersion)
+{
+   // No pending update from the last completed check -> nothing to carry.
+   if (!prior.updateAvailable)
+      return PendingUpdate();
+
+   // The installed version changed since the check that computed this pending
+   // update (an out-of-band install, or the update itself was applied). Its
+   // target and upgrade/downgrade classification are stale -> clear, and let the
+   // next due fetch recompute against the current install.
+   if (installedVersion != priorInstalledVersion)
+      return PendingUpdate();
+
+   // Installed version unchanged: the last fetch's pending update still applies
+   // exactly. A throttled skip re-fetches nothing, so it must not discard it.
+   return prior;
+}
+
 } // namespace throttle
 } // namespace chat
 } // namespace modules
