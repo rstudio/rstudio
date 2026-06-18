@@ -439,6 +439,26 @@ boost::thread run(F&& f)
 void safeLaunchThread(boost::function<void()> threadMain,
                       boost::thread* pThread = nullptr);
 
+// Best-effort join for a background worker on the process-exit path. Waits up
+// to `timeout` for `thread` to finish; if it doesn't, logs a warning naming the
+// thread and detaches it (so ~boost::thread does not std::terminate() on a
+// still-joinable handle) and returns so shutdown can proceed instead of hanging
+// indefinitely. A non-joinable thread (never started or already joined) is a
+// no-op. Returns true if the thread was joined, false if it timed out and was
+// detached. Never throws, so it is safe to call from a destructor.
+//
+// `interrupt` is deliberately required so every caller decides how its thread
+// is woken: pass true for a thread whose run loop polls boost interruption
+// points (this calls boost::thread::interrupt() before joining); pass false for
+// a thread woken another way (for example an io_context worker, which is not an
+// interruption point and must be released via io_context::stop() by the caller
+// before calling this).
+bool joinOrAbandonThread(
+   boost::thread& thread,
+   const std::string& name,
+   bool interrupt,
+   const boost::posix_time::time_duration& timeout = boost::posix_time::seconds(3));
+
 void initializeMainThreadId(boost::thread::id id);
 
 bool isMainThread();
