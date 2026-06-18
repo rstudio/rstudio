@@ -9,7 +9,7 @@ import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
-import { rLibsUserTemplate } from './r-libs-setup';
+import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
 
@@ -34,7 +34,37 @@ function sandboxRoot(): string {
 // createTempConfig), only as the source of the seeded Posit Assistant build
 // (data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is set).
 const sandboxDataHome = () => path.join(sandboxRoot(), 'data-home');
-const sharedUserHome = () => path.join(sandboxRoot(), 'user-home');
+
+// HOME / USERPROFILE for the current worker. Single-worker runs (the default)
+// use the seeded template home directly -- byte-for-byte the historical
+// behavior. Parallel runs give every worker its own copy of the template,
+// keyed on the stable parallel index, so concurrent workers never write the
+// same HOME (RStudio user state, command history, AI credentials, ...). The
+// copy is lazy and idempotent; the template carries the seeded AI credentials
+// and Windows AppData scaffold, so each worker's copy starts authenticated.
+function workerUserHome(): string {
+  const template = path.join(sandboxRoot(), 'user-home');
+
+  const totalWorkers = Number(process.env.PW_TOTAL_WORKERS ?? '1');
+  if (!Number.isFinite(totalWorkers) || totalWorkers <= 1) {
+    return template;
+  }
+
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  const home = path.join(sandboxRoot(), `user-home-${idx}`);
+  if (!fs.existsSync(home)) {
+    // Copy into a temp sibling and atomically rename, so a crash mid-copy can't
+    // leave a partial HOME that later reads as complete (missing seeded AI creds
+    // / Windows AppData scaffold). The parallel index is exclusive to one worker
+    // process at a time, so the temp name only needs to be unique against a
+    // prior aborted attempt.
+    const tmp = `${home}.partial`;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.cpSync(template, tmp, { recursive: true });
+    fs.renameSync(tmp, home);
+  }
+  return home;
+}
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
   let raw: string;
@@ -62,7 +92,19 @@ export const RSTUDIO_PATH = process.platform === 'win32'
   : process.platform === 'darwin'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
-export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
+// Deterministic per-worker CDP port: each parallel worker gets its own fixed
+// port (base + parallel index) so concurrent workers never collide. A random
+// port would, with a handful of workers, occasionally have two workers draw the
+// same value -- and the per-launch `lsof :PORT | kill` cleanup would then kill
+// another worker's RStudio. The dev/logger ports derive from this (+1000/+2000),
+// so a small index keeps all three bands disjoint. PW_CDP_PORT overrides for
+// single-instance debugging.
+const CDP_PORT_BASE = 9231;
+function defaultCdpPort(): number {
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  return CDP_PORT_BASE + idx;
+}
+export const CDP_PORT = Number(process.env.PW_CDP_PORT) || defaultCdpPort();
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
 
 // PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
@@ -290,9 +332,10 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
 }
 
 async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
-  // Clean up any existing RStudio on our specific CDP port. The port is
-  // random per worker (9231-9299), so a collision is rare -- only happens
-  // when an orphaned process from a prior interrupted run is still bound.
+  // Clean up any existing RStudio on our specific CDP port. The port is fixed
+  // per worker (base + parallel index), so this only ever reclaims an orphaned
+  // process from a prior interrupted run on this worker's own port -- never a
+  // sibling worker's live instance.
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
@@ -382,12 +425,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
-      HOME: sharedUserHome(),
+      HOME: workerUserHome(),
       // R expands %p / %v at startup; the resolved path is the same one
       // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
       // this explicitly is necessary because HOME is redirected -- without it,
-      // R derives an empty default library inside the per-run sandbox.
-      R_LIBS_USER: rLibsUserTemplate(),
+      // R derives an empty default library inside the per-run sandbox. Under
+      // parallel runs this resolves to a per-worker hermetic clone of that
+      // library so concurrent installs/removes can't race or leak.
+      R_LIBS_USER: workerRLibsUser(),
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
       RSTUDIO_CONFIG_HOME: tempConfig.configHome,
       RSTUDIO_CONFIG_ROOT: tempConfig.root,
@@ -416,16 +461,15 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
       // from the per-worker CDP port so concurrent workers -- and a developer's
       // own manually-launched dev instance on the defaults -- don't collide.
-      // The +1000/+2000 offsets exceed CDP_PORT's spread (9231 + 0..68, a span
-      // of 68 << 1000), so the CDP / dev / logger bands never overlap across
-      // workers; the only residual collision is two workers drawing the same
-      // CDP_PORT, which already conflicts on CDP itself.
+      // CDP ports are now fixed per worker (base + parallel index), so with a
+      // realistic worker count the CDP / dev (+1000) / logger (+2000) bands stay
+      // disjoint and no two workers share a port.
       // forge.config.js reads these; ignored by the installed-binary path.
       ...(DEV_MODE ? {
         RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
         RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
       } : {}),
-      USERPROFILE: sharedUserHome(),
+      USERPROFILE: workerUserHome(),
     },
   };
   if (DEV_MODE) {

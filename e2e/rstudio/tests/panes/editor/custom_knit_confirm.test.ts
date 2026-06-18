@@ -25,6 +25,9 @@ test.describe('Custom knit render confirmation', () => {
   let fileName = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache package install can outlast the global per-test timeout;
+    // keep the headroom this install hook's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.resetSourcePane();
 

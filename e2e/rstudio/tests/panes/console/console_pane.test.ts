@@ -86,7 +86,6 @@ test.describe('Console pane', () => {
   });
 
   test('writeLines outputs all 10000 lines without truncation', async () => {
-    test.setTimeout(90000);
     await consoleActions.executeInConsole('long <- as.character(1:1E4)');
     await consoleActions.executeInConsole('writeLines(long)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('10000', {

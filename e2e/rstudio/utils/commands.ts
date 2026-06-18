@@ -233,16 +233,50 @@ function snakeToCamel(s: string): string {
 
 /** Run an AppCommand by id (no console roundtrip). */
 export async function executeCommand(page: Page, commandId: string): Promise<void> {
-  // The bridge is transiently absent during session restarts (project open
-  // /close, Restart R). Wait for the specific command to land before
-  // dispatching so callers don't have to manage that themselves. When the
-  // bridge is already up, the condition is true on the first poll, so this
-  // adds no measurable latency to the steady-state path.
-  await page.waitForFunction(
-    (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
-    commandId,
-    { timeout: 10000, polling: 50 },
-  );
+  // Wait for the command to exist AND be ready to dispatch:
+  //  - existence covers the bridge being transiently absent during session
+  //    restarts (project open/close, Restart R);
+  //  - enabled-state covers the brief command-state lag after a focus or
+  //    cursor change (e.g. navigating into a chunk before executeCurrentChunk).
+  // Executing a disabled command trips a dev-build assertion in
+  // AppCommand.execute() (AppCommand.java) -- the handler never runs, so the
+  // failure surfaces as an opaque "AppCommand executed when it was not
+  // enabled" client exception plus a downstream hang. Gating here both
+  // absorbs the lag and, on timeout, names the offending command. When the
+  // command is already up and enabled the condition is true on the first
+  // poll, so this adds no measurable latency to the steady-state path.
+  //
+  // isEnabled() is `enabled_ && isVisible()` (AppCommand.isEnabled), but
+  // doExecute() only requires `enabled_`. Invisible programmatic commands
+  // (visible="false", e.g. restoreDefaultPaneAndTabLayoutNoPrompt) are
+  // therefore always reported disabled yet dispatch fine, so the gate would
+  // block them forever. Bypass the enabled-wait for invisible commands --
+  // their enabled_ flag isn't observable from JS, and they are not the
+  // focus/cursor-lag case this gate exists for.
+  const ENABLE_TIMEOUT = 10000;
+  try {
+    await page.waitForFunction(
+      (id) => {
+        const cmd = (window.rstudio?.commands as Record<string, ((() => void) & { isEnabled(): boolean; isVisible(): boolean }) | undefined> | undefined)?.[id];
+        return typeof cmd === 'function' && (cmd.isEnabled() || !cmd.isVisible());
+      },
+      commandId,
+      { timeout: ENABLE_TIMEOUT, polling: 50 },
+    );
+  } catch {
+    // Distinguish "never appeared" from "present but stayed disabled" so the
+    // failure names the command and its actual blocking condition, rather
+    // than a generic waitForFunction timeout.
+    const exists = await page.evaluate(
+      (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
+      commandId,
+    );
+    throw new Error(
+      exists
+        ? `Command "${commandId}" did not become enabled within ${ENABLE_TIMEOUT}ms`
+        : `Command "${commandId}" never became available within ${ENABLE_TIMEOUT}ms`,
+    );
+  }
   await page.evaluate((id) => {
     const r = window.rstudio!;
     const cmd = r.commands[id];
@@ -333,7 +367,18 @@ export async function drainClientExceptions(page: Page): Promise<ClientException
  * editor's value after this returns reflects the final on-disk content.
  */
 export async function saveDocument(page: Page, timeout = 5000): Promise<void> {
-  await executeCommand(page, 'saveSourceDoc');
+  // Only issue Save when the document is actually dirty. A clean document
+  // (e.g. one opened from a file that createAndOpenFile already wrote to
+  // disk) is already saved, and saveSourceDoc is disabled for it -- invoking
+  // it anyway would trip the disabled-command guard. The wait below then
+  // confirms the clean state regardless of which branch we took.
+  const dirty = await page.evaluate(() => {
+    const doc = window.rstudio?.documents.active() ?? null;
+    return doc !== null && doc.dirty;
+  });
+  if (dirty)
+    await executeCommand(page, 'saveSourceDoc');
+
   await page.waitForFunction(
     () => {
       const doc = window.rstudio?.documents.active() ?? null;

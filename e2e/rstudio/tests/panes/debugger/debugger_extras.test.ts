@@ -239,7 +239,9 @@ test.describe('R debugger extras', () => {
 
     test.beforeAll(async () => {
       // S7 installs from source on Linux PPM (or whatever ensurePackages
-      // resolves to). Give it room.
+      // resolves to). Give it room -- a cold-cache source build can outlast
+      // the global per-test timeout, so raise this hook's budget to match.
+      test.setTimeout(300000);
       s7Missing = await consoleActions.ensurePackages(['S7'], 180_000);
     });
 

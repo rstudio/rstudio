@@ -5,7 +5,7 @@ End-to-end tests are written in TypeScript with Playwright. The rsession is star
 The `window.rstudio` surface includes:
 
 - `window.rstudio.ready` -- boolean flipped to `true` once R's deferred init has run; the canonical "automation can start" signal (reset to `false` on restart or project open/close).
-- `window.rstudio.commands.<commandId>()` -- execute an AppCommand; `.isChecked()` / `.isEnabled()` query its state. `commands.list` is the array of all command ids.
+- `window.rstudio.commands.<commandId>()` -- execute an AppCommand; `.isChecked()` / `.isEnabled()` / `.isVisible()` query its state (note `isEnabled()` is `enabled_ && isVisible()`, so an invisible programmatic command reads disabled even when it dispatches fine). `commands.list` is the array of all command ids.
 - `window.rstudio.prefs.<camelCaseName>.get()` / `.set(value)` / `.clear()` -- `set` and `clear` return a Promise that resolves once the `setUserPrefs` RPC has landed server-side.
 - `window.rstudio.documents` -- `active()`, `activeEditor()` (native Ace editor), `open(path, opts?)`, `closeAllNoSave()`, `resetToUntitled()`.
 - `window.rstudio.project` -- `path()`, `name()`, `isActive()`, `open(path)`.

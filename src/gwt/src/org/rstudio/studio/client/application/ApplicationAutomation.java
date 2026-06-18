@@ -65,6 +65,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.commands.&lt;commandId&gt;()           // execute
  *   window.rstudio.commands.&lt;commandId&gt;.isChecked()
  *   window.rstudio.commands.&lt;commandId&gt;.isEnabled()
+ *   window.rstudio.commands.&lt;commandId&gt;.isVisible()
  *   window.rstudio.commands.list                       // string[] of all command ids
  *
  *   window.rstudio.prefs.&lt;camelCaseName&gt;.get()
@@ -472,6 +473,11 @@ public class ApplicationAutomation
       return command.isEnabled();
    }
 
+   private boolean isCommandVisible(AppCommand command)
+   {
+      return command.isVisible();
+   }
+
    private Object getPrefValue(Prefs.PrefValue<?> pref)
    {
       return pref.getValue();
@@ -636,6 +642,9 @@ public class ApplicationAutomation
       });
       fn.isEnabled = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandEnabled(*)(command);
+      });
+      fn.isVisible = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandVisible(*)(command);
       });
       $wnd.rstudio.commands[id] = fn;
    }-*/;

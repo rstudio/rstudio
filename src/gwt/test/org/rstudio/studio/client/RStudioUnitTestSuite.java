@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponseTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
@@ -71,6 +72,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ApplicationUtilsTests.class);
       suite.addTestSuite(ProjectMRUEntryTests.class);
       suite.addTestSuite(YamlTreeTests.class);
+      suite.addTestSuite(DataImportPreviewResponseTests.class);
 
       return suite;
    }

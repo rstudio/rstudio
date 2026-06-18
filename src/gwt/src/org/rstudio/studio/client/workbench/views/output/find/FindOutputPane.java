@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
@@ -73,7 +75,9 @@ public class FindOutputPane extends WorkbenchPane
          @Override
          public void onClick(ClickEvent event)
          {
-            if (!replaceMode_)
+            // the toggle is disabled while a find is running: entering replace
+            // mode then would build the preview from incomplete search results
+            if (!replaceMode_ && replaceModeToggleEnabled_)
                turnOnReplaceMode();
          }
       });
@@ -472,14 +476,50 @@ public class FindOutputPane extends WorkbenchPane
    public void enableReplace()
    {
       replaceTextBox_.setReadOnly(false);
-      replaceAllButton_.setEnabled(true);
+      setReplaceAllButtonEnabled(true);
+      setReplaceModeToggleEnabled(true);
    }
 
    @Override
    public void disableReplace()
    {
       replaceTextBox_.setReadOnly(true);
-      replaceAllButton_.setEnabled(false);
+      setReplaceAllButtonEnabled(false);
+      setReplaceModeToggleEnabled(false);
+   }
+
+   // The Find/Replace mode toggle has no enabled state of its own, so grey it
+   // out, block pointer input, and expose the state via aria-disabled; the
+   // click handler also consults replaceModeToggleEnabled_ so the mode cannot be
+   // toggled while disabled. Only the find-to-replace direction is gated -- the
+   // replace-to-find toggle (showReplaceButton_) stays usable.
+   private void setReplaceModeToggleEnabled(boolean enabled)
+   {
+      replaceModeToggleEnabled_ = enabled;
+
+      Element toggle = showFindButton_.getElement();
+      if (enabled)
+      {
+         toggle.getStyle().clearOpacity();
+         toggle.getStyle().clearProperty("pointerEvents");
+      }
+      else
+      {
+         toggle.getStyle().setOpacity(0.4);
+         toggle.getStyle().setProperty("pointerEvents", "none");
+      }
+      toggle.setAttribute("aria-disabled", enabled ? "false" : "true");
+   }
+
+   @Override
+   public void setReplaceAllButtonEnabled(boolean enabled)
+   {
+      replaceAllButton_.setEnabled(enabled);
+
+      // FocusWidget stores the disabled state as a DOM property, which is not
+      // observable as an attribute; mirror it to aria-disabled so the control's
+      // state is exposed to assistive technology (and automated tests)
+      Roles.getButtonRole().setAriaDisabledState(replaceAllButton_.getElement(), !enabled);
    }
 
    @Override
@@ -577,6 +617,7 @@ public class FindOutputPane extends WorkbenchPane
 
    private boolean replaceMode_;
    private boolean regexPreviewMode_;
+   private boolean replaceModeToggleEnabled_ = true;
 
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;

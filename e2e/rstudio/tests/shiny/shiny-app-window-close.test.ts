@@ -121,7 +121,6 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
   });
 
   test('window closes when the app is stopped', async ({ rstudioPage: page }) => {
-    test.setTimeout(120000);
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
@@ -144,7 +143,6 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
   });
 
   test('window closes while the app is running', async ({ rstudioPage: page }) => {
-    test.setTimeout(120000);
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 
@@ -159,7 +157,6 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
   test('window closes despite a beforeunload handler in the app', async ({
     rstudioPage: page,
   }) => {
-    test.setTimeout(120000);
     const consoleActions = new ConsolePaneActions(page);
     const satellitePage = await launchShinyAppInWindow(page, consoleActions);
 

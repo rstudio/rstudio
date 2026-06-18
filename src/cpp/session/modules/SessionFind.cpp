@@ -961,6 +961,18 @@ private:
 
    void onStdout(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
+      // Drop output from a grep process that is no longer the current
+      // operation. A stopped or superseded operation -- e.g. a find or replace
+      // preview that was cancelled when the user started a Replace All -- can
+      // still have buffered stdout delivered after findResults() has been
+      // reconfigured for the new operation. Processing it here would corrupt
+      // the new operation's results and, in replace mode, write files under the
+      // wrong configuration (the find/replace state is a shared singleton).
+      // onContinue applies the same guard to halt the process, but cannot
+      // prevent already-buffered output from arriving.
+      if (!findResults().isRunning() || findResults().handle() != handle())
+         return;
+
       if (debugging())
          std::cerr << "stdout: " << data << std::endl;
 
