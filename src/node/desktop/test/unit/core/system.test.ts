@@ -16,8 +16,11 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { createServer } from 'net';
+
 import { FilePath } from '../../../src/core/file-path';
 import {
+  findFreePort,
   fixupExecutablePath,
   generateRandomPort,
   generateShortenedUuid,
@@ -46,6 +49,18 @@ describe('System', () => {
     assert.notEqual(port1, port2);
     assert.isAbove(port1, 0);
     assert.isAbove(port2, 0);
+  });
+  it('findFreePort returns a port that is actually bindable', async () => {
+    const port = await findFreePort();
+    assert.isAbove(port, 0);
+
+    // the port findFreePort handed back should itself be free to bind
+    const server = createServer();
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(port, '127.0.0.1', resolve);
+    });
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   });
   it('isCentOS returns reasonable result on this platform', () => {
     // Can't fully test this without reimplementing it here; but we can make sure it

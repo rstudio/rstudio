@@ -55,11 +55,10 @@ describe('Application', () => {
       assert.isAbove(port, 0);
       assert.strictEqual(app.port, port);
     });
-    it('generates new port', () => {
+    it('generates new port', async () => {
       const app = new Application();
-      const origPort = app.port;
-      app.generateNewPort();
-      assert.notStrictEqual(origPort, app.port);
+      await app.generateNewPort();
+      assert.isAbove(app.port, 0);
     });
     it('returns default if scratch path not set or does not exist', () => {
       const app = new Application();

@@ -175,9 +175,11 @@ export class SessionLauncher {
     appState().activation().getInitialLicense(installPath, devMode);
   }
 
-  private launchFirst(): Err {
-    // build a new new launch context
-    const launchContext = this.buildLaunchContext();
+  private async launchFirst(): Promise<Err> {
+    // build a new launch context -- probe for a free port rather than reusing
+    // the unverified random port assigned at construction, so concurrently
+    // launched instances don't collide on the same rsession port
+    const launchContext = await this.buildLaunchContext(false);
 
     // show help home on first run
     launchContext.argList.push('--show-help-home', '1');
@@ -441,22 +443,28 @@ export class SessionLauncher {
       }
 
       // launch next session
-      const error = this.launchNextSession(reload);
-      if (error) {
-        logger().logError(error);
+      this.launchNextSession(reload)
+        .then((error) => {
+          if (error) {
+            logger().logError(error);
 
-        // TODO
-        //  showMessageBox(QMessageBox::Critical,
-        //                 pMainWindow_,
-        //                 desktop::activation().editionName(),
-        //                 launchFailedErrorMessage(), QString());
+            // TODO
+            //  showMessageBox(QMessageBox::Critical,
+            //                 pMainWindow_,
+            //                 desktop::activation().editionName(),
+            //                 launchFailedErrorMessage(), QString());
 
-        this.mainWindow?.quit();
-      }
+            this.mainWindow?.quit();
+          }
+        })
+        .catch((err: unknown) => {
+          logger().logError(safeError(err));
+          this.mainWindow?.quit();
+        });
     }
   }
 
-  launchNextSession(reload: boolean): Err {
+  async launchNextSession(reload: boolean): Promise<Err> {
     // unset the initial project environment variable it this doesn't
     // pollute future sessions
     unsetenv(kRStudioInitialProject);
@@ -473,7 +481,7 @@ export class SessionLauncher {
     this.sessionProcess = undefined;
 
     // build a new launch context -- re-use the same port if we aren't reloading
-    const launchContext = this.buildLaunchContext(!reload);
+    const launchContext = await this.buildLaunchContext(!reload);
 
     // launch the process
     try {
@@ -553,7 +561,7 @@ export class SessionLauncher {
     return true;
   }
 
-  private onLaunchFirstSession(): void {
+  private async onLaunchFirstSession(): Promise<void> {
     if (this.shouldShowWhatsNew()) {
       // Flag to show What's New as a modal child of the main window
       // once it finishes loading (see did-finish-load handler)
@@ -580,7 +588,7 @@ export class SessionLauncher {
         .catch((err) => logger().logError(err));
     }
 
-    const error = this.launchFirst();
+    const error = await this.launchFirst();
     if (error) {
       logger().logError(error);
       appState().activation().emitLaunchError(this.launchFailedErrorMessage());
@@ -783,11 +791,11 @@ export class SessionLauncher {
     return errMsg;
   }
 
-  buildLaunchContext(reusePort = true): LaunchContext {
+  async buildLaunchContext(reusePort = true): Promise<LaunchContext> {
     const argList: string[] = [];
 
     if (!reusePort) {
-      appState().generateNewPort();
+      await appState().generateNewPort();
     }
 
     if (!this.confPath.isEmpty()) {

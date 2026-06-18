@@ -37,7 +37,7 @@ export interface AppState {
   scriptsPath?: FilePath;
   activation(): DesktopActivation;
   port: number;
-  generateNewPort(): void;
+  generateNewPort(): Promise<void>;
   windowTracker: WindowTracker;
   modalTracker: ModalDialogTracker;
   gwtCallback?: GwtCallback;
