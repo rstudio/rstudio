@@ -170,6 +170,46 @@ bool parseConfigFile(variables_map& vm,
    return true;
 }
 
+// Collect all unrecognized keys from the config file by parsing with
+// allow_unregistered=true. Used by --check-config to report every
+// unrecognized key in a single pass rather than stopping at the first.
+std::vector<std::string> collectUnrecognizedConfigKeys(
+      const std::string& configFile,
+      const OptionsDescription& optionsDescription)
+{
+   std::vector<std::string> unrecognized;
+
+   if (configFile.empty())
+      return unrecognized;
+
+   std::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(configFile).openForRead(pIfs);
+   if (error)
+      return unrecognized;
+
+   try
+   {
+      parsed_options parsed = parse_config_file(*pIfs,
+                                                optionsDescription.configFile,
+                                                true /* allow_unregistered */);
+
+      // collect the key name of each unregistered option; we use string_key
+      // rather than collect_unrecognized() so we report only the option names
+      // and not their values
+      for (const auto& option : parsed.options)
+      {
+         if (option.unregistered && !option.string_key.empty())
+            unrecognized.push_back(option.string_key);
+      }
+   }
+   catch(const std::exception&)
+   {
+      // syntax error already reported by the normal parse pass; skip here
+   }
+
+   return unrecognized;
+}
+
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
@@ -182,13 +222,30 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    *pHelp = false;
    std::string configFile;
    OptionsParseState state = OptionsParseState::Initial;
+
+   // detect --check-config early (raw argv scan) so we can relax config
+   // parsing before the full parse runs; this lets us collect ALL
+   // unrecognized keys rather than stopping at the first
+   bool checkConfigMode = false;
+   for (int i = 1; i < argc; ++i)
+   {
+      if (std::string(argv[i]) == "--check-config")
+      {
+         checkConfigMode = true;
+         break;
+      }
+   }
+   if (checkConfigMode)
+      allowUnregisteredConfigOptions = true;
+
    try
-   {        
+   {
       // general options
       options_description general("general");
       general.add_options()
          ("help", "print help message")
          ("test-config", "test to ensure the config file is valid")
+         ("check-config", "validate the config file and report all unrecognized keys in a single pass")
          ("config-file",
            value<std::string>(&configFile)->default_value(
                                     optionsDescription.defaultConfigFilePath),
@@ -260,6 +317,29 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       if (vm.count("test-config"))
       {
          return ProgramStatus::exitSuccess();
+      }
+      else if (checkConfigMode)
+      {
+         // perform the unrecognized-key scan: re-parse the config file with
+         // allow_unregistered=true and collect every unknown key name,
+         // mirroring Connect's NamesChecker behavior
+         std::vector<std::string> unrecognizedKeys =
+               collectUnrecognizedConfigKeys(configFile, optionsDescription);
+
+         bool anyFailure = false;
+         if (unrecognizedKeys.empty())
+         {
+            std::cerr << "[PASS] Config file: no unrecognized options found" << std::endl;
+         }
+         else
+         {
+            anyFailure = true;
+            std::cerr << "[FAIL] Config file: unrecognized option(s):" << std::endl;
+            for (const std::string& key : unrecognizedKeys)
+               std::cerr << "  - " << key << std::endl;
+         }
+
+         return anyFailure ? ProgramStatus::exitFailure() : ProgramStatus::exitSuccess();
       }
       else
       {
