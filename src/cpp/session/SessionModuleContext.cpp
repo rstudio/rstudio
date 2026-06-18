@@ -31,6 +31,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
+#include <core/Thread.hpp>
 #include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
@@ -134,8 +135,11 @@ public:
    
    ~ConsoleInputService()
    {
-      thread_.interrupt();
-      thread_.timed_join(1);
+      core::thread::joinOrAbandonThread(
+            thread_,
+            "console input service thread",
+            true,
+            boost::posix_time::seconds(1));
    }
    
    void enqueue(const std::string& input)

@@ -1762,6 +1762,7 @@ namespace session {
 void exitEarly(int status)
 {
    stopMonitorWorkerThread();
+   server_rpc::stop();
    offlineService().stop();
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
@@ -2003,6 +2004,11 @@ Error ensureLibRSoValid()
 // io_context for performing monitor work on the thread
 boost::asio::io_context s_monitorIoContext;
 
+// the monitor worker thread. retained as a joinable handle so that
+// stopMonitorWorkerThread() can wait for run() to return before the process
+// tears s_monitorIoContext down at exit (see stopMonitorWorkerThread).
+boost::thread s_monitorWorkerThread;
+
 void monitorWorkerThreadFunc()
 {
    auto guard = boost::asio::make_work_guard(s_monitorIoContext);
@@ -2011,7 +2017,17 @@ void monitorWorkerThreadFunc()
 
 void stopMonitorWorkerThread()
 {
+   // stop() makes run() return; we then wait for the thread to actually leave
+   // run() before s_monitorIoContext is destroyed. Without this, ::exit()
+   // destroys this file-scope io_context while the worker is still inside
+   // run() -- undefined behavior that can hang on Windows (see the matching
+   // server_rpc::stop()). joinOrAbandonThread bounds the wait so we never trade
+   // that teardown hang for an indefinite join hang on the process-exit path.
    s_monitorIoContext.stop();
+   core::thread::joinOrAbandonThread(
+      s_monitorWorkerThread,
+      "monitor worker thread",
+      false); // released via s_monitorIoContext.stop() above, not interruptible
 }
 
 void initMonitorClient()
@@ -2040,7 +2056,7 @@ void initMonitorClient()
    // intermittent SIGSEGVs. The client object is still initialized above so that
   // monitor::client() stays valid; queued async ops are simply never processed.
    if (!options().runTests())
-      core::thread::safeLaunchThread(monitorWorkerThreadFunc);
+      core::thread::safeLaunchThread(monitorWorkerThreadFunc, &s_monitorWorkerThread);
 }
 
 void beforeResume()

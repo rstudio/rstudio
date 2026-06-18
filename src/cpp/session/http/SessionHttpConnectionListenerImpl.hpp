@@ -26,6 +26,7 @@
 
 #include <core/Macros.hpp>
 #include <core/BoostThread.hpp>
+#include <core/Thread.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/FileLock.hpp>
 #include <shared_core/Error.hpp>
@@ -153,20 +154,12 @@ public:
       if (ec)
          LOG_ERROR(core::Error(ec, ERROR_LOCATION));
 
-      // stop the server
+      // stop the server, then wait for the listener thread to finish
       ioContext().stop();
-
-      // join the thread and wait for it complete
-      if (listenerThread_.joinable())
-      {
-         if (!listenerThread_.timed_join(boost::posix_time::seconds(3)))
-         {
-            LOG_WARNING_MESSAGE(
-                  "HttpConnectionListener didn't stop within 3 sec");
-         }
-
-         listenerThread_.detach();
-      }
+      core::thread::joinOrAbandonThread(
+            listenerThread_,
+            "HttpConnectionListener thread",
+            false); // released via ioContext().stop() above, not interruptible
 
       // allow subclass specific cleanup
       core::Error error = cleanup();

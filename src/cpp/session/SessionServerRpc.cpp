@@ -99,6 +99,11 @@ boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
 // io_context for performing RPC work on the thread
 boost::asio::io_context s_ioContext;
 
+// the RPC worker thread. retained as a joinable handle (rather than launched
+// detached) so that stop() can wait for run() to return before the process
+// tears s_ioContext down at exit -- see stop().
+boost::thread s_rpcWorkerThread;
+
 void rpcWorkerThreadFunc()
 {
    auto work = boost::asio::make_work_guard(s_ioContext);
@@ -111,7 +116,7 @@ void ensureRpcWorkerThreadRunning()
    boost::call_once(s_threadOnce,
                     boost::bind(core::thread::safeLaunchThread,
                                 rpcWorkerThreadFunc,
-                                nullptr));
+                                &s_rpcWorkerThread));
 }
 
 } // anonymous namespace
@@ -120,6 +125,25 @@ boost::asio::io_context& ioContext()
 {
    ensureRpcWorkerThreadRunning();
    return s_ioContext;
+}
+
+void stop()
+{
+   // The worker thread runs s_ioContext.run() behind a work guard, so it never
+   // returns on its own. stop() forces run() to return; we then wait for the
+   // thread to actually leave run() before s_ioContext is destroyed. Without
+   // this, ::exit() (called on the main thread from exitEarly()) destroys this
+   // file-scope io_context while the worker is still inside run() -- undefined
+   // behavior that hangs on Windows (rstudio#18018). stop() abandons any
+   // in-flight request rather than draining it, so a clean shutdown joins almost
+   // immediately; joinOrAbandonThread bounds the wait so we never trade the
+   // teardown hang for an indefinite join hang, and is a no-op if the thread was
+   // never started (no async RPC was ever issued).
+   s_ioContext.stop();
+   core::thread::joinOrAbandonThread(
+      s_rpcWorkerThread,
+      "server RPC worker thread",
+      false); // released via s_ioContext.stop() above, not interruptible
 }
 
 Error invokeServerRpc(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
