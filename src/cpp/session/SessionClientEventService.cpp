@@ -88,28 +88,11 @@ Error ClientEventService::start(const std::string& clientId)
    
 void ClientEventService::stop()
 {
-   try
-   {
-      if (serviceThread_.joinable())
-      {
-         serviceThread_.interrupt();
-
-         // wait for for the service thread to stop
-         if (!serviceThread_.timed_join(
-               boost::posix_time::seconds(kLastChanceWaitSeconds + 1)))
-         {
-            LOG_WARNING_MESSAGE("ClientEventService didn't stop on its own");
-         }
-
-         serviceThread_.detach();
-      }
-   }
-   catch(const boost::thread_interrupted&)
-   {
-      // the main thread is the one who calls stop() and it should 
-      // NEVER be interrupted for any reason
-      LOG_WARNING_MESSAGE("thread interrupted during stop");
-   }
+   core::thread::joinOrAbandonThread(
+         serviceThread_,
+         "ClientEventService thread",
+         true,
+         boost::posix_time::seconds(kLastChanceWaitSeconds + 1));
 }
    
 void ClientEventService::setClientId(const std::string& clientId, bool clearEvents)

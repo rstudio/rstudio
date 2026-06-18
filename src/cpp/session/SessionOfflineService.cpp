@@ -108,28 +108,11 @@ Error OfflineService::start()
    
 void OfflineService::stop()
 {
-   try
-   {
-      if (offlineThread_.joinable())
-      {
-         offlineThread_.interrupt();
-
-         // wait for for the service thread to stop
-         if (!offlineThread_.timed_join(
-               boost::posix_time::seconds(2)))
-         {
-            LOG_WARNING_MESSAGE("OfflineService didn't stop on its own");
-         }
-
-         offlineThread_.detach();
-      }
-   }
-   catch(const boost::thread_interrupted&)
-   {
-      // the main thread is the one who calls stop() and it should 
-      // NEVER be interrupted for any reason
-      LOG_WARNING_MESSAGE("OfflineService thread interrupted during stop");
-   }
+   core::thread::joinOrAbandonThread(
+         offlineThread_,
+         "OfflineService thread",
+         true,
+         boost::posix_time::seconds(2));
 }
 
 // Called for each connection in mainConnectionQueue until an offlineable request is found.
