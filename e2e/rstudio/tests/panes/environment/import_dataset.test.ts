@@ -41,15 +41,32 @@ async function awaitPreviewOrSkip(
   previewFrame: FrameLocator,
 ): Promise<void> {
   const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
+
   const previewReady = await firstColHeader
     .waitFor({ state: 'visible', timeout: 45000 })
     .then(() => true)
     .catch(() => false);
-  if (!previewReady) {
-    await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'readr CSV preview subprocess did not load on Windows CI');
-    throw new Error('readr CSV preview did not produce column headers within 45 s');
-  }
+  if (previewReady)
+    return;
+
+  // The header never appeared. When the preview subprocess fails, the error is
+  // surfaced through the progress indicator's onError, which routes to
+  // GlobalDisplay.showErrorMessage (ModalDialogBase.addProgressIndicator) and
+  // renders a separate top-level "Error" dialog -- not a label inside the
+  // import dialog. Scrape that dialog for a more specific diagnostic. The
+  // message is prefixed with "Is this a valid CSV file? " by
+  // enhancePreviewErrorMessage, so key on that marker.
+  const errorDialog = dialog.page().locator('.gwt-DialogBox[aria-label="Error"]');
+  const errorText = (await errorDialog.textContent().catch(() => null)) ?? '';
+  const detail = errorText.includes('valid CSV file')
+    ? `readr CSV preview failed on Windows CI: ${errorText.trim()}`
+    : 'readr CSV preview subprocess did not load on Windows CI';
+
+  // Cancel out of the import dialog before skipping so teardown stays clean.
+  await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
+
+  test.fixme(os.platform() === 'win32' && !!process.env.CI, detail);
+  throw new Error('readr CSV preview did not produce column headers within 45 s');
 }
 
 async function openReadrCsvPreview(
