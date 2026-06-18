@@ -1,7 +1,7 @@
 ## RStudio 2026.07.0 "Pacific Dogwood" Release Notes
 
 ### New
-- ([#18020](https://github.com/rstudio/rstudio/pull/18020)): Add `rserver --check-config` (and the `rstudio-server check-config` admin subcommand) to validate the configuration file without starting the service, reporting all unrecognized option names in a single pass. The existing `--test-config` flag is unchanged.
+- ([#18020](https://github.com/rstudio/rstudio/pull/18020)): Add `rserver --check-config` (and the `rstudio-server check-config` admin subcommand) to validate the configuration file without starting the service, reporting all unrecognized options in a single pass. `--test-config` is now a deprecated alias for `--check-config` with the same behavior; it previously stopped at the first unrecognized option. Using `--test-config` prints a deprecation warning, and it will be removed in a future release.
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
 - ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
