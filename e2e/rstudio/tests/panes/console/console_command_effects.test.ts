@@ -41,7 +41,6 @@ test.describe('Console command effects', () => {
   });
 
   test('rstudioDiagnosticsReport() writes a diagnostics report', async () => {
-    test.setTimeout(120000);
     await consoleActions.executeInConsole('rstudioDiagnosticsReport()');
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
       'Diagnostics report written',
@@ -50,7 +49,6 @@ test.describe('Console command effects', () => {
   });
 
   test('install.packages() reports not-available for a non-existent package', async () => {
-    test.setTimeout(60000);
     await consoleActions.executeInConsole(
       "install.packages('fake_package', repos = 'https://cran.r-project.org')",
     );
@@ -61,7 +59,6 @@ test.describe('Console command effects', () => {
   });
 
   test('install.packages() installs a real CRAN package that library() can load', async () => {
-    test.setTimeout(60000);
     const uninstalled = await consoleActions.uninstallPackage('praise');
     test.skip(!uninstalled, 'Could not uninstall praise to set up a fresh-install scenario');
     const failed = await consoleActions.ensurePackages(['praise'], 60000);

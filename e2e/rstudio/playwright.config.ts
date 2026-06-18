@@ -51,16 +51,22 @@ if (edition !== 'os' && edition !== 'pro') {
 }
 const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 
+// The @smoke startup test is a long, low-information liveness check that just
+// idles for 30s. It is redundant alongside the full suite, and with no timeout
+// headroom (and full runs often capping the global timeout low) it is the first
+// casualty under parallel load. Exclude it by default; opt in with PW_RUN_SMOKE.
+const smokeExclusions = process.env.PW_RUN_SMOKE ? [] : ['@smoke'];
+
 const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
   },
 ];
 
@@ -139,7 +145,11 @@ export default defineConfig<{}, ProjectOptions>({
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
   fullyParallel: false,
   workers: 1,
-  timeout: 300000,
+  // Global per-test budget. Kept low so a hung test fails fast rather than
+  // parking a worker for minutes; individual slow tests opt up with
+  // test.setTimeout() (e.g. package installs in a beforeAll), and slow
+  // individual actions pass their own { timeout } (see TIMEOUTS).
+  timeout: 120000,
   // On CI a single transient launch flake (e.g. GWT app slow to reach
   // ready under cold disk caches on a fresh runner) can otherwise turn
   // the whole suite red. One retry absorbs that without rerunning by hand.

@@ -367,12 +367,8 @@ public:
       boost::algorithm::replace_all(dest, "src=\"/", "src=\"" + baseUrl + "/");
       boost::algorithm::replace_all(dest, "src='/", "src='" + baseUrl + "/");
       
-      // add classes to headers; the h3 may carry an id attribute when R's
-      // dynamic help server emits a table of contents (R >= 4.6.0), so
-      // preserve any existing attributes via the capture group
-      boost::regex reHeader("<h3([^>]*)>Arguments</h3>");
-      std::string reFormat("<h3$1 class=\"r-arguments-title\">Arguments</h3>");
-      boost::algorithm::replace_all_regex(dest, reHeader, reFormat);
+      // add classes to headers
+      detail::addArgumentsHeaderClass(&dest);
       
       // append javascript callbacks
       std::string js(kJsCallbacks);
@@ -1225,7 +1221,21 @@ SEXP rs_showPythonHelp(SEXP codeSEXP)
 }
 
 } // anonymous namespace
-   
+
+namespace detail {
+
+void addArgumentsHeaderClass(std::vector<char>* pContents)
+{
+   // the h3 may carry an id attribute when R's dynamic help server emits
+   // a table of contents (R >= 4.6.0), so preserve any existing attributes
+   // via the capture group
+   boost::regex reHeader("<h3([^>]*)>Arguments</h3>");
+   std::string reFormat("<h3$1 class=\"r-arguments-title\">Arguments</h3>");
+   boost::algorithm::replace_all_regex(*pContents, reHeader, reFormat);
+}
+
+} // namespace detail
+
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_previewRd, 1);

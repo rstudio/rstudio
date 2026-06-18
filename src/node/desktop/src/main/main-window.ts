@@ -16,7 +16,7 @@
 import { ChildProcess } from 'child_process';
 import { BrowserWindow, dialog, session, shell } from 'electron';
 
-import { Err } from '../core/err';
+import { Err, safeError } from '../core/err';
 import { logger } from '../core/logger';
 
 import i18next from 'i18next';
@@ -201,8 +201,7 @@ export class MainWindow extends GwtWindow {
       appState().modalTracker.resetGwtModals();
     }
 
-    const error = this.sessionLauncher?.launchNextSession(reload);
-    if (error) {
+    const onLaunchError = (error: Err) => {
       logger().logError(error);
 
       appState().modalTracker.trackElectronModalSync(() =>
@@ -213,7 +212,16 @@ export class MainWindow extends GwtWindow {
         }),
       );
       this.quit();
-    }
+    };
+
+    this.sessionLauncher
+      ?.launchNextSession(reload)
+      .then((error) => {
+        if (error) {
+          onLaunchError(error);
+        }
+      })
+      .catch((err: unknown) => onLaunchError(safeError(err)));
   }
 
   launchRStudio(options: LaunchRStudioOptions): void {

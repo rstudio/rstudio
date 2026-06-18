@@ -34,9 +34,10 @@ var BUFFER_ROWS = 25;
 // visible window plus the buffer above.
 var FETCH_SIZE = 500;
 
-// Pixel distance from the viewport edge at which we trigger the next
-// row-fetch ahead of the user's scroll.
-var FETCH_THRESHOLD = 100;
+// Row prefetch is currently one FETCH_SIZE block ahead of the visible window
+// (see renderVisibleRows). If that proves too coarse for fast scrolling, a
+// pixel-distance-from-edge threshold could be reintroduced here to trigger the
+// next fetch earlier.
 
 // rowCache eviction. Holding ~20k rows in memory comfortably covers any
 // reasonable visible-window-plus-prefetch; once we exceed the limit we
@@ -82,7 +83,7 @@ var TIMING = {
    infoBarDebounce: 150,        // "Showing X to Y" text update during scroll
    resizeDebounce: 75,          // window resize -> relayout
    sidebarTransition: 200,      // CSS transition duration for sidebar expand/collapse
-   columnFlash: 1000,           // duration of the highlight-flash on scrollToColumn
+   columnFlash: 1000,           // duration of the column highlight-flash on a go-to-column jump
    scrollbarHide: 1200          // delay before custom scrollbars fade out
 };
 
@@ -101,6 +102,20 @@ var columnOffset = 0;
 
 // Maximum columns to display at once
 var maxDisplayColumns = -1;
+
+// Bounds of the currently FETCHED column window (absolute, 1-based,
+// inclusive), captured when `cols` is established. Layout math (the
+// unfetched-span widths, content-x mapping) keys off these rather than
+// columnOffset so it stays self-consistent while a slide is in flight
+// (columnOffset already points at the next window then).
+// fetchedWindowEnd === 0 means "unknown" (no grid yet).
+var fetchedWindowStart = 1;
+var fetchedWindowEnd = 0;
+
+// Non-zero while a column-window slide's metadata fetch is in flight
+// (holds that slide's generation token). Gates scroll-driven slides so
+// fast horizontal scrubbing issues at most one metadata fetch at a time.
+var slideInFlightGen = 0;
 
 // Maximum rows to display (-1 = all)
 var maxRows = -1;
@@ -150,11 +165,21 @@ var lastScrollLeft = 0;
 var pendingScrollRestore = null;
 var activeScrollRestore = null;
 
-// Row data cache
+// Row data cache. Each entry is an array aligned 1:1 with the current `cols`
+// (rowname at position 0, then the fetched columns in fetch order).
 var rowCache = new Map();
 var totalRows = 0;
 var filteredRows = 0;
 var drawCounter = 0;
+
+// Column signature of the current `cols` (comma-joined absolute indices) and,
+// per FETCH_SIZE-aligned block, the signature its cached rows were fetched
+// with. A block whose stored signature differs from colsSig is "incomplete":
+// its rows were remapped from a previous column window (see remapRowCache)
+// and may carry undefined cells, so it is refetched when it next becomes
+// visible. Cleared with rowCache in invalidateCache.
+var colsSig = "";
+var blockColsSig = new Map();
 
 // In-flight fetch requests
 var pendingFetches = new Map(); // key: "start-length" -> AbortController
@@ -171,9 +196,15 @@ var bottomSpacerRow = null;
 // Column resize state
 var didResize = false;
 var resizingColIdx = null;
+var resizingHeaderTh = null;
 var initResizeX = null;
 var initResizingWidth = null;
+// Width of the table being resized at drag start: the pinned table for a
+// pinned column, otherwise the unpinned (#rsGridData) table. origResizePinned
+// records which, so applyResizeDelta grows the right pane and resizing a pinned
+// column never disturbs the unpinned pane's scroll position.
 var origTableWidth = null;
+var origResizePinned = false;
 var resizingBoundsExceeded = 0;
 var origColWidths = [];
 // User-driven resize widths, keyed by absolute (col_index) column identity --
@@ -218,11 +249,6 @@ var sidebarDefaultResolved = false;
 // the recorded postInitActions entry keyed by this marker).
 var FILTER_UI_MARKER = "filter-injected-ui";
 
-// In-flight column-summary fetches; the shared sidebar spinner only
-// hides when this drops back to zero so partial completion doesn't yank
-// it out from under still-pending fetches.
-var pendingSummaryFetches = 0;
-
 // Active cell coordinates. activeRow is the 0-based index into the
 // currently displayed (filtered/sorted) rows; activeCol is the 0-based
 // position in columnOrder (display order, accounting for pinning).
@@ -257,11 +283,9 @@ var pendingSavedState = null;
 // initGrid re-bootstraps once after clearing the stale selection.
 var primedPinnedCount = 0;
 
-// Pinned-column layout cache. cachedPinnedOffsets[colIdx] -> px offset
-// from the viewport's left edge; the more elaborate pinnedOffsetsCache
-// also tracks total pinned width. Both are invalidated by mutations
-// affecting widths or pinning (invalidatePinnedOffsets()).
-var cachedPinnedOffsets = {};
+// Pinned-block width cache (pinnedOffsetsCache.totalWidth), dropped by
+// invalidatePinnedOffsets() on width/pinning changes. The pinned columns now
+// render in their own pane, so no per-column sticky offset cache is needed.
 var pinnedOffsetsCache = null;
 
 // Current column display order (pinned first, then unpinned), recomputed
@@ -288,9 +312,15 @@ var measuredWidths = [];
 // Cached cumulative column offsets (see columnOffsets). Derived purely from
 // columnOrder + measuredWidths, so it shares their invalidation point
 // (invalidatePinnedOffsets). Memoized because columnOffsets is called once per
-// rendered row in appendWindowedCells -- recomputing an O(columns) prefix sum
-// for every row of a wide frame was a measurable share of render cost (#17806).
+// rendered row while building cells -- recomputing an O(columns) prefix sum for
+// every row of a wide frame was a measurable share of render cost (#17806).
 var columnOffsetsCache = null;
+
+// Cached widths of the unfetched column spans flanking the fetched window
+// (see leftSpanWidth / rightSpanWidth). -1 = needs recompute; shares the
+// invalidation point of the other layout caches (invalidatePinnedOffsets).
+var leftSpanWidthCache = -1;
+var rightSpanWidthCache = -1;
 
 // Authoritative table content width; mirrors the sum of measuredWidths after
 // autoSizeColumns. Prefer this over deriving content width from
@@ -300,9 +330,32 @@ var columnOffsetsCache = null;
 var totalTableWidth = 0;
 
 // Canvas-based text measurer. Lazily initialized so a non-DOM context
-// (tests) doesn't pay the canvas allocation up front.
+// (tests) doesn't pay the canvas allocation up front. measureCtxFont tracks
+// the font currently assigned to the context: reassigning canvas .font reparses
+// the shorthand and dominates the autoSizeColumns measure loop, so we set it
+// only when it actually changes (the loop alternates between just two fonts).
 var measureCanvas = null;
 var measureCtx = null;
+var measureCtxFont = "";
+
+// DOM element cache -- populated in initGrid, cleared in destroyGrid.
+// Avoids document.getElementById calls on every scroll frame.
+// domViewport/domThead/domTbody refer to the scrollable UNPINNED pane; the
+// pinned (frozen) pane has its own table whose vertical scroll mirrors the
+// unpinned pane (see syncPinnedScrollTop). The pinned pane never scrolls
+// horizontally and has no spacers/window -- it renders only pinned columns.
+var domViewport = null;
+var domTbody = null;
+var domThead = null;
+var domPinnedPane = null;
+var domPinnedThead = null;
+var domPinnedTbody = null;
+
+// The two fonts measureTextWidth uses: regular for data cells, bold for
+// headers. Same size/family; only the weight differs.
+var MEASURE_FONT =
+   "11px 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif";
+var MEASURE_FONT_BOLD = "bold " + MEASURE_FONT;
 
 // Cached "1 character width" derived from AVG_CHAR_REF_STRING. Invalid
 // until a measureTextWidth call has populated it; reset to 0 to force
@@ -324,6 +377,13 @@ var deferredHeaderRebuild = false;
 var gridScrollbarV_ = null;
 var gridScrollbarH_ = null;
 var sidebarScrollbar_ = null;
+
+// Whether the grid draws its own overlay scrollbars (true) or relies on the
+// native scrollbars (false). Resolved from the use_overlay_scrollbars URL
+// param at bootstrap and updated live by setOption when the
+// data_viewer_use_overlay_scrollbars preference changes; applyScrollbarMode
+// reconciles the DOM (body class + overlay lifecycle) with this flag.
+var useOverlayScrollbars = true;
 
 // Sparklines whose container has been created but whose (relatively
 // expensive) canvas has not been drawn yet. Populated by initSidebar and
@@ -430,6 +490,8 @@ var showError = function(msg) {
    document.getElementById("error").textContent = msg;
    var grid = document.getElementById("rsGridData");
    if (grid) grid.style.display = "none";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.display = "none";
 };
 
 // Reverse of showError, run when a bootstrap succeeds: without this, a grid
@@ -441,6 +503,8 @@ var hideError = function() {
    document.getElementById("errorMask").style.display = "none";
    var grid = document.getElementById("rsGridData");
    if (grid) grid.style.display = "";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.display = "";
 };
 
 var parseLocationUrl = function() {
@@ -449,7 +513,13 @@ var parseLocationUrl = function() {
       maxDisplayColumns: -1, maxCols: 0, maxRows: 0,
       // Default true so the sidebar shows when the param is absent (e.g.
       // older callers that don't pass it).
-      showSummary: true
+      showSummary: true,
+      // Default false: the filter bar is hidden by default until the user
+      // explicitly shows it or restores saved filter values.
+      showFilters: false,
+      // Default true: draw the custom overlay scrollbars. When false, the
+      // native scrollbars are shown instead (data_viewer_use_overlay_scrollbars).
+      useOverlayScrollbars: true
    };
    var query = window.location.search.substring(1);
    var vars = query.split("&");
@@ -465,6 +535,8 @@ var parseLocationUrl = function() {
       else if (key === "max_cols") result.maxCols = parseInt(val, 10);
       else if (key === "max_rows") result.maxRows = parseInt(val, 10);
       else if (key === "show_summary") result.showSummary = (val === "1" || val === "true");
+      else if (key === "show_filters") result.showFilters = (val === "1" || val === "true");
+      else if (key === "use_overlay_scrollbars") result.useOverlayScrollbars = (val === "1" || val === "true");
    }
    return result;
 };
@@ -523,11 +595,55 @@ var gridDataFetch = function(body, signal) {
    });
 };
 
-var fetchColumnSummary = function(columnIndex, callback) {
-   var params = "show=column_summary&column=" + columnIndex +
-      "&" + window.location.search.substring(1);
+// Whether any column filter or global search is active. Sort is excluded: it
+// reorders rows but doesn't change the set, so it leaves summaries unchanged.
+// This is the gate for showing filtered (vs. whole-frame) summaries.
+var hasActiveRowFilter = function() {
+   if (cachedSearch && cachedSearch.length > 0)
+      return true;
+   for (var k in cachedFilterValues) {
+      if (cachedFilterValues.hasOwnProperty(k) && cachedFilterValues[k])
+         return true;
+   }
+   return false;
+};
 
-   gridDataFetch(params)
+// Add the active filter/search/sort to a request params object, in the
+// DataTables wire form the backend parses. Shared by the row, summary, and
+// detail fetches so they all resolve to the same filtered/sorted frame.
+var appendTransformParams = function(params) {
+   params["search[value]"] = cachedSearch;
+
+   if (sortColumn >= 0 && sortDirection) {
+      params["order[0][column]"] = sortColumn;
+      params["order[0][dir]"] = sortDirection;
+   }
+
+   for (var absIdx in cachedFilterValues) {
+      if (!cachedFilterValues.hasOwnProperty(absIdx))
+         continue;
+      var filterVal = cachedFilterValues[absIdx];
+      if (filterVal)
+         params["columns[" + absIdx + "][search][value]"] = filterVal;
+   }
+   return params;
+};
+
+var fetchColumnSummary = function(columnIndex, callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "column_summary",
+      column: columnIndex,
+      max_rows: maxRows
+   };
+   // Detail stats describe the same rows the grid shows: send the active
+   // filter/search/sort so the backend computes them over the filtered frame.
+   appendTransformParams(params);
+
+   gridDataFetch(buildFormData(params))
       .then(function(result) { if (callback) callback(result); })
       .catch(function(err) {
          if (err && err.name === "AbortError") {
@@ -540,6 +656,204 @@ var fetchColumnSummary = function(columnIndex, callback) {
          // Render an error state instead of staying on a "Loading..." spinner
          // forever. Pass through the server-formatted message when available.
          if (callback) callback({ error: (err && err.message) || "Failed to load summary." });
+      });
+};
+
+// Per-column summary stats for the sidebar, computed over the filtered rows
+// (show=cols&filtered=1). Keyed by absolute column index; null when no filter
+// is active (the sidebar then renders from the full-frame `cols` metadata).
+// Separate from `cols` on purpose: `cols` keeps describing the full frame so
+// the filter popups' brush histogram and factor levels stay full-range.
+var filteredSummaries = null;
+
+// Filtered row count reported alongside filteredSummaries (the rownames entry's
+// total_rows), used as the percentage denominator when rendering them. Avoids
+// racing the row fetch that updates filteredRows.
+var filteredSummariesRowCount = 0;
+
+// Complete per-column identity (col_name/col_type/col_class/col_index) for
+// EVERY column, backing the sidebar's full column list (show=column_index).
+// null until loaded, when the sidebar falls back to the fetched grid window.
+// Cleared on bootstrap (a refresh can rename/retype columns).
+var sidebarColumns = null;
+var sidebarColumnsFetching = false;
+
+// Lazily-fetched summary descriptors (breaks/counts/range/NA/...) for columns
+// OUTSIDE the fetched grid window, keyed by absolute index. Window columns get
+// their summaries from `cols` (or filteredSummaries when filtered); this
+// covers the rest, populated by the sidebar's IntersectionObserver as off-
+// window entries scroll into view. Cleared when the filter state changes
+// (refreshSidebarSummaries) and on bootstrap.
+var sidebarLazySummaries = {};
+
+// Full-frame column descriptors (abs index -> describe result) for the sidebar
+// filter popups, fetched on demand when the icon is clicked. Kept separate from
+// sidebarLazySummaries because those are computed over the FILTERED rows when a
+// filter is active, whereas a filter brush must span the whole column's range
+// (matching the header popups, which read full-frame `cols`). Cleared when the
+// column set / fingerprint changes (alongside sidebarLazySummaries).
+var filterDescriptors = {};
+
+// Abs indices queued for the next (debounced) lazy summary fetch, populated as
+// entries are built into the virtual window. Reset per sidebar rebuild.
+var sidebarPendingFetch = {};
+
+// Abs indices with a lazy summary fetch currently in flight (set -> true), so an
+// entry scrubbed out of and back into the window before its fetch lands does not
+// queue a duplicate show=cols request. Cleared when each batch settles, and
+// wholesale when the filter state or frame changes.
+var sidebarInflight = {};
+
+// Abs indices whose lazy summary fetch failed (set -> true). Their entries get a
+// one-shot "unavailable" marker rather than re-queuing a fetch on every
+// re-observe (which would retry forever with no user-visible signal). Cleared
+// when the filter state or frame changes, giving the columns a fresh attempt.
+var sidebarFailed = {};
+
+// Summary-sidebar virtualization. Like the grid rows, only the entries whose
+// vertical band intersects the panel viewport are built; everything else is
+// stood in for by two spacer divs sized from the constant entry height. This
+// keeps initSidebar O(visible) rather than O(all columns). See initSidebar and
+// renderSidebarWindow.
+var SIDEBAR_BUFFER_ENTRIES = 5;  // extra entries kept built on each side
+var sidebarListCols = [];        // listed column descriptors (rowname excluded)
+var sidebarRenderTop = null;     // top spacer div
+var sidebarRenderMid = null;     // container holding the currently built entries
+var sidebarRenderBottom = null;  // bottom spacer div (includes overscroll tail)
+var sidebarWinStart = -1;        // first built virtual index (inclusive)
+var sidebarWinEnd = -1;          // last built virtual index (inclusive)
+var sidebarIndexByAbs = {};      // abs column index -> virtual index in sidebarListCols
+var sidebarScrollRaf = 0;        // rAF handle coalescing scroll-driven re-renders
+
+var fetchFilteredSummaries = function(callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      filtered: 1,
+      max_rows: maxRows
+   };
+
+   // Describe the same columns the sidebar lists (the fetched window).
+   var requestedColumns = colsRequestList();
+   if (requestedColumns.length > 0)
+      params["columns_requested"] = requestedColumns.join(",");
+
+   appendTransformParams(params);
+
+   // callback(map, rowCount, ok): ok is false only on a hard failure (the fetch
+   // rejected, or the server reported an error). An empty-but-successful result
+   // is reported as ok with a null map -- the caller treats that as "no filtered
+   // summaries to show" rather than a failure. Note a filter matching zero rows
+   // still returns one entry per column (with total_rows 0), so it lands in the
+   // success branch below, not the empty branch.
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (result && result.error) {
+            console.warn("fetchFilteredSummaries failed:", result.error);
+            callback(null, 0, false);
+            return;
+         }
+         if (!result || !result.length) {
+            callback(null, 0, true);
+            return;
+         }
+         prepareColumnResponse(result);
+         var map = {};
+         var rowCount = 0;
+         for (var i = 0; i < result.length; i++) {
+            var entry = result[i];
+            if (typeof entry.total_rows === "number" && entry.total_rows >= 0)
+               rowCount = entry.total_rows;
+            if (typeof entry.col_index === "number" && entry.col_index >= 1)
+               map[entry.col_index] = entry;
+         }
+         callback(map, rowCount, true);
+      })
+      .catch(function(err) {
+         console.warn("fetchFilteredSummaries failed:", err);
+         callback(null, 0, false);
+      });
+};
+
+// Rebuild the sidebar, preserving its scroll position across the teardown.
+var rebuildSidebarPreservingScroll = function() {
+   var sidebarContent = document.getElementById("sidebarContent");
+   var scrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
+   initSidebar();
+   sidebarContent = document.getElementById("sidebarContent");
+   if (sidebarContent) {
+      sidebarContent.scrollTop = scrollTop;
+      // initSidebar built the window for scrollTop 0; rebuild it for the
+      // restored position so the visible entries match where we scrolled back to.
+      renderSidebarWindow(true);
+   }
+};
+
+// Rebuild the sidebar against the current filter state: fetch filtered
+// summaries first when a filter/search is active, otherwise clear them and
+// render the full-frame metadata. Debounced calls during rapid filter typing
+// coalesce via the drawCounter staleness check below.
+var refreshSidebarSummaries = function() {
+   // Lazily-fetched off-window summaries reflect the previous filter state;
+   // drop them so they're refetched for the new one. Also drop the in-flight
+   // and failed tracking: any in-flight fetch is for the old filter state (and
+   // will be ignored on arrival by the drawCounter check), and failed columns
+   // get a fresh attempt under the new state.
+   sidebarLazySummaries = {};
+   sidebarInflight = {};
+   sidebarFailed = {};
+
+   if (!hasActiveRowFilter()) {
+      filteredSummaries = null;
+      filteredSummariesRowCount = 0;
+      rebuildSidebarPreservingScroll();
+      return;
+   }
+
+   var startToken = drawCounter;
+   fetchFilteredSummaries(function(map, rowCount, ok) {
+      // Drop a response superseded by a newer filter/search/refresh.
+      if (startToken !== drawCounter)
+         return;
+      // On a hard failure, keep whatever summaries we already had rather than
+      // reverting to whole-frame stats: that would silently drop the
+      // "(filtered)" tag and relabel full-object numbers as the filtered view.
+      // The failure is logged; a later successful refresh corrects the panel.
+      if (!ok)
+         return;
+      filteredSummaries = map;
+      filteredSummariesRowCount = rowCount;
+      rebuildSidebarPreservingScroll();
+   });
+};
+
+// Column names for the WHOLE frame (the fetched window only covers a slice),
+// backing the go-to-column popup. Fetched lazily on first use and cached;
+// invalidated on bootstrap (a data refresh can rename columns).
+var columnNamesCache = null;
+
+var fetchColumnNames = function(callback) {
+   if (columnNamesCache) {
+      callback(columnNamesCache);
+      return;
+   }
+
+   var params = "show=colnames&" + window.location.search.substring(1);
+   gridDataFetch(params)
+      .then(function(result) {
+         if (result && !result.error && result.names) {
+            columnNamesCache = result.names;
+            callback(columnNamesCache);
+         } else {
+            callback(null);
+         }
+      })
+      .catch(function(err) {
+         console.warn("fetchColumnNames failed:", err);
+         callback(null);
       });
 };
 
@@ -581,31 +895,19 @@ var fetchRows = function(start, length, callback) {
       start: start,
       length: length,
       draw: startToken,
-      max_rows: maxRows,
-      "search[value]": cachedSearch
+      max_rows: maxRows
    };
 
-   // Request exactly the columns we display (pinned first, then the window),
-   // by absolute index. An empty list means the whole frame.
-   var requestedColumns = buildRequestedColumns();
+   // Request exactly the columns of the current `cols` so the returned rows
+   // are always aligned 1:1 with it (an empty list means the whole frame).
+   var requestedColumns = colsRequestList();
+   var requestSig = requestedColumns.join(",");
    if (requestedColumns.length > 0) {
-      params["columns_requested"] = requestedColumns.join(",");
+      params["columns_requested"] = requestSig;
    }
 
-   // Add sort parameters (order[0][column] is an absolute column index)
-   if (sortColumn >= 0 && sortDirection) {
-      params["order[0][column]"] = sortColumn;
-      params["order[0][dir]"] = sortDirection;
-   }
-
-   // Add column filter parameters, keyed by absolute column index
-   for (var absIdx in cachedFilterValues) {
-      if (!cachedFilterValues.hasOwnProperty(absIdx))
-         continue;
-      var filterVal = cachedFilterValues[absIdx];
-      if (filterVal)
-         params["columns[" + absIdx + "][search][value]"] = filterVal;
-   }
+   // Filter/search/sort parameters (all keyed by absolute column index).
+   appendTransformParams(params);
 
    var controller = new AbortController();
    pendingFetches.set(key, controller);
@@ -628,6 +930,10 @@ var fetchRows = function(start, length, callback) {
          for (var i = 0; i < result.data.length; i++) {
             rowCache.set(start + i, result.data[i]);
          }
+         // Record the column signature these rows carry. `start` is always
+         // FETCH_SIZE-aligned (every caller fetches whole blocks), so this
+         // marks exactly the block the rows landed in.
+         blockColsSig.set(start, requestSig);
          trimRowCache();
          if (callback) callback();
          renderVisibleRows(true);
@@ -647,6 +953,7 @@ var fetchRows = function(start, length, callback) {
 
 var invalidateCache = function() {
    rowCache.clear();
+   blockColsSig.clear();
    // Abort all pending fetches
    pendingFetches.forEach(function(controller) { controller.abort(); });
    pendingFetches.clear();
@@ -655,6 +962,14 @@ var invalidateCache = function() {
    // Bump the staleness token so any in-flight responses that slip past
    // AbortController are discarded by fetchRows' response handler.
    drawCounter++;
+};
+
+// Whether a block's cached rows are present AND complete for the current
+// column set. A block remapped from a previous column window keeps its old
+// signature (its rows have undefined cells for newly entered columns), so it
+// reads as needing a refetch while still rendering its overlap data.
+var blockIsCurrent = function(blockStart) {
+   return rowCache.has(blockStart) && blockColsSig.get(blockStart) === colsSig;
 };
 
 // Cap rowCache size so a long scroll through a multi-million-row dataset
@@ -701,8 +1016,41 @@ var trimRowCache = function() {
          for (var j = 0; j < rows.length; j++) {
             rowCache.delete(rows[j]);
          }
+         blockColsSig.delete(blockStarts[i]);
       }
    }
+};
+
+// Remap every cached row from the old `cols` alignment to the new one,
+// keyed by absolute column identity (col_index). Cells for columns present
+// in both windows (rownames, pinned columns, any overlap) carry over; cells
+// for newly entered columns become undefined and render blank until the
+// block's refetch lands (blocks keep their old signature, so blockIsCurrent
+// reports them as needing that refetch). This is what lets a column-window
+// slide show row skeletons immediately instead of a blank grid.
+var remapRowCache = function(oldCols, newCols) {
+   if (rowCache.size === 0 || !oldCols)
+      return;
+
+   var oldPosByAbs = {};
+   for (var i = 0; i < oldCols.length; i++) {
+      oldPosByAbs[oldCols[i].col_index] = i;
+   }
+
+   var srcFor = new Array(newCols.length);
+   for (var j = 0; j < newCols.length; j++) {
+      var src = oldPosByAbs[newCols[j].col_index];
+      srcFor[j] = (typeof src === "number") ? src : -1;
+   }
+
+   rowCache.forEach(function(row, key) {
+      var newRow = new Array(newCols.length);
+      for (var k = 0; k < newCols.length; k++) {
+         if (srcFor[k] >= 0)
+            newRow[k] = row[srcFor[k]];
+      }
+      rowCache.set(key, newRow);
+   });
 };
 
 // ==========================================================================
@@ -726,9 +1074,12 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       data = (data === null || data === undefined) ? "" : String(data);
    }
 
-   // Row name column: parse JSON to unwrap quoted character row names; numeric
-   // automatic row names parse to a number whose toString matches the wire form.
-   if (rowNumbers && colIdx === 0) {
+   // Row name column: unwrap JSON-encoded character row names; numeric
+   // automatic row names arrive as plain numeric strings and need no
+   // decoding.  Character row names always arrive as JSON strings whose
+   // first character is a double-quote, so checking for it avoids the
+   // JSON.parse cost (parse + toString) when the value is already final.
+   if (rowNumbers && colIdx === 0 && typeof data === "string" && data[0] === '"') {
       try { data = String(JSON.parse(data)); } catch(e) { /* leave as-is */ }
    }
 
@@ -752,7 +1103,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
 
    // Column-specific search highlighting (skip if global search already highlighted)
    if (!didHighlight) {
-      var colSearch = getColumnSearch(colIdx);
+      var colSearch = getColumnSearch(absColIndex(colIdx));
       if (colSearch && colSearch.indexOf("character|") === 0) {
          var term = decodeURIComponent(parseSearchString(colSearch));
          var colIdx2 = data.toLowerCase().indexOf(term.toLowerCase());
@@ -810,9 +1161,10 @@ var createCell = function(data, colIdx, rowData, clazz) {
    var td = document.createElement("td");
 
    var classes = [clazz];
+   // Pinned cells render in the frozen pane's own table (not sticky), so they
+   // need no inline left offset; the .pinned class is kept as a styling hook.
    if (isColumnPinned(colIdx)) {
       classes.push("pinned");
-      td.style.left = (cachedPinnedOffsets[colIdx] || 0) + "px";
    }
    if (colIdx === 0 && rowNumbers) classes.push("first-child");
    // Long cells get a max-width + ellipsis treatment via .largeCell so they
@@ -823,9 +1175,11 @@ var createCell = function(data, colIdx, rowData, clazz) {
    renderCellContents(td, data, colIdx, rowData, clazz);
 
    // Tooltip: for the row-names column, unwrap the JSON-encoded form so the
-   // tooltip shows `foo` rather than `"foo"`. Other columns pass through;
-   // non-strings (numbers, NA sentinels) intentionally get no tooltip.
-   if (rowNumbers && colIdx === 0 && typeof data === "string") {
+   // tooltip shows `foo` rather than `"foo"`.  Character row names always
+   // arrive as JSON strings whose first character is a double-quote; skip
+   // parse when the value is already the plain numeric form.
+   if (rowNumbers && colIdx === 0 && typeof data === "string" &&
+       data[0] === '"') {
       try { td.title = String(JSON.parse(data)); } catch(e) { td.title = data; }
    } else if (typeof data === "string") {
       td.title = data;
@@ -871,6 +1225,19 @@ var isNumericColumn = function(col) {
           colHasClass(col, "integer") ||
           colHasClass(col, "double") ||
           colHasClass(col, "integer64");
+};
+
+// Date / datetime columns. They get a brushable histogram + range filter like
+// numerics, but their col_breaks are epoch values (days for Date, seconds for
+// POSIXct) paired with formatted col_break_labels for display, and they carry
+// an optional col_tz. Kept distinct from isNumericColumn so dates aren't
+// right-aligned or fed to the numeric stats/footer paths. Only Date and
+// POSIXct are matched -- the backend emits the date metadata for exactly those
+// (a data.frame coerces POSIXlt to POSIXct), so matching POSIXlt here too would
+// claim columns the server never marked up.
+var isDateColumn = function(col) {
+   return colHasClass(col, "Date") ||
+          colHasClass(col, "POSIXct");
 };
 
 // Whether the backend computed histogram data for this column. col_breaks /
@@ -948,15 +1315,17 @@ var createHeader = function(idx, col) {
       pinIcon.addEventListener("click", function(evt) {
          evt.stopPropagation();
          evt.preventDefault();
-         togglePinColumn(idx);
+         togglePinColumn(absColIndex(idx));
          // Focus the viewport and mark the column the user just pinned
          // as the active header so subsequent keyboard nav routes to
          // the grid and starts from this column. displayIdx can be -1
          // when the column lives past maxDisplayColumns and the unpin
          // pushed it out of the visible window -- in that case we just
-         // focus the grid without setting an active header.
+         // focus the grid without setting an active header. Pass
+         // scrollIntoView=false: a mouse pin click shouldn't scroll the
+         // viewport to the column's new location (only keyboard nav should).
          var displayIdx = columnOrder.indexOf(idx);
-         if (displayIdx >= 0) setActiveHeader(displayIdx);
+         if (displayIdx >= 0) setActiveHeader(displayIdx, false);
          focusGridViewport();
       });
       interior.appendChild(pinIcon);
@@ -971,7 +1340,12 @@ var createHeader = function(idx, col) {
       th.title = "row names";
    } else {
       th.title = "column " + absColIndex(idx) + ": " + col.col_type;
-      if (hasHistogram(col)) {
+      if (col.col_tz)
+         th.title += "\ntimezone: " + col.col_tz;
+      if (isDateColumn(col) && col.col_min_label && col.col_max_label) {
+         // col_breaks are raw epoch values for dates; show the formatted range.
+         th.title += "\nrange: " + col.col_min_label + " to " + col.col_max_label;
+      } else if (hasHistogram(col)) {
          th.title += " with range " + col.col_breaks[0] +
             " - " + col.col_breaks[col.col_breaks.length - 1];
       } else if (isFactorColumn(col) && col.col_vals) {
@@ -1015,7 +1389,7 @@ var createHeader = function(idx, col) {
       if (evt.target.className === "resizer") return;
       if (evt.target.classList && evt.target.classList.contains("pin-icon")) return;
       if (didResize) { didResize = false; return; }
-      if (sortable) handleSortClick(idx);
+      if (sortable) handleSortClick(absColIndex(idx));
       var displayIdx = columnOrder.indexOf(idx);
       if (displayIdx >= 0) setActiveHeader(displayIdx);
       focusGridViewport();
@@ -1039,11 +1413,11 @@ var sortAriaValue = function(dir) {
    return "none";
 };
 
-var handleSortClick = function(colIdx) {
-   // sortColumn is an absolute column identity, so translate the clicked
-   // window position before comparing/storing.
-   var absIdx = absColIndex(colIdx);
-
+// absIdx is the absolute (1-based) column index, which is how sortColumn is
+// stored -- so this works for any column, including one not in the fetched
+// window (e.g. sorted from its sidebar entry). Callers holding a window
+// position translate via absColIndex first.
+var handleSortClick = function(absIdx) {
    // Cycle: unsorted -> asc -> desc -> unsorted
    var newDir = "";
    if (sortColumn !== absIdx) {
@@ -1173,6 +1547,25 @@ var buildRequestedColumns = function() {
    return requested;
 };
 
+// The ordered list of absolute column indices to request for ROW data. Once
+// `cols` exists this derives from it -- not from buildRequestedColumns -- so
+// returned rows are always aligned 1:1 with `cols`, even when the desired
+// window has drifted from the fetched one (e.g. unpinning an out-of-window
+// column changes buildRequestedColumns before the metadata is re-fetched).
+// An empty list means "the whole frame" (no column windowing configured).
+var colsRequestList = function() {
+   if (effectiveMaxDisplayColumns() <= 0)
+      return [];
+   if (cols && cols.length > 1) {
+      var list = [];
+      for (var i = 1; i < cols.length; i++) {
+         list.push(typeof cols[i].col_index === "number" ? cols[i].col_index : i);
+      }
+      return list;
+   }
+   return buildRequestedColumns();
+};
+
 // The number of display columns in the current window, resolved from the
 // module state if known or from the URL parameters otherwise (the module
 // value isn't set until initGrid, but the column fetch runs before that).
@@ -1251,6 +1644,144 @@ var columnOffsets = function() {
    return offs;
 };
 
+// Total width of the pinned block (sum of pinned column widths). This is the
+// width of the frozen #pinnedPane, and the offset between the full-layout x
+// (columnOffsets, which sums pinned columns first) and the UNPINNED-pane
+// coordinate space the scroll math works in (where x = 0 is the unpinned
+// pane's left edge). absColAtContentX / layoutXOfAbs convert across the two.
+var pinnedBlockWidth = function() {
+   var offs = columnOffsets();
+   return offs[firstUnpinnedPos()] || 0;
+};
+
+// ----------------------------------------------------------------------------
+// Unfetched column spans. The table's layout covers the WHOLE frame: pinned
+// columns, then a left span standing in for the unfetched columns before the
+// fetched window, the fetched window itself, and a right span for the
+// unfetched columns after it. Span columns are billed at DEFAULT_COL_WIDTH (no
+// metadata exists for them yet); the discrepancy against their real widths is
+// absorbed when a slide lands (anchor-based scroll compensation in
+// applyColumnWindowUpdate). This is what gives the horizontal scrollbar the
+// full frame's range, so the user scrolls -- rather than paginates -- through
+// columns.
+// ----------------------------------------------------------------------------
+
+// Number of pinned columns whose absolute index falls in [lo, hi].
+var countPinnedInRange = function(lo, hi) {
+   if (lo > hi) return 0;
+   var n = 0;
+   pinnedColumns.forEach(function(abs) {
+      if (abs >= lo && abs <= hi) n++;
+   });
+   return n;
+};
+
+// Unpinned column counts in the spans. Pinned columns are excluded: they are
+// always fetched and rendered sticky at the front, so they occupy no span
+// space. fetchedWindowEnd === 0 (no grid yet) yields empty spans.
+var leftSpanCols = function() {
+   var hi = fetchedWindowStart - 1;
+   if (fetchedWindowEnd <= 0 || hi < 1) return 0;
+   return hi - countPinnedInRange(1, hi);
+};
+
+var rightSpanCols = function() {
+   if (fetchedWindowEnd <= 0 || fetchedWindowEnd >= totalCols) return 0;
+   var lo = fetchedWindowEnd + 1;
+   return (totalCols - lo + 1) - countPinnedInRange(lo, totalCols);
+};
+
+var leftSpanWidth = function() {
+   if (leftSpanWidthCache < 0)
+      leftSpanWidthCache = leftSpanCols() * DEFAULT_COL_WIDTH;
+   return leftSpanWidthCache;
+};
+
+var rightSpanWidth = function() {
+   if (rightSpanWidthCache < 0)
+      rightSpanWidthCache = rightSpanCols() * DEFAULT_COL_WIDTH;
+   return rightSpanWidthCache;
+};
+
+// The k-th (0-based) unpinned absolute column index at or after startAbs.
+// Walks the (small, sorted) pinned set to skip over pinned indices.
+var nthUnpinnedAbs = function(startAbs, k) {
+   var sorted = Array.from(pinnedColumns).sort(function(a, b) { return a - b; });
+   var abs = startAbs + k;
+   for (var i = 0; i < sorted.length; i++) {
+      if (sorted[i] >= startAbs && sorted[i] <= abs) abs++;
+   }
+   return Math.max(1, Math.min(abs, totalCols));
+};
+
+// Map a content x-coordinate (px from the table's left edge) to the absolute
+// index of the unpinned column at that position, across all three layout
+// segments (left span / fetched window / right span).
+var absColAtContentX = function(x) {
+   var offs = columnOffsets();
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   if (lastPos < 0 || offs.length === 0) return 1;
+
+   // `x` arrives in unpinned-pane coordinates (0 = the unpinned pane's left
+   // edge); the prefix-sum math below works in full-layout coordinates (which
+   // start with the pinned block), so shift across.
+   x += pinnedBlockWidth();
+
+   var spanBase = offs[firstUnpinned]; // pinned block width
+   var leftW = leftSpanWidth();
+
+   if (x < spanBase + leftW) {
+      var k = Math.max(0, Math.floor((x - spanBase) / DEFAULT_COL_WIDTH));
+      return nthUnpinnedAbs(1, k);
+   }
+
+   var fx = x - leftW;
+   for (var i = firstUnpinned; i <= lastPos; i++) {
+      if (fx < offs[i + 1]) return absColIndex(columnOrder[i]);
+   }
+
+   var rx = x - (offs[lastPos + 1] + leftW);
+   var k2 = Math.max(0, Math.floor(rx / DEFAULT_COL_WIDTH));
+   return nthUnpinnedAbs(fetchedWindowEnd + 1, k2);
+};
+
+// Inverse of absColAtContentX: the layout x of a column's left edge, by
+// absolute index. Fetched columns resolve through the measured prefix sums;
+// span columns through the DEFAULT_COL_WIDTH estimate.
+var layoutXOfAbs = function(absIdx) {
+   var offs = columnOffsets();
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
+   if (lastPos < 0 || offs.length === 0) return 0;
+
+   var leftW = leftSpanWidth();
+   // Returned x is in unpinned-pane coordinates (0 = unpinned pane's left
+   // edge); the full-layout prefix sums start with the pinned block, so
+   // subtract it. Pinned columns aren't scrolled (callers no-op for them), so
+   // their negative result is never used for positioning.
+   var pinnedW = pinnedBlockWidth();
+
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0) {
+      var orderPos = columnOrder.indexOf(pos);
+      if (orderPos >= 0) {
+         return orderPos < firstUnpinned
+            ? offs[orderPos] - pinnedW              // pinned (unused for scroll)
+            : offs[orderPos] + leftW - pinnedW;     // fetched window
+      }
+   }
+
+   if (absIdx < fetchedWindowStart) {
+      var k = (absIdx - 1) - countPinnedInRange(1, absIdx - 1);
+      return offs[firstUnpinned] - pinnedW + Math.max(0, k) * DEFAULT_COL_WIDTH;
+   }
+
+   var lo = fetchedWindowEnd + 1;
+   var k2 = (absIdx - lo) - countPinnedInRange(lo, absIdx - 1);
+   return offs[lastPos + 1] + leftW - pinnedW + Math.max(0, k2) * DEFAULT_COL_WIDTH;
+};
+
 // Compute the visible unpinned column window for a given horizontal scroll
 // position. Returns columnOrder positions { start, end } (inclusive) covering
 // the unpinned columns whose x-range intersects the viewport plus BUFFER_COLS
@@ -1268,19 +1799,31 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
    var visLeft = scrollLeft;
    var visRight = scrollLeft + clientWidth;
 
+   // scrollLeft is in unpinned-pane coordinates. A fetched unpinned column at
+   // columnOrder position i sits at unpinned-pane x = offs[i] - pinnedBlock +
+   // leftSpan (the pinned block is a separate pane; the left unfetched span
+   // precedes the fetched window). Fold both terms into one shift.
+   var shift = leftSpanWidth() - pinnedBlockWidth();
+
    var start = -1, end = -1;
    for (var i = firstUnpinned; i <= lastPos; i++) {
-      var colLeft = offs[i];
-      var colRight = offs[i + 1];
+      var colLeft = offs[i] + shift;
+      var colRight = offs[i + 1] + shift;
       if (colRight > visLeft && colLeft < visRight) {
          if (start === -1) start = i;
          end = i;
       }
    }
 
-   // Nothing intersected (e.g. scrolled past the end during a transient
-   // layout); fall back to the last column so we never render an empty body.
-   if (start === -1) { start = lastPos; end = lastPos; }
+   // Nothing intersected: the viewport is over an unfetched span (or past the
+   // end during a transient layout). Keep the nearest edge column rendered so
+   // we never produce an empty body.
+   if (start === -1) {
+      var nearest = (visRight <= offs[firstUnpinned] + shift)
+         ? firstUnpinned : lastPos;
+      start = nearest;
+      end = nearest;
+   }
 
    start = Math.max(firstUnpinned, start - BUFFER_COLS);
    end = Math.min(lastPos, end + BUFFER_COLS);
@@ -1290,7 +1833,7 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
 // Recompute the rendered column window from the current horizontal scroll
 // position. Returns true if the window changed (so callers can rebuild).
 var computeColumnWindow = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    var sl = viewport ? viewport.scrollLeft : 0;
    var cw = viewport ? viewport.clientWidth : 0;
    var win = getColumnWindow(sl, cw);
@@ -1315,19 +1858,28 @@ var colSpacerCell = function(tag, widthPx) {
    return c;
 };
 
-// Append the windowed cell sequence to `parent`: all pinned cells, a left
-// spacer, the visible column window, and a right spacer. `makeCell(pos)`
-// builds the cell for columnOrder position `pos`. Shared by the header and
-// body so their column structure stays identical (required for table-layout:
-// fixed to keep columns aligned).
-var appendWindowedCells = function(parent, makeCell, spacerTag) {
+// Append the pinned cells to `parent` (one per pinned columnOrder position,
+// which are all at the front). Used to populate the frozen pinned pane's
+// header row and body rows. `makeCell(pos)` builds the cell for position `pos`.
+var appendPinnedCells = function(parent, makeCell) {
    var firstUnpinned = firstUnpinnedPos();
-   var lastPos = columnOrder.length - 1;
-
-   // Pinned columns are always rendered (they're sticky).
    for (var p = 0; p < firstUnpinned; p++) {
       parent.appendChild(makeCell(p));
    }
+};
+
+// Append the windowed unpinned cell sequence to `parent`: a left spacer, the
+// visible column window, and a right spacer. `makeCell(pos)` builds the cell
+// for columnOrder position `pos`. Used to populate the scrollable unpinned
+// pane's header row and body rows. The spacers absorb both the off-window
+// fetched columns AND the unfetched spans flanking the fetched window, so the
+// unpinned table's total width spans the whole (unpinned) frame and the
+// horizontal scrollbar covers every column. Pinned/unpinned headers and body
+// rows are built by the same makeCell logic so columns stay aligned under
+// table-layout: fixed within each pane.
+var appendUnpinnedWindowedCells = function(parent, makeCell, spacerTag) {
+   var firstUnpinned = firstUnpinnedPos();
+   var lastPos = columnOrder.length - 1;
    if (firstUnpinned > lastPos) return;
 
    // Clamp the window to the unpinned range; fall back to the full range if it
@@ -1339,26 +1891,31 @@ var appendWindowedCells = function(parent, makeCell, spacerTag) {
    }
 
    var offs = columnOffsets();
-   var leftW = offs[winStart] - offs[firstUnpinned];
+   var leftW = (offs[winStart] - offs[firstUnpinned]) + leftSpanWidth();
    if (leftW > 0) parent.appendChild(colSpacerCell(spacerTag, leftW));
 
    for (var p = winStart; p <= winEnd; p++) {
       parent.appendChild(makeCell(p));
    }
 
-   var rightW = offs[lastPos + 1] - offs[winEnd + 1];
+   var rightW = (offs[lastPos + 1] - offs[winEnd + 1]) + rightSpanWidth();
    if (rightW > 0) parent.appendChild(colSpacerCell(spacerTag, rightW));
 };
 
-// Number of cells appendWindowedCells emits per row (pinned + optional left
-// spacer + window + optional right spacer). The vertical spacer row's td must
-// use exactly this as its colSpan: an oversized colspan would force the table
-// to that many columns and break table-layout: fixed width distribution.
-var renderedColumnCount = function() {
+// Cell count emitted by appendPinnedCells -- the pinned pane's spacer-row
+// colSpan. Clamped to >= 1 so an empty colspan can't collapse the spacer.
+var pinnedColumnCount = function() {
+   return firstUnpinnedPos() || 1;
+};
+
+// Cell count emitted by appendUnpinnedWindowedCells (optional left spacer +
+// window + optional right spacer) -- the unpinned pane's spacer-row colSpan.
+// An oversized colspan would force the table to that many columns and break
+// table-layout: fixed width distribution, so it must match exactly.
+var unpinnedRenderedColumnCount = function() {
    var firstUnpinned = firstUnpinnedPos();
    var lastPos = columnOrder.length - 1;
-   var count = firstUnpinned; // pinned cells (always rendered)
-   if (firstUnpinned > lastPos) return count || 1;
+   if (firstUnpinned > lastPos) return 1;
 
    var winStart = colWinStart, winEnd = colWinEnd;
    if (winEnd < winStart || winStart < firstUnpinned || winEnd > lastPos) {
@@ -1366,9 +1923,12 @@ var renderedColumnCount = function() {
       winEnd = lastPos;
    }
    var offs = columnOffsets();
-   if (offs[winStart] - offs[firstUnpinned] > 0) count++;       // left spacer
+   var count = 0;
+   if (offs[winStart] - offs[firstUnpinned] + leftSpanWidth() > 0)
+      count++;                                                  // left spacer
    count += (winEnd - winStart + 1);                            // window cells
-   if (offs[lastPos + 1] - offs[winEnd + 1] > 0) count++;       // right spacer
+   if (offs[lastPos + 1] - offs[winEnd + 1] + rightSpanWidth() > 0)
+      count++;                                                  // right spacer
    return count || 1;
 };
 
@@ -1394,24 +1954,38 @@ var reinjectHeaderUI = function(th, colIdx, col) {
 // spacer, the windowed headers (with widths + any active header UI), and a
 // right spacer. Cheap to call on every horizontal-window change.
 var rebuildHeaderWindow = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead || !cols || !columnOrder.length) return;
 
+   var makeHeader = function(pos) {
+      var colIdx = columnOrder[pos];
+      var th = createHeader(colIdx, cols[colIdx]);
+      if (typeof measuredWidths[pos] === "number") {
+         th.style.width = measuredWidths[pos] + "px";
+      }
+      reinjectHeaderUI(th, colIdx, cols[colIdx]);
+      return th;
+   };
+
+   // Pinned headers go in the frozen pane's thead (no spacers/window); the
+   // unpinned windowed headers go in the scrollable pane's thead.
+   if (domPinnedThead) {
+      domPinnedThead.innerHTML = "";
+      appendPinnedCells(domPinnedThead, makeHeader);
+   }
+
    thead.innerHTML = "";
-   appendWindowedCells(
-      thead,
-      function(pos) {
-         var colIdx = columnOrder[pos];
-         var th = createHeader(colIdx, cols[colIdx]);
-         if (typeof measuredWidths[pos] === "number") {
-            th.style.width = measuredWidths[pos] + "px";
-         }
-         reinjectHeaderUI(th, colIdx, cols[colIdx]);
-         return th;
-      },
-      "th"
-   );
+   appendUnpinnedWindowedCells(thead, makeHeader, "th");
+
    applySortIndicators();
+   // syncHeaderHeights is intentionally NOT called here: rebuildHeaderWindow
+   // runs on every horizontal-window slide, and a layout-flushing offsetHeight
+   // read per slide is wasted work since the header height only changes on
+   // filter show/hide and pin/unpin. The explicit height set on the thead by
+   // the last sync persists across these rebuilds (innerHTML replaces the
+   // thead's children, not the thead's own style), so the panes stay aligned.
+   // The height-changing callers
+   // (autoSizeColumns, setHeaderUIVisible) call syncHeaderHeights themselves.
 
    // Headers are recreated as the window slides, so re-apply the active-header
    // highlight if its column landed in the new window (the active cell is
@@ -1422,9 +1996,47 @@ var rebuildHeaderWindow = function() {
    }
 };
 
-var togglePinColumn = function(colIdx) {
-   // pinnedColumns tracks absolute column identities, not window positions.
-   var absIdx = absColIndex(colIdx);
+// Keep the two panes' header rows the same height. They are separate sticky
+// theads, and only some columns carry the (taller) filter row -- e.g. the
+// rownames header has no filter while unpinned data headers do -- so their
+// natural heights can differ, which would offset the body rows below them and
+// break the vertical alignment the synced scroll relies on. Force both to the
+// taller of the two. A no-op when both are naturally equal (no filter row).
+var syncHeaderHeights = function() {
+   if (!domThead || !domPinnedThead) return;
+   domThead.style.height = "";
+   domPinnedThead.style.height = "";
+   var h = Math.max(domThead.offsetHeight, domPinnedThead.offsetHeight);
+   if (h > 0) {
+      domThead.style.height = h + "px";
+      domPinnedThead.style.height = h + "px";
+   }
+};
+
+// Recompute the rendered column window from the current scroll position; if it
+// changed, rebuild the windowed header and re-apply pinned styling. Returns
+// whether the window changed, so callers can decide how to re-render rows (a
+// changed window forces a full row rebuild -- existing rows carry the old
+// window's cells). Shared by the scroll handlers, the keyboard / go-to scroll-
+// into-view paths, and the column-window slide.
+var syncColumnWindow = function() {
+   if (!computeColumnWindow())
+      return false;
+   rebuildHeaderWindow();
+   applyPinnedColumns();
+   return true;
+};
+
+// absIdx is the absolute (1-based) column index; pinnedColumns tracks absolute
+// identities, so this works for any column, including one not in the fetched
+// window (e.g. pinned from its sidebar entry). Callers holding a window
+// position translate via absColIndex first.
+// scrollActiveHeader: when true (keyboard P), the restored active header is
+// scrolled back into view so the keyboard cursor stays visible after the
+// reorder. Mouse/sidebar toggles leave it false -- pinning is a reorder, not a
+// navigation, so it must not move the viewport (which would otherwise scroll
+// the just-unpinned column into view at its new location).
+var togglePinColumn = function(absIdx, scrollActiveHeader) {
    if (pinnedColumns.has(absIdx)) {
       pinnedColumns.delete(absIdx);
    } else {
@@ -1452,15 +2064,23 @@ var togglePinColumn = function(colIdx) {
    saveState();
    if (headerOrigCol >= 0) {
       var newDisplayIdx = columnOrder.indexOf(headerOrigCol);
-      if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx);
+      if (newDisplayIdx >= 0) setActiveHeader(newDisplayIdx, !!scrollActiveHeader);
    }
+
+   // Unpinning a column that lies outside the current window removes it from
+   // the desired fetch set, leaving `cols` (and the rows aligned to it) with
+   // a column the window no longer wants. Re-sync the fetched window in
+   // place; in-window pin toggles don't change the requested set, so this is
+   // a no-op for them.
+   if (buildRequestedColumns().join(",") !== colsRequestList().join(","))
+      slideColumnWindow();
 };
 
 // Rebuild headers in the current column order (pinned first, then unpinned).
 // Reorder existing <th> elements rather than recreating them so any attached
 // filter UI / popup state is preserved across pin toggles.
 var rebuildHeaders = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead || !cols) return;
 
    // Recompute the pinned/unpinned order, then let autoSizeColumns rebuild the
@@ -1472,43 +2092,19 @@ var rebuildHeaders = function() {
    applyPinnedColumns();
 };
 
-// Compute the cumulative left offset for each pinned column based on render order.
-// Returns { offsets: { colIdx: leftPx, ... }, totalWidth: number }.
-//
-// Result is cached in pinnedOffsetsCache (declared with the rest of the
-// state). Each entry costs an offsetWidth read which forces layout, and
-// this function is called from renderVisibleRows on every scroll.
-// Callers that change column widths or pinning must invalidate via
-// invalidatePinnedOffsets(). This also drops columnOffsetsCache, which is
-// derived from the same columnOrder + measuredWidths state.
+// Drop the derived layout caches. Callers that change column widths or pinning
+// must invalidate so columnOffsets / span widths (and the pinned-block width
+// derived from them) recompute from the current columnOrder + measuredWidths.
 var invalidatePinnedOffsets = function() {
    pinnedOffsetsCache = null;
    columnOffsetsCache = null;
+   leftSpanWidthCache = -1;
+   rightSpanWidthCache = -1;
 };
 
-var getPinnedOffsets = function() {
-   if (pinnedOffsetsCache !== null) return pinnedOffsetsCache;
-
-   var offsets = {};
-   var cumulative = 0;
-
-   // Derive pinned offsets from measuredWidths rather than reading rendered
-   // <th> offsetWidths: with column virtualization the pinned headers are
-   // always present, but keying off measuredWidths avoids a per-call layout
-   // flush and stays correct regardless of what else is in the DOM.
-   for (var i = 0; i < columnOrder.length; i++) {
-      var colIdx = columnOrder[i];
-      if (!isColumnPinned(colIdx)) break; // pinned columns are all at the front
-      offsets[colIdx] = cumulative;
-      cumulative += measuredWidths[i] || 0;
-   }
-   pinnedOffsetsCache = { offsets: offsets, totalWidth: cumulative };
-   return pinnedOffsetsCache;
-};
-
-// Apply pinned styling to header cells
+// Apply pinned styling to header cells and size the frozen pinned pane.
 var applyPinnedColumns = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    if (!thead) return;
 
    // No-op if column widths haven't been measured yet (e.g. autoSizeColumns
@@ -1517,41 +2113,43 @@ var applyPinnedColumns = function() {
    // wait for the next autoSizeColumns + applyPinnedColumns pair instead.
    if (totalTableWidth === 0) return;
 
-   var pinned = getPinnedOffsets();
+   // Size the frozen pane (and its table) to the pinned block width. Pinned
+   // columns are ordinary cells in #pinnedTable now -- no sticky offsets.
+   var pinnedW = pinnedBlockWidth();
+   if (domPinnedPane) domPinnedPane.style.width = pinnedW + "px";
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) pinnedTable.style.width = pinnedW + "px";
 
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer): they carry no data-col-idx and are
-      // never pinned. With column virtualization thead.children no longer maps
-      // 1:1 to columnOrder, so read the column index off the header itself.
-      if (isNaN(colIdx)) continue;
-      var pinIcon = th.querySelector(".pin-icon");
-      var nowPinned = isColumnPinned(colIdx);
-
-      if (nowPinned) {
-         th.classList.add("pinned");
-         th.style.left = (pinned.offsets[colIdx] || 0) + "px";
-      } else {
-         th.classList.remove("pinned");
-         th.style.left = "";
-      }
-      if (pinIcon) {
-         if (nowPinned) pinIcon.classList.add("pinned");
-         else pinIcon.classList.remove("pinned");
-         pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
+   // Toggle the .pinned class + pin-icon state across both panes' headers.
+   var theads = [domThead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var th0 = theads[t];
+      if (!th0) continue;
+      for (var i = 0; i < th0.children.length; i++) {
+         var th = th0.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer): no data-col-idx, never pinned.
+         if (isNaN(colIdx)) continue;
+         var pinIcon = th.querySelector(".pin-icon");
+         var nowPinned = isColumnPinned(colIdx);
+         if (nowPinned) th.classList.add("pinned");
+         else th.classList.remove("pinned");
+         if (pinIcon) {
+            if (nowPinned) pinIcon.classList.add("pinned");
+            else pinIcon.classList.remove("pinned");
+            pinIcon.title = nowPinned ? "Unpin column" : "Pin column";
+         }
       }
    }
 
-   // Horizontal overscroll: lets the user scroll the rightmost column to sit
-   // just past the pinned columns for side-by-side context. Applied even when
-   // all columns fit in the viewport so horizontal scrolling is consistently
-   // available. We reserve room for the rightmost column so it stays visible
-   // at maximum scroll; without this reservation the user can scroll every
-   // unpinned column off-screen (issue #17612). If every column is pinned
-   // (or none exist) there is nothing to scroll past, so we skip the padding
-   // to avoid a phantom scrollbar over empty space.
-   var viewport = document.getElementById("gridViewport");
+   // Horizontal overscroll: lets the user scroll the rightmost column to sit at
+   // the left of the unpinned pane for side-by-side context with the pinned
+   // columns. Applied even when all columns fit so horizontal scrolling is
+   // consistently available. We reserve room for the rightmost column so it
+   // stays visible at maximum scroll; without this the user could scroll every
+   // unpinned column off-screen (issue #17612). The unpinned pane's clientWidth
+   // already excludes the pinned block (separate pane), so no pinned term here.
+   var viewport = domViewport;
    var table = document.getElementById("rsGridData");
    if (viewport && table) {
       var overscroll = 0;
@@ -1559,11 +2157,14 @@ var applyPinnedColumns = function() {
       // columnOrder places pinned columns before unpinned, so the last entry
       // being unpinned is sufficient to confirm an unpinned column exists.
       if (lastIdx >= 0 && !isColumnPinned(columnOrder[lastIdx])) {
-         // The last column may be outside the rendered window; use its
-         // measured width rather than a (possibly absent) rendered <th>.
-         var lastUnpinnedWidth = measuredWidths[lastIdx] || 0;
+         // The last LAYOUT column may be an unfetched span column (billed at
+         // the default estimate) or a fetched column outside the rendered
+         // window; use the appropriate width rather than a rendered <th>.
+         var lastUnpinnedWidth = rightSpanWidth() > 0
+            ? DEFAULT_COL_WIDTH
+            : (measuredWidths[lastIdx] || 0);
          overscroll = Math.max(0,
-            viewport.clientWidth - pinned.totalWidth - lastUnpinnedWidth);
+            viewport.clientWidth - lastUnpinnedWidth);
       }
       table.style.paddingRight = overscroll + "px";
    }
@@ -1580,9 +2181,13 @@ var measureTextWidth = function(text, bold) {
    if (!measureCtx) {
       measureCanvas = document.createElement("canvas");
       measureCtx = measureCanvas.getContext("2d");
+      measureCtxFont = "";
    }
-   measureCtx.font = (bold ? "bold " : "") +
-      "11px 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif";
+   var font = bold ? MEASURE_FONT_BOLD : MEASURE_FONT;
+   if (font !== measureCtxFont) {
+      measureCtx.font = font;
+      measureCtxFont = font;
+   }
    return Math.ceil(measureCtx.measureText(text).width);
 };
 
@@ -1596,6 +2201,39 @@ var avgCharWidth = function() {
          measureTextWidth(AVG_CHAR_REF_STRING, false) / AVG_CHAR_REF_STRING.length;
    }
    return avgCharWidthCache;
+};
+
+// Width of the widest digit at the cell font. Numeric and ISO date/time cells
+// render only digits and separators ('-', ':', '.', ' '), and every separator
+// is narrower than a digit, so col_max_chars * this is a safe upper bound on
+// such a column's rendered width -- letting autoSizeColumns size those columns
+// from the (whole-column-accurate) col_max_chars hint without sampling cells.
+// Cached; the font never changes.
+var digitWidthCache = 0;
+var digitWidth = function() {
+   if (!digitWidthCache) {
+      var w = 0;
+      for (var d = 0; d <= 9; d++) {
+         var dw = measureTextWidth(String(d), false);
+         if (dw > w) w = dw;
+      }
+      digitWidthCache = w;
+   }
+   return digitWidthCache;
+};
+
+// Width of the widest logical literal at the cell font. Logical cells render
+// only TRUE / FALSE / NA, so this sizes a logical column exactly without
+// sampling. Cached; the font never changes.
+var logicalCellWidthCache = 0;
+var logicalCellWidth = function() {
+   if (!logicalCellWidthCache) {
+      logicalCellWidthCache = Math.max(
+         measureTextWidth("TRUE", false),
+         measureTextWidth("FALSE", false),
+         measureTextWidth("NA", false));
+   }
+   return logicalCellWidthCache;
 };
 
 // Compute column widths by measuring header text and a sample of cached cell
@@ -1628,7 +2266,7 @@ var flushDeferredHeaderRebuild = function() {
 };
 
 var autoSizeColumns = function() {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    // Widths are computed from columnOrder + data (below), so headers need not
    // exist yet -- this is also the path that first builds the windowed header.
    if (!thead || !cols || !columnOrder.length) return;
@@ -1636,7 +2274,7 @@ var autoSizeColumns = function() {
    // If the viewport isn't visible (e.g. background tab), measurements
    // will be wrong. Flag and bail; onActivate will re-run sizing once the
    // tab has real layout.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport && viewport.offsetHeight === 0) {
       needsAutoSize = true;
       return;
@@ -1652,6 +2290,13 @@ var autoSizeColumns = function() {
 
    measuredWidths = [];
    var totalWidth = 0;
+
+   // Memoize cell-text measurements for this pass. Sampled columns are often
+   // low-cardinality (logical, factor, repeated integers), so the same string
+   // is measured many times across the up-to-100-row sample; caching collapses
+   // that to one measureText per distinct value. Lives for one pass only, so it
+   // can't go stale and is bounded by the sample size.
+   var cellWidthMemo = new Map();
 
    // CSS-derived chrome added beyond the measured text width:
    //   td/th: padding 5px each side + 1px border-right = 11px
@@ -1688,37 +2333,84 @@ var autoSizeColumns = function() {
          ? TD_DATA_EXTRA : TD_EXTRA;
       cellExtra += rowNamesPad;
 
-      // If the server provided a max-chars hint, derive a baseline cell
-      // width from it (avgCharWidth x N + chrome). This is exact for
-      // numeric/integer/Date/POSIXct/logical columns, exact-by-bound for
-      // character/factor (max nchar across values), and absent for column
-      // types whose accurate length would require expensive formatting.
-      // We still sample below -- the hint is a baseline, not a ceiling.
-      if (typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
-         var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
-         if (hintW > maxW) maxW = hintW;
+      // Fixed-glyph columns (numeric, Date, POSIXct) render only digits and
+      // separators ('-', ':', '.', ' '), none wider than a digit; logical
+      // columns render only TRUE / FALSE / NA. Neither needs text measured per
+      // cell. Row names are excluded: their values are JSON-encoded and
+      // proportional, so they take the generic measureText sampling path.
+      var isFixedGlyph = !isRowNames && (isNumericColumn(col) || isDateColumn(col));
+
+      // Fast paths that size a column with no per-cell sampling at all.
+      var sized = false;
+      if (col.col_type === "logical") {
+         // Only TRUE / FALSE / NA: the widest literal is the column's cell width.
+         var lw = logicalCellWidth() + cellExtra;
+         if (lw > maxW) maxW = lw;
+         sized = true;
+      } else if (isFixedGlyph &&
+                 typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+         // The server's col_max_chars hint is computed over ALL rows, so
+         // col_max_chars x widest-digit width is an exact upper bound -- cheaper
+         // AND more accurate than sampling (which could miss the widest value).
+         var nw = Math.ceil(col.col_max_chars * digitWidth()) + cellExtra;
+         if (nw > maxW) maxW = nw;
+         sized = true;
       }
 
-      // Measure a sample of cell values from the cache. When the hint is
-      // present this catches cases where the avg-char-width estimate
-      // under-counts (e.g., a column of unusually wide glyphs); when it
-      // isn't, this is the sole source of width data for the column.
-      var sampleSize = Math.min(rowCache.size, 100);
-      for (var r = 0; r < sampleSize; r++) {
-         var row = rowCache.get(r);
-         if (!row) continue;
-         var cellVal = row[colIdx];
-         if (cellVal === 0 || cellVal === null || cellVal === undefined) {
-            // NA -- short
-            cellVal = "NA";
+      if (!sized) {
+         // No usable metadata hint. For character/factor the rendered width is
+         // proportional and must be measured; for fixed-glyph columns without a
+         // hint (non-integral doubles, which the server declines to bound) the
+         // cells are still digit-only, so the longest sampled string x digit
+         // width bounds them -- a cheap string-length scan rather than a
+         // measureText per cell.
+         if (!isFixedGlyph &&
+             typeof col.col_max_chars === "number" && col.col_max_chars > 0) {
+            var hintW = Math.ceil(col.col_max_chars * avgCharWidth()) + cellExtra;
+            if (hintW > maxW) maxW = hintW;
          }
-         var cellText = String(cellVal);
-         // For row names (col 0), the value is JSON-encoded
-         if (isRowNames) {
-            try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+
+         // Sample from the current render window rather than row 0: after a
+         // column-window slide the cache holds the rows around the viewport,
+         // which may be nowhere near the top.
+         var sampleStart = Math.max(0, renderStart);
+         var sampleEnd = sampleStart + Math.min(rowCache.size, 100);
+         for (var r = sampleStart; r < sampleEnd; r++) {
+            var row = rowCache.get(r);
+            if (!row) continue;
+            var cellVal = row[colIdx];
+            if (cellVal === 0 || cellVal === null || cellVal === undefined) {
+               // NA -- short
+               cellVal = "NA";
+            }
+            var cellText = String(cellVal);
+
+            var cellW;
+            if (isFixedGlyph) {
+               // Digit-bounded: char count x widest digit, no text measurement.
+               // The non-finite literals Inf/-Inf/NaN contain letters that can
+               // be slightly wider than a digit, so an all-non-finite column
+               // (no col_max_chars) could be under-sized by a few px -- harmless
+               // here since those tokens are short and MIN_COL_WIDTH (plus the
+               // header text width) dominates.
+               cellW = Math.ceil(cellText.length * digitWidth()) + cellExtra;
+            } else {
+               // For row names (col 0), character names arrive as JSON-encoded
+               // strings (first char is a double-quote); numeric auto row names
+               // are plain strings and need no decoding.
+               if (isRowNames && typeof cellText === "string" &&
+                   cellText[0] === '"') {
+                  try { cellText = JSON.parse(cellText).toString(); } catch(e) { /* leave as-is */ }
+               }
+               var textW = cellWidthMemo.get(cellText);
+               if (textW === undefined) {
+                  textW = measureTextWidth(cellText, false);
+                  cellWidthMemo.set(cellText, textW);
+               }
+               cellW = textW + cellExtra;
+            }
+            if (cellW > maxW) maxW = cellW;
          }
-         var cellW = measureTextWidth(cellText, false) + cellExtra;
-         if (cellW > maxW) maxW = cellW;
       }
 
       // Manual widths (user resize) take precedence over computed widths.
@@ -1735,20 +2427,48 @@ var autoSizeColumns = function() {
       totalWidth += w;
    }
 
+   // The table spans the WHOLE frame: measured widths for the fetched
+   // columns plus the estimated unfetched spans on either side, so the
+   // horizontal scrollbar's range covers every column. Invalidate the layout
+   // caches first -- the span widths depend on the (possibly just-changed)
+   // fetched window bounds.
+   invalidatePinnedOffsets();
+   totalWidth += leftSpanWidth() + rightSpanWidth();
+
+   // Split the layout across the two panes: the frozen pinned table holds the
+   // pinned block; the scrollable table holds everything else (fetched unpinned
+   // columns plus the estimated unfetched spans), so its horizontal scrollbar
+   // covers every unpinned column. totalTableWidth tracks the UNPINNED table
+   // width -- it's what updateColumnOverflowState compares against the unpinned
+   // pane's clientWidth, and what an unpinned-column resize grows.
+   var pinnedW = pinnedBlockWidth();
+   var unpinnedW = Math.max(0, totalWidth - pinnedW);
+
    var table = document.getElementById("rsGridData");
    if (table) {
-      table.style.width = totalWidth + "px";
+      table.style.width = unpinnedW + "px";
       table.style.tableLayout = "fixed";
    }
+   var pinnedTable = document.getElementById("pinnedTable");
+   if (pinnedTable) {
+      pinnedTable.style.width = pinnedW + "px";
+      pinnedTable.style.tableLayout = "fixed";
+   }
+   // Size the frozen pane now (applyPinnedColumns re-affirms it later) so it
+   // isn't briefly clipped to zero width between here and that call.
+   if (domPinnedPane) domPinnedPane.style.width = pinnedW + "px";
 
-   totalTableWidth = totalWidth;
-   invalidatePinnedOffsets();
+   totalTableWidth = unpinnedW;
 
    // Recompute the visible column window against the new widths and (re)build
    // the windowed header row, which applies per-column widths to the rendered
    // headers. Widths now exist for every column, so the window is accurate.
    computeColumnWindow();
    rebuildHeaderWindow();
+   // Re-align the two panes' header heights here (and in setHeaderUIVisible),
+   // rather than on every windowed-header rebuild -- this covers the initial
+   // build, width changes, and pin/unpin (via rebuildHeaders).
+   syncHeaderHeights();
 };
 
 // ==========================================================================
@@ -1764,10 +2484,14 @@ var initResizeHandlers = function() {
       initResizeX = evt.clientX;
       resizingBoundsExceeded = 0;
 
-      var th = getHeaderCell(resizingColIdx);
-      if (th) {
-         initResizingWidth = th.offsetWidth;
-         origTableWidth = totalTableWidth;
+      resizingHeaderTh = getHeaderCell(resizingColIdx);
+      if (resizingHeaderTh) {
+         initResizingWidth = resizingHeaderTh.offsetWidth;
+         // Base the table-width math on the pane that actually grows: the
+         // frozen pinned table for a pinned column, the scrollable table
+         // otherwise. (totalTableWidth tracks only the unpinned table.)
+         origResizePinned = isColumnPinned(resizingColIdx);
+         origTableWidth = origResizePinned ? pinnedBlockWidth() : totalTableWidth;
          if (typeof origColWidths[resizingColIdx] === "undefined") {
             origColWidths[resizingColIdx] = initResizingWidth;
          }
@@ -1800,6 +2524,7 @@ var initResizeHandlers = function() {
       document.body.classList.remove("col-resizing");
       if (resizingColIdx === null) return;
       resizingColIdx = null;
+      resizingHeaderTh = null;
       saveState();
       // applyResizeDelta updates totalTableWidth on every mousemove but
       // skips applyPinnedColumns/updateCustomScrollbars to avoid jank
@@ -1829,9 +2554,13 @@ var initResizeHandlers = function() {
 };
 
 var getHeaderCell = function(colIdx) {
-   var thead = document.getElementById("data_cols");
-   if (!thead) return null;
-   return thead.querySelector('th[data-col-idx="' + colIdx + '"]');
+   // A header lives in either the pinned pane's thead or the unpinned pane's
+   // thead depending on whether its column is pinned; check both.
+   var sel = 'th[data-col-idx="' + colIdx + '"]';
+   var th = domThead ? domThead.querySelector(sel) : null;
+   if (!th && domPinnedThead)
+      th = domPinnedThead.querySelector(sel);
+   return th;
 };
 
 var applyResizeDelta = function(delta) {
@@ -1853,18 +2582,28 @@ var applyResizeDelta = function(delta) {
       colWidth = initResizingWidth + delta;
    }
 
-   // Apply width to header
-   var th = getHeaderCell(resizingColIdx);
-   if (th) {
-      th.style.width = colWidth + "px";
+   // Apply width to header -- use the cached <th> from the mousedown init
+   // to avoid a per-mousemove querySelector during a 1-2s drag.
+   if (resizingHeaderTh) {
+      resizingHeaderTh.style.width = colWidth + "px";
       manualWidths[absColIndex(resizingColIdx)] = colWidth;
    }
 
-   // Apply width to table
-   var table = document.getElementById("rsGridData");
-   if (table) {
-      table.style.width = (origTableWidth + delta) + "px";
-      totalTableWidth = origTableWidth + delta;
+   // Apply width to the table being resized. A pinned column grows the frozen
+   // pinned table (and its pane), widening the frozen region without touching
+   // the unpinned pane's scroll position. An unpinned column grows the
+   // scrollable table as before.
+   var newW = origTableWidth + delta;
+   if (origResizePinned) {
+      var pinnedTable = document.getElementById("pinnedTable");
+      if (pinnedTable) pinnedTable.style.width = newW + "px";
+      if (domPinnedPane) domPinnedPane.style.width = newW + "px";
+   } else {
+      var table = document.getElementById("rsGridData");
+      if (table) {
+         table.style.width = newW + "px";
+         totalTableWidth = newW;
+      }
    }
 
    invalidatePinnedOffsets();
@@ -1875,6 +2614,29 @@ var applyResizeDelta = function(delta) {
 // ==========================================================================
 // Filter UI
 // ==========================================================================
+
+// Column search types that have a typed filter widget. The rownames column and
+// unsupported types (list, data.frame) have none.
+var isFilterableSearchType = function(searchType) {
+   return searchType === "numeric" || searchType === "date" ||
+          searchType === "character" || searchType === "factor" ||
+          searchType === "boolean";
+};
+
+// Build the typed filter widget for a column, dispatching on its search type.
+// `idx` is the ABSOLUTE column index. `anchor`, when given, is the element the
+// popup attaches to (and whose click toggles it) instead of the widget's own
+// display element -- used by the sidebar to anchor the popup under its filter
+// icon. Returns the widget's display element (with a `dvFilterController`
+// property exposing { open, dismiss } for popup-backed types), or null.
+var buildTypedFilterUI = function(idx, col, onDismiss, anchor) {
+   if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "date") return createDateFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss, anchor);
+   if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss, anchor);
+   return null;
+};
 
 var createFilterUI = function(idx, col) {
    if (idx < 1) return null;
@@ -1926,11 +2688,7 @@ var createFilterUI = function(idx, col) {
    val.textContent = "All";
 
    var buildTypedUI = function() {
-      if (col.col_search_type === "numeric") return createNumericFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "factor") return createFactorFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "character") return createTextFilterUI(idx, col, onDismiss);
-      if (col.col_search_type === "boolean") return createBooleanFilterUI(idx, col, onDismiss);
-      return null;
+      return buildTypedFilterUI(idx, col, onDismiss);
    };
 
    // Swap the "All" placeholder for the typed filter widget and mark the host
@@ -1971,19 +2729,40 @@ var createFilterUI = function(idx, col) {
    return host;
 };
 
-// idx is a position in the current window; cachedFilterValues is keyed by
-// absolute column identity so a filter follows its column across pagination.
-var getColumnSearch = function(idx) {
-   return cachedFilterValues[absColIndex(idx)] || "";
+// Keyed by ABSOLUTE column index (cachedFilterValues' key), so a filter follows
+// its column across pagination and can be driven from either the header (which
+// passes col_index) or the sidebar (which works in absolute indices). Callers
+// holding a window position must convert via absColIndex() first.
+var getColumnSearch = function(absIdx) {
+   return cachedFilterValues[absIdx] || "";
 };
 
-var setColumnSearch = function(idx, val) {
-   var absIdx = absColIndex(idx);
+var setColumnSearch = function(absIdx, val) {
    if (val) {
       cachedFilterValues[absIdx] = val;
    } else {
       delete cachedFilterValues[absIdx];
    }
+};
+
+// Human-readable summary of a stored filter value ("type|value"), for the
+// sidebar filter indicator's tooltip. Range filters (numeric / date) read as
+// "lo to hi". Factor values are a stored level INDEX, not the label, so they'd
+// read as a meaningless number ("Filtered: 3") -- return "" for them so the
+// caller shows a generic "Filtered" instead. Everything else (character,
+// boolean) is already human-readable.
+var describeFilterValue = function(raw) {
+   if (!raw) return "";
+   var pipe = raw.indexOf("|");
+   var type = pipe > 0 ? raw.substring(0, pipe) : "";
+   var value = parseSearchString(raw);
+   if ((type === "numeric" || type === "date") && value.indexOf("_") > 0) {
+      var parts = value.split("_");
+      return parts[0] + " to " + parts[1];
+   }
+   if (type === "factor")
+      return "";
+   return value;
 };
 
 // Per-column dismissal epochs, keyed by absolute column index. Bumped when a
@@ -1994,8 +2773,7 @@ var setColumnSearch = function(idx, val) {
 // slot is "" at schedule time and still "" after the dismissal).
 var columnFilterEpochs = {};
 
-var bumpColumnFilterEpoch = function(idx) {
-   var absIdx = absColIndex(idx);
+var bumpColumnFilterEpoch = function(absIdx) {
    columnFilterEpochs[absIdx] = (columnFilterEpochs[absIdx] || 0) + 1;
 };
 
@@ -2009,10 +2787,9 @@ var bumpColumnFilterEpoch = function(idx) {
 // didn't change (see columnFilterEpochs). Watching per-column state (rather
 // than a global invalidation counter) means applies racing unrelated
 // invalidations -- a sort, a search, another column's filter -- still run.
-var watchColumnSearch = function(idx) {
+var watchColumnSearch = function(absIdx) {
    return function() {
-      var absIdx = absColIndex(idx);
-      return (columnFilterEpochs[absIdx] || 0) + "#" + getColumnSearch(idx);
+      return (columnFilterEpochs[absIdx] || 0) + "#" + getColumnSearch(absIdx);
    };
 };
 
@@ -2022,20 +2799,68 @@ var applyFilters = function() {
    fetchRows(0, FETCH_SIZE, function() {
       scrollToTop();
    });
+   // The sidebar summaries describe the filtered rows; recompute them (or
+   // restore the whole-frame ones when the last filter was cleared).
+   refreshSidebarSummaries();
+   // Light the sidebar filter indicators immediately (the summary refresh is
+   // async; this reflects the new filter state without waiting for it).
+   updateSidebarColumnIndicators();
    saveState();
 };
 
-var createNumericFilterUI = function(idx, col, onDismiss) {
+// Append apply (checkmark) and clear (x) buttons to the top-right of a
+// numeric/date filter popup. onApply commits the current value -- an unchanged
+// / full-range selection yields no filter (applyNumericFilter/applyDateFilter
+// only store a filter when the value narrows the range), so applying a freshly
+// opened popup does nothing. onClear drops the filter. Both then dismiss. The
+// header chip has its own clear X, but a sidebar-opened popup has neither, so
+// these are its only apply/clear affordances.
+var appendPopupActions = function(popup, onApply, onClear) {
+   var addButton = function(cls, label, handler) {
+      var btn = document.createElement("span");
+      btn.className = cls;
+      btn.title = label;
+      btn.setAttribute("role", "button");
+      btn.setAttribute("tabindex", "0");
+      btn.setAttribute("aria-label", label);
+      var run = function(evt) {
+         evt.stopPropagation();
+         evt.preventDefault();
+         handler();
+         if (dismissActivePopup) dismissActivePopup(true);
+      };
+      btn.addEventListener("click", run);
+      btn.addEventListener("keydown", function(evt) {
+         if (evt.key === "Enter" || evt.key === " ") run(evt);
+      });
+      popup.appendChild(btn);
+   };
+   addButton("filterPopupApply", "Apply filter", onApply);
+   addButton("filterPopupClear", "Clear filter", onClear);
+};
+
+// Shared brushable range-filter widget for numeric and date/datetime columns.
+// Both render a histogram (hist.js) with a draggable brush plus a text box, and
+// share all the popup wiring -- debounced apply, Enter/Escape commit/cancel, the
+// change-replay suppression, and the apply/clear buttons. The `spec` supplies
+// the type-specific pieces:
+//   initialRange()        -> { lo, hi } seed values for the box and brush
+//   filterFromRange(s, e) -> the box's display string for a [s, e] selection
+//   textFromBrush(s, e)   -> the box value for a brush move (raw break values)
+//   binsFor(lo, hi)       -> { start, end } brushed histogram bins
+//   applyFilter(boxValue) -> parse the box, store the search, applyFilters()
+// The header label rendering ("[lo, hi]" / "[v]" / "[...]") is identical for
+// both types, so it lives here.
+var createRangeFilterUI = function(idx, col, onDismiss, anchor, spec) {
    var ele = document.createElement("div");
 
    // Set by buildPopup each time the popup opens; lets the dismiss wrapper
    // below commit a brush/typed value still inside the debounce window.
    var flushPendingApply = null;
 
-   // Render the active numeric filter into the header label: "[15, 30]"
-   // for a range, "[15]" for a single value, "[...]" while the popup is
-   // open with no value yet. Keeps the user oriented on what's filtered
-   // without having to reopen the popup.
+   // Render the active filter into the header label: "[15, 30]" for a range,
+   // "[15]" for a single value, "[...]" while the popup is open with no value
+   // yet. Keeps the user oriented on what's filtered without reopening it.
    var renderActiveFilter = function() {
       var raw = parseSearchString(getColumnSearch(idx));
       if (raw.length === 0) {
@@ -2051,60 +2876,26 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       }
    };
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       popup.classList.add("numericFilterPopup");
-      var min = col.col_breaks[0].toString();
-      var max = col.col_breaks[col.col_breaks.length - 1].toString();
-      var val = parseSearchString(getColumnSearch(idx));
-      if (val.indexOf("_") > 0) {
-         var range = val.split("_");
-         min = range[0]; max = range[1];
-      } else if (!isNaN(parseFloat(val)) && val.length > 0) {
-         min = parseFloat(val); max = parseFloat(val);
-      }
 
-      var filterFromRange = function(s, e) {
-         if (Math.abs(s - e) === 0) return "" + s;
-         return s + " - " + e;
-      };
+      var init = spec.initialRange();
 
-      var numVal = document.createElement("input");
-      numVal.type = "text";
-      numVal.className = "numValueBox";
-      numVal.style.textAlign = "center";
-      numVal.value = filterFromRange(min, max);
+      var valBox = document.createElement("input");
+      valBox.type = "text";
+      valBox.className = "numValueBox";
+      valBox.style.textAlign = "center";
+      valBox.value = spec.filterFromRange(init.lo, init.hi);
 
-      // Numeric tokens accept optional scientific-notation suffix (1e10,
-      // 2.5e-5). The range separator is `-` surrounded by required
-      // whitespace, which disambiguates from a leading negative sign.
-      var NUM = "-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?";
-      var SINGLE_RE = new RegExp("^\\s*" + NUM + "\\s*$");
-      var RANGE_RE = new RegExp(
-         "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
-
-      var applyNumericFilter = function(v) {
-         var searchText = "";
-         v = v.replace(/[^-+0-9 .eE]/g, "");
-         var digit = v.match(SINGLE_RE);
-         if (digit !== null) {
-            searchText = digit[0].trim();
-         } else {
-            var matches = v.match(RANGE_RE);
-            if (matches !== null && matches.length > 2) {
-               if (Math.abs(parseFloat(matches[1]) - col.col_breaks[0]) !== 0 ||
-                   Math.abs(parseFloat(matches[2]) - col.col_breaks[col.col_breaks.length - 1]) !== 0) {
-                  searchText = matches[1] + "_" + matches[2];
-               }
-            }
-         }
-         if (searchText.length > 0) searchText = "numeric|" + searchText;
-         setColumnSearch(idx, searchText);
-         applyFilters();
+      // Commit the current box value: spec.applyFilter parses it and stores the
+      // search (or clears it for a full-range selection), then refresh the label.
+      var applyValue = function() {
+         spec.applyFilter(valBox.value);
          renderActiveFilter();
       };
 
       var updateView = debounce(
-         TIMING.filterDebounce, watchColumnSearch(idx), applyNumericFilter);
+         TIMING.filterDebounce, watchColumnSearch(idx), applyValue);
       flushPendingApply = function() { updateView.flush(); };
 
       // Dismissing the popup removes a focused, dirty input from the DOM,
@@ -2113,12 +2904,12 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       // otherwise that replay would schedule one more apply that lands after
       // the popup is gone.
       var suppressChange = false;
-      numVal.addEventListener("change", function() {
+      valBox.addEventListener("change", function() {
          if (suppressChange) return;
-         updateView(numVal.value);
+         updateView();
       });
-      numVal.addEventListener("click", function(evt) { evt.stopPropagation(); });
-      numVal.addEventListener("keydown", function(evt) {
+      valBox.addEventListener("click", function(evt) { evt.stopPropagation(); });
+      valBox.addEventListener("keydown", function(evt) {
          if (!dismissActivePopup) return;
          if (evt.keyCode === 27) {
             // Escape cancels: drop any pending debounced apply rather than
@@ -2136,35 +2927,44 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
             // the column would wrongly revert to the unfiltered display.
             suppressChange = true;
             updateView.cancel();
-            applyNumericFilter(numVal.value);
+            applyValue();
             dismissActivePopup(true);
          }
       });
 
-      var updateText = function(start, end) {
-         numVal.value = filterFromRange(start, end);
-         updateView(numVal.value);
-      };
-
       var histBrush = document.createElement("div");
       histBrush.className = "numHist";
+      // A click inside the histogram adjusts the brush; stop it from bubbling
+      // to the body-level light-dismiss handler, which would close the popup
+      // (the value box already stops its own clicks for the same reason).
+      histBrush.addEventListener("click", function(evt) { evt.stopPropagation(); });
 
-      var binStart = 0;
-      var binEnd = col.col_breaks.length - 2;
+      var bins = spec.binsFor(init.lo, init.hi);
 
-      for (var i = 0; i < col.col_breaks.length; i++) {
-         if (Math.abs(col.col_breaks[i] - min) < Math.abs(col.col_breaks[binStart] - min))
-            binStart = i;
-         if (i === 0) continue;
-         if (Math.abs(col.col_breaks[i] - max) < Math.abs(col.col_breaks[binEnd] - max))
-            binEnd = i - 1;
-      }
-      if (binEnd < binStart) binStart = binEnd;
+      // Use the existing hist.js for interactive histogram. A brush move sets
+      // the box value from the (raw) break values and schedules an apply.
+      hist(histBrush, col.col_breaks, col.col_counts, bins.start, bins.end,
+         function(start, end) {
+            valBox.value = spec.textFromBrush(start, end);
+            updateView();
+         });
 
-      // Use the existing hist.js for interactive histogram
-      hist(histBrush, col.col_breaks, col.col_counts, binStart, binEnd, updateText);
       popup.appendChild(histBrush);
-      popup.appendChild(numVal);
+      popup.appendChild(valBox);
+      appendPopupActions(popup, function() {
+         // Apply: commit the current box value (no-op filter if it's the full
+         // range). suppressChange stops the input's removal-triggered change
+         // from scheduling a second, late apply.
+         suppressChange = true;
+         updateView.cancel();
+         applyValue();
+      }, function() {
+         suppressChange = true;
+         updateView.cancel();
+         setColumnSearch(idx, "");
+         applyFilters();
+         renderActiveFilter();
+      });
    }, function() {
       // Light dismiss (click-away / Enter) commits a brush or typed value
       // still inside the debounce window before onDismiss inspects the
@@ -2176,6 +2976,140 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
 
    renderActiveFilter();
    return ele;
+};
+
+var createNumericFilterUI = function(idx, col, onDismiss, anchor) {
+   var fullMin = col.col_breaks[0];
+   var fullMax = col.col_breaks[col.col_breaks.length - 1];
+
+   var filterFromRange = function(s, e) {
+      if (Math.abs(s - e) === 0) return "" + s;
+      return s + " - " + e;
+   };
+
+   // Numeric tokens accept optional scientific-notation suffix (1e10,
+   // 2.5e-5). The range separator is `-` surrounded by required
+   // whitespace, which disambiguates from a leading negative sign.
+   var NUM = "-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?";
+   var SINGLE_RE = new RegExp("^\\s*" + NUM + "\\s*$");
+   var RANGE_RE = new RegExp(
+      "^\\s*(" + NUM + ")\\s*-\\s*(" + NUM + ")\\s*");
+
+   return createRangeFilterUI(idx, col, onDismiss, anchor, {
+      initialRange: function() {
+         var val = parseSearchString(getColumnSearch(idx));
+         if (val.indexOf("_") > 0) {
+            var range = val.split("_");
+            return { lo: range[0], hi: range[1] };
+         }
+         if (!isNaN(parseFloat(val)) && val.length > 0) {
+            var n = parseFloat(val);
+            return { lo: n, hi: n };
+         }
+         return { lo: fullMin.toString(), hi: fullMax.toString() };
+      },
+      filterFromRange: filterFromRange,
+      textFromBrush: filterFromRange,
+      binsFor: function(lo, hi) {
+         var binStart = 0;
+         var binEnd = col.col_breaks.length - 2;
+         for (var i = 0; i < col.col_breaks.length; i++) {
+            if (Math.abs(col.col_breaks[i] - lo) < Math.abs(col.col_breaks[binStart] - lo))
+               binStart = i;
+            if (i === 0) continue;
+            if (Math.abs(col.col_breaks[i] - hi) < Math.abs(col.col_breaks[binEnd] - hi))
+               binEnd = i - 1;
+         }
+         if (binEnd < binStart) binStart = binEnd;
+         return { start: binStart, end: binEnd };
+      },
+      applyFilter: function(v) {
+         var searchText = "";
+         v = v.replace(/[^-+0-9 .eE]/g, "");
+         var digit = v.match(SINGLE_RE);
+         if (digit !== null) {
+            searchText = digit[0].trim();
+         } else {
+            var matches = v.match(RANGE_RE);
+            if (matches !== null && matches.length > 2) {
+               if (Math.abs(parseFloat(matches[1]) - col.col_breaks[0]) !== 0 ||
+                   Math.abs(parseFloat(matches[2]) - col.col_breaks[col.col_breaks.length - 1]) !== 0) {
+                  searchText = matches[1] + "_" + matches[2];
+               }
+            }
+         }
+         if (searchText.length > 0) searchText = "numeric|" + searchText;
+         setColumnSearch(idx, searchText);
+         applyFilters();
+      }
+   });
+};
+
+// Date / datetime range filter. Reuses the numeric filter's brushable
+// histogram (and its CSS), but the histogram breaks are epoch values paired
+// with formatted col_break_labels, so the brush and the text box operate in
+// formatted dates. The serialized filter value is "date|<lo>_<hi>" -- two ISO
+// strings the backend parses on the native Date/POSIXct scale. The brush always
+// produces a range; a single typed value is accepted as a one-instant range
+// (lo === hi), which for a Date is that whole day.
+var createDateFilterUI = function(idx, col, onDismiss, anchor) {
+   var labels = col.col_break_labels || [];
+   var fullMin = labels.length > 0 ? labels[0] : "";
+   var fullMax = labels.length > 0 ? labels[labels.length - 1] : "";
+
+   // Map an epoch break value (what hist.js hands back) to its formatted
+   // label by locating it in col_breaks; nearest wins if precision drifts.
+   var labelForBreak = function(v) {
+      var best = 0;
+      for (var i = 0; i < col.col_breaks.length; i++) {
+         if (Math.abs(col.col_breaks[i] - v) < Math.abs(col.col_breaks[best] - v))
+            best = i;
+      }
+      return labels[best] !== undefined ? labels[best] : String(v);
+   };
+
+   var filterFromRange = function(s, e) {
+      if (s === e) return "" + s;
+      return s + " - " + e;
+   };
+
+   return createRangeFilterUI(idx, col, onDismiss, anchor, {
+      initialRange: function() {
+         var val = parseSearchString(getColumnSearch(idx));
+         if (val.indexOf("_") > 0) {
+            var range = val.split("_");
+            return { lo: range[0], hi: range[1] };
+         }
+         return { lo: fullMin, hi: fullMax };
+      },
+      filterFromRange: filterFromRange,
+      textFromBrush: function(start, end) {
+         return filterFromRange(labelForBreak(start), labelForBreak(end));
+      },
+      binsFor: function(lo, hi) {
+         // Seed the brushed bins from the active filter's labels (if any).
+         var binStart = 0;
+         var binEnd = col.col_breaks.length - 2;
+         var loIdx = labels.indexOf(lo);
+         var hiIdx = labels.indexOf(hi);
+         if (loIdx >= 0) binStart = loIdx;
+         if (hiIdx >= 1) binEnd = hiIdx - 1;
+         if (binEnd < binStart) binStart = binEnd;
+         return { start: binStart, end: binEnd };
+      },
+      applyFilter: function(v) {
+         var searchText = "";
+         var parts = v.split(" - ");
+         var a = parts[0] ? parts[0].trim() : "";
+         var b = (parts.length > 1 && parts[1]) ? parts[1].trim() : a;
+         // Only treat it as a filter when it narrows the full range; an
+         // untouched [min, max] selection clears the filter.
+         if (a.length > 0 && b.length > 0 && (a !== fullMin || b !== fullMax))
+            searchText = "date|" + a + "_" + b;
+         setColumnSearch(idx, searchText);
+         applyFilters();
+      }
+   });
 };
 
 var createTextFilterBox = function(ele, idx, col, onDismiss) {
@@ -2211,7 +3145,7 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
    return input;
 };
 
-var createFactorFilterUI = function(idx, col, onDismiss) {
+var createFactorFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
    var input = createTextFilterBox(ele, idx, col, onDismiss);
 
@@ -2236,7 +3170,7 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
       if (dismissActivePopup) dismissActivePopup(false);
    });
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       var list = document.createElement("div");
       list.className = "choiceList";
 
@@ -2259,8 +3193,23 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
    return ele;
 };
 
-var createTextFilterUI = function(idx, col, onDismiss) {
+var createTextFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
+
+   // Alternate location (sidebar): the character filter is normally a bare
+   // inline header input, but with an anchor we present a padded text box with
+   // placeholder guidance inside a popup attached to the trigger (the sidebar
+   // filter icon) -- the divergence from the inline header widget is intended.
+   if (anchor) {
+      ele.dvFilterController = invokeFilterPopup(anchor, function(popup) {
+         popup.classList.add("textFilterPopup");
+         var input = createTextFilterBox(popup, idx, col, onDismiss);
+         input.placeholder = "Filter " + col.col_name;
+         setTimeout(function() { input.focus(); }, 0);
+      }, onDismiss);
+      return ele;
+   }
+
    var input = createTextFilterBox(ele, idx, col, onDismiss);
    input.addEventListener("blur", function() {
       onDismiss();
@@ -2272,7 +3221,7 @@ var createTextFilterUI = function(idx, col, onDismiss) {
    return ele;
 };
 
-var createBooleanFilterUI = function(idx, col, onDismiss) {
+var createBooleanFilterUI = function(idx, col, onDismiss, anchor) {
    var ele = document.createElement("div");
    var display = document.createElement("span");
    display.innerHTML = "&nbsp;";
@@ -2286,7 +3235,7 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
       display.textContent = boolSearch[1];
    }
 
-   invokeFilterPopup(ele, function(popup) {
+   ele.dvFilterController = invokeFilterPopup(anchor || ele, function(popup) {
       var list = document.createElement("div");
       list.className = "choiceList";
       var values = ["TRUE", "FALSE"];
@@ -2338,36 +3287,58 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
       if (popup && evt.keyCode === 27) dismissPopup(true);
    };
 
-   ele.addEventListener("click", function(evt) {
+   // Open the popup (or toggle it closed if already open), anchored under
+   // `ele`. Dismisses any other open filter popup first. Exposed on the
+   // returned controller so callers (e.g. the sidebar filter icon) can open it
+   // programmatically rather than only via the bound click.
+   var openPopup = function() {
       if (dismissActivePopup && dismissActivePopup !== dismissPopup) {
          dismissActivePopup(true);
       }
       if (popup) {
          dismissPopup(true);
-      } else {
-         popup = document.createElement("div");
-         popup.className = "filterPopup";
-         var popupInfo = buildPopup(popup);
-         document.body.appendChild(popup);
-
-         var rect = ele.getBoundingClientRect();
-         var top = rect.bottom + (!popupInfo ? 0 : (popupInfo.top || 0));
-         var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
-
-         if (popup.offsetWidth + left > document.body.offsetWidth) {
-            left = document.body.offsetWidth - popup.offsetWidth;
-         }
-
-         popup.style.top = top + "px";
-         popup.style.left = left + "px";
-
-         document.body.addEventListener("click", checkLightDismiss);
-         document.body.addEventListener("keydown", checkEscDismiss);
-         dismissActivePopup = dismissPopup;
+         return;
       }
+      popup = document.createElement("div");
+      popup.className = "filterPopup";
+      var popupInfo = buildPopup(popup);
+      document.body.appendChild(popup);
+
+      var rect = ele.getBoundingClientRect();
+      // +2px gap so the popup sits just below the trigger rather than flush.
+      var top = rect.bottom + 2 + (!popupInfo ? 0 : (popupInfo.top || 0));
+      var left = rect.left + (!popupInfo ? -4 : (popupInfo.left || -4));
+
+      // When opened from the summary sidebar, center the popup within the
+      // sidebar column rather than anchoring to the narrow, right-aligned icon
+      // (which pushed it against the panel's right edge).
+      var sidebarPanel = ele.closest ? ele.closest("#sidebarPanel") : null;
+      if (sidebarPanel) {
+         var sb = sidebarPanel.getBoundingClientRect();
+         left = sb.left + (sb.width - popup.offsetWidth) / 2;
+      }
+
+      // Keep the popup fully on-screen on both edges.
+      if (popup.offsetWidth + left > document.body.offsetWidth)
+         left = document.body.offsetWidth - popup.offsetWidth;
+      if (left < 0)
+         left = 0;
+
+      popup.style.top = top + "px";
+      popup.style.left = left + "px";
+
+      document.body.addEventListener("click", checkLightDismiss);
+      document.body.addEventListener("keydown", checkEscDismiss);
+      dismissActivePopup = dismissPopup;
+   };
+
+   ele.addEventListener("click", function(evt) {
+      openPopup();
       evt.preventDefault();
       evt.stopPropagation();
    });
+
+   return { open: openPopup, dismiss: dismissPopup };
 };
 
 // ==========================================================================
@@ -2415,8 +3386,53 @@ var createColumnTypesUI = function(th, idx, col) {
 // ==========================================================================
 
 var scrollToTop = function() {
-   var viewport = document.getElementById("gridViewport");
-   if (viewport) viewport.scrollTop = 0;
+   var viewport = domViewport;
+   if (viewport) setViewportScrollTop(viewport, 0);
+};
+
+// Single funnel for programmatic horizontal scroll changes (reveals, anchor /
+// saved-state restores, column-window slides). Sets viewport.scrollLeft and
+// keeps lastScrollLeft -- the module's mirror of the live scroll position, read
+// by saveState / onActivate / the info bar's column range -- in sync
+// synchronously, rather than relying on the async scroll event to heal it.
+// Clamps negatives, and records the browser's (possibly clamped) resulting
+// scrollLeft so the mirror reflects reality even when the request overshoots.
+// Returns true when the request differed from the current position. Live-gesture
+// scrolling (native wheel, custom scrollbar drag) is mirrored by onScroll
+// instead; those are not routed through here.
+var setViewportScrollLeft = function(viewport, left) {
+   left = Math.max(0, left);
+   var changed = viewport.scrollLeft !== left;
+   if (changed)
+      viewport.scrollLeft = left;
+   // Sync the mirror to the live (possibly clamped) position even when no write
+   // was needed: the DOM scrollLeft can have drifted from the mirror since it
+   // was last set (e.g. an inactive tab reads 0 while lastScrollLeft is
+   // non-zero), and saveState / onActivate / the info bar read the mirror as the
+   // source of truth.
+   lastScrollLeft = viewport.scrollLeft;
+   return changed;
+};
+
+// Vertical counterpart to setViewportScrollLeft: applies a programmatic
+// scrollTop and keeps lastScrollTop -- the mirror read by saveState / onActivate
+// / the info bar's "Showing X to Y" range -- in sync synchronously. The scroll
+// math that decides the target row lives in the callers (e.g.
+// ensureActiveCellVisible); this only applies it and records the (possibly
+// clamped) result. Live-gesture scrolling is mirrored by onScroll instead.
+var setViewportScrollTop = function(viewport, top) {
+   top = Math.max(0, top);
+   var changed = viewport.scrollTop !== top;
+   if (changed) {
+      viewport.scrollTop = top;
+      // Keep the frozen pane aligned immediately (the scroll event would also do
+      // this, but it fires asynchronously).
+      syncPinnedScrollTop();
+   }
+   // Sync the mirror to the live (possibly clamped) position even when no write
+   // was needed; see setViewportScrollLeft.
+   lastScrollTop = viewport.scrollTop;
+   return changed;
 };
 
 // Snapshot the live scroll position (and the current unfiltered row count) so a
@@ -2424,7 +3440,7 @@ var scrollToTop = function() {
 // after the grid is torn down and rebuilt. Must run before bootstrap() (whose
 // destroyGrid zeroes the viewport and lastScroll* state).
 var captureScrollForRefresh = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    var top = viewport ? viewport.scrollTop : 0;
    var left = viewport ? viewport.scrollLeft : 0;
    // If the refresh fired while the tab was inactive, the live scrollTop may
@@ -2453,8 +3469,24 @@ var captureScrollForRefresh = function() {
 var restoreScrollAfterRefresh = function() {
    var restore = activeScrollRestore;
    activeScrollRestore = null;
-   if (!restore || restore.rows !== totalRows)
+   if (!restore) {
+      // No capture was made (e.g. no refresh path was taken). Nothing to do.
       return;
+   }
+   if (restore.rows !== totalRows) {
+      // The row count changed: the previous position no longer maps meaningfully
+      // to the new data, so reset to the top rather than restoring a stale offset.
+      requestAnimationFrame(function() {
+         var viewport = domViewport;
+         if (!viewport)
+            return;
+         setViewportScrollTop(viewport, 0);
+         renderVisibleRows(true);
+         updateInfoBar();
+         updateCustomScrollbars();
+      });
+      return;
+   }
 
    // Guard against a rapid second refresh landing in the gap before this frame
    // paints: capture the current draw and bail if another fetch has superseded
@@ -2468,13 +3500,11 @@ var restoreScrollAfterRefresh = function() {
    requestAnimationFrame(function() {
       if (restoreToken !== drawCounter)
          return;
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       if (!viewport)
          return;
-      viewport.scrollTop = restore.top;
-      viewport.scrollLeft = restore.left;
-      lastScrollTop = viewport.scrollTop;
-      lastScrollLeft = viewport.scrollLeft;
+      setViewportScrollTop(viewport, restore.top);
+      setViewportScrollLeft(viewport, restore.left);
       renderVisibleRows(true);
       updateInfoBar();
       updateCustomScrollbars();
@@ -2498,13 +3528,13 @@ var updateAriaRowCount = function() {
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
 // the top (while still contributing to scroll content height), and when
 // horizontal scroll is active the custom horizontal scrollbar overlays the
-// bottom 10px (see .custom-scrollbar.horizontal in DataViewer.css).
+// bottom 11px (see .custom-scrollbar.horizontal in DataViewer.css).
 var visibleBodyHeight = function(viewport) {
-   var headerEl = document.getElementById("data_cols");
+   var headerEl = domThead;
    var headerH = (headerEl && headerEl.parentElement)
       ? headerEl.parentElement.offsetHeight : 0;
    var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 10 : 0));
+   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 11 : 0));
 };
 
 // Update the "Sorted by" portion of the info bar. The text span and the
@@ -2516,6 +3546,33 @@ var setSortStatus = function(text) {
    if (textEl) textEl.textContent = text;
    var clearEl = document.getElementById("rsGridData_info_sort_clear");
    if (clearEl) clearEl.style.display = text ? "inline-block" : "none";
+};
+
+// ", columns X to Y of N" for the (unpinned) columns currently in view, or
+// "" when the frame doesn't column-slide (it fits in one fetch window) or
+// the layout isn't measured yet -- callers fall back to the total-only
+// form. The range exists to keep the user oriented during long-range
+// horizontal scrolling; for a frame that's merely clipped by the viewport,
+// the plain total reads better and stays stable.
+var visibleColumnRangeText = function() {
+   if (!cols || measuredWidths.length === 0 || totalCols <= 0)
+      return "";
+   if (maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
+      return "";
+   var viewport = domViewport;
+   if (!viewport)
+      return "";
+
+   // The unpinned pane scrolls independently; its left edge (scrollLeft) is the
+   // first visible unpinned column, its right edge the last. Pinned columns are
+   // always visible and excluded from this range readout.
+   var vLo = absColAtContentX(lastScrollLeft);
+   var vHi = absColAtContentX(lastScrollLeft + viewport.clientWidth);
+   if (vLo <= 1 && vHi >= totalCols)
+      return "";
+
+   return ", columns " + vLo.toLocaleString() + " to " + vHi.toLocaleString() +
+          " of " + totalCols.toLocaleString();
 };
 
 var updateInfoBar = function() {
@@ -2561,7 +3618,7 @@ var updateInfoBar = function() {
       first = 0;
       last = 0;
    } else {
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       var bodyH = viewport ? visibleBodyHeight(viewport) : 0;
       first = Math.ceil((lastScrollTop + ROW_HEIGHT / 2) / ROW_HEIGHT);
       last = Math.round((lastScrollTop + bodyH) / ROW_HEIGHT);
@@ -2578,8 +3635,14 @@ var updateInfoBar = function() {
       text += " (filtered from " + totalRows.toLocaleString() + " total entries)";
    }
    if (totalCols > 0) {
-      text += ", " + totalCols.toLocaleString() +
-         (totalCols === 1 ? " total column" : " total columns");
+      // When the frame is wider than the viewport, orient the user with the
+      // visible column range (the toolbar no longer carries a column-window
+      // readout); otherwise just report the total.
+      var colRange = visibleColumnRangeText();
+      text += colRange !== ""
+         ? colRange
+         : ", " + totalCols.toLocaleString() +
+           (totalCols === 1 ? " total column" : " total columns");
    }
    if (textEl) textEl.textContent = text;
 
@@ -2594,10 +3657,9 @@ var updateInfoBar = function() {
    setSortStatus(sortText);
 };
 
-var buildRow = function(r) {
-   var rowData = rowCache.get(r);
-   if (!rowData) return null;
-
+// Create the <tr> shell for data row `r` (shared by the pinned and unpinned
+// panes; both panes render a row per data row so they stay vertically aligned).
+var makeBodyTr = function(r) {
    var tr = document.createElement("tr");
    tr.setAttribute("data-row", r);
    tr.setAttribute("role", "row");
@@ -2607,34 +3669,44 @@ var buildRow = function(r) {
    // contains a leading spacer row plus only the virtual window of data rows,
    // so :nth-child would flip the stripe pattern as the window slides.
    if (r % 2 === 1) tr.classList.add("odd-row");
-
-   // Render only the pinned columns plus the visible column window (with
-   // left/right spacers for the rest) -- see "Column virtualization". `pos`
-   // is the columnOrder position, matching activeCol's coordinate space.
-   appendWindowedCells(
-      tr,
-      function(pos) {
-         var colIdx = columnOrder[pos];
-         var clazz = getColClass(cols[colIdx]);
-         var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
-         td.setAttribute("role", "gridcell");
-         // Record the columnOrder position so click handling can map a cell
-         // back to its column without relying on DOM position (spacer cells
-         // make tr.children non-1:1 with columnOrder).
-         td.setAttribute("data-col-pos", pos);
-         if (r === activeRow && pos === activeCol) {
-            td.classList.add("activeCell");
-            // Stable id so the viewport's aria-activedescendant can refer
-            // to this cell. Re-applied here because rows are recreated
-            // when they scroll back into view.
-            td.id = activeCellId(r, pos);
-         }
-         return td;
-      },
-      "td"
-   );
-
    return tr;
+};
+
+// Build the pinned-pane and unpinned-pane <tr> for data row `r`. Returns
+// { pinned, unpinned } (or null when the row isn't cached yet). `pos` is the
+// columnOrder position, matching activeCol's coordinate space; the same
+// makeCell logic feeds both panes, so the active-cell check naturally lands in
+// whichever pane the active column belongs to.
+var buildRow = function(r) {
+   var rowData = rowCache.get(r);
+   if (!rowData) return null;
+
+   var makeCell = function(pos) {
+      var colIdx = columnOrder[pos];
+      var clazz = getColClass(cols[colIdx]);
+      var td = createCell(rowData[colIdx], colIdx, rowData, clazz);
+      td.setAttribute("role", "gridcell");
+      // Record the columnOrder position so click handling can map a cell
+      // back to its column without relying on DOM position (spacer cells
+      // make tr.children non-1:1 with columnOrder).
+      td.setAttribute("data-col-pos", pos);
+      if (r === activeRow && pos === activeCol) {
+         td.classList.add("activeCell");
+         // Stable id so the viewport's aria-activedescendant can refer to this
+         // cell. Re-applied here because rows are recreated when they scroll
+         // back into view.
+         td.id = activeCellId(r, pos);
+      }
+      return td;
+   };
+
+   var pinnedTr = makeBodyTr(r);
+   appendPinnedCells(pinnedTr, makeCell);
+
+   var unpinnedTr = makeBodyTr(r);
+   appendUnpinnedWindowedCells(unpinnedTr, makeCell, "td");
+
+   return { pinned: pinnedTr, unpinned: unpinnedTr };
 };
 
 var createSpacerRow = function(colSpan) {
@@ -2662,9 +3734,11 @@ var updateSpacerRowHeight = function(spacerTr, heightPx) {
 //     Required after fetches, sort/filter, sidebar toggle, resize, etc. --
 //     anything that invalidates row content or window layout.
 var renderVisibleRows = function(forceRebuild) {
-   var viewport = document.getElementById("gridViewport");
-   var tbody = document.getElementById("gridBody");
+   var viewport = domViewport;
+   var tbody = domTbody;
    if (!viewport || !tbody || !cols) return;
+
+   var pinnedTbody = domPinnedTbody;
 
    var scrollTop = viewport.scrollTop;
    var viewportH = viewport.clientHeight;
@@ -2672,6 +3746,7 @@ var renderVisibleRows = function(forceRebuild) {
 
    if (activeRows === 0) {
       tbody.innerHTML = "";
+      if (pinnedTbody) pinnedTbody.innerHTML = "";
       renderedRowElements.clear();
       topSpacerRow = null;
       bottomSpacerRow = null;
@@ -2691,36 +3766,41 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Check if we need to fetch more data
+   // Check if we need to fetch more data. A block is fetched when absent
+   // from the cache OR present but incomplete for the current column set
+   // (remapped across a column-window slide; see blockIsCurrent).
    var firstBlock = Math.floor(newStart / FETCH_SIZE) * FETCH_SIZE;
    for (var blockStart = firstBlock; blockStart <= newEnd; blockStart += FETCH_SIZE) {
-      if (!rowCache.has(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
+      if (!blockIsCurrent(blockStart) && !pendingFetches.has(blockStart + "-" + FETCH_SIZE)) {
          fetchRows(blockStart, FETCH_SIZE);
       }
    }
 
    // Prefetch ahead
    var aheadStart = Math.floor(newEnd / FETCH_SIZE) * FETCH_SIZE + FETCH_SIZE;
-   if (aheadStart < activeRows && !rowCache.has(aheadStart)) {
+   if (aheadStart < activeRows && !blockIsCurrent(aheadStart)) {
       fetchRows(aheadStart, FETCH_SIZE);
    }
 
-   // Recompute pinned offsets for data cells
-   cachedPinnedOffsets = getPinnedOffsets().offsets;
-
-   // Spacer rows span exactly the windowed cell count (pinned + spacers +
-   // window), not the full column count -- see renderedColumnCount.
-   var colSpan = renderedColumnCount();
+   // Spacer rows span exactly the windowed cell count for their pane, not the
+   // full column count -- see pinnedColumnCount / unpinnedRenderedColumnCount.
+   var pinnedColSpan = pinnedColumnCount();
+   var unpinnedColSpan = unpinnedRenderedColumnCount();
 
    // --- Full rebuild (force, or no existing spacers) ---
    if (forceRebuild || !topSpacerRow || !bottomSpacerRow) {
       renderedRowElements.clear();
 
-      // Build into a fragment so the tbody only takes a single layout hit
-      // for the whole rebuild rather than one per row.
-      var fragment = document.createDocumentFragment();
-      topSpacerRow = createSpacerRow(colSpan);
-      fragment.appendChild(topSpacerRow);
+      // Build into fragments so each tbody takes a single layout hit for the
+      // whole rebuild rather than one per row.
+      var fragU = document.createDocumentFragment();
+      var fragP = document.createDocumentFragment();
+      topSpacerRow = {
+         unpinned: createSpacerRow(unpinnedColSpan),
+         pinned: createSpacerRow(pinnedColSpan)
+      };
+      fragU.appendChild(topSpacerRow.unpinned);
+      fragP.appendChild(topSpacerRow.pinned);
 
       // Render only the contiguous prefix from newStart. If a row is missing
       // from cache (out-of-order fetch), stop here -- the unrendered tail
@@ -2728,68 +3808,95 @@ var renderVisibleRows = function(forceRebuild) {
       // gap don't get displayed at the wrong vertical position.
       var lastRendered = newStart - 1;
       for (var r = newStart; r <= newEnd; r++) {
-         var tr = buildRow(r);
-         if (!tr) break;
-         fragment.appendChild(tr);
-         renderedRowElements.set(r, tr);
+         var pair = buildRow(r);
+         if (!pair) break;
+         fragU.appendChild(pair.unpinned);
+         fragP.appendChild(pair.pinned);
+         renderedRowElements.set(r, pair);
          lastRendered = r;
       }
 
-      bottomSpacerRow = createSpacerRow(colSpan);
-      fragment.appendChild(bottomSpacerRow);
+      bottomSpacerRow = {
+         unpinned: createSpacerRow(unpinnedColSpan),
+         pinned: createSpacerRow(pinnedColSpan)
+      };
+      fragU.appendChild(bottomSpacerRow.unpinned);
+      fragP.appendChild(bottomSpacerRow.pinned);
 
       tbody.innerHTML = "";
-      tbody.appendChild(fragment);
+      tbody.appendChild(fragU);
+      if (pinnedTbody) {
+         pinnedTbody.innerHTML = "";
+         pinnedTbody.appendChild(fragP);
+      }
 
-      updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-      updateSpacerRowHeight(bottomSpacerRow,
-         Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT);
+      var topH = newStart * ROW_HEIGHT;
+      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT;
+      updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+      updateSpacerRowHeight(topSpacerRow.pinned, topH);
+      updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+      updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
 
       renderStart = newStart;
       renderEnd = newEnd;
       return;
    }
 
-   // --- Incremental update ---
+   // --- Incremental update (both panes in lockstep) ---
 
    // Remove rows that are no longer in the window
    // Scrolling down: remove from top (renderStart .. newStart-1)
    // Scrolling up: remove from bottom (newEnd+1 .. renderEnd)
    for (var r = renderStart; r < newStart; r++) {
       var el = renderedRowElements.get(r);
-      if (el) { el.remove(); renderedRowElements.delete(r); }
+      if (el) {
+         if (el.unpinned) el.unpinned.remove();
+         if (el.pinned) el.pinned.remove();
+         renderedRowElements.delete(r);
+      }
    }
    for (var r = newEnd + 1; r <= renderEnd; r++) {
       var el = renderedRowElements.get(r);
-      if (el) { el.remove(); renderedRowElements.delete(r); }
-   }
-
-   // Add new rows at the top (newStart .. renderStart-1)
-   // Insert before the first data row (right after topSpacerRow). If a row
-   // is missing from cache, bail out and re-enter via the full-rebuild
-   // path so the contiguous-prefix logic can position rows correctly --
-   // skipping rows here would leave subsequent ones at the wrong offset.
-   var missingRow = false;
-   var insertBeforeTop = topSpacerRow.nextSibling;
-   for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
-      if (!renderedRowElements.has(r)) {
-         var tr = buildRow(r);
-         if (!tr) { missingRow = true; break; }
-         tbody.insertBefore(tr, insertBeforeTop);
-         renderedRowElements.set(r, tr);
-         insertBeforeTop = tr;
+      if (el) {
+         if (el.unpinned) el.unpinned.remove();
+         if (el.pinned) el.pinned.remove();
+         renderedRowElements.delete(r);
       }
    }
 
-   // Add new rows at the bottom (renderEnd+1 .. newEnd), insert before the
-   // bottom spacer. Same fall-back rule as the top edge.
+   // Add new rows at the top (newStart .. renderStart-1), inserted right after
+   // each pane's top spacer. If a row is missing from cache, bail out and
+   // re-enter via the full-rebuild path so the contiguous-prefix logic can
+   // position rows correctly -- skipping rows here would leave subsequent ones
+   // at the wrong offset.
+   var missingRow = false;
+   var insertBeforeTopU = topSpacerRow.unpinned.nextSibling;
+   var insertBeforeTopP = topSpacerRow.pinned ? topSpacerRow.pinned.nextSibling : null;
+   for (var r = Math.min(renderStart - 1, newEnd); r >= newStart; r--) {
+      if (!renderedRowElements.has(r)) {
+         var pair = buildRow(r);
+         if (!pair) { missingRow = true; break; }
+         tbody.insertBefore(pair.unpinned, insertBeforeTopU);
+         insertBeforeTopU = pair.unpinned;
+         if (pinnedTbody) {
+            pinnedTbody.insertBefore(pair.pinned, insertBeforeTopP);
+            insertBeforeTopP = pair.pinned;
+         }
+         renderedRowElements.set(r, pair);
+      }
+   }
+
+   // Add new rows at the bottom (renderEnd+1 .. newEnd), inserted before each
+   // pane's bottom spacer. Same fall-back rule as the top edge.
    if (!missingRow) {
       for (var r = Math.max(renderEnd + 1, newStart); r <= newEnd; r++) {
          if (!renderedRowElements.has(r)) {
-            var tr = buildRow(r);
-            if (!tr) { missingRow = true; break; }
-            tbody.insertBefore(tr, bottomSpacerRow);
-            renderedRowElements.set(r, tr);
+            var pair = buildRow(r);
+            if (!pair) { missingRow = true; break; }
+            tbody.insertBefore(pair.unpinned, bottomSpacerRow.unpinned);
+            if (pinnedTbody)
+               pinnedTbody.insertBefore(pair.pinned, bottomSpacerRow.pinned);
+            renderedRowElements.set(r, pair);
          }
       }
    }
@@ -2803,9 +3910,13 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Update spacer heights
-   updateSpacerRowHeight(topSpacerRow, newStart * ROW_HEIGHT);
-   updateSpacerRowHeight(bottomSpacerRow, (activeRows - newEnd - 1) * ROW_HEIGHT);
+   // Update spacer heights (both panes stay aligned)
+   var topH = newStart * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT;
+   updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+   updateSpacerRowHeight(topSpacerRow.pinned, topH);
+   updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+   updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
 
    renderStart = newStart;
    renderEnd = newEnd;
@@ -2816,14 +3927,200 @@ var renderVisibleRows = function(forceRebuild) {
 // which is expensive during fast scrolling.
 var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 
+// Mirror the unpinned (master) pane's vertical scroll onto the frozen pinned
+// pane so their rows stay aligned. The pinned pane's own scrollbar is hidden
+// but it is still programmatically scrollable. Run synchronously on every
+// scroll event -- it's a single property write -- so the panes never lag a
+// frame apart. Horizontal scroll never touches the pinned pane (it has no
+// horizontal overflow).
+var syncPinnedScrollTop = function() {
+   if (domPinnedPane && domViewport)
+      domPinnedPane.scrollTop = domViewport.scrollTop;
+};
+
+// The frozen pane is itself vertically scrollable (so wheel / middle-click over
+// it work), but the unpinned pane is the master that drives rendering and holds
+// the visible scrollbar. Mirror the frozen pane's scroll onto the master, which
+// re-renders and mirrors back via onScroll -> syncPinnedScrollTop. The equality
+// guards make this converge without an event ping-pong (setting scrollTop to
+// its current value fires no scroll event).
+var onPinnedScroll = function() {
+   if (!domPinnedPane || !domViewport) return;
+   if (domViewport.scrollTop === domPinnedPane.scrollTop) return;
+   // In native-scrollbar mode the viewport's horizontal scrollbar shrinks its
+   // clientHeight, so the viewport can scroll slightly lower than the
+   // (scrollbar-free) frozen pane. When the viewport is ahead but the frozen
+   // pane is already clamped at its own bottom, that gap is just the clamp --
+   // not a user scroll of the frozen pane -- so leave the viewport alone rather
+   // than yanking it back up (which snapped the bottom edge). The scrollHeight
+   // read is reached only in this descending/bottom case, not on the common
+   // synced-echo path above.
+   if (domViewport.scrollTop > domPinnedPane.scrollTop) {
+      var pinnedMax = domPinnedPane.scrollHeight - domPinnedPane.clientHeight;
+      if (domPinnedPane.scrollTop >= pinnedMax) return;
+   }
+   domViewport.scrollTop = domPinnedPane.scrollTop;
+};
+
+// The frozen pane has no horizontal scroll of its own (its table is exactly the
+// pane width), but a horizontal wheel/trackpad gesture over it should still pan
+// the unpinned columns. Intercept clearly-horizontal gestures (and shift+wheel)
+// and apply them to the master pane's scrollLeft; leave vertical gestures to
+// the pane's native (smooth) scroll, which syncs via onPinnedScroll. Only the
+// horizontal-dominant case is consumed so a mostly-vertical gesture with slight
+// horizontal drift still scrolls vertically and smoothly.
+var onPinnedWheel = function(evt) {
+   if (!domViewport) return;
+   var dx = evt.deltaX;
+   var dy = evt.deltaY;
+   var horizontal = 0;
+   if (evt.shiftKey) {
+      // Shift+wheel means horizontal intent; Chromium puts the delta on
+      // deltaX in some configs and deltaY in others, so take whichever is set.
+      horizontal = dx || dy;
+   } else if (Math.abs(dx) > Math.abs(dy)) {
+      // A clearly-horizontal trackpad gesture. (A vertical scroll with slight
+      // horizontal drift stays vertical and scrolls the pane natively/smoothly.)
+      horizontal = dx;
+   }
+   if (horizontal === 0) return;
+   // Honor the wheel delta mode (Chromium reports pixels; line/page modes need
+   // scaling so the step isn't a near-no-op).
+   var scale = evt.deltaMode === 1 ? ROW_HEIGHT
+             : evt.deltaMode === 2 ? domViewport.clientWidth : 1;
+   domViewport.scrollLeft += horizontal * scale;
+   evt.preventDefault();
+};
+
+// ----- Middle-click autoscroll over the frozen pane -----
+// Native middle-click autoscroll only pans axes the element under the pointer
+// can actually scroll, and the frozen pane has no horizontal overflow (its
+// table is exactly the pane width), so there it pans only vertically.
+// Reimplement it: a middle-click (drag, or click-then-move "sticky" mode) over
+// the frozen pane pans BOTH axes of the unpinned (master) pane -- moving the
+// unpinned columns horizontally while the pinned columns stay frozen, with the
+// vertical component syncing back to the frozen pane via onScroll.
+var autoScrollActive = false;
+var autoScrollAnchorX = 0;
+var autoScrollAnchorY = 0;
+var autoScrollPointerX = 0;
+var autoScrollPointerY = 0;
+var autoScrollRaf = 0;
+var autoScrollMoved = false;
+var autoScrollAnchorEl = null;
+
+var AUTOSCROLL_DEADZONE = 10;   // px of slack around the anchor before scrolling
+var AUTOSCROLL_SPEED = 0.18;    // master px per frame per px of pointer offset
+
+var autoScrollAxisVelocity = function(offset) {
+   if (offset > AUTOSCROLL_DEADZONE)
+      return (offset - AUTOSCROLL_DEADZONE) * AUTOSCROLL_SPEED;
+   if (offset < -AUTOSCROLL_DEADZONE)
+      return (offset + AUTOSCROLL_DEADZONE) * AUTOSCROLL_SPEED;
+   return 0;
+};
+
+var autoScrollTick = function() {
+   autoScrollRaf = 0;
+   if (!autoScrollActive || !domViewport) return;
+   var vx = autoScrollAxisVelocity(autoScrollPointerX - autoScrollAnchorX);
+   var vy = autoScrollAxisVelocity(autoScrollPointerY - autoScrollAnchorY);
+   // Inside the deadzone (e.g. sticky mode with the pointer parked): pause the
+   // loop rather than burning a frame callback every tick; onAutoScrollMove
+   // resumes it when the pointer moves back out.
+   if (!vx && !vy) return;
+   if (vx) domViewport.scrollLeft += vx;
+   if (vy) domViewport.scrollTop += vy;   // syncs to the frozen pane via onScroll
+   autoScrollRaf = requestAnimationFrame(autoScrollTick);
+};
+
+var onAutoScrollMove = function(evt) {
+   autoScrollPointerX = evt.clientX;
+   autoScrollPointerY = evt.clientY;
+   if (Math.abs(evt.clientX - autoScrollAnchorX) > AUTOSCROLL_DEADZONE ||
+       Math.abs(evt.clientY - autoScrollAnchorY) > AUTOSCROLL_DEADZONE)
+      autoScrollMoved = true;
+   // Resume the loop if it paused while the pointer sat inside the deadzone.
+   if (autoScrollActive && !autoScrollRaf)
+      autoScrollRaf = requestAnimationFrame(autoScrollTick);
+};
+
+var onAutoScrollMouseDown = function(evt) {
+   // Any button press while autoscroll is active exits it (matches the native
+   // click-to-release behavior).
+   stopAutoScroll();
+   evt.preventDefault();
+   evt.stopPropagation();
+};
+
+var onAutoScrollMouseUp = function(evt) {
+   if (evt.button !== 1) return;
+   // Press-drag: releasing after moving past the deadzone ends autoscroll. A
+   // clean click (no movement) leaves it active in "sticky" mode until the
+   // next button press.
+   if (autoScrollMoved) stopAutoScroll();
+};
+
+var onAutoScrollKey = function(evt) {
+   if (evt.key === "Escape") stopAutoScroll();
+};
+
+var startAutoScroll = function(x, y) {
+   autoScrollActive = true;
+   autoScrollAnchorX = autoScrollPointerX = x;
+   autoScrollAnchorY = autoScrollPointerY = y;
+   autoScrollMoved = false;
+
+   document.body.classList.add("auto-scrolling");
+   autoScrollAnchorEl = document.createElement("div");
+   autoScrollAnchorEl.className = "autoscroll-anchor";
+   autoScrollAnchorEl.style.left = x + "px";
+   autoScrollAnchorEl.style.top = y + "px";
+   document.body.appendChild(autoScrollAnchorEl);
+
+   // Capture phase so we intercept before the grid's own handlers.
+   document.addEventListener("mousemove", onAutoScrollMove, true);
+   document.addEventListener("mousedown", onAutoScrollMouseDown, true);
+   document.addEventListener("mouseup", onAutoScrollMouseUp, true);
+   document.addEventListener("keydown", onAutoScrollKey, true);
+
+   if (!autoScrollRaf) autoScrollRaf = requestAnimationFrame(autoScrollTick);
+};
+
+var stopAutoScroll = function() {
+   if (!autoScrollActive) return;
+   autoScrollActive = false;
+   document.body.classList.remove("auto-scrolling");
+   if (autoScrollRaf) { cancelAnimationFrame(autoScrollRaf); autoScrollRaf = 0; }
+   if (autoScrollAnchorEl && autoScrollAnchorEl.parentNode)
+      autoScrollAnchorEl.parentNode.removeChild(autoScrollAnchorEl);
+   autoScrollAnchorEl = null;
+   document.removeEventListener("mousemove", onAutoScrollMove, true);
+   document.removeEventListener("mousedown", onAutoScrollMouseDown, true);
+   document.removeEventListener("mouseup", onAutoScrollMouseUp, true);
+   document.removeEventListener("keydown", onAutoScrollKey, true);
+};
+
+var onPinnedMouseDown = function(evt) {
+   if (evt.button !== 1) return;   // middle button only
+   // Block native autoscroll (which can't pan the frozen pane horizontally) and
+   // run our own, which drives the master pane on both axes. While autoscroll
+   // is already active, the document-level capture handler (onAutoScrollMouseDown)
+   // intercepts the press and stops it before it reaches here, so this only ever
+   // runs to start a fresh autoscroll.
+   evt.preventDefault();
+   startAutoScroll(evt.clientX, evt.clientY);
+};
+
 // RAF-throttle scroll (via pendingScrollRaf): render at most once per
 // animation frame so virtual scroll updates happen during the scroll,
 // not 16ms after it stops.
 var onScroll = function() {
+   syncPinnedScrollTop();
    if (pendingScrollRaf) return;
    pendingScrollRaf = requestAnimationFrame(function() {
       pendingScrollRaf = 0;
-      var viewport = document.getElementById("gridViewport");
+      var viewport = domViewport;
       if (!viewport) return;
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
@@ -2831,13 +4128,13 @@ var onScroll = function() {
       // the header for the new window and force a full row rebuild (existing
       // rows carry the old window's cells). Vertical-only scroll keeps the
       // cheap incremental row path.
-      var colsChanged = computeColumnWindow();
-      if (colsChanged) {
-         rebuildHeaderWindow();
-         applyPinnedColumns();
-      }
+      var colsChanged = syncColumnWindow();
       renderVisibleRows(colsChanged);
       debouncedInfoBar();
+
+      // Horizontal scroll may have moved the viewport near (or past) the
+      // fetched window's edge; recenter the window on it when so.
+      maybeSlideForScroll();
    });
 };
 onScroll.cancel = function() {
@@ -2863,18 +4160,15 @@ var onScrollbarUpdate = function() {
 var onScrollEnd = function() {
    if (anyScrollbarDragging()) return;
    onScroll.cancel();
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
-   var colsChanged = computeColumnWindow();
-   if (colsChanged) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-   }
+   var colsChanged = syncColumnWindow();
    renderVisibleRows(colsChanged);
    updateInfoBar();
    updateCustomScrollbars();
+   maybeSlideForScroll();
 
    // Persist the settled scroll position so it survives a close/reopen reload,
    // alongside pins/sort/filters. scrollend fires once per gesture (including
@@ -2889,6 +4183,9 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
    applyPinnedColumns();
    renderVisibleRows(true);
    updateInfoBar();
+   // A resize changes the panel's clientHeight (and thus how many entries fit
+   // and the overscroll tail), so rebuild the sidebar's visible window.
+   renderSidebarWindow(true);
    updateCustomScrollbars();
 
    // A resize can change whether (and how far) the grid scrolls horizontally
@@ -2912,7 +4209,7 @@ var onResize = debounce(TIMING.resizeDebounce, function() {
 // categorical frequency bars (labels + counts, breaks null). Categorical
 // bars draw in an alternate color with per-bar gaps, cueing that the x-axis
 // is a set of discrete values rather than a continuous range.
-var createSparkline = function(breaks, counts, labels) {
+var createSparkline = function(breaks, counts, labels, breakLabels) {
    if (!counts || counts.length === 0) return null;
    if (!breaks && !labels) return null;
 
@@ -2948,11 +4245,17 @@ var createSparkline = function(breaks, counts, labels) {
    if (!ctx) return null;
 
    // Resolve the bar color from CSS so theming still applies; a canvas
-   // can't pick up the old .sparkline-bar rule on its own.
+   // can't pick up the old .sparkline-bar rule on its own. Categorical bars
+   // (labels), date/time histograms (numeric breaks + breakLabels), and plain
+   // numeric histograms each get a distinct hue.
    var styles = getComputedStyle(document.documentElement);
-   var barColor = labels
-      ? (styles.getPropertyValue("--grid-spark-categorical").trim() || "#2ba36b")
-      : (styles.getPropertyValue("--grid-spark-numeric").trim() || "#4d9de0");
+   var barColor;
+   if (labels)
+      barColor = styles.getPropertyValue("--grid-spark-categorical").trim() || "#2ba36b";
+   else if (breakLabels)
+      barColor = styles.getPropertyValue("--grid-spark-date").trim() || "#9575cd";
+   else
+      barColor = styles.getPropertyValue("--grid-spark-numeric").trim() || "#4d9de0";
 
    // Histogram bins tile seamlessly (contiguous ranges); categorical bars
    // get a small gap so discrete values read as separate bars.
@@ -3003,15 +4306,24 @@ var createSparkline = function(breaks, counts, labels) {
       var count = counts[bin];
       var pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
 
-      var headline;
+      var headlineLines;
       if (labels) {
          // Categorical bar: the headline is the value itself, truncated so
          // a long string can't blow the tooltip out to absurd widths. An
          // explicit NA factor level arrives as JSON null; label it "NA"
          // rather than rendering the literal string "null".
-         headline = labels[bin] === null ? "NA" : String(labels[bin]);
-         if (headline.length > 40)
-            headline = headline.substring(0, 40) + "...";
+         var lbl = labels[bin] === null ? "NA" : String(labels[bin]);
+         if (lbl.length > 40)
+            lbl = lbl.substring(0, 40) + "...";
+         headlineLines = [lbl];
+      } else if (breakLabels && breakLabels.length > bin + 1) {
+         // Date/datetime histogram: the numeric breaks are epoch values. Show
+         // the formatted bin bounds on their own Start/End lines -- a single
+         // "Range: lo to hi" line gets over-long once times are included.
+         headlineLines = [
+            "Start: " + breakLabels[bin],
+            "End: " + breakLabels[bin + 1]
+         ];
       } else {
          // breaks arrive from R as strings (col_breaks is as.character'd
          // server-side); coerce here so arithmetic doesn't fall into string
@@ -3024,19 +4336,31 @@ var createSparkline = function(breaks, counts, labels) {
          // integer rather than the awkward "Range: 0.5 to 1.5".
          var mid = (lo + hi) / 2;
          var isIntegerBin = (hi - lo) === 1 && Number.isInteger(mid);
-         headline = isIntegerBin
+         headlineLines = [isIntegerBin
             ? "Value: " + mid
-            : "Range: " + formatCompactNum(lo) + " to " + formatCompactNum(hi);
+            : "Range: " + formatCompactNum(lo) + " to " + formatCompactNum(hi)];
       }
 
       // Build with DOM nodes rather than innerHTML so future format changes
       // can't accidentally interpret data values as markup.
       tooltip.textContent = "";
-      tooltip.appendChild(document.createTextNode(headline));
-      tooltip.appendChild(document.createElement("br"));
+      for (var li = 0; li < headlineLines.length; li++) {
+         tooltip.appendChild(document.createTextNode(headlineLines[li]));
+         tooltip.appendChild(document.createElement("br"));
+      }
       tooltip.appendChild(document.createTextNode(
          "Count: " + count.toLocaleString() + " (" + pct + "%)"));
       tooltip.style.display = "";
+
+      // Keep a wide tooltip (date ranges especially) from being clipped at the
+      // viewport's right edge: anchored at the wrapper's left by default, but
+      // nudged left by however much it overflows. Reset first so each bin
+      // re-measures from the default anchor.
+      tooltip.style.left = "0px";
+      var docWidth = document.documentElement.clientWidth;
+      var overflowRight = tooltip.getBoundingClientRect().right - (docWidth - 4);
+      if (overflowRight > 0)
+         tooltip.style.left = (-overflowRight) + "px";
    });
 
    canvas.addEventListener("mouseleave", function() {
@@ -3095,6 +4419,47 @@ var appendRangePunct = function(el, text) {
    punct.className = "range-punct";
    punct.textContent = text;
    el.appendChild(punct);
+};
+
+// Render a Date/POSIXct min/max range into the sidebar footer, compactly:
+//   - Date columns (labels carry no time part): "[min, max]".
+//   - POSIXct spanning multiple days: dates only, "[minDate, maxDate]".
+//   - POSIXct within a single day: the date once, then the times,
+//     "<date> [minTime, maxTime]".
+// When time precision is dropped, the full labels go in a title tooltip.
+// Labels are R's format() output ("YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"), so the
+// first space separates the date from the time.
+var appendDateRangeSummary = function(el, minLabel, maxLabel) {
+   var minSp = minLabel.indexOf(" ");
+   var maxSp = maxLabel.indexOf(" ");
+
+   if (minSp < 0 || maxSp < 0) {
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minLabel));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxLabel));
+      appendRangePunct(el, "]");
+      return;
+   }
+
+   var minDate = minLabel.substring(0, minSp), minTime = minLabel.substring(minSp + 1);
+   var maxDate = maxLabel.substring(0, maxSp), maxTime = maxLabel.substring(maxSp + 1);
+   el.title = minLabel + " to " + maxLabel;
+
+   if (minDate === maxDate) {
+      el.appendChild(document.createTextNode(minDate + " "));
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minTime));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxTime));
+      appendRangePunct(el, "]");
+   } else {
+      appendRangePunct(el, "[");
+      el.appendChild(document.createTextNode(minDate));
+      appendRangePunct(el, ", ");
+      el.appendChild(document.createTextNode(maxDate));
+      appendRangePunct(el, "]");
+   }
 };
 
 var formatStatValue = function(val) {
@@ -3158,6 +4523,8 @@ var renderColumnStats = function(container, data, colType) {
       // Date/datetime
       addRow("Min", data.min);
       addRow("Max", data.max);
+      // Timezone (POSIXct only; absent for Date and tz-less columns).
+      if (data.tz) addRow("Timezone", data.tz);
    }
 
    // If no type-specific stats were added (unsupported column type, or a
@@ -3190,6 +4557,824 @@ var onSidebarToggleKeyDown = function(evt) {
    if (evt.key === "Enter" || evt.key === " ") onSidebarToggleActivate(evt);
 };
 
+// The columns the sidebar lists: the complete index once loaded, otherwise
+// the fetched grid window (identity only) as a fast first paint. Both yield
+// items carrying col_name/col_type/col_class/col_index, so entry construction
+// is uniform. Rownames (col 0 of the grid window) is excluded.
+var sidebarColumnList = function() {
+   if (sidebarColumns)
+      return sidebarColumns;
+   var list = [];
+   if (cols) {
+      for (var i = 1; i < cols.length; i++)
+         list.push(cols[i]);
+   }
+   return list;
+};
+
+// Fetch the whole frame's lightweight column index once, then rebuild the
+// sidebar so it lists every column (not just the fetched window). Cheap
+// enough for very wide frames; the per-column summaries stay lazy.
+var ensureSidebarColumns = function() {
+   if (sidebarColumns || sidebarColumnsFetching || dataMode !== "server")
+      return;
+   sidebarColumnsFetching = true;
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "column_index"
+   };
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         sidebarColumnsFetching = false;
+         if (result && !result.error && result.columns && result.columns.length) {
+            sidebarColumns = result.columns;
+            rebuildSidebarPreservingScroll();
+         }
+      })
+      .catch(function(err) {
+         sidebarColumnsFetching = false;
+         console.warn("fetchColumnIndex failed:", err);
+      });
+};
+
+// The summary descriptor for a column (absolute index) matching the current
+// filter state, or null if not yet loaded. Window columns resolve from the
+// grid metadata (filteredSummaries when filtered, else `cols`); off-window
+// columns from the lazy cache.
+var getSidebarSummary = function(absIdx) {
+   if (filteredSummaries) {
+      if (filteredSummaries[absIdx])
+         return filteredSummaries[absIdx];
+   } else {
+      var pos = posForAbsColIndex(absIdx);
+      if (pos >= 0)
+         return cols[pos];
+   }
+   return sidebarLazySummaries[absIdx] || null;
+};
+
+// Percentage denominator for the sidebar summaries: the filtered row count
+// when a filter is active, otherwise the whole-frame row count (from the
+// metadata, not the transiently-zeroed totalRows -- see initSidebar).
+var sidebarSummaryRowCount = function() {
+   if (filteredSummaries)
+      return filteredSummariesRowCount;
+   return (cols && cols[0] && typeof cols[0].total_rows === "number" &&
+           cols[0].total_rows > 0)
+      ? cols[0].total_rows
+      : totalRows;
+};
+
+// Fetch summary descriptors for a set of absolute column indices (matching
+// the current filter state) and stash them in the lazy cache, then invoke
+// the callback. Reuses show=cols (the same describe the grid window uses).
+var fetchSidebarSummaries = function(absList, callback) {
+   if (absList.length === 0) { callback(); return; }
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      max_rows: maxRows,
+      columns_requested: absList.join(",")
+   };
+   if (hasActiveRowFilter()) {
+      params["filtered"] = 1;
+      appendTransformParams(params);
+   }
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (result && !result.error && result.length) {
+            prepareColumnResponse(result);
+            for (var i = 0; i < result.length; i++) {
+               var entry = result[i];
+               if (typeof entry.col_index === "number" && entry.col_index >= 1)
+                  sidebarLazySummaries[entry.col_index] = entry;
+            }
+         }
+         // ok = the request itself succeeded; a column that simply isn't in the
+         // result (no error) is left to retry on a later re-observe, but an
+         // actual error marks the batch failed so callers can stop retrying.
+         callback(!!(result && !result.error));
+      })
+      .catch(function(err) {
+         console.warn("fetchSidebarSummaries failed:", err);
+         callback(false);
+      });
+};
+
+// Fetch a single column's FULL-FRAME describe descriptor (no filter applied)
+// for its sidebar filter popup, caching it in filterDescriptors. Unlike the
+// lazy sidebar summaries this never sends the active filter, so the brush spans
+// the column's whole range.
+var fetchFilterDescriptor = function(absIdx, callback) {
+   var loc = parseLocationUrl();
+   var params = {
+      env: loc.env,
+      obj: loc.obj,
+      cache_key: loc.cacheKey,
+      show: "cols",
+      max_rows: maxRows,
+      columns_requested: String(absIdx)
+   };
+   gridDataFetch(buildFormData(params))
+      .then(function(result) {
+         if (result && !result.error && result.length) {
+            prepareColumnResponse(result);
+            for (var i = 0; i < result.length; i++) {
+               var entry = result[i];
+               if (typeof entry.col_index === "number" && entry.col_index >= 1)
+                  filterDescriptors[entry.col_index] = entry;
+            }
+         }
+         callback(filterDescriptors[absIdx] || null);
+      })
+      .catch(function(err) {
+         console.warn("fetchFilterDescriptor failed:", err);
+         callback(null);
+      });
+};
+
+// Resolve a column's full-frame filter descriptor: from the fetched grid window
+// (`cols`, which always describes the full frame) when present, else the cache,
+// else a fetch. Invokes callback with the descriptor (or null).
+var resolveFilterDescriptor = function(absIdx, callback) {
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0 && cols[pos]) {
+      callback(cols[pos]);
+      return;
+   }
+   if (filterDescriptors[absIdx]) {
+      callback(filterDescriptors[absIdx]);
+      return;
+   }
+   fetchFilterDescriptor(absIdx, callback);
+};
+
+// Open a column's filter popup from its sidebar icon. The first activation
+// resolves the descriptor and builds the typed widget anchored to the icon
+// (binding the icon's click to the popup via invokeFilterPopup); once wired,
+// subsequent clicks toggle through that bound handler, so this is a no-op then.
+var openColumnFilterFromSidebar = function(icon, absIdx) {
+   // Already wired: toggle through the widget's own popup controller.
+   if (icon.dvFilterController) {
+      icon.dvFilterController.open();
+      return;
+   }
+   // A descriptor fetch from a prior click is still in flight.
+   if (icon.dvFilterWiring)
+      return;
+
+   icon.dvFilterWiring = true;
+   resolveFilterDescriptor(absIdx, function(desc) {
+      icon.dvFilterWiring = false;
+
+      // A sidebar rebuild / resetGridState may have detached this icon while
+      // the descriptor fetch was in flight; anchoring a popup to an off-DOM
+      // node would position it at (0,0). Bail rather than open a stray popup.
+      if (!icon.isConnected)
+         return;
+      if (!desc || !isFilterableSearchType(desc.col_search_type))
+         return;
+
+      var widget = buildTypedFilterUI(absIdx, desc, function() {
+         // On dismiss, re-sync the icon's active state with the filter store.
+         updateSidebarColumnIndicators();
+      }, icon);
+
+      var ctrl = widget && widget.dvFilterController;
+      if (!ctrl)
+         return;
+
+      icon.dvFilterController = ctrl;
+      ctrl.open();
+   });
+};
+
+// Debounced flush of the IntersectionObserver's queued abs indices: fetch the
+// ones still missing a summary, then populate their (still-present) entries.
+var flushSidebarPendingFetch = debounce(120, function() {
+   var content = document.getElementById("sidebarContent");
+   if (!content) { sidebarPendingFetch = {}; return; }
+
+   var want = [];
+   var populatedAny = false;
+   for (var key in sidebarPendingFetch) {
+      if (!sidebarPendingFetch.hasOwnProperty(key)) continue;
+      var abs = parseInt(key, 10);
+      var have = getSidebarSummary(abs);
+      if (have) {
+         // Summary already on hand -- typically a column that slid into the
+         // fetched window after its (shell) entry was built. Populate it
+         // directly rather than refetching; this is the in-place equivalent of
+         // the re-seed the full sidebar rebuild used to do on every slide.
+         var readyEntry = content.querySelector(
+            '.sidebar-col[data-col-idx="' + abs + '"]');
+         if (readyEntry) {
+            populateEntrySummary(readyEntry, have);
+            populatedAny = true;
+         }
+      } else if (!sidebarInflight[abs]) {
+         // Skip columns already being fetched: the in-flight batch's callback
+         // will populate this (still-present) entry by query when it lands.
+         want.push(abs);
+      }
+   }
+   sidebarPendingFetch = {};
+
+   if (populatedAny) {
+      if (sidebarVisible) renderPendingSparklines();
+      if (sidebarScrollbar_) sidebarScrollbar_.update();
+   }
+
+   if (want.length === 0)
+      return;
+
+   var token = drawCounter;
+   for (var w = 0; w < want.length; w++)
+      sidebarInflight[want[w]] = true;
+   fetchSidebarSummaries(want, function(ok) {
+      for (var c = 0; c < want.length; c++)
+         delete sidebarInflight[want[c]];
+      // A filter/search/refresh since we issued the fetch invalidated the
+      // cache keying; the rebuild it triggered will re-observe and refetch.
+      if (token !== drawCounter)
+         return;
+      var liveContent = document.getElementById("sidebarContent");
+      if (!liveContent)
+         return;
+      for (var i = 0; i < want.length; i++) {
+         var summary = getSidebarSummary(want[i]);
+         var entry = liveContent.querySelector(
+            '.sidebar-col[data-col-idx="' + want[i] + '"]');
+         if (!entry)
+            continue;
+         if (summary) {
+            populateEntrySummary(entry, summary);
+         } else if (!ok) {
+            // The fetch errored; mark the column so its entry shows a static
+            // "unavailable" footer instead of re-queueing on every re-observe.
+            sidebarFailed[want[i]] = true;
+            markEntrySummaryUnavailable(entry);
+         }
+      }
+      // The entries just populated registered sparklines; draw them (the
+      // panel is open, since the observer only fires for visible entries).
+      if (sidebarVisible) renderPendingSparklines();
+      if (sidebarScrollbar_) sidebarScrollbar_.update();
+   });
+});
+
+// One-shot "summary unavailable" state for an entry whose lazy fetch failed.
+// Marks the entry loaded (so populateEntrySummary and the build path both skip
+// it) and shows a static footer marker rather than leaving an empty shell that
+// re-queues a fetch on every re-observe.
+var markEntrySummaryUnavailable = function(entry) {
+   if (entry.getAttribute("data-summary-loaded") === "1")
+      return;
+   entry.setAttribute("data-summary-loaded", "1");
+   entry.setAttribute("data-summary-failed", "1");
+
+   var footer = entry.querySelector(".sidebar-col-footer");
+   if (!footer)
+      return;
+   var summaryEl = footer.querySelector(".sidebar-col-summary");
+   if (summaryEl)
+      summaryEl.textContent = "Summary unavailable";
+};
+
+// Fill an entry's summary content (sparkline + footer range/NA/unique) from a
+// describe descriptor. Idempotent: skips entries already populated (so a
+// double IntersectionObserver fire or a seed+observe race can't duplicate the
+// sparkline). The column summary is supplied directly via the summary parameter.
+var populateEntrySummary = function(entry, summary) {
+   if (entry.getAttribute("data-summary-loaded") === "1")
+      return;
+   entry.setAttribute("data-summary-loaded", "1");
+
+   var rowCount = sidebarSummaryRowCount();
+   var footer = entry.querySelector(".sidebar-col-footer");
+
+   // Sparkline (numeric histogram or categorical bars) drawn into the entry's
+   // reserved fixed-height slot (kept empty for columns without one, so the
+   // entry stays the constant height the virtualizer assumes). Deferred-drawn
+   // via pendingSparklines_ + renderPendingSparklines.
+   var sparkSlot = entry.querySelector(".sidebar-sparkline");
+   if (sparkSlot && hasHistogram(summary)) {
+      pendingSparklines_.push({
+         container: sparkSlot,
+         breaks: summary.col_breaks,
+         counts: summary.col_counts,
+         labels: null,
+         breakLabels: summary.col_break_labels || null
+      });
+   } else if (sparkSlot && hasCategoryCounts(summary)) {
+      pendingSparklines_.push({
+         container: sparkSlot,
+         breaks: null,
+         counts: summary.col_cat_counts,
+         labels: summary.col_cat_vals
+      });
+   }
+
+   // Footer: type-specific summary (left) + NA stat (right).
+   var summaryEl = footer.querySelector(".sidebar-col-summary");
+   if (hasHistogram(summary) &&
+       typeof summary.col_min === "number" &&
+       typeof summary.col_max === "number") {
+      summaryEl.classList.add("range");
+      appendRangePunct(summaryEl, "[");
+      summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_min)));
+      appendRangePunct(summaryEl, ", ");
+      summaryEl.appendChild(document.createTextNode(formatCompactNum(summary.col_max)));
+      appendRangePunct(summaryEl, "]");
+   } else if (summary.col_min_label && summary.col_max_label) {
+      // Date/datetime range: the min/max arrive pre-formatted (col_min/col_max
+      // are deliberately omitted for dates so the numeric branch above is
+      // skipped). Rendered compactly -- see appendDateRangeSummary.
+      summaryEl.classList.add("range");
+      appendDateRangeSummary(summaryEl, summary.col_min_label, summary.col_max_label);
+   } else {
+      // Factor level count is structural (read from the summary's col_vals);
+      // distinct-value count is data-dependent. Enrich with the dominant
+      // value when there's no category sparkline and "top" isn't every-row.
+      var catText = "";
+      if (isFactorColumn(summary) && summary.col_vals) {
+         catText = summary.col_vals.length.toLocaleString() + " levels";
+      } else if (typeof summary.col_n_unique === "number") {
+         catText = summary.col_n_unique.toLocaleString() + " unique";
+      }
+      if (catText &&
+          typeof summary.col_top_count === "number" &&
+          summary.col_top_count > 1 &&
+          rowCount > 0) {
+         var topPct = (summary.col_top_count / rowCount) * 100;
+         catText += " · top: " + summary.col_top_value +
+            " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
+      }
+      summaryEl.textContent = catText;
+      if (catText)
+         summaryEl.title = catText;
+   }
+
+   var naEl = footer.querySelector(".sidebar-col-na");
+   var naCount = summary.col_na_count || 0;
+   if (naCount > 0 && rowCount > 0) {
+      var naPct = (naCount / rowCount) * 100;
+      naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
+      naEl.title = naCount.toLocaleString() + " missing values";
+      naEl.classList.remove("zero");
+   } else {
+      naEl.textContent = "0% NA";
+      naEl.classList.add("zero");
+      naEl.title = "No missing values";
+   }
+};
+
+// Apply the current pin/sort/filter indicator state to a single built entry.
+// Shared by buildSidebarEntry (at build time) and updateSidebarColumnIndicators
+// (when state changes), keyed off the entry's absolute data-col-idx.
+var applySidebarEntryIndicators = function(entry) {
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+   var nameEl = entry.querySelector(".sidebar-col-name");
+   var colName = nameEl ? nameEl.textContent : "";
+
+   var pinEl = entry.querySelector(".sidebar-pin-icon");
+   if (pinEl) {
+      var pinned = pinnedColumns.has(absIdx);
+      pinEl.classList.toggle("pinned", pinned);
+      pinEl.title = pinned ? "Unpin column" : "Pin column";
+      pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
+      pinEl.setAttribute("aria-label",
+         (pinned ? "Unpin column " : "Pin column ") + colName);
+   }
+
+   var sortEl = entry.querySelector(".sidebar-sort-icon");
+   if (sortEl && !sortEl.classList.contains("disabled")) {
+      var dir = (absIdx === sortColumn) ? sortDirection : "";
+      sortEl.classList.toggle("sorting_asc", dir === "asc");
+      sortEl.classList.toggle("sorting_desc", dir === "desc");
+      var action;
+      if (dir === "asc") {
+         action = "Sort column " + colName + " descending";
+      } else if (dir === "desc") {
+         action = "Remove sort on column " + colName;
+      } else {
+         action = "Sort column " + colName + " ascending";
+      }
+      sortEl.title = action;
+      sortEl.setAttribute("aria-label", action);
+   }
+
+   var filterEl = entry.querySelector(".sidebar-filter-icon");
+   if (filterEl) {
+      var filterRaw = cachedFilterValues[absIdx];
+      var filtered = !!filterRaw;
+      filterEl.classList.toggle("active", filtered);
+      if (filtered) {
+         var desc = describeFilterValue(filterRaw);
+         filterEl.title = desc ? "Filtered: " + desc : "Filtered";
+         filterEl.setAttribute("aria-label",
+            "Edit filter for column " + colName + (desc ? " (" + desc + ")" : ""));
+      } else {
+         filterEl.title = "Filter column";
+         filterEl.setAttribute("aria-label", "Filter column " + colName);
+      }
+   }
+};
+
+// Build one sidebar entry's DOM. No per-entry listeners -- those are delegated
+// to the content container. Identity (name, type, pin/sort/filter icons) is
+// always present; the summary (sparkline + range/NA) is seeded from cache if
+// available, else queued for the debounced lazy fetch. The sparkline lives in a
+// fixed-height slot reserved up front so every entry is the constant
+// --sidebar-entry-height the virtualizer assumes.
+var buildSidebarEntry = function(col, absIdx, virtIndex) {
+   var entry = document.createElement("div");
+   entry.className = "sidebar-col";
+   // data-col-idx is the ABSOLUTE column index (1-based); the delegated handlers
+   // and summary loader key off it (it identifies the column across the whole
+   // frame, not its position in the fetched window).
+   entry.setAttribute("data-col-idx", absIdx);
+   entry.setAttribute("role", "listitem");
+   // The list is virtualized, so only the visible entries are in the DOM;
+   // setsize/posinset tell assistive tech the true list length and this entry's
+   // place in it rather than just "N of <visible-count>".
+   entry.setAttribute("aria-setsize", sidebarListCols.length);
+   entry.setAttribute("aria-posinset", virtIndex + 1);
+   // Stash the stats category so the delegated expand handler can pass it to the
+   // stats popover without re-deriving it from `col`.
+   entry.setAttribute("data-stats-cat", statsCategory(col));
+
+   var header = document.createElement("div");
+   header.className = "sidebar-col-header";
+   header.setAttribute("role", "button");
+   header.setAttribute("tabindex", "0");
+   header.setAttribute("aria-label", "Scroll to column " + col.col_name);
+
+   var expandBtn = document.createElement("span");
+   expandBtn.className = "sidebar-expand-btn";
+   expandBtn.title = "Show column summary";
+   expandBtn.setAttribute("role", "button");
+   expandBtn.setAttribute("tabindex", "0");
+   expandBtn.setAttribute("aria-expanded", "false");
+   expandBtn.setAttribute("aria-label", "Toggle summary for column " + col.col_name);
+   header.appendChild(expandBtn);
+
+   var pinIcon = document.createElement("span");
+   pinIcon.className = "pin-icon sidebar-pin-icon";
+   pinIcon.setAttribute("role", "button");
+   pinIcon.setAttribute("tabindex", "0");
+   header.appendChild(pinIcon);
+
+   var name = document.createElement("span");
+   name.className = "sidebar-col-name";
+   name.textContent = col.col_name;
+   name.title = col.col_name;
+   header.appendChild(name);
+
+   var type = document.createElement("span");
+   type.className = "sidebar-col-type";
+   type.textContent = "<" + typeLabel(col) + ">";
+   if (col.col_tz)
+      type.title = "Timezone: " + col.col_tz;
+   header.appendChild(type);
+
+   var filterIcon = document.createElement("span");
+   filterIcon.className = "sidebar-filter-icon";
+   filterIcon.setAttribute("role", "button");
+   filterIcon.setAttribute("tabindex", "0");
+   filterIcon.setAttribute("aria-label", "Filter column " + col.col_name);
+   header.appendChild(filterIcon);
+
+   // Sort icon at the right edge. Non-sortable columns (list / data.frame) keep
+   // an inert disabled placeholder so the type labels stay aligned; when
+   // ordering is disabled for the whole grid no icon is created.
+   if (ordering) {
+      var sortIcon = document.createElement("span");
+      sortIcon.className = "sidebar-sort-icon";
+      if (isColumnSortable(col)) {
+         sortIcon.setAttribute("role", "button");
+         sortIcon.setAttribute("tabindex", "0");
+      } else {
+         sortIcon.classList.add("disabled");
+      }
+      header.appendChild(sortIcon);
+   }
+
+   entry.appendChild(header);
+
+   // Reserved sparkline slot (always present so the entry stays the constant
+   // height, whether or not the column has -- or has loaded -- a sparkline).
+   var spark = document.createElement("div");
+   spark.className = "sidebar-sparkline";
+   entry.appendChild(spark);
+
+   var footer = document.createElement("div");
+   footer.className = "sidebar-col-footer";
+   var summaryEl = document.createElement("span");
+   summaryEl.className = "sidebar-col-summary";
+   footer.appendChild(summaryEl);
+   var naEl = document.createElement("span");
+   naEl.className = "sidebar-col-na";
+   footer.appendChild(naEl);
+   entry.appendChild(footer);
+
+   applySidebarEntryIndicators(entry);
+
+   var seeded = getSidebarSummary(absIdx);
+   if (seeded)
+      populateEntrySummary(entry, seeded);
+   else if (sidebarFailed[absIdx])
+      markEntrySummaryUnavailable(entry);
+   else
+      sidebarPendingFetch[absIdx] = true;
+
+   return entry;
+};
+
+// Fixed entry height the virtualizer's offset math (offset = index x H) relies
+// on. Read once from the --sidebar-entry-height CSS custom property so the value
+// has a single source of truth (the :root rule in DataViewer.css), rather than a
+// JS literal that must be kept in sync with the CSS. Falls back to 78 if
+// unavailable.
+var sidebarEntryHeightCache = 0;
+var sidebarEntryHeight = function() {
+   if (!sidebarEntryHeightCache) {
+      var v = parseInt(getComputedStyle(document.documentElement)
+         .getPropertyValue("--sidebar-entry-height"), 10);
+      sidebarEntryHeightCache = (v > 0) ? v : 78;
+   }
+   return sidebarEntryHeightCache;
+};
+
+// Build (only) the sidebar entries whose vertical band intersects the panel
+// viewport, sizing the off-window range with the top/bottom spacers. The grid-
+// row analogue is renderVisibleRows. Cheap: the one forced layout is reading the
+// panel's own clientHeight, and at most ~visible+buffer entries are built.
+var renderSidebarWindow = function(force) {
+   var content = document.getElementById("sidebarContent");
+   if (!content || !sidebarRenderMid) return;
+
+   var n = sidebarListCols.length;
+   var H = sidebarEntryHeight();
+   var scrollTop = content.scrollTop;
+   var clientH = content.clientHeight;
+
+   var first, last;
+   if (n === 0) {
+      first = 0;
+      last = -1;
+   } else {
+      first = Math.floor(scrollTop / H) - SIDEBAR_BUFFER_ENTRIES;
+      last = Math.ceil((scrollTop + clientH) / H) + SIDEBAR_BUFFER_ENTRIES;
+      if (first < 0) first = 0;
+      if (last > n - 1) last = n - 1;
+   }
+
+   if (!force && first === sidebarWinStart && last === sidebarWinEnd)
+      return;
+   sidebarWinStart = first;
+   sidebarWinEnd = last;
+
+   // The stats popover is anchored to an entry we're about to destroy; close it
+   // so it can't float detached over the rebuilt list. (Filter popups are NOT
+   // dismissed here: a filter's own apply triggers a sidebar refresh/rebuild,
+   // and the popup is expected to stay open through that -- it self-heals on
+   // light-dismiss if its anchor later scrolls away.)
+   if (sidebarStatsPopup) dismissSidebarStats();
+
+   // Spacers stand in for the off-window entries; the bottom one adds an
+   // overscroll tail so the last entry can be scrolled toward the top of the
+   // panel rather than bottoming out at its lower edge. Only when the list
+   // actually overflows -- otherwise a short list would gain phantom scroll
+   // space past its end (matching the old overflow-only overscroll padding).
+   var overscroll = (n * H > clientH) ? Math.max(0, clientH - H) : 0;
+   var tail = (last < 0) ? n : (n - 1 - last);
+   sidebarRenderTop.style.height = (first * H) + "px";
+   sidebarRenderBottom.style.height = (Math.max(0, tail) * H + overscroll) + "px";
+
+   // Drop sparklines queued for the entries we're about to destroy; the rebuilt
+   // entries re-queue their own (otherwise renderPendingSparklines could draw
+   // into a now-detached slot).
+   pendingSparklines_ = [];
+
+   sidebarRenderMid.innerHTML = "";
+   if (last >= first) {
+      var frag = document.createDocumentFragment();
+      for (var i = first; i <= last; i++) {
+         var col = sidebarListCols[i];
+         var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
+         frag.appendChild(buildSidebarEntry(col, absIdx, i));
+      }
+      sidebarRenderMid.appendChild(frag);
+   }
+
+   // Draw the seeded sparklines and fetch any summaries the new entries queued
+   // -- but only while the panel is shown. A collapsed panel can still have a
+   // non-zero clientHeight, so fetching here would eagerly pull a screenful of
+   // summaries the user can't see; toggleSidebar/onActivate rebuild on open and
+   // fetch then (matching the old IntersectionObserver, which never fired for a
+   // hidden panel).
+   if (sidebarVisible) {
+      renderPendingSparklines();
+      flushSidebarPendingFetch();
+   }
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
+};
+
+// The virtual index (position in sidebarListCols) of an absolute column index,
+// or -1 if it isn't listed. Used by flashSidebarColumn to scroll to a column
+// whose entry may not currently be built.
+var sidebarVirtIndexForAbs = function(absIdx) {
+   var idx = sidebarIndexByAbs[absIdx];
+   return (typeof idx === "number") ? idx : -1;
+};
+
+// --- Delegated sidebar entry interactions --------------------------------
+// Built entries come and go as the window scrolls, so a single set of handlers
+// lives on the persistent content container and dispatches by the closest
+// affordance + the entry's absolute index.
+
+var onSidebarContentClick = function(evt) {
+   var t = evt.target;
+   if (!t || !t.closest) return;
+   var entry = t.closest(".sidebar-col");
+   if (!entry || !sidebarRenderMid || !sidebarRenderMid.contains(entry)) return;
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+
+   var expandEl = t.closest(".sidebar-expand-btn");
+   if (expandEl) {
+      evt.stopPropagation(); evt.preventDefault();
+      openSidebarStats(expandEl, absIdx, entry.getAttribute("data-stats-cat"));
+      return;
+   }
+   if (t.closest(".sidebar-pin-icon")) {
+      evt.stopPropagation(); evt.preventDefault();
+      togglePinColumn(absIdx);
+      return;
+   }
+   var sortEl = t.closest(".sidebar-sort-icon");
+   if (sortEl) {
+      if (sortEl.classList.contains("disabled")) return;
+      evt.stopPropagation(); evt.preventDefault();
+      handleSortClick(absIdx);
+      return;
+   }
+   var filterEl = t.closest(".sidebar-filter-icon");
+   if (filterEl) {
+      evt.stopPropagation(); evt.preventDefault();
+      // The first activation builds the widget (which binds the icon's own
+      // click via invokeFilterPopup); once bound, that handler toggles it, so
+      // this path only kicks off the initial build.
+      if (filterEl.dvFilterController) return;
+      openColumnFilterFromSidebar(filterEl, absIdx);
+      return;
+   }
+   // Anywhere else in the entry: navigate to the column.
+   goToColumn(absIdx);
+};
+
+var onSidebarContentKeydown = function(evt) {
+   if (evt.key !== "Enter" && evt.key !== " ") return;
+   var t = evt.target;
+   if (!t || !t.classList || !t.closest) return;
+   var entry = t.closest(".sidebar-col");
+   if (!entry || !sidebarRenderMid || !sidebarRenderMid.contains(entry)) return;
+   var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
+   if (isNaN(absIdx)) return;
+
+   if (t.classList.contains("sidebar-expand-btn")) {
+      evt.preventDefault(); evt.stopPropagation();
+      openSidebarStats(t, absIdx, entry.getAttribute("data-stats-cat"));
+   } else if (t.classList.contains("sidebar-pin-icon")) {
+      evt.preventDefault(); evt.stopPropagation();
+      togglePinColumn(absIdx);
+   } else if (t.classList.contains("sidebar-sort-icon")) {
+      if (t.classList.contains("disabled")) return;
+      evt.preventDefault(); evt.stopPropagation();
+      handleSortClick(absIdx);
+   } else if (t.classList.contains("sidebar-filter-icon")) {
+      evt.preventDefault(); evt.stopPropagation();
+      openColumnFilterFromSidebar(t, absIdx);
+   } else if (t.classList.contains("sidebar-col-header")) {
+      evt.preventDefault();
+      goToColumn(absIdx);
+   }
+};
+
+// --- Detailed-stats popover ----------------------------------------------
+// Expanding a column's stats opens a floating popover anchored to its expand
+// button rather than growing the entry inline -- which keeps every entry the
+// constant height the virtualizer requires. One open at a time; it cooperates
+// with the filter popups through dismissActivePopup.
+var sidebarStatsPopup = null;   // the open popover element, or null
+var sidebarStatsAbs = -1;       // absolute column index it is showing
+
+var dismissSidebarStats = function() {
+   if (!sidebarStatsPopup) return false;
+   if (sidebarStatsPopup.parentNode)
+      document.body.removeChild(sidebarStatsPopup);
+   document.body.removeEventListener("click", sidebarStatsLightDismiss);
+   document.body.removeEventListener("keydown", sidebarStatsEscDismiss);
+   sidebarStatsPopup = null;
+   sidebarStatsAbs = -1;
+   if (dismissActivePopup === dismissSidebarStats)
+      dismissActivePopup = null;
+   // Clear the expanded state on whichever expand button is currently built
+   // (the original anchor may have scrolled out of the window).
+   var content = document.getElementById("sidebarContent");
+   if (content) {
+      var open = content.querySelectorAll(".sidebar-expand-btn.expanded");
+      for (var i = 0; i < open.length; i++) {
+         open[i].classList.remove("expanded");
+         open[i].setAttribute("aria-expanded", "false");
+      }
+   }
+   return true;
+};
+
+var sidebarStatsLightDismiss = function(evt) {
+   if (sidebarStatsPopup && sidebarStatsPopup.contains(evt.target))
+      return;
+   dismissSidebarStats();
+};
+
+var sidebarStatsEscDismiss = function(evt) {
+   if (evt.keyCode === 27) dismissSidebarStats();
+};
+
+// Position a body-appended popover just under `anchorEl`, centered within the
+// sidebar panel and clamped on-screen (mirrors invokeFilterPopup's placement).
+var positionSidebarPopover = function(popup, anchorEl) {
+   var rect = anchorEl.getBoundingClientRect();
+   var left = rect.left - 4;
+   var panel = anchorEl.closest ? anchorEl.closest("#sidebarPanel") : null;
+   if (panel) {
+      var sb = panel.getBoundingClientRect();
+      left = sb.left + (sb.width - popup.offsetWidth) / 2;
+   }
+   if (popup.offsetWidth + left > document.body.offsetWidth)
+      left = document.body.offsetWidth - popup.offsetWidth;
+   if (left < 0) left = 0;
+
+   // The stats popover can be tall (numeric/factor); for an anchor low in the
+   // panel, opening downward would run it off the bottom of the viewport. Flip
+   // it above the anchor when it doesn't fit below, then clamp to the top edge.
+   var viewH = document.documentElement.clientHeight || document.body.offsetHeight;
+   var top = rect.bottom + 2;
+   if (top + popup.offsetHeight > viewH) {
+      var above = rect.top - 2 - popup.offsetHeight;
+      top = (above >= 0) ? above : Math.max(0, viewH - popup.offsetHeight);
+   }
+
+   popup.style.top = top + "px";
+   popup.style.left = left + "px";
+};
+
+var openSidebarStats = function(anchorEl, absIdx, colType) {
+   // Toggle closed if it's already open for this column.
+   if (sidebarStatsPopup && sidebarStatsAbs === absIdx) {
+      dismissSidebarStats();
+      return;
+   }
+   // Dismiss any other open popup (a filter popup, or stats for another column).
+   if (dismissActivePopup) dismissActivePopup(true);
+   dismissSidebarStats();
+
+   var popup = document.createElement("div");
+   popup.className = "filterPopup sidebar-stats-popup";
+   var loading = document.createElement("div");
+   loading.className = "stats-empty";
+   loading.textContent = "Loading...";
+   popup.appendChild(loading);
+   document.body.appendChild(popup);
+   sidebarStatsPopup = popup;
+   sidebarStatsAbs = absIdx;
+   positionSidebarPopover(popup, anchorEl);
+
+   anchorEl.classList.add("expanded");
+   anchorEl.setAttribute("aria-expanded", "true");
+
+   document.body.addEventListener("click", sidebarStatsLightDismiss);
+   document.body.addEventListener("keydown", sidebarStatsEscDismiss);
+   dismissActivePopup = dismissSidebarStats;
+
+   fetchColumnSummary(absIdx, function(data) {
+      // Superseded or dismissed while the fetch was in flight.
+      if (sidebarStatsPopup !== popup) return;
+      if (data === null) { dismissSidebarStats(); return; }
+      renderColumnStats(popup, data, colType);
+      positionSidebarPopover(popup, anchorEl);
+   });
+};
+
 var initSidebar = function() {
    var content = document.getElementById("sidebarContent");
    var toggle = document.getElementById("sidebarToggle");
@@ -3201,32 +5386,36 @@ var initSidebar = function() {
    toggle.setAttribute("aria-controls", "sidebarContent");
    toggle.setAttribute("aria-expanded", sidebarVisible ? "true" : "false");
    toggle.setAttribute("aria-label", "Toggle column summary panel");
-   // The host toolbar's Summary button already names the panel, so the
-   // header shows the column count instead of repeating "Summary".
-   var shownCols = 0;
-   for (var ci = 0; ci < cols.length; ci++) {
-      if (!isRownameColumn(cols[ci]))
-         shownCols++;
-   }
+   // The host toolbar's Summary button already names the panel, so the header
+   // shows the column count instead of repeating "Summary". The sidebar lists
+   // every column of the frame, so the count is the frame total. While the
+   // complete index is still loading it falls back to the fetched window, so
+   // show "N of M" during that brief transient (and for the rare frame whose
+   // index failed to load).
+   var listedCols = sidebarColumnList().length;
 
    var toggleLabel = document.createElement("span");
    toggleLabel.className = "sidebar-toggle-label";
-   if (totalCols > shownCols) {
-      // Fewer columns are loaded than the frame contains (e.g. only the
-      // current page of a paginated frame); the sidebar lists those only.
-      toggleLabel.textContent = shownCols.toLocaleString() + " of " +
+   if (sidebarColumns === null && totalCols > listedCols) {
+      toggleLabel.textContent = listedCols.toLocaleString() + " of " +
          totalCols.toLocaleString() + " columns";
    } else {
-      toggleLabel.textContent = shownCols.toLocaleString() +
-         (shownCols === 1 ? " column" : " columns");
+      toggleLabel.textContent = totalCols.toLocaleString() +
+         (totalCols === 1 ? " column" : " columns");
    }
    toggle.appendChild(toggleLabel);
 
-   var toggleSpinner = document.createElement("span");
-   toggleSpinner.className = "sidebar-spinner";
-   toggleSpinner.style.display = "none";
-   toggleSpinner.id = "sidebarSpinner";
-   toggle.appendChild(toggleSpinner);
+   // When the summaries describe a filtered subset rather than the whole
+   // frame, say so -- the histograms/ranges/NA% otherwise look like they
+   // describe the full object. (filteredSummaries is set only while a column
+   // filter or global search is active.)
+   if (filteredSummaries !== null) {
+      var filteredTag = document.createElement("span");
+      filteredTag.className = "sidebar-toggle-filtered";
+      filteredTag.textContent = " (filtered)";
+      filteredTag.title = "Summaries reflect the current filter and search";
+      toggleLabel.appendChild(filteredTag);
+   }
 
    // Help icon: opens a small dialog explaining the summary entries. Unlike
    // the close glyph below, activation must NOT reach the toggle -- it opens
@@ -3271,283 +5460,63 @@ var initSidebar = function() {
    // containers were just removed by the innerHTML reset above.
    pendingSparklines_ = [];
 
-   for (var i = 0; i < cols.length; i++) {
-      var col = cols[i];
-      if (isRownameColumn(col)) continue;
+   // Reset the lazy summary-fetch queue for this rebuild.
+   sidebarPendingFetch = {};
 
-      var entry = document.createElement("div");
-      entry.className = "sidebar-col";
-      entry.setAttribute("data-col-idx", i);
-      entry.setAttribute("role", "listitem");
-
-      // Header row: expand button + name + type
-      var header = document.createElement("div");
-      header.className = "sidebar-col-header";
-      header.setAttribute("role", "button");
-      header.setAttribute("tabindex", "0");
-      header.setAttribute("aria-label",
-         "Scroll to column " + col.col_name);
-
-      var expandBtn = document.createElement("span");
-      expandBtn.className = "sidebar-expand-btn";
-      expandBtn.title = "Show column summary";
-      expandBtn.setAttribute("role", "button");
-      expandBtn.setAttribute("tabindex", "0");
-      expandBtn.setAttribute("aria-expanded", "false");
-      expandBtn.setAttribute("aria-label",
-         "Toggle summary for column " + col.col_name);
-      header.appendChild(expandBtn);
-
-      // Pin icon, mirroring the grid header's affordance: hidden until the
-      // entry is hovered, persistent while the column is pinned. State
-      // (pinned class, title, aria) is applied by
-      // updateSidebarColumnIndicators once all entries exist.
-      var pinIcon = document.createElement("span");
-      pinIcon.className = "pin-icon sidebar-pin-icon";
-      pinIcon.setAttribute("role", "button");
-      pinIcon.setAttribute("tabindex", "0");
-      header.appendChild(pinIcon);
-
-      var name = document.createElement("span");
-      name.className = "sidebar-col-name";
-      name.textContent = col.col_name;
-      name.title = col.col_name;
-      header.appendChild(name);
-
-      var type = document.createElement("span");
-      type.className = "sidebar-col-type";
-      type.textContent = "<" + typeLabel(col) + ">";
-      header.appendChild(type);
-
-      // Sort icon at the right edge, mirroring the grid header's indicator.
-      // Non-sortable columns (list / data.frame) keep an inert hidden
-      // placeholder so the type labels stay aligned across entries; when
-      // ordering is disabled for the whole grid no icon is created at all.
-      var sortIcon = null;
-      if (ordering) {
-         sortIcon = document.createElement("span");
-         sortIcon.className = "sidebar-sort-icon";
-         if (isColumnSortable(col)) {
-            sortIcon.setAttribute("role", "button");
-            sortIcon.setAttribute("tabindex", "0");
-         } else {
-            sortIcon.classList.add("disabled");
-         }
-         header.appendChild(sortIcon);
-      }
-
-      entry.appendChild(header);
-
-      // Sparkline for numeric columns (histogram) and low-cardinality
-      // factor / character columns (per-category frequency bars). Create
-      // the (empty) container now but defer drawing the canvas until the
-      // panel is visible -- see renderPendingSparklines.
-      if (hasHistogram(col)) {
-         var sparkContainer = document.createElement("div");
-         sparkContainer.className = "sidebar-sparkline";
-         entry.appendChild(sparkContainer);
-         pendingSparklines_.push({
-            container: sparkContainer,
-            breaks: col.col_breaks,
-            counts: col.col_counts,
-            labels: null
-         });
-      } else if (hasCategoryCounts(col)) {
-         var catContainer = document.createElement("div");
-         catContainer.className = "sidebar-sparkline";
-         entry.appendChild(catContainer);
-         pendingSparklines_.push({
-            container: catContainer,
-            breaks: null,
-            counts: col.col_cat_counts,
-            labels: col.col_cat_vals
-         });
-      }
-
-      // Footer row: type-specific summary (left) + NA stat (right). Always
-      // rendered so entries keep a uniform shape: the left slot may be empty
-      // (e.g. Date / logical columns, or character columns too long for the
-      // server to count distinct values), and the NA stat is always
-      // present, visually dimmed when the column has nothing missing.
-      var footer = document.createElement("div");
-      footer.className = "sidebar-col-footer";
-
-      // Type-specific summary (left). For numeric columns this is the actual
-      // data range as a closed interval, [min, max], which doubles as the
-      // sparkline's (unticked) axis bounds; the col_min/col_max checks are
-      // purely defensive (the fields ship with every histogram), keeping the
-      // slot empty rather than throwing mid-bootstrap if one were missing.
-      // The bracket and comma adornments are dimmed spans (see .range-punct)
-      // so they read as notation rather than data.
-      var summaryEl = document.createElement("span");
-      summaryEl.className = "sidebar-col-summary";
-      if (hasHistogram(col) &&
-          typeof col.col_min === "number" &&
-          typeof col.col_max === "number") {
-         summaryEl.classList.add("range");
-         appendRangePunct(summaryEl, "[");
-         summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(col.col_min)));
-         appendRangePunct(summaryEl, ", ");
-         summaryEl.appendChild(
-            document.createTextNode(formatCompactNum(col.col_max)));
-         appendRangePunct(summaryEl, "]");
-      } else {
-         // Categorical cardinality: level count for factors, distinct-value
-         // count for characters (absent when the server skipped counting,
-         // e.g. very long columns). Above the server's bar cutoff there is
-         // no category sparkline, so enrich the text with the dominant
-         // value instead -- but not when the top count is 1 (ID-like
-         // columns where every value is distinct, and "top" is noise).
-         var catText = "";
-         if (isFactorColumn(col) && col.col_vals) {
-            catText = col.col_vals.length.toLocaleString() + " levels";
-         } else if (typeof col.col_n_unique === "number") {
-            catText = col.col_n_unique.toLocaleString() + " unique";
-         }
-         if (catText &&
-             typeof col.col_top_count === "number" &&
-             col.col_top_count > 1 &&
-             totalRows > 0) {
-            var topPct = (col.col_top_count / totalRows) * 100;
-            catText += " \u00b7 top: " + col.col_top_value +
-               " (" + (topPct < 1 ? "<1" : Math.round(topPct)) + "%)";
-         }
-         summaryEl.textContent = catText;
-         // The top value is user data of arbitrary length; the summary
-         // ellipsizes, so expose the full text as a tooltip.
-         if (catText)
-            summaryEl.title = catText;
-      }
-      footer.appendChild(summaryEl);
-
-      // NA stat (right)
-      var naCount = col.col_na_count || 0;
-      var naEl = document.createElement("span");
-      naEl.className = "sidebar-col-na";
-      if (naCount > 0 && totalRows > 0) {
-         var naPct = ((naCount / totalRows) * 100);
-         naEl.textContent = (naPct < 1 ? "<1" : Math.round(naPct)) + "% NA";
-         naEl.title = naCount.toLocaleString() + " missing values";
-      } else {
-         naEl.textContent = "0% NA";
-         naEl.classList.add("zero");
-         naEl.title = "No missing values";
-      }
-      footer.appendChild(naEl);
-
-      entry.appendChild(footer);
-
-      // Stats panel (hidden until expanded)
-      var statsPanel = document.createElement("div");
-      statsPanel.className = "sidebar-stats";
-      statsPanel.style.display = "none";
-      entry.appendChild(statsPanel);
-
-      // Click entry to scroll; click expand button to toggle stats; pin and
-      // sort icons route into the same toggle/cycle paths as the grid header.
-      (function(colIdx, statsEl, btnEl, headerEl, pinEl, sortEl, colType) {
-         var expanded = false;
-         var loaded = false;
-
-         var toggleStats = function(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            expanded = !expanded;
-            btnEl.classList.toggle("expanded", expanded);
-            btnEl.setAttribute("aria-expanded", expanded ? "true" : "false");
-
-            if (expanded) {
-               if (!loaded) {
-                  // Show spinner while at least one summary fetch is in flight
-                  var spinner = document.getElementById("sidebarSpinner");
-                  pendingSummaryFetches++;
-                  if (spinner) spinner.style.display = "";
-                  fetchColumnSummary(absColIndex(colIdx), function(data) {
-                     pendingSummaryFetches = Math.max(0, pendingSummaryFetches - 1);
-                     if (spinner && pendingSummaryFetches === 0) {
-                        spinner.style.display = "none";
-                     }
-                     // Aborted requests pass null -- leave loaded=false so a
-                     // re-expand can retry.
-                     if (data === null) return;
-                     // Errors render the message but also leave loaded=false
-                     // so collapsing and re-expanding the entry kicks off a
-                     // fresh fetch (instead of pinning the user on a stale
-                     // error until full reload).
-                     renderColumnStats(statsEl, data, colType);
-                     statsEl.style.display = "";
-                     if (sidebarScrollbar_) sidebarScrollbar_.update();
-                     if (!data.error) loaded = true;
-                  });
-               } else {
-                  statsEl.style.display = "";
-                  if (sidebarScrollbar_) sidebarScrollbar_.update();
-               }
-            } else {
-               statsEl.style.display = "none";
-               if (sidebarScrollbar_) sidebarScrollbar_.update();
-            }
-         };
-
-         btnEl.addEventListener("click", toggleStats);
-         btnEl.addEventListener("keydown", function(evt) {
-            if (evt.key === "Enter" || evt.key === " ") toggleStats(evt);
-         });
-
-         var togglePin = function(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            togglePinColumn(colIdx);
-         };
-         pinEl.addEventListener("click", togglePin);
-         pinEl.addEventListener("keydown", function(evt) {
-            if (evt.key === "Enter" || evt.key === " ") togglePin(evt);
-         });
-
-         if (sortEl && !sortEl.classList.contains("disabled")) {
-            var cycleSort = function(evt) {
-               evt.stopPropagation();
-               evt.preventDefault();
-               handleSortClick(colIdx);
-            };
-            sortEl.addEventListener("click", cycleSort);
-            sortEl.addEventListener("keydown", function(evt) {
-               if (evt.key === "Enter" || evt.key === " ") cycleSort(evt);
-            });
-         }
-
-         var scrollToCol = function() { scrollToColumn(colIdx); };
-         entry.addEventListener("click", scrollToCol);
-         headerEl.addEventListener("keydown", function(evt) {
-            if (evt.target !== headerEl) return;
-            if (evt.key === "Enter" || evt.key === " ") {
-               evt.preventDefault();
-               scrollToCol();
-            }
-         });
-      })(i, statsPanel, expandBtn, header, pinIcon, sortIcon, statsCategory(col));
-
-      content.appendChild(entry);
+   // Snapshot the listed columns (rowname excluded) with an abs-index lookup,
+   // then build the virtualized structure: a top spacer, a container for the
+   // entries currently in the visible window, and a bottom spacer (which also
+   // carries the overscroll tail). renderSidebarWindow fills the container with
+   // only the entries whose vertical band intersects the panel viewport, so
+   // initSidebar is O(visible) rather than O(all columns).
+   sidebarListCols = [];
+   sidebarIndexByAbs = {};
+   var allSidebarCols = sidebarColumnList();
+   for (var si = 0; si < allSidebarCols.length; si++) {
+      var sc = allSidebarCols[si];
+      if (isRownameColumn(sc)) continue;
+      var scAbs = (typeof sc.col_index === "number")
+         ? sc.col_index : sidebarListCols.length + 1;
+      sidebarIndexByAbs[scAbs] = sidebarListCols.length;
+      sidebarListCols.push(sc);
    }
 
-   // Apply the current (possibly restored-from-saved-state) pin and sort
-   // state to the icons just created.
-   updateSidebarColumnIndicators();
+   sidebarRenderTop = document.createElement("div");
+   sidebarRenderTop.className = "sidebar-virt-spacer";
+   sidebarRenderTop.setAttribute("aria-hidden", "true");
+   sidebarRenderMid = document.createElement("div");
+   sidebarRenderBottom = document.createElement("div");
+   sidebarRenderBottom.className = "sidebar-virt-spacer";
+   sidebarRenderBottom.setAttribute("aria-hidden", "true");
+   content.appendChild(sidebarRenderTop);
+   content.appendChild(sidebarRenderMid);
+   content.appendChild(sidebarRenderBottom);
+   sidebarWinStart = -1;
+   sidebarWinEnd = -1;
 
-   // Apply initial sidebar visibility -- toggle authoritatively so a previous
-   // "expanded" class from an earlier bootstrap doesn't override saved state.
+   // Entry interactions are delegated to the persistent content container
+   // (built entries come and go as the window scrolls). addEventListener is
+   // idempotent for these module-scoped handlers across rebuilds.
+   content.addEventListener("click", onSidebarContentClick);
+   content.addEventListener("keydown", onSidebarContentKeydown);
+
+   // Kick off loading the complete column index if we're still showing only
+   // the fetched window; it rebuilds the sidebar when it lands.
+   ensureSidebarColumns();
+
+   // Apply initial sidebar visibility before measuring so renderSidebarWindow
+   // reads the real (expanded) clientHeight.
    var panel = document.getElementById("sidebarPanel");
    if (panel) {
       panel.classList.toggle("expanded", sidebarVisible);
    }
 
-   // Draw the sparklines only if the panel is starting out visible; otherwise
-   // they stay pending until the first time the user opens the panel.
-   if (sidebarVisible) renderPendingSparklines();
+   // Build the initial visible window. Reading clientHeight here forces a
+   // layout, but only of the two spacers plus the handful of visible entries
+   // (not every column) -- which is the whole point of the virtualization.
+   renderSidebarWindow(true);
 
-   // Attach the floating sidebar scrollbar after the content is in place
-   // (so its initial measurement reflects the populated entries).
+   // Attach the floating scrollbar after the spacers establish the scroll range.
    attachSidebarScrollbar();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
 };
@@ -3556,46 +5525,17 @@ var initSidebar = function() {
 // Called after any pin or sort mutation -- whether it originated from the
 // grid header, the keyboard, or the sidebar icons themselves -- and at the
 // end of initSidebar to apply the initial (possibly restored) state.
+// Re-apply pin/sort/filter indicator state to the currently-built entries.
+// With virtualization only the visible window exists in the DOM; off-window
+// entries pick up the current state when they are next built (buildSidebarEntry
+// calls applySidebarEntryIndicators). The per-entry logic is shared with that
+// build path via applySidebarEntryIndicators.
 var updateSidebarColumnIndicators = function() {
    var content = document.getElementById("sidebarContent");
-   if (!content || !cols) return;
-
+   if (!content) return;
    var entries = content.querySelectorAll(".sidebar-col");
-   for (var i = 0; i < entries.length; i++) {
-      var entry = entries[i];
-      var colIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
-      var col = isNaN(colIdx) ? null : cols[colIdx];
-      if (!col) continue;
-
-      var pinEl = entry.querySelector(".sidebar-pin-icon");
-      if (pinEl) {
-         var pinned = pinnedColumns.has(absColIndex(colIdx));
-         pinEl.classList.toggle("pinned", pinned);
-         pinEl.title = pinned ? "Unpin column" : "Pin column";
-         pinEl.setAttribute("aria-pressed", pinned ? "true" : "false");
-         pinEl.setAttribute("aria-label",
-            (pinned ? "Unpin column " : "Pin column ") + col.col_name);
-      }
-
-      var sortEl = entry.querySelector(".sidebar-sort-icon");
-      if (sortEl && !sortEl.classList.contains("disabled")) {
-         var dir = (absColIndex(colIdx) === sortColumn) ? sortDirection : "";
-         sortEl.classList.toggle("sorting_asc", dir === "asc");
-         sortEl.classList.toggle("sorting_desc", dir === "desc");
-
-         // The label announces the next step in the sort cycle.
-         var action;
-         if (dir === "asc") {
-            action = "Sort column " + col.col_name + " descending";
-         } else if (dir === "desc") {
-            action = "Remove sort on column " + col.col_name;
-         } else {
-            action = "Sort column " + col.col_name + " ascending";
-         }
-         sortEl.title = action;
-         sortEl.setAttribute("aria-label", action);
-      }
-   }
+   for (var i = 0; i < entries.length; i++)
+      applySidebarEntryIndicators(entries[i]);
 };
 
 // ==========================================================================
@@ -3713,12 +5653,17 @@ var buildSidebarHelpOverlay = function() {
    addLine(headerSec,
       "Each entry names a column and its type. Click an entry to scroll " +
       "the grid to that column; the pin and sort icons work just like " +
-      "their counterparts in the grid header.");
+      "their counterparts in the grid header, and the funnel icon filters " +
+      "the column (see Filter below). For date and date-time columns, hover " +
+      "the type label to see the timezone.");
 
    var plotSec = addSection("Mini-plot");
    addLine(plotSec,
       "Numeric columns draw a histogram of their finite values.",
       "numeric");
+   addLine(plotSec,
+      "Date and date-time columns draw a histogram over time.",
+      "date");
    addLine(plotSec,
       "Factor and character columns with few distinct values draw one " +
       "bar per value: factors in level order, characters most frequent " +
@@ -3727,16 +5672,25 @@ var buildSidebarHelpOverlay = function() {
 
    var statsSec = addSection("Summary line");
    addLine(statsSec,
-      "The numeric data range as [min, max], or the number of factor " +
-      "levels / distinct values -- plus the most frequent value when " +
-      "there are too many to chart. Distinct values are not counted for " +
-      "very large character columns. The right-hand side shows the " +
-      "percentage of missing values.");
+      "The numeric or date/time data range as [min, max] (a date-time range " +
+      "within a single day shows the date once with a time range), or the " +
+      "number of factor levels / distinct values -- plus the most frequent " +
+      "value when there are too many to chart. Distinct values are not " +
+      "counted for very large character columns. The right-hand side shows " +
+      "the percentage of missing values.");
+
+   var filterSec = addSection("Filter");
+   addLine(filterSec,
+      "The funnel icon opens a filter for the column. Numeric and date/time " +
+      "columns brush a range on the histogram (or type one); factor, logical, " +
+      "and text columns pick or match a value. The grid updates as you adjust " +
+      "the filter. Use the checkmark to confirm and close, or the x to clear " +
+      "it; clicking away leaves the filter in place.");
 
    var detailsSec = addSection("Details");
    addLine(detailsSec,
       "The triangle expands a panel of detailed statistics, computed " +
-      "on demand.");
+      "on demand; for date-time columns this includes the timezone.");
 
    overlay.appendChild(dialog);
    return overlay;
@@ -3750,15 +5704,13 @@ var renderPendingSparklines = function() {
    var items = pendingSparklines_;
    pendingSparklines_ = [];
    for (var i = 0; i < items.length; i++) {
-      var spark = createSparkline(items[i].breaks, items[i].counts, items[i].labels);
+      var spark = createSparkline(items[i].breaks, items[i].counts,
+                                  items[i].labels, items[i].breakLabels);
       if (spark) {
          items[i].container.appendChild(spark);
-      } else {
-         // No drawable histogram (e.g. all-equal values, or no 2D context):
-         // remove the empty placeholder rather than leave it reserving space.
-         var empty = items[i].container;
-         if (empty.parentNode) empty.parentNode.removeChild(empty);
       }
+      // No drawable histogram (all-equal values, or no 2D context): leave the
+      // reserved slot empty so the entry keeps its constant height.
    }
 };
 
@@ -3783,52 +5735,106 @@ var toggleSidebar = function() {
       applyPinnedColumns();
       renderVisibleRows(true);
       updateInfoBar();
+      // Opening the panel gives it a real clientHeight; (re)build its visible
+      // entry window now that the transition has settled.
+      renderSidebarWindow(true);
       updateCustomScrollbars();
    }, TIMING.sidebarTransition);
    saveState();
    if (window.sidebarStateCallback) window.sidebarStateCallback(sidebarVisible);
 };
 
-var scrollToColumn = function(colIdx) {
-   var viewport = document.getElementById("gridViewport");
-   var thead = document.getElementById("data_cols");
-   if (!viewport || !thead) return;
+// Scroll the viewport so the column at columnOrder position `pos` is visible.
+// Geometry is derived from measuredWidths (not a rendered <th>), so this works
+// for columns outside the current render window; unpinned columns sit to the
+// right of the left unfetched span. With `center`, the column is scrolled to
+// the middle of the unpinned viewport region (go-to-column jumps want context
+// on both sides); otherwise it's the minimal scroll that brings an off-edge
+// column flush with the nearest edge. Operates entirely in the unpinned pane's
+// own scroll space. Returns true (and updates lastScrollLeft) when it actually
+// scrolls; a no-op when the column is already where it needs to be.
+var scrollColumnPosIntoView = function(pos, center) {
+   var viewport = domViewport;
+   if (!viewport || pos < 0 || pos >= columnOrder.length) return false;
 
-   // The target header may be outside the current column window (so not in the
-   // DOM); derive its geometry from measuredWidths instead of a rendered <th>.
-   var pos = columnOrder.indexOf(colIdx);
-   if (pos < 0) return;
+   // Pinned columns live in the frozen pane -- always visible regardless of the
+   // unpinned pane's scroll position -- so there's nothing to scroll into view.
+   if (pos < firstUnpinnedPos()) return false;
+
    var offs = columnOffsets();
-   var colLeft = offs[pos];
+   // Unpinned-pane x of the column's left edge: drop the pinned block (separate
+   // pane) and add the left unfetched span that precedes the fetched window.
+   var colLeft = offs[pos] + leftSpanWidth() - pinnedBlockWidth();
    var colWidth = measuredWidths[pos] || 0;
    var viewLeft = viewport.scrollLeft;
    var viewWidth = viewport.clientWidth;
 
-   // Account for the sticky pinned columns occluding the left edge.
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
+   var newLeft = viewLeft;
+   if (center) {
+      var fullyVisible = colLeft >= viewLeft &&
+                         colLeft + colWidth <= viewLeft + viewWidth;
+      if (!fullyVisible) {
+         newLeft = Math.max(0,
+            colLeft - Math.max(0, (viewWidth - colWidth) / 2));
+      }
+   } else if (colLeft < viewLeft) {
+      newLeft = Math.max(0, colLeft);
    } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
+      newLeft = colLeft + colWidth - viewWidth;
    }
 
-   // Bring the new window into the DOM synchronously so the header exists to
-   // flash (the scroll event's re-window is async via requestAnimationFrame).
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
+   if (newLeft === viewLeft) return false;
+   setViewportScrollLeft(viewport, newLeft);
+   return true;
+};
 
-   // Briefly highlight the column header (if it's now rendered).
+// Briefly highlight a column's header so the user can spot where a jump
+// landed. No-op when the header isn't rendered.
+var flashColumnHeader = function(colIdx) {
    var th = getHeaderCell(colIdx);
-   if (th) {
-      th.classList.add("highlight-flash");
-      setTimeout(function() {
-         th.classList.remove("highlight-flash");
-      }, TIMING.columnFlash);
+   if (!th) return;
+   th.classList.add("highlight-flash");
+   setTimeout(function() {
+      th.classList.remove("highlight-flash");
+   }, TIMING.columnFlash);
+};
+
+// Scroll a column's sidebar entry into view and flash it, mirroring the header
+// flash on a go-to-column jump so the summary panel tracks the jump (the inverse
+// of clicking a sidebar entry, which scrolls the grid). No-op when the panel is
+// collapsed or the column isn't listed. Deliberately does NOT move keyboard
+// focus -- the jump leaves focus on the grid so arrow keys drive the data.
+// absIdx is the ABSOLUTE column index.
+var flashSidebarColumn = function(absIdx) {
+   if (!sidebarVisible) return;
+   var content = document.getElementById("sidebarContent");
+   if (!content) return;
+
+   // The target entry may not currently be built; resolve its virtual index and
+   // compute its offset from the constant entry height.
+   var idx = sidebarVirtIndexForAbs(absIdx);
+   if (idx < 0) return;
+   var H = sidebarEntryHeight();
+   var top = idx * H;
+   var viewTop = content.scrollTop;
+   var viewH = content.clientHeight;
+
+   // Center the entry, but only when it isn't already fully visible -- so a jump
+   // to a nearby, already-on-screen column doesn't jolt the list.
+   if (top < viewTop || top + H > viewTop + viewH) {
+      content.scrollTop = Math.max(0, top - Math.max(0, (viewH - H) / 2));
    }
+
+   // Build the window at the new scroll position so the entry exists to flash.
+   renderSidebarWindow(false);
+   if (sidebarScrollbar_) sidebarScrollbar_.update();
+
+   var entry = content.querySelector('.sidebar-col[data-col-idx="' + absIdx + '"]');
+   if (!entry) return;
+   entry.classList.add("highlight-flash");
+   setTimeout(function() {
+      entry.classList.remove("highlight-flash");
+   }, TIMING.columnFlash);
 };
 
 // ==========================================================================
@@ -3837,17 +5843,21 @@ var scrollToColumn = function(colIdx) {
 
 var getActiveCellTd = function() {
    if (activeRow < 0 || activeCol < 0) return null;
-   var tr = renderedRowElements.get(activeRow);
+   var pair = renderedRowElements.get(activeRow);
+   if (!pair) return null;
+   // The active cell lives in the pinned pane's row when its column is pinned
+   // (columnOrder position < firstUnpinnedPos), otherwise in the unpinned row.
+   var tr = activeCol < firstUnpinnedPos() ? pair.pinned : pair.unpinned;
    if (!tr) return null;
-   // Can't index by activeCol: tr.children is the windowed cell set (pinned +
-   // spacers + window), not 1:1 with columnOrder. Every rendered cell records
-   // its columnOrder position in data-col-pos (set by buildRow), so match on
-   // that. We must NOT look up by the activeCell id here: buildRow assigns that
-   // id only to the cell that is *already* active, so a freshly clicked or
-   // navigated-to cell would not have it yet and setActiveCell could never find
-   // the cell to mark -- the highlight would only appear after a later render
-   // pass rebuilt the row. Returns null when the column is outside the rendered
-   // window (caller handles the absent case).
+   // Can't index by activeCol: tr.children is the windowed cell set (spacers +
+   // window for the unpinned pane), not 1:1 with columnOrder. Every rendered
+   // cell records its columnOrder position in data-col-pos (set by buildRow),
+   // so match on that. We must NOT look up by the activeCell id here: buildRow
+   // assigns that id only to the cell that is *already* active, so a freshly
+   // clicked or navigated-to cell would not have it yet and setActiveCell could
+   // never find the cell to mark -- the highlight would only appear after a
+   // later render pass rebuilt the row. Returns null when the column is outside
+   // the rendered window (caller handles the absent case).
    return tr.querySelector('[data-col-pos="' + activeCol + '"]');
 };
 
@@ -3866,7 +5876,7 @@ var getActiveHeaderTh = function() {
 // follow virtual focus into the grid. The viewport is the focused
 // element; the active cell or header is its activedescendant.
 var setViewportActiveDescendant = function(id) {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    if (id) {
       viewport.setAttribute("aria-activedescendant", id);
@@ -3879,7 +5889,7 @@ var setViewportActiveDescendant = function(id) {
 // grid -- without it, subsequent keystrokes would route to whatever was
 // focused before the click instead of onGridKeyDown.
 var focusGridViewport = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport && viewport.focus) viewport.focus({ preventScroll: true });
 };
 
@@ -3902,7 +5912,7 @@ var clearActiveHeader = function() {
 };
 
 var ensureActiveCellVisible = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
 
    // Vertical: rows are uniform-height so we can compute target scrollTop
@@ -3921,33 +5931,19 @@ var ensureActiveCellVisible = function() {
    var viewTop = viewport.scrollTop;
    var bodyHeight = visibleBodyHeight(viewport);
    if (rowTop < viewTop) {
-      viewport.scrollTop = rowTop;
+      setViewportScrollTop(viewport, rowTop);
    } else if (rowBottom > viewTop + bodyHeight) {
-      viewport.scrollTop = rowBottom - bodyHeight;
+      setViewportScrollTop(viewport, rowBottom - bodyHeight);
    }
 
-   // Horizontal: the active column may be outside the rendered column window,
-   // so derive its geometry from measuredWidths rather than a rendered <th>.
+   // Horizontal: scroll the active column flush with the nearest edge if it's
+   // off-screen (no-op when already visible).
    if (activeCol < 0 || activeCol >= columnOrder.length) return;
-   var offs = columnOffsets();
-   var colLeft = offs[activeCol];
-   var colWidth = measuredWidths[activeCol] || 0;
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-   var viewLeft = viewport.scrollLeft;
-   var viewWidth = viewport.clientWidth;
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
-   } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
-   }
+   scrollColumnPosIntoView(activeCol, false);
 
    // Bring the (possibly new) column window into the DOM synchronously so the
    // active cell is rendered for the caller to mark and for screen readers.
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
+   if (syncColumnWindow()) renderVisibleRows(true);
 };
 
 var setActiveCell = function(row, col) {
@@ -4004,32 +6000,23 @@ var setActiveCell = function(row, col) {
 };
 
 var ensureActiveHeaderVisible = function() {
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (!viewport) return;
    if (activeHeaderCol < 0 || activeHeaderCol >= columnOrder.length) return;
 
-   // The active header may be outside the rendered window; derive geometry
-   // from measuredWidths rather than a rendered <th>.
-   var offs = columnOffsets();
-   var colLeft = offs[activeHeaderCol];
-   var colWidth = measuredWidths[activeHeaderCol] || 0;
-   var pinnedWidth = getPinnedOffsets().totalWidth;
-   var viewLeft = viewport.scrollLeft;
-   var viewWidth = viewport.clientWidth;
-   if (colLeft < viewLeft + pinnedWidth) {
-      viewport.scrollLeft = Math.max(0, colLeft - pinnedWidth);
-   } else if (colLeft + colWidth > viewLeft + viewWidth) {
-      viewport.scrollLeft = colLeft + colWidth - viewWidth;
-   }
+   // Scroll the active header flush with the nearest edge if it's off-screen
+   // (no-op when already visible).
+   scrollColumnPosIntoView(activeHeaderCol, false);
 
-   if (computeColumnWindow()) {
-      rebuildHeaderWindow();
-      applyPinnedColumns();
-      renderVisibleRows(true);
-   }
+   if (syncColumnWindow()) renderVisibleRows(true);
 };
 
-var setActiveHeader = function(col) {
+// scrollIntoView (default true): also scroll the header into view. Pass false
+// to mark it active without moving the viewport -- e.g. when restoring the
+// active header after a mouse/sidebar pin reorder, where scrolling would be
+// unwanted. Keyboard-driven changes keep the default so the active header (the
+// keyboard cursor) stays visible.
+var setActiveHeader = function(col, scrollIntoView) {
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
    col = Math.max(0, Math.min(maxCol, col));
@@ -4061,7 +6048,7 @@ var setActiveHeader = function(col) {
    if (prevTh) prevTh.classList.remove("activeHeader");
 
    activeHeaderCol = col;
-   ensureActiveHeaderVisible();
+   if (scrollIntoView !== false) ensureActiveHeaderVisible();
 
    var nextTh = getActiveHeaderTh();
    if (nextTh) {
@@ -4126,13 +6113,15 @@ var onGridKeyDown = function(evt) {
       if (key === "Enter" || key === " ") {
          evt.preventDefault();
          if (ordering && isColumnSortable(col)) {
-            handleSortClick(origCol);
+            handleSortClick(absColIndex(origCol));
          }
          return;
       }
       if (key === "p" || key === "P") {
          evt.preventDefault();
-         if (!isRownames) togglePinColumn(origCol);
+         // Keyboard toggle: keep the active header (the keyboard cursor)
+         // visible by scrolling it back into view after the reorder.
+         if (!isRownames) togglePinColumn(absColIndex(origCol), true);
          return;
       }
    }
@@ -4206,7 +6195,7 @@ var onGridKeyDown = function(evt) {
    var c = activeCol;
    var pageRows = Math.max(
       1,
-      Math.floor(document.getElementById("gridViewport").clientHeight / ROW_HEIGHT) - 1);
+      Math.floor(domViewport.clientHeight / ROW_HEIGHT) - 1);
 
    // Home/End move vertically within the current column (with or without
    // Ctrl), matching the pre-rewrite viewer where they scrolled the grid to
@@ -4444,34 +6433,37 @@ var anyScrollbarDragging = function() {
 };
 
 var createCustomScrollbars = function() {
-   var gridPanel = document.getElementById("gridPanel");
-   var viewport = document.getElementById("gridViewport");
-   if (!gridPanel || !viewport) return;
+   // Host the overlay bars on #gridPanes (the row holding both panes); it sits
+   // above the info bar and spans the full pane width, so the vertical bar
+   // lands at the right edge of the unpinned pane and the horizontal bar starts
+   // after the frozen pinned pane. Both reflect the unpinned pane's scroll.
+   var gridPanes = document.getElementById("gridPanes");
+   var viewport = domViewport;
+   if (!gridPanes || !viewport) return;
 
-   gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanel, "vertical", {
+   gridScrollbarV_ = attachCustomScrollbar(viewport, gridPanes, "vertical", {
       getInsets: function() {
-         var thead = document.getElementById("data_cols");
+         var thead = domThead;
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
          var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-         // The bar's host is #gridPanel, which includes the info bar
-         // below the scrollable viewport. Add its height to the bottom
-         // inset so the bar doesn't extend over the info bar area.
-         var infoBar = document.getElementById("rsGridData_info");
-         var infoBarH = infoBar ? infoBar.offsetHeight : 0;
+         // #gridPanes excludes the info bar, so no info-bar inset is needed;
+         // just leave room for the horizontal bar when it's present.
          return {
             top: headerH,
-            bottom: infoBarH + (hasHScroll ? 10 : 0)
+            bottom: hasHScroll ? 11 : 0
          };
       },
       onDragEnd: updateInfoBar
    });
 
-   gridScrollbarH_ = attachCustomScrollbar(viewport, gridPanel, "horizontal", {
+   gridScrollbarH_ = attachCustomScrollbar(viewport, gridPanes, "horizontal", {
       getInsets: function() {
-         var pinnedWidth = getPinnedOffsets().totalWidth;
+         // The frozen pinned pane occupies the left of #gridPanes; start the
+         // horizontal bar after it so it tracks only the unpinned pane.
+         var pinnedW = domPinnedPane ? domPinnedPane.offsetWidth : 0;
          var hasVScroll = viewport.scrollHeight > viewport.clientHeight + 1;
-         return { left: pinnedWidth, right: hasVScroll ? 10 : 0 };
+         return { left: pinnedW, right: hasVScroll ? 11 : 0 };
       },
       onDragEnd: updateInfoBar
    });
@@ -4481,13 +6473,24 @@ var createCustomScrollbars = function() {
 // is idempotent across re-bootstraps. Reads sidebarScrollbar_ at call time
 // so it's safe to register before/after attachCustomScrollbar fires.
 var onSidebarScroll = function() {
-   if (!sidebarScrollbar_) return;
-   sidebarScrollbar_.show();
-   sidebarScrollbar_.update();
+   // A stats popover is anchored to a (now-moving) entry; dismiss it on scroll.
+   if (sidebarStatsPopup) dismissSidebarStats();
+   if (sidebarScrollbar_) {
+      sidebarScrollbar_.show();
+      sidebarScrollbar_.update();
+   }
+   // Re-render the virtual entry window, coalesced to one pass per frame.
+   if (sidebarScrollRaf) return;
+   sidebarScrollRaf = requestAnimationFrame(function() {
+      sidebarScrollRaf = 0;
+      renderSidebarWindow(false);
+   });
 };
 
 // Vertical scrollbar for the Summary sidebar. Appended below the toggle
-// label so the bar tracks only the scrollable content list.
+// label so the bar tracks only the scrollable content list. The scroll range
+// (and thus the overscroll past the last entry) is set by the virtualizer's
+// top/bottom spacers, so there is no padding to recompute here.
 var attachSidebarScrollbar = function() {
    var sidebarPanel = document.getElementById("sidebarPanel");
    var sidebarContent = document.getElementById("sidebarContent");
@@ -4502,20 +6505,82 @@ var attachSidebarScrollbar = function() {
       sidebarScrollbar_ = null;
    }
 
+   // The scroll listener drives the sidebar's entry virtualization (not just
+   // the overlay scrollbar), so it must be attached in both scrollbar modes.
+   // addEventListener with the module-scoped handler is idempotent.
+   sidebarContent.addEventListener("scroll", onSidebarScroll);
+
+   // In native-scrollbar mode there is no overlay to create; the native
+   // scrollbar is revealed by the absence of the overlay-scrollbars body class.
+   if (!useOverlayScrollbars) return;
+
    sidebarScrollbar_ = attachCustomScrollbar(
       sidebarContent, sidebarPanel, "vertical", {
          getInsets: function() {
             return { top: sidebarToggle ? sidebarToggle.offsetHeight : 0 };
          }
       });
+};
 
-   sidebarContent.addEventListener("scroll", onSidebarScroll);
+// Reconcile the DOM with the current useOverlayScrollbars flag: toggle the
+// body class that gates the native-scrollbar-hiding CSS, and create or destroy
+// the overlay scrollbars to match. Safe to call repeatedly and whether or not
+// the grid/sidebar DOM exists yet (the create/attach helpers no-op then).
+var applyScrollbarMode = function() {
+   document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
+
+   if (useOverlayScrollbars) {
+      if (!gridScrollbarV_)
+         createCustomScrollbars();
+      // Recreate the sidebar overlay when the sidebar DOM is present.
+      if (document.getElementById("sidebarContent"))
+         attachSidebarScrollbar();
+      updateCustomScrollbars();
+   } else {
+      // Drop the overlay scrollbars but leave the sidebar scroll listener in
+      // place (attachSidebarScrollbar owns it) so virtualization keeps working.
+      if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
+      if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
+      if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
+      // Native scrollbars take up viewport width, which can change whether the
+      // columns overflow; re-evaluate so the "Go to column" control stays in
+      // sync. (The scrollbar updates inside are no-ops now they're destroyed.)
+      updateCustomScrollbars();
+   }
 };
 
 var updateCustomScrollbars = function() {
    if (gridScrollbarV_) gridScrollbarV_.update();
    if (gridScrollbarH_) gridScrollbarH_.update();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
+   updateColumnOverflowState();
+};
+
+// Last column-overflow state pushed to the host (null = not yet pushed).
+// The host shows its "Go to Column..." button whenever the frame's columns
+// overflow the viewport -- which can change on resize, sidebar toggle,
+// column resize, pin changes, or a data refresh, so the grid pushes the
+// state from updateCustomScrollbars (called on every layout change) rather
+// than the host polling.
+var lastColumnOverflow = null;
+
+var updateColumnOverflowState = function() {
+   if (!cols || totalTableWidth <= 0)
+      return;
+   var viewport = domViewport;
+   if (!viewport)
+      return;
+
+   // totalTableWidth is the unpinned content width (fetched unpinned columns
+   // plus estimated unfetched spans); domViewport is the unpinned pane. Compare
+   // against clientWidth rather than scrollWidth, which includes the overscroll
+   // padding and would read as "overflowing" for every frame.
+   var overflow = totalTableWidth > viewport.clientWidth + 1;
+   if (overflow !== lastColumnOverflow) {
+      lastColumnOverflow = overflow;
+      if (window.columnOverflowCallback)
+         window.columnOverflowCallback(overflow);
+   }
 };
 
 var showScrollbars = function() {
@@ -4537,7 +6602,57 @@ var destroyCustomScrollbars = function() {
 // Grid Lifecycle
 // ==========================================================================
 
+// Normalize a fetched column-metadata response in place. R serializes
+// col_breaks via as.character() to preserve full numeric precision over the
+// JSON wire (avoiding the precision loss that an R double -> JSON-number
+// round-trip can introduce). Convert back to numbers here so the rest of the
+// client can do arithmetic on them.
+var prepareColumnResponse = function(resCols) {
+   for (var i = 0; i < resCols.length; i++) {
+      if (resCols[i].col_breaks) {
+         for (var j = 0; j < resCols[i].col_breaks.length; j++) {
+            if (typeof resCols[i].col_breaks[j] === "string")
+               resCols[i].col_breaks[j] = parseFloat(resCols[i].col_breaks[j]);
+         }
+      }
+   }
+};
+
+// Install a freshly fetched column-metadata response as the current `cols`:
+// refine it, recompute the column signature, the frame totals, and the fetched-
+// window bounds the span layout derives from. Shared by the bootstrap (initGrid)
+// and the in-place column-window slide (applyColumnWindowUpdate) so those two
+// paths can't drift. Assumes columnOffset and maxDisplayColumns are already set
+// for the window being installed.
+var installColumnResponse = function(resCols) {
+   prepareColumnResponse(resCols);
+
+   cols = resCols;
+   colsSig = colsRequestList().join(",");
+
+   var resTotalCols = cols[0].total_cols;
+   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
+   if (cols[0].total_rows > 0)
+      totalRows = cols[0].total_rows;
+
+   // Record the fetched window bounds the span layout derives from.
+   fetchedWindowStart = columnOffset + 1;
+   fetchedWindowEnd = maxDisplayColumns > 0
+      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
+      : totalCols;
+};
+
 var initGrid = function(resCols, data) {
+   // Cache DOM element references so render-path code can skip re-querying.
+   // The individual references are captured here once and used by the many
+   // render-path functions that reference the cached variables directly.
+   domViewport = document.getElementById("gridViewport");
+   domTbody = document.getElementById("gridBody");
+   domThead = document.getElementById("data_cols");
+   domPinnedPane = document.getElementById("pinnedPane");
+   domPinnedThead = document.getElementById("pinned_cols");
+   domPinnedTbody = document.getElementById("pinnedBody");
+
    if (resCols.error) {
       showError(resCols.error);
 
@@ -4551,44 +6666,29 @@ var initGrid = function(resCols, data) {
    // failed one so the rebuilt grid is actually visible.
    hideError();
 
-   // R serializes col_breaks via as.character() to preserve full numeric
-   // precision over the JSON wire (avoiding the precision loss that an R
-   // double -> JSON-number round-trip can introduce). Convert back to
-   // numbers here so the rest of the client can do arithmetic on them.
-   for (var i = 0; i < resCols.length; i++) {
-      if (resCols[i].col_breaks) {
-         for (var j = 0; j < resCols[i].col_breaks.length; j++) {
-            if (typeof resCols[i].col_breaks[j] === "string")
-               resCols[i].col_breaks[j] = parseFloat(resCols[i].col_breaks[j]);
-         }
-      }
-   }
-
-   cols = resCols;
-
    var loc = parseLocationUrl();
 
-   // Determine max display columns
+   // Resolve the scrollbar mode before initSidebar/createCustomScrollbars run,
+   // so attachSidebarScrollbar and the body class reflect the right mode from
+   // the first paint. applyScrollbarMode below reconciles the overlays.
+   useOverlayScrollbars = loc.useOverlayScrollbars;
+   document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
+
+   // Determine max display columns. Resolved before installColumnResponse so the
+   // column signature and fetched-window bounds it computes use the final value.
    if (loc.maxCols) {
-      maxDisplayColumns = loc.maxCols > 0 ? loc.maxCols : cols.length;
+      maxDisplayColumns = loc.maxCols > 0 ? loc.maxCols : resCols.length;
    } else if (loc.maxDisplayColumns > 0) {
       maxDisplayColumns = loc.maxDisplayColumns;
    } else {
-      maxDisplayColumns = cols.length;
+      maxDisplayColumns = resCols.length;
    }
 
    if (loc.maxRows > 0) {
       maxRows = loc.maxRows;
    }
 
-   // Total columns/rows from rownames metadata
-   var resTotalCols = cols[0].total_cols;
-   totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
-   var resTotalRows = cols[0].total_rows;
-   if (resTotalRows > 0) totalRows = resTotalRows;
-
-   window.dataTableMaxColumns = totalCols;
-   window.dataTableColumnOffset = 0;
+   installColumnResponse(resCols);
 
    // Apply the data_viewer_show_summary preference as the default, but only
    // on the first bootstrap of this frame. When applySavedState will restore
@@ -4629,7 +6729,7 @@ var initGrid = function(resCols, data) {
    // It re-runs after the first row fetch below to refine widths with real
    // cell values.
    columnOrder = getColumnOrder();
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
    thead.innerHTML = "";
    autoSizeColumns();
 
@@ -4647,13 +6747,17 @@ var initGrid = function(resCols, data) {
          autoSizeColumns();
          applyPinnedColumns();
          restoreScrollAfterRefresh();
+         // Saved state may have restored filters/search; the sidebar built
+         // above shows whole-frame stats, so refresh it to the filtered view.
+         if (hasActiveRowFilter())
+            refreshSidebarSummaries();
       });
    }
 
    // Set up scroll handler. addEventListener is idempotent on the same
    // function reference, so the module-scoped listeners declared below can
    // be re-registered safely even if a previous bootstrap is still in flight.
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       viewport.addEventListener("scroll", onScroll);
       viewport.addEventListener("scroll", onScrollbarUpdate);
@@ -4665,21 +6769,33 @@ var initGrid = function(resCols, data) {
       viewport.setAttribute("tabindex", "0");
       viewport.addEventListener("keydown", onGridKeyDown);
    }
-   var gridBody = document.getElementById("gridBody");
+   // Forward wheel / middle-click scrolling done over the frozen pane onto the
+   // master pane (idempotent on the same function reference). The wheel handler
+   // is non-passive so it can preventDefault to consume horizontal gestures.
+   if (domPinnedPane) {
+      domPinnedPane.addEventListener("scroll", onPinnedScroll);
+      domPinnedPane.addEventListener("wheel", onPinnedWheel, { passive: false });
+      // Middle-click autoscroll (custom, so it can pan horizontally too).
+      domPinnedPane.addEventListener("mousedown", onPinnedMouseDown);
+   }
+   var gridBody = domTbody;
    if (gridBody) {
       gridBody.addEventListener("click", onGridCellClick);
    }
+   // The frozen pane's cells need the same click-to-activate handling; clicks
+   // there resolve their column via data-col-pos and route focus back to the
+   // (single, focusable) unpinned viewport, so keyboard nav keeps working.
+   if (domPinnedTbody) {
+      domPinnedTbody.addEventListener("click", onGridCellClick);
+   }
 
-   // Create custom scrollbars
-   createCustomScrollbars();
-   updateCustomScrollbars();
+   // Create the overlay scrollbars (overlay mode) or leave the native ones in
+   // place (native mode), per the resolved useOverlayScrollbars flag.
+   applyScrollbarMode();
 
    // Resize handler -- recompute pinned overscroll padding too, since it
    // depends on viewport width.
    window.addEventListener("resize", onResize);
-
-   // Update column frame callback
-   window.columnFrameCallback(columnOffset, maxDisplayColumns);
 
    // Sync the host's latched-state mirror with sidebarVisible after URL
    // params + saved state have both resolved -- the callback may have
@@ -4689,10 +6805,12 @@ var initGrid = function(resCols, data) {
    // Reveal the filter row when saved state restored active per-column filters,
    // so they're visible and editable instead of being applied with no UI
    // (#17830). Filter-row visibility itself isn't persisted -- it's derived
-   // from whether any filter values came back. setFilterUIVisible records a
+   // from whether any filter values came back, or when the
+   // data_viewer_show_filters preference is true. setFilterUIVisible records a
    // post-init action, so this also survives column-pagination re-bootstraps;
    // the replay loop below applies it once the headers are built.
-   if (Object.keys(cachedFilterValues).length > 0) {
+   if (Object.keys(cachedFilterValues).length > 0 ||
+       loc.showFilters) {
       window.setFilterUIVisible(true);
    }
 
@@ -4732,6 +6850,12 @@ var initWithData = function(data) {
       rowCache.set(r, row);
    }
 
+   // Preview mode never fetches; mark every block complete for the current
+   // column set so blockIsCurrent doesn't report them as needing one.
+   for (var b = 0; b < numRows; b += FETCH_SIZE) {
+      blockColsSig.set(b, colsSig);
+   }
+
    renderVisibleRows();
    updateInfoBar();
 };
@@ -4749,6 +6873,7 @@ var resetGridState = function() {
 
    // Data
    cols = null;
+   colsSig = "";
    // Invalidate the cached column count. buildRequestedColumns clamps the
    // requested window to totalCols, so a stale value left over from the
    // previous frame would cap the fetch at the old column count and drop any
@@ -4757,6 +6882,9 @@ var resetGridState = function() {
    // Reset here (rather than in invalidateCache) because resetGridState only
    // runs from bootstrap, which always re-fetches columns and repopulates this.
    totalCols = 0;
+   fetchedWindowStart = 1;
+   fetchedWindowEnd = 0;
+   slideInFlightGen = 0;
    sortColumn = -1;
    sortDirection = "";
    cachedSearch = "";
@@ -4789,7 +6917,6 @@ var resetGridState = function() {
    renderedRowElements.clear();
    topSpacerRow = null;
    bottomSpacerRow = null;
-   cachedPinnedOffsets = {};
    invalidatePinnedOffsets();
    needsAutoSize = false;
    deferredHeaderRebuild = false;
@@ -4801,6 +6928,7 @@ var resetGridState = function() {
    initResizeX = null;
    initResizingWidth = null;
    origTableWidth = null;
+   origResizePinned = false;
    resizingBoundsExceeded = 0;
    if (typeof document !== "undefined" && document.body) {
       document.body.classList.remove("col-resizing");
@@ -4811,9 +6939,24 @@ var resetGridState = function() {
    dismissActivePopup = null;
    columnsPopup = null;
    activeColumnInfo = {};
+   // A refresh can rename columns; refetch names next time they're needed.
+   columnNamesCache = null;
+   // Filtered summaries are recomputed on the next filter/search after the
+   // rebuild; start clean so a stale map can't drive the fresh sidebar.
+   filteredSummaries = null;
+   filteredSummariesRowCount = 0;
 
-   // Sidebar
-   pendingSummaryFetches = 0;
+   // Complete-index sidebar state: the column set and any lazily-fetched
+   // summaries belong to the previous frame; drop them so the rebuilt sidebar
+   // re-fetches cleanly.
+   sidebarColumns = null;
+   sidebarColumnsFetching = false;
+   sidebarLazySummaries = {};
+   filterDescriptors = {};
+   sidebarPendingFetch = {};
+   sidebarInflight = {};
+   sidebarFailed = {};
+   if (sidebarStatsPopup) dismissSidebarStats();
 };
 
 // ==========================================================================
@@ -5059,24 +7202,28 @@ var applySavedState = function(state) {
 // handleSortClick / clearSort and after the header window is rebuilt (e.g.
 // when restoring saved state).
 var applySortIndicators = function() {
-   var thead = document.getElementById("data_cols");
-   if (!thead) return;
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer) that stand in for off-window columns.
-      if (isNaN(colIdx)) continue;
-      th.classList.remove("sorting", "sorting_asc", "sorting_desc");
-      var sorted = absColIndex(colIdx) === sortColumn && sortDirection;
-      if (sorted) {
-         th.classList.add("sorting_" + sortDirection);
-      } else {
-         th.classList.add("sorting");
-      }
-      // Only sortable headers carry aria-sort (set in createHeader).
-      if (th.hasAttribute("aria-sort")) {
-         th.setAttribute("aria-sort",
-            sorted ? sortAriaValue(sortDirection) : "none");
+   // Headers live in two theads now (pinned pane + unpinned pane); apply to both.
+   var theads = [domThead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var thead = theads[t];
+      if (!thead) continue;
+      for (var i = 0; i < thead.children.length; i++) {
+         var th = thead.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer) that stand in for off-window columns.
+         if (isNaN(colIdx)) continue;
+         th.classList.remove("sorting", "sorting_asc", "sorting_desc");
+         var sorted = absColIndex(colIdx) === sortColumn && sortDirection;
+         if (sorted) {
+            th.classList.add("sorting_" + sortDirection);
+         } else {
+            th.classList.add("sorting");
+         }
+         // Only sortable headers carry aria-sort (set in createHeader).
+         if (th.hasAttribute("aria-sort")) {
+            th.setAttribute("aria-sort",
+               sorted ? sortAriaValue(sortDirection) : "none");
+         }
       }
    }
 };
@@ -5086,30 +7233,57 @@ var destroyGrid = function() {
    invalidateCache();
    destroyCustomScrollbars();
 
-   // Clear DOM
-   var thead = document.getElementById("data_cols");
+   // Clear DOM (both the unpinned and the frozen pinned pane)
+   var thead = domThead;
    if (thead) thead.innerHTML = "";
-   var tbody = document.getElementById("gridBody");
+   var tbody = domTbody;
    if (tbody) { tbody.innerHTML = ""; }
+   if (domPinnedThead) domPinnedThead.innerHTML = "";
+   if (domPinnedTbody) domPinnedTbody.innerHTML = "";
 
    var infoText = document.getElementById("rsGridData_info_text");
    if (infoText) infoText.textContent = "";
    setSortStatus("");
 
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       viewport.removeEventListener("scroll", onScroll);
       viewport.removeEventListener("scroll", onScrollbarUpdate);
       viewport.removeEventListener("scrollend", onScrollEnd);
+      viewport.removeEventListener("keydown", onGridKeyDown);
       viewport.scrollTop = 0;
       viewport.scrollLeft = 0;
    }
+   if (domPinnedPane) {
+      domPinnedPane.removeEventListener("scroll", onPinnedScroll);
+      domPinnedPane.removeEventListener("wheel", onPinnedWheel);
+      domPinnedPane.removeEventListener("mousedown", onPinnedMouseDown);
+      domPinnedPane.scrollTop = 0;
+   }
+   // Tear down any in-progress middle-click autoscroll (its listeners live on
+   // document, and the anchor element on body).
+   stopAutoScroll();
    window.removeEventListener("resize", onResize);
    if (pendingScrollbarRaf) {
       cancelAnimationFrame(pendingScrollbarRaf);
       pendingScrollbarRaf = 0;
    }
    onScroll.cancel();
+   onResize.cancel();
+   // Cancel global debounced timers so they don't fire after the grid
+   // is torn down and attempt to operate on a destroyed state.
+   debouncedInfoBar.cancel();
+   flushSidebarPendingFetch.cancel();
+   debouncedSearch.cancel();
+
+   // Clear DOM cache at the end, after all cleanup that depends on the
+   // cached references has run.  The next initGrid re-populates them.
+   domViewport = null;
+   domTbody = null;
+   domThead = null;
+   domPinnedPane = null;
+   domPinnedThead = null;
+   domPinnedTbody = null;
 };
 
 var bootstrap = function(data) {
@@ -5166,7 +7340,7 @@ var bootstrap = function(data) {
 // setFilterUIVisible(true) doesn't get clobbered by a queued
 // setColumnDefinitionsUIVisible(true).
 var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
-   var thead = document.getElementById("data_cols");
+   var thead = domThead;
 
    // Record the desired visibility so it's reapplied after a bootstrap
    // (column pagination / refresh): initGrid replays postInitActions, which is
@@ -5192,35 +7366,47 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
       delete activeHeaderUIs[markerClass];
    }
 
-   if (!visible && hide) {
-      hide(thead);
-      if (dismissActivePopup) dismissActivePopup(true);
-   }
+   // Apply to both panes' headers: a pinned data column is just as filterable
+   // as an unpinned one, and its header lives in the frozen pane's thead.
+   var theads = [thead, domPinnedThead];
+   for (var t = 0; t < theads.length; t++) {
+      var th0 = theads[t];
+      if (!th0) continue;
 
-   for (var i = 0; i < thead.children.length; i++) {
-      var th = thead.children[i];
-      var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
-      // Skip spacer cells (col-spacer), which stand in for off-window columns
-      // and carry no data-col-idx.
-      if (isNaN(colIdx)) continue;
-      var col = cols[colIdx];
-
-      // Always strip any existing instances of this marker first so
-      // visible=true is idempotent and visible=false fully cleans up
-      // (querySelector would have only handled one match).
-      var existing = th.querySelectorAll("." + markerClass);
-      for (var k = 0; k < existing.length; k++) {
-         th.removeChild(existing[k]);
+      if (!visible && hide) {
+         hide(th0);
       }
 
-      if (visible) {
-         var el = initialize(th, col, colIdx);
-         if (el) {
-            el.classList.add(markerClass);
-            th.appendChild(el);
+      for (var i = 0; i < th0.children.length; i++) {
+         var th = th0.children[i];
+         var colIdx = parseInt(th.getAttribute("data-col-idx"), 10);
+         // Skip spacer cells (col-spacer), which stand in for off-window
+         // columns and carry no data-col-idx.
+         if (isNaN(colIdx)) continue;
+         var col = cols[colIdx];
+
+         // Always strip any existing instances of this marker first so
+         // visible=true is idempotent and visible=false fully cleans up
+         // (querySelector would have only handled one match).
+         var existing = th.querySelectorAll("." + markerClass);
+         for (var k = 0; k < existing.length; k++) {
+            th.removeChild(existing[k]);
+         }
+
+         if (visible) {
+            var el = initialize(th, col, colIdx);
+            if (el) {
+               el.classList.add(markerClass);
+               th.appendChild(el);
+            }
          }
       }
    }
+
+   if (!visible && hide && dismissActivePopup) dismissActivePopup(true);
+
+   // The filter row changes header height; keep both panes' headers aligned.
+   syncHeaderHeights();
 
    renderVisibleRows(true);
    updateCustomScrollbars();
@@ -5228,27 +7414,409 @@ var setHeaderUIVisible = function(visible, initialize, hide, markerClass) {
 };
 
 // ==========================================================================
-// Column Pagination
+// Column Window Sliding (pagination without a rebuild)
 // ==========================================================================
 
-var columnNav = function(newOffset) {
+// Capture the column under the viewport's left edge (and its on-screen pixel
+// offset) so a relayout can restore the user's visual position even though
+// column widths -- estimated for unfetched spans, measured for fetched ones --
+// change as the window slides.
+var captureScrollAnchor = function() {
+   var viewport = domViewport;
+   if (!viewport || !cols) return null;
+   // scrollLeft is already the unpinned pane's left edge (the pinned pane is
+   // separate), so it maps straight to the leftmost visible unpinned column.
+   var abs = absColAtContentX(viewport.scrollLeft);
+   return { abs: abs, offsetPx: layoutXOfAbs(abs) - viewport.scrollLeft };
+};
+
+var restoreScrollAnchor = function(anchor) {
+   var viewport = domViewport;
+   if (!viewport || !anchor) return;
+   setViewportScrollLeft(viewport, layoutXOfAbs(anchor.abs) - anchor.offsetPx);
+};
+
+// Swap the grid over to a freshly fetched column window without tearing the
+// grid down. Everything a bootstrap would reset survives: scroll position,
+// pins/sort/filters (live state, not re-read from storage), the sidebar's
+// visibility, header-attached UI, and the row cache (remapped so overlap
+// columns -- rownames, pinned, any shared window -- render immediately while
+// the new columns' data is refetched).
+//
+// options.targetAbs, when given, scrolls the viewport so that absolute column
+// is centered in the unpinned viewport region -- used by go-to-column jumps.
+// Otherwise the current visual position is preserved via a scroll anchor.
+var applyColumnWindowUpdate = function(resCols, options) {
+   var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
+   var anchor = targetAbs > 0 ? null : captureScrollAnchor();
+
+   // Capture active cell/header identity before swapping `cols`
+   // (absColIndex resolves through it); remapped to the new window below.
+   // installColumnResponse refines resCols but doesn't touch the active `cols`,
+   // so these captures still read the old window.
+   var activeCellAbs = (activeRow >= 0 && activeCol >= 0)
+      ? absColIndex(columnOrder[activeCol]) : -1;
+   var activeHeaderAbs = (activeHeaderCol >= 0)
+      ? absColIndex(columnOrder[activeHeaderCol]) : -1;
+
+   var oldCols = cols;
+   installColumnResponse(resCols);
+
+   // Carry cached rows over to the new column alignment, then retire the
+   // old window's in-flight fetches: their rows would land misaligned.
+   remapRowCache(oldCols, cols);
+
+   // Drop every block signature that doesn't match the new window. remapRowCache
+   // wipes a remapped block's non-overlap cells but leaves its stored signature
+   // alone; without this purge a jump-away-and-back gesture (window A -> B -> A)
+   // restores the original colsSig, so a block wiped during the round trip would
+   // read as current (blockColsSig === colsSig) while holding undefined cells --
+   // rendering a permanently blank band until an unrelated invalidateCache.
+   // Removing the non-matching entry forces such blocks to refetch when scrolled
+   // back into view (the remapped rows stay in rowCache for skeleton rendering).
+   blockColsSig.forEach(function(sig, blockStart) {
+      if (sig !== colsSig)
+         blockColsSig.delete(blockStart);
+   });
+
+   pendingFetches.forEach(function(controller) { controller.abort(); });
+   pendingFetches.clear();
+   drawCounter++;
+
+   columnOrder = getColumnOrder();
+   invalidatePinnedOffsets();
+
+   // Re-resolve the active cell/header in the new window; columns that
+   // slid out of the fetched set lose their highlight.
+   var remapDisplayIdx = function(absIdx) {
+      if (absIdx < 0) return -1;
+      var pos = posForAbsColIndex(absIdx);
+      return pos >= 0 ? columnOrder.indexOf(pos) : -1;
+   };
+   activeCol = remapDisplayIdx(activeCellAbs);
+   if (activeCol < 0) activeRow = -1;
+   activeHeaderCol = remapDisplayIdx(activeHeaderAbs);
+
+   // The header row must be rebuilt for the new window, but autoSizeColumns
+   // defers the rebuild while a filter editor is open (to protect it from
+   // teardown mid-edit). Close any open editor instead -- its column may not
+   // even exist in the new window.
+   if (dismissActivePopup) dismissActivePopup(true);
+   var activeEl = document.activeElement;
+   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
+      activeEl.blur();
+   deferredHeaderRebuild = false;
+
+   // Rebuild layout for the new window: widths, headers (autoSizeColumns
+   // re-injects any active header UI) and pinned offsets.
+   autoSizeColumns();
+   applyPinnedColumns();
+
+   // The sidebar is a complete index of the WHOLE frame (sidebarColumns), so a
+   // window slide does NOT change which entries it lists -- only which columns
+   // now have window-backed summaries, and for unfiltered data those are
+   // identical to the lazily-cached summaries the entries already show. Once the
+   // complete index has loaded, rebuilding the entire entry list (initSidebar)
+   // on every slide is pure DOM churn and a real scroll-time cost (it dominated
+   // slide profiles), so skip it: pin/sort/filter indicators are frame-global
+   // and unchanged by a scroll, and entries that slid into the window are filled
+   // in lazily as they scroll into the sidebar viewport (flushSidebarPendingFetch
+   // now populates already-available summaries, not just freshly-fetched ones).
+   //
+   // The full rebuild is still required before the index loads, when the listed
+   // entries ARE the fetched window and therefore change with the slide.
+   if (sidebarColumns === null) {
+      var sidebarContent = document.getElementById("sidebarContent");
+      var sidebarScrollTop = sidebarContent ? sidebarContent.scrollTop : 0;
+      initSidebar();
+      if (sidebarContent)
+         sidebarContent.scrollTop = sidebarScrollTop;
+   }
+
+   // When a filter is active the new window's columns aren't in the filtered-
+   // summary map yet; refetch so their sidebar entries reflect the filter rather
+   // than whole-frame stats. This rebuilds the sidebar asynchronously when the
+   // summaries land, so it never blocks the slide.
+   if (hasActiveRowFilter())
+      refreshSidebarSummaries();
+
+   // Restore the user's visual position against the new layout: either pin
+   // the requested column centered in the unpinned region (go-to-column jumps)
+   // or re-derive scrollLeft from the anchor captured before the relayout. Then
+   // recompute the render window against the settled scroll position.
+   var viewport = domViewport;
+   if (targetAbs > 0 && viewport) {
+      // Center the target in the unpinned pane (matching revealColumnCentered
+      // for already-fetched targets). layoutXOfAbs is already in unpinned-pane
+      // coordinates, and the pane's clientWidth is the region to center within.
+      var tPos = posForAbsColIndex(targetAbs);
+      var tOrderPos = tPos >= 0 ? columnOrder.indexOf(tPos) : -1;
+      var tWidth = tOrderPos >= 0
+         ? (measuredWidths[tOrderPos] || DEFAULT_COL_WIDTH)
+         : DEFAULT_COL_WIDTH;
+      var region = Math.max(0, viewport.clientWidth);
+      setViewportScrollLeft(viewport,
+         layoutXOfAbs(targetAbs) - Math.max(0, (region - tWidth) / 2));
+   } else if (!anyScrollbarDragging()) {
+      // Don't fight an in-progress scrollbar drag for the scroll position;
+      // the drag is the user's statement of where they want to be.
+      restoreScrollAnchor(anchor);
+   }
+   syncColumnWindow();
+
+   // Sync the viewport's aria-activedescendant with the remapped active
+   // cell/header (cleared when neither survived the slide).
+   if (activeRow >= 0 && activeCol >= 0) {
+      setViewportActiveDescendant(activeCellId(activeRow, activeCol));
+   } else {
+      var activeTh = getActiveHeaderTh();
+      setViewportActiveDescendant(activeTh ? activeTh.id : null);
+   }
+
+   // Refetch the first visible block with a width-refinement callback (the
+   // initial autoSize above could only sample overlap cells), then render
+   // the remapped skeleton; renderVisibleRows issues fetches for any other
+   // incomplete visible blocks.
+   var scrollTop = viewport ? viewport.scrollTop : 0;
+   var firstVisible = Math.floor(scrollTop / ROW_HEIGHT);
+   var blockStart =
+      Math.floor(Math.max(0, firstVisible - BUFFER_ROWS) / FETCH_SIZE) * FETCH_SIZE;
+   fetchRows(blockStart, FETCH_SIZE, function() {
+      autoSizeColumns();
+      applyPinnedColumns();
+   });
+
+   renderVisibleRows(true);
+   updateInfoBar();
+   updateCustomScrollbars();
+
+   // A targeted jump flashes its landing column (header + sidebar entry) so
+   // the user can spot where it landed.
+   if (targetAbs > 0) {
+      var targetPos = posForAbsColIndex(targetAbs);
+      if (targetPos >= 0) {
+         flashColumnHeader(targetPos);
+         flashSidebarColumn(targetAbs);
+      }
+   }
+
+   // The user may have kept scrolling while this window was in flight;
+   // immediately evaluate whether another slide is already warranted.
+   maybeSlideForScroll();
+};
+
+// Fetch column metadata for the current columnOffset/maxDisplayColumns and
+// apply it incrementally. Shares the bootstrap generation token so a slide
+// superseded by a newer slide or a full bootstrap (data refresh) is dropped.
+var slideColumnWindow = function(options) {
+   if (bootstrapping || cols === null)
+      return;
+
+   var generation = ++bootstrapGeneration;
+   slideInFlightGen = generation;
+   fetchColumns(function(result) {
+      // Clear the in-flight gate before the staleness check so a superseded
+      // or failed slide can't permanently block scroll-driven slides.
+      if (slideInFlightGen === generation)
+         slideInFlightGen = 0;
+      if (generation !== bootstrapGeneration) return;
+      if (result.error) {
+         // The slide advanced columnOffset before fetching; on failure roll it
+         // back to the still-current fetched window. Otherwise columnOffset and
+         // fetchedWindowStart stay desynced and maybeSlideForScroll's
+         // "newOffset === columnOffset" guard treats an identical retry as a
+         // no-op, leaving the viewport parked over blank span columns.
+         columnOffset = fetchedWindowStart - 1;
+         showError(result.error);
+         return;
+      }
+      hideError();
+      applyColumnWindowUpdate(result, options);
+   });
+};
+
+// Scroll-driven sliding: when the visible column range pokes outside the
+// fetched window (i.e. unfetched span columns are on screen), recenter the
+// window on the viewport. Called from the scroll handlers and again when a
+// slide lands. At most one metadata fetch is in flight at a time
+// (slideInFlightGen); the landing slide re-evaluates, so fast scrubbing
+// converges on the final position with a short chain of fetches rather than
+// one per scroll event.
+//
+// The trigger is deliberately strict -- visible range OUTSIDE the window, not
+// merely near its edge -- so that a pagination jump (which lands the view
+// exactly at the window's left edge by design) doesn't immediately recenter
+// itself away from the page the user asked for.
+var maybeSlideForScroll = function() {
+   if (!cols || bootstrapping || slideInFlightGen || dataMode !== "server")
+      return;
+   if (totalCols <= 0 || maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
+      return;
+   // Layout (and thus the x -> column mapping) isn't meaningful until the
+   // first width measurement has run.
+   if (measuredWidths.length === 0)
+      return;
+
+   var viewport = domViewport;
+   if (!viewport) return;
+
+   // The unpinned pane scrolls on its own; scrollLeft is the leftmost visible
+   // unpinned column, scrollLeft + clientWidth the rightmost.
+   var vLo = absColAtContentX(viewport.scrollLeft);
+   var vHi = absColAtContentX(viewport.scrollLeft + viewport.clientWidth);
+
+   var needSlide =
+      (vLo < fetchedWindowStart && fetchedWindowStart > 1) ||
+      (vHi > fetchedWindowEnd && fetchedWindowEnd < totalCols);
+   if (!needSlide) return;
+
+   var center = Math.round((vLo + vHi) / 2);
+   var newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns,
+      center - Math.floor(maxDisplayColumns / 2) - 1));
+   if (newOffset === columnOffset) return;
+
+   columnOffset = newOffset;
+   slideColumnWindow();
+};
+
+// Jump to an absolute (1-based) column. A column already in the fetched set
+// scrolls into view directly; anything else slides the window to contain the
+// target (centered, clamping the window start at the end of the frame) and
+// centers it in the viewport. Either way the landing header flashes briefly.
+var goToColumn = function(column) {
    if (bootstrapping) return;
 
    // A failed bootstrap leaves no grid (cols === null, only possible here
-   // when not bootstrapping) and an unknown totalCols (0), so the clamp
-   // below would pin every request back to offset 0 and conclude there's
-   // nothing to do. Treat any nav action on a dead grid as "retry at the
-   // current offset": the bootstrap re-fetches this window and repopulates
-   // totalCols, and the next click pages normally.
+   // when not bootstrapping) and an unknown totalCols (0). Treat any nav
+   // action on a dead grid as "retry": the bootstrap re-fetches the current
+   // window and repopulates totalCols.
    if (cols === null) {
       bootstrap();
       return;
    }
 
-   newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns, newOffset));
-   if (columnOffset !== newOffset) {
-      columnOffset = newOffset;
-      bootstrap();
+   var abs = Math.round(column);
+   if (!isFinite(abs) || abs < 1) return;
+   if (totalCols > 0) abs = Math.min(abs, totalCols);
+
+   // Already fetched: bring it into view directly (centered, with the
+   // highlight flash).
+   var pos = posForAbsColIndex(abs);
+   if (pos >= 0) {
+      revealColumnCentered(pos);
+      return;
+   }
+
+   // Center the fetched window on the target as well as the viewport: a
+   // jump wants context on both sides, and a window starting at the target
+   // would put unfetched (blank) span columns to its immediate left.
+   if (maxDisplayColumns <= 0) return;
+   columnOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns,
+      abs - 1 - Math.floor(maxDisplayColumns / 2)));
+   slideColumnWindow({ targetAbs: abs });
+};
+
+// Bring a fetched column (cols position) into view for a go-to jump: if it
+// is already fully visible just flash it; otherwise scroll it to the center
+// of the unpinned viewport region (a jump wants context on both sides --
+// the same convention as go-to-line in editors).
+var revealColumnCentered = function(colIdx) {
+   var pos = columnOrder.indexOf(colIdx);
+   if (pos < 0) return;
+
+   // Center the column in the unpinned viewport region (no-op when it's
+   // already fully visible); bring the new window into the DOM when it scrolls.
+   if (scrollColumnPosIntoView(pos, true)) {
+      if (syncColumnWindow()) renderVisibleRows(true);
+   }
+   flashColumnHeader(colIdx);
+   // flashSidebarColumn keys off the absolute index; colIdx here is a cols
+   // position, so map it through absColIndex.
+   flashSidebarColumn(absColIndex(colIdx));
+};
+
+// ==========================================================================
+// Go To Column matching
+// ==========================================================================
+//
+// Backs the host toolbar's go-to-column search box (a typeahead in the
+// spirit of Go to File/Function, living in the GWT toolbar): the box asks
+// for matches via window.matchColumns and jumps via window.goToColumn.
+
+var GOTO_MAX_RESULTS = 12;
+
+// Sparse fallback name list built from the fetched columns (index abs-1 ->
+// name), used when the whole frame's names are unavailable (fetch still in
+// flight or unsupported, e.g. data-import preview mode).
+var namesFromCols = function() {
+   var arr = [];
+   if (!cols) return arr;
+   for (var i = 1; i < cols.length; i++) {
+      var abs = cols[i].col_index;
+      if (typeof abs === "number" && abs >= 1)
+         arr[abs - 1] = cols[i].col_name;
+   }
+   return arr;
+};
+
+// Match a query against the frame's column names: numeric queries offer a
+// direct index jump first; name matches rank prefix matches ahead of
+// substring matches, in column order, capped at GOTO_MAX_RESULTS.
+var buildGoToMatches = function(query, names) {
+   var matches = [];
+   var q = query.trim();
+   if (q.length === 0)
+      return matches;
+
+   if (/^\d+$/.test(q)) {
+      var idx = parseInt(q, 10);
+      if (idx >= 1) {
+         if (totalCols > 0)
+            idx = Math.min(idx, totalCols);
+         var idxName = (names && names[idx - 1]) || "";
+         matches.push({ idx: idx, name: idxName, isIndexJump: true });
+      }
+   }
+
+   if (names) {
+      var qLower = q.toLowerCase();
+      var starts = [], contains = [];
+      for (var i = 0; i < names.length; i++) {
+         if (starts.length >= GOTO_MAX_RESULTS)
+            break;
+         var nm = names[i];
+         if (!nm) continue;
+         var at = String(nm).toLowerCase().indexOf(qLower);
+         if (at === 0)
+            starts.push({ idx: i + 1, name: nm });
+         else if (at > 0 && contains.length < GOTO_MAX_RESULTS)
+            contains.push({ idx: i + 1, name: nm });
+      }
+      var byName = starts.concat(contains);
+      for (var j = 0; j < byName.length && matches.length < GOTO_MAX_RESULTS; j++) {
+         matches.push(byName[j]);
+      }
+   }
+   return matches;
+};
+
+// Resolve ranked matches for a go-to-column query, fetching the frame's
+// full name list on first use. The host's search box calls this through
+// window.matchColumns; until (or unless -- e.g. import preview) the fetch
+// resolves, matching falls back to the fetched window's names.
+var matchColumnsAsync = function(query, callback) {
+   if (!cols) {
+      callback([]);
+      return;
+   }
+
+   var q = String(query === null || query === undefined ? "" : query);
+   if (columnNamesCache === null && dataMode === "server") {
+      fetchColumnNames(function(fetched) {
+         callback(buildGoToMatches(q, fetched || namesFromCols()));
+      });
+   } else {
+      callback(buildGoToMatches(q, columnNamesCache || namesFromCols()));
    }
 };
 
@@ -5267,11 +7835,13 @@ window.setFilterUIVisible = function(visible) {
    return setHeaderUIVisible(
       visible,
       function(th, col, i) {
-         if (col.col_search_type === "numeric" ||
-             col.col_search_type === "character" ||
-             col.col_search_type === "factor" ||
-             col.col_search_type === "boolean") {
-            return createFilterUI(i, col);
+         if (isFilterableSearchType(col.col_search_type)) {
+            // createFilterUI keys off the absolute column index, not the window
+            // position `i`. Route through absColIndex(i) (= col.col_index, with
+            // the documented fallback to `i` when col_index is unavailable)
+            // rather than reading col.col_index raw, so a missing col_index
+            // can't collapse columns onto cachedFilterValues[undefined].
+            return createFilterUI(absColIndex(i), col);
          }
          return null;
       },
@@ -5281,6 +7851,10 @@ window.setFilterUIVisible = function(visible) {
          if (hadFilters) {
             invalidateCache();
             fetchRows(0, FETCH_SIZE);
+            // Filters cleared: restore the whole-frame summaries (search may
+            // still be active, in which case this re-fetches for it).
+            refreshSidebarSummaries();
+            updateSidebarColumnIndicators();
             saveState();
          }
       },
@@ -5317,6 +7891,13 @@ window.refreshAndReset = function() {
    // Reset View deliberately returns to the top, so drop any captured position.
    clearSavedState();
    pendingScrollRestore = null;
+   // Also return to the first column. bootstrap()/resetGridState don't touch
+   // columnOffset (a plain refresh keeps the horizontal position and restores
+   // scrollLeft), but Reset View clears the scroll position, so a stale offset
+   // would leave the fetched window parked far right while the viewport sits at
+   // scrollLeft 0 over the blank left spacer span -- a blank grid until the
+   // user scrolls. Reset it so the window and the viewport both start at column 1.
+   columnOffset = 0;
    bootstrap();
 };
 
@@ -5340,6 +7921,8 @@ var debouncedSearch = debounce(TIMING.searchDebounce, watchGlobalSearch, functio
       fetchRows(0, FETCH_SIZE, function() {
          scrollToTop();
       });
+      // Search narrows the rows the summaries describe; recompute them.
+      refreshSidebarSummaries();
    }
 });
 
@@ -5349,10 +7932,10 @@ window.applySearch = function(text) {
 
 window.onActivate = function() {
    // Restore scroll position and re-render
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
-      viewport.scrollTop = lastScrollTop;
-      viewport.scrollLeft = lastScrollLeft;
+      setViewportScrollTop(viewport, lastScrollTop);
+      setViewportScrollLeft(viewport, lastScrollLeft);
    }
 
    // Re-run auto-sizing if the initial sizing happened while the tab
@@ -5364,6 +7947,10 @@ window.onActivate = function() {
    }
 
    renderVisibleRows(true);
+   // The sidebar's visible-entry window is computed from the panel's
+   // clientHeight; if the grid bootstrapped while hidden that was 0 and only a
+   // stub window was built, so rebuild it now that the tab has real layout.
+   renderSidebarWindow(true);
    updateInfoBar();
    updateCustomScrollbars();
 
@@ -5377,7 +7964,7 @@ window.onActivate = function() {
 
 window.onDeactivate = function() {
    // Save scroll position
-   var viewport = document.getElementById("gridViewport");
+   var viewport = domViewport;
    if (viewport) {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
@@ -5417,14 +8004,23 @@ window.setOption = function(option, value) {
       case "rowNumbers":
          rowNumbers = value === "true";
          break;
+      case "useOverlayScrollbars":
+         // Sent by the host when the data_viewer_use_overlay_scrollbars
+         // preference changes, so the open grid switches modes live.
+         useOverlayScrollbars = (value === true || value === "true");
+         applyScrollbarMode();
+         break;
       case "dataViewerCallback":
          window.dataViewerCallback = value;
          break;
       case "listViewerCallback":
          window.listViewerCallback = value;
          break;
-      case "columnFrameCallback":
-         window.columnFrameCallback = value;
+      case "columnOverflowCallback":
+         window.columnOverflowCallback = value;
+         // Push the current state immediately when known; registration can
+         // land after the first layout pass has already run.
+         if (lastColumnOverflow !== null) value(lastColumnOverflow);
          break;
       case "sidebarStateCallback":
          window.sidebarStateCallback = value;
@@ -5462,32 +8058,31 @@ window.listViewerCallback = function(row, col) {
    alert("No viewer for list at " + col + ", " + row + ".");
 };
 
-window.columnFrameCallback = function() {};
-
 window.getActiveColumn = function() {
    return activeColumnInfo;
 };
 
-window.nextColumnPage = function() {
-   columnNav(columnOffset + maxDisplayColumns);
+window.goToColumn = function(column) {
+   goToColumn(column);
+   // Jumps come from the host's go-to-column box; hand focus to the grid so
+   // subsequent keystrokes navigate the data (mirrors Go to File/Function
+   // returning focus to the editor).
+   focusGridViewport();
 };
 
-window.prevColumnPage = function() {
-   columnNav(columnOffset - maxDisplayColumns);
+window.matchColumns = function(query, callback) {
+   matchColumnsAsync(query, callback);
 };
 
-window.firstColumnPage = function() {
-   columnNav(0);
-};
-
-window.lastColumnPage = function() {
-   columnNav(totalCols - maxDisplayColumns);
-};
-
+// Slide the fetched column window to an explicit offset/size. No production
+// caller remains (the old column-pagination UI was replaced by scroll-driven
+// sliding), but this is retained as an automation hook: it is the only way to
+// position the window at an exact offset, which the e2e pin-across-pagination
+// test relies on to page a pinned column out of the fetched set deterministically.
 window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    if (bootstrapping) return;
 
-   // Same dead-grid recovery rule as columnNav: with totalCols unknown (0)
+   // Same dead-grid recovery rule as goToColumn: with totalCols unknown (0)
    // after a failed bootstrap, the guards below would swallow every request.
    if (cols === null) {
       bootstrap();
@@ -5506,22 +8101,12 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
    } else {
       maxDisplayColumns = Math.min(cap, maxDisplayColumns);
    }
-   // Column window changed -- the active cell or header's display index
-   // may now refer to a different column; clear before bootstrap rebuilds
-   // DOM. (bootstrap -> destroyGrid -> resetGridState clears these too,
-   // but doing it explicitly keeps the local invariant obvious.)
-   clearActiveCell();
-   clearActiveHeader();
-   bootstrap();
-};
 
-window.isLimitedColumnFrame = function() {
-   return totalCols > maxDisplayColumns;
+   // Slide to the new window in place. The active cell/header is remapped
+   // by identity (or cleared when its column left the fetched set), and the
+   // new window's first column is centered in the unpinned viewport region.
+   slideColumnWindow({ targetAbs: columnOffset + 1 });
 };
-
-// Expose these for GWT interop (DataTable.java sets them)
-window.dataTableMaxColumns = 0;
-window.dataTableColumnOffset = 0;
 
 // ==========================================================================
 // Initialization

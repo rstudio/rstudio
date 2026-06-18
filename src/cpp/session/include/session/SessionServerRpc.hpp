@@ -32,6 +32,11 @@ namespace server_rpc {
 // useful if building clients "by hand" that conceptually perform server RPCs
 boost::asio::io_context& ioContext();
 
+// stop the io_context worker thread (if running) and wait for it to exit.
+// must be called before process teardown destroys the io_context -- see the
+// implementation for details.
+void stop();
+
 core::Error invokeServerRpc(const core::json::JsonRpcRequest& request,
                             core::json::JsonRpcResponse* pResponse);
 

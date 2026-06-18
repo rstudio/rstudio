@@ -20,6 +20,9 @@ test.describe('RMarkdown', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache install can outrun the 120s global timeout; give this hook
+    // the headroom its ensurePackages() call needs.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 
@@ -31,8 +34,15 @@ test.describe('RMarkdown', () => {
     // would then fail with an opaque knit/template/spellcheck timeout 60+
     // seconds later. Capture failures and surface them as a clear test.skip
     // in each test so the cause is visible in one place.
+    // thematic and bslib back the "Theming with bslib and thematic" RMarkdown
+    // template the rmd-templates test selects. Without them, opening the
+    // template surfaces a non-modal "Package thematic required" notification
+    // banner that blocks panmirror from mounting -- ensureVisualMode then
+    // times out waiting for .ProseMirror. installDepIfPrompted only handles
+    // modal install dialogs, not the inline banner, so the cleanest fix is
+    // to pre-install the packages here.
     missingPackages = await consoleActions.ensurePackages(
-      ['rmarkdown', 'remotes'],
+      ['rmarkdown', 'remotes', 'thematic', 'bslib'],
       180_000,
     );
 

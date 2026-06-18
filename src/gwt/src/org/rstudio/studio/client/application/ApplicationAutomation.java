@@ -30,6 +30,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
@@ -63,6 +65,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.commands.&lt;commandId&gt;()           // execute
  *   window.rstudio.commands.&lt;commandId&gt;.isChecked()
  *   window.rstudio.commands.&lt;commandId&gt;.isEnabled()
+ *   window.rstudio.commands.&lt;commandId&gt;.isVisible()
  *   window.rstudio.commands.list                       // string[] of all command ids
  *
  *   window.rstudio.prefs.&lt;camelCaseName&gt;.get()
@@ -94,6 +97,10 @@ import com.google.inject.Singleton;
  *   window.rstudio.errors.clear()        // empty the record
  *   window.rstudio.errors.simulate(msg)  // raise a real uncaught exception
  *                                        // (harness self-test only)
+ *
+ *   window.rstudio.shiny.stopForegroundApp() // stop the running foreground
+ *                                            // shiny app via shiny::stopApp();
+ *                                            // resolves once R exits runApp
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -115,6 +122,7 @@ public class ApplicationAutomation
                                 UserPrefs userPrefs,
                                 SourceColumnManager sourceColumnManager,
                                 ChatServerOperations chatServer,
+                                ShinyServerOperations shinyServer,
                                 Provider<PaneManager> pPaneManager)
    {
       commands_ = commands;
@@ -123,6 +131,7 @@ public class ApplicationAutomation
       userPrefs_ = userPrefs;
       sourceColumnManager_ = sourceColumnManager;
       chatServer_ = chatServer;
+      shinyServer_ = shinyServer;
       // Provider, not a direct injection: PaneManager is constructed later in
       // the workbench lifecycle than this early-initialized agent, so resolve
       // it lazily (mirrors WorkbenchScreen / PaneLayoutPreferencesPane).
@@ -144,6 +153,7 @@ public class ApplicationAutomation
       registerProject();
       registerVersion();
       registerChat();
+      registerShiny();
       registerDialogs();
       registerLayout();
       registerErrors();
@@ -253,6 +263,11 @@ public class ApplicationAutomation
       registerChatObject();
    }
 
+   private void registerShiny()
+   {
+      registerShinyObject();
+   }
+
    private void registerDialogs()
    {
       registerDialogsObject();
@@ -350,6 +365,32 @@ public class ApplicationAutomation
       ModalDialogTracker.dismissAllModalDialogs();
    }
 
+   // Stop the running foreground shiny app via the same `stop_shiny_app` RPC
+   // the IDE invokes on satellite-window close. Cleaner than driving the
+   // interrupt button from a test: interrupt relies on a signal landing while
+   // R is in a check-for-interrupts state inside runApp(), which is unreliable
+   // on Windows where the OS-level signal path differs from Unix. The RPC
+   // calls shiny::stopApp() on the rsession side, which returns from runApp()
+   // through the normal shutdown path on every platform.
+   private void stopForegroundShinyApp(JavaScriptObject onCompleted)
+   {
+      shinyServer_.stopShinyApp(ShinyApplicationParams.ID_FOREGROUND,
+         new org.rstudio.studio.client.server.ServerRequestCallback<org.rstudio.studio.client.server.VoidResponse>()
+         {
+            @Override
+            public void onResponseReceived(org.rstudio.studio.client.server.VoidResponse response)
+            {
+               invokeBoolCallback(onCompleted, true);
+            }
+
+            @Override
+            public void onError(org.rstudio.studio.client.server.ServerError error)
+            {
+               invokeBoolCallback(onCompleted, false);
+            }
+         });
+   }
+
    private void setChatUpdateCheckOverride(JavaScriptObject override,
                                            JavaScriptObject onCompleted)
    {
@@ -430,6 +471,11 @@ public class ApplicationAutomation
    private boolean isCommandEnabled(AppCommand command)
    {
       return command.isEnabled();
+   }
+
+   private boolean isCommandVisible(AppCommand command)
+   {
+      return command.isVisible();
    }
 
    private Object getPrefValue(Prefs.PrefValue<?> pref)
@@ -596,6 +642,9 @@ public class ApplicationAutomation
       });
       fn.isEnabled = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandEnabled(*)(command);
+      });
+      fn.isVisible = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandVisible(*)(command);
       });
       $wnd.rstudio.commands[id] = fn;
    }-*/;
@@ -788,12 +837,34 @@ public class ApplicationAutomation
       });
    }-*/;
 
+   private native final void registerShinyObject() /*-{
+      var self = this;
+      $wnd.rstudio = $wnd.rstudio || {};
+      $wnd.rstudio.shiny = $wnd.rstudio.shiny || {};
+      // Stop the running foreground shiny app. Returns a Promise that
+      // resolves once the rsession-side `stop_shiny_app` RPC completes (and
+      // shiny::stopApp() has unblocked runApp on the R side). Tests use this
+      // instead of clicking the interrupt button to get a clean shutdown on
+      // every platform -- the interrupt path depends on signal handling that
+      // is unreliable on Windows.
+      $wnd.rstudio.shiny.stopForegroundApp = $entry(function() {
+         return new $wnd.Promise(function(resolve, reject) {
+            var cb = $entry(function(succeeded) {
+               if (succeeded) resolve();
+               else reject(new Error('stop_shiny_app RPC failed'));
+            });
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::stopForegroundShinyApp(*)(cb);
+         });
+      });
+   }-*/;
+
    private final Commands commands_;
    private final EventBus eventBus_;
    private final Session session_;
    private final UserPrefs userPrefs_;
    private final SourceColumnManager sourceColumnManager_;
    private final ChatServerOperations chatServer_;
+   private final ShinyServerOperations shinyServer_;
    private final Provider<PaneManager> pPaneManager_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;

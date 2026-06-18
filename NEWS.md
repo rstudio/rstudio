@@ -1,6 +1,7 @@
-## RStudio 2026.06.0 "Blue Plumbago" Release Notes
+## RStudio 2026.07.0 "Pacific Dogwood" Release Notes
 
 ### New
+- ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
 - ([#15830](https://github.com/rstudio/rstudio/issues/15830)): Add a Code menu and command-palette entry to re-enable the editor's missing-package banner for a file after dismissing it, and rename the banner's dismissal label to "Don't show for this file" to make the per-file scope explicit.
 - ([#17734](https://github.com/rstudio/rstudio/issues/17734)): Support em dashes and box-drawing characters as native R code section delimiters.
 - ([#8541](https://github.com/rstudio/rstudio/issues/8541)): Add a "Change active editor tab with mouse wheel" preference (General > Basic > Other) to disable switching the active editor tab by scrolling the mouse wheel over the tab bar.
@@ -65,6 +66,14 @@
 - ([#17951](https://github.com/rstudio/rstudio/issues/17951)): Fix `View()` failing with "missing value where TRUE/FALSE needed" on data frames containing an integer column whose range exceeds `.Machine$integer.max` (for example, values spanning -2000000000 to 2000000000).
 - ([#17950](https://github.com/rstudio/rstudio/issues/17950)): Fix data viewer column filters being silently re-applied after being dismissed -- a value typed or brushed just before pressing Escape, clicking the clear button, or clicking away could land after the header had reverted to "All", leaving the grid filtered with no visible filter. A factor filter restored when its column scrolls back into view now displays its level name instead of a blank box, and pressing Enter in the numeric filter popup now applies the typed value immediately.
 - ([#17970](https://github.com/rstudio/rstudio/issues/17970)): Fix the Packages pane vulnerability dialog listing vulnerabilities that affect a different installed version of the clicked package; the dialog now shows only the vulnerabilities for that row's version. A package with vulnerability records from multiple repositories now shows a single combined warning icon and dialog instead of one per repository.
+- ([#17985](https://github.com/rstudio/rstudio/issues/17985)): Fixed an issue where the Import Dataset preview dialog failed to display error messages when the readr preview subprocess encountered an error, causing the dialog to hang indefinitely waiting for data that would never arrive.
+- ([#18003](https://github.com/rstudio/rstudio/issues/18003)): Fixed an issue where reformat-on-save with Air configured as an external formatter ignored the project's air.toml configuration.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer now scrolls continuously through the columns of a very wide data frame instead of paging through fixed blocks of columns, so a column's filter, sort, and pin are no longer limited to (or lost when leaving) the currently visible set of columns.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's column-pagination arrows are replaced by a "Go to column" box in the toolbar that jumps to a column by name or number.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's summary sidebar now lists every column of the frame, loading each column's summary as it scrolls into view.
+- ([#6147](https://github.com/rstudio/rstudio/issues/6147)): The data viewer's summary sidebar now reflects the active filter and search, rather than always describing the whole frame.
+- ([#17979](https://github.com/rstudio/rstudio/issues/17979)): Add a "Show Filter UI by default" toggle to the data viewer's Settings menu. When enabled, the filter bar is shown automatically each time a data frame is opened, instead of requiring a click to reveal it.
+- ([#17993](https://github.com/rstudio/rstudio/issues/17993)): Add a "Use overlay scrollbars" toggle to the data viewer's Settings menu. When disabled, the data viewer uses native, always-visible scrollbars instead of the auto-hiding overlay scrollbars.
 
 ### Dependencies
 - Ace 1.43.5

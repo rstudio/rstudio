@@ -376,7 +376,11 @@ json::Object makeDataItem(SEXP dataSEXP,
       http::util::urlEncode(cacheKey, true) + "&max_display_columns=" +
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns()) +
       "&show_summary=" +
-      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0");
+      (prefs::userPrefs().dataViewerShowSummary() ? "1" : "0") +
+      "&show_filters=" +
+      (prefs::userPrefs().dataViewerShowFilters() ? "1" : "0") +
+      "&use_overlay_scrollbars=" +
+      (prefs::userPrefs().dataViewerUseOverlayScrollbars() ? "1" : "0");
    dataItem["preview"] = preview;
 
    return dataItem;
@@ -489,9 +493,16 @@ json::Value getCols(SEXP dataSEXP,
          err["error"] = "Failed to retrieve column definitions for data.";
       result = err;
    }
-   else 
+   else
    {
-      r::json::jsonValueFromList(colsSEXP, &result);
+      Error jsonError = r::json::jsonValueFromList(colsSEXP, &result);
+      if (jsonError)
+      {
+         LOG_ERROR(jsonError);
+         json::Object err;
+         err["error"] = "Failed to retrieve column definitions for data.";
+         result = err;
+      }
    }
    return result;
 }
@@ -547,20 +558,171 @@ json::Value getColsByIndex(SEXP dataSEXP,
          err["error"] = "Failed to retrieve column definitions for the data slice.";
       result = err;
    }
-   else 
+   else
    {
-      r::json::jsonValueFromList(colsSEXP, &result);
+      Error jsonError = r::json::jsonValueFromList(colsSEXP, &result);
+      if (jsonError)
+      {
+         LOG_ERROR(jsonError);
+         json::Object err;
+         err["error"] = "Failed to retrieve column definitions for the data slice.";
+         result = err;
+      }
    }
    return result;
 }
 
+// The active filter/search/sort for a view request, in the DataTables-style
+// wire form. Shared by the grid's data path and the summary paths so they
+// agree on the filtered row set.
+struct ViewTransformParams
+{
+   std::string search;                  // global search across all columns
+   std::vector<std::string> filters;    // per 1-based column (size == ncol)
+   std::vector<int> ordercols;          // 1-based sort columns
+   std::vector<std::string> orderdirs;  // "asc"/"desc", paired with ordercols
+
+   bool needsTransform() const
+   {
+      if (!ordercols.empty() || !search.empty())
+         return true;
+      for (const std::string& filter : filters)
+      {
+         if (!filter.empty())
+            return true;
+      }
+      return false;
+   }
+};
+
+// Parse the filter/search/sort fields from a request. ncol is the column count
+// of the frame being viewed (bounding the per-column filter scan).
+ViewTransformParams parseViewTransformParams(const http::Fields& fields, int ncol)
+{
+   ViewTransformParams params;
+
+   params.search = http::util::urlDecode(
+         http::util::fieldValue<std::string>(fields, "search[value]", ""));
+
+   // loop through sort columns
+   int orderIdx = 0;
+   int ordercol = -1;
+   do
+   {
+      std::string ordercolstr = "order[" + std::to_string(orderIdx) + "][column]";
+      std::string orderdirstr = "order[" + std::to_string(orderIdx) + "][dir]";
+      ordercol = http::util::fieldValue<int>(fields, ordercolstr, -1);
+      std::string orderdir = http::util::fieldValue<std::string>(fields, orderdirstr, "asc");
+
+      if (ordercol > 0)
+      {
+         params.ordercols.push_back(ordercol);
+         params.orderdirs.push_back(orderdir);
+      }
+
+      orderIdx++;
+   } while (ordercol > 0);
+
+   // extract filters, keyed by absolute (1-based) column index
+   for (int i = 1; i <= ncol; i++)
+   {
+      std::string filterVal = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields,
+                  "columns[" + boost::lexical_cast<std::string>(i) + "]"
+                  "[search][value]", ""));
+      params.filters.push_back(filterVal);
+   }
+
+   return params;
+}
+
+// Apply the request's filter/search/sort to dataSEXP, returning the
+// filtered/sorted frame (or dataSEXP unchanged when nothing is active).
+// Maintains the per-cacheKey working-copy cache exactly as the grid's data
+// path does, so the grid and any summary request resolve to the same filtered
+// row set. *pTransformed (when non-null) reports whether a transform applied.
+//
+// NB: may throw on a transform failure (handled by getGridData).
+SEXP applyViewTransform(SEXP dataSEXP,
+                        const std::string& cacheKey,
+                        const ViewTransformParams& params,
+                        bool* pTransformed,
+                        r::sexp::Protect& protect)
+{
+   bool transformed = params.needsTransform();
+   if (pTransformed != nullptr)
+      *pTransformed = transformed;
+   if (!transformed)
+      return dataSEXP;
+
+   // Reuse a cached working copy when its parameters match (exactly, or as a
+   // superset we can further filter) before recomputing from scratch.
+   bool recompute = true;
+   auto cachedFrame = s_cachedFrames.find(cacheKey);
+   if (cachedFrame != s_cachedFrames.end())
+   {
+      SEXP workingDataSEXP = R_NilValue;
+      r::exec::RFunction(".rs.findWorkingData", cacheKey)
+         .call(&workingDataSEXP, &protect);
+
+      if (workingDataSEXP != R_NilValue)
+      {
+         if (cachedFrame->second.workingSearch == params.search &&
+             cachedFrame->second.workingFilters == params.filters &&
+             cachedFrame->second.workingOrderDirs == params.orderdirs &&
+             cachedFrame->second.workingOrderCols == params.ordercols)
+         {
+            // exact match -- use it as is
+            dataSEXP = workingDataSEXP;
+            recompute = false;
+         }
+         else if (cachedFrame->second.isSupersetOf(params.search, params.filters))
+         {
+            // a strict superset -- transform from it instead of the original
+            dataSEXP = workingDataSEXP;
+         }
+      }
+   }
+
+   if (recompute)
+   {
+      r::exec::RFunction transform(".rs.applyTransform");
+      transform.addParam("x", dataSEXP);             // data to transform
+      transform.addParam("filtered", params.filters); // which columns are filtered
+      transform.addParam("search", params.search);    // global search (across cols)
+      transform.addParam("cols", params.ordercols);    // which column to order on
+      transform.addParam("dirs", params.orderdirs);    // order direction
+      Error error = transform.call(&dataSEXP, &protect);
+      if (error)
+         throw r::exec::RErrorException(error.getSummary());
+
+      // check to see if we've accidentally transformed ourselves into nothing
+      // (this shouldn't generally happen without a specific error)
+      if (dataSEXP == R_NilValue)
+         throw r::exec::RErrorException("Failure to sort or filter data");
+
+      // save the working data state (it's okay if this fails; it's a
+      // performance optimization)
+      r::exec::RFunction(".rs.assignWorkingData", cacheKey, dataSEXP).call();
+      if (cachedFrame != s_cachedFrames.end())
+      {
+         cachedFrame->second.workingSearch = params.search;
+         cachedFrame->second.workingFilters = params.filters;
+         cachedFrame->second.workingOrderDirs = params.orderdirs;
+         cachedFrame->second.workingOrderCols = params.ordercols;
+      }
+   }
+
+   return dataSEXP;
+}
+
 // given an object from which to return data, and a description of the data to
 // return via URL-encoded parameters supplied by the DataTables API, returns the
-// data requested by the parameters. 
+// data requested by the parameters.
 //
 // the shape of the API is described here:
 // http://datatables.net/manual/server-side
-// 
+//
 // NB: may throw exceptions! these are expected to be handled by the handlers
 // in getGridData, where they will be marshaled to JSON and displayed on the
 // client.
@@ -594,12 +756,9 @@ json::Object getData(SEXP dataSEXP,
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
 
-   std::string search = http::util::urlDecode(
-         http::util::fieldValue<std::string>(fields, "search[value]", ""));
-
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
-   
+
    // Absolute, 1-based column indices the client wants returned, in display
    // order (pinned columns first, then the visible window). Empty means the
    // whole frame. The sort column and per-column filters below are likewise
@@ -607,126 +766,17 @@ json::Object getData(SEXP dataSEXP,
    std::vector<int> columnIndices =
          parseColumnIndices(http::util::fieldValue<std::string>(fields, "columns_requested", ""));
 
-   // loop through sort columns
-   std::vector<int> ordercols;
-   std::vector<std::string> orderdirs;
-   int orderIdx = 0;
-   int ordercol = -1;
-   std::string orderdir;
-   do
-   {
-      std::string ordercolstr = "order[" + std::to_string(orderIdx) + "][column]";
-      std::string orderdirstr = "order[" + std::to_string(orderIdx) + "][dir]";
-      ordercol = http::util::fieldValue<int>(fields, ordercolstr,  -1);
-      orderdir = http::util::fieldValue<std::string>(fields, orderdirstr, "asc");
-
-      if (ordercol > 0)
-      {
-         ordercols.push_back(ordercol);
-         orderdirs.push_back(orderdir);
-      }
-
-      orderIdx++;
-   } while (ordercol > 0);
-
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
 
-   int filteredNRow = 0;
+   // Apply the active filter/search/sort, reusing the working-copy cache.
+   // recordsFiltered is the post-transform row count (the unfiltered total
+   // when no transform is active).
+   ViewTransformParams params = parseViewTransformParams(fields, ncol);
+   bool transformed = false;
+   dataSEXP = applyViewTransform(dataSEXP, cacheKey, params, &transformed, protect);
 
-   // extract filters, keyed by absolute (1-based) column index
-   std::vector<std::string> filters;
-   bool hasFilter = false;
-
-   for (int i = 1; i <= ncol; i++)
-   {
-      std::string filterVal = http::util::urlDecode(
-            http::util::fieldValue<std::string>(fields,
-                  "columns[" + boost::lexical_cast<std::string>(i) + "]"
-                  "[search][value]", ""));
-
-      if (!filterVal.empty())
-      {
-         hasFilter = true;
-      }
-      filters.push_back(filterVal);
-   }
-
-   bool needsTransform = ordercols.size() > 0 || hasFilter || !search.empty();
-   bool hasTransform = false;
-
-   // check to see if we have an ordered/filtered view we can build from
-   auto cachedFrame = s_cachedFrames.find(cacheKey);
-   if (needsTransform)
-   {
-      if (cachedFrame != s_cachedFrames.end())
-      {
-         // do we have a previously ordered/filtered view?
-         SEXP workingDataSEXP = R_NilValue;
-         r::exec::RFunction(".rs.findWorkingData", cacheKey)
-            .call(&workingDataSEXP, &protect);
-         
-         if (workingDataSEXP != R_NilValue)
-         {
-            if (cachedFrame->second.workingSearch == search &&
-                cachedFrame->second.workingFilters == filters && 
-                cachedFrame->second.workingOrderDirs == orderdirs &&
-                cachedFrame->second.workingOrderCols == ordercols)
-            {
-               // we have one with exactly the same parameters as requested;
-               // use it exactly as is
-               dataSEXP = workingDataSEXP;
-               needsTransform = false;
-               hasTransform = true;
-            }
-            else if (cachedFrame->second.isSupersetOf(search, filters))
-            {
-               // we have one that is a strict superset of the parameters
-               // requested; transform the filtered set instead of starting
-               // from scratch
-               dataSEXP = workingDataSEXP;
-            }
-         }
-      }
-   }
-
-   // apply transformations if needed.    
-   if (needsTransform) 
-   {
-      // can we use a working copy? 
-      r::exec::RFunction transform(".rs.applyTransform");
-      transform.addParam("x", dataSEXP);       // data to transform
-      transform.addParam("filtered", filters); // which columns are filtered
-      transform.addParam("search", search);    // global search (across cols)
-      transform.addParam("cols", ordercols);     // which column to order on
-      transform.addParam("dirs", orderdirs);     // order direction ("asc"/"desc")
-      transform.call(&dataSEXP, &protect);
-      if (error)
-         throw r::exec::RErrorException(error.getSummary());
-
-      // check to see if we've accidentally transformed ourselves into nothing
-      // (this shouldn't generally happen without a specific error)
-      if (dataSEXP == R_NilValue)
-      {
-         throw r::exec::RErrorException("Failure to sort or filter data");
-      }
-
-      // save the working data state (it's okay if this fails; it's a
-      // performance optimization)
-      r::exec::RFunction(".rs.assignWorkingData", cacheKey, dataSEXP).call();
-      if (cachedFrame != s_cachedFrames.end())
-      {
-         cachedFrame->second.workingSearch = search;
-         cachedFrame->second.workingFilters = filters;
-         cachedFrame->second.workingOrderDirs = orderdirs;
-         cachedFrame->second.workingOrderCols = ordercols;
-      }
-   }
-
-   // apply new row count if we've transformed the data (or need to)
-   filteredNRow = needsTransform || hasTransform
-      ? safeDim(dataSEXP, DIM_ROWS)
-      : nrow;
+   int filteredNRow = transformed ? safeDim(dataSEXP, DIM_ROWS) : nrow;
 
    // return the lesser of the rows available and rows requested
    length = std::min(length, filteredNRow - start);
@@ -973,26 +1023,137 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
+            // The default ("filtered" absent) describes the full frame -- the
+            // column metadata drives the filter UI (the brushable histogram,
+            // factor levels), which must stay full-range so a filter can
+            // always be widened. The sidebar's summary panel separately
+            // requests filtered=1 to describe the same rows the grid shows.
+            bool filtered = http::util::fieldValue<int>(fields, "filtered", 0) != 0;
+            SEXP framesSEXP = dataSEXP;
+            if (filtered)
+            {
+               // subset to the grid's view, then apply the active transform so
+               // the summaries reflect the displayed (filtered) rows
+               SEXP subsetSEXP = R_NilValue;
+               if (!r::exec::RFunction(".rs.subsetData")
+                        .addParam(dataSEXP).addParam(maxRows).addParam(maxCols)
+                        .call(&subsetSEXP, &protect))
+               {
+                  framesSEXP = subsetSEXP;
+               }
+               int viewNcol = safeDim(framesSEXP, DIM_COLS);
+               ViewTransformParams params = parseViewTransformParams(fields, viewNcol);
+
+               // applyViewTransform shares the per-cacheKey working-copy cache
+               // with the grid's data path. That is safe only while this path
+               // resolves to the SAME filtered frame the grid does: today the
+               // client sends max_rows/max_cols == -1 here, so .rs.subsetData
+               // is a no-op and the transform recomputes from the identical
+               // full frame. If this path ever passes a finite row/col subset,
+               // recompute would assign a subset as the shared working data and
+               // corrupt the grid's getData; give it a distinct cache key (or
+               // subset rows after the transform) before doing so.
+               framesSEXP = applyViewTransform(framesSEXP, cacheKey, params, nullptr, protect);
+            }
+
             if (!columnIndices.empty())
             {
-               result = getColsByIndex(dataSEXP, columnIndices);
+               result = getColsByIndex(framesSEXP, columnIndices);
             }
             else
             {
-               result = getCols(dataSEXP, maxRows, maxCols);
+               // rows already subset above when filtered, so don't re-subset
+               result = getCols(framesSEXP,
+                                filtered ? -1 : maxRows,
+                                filtered ? -1 : maxCols);
             }
          }
          else if (show == "data")
          {
             result = getData(dataSEXP, maxRows, maxCols, fields);
          }
+         else if (show == "colnames")
+         {
+            // Lightweight request backing the go-to-column popup: the full
+            // frame's column names (no per-column statistics), so the client
+            // can match a typed name against columns far outside the
+            // currently fetched window.
+            SEXP namesSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.dataViewer.columnNames")
+                  .addParam(dataSEXP)
+                  .call(&namesSEXP, &protect);
+
+            json::Value namesJSON;
+            if (!error)
+               error = r::json::jsonValueFromVector(namesSEXP, &namesJSON);
+
+            if (error)
+            {
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to retrieve column names.";
+               result = err;
+            }
+            else
+            {
+               json::Object names;
+               names["names"] = namesJSON;
+               result = names;
+            }
+         }
+         else if (show == "column_index")
+         {
+            // Lightweight per-column identity (name/typeof/class) for every
+            // column, backing the summary sidebar's complete column list. No
+            // statistics, so it scales to very wide frames; the sidebar
+            // lazy-loads the real summaries (show=cols) as entries scroll in.
+            SEXP indexSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.dataViewer.columnIndex")
+                  .addParam(dataSEXP)
+                  .call(&indexSEXP, &protect);
+
+            json::Value columnsJSON;
+            if (!error)
+               error = r::json::jsonValueFromList(indexSEXP, &columnsJSON);
+
+            if (error)
+            {
+               LOG_ERROR(error);
+               json::Object err;
+               err["error"] = "Failed to retrieve column index.";
+               result = err;
+            }
+            else
+            {
+               json::Object index;
+               index["columns"] = columnsJSON;
+               result = index;
+            }
+         }
          else if (show == "column_summary")
          {
             int column = http::util::fieldValue<int>(fields, "column", 0);
+
+            // Compute the detail stats over the same rows the grid shows: a
+            // no-op when no filter/search is active (matching the historical
+            // whole-column behavior), otherwise the filtered working copy.
+            //
+            // applyViewTransform shares the per-cacheKey working-copy cache with
+            // the grid's data path, which writes a max_rows/max_cols-subset frame
+            // into that cache before transforming. Transforming the FULL frame
+            // here under the same key is correct only because the client sends
+            // max_rows/max_cols == -1, so the grid's working copy is the full
+            // frame too and n/mean/median compute over the complete column. If a
+            // finite row subset is ever wired up here, this would silently
+            // summarize a truncated set (and could corrupt the grid's cached
+            // working data); give summary requests a distinct cache key first.
+            int viewNcol = safeDim(dataSEXP, DIM_COLS);
+            ViewTransformParams params = parseViewTransformParams(fields, viewNcol);
+            SEXP frameSEXP = applyViewTransform(dataSEXP, cacheKey, params, nullptr, protect);
+
             SEXP summarySEXP = R_NilValue;
-            r::sexp::Protect protect;
             Error error = r::exec::RFunction(".rs.summarizeColumn")
-                  .addParam(dataSEXP)
+                  .addParam(frameSEXP)
                   .addParam(column)
                   .call(&summarySEXP, &protect);
             if (error)

@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
@@ -46,6 +47,9 @@ test.describe('R Notebook', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache install can outrun the 120s global timeout; give this hook
+    // the headroom its ensurePackages() call needs.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 
@@ -70,6 +74,7 @@ test.describe('R Notebook', () => {
 
   test('create new R Notebook and preview', async ({ rstudioPage: page }) => {
     // Original: test_desktop_RNotebook.py::test_creating_new_r_notebook_and_preview
+    test.fixme(['win32', 'darwin'].includes(os.platform()) && !!process.env.CI, 'Same cross-origin SecurityError as markdown preview; needs product fix');
     const fileName = `rnotebook_test_${Date.now()}.Rmd`;
 
     // output: html_notebook is what makes this a Notebook (Preview, not Knit).

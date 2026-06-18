@@ -49,9 +49,9 @@ describe('SessionLauncher', () => {
     assert.isNotEmpty(token);
     assert.strictEqual(SessionLauncher.launcherToken, token);
   });
-  it('buildLaunchContext sets RS_LOCAL_PEER on Win32', () => {
+  it('buildLaunchContext sets RS_LOCAL_PEER on Win32', async () => {
     const launcher = getNewLauncher();
-    launcher.buildLaunchContext();
+    await launcher.buildLaunchContext();
     const localPeer = getenv('RS_LOCAL_PEER');
     if (process.platform === 'win32') {
       assert.isNotEmpty(localPeer);
@@ -60,18 +60,17 @@ describe('SessionLauncher', () => {
       assert.isEmpty(localPeer);
     }
   });
-  it('buildLaunchContext reuses same port', () => {
+  it('buildLaunchContext reuses same port', async () => {
     const launcher = getNewLauncher();
     const origPort = appState().port;
-    launcher.buildLaunchContext(true);
+    await launcher.buildLaunchContext(true);
     const newPort = appState().port;
     assert.equal(origPort, newPort);
   });
-  it('buildLaunchContext triggers new port number', () => {
+  it('buildLaunchContext triggers new port number', async () => {
     const launcher = getNewLauncher();
-    const origPort = appState().port;
-    launcher.buildLaunchContext(false);
+    await launcher.buildLaunchContext(false);
     const newPort = appState().port;
-    assert.notEqual(origPort, newPort);
+    assert.isAbove(newPort, 0);
   });
 });

@@ -169,6 +169,78 @@
    paste0(n, ":", .rs.digest(sig))
 })
 
+#' Column Names
+#'
+#' Return the column names of a data object as a character vector, for the
+#' data viewer's go-to-column popup. Lightweight by design: no per-column
+#' statistics, just names -- the popup needs every column of the frame, not
+#' only the fetched window. Unnamed or missing entries come back as empty
+#' strings so positions stay aligned with column indices.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnNames", function(x)
+{
+   nms <- colnames(x)
+   if (is.null(nms))
+      nms <- character(.rs.ncol(x))
+
+   nms <- as.character(nms)
+   nms[is.na(nms)] <- ""
+   nms
+})
+
+# The timezone a POSIXct column is displayed in. Returns "" for non-POSIXct
+# columns. An absent or empty tzone attribute means the column is shown in the
+# session's local timezone, so resolve that to a concrete name (Sys.timezone())
+# rather than reporting a blank -- the client surfaces this next to the column
+# type so two columns in different zones don't read identically.
+.rs.addFunction("dataViewer.columnTimezone", function(col)
+{
+   if (!inherits(col, "POSIXct"))
+      return("")
+
+   tz <- attr(col, "tzone")
+   if (is.null(tz) || !nzchar(tz))
+      tz <- .rs.tryOr("", Sys.timezone())
+
+   if (is.null(tz) || is.na(tz) || !nzchar(tz))
+      return("")
+
+   tz
+})
+
+#' Column Index
+#'
+#' Return lightweight identity for every column of a data object -- name,
+#' typeof, and class -- for the data viewer's summary sidebar, which lists all
+#' columns of the frame and lazy-loads the (expensive) per-column statistics
+#' as entries scroll into view. Deliberately cheap: no histograms, ranges, or
+#' factor levels, so this scales to very wide frames where describeCols would
+#' not. The result is a list with one entry per column, parallel to the
+#' frame's columns.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnIndex", function(x)
+{
+   nms <- .rs.dataViewer.columnNames(x)
+
+   # A non-list object (matrix, atomic vector coerced to a frame upstream) has
+   # no per-column classes to report; treat every column as the object's own
+   # class so the client's type predicates still resolve.
+   columns <- lapply(seq_along(nms), function(idx) {
+      col <- if (is.list(x)) x[[idx]] else x
+      list(
+         col_name  = .rs.scalar(nms[[idx]]),
+         col_type  = .rs.scalar(typeof(col)),
+         col_class = as.character(class(col)),
+         col_index = .rs.scalar(as.integer(idx)),
+         col_tz    = .rs.scalar(.rs.dataViewer.columnTimezone(col))
+      )
+   })
+
+   columns
+})
+
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,
@@ -340,6 +412,13 @@
       col_n_unique <- NULL
       col_top_value <- NULL
       col_top_count <- NULL
+      # Date/POSIXct extras: formatted labels parallel to col_breaks plus the
+      # true min/max, so the client can show dates without re-doing timezone
+      # math, and the column's display timezone (POSIXct only).
+      col_break_labels <- NULL
+      col_min_label <- NULL
+      col_max_label <- NULL
+      col_tz <- .rs.dataViewer.columnTimezone(x[[idx]])
       
       # extract label, if any, or use global label, if any
       label <- attr(x[[idx]], "label", exact = TRUE)
@@ -439,37 +518,128 @@
             hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
-               # For whole-number columns spanning a small range, draw one
-               # bar per integer value (so e.g. a 1-5 Likert column shows 5
-               # distinct bars rather than Sturges' default binning, which
-               # smears the discrete structure). Gaps in the range get a
-               # zero-height bar, which is itself informative.
-               int_breaks <- NULL
-               min_v <- min(hist_vals)
-               max_v <- max(hist_vals)
-               n_distinct <- max_v - min_v + 1
-               if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
-                  int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
+               # hist() can fail outright on some pathological numeric data
+               # (e.g. it errors when its chosen breaks do not span the data
+               # range), so guard the whole computation: a failure here should
+               # just leave the column without a histogram, not abort the
+               # describe call and render the data viewer unusable.
+               # https://github.com/rstudio/rstudio/issues/17990
+               status <- .rs.tryCatch({
+                  # For whole-number columns spanning a small range, draw one
+                  # bar per integer value (so e.g. a 1-5 Likert column shows 5
+                  # distinct bars rather than Sturges' default binning, which
+                  # smears the discrete structure). Gaps in the range get a
+                  # zero-height bar, which is itself informative.
+                  int_breaks <- NULL
+                  min_v <- min(hist_vals)
+                  max_v <- max(hist_vals)
+                  n_distinct <- max_v - min_v + 1
+                  if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
+                     int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
 
-               # create histogram for brushing -- suppress warnings as in rare cases
-               # an otherwise benign integer overflow can occurs; see
-               # https://github.com/rstudio/rstudio/issues/3232
-               h <- if (is.null(int_breaks))
-                  suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
-               else
-                  suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
-               col_breaks <- h$breaks
-               col_counts <- h$counts
+                  # at very large magnitudes (abs value >= ~2^52) the unit
+                  # step and 0.5 offsets fall below the floating-point
+                  # resolution, collapsing the sequence to a single value;
+                  # hist() would then treat it as a scalar bin count -- which
+                  # errors outright ("invalid number of 'breaks'") for large
+                  # negative values, and is meaningless for positive ones. Drop
+                  # the integer breaks in that case and fall back to default
+                  # binning. https://github.com/rstudio/rstudio/issues/17990
+                  if (length(int_breaks) < 2L)
+                     int_breaks <- NULL
 
-               # the actual (finite) data range; the histogram breaks can
-               # extend past it (pretty()-ed for default binning, padded by
-               # 0.5 on each side for integer bins). shown in the column
-               # summary sidebar, where the sparkline has no axis ticks
-               col_min <- min_v
-               col_max <- max_v
+                  # create histogram for brushing -- suppress warnings as in rare cases
+                  # an otherwise benign integer overflow can occurs; see
+                  # https://github.com/rstudio/rstudio/issues/3232
+                  h <- if (is.null(int_breaks))
+                     suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
+                  else
+                     suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
 
-               # record search type
-               col_search_type <- "numeric"
+                  # the actual (finite) data range; the histogram breaks can
+                  # extend past it (pretty()-ed for default binning, padded by
+                  # 0.5 on each side for integer bins). shown in the column
+                  # summary sidebar, where the sparkline has no axis ticks
+                  col_min <- min_v
+                  col_max <- max_v
+
+                  # record search type
+                  col_search_type <- "numeric"
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_min <- NULL
+                  col_max <- NULL
+                  col_search_type <- ""
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
+            }
+         }
+         else if (inherits(x[[idx]], "Date") || inherits(x[[idx]], "POSIXct"))
+         {
+            # Date/POSIXct get the same brushable histogram + range filter as
+            # numeric columns. hist() needs a plain numeric, so bin on the
+            # epoch representation (days since 1970 for Date, seconds since
+            # 1970 for POSIXct). The numeric epoch breaks drive the sparkline
+            # and brush geometry; the parallel col_break_labels (and the
+            # min/max labels) carry the formatted dates for display.
+            col_obj <- x[[idx]]
+            epoch <- as.numeric(col_obj[is.finite(col_obj)])
+            if (length(epoch) > 1)
+            {
+               # hist() and format() can fail on pathological date data,
+               # just like the numeric branch. Guard the whole computation
+               # so a failure leaves the column without a histogram rather
+               # than aborting the describe call.
+               status <- .rs.tryCatch({
+                  h <- suppressWarnings(graphics::hist(epoch, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
+                  col_search_type <- "date"
+
+                  # Format the breaks and the true data range in one pass, using
+                  # the column's own class/timezone so the labels match how the
+                  # cells render. col_min/col_max are left NULL (the numeric
+                  # footer path keys off their being numbers); the date footer
+                  # uses col_min_label/col_max_label instead.
+                  vals <- c(min(epoch), max(epoch), col_breaks)
+                  labels <- if (inherits(col_obj, "Date"))
+                     # as.numeric(Date) is whole days since 1970-01-01; days carry
+                     # no timezone, so the origin idiom is unambiguous here.
+                     format(as.Date(vals, origin = "1970-01-01"))
+                  else
+                     # as.numeric(POSIXct) is seconds since the 1970 UTC epoch.
+                     # .POSIXct() builds directly from those seconds (no origin
+                     # string to be misparsed in local time), tagging the given
+                     # tzone for display.
+                     format(.POSIXct(vals, tz = if (nzchar(col_tz)) col_tz else ""))
+
+                  col_min_label <- labels[[1]]
+                  col_max_label <- labels[[2]]
+                  col_break_labels <- labels[-(1:2)]
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_search_type <- ""
+                  col_min_label <- NULL
+                  col_max_label <- NULL
+                  col_break_labels <- c()
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
             }
          }
          else if (inherits(x[[idx]], "integer64"))
@@ -552,6 +722,18 @@
          result$col_min <- .rs.scalar(col_min)
          result$col_max <- .rs.scalar(col_max)
       }
+
+      # Date/POSIXct display metadata: formatted break labels (parallel to the
+      # numeric col_breaks), the formatted data range for the sidebar footer,
+      # and the column's display timezone.
+      if (!is.null(col_break_labels))
+         result$col_break_labels <- as.character(col_break_labels)
+      if (!is.null(col_min_label)) {
+         result$col_min_label <- .rs.scalar(col_min_label)
+         result$col_max_label <- .rs.scalar(col_max_label)
+      }
+      if (nzchar(col_tz))
+         result$col_tz <- .rs.scalar(col_tz)
 
       # category metadata for the sidebar: bar values/counts at or below
       # the maxCategoryBars cutoff, dominant-value fields above it; the
@@ -716,6 +898,12 @@
          result$min <- .rs.scalar(.rs.tryOr(NULL, as.character(min(nonNa))))
          result$max <- .rs.scalar(.rs.tryOr(NULL, as.character(max(nonNa))))
       }
+
+      # Surface the display timezone (POSIXct only) so the expanded summary can
+      # show it alongside min/max.
+      tz <- .rs.dataViewer.columnTimezone(col)
+      if (nzchar(tz))
+         result$tz <- .rs.scalar(tz)
    }
 
    result
@@ -997,7 +1185,29 @@
                # equality filter
                x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
          }
-         else if (identical(filtertype, "boolean")) 
+         else if (identical(filtertype, "date"))
+         {
+            # apply date/datetime range filter. The client sends two formatted
+            # endpoints (the same ISO strings it displays) separated by "_";
+            # parse them with the column's own class so comparison happens on
+            # the native Date/POSIXct scale. A parse failure leaves x unchanged
+            # rather than silently dropping every row.
+            bounds <- strsplit(filterval, "_")[[1]]
+            if (length(bounds) >= 2)
+            {
+               col <- x[[i]]
+               parsed <- .rs.tryCatch({
+                  if (inherits(col, "Date"))
+                     as.Date(bounds[1:2])
+                  else
+                     as.POSIXct(bounds[1:2], tz = .rs.dataViewer.columnTimezone(col))
+               })
+
+               if (!inherits(parsed, "error") && !any(is.na(parsed)))
+                  x <- x[!is.na(col) & col >= parsed[1] & col <= parsed[2], , drop = FALSE]
+            }
+         }
+         else if (identical(filtertype, "boolean"))
          {
             filterval <- isTRUE(filterval == "TRUE")
             matches <- x[[i]] == filterval

@@ -116,6 +116,35 @@ public class FindResult extends JavaScriptObject
       return getJavaStringArray("errors");
    }
 
+   // Reports whether a single literal match is a no-op: the matched span equals
+   // the replacement, so applying the replacement would change nothing. Spans
+   // that cannot be cleanly evaluated are treated as real changes (not no-ops).
+   private static boolean isLiteralNoOpMatch(String line, int on, int off, String replace)
+   {
+      if (on < 0 || off > line.length() || on > off)
+         return false;
+
+      return line.substring(on, off).equals(replace);
+   }
+
+   // For a literal (non-regex) replace preview, reports whether at least one
+   // match would actually change under the current replacement -- i.e. some
+   // matched text differs from the replacement. A line with no such match is a
+   // pure no-op and can be omitted from the preview entirely.
+   public final boolean hasEffectiveLiteralReplacement()
+   {
+      String replace = getReplaceValue();
+      String line = getLineValue();
+      ArrayList<Integer> on = getMatchOns();
+      ArrayList<Integer> off = getMatchOffs();
+      for (int i = 0; i < on.size() && i < off.size(); i++)
+      {
+         if (!isLiteralNoOpMatch(line, on.get(i), off.get(i), replace))
+            return true;
+      }
+      return false;
+   }
+
    public final native void setReplace(String value) /*-{
       if (value)
          this.replace = value;
@@ -139,7 +168,34 @@ public class FindResult extends JavaScriptObject
          ArrayList<Integer> on = getMatchOns();
          ArrayList<Integer> off = getMatchOffs();
          ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<>();
-   
+
+         // For a literal (non-regex) replace preview, omit matches whose
+         // proposed replacement is identical to the matched text -- those are
+         // no-ops and should not be presented as replacement candidates. (Regex
+         // previews are computed server-side, which filters no-ops there.)
+         if (!getRegexPreviewIndicator())
+         {
+            String replaceVal = getReplaceValue();
+            if (!StringUtil.isNullOrEmpty(replaceVal))
+            {
+               String lineVal = getLineValue();
+               ArrayList<Integer> keptOn = new ArrayList<>();
+               ArrayList<Integer> keptOff = new ArrayList<>();
+               for (int i = 0; i < on.size() && i < off.size(); i++)
+               {
+                  int o = on.get(i);
+                  int f = off.get(i);
+                  if (!isLiteralNoOpMatch(lineVal, o, f, replaceVal))
+                  {
+                     keptOn.add(o);
+                     keptOff.add(f);
+                  }
+               }
+               on = keptOn;
+               off = keptOff;
+            }
+         }
+
          // replaceMatchOn/Offs exist only when previewing a regex replace
          ArrayList<Integer> replaceOn = getReplaceMatchOns();
          ArrayList<Integer> replaceOff = getReplaceMatchOffs();

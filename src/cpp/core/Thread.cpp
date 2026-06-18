@@ -17,6 +17,7 @@
 
 #include <shared_core/Error.hpp>
 
+#include <core/Log.hpp>
 #include <core/Macros.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
@@ -57,6 +58,47 @@ void safeLaunchThread(boost::function<void()> threadMain,
    {
       LOG_ERROR(Error(boost::thread_error::ec_from_exception(e),
                       ERROR_LOCATION));
+   }
+}
+
+bool joinOrAbandonThread(boost::thread& thread,
+                         const std::string& name,
+                         bool interrupt,
+                         const boost::posix_time::time_duration& timeout)
+{
+   // Never throw: this runs on the process-exit path and some callers invoke it
+   // from a destructor, where an escaping exception would std::terminate during
+   // unwinding. On any failure we still detach so the boost::thread destructor
+   // does not terminate on a still-joinable handle.
+   try
+   {
+      if (!thread.joinable())
+         return true;
+
+      if (interrupt)
+         thread.interrupt();
+
+      if (thread.timed_join(timeout))
+         return true;
+
+      LOG_WARNING_MESSAGE(name + " did not stop on its own; abandoning it");
+      thread.detach();
+      return false;
+   }
+   catch (...)
+   {
+      LOG_WARNING_MESSAGE("error while stopping " + name + "; abandoning it");
+      try
+      {
+         if (thread.joinable())
+            thread.detach();
+      }
+      catch (...)
+      {
+         // Intentionally empty: a throwing detach() here is unrecoverable
+         // mid-teardown, and we must not let an exception escape (see above).
+      }
+      return false;
    }
 }
 

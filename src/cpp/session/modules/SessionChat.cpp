@@ -245,7 +245,6 @@ namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
-using chat_constants::kProtocolVersionFileName;
 using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
@@ -271,11 +270,13 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
+using chat_installation::writeProtocolVersionFileIfMissing;
 
 // Update throttle types used throughout
 using throttle::ManifestCheckRecord;
 using throttle::ResolvedBlock;
 using throttle::SuccessOutcome;
+using throttle::PendingUpdate;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -3620,7 +3621,13 @@ void onBackgroundProcessing(bool isIdle)
 // Update Management
 // ============================================================================
 
-// Structure to hold update check state
+// Structure to hold update check state.
+//
+// The pending-update fields (updateAvailable, isDowngrade, newVersion,
+// downloadUrl, expectedSha256) mirror throttle::PendingUpdate, which carries
+// them across a throttled skip in resolveWithoutManifestFetch(). Keep the two
+// field sets in sync: a field added here that isn't carried there would be
+// silently dropped on a skip (the regression #18014 fixed).
 struct UpdateState
 {
    bool updateAvailable;
@@ -3671,6 +3678,14 @@ boost::mutex s_updateStateMutex;
 // Posit Assistant manifest endpoints (prod + opt-in test manifest).
 const char* const kManifestUrl     = "https://cdn.posit.co/posit-ai/manifest.json";
 const char* const kManifestTestUrl = "https://cdn.posit.co/posit-ai/manifest-test.json";
+
+// Whether Posit Assistant is opted into the pre-release (test) manifest, via
+// either the command-line/session option or the user preference.
+bool isUsingTestManifest()
+{
+   return options().positAssistantTestManifest() ||
+          prefs::userPrefs().positAssistantTestManifest();
+}
 
 // Wall-clock bound for a manifest fetch; a stalled child is terminated and the
 // check fails (manifestUnavailable) after this long.
@@ -3832,11 +3847,8 @@ void fetchManifestAsync(
    }
 #endif
 
-   // Get download URI; use test manifest when opted in via either the
-   // command-line/session option or the user preference.
-   bool useTestManifest = options().positAssistantTestManifest() ||
-                          prefs::userPrefs().positAssistantTestManifest();
-   std::string url = useTestManifest ? kManifestTestUrl : kManifestUrl;
+   // Get download URI; use test manifest when opted in.
+   std::string url = isUsingTestManifest() ? kManifestTestUrl : kManifestUrl;
    DLOG("Fetching manifest from: {}", url);
 
    // Build the child command in the parent session so the --vanilla child
@@ -4009,8 +4021,7 @@ void showTestManifestWarning()
 
 void onDeferredInit(bool)
 {
-   if (options().positAssistantTestManifest() ||
-       prefs::userPrefs().positAssistantTestManifest())
+   if (isUsingTestManifest())
    {
       showTestManifestWarning();
    }
@@ -4410,13 +4421,9 @@ Error installPackage(const FilePath& packagePath)
       }
    }
 
-   // Write protocol.json so future update checks can detect mismatches
-   core::FilePath protoFile =
-      aiDir.completeChildPath(kProtocolVersionFileName);
-   json::Object protoJson;
-   protoJson["protocol"] = kProtocolVersion;
-   Error protoError = core::writeStringToFile(
-      protoFile, protoJson.write());
+   // Write protocol.json so future update checks can detect mismatches, unless
+   // the package already shipped one (newer packages bundle protocol.json).
+   Error protoError = writeProtocolVersionFileIfMissing(aiDir);
    if (protoError)
    {
       return protoError;
@@ -4677,8 +4684,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 // Decide whether an automatic check must actually fetch the manifest. Always
 // fetches when nothing is installed or the installed protocol mismatches; otherwise
 // throttles to once per the posit_assistant_update_check_interval_hours preference
-// (0 hours = always check). `force` (Retry / install) always fetches. Main-thread
-// only (reads the filesystem).
+// (0 hours = always check). The test manifest is opt-in for pre-release testing,
+// so throttling is disabled there (every check fetches, as if the interval were 0).
+// `force` (Retry / install) always fetches. Main-thread only (reads the filesystem).
 bool shouldFetchManifest(bool force)
 {
    std::string installed = getInstalledVersion();   // "" when not installed
@@ -4691,8 +4699,10 @@ bool shouldFetchManifest(bool force)
    if (record)
       last = record->lastCheckTime;
 
-   int throttleSeconds = throttle::throttleSecondsFromHours(
-      prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
+   int throttleSeconds = isUsingTestManifest()
+      ? 0
+      : throttle::throttleSecondsFromHours(
+           prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
 
    return throttle::manifestCheckDue(
       force, isInstalled, mismatch, last,
@@ -4722,6 +4732,28 @@ void resolveWithoutManifestFetch()
 
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+      // A throttled skip re-fetches no manifest, so the pending update from the
+      // last completed check is still authoritative -- carry it through instead of
+      // clearing it. Clearing it here would let a later install see no update and
+      // fail with "No update available" even though the pane still offered one. The
+      // carry is gated on the installed version being unchanged from that check
+      // (s_updateState.currentVersion), so an out-of-band install can't leave a
+      // stale target or downgrade classification behind.
+      PendingUpdate prior;
+      prior.updateAvailable = s_updateState.updateAvailable;
+      prior.isDowngrade = s_updateState.isDowngrade;
+      prior.newVersion = s_updateState.newVersion;
+      prior.downloadUrl = s_updateState.downloadUrl;
+      prior.expectedSha256 = s_updateState.expectedSha256;
+      PendingUpdate carried = throttle::carryPendingUpdateThroughSkip(
+         prior, s_updateState.currentVersion, installedVersion);
+
+      if (prior.updateAvailable)
+         DLOG("Throttled skip: pending update {} (installed {}, last checked {})",
+              carried.updateAvailable ? "carried" : "cleared",
+              installedVersion, s_updateState.currentVersion);
+
       s_updateState.currentVersion = installedVersion;
       s_updateState.manifestUnavailable = false;
       s_updateState.errorMessage = "";
@@ -4729,11 +4761,11 @@ void resolveWithoutManifestFetch()
       s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
       s_updateState.noCompatibleVersion = false;
       s_updateState.additionalProvidersAvailable = false;
-      s_updateState.updateAvailable = false;
-      s_updateState.isDowngrade = false;
-      s_updateState.newVersion = "";
-      s_updateState.downloadUrl = "";
-      s_updateState.expectedSha256 = "";
+      s_updateState.updateAvailable = carried.updateAvailable;
+      s_updateState.isDowngrade = carried.isDowngrade;
+      s_updateState.newVersion = carried.newVersion;
+      s_updateState.downloadUrl = carried.downloadUrl;
+      s_updateState.expectedSha256 = carried.expectedSha256;
    }
 
    // Non-blocking, like onUpdateCheckComplete: this resolves the
