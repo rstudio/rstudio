@@ -129,11 +129,15 @@ private:
    {
       json::Object jsonError;
 
-      // Always return message as an array so the frontend can handle it
-      // consistently regardless of whether stderr output was captured.
+      // Always return the message as an array so the frontend can handle it
+      // consistently regardless of whether stderr output was captured. Prefer
+      // the captured stderr (errors_) when present; otherwise fall back to the
+      // generic message so the array is never empty.
       std::vector<std::string> messages;
-      messages.push_back(message);
-      messages.insert(messages.end(), errors_.begin(), errors_.end());
+      if (errors_.empty())
+         messages.push_back(message);
+      else
+         messages = errors_;
       jsonError["message"] = json::toJsonArray(messages);
 
       json::Object jsonErrorResponse;
