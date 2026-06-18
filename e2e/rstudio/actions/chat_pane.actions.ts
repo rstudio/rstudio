@@ -183,19 +183,13 @@ export class ChatPaneActions {
   async signInWith(account: PositAiAccount): Promise<void> {
     // The chat pane initially shows "Sign in with Posit AI to get started"
     // with a Sign-In button. Clicking it triggers the IDE's device-code
-    // request to posit.cloud; the pane then transitions to a "Complete
-    // Authentication in Browser" view that renders the user_code and an
-    // "Open Browser to Authorize" button. The code does not exist before
+    // request to posit.cloud; the pane then renders a "Complete
+    // Authentication in Browser" dialog ([role="dialog"], typically via a
+    // React portal *outside* the chat root) containing the user_code and
+    // an "Open Browser to Authorize" button. The code does not exist before
     // this click.
     console.log('signInWith: clicking Sign-In to request a device code');
     await this.chatPane.signInBtn.first().click();
-
-    // Wait for the device-code screen. The "Open Browser to Authorize" button
-    // is the clear signal that the user_code is rendered. Use a generous
-    // timeout -- the IDE has to round-trip with posit.cloud's backend.
-    await this.chatPane.frame
-      .getByRole('button', { name: /Open Browser to Authorize/i })
-      .waitFor({ state: 'visible', timeout: 30_000 });
 
     const userCode = await this.extractVerificationCode();
     const url = buildPositVerificationUrl(userCode);
@@ -231,33 +225,40 @@ export class ChatPaneActions {
   }
 
   /**
-   * Read the XXXX-XXXX device-flow user_code displayed in the chat pane.
-   * The chat pane lays out the code with extra spaces between characters
-   * for readability ("N V J S - V L M N"), so we collapse whitespace and
-   * search specifically next to the "authentication code:" label rather
-   * than the whole pane text (the pane includes sandbox paths and other
-   * incidental hyphenated tokens like USER-HOME that would otherwise
-   * regex-match first).
+   * Read the XXXX-XXXX device-flow user_code from the "Complete
+   * Authentication in Browser" dialog. The dialog is rendered as a
+   * [role="dialog"] (typically through a React portal outside chatRoot, so
+   * chatRoot.textContent() does not include the code) and contains a
+   * separate text element holding the canonical XXXX-XXXX value -- locate
+   * it directly via that text pattern, scoped to the dialog so unrelated
+   * hyphenated tokens elsewhere in the iframe (sandbox paths, config keys,
+   * etc.) can't false-match.
+   *
+   * The wait is built into the locator: the code text is bound after the
+   * IDE gets its device-code response from posit.cloud, which can lag the
+   * dialog and "Open Browser" button by a few hundred ms, so waiting for
+   * the code element itself avoids that race.
    */
   private async extractVerificationCode(): Promise<string> {
-    const text = (await this.chatPane.chatRoot.textContent()) ?? '';
-    // Match "authentication code" label, then capture the next visible XXXX-XXXX
-    // group (allowing intervening whitespace because the IDE spaces the code
-    // characters out visually).
-    const labelMatch = text.match(
-      /authentication\s+code\s*:?\s*([A-Z0-9](?:\s*[A-Z0-9]){3}\s*-\s*[A-Z0-9](?:\s*[A-Z0-9]){3})/i,
-    );
-    if (labelMatch) {
-      const code = labelMatch[1].replace(/\s+/g, '').toUpperCase();
-      if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
-        return code;
-      }
+    const dialog = this.chatPane.frame
+      .locator('[role="dialog"]')
+      .filter({ hasText: 'Complete Authentication in Browser' });
+    const codeLocator = dialog.getByText(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    try {
+      await codeLocator.waitFor({ state: 'visible', timeout: 30_000 });
+    } catch {
+      throw new Error(
+        'signInWith: device-code dialog did not render a XXXX-XXXX user_code within 30s. ' +
+        'Either the IDE failed to reach posit.cloud, or posit.cloud changed the dialog format.'
+      );
     }
-    throw new Error(
-      'signInWith: could not find an "authentication code: XXXX-XXXX" pattern in the chat pane. ' +
-      'Either the IDE is on a different sign-in screen, or login.posit.cloud ' +
-      'changed the displayed code format.'
-    );
+    const code = (await codeLocator.textContent())?.trim().toUpperCase();
+    if (!code || !/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+      throw new Error(
+        `signInWith: extracted code "${code}" does not match XXXX-XXXX format`,
+      );
+    }
+    return code;
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
