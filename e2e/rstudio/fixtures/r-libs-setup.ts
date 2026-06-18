@@ -281,6 +281,11 @@ export function workerRLibsUser(): string {
 
   const templateExpanded = process.env[RSTUDIO_R_LIBS_TEMPLATE_ENV];
   if (!templateExpanded) {
+    console.warn(
+      `[r-libs] ${TOTAL_WORKERS_ENV}=${totalWorkers} but ${RSTUDIO_R_LIBS_TEMPLATE_ENV} is unset ` +
+        `(prep skipped or expansion failed); falling back to the shared library. ` +
+        `Per-worker hermetic isolation is OFF -- uninstall/reinstall tests may race across workers.`,
+    );
     return template;
   }
 

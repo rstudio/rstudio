@@ -53,7 +53,15 @@ function workerUserHome(): string {
   const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
   const home = path.join(sandboxRoot(), `user-home-${idx}`);
   if (!fs.existsSync(home)) {
-    fs.cpSync(template, home, { recursive: true });
+    // Copy into a temp sibling and atomically rename, so a crash mid-copy can't
+    // leave a partial HOME that later reads as complete (missing seeded AI creds
+    // / Windows AppData scaffold). The parallel index is exclusive to one worker
+    // process at a time, so the temp name only needs to be unique against a
+    // prior aborted attempt.
+    const tmp = `${home}.partial`;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.cpSync(template, tmp, { recursive: true });
+    fs.renameSync(tmp, home);
   }
   return home;
 }

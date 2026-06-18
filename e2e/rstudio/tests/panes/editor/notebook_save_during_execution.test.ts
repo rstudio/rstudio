@@ -18,6 +18,9 @@ test.describe('Notebook save during execution', { tag: ['@parallel_safe'] }, () 
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache install can outrun the 120s global timeout; give this hook
+    // the headroom its ensurePackages() call needs.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
 

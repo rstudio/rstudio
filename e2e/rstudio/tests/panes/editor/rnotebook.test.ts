@@ -47,8 +47,8 @@ test.describe('R Notebook', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // A cold-cache package install can outlast the global per-test timeout;
-    // keep the headroom this install hook's ensurePackages() budget assumes.
+    // A cold-cache install can outrun the 120s global timeout; give this hook
+    // the headroom its ensurePackages() call needs.
     test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
