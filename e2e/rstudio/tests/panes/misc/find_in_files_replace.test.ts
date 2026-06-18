@@ -302,6 +302,11 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
     const findPane = page.locator(FIND_PANE);
     await expect(findPane).toContainText('hello.txt', { timeout: TIMEOUTS.fileOpen });
 
+    // Replace is only usable once the find has finished (the stop-search button
+    // is replaced by the refresh button); wait for that so the replace cannot
+    // overlap a still-running find.
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+
     // Switch to Replace mode, enter the replacement, and Replace All.
     await page.locator(REPLACE_MODE_TOGGLE).click();
     const replaceInput = page.locator(REPLACE_INPUT);
@@ -345,6 +350,9 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
 
     const findPane = page.locator(FIND_PANE);
     await expect(findPane).toContainText('real.txt', { timeout: TIMEOUTS.fileOpen });
+
+    // wait for the find to finish before replacing (see note above)
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
 
     await page.locator(REPLACE_MODE_TOGGLE).click();
     const replaceInput = page.locator(REPLACE_INPUT);
@@ -390,6 +398,9 @@ test.describe('Find in Files: Replace All', { tag: ['@desktop_only'] }, () => {
 
     const findPane = page.locator(FIND_PANE);
     await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
+
+    // wait for the find to finish before replacing (see note above)
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
 
     await page.locator(REPLACE_MODE_TOGGLE).click();
     const replaceInput = page.locator(REPLACE_INPUT);

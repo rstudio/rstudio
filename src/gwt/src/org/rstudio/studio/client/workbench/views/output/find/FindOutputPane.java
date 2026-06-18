@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;
@@ -472,14 +473,25 @@ public class FindOutputPane extends WorkbenchPane
    public void enableReplace()
    {
       replaceTextBox_.setReadOnly(false);
-      replaceAllButton_.setEnabled(true);
+      setReplaceAllButtonEnabled(true);
    }
 
    @Override
    public void disableReplace()
    {
       replaceTextBox_.setReadOnly(true);
-      replaceAllButton_.setEnabled(false);
+      setReplaceAllButtonEnabled(false);
+   }
+
+   @Override
+   public void setReplaceAllButtonEnabled(boolean enabled)
+   {
+      replaceAllButton_.setEnabled(enabled);
+
+      // FocusWidget stores the disabled state as a DOM property, which is not
+      // observable as an attribute; mirror it to aria-disabled so the control's
+      // state is exposed to assistive technology (and automated tests)
+      Roles.getButtonRole().setAriaDisabledState(replaceAllButton_.getElement(), !enabled);
    }
 
    @Override
