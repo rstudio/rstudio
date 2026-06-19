@@ -138,7 +138,12 @@ endif()
 # themselves. This makes repeat and git-worktree builds (which otherwise
 # recompile from scratch) reuse cached objects. Off for non-development builds
 # (CI/official packaging) and opt-out via -DRSTUDIO_USE_CCACHE=OFF.
-if(RSTUDIO_DEVELOPMENT AND NOT DEFINED RSTUDIO_USE_CCACHE)
+#
+# CI/package builds opt into sccache explicitly via SCCACHE_ENABLED, which is
+# wired up separately (see cmake/modules/sccache.cmake, included below); defer
+# to it so the two mechanisms never both configure a launcher.
+if(RSTUDIO_DEVELOPMENT AND NOT DEFINED RSTUDIO_USE_CCACHE AND
+   NOT SCCACHE_ENABLED AND NOT "$ENV{SCCACHE_ENABLED}")
    set(RSTUDIO_USE_CCACHE ON)
 endif()
 if(RSTUDIO_USE_CCACHE AND
