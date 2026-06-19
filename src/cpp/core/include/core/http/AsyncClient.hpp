@@ -45,6 +45,9 @@
 #include <core/http/ConnectionRetryProfile.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
+
+#include <boost/optional.hpp>
 
 // special version of unexpected exception handler which makes
 // sure to call the user's ErrorHandler
@@ -594,13 +597,19 @@ private:
       if (chunkedEncoding_)
          return false;
 
-      // distinguish an absent Content-Length from "Content-Length: 0":
-      // contentLength() returns 0 in both cases, but only the latter means the
-      // body is delimited (and already complete)
-      if (response_.headerValue("Content-Length").empty())
+      // only treat the body as Content-Length-delimited when the header is
+      // present and parses to a valid non-negative integer. An absent header
+      // means the body is delimited by connection close, and a malformed value
+      // should likewise fall back to reading until EOF rather than
+      // short-circuiting on a possibly-incomplete body. (contentLength()
+      // returns 0 for both an absent and an unparseable header, so we parse it
+      // explicitly here.)
+      boost::optional<uintmax_t> contentLength =
+         safe_convert::stringTo<uintmax_t>(response_.headerValue("Content-Length"));
+      if (!contentLength)
          return false;
 
-      return response_.body().size() >= response_.contentLength();
+      return response_.body().size() >= *contentLength;
    }
 
    void handleReadHeaders(const boost::system::error_code& ec)
