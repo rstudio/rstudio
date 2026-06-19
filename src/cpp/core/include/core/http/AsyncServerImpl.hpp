@@ -70,6 +70,18 @@ public:
    }
 };
 
+// A resource-exhaustion accept error (out of file descriptors or memory) is
+// handled differently from other accept errors: the server aborts (so it can
+// be respawned) and, while still running, backs off before re-accepting rather
+// than spinning on the still-queued connection. Free function so it can be unit
+// tested without exhausting descriptors (see AsyncServerTests.cpp).
+inline bool isResourceExhaustionError(const boost::system::error_code& ec)
+{
+   return ec.category() == boost::system::system_category() &&
+          (ec.value() == boost::system::errc::too_many_files_open ||
+           ec.value() == boost::system::errc::not_enough_memory);
+}
+
 template <typename ProtocolType>
 class AsyncServerImpl : public AsyncServer, boost::noncopyable
 {
@@ -1039,13 +1051,6 @@ private:
       }
    }
    
-   static bool isResourceExhaustionError(const boost::system::error_code& ec)
-   {
-      return ec.category() == boost::system::system_category() &&
-             (ec.value() == boost::system::errc::too_many_files_open ||
-              ec.value() == boost::system::errc::not_enough_memory);
-   }
-
    void checkForResourceExhaustion(const boost::system::error_code& ec,
                                    const core::ErrorLocation& location)
    {

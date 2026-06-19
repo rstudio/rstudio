@@ -614,6 +614,13 @@ private:
    // the fully-received body gets discarded (see rstudio#17807). When the
    // response is chunked, or declares no Content-Length at all, we must still
    // read until EOF.
+   //
+   // Note: a malformed response carrying both Transfer-Encoding: chunked and a
+   // Content-Length is not treated as chunked here (chunkedEncoding_ is only set
+   // when no Content-Length is present, see handleReadHeaders), so we will honor
+   // its Content-Length. RFC 7230 says Transfer-Encoding wins and Content-Length
+   // must be ignored in that case; we don't, but this only affects a malformed
+   // peer and matches the pre-existing chunked-detection behavior.
    bool responseBodyComplete() const
    {
       if (chunkedEncoding_)
@@ -910,8 +917,13 @@ private:
       if (ec == boost::asio::error::operation_aborted)
          return;
 
-      // if the request already settled, its handlers were cleared by
-      // disableHandlers() and there is nothing left to time out
+      // fast-path: if the request already settled, its handlers were cleared by
+      // disableHandlers() and there is nothing left to time out. this is only an
+      // advisory short-circuit -- disableHandlers() may run off the io_context
+      // (see cancelRequestDeadline), so this read of the handler members is not
+      // strictly synchronized. it is safe regardless of how it races: the
+      // authoritative single-settle guard is the mutex-protected closed_ flag in
+      // handleError() below, which is what actually prevents a double-settle
       if (!responseHandler_ && !errorHandler_ && !chunkHandler_)
          return;
 

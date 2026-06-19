@@ -1,7 +1,7 @@
 /*
  * AsyncServerTests.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -13,12 +13,15 @@
  *
  */
 
-// Smoke coverage for AsyncServerImpl's accept loop. The resource-exhaustion
-// backoff (handleAccept -> scheduleAcceptRetry) can't be triggered
-// deterministically without exhausting file descriptors, so this instead
-// exercises the normal accept/serve path end-to-end -- which also forces the
-// server template (including the backoff branch) to compile and confirms the
-// refactor did not break ordinary request handling.
+// Coverage for AsyncServerImpl's accept loop.
+//
+// The resource-exhaustion backoff (handleAccept -> scheduleAcceptRetry) can't
+// be triggered deterministically without exhausting file descriptors, so it is
+// covered in two narrower ways: a direct unit test of the classification
+// predicate (isResourceExhaustionError) that selects the backoff path, and a
+// normal accept/serve round-trip that forces the server template -- including
+// the backoff branch -- to compile and confirms ordinary request handling was
+// not broken by the refactor.
 
 #include <chrono>
 #include <string>
@@ -49,6 +52,35 @@ void handlePing(const http::Request& request, http::Response* pResponse)
 }
 
 } // anonymous namespace
+
+// The predicate that decides whether an accept error triggers the backoff path:
+// only EMFILE/ENOMEM in the system category, and nothing else.
+TEST(AsyncServerResourceExhaustion, ClassifiesResourceErrors)
+{
+   using boost::system::error_code;
+   using boost::system::system_category;
+   using boost::system::generic_category;
+   namespace errc = boost::system::errc;
+
+   // the two resource-exhaustion errors we back off on
+   EXPECT_TRUE(isResourceExhaustionError(
+      error_code(errc::too_many_files_open, system_category())));
+   EXPECT_TRUE(isResourceExhaustionError(
+      error_code(errc::not_enough_memory, system_category())));
+
+   // unrelated system errors are not resource exhaustion
+   EXPECT_FALSE(isResourceExhaustionError(
+      error_code(errc::connection_reset, system_category())));
+   EXPECT_FALSE(isResourceExhaustionError(
+      error_code(errc::operation_canceled, system_category())));
+
+   // a success code (no error) is not resource exhaustion
+   EXPECT_FALSE(isResourceExhaustionError(error_code()));
+
+   // the right value but the wrong category must not match
+   EXPECT_FALSE(isResourceExhaustionError(
+      error_code(errc::too_many_files_open, generic_category())));
+}
 
 TEST(AsyncServerSmoke, ServesABasicRequest)
 {
