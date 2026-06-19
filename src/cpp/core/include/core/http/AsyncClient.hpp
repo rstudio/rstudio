@@ -580,6 +580,29 @@ private:
       return false;
    }
 
+   // A non-chunked response that carries a Content-Length is fully received
+   // once the accumulated body reaches that length. Detecting this lets us
+   // stop reading immediately instead of depending on the server to close the
+   // connection (EOF) to signal the end of the body. Some servers and proxies
+   // keep the socket open even when the client asked for "Connection: close",
+   // which would otherwise stall the read until the caller's timeout fires and
+   // the fully-received body gets discarded (see rstudio#17807). When the
+   // response is chunked, or declares no Content-Length at all, we must still
+   // read until EOF.
+   bool responseBodyComplete() const
+   {
+      if (chunkedEncoding_)
+         return false;
+
+      // distinguish an absent Content-Length from "Content-Length: 0":
+      // contentLength() returns 0 in both cases, but only the latter means the
+      // body is delimited (and already complete)
+      if (response_.headerValue("Content-Length").empty())
+         return false;
+
+      return response_.body().size() >= response_.contentLength();
+   }
+
    void handleReadHeaders(const boost::system::error_code& ec)
    {
       try
@@ -613,6 +636,14 @@ private:
             if (responseBuffer_.size() > 0)
                ResponseParser::appendToBody(&responseBuffer_, &response_);
 
+            // a Content-Length-delimited body may have arrived in full along
+            // with the headers; if so respond now rather than reading further
+            if (responseBodyComplete())
+            {
+               closeAndRespond();
+               return;
+            }
+
             // start reading content
             readSomeContent();
          }
@@ -640,6 +671,14 @@ private:
 
             // copy content
             ResponseParser::appendToBody(&responseBuffer_, &response_);
+
+            // stop once a Content-Length-delimited body is fully received,
+            // rather than waiting for the connection to close
+            if (responseBodyComplete())
+            {
+               closeAndRespond();
+               return;
+            }
 
             // continue reading content
             readSomeContent();
