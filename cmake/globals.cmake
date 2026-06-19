@@ -133,6 +133,41 @@ if(NOT RSTUDIO_TARGET)
 
 endif()
 
+# For development builds, route compilation through ccache when it is available
+# and the user has not configured a launcher themselves. This makes repeat and
+# git-worktree builds (which otherwise recompile from scratch) reuse cached
+# objects. Off for non-development builds (CI/official packaging) and opt-out via
+# -DRSTUDIO_USE_CCACHE=OFF.
+if(RSTUDIO_DEVELOPMENT AND NOT DEFINED RSTUDIO_USE_CCACHE)
+   set(RSTUDIO_USE_CCACHE ON)
+endif()
+if(RSTUDIO_USE_CCACHE AND
+   NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER AND
+   NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
+   find_program(CCACHE_EXECUTABLE ccache)
+   if(CCACHE_EXECUTABLE)
+      # Confirm this is genuine ccache before using it as a compiler launcher. A
+      # 'ccache' on PATH is sometimes actually sccache (or another shim) that
+      # rejects the -E compiler-feature probes CMake runs for bundled
+      # dependencies, which breaks the build outright. ccache --version prints
+      # "ccache version ..."; sccache prints "sccache ..." (note: "sccache"
+      # contains "ccache", so anchor the match).
+      execute_process(
+         COMMAND "${CCACHE_EXECUTABLE}" --version
+         OUTPUT_VARIABLE CCACHE_VERSION_OUTPUT
+         ERROR_QUIET
+         OUTPUT_STRIP_TRAILING_WHITESPACE
+         RESULT_VARIABLE CCACHE_VERSION_RESULT)
+      if(CCACHE_VERSION_RESULT EQUAL 0 AND CCACHE_VERSION_OUTPUT MATCHES "^ccache")
+         set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE STRING "")
+         set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE STRING "")
+         message(STATUS "Using ccache: ${CCACHE_EXECUTABLE}")
+      else()
+         message(STATUS "Skipping compiler cache: '${CCACHE_EXECUTABLE}' is not genuine ccache")
+      endif()
+   endif()
+endif()
+
 # set desktop and server build flags
 if(NOT DEFINED RSTUDIO_SERVER)
    if(NOT WIN32 AND (RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server"))
@@ -306,6 +341,20 @@ endif()
 # look for dependencies in the source folder if not installed globally
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
+endif()
+
+# When building from a secondary git worktree, downloaded dependencies are not
+# present in this checkout -- they are gitignored, so they only ever live in the
+# primary checkout. If the resolved dependencies directory has no downloaded
+# content, borrow the primary worktree's instead so worktree builds work without
+# a re-install or manual symlink (mirrors src/gwt/build.xml).
+if(NOT WIN32 AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/node")
+   include("${CMAKE_CURRENT_LIST_DIR}/git-worktree.cmake")
+   if(RSTUDIO_GIT_MAIN_WORKTREE AND
+      EXISTS "${RSTUDIO_GIT_MAIN_WORKTREE}/dependencies/common/node")
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_GIT_MAIN_WORKTREE}/dependencies")
+      message(STATUS "Using primary-worktree dependencies: ${RSTUDIO_DEPENDENCIES_DIR}")
+   endif()
 endif()
 
 # tools

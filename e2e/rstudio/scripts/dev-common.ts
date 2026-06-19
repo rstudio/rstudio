@@ -3,12 +3,58 @@
 // that a `npm run test:*-dev` invocation actually exercises the user's
 // uncommitted changes.
 
-import { spawn, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export const REPO_ROOT = path.resolve(__dirname, '../../..');
 export const BUILD_DIR = path.join(REPO_ROOT, 'build');
+
+// The pinned node toolchain version (keep in sync with RSTUDIO_NODE_VERSION in
+// dependencies/tools/rstudio-tools.sh and the cmake/ant builds).
+const PINNED_NODE_VERSION = '22.22.2';
+
+// Resolve the primary git worktree (main checkout). Downloaded deps are
+// gitignored, so a secondary worktree must borrow them from the primary --
+// matching the resolution in cmake/git-worktree.cmake and src/gwt/build.xml.
+function gitMainWorktree(): string | null {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    }).trim();
+    return out ? path.dirname(out) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Locate the pinned node's bin directory: this checkout, then the primary
+// worktree, then the global tools location. Returns null if none has it.
+export function pinnedNodeBinDir(): string | null {
+  const arch = process.arch === 'arm64' ? '-arm64' : '';
+  const rel = path.join('dependencies', 'common', 'node', `${PINNED_NODE_VERSION}${arch}`, 'bin');
+  const roots = [REPO_ROOT, gitMainWorktree(), '/opt/rstudio-tools'].filter(
+    (r): r is string => !!r,
+  );
+  const exe = process.platform === 'win32' ? 'node.exe' : 'node';
+  for (const root of roots) {
+    const bin = path.join(root, rel);
+    if (fs.existsSync(path.join(bin, exe)))
+      return bin;
+  }
+  return null;
+}
+
+// process.env.PATH with the pinned node bin prepended, so spawned npm /
+// electron-forge / npx use the project's node rather than whatever is on the
+// developer's system PATH (a mismatched system node breaks npm postinstall).
+export function pathWithPinnedNode(): string {
+  const sep = path.delimiter;
+  const current = process.env.PATH ?? '';
+  const bin = pinnedNodeBinDir();
+  return bin ? `${bin}${sep}${current}` : current;
+}
 
 // The e2e/rstudio directory (where the npm scripts run and where Playwright
 // writes its reports). Resolved from this script's location so it's correct
@@ -308,7 +354,7 @@ export function runPlaywright(
 
   const child = spawn(npx, args, {
     stdio: 'inherit',
-    env: { ...process.env, ...reportEnv, ...env },
+    env: { ...process.env, PATH: pathWithPinnedNode(), ...reportEnv, ...env },
     // POSIX: give the child its own process group so a terminal Ctrl-C is
     // delivered only to this launcher, not also straight to the child group.
     // The launcher then forwards a single, well-timed signal (see below)

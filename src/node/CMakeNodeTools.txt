@@ -27,15 +27,24 @@ endif()
 
 # set cmake env vars for node (NODEJS) and node tools, like YARN, and NPM
 
+# resolve the primary git worktree so a secondary worktree (whose downloaded
+# deps are gitignored and hence empty) can borrow the primary checkout's node
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/git-worktree.cmake")
+set(RSTUDIO_WORKTREE_NODE_DIR "")
+if(RSTUDIO_GIT_MAIN_WORKTREE)
+   set(RSTUDIO_WORKTREE_NODE_DIR "${RSTUDIO_GIT_MAIN_WORKTREE}/dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+endif()
+
 if(APPLE AND UNAME_M STREQUAL arm64)
 
    # make sure we're using arm64 binaries of node / npm for arm64 builds
-   set(NODEJS 
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/node")
-   set(NPM 
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npm")
-   set(NPX 
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npx")
+   set(NODE_BIN_DIR "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin")
+   if(NOT EXISTS "${NODE_BIN_DIR}" AND RSTUDIO_WORKTREE_NODE_DIR)
+      set(NODE_BIN_DIR "${RSTUDIO_WORKTREE_NODE_DIR}-arm64/bin")
+   endif()
+   set(NODEJS "${NODE_BIN_DIR}/node")
+   set(NPM    "${NODE_BIN_DIR}/npm")
+   set(NPX    "${NODE_BIN_DIR}/npx")
 
 else()
 
@@ -46,7 +55,8 @@ else()
       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${RSTUDIO_WORKTREE_NODE_DIR}")
 
    find_program(NPM
       NAMES npm
@@ -55,7 +65,8 @@ else()
       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${RSTUDIO_WORKTREE_NODE_DIR}")
 
    find_program(NPX
       NAMES npx
@@ -64,7 +75,8 @@ else()
       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${RSTUDIO_WORKTREE_NODE_DIR}")
 
 endif()
    
