@@ -109,6 +109,7 @@ public class FindOutputPresenter extends BasePresenter
       void setReplaceAllButtonEnabled(boolean enabled);
       void turnOnReplaceMode();
       void turnOffReplaceMode();
+      void cancelReplacePreview();
 
       void showProgress();
       void hideProgress();
@@ -219,6 +220,14 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
+            // ignore a preview that arrives while a find or replace is already
+            // running: it would stopAndClear the in-flight operation and (after
+            // a Replace All) re-grep the just-modified files, dropping the real
+            // results. The debounced preview is also cancelled when Replace All
+            // starts (cancelReplacePreview); this guards an already-queued event.
+            if (findInProgress_)
+               return;
+
             view_.setRegexPreviewMode(true);
             stopAndClear();
             dialogState_.clearResultsCount();
@@ -315,6 +324,11 @@ public class FindOutputPresenter extends BasePresenter
                      @Override
                      public void execute()
                      {
+                        // drop any queued replace preview before starting: a
+                        // preview firing mid-replace would stopAndClear this
+                        // operation and re-grep the just-modified files (see
+                        // onPreviewReplace), dropping the replace results
+                        view_.cancelReplacePreview();
                         stopAndClear();
                         // the replace runs its own grep; keep Replace All
                         // disabled until it completes (re-enabled when the
