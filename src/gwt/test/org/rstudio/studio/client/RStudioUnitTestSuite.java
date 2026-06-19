@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.model.Da
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
@@ -67,6 +68,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
       suite.addTestSuite(LintItemTests.class);
+      suite.addTestSuite(PackageLinkColumnTests.class);
       suite.addTestSuite(SourceMarkerItemCodecTests.class);
       suite.addTestSuite(TestMocks.class);
       suite.addTestSuite(ApplicationUtilsTests.class);

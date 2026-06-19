@@ -16,7 +16,9 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -84,7 +86,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
          String name = value.getName();
          String version = value.getVersion();
 
-         List<PackageVulnerability> pvList = vulnerabilitiesForPackage(name, version);
+         List<PackageVulnerability> pvList = vulnerabilitiesForPackage(vulns_, name, version);
          if (pvList.isEmpty())
          {
             sb.append(TEMPLATES.renderIconPlaceholder(RESOURCES.styles().iconPlaceholder()));
@@ -105,23 +107,29 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       }
 
       // collect the vulnerabilities affecting this specific (name, version)
-      // pair, sorted by id. each vuln carries its own versions map, so we
-      // drop the ones that don't apply to this row here. SessionPPM.R relies
-      // on this check when concatenating cached vuln lists across libraries
-      // without deduping (see ppm.aggregateVulnsByName).
-      private List<PackageVulnerability> vulnerabilitiesForPackage(String name, String version)
+      // pair, sorted by id. the vulnerability data is keyed by repository, so
+      // we merge matches across every repository key into a single list -- one
+      // icon and dialog per row, rather than one per repository. each vuln
+      // carries its own versions map, so we drop the ones that don't apply to
+      // this row here; SessionPPM.R relies on this check when concatenating
+      // cached vuln lists across libraries without deduping (see
+      // ppm.aggregateVulnsByName). because the same CVE can surface under more
+      // than one repository key, we also dedup by id so it appears only once.
+      static List<PackageVulnerability> vulnerabilitiesForPackage(
+         RepositoryPackageVulnerabilityListMap vulns, String name, String version)
       {
          List<PackageVulnerability> result = new ArrayList<>();
+         Set<String> seenIds = new HashSet<>();
 
-         vulns_.forEach((String key) ->
+         vulns.forEach((String key) ->
          {
-            PackageVulnerabilityListMap pvlMap = vulns_.get(key);
+            PackageVulnerabilityListMap pvlMap = vulns.get(key);
             if (pvlMap == null || isArray(pvlMap) || !pvlMap.has(name))
                return;
 
             for (PackageVulnerability pvItem : pvlMap.get(name).asList())
             {
-               if (pvItem.versions.has(version))
+               if (pvItem.versions.has(version) && seenIds.add(pvItem.id))
                {
                   result.add(pvItem);
                }
@@ -187,7 +195,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
          {
             PackageInfo info = data.get(idx);
             List<PackageVulnerability> pvList =
-               vulnerabilitiesForPackage(info.getName(), info.getVersion());
+               vulnerabilitiesForPackage(vulns_, info.getName(), info.getVersion());
             if (pvList.isEmpty())
                return;
 
