@@ -80,6 +80,8 @@ public:
    virtual http::Request& request() = 0;
    virtual void setConnectionRetryProfile(
          const http::ConnectionRetryProfile& connectionRetryProfile) = 0;
+   virtual void setRequestTimeout(
+         const boost::posix_time::time_duration& requestTimeout) = 0;
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
                         const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
@@ -127,6 +129,19 @@ public:
       connectionRetryContext_.profile = connectionRetryProfile;
    }
 
+   // Set an optional overall request deadline covering connect, handshake, and
+   // response read. Must be set prior to calling execute. When left unset the
+   // request has no deadline of its own -- the connect phase is still bounded
+   // by the subclass's connection timeout, but a peer that completes the
+   // handshake and then stalls would otherwise keep the request in flight
+   // indefinitely (see rstudio#17807). A special or non-positive duration
+   // disables the deadline.
+   virtual void setRequestTimeout(
+         const boost::posix_time::time_duration& requestTimeout)
+   {
+      requestTimeout_ = requestTimeout;
+   }
+
    // Execute the async client
    // The responseHandler will be expected to handle any status that indicates http error, such as 400 or 500 series of codes
    // The errorHandler is called on a low level level error like failure to read or write
@@ -145,6 +160,9 @@ public:
       if (request_.host().empty())
          request_.setHost(getDefaultHostHeader());
 
+      // arm the overall request deadline (no-op unless one was configured)
+      armRequestDeadline();
+
       // connect and write request (implemented in a protocol
       // specific manner by subclassees)
       connectAndWriteRequest();
@@ -159,6 +177,10 @@ public:
    // any pending handlers
    virtual void disableHandlers()
    {
+      // the request has settled (or is being torn down by an embedder); stop
+      // the overall deadline so it can't fire a spurious timeout afterwards
+      cancelRequestDeadline();
+
       responseHandler_ = ResponseHandler();
       errorHandler_ = ErrorHandler();
       chunkHandler_ = ChunkHandler();
@@ -830,6 +852,60 @@ private:
       disableHandlers();
    }
 
+   // Start the overall request deadline, if one was configured via
+   // setRequestTimeout. The timer holds a shared_ptr to us (via the bound
+   // handler) so we stay alive until it fires or its cancellation is delivered.
+   void armRequestDeadline()
+   {
+      if (requestTimeout_.is_special() || requestTimeout_.total_milliseconds() <= 0)
+         return;
+
+      pRequestDeadlineTimer_.reset(new boost::asio::system_timer(
+         ioContext_,
+         std::chrono::milliseconds(requestTimeout_.total_milliseconds())));
+
+      pRequestDeadlineTimer_->async_wait(
+         boost::asio::bind_executor(
+            *pStrand_,
+            boost::bind(&AsyncClient<SocketService>::handleRequestDeadline,
+                        AsyncClient<SocketService>::shared_from_this(),
+                        boost::asio::placeholders::error)));
+   }
+
+   void cancelRequestDeadline()
+   {
+      if (!pRequestDeadlineTimer_)
+         return;
+
+      // never let a cancel failure propagate; disableHandlers() (our caller)
+      // may run from an embedder's destructor path
+      try
+      {
+         pRequestDeadlineTimer_->cancel();
+      }
+      catch (...)
+      {
+      }
+   }
+
+   void handleRequestDeadline(const boost::system::error_code& ec)
+   {
+      // a normal completion cancels the timer, delivering operation_aborted;
+      // nothing actually timed out in that case
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+
+      // if the request already settled, its handlers were cleared by
+      // disableHandlers() and there is nothing left to time out
+      if (!responseHandler_ && !errorHandler_ && !chunkHandler_)
+         return;
+
+      // close the socket and surface a timeout; handleError() drives the
+      // single-settle bookkeeping (closed_), so the subsequently-aborted read
+      // or write completion stays quiet
+      handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));
+   }
+
    void logError(const Error& error) const
    {
       if (logToStderr_)
@@ -887,6 +963,11 @@ private:
    ChunkHandler chunkHandler_;
 
    boost::shared_ptr<ChunkState> chunkState_;
+
+   // optional overall request deadline (connect + handshake + read); unset by
+   // default, configured via setRequestTimeout and armed in execute()
+   boost::posix_time::time_duration requestTimeout_ = boost::posix_time::pos_infin;
+   boost::shared_ptr<boost::asio::system_timer> pRequestDeadlineTimer_;
 
    boost::mutex socketMutex_;
    bool closed_;

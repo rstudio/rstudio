@@ -13,11 +13,15 @@
  *
  */
 
-// Regression coverage for rstudio#17807: AsyncClient must terminate a
-// Content-Length-delimited response once the body is fully received, rather
-// than depending on the server to close the connection (EOF). A server or
-// proxy that keeps the socket open after a complete response would otherwise
-// stall the read until the caller's timeout, discarding the received body.
+// Regression coverage for rstudio#17807 and the related AsyncClient hardening:
+//   - AsyncClient must terminate a Content-Length-delimited response once the
+//     body is fully received, rather than depending on the server to close the
+//     connection (EOF). A server or proxy that keeps the socket open after a
+//     complete response would otherwise stall the read until the deadline,
+//     discarding the received body.
+//   - When an overall request deadline is configured (setRequestTimeout), a
+//     peer that stalls after connecting must surface a timeout error rather
+//     than keeping the request in flight indefinitely.
 
 #include <atomic>
 #include <chrono>
@@ -47,17 +51,20 @@ namespace {
 using boost::asio::ip::tcp;
 
 // A minimal blocking HTTP/1.1 server on its own thread. Accepts a single
-// connection, reads the request headers, and writes back a Content-Length
-// response. It never sends "Connection: close"; when closeAfterResponse is
-// false it holds the socket open, simulating an origin/proxy that keeps the
-// connection alive.
+// connection, reads the request headers, and (when respond is true) writes back
+// a Content-Length response. It never sends "Connection: close"; when
+// closeAfterResponse is false it holds the socket open, simulating an
+// origin/proxy that keeps the connection alive. When respond is false it
+// accepts and then holds the socket open without replying at all, simulating a
+// peer that stalls after the handshake.
 class LocalServer
 {
 public:
-   LocalServer(bool closeAfterResponse, std::string body)
+   LocalServer(bool closeAfterResponse, std::string body, bool respond = true)
       : acceptor_(ioc_, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0)),
         closeAfterResponse_(closeAfterResponse),
-        body_(std::move(body))
+        body_(std::move(body)),
+        respond_(respond)
    {
    }
 
@@ -85,21 +92,26 @@ private:
       boost::asio::streambuf buf;
       boost::asio::read_until(socket, buf, "\r\n\r\n", ec);
 
-      std::string resp =
-         "HTTP/1.1 200 OK\r\n"
-         "Content-Type: application/x-ndjson\r\n"
-         "Content-Length: " + std::to_string(body_.size()) + "\r\n"
-         "\r\n" + body_;
+      if (respond_)
+      {
+         std::string resp =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/x-ndjson\r\n"
+            "Content-Length: " + std::to_string(body_.size()) + "\r\n"
+            "\r\n" + body_;
 
-      boost::asio::write(socket, boost::asio::buffer(resp), ec);
+         boost::asio::write(socket, boost::asio::buffer(resp), ec);
+      }
 
-      if (closeAfterResponse_)
+      if (respond_ && closeAfterResponse_)
       {
          socket.shutdown(tcp::socket::shutdown_both, ec);
          socket.close(ec);
       }
       else
       {
+         // hold the socket open (kept-alive response, or no reply at all) until
+         // the test releases us
          while (!stop_.load())
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
          socket.close(ec);
@@ -110,6 +122,7 @@ private:
    tcp::acceptor acceptor_;
    bool closeAfterResponse_;
    std::string body_;
+   bool respond_;
    std::atomic<bool> stop_{false};
    std::thread thread_;
 };
@@ -125,9 +138,12 @@ struct Outcome
 };
 
 Outcome runScenario(bool closeAfterResponse,
-                    const std::string& responseBody = "{\"name\":\"jsonlite\"}\n")
+                    const std::string& responseBody = "{\"name\":\"jsonlite\"}\n",
+                    bool respond = true,
+                    const boost::posix_time::time_duration& requestTimeout =
+                       boost::posix_time::pos_infin)
 {
-   LocalServer server(closeAfterResponse, responseBody);
+   LocalServer server(closeAfterResponse, responseBody, respond);
    server.start();
 
    boost::asio::io_context ioc;
@@ -136,6 +152,9 @@ Outcome runScenario(bool closeAfterResponse,
       boost::make_shared<TcpIpAsyncClient>(
          ioc, "127.0.0.1", std::to_string(server.port()),
          boost::posix_time::seconds(5));
+
+   if (!requestTimeout.is_special())
+      pClient->setRequestTimeout(requestTimeout);
 
    http::Request& request = pClient->request();
    request.setMethod("POST");
@@ -214,6 +233,22 @@ TEST(AsyncClientContentLength, DeliversEmptyBodyWhenServerKeepsConnectionOpen)
    EXPECT_TRUE(outcome.gotResponse);
    EXPECT_EQ(outcome.statusCode, 200);
    EXPECT_TRUE(outcome.body.empty());
+   EXPECT_FALSE(outcome.timedOut);
+}
+
+// rstudio#17807 (general gap): when setRequestTimeout is configured, a peer
+// that connects and then never responds must surface a timeout error rather
+// than keeping the request in flight forever. The client's own deadline should
+// fire (delivering an error) well before the test's 4s backstop.
+TEST(AsyncClientContentLength, RequestTimeoutFiresWhenServerNeverResponds)
+{
+   Outcome outcome = runScenario(/*closeAfterResponse=*/false,
+                                 /*responseBody=*/"",
+                                 /*respond=*/false,
+                                 /*requestTimeout=*/boost::posix_time::milliseconds(300));
+
+   EXPECT_FALSE(outcome.gotResponse);
+   EXPECT_TRUE(outcome.gotError);
    EXPECT_FALSE(outcome.timedOut);
 }
 
