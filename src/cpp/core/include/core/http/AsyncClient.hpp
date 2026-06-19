@@ -877,15 +877,30 @@ private:
       if (!pRequestDeadlineTimer_)
          return;
 
-      // never let a cancel failure propagate; disableHandlers() (our caller)
-      // may run from an embedder's destructor path
-      try
-      {
-         pRequestDeadlineTimer_->cancel();
-      }
-      catch (...)
-      {
-      }
+      // The timer is otherwise only touched by its own strand-bound async_wait
+      // completion, and a Boost.Asio timer is not safe to access concurrently
+      // from another thread. disableHandlers() (our caller) may run off the
+      // io_context -- e.g. from an embedder's destructor -- so hop onto the
+      // strand to cancel rather than racing the io_context thread. Capture a
+      // shared_ptr to keep both this and the timer alive until the cancel runs;
+      // if the io_context has already stopped the cancel simply never runs (and
+      // neither would the deadline). The try/catch guards against cancel
+      // throwing on the strand thread.
+      boost::shared_ptr<AsyncClient<SocketService> > self =
+         AsyncClient<SocketService>::shared_from_this();
+      boost::shared_ptr<boost::asio::system_timer> pTimer = pRequestDeadlineTimer_;
+
+      boost::asio::post(
+         ioContext_,
+         boost::asio::bind_executor(*pStrand_, [self, pTimer]() {
+            try
+            {
+               pTimer->cancel();
+            }
+            catch (...)
+            {
+            }
+         }));
    }
 
    void handleRequestDeadline(const boost::system::error_code& ec)
