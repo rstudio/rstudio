@@ -133,38 +133,65 @@ if(NOT RSTUDIO_TARGET)
 
 endif()
 
-# For development builds, route compilation through ccache when it is available
-# and the user has not configured a launcher themselves. This makes repeat and
-# git-worktree builds (which otherwise recompile from scratch) reuse cached
-# objects. Off for non-development builds (CI/official packaging) and opt-out via
-# -DRSTUDIO_USE_CCACHE=OFF.
+# For development builds, route compilation through a compiler cache (ccache or
+# sccache) when one is available and the user has not configured a launcher
+# themselves. This makes repeat and git-worktree builds (which otherwise
+# recompile from scratch) reuse cached objects. Off for non-development builds
+# (CI/official packaging) and opt-out via -DRSTUDIO_USE_CCACHE=OFF.
 if(RSTUDIO_DEVELOPMENT AND NOT DEFINED RSTUDIO_USE_CCACHE)
    set(RSTUDIO_USE_CCACHE ON)
 endif()
 if(RSTUDIO_USE_CCACHE AND
    NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER AND
    NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
-   find_program(CCACHE_EXECUTABLE ccache)
+
+   # Search the architecture-appropriate Homebrew prefix first so a native tool
+   # is preferred over, e.g., an x86_64 binary in the Intel-Homebrew tree
+   # (/usr/local) on Apple Silicon.
+   if(APPLE AND UNAME_M STREQUAL "arm64")
+      set(RSTUDIO_HOMEBREW_BIN "/opt/homebrew/bin")
+   else()
+      set(RSTUDIO_HOMEBREW_BIN "/usr/local/bin")
+   endif()
+
+   # ccache and sccache both work as compiler launchers ("<tool> <compiler>
+   # <args>"); prefer ccache, fall back to sccache. Validate each via --version
+   # with an anchored match: this rejects a 'ccache' that is really a symlink to
+   # sccache (its --version reports "sccache ...", and sccache invoked under the
+   # name 'ccache' misparses cmake's -E probes and breaks the build). When that
+   # happens we still find the real sccache by its own name below and use it.
+   set(RSTUDIO_COMPILER_CACHE "")
+
+   find_program(CCACHE_EXECUTABLE NAMES ccache HINTS "${RSTUDIO_HOMEBREW_BIN}")
    if(CCACHE_EXECUTABLE)
-      # Confirm this is genuine ccache before using it as a compiler launcher. A
-      # 'ccache' on PATH is sometimes actually sccache (or another shim) that
-      # rejects the -E compiler-feature probes CMake runs for bundled
-      # dependencies, which breaks the build outright. ccache --version prints
-      # "ccache version ..."; sccache prints "sccache ..." (note: "sccache"
-      # contains "ccache", so anchor the match).
       execute_process(
          COMMAND "${CCACHE_EXECUTABLE}" --version
-         OUTPUT_VARIABLE CCACHE_VERSION_OUTPUT
-         ERROR_QUIET
-         OUTPUT_STRIP_TRAILING_WHITESPACE
-         RESULT_VARIABLE CCACHE_VERSION_RESULT)
-      if(CCACHE_VERSION_RESULT EQUAL 0 AND CCACHE_VERSION_OUTPUT MATCHES "^ccache")
-         set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE STRING "")
-         set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE STRING "")
-         message(STATUS "Using ccache: ${CCACHE_EXECUTABLE}")
-      else()
-         message(STATUS "Skipping compiler cache: '${CCACHE_EXECUTABLE}' is not genuine ccache")
+         OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
+         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+         RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
+      if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^ccache")
+         set(RSTUDIO_COMPILER_CACHE "${CCACHE_EXECUTABLE}")
       endif()
+   endif()
+
+   if(NOT RSTUDIO_COMPILER_CACHE)
+      find_program(SCCACHE_EXECUTABLE NAMES sccache HINTS "${RSTUDIO_HOMEBREW_BIN}")
+      if(SCCACHE_EXECUTABLE)
+         execute_process(
+            COMMAND "${SCCACHE_EXECUTABLE}" --version
+            OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
+         if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^sccache")
+            set(RSTUDIO_COMPILER_CACHE "${SCCACHE_EXECUTABLE}")
+         endif()
+      endif()
+   endif()
+
+   if(RSTUDIO_COMPILER_CACHE)
+      set(CMAKE_C_COMPILER_LAUNCHER "${RSTUDIO_COMPILER_CACHE}" CACHE STRING "")
+      set(CMAKE_CXX_COMPILER_LAUNCHER "${RSTUDIO_COMPILER_CACHE}" CACHE STRING "")
+      message(STATUS "Using compiler cache: ${RSTUDIO_COMPILER_CACHE}")
    endif()
 endif()
 
