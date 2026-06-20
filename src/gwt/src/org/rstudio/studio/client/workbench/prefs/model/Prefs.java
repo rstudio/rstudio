@@ -161,9 +161,10 @@ public abstract class Prefs
          // Skip the project layer if it exists by starting at the user layer.
          for (int i = userLayer(); i >= 0; i--)
          {
-            if (layers_.get(i).getValues().hasKey(name_))
+            JsObject values = layerValues(i);
+            if (values != null && values.hasKey(name_))
             {
-               return doGetValue(layers_.get(i).getValues());
+               return doGetValue(values);
             }
          }
          return defaultValue_;
@@ -178,53 +179,61 @@ public abstract class Prefs
 
       public void setGlobalValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(userLayer()).getValues(), value, fireEvents);
+         JsObject values = layerValues(userLayer());
+         if (values == null)
+            return;
+         setValue(values, value, fireEvents);
       }
-      
+
       public void removeGlobalValue(boolean fireEvents)
       {
          boolean wasUnset = false;
-         
+
          for (int i = userLayer(); i >= 0; i--)
          {
-            JsObject layer = layers_.get(i).getValues();
-            if (layer.hasKey(name_))
+            JsObject layer = layerValues(i);
+            if (layer != null && layer.hasKey(name_))
             {
                layer.unset(name_);
                wasUnset = true;
             }
          }
-         
+
          if (fireEvents && wasUnset)
             ValueChangeEvent.fire(this, getValue());
       }
-      
+
       public T getProjectValue()
       {
-         JsObject projValues = layers_.get(projectLayer()).getValues();
+         JsObject projValues = layerValues(projectLayer());
+         if (projValues == null)
+            return defaultValue_;
          return doGetValue(projValues);
       }
 
       public boolean hasProjectValue()
       {
-         JsObject projValues = layers_.get(projectLayer()).getValues();
-         return projValues.hasKey(name_);
+         JsObject projValues = layerValues(projectLayer());
+         return projValues != null && projValues.hasKey(name_);
       }
-      
+
       public void setProjectValue(T value)
       {
          setProjectValue(value, true);
       }
-      
+
       public void setProjectValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(projectLayer()).getValues(), value, fireEvents);
+         JsObject projValues = layerValues(projectLayer());
+         if (projValues == null)
+            return;
+         setValue(projValues, value, fireEvents);
       }
-      
+
       public void removeProjectValue(boolean fireEvents)
       {
-         JsObject projValues = layers_.get(projectLayer()).getValues();
-         if (projValues.hasKey(name_))
+         JsObject projValues = layerValues(projectLayer());
+         if (projValues != null && projValues.hasKey(name_))
          {
             projValues.unset(name_);
             if (fireEvents)
@@ -434,6 +443,23 @@ public abstract class Prefs
    
    public abstract int userLayer();
    public abstract int projectLayer();
+
+   // Returns the values for the pref layer at the given index, or null if that
+   // layer is not present. The pref layers can momentarily be incomplete during
+   // startup (e.g. if a bootstrap RPC fails before they are fully populated);
+   // callers that index directly into layers_ must tolerate a missing layer
+   // rather than dereferencing undefined. See #18019.
+   private JsObject layerValues(int index)
+   {
+      if (index < 0 || index >= layers_.length())
+         return null;
+
+      PrefLayer layer = layers_.get(index);
+      if (layer == null)
+         return null;
+
+      return layer.getValues();
+   }
 
    @SuppressWarnings("unchecked")
    protected PrefValue<Boolean> bool(
