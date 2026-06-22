@@ -71,10 +71,11 @@ public:
 };
 
 // A resource-exhaustion accept error (out of file descriptors or memory) is
-// handled differently from other accept errors: the server aborts (so it can
-// be respawned) and, while still running, backs off before re-accepting rather
-// than spinning on the still-queued connection. Free function so it can be unit
-// tested without exhausting descriptors (see AsyncServerTests.cpp).
+// handled differently from other accept errors: rather than spinning on the
+// still-queued connection, the server backs off before re-accepting (and, when
+// abortOnResourceError_ is set, aborts first so it can be respawned). Free
+// function so it can be unit tested without exhausting descriptors (see
+// AsyncServerTests.cpp).
 inline bool isResourceExhaustionError(const boost::system::error_code& ec)
 {
    return ec.category() == boost::system::system_category() &&

@@ -616,9 +616,9 @@ private:
    // read until EOF.
    //
    // Note: a malformed response carrying both Transfer-Encoding: chunked and a
-   // Content-Length is not treated as chunked here (chunkedEncoding_ is only set
-   // when no Content-Length is present, see handleReadHeaders), so we will honor
-   // its Content-Length. RFC 7230 says Transfer-Encoding wins and Content-Length
+   // non-zero Content-Length is not treated as chunked here (chunkedEncoding_ is
+   // only set when Content-Length is absent or zero, see handleReadHeaders), so
+   // we will honor its Content-Length. RFC 7230 says Transfer-Encoding wins and
    // must be ignored in that case; we don't, but this only affects a malformed
    // peer and matches the pre-existing chunked-detection behavior.
    bool responseBodyComplete() const
@@ -904,8 +904,10 @@ private:
             {
                pTimer->cancel();
             }
-            catch (...)
+            catch (const boost::system::system_error& e)
             {
+               LOG_DEBUG_MESSAGE(std::string("error cancelling AsyncClient request deadline: ") +
+                                 e.what());
             }
          }));
    }
@@ -917,19 +919,11 @@ private:
       if (ec == boost::asio::error::operation_aborted)
          return;
 
-      // fast-path: if the request already settled, its handlers were cleared by
-      // disableHandlers() and there is nothing left to time out. this is only an
-      // advisory short-circuit -- disableHandlers() may run off the io_context
-      // (see cancelRequestDeadline), so this read of the handler members is not
-      // strictly synchronized. it is safe regardless of how it races: the
-      // authoritative single-settle guard is the mutex-protected closed_ flag in
-      // handleError() below, which is what actually prevents a double-settle
-      if (!responseHandler_ && !errorHandler_ && !chunkHandler_)
-         return;
-
-      // close the socket and surface a timeout; handleError() drives the
-      // single-settle bookkeeping (closed_), so the subsequently-aborted read
-      // or write completion stays quiet
+      // close the socket and surface a timeout. if the request already settled
+      // (e.g. a late deadline that lost the race with cancellation), handleError()
+      // drives the single-settle bookkeeping via the mutex-protected closed_ flag,
+      // so this becomes a no-op and the subsequently-aborted read or write
+      // completion stays quiet
       handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));
    }
 
