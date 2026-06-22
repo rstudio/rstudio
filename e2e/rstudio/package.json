@@ -12,6 +12,9 @@
     "test:report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
   },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
   "dependencies": {
     "@playwright/test": "1.59.1",
     "dotenv": "^17.4.2",

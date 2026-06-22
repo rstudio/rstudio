@@ -345,8 +345,9 @@ When documenting R code, use Roxygen style for formatting. For example:
 C++ code is formatted with clang-format. The configuration is in `src/cpp/.clang-format`. Key settings:
 
 - 3-space indentation
-- Allman brace style
+- Allman brace style, except namespaces keep their opening brace on the same line (`namespace x {`)
 - No tabs
+- No column limit: clang-format does not re-wrap long lines, and include/using order and comment prose are left as written. It acts as a brace/indent/spacing normalizer, so running it over existing code stays low-churn.
 
 
 ### TypeScript (Desktop)
