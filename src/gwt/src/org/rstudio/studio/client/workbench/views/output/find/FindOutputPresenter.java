@@ -220,11 +220,12 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
-            // ignore a preview that arrives while a find or replace is already
-            // running: it would stopAndClear the in-flight operation and (after
-            // a Replace All) re-grep the just-modified files, dropping the real
-            // results. The debounced preview is also cancelled when Replace All
-            // starts (cancelReplacePreview); this guards an already-queued event.
+            // ignore a preview that arrives while a find or Replace All is
+            // already running: it would stopAndClear the in-flight operation and
+            // (after a Replace All) re-grep the just-modified files, dropping the
+            // real results. The debounced preview is also cancelled when Replace
+            // All starts (cancelReplacePreview); this guards an already-queued
+            // event.
             if (findInProgress_)
                return;
 
@@ -369,6 +370,22 @@ public class FindOutputPresenter extends BasePresenter
                                                                         dialogState_.isWholeWord(),
                                                                         dialogState_.isRegex(),
                                                                         view_.getReplaceText());
+                                                   }
+
+                                                   @Override
+                                                   public void onError(ServerError error)
+                                                   {
+                                                      // a failed replace fires no
+                                                      // FindOperationEndedEvent, so reset the
+                                                      // in-progress state here; otherwise Replace
+                                                      // All and the regex preview stay disabled
+                                                      // for the rest of the session
+                                                      Debug.logError(error);
+                                                      findInProgress_ = false;
+                                                      stopAndClear();
+                                                      view_.setStopReplaceButtonVisible(false);
+                                                      view_.hideProgress();
+                                                      view_.enableReplace();
                                                    }
                                                 });
                      }
@@ -758,10 +775,13 @@ public class FindOutputPresenter extends BasePresenter
    private String currentFindHandle_;
    // true while a find or replace grep operation is in flight; used to keep the
    // Replace All action disabled until it has finished or been stopped, so a new
-   // replace cannot overlap a still-running one. (A transient replace preview is
-   // intentionally not gated here -- the user keeps editing while it runs, and a
-   // Replace All that supersedes it is made safe by GrepOperation::onStdout in
-   // SessionFind.cpp dropping the stale operation's buffered output.)
+   // replace cannot overlap a still-running one. A transient replace preview does
+   // not itself set this flag -- the user keeps editing while it runs -- but a
+   // preview that arrives while a find or Replace All is in flight is now dropped
+   // in onPreviewReplace, so it cannot stopAndClear the in-flight operation and
+   // re-grep the just-modified files. (A preview superseding an earlier preview
+   // is still handled server-side by GrepOperation::onStdout in SessionFind.cpp
+   // dropping the stale operation's buffered output.)
    private boolean findInProgress_;
    private FindInFilesDialog.State dialogState_;
 

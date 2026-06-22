@@ -16,6 +16,7 @@ package org.rstudio.studio.client;
 
 import org.rstudio.core.client.AnsiCodeTests;
 import org.rstudio.core.client.ConsoleOutputWriterTests;
+import org.rstudio.core.client.DebouncedCommandTests;
 import org.rstudio.core.client.ElementIdsTests;
 import org.rstudio.core.client.SafeHtmlUtilTests;
 import org.rstudio.core.client.StringUtilTests;
@@ -52,6 +53,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(VirtualConsoleTests.class); // SLOW
       suite.addTestSuite(ConsoleOutputWriterTests.class); // SLOW
       suite.addTestSuite(StringUtilTests.class);
+      suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
