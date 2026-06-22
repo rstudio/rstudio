@@ -251,6 +251,7 @@
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
+   <set-if-exists property="panmirror.dir" value="${git.main.worktree}/src/gwt/lib/quarto/apps/panmirror"/>
    <!-- write panmirror to ${www.dir} so it tracks the same output tree as every
         other ant target. cmake passes -Dwww.dir=<build>/gwt/www to redirect
         ant output into the build tree; with the previous hardcoded ./www path
