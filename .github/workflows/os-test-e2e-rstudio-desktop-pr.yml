@@ -23,39 +23,111 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Single change-detection job shared by both platforms. Checks if C++,
-  # CMake, build scripts, or dependencies changed. When only e2e tests or
-  # CI workflows changed, both platforms skip the ~60 min source build and
-  # use the latest daily installer instead.
+  # Single change-detection job shared by both platforms. Decides, per
+  # platform, whether to build from source or test against the latest daily
+  # installer. We only use a daily when ALL of the following hold:
+  #   1. No compiled-binary source changed in this PR (else the daily can't
+  #      contain the change under test).
+  #   2. The daily manifest resolves a usable installer for that platform
+  #      (link + filename + sha256 + commit all present).
+  #   3. The daily was built from a commit that already contains this branch's
+  #      merge-base -- otherwise the daily predates the product behavior the
+  #      (possibly main-merged) test-only branch assumes.
+  # Any miss falls back to a source build, so a stale, broken, or unreachable
+  # daily manifest can never silently run the suite against the wrong binary.
+  # The two platforms are decided independently because the manifest can carry
+  # a different commit per platform.
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      build_from_source: ${{ steps.check.outputs.build_from_source }}
+      macos_build_from_source: ${{ steps.check.outputs.macos_build_from_source }}
+      windows_build_from_source: ${{ steps.check.outputs.windows_build_from_source }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check for source changes requiring a build
+      - name: Decide build-from-source vs daily (per platform)
         id: check
         run: |
           BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
           CHANGED=$(git diff --name-only "$BASE" HEAD)
           echo "Changed files vs merge base with ${{ github.base_ref }}:"
           echo "$CHANGED"
+
           # Build from source when C++, GWT, CMake, build scripts, or
-          # dependencies changed — anything that ends up in the compiled binary.
-          # Matches all of package/ (CMakeLists.txt at the root, and every
-          # per-platform subdir) plus the repo-root CMakeLists.txt so a
-          # packaging or top-level cmake change can't silently fall through
-          # to running tests against a daily.
+          # dependencies changed -- anything that ends up in the compiled
+          # binary. Matches all of package/ (CMakeLists.txt at the root, and
+          # every per-platform subdir) plus the repo-root CMakeLists.txt so a
+          # packaging or top-level cmake change can't silently fall through to
+          # running tests against a daily.
+          SOURCE_CHANGED=false
           if echo "$CHANGED" | grep -qE '^(CMakeLists\.txt$|src/|package/|dependencies/|cmake/)'; then
-            echo "Source files changed — building from source"
-            echo "build_from_source=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No source files changed — using daily installer"
-            echo "build_from_source=false" >> "$GITHUB_OUTPUT"
+            SOURCE_CHANGED=true
           fi
+
+          # Fetch the daily manifest once, up front, so both a broken/missing
+          # manifest and a stale daily resolve to the same safe fallback:
+          # build from source. A non-200 response or a body that doesn't parse
+          # as JSON is normalized to empty so decide() treats it as unreachable
+          # rather than letting a later jq error abort this step.
+          MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json' || echo '')
+          if [ -n "$MANIFEST" ] && ! echo "$MANIFEST" | jq empty 2>/dev/null; then
+            echo "Daily manifest did not parse as JSON -- treating as unreachable"
+            MANIFEST=""
+          fi
+
+          # Echoes "true" (build from source) or "false" (use the daily) for
+          # the electron platform key passed as $1.
+          decide() {
+            local key="$1"
+
+            if [ "$SOURCE_CHANGED" = true ]; then
+              echo "$key: source files changed -- building from source" >&2
+              echo true
+              return
+            fi
+
+            if [ -z "$MANIFEST" ]; then
+              echo "$key: daily manifest unreachable -- building from source" >&2
+              echo true
+              return
+            fi
+
+            local entry link filename sha commit
+            entry=$(echo "$MANIFEST" | jq -c --arg k "$key" '.products.electron.platforms[$k] // empty')
+            link=$(echo "$entry" | jq -r '.link // empty')
+            filename=$(echo "$entry" | jq -r '.filename // empty')
+            sha=$(echo "$entry" | jq -r '.sha256 // empty')
+            commit=$(echo "$entry" | jq -r '.commit // empty')
+            if [ -z "$link" ] || [ -z "$filename" ] || [ -z "$sha" ] || [ -z "$commit" ]; then
+              echo "$key: daily manifest missing fields (link='$link' filename='$filename' sha256='$sha' commit='$commit') -- building from source" >&2
+              echo true
+              return
+            fi
+
+            # The daily's commit must already contain this branch's merge-base,
+            # or it predates the behavior the test-only branch assumes. Fetch
+            # the commit best-effort in case full history isn't local; any
+            # error from --is-ancestor (including an unknown commit) is treated
+            # as "not contained" and falls back to a source build.
+            if ! git cat-file -e "${commit}^{commit}" 2>/dev/null; then
+              git fetch --no-tags --quiet origin "$commit" 2>/dev/null || true
+            fi
+            if git merge-base --is-ancestor "$BASE" "$commit" 2>/dev/null; then
+              echo "$key: daily $commit contains merge-base $BASE -- using daily" >&2
+              echo false
+            else
+              echo "$key: daily $commit does not contain merge-base $BASE -- building from source" >&2
+              echo true
+            fi
+          }
+
+          MACOS=$(decide macos)
+          WINDOWS=$(decide windows)
+          echo "Decision: macos build_from_source=$MACOS, windows build_from_source=$WINDOWS"
+          echo "macos_build_from_source=$MACOS" >> "$GITHUB_OUTPUT"
+          echo "windows_build_from_source=$WINDOWS" >> "$GITHUB_OUTPUT"
 
   windows:
     needs: detect-changes
@@ -63,7 +135,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
-      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.windows_build_from_source) }}
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
@@ -75,7 +147,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
-      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.build_from_source) }}
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.macos_build_from_source) }}
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
