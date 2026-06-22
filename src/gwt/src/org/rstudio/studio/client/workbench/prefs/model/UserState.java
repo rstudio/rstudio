@@ -87,6 +87,13 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
             @Override
             public void onError(ServerError error)
             {
+               // still invoke the continuation on failure so that callers
+               // chaining off writeState() (e.g. workbench bootstrap) are not
+               // left dead-ended by a transient RPC failure (see #18019)
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(false);
+               }
                Debug.logError(error);
             }
          });
