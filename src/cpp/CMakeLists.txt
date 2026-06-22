@@ -451,7 +451,17 @@ endif()
 
 # external libraries
 add_subdirectory(ext)
-include_directories(SYSTEM "${FMT_SOURCE_DIR}/include")
+
+# Make the bundled {fmt} headers available to all targets. We deliberately add
+# this as a normal (non-SYSTEM) include placed BEFORE the other directories,
+# rather than via include_directories(SYSTEM ...). On macOS, clang searches the
+# driver-added /usr/local/include ahead of every -isystem directory, so a stray
+# fmt installed there (e.g. a Homebrew fmt under the /usr/local prefix) would
+# shadow our bundled headers and pull in a different fmt ABI version -- yielding
+# undefined fmt::v<N> symbols at link time against the bundled libfmt. A -I entry
+# is searched before /usr/local/include, so this guarantees the bundled headers
+# win regardless of what is installed on the system.
+include_directories(BEFORE "${FMT_SOURCE_DIR}/include")
 
 # shared library
 add_subdirectory(shared_core)
