@@ -2,7 +2,6 @@ import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
-import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
 import { rStringLiteral } from '../utils/r';
 import { executeCommand } from '../utils/commands';
@@ -254,8 +253,19 @@ export class SourcePaneActions {
     }
 
     await toggle.click();
-    // The first switch to visual mode for a document can raise a confirmation.
-    await clickConfirmIfVisible(this.page, 5000);
+
+    // The first switch to visual mode for a document can raise a confirmation
+    // dialog, but only after the pandoc conversion returns -- a server roundtrip
+    // that on a loaded machine can exceed a fixed dialog-poll window. A separate
+    // short timeout here races that roundtrip and, when it loses, leaves the
+    // modal unconfirmed so the editor never mounts. Instead wait for whichever
+    // appears first -- the dialog or the mounted editor -- then dismiss the
+    // dialog if it showed.
+    const okBtn = this.page.locator('#rstudio_dlg_ok');
+    await expect(proseMirror.first().or(okBtn)).toBeVisible({ timeout: 90000 });
+    if (await okBtn.isVisible().catch(() => false))
+      await okBtn.click();
+
     // Wait for the visual editor to actually mount rather than sleeping a fixed
     // interval: converting a heavier document (a template with chunks/plots)
     // through pandoc takes longer than a blank one, and the old 2s sleep could
