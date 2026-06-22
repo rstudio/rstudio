@@ -45,6 +45,15 @@ public abstract class DebouncedCommand
       suspended_ = true;
    }
 
+   // Cancel a pending (scheduled-but-not-yet-fired) execution without latching
+   // the command off the way suspend() does -- subsequent nudges are still
+   // honored. Used to drop a debounced action that a newer action has made
+   // obsolete (e.g. cancelling a queued replace preview when Replace All runs).
+   public void cancelPending()
+   {
+      timer_.cancel();
+   }
+
    public void resume()
    {
       suspended_ = false;

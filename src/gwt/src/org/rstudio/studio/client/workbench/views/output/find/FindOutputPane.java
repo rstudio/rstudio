@@ -560,6 +560,16 @@ public class FindOutputPane extends WorkbenchPane
          replaceProgress_.setVisible(false);
    }
 
+   @Override
+   public void cancelReplacePreview()
+   {
+      // drop any queued replace preview so it cannot fire after a Replace All
+      // has begun -- a stale preview would stopAndClear the running replace and
+      // re-grep the just-modified files, dropping the real results
+      if (displayPreview_ != null)
+         displayPreview_.cancelPending();
+   }
+
    private void createDisplayPreview()
    {
       displayPreview_ = new DebouncedCommand(500)

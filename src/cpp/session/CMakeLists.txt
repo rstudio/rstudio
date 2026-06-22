@@ -501,6 +501,14 @@ set(RSTUDIO_PANMIRROR_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/pa
 if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
    set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/../src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
 endif()
+# quarto is gitignored, so a secondary git worktree won't have it in its source
+# tree -- fall back to the primary checkout's copy (see cmake/git-worktree.cmake)
+if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   include("${CMAKE_SOURCE_DIR}/cmake/git-worktree.cmake")
+   if(RSTUDIO_GIT_MAIN_WORKTREE)
+      set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_GIT_MAIN_WORKTREE}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+   endif()
+endif()
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts)
 configure_file(${RSTUDIO_PANMIRROR_SCRIPT}
                ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts/ COPYONLY)

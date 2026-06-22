@@ -16,6 +16,7 @@ package org.rstudio.studio.client;
 
 import org.rstudio.core.client.AnsiCodeTests;
 import org.rstudio.core.client.ConsoleOutputWriterTests;
+import org.rstudio.core.client.DebouncedCommandTests;
 import org.rstudio.core.client.ElementIdsTests;
 import org.rstudio.core.client.SafeHtmlUtilTests;
 import org.rstudio.core.client.StringUtilTests;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsTests;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponseTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
@@ -52,6 +54,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(VirtualConsoleTests.class); // SLOW
       suite.addTestSuite(ConsoleOutputWriterTests.class); // SLOW
       suite.addTestSuite(StringUtilTests.class);
+      suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
@@ -73,6 +76,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ProjectMRUEntryTests.class);
       suite.addTestSuite(YamlTreeTests.class);
       suite.addTestSuite(DataImportPreviewResponseTests.class);
+      suite.addTestSuite(PrefsTests.class);
 
       return suite;
    }

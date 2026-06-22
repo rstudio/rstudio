@@ -273,6 +273,11 @@ public class Application implements ApplicationEventHandlers
             // in desktop mode, though unsure why). The automation agent must be initialized
             // after this refresh -- registerPrefs() iterates userPrefs_.allPrefs(), and in desktop
             // mode that returns an incomplete set until the pref refresh has run.
+            // The completion booleans report whether the set_user_state /
+            // set_user_prefs RPCs succeeded, but we deliberately proceed to
+            // build the workbench either way: a transient persistence failure
+            // here must not dead-end startup (see #18019). The RPC error has
+            // already been logged by writeState()/writeUserPrefs().
             userState_.get().writeState(boolArg ->
             {
                userPrefs_.get().writeUserPrefs(boolArg1 ->

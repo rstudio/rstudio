@@ -22,6 +22,7 @@
 - ([#17979](https://github.com/rstudio/rstudio/issues/17979)): Add a "Show Filter UI by default" toggle to the data viewer's Settings menu. When enabled, the filter bar is shown automatically each time a data frame is opened, instead of requiring a click to reveal it.
 - ([#17993](https://github.com/rstudio/rstudio/issues/17993)): Add a "Use overlay scrollbars" toggle to the data viewer's Settings menu. When disabled, the data viewer uses native, always-visible scrollbars instead of the auto-hiding overlay scrollbars.
 - ([#17807](https://github.com/rstudio/rstudio/issues/17807)): Fixed a startup stall and missing package vulnerability badges that could occur when an intermediary (such as a proxy) kept the connection to Posit Package Manager open after responding. RStudio's HTTP client now completes a response as soon as its full Content-Length body has been received, rather than waiting for the connection to close.
+- ([#18019](https://github.com/rstudio/rstudio/issues/18019)): Fixed an issue where a transient connection failure while writing user state during startup could leave the IDE stuck on an empty grey screen.
 
 ### Dependencies
 - Ace 1.43.5

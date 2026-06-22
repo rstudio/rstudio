@@ -108,6 +108,11 @@ NODE_PATH=$(realpath ../../../dependencies/common/node/<VERSION>/bin)
 set(RSTUDIO_NODE_VERSION "<VERSION>")
 ```
 
+**`e2e/rstudio/scripts/dev-common.ts`** (~line 15) — TypeScript constant used by the dev Playwright runners to pin node on PATH:
+```ts
+const PINNED_NODE_VERSION = '<VERSION>';
+```
+
 **`src/node/desktop/.vscode/settings.json`** (~line 81) — JSON string with backslash path separators:
 ```json
 "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\<VERSION>;${env:PATH}"
