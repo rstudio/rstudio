@@ -23,6 +23,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 
@@ -181,7 +182,11 @@ public abstract class Prefs
       {
          JsObject values = layerValues(userLayer());
          if (values == null)
+         {
+            Debug.logWarning("Discarding setGlobalValue for '" + name_ +
+               "': user pref layer (" + userLayer() + ") is not present");
             return;
+         }
          setValue(values, value, fireEvents);
       }
 
@@ -226,7 +231,11 @@ public abstract class Prefs
       {
          JsObject projValues = layerValues(projectLayer());
          if (projValues == null)
+         {
+            Debug.logWarning("Discarding setProjectValue for '" + name_ +
+               "': project pref layer (" + projectLayer() + ") is not present");
             return;
+         }
          setValue(projValues, value, fireEvents);
       }
 
@@ -446,9 +455,15 @@ public abstract class Prefs
 
    // Returns the values for the pref layer at the given index, or null if that
    // layer is not present. The pref layers can momentarily be incomplete during
-   // startup (e.g. if a bootstrap RPC fails before they are fully populated);
-   // callers that index directly into layers_ must tolerate a missing layer
-   // rather than dereferencing undefined. See #18019.
+   // startup (e.g. if a bootstrap RPC fails before they are fully populated).
+   // Accessors that read a fixed layer by position (getGlobalValue,
+   // getProjectValue, setGlobalValue, setProjectValue, removeGlobalValue,
+   // removeProjectValue, hasProjectValue) route through this helper so a missing
+   // layer falls back to the default instead of dereferencing undefined. The
+   // name-iterating accessors (getValue, hasValue, setValue) are already safe by
+   // construction, and getUserLayer() is deliberately left unguarded -- it is
+   // only used by the preferences dialog save path, after the layers are fully
+   // populated. See #18019.
    private JsObject layerValues(int index)
    {
       if (index < 0 || index >= layers_.length())
