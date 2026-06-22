@@ -216,4 +216,18 @@ export class AceEditor extends PageObject {
   async focus(): Promise<void> {
     await this.run((editor) => editor.focus());
   }
+
+  /**
+   * True when the renderer holds active ghost text (the mechanism behind
+   * rstudioapi::setGhostText() and at-cursor completion previews). This is the
+   * internal state Tab acts on, so it can stay set even after the ghost text
+   * is no longer painted. Distinct from the assistant's synthetic ghost-text
+   * tokens, which getTokens() reports.
+   */
+  async hasRendererGhostText(): Promise<boolean> {
+    return this.run((editor) => {
+      const renderer = (editor as unknown as { renderer?: { $ghostText?: unknown } }).renderer;
+      return renderer?.$ghostText != null;
+    });
+  }
 }

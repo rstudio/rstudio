@@ -408,6 +408,11 @@ public class AceEditor implements DocDisplay
       {
          fixVerticalOffsetBug();
          clearLineHighlight();
+
+         // dismiss renderer ghost text (e.g. rstudioapi::setGhostText()) on navigation;
+         // the assistant's synthetic-token suggestions manage their own lifetime (#18033)
+         clearGhostText();
+
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
@@ -416,6 +421,7 @@ public class AceEditor implements DocDisplay
       {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
+         clearGhostText();
       });
 
       widget_.addAttachHandler(event ->
