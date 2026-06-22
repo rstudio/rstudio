@@ -169,10 +169,14 @@ test.describe('Find in Files', () => {
 
     // The preview keeps real_change.txt (its matches change) but drops
     // noop_only.txt entirely, since every match there would be a no-op.
-    // Wait for the debounced preview to complete by asserting the file that
-    // should remain is still present, then check the dropped file is absent.
-    await expect(findPane).toContainText('real_change.txt', { timeout: TIMEOUTS.fileOpen });
-    await expect(findPane).not.toContainText('noop_only.txt');
+    // real_change.txt was already listed by the pre-preview search, so waiting
+    // on it would not gate on the preview. Instead wait for the debounced
+    // preview to actually render -- a replacement marker (<ins>) only appears
+    // once it lands -- then assert the dropped file is gone. The preview's
+    // server-side re-search can exceed the default 5s expect timeout on a loaded
+    // machine, so both waits use the longer fileOpen budget.
+    await expect(findPane.locator('ins').first()).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).not.toContainText('noop_only.txt', { timeout: TIMEOUTS.fileOpen });
   });
 
   test('literal replace preview omits matches whose replacement is identical', async ({ rstudioPage: page }) => {
@@ -226,10 +230,13 @@ test.describe('Find in Files', () => {
 
     // mixed.txt stays (its "Cat" match changes) but allnoop.txt is dropped
     // entirely. The preview inserts (<ins>) exactly one replacement -- for the
-    // "Cat" match -- and not for either no-op "cat".
-    await expect(findPane).toContainText('mixed.txt', { timeout: TIMEOUTS.fileOpen });
+    // "Cat" match -- and not for either no-op "cat". Wait on that insertion
+    // count first: it's the strongest positive signal that the debounced
+    // preview has settled, after which the file present/absent checks are
+    // immediate. (fileOpen budget absorbs preview latency on a loaded machine.)
+    await expect(findPane.locator('ins')).toHaveCount(1, { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).toContainText('mixed.txt');
     await expect(findPane).not.toContainText('allnoop.txt');
-    await expect(findPane.locator('ins')).toHaveCount(1);
   });
 
   test('regex replace preview retains a line mixing no-op and real matches', async ({ rstudioPage: page }) => {
@@ -271,9 +278,11 @@ test.describe('Find in Files', () => {
     await replaceInput.pressSequentially('cat');
 
     // The line is kept (it has a real change) and exactly one replacement is
-    // previewed -- for "cot", not the no-op "cat".
-    await expect(findPane).toContainText('mixed_regex.txt', { timeout: TIMEOUTS.fileOpen });
-    await expect(findPane.locator('ins')).toHaveCount(1);
+    // previewed -- for "cot", not the no-op "cat". Wait on the insertion count
+    // (with the longer fileOpen budget) to let the debounced preview settle;
+    // a transient mid-render can briefly show both matches decorated.
+    await expect(findPane.locator('ins')).toHaveCount(1, { timeout: TIMEOUTS.fileOpen });
+    await expect(findPane).toContainText('mixed_regex.txt');
   });
 });
 
