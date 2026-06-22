@@ -139,6 +139,12 @@ endif()
 # recompile from scratch) reuse cached objects. Off for non-development builds
 # (CI/official packaging) and opt-out via -DRSTUDIO_USE_CCACHE=OFF.
 #
+# Note RSTUDIO_DEVELOPMENT is only set when no RSTUDIO_TARGET was given (the
+# inferred-development case above); a build that passes -DRSTUDIO_TARGET=Development
+# explicitly is intentionally excluded here (pass -DRSTUDIO_USE_CCACHE=ON to opt
+# in). RSTUDIO_DEVELOPMENT is a build-wide toggle (see src/cpp/CMakeLists.txt),
+# so we don't widen it just for the cache.
+#
 # CI/package builds opt into sccache explicitly via SCCACHE_ENABLED, which is
 # wired up separately (see cmake/modules/sccache.cmake, included below); defer
 # to it so the two mechanisms never both configure a launcher.
@@ -160,38 +166,29 @@ if(RSTUDIO_USE_CCACHE AND
    endif()
 
    # ccache and sccache both work as compiler launchers ("<tool> <compiler>
-   # <args>"); prefer ccache, fall back to sccache. Validate each via --version
-   # with an anchored match: this rejects a 'ccache' that is really a symlink to
+   # <args>"); prefer ccache, fall back to sccache (ccache is listed first in the
+   # loop, and we break on the first match). Validate each via --version with an
+   # anchored "^<name>" match: this rejects a 'ccache' that is really a symlink to
    # sccache (its --version reports "sccache ...", and sccache invoked under the
    # name 'ccache' misparses cmake's -E probes and breaks the build). When that
-   # happens we still find the real sccache by its own name below and use it.
+   # happens we fall through and find the genuine sccache by its own name.
    set(RSTUDIO_COMPILER_CACHE "")
 
-   find_program(CCACHE_EXECUTABLE NAMES ccache HINTS "${RSTUDIO_HOMEBREW_BIN}")
-   if(CCACHE_EXECUTABLE)
-      execute_process(
-         COMMAND "${CCACHE_EXECUTABLE}" --version
-         OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
-         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
-         RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
-      if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^ccache")
-         set(RSTUDIO_COMPILER_CACHE "${CCACHE_EXECUTABLE}")
-      endif()
-   endif()
-
-   if(NOT RSTUDIO_COMPILER_CACHE)
-      find_program(SCCACHE_EXECUTABLE NAMES sccache HINTS "${RSTUDIO_HOMEBREW_BIN}")
-      if(SCCACHE_EXECUTABLE)
+   foreach(_cache_name ccache sccache)
+      string(TOUPPER "${_cache_name}" _cache_var)
+      find_program(${_cache_var}_EXECUTABLE NAMES ${_cache_name} HINTS "${RSTUDIO_HOMEBREW_BIN}")
+      if(${_cache_var}_EXECUTABLE)
          execute_process(
-            COMMAND "${SCCACHE_EXECUTABLE}" --version
+            COMMAND "${${_cache_var}_EXECUTABLE}" --version
             OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
             ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
-         if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^sccache")
-            set(RSTUDIO_COMPILER_CACHE "${SCCACHE_EXECUTABLE}")
+         if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
+            set(RSTUDIO_COMPILER_CACHE "${${_cache_var}_EXECUTABLE}")
+            break()
          endif()
       endif()
-   endif()
+   endforeach()
 
    if(RSTUDIO_COMPILER_CACHE)
       set(CMAKE_C_COMPILER_LAUNCHER "${RSTUDIO_COMPILER_CACHE}" CACHE STRING "")

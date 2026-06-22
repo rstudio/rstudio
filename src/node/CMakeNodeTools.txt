@@ -37,14 +37,19 @@ endif()
 
 if(APPLE AND UNAME_M STREQUAL arm64)
 
-   # make sure we're using arm64 binaries of node / npm for arm64 builds
-   set(NODE_BIN_DIR "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin")
-   if(NOT EXISTS "${NODE_BIN_DIR}" AND RSTUDIO_WORKTREE_NODE_DIR)
-      set(NODE_BIN_DIR "${RSTUDIO_WORKTREE_NODE_DIR}-arm64/bin")
+   # make sure we're using arm64 binaries of node / npm for arm64 builds; search
+   # this checkout first, then the primary worktree. Use find_program (like the
+   # else branch) so a missing path leaves the var empty and trips the clear
+   # "not found" error below rather than passing a bogus path on to first use.
+   set(RSTUDIO_NODE_ARM64_PATHS
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64")
+   if(RSTUDIO_WORKTREE_NODE_DIR)
+      list(APPEND RSTUDIO_NODE_ARM64_PATHS "${RSTUDIO_WORKTREE_NODE_DIR}-arm64")
    endif()
-   set(NODEJS "${NODE_BIN_DIR}/node")
-   set(NPM    "${NODE_BIN_DIR}/npm")
-   set(NPX    "${NODE_BIN_DIR}/npx")
+
+   find_program(NODEJS NAMES node NO_DEFAULT_PATH PATH_SUFFIXES "bin" PATHS ${RSTUDIO_NODE_ARM64_PATHS})
+   find_program(NPM    NAMES npm  NO_DEFAULT_PATH PATH_SUFFIXES "bin" PATHS ${RSTUDIO_NODE_ARM64_PATHS})
+   find_program(NPX    NAMES npx  NO_DEFAULT_PATH PATH_SUFFIXES "bin" PATHS ${RSTUDIO_NODE_ARM64_PATHS})
 
 else()
 

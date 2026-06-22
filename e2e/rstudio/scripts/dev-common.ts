@@ -32,7 +32,10 @@ function gitMainWorktree(): string | null {
 // Locate the pinned node's bin directory: this checkout, then the primary
 // worktree, then the global tools location. Returns null if none has it.
 export function pinnedNodeBinDir(): string | null {
-  const arch = process.arch === 'arm64' ? '-arm64' : '';
+  // The '-arm64' dir suffix is a macOS-only convention in this repo (see
+  // rstudio-tools.sh and CMakeNodeTools.txt); on Linux aarch64 node lives in an
+  // unsuffixed dir, so only apply the suffix on Darwin arm64.
+  const arch = process.platform === 'darwin' && process.arch === 'arm64' ? '-arm64' : '';
   const rel = path.join('dependencies', 'common', 'node', `${PINNED_NODE_VERSION}${arch}`, 'bin');
   const roots = [REPO_ROOT, gitMainWorktree(), '/opt/rstudio-tools'].filter(
     (r): r is string => !!r,
@@ -53,7 +56,18 @@ export function pathWithPinnedNode(): string {
   const sep = path.delimiter;
   const current = process.env.PATH ?? '';
   const bin = pinnedNodeBinDir();
-  return bin ? `${bin}${sep}${current}` : current;
+  if (!bin) {
+    // The whole point of this helper is to avoid a mismatched system node, so
+    // leave a breadcrumb when we couldn't find the pinned one and fall back to
+    // whatever PATH already has.
+    console.warn(
+      `warning: pinned node ${PINNED_NODE_VERSION} not found in this checkout, the primary ` +
+        'worktree, or /opt/rstudio-tools; spawned npm/npx will use the system node on PATH ' +
+        '(a mismatched version may break npm postinstall).',
+    );
+    return current;
+  }
+  return `${bin}${sep}${current}`;
 }
 
 // The e2e/rstudio directory (where the npm scripts run and where Playwright
