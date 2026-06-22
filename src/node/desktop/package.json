@@ -27,11 +27,14 @@
   },
   "overrides": {
     "@electron/node-gyp": "npm:node-gyp@^12.0.0",
+    "js-yaml": "^4.2.0",
+    "launch-editor": "^2.14.1",
     "serialize-javascript": "^7.0.5",
     "tar": "^7.5.16",
     "tmp": "^0.2.7",
+    "undici": "^7.28.0",
     "uuid": "$uuid",
-    "webpack-dev-server": "^5.2.4"
+    "webpack-dev-server": "^5.2.5"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.1",
