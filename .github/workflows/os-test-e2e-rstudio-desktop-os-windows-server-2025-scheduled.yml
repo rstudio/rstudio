@@ -18,8 +18,7 @@ jobs:
   run-windows-2025:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
     secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"

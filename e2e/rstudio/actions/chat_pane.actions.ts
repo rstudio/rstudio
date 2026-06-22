@@ -1,9 +1,17 @@
 import type { Page } from 'playwright';
-import { expect } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
 import { executeCommand } from '../utils/commands';
+import {
+  buildPositVerificationUrl,
+  getPositAiAccount,
+  type PositAiAccount,
+} from '../utils/ai-credentials';
 
 export class ChatPaneActions {
   readonly page: Page;
@@ -54,14 +62,16 @@ export class ChatPaneActions {
    * is editable. Until that point, sending a message is a guaranteed failure
    * even when chatRoot is visible, so this is the only real "ready" signal.
    *
-   * Polls (a) clicking through any trust dialog that appears late and (b)
-   * failing fast with an actionable message if a Sign-In button shows up,
-   * since seeded credentials are the only auth path the test harness supports.
-   * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
-   * so seeded copies can be invalidated between globalSetup and test
-   * execution; surfacing that as "sign in on the host and re-run" is more
-   * useful than the cryptic "input not editable after 15s" downstream timeout
-   * each test would otherwise hit.
+   * Polls (a) clicking through any trust dialog that appears late, (b)
+   * driving the device-code OAuth flow when a Sign-In button shows up and
+   * POSIT_AI_EMAIL/POSIT_AI_PASSWORD are available, and (c) failing with an
+   * actionable error if Sign-In is still visible without creds available to
+   * drive it. The host's Posit Assistant rotates the refresh token in
+   * ~/.posit/assistant/store, so seeded copies can be invalidated between
+   * globalSetup and test execution; surfacing that as "sign in on the host or
+   * provide POSIT_AI_EMAIL/POSIT_AI_PASSWORD" is more useful than the cryptic
+   * "input not editable after 15s" downstream timeout each test would
+   * otherwise hit.
    *
    * The TrustOverlay component in databot renders as a role="dialog" with the
    * primary button; the RestrictedModeBadge also has a "Trust this workspace"
@@ -69,20 +79,22 @@ export class ChatPaneActions {
    * blocker) and fall back to any visible match.
    */
   async waitForChatReady(timeout: number = 30000): Promise<void> {
-    const deadline = Date.now() + timeout;
+    let deadline = Date.now() + timeout;
     const overlayTrustBtn = this.chatPane.frame.locator(
       "[role='dialog'] button:has-text('Trust this workspace')"
     );
 
     let iter = 0;
+    let signInAttempted = false;
     while (Date.now() < deadline) {
       iter += 1;
 
-      if (await this.chatPane.isChatInputReady()) {
-        if (iter > 1) console.log(`waitForChatReady: input editable after ${iter} iterations`);
-        return;
-      }
-
+      // Dismiss the Trust Workspace modal first. It renders as a real
+      // aria-modal="true" dialog overlaying the chat iframe; while it's up,
+      // every element behind it (including signInBtn) reports `isVisible`
+      // but is unclickable -- clicks get intercepted by the modal's "Open
+      // in restricted mode" button. Must clear the modal before anything
+      // else can be acted on.
       if (await overlayTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking trust overlay button');
         await overlayTrustBtn.click({ timeout: 5000 });
@@ -99,6 +111,40 @@ export class ChatPaneActions {
         continue;
       }
 
+      // With the trust modal cleared, Sign-In becomes actually clickable.
+      // Check it before isChatInputReady because the pre-sign-in welcome
+      // state renders the tiptap composer with contenteditable=true even
+      // though the welcome panel intercepts pointer events; isChatInputReady
+      // would otherwise return true here and short-circuit the loop before
+      // sign-in could happen.
+      if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
+        if (!signInAttempted) {
+          const account = getPositAiAccount();
+          if (account) {
+            console.log('waitForChatReady: driving device-code sign-in with env credentials');
+            signInAttempted = true;
+            await this.signInWith(account);
+            // signInWith can take 30-50s (waiting for the IDE's device-code
+            // round-trip, then driving the posit.cloud form). After it
+            // returns, give a fresh budget for the IDE-polling phase that
+            // converts "authorized on posit.cloud" into "chat composer is
+            // truly clickable" -- that polling needs its own time.
+            deadline = Math.max(deadline, Date.now() + 30_000);
+            await sleep(500);
+            continue;
+          }
+        }
+        // No creds (or sign-in already tried and didn't clear the button).
+        // Let the deadline expire and the final error message handle it.
+        await sleep(500);
+        continue;
+      }
+
+      if (await this.chatPane.isChatInputReady()) {
+        if (iter > 1) console.log(`waitForChatReady: input editable after ${iter} iterations`);
+        return;
+      }
+
       await sleep(500);
     }
 
@@ -109,8 +155,9 @@ export class ChatPaneActions {
     // polling window.
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
-        'Posit Assistant requires sign-in despite seeded credentials. ' +
-        'Sign in on the host (~/.posit/assistant) and re-run.'
+        'Posit Assistant requires sign-in but no credentials are available. ' +
+        'Either sign in on the host (~/.posit/assistant) or set ' +
+        'POSIT_AI_EMAIL / POSIT_AI_PASSWORD and re-run.'
       );
     }
 
@@ -119,6 +166,172 @@ export class ChatPaneActions {
       `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
       `have stalled.`
     );
+  }
+
+  /**
+   * Drive the Posit device-code OAuth flow at login.posit.cloud using the
+   * supplied account credentials. Extracts the user_code displayed in the
+   * chat pane, launches a separate Chromium browser (necessary because
+   * Electron's CDP context doesn't support Target.createTarget, so
+   * page.context().newPage() throws "Not supported" -- the IDE is attached
+   * to Electron over CDP and we can't add a sibling page inside it), drives
+   * the form, and authorizes the device. Returns once the post-authorize
+   * "Access Authorized" page is visible; the IDE-side polling will detect
+   * the new token within a few seconds and the caller's waitForChatReady
+   * loop will see the composer become editable.
+   *
+   * Selectors are pinned to login.posit.cloud's current UI -- if Posit
+   * redesigns that flow, this method needs to be updated.
+   */
+  async signInWith(account: PositAiAccount): Promise<void> {
+    // The chat pane initially shows "Sign in with Posit AI to get started"
+    // with a Sign-In button. Clicking it triggers the IDE's device-code
+    // request to posit.cloud; the pane then renders a "Complete
+    // Authentication in Browser" dialog ([role="dialog"], typically via a
+    // React portal *outside* the chat root) containing the user_code and
+    // an "Open Browser to Authorize" button. The code does not exist before
+    // this click.
+    console.log('signInWith: clicking Sign-In to request a device code');
+    await this.chatPane.signInBtn.first().click();
+
+    const userCode = await this.extractVerificationCode();
+    const url = buildPositVerificationUrl(userCode);
+    console.log(`signInWith: opening posit.cloud at user_code=${userCode}`);
+
+    const browser = await chromium.launch();
+    // login.posit.cloud returns a 400 "Invalid request" page when the
+    // request comes from a default Playwright UA (it includes
+    // "HeadlessChrome", which the login backend rejects as a bot). With a
+    // realistic Chrome UA the page renders the actual Log In form. Pin
+    // the UA here -- not via the global config -- because this is the
+    // only place we touch a third-party site; rstudioPage shouldn't
+    // masquerade as a browser version it isn't.
+    const context = await browser.newContext({
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+    });
+    // Record a trace + console so we can see exactly what login.posit.cloud
+    // served when a step times out in CI. Without this we get a bare
+    // "locator.fill timeout" with no insight into the popup -- this form
+    // of OAuth automation has been hard to debug because the popup is a
+    // sibling browser, not the main rstudioPage that test fixtures
+    // already trace.
+    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+    const popupConsole: string[] = [];
+    const popup = await context.newPage();
+    popup.on('console', (msg) => popupConsole.push(`[${msg.type()}] ${msg.text()}`));
+
+    try {
+      await popup.goto(url, { waitUntil: 'domcontentloaded' });
+
+      // The Email and Password inputs on login.posit.cloud are
+      // <input placeholder="..."> with no aria-label / <label>, so they
+      // have no accessible name -- getByRole('textbox', { name: 'Email' })
+      // matches nothing. getByPlaceholder is the supported selector for
+      // this form.
+      await popup.getByPlaceholder('Email').fill(account.email);
+      await popup.getByRole('button', { name: 'Continue' }).click();
+
+      await popup.getByPlaceholder('Password').fill(account.password);
+      // exact:true so we don't match the "Log in with Google / GitHub /
+      // Clever" buttons that share the same prefix on the email step.
+      await popup.getByRole('button', { name: 'Log in', exact: true }).click();
+
+      // Some posit.cloud sessions show an intermediate "Continue" step
+      // (account selection / consent) before the device-authorize page.
+      // Click it only if it appears.
+      const intermediateContinue = popup.getByRole('button', { name: 'Continue' });
+      if (await intermediateContinue.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await intermediateContinue.click();
+      }
+
+      await popup.getByRole('button', { name: 'Authorize' }).click();
+      await expect(popup.getByRole('heading', { name: 'Access Authorized' }))
+        .toBeVisible({ timeout: 15_000 });
+
+      await context.tracing.stop();
+    } catch (err) {
+      await this.dumpPopupDiagnostics(popup, context, popupConsole, userCode).catch(() => {});
+      throw err;
+    } finally {
+      await browser.close();
+    }
+  }
+
+  /**
+   * On signInWith failure, capture everything we can about the popup's
+   * state -- screenshot, HTML, URL, console log, and the in-progress
+   * trace -- under PW_SANDBOX/oauth-debug/ (or os.tmpdir() as fallback).
+   * The sandbox dir is uploaded as a workflow artifact on failure, so
+   * these files end up downloadable from the run.
+   */
+  private async dumpPopupDiagnostics(
+    popup: import('playwright').Page,
+    context: import('playwright').BrowserContext,
+    popupConsole: string[],
+    userCode: string,
+  ): Promise<void> {
+    const root = process.env.PW_SANDBOX
+      ? path.join(process.env.PW_SANDBOX, 'oauth-debug')
+      : path.join(os.tmpdir(), 'rstudio-pw-oauth-debug');
+    fs.mkdirSync(root, { recursive: true });
+    const stamp = `${Date.now()}-${userCode}`;
+
+    const screenshotPath = path.join(root, `popup-${stamp}.png`);
+    const htmlPath = path.join(root, `popup-${stamp}.html`);
+    const consolePath = path.join(root, `popup-${stamp}.console.log`);
+    const tracePath = path.join(root, `popup-${stamp}-trace.zip`);
+
+    try { await popup.screenshot({ path: screenshotPath, fullPage: true }); } catch {}
+    try { fs.writeFileSync(htmlPath, await popup.content()); } catch {}
+    try {
+      const url = popup.url();
+      fs.writeFileSync(
+        consolePath,
+        `popup url: ${url}\nuser_code: ${userCode}\n\n--- console ---\n${popupConsole.join('\n')}\n`,
+      );
+    } catch {}
+    try { await context.tracing.stop({ path: tracePath }); } catch {}
+
+    console.warn(`signInWith: dumped popup diagnostics to ${root}`);
+  }
+
+  /**
+   * Read the XXXX-XXXX device-flow user_code from the "Complete
+   * Authentication in Browser" dialog. The dialog is rendered as a
+   * [role="dialog"] (typically through a React portal outside chatRoot, so
+   * chatRoot.textContent() does not include the code) and contains a
+   * separate text element holding the canonical XXXX-XXXX value -- locate
+   * it directly via that text pattern, scoped to the dialog so unrelated
+   * hyphenated tokens elsewhere in the iframe (sandbox paths, config keys,
+   * etc.) can't false-match.
+   *
+   * The wait is built into the locator: the code text is bound after the
+   * IDE gets its device-code response from posit.cloud, which can lag the
+   * dialog and "Open Browser" button by a few hundred ms, so waiting for
+   * the code element itself avoids that race.
+   */
+  private async extractVerificationCode(): Promise<string> {
+    const dialog = this.chatPane.frame
+      .locator('[role="dialog"]')
+      .filter({ hasText: 'Complete Authentication in Browser' });
+    const codeLocator = dialog.getByText(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    try {
+      await codeLocator.waitFor({ state: 'visible', timeout: 30_000 });
+    } catch {
+      throw new Error(
+        'signInWith: device-code dialog did not render a XXXX-XXXX user_code within 30s. ' +
+        'Either the IDE failed to reach posit.cloud, or posit.cloud changed the dialog format.'
+      );
+    }
+    const code = (await codeLocator.textContent())?.trim().toUpperCase();
+    if (!code || !/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+      throw new Error(
+        `signInWith: extracted code "${code}" does not match XXXX-XXXX format`,
+      );
+    }
+    return code;
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {

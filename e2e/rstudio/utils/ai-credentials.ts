@@ -25,6 +25,45 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
 };
 
 /**
+ * Posit AI account credentials sourced from env vars (populated in CI by the
+ * "Load secrets from 1Password" workflow step; set manually for local dev).
+ * Returns null when either var is missing -- callers should fall back to the
+ * file-based seeded path (~/.posit/assistant) in that case.
+ *
+ * Marked optional in CI on fork PRs (no 1Password service-account token); the
+ * matching @ai tests then skip via requireAiCredentials.
+ */
+export interface PositAiAccount {
+  email: string;
+  password: string;
+}
+
+export function getPositAiAccount(): PositAiAccount | null {
+  const email = process.env.POSIT_AI_EMAIL;
+  const password = process.env.POSIT_AI_PASSWORD;
+  if (!email || !password) {
+    return null;
+  }
+  return { email, password };
+}
+
+/**
+ * Build the login.posit.cloud verification URL for a Posit Assistant device
+ * authorization flow. The IDE displays a `XXXX-XXXX` user_code in the chat
+ * pane and (when the user clicks "Open Browser to Authorize") opens this URL
+ * in the system browser. Driving the browser side from Playwright requires
+ * constructing the URL directly.
+ *
+ * Strips whitespace from the input so the visually-spaced form ("N V J S - V
+ * L M N") and the compact form ("NVJS-VLMN") both work.
+ */
+export function buildPositVerificationUrl(userCode: string): string {
+  const compact = userCode.replace(/\s+/g, '').toUpperCase();
+  const redirect = `/oauth/device?user_code=${compact}`;
+  return `https://login.posit.cloud/login?redirect=${encodeURIComponent(redirect)}`;
+}
+
+/**
  * Gate the surrounding describe block on having real credentials seeded for
  * `provider`. Each test inside the describe is marked skipped (with reason)
  * when the matching PW_AI_SEEDED_* env var is unset, which happens when the
@@ -50,7 +89,16 @@ export function requireAiCredentials(
   test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
-  test.beforeEach(() => {
+  // Skip in beforeAll, not beforeEach: every @ai describe registers a
+  // beforeAll that opens the chat pane and drives sign-in, and Playwright
+  // runs beforeAll *before* beforeEach. A beforeEach-based skip would let
+  // setup run (and OAuth fail) before the skip ever fired. Calling
+  // test.skip from beforeAll aborts the whole suite, including the
+  // sibling beforeAll hooks that follow this one -- which only works if
+  // requireAiCredentials is invoked *before* the spec's own beforeAll
+  // registration (the established pattern: first call inside the
+  // describe body).
+  test.beforeAll(() => {
     // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
     // seeded. sandbox-setup.ts clears these at start of run and sets "1"
     // only on a successful copy, so any other value is treated as unseeded.

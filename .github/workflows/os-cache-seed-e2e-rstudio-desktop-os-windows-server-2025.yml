@@ -34,6 +34,11 @@ permissions:
 jobs:
   seed:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      # build_only=true skips the e2e job, so this secret isn't exercised
+      # here -- it's passed only to keep the call signature complete and to
+      # match what the e2e workflows use, so future edits stay in lockstep.
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       build_from_source: true
       build_only: true

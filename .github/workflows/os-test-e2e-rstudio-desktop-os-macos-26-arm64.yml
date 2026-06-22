@@ -32,9 +32,9 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title."
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
@@ -72,7 +72,7 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         type: string
         default: ""
@@ -83,8 +83,13 @@ on:
         type: boolean
         default: false
     secrets:
-      CONNECT_API_KEY:
-        description: "Posit Connect API key for the E2E Test Insights reporter"
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: >-
+          1Password service account token used to fetch CONNECT_API_KEY (E2E
+          Test Insights reporter) and Posit AI account credentials (email /
+          password consumed by @ai-tagged tests). Empty on fork PRs; the
+          1Password step is then skipped and the dependent features degrade
+          gracefully (reporter uploads warn, @ai tests skip with reason).
         required: false
 
 permissions:
@@ -295,14 +300,17 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
-            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
-            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
+            # The daily manifest publishes a single universal macOS build
+            # under the "macos" platform key (architecture: universal). There
+            # are no separate "mac-arm64" / "mac" entries.
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms.macos.filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1
             fi
-            echo "Auto-resolved latest macOS ARM64 daily:"
+            echo "Auto-resolved latest macOS daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
@@ -370,6 +378,50 @@ jobs:
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
+      # Probe whether the 1Password service-account token is configured without
+      # exposing the secret value to the job env -- the `secrets` context is
+      # not available in step-level `if:` expressions, so we surface a plain
+      # boolean output instead. Empty on fork PRs and on repos that haven't
+      # configured the secret; the Load step below is then skipped and
+      # downstream features degrade gracefully (reporter warns, @ai tests
+      # skip with reason).
+      - name: Check for 1Password token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fetch CONNECT_API_KEY (E2E Test Insights reporter) and the Posit AI
+      # account creds (email/password consumed by @ai-tagged tests) from
+      # 1Password. The GitHub secret holds only the 1Password service account
+      # token; the dashboard key and account creds live in 1Password so they
+      # can be rotated without re-issuing GitHub secrets. `export-env: true`
+      # exposes each entry as an env var of the same name to subsequent steps
+      # (and masks them in logs).
+      #
+      # OP_SERVICE_ACCOUNT_TOKEN is scoped to this step only -- it's a vault
+      # credential with broader reach than the per-entry secrets it fetches,
+      # so we keep it out of the job env to avoid surfacing it to later
+      # steps that execute PR-controlled code (the Playwright test runner).
+      - name: Load secrets from 1Password
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          # E2E Test Insights reporter (posts results to the Connect dashboard).
+          CONNECT_API_KEY: "op://RStudio OSS GitHub Actions/CONNECT_API_KEY/credential"
+          # Posit AI account credentials used by @ai-tagged Playwright tests.
+          # Account: posit-ai-test-rstudio@posit.co (https://posit.ai).
+          POSIT_AI_EMAIL: "op://RStudio OSS GitHub Actions/Login/username"
+          POSIT_AI_PASSWORD: "op://RStudio OSS GitHub Actions/Login/password"
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -382,12 +434,11 @@ jobs:
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
-          # E2E Test Insights reporter: posts per-shard results to the dashboard
-          # API. SHARD_NAME makes each shard's run id unique so shards don't
-          # overwrite each other. CONNECT_API_KEY is empty on fork PRs; the
-          # reporter still runs but its uploads fail with warnings (never fails
-          # the run).
-          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          # SHARD_NAME makes each shard's run id unique so shards don't
+          # overwrite each other. CONNECT_API_KEY / POSIT_AI_* are inherited
+          # from the "Load secrets from 1Password" step above (empty when the
+          # 1Password service account token isn't available, e.g. fork PRs --
+          # the reporter then warns on upload and @ai tests skip with reason).
           SHARD_NAME: desktop-mac-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows
           # which phase exceeded the deadline (CDP-connect vs. bridge-installed
