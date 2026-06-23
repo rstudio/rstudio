@@ -1596,8 +1596,8 @@ void rollbackOpenSqliteTransaction(const boost::shared_ptr<Connection>& connecti
    }
    catch (const soci::soci_error& e)
    {
-      LOG_DEBUG_MESSAGE(std::string("Failed to roll back open transaction on a "
-                                    "pooled connection: ") + e.what());
+      LOG_WARNING_MESSAGE(std::string("Failed to roll back open transaction on a "
+                                      "pooled connection: ") + e.what());
    }
 }
 
