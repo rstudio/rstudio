@@ -4,6 +4,7 @@
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
 
 ### Fixed
+- ([#18037](https://github.com/rstudio/rstudio/issues/18037)): Fixed the Plots pane not being brought to the front when Posit Assistant runs code that produces a plot. Interactive agent code now activates the Plots pane like a console command does.
 - ([#18033](https://github.com/rstudio/rstudio/issues/18033)): Fix ghost text set via `rstudioapi::setGhostText()` not being dismissed when navigating the cursor away or typing a non-matching character, which left it insertable by Tab even after it appeared to be gone.
 - ([#17970](https://github.com/rstudio/rstudio/issues/17970)): Fix the Packages pane vulnerability dialog listing vulnerabilities that affect a different installed version of the clicked package; the dialog now shows only the vulnerabilities for that row's version. A package with vulnerability records from multiple repositories now shows a single combined warning icon and dialog instead of one per repository.
 - ([#17985](https://github.com/rstudio/rstudio/issues/17985)): Fixed an issue where the Import Dataset preview dialog failed to display error messages when the readr preview subprocess encountered an error, causing the dialog to hang indefinitely waiting for data that would never arrive.

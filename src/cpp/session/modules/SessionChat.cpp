@@ -2007,11 +2007,21 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Send successful response
    sendJsonRpcResponse(ops, requestId, result);
 
-   // Fire change detection event to trigger environment refresh
-   // Use ChangeSourceREPL if a plot was captured so the Plots pane gets activated
-   module_context::ChangeSource changeSource = !plotsArray.isEmpty()
-      ? module_context::ChangeSourceREPL
-      : module_context::ChangeSourceRPC;
+   // Fire change detection event to trigger environment refresh. Interactive
+   // executions mimic the REPL, which always reports ChangeSourceREPL after a
+   // console turn (see SessionConsoleInput.cpp); that is what lets the Plots
+   // pane activate when R drew a plot. Activation self-gates on actual
+   // graphics-device changes (SessionPlots.cpp), so this is a no-op when
+   // nothing was plotted. We cannot key off plotsArray here: it is only
+   // populated when the caller requests capturePlot, yet an interactive
+   // execution may produce a plot with capturePlot disabled (e.g. the Posit
+   // Assistant's interleaved path, which captures plots through its own R-side
+   // hook). Keying activation off whether this was a console-style turn is
+   // correct regardless of how the caller captures plots. Silent setup/teardown
+   // helpers are not REPL turns and must not activate the pane.
+   module_context::ChangeSource changeSource = silentExecution
+      ? module_context::ChangeSourceRPC
+      : module_context::ChangeSourceREPL;
    module_context::events().onDetectChanges(changeSource);
 }
 
