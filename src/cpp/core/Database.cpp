@@ -1568,8 +1568,45 @@ bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWa
    return validConnection;
 }
 
+namespace {
+
+// Rolls back any open transaction before returning to the pool; an inherited
+// open transaction can produce SQLITE_BUSY_SNAPSHOT that busy_timeout cannot
+// clear. SQLite WAL-specific: Postgres MVCC (READ COMMITTED) takes a fresh
+// snapshot per statement, so the same failure mode cannot occur there.
+void rollbackOpenSqliteTransaction(const boost::shared_ptr<Connection>& connection)
+{
+   if (connection->driver() != Driver::Sqlite)
+      return;
+
+   auto* backend = static_cast<soci::sqlite3_session_backend*>(connection->session().get_backend());
+   if (backend == nullptr || backend->conn_ == nullptr)
+      return;
+
+   // A nonzero result means the connection is in autocommit (no open
+   // transaction), which is the expected state - nothing to roll back.
+   if (sqlite_api::sqlite3_get_autocommit(backend->conn_) != 0)
+      return;
+
+   try
+   {
+      connection->session() << "ROLLBACK";
+      LOG_DEBUG_MESSAGE("Rolled back an open transaction before returning a "
+                        "connection to the pool");
+   }
+   catch (const soci::soci_error& e)
+   {
+      LOG_DEBUG_MESSAGE(std::string("Failed to roll back open transaction on a "
+                                    "pooled connection: ") + e.what());
+   }
+}
+
+} // anonymous namespace
+
 void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
 {
+   rollbackOpenSqliteTransaction(connection);
+
    auto now = boost::posix_time::microsec_clock::universal_time();
    connection->setLastReturnedTime(now);
 
