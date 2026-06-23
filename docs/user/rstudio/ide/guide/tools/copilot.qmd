@@ -74,6 +74,12 @@ You can also enable **Tools > Global Options > Assistant > "Use the system certi
 
 This option is additive: it supplements `NODE_EXTRA_CA_CERTS` and `copilot-ssl-certificates-file` rather than replacing them. It requires the bundled Node.js (or any configured Node.js 22.17.0 or newer); with an older configured Node.js the option is ignored.
 
+::: callout-warning
+In some enterprise environments -- particularly certain SASE/ZTNA products such as Check Point Harmony -- the operating system trust store contains several CA certificates that share the same subject name but use different keys. The operating system tolerates this (it tries each name match until one verifies), but Node.js and OpenSSL select the first certificate matching the subject and may fail with `CERT_SIGNATURE_FAILURE` if that is not the right one. In such environments, enabling **"Use the system certificate store"** can prevent the assistant from connecting rather than help it; leave the option disabled.
+
+Note also that the GitHub Copilot language server reads the operating system trust store on its own, independent of this setting and of `NODE_EXTRA_CA_CERTS`. Because `NODE_EXTRA_CA_CERTS` can only add certificates, supplying a clean single-CA PEM does not exclude conflicting duplicates that the language server picks up from the system store for GitHub Copilot. When duplicate same-subject certificates cause connection failures, the reliable fix is to remove the duplicate or invalid certificates from the operating system trust store.
+:::
+
 ### External Services Used by GitHub Copilot
 
 The GitHub Copilot agent process will communicate with the following external services when authenticating the current user, and also when generating code suggestions:
