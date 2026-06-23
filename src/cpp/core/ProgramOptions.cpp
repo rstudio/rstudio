@@ -367,7 +367,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
             // When the caller has requested deferred mode it will run additional
             // extended checks (file-path existence, R installation, etc.) before
             // deciding the final exit code, so hand control back via run().
-            // In non-deferred mode (rsession, postback, …) exit immediately as
+            // In non-deferred mode (rsession, postback, ...) exit immediately as
             // before so that behaviour is completely unchanged for those callers.
             if (deferCheckConfig)
                return ProgramStatus::run();

@@ -200,6 +200,19 @@ ProgramStatus Options::read(int argc,
    optionsDesc.commandLine.add(automation).add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
  
+   // Detect --check-config (and its --test-config alias) once here so the
+   // result is available to callers via checkConfigMode() without re-scanning.
+   checkConfigMode_ = false;
+   for (int i = 1; i < argc; ++i)
+   {
+      std::string arg(argv[i]);
+      if (arg == "--check-config" || arg == "--test-config")
+      {
+         checkConfigMode_ = true;
+         break;
+      }
+   }
+
    // read options; pass deferCheckConfig=true so that a clean --check-config
    // result returns run() rather than exitSuccess(), allowing ServerMain to
    // run extended file-path and R-installation checks before exiting.

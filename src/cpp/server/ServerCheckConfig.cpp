@@ -23,13 +23,20 @@ namespace server {
 bool checkConfigFilePath(const std::string& optionName,
                          const core::FilePath& path,
                          std::ostream& out,
-                         bool informational)
+                         bool informational,
+                         bool fileOnly)
 {
    if (path.isEmpty())
       return true;
 
    if (path.exists())
    {
+      if (fileOnly && path.isDirectory())
+      {
+         out << "[FAIL] " << optionName << ": " << path.getAbsolutePath()
+             << " exists but is a directory, not a file" << std::endl;
+         return false;
+      }
       out << "[PASS] " << optionName << ": " << path.getAbsolutePath() << " exists" << std::endl;
       return true;
    }
@@ -48,11 +55,12 @@ bool checkConfigFilePath(const std::string& optionName,
 bool checkConfigFilePath(const std::string& optionName,
                          const std::string& path,
                          std::ostream& out,
-                         bool informational)
+                         bool informational,
+                         bool fileOnly)
 {
    if (path.empty())
       return true;
-   return checkConfigFilePath(optionName, core::FilePath(path), out, informational);
+   return checkConfigFilePath(optionName, core::FilePath(path), out, informational, fileOnly);
 }
 
 } // namespace server

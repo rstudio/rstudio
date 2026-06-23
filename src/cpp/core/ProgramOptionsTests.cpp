@@ -143,6 +143,27 @@ TEST(ProgramOptionsCheckConfigTest, DoesNotStartServiceOnCleanConfig)
    cfg.removeIfExists();
 }
 
+TEST(ProgramOptionsCheckConfigTest, DeferredCleanConfigReturnsRun)
+{
+   // When deferCheckConfig=true a clean check must return run() so the caller
+   // can perform extended checks before exiting -- it must NOT return exitSuccess.
+   FilePath cfg = writeConfig("valid-one=hello\n");
+   OptionsDescription odesc = testOptions();
+   std::string pathArg = cfg.getAbsolutePath();
+   const char* argv[] = {"test", "--check-config", "--config-file", pathArg.c_str()};
+   bool help = false;
+
+   testing::internal::CaptureStdout();
+   ProgramStatus status = read(odesc, 4, argv, &help,
+                               false /* allowUnregisteredConfigOptions */,
+                               false /* configFileHasPrecedence */,
+                               true  /* deferCheckConfig */);
+   testing::internal::GetCapturedStdout();
+
+   EXPECT_FALSE(status.exit()); // run(), not exitSuccess()
+   cfg.removeIfExists();
+}
+
 TEST(ProgramOptionsReadTest, NoCheckFlagRunsNormally)
 {
    FilePath cfg = writeConfig("valid-one=hello\n");

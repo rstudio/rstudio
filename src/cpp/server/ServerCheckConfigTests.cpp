@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include <shared_core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <gtest/gtest.h>
 
@@ -111,6 +112,38 @@ TEST(CheckConfigFilePathTest, MissingFilePathInformationalReturnsPassAndTrue)
    EXPECT_TRUE(result);
    EXPECT_NE(std::string::npos, out.str().find("[PASS]"));
    EXPECT_NE(std::string::npos, out.str().find("will be created on startup"));
+}
+
+// ---------------------------------------------------------------------------
+// checkConfigFilePath -- fileOnly flag
+// ---------------------------------------------------------------------------
+
+TEST(CheckConfigFilePathTest, FileOnlyRejectsDirectoryWithFail)
+{
+   // /tmp always exists and is a directory; fileOnly=true must reject it
+   std::ostringstream out;
+   bool result = checkConfigFilePath("test-option", FilePath("/tmp"), out,
+                                     false /* informational */, true /* fileOnly */);
+   EXPECT_FALSE(result);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+   EXPECT_NE(std::string::npos, out.str().find("directory"));
+}
+
+TEST(CheckConfigFilePathTest, FileOnlyAcceptsRegularFile)
+{
+   // Write a real temp file and verify fileOnly=true accepts it
+   FilePath path;
+   Error error = FilePath::tempFilePath(path);
+   ASSERT_FALSE(error);
+   error = writeStringToFile(path, "x");
+   ASSERT_FALSE(error);
+
+   std::ostringstream out;
+   bool result = checkConfigFilePath("test-option", path, out,
+                                     false /* informational */, true /* fileOnly */);
+   EXPECT_TRUE(result);
+   EXPECT_NE(std::string::npos, out.str().find("[PASS]"));
+   path.removeIfExists();
 }
 
 } // namespace server

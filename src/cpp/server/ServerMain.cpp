@@ -697,19 +697,6 @@ int main(int argc, char * const argv[])
       }
 #endif
 
-      // scan argv early so we know whether --check-config was requested before
-      // options.read() is called; this mirrors the scan inside ProgramOptions.cpp
-      bool checkConfigRequested = false;
-      for (int i = 1; i < argc; ++i)
-      {
-         std::string arg(argv[i]);
-         if (arg == "--check-config" || arg == "--test-config")
-         {
-            checkConfigRequested = true;
-            break;
-         }
-      }
-
       // read program options
       std::ostringstream osWarnings;
       Options& options = server::options();
@@ -728,7 +715,7 @@ int main(int argc, char * const argv[])
       // parse (handled inside program_options::read) has already printed its
       // [PASS] line and returned run() instead of exitSuccess() so we arrive
       // here.  We now run additional checks and collect an overall verdict.
-      if (checkConfigRequested)
+      if (options.checkConfigMode())
       {
          bool allPassed = true;
 
@@ -739,10 +726,12 @@ int main(int argc, char * const argv[])
          // secureCookieKeyFile (FilePath accessor)
          if (!checkConfigFilePath("secure-cookie-key-file",
                                   options.secureCookieKeyFile(),
-                                  std::cout))
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
             allPassed = false;
 
-         // serverDataDir (FilePath accessor) — informational: the server
+         // serverDataDir (FilePath accessor) -- informational: the server
          // creates this directory on startup so a missing dir is not a fatal
          // error; pass informational=true so it is always reported as [PASS].
          checkConfigFilePath("server-data-dir",
@@ -753,13 +742,17 @@ int main(int argc, char * const argv[])
          // rsessionConfigFile (string accessor)
          if (!checkConfigFilePath("rsession-config-file",
                                   options.rsessionConfigFile(),
-                                  std::cout))
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
             allPassed = false;
 
          // databaseConfigFile (string accessor)
          if (!checkConfigFilePath("database-config-file",
                                   options.databaseConfigFile(),
-                                  std::cout))
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
             allPassed = false;
 
          // Note: product binaries resolved relative to the install (rsession,

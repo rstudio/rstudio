@@ -28,18 +28,21 @@ namespace server {
 // [FAIL] line to `out`.  When the path is empty the check is skipped and true
 // is returned.  When `informational` is true a missing path is reported as
 // [PASS] with a clarifying note rather than [FAIL] (used for paths that the
-// server creates on startup, such as server-data-dir).  Returns true if the
-// overall check passed (or was skipped / informational).
+// server creates on startup, such as server-data-dir).  When `fileOnly` is
+// true an existing path that is a directory is also reported as [FAIL].
+// Returns true if the overall check passed (or was skipped / informational).
 bool checkConfigFilePath(const std::string& optionName,
                          const core::FilePath& path,
                          std::ostream& out,
-                         bool informational = false);
+                         bool informational = false,
+                         bool fileOnly = false);
 
 // Convenience overload that accepts a plain string path.
 bool checkConfigFilePath(const std::string& optionName,
                          const std::string& path,
                          std::ostream& out,
-                         bool informational = false);
+                         bool informational = false,
+                         bool fileOnly = false);
 
 } // namespace server
 } // namespace rstudio
