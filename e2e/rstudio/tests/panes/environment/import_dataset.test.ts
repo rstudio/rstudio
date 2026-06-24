@@ -100,14 +100,17 @@ async function openReadrCsvPreview(
   consoleActions: ConsolePaneActions,
   csvPath: string,
 ): Promise<{ dialog: Locator; previewFrame: FrameLocator; csvPath: string }> {
-  // Write the CSV via the R session (so the path is valid on the rsession host
-  // -- matters for Server mode where runner and session can differ) and confirm
-  // it actually landed before opening the dialog. The preview runs in a
-  // separate --vanilla R subprocess; if the write hasn't completed when the
-  // subprocess opens the file, vroom reports "<csv> does not exist" and the
-  // preview times out after 45s (#17985). See writeCsvConfirmed for why a plain
-  // executeInConsole({wait:true}) isn't a sufficient gate here.
-  await writeCsvConfirmed(consoleActions, csvPath);
+  // Write the CSV via the R session so the path is valid on the rsession host
+  // (matters for Server mode where runner and session can differ). The preview
+  // runs in a separate --vanilla R subprocess, so the file must be on disk
+  // before the dialog opens or vroom reports "<csv> does not exist" and the
+  // preview times out after 45s (#17985). executeInConsole({wait:true}) now
+  // waits for a new console prompt (waitForConsoleCommandComplete), so the
+  // write is guaranteed complete on return.
+  await consoleActions.executeInConsole(
+    `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
+    { wait: true },
+  );
 
   // The presenter wraps the dialog in a dependency check; accept the install
   // prompt if readr (or a transitive dep) isn't already on the library path.
@@ -146,34 +149,6 @@ async function openReadrCsvPreview(
   await updateBtn.click();
 
   return { dialog, previewFrame: dialog.frameLocator(PREVIEW_FRAME), csvPath };
-}
-
-// Write the CSV and confirm it landed, in a single R round-trip per attempt.
-// The block returns file.exists(), which evalRLogical reads from the printed
-// `[1] TRUE/FALSE`. That printed result only appears after R has actually run
-// the expression, so it is a true completion signal -- unlike
-// executeInConsole({wait:true}), whose wait-for-idle (waitForConsoleIdle) can
-// return in the submit->busy gap before the write has even run. That premature
-// return is the suspected source of the intermittent "<csv> does not exist"
-// preview failure in #17985: the preview subprocess opens the CSV before the
-// writeLines completes. Retries once, then throws a setup-level error (not a
-// preview timeout) so a genuine write failure is attributed here.
-async function writeCsvConfirmed(
-  consoleActions: ConsolePaneActions,
-  csvPath: string,
-): Promise<void> {
-  const writeAndCheck =
-    `{ writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}"); file.exists("${csvPath}") }`;
-
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    if ((await consoleActions.evalRLogical(writeAndCheck)) === true)
-      return;
-  }
-
-  throw new Error(
-    `Import Dataset test setup: CSV not written to ${csvPath} ` +
-    `(file.exists() is FALSE after two confirmed-write attempts).`,
-  );
 }
 
 test.describe('Import Dataset (readr)', () => {

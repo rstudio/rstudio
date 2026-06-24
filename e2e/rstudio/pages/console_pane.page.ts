@@ -91,6 +91,51 @@ export async function waitForConsoleIdle(
 }
 
 /**
+ * Read the automation agent's monotonic console prompt counter, or null if the
+ * running binary predates it (`window.rstudio.console.promptCount`, added in
+ * ApplicationAutomation). The counter advances by one each time R returns to
+ * its top-level prompt -- i.e. each time a submitted console command completes
+ * -- so it is a race-free completion signal, unlike the busy CSS class which is
+ * sampled (and can be read stale in the submit->busy gap, or miss a fast
+ * command's busy flash). See waitForConsoleCommandComplete.
+ */
+export async function getConsolePromptCount(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const count = window.rstudio?.console?.promptCount;
+    return typeof count === 'number' ? count : null;
+  });
+}
+
+/**
+ * Wait for a console command to finish, given the prompt count captured *before*
+ * it was submitted (via getConsolePromptCount). Resolves once the count exceeds
+ * `promptCountBefore`, i.e. R emitted a new prompt. This is the reliable
+ * replacement for waitForConsoleIdle when bracketing a submission: it keys off
+ * the prompt *event*, not a sampled class, so it can't return spuriously-idle
+ * before the command starts. Falls back to the busy-class wait when the counter
+ * is unavailable (older binary), preserving prior behavior.
+ */
+export async function waitForConsoleCommandComplete(
+  page: Page,
+  promptCountBefore: number | null,
+  timeout: number = TIMEOUTS.sessionRestart,
+): Promise<void> {
+  if (promptCountBefore === null) {
+    await waitForConsoleIdle(page, timeout);
+    return;
+  }
+
+  await page.waitForFunction(
+    (before) => {
+      const count = window.rstudio?.console?.promptCount;
+      return typeof count === 'number' && count > before;
+    },
+    promptCountBefore,
+    { timeout, polling: 50 },
+  );
+}
+
+/**
  * Wait for the console input to gain its "busy" class -- i.e. for R to start
  * processing submitted code. Pairs with waitForConsoleIdle to bracket an
  * asynchronously-dispatched job (e.g. executeCurrentChunk) whose work doesn't
@@ -162,9 +207,10 @@ export interface ExecuteInConsoleOptions {
  * to run; use `typeInConsole` only when a test is exercising actual typing
  * behavior (e.g. autocomplete triggering).
  *
- * By default this waits for R to finish the command (polling the console-busy
- * class instead of sleeping). Pass `{ wait: false }` for the fire-and-forget
- * pattern (e.g. queuing a marker command behind a long-running install).
+ * By default this waits for R to finish the command -- it waits for a new
+ * console prompt (waitForConsoleCommandComplete) rather than sleeping. Pass
+ * `{ wait: false }` for the fire-and-forget pattern (e.g. queuing a marker
+ * command behind a long-running install).
  */
 export async function executeInConsole(
   page: Page,
@@ -179,6 +225,11 @@ export async function executeInConsole(
     editor.setValue(text, 1); // 1 = move cursor to end
     editor.focus();
   }, command);
+  // Capture the console prompt count before submitting so the wait below can
+  // key off a *new* prompt (command completed) rather than sampling the busy
+  // class. Must be read before any Enter press, while R is still at the prior
+  // prompt.
+  const promptCountBefore = await getConsolePromptCount(page);
   // Try the Enter dispatch a few times. Ace can briefly route the keystroke
   // to an autocomplete / signature-help popup (selecting an entry instead of
   // submitting), and `waitForConsoleIdle` alone can't catch that case
@@ -242,7 +293,7 @@ export async function executeInConsole(
     }
   }
   if (opts.wait ?? true) {
-    await waitForConsoleIdle(page, opts.timeout);
+    await waitForConsoleCommandComplete(page, promptCountBefore, opts.timeout);
   }
 }
 
