@@ -100,22 +100,14 @@ async function openReadrCsvPreview(
   consoleActions: ConsolePaneActions,
   csvPath: string,
 ): Promise<{ dialog: Locator; previewFrame: FrameLocator; csvPath: string }> {
-  // Write the CSV via the R session so the path is valid on the rsession host
-  // (matters for Server mode where runner and session can be on different
-  // machines).
-  const writeCmd = `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`;
-  await consoleActions.executeInConsole(writeCmd, { wait: true });
-
-  // Verify the CSV actually landed before opening the dialog. The preview runs
-  // in a separate --vanilla R subprocess; if the write silently failed (a
-  // transient open/lock failure on Windows CI is swallowed by wait:true) the
-  // subprocess reports the file "does not exist" and the preview times out
-  // after 45s (#17985). Poll file.exists() from the session, retry the write
-  // once, and surface a setup error here rather than misattributing it to the
-  // preview. file.exists() is the session's own view -- a cross-process
-  // visibility lag still slips through, but awaitPreviewOrSkip's probe records
-  // that case.
-  await ensureCsvWritten(consoleActions, csvPath, writeCmd);
+  // Write the CSV via the R session (so the path is valid on the rsession host
+  // -- matters for Server mode where runner and session can differ) and confirm
+  // it actually landed before opening the dialog. The preview runs in a
+  // separate --vanilla R subprocess; if the write hasn't completed when the
+  // subprocess opens the file, vroom reports "<csv> does not exist" and the
+  // preview times out after 45s (#17985). See writeCsvConfirmed for why a plain
+  // executeInConsole({wait:true}) isn't a sufficient gate here.
+  await writeCsvConfirmed(consoleActions, csvPath);
 
   // The presenter wraps the dialog in a dependency check; accept the install
   // prompt if readr (or a transitive dep) isn't already on the library path.
@@ -156,27 +148,31 @@ async function openReadrCsvPreview(
   return { dialog, previewFrame: dialog.frameLocator(PREVIEW_FRAME), csvPath };
 }
 
-// Confirm the CSV is on disk from the R session's point of view, retrying the
-// write once. Throws a setup-level error (not a preview timeout) if the file
-// never appears -- see openReadrCsvPreview for why this guards #17985.
-async function ensureCsvWritten(
+// Write the CSV and confirm it landed, in a single R round-trip per attempt.
+// The block returns file.exists(), which evalRLogical reads from the printed
+// `[1] TRUE/FALSE`. That printed result only appears after R has actually run
+// the expression, so it is a true completion signal -- unlike
+// executeInConsole({wait:true}), whose wait-for-idle (waitForConsoleIdle) can
+// return in the submit->busy gap before the write has even run. That premature
+// return is the suspected source of the intermittent "<csv> does not exist"
+// preview failure in #17985: the preview subprocess opens the CSV before the
+// writeLines completes. Retries once, then throws a setup-level error (not a
+// preview timeout) so a genuine write failure is attributed here.
+async function writeCsvConfirmed(
   consoleActions: ConsolePaneActions,
   csvPath: string,
-  writeCmd: string,
 ): Promise<void> {
-  const exists = async (): Promise<boolean> =>
-    (await consoleActions.evalRLogical(`file.exists("${csvPath}")`)) === true;
+  const writeAndCheck =
+    `{ writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}"); file.exists("${csvPath}") }`;
 
-  if (await exists())
-    return;
-
-  await consoleActions.executeInConsole(writeCmd, { wait: true });
-  if (await exists())
-    return;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if ((await consoleActions.evalRLogical(writeAndCheck)) === true)
+      return;
+  }
 
   throw new Error(
     `Import Dataset test setup: CSV not written to ${csvPath} ` +
-    `(file.exists() is FALSE after two writeLines attempts).`,
+    `(file.exists() is FALSE after two confirmed-write attempts).`,
   );
 }
 
