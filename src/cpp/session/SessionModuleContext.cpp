@@ -1241,6 +1241,17 @@ bool isVisibleUserFile(const FilePath& filePath)
            !filePath.isWithin(module_context::userScratchPath()));
 }
 
+bool reduceRemoteFilesystemOperations()
+{
+   // resolved per-project (combines the project setting, the global
+   // preference, and remote-filesystem detection); no project means no
+   // reduction
+   if (!projects::projectContext().hasProject())
+      return false;
+
+   return projects::projectContext().reduceRemoteFilesystemOperations();
+}
+
 FilePath safeCurrentPath()
 {
    return FilePath::safeCurrentPath(userHomePath());

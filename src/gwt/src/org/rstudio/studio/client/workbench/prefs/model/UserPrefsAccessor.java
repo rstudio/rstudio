@@ -267,6 +267,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String AUTO_SAVE_ON_IDLE = "auto_save_on_idle";
    public static final String AUTO_SAVE_IDLE_MS = "auto_save_idle_ms";
    public static final String AUTO_SAVE_ON_BLUR = "auto_save_on_blur";
+   public static final String REDUCE_REMOTE_FILESYSTEM_OPERATIONS = "reduce_remote_filesystem_operations";
    public static final String TERMINAL_INITIAL_DIRECTORY = "terminal_initial_directory";
    public static final String FULL_PROJECT_PATH_IN_WINDOW_TITLE = "full_project_path_in_window_title";
    public static final String VISUAL_MARKDOWN_EDITING_IS_DEFAULT = "visual_markdown_editing_is_default";
@@ -3473,6 +3474,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio reduces background file monitoring, indexing, external-edit checks, and version-control polling for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file and version-control state.
+    */
+   public PrefValue<Boolean> reduceRemoteFilesystemOperations()
+   {
+      return bool(
+         "reduce_remote_filesystem_operations",
+         _constants.reduceRemoteFilesystemOperationsTitle(), 
+         _constants.reduceRemoteFilesystemOperationsDescription(), 
+         true);
+   }
+
+   /**
     * Initial directory for new terminals.
     */
    public PrefValue<String> terminalInitialDirectory()
@@ -5041,6 +5054,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
+      if (source.hasKey("reduce_remote_filesystem_operations"))
+         reduceRemoteFilesystemOperations().setValue(layer, source.getBool("reduce_remote_filesystem_operations"));
       if (source.hasKey("terminal_initial_directory"))
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
@@ -5420,6 +5435,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
+      prefs.add(reduceRemoteFilesystemOperations());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());

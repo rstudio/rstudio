@@ -1092,6 +1092,18 @@ Error readProjectFile(const FilePath& projectFilePath,
    else
       pConfig->editorTheme = defaultConfig.editorTheme;
 
+   // reduce remote filesystem operations (sorted field)
+   it = dcfFields.find("ReduceRemoteFilesystemOperations");
+   if (it != dcfFields.end())
+   {
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->reduceRemoteFilesystemOperations)))
+         return requiredFieldError("ReduceRemoteFilesystemOperations", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->reduceRemoteFilesystemOperations = defaultConfig.reduceRemoteFilesystemOperations;
+   }
+
    return Success();
 }
 
@@ -1416,6 +1428,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
       sortedFields["EditorTheme"] = config.editorTheme;
    else
       sortedFields.erase("EditorTheme");
+
+   if (config.reduceRemoteFilesystemOperations != DefaultValue)
+      sortedFields["ReduceRemoteFilesystemOperations"] = yesNoAskValueToString(config.reduceRemoteFilesystemOperations);
+   else
+      sortedFields.erase("ReduceRemoteFilesystemOperations");
 
    // add the sorted fields
    if (!sortedFields.empty())

@@ -113,6 +113,16 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       quitChildProcessesOnExit_ = new CheckBox(constants_.quitChildProcessesOnExitText());
       container.add(nudgeRight(quitChildProcessesOnExit_));
 
+      // reduce background file operations on remote/network filesystems;
+      // "(Default)" inherits the global preference
+      reduceRemoteFilesystemOperations_ = new YesNoAskDefault(false);
+      LayoutGrid remoteFsGrid = new LayoutGrid(1, 2);
+      remoteFsGrid.addStyleName(RESOURCES.styles().workspaceGrid());
+      remoteFsGrid.setWidget(0, 0, new FormLabel(
+            constants_.reduceRemoteFilesystemOperationsText(), reduceRemoteFilesystemOperations_));
+      remoteFsGrid.setWidget(0, 1, reduceRemoteFilesystemOperations_);
+      container.add(remoteFsGrid);
+
       if (sessionInfo_.getAllowFullUI())
       {
          container.add(spacedBefore(headerLabel("Advanced")));
@@ -177,6 +187,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
 
+      reduceRemoteFilesystemOperations_.setSelectedIndex(config.getReduceRemoteFilesystemOperations());
+
       projectName_.setText(config.getProjectName());
       
       String scratchPath = config.getScratchPath();
@@ -210,6 +222,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
 
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
+      config.setReduceRemoteFilesystemOperations(reduceRemoteFilesystemOperations_.getSelectedIndex());
       config.setProjectName(projectName_.getValue());
       config.setScratchPath(scratchPath_.getText());
       
@@ -230,6 +243,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault alwaysSaveHistory_;
    private CheckBox disableExecuteRprofile_;
    private CheckBox quitChildProcessesOnExit_;
+   private YesNoAskDefault reduceRemoteFilesystemOperations_;
    private SessionInfo sessionInfo_;
 
    private String tutorialPath_;

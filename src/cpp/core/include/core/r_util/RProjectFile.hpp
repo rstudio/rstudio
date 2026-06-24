@@ -130,6 +130,7 @@ struct RProjectConfig
         // sorted order start here
 
         editorTheme(),
+        reduceRemoteFilesystemOperations(DefaultValue),
 
         // internal storage for sorted fields
         sortedFields()
@@ -186,6 +187,7 @@ struct RProjectConfig
    // fields living in the sorted section at end of file start here
 
    std::string editorTheme;
+   int reduceRemoteFilesystemOperations;
 
    std::map<std::string, std::string> sortedFields;
 };

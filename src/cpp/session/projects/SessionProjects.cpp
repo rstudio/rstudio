@@ -515,6 +515,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
    configJson["editor_theme"] = config.editorTheme;
+   configJson["reduce_remote_filesystem_operations"] = config.reduceRemoteFilesystemOperations;
 
    // scratch path
    std::string scratchPath;
@@ -867,6 +868,18 @@ Error writeProjectConfig(const json::Object& configJson)
    // explicit empty string from the Appearance pane clears the project override
    config.editorTheme = resolveWrittenEditorTheme(existingConfig.editorTheme, configJson);
 
+   // reduce remote filesystem operations -- preserve the existing value when
+   // the client does not send the key (e.g. older clients that predate it)
+   config.reduceRemoteFilesystemOperations = existingConfig.reduceRemoteFilesystemOperations;
+   if (configJson.find("reduce_remote_filesystem_operations") != configJson.end())
+   {
+      error = json::readObject(configJson,
+                               "reduce_remote_filesystem_operations",
+                               config.reduceRemoteFilesystemOperations);
+      if (error)
+         return error;
+   }
+
    // project id
    config.projectId = existingConfig.projectId;
 
@@ -1028,6 +1041,25 @@ void afterSessionInitHook(bool newSession)
          boost::posix_time::seconds(
             prefs::userPrefs().projectSafeStartupSeconds()),
          saveLastProjectPath, true);
+
+   // if background file operations have been reduced for this project (e.g.
+   // because it lives on a network or remote filesystem), let the user know,
+   // since some live-updating behaviors (file monitoring, indexing) are off.
+   // emitted via R's message() so it renders as an informational console
+   // message. See https://github.com/rstudio/rstudio/issues/10417.
+   if (module_context::reduceRemoteFilesystemOperations())
+   {
+      std::string msg =
+            "RStudio has reduced background file operations for this project, "
+            "as it appears to be on a network or remote filesystem. Some "
+            "features (such as file monitoring and code indexing) are disabled "
+            "to improve responsiveness; you can change this in "
+            "Tools -> Global Options -> General -> Advanced.";
+
+      Error error = r::exec::RFunction("base:::message", msg).call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)

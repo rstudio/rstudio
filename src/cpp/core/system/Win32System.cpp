@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <tlhelp32.h>
 #include <VersionHelpers.h>
 
@@ -482,6 +483,31 @@ bool isHiddenFile(const FileInfo& fileInfo)
 bool isReadOnly(const FilePath& filePath)
 {
    // TODO: readonly detection for windows
+   return false;
+}
+
+bool isRemotePath(const FilePath& filePath)
+{
+   std::wstring path = filePath.getAbsolutePathW();
+   if (path.empty())
+      return false;
+
+   // PathIsNetworkPath recognizes UNC paths (\\server\share) as well as drive
+   // letters mapped to network shares. Note that it does not detect drives
+   // mapped via SUBST or DefineDosDevice, and it does not verify that the
+   // resource exists -- but best-effort detection is sufficient here.
+   if (::PathIsNetworkPathW(path.c_str()))
+      return true;
+
+   // As a fallback, classify the volume directly via its drive letter. This
+   // can catch some network drives that PathIsNetworkPath does not recognize.
+   if (path.length() >= 2 && path[1] == L':')
+   {
+      wchar_t root[] = { path[0], L':', L'\\', L'\0' };
+      if (::GetDriveTypeW(root) == DRIVE_REMOTE)
+         return true;
+   }
+
    return false;
 }
 

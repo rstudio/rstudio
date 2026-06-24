@@ -2,6 +2,7 @@
 
 ### New
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
+- ([#10417](https://github.com/rstudio/rstudio/issues/10417)): RStudio can now reduce background file operations (recursive file monitoring, code indexing, and external-edit checks) for projects located on network or remote filesystems, improving responsiveness on slow drives. This applies automatically when a remote filesystem is detected, and can be configured globally (Tools > Global Options > General > Advanced) or overridden per-project (Project Options > General).
 
 ### Fixed
 - ([#18033](https://github.com/rstudio/rstudio/issues/18033)): Fix ghost text set via `rstudioapi::setGhostText()` not being dismissed when navigating the cursor away or typing a non-matching character, which left it insertable by Tab even after it appeared to be gone.

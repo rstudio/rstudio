@@ -275,6 +275,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       advanced.add(projectUserDataDirChooser_);
       advanced.add(new VerticalSpacer("16px"));
 
+      advanced.add(checkboxPref(prefs_.reduceRemoteFilesystemOperations()));
+      advanced.add(new VerticalSpacer("16px"));
+
       showServerHomePage_ = new SelectWidget(
               constants_.serverHomePageLabel(),
             new String[] {
@@ -341,19 +344,9 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
 
-         useGpuExclusions_ = new CheckBox(constants_.useGpuExclusionListLabel());
-         advanced.add(lessSpaced(useGpuExclusions_));
-         Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) -> {
-            desktopIgnoreGpuExclusions_ = ignore;
-            useGpuExclusions_.setValue(!ignore);
-         });
-
-         useGpuDriverBugWorkarounds_ = new CheckBox(constants_.useGpuDriverBugWorkaroundsLabel());
-         advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
-         Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
-            desktopDisableGpuDriverBugWorkarounds_ = disable;
-            useGpuDriverBugWorkarounds_.setValue(!disable);
-         });
+         // Note: the GPU exclusion list and driver bug workaround settings are
+         // adjustable via the "Toggle GPU Exclusion List" and "Toggle GPU Driver
+         // Bug Workarounds" commands (e.g. from the Command Palette).
 
          if (BrowseCap.isLinuxDesktop() && !BrowseCap.isElectron())
          {
@@ -564,24 +557,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
 
-      if (useGpuExclusions_ != null &&
-          desktopIgnoreGpuExclusions_ != !useGpuExclusions_.getValue())
-      {
-         restartRequirement.setDesktopRestartRequired(true);
-         boolean ignore = !useGpuExclusions_.getValue();
-         desktopIgnoreGpuExclusions_ = ignore;
-         Desktop.getFrame().setIgnoreGpuExclusionList(ignore);
-      }
-
-      if (useGpuDriverBugWorkarounds_ != null &&
-          desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue())
-      {
-         restartRequirement.setDesktopRestartRequired(true);
-         boolean disable = !useGpuDriverBugWorkarounds_.getValue();
-         desktopDisableGpuDriverBugWorkarounds_ = disable;
-         Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
-      }
-
       if (saveWorkspace_.isEnabled())
       {
          prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
@@ -737,8 +712,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private static final String ENGINE_SOFTWARE    = "software"; //$NON-NLS-1$
 
    private boolean desktopMonitoring_ = false;
-   private boolean desktopIgnoreGpuExclusions_ = false;
-   private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
 
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
@@ -750,8 +723,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox fullPathInTitle_ = null;
    private CheckBox nativeFileDialogs_ = null;
    private CheckBox disableRendererAccessibility_ = null;
-   private CheckBox useGpuExclusions_ = null;
-   private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
 

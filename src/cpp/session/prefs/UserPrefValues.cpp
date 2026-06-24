@@ -2923,6 +2923,19 @@ core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
 }
 
 /**
+ * When enabled, RStudio reduces background file monitoring, indexing, external-edit checks, and version-control polling for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file and version-control state.
+ */
+bool UserPrefValues::reduceRemoteFilesystemOperations()
+{
+   return readPref<bool>("reduce_remote_filesystem_operations");
+}
+
+core::Error UserPrefValues::setReduceRemoteFilesystemOperations(bool val)
+{
+   return writePref("reduce_remote_filesystem_operations", val);
+}
+
+/**
  * Initial directory for new terminals.
  */
 std::string UserPrefValues::terminalInitialDirectory()
@@ -4136,6 +4149,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
+      kReduceRemoteFilesystemOperations,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,

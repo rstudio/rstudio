@@ -282,6 +282,12 @@ log::LogLevel lowestLogLevel();
 bool isHiddenFile(const FilePath& filePath);
 bool isHiddenFile(const FileInfo& fileInfo);
 bool isReadOnly(const FilePath& filePath);
+
+// Best-effort detection of whether a path lives on a network or remote
+// filesystem (e.g. a Windows UNC path or mapped network drive). Used to
+// reduce background filesystem operations on slow drives.
+// See https://github.com/rstudio/rstudio/issues/10417.
+bool isRemotePath(const FilePath& filePath);
    
 // terminals
 bool stderrIsTerminal();

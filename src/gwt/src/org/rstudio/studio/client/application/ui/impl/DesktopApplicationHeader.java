@@ -384,6 +384,36 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    }
 
    @Handler
+   void onToggleGpuExclusionList()
+   {
+      Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) ->
+      {
+         Desktop.getFrame().setIgnoreGpuExclusionList(!ignore);
+         promptGpuSettingRestart();
+      });
+   }
+
+   @Handler
+   void onToggleGpuDriverBugWorkarounds()
+   {
+      Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) ->
+      {
+         Desktop.getFrame().setDisableGpuDriverBugWorkarounds(!disable);
+         promptGpuSettingRestart();
+      });
+   }
+
+   private void promptGpuSettingRestart()
+   {
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            constants_.gpuSettingChangedCaption(),
+            constants_.gpuSettingChangedMessage(),
+            () -> appQuit_.doRestart(session_),
+            true);
+   }
+
+   @Handler
    void onShowA11yDiagnostics()
    {
       globalDisplay_.openMinimalWindow("chrome://accessibility", 500, 400);

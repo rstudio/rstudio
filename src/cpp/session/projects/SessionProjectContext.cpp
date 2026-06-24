@@ -29,6 +29,7 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/FileMonitor.hpp>
+#include <core/system/System.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -260,6 +261,25 @@ Error computeScratchPaths(const FilePath& projectFile,
 }
 
 
+bool ProjectContext::reduceRemoteFilesystemOperations() const
+{
+   // a per-project setting takes precedence over the global preference
+   switch (config_.reduceRemoteFilesystemOperations)
+   {
+   case r_util::YesValue: return true;
+   case r_util::NoValue:  return false;
+   default: break; // DefaultValue -> consult the global preference
+   }
+
+   // when the global preference is disabled, never reduce
+   if (!prefs::userPrefs().reduceRemoteFilesystemOperations())
+      return false;
+
+   // otherwise (automatic): reduce only when the project lives on a remote
+   // filesystem. isRemotePath() is a cheap local query (no network round-trip).
+   return core::system::isRemotePath(directory_);
+}
+
 FilePath ProjectContext::oldScratchPath() const
 {
    // start from the standard .Rproj.user dir
@@ -411,8 +431,10 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
-   // repaired by a single refresh of the files pane
-   hasFileMonitor_ = config_.enableCodeIndexing;
+   // repaired by a single refresh of the files pane.
+   // the recursive file monitor is suppressed when reducing remote filesystem
+   // operations, since monitoring a slow network drive is expensive.
+   hasFileMonitor_ = config_.enableCodeIndexing && !reduceRemoteFilesystemOperations();
 
    // return success
    return Success();
@@ -641,8 +663,10 @@ Error ProjectContext::initialize()
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
-      // subscribe to deferred init (for initializing our file monitor)
-      if (config().enableCodeIndexing)
+      // subscribe to deferred init (for initializing our file monitor); skip
+      // when reducing remote filesystem operations, as the recursive monitor
+      // would repeatedly traverse a slow network drive
+      if (config().enableCodeIndexing && !reduceRemoteFilesystemOperations())
       {
          module_context::events().onDeferredInit.connect(
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));

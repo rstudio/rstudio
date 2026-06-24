@@ -168,6 +168,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String alwaysSaveHistoryText();
     String disableExecuteRprofileText();
     String quitChildProcessesOnExitText();
+    String reduceRemoteFilesystemOperationsText();
     String generalText();
     String initializePackratMessage();
     String chkUsePackratLabel();

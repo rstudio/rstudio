@@ -157,6 +157,14 @@ public:
    core::FilePath fileUnderWebsitePath(const core::FilePath& file) const;
 
    const core::r_util::RProjectConfig& config() const { return config_; }
+
+   // Resolves whether background filesystem operations should be reduced for
+   // this project: the per-project setting wins, otherwise the global
+   // 'reduce_remote_filesystem_operations' preference, which in automatic mode
+   // applies only when the project lives on a remote filesystem.
+   // See https://github.com/rstudio/rstudio/issues/10417.
+   bool reduceRemoteFilesystemOperations() const;
+
    void setConfig(const core::r_util::RProjectConfig& config)
    {
       config_ = config;
