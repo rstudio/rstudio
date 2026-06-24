@@ -468,9 +468,11 @@ if [ "${build_package}" = "1" ]; then
 
       cd ..
 
-      # allocate oversized dmg, which will be compressed
+      # allocate oversized dmg, which will be compressed (UDZO), so the extra
+      # headroom is reclaimed and does not bloat the final artifact. The app
+      # bundle is ~1.7G+ and outgrew the previous 2g ceiling.
       hdiutil create                       \
-         -size 2g                          \
+         -size 4g                          \
          -fs "APFS"                        \
          -volname "${RSTUDIO_BUNDLE_NAME}" \
          -srcfolder "install"              \
