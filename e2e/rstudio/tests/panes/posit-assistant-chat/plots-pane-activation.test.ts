@@ -57,6 +57,19 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
     annotateVersions(versions);
   });
 
+  test.afterAll(async ({ rstudioPage: page }) => {
+    // Don't leak the device/plot this test created into later tests in the
+    // worker: close the graphics device and clear the Plots pane history.
+    if (!consoleActions) return;
+    await consoleActions.executeInConsole('graphics.off()', { wait: true });
+    await executeCommand(page, 'clearPlots');
+    const clearYes = page.locator('role=alertdialog >> button:has-text("Yes")');
+    if (await clearYes.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await clearYes.click();
+      await expect(clearYes).not.toBeVisible({ timeout: 5000 });
+    }
+  });
+
   test('generating a plot brings the Plots pane to the front', async ({ rstudioPage: page }) => {
     test.setTimeout(180000);
 
