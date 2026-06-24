@@ -36,9 +36,17 @@ const PREVIEW_FRAME = 'iframe[title="Data Preview"]';
 // Waits for the readr preview iframe to show its first column header.
 // On Windows CI the preview subprocess occasionally fails to start; soft-skip
 // rather than hard-fail so an environment issue doesn't mask other results.
+//
+// `consoleActions` and `csvPath` are used only on the failure path, to probe
+// the R session for the CSV's on-disk state. #17985 manifests as the preview
+// subprocess reporting the CSV "does not exist"; the probe records whether the
+// file is actually missing (write failed / wrong path) or present-but-invisible
+// to the separate preview process, so the skip reason is actionable.
 async function awaitPreviewOrSkip(
   dialog: Locator,
   previewFrame: FrameLocator,
+  consoleActions: ConsolePaneActions,
+  csvPath: string,
 ): Promise<void> {
   const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
 
@@ -58,29 +66,56 @@ async function awaitPreviewOrSkip(
   // enhancePreviewErrorMessage, so key on that marker.
   const errorDialog = dialog.page().locator('.gwt-DialogBox[aria-label="Error"]');
   const errorText = (await errorDialog.textContent().catch(() => null)) ?? '';
-  const detail = errorText.includes('valid CSV file')
+  let detail = errorText.includes('valid CSV file')
     ? `readr CSV preview failed on Windows CI: ${errorText.trim()}`
     : 'readr CSV preview subprocess did not load on Windows CI';
 
-  // Cancel out of the import dialog before skipping so teardown stays clean.
+  // Cancel out of the import dialog and dismiss the top-level Error dialog (if
+  // any) before probing/skipping, so the console is reachable for the probe
+  // below and teardown stays clean.
   await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
+  await errorDialog.getByRole('button', { name: 'OK' }).click().catch(() => {});
+
+  // Best-effort: capture the R session's view of the CSV so the skip/throw
+  // reason says whether the file is on disk (write failed / wrong path) or
+  // present-but-invisible to the separate preview process (the suspected
+  // Windows-CI filesystem-visibility flake in #17985).
+  const fsState = await consoleActions
+    .evalRString(
+      `paste0("wd=[", getwd(), "] exists=", file.exists("${csvPath}"), ` +
+      `" dirfiles=[", paste(list.files(dirname("${csvPath}")), collapse=", "), "]")`,
+    )
+    .catch(() => null);
+  if (fsState)
+    detail += ` [R fs: ${fsState}]`;
 
   test.fixme(os.platform() === 'win32' && !!process.env.CI, detail);
-  throw new Error('readr CSV preview did not produce column headers within 45 s');
+  throw new Error(
+    `readr CSV preview did not produce column headers within 45 s [R fs: ${fsState ?? 'unavailable'}]`,
+  );
 }
 
 async function openReadrCsvPreview(
   page: Page,
   consoleActions: ConsolePaneActions,
   csvPath: string,
-): Promise<{ dialog: Locator; previewFrame: FrameLocator }> {
+): Promise<{ dialog: Locator; previewFrame: FrameLocator; csvPath: string }> {
   // Write the CSV via the R session so the path is valid on the rsession host
   // (matters for Server mode where runner and session can be on different
   // machines).
-  await consoleActions.executeInConsole(
-    `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
-    { wait: true },
-  );
+  const writeCmd = `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`;
+  await consoleActions.executeInConsole(writeCmd, { wait: true });
+
+  // Verify the CSV actually landed before opening the dialog. The preview runs
+  // in a separate --vanilla R subprocess; if the write silently failed (a
+  // transient open/lock failure on Windows CI is swallowed by wait:true) the
+  // subprocess reports the file "does not exist" and the preview times out
+  // after 45s (#17985). Poll file.exists() from the session, retry the write
+  // once, and surface a setup error here rather than misattributing it to the
+  // preview. file.exists() is the session's own view -- a cross-process
+  // visibility lag still slips through, but awaitPreviewOrSkip's probe records
+  // that case.
+  await ensureCsvWritten(consoleActions, csvPath, writeCmd);
 
   // The presenter wraps the dialog in a dependency check; accept the install
   // prompt if readr (or a transitive dep) isn't already on the library path.
@@ -118,7 +153,31 @@ async function openReadrCsvPreview(
   await expect(updateBtn).toBeVisible({ timeout: 5000 });
   await updateBtn.click();
 
-  return { dialog, previewFrame: dialog.frameLocator(PREVIEW_FRAME) };
+  return { dialog, previewFrame: dialog.frameLocator(PREVIEW_FRAME), csvPath };
+}
+
+// Confirm the CSV is on disk from the R session's point of view, retrying the
+// write once. Throws a setup-level error (not a preview timeout) if the file
+// never appears -- see openReadrCsvPreview for why this guards #17985.
+async function ensureCsvWritten(
+  consoleActions: ConsolePaneActions,
+  csvPath: string,
+  writeCmd: string,
+): Promise<void> {
+  const exists = async (): Promise<boolean> =>
+    (await consoleActions.evalRLogical(`file.exists("${csvPath}")`)) === true;
+
+  if (await exists())
+    return;
+
+  await consoleActions.executeInConsole(writeCmd, { wait: true });
+  if (await exists())
+    return;
+
+  throw new Error(
+    `Import Dataset test setup: CSV not written to ${csvPath} ` +
+    `(file.exists() is FALSE after two writeLines attempts).`,
+  );
 }
 
 test.describe('Import Dataset (readr)', () => {
@@ -131,7 +190,7 @@ test.describe('Import Dataset (readr)', () => {
 
   // https://github.com/rstudio/rstudio/issues/17777
   test('CSV preview renders without an .rs.digest lookup error', async ({ rstudioPage: page }) => {
-    const { dialog, previewFrame } = await openReadrCsvPreview(
+    const { dialog, previewFrame, csvPath } = await openReadrCsvPreview(
       page, consoleActions, `${sandbox.dir}/sample.csv`,
     );
 
@@ -141,7 +200,7 @@ test.describe('Import Dataset (readr)', () => {
     // CSV file?" error prefix instead. The grid renders each header as
     // "<name>(<type>)" once column inference completes; anchor on the name
     // prefix so the assertion doesn't depend on the inferred type string.
-    await awaitPreviewOrSkip(dialog, previewFrame);
+    await awaitPreviewOrSkip(dialog, previewFrame, consoleActions, csvPath);
 
     const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
     await expect(firstColHeader).toHaveText(/^a/);
@@ -160,12 +219,12 @@ test.describe('Import Dataset (readr)', () => {
 
   // https://github.com/rstudio/rstudio/issues/17735
   test('preview hides the column-summary sidebar', async ({ rstudioPage: page }) => {
-    const { dialog, previewFrame } = await openReadrCsvPreview(
+    const { dialog, previewFrame, csvPath } = await openReadrCsvPreview(
       page, consoleActions, `${sandbox.dir}/summary.csv`,
     );
 
     // Gate on the preview being up before asserting sidebar state.
-    await awaitPreviewOrSkip(dialog, previewFrame);
+    await awaitPreviewOrSkip(dialog, previewFrame, consoleActions, csvPath);
 
     // The fix: GridViewerFrame requests show_summary=0, so the panel never
     // gains the "expanded" class and the toggle reports collapsed. Pre-fix the

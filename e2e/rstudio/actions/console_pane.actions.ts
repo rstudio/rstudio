@@ -199,6 +199,33 @@ export class ConsolePaneActions {
   }
 
   /**
+   * Evaluate an R expression that yields a single string and return its value
+   * (or null if it couldn't be read). `cat()`s the value between unique
+   * markers and slices it back out of the console, so the value may contain
+   * spaces. Clears the console first so the markers appear at most twice (the
+   * echoed input line and the printed output).
+   *
+   * The leading/trailing `\s+` in the match pattern disambiguates the printed
+   * output from the echoed command: `cat()` separates its arguments with a
+   * space, so in the output each marker is flanked by whitespace, whereas in
+   * the echo the marker is immediately adjacent to a `"` quote. (Same trick as
+   * createSandbox's marker scrape.)
+   *
+   * Intended for diagnostics/state probes where the test wants the R value,
+   * not the console rendering. The expression must evaluate to a single
+   * (length-1) string.
+   */
+  async evalRString(expr: string): Promise<string | null> {
+    await this.clearConsole();
+    const token = `__RVAL_${Date.now()}__`;
+    await this.executeInConsole(`cat(${JSON.stringify(token)}, ${expr}, ${JSON.stringify(token)})`);
+    const output = await this.consolePane.consoleOutput.innerText();
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = output.match(new RegExp(`${escaped}\\s+([\\s\\S]*?)\\s+${escaped}`));
+    return match ? match[1].trim() : null;
+  }
+
+  /**
    * Ensure an R package is available, installing it if necessary.
    * Returns true if the package is available after the check, false if installation failed.
    */
