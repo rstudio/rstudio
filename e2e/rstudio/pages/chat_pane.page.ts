@@ -13,6 +13,7 @@ export class ChatPane extends FramePageObject {
   public chatRoot: Locator;
   public chatInput: Locator;
   public messageItem: Locator;
+  public assistantMessageItem: Locator;
   public allowBtn: Locator;
   public allowDropdownTrigger: Locator;
   public allowForSessionItem: Locator;
@@ -50,6 +51,11 @@ export class ChatPane extends FramePageObject {
     // <textarea>. editor.setEditable() toggles its contenteditable attribute.
     this.chatInput = this.frame.locator('.tiptap-input-editor');
     this.messageItem = this.frame.locator('[data-message-id]');
+    // Assistant-role bubbles only. The message wrapper carries the role via an
+    // inner .chat-message-assistant / .chat-message-user class (ChatMessage.tsx),
+    // so this excludes the user's own prompt bubble -- letting callers match on
+    // reply content without a fragile "not the prompt text" exclusion.
+    this.assistantMessageItem = this.frame.locator('[data-message-id]:has(.chat-message-assistant)');
     this.allowBtn = this.frame.locator("button:has-text('Allow')");
     this.allowDropdownTrigger = this.frame.locator('button.rounded-l-none:has(svg.lucide-chevron-down)');
     this.allowForSessionItem = this.frame.locator('[role="menuitem"]:has-text("for this session")');
