@@ -237,6 +237,13 @@ public class ApplicationAutomation
    // rstudio-console-busy CSS class (which can be observed stale in the
    // submit->busy gap, or miss a fast command's busy flash entirely).
    //
+   // The bump is gated on the prompt's busy flag: ConsolePromptEvent also fires
+   // for mid-execution prompts (continuation "+", browser(), readline(),
+   // menu()), which carry busy == true. Counting those would let a waiter
+   // resolve on an intermediate prompt, before the command truly returns to
+   // top-level. Only the top-level prompt (busy == false) advances the counter,
+   // so "promptCount increased" means "command completed".
+   //
    // Handlers are registered once per GWT page lifetime (initializeAgent runs
    // again on each session restart), guarded like registerReadinessHandlers.
    // The counter is intentionally not reset across restarts -- it only needs to
@@ -249,7 +256,11 @@ public class ApplicationAutomation
       if (consoleHandlersRegistered_)
          return;
 
-      eventBus_.addHandler(ConsolePromptEvent.TYPE, event -> bumpConsolePromptCount());
+      eventBus_.addHandler(ConsolePromptEvent.TYPE, event ->
+      {
+         if (!event.getPrompt().getBusy())
+            bumpConsolePromptCount();
+      });
       consoleHandlersRegistered_ = true;
    }
 

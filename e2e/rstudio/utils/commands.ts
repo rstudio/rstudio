@@ -186,12 +186,10 @@ type ErrorsBridge = {
 
 type ConsoleBridge = {
   /**
-   * Monotonic count of console prompts: advances by one each time R returns to
-   * its top-level prompt (i.e. a submitted console command completed). Driven
-   * by ConsolePromptEvent, so it is a race-free completion signal --
-   * executeInConsole captures it before submitting and waits for it to
-   * increase, rather than sampling the busy class. Absent on binaries built
-   * before the counter was added (ApplicationAutomation.registerConsole).
+   * Monotonic count of completed console commands (advances on each top-level
+   * prompt). Absent on binaries built before the counter was added. See
+   * ApplicationAutomation.registerConsole for the authoritative rationale, and
+   * waitForConsoleCommandComplete for how callers consume it.
    */
   promptCount: number;
 };

@@ -101,9 +101,11 @@ async function openReadrCsvPreview(
   const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
   await expect(fileInput).toBeVisible({ timeout: 5000 });
   // The file chooser passes the typed path to Java's File API; on Windows use
-  // native backslash separators. Normalize to forward slashes first, since
-  // sandbox.dir may already be backslashes (R tempfile()) joined with a forward
-  // slash, then convert -- so the result is uniformly separated on each OS.
+  // native backslash separators. createSandbox now normalizes its workdir to
+  // forward slashes, so csvPath has no backslashes and the first replace is a
+  // belt-and-suspenders no-op on every platform; it stays only to guard a
+  // future caller that builds csvPath from a raw backslash path. The Windows
+  // branch then converts to backslashes for the File API.
   const forwardPath = csvPath.replace(/\\/g, '/');
   const fillPath = os.platform() === 'win32' ? forwardPath.replace(/\//g, '\\') : forwardPath;
   await fileInput.fill(fillPath);
