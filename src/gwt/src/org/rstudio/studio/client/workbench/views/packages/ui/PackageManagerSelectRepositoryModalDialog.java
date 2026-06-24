@@ -150,7 +150,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
       table_.selectRow(0);
 
-      // border and background color are set via RowTable.css (theme aware)
+      // border and background color are set via RowTable.gss (theme aware)
       tableContainer_.add(table_);
 
       showHiddenReposCb_ = new CheckBox("Show hidden repositories");

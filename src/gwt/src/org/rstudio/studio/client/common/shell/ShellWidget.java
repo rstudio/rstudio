@@ -1315,7 +1315,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 
    // CSS classes for agent-generated console content. AGENT_CLASS_INPUT has
-   // styling in consoleStyles.css; OUTPUT and ERROR are hooks for DevTools
+   // styling in consoleStyles.gss; OUTPUT and ERROR are hooks for DevTools
    // inspection and future styling.
    private static final String AGENT_CLASS_INPUT = " rstudio-agent-input";
    private static final String AGENT_CLASS_OUTPUT = " rstudio-agent-output";

@@ -125,7 +125,7 @@ public class DirectoryContentsWidget extends Composite
 
       };
       
-      // background color is set via RowTable.css
+      // background color is set via RowTable.gss
       table_.setSize("500px", "300px");
       
       table_.addDomHandler(new KeyDownHandler()

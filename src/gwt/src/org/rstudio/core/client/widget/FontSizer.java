@@ -148,7 +148,7 @@ public class FontSizer
    
 
    /**
-    * Needs to match the size computed in FontSizer.css; used by xterm.js which is not
+    * Needs to match the size computed in FontSizer.gss; used by xterm.js which is not
     * styled with css but via API calls
     *
     * @return css line_height scaling (no units)

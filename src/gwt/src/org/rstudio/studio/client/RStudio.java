@@ -456,7 +456,7 @@ public class RStudio implements EntryPoint
     */
    private void setVisuallyHidden(Element el)
    {
-      // Keep in sync with themeStyles.css visuallyHidden
+      // Keep in sync with themeStyles.gss visuallyHidden
       el.getStyle().setPosition(Position.ABSOLUTE);
       el.getStyle().setProperty("clip", "rect(0 0 0 0)");
       el.getStyle().setBorderWidth(0, Unit.PX);
