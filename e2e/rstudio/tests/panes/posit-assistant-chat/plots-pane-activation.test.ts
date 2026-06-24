@@ -1,6 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { requireAiCredentials } from '@utils/ai-credentials';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import type { ChatPane } from '@pages/chat_pane.page';
 import type { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -62,11 +62,17 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
     // worker: close the graphics device and clear the Plots pane history.
     if (!consoleActions) return;
     await consoleActions.executeInConsole('graphics.off()', { wait: true });
-    await executeCommand(page, 'clearPlots');
-    const clearYes = page.locator('role=alertdialog >> button:has-text("Yes")');
-    if (await clearYes.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await clearYes.click();
-      await expect(clearYes).not.toBeVisible({ timeout: 5000 });
+    // clearPlots is disabled when there is no plot history (e.g. the test
+    // failed before plotting). Gate on the enabled state so this cleanup never
+    // throws and masks the original failure -- executeCommand otherwise waits
+    // for the command to enable and then times out.
+    if (await isCommandEnabled(page, 'clearPlots')) {
+      await executeCommand(page, 'clearPlots');
+      const clearYes = page.locator('role=alertdialog >> button:has-text("Yes")');
+      if (await clearYes.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await clearYes.click();
+        await expect(clearYes).not.toBeVisible({ timeout: 5000 });
+      }
     }
   });
 
