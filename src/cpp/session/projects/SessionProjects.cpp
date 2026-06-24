@@ -515,7 +515,6 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
    configJson["editor_theme"] = config.editorTheme;
-   configJson["reduce_remote_filesystem_operations"] = config.reduceRemoteFilesystemOperations;
 
    // scratch path
    std::string scratchPath;
@@ -867,18 +866,6 @@ Error writeProjectConfig(const json::Object& configJson)
    // editor theme -- a missing key preserves the existing value, while an
    // explicit empty string from the Appearance pane clears the project override
    config.editorTheme = resolveWrittenEditorTheme(existingConfig.editorTheme, configJson);
-
-   // reduce remote filesystem operations -- preserve the existing value when
-   // the client does not send the key (e.g. older clients that predate it)
-   config.reduceRemoteFilesystemOperations = existingConfig.reduceRemoteFilesystemOperations;
-   if (configJson.find("reduce_remote_filesystem_operations") != configJson.end())
-   {
-      error = json::readObject(configJson,
-                               "reduce_remote_filesystem_operations",
-                               config.reduceRemoteFilesystemOperations);
-      if (error)
-         return error;
-   }
 
    // project id
    config.projectId = existingConfig.projectId;

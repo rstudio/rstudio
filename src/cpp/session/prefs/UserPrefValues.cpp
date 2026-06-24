@@ -4232,6 +4232,7 @@ std::vector<std::string> UserPrefValues::allKeys()
 std::set<std::string> UserPrefValues::localProjectPrefs()
 {
    return std::set<std::string>({
+      kReduceRemoteFilesystemOperations,
       kFileMonitorUseGitignore,
    });
 }

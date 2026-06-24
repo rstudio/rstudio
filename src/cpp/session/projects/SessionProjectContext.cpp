@@ -263,12 +263,37 @@ Error computeScratchPaths(const FilePath& projectFile,
 
 bool ProjectContext::reduceRemoteFilesystemOperations() const
 {
-   // a per-project setting takes precedence over the global preference
-   switch (config_.reduceRemoteFilesystemOperations)
+   // an explicit per-project setting takes precedence over the global
+   // preference. this is a user-specific project-local preference, stored
+   // under .Rproj.user (so it is not shared via version control). we read the
+   // local preferences file directly rather than through the project
+   // preference layer, because this is consulted very early during project
+   // startup -- before that layer has been initialized
+   // (see session::projects::initialize).
+   if (!scratchPath_.isEmpty())
    {
-   case r_util::YesValue: return true;
-   case r_util::NoValue:  return false;
-   default: break; // DefaultValue -> consult the global preference
+      FilePath localPrefsFile = scratchPath_.completePath(kUserPrefsFile);
+      if (localPrefsFile.exists())
+      {
+         std::string contents;
+         Error error = readStringFromFile(localPrefsFile, &contents);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else
+         {
+            json::Value value;
+            error = value.parse(contents);
+            if (!error && value.isObject())
+            {
+               const json::Object& localPrefs = value.getObject();
+               auto it = localPrefs.find(kReduceRemoteFilesystemOperations);
+               if (it != localPrefs.end() && (*it).getValue().isBool())
+                  return (*it).getValue().getBool();
+            }
+         }
+      }
    }
 
    // when the global preference is disabled, never reduce

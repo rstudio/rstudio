@@ -132,14 +132,6 @@ public class RProjectConfig extends JavaScriptObject
        this.use_native_pipe_operator = useNativePipeOperator;
    }-*/;
 
-   public native final int getReduceRemoteFilesystemOperations() /*-{
-      return this.reduce_remote_filesystem_operations;
-   }-*/;
-
-   public native final void setReduceRemoteFilesystemOperations(int reduceRemoteFilesystemOperations) /*-{
-      this.reduce_remote_filesystem_operations = reduceRemoteFilesystemOperations;
-   }-*/;
-
    public native final boolean getAutoAppendNewline() /*-{
       return this.auto_append_newline;
    }-*/;
