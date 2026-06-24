@@ -4,9 +4,12 @@
    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
    ui:generateLocales="default">
    <ui:style>
+   @eval THEME_MUTED_GRAY org.rstudio.core.client.theme.ThemeColors.mutedGray;
+   @def sectionSpacing 20px;
+
    .host
    {
-      margin-top: 20px;
+      margin-top: sectionSpacing;
    }
    
    .warning
@@ -33,9 +36,9 @@
    
    .status
    {
-      margin-top: 20px;
+      margin-top: sectionSpacing;
       font-style: italic;
-      color: #a0a0a0;
+      color: THEME_MUTED_GRAY;
    }
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
