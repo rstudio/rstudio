@@ -67,16 +67,20 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
     // failed before plotting). Gate on the enabled state so this cleanup never
     // throws and masks the original failure -- executeCommand otherwise waits
     // for the command to enable and then times out.
-    if (await isCommandEnabled(page, 'clearPlots')) {
-      await executeCommand(page, 'clearPlots');
-      // Confirm via the stable GWT "Yes" button id, polling for it rather than
-      // racing a fixed timeout. dismissAll only hides dialogs, so it would not
-      // actually clear the history -- the Yes click is what runs clearPlots.
-      await page.locator(YES_BTN).click({ timeout: 10000 }).catch(() => {});
-    }
-    // Safety net: guarantee no modal (confirm or its progress indicator) is
-    // left up to block later specs in this worker, regardless of timing above.
-    if ((await numModalsShowing(page)) > 0) {
+    if (!(await isCommandEnabled(page, 'clearPlots'))) return;
+
+    await executeCommand(page, 'clearPlots');
+    // Confirm via the stable GWT "Yes" button id, polling for it rather than
+    // racing a fixed timeout. dismissAll only hides dialogs, so it would not
+    // actually clear the history -- the Yes click is what runs clearPlots.
+    await page.locator(YES_BTN).click({ timeout: 10000 }).catch(() => {});
+
+    // Wait for the confirm dialog and its clearPlots progress indicator to
+    // drain -- i.e. the async clear finished -- so it can't race later specs in
+    // this worker. Only force any still-open modal down if that doesn't happen.
+    try {
+      await expect.poll(() => numModalsShowing(page), { timeout: 10000 }).toBe(0);
+    } catch {
       await dismissAllModals(page);
     }
   });
