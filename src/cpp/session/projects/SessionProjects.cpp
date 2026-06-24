@@ -1050,11 +1050,11 @@ void afterSessionInitHook(bool newSession)
    if (module_context::reduceRemoteFilesystemOperations())
    {
       std::string msg =
-            "RStudio has reduced background file operations for this project, "
-            "as it appears to be on a network or remote filesystem. Some "
-            "features (such as file monitoring and code indexing) are disabled "
-            "to improve responsiveness; you can change this in "
-            "Tools -> Global Options -> General -> Advanced.";
+            "RStudio has reduced background file operations (such as file "
+            "monitoring and code indexing) for this project to improve "
+            "responsiveness on network or remote filesystems. You can change "
+            "this in Tools -> Global Options -> General -> Advanced, or for "
+            "this project in Project Options -> General.";
 
       Error error = r::exec::RFunction("base:::message", msg).call();
       if (error)

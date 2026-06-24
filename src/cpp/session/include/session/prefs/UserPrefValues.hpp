@@ -1850,7 +1850,7 @@ public:
    core::Error setAutoSaveOnBlur(bool val);
 
    /**
-    * When enabled, RStudio reduces background file monitoring, indexing, external-edit checks, and version-control polling for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file and version-control state.
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
     */
    bool reduceRemoteFilesystemOperations();
    core::Error setReduceRemoteFilesystemOperations(bool val);

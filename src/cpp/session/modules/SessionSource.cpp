@@ -1128,7 +1128,9 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
 
    // When reducing remote filesystem operations, skip the external-edit check;
    // the exists() / getLastWriteTime() stats below can be slow on network
-   // drives. See https://github.com/rstudio/rstudio/issues/10417.
+   // drives. This is intentionally project-scoped (keyed on the active project,
+   // not the individual document's path), matching the rest of the feature.
+   // See https://github.com/rstudio/rstudio/issues/10417.
    if (module_context::reduceRemoteFilesystemOperations())
    {
       pResponse->setResult(result);

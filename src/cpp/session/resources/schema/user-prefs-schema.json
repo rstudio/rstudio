@@ -1530,7 +1530,7 @@
             "type": "boolean",
             "default": true,
             "title": "Reduce background file operations on network and remote drives",
-            "description": "When enabled, RStudio reduces background file monitoring, indexing, external-edit checks, and version-control polling for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file and version-control state."
+            "description": "When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status."
         },
         "terminal_initial_directory": {
             "type": "string",

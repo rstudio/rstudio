@@ -115,8 +115,8 @@ core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
 // Resolves whether RStudio should reduce background filesystem operations
-// (monitoring, indexing, external-edit checks, version-control polling) for
-// the current project. Combines the per-project setting, the global
+// (monitoring, code indexing, external-edit checks) for the current project.
+// Combines the per-project setting, the global
 // 'reduce_remote_filesystem_operations' preference, and remote-filesystem
 // detection. See https://github.com/rstudio/rstudio/issues/10417.
 bool reduceRemoteFilesystemOperations();

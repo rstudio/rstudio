@@ -113,7 +113,9 @@ class ProjectContext : boost::noncopyable
 public:
    ProjectContext()
       : isNewProject_(false),
-        hasFileMonitor_(false)
+        hasFileMonitor_(false),
+        remoteFilesystemChecked_(false),
+        remoteFilesystem_(false)
    {
    }
    
@@ -295,6 +297,11 @@ private:
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
+
+   // cached result of remote-filesystem detection for directory_; computed at
+   // most once per session, since statfs() on a hung remote mount can block
+   mutable bool remoteFilesystemChecked_;
+   mutable bool remoteFilesystem_;
    RSTUDIO_BOOST_SIGNAL<void(const tree<core::FileInfo>&)> onMonitoringEnabled_;
    RSTUDIO_BOOST_SIGNAL<void(const std::vector<core::system::FileChangeEvent>&)>
                                                             onFilesChanged_;

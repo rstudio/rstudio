@@ -276,8 +276,15 @@ bool ProjectContext::reduceRemoteFilesystemOperations() const
       return false;
 
    // otherwise (automatic): reduce only when the project lives on a remote
-   // filesystem. isRemotePath() is a cheap local query (no network round-trip).
-   return core::system::isRemotePath(directory_);
+   // filesystem. cache the detection: directory_ is fixed for the session, and
+   // statfs() on a hung remote mount can block, so probe at most once.
+   if (!remoteFilesystemChecked_)
+   {
+      remoteFilesystem_ = core::system::isRemotePath(directory_);
+      remoteFilesystemChecked_ = true;
+   }
+
+   return remoteFilesystem_;
 }
 
 FilePath ProjectContext::oldScratchPath() const
