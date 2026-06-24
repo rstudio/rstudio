@@ -1,7 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { requireAiCredentials } from '@utils/ai-credentials';
-import { executeCommand, isCommandEnabled } from '@utils/commands';
+import { executeCommand, isCommandEnabled, numModalsShowing, dismissAllModals } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
+import { YES_BTN } from '@pages/modals.page';
 import type { ChatPane } from '@pages/chat_pane.page';
 import type { ChatPaneActions } from '@actions/chat_pane.actions';
 import type { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -68,11 +69,15 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
     // for the command to enable and then times out.
     if (await isCommandEnabled(page, 'clearPlots')) {
       await executeCommand(page, 'clearPlots');
-      const clearYes = page.locator('role=alertdialog >> button:has-text("Yes")');
-      if (await clearYes.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await clearYes.click();
-        await expect(clearYes).not.toBeVisible({ timeout: 5000 });
-      }
+      // Confirm via the stable GWT "Yes" button id, polling for it rather than
+      // racing a fixed timeout. dismissAll only hides dialogs, so it would not
+      // actually clear the history -- the Yes click is what runs clearPlots.
+      await page.locator(YES_BTN).click({ timeout: 10000 }).catch(() => {});
+    }
+    // Safety net: guarantee no modal (confirm or its progress indicator) is
+    // left up to block later specs in this worker, regardless of timing above.
+    if ((await numModalsShowing(page)) > 0) {
+      await dismissAllModals(page);
     }
   });
 
@@ -95,13 +100,14 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
     await chatActions.sendChatMessage(PROMPT);
 
     // Drive the conversation to completion, granting executeCode permission as
-    // its Allow dialog appears. The user's prompt bubble also contains the
-    // marker, so guard against matching it by excluding a prompt-only phrase.
+    // its Allow dialog appears. Match the marker only in the assistant's reply
+    // bubble: the user's prompt bubble also contains the marker verbatim, so
+    // scoping to the assistant role avoids depending on a prompt-text exclusion
+    // (which would deadlock until timeout if the reply echoed that phrase).
     await chatActions.pollWithAllowDialogs(async () => {
       if (await chatPane.isStopButtonVisible()) return false;
-      if ((await chatPane.getMessageCount()) < 2) return false;
-      const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
-      return lastText.includes(PLOT_DONE_MARKER) && !lastText.includes('Use your code execution tool');
+      const lastReply = await chatPane.assistantMessageItem.last().innerText().catch(() => '');
+      return lastReply.includes(PLOT_DONE_MARKER);
     }, 150000);
 
     // The regression: the assistant drew a plot, so the Plots pane must be
