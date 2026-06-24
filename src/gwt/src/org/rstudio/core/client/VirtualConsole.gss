@@ -1,0 +1,139 @@
+@external ace_console_error;
+@external rstudio-themes-default;
+@external rstudio-themes-dark;
+.stdin {
+}
+
+.stdout {
+}
+
+.stderr {
+}
+
+@def LIGHT_BACKGROUND_COLOR rgba(0, 0, 0, 0.08);
+@def LIGHT_ERROR_COLOR #991717;
+@def LIGHT_WARNING_COLOR #64480d;
+@def LIGHT_MESSAGE_COLOR #1d6ec0;
+@def LIGHT_AGENT_COLOR #9b59b6;
+
+.rstudio-themes-default .ace_console_error .group {
+  all: unset;
+}
+
+.rstudio-themes-default .group {
+  display: block;
+  padding: 6px 0 6px 10px;
+  margin: 6px 0 6px -6px;
+}
+
+.rstudio-themes-default .groupTop {
+  background: LIGHT_BACKGROUND_COLOR;
+}
+
+.rstudio-themes-default .groupError {
+  border-left: 2px solid LIGHT_ERROR_COLOR;
+}
+
+.rstudio-themes-default .groupWarning {
+  border-left: 2px solid LIGHT_WARNING_COLOR;
+}
+
+.rstudio-themes-default .groupMessage {
+  border-left: 2px solid LIGHT_MESSAGE_COLOR;
+}
+
+.rstudio-themes-default .groupAgent {
+  border-left: 2px solid LIGHT_AGENT_COLOR;
+}
+
+.rstudio-themes-default .groupAgent.groupTop {
+  position: relative;
+}
+
+.rstudio-themes-default .groupAgent.groupTop::after {
+  content: "AI";
+  position: absolute;
+  top: 0;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 200;
+  font-family: monospace;
+  color: LIGHT_AGENT_COLOR;
+  opacity: 0.7;
+}
+
+.rstudio-themes-default .error {
+  color: LIGHT_ERROR_COLOR;
+}
+
+.rstudio-themes-default .warning {
+  color: LIGHT_WARNING_COLOR;
+}
+
+.rstudio-themes-default .message {
+  font-weight: bold;
+}
+
+@def DARK_BACKGROUND_COLOR rgba(255, 255, 255, 0.1);
+@def DARK_ERROR_COLOR #ff8000;
+@def DARK_WARNING_COLOR #e5c515;
+@def DARK_MESSAGE_COLOR #7aa8d7;
+@def DARK_AGENT_COLOR #bb86fc;
+
+.rstudio-themes-dark .ace_console_error .group {
+  all: unset;
+}
+
+.rstudio-themes-dark .group {
+  display: block;
+  padding: 6px 0 6px 10px;
+  margin: 6px 0 6px -6px;
+}
+
+.rstudio-themes-dark .groupTop {
+  background: DARK_BACKGROUND_COLOR;
+}
+
+.rstudio-themes-dark .groupError {
+  border-left: 2px solid DARK_ERROR_COLOR;
+}
+
+.rstudio-themes-dark .groupWarning {
+  border-left: 2px solid DARK_WARNING_COLOR;
+}
+
+.rstudio-themes-dark .groupMessage {
+  border-left: 2px solid DARK_MESSAGE_COLOR;
+}
+
+.rstudio-themes-dark .groupAgent {
+  border-left: 2px solid DARK_AGENT_COLOR;
+}
+
+.rstudio-themes-dark .groupAgent.groupTop {
+  position: relative;
+}
+
+.rstudio-themes-dark .groupAgent.groupTop::after {
+  content: "AI";
+  position: absolute;
+  top: 0;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 200;
+  font-family: monospace;
+  color: DARK_AGENT_COLOR;
+  opacity: 0.7;
+}
+
+.rstudio-themes-dark .error {
+  color: DARK_ERROR_COLOR;
+}
+
+.rstudio-themes-dark .warning {
+  color: DARK_WARNING_COLOR;
+}
+
+.rstudio-themes-dark .message {
+  font-weight: bold;
+}

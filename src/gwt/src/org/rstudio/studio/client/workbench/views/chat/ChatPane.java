@@ -1322,7 +1322,7 @@ public class ChatPane
    // Resources ----
    public interface Resources extends ClientBundle
    {
-      @Source("ChatPane.css")
+      @Source("ChatPane.gss")
       Styles styles();
    }
 

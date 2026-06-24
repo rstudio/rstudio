@@ -7,7 +7,7 @@
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
 
    <ui:style>
-      @external .gwt-TextBox;
+      @external gwt-TextBox;
 
       .panel input[type=checkbox] {
          margin-left: 0;

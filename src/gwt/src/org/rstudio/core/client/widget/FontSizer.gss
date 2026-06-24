@@ -1,0 +1,18 @@
+@external windows macintosh linux;
+.macintosh .normalSize,
+.macintosh .normalSize td,
+.macintosh .normalSize pre {
+  line-height: 1.45;
+}
+
+.windows .normalSize,
+.windows .normalSize td,
+.windows .normalSize pre {
+  line-height: 1.2;
+}
+
+.normalSize,
+.normalSize td,
+.normalSize pre {
+  line-height: 1.25;
+}

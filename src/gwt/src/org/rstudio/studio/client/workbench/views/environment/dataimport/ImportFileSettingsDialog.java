@@ -51,7 +51,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    interface Resources extends ClientBundle
    {
-      @Source("ImportFileSettingsDialog.css")
+      @Source("ImportFileSettingsDialog.gss")
       Styles styles();
    }
 

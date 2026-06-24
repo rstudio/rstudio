@@ -117,7 +117,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
 
    interface Resources extends ClientBundle
    {
-      @Source("ProjectRenvPreferencesPane.css")
+      @Source("ProjectRenvPreferencesPane.gss")
       Styles styles();
    }
 

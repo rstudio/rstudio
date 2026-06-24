@@ -21,6 +21,6 @@ public interface StudioResources extends ClientBundle
 {
    public static final StudioResources INSTANCE = GWT.create(StudioResources.class);
 
-   @Source("cstyles.css")
+   @Source("cstyles.gss")
    StudioStyles styles();
 }

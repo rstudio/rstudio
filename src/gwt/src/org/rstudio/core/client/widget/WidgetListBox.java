@@ -84,7 +84,7 @@ public class WidgetListBox<T extends Widget>
 
    public interface Resources extends ClientBundle
    {
-      @Source("WidgetListBox.css")
+      @Source("WidgetListBox.gss")
       ListStyle listStyle();
    }
 

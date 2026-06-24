@@ -255,7 +255,7 @@ public abstract class AceEditorDiffView
 
    public interface Resources extends ClientBundle
    {
-      @Source("AceEditorDiffView.css")
+      @Source("AceEditorDiffView.gss")
       Styles styles();
    }
 

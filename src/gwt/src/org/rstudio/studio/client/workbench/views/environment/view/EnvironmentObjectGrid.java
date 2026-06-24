@@ -56,7 +56,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
    public interface Resources extends ClientBundle
    {
-      @Source("EnvironmentObjectGrid.css")
+      @Source("EnvironmentObjectGrid.gss")
       Style style();
    }
 

@@ -1,0 +1,107 @@
+@external rstudio-themes-dark;
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@def THEME_DEFAULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.defaultBackground');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_ALTERNATE_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.alternateBackground');
+@def THEME_LIGHT_CONTROL_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.lightControlBackground');
+@def THEME_LIGHT_CONTROL_BORDER eval('org.rstudio.core.client.theme.ThemeColors.lightControlBorder');
+@def THEME_DARK_CONTROL_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkControlBackground');
+@def THEME_DARK_CONTROL_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkControlBorder');
+
+.container {
+  display: inline-block;
+  height: 18px;
+  margin-right: 3px;
+}
+
+.container td {
+}
+
+tr .leftLeft {
+  width: auto;
+  padding-left: 7px;
+  padding-right: 4px;
+}
+
+.leftOn .leftLeft {
+  width: auto;
+}
+
+.leftLeft button,
+.rightRight button {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+
+tr .rightRight {
+  background-position: top right;
+  width: auto;
+  padding-left: 5px;
+  padding-right: 9px;
+}
+
+.rightOn .rightRight {
+  width: auto;
+}
+
+.rightOn {
+  border: solid 1px #fff;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.leftOn,
+.rightOn {
+  cursor: pointer;
+  position: relative;
+  top: 1px;
+  margin-right: 6px;
+  margin-left: 6px;
+  border: solid 1px THEME_LIGHT_CONTROL_BORDER;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rstudio-themes-dark .rightOn,
+.rstudio-themes-dark .leftOn {
+  border: solid 1px THEME_DARK_CONTROL_BORDER;
+}
+
+.leftLeft,
+.rightRight {
+  height: 16px;
+  background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-dark .leftLeft,
+.rstudio-themes-dark .rightRight {
+  background: THEME_DARK_CONTROL_BACKGROUND;
+}
+
+.rightRight {
+  border-left: solid 1px THEME_LIGHT_CONTROL_BORDER;
+}
+
+.rstudio-themes-dark .rightRight {
+  border-left: solid 1px THEME_DARK_CONTROL_BORDER;
+}
+
+.rightOn .leftLeft,
+.leftOn .rightRight {
+  background: THEME_LIGHT_CONTROL_BACKGROUND;
+}
+
+.rstudio-themes-dark-grey .rightOn .leftLeft,
+.rstudio-themes-dark-grey .leftOn .rightRight {
+  background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-alternate .rightOn .leftLeft,
+.rstudio-themes-alternate .leftOn .rightRight {
+  background: THEME_ALTERNATE_BACKGROUND;
+}

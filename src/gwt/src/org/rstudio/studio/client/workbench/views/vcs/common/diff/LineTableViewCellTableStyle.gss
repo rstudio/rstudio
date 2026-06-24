@@ -1,0 +1,148 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+@def SELECTION_BORDER_WIDTH 1px;
+
+.cellTableWidget {
+  font-family: FIXED_WIDTH_FONT;
+  white-space: pre-wrap;
+  color: #888;
+  user-select: text;
+}
+
+.cellTableWidget>tbody>tr>td {
+  vertical-align: top;
+}
+
+.header {
+  background-color: #ddd;
+  color: #444;
+}
+
+.header>td {
+  border-top: SELECTION_BORDER_WIDTH #bbb solid !important;
+  border-bottom: SELECTION_BORDER_WIDTH #bbb solid !important;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.same {
+}
+
+.insertion {
+  background-color: #ddfeda;
+  color: #444;
+}
+
+.insertion.start>td {
+  border-top: #90d989 solid SELECTION_BORDER_WIDTH !important;
+}
+
+.insertion.end>td {
+  border-bottom: #90d989 solid SELECTION_BORDER_WIDTH !important;
+}
+
+.deletion {
+  background-color: #ffdedc;
+  color: #444;
+}
+
+.deletion.start>td {
+  border-top: #e1938f solid SELECTION_BORDER_WIDTH !important;
+}
+
+.deletion.end>td {
+  border-bottom: #e1938f solid SELECTION_BORDER_WIDTH !important;
+}
+
+.comment {
+  background-color: #f0f0f0;
+  color: #777;
+}
+
+.info {
+  background-color: #ffffdc;
+  color: #444;
+}
+
+.info.start>td {
+  border-top: #a0a060 solid SELECTION_BORDER_WIDTH !important;
+}
+
+.info.end>td {
+  border-bottom: #a0a060 solid SELECTION_BORDER_WIDTH !important;
+}
+
+.cellTableWidget>.lineNumber {
+  background-color: #f0f0f0;
+  border-right-color: #d9d9d9 !important;
+}
+
+.cellTableWidget>tbody>tr .lineNumber.lastLineNumber {
+  border-right-color: #bbb !important;
+}
+
+.cellTableWidget>tbody>tr.same .lineNumber {
+  background-color: #f0f0f0;
+}
+
+.cellTableWidget>tbody>tr.header .lineNumber {
+  border-right-color: transparent;
+}
+
+.cellTableWidget>tbody>tr>td:first-child {
+  text-align: right;
+}
+
+.cellTableCell {
+  padding: 0 8px;
+}
+
+.cellTableWidget>tbody>tr>td {
+  border: SELECTION_BORDER_WIDTH solid transparent;
+  border-right-color: #d9d9d9 !important;
+}
+
+.cellTableSelectedRow {
+  background: #ccc !important;
+}
+
+.cellTableSelectedRowCell {
+  background: #ccc !important;
+}
+
+.cellTableWidget:focus .cellTableSelectedRow {
+  background: #92c1f0 !important;
+}
+
+.cellTableWidget:focus .cellTableSelectedRowCell {
+  background: #92c1f0 !important;
+}
+
+.stageMode .actions div[data-action="Stage"],
+.stageMode .actions div[data-action="Discard"] {
+  display: none;
+}
+
+.workingMode .actions div[data-action="Unstage"] {
+  display: none;
+}
+
+.noStageMode .actions div[data-action="Stage"],
+.noStageMode .actions div[data-action="Unstage"] {
+  display: none;
+}
+
+.chunkActions {
+}
+
+.lineActions {
+}
+
+.actions {
+  font-family: PROPORTIONAL_FONT;
+  float: right;
+  height: 16px;
+  padding: 1px 0 0 0;
+  margin-bottom: -5px;
+  overflow: visible;
+}

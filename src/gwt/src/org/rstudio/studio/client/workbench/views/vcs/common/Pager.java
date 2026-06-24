@@ -68,8 +68,8 @@ public class Pager extends SimplePager
       ImageResource simplePagerPreviousPageDisabled();
 
       @Override
-      @Source({"com/google/gwt/user/cellview/client/SimplePager.css",
-               "SimplePagerStyle.css"})
+      @Source({"com/google/gwt/user/cellview/client/SimplePager.gss",
+               "SimplePagerStyle.gss"})
       SimplePagerStyle simplePagerStyle();
    }
 

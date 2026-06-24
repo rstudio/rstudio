@@ -620,7 +620,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewQuartoDocumentDialog.css")
+      @Source("NewQuartoDocumentDialog.gss")
       Styles styles();
    }
    

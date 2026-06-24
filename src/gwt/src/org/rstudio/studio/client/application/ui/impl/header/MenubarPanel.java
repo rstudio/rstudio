@@ -34,7 +34,7 @@ public class MenubarPanel extends Composite
    
    interface Resources extends ClientBundle
    {
-      @Source("MenubarPanel.css")
+      @Source("MenubarPanel.gss")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

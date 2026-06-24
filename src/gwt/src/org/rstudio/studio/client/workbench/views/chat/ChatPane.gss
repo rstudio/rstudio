@@ -1,0 +1,80 @@
+@charset "UTF-8";
+
+@def THEME_DEFAULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.defaultBackground');
+@def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_ALTERNATE_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.alternateBackground');
+@def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
+
+@external rstudio-themes-dark-grey rstudio-themes-alternate;
+
+.chatUpdateNotification {
+  background-color: THEME_DEFAULT_BACKGROUND;
+  padding: 6px;
+  border-bottom: 1px solid THEME_DEFAULT_BORDER;
+  overflow: hidden;
+}
+
+.chatNotificationContent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.chatUpdateMessage {
+  line-height: normal;
+  flex: 1;
+}
+
+.chatNotificationButtonPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rstudio-themes-dark-grey .chatUpdateNotification {
+  background-color: THEME_DARKGREY_BACKGROUND !important;
+  border-bottom: 1px solid THEME_DARKGREY_BORDER !important;
+}
+
+.rstudio-themes-alternate .chatUpdateNotification {
+  background-color: THEME_ALTERNATE_BACKGROUND !important;
+  border-bottom: 1px solid THEME_ALTERNATE_BORDER !important;
+}
+
+.chatNotificationButton {
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid THEME_DEFAULT_BORDER;
+  background-color: THEME_DEFAULT_BACKGROUND;
+  color: #333;
+}
+
+.chatNotificationButton:hover {
+  background-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-dark-grey .chatNotificationButton {
+  border: 1px solid THEME_DARKGREY_BORDER !important;
+  background-color: THEME_DARKGREY_BACKGROUND !important;
+  color: #fff !important;
+}
+
+.rstudio-themes-dark-grey .chatNotificationButton:hover {
+  background-color: THEME_DARKGREY_BORDER !important;
+}
+
+.rstudio-themes-alternate .chatNotificationButton {
+  border: 1px solid THEME_ALTERNATE_BORDER !important;
+  background-color: THEME_ALTERNATE_BACKGROUND !important;
+}
+
+.rstudio-themes-alternate .chatNotificationButton:hover {
+  background-color: THEME_ALTERNATE_BORDER !important;
+}

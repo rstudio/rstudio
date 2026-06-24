@@ -6,7 +6,7 @@
    ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
-      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+      @def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
       
       .outer {
          margin: 5px;
@@ -17,7 +17,7 @@
       }
       
       .list {
-         font-family: fixedWidthFont;
+         font-family: FIXED_WIDTH_FONT;
          padding: 5px;
          width: 100%;
       }

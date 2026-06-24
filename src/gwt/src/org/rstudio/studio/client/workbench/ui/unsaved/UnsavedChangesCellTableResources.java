@@ -25,6 +25,6 @@ public interface UnsavedChangesCellTableResources extends CellTable.Resources
    {
    }
 
-   @Source("UnsavedChangesCellTableStyle.css")
+   @Source("UnsavedChangesCellTableStyle.gss")
    UnsavedChangesCellTableStyle cellTableStyle();
 }

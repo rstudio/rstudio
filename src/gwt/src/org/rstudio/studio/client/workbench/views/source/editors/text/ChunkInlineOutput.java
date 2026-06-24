@@ -109,7 +109,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("ChunkInlineOutput.css")
+      @Source("ChunkInlineOutput.gss")
       Styles styles();
    }
    

@@ -282,7 +282,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
    interface Resources extends ClientBundle
    {
-      @Source("ApplicationEndedPopupPanel.css")
+      @Source("ApplicationEndedPopupPanel.gss")
       Styles styles();
 
       @Source("applicationQuit_2x.png")

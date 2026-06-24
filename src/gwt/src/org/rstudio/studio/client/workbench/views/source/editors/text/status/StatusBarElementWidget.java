@@ -235,7 +235,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
    
    public interface Resources extends ClientBundle
    {
-      @Source("StatusBarElementWidget.css")
+      @Source("StatusBarElementWidget.gss")
       Styles styles();
       
       @Source("upDownArrow_2x.png")

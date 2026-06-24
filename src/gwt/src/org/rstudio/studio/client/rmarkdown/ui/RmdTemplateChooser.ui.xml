@@ -6,8 +6,8 @@
    ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
-     @external .gwt-Label;
-     @external .gwt-TextBox;
+     @external gwt-Label;
+     @external gwt-TextBox;
      
      .controlLabel .gwt-Label, .directoryChooser .gwt-Label
      {

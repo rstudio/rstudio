@@ -1,0 +1,29 @@
+.entryLabel {
+  margin-bottom: 2px;
+}
+
+.mainWidget {
+  width: 350px;
+}
+
+.keyPathTextBox {
+  margin-top: 2px;
+  background-color: transparent;
+}
+
+.newSection {
+  margin-top: 10px;
+}
+
+.lastSection {
+  margin-bottom: 40px;
+}
+
+.passphrase {
+  width: 170px;
+  margin-right: 10px;
+}
+
+.passphraseConfirm {
+  width: 165px;
+}

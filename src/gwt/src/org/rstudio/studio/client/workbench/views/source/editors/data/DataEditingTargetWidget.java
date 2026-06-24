@@ -60,7 +60,7 @@ public class DataEditingTargetWidget extends Composite
    
    interface Resources extends ClientBundle
    {
-      @Source("DataEditingTargetWidget.css")
+      @Source("DataEditingTargetWidget.gss")
       Styles styles();
    }
    private static Resources resources = GWT.create(Resources.class);

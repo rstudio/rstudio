@@ -303,7 +303,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 
    interface Resources extends ClientBundle
    {
-      @Source("ProjectPackratPreferencesPane.css")
+      @Source("ProjectPackratPreferencesPane.gss")
       Styles styles();
    }
 

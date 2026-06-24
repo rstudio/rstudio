@@ -1,0 +1,45 @@
+@charset "UTF-8";
+
+@external gwt-MenuItem;
+@external rstudio-themes-dark rstudio-themes-dark-grey;
+
+@def THEME_DARKGREY_MENU_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected');
+
+.toolbarButtonLatched {
+  background: #e7e8ea;
+}
+
+.rstudio-themes-dark .toolbarButtonLatched,
+.rstudio-themes-dark-grey .toolbarButtonLatched {
+  background: THEME_DARKGREY_MENU_SELECTED;
+}
+
+.toolbarButton {
+  margin-top: 2px;
+  height: 20px;
+}
+
+.toolbarButton img {
+  margin-top: 1px;
+}
+
+.toolbarTextMenuButton {
+  margin-top: -1px;
+  color: #393939;
+}
+
+.rstudio-themes-dark .toolbarTextMenuButton {
+  color: #efefef;
+}
+
+.toolbarSeparator {
+  margin-top: 2px;
+}
+
+.toolbarPopupMenu .gwt-MenuItem {
+  min-width: 185px;
+}
+
+.toolbarPopupSubmenu .gwt-MenuItem {
+  min-width: 120px;
+}

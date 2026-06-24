@@ -1,0 +1,35 @@
+.wizardPageSelector {
+  top: -1px !important;
+}
+
+.wizardPageConnectionSelectorItemLeftIcon {
+  max-width: 16px;
+  max-height: 16px;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+
+.wizardPageWarningPanel {
+  background: #fffbec;
+  padding: 3px;
+  padding-left: 8px;
+  padding-top: 4px;
+}
+
+.wizardPageWarningLabel {
+  display: inline-block;
+  vertical-align: top;
+  padding-left: 5px;
+}
+
+.wizardPageWarningImage {
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .wizardPageWarningPanel {
+  background: THEME_DARKGREY_INACTIVE;
+}

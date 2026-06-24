@@ -1,0 +1,73 @@
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@external dataGridHeader;
+@def THEME_DEFAULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.defaultBackground');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_ALTERNATE_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.alternateBackground');
+
+.packageColumn {
+  display: flex;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.widgetColumnHeader {
+  border-right: none;
+}
+
+.rstudio-themes-default .dataGridCell img {
+  filter: brightness(0.9);
+}
+
+.rstudio-themes-dark .dataGridOddRow:hover,
+.rstudio-themes-dark .dataGridEvenRow:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.rstudio-themes-default .dataGridOddRow:hover,
+.rstudio-themes-default .dataGridEvenRow:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.rstudio-themes-default .dataGridOddRow:hover img,
+.rstudio-themes-default .dataGridEvenRow:hover img {
+  filter: brightness(0.8);
+}
+
+.rstudio-themes-default .dataGridCell img:hover {
+  filter: brightness(0.5) !important;
+}
+
+.rstudio-themes-dark .dataGridOddRow img:hover,
+.rstudio-themes-dark .dataGridEvenRow img:hover {
+  filter: brightness(1.2);
+}
+
+.dataGridFirstColumn {
+  text-align: center;
+}
+
+.dataGridLastColumn {
+  padding-top: 3px;
+  padding-left: 3px;
+}
+
+.packageOutOfSyncRow {
+  background-color: #fff9e2;
+}
+
+.packageNotApplicableColumn {
+  color: #b0b0b0;
+}
+
+.rstudio-themes-default .dataGridHeader {
+  background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-dark-grey .dataGridHeader {
+  background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-alternate .dataGridHeader {
+  background: THEME_ALTERNATE_BACKGROUND;
+}

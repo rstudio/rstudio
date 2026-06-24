@@ -290,7 +290,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewPlumberAPI.css")
+      @Source("NewPlumberAPI.gss")
       Styles styles();
    }
 

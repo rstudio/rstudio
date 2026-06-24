@@ -379,7 +379,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewShinyWebApplication.css")
+      @Source("NewShinyWebApplication.gss")
       Styles styles();
    }
    

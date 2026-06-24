@@ -65,7 +65,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
 
    public interface Resources extends ClientBundle
    {
-      @Source("EnvironmentObjectList.css")
+      @Source("EnvironmentObjectList.gss")
       Style style();
    }
 

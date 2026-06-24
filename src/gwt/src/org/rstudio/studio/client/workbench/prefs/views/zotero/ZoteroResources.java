@@ -34,7 +34,7 @@ public interface ZoteroResources extends ClientBundle
       String librariesSelect();
    }
    
-   @Source("ZoteroResources.css")
+   @Source("ZoteroResources.gss")
    Styles styles();
    
    public static final ZoteroResources INSTANCE = GWT.create(ZoteroResources.class);

@@ -1,0 +1,72 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@def THEME_DARK_DIALOG_CONTROL_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground');
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+
+.smallButton {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
+.buttonContent {
+  font-size: 9px;
+  color: black;
+  white-space: nowrap;
+  margin-top: 3px;
+  margin-left: 6px;
+  margin-right: 6px;
+  margin-bottom: 3px;
+}
+
+button.smallButton {
+  margin-bottom: 2px;
+  border-radius: 6px;
+}
+
+button.smallButton>table:first-child {
+  border: solid 1px #bbb;
+  border-radius: 5px;
+  background: #f6f5f7;
+  box-shadow: 0 1px #ececec;
+  overflow: hidden;
+}
+
+.rstudio-themes-dark button.smallButton>table:first-child {
+  box-shadow: none;
+}
+
+button.smallButton:active>table:first-child {
+  background: #eaeaea;
+}
+
+.buttonCenter {
+  font-size: 10px;
+}
+
+.rstudio-themes-dark .buttonCenter {
+  color: white;
+}
+
+.rstudio-themes-dark button.smallButton>table:first-child {
+  border-color: #2d3c4b;
+  background: #919aa1;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.smallButton>table:first-child {
+  background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+  border-color: THEME_DARKGREY_BORDER;
+  box-shadow: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.smallButton:active>table:first-child {
+  background: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark .buttonContent {
+  color: white;
+}

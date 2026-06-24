@@ -169,7 +169,7 @@ public class RenvActionDialogContents extends Composite
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "RenvActionDialogContents.css"})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "RenvActionDialogContents.gss"})
       Styles dataGridStyle();
    }
    

@@ -147,7 +147,7 @@ public class ResizeGripper extends Composite
    
    interface Resources extends ClientBundle
    {
-      @Source("ResizeGripper.css")
+      @Source("ResizeGripper.gss")
       Styles styles();
 
       @Source("resizeGripper_2x.png")

@@ -1,0 +1,117 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+@def THEME_DARK_ROW_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkRowSelected');
+@def THEME_DARK_ROW_FOCUSED eval('org.rstudio.core.client.theme.ThemeColors.darkRowFocused');
+
+@external editor_dark ace_editor_theme;
+
+.selected {
+  background-color: #ccc;
+}
+
+.editor_dark .ace_editor_theme .selected {
+  background-color: THEME_DARK_ROW_SELECTED;
+}
+
+:focus .selected,
+.inboundFocus .selected,
+.fakeFocus .selected {
+  background-color: #92c1f0;
+}
+
+.editor_dark .ace_editor_theme :focus .selected,
+.inboundFocus .selected,
+.fakeFocus .selected {
+  background-color: THEME_DARK_ROW_FOCUSED;
+}
+
+.historyTable:focus {
+  outline: none;
+}
+
+.loadMore {
+  display: block;
+  text-decoration: none;
+  text-align: center;
+  font-weight: bold;
+  padding: 2px 0 2px 0;
+}
+
+.historyTable {
+  font-family: FIXED_WIDTH_FONT;
+  font-size: 12px;
+  overflow-x: hidden;
+  table-layout: fixed;
+}
+
+.historyTable td:first-child div {
+  width: 100%;
+  padding-left: 3px;
+  padding-right: 3px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  user-select: all;
+}
+
+.historyTable div::selection {
+  background: none;
+}
+
+.historyTable .selected td:first-child div {
+  width: auto;
+  overflow: visible;
+  margin-left: 28px;
+  text-indent: -28px;
+}
+
+.editor_dark .ace_editor_theme .historyTable .selected td:first-child div {
+  color: #fff;
+}
+
+.command {
+  width: 20%;
+  overflow-x: hidden;
+  white-space: nowrap;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.selected .command {
+  white-space: normal;
+}
+
+.timestamp {
+  color: #999;
+  font-family: PROPORTIONAL_FONT;
+}
+
+.historyTable td.timestamp {
+  padding-right: 3px;
+  white-space: nowrap;
+  overflow-x: hidden;
+  font-size: 11px !important;
+}
+
+.historyTable tr.timestamp td {
+  padding-top: 6px;
+  font-size: 11px !important;
+}
+
+.selected td.timestamp {
+  color: black;
+}
+
+div.disclosure {
+  gwt-sprite: "searchResultsContextButton22x";
+  margin-top: 1px;
+  background-size: 14px 15px;
+  width: 14px;
+  height: 15px;
+}
+
+.selected div.disclosure {
+  gwt-sprite: "searchResultsContextButton2x";
+  background-size: 14px 15px;
+  width: 14px;
+  height: 15px;
+}

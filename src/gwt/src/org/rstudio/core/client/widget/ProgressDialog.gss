@@ -1,0 +1,43 @@
+@external dialogTop dialogContent;
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+.labelCell {
+  padding-right: 6px;
+}
+
+.progressBarCell {
+  padding-right: 24px;
+}
+
+.buttonCell button {
+  position: relative;
+  top: 0;
+  left: 0;
+  margin-left: 0;
+}
+
+.progressDialog .dialogTop {
+  display: none;
+}
+
+.progressDialog .dialogContent {
+  margin-top: 4px;
+}
+
+.progressDialog {
+  position: fixed !important;
+  top: 0 !important;
+}
+
+.displayWidget {
+  background-color: white;
+  border: solid #ccc 1px !important;
+  margin: 0;
+  margin-bottom: -6px;
+  height: 250px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .displayWidget {
+  background-color: #44505a;
+  border-color: #0c1f30 !important;
+}

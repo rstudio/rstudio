@@ -1,0 +1,21 @@
+.checkBoxList {
+  background-color: #fff;
+  border: 1px solid #999;
+  padding: 7px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  margin-right: 30px;
+  overflow: hidden;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .checkBoxList {
+  background-color: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+}

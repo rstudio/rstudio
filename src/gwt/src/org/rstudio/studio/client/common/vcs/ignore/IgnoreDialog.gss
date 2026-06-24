@@ -1,0 +1,12 @@
+.dirChooser {
+  margin-bottom: 8px;
+}
+
+.ignoresCaption {
+  margin-bottom: 2px;
+}
+
+.editorFrame {
+  border: 1px solid #bbb;
+  background-color: white;
+}

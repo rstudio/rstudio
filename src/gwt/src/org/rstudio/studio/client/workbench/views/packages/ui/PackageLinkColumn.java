@@ -258,7 +258,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       @Source("iconError.png")
       ImageResource iconError();
 
-      @Source("PackageLinkColumn.css")
+      @Source("PackageLinkColumn.gss")
       Styles styles();
    }
 

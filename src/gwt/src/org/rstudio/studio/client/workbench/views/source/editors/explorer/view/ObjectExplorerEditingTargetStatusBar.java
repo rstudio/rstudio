@@ -87,7 +87,7 @@ public class ObjectExplorerEditingTargetStatusBar extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("ObjectExplorerEditingTargetStatusBar.css")
+      @Source("ObjectExplorerEditingTargetStatusBar.gss")
       Styles styles();
    }
 

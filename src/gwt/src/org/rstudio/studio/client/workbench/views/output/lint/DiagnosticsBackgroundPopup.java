@@ -372,7 +372,7 @@ public class DiagnosticsBackgroundPopup
          String popup();
       }
 
-      @Source("DiagnosticsBackgroundPopup.css")
+      @Source("DiagnosticsBackgroundPopup.gss")
       Styles styles();
 
       public static Resources INSTANCE =

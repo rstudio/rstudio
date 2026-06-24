@@ -38,7 +38,7 @@ public class SimpleButton extends FocusWidget
 
    interface Resources extends ClientBundle
    {
-      @Source("SimpleButton.css")
+      @Source("SimpleButton.gss")
       Styles styles();
    }
 

@@ -697,7 +697,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    interface Resources extends ClientBundle
    {
-      @Source("AceEditorBackgroundLinkHighlighter.css")
+      @Source("AceEditorBackgroundLinkHighlighter.gss")
       Styles styles();
    }
 

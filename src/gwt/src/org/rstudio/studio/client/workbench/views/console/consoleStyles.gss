@@ -1,0 +1,202 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external popupContent;
+@external ace_sb ace_cursor ace_hidden;
+@external rstudio-themes-dark-menus;
+@external rstudio-agent-input;
+@external rstudio-agent-output;
+@external rstudio-agent-error;
+@external js-focus-visible focus-visible;
+
+@def THEME_DARKGREY_MENU_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected');
+@def THEME_DARK_SEARCHRESULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground');
+
+.console,
+.warning {
+  font-family: FIXED_WIDTH_FONT;
+  padding-left: 6px;
+  padding-bottom: 8px;
+  line-height: 16px;
+  border: none;
+  outline: none;
+  word-wrap: break-word;
+  white-space: pre-wrap !important;
+  cursor: text;
+}
+
+.console td {
+  font-family: FIXED_WIDTH_FONT;
+}
+
+.warning {
+  font-style: italic;
+}
+
+.output {
+  outline: none;
+  border: none;
+  margin: 0;
+  -ms-user-select: text;
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.outputSoftWrap {
+  white-space: pre-wrap !important;
+  word-break: break-all;
+}
+
+.output .command,
+.input {
+}
+
+.outputChunk {
+  outline: none;
+}
+
+.console .output:focus-visible,
+.console .outputChunk:focus-visible {
+  outline-style: none !important;
+}
+
+.error {
+}
+
+.input.ace_editor {
+  position: relative !important;
+}
+
+.input .ace_sb {
+  display: none;
+  width: 0 !important;
+}
+
+.console .prompt {
+  white-space: pre;
+  -ms-user-select: text;
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.completionPopup {
+  padding: 0;
+  margin-left: -8px !important;
+  margin-top: 4px !important;
+  z-index: 1002;
+}
+
+.completionPopup .popupContent {
+  margin: -4px;
+}
+
+.completionGrid {
+  cursor: default;
+  padding: 0;
+}
+
+.helpPopup {
+  background: white;
+  z-index: 1003;
+}
+
+.completionGrid td {
+  font-family: FIXED_WIDTH_FONT;
+  font-size: 12px;
+  padding-left: 3px;
+  padding-right: 3px;
+  margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.completionGrid td span.packageName {
+  color: #999;
+}
+
+.selected {
+  background-color: #92c1f0;
+}
+
+.searchMatch {
+  background-color: #bee6ff;
+}
+
+.rstudio-themes-dark-menus .searchMatch {
+  background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
+}
+
+.functionInfo,
+.paramInfoName {
+  padding: 2px 2px 2px 3px;
+}
+
+.paramInfoName {
+  font-weight: bold;
+}
+
+.functionInfoSignature {
+  font-family: FIXED_WIDTH_FONT;
+  font-size: 12px;
+}
+
+.functionInfoSignature,
+.paramInfoDesc {
+  padding-left: 2em;
+  text-indent: -2em;
+  padding-bottom: 3px;
+}
+
+.functionInfoSummary {
+  font-size: 12px;
+  color: black;
+}
+
+.functionInfoSummary>a {
+  text-decoration: none;
+  color: black;
+}
+
+.packageName {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.packageDescription {
+  color: black;
+}
+
+.promptFullHelp {
+  height: 11px;
+  background: #eaeaca;
+  font-size: 9px;
+  padding: 3px;
+}
+
+.rstudio-themes-dark-menus .promptFullHelp {
+  background: #6f6f5f;
+}
+
+.rstudio-themes-dark-menus .selected {
+  background-color: THEME_DARKGREY_MENU_SELECTED;
+}
+
+.paddedOutput {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  width: 100%;
+  padding: 6px;
+}
+
+.truncatedLabel {
+  padding: 4px;
+  font-style: italic;
+  color: #888;
+}
+
+.rstudio-agent-input {
+  font-style: italic;
+}

@@ -1,0 +1,35 @@
+@charset "UTF-8";
+
+@external windows rstudio-themes-dark rstudio-themes-scrollbars;
+
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+  background: #fff;
+}
+
+.windows.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.windows.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 10px;
+  background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-track,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-track,
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-corner,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {
+  background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+  border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
+}

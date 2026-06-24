@@ -94,7 +94,7 @@ public class CheckBoxList extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("CheckBoxList.css")
+      @Source("CheckBoxList.gss")
       ListStyle listStyle();
    }
 

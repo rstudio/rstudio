@@ -1,0 +1,85 @@
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external fixedWidthFont;
+
+.wizardWidget {
+  margin-left: 2px;
+}
+
+.wizardTextEntryLabel {
+  margin-bottom: 2px;
+}
+
+.wizardMainColumn {
+  width: 296px;
+}
+
+.wizardSpacer {
+  height: 6px;
+}
+
+.newProjectDirectoryName {
+  width: 100%;
+}
+
+.codeFilesListButton {
+  width: 60px;
+}
+
+.codeFilesListBox {
+  width: 236px;
+  margin-right: 4px;
+}
+
+.vcsSelectorDesktop {
+  margin-top: -2px;
+  margin-left: -2px;
+}
+
+@if (is("user.agent", "gecko1_8")) {
+  .wizardCheckbox {
+    margin-left: -3px;
+  }
+}
+@else  {
+  .wizardCheckbox {
+  }
+}
+
+.vcsNotInstalledWidget {
+  width: 325px;
+  margin-left: 10px;
+}
+
+.vcsHelpLink {
+  margin-left: -2px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.invalidPkgName {
+  background-color: #f2dede;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .invalidPkgName {
+  background-color: rgba(220, 53, 69, 0.25);
+}
+
+.quartoProjectTypeSelect {
+  margin-top: 2px;
+  height: 21px;
+}
+
+.quartoEngineSelect {
+  margin-right: 8px;
+  margin-bottom: 5px;
+}
+
+.quartoVenvPackages[type="text"] {
+  font-family: FIXED_WIDTH_FONT;
+  margin-top: -1px;
+  margin-left: 6px;
+}

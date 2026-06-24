@@ -1,0 +1,71 @@
+@external rstudio-themes-dark;
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
+
+.objectGridColumn,
+.objectGridHeader {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 4px;
+}
+
+th.objectGridHeader {
+  font-family: PROPORTIONAL_FONT;
+  border-bottom: 1px solid #d6dadc;
+  border-right: 1px solid #d6dadc;
+  color: #3c474d;
+  background-color: #eeeff1;
+  font-weight: normal;
+  text-align: left;
+  border-collapse: separate;
+  font-size: 11px;
+  padding: 0;
+  padding-left: 2px;
+  padding-right: 2px;
+  height: 16px;
+}
+
+.rstudio-themes-dark th.objectGridHeader {
+  color: white;
+}
+
+th.objectGridHeader:last-child {
+  border-right: none;
+}
+
+.valueColumn {
+  padding-right: 15px;
+}
+
+.objectGrid table {
+  border-collapse: separate;
+}
+
+.checkColumn,
+th.checkColumn {
+  text-align: center;
+}
+
+.checkColumn input {
+  margin: 0;
+}
+
+.decoratedValueCol {
+  padding-right: 35px;
+}
+
+.rstudio-themes-default .objectGridHeader {
+  border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-dark-grey .objectGridHeader {
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-alternate .objectGridHeader {
+  border-color: THEME_ALTERNATE_BORDER;
+}

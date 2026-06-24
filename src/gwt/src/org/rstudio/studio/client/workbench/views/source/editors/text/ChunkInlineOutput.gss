@@ -1,0 +1,18 @@
+.output {
+  color: #303030;
+}
+
+.error {
+  color: #f03030;
+}
+
+.panel {
+  background-color: #fff;
+  max-width: 600px;
+  max-height: 400px;
+  overflow: auto !important;
+}
+
+.panel pre {
+  margin: 7px;
+}

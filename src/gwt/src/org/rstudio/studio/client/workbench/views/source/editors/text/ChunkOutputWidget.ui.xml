@@ -13,10 +13,10 @@
 
    @external editor_dark;
 
-   @url COLLAPSE_LIGHT collapseChunkIcon2x;
-   @url COLLAPSE_DARK collapseChunkIconDark2x;
-   @url REMOVE_LIGHT removeChunkIcon2x;
-   @url REMOVE_DARK removeChunkIconDark2x;
+   @def COLLAPSE_LIGHT resourceUrl('collapseChunkIcon2x');
+   @def COLLAPSE_DARK resourceUrl('collapseChunkIconDark2x');
+   @def REMOVE_LIGHT resourceUrl('removeChunkIcon2x');
+   @def REMOVE_DARK resourceUrl('removeChunkIconDark2x');
 
    .fullsize
    {

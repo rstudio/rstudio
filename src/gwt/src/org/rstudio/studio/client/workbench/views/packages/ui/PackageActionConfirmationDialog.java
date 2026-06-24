@@ -241,7 +241,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
 
    interface Resources extends ClientBundle
    {
-      @Source("PackageActionConfirmationDialog.css")
+      @Source("PackageActionConfirmationDialog.gss")
       Styles styles();
    }
 

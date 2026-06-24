@@ -111,6 +111,6 @@ public interface NewProjectResources extends ClientBundle
       String quartoVenvPackages();
    }
 
-   @Source("NewProjectWizard.css")
+   @Source("NewProjectWizard.gss")
    Styles styles();
 }

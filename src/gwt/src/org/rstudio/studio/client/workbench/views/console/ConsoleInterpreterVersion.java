@@ -337,7 +337,7 @@ public class ConsoleInterpreterVersion
 
    public interface Resources extends ClientBundle
    {
-      @Source("ConsoleInterpreterVersion.css")
+      @Source("ConsoleInterpreterVersion.gss")
       Styles styles();
    }
 

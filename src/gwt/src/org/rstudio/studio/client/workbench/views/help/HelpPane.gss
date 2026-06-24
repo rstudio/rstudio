@@ -1,0 +1,17 @@
+.topicTitle {
+  padding-top: 3px;
+  height: 15px;
+}
+
+.findTopicTextbox {
+  top: -1px !important;
+}
+
+button.topicNavigationButton {
+  height: 18px;
+  margin-top: 1px;
+}
+
+button.topicNavigationButton td {
+  height: 16px;
+}

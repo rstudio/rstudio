@@ -352,7 +352,7 @@ public class RStudioThemedFrame extends RStudioFrame
    // Resources ----
    public interface Resources extends ClientBundle
    {
-      @Source("RStudioThemedFrame.css")
+      @Source("RStudioThemedFrame.gss")
       Styles styles();
    }
 

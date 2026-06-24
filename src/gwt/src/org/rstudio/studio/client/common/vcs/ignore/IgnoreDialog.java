@@ -187,7 +187,7 @@ public class IgnoreDialog extends ModalDialogBase
 
    static interface Resources extends ClientBundle
    {
-      @Source("IgnoreDialog.css")
+      @Source("IgnoreDialog.gss")
       Styles styles();
    }
 

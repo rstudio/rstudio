@@ -205,7 +205,7 @@ public class NewDirectoryNavigationPage
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewDirectoryNavigationPage.css")
+      @Source("NewDirectoryNavigationPage.gss")
       Styles styles();
    }
 

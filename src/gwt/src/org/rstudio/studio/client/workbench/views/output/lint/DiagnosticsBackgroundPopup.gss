@@ -1,0 +1,8 @@
+.popup {
+  background: linear-gradient(#eee, #ccc);
+  border: 1px solid #888;
+  padding: 3px;
+  border-radius: 3px;
+  opacity: 0.9;
+  z-index: 1000;
+}

@@ -244,7 +244,7 @@ public class NewConnectionNavigationPage
    
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionNavigationPage.css")
+      @Source("NewConnectionNavigationPage.gss")
       Styles styles();
    }
 

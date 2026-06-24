@@ -60,10 +60,10 @@ public abstract class ChangelistTable extends Composite
 
       @Override
       @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
-               "ChangelistTableCellTableStyle.css"})
+               "ChangelistTableCellTableStyle.gss"})
       ChangelistTableCellTableStyle cellTableStyle();
 
-      @Source("ChangelistTable.css")
+      @Source("ChangelistTable.gss")
       Styles styles();
    }
 

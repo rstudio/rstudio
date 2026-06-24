@@ -36,7 +36,7 @@ public interface PanmirrorToolbarResources extends ClientBundle
       String toolbarButtonLatched();
    }
 
-   @Source("PanmirrorToolbar.css")
+   @Source("PanmirrorToolbar.gss")
    Styles styles();
  
    @Source("bold_2x.png")

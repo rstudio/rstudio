@@ -154,7 +154,7 @@ public class LocalRepositoriesWidget extends Composite
    
    static interface Resources extends ClientBundle
    {
-      @Source("LocalRepositoriesWidget.css")
+      @Source("LocalRepositoriesWidget.gss")
       Styles styles();
    }
    

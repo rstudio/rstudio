@@ -1,0 +1,3 @@
+.infoBar {
+  border-bottom: 1px solid #bcc1c5;
+}

@@ -32,7 +32,7 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
 {
    public interface Resources extends ClientBundle
    {
-      @Source("ThemedPopupPanel.css")
+      @Source("ThemedPopupPanel.gss")
       Styles styles();
 
       ImageResource popupTopLeft();

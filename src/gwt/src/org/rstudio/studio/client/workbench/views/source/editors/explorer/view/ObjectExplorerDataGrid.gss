@@ -1,0 +1,147 @@
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external editor_dark;
+
+.dataGridKeyboardSelectedRowCell,
+.dataGridKeyboardSelectedRowCell:active,
+.dataGridKeyboardSelectedRowCell:hover,
+.dataGridKeyboardSelectedRowCell:focus {
+  border: 0;
+}
+
+.dataGridKeyboardSelectedRowCell:first-child {
+  border-left: 2px solid #0af !important;
+  padding-left: 4px !important;
+}
+
+.dataGridEvenRowCell:first-child,
+.dataGridOddRowCell:first-child {
+  padding-left: 6px;
+}
+
+.dataGridEvenRow,
+.dataGridOddRow {
+  height: 24px !important;
+}
+
+.dataGridEvenRowCell,
+.dataGridOddRowCell {
+  border: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.dataGridWidget>div {
+  min-height: 18px !important;
+}
+
+.dataGridWidget td>div {
+  float: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dataGridCell {
+  font-family: inherit;
+  max-width: 100%;
+}
+
+.dataGridHeader:active,
+.dataGridHeader:focus {
+  outline: 0;
+}
+
+.spriteExpandIcon {
+  gwt-sprite: "expandIcon2x";
+  background-position: center;
+  cursor: pointer;
+  height: 14px;
+  width: 14px;
+  background-size: 14px 14px;
+}
+
+.spriteCollapseIcon {
+  gwt-sprite: "collapseIcon2x";
+  background-position: center;
+  cursor: pointer;
+  height: 14px;
+  width: 14px;
+  background-size: 14px 14px;
+}
+
+.spriteExtractCodeIcon {
+  gwt-sprite: "extractCode2x";
+  background-position: center;
+  height: 18px;
+  width: 20px;
+  background-size: 20px 18px;
+}
+
+.spriteViewObjectIcon {
+  gwt-sprite: "viewObject2x";
+  background-position: center;
+  height: 18px;
+  width: 20px;
+  background-size: 15px 13px;
+}
+
+.valueDesc {
+}
+
+.cellInnerTable {
+  table-layout: fixed;
+  width: 100%;
+  border-spacing: 0;
+}
+
+.cellInnerTable td {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.virtual {
+  font-style: italic;
+}
+
+.verticalAlignHelper {
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.clickableIcon {
+  text-align: center;
+  width: 22px !important;
+  height: 20px !important;
+}
+
+.clickableIcon img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.clickableIcon:hover {
+  border-radius: 2px;
+  background-color: #efefef;
+  cursor: pointer;
+}
+
+.clickableIcon:active {
+  border-radius: 2px;
+  background-color: #e6e6e6;
+  cursor: pointer;
+}
+
+.rstudio-themes-dark .clickableIcon:hover {
+  border-radius: 2px;
+  background-color: #444;
+  cursor: pointer;
+}
+
+.rstudio-themes-dark .clickableIcon:active {
+  border-radius: 2px;
+  background-color: #555;
+  cursor: pointer;
+}

@@ -6,7 +6,7 @@
     ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
     ui:generateLocales="default">
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
-    <ui:style src="res/DataImportStyles.css"
+    <ui:style gss="true" src="res/DataImportStyles.gss"
         type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
         .modelLabel {
             margin-top: 6px;

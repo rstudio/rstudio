@@ -1408,7 +1408,7 @@ public class ObjectExplorerDataGrid
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ObjectExplorerDataGrid.css"})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ObjectExplorerDataGrid.gss"})
       Styles dataGridStyle();
 
       @Source("images/expandIcon.png")

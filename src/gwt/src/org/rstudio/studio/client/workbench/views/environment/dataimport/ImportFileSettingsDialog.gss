@@ -1,0 +1,81 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+.input,
+.output {
+  resize: none;
+  font-family: FIXED_WIDTH_FONT;
+  font-size: 11px;
+  white-space: pre;
+  width: 400px;
+  height: 200px;
+  overflow: auto;
+  background-color: white;
+  border: 1px solid #888;
+  padding: 4px;
+}
+
+.output td {
+  padding-right: 16px;
+}
+
+.inputLabel,
+.outputLabel {
+  margin-bottom: 3px;
+}
+
+.outputLabel {
+  margin-top: 12px;
+}
+
+.header {
+  font-weight: bold;
+}
+
+.leftPanel {
+  position: relative;
+  top: -5px;
+  margin-right: 10px;
+}
+
+.list {
+  width: 150px;
+}
+
+.nastrings {
+  width: 75px;
+}
+
+.varname {
+  width: 100%;
+  margin-bottom: 1.5em;
+  border: #cfd2d4 solid 1px;
+  font-size: 12px;
+  font-family: PROPORTIONAL_FONT;
+  outline: none;
+}
+
+.leftPanel fieldset {
+  border: none;
+  padding: 0;
+  padding-block-end: 0;
+  padding-inline-end: 0;
+  margin: 0;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .input,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .output {
+  background-color: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .varname {
+  border-color: THEME_DARKGREY_BORDER;
+}

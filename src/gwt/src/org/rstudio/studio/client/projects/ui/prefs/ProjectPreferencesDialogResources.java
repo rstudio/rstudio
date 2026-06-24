@@ -50,7 +50,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String infoLabel();
    }
 
-   @Source("ProjectPreferencesDialog.css")
+   @Source("ProjectPreferencesDialog.gss")
    Styles styles();
 
    @Source("iconBuild_2x.png")

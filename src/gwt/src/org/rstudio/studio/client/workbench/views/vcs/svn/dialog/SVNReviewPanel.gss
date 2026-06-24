@@ -1,0 +1,99 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+
+@def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
+@external gwt-SplitLayoutPanel-VDragger gwt-SplitLayoutPanel-HDragger;
+
+.splitPanel {
+  background-color: #f3f4f4;
+}
+
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
+  gwt-sprite: "splitterTileV";
+}
+
+.whitebg {
+  background-color: white;
+}
+
+.toolbar {
+  background-image: none !important;
+  border: none;
+}
+
+.toolbarWrapper {
+  gwt-sprite: "toolbarTile";
+  position: relative;
+  padding-top: 2px;
+  font-size: 11px;
+}
+
+.toolbarWrapper select {
+  font-size: 11px;
+}
+
+.toolbarWrapper {
+  background: #f4f8f9;
+  border-bottom: solid 1px;
+  height: 25px;
+}
+
+.toolbarInnerWrapper {
+  border: none;
+}
+
+.diffToolbarInnerWrapper {
+  float: right;
+  border: none;
+}
+
+.diffContextLines {
+  padding-top: 4px;
+}
+
+.diffToolbarWrapper {
+  height: 28px;
+}
+
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
+  border-top: solid 1px #000;
+  border-bottom: solid 1px #000;
+  height: 2px !important;
+}
+
+.toolbarWrapper,
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
+  border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-dark-grey .toolbarWrapper,
+.rstudio-themes-dark-grey .splitPanel .gwt-SplitLayoutPanel-VDragger {
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-alternate .toolbarWrapper,
+.rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
+  border-color: THEME_ALTERNATE_BORDER;
+}
+
+.contextLabel {
+  display: inline;
+  margin-right: 8px;
+}
+
+.diffToolbar {
+  float: right;
+  width: auto;
+}
+
+.diffViewOptions {
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  bottom: 2px;
+  width: auto;
+}

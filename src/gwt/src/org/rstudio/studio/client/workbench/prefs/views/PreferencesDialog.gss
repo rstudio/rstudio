@@ -1,0 +1,108 @@
+@external gwt-CheckBox gwt-Label;
+@external rstudio-themes-dark rstudio-theme-aware-dialog;
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+@def PANEL_CONTAINER_WIDTH eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidth()');
+@def PANEL_CONTAINER_HEIGHT eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerHeight()');
+@def PANEL_CONTAINER_WIDTH_NO_CHOOSER eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidthNoChooser()');
+
+.panelContainer {
+  width: PANEL_CONTAINER_WIDTH;
+  height: PANEL_CONTAINER_HEIGHT;
+}
+
+.panelContainerNoChooser {
+  width: PANEL_CONTAINER_WIDTH_NO_CHOOSER;
+  height: PANEL_CONTAINER_HEIGHT;
+}
+
+.sshKeyWidget {
+  margin-top: 20px;
+}
+
+.usingVcsHelp {
+  margin-top: 30px;
+}
+
+.newSection {
+  margin-top: 25px;
+}
+
+.alwaysCompletePanel {
+  margin-bottom: 11px;
+}
+
+.paneLayoutTable {
+  height: 160px;
+}
+
+.paneLayoutTable td.paneLayoutTable {
+  background-color: white;
+  vertical-align: top;
+  padding: 0;
+  border: 0.5px solid #555;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+}
+
+.paneLayoutTable .label {
+  padding: 5px 5px 0 5px;
+}
+
+.paneLayoutTable .gwt-CheckBox {
+  display: block;
+  margin: 0 0 0 8px;
+  max-height: 18px;
+  font-size: 11px;
+}
+
+.paneLayoutTable select {
+  margin: 5px 5px 5px 5px;
+}
+
+.themeChooser select {
+  width: 148px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.themeInfobar {
+  border: solid 1px #ccc;
+  border-bottom: none;
+  display: none;
+}
+
+.themeInfobarShowing {
+  display: block;
+}
+
+.selectWidgetHelp {
+  margin-left: 8px;
+}
+
+.smallerText {
+  font-size: 0.9em;
+}
+
+.checkBoxAligned {
+  margin-left: 20px;
+}
+
+.visualModeWrapSelectWidget .gwt-Label {
+  margin-bottom: 1px;
+}
+
+.userDictEditButton {
+  margin-left: 8px !important;
+  margin-top: 2px !important;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .paneLayoutTable td.paneLayoutTable {
+  background-color: THEME_DARKGREY_MOST_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .themeInfobar {
+  border-color: THEME_DARKGREY_BORDER;
+}

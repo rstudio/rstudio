@@ -318,7 +318,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("MiniPopupPanel.css")
+      @Source("MiniPopupPanel.gss")
       Styles styles();
    }
    

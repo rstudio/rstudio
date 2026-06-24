@@ -231,7 +231,7 @@ public class SecondaryReposWidget extends Composite
   
    static interface Resources extends ClientBundle
    {
-      @Source("SecondaryReposWidget.css")
+      @Source("SecondaryReposWidget.gss")
       Styles styles();
    }
    

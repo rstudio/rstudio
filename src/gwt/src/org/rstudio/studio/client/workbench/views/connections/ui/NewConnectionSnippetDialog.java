@@ -134,7 +134,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionSnippetDialog.css")
+      @Source("NewConnectionSnippetDialog.gss")
       Styles styles();
    }
    

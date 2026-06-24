@@ -28,7 +28,7 @@ public interface BuildPaneResources extends ClientBundle
    }
 
   
-   @Source("BuildPane.css")
+   @Source("BuildPane.gss")
    Styles styles();
   
    @Source("iconBuild_2x.png")

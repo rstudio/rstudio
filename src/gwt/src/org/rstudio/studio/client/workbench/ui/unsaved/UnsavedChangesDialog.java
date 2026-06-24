@@ -274,7 +274,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
 
    interface Resources extends ClientBundle
    {
-      @Source("UnsavedChangesDialog.css")
+      @Source("UnsavedChangesDialog.gss")
       Styles styles();
    }
 

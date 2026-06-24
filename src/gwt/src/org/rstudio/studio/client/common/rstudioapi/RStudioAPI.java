@@ -74,7 +74,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler,
    
    public interface Resources extends ClientBundle
    {
-      @Source("RStudioAPI.css")
+      @Source("RStudioAPI.gss")
       Styles styles();
    }
    

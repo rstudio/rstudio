@@ -607,7 +607,7 @@ public class ConnectionsPane extends WorkbenchPane
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.gss"})
       Styles dataGridStyle();
         
       @Source("connectionExploreButton_2x.png")

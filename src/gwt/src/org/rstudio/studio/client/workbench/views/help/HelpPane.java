@@ -1023,10 +1023,10 @@ public class HelpPane extends WorkbenchPane
 
    public interface Resources extends ClientBundle
    {
-      @Source("HelpPane.css")
+      @Source("HelpPane.gss")
       Styles styles();
 
-      @Source("HelpPaneEditorStyles.css")
+      @Source("HelpPaneEditorStyles.gss")
       EditorStyles editorStyles();
    }
 

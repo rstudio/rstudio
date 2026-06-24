@@ -66,7 +66,7 @@ public class NotifyingSplitLayoutPanel extends SplitLayoutPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("NotifyingSplitPanel.css")
+      @Source("NotifyingSplitPanel.gss")
       Styles styles();
    }
    

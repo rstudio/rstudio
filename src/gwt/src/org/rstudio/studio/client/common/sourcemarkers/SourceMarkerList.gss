@@ -1,0 +1,130 @@
+@external editor_dark ace_editor_theme;
+@def THEME_DARK_ROW_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkRowSelected');
+@def THEME_DARK_ROW_FOCUSED eval('org.rstudio.core.client.theme.ThemeColors.darkRowFocused');
+
+.iconCell {
+  vertical-align: top;
+  width: 34px;
+  padding: 2px 3px;
+}
+
+.lineCell {
+  color: #777;
+  vertical-align: top;
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 8px;
+}
+
+.selectedRow .lineCell {
+  color: #666;
+}
+
+.messageCell {
+  white-space: pre;
+  width: 100%;
+  vertical-align: top;
+  padding-right: 8px;
+}
+
+.messageCell strong {
+  font-weight: normal;
+  color: #66a;
+}
+
+.selectedRow {
+  background-color: #ccc;
+}
+
+.editor_dark .ace_editor_theme .selectedRow {
+  background-color: THEME_DARK_ROW_SELECTED;
+}
+
+:focus .selectedRow {
+  background-color: #92c1f0;
+}
+
+.editor_dark .ace_editor_theme :focus .selectedRow {
+  background-color: THEME_DARK_ROW_FOCUSED;
+}
+
+.headerRow td {
+  font-weight: bold;
+  padding: 2px 2px 2px 3px;
+  width: 100%;
+}
+
+.table {
+  outline: none;
+}
+
+.errorIcon {
+  width: 16px !important;
+  height: 14px !important;
+  background-size: 16px 14px !important;
+}
+
+.warningIcon {
+  width: 16px !important;
+  height: 14px !important;
+  background-size: 16px 14px !important;
+}
+
+.boxIcon {
+  width: 16px !important;
+  height: 14px !important;
+  background-size: 16px 14px !important;
+}
+
+.infoIcon {
+  width: 16px !important;
+  height: 14px !important;
+  background-size: 16px 14px !important;
+}
+
+.styleIcon {
+  width: 16px !important;
+  height: 14px !important;
+  background-size: 16px 14px !important;
+}
+
+.errorIcon {
+  gwt-sprite: "error2x";
+}
+
+.warningIcon {
+  gwt-sprite: "warning2x";
+}
+
+.boxIcon {
+  gwt-sprite: "badbox2x";
+}
+
+.infoIcon {
+  gwt-sprite: "info2x";
+}
+
+.styleIcon {
+  gwt-sprite: "style2x";
+}
+
+.noIcon {
+  width: 3%;
+}
+
+div.disclosure {
+  margin-top: 1px;
+  margin-right: 3px;
+}
+
+.selectedRow div.disclosure {
+  width: 20;
+  height: 18;
+}
+
+.selectedRow div.disclosure {
+  gwt-sprite: "logContextButton2x";
+  width: 20px !important;
+  height: 16px !important;
+  background-size: 20px 16px !important;
+}

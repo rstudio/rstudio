@@ -4,7 +4,7 @@
    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
    ui:generateLocales="default">
    <ui:style>
-   @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+   @def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
 
    .shortcutHeader
    {
@@ -44,7 +44,7 @@
    .shortcutPanel strong
    {
      color: #c0c0ff;
-     font-family: fixedWidthFont;
+     font-family: FIXED_WIDTH_FONT;
    }
    
    .shortcutPanel td

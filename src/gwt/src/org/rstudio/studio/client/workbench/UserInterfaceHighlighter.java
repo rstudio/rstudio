@@ -426,7 +426,7 @@ public class UserInterfaceHighlighter
 
    public interface Resources extends ClientBundle
    {
-      @Source("UserInterfaceHighlighter.css")
+      @Source("UserInterfaceHighlighter.gss")
       Styles styles();
    }
 

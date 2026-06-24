@@ -1,0 +1,210 @@
+@charset "UTF-8";
+
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+@def THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveTransparentBackground');
+
+@external macintosh windows forceMacScrollbars;
+@external rstudio-themes-scrollbars;
+@external rstudio-themes-light-menus;
+@external rstudio-themes-light;
+@external rstudio-themes-dark-menus;
+@external rstudio-themes-dark;
+@external rstudio-tutorials;
+@external rstudio-tutorials-section;
+@external rstudio-tutorials-container;
+@external rstudio-tutorials-package;
+@external rstudio-tutorials-label-container;
+@external rstudio-tutorials-label;
+@external rstudio-tutorials-logo;
+@external rstudio-tutorials-run-container;
+@external rstudio-tutorials-run-button;
+@external rstudio-tutorials-run-button-label;
+@external rstudio-tutorials-run-button-icon;
+@external rstudio-tutorials-description;
+@external rstudio-tutorials-description-empty;
+@external rstudio-tutorials-sublabel;
+@external rstudio-tutorials-footer;
+@external rstudio-tutorials-footer-text;
+@external rstudio-tutorials-install-learnr-link;
+@external rstudio-tutorials-install-shiny-link;
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+  background: #fff;
+}
+
+.windows.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.windows.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 10px;
+  background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-track,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-track,
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-corner,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {
+  background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+  border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-tutorials {
+  margin: 8px;
+  padding: 0 4px 4px 4px;
+  font-family: "SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.rstudio-tutorials-section {
+  margin-top: 12px;
+}
+
+.rstudio-tutorials-container {
+}
+
+.rstudio-tutorials-package {
+  text-align: center;
+  font-size: 24px;
+}
+
+.rstudio-tutorials a {
+  display: inline-block;
+}
+
+.rstudio-tutorials-run-container {
+  white-space: nowrap;
+}
+
+.rstudio-tutorials-label-container {
+  display: flex;
+  width: 100%;
+  padding: 4px;
+}
+
+.rstudio-tutorials-label {
+  flex: 1;
+  font-size: 16pt;
+  font-weight: bold;
+}
+
+.rstudio-tutorials-description {
+  padding: 4px;
+}
+
+.rstudio-tutorials-description-empty {
+  font-style: italic;
+}
+
+.rstudio-tutorials-run-button {
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8em;
+  margin-right: 12px;
+  margin-top: 3px;
+  user-select: none;
+}
+
+.rstudio-tutorials-logo {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.rstudio-tutorials-footer {
+  margin-top: 12px;
+}
+
+.rstudio-tutorials-footer-text {
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.rstudio-tutorials-run-button:active {
+  margin-top: 4px;
+}
+
+.rstudio-tutorials-run-button-icon {
+  color: #02a44f;
+  padding-left: 4px;
+  font-size: 0.9em;
+}
+
+.rstudio-tutorials-sublabel {
+  padding: 0 4px;
+  font-size: 10pt;
+  font-style: oblique;
+}
+
+.rstudio-themes-light-menus.rstudio-tutorials {
+  background: white;
+  color: black;
+}
+
+.rstudio-themes-light-menus .rstudio-tutorials-section {
+  border-bottom: 1px dotted #ccc;
+}
+
+.rstudio-themes-light-menus .rstudio-tutorials-run-button {
+  background-color: white;
+  color: black;
+  border-top: 1px solid #d8d8d8;
+  border-left: 1px solid #d2d2d2;
+  border-right: 1px solid #d2d2d2;
+  border-bottom: 1px solid #bababa;
+}
+
+.rstudio-themes-light-menus .rstudio-tutorials-sublabel {
+  color: #747474;
+}
+
+.rstudio-themes-dark-menus.rstudio-tutorials {
+  background: black;
+  color: #e8e8e8;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-section {
+  border-bottom: 1px dotted #3a4854;
+}
+
+.rstudio-themes-dark-menus.rstudio-tutorials a:visited {
+  color: #4e83b5;
+}
+
+.rstudio-themes-dark-menus.rstudio-tutorials a:link {
+  color: #76abdd;
+}
+
+.rstudio-themes-dark-menus.rstudio-tutorials a:visited {
+  color: #4e83b5;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-run-button {
+  color: #e8e8e8;
+  background-color: #4e5c68;
+  border: 1px solid #6c7983;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-sublabel {
+  color: #acacac;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-install-learnr-link:link {
+  color: #76abdd;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-install-shiny-link:link {
+  color: #76abdd;
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-description-empty {
+  color: #acacac;
+}

@@ -624,7 +624,7 @@ public class NewConnectionSnippetHost extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionSnippetHost.css")
+      @Source("NewConnectionSnippetHost.gss")
       Styles styles();
    }
    

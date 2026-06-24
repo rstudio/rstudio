@@ -45,7 +45,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String extraSpacedBefore();
    }
 
-   @Source("PreferencesDialogBase.css")
+   @Source("PreferencesDialogBase.gss")
    Styles styles();
    
    @Source("iconCodeEditing_2x.png")

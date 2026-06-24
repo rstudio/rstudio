@@ -35,10 +35,10 @@ public interface LintResources extends ClientBundle
       String fatal();
    }
    
-   @Source("Lint.css")
+   @Source("Lint.gss")
    Styles styles();
    
-   @Source("LintRetina.css")
+   @Source("LintRetina.gss")
    Styles retinaStyles();
    
    ImageResource note();

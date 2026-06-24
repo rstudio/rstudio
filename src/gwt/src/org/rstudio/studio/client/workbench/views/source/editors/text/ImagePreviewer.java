@@ -620,7 +620,7 @@ public class ImagePreviewer
    
    interface Resources extends ClientBundle
    {
-      @Source("ImagePreviewer.css")
+      @Source("ImagePreviewer.gss")
       Styles styles();
    }
    

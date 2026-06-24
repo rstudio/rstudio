@@ -260,7 +260,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
   
    static interface Resources extends ClientBundle
    {
-      @Source("ChooseMirrorDialog.css")
+      @Source("ChooseMirrorDialog.gss")
       Styles styles();
    }
    

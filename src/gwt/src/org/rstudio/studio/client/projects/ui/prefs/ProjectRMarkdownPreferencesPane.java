@@ -183,7 +183,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
 
    interface Resources extends ClientBundle
    {
-      @Source("ProjectRMarkdownPreferencesPane.css")
+      @Source("ProjectRMarkdownPreferencesPane.gss")
       Styles styles();
    }
 

@@ -76,7 +76,7 @@ public class ApplicationSerializationProgress extends PopupPanel
   
    public interface Resources extends ClientBundle
    {
-      @Source("ApplicationSerializationProgress.css")
+      @Source("ApplicationSerializationProgress.gss")
       Styles styles();
 
       ImageResource spinnerManilla();

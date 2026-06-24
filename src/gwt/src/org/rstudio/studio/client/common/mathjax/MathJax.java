@@ -616,7 +616,7 @@ public class MathJax
 
    public interface Resources extends ClientBundle
    {
-      @Source("MathJax.css")
+      @Source("MathJax.gss")
       Styles styles();
    }
 

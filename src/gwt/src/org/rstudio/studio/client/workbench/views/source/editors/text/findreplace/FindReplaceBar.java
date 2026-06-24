@@ -41,7 +41,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 {
    interface Resources extends ClientBundle
    {
-      @Source("FindReplaceBar.css")
+      @Source("FindReplaceBar.gss")
       Styles styles();
 
       @Source("findReplace_2x.png")

@@ -1,0 +1,12 @@
+@external popupPanel popupMiddleCenter;
+.popupPanel {
+  background-color: #eff3f5;
+  border: 1px solid #969fa7;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.popupPanel .popupMiddleCenter {
+  border: none;
+}

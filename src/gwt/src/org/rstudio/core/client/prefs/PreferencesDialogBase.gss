@@ -1,0 +1,115 @@
+@external gwt-CheckBox gwt-RadioButton gwt-Label;
+@external rstudio-themes-dark rstudio-theme-aware-dialog;
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+
+.preferencesDialog .gwt-CheckBox,
+.preferencesDialog .gwt-RadioButton {
+  display: block;
+}
+
+.spaced {
+  margin-bottom: 12px;
+}
+
+.lessSpaced {
+  margin-bottom: 4px;
+}
+
+.mediumSpaced {
+  margin-bottom: 15px;
+}
+
+.extraSpaced {
+  margin-bottom: 23px;
+}
+
+.preferencesDialog .tight {
+  margin-bottom: 2px;
+}
+
+.nudgeRight {
+  margin-left: 2px;
+}
+
+.nudgeRightPlus {
+  margin-left: 4px;
+}
+
+.nudgeDown {
+  margin-top: 2px;
+}
+
+.headerLabel {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+@if (is("user.agent", "gecko1_8")) {
+  .nudgeRight {
+    margin-left: 5px;
+  }
+}
+
+.sectionChooser {
+  background-color: white;
+  border: 1px solid #999;
+}
+
+.sectionChooserInner {
+  background-color: transparent;
+  width: 100%;
+}
+
+.section {
+  width: 100%;
+  padding: 6px 2px 4px 2px;
+}
+
+.section:focus {
+  outline: none;
+}
+
+.section * {
+  cursor: default;
+}
+
+.activeSection {
+  background: #d6e9f8;
+}
+
+.activeSection:focus {
+  outline: none;
+}
+
+.indent {
+  margin-left: 20px;
+}
+
+.textBoxWithChooser {
+  width: 350px;
+}
+
+.infoLabel {
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.spacedBefore {
+  margin-top: 8px;
+}
+
+.extraSpacedBefore {
+  margin-top: 12px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .sectionChooser {
+  background-color: THEME_DARKGREY_MOST_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .activeSection {
+  background: THEME_DARKGREY_BACKGROUND;
+}

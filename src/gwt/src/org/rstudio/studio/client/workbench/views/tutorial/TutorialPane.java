@@ -591,7 +591,7 @@ public class TutorialPane
    // Resources ----
    public interface Resources extends ClientBundle
    {
-      @Source("TutorialPane.css")
+      @Source("TutorialPane.gss")
       CssResource styles();
    }
 

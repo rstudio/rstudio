@@ -1,0 +1,16 @@
+.pageDetails {
+  min-width: 120px;
+  cursor: default;
+}
+
+.button {
+  cursor: default;
+}
+
+.button img {
+  display: block;
+  position: relative;
+  cursor: default;
+  width: 18px;
+  height: 18px;
+}

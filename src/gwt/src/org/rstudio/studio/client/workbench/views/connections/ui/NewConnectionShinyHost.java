@@ -338,7 +338,7 @@ public class NewConnectionShinyHost extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionShinyHost.css")
+      @Source("NewConnectionShinyHost.gss")
       Styles styles();
    }
    

@@ -41,7 +41,7 @@ public class DiffFrame extends Composite
 {
    interface Resources extends ClientBundle
    {
-      @Source("DiffFrame.css")
+      @Source("DiffFrame.gss")
       Styles styles();
 
       @Source("images/diffHeaderTile.png")

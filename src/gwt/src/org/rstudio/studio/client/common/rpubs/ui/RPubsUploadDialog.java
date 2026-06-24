@@ -265,7 +265,7 @@ public class RPubsUploadDialog extends ModalDialogBase
   
    interface Resources extends ClientBundle
    {
-      @Source("RPubsUploadDialog.css")
+      @Source("RPubsUploadDialog.gss")
       Styles styles();
       
       @Source("publishLarge_2x.png")

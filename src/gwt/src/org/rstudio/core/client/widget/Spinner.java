@@ -29,7 +29,7 @@ public class Spinner extends Widget
 
    public interface Resources extends ClientBundle
    {
-      @Source("Spinner.css")
+      @Source("Spinner.gss")
       Styles styles();
    }
 

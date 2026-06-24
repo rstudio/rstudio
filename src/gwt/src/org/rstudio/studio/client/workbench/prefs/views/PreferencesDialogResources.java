@@ -41,7 +41,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String userDictEditButton();
    }
 
-   @Source("PreferencesDialog.css")
+   @Source("PreferencesDialog.gss")
    Styles styles();
 
    @Source("iconAppearance_2x.png")

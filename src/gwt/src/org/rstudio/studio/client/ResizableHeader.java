@@ -180,7 +180,7 @@ public class ResizableHeader extends Header<String>
    // Resources, etc ----
    public interface Resources extends ClientBundle
    {
-      @Source("ResizableHeader.css")
+      @Source("ResizableHeader.gss")
       Styles styles();
    }
    

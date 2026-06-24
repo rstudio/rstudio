@@ -33,7 +33,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
       String roxygenSnippet();
    }
   
-   @Source("HelpInfoPopupPanel.css")
+   @Source("HelpInfoPopupPanel.gss")
    Styles styles();
   
    public static HelpInfoPopupPanelResources INSTANCE = 

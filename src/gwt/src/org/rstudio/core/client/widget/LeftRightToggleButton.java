@@ -36,7 +36,7 @@ public class LeftRightToggleButton extends Widget
 {
    interface Resources extends ClientBundle
    {
-      @Source("LeftRightToggleButton.css")
+      @Source("LeftRightToggleButton.gss")
       Styles styles();
    }
 

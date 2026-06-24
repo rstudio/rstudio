@@ -1,0 +1,87 @@
+@external search;
+.codeSearchWidget .search {
+  width: 145px;
+  top: 0;
+}
+
+.fileImage {
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  margin-right: 5px;
+}
+
+.fileItem {
+  position: relative;
+  top: -1px;
+  margin-right: 7px;
+}
+
+.smallCodeImage {
+  display: inline-block;
+  position: relative;
+  text-align: center;
+  margin-right: 5px;
+  width: 16px;
+  height: 19px;
+}
+
+.smallCodeImage img {
+  position: relative;
+  top: 4px;
+}
+
+.smallCodeItem {
+  position: relative;
+  margin-right: 10px;
+  top: 3px;
+}
+
+.smallItemContext {
+  position: relative;
+  top: 3px;
+  color: #888;
+  font-size: smaller;
+}
+
+.codeImage {
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  margin-right: 5px;
+}
+
+.codeItem {
+  position: relative;
+  top: -1px;
+  margin-right: 7px;
+}
+
+.xrefImage {
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  margin-right: 5px;
+}
+
+.xrefItem {
+  position: relative;
+  top: -1px;
+  margin-right: 7px;
+}
+
+.itemContext {
+  position: relative;
+  margin-right: 7px;
+  top: 3px;
+  color: #666;
+  font-size: smaller;
+}
+
+.codeSearchDialogMainWidget {
+  width: 250px;
+}
+
+.codeSearchDialogMainWidget .codeSearchWidget .search {
+  width: 100%;
+}

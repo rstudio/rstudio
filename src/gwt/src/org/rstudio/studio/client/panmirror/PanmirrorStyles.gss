@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+@external body;
+@external pagedtable;
+@external pm-background-color;
+@external pm-editing-root-node;
+@external ProseMirror;
+
+.ProseMirror:focus-visible {
+  outline-style: none !important;
+}
+
+.ProseMirror .body {
+  padding-top: 2px !important;
+}
+
+.ProseMirror .pm-background-color .pagedtable table {
+  width: 100%;
+  table-layout: auto;
+}

@@ -18,5 +18,5 @@ import com.google.gwt.user.cellview.client.CellTable;
 
 public interface RStudioCellTableStyle extends CellTable.Style
 {
-   String RSTUDIO_DEFAULT_CSS = "org/rstudio/core/client/theme/RStudioCellTableStyle.css";
+   String RSTUDIO_DEFAULT_CSS = "org/rstudio/core/client/theme/RStudioCellTableStyle.gss";
 }

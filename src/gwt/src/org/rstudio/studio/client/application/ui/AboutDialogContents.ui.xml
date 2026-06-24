@@ -7,7 +7,7 @@
    <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
-      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+      @def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
       .productName {
          font-size: 18pt;
          font-weight: bold;
@@ -70,7 +70,7 @@
       .licenseBox {
          clear: both;
          width: 100%;
-         font-family: fixedWidthFont;
+         font-family: FIXED_WIDTH_FONT;
          margin-top: 3px;
          margin-bottom: 15px;
       }

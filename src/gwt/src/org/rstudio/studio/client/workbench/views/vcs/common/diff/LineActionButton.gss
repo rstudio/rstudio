@@ -1,0 +1,27 @@
+.button {
+  display: inline-table;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0 0 0 4px;
+  background-color: transparent;
+  height: value('buttonLeft.getHeight', 'px');
+}
+
+.button div {
+  display: table-cell;
+  vertical-align: middle;
+  font-size: 9px !important;
+}
+
+.left {
+  gwt-sprite: "buttonLeft";
+}
+
+.center {
+  gwt-sprite: "buttonTile";
+}
+
+.right {
+  gwt-sprite: "buttonRight";
+}

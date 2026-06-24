@@ -36,7 +36,7 @@ public class HeaderPanel extends Composite
    
    interface Resources extends ClientBundle
    {
-      @Source("HeaderPanel.css")
+      @Source("HeaderPanel.gss")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

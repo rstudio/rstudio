@@ -32,7 +32,7 @@ public interface CompletionRequesterResources extends ClientBundle
       String meta();
    }
    
-   @Source("CompletionRequester.css")
+   @Source("CompletionRequester.gss")
    Styles styles();
    
    public static CompletionRequesterResources INSTANCE =

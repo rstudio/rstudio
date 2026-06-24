@@ -45,7 +45,7 @@ public interface WizardResources extends ClientBundle
       String wizardDisclosureArrow();
    }
    
-   @Source("Wizard.css")
+   @Source("Wizard.gss")
    Styles styles(); 
    
    @Source("wizardBackButton_2x.png")

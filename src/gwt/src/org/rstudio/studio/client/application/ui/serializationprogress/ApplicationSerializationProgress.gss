@@ -1,0 +1,37 @@
+.panel {
+  z-index: 1001;
+}
+
+.glass {
+  background-color: black;
+  filter: alpha(opacity = 0) !important;
+  opacity: 0;
+  z-index: 1000;
+}
+
+.label {
+  position: relative;
+  display: inline;
+  top: 3px;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+.left {
+  gwt-sprite: "statusPopupLeft";
+}
+
+.center {
+  gwt-sprite: "statusPopupTile";
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.spinner {
+  position: relative;
+  top: 8px;
+}
+
+.right {
+  gwt-sprite: "statusPopupRight";
+}

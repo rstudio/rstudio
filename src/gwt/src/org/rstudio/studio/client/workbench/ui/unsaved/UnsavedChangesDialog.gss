@@ -1,0 +1,42 @@
+.captionLabel {
+  margin-bottom: 4px;
+  width: 400px;
+}
+
+.targetName {
+}
+
+.targetPath {
+  color: #606060;
+  font-size: 0.9em;
+  word-wrap: break-word;
+}
+
+.targetUntitled {
+  line-height: 2.2ex;
+  height: 4.4ex;
+  vertical-align: middle;
+  display: table-cell;
+}
+
+.targetScrollPanel {
+  width: 400px;
+  height: 170px;
+  border: 1px solid #bbb;
+  background-color: white;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .targetPath {
+  color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .targetScrollPanel {
+  background-color: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BACKGROUND;
+}

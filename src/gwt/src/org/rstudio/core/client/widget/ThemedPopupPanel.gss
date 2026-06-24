@@ -1,0 +1,154 @@
+@external popupTopLeft popupTopCenter popupTopRight popupMiddleLeft popupMiddleCenter popupMiddleRight popupBottomLeft popupBottomCenter popupBottomRight popupContent;
+@external gwt-MenuBarPopup gwt-PopupPanel menuPopupTopLeft menuPopupTopCenter menuPopupTopRight menuPopupMiddleLeft menuPopupMiddleCenter menuPopupMiddleRight menuPopupBottomLeft menuPopupBottomCenter menuPopupBottomRight menuPopupContent;
+@external gwt-SuggestBoxPopup suggestPopupTopLeft suggestPopupTopCenter suggestPopupTopRight suggestPopupMiddleLeft suggestPopupMiddleCenter suggestPopupMiddleRight suggestPopupBottomLeft suggestPopupBottomCenter suggestPopupBottomRight suggestPopupContent suggestPopupTop suggestPopupBottom;
+@external gwt-MenuBar-vertical;
+@external safari;
+@external rstudio-themes-dark-menus;
+@external menuPopupTop menuPopupBottom menuPopupMiddle;
+@external popupTop popupBottom popupMiddle;
+@external gwt-DecoratedPopupPanel;
+@external themedPopupPanel;
+@def THEME_DARKGREY_MENU_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground');
+@def THEME_DARKGREY_MENU_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder');
+
+.safari .themedPopupPanel,
+.safari .gwt-MenuBarPopup,
+.safari .gwt-PopupPanel {
+  transform: translateZ(0);
+}
+
+.themedPopupPanel {
+  margin: -6px;
+  margin-top: 0;
+  z-index: 99999;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.themedPopupPanel .popupTopLeft,
+.menuPopupTopLeft,
+.suggestPopupTopLeft {
+  gwt-sprite: "popupTopLeft";
+  width: value('popupTopLeft.getWidth', 'px');
+  height: value('popupTopLeft.getHeight', 'px');
+}
+
+.themedPopupPanel .popupTopCenter,
+.menuPopupTopCenter,
+.suggestPopupTopCenter {
+  gwt-sprite: "popupTopCenter";
+  height: value('popupTopCenter.getHeight', 'px');
+}
+
+.themedPopupPanel .popupTopRight,
+.menuPopupTopRight,
+.suggestPopupTopRight {
+  gwt-sprite: "popupTopRight";
+  width: value('popupTopRight.getWidth', 'px');
+  height: value('popupTopRight.getHeight', 'px');
+}
+
+.themedPopupPanel .popupMiddleLeft,
+.menuPopupMiddleLeft,
+.suggestPopupMiddleLeft {
+  gwt-sprite: "popupMiddleLeft";
+  width: value('popupMiddleLeft.getWidth', 'px');
+}
+
+.themedPopupPanel .popupMiddleCenter,
+.menuPopupMiddleCenter,
+.suggestPopupMiddleCenter {
+  background-color: white;
+}
+
+.themedPopupPanel .popupMiddleLeft {
+  min-width: value('popupMiddleLeft.getWidth', 'px');
+}
+
+.themedPopupPanel .popupMiddleRight,
+.menuPopupMiddleRight,
+.suggestPopupMiddleRight {
+  gwt-sprite: "popupMiddleRight";
+  width: value('popupMiddleRight.getWidth', 'px');
+}
+
+.themedPopupPanel .popupBottomLeft,
+.menuPopupBottomLeft,
+.suggestPopupBottomLeft {
+  gwt-sprite: "popupBottomLeft";
+  width: value('popupBottomLeft.getWidth', 'px');
+  height: value('popupBottomLeft.getHeight', 'px');
+}
+
+.themedPopupPanel .popupBottomCenter,
+.menuPopupBottomCenter,
+.suggestPopupBottomCenter {
+  gwt-sprite: "popupBottomCenter";
+  height: value('popupBottomCenter.getHeight', 'px');
+}
+
+.themedPopupPanel .popupBottomRight,
+.menuPopupBottomRight,
+.suggestPopupBottomRight {
+  gwt-sprite: "popupBottomRight";
+  width: value('popupBottomRight.getWidth', 'px');
+  height: value('popupBottomRight.getHeight', 'px');
+}
+
+.gwt-MenuBarPopup {
+  margin: -5px;
+  margin-top: 0;
+  z-index: 1000;
+}
+
+.gwt-MenuBarPopup,
+.gwt-DecoratedPopupPanel,
+.gwt-SuggestBoxPopup {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.gwt-SuggestBoxPopup {
+  margin-top: 3px;
+}
+
+.menuPopupMiddleCenter,
+.popupMiddleCenter {
+  padding: 4px;
+}
+
+.menuPopupMiddleCenter,
+.popupMiddleCenter,
+.gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
+  border: solid 1px #a3a8b2;
+}
+
+.menuPopupTop,
+.popupTop,
+.suggestPopupTop {
+  display: none;
+}
+
+.menuPopupMiddle .menuPopupMiddleLeft,
+.popupMiddle .popupMiddleLeft,
+.suggestPopupMiddleLeft {
+  display: none;
+}
+
+.menuPopupMiddle .menuPopupMiddleRight,
+.popupMiddle .popupMiddleRight,
+.suggestPopupMiddleRight {
+  display: none;
+}
+
+.menuPopupBottom,
+.popupBottom,
+.suggestPopupBottom {
+  display: none;
+}
+
+.rstudio-themes-dark-menus .menuPopupMiddleCenter,
+.rstudio-themes-dark-menus .themedPopupPanel .popupMiddleCenter,
+.rstudio-themes-dark-menus .gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
+  background: THEME_DARKGREY_MENU_BACKGROUND;
+  border: solid 1px THEME_DARKGREY_MENU_BORDER;
+  color: #f0f0f0;
+}

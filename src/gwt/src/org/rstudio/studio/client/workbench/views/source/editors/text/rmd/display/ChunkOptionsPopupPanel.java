@@ -852,7 +852,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("ChunkOptionsPopupPanel.css")
+      @Source("ChunkOptionsPopupPanel.gss")
       Styles styles();
    }
    

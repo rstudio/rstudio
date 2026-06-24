@@ -1,0 +1,41 @@
+@def CALL_FRAME_PANEL_MARGIN 12px;
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+
+.frameList {
+  box-sizing: border-box;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.framePanel {
+  padding-bottom: CALL_FRAME_PANEL_MARGIN;
+  padding-top: 3px;
+}
+
+.executionArrow {
+  position: absolute;
+  left: 3px;
+  top: 0.5em;
+  width: 11px;
+  height: 10px;
+}
+
+.tracebackHeader {
+  margin-top: 2px;
+  margin-left: 10px;
+}
+
+.toggleHide {
+  font-family: PROPORTIONAL_FONT;
+  text-align: right;
+  font-weight: normal;
+  margin-right: 10px;
+}
+
+.showInternalsCheckbox {
+  margin-top: 1px;
+}
+
+.showInternalsCheckbox input {
+  margin-right: 5px !important;
+}

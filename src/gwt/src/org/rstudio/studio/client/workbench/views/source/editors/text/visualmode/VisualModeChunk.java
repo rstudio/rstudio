@@ -97,7 +97,7 @@ public class VisualModeChunk
 {
    public interface ChunkStyle extends ClientBundle
    {
-      @Source("VisualModeChunk.css")
+      @Source("VisualModeChunk.gss")
       VisualModeChunk.Styles style();
    }
 

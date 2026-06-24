@@ -54,7 +54,7 @@ public interface SourceMarkerListResources extends ClientBundle
    @Source("images/style_2x.png")
    ImageResource style2x();
 
-   @Source("SourceMarkerList.css")
+   @Source("SourceMarkerList.gss")
    Styles styles();
    
    @Source("images/logContextButton_2x.png")

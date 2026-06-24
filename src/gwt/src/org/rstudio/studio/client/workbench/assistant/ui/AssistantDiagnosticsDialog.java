@@ -126,7 +126,7 @@ public class AssistantDiagnosticsDialog extends ModalDialogBase
 
    public interface Resources extends ClientBundle
    {
-      @Source("AssistantDiagnosticsDialog.css")
+      @Source("AssistantDiagnosticsDialog.gss")
       Styles styles();
    }
 

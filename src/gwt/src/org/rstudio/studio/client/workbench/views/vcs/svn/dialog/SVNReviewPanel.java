@@ -66,7 +66,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 {
    interface Resources extends ClientBundle
    {
-      @Source("SVNReviewPanel.css")
+      @Source("SVNReviewPanel.gss")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

@@ -1,0 +1,77 @@
+.applicationEndedPopupPanel {
+  z-index: 1001;
+}
+
+.glass {
+  background-color: black;
+  filter: alpha(opacity = 15) !important;
+  opacity: 0.15;
+  z-index: 1000;
+}
+
+.mainPanel {
+  width: 530px;
+  height: 350px;
+}
+
+.contentPanel {
+  width: 260px;
+}
+
+.captionLabel {
+  font-size: 1.7em;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.descriptionLabel {
+  margin-bottom: 30px;
+}
+
+.NW {
+  gwt-sprite: "panelTopLeft";
+  width: 14px;
+  height: 14px;
+}
+
+.N {
+  gwt-sprite: "panelTop";
+  height: 14px;
+}
+
+.NE {
+  gwt-sprite: "panelTopRight";
+  width: 14px;
+  height: 14px;
+}
+
+.W {
+  gwt-sprite: "panelLeft";
+  width: 14px;
+}
+
+.C {
+  background-color: #f3f3f4;
+}
+
+.E {
+  gwt-sprite: "panelRight";
+  width: 14px;
+}
+
+.SW {
+  gwt-sprite: "panelBottomLeft";
+  width: 14px;
+  height: 14px;
+}
+
+.S {
+  gwt-sprite: "panelBottom";
+  height: 14px;
+}
+
+.SE {
+  gwt-sprite: "panelBottomRight";
+  width: 14px;
+  height: 14px;
+}

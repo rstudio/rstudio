@@ -44,7 +44,7 @@ public class HistoryPanel extends Composite implements Display
 {
    public interface Resources extends ClientBundle
    {
-      @Source("HistoryPanel.css")
+      @Source("HistoryPanel.gss")
       Styles styles();
    }
 

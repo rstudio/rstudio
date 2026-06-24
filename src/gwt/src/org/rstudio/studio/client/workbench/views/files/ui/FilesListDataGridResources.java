@@ -41,6 +41,6 @@ public interface FilesListDataGridResources extends DataGrid.Resources
    {
    }
    
-   @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "FilesListDataGridStyle.css"})
+   @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "FilesListDataGridStyle.gss"})
    FilesListDataGridStyle dataGridStyle();
 }

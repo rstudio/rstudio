@@ -1,7 +1,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" field="environmentStyle" />
-    <ui:style src="CallFramePanel.css" type="org.rstudio.studio.client.workbench.views.environment.view.CallFramePanelStyle"></ui:style>
+    <ui:style gss="true" src="EnvironmentObjects.gss" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" field="environmentStyle" />
+    <ui:style gss="true" src="CallFramePanel.gss" type="org.rstudio.studio.client.workbench.views.environment.view.CallFramePanelStyle"></ui:style>
     <ui:image src="ExecutionArrow_2x.png"
               width="10"
               height="11"

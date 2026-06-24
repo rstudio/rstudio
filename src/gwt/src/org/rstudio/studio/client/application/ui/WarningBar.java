@@ -49,7 +49,7 @@ public class WarningBar extends Composite
 {
    interface Resources extends ClientBundle
    {
-      @Source("WarningBar.css")
+      @Source("WarningBar.gss")
       Styles styles();
 
       ImageResource warningBarLeft();

@@ -125,6 +125,12 @@
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 
+   <!-- GSS (#17251): all CssResource styles are authored as native .gss / GSS
+        inline <ui:style> blocks, so no legacy-CSS auto-conversion is needed. -->
+   <set-configuration-property name="CssResource.enableGss" value="true" />
+   <set-configuration-property name="CssResource.conversionMode" value="off" />
+   <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="true" />
+
    <!-- work around incompatibility between GWT 2.8 and Gin 2.1.2 -->
    <set-configuration-property name="gin.classloading.exceptedPackages" value="com.google.gwt.core.client"/>
 

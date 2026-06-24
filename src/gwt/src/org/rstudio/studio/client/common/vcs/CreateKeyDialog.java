@@ -303,7 +303,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    interface Resources extends ClientBundle
    {
-      @Source("CreateKeyDialog.css")
+      @Source("CreateKeyDialog.gss")
       Styles styles();
    }
 

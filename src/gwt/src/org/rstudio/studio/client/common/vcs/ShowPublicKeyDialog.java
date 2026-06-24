@@ -103,7 +103,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
   
    static interface Resources extends ClientBundle
    {
-      @Source("ShowPublicKeyDialog.css")
+      @Source("ShowPublicKeyDialog.gss")
       Styles styles();
    }
    

@@ -36,7 +36,7 @@ public interface NewDocumentResources extends ClientBundle
    @Source("MarkdownShinyIcon_2x.png")
    ImageResource shinyIcon2x();
    
-   @Source("NewDocumentStyles.css")
+   @Source("NewDocumentStyles.gss")
    NewDocumentStyles styles();
 }
 

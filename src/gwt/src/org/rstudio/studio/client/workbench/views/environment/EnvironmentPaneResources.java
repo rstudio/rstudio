@@ -23,7 +23,7 @@ public interface EnvironmentPaneResources extends ClientBundle
    public static final EnvironmentPaneResources INSTANCE =
            GWT.create(EnvironmentPaneResources.class);
 
-   @Source("EnvironmentPane.css")
+   @Source("EnvironmentPane.gss")
    EnvironmentPaneStyle environmentPaneStyle();
 }
 

@@ -73,7 +73,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 {
    interface Resources extends ClientBundle
    {
-      @Source("GitReviewPanel.css")
+      @Source("GitReviewPanel.gss")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

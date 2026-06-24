@@ -5,7 +5,7 @@
 
 
    <ui:style>
-   @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+   @def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
    .RestoreActionsTable {
       height: 300px;
       width: 600px;

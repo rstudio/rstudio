@@ -2,7 +2,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:rw='urn:import:org.rstudio.core.client.widget'>
     <ui:style type="org.rstudio.core.client.widget.AutocompleteComboBox.Style">
-@external .suggestPopupContent;
+@external suggestPopupContent;
 
 .suggestBox
 {

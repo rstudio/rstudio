@@ -1491,7 +1491,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ModifyKeyboardShortcutsWidget.css"})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ModifyKeyboardShortcutsWidget.gss"})
       Styles dataGridStyle();
    }
    

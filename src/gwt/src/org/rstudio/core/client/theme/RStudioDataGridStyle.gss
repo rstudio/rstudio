@@ -1,0 +1,193 @@
+@external rstudio-themes-dark;
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@external histBar;
+@external dataGridHeader;
+@def THEME_DEFAULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.defaultBackground');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_ALTERNATE_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.alternateBackground');
+@def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
+@def SELECTION_BORDER_WIDTH 1px;
+
+.dataGridHeader:active,
+.dataGridHeader:focus {
+  outline: 0;
+}
+
+.dataGridWidget {
+  font-size: 9pt;
+  outline: none;
+}
+
+.dataGridWidget>div {
+  min-height: 16px !important;
+}
+
+.dataGridFirstColumn {
+}
+
+.dataGridLastColumn {
+}
+
+.dataGridFooter {
+  border-top: 1px solid #bbb;
+  padding: 3px 4px;
+  text-align: left;
+  overflow: hidden;
+  cursor: default;
+}
+
+.dataGridHeader {
+  border-bottom: 1px solid #d6dadc;
+  border-right: 1px solid #d6dadc;
+  padding: 1px 2px;
+  text-align: left;
+  font-weight: normal;
+  font-size: 11px;
+  color: #3c474d;
+  background-color: #eeeff1;
+  overflow: hidden;
+  cursor: default;
+  height: 16px;
+}
+
+.rstudio-themes-dark .dataGridHeader {
+  border-top: 0;
+  border-left: 0;
+  color: white;
+}
+
+.dataGridCell {
+  padding: 2px 4px;
+  overflow: hidden;
+  cursor: default;
+}
+
+.dataGridCell:first-child {
+  padding: 0 4px;
+}
+
+.dataGridCell:first-child+.dataGridCell {
+  padding: 0 4px;
+}
+
+.dataGridFirstColumnFooter {
+}
+
+.dataGridFirstColumnHeader {
+}
+
+.dataGridLastColumnFooter {
+}
+
+.dataGridLastColumnHeader {
+  border-right: none;
+}
+
+.dataGridSortableHeader {
+  cursor: default;
+}
+
+.dataGridSortableHeader:hover {
+  color: #6c6b6b;
+}
+
+.dataGridSortedHeaderAscending {
+}
+
+.dataGridSortedHeaderAscending img {
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #818a98;
+  margin-left: 3px;
+}
+
+.dataGridSortedHeaderDescending {
+}
+
+.dataGridSortedHeaderDescending img {
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #818a98;
+  margin-left: 3px;
+}
+
+.dataGridEvenRow {
+}
+
+.dataGridEvenRowCell {
+  border: SELECTION_BORDER_WIDTH solid #fff;
+}
+
+.dataGridOddRow {
+}
+
+.dataGridOddRowCell {
+  border: SELECTION_BORDER_WIDTH solid #fff;
+}
+
+.dataGridHoveredRow {
+}
+
+.dataGridHoveredRowCell {
+}
+
+.dataGridKeyboardSelectedRow {
+}
+
+.dataGridKeyboardSelectedRowCell {
+}
+
+.dataGridKeyboardSelectedRowCell:first-child {
+}
+
+.dataGridKeyboardSelectedRowCell:first-child+td+td {
+}
+
+.dataGridSelectedRow {
+  background: #ccc;
+  height: auto;
+  overflow: auto;
+}
+
+.dataGridSelectedRowCell {
+  border: SELECTION_BORDER_WIDTH solid #ccc;
+}
+
+.dataGridWidget:focus .dataGridSelectedRow {
+  background: #92c1f0;
+}
+
+.dataGridWidget:focus .dataGridSelectedRowCell {
+  border-color: #92c1f0;
+}
+
+.dataGridKeyboardSelectedCell {
+  border: SELECTION_BORDER_WIDTH solid transparent;
+}
+
+.rstudio-themes-default .dataGridHeader {
+  background: THEME_DEFAULT_BACKGROUND;
+  border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-dark-grey .dataGridHeader {
+  background: THEME_DARKGREY_BACKGROUND;
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-alternate .dataGridHeader {
+  background: THEME_ALTERNATE_BACKGROUND;
+  border-color: THEME_ALTERNATE_BORDER;
+}
+
+.histBar {
+  background-color: THEME_ALTERNATE_BACKGROUND;
+}

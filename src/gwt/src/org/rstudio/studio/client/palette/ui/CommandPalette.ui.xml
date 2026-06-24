@@ -2,8 +2,8 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPalette.Styles">
-      @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
-      @external editor_dark, .gwt-Label;
+      @def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+      @external editor_dark, gwt-Label;
 
       .popup {
          width: 600px;
@@ -16,7 +16,7 @@
       }
 
       .popup td {
-         font-family: proportionalFont;
+         font-family: PROPORTIONAL_FONT;
       }
 
       .searchBox {
@@ -73,7 +73,7 @@
       }
 
       .noResults .gwt-Label {
-         font-family: proportionalFont;
+         font-family: PROPORTIONAL_FONT;
       }
    </ui:style>
    <g:HTMLPanel styleName="rstudio-themes-border ace_editor {styles_.popup}">

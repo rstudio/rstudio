@@ -1,0 +1,49 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+
+.curtain {
+  overflow-y: hidden;
+  height: 0;
+  position: relative;
+  z-index: 1000;
+}
+
+.container {
+  background: #f3f4f4;
+  border: 1px solid #c0c0c0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 8px 14px;
+  margin: 0 auto 12px;
+  display: table;
+}
+
+.content {
+  max-width: 500px;
+  display: inline-block;
+}
+
+.cancelColumn {
+  padding-left: 6px;
+}
+
+.cancelButton {
+  margin-top: 1px;
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .container {
+  background: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .content {
+  color: #eee;
+}

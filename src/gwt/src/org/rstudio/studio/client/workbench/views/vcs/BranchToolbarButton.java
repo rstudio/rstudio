@@ -484,7 +484,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
    public interface Resources extends ClientBundle
    {
-      @Source("BranchToolbarButton.css")
+      @Source("BranchToolbarButton.gss")
       Styles styles();
    }
 

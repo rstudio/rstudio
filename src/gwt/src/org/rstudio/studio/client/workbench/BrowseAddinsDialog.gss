@@ -1,0 +1,54 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+
+.dataGridCell {
+  border: none;
+  border-bottom: 1px solid #ddd;
+}
+
+.dataGridWidget {
+  border: solid 1px #ddd;
+  background: #fff;
+}
+
+.dataGridWidget table {
+  border-collapse: collapse;
+}
+
+.dataGridWidget .dataGridSelectedRow {
+  background: #eeeff1;
+}
+
+.filterLabel {
+  float: left;
+  padding-right: 4px;
+  line-height: 19px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget {
+  background: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridHeader {
+  background-color: THEME_DARKGREY_MOST_INACTIVE;
+  border-bottom-color: THEME_DARKGREY_BORDER;
+  border-right-color: THEME_DARKGREY_BORDER;
+  color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell {
+  border-bottom-color: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget .dataGridSelectedRow {
+  background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget:focus .dataGridSelectedRow {
+  background: #46648c;
+}

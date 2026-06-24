@@ -37,7 +37,7 @@ public class FancyButton extends FocusWidget
 
    interface Resources extends ClientBundle
    {
-      @Source("FancyButton.css")
+      @Source("FancyButton.gss")
       Styles styles();
    }
 

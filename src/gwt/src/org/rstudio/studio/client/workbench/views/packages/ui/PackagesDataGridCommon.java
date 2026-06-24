@@ -22,6 +22,6 @@ public interface PackagesDataGridCommon extends DataGrid.Resources
    {
    }
 
-   @Source({DataGrid.Style.DEFAULT_CSS, "PackagesDataGridCommon.css"})
+   @Source({"com/google/gwt/user/cellview/client/DataGrid.gss", "PackagesDataGridCommon.gss"})
    PackagesDataGridCommonStyle dataGridStyle();
 }

@@ -80,7 +80,7 @@ public class AceInfoBar extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("AceInfoBar.css")
+      @Source("AceInfoBar.gss")
       Styles styles();
    }
 

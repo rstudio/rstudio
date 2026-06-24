@@ -9,7 +9,7 @@
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
 
-      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+      @def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
 
       .rawDialog {
          width: 400px;
@@ -20,7 +20,7 @@
       }
 
       input[type="text"].rawContent {
-         font-family: fixedWidthFont;
+         font-family: FIXED_WIDTH_FONT;
       }
 
    </ui:style>

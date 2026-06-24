@@ -18,7 +18,7 @@ import com.google.gwt.user.cellview.client.DataGrid;
 
 public interface PackagesDataGridResources extends DataGrid.Resources
 {
-   @Source({DataGrid.Style.DEFAULT_CSS, "PackagesDataGridCommon.css", 
-            "PackagesDataGrid.css"})
+   @Source({"com/google/gwt/user/cellview/client/DataGrid.gss", "PackagesDataGridCommon.gss", 
+            "PackagesDataGrid.gss"})
    PackagesDataGridStyle dataGridStyle();
 }

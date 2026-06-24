@@ -59,7 +59,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String alignmentPanel();
    }
 
-   @Source("PanmirrorDialogsStyles.css")
+   @Source("PanmirrorDialogsStyles.gss")
    Styles styles();
    
    @Source("break_link_2x.png")

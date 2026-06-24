@@ -1,0 +1,55 @@
+@charset "UTF-8";
+
+@def THEME_DARKGREY_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_DARKGREY_MOST_INACTIVE eval('org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground');
+@def THEME_DARK_ROW_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkRowSelected');
+@def THEME_DARK_ROW_FOCUSED eval('org.rstudio.core.client.theme.ThemeColors.darkRowFocused');
+
+.panel {
+  border: 1px solid #d0d2d4;
+  background-color: white;
+}
+
+.table {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.row td>* {
+  overflow: hidden;
+  padding: 1px 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected {
+  background-color: #d0d2d4;
+}
+
+.active .selected {
+  background-color: #d6e9f7;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .panel {
+  background-color: THEME_DARKGREY_INACTIVE;
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+  scrollbar-color: THEME_DARKGREY_BACKGROUND THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
+  filter: brightness(90%) saturate(90%);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .selected {
+  background-color: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .active .selected {
+  background-color: THEME_DARK_ROW_FOCUSED;
+}

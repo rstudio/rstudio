@@ -54,7 +54,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    public interface LineTableViewCellTableResources extends CellTable.Resources
    {
       @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
-               "LineTableViewCellTableStyle.css"})
+               "LineTableViewCellTableStyle.gss"})
       LineTableViewCellTableStyle cellTableStyle();
    }
 

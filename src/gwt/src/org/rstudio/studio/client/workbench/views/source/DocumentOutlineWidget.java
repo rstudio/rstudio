@@ -596,7 +596,7 @@ public class DocumentOutlineWidget extends Composite
 
    public interface Resources extends ClientBundle
    {
-      @Source("DocumentOutlineWidget.css")
+      @Source("DocumentOutlineWidget.gss")
       Styles styles();
    }
 

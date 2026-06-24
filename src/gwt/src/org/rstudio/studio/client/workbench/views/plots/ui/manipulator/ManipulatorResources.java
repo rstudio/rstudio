@@ -23,7 +23,7 @@ public interface ManipulatorResources extends ClientBundle
 {
    public static final ManipulatorResources INSTANCE = GWT.create(ManipulatorResources.class);
 
-   @Source("ManipulatorStyles.css")
+   @Source("ManipulatorStyles.gss")
    ManipulatorStyles manipulatorStyles();
    
    @Source("manipulateButton_2x.png")

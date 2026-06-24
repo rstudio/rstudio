@@ -56,7 +56,7 @@ public class MathJaxPopupPanel extends MiniPopupPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("MathJaxPopupPanel.css")
+      @Source("MathJaxPopupPanel.gss")
       Styles styles();
    }
    

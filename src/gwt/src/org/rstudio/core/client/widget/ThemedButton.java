@@ -38,7 +38,7 @@ public class ThemedButton extends FocusWidget
 
    interface Resources extends ClientBundle
    {
-      @Source("ThemedButton.css")
+      @Source("ThemedButton.gss")
       Styles styles();
    }
 

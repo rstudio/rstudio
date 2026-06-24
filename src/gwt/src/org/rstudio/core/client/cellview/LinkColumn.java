@@ -119,7 +119,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
 
    interface Resources extends ClientBundle
    {
-      @Source("LinkColumn.css")
+      @Source("LinkColumn.gss")
       Styles styles();
    }
 

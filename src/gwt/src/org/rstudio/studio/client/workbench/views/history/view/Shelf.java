@@ -41,7 +41,7 @@ public class Shelf extends Composite
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource shelfbgLarge();
       
-      @Source("Shelf.css")
+      @Source("Shelf.gss")
       Styles styles();
    }
 

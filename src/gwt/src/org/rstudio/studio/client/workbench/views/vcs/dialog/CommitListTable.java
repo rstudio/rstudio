@@ -47,7 +47,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
    interface Resources extends CellTable.Resources
    {
       @Override
-      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "CommitListTableCellTableStyle.css"})
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "CommitListTableCellTableStyle.gss"})
       Style cellTableStyle();
    }
 

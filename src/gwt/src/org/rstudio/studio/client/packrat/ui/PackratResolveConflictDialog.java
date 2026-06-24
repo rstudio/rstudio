@@ -203,7 +203,7 @@ public class PackratResolveConflictDialog
   
    static interface Resources extends ClientBundle
    {
-      @Source("PackratResolveConflictDialog.css")
+      @Source("PackratResolveConflictDialog.gss")
       Styles styles();
    }
    

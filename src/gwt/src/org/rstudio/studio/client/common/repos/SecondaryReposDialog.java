@@ -328,7 +328,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
    static interface Resources extends ClientBundle
    {
-      @Source("SecondaryReposDialog.css")
+      @Source("SecondaryReposDialog.gss")
       Styles styles();
    }
    

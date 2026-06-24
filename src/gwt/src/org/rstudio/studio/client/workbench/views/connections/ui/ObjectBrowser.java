@@ -162,7 +162,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       @Source("CollapseIcon_2x.png")
       ImageResource cellTreeOpenItem();
       
-      @Source({CellTree.Style.DEFAULT_CSS, "ObjectBrowser.css"})
+      @Source({"com/google/gwt/user/cellview/client/CellTree.gss", "ObjectBrowser.gss"})
       public Style cellTreeStyle();   
       
       public interface Style extends CellTree.Style

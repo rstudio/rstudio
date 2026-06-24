@@ -2,7 +2,7 @@
    xmlns:rw='urn:import:org.rstudio.core.client.widget'
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:style>
-   @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+   @def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
    
    .consoleErrorBox {
       position: relative;
@@ -27,7 +27,7 @@
    }
    
    .errorCommandText {
-      font-family: proportionalFont;
+      font-family: PROPORTIONAL_FONT;
       font-size: 80%;
       opacity: 0.50;
       cursor: pointer;

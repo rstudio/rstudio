@@ -24,7 +24,7 @@ public interface FileDialogResources extends ClientBundle
    public static final FileDialogResources INSTANCE =
          GWT.create(FileDialogResources.class);
 
-   @Source("FileDialogStyles.css")
+   @Source("FileDialogStyles.gss")
    FileDialogStyles styles();
 
    @Source("dirseparator_2x.png")

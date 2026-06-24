@@ -1,0 +1,129 @@
+.DEBUG {
+  border: 1px solid red;
+  background-color: lime;
+}
+
+.rstudio-Toolbar {
+  height: 23px;
+  width: 100%;
+  background-color: #f2f3f4;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #bbc1c5;
+}
+
+.rstudio-SecondaryToolbar {
+  height: 23px;
+}
+
+.rstudio-SecondaryToolbar .rstudio-StrongLabel {
+  font-weight: bold;
+}
+
+.gwt-Button-Toolbar {
+  height: 19px;
+  background-color: transparent;
+  margin: 1px;
+  padding: 0;
+  border: none;
+}
+
+.gwt-Button-Toolbar:active {
+  border: 1px inset #ccc;
+}
+
+.gwt-Button-Toolbar:hover {
+  margin: 0;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #ccc #999 #999 #aaa;
+}
+
+.gwt-Button-Toolbar[disabled] {
+  cursor: default;
+  color: #888;
+}
+
+.gwt-Button-Toolbar[disabled]:hover {
+  border: 1px outset #ccc;
+}
+
+.gwt-DecoratedPopupPanel-Toolbar .popupMiddleCenter {
+  background: white;
+}
+
+.gwt-DialogBox-ModalDialog .Caption {
+  font-weight: bold;
+}
+
+.rstudio-DialogBoxProgressPanel {
+  height: 25px;
+}
+
+.rstudio-DialogBoxProgressPanel .gwt-Label-ProgressText {
+  color: grey;
+  padding-left: 4px;
+}
+
+.rstudio-DialogBoxVerticalInputLabel {
+  margin-bottom: 2px;
+}
+
+.rstudio-ModalDialogButtonSpacer {
+  width: 5px;
+}
+
+.rstudio-HyperlinkLabel {
+  color: #00a;
+}
+
+.rstudio-HyperlinkLabel:focus {
+  outline: none;
+}
+
+.rstudio-HyperlinkLabel-Link {
+  text-decoration: underline;
+}
+
+.rstudio-HelpButton {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+}
+
+.rstudio-HelpButton:focus {
+  outline: none;
+}
+
+.rstudio-ImageButton {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+}
+
+.rstudio-ImageButton:focus {
+  outline: none;
+}
+
+.rstudio-StatusIndicator {
+}
+
+.rstudio-StatusIndicator .Message {
+  font-weight: bold;
+  padding: 3px 3px 3px 3px;
+}
+
+.rstudio-StatusIndicator .Message-Info {
+  background-color: #ffec8b;
+}
+
+.rstudio-StatusIndicator .Message-Error {
+  background-color: #ff6347;
+}
+
+.gwt-TabLayoutPanelTab,
+.gwt-TabLayoutPanelTab-selected {
+  outline: none;
+}

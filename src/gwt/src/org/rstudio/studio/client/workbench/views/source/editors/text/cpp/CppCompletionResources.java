@@ -35,7 +35,7 @@ public interface CppCompletionResources extends ClientBundle
    }
 
   
-   @Source("CppCompletion.css")
+   @Source("CppCompletion.gss")
    Styles styles();
   
    @Source("upArrow_2x.png")

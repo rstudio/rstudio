@@ -1,0 +1,36 @@
+.header {
+  gwt-sprite: "diffHeaderTile";
+  position: relative;
+}
+
+.header img,
+.fileIcon {
+  display: block;
+  position: absolute;
+  top: 5px;
+  left: 6px;
+}
+
+.headerLabel {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 12px;
+  position: absolute;
+  top: 6px;
+  left: 28px;
+}
+
+.viewFilePanel {
+  position: absolute;
+  right: 6px;
+}
+
+.viewFileSeparator {
+  margin-top: 3px;
+  margin-right: 5px;
+}
+
+.viewFileHyperlink {
+  font-size: 11px;
+  margin-top: 6px;
+}

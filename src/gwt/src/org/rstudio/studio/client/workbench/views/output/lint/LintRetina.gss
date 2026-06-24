@@ -1,0 +1,24 @@
+@def NOTE resourceUrl("note2x");
+@def WARNING resourceUrl("warning2x");
+@def ERROR resourceUrl("error2x");
+@def SPELLING resourceUrl("spelling2x");
+
+.error,
+.fatal {
+  background-image: ERROR;
+}
+
+.warning {
+  background-image: WARNING;
+}
+
+.spelling {
+  background-image: SPELLING;
+}
+
+.info,
+.ignored,
+.note,
+.style {
+  background-image: NOTE;
+}

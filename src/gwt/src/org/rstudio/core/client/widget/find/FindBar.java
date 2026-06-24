@@ -49,7 +49,7 @@ public abstract class FindBar extends Composite
 
    interface Resources extends ClientBundle
    {
-      @Source("FindBar.css")
+      @Source("FindBar.gss")
       Styles styles();
    }
 

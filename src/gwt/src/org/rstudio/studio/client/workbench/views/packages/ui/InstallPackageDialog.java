@@ -379,7 +379,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
   
    static interface Resources extends ClientBundle
    {
-      @Source("InstallPackageDialog.css")
+      @Source("InstallPackageDialog.gss")
       Styles styles();
    }
    

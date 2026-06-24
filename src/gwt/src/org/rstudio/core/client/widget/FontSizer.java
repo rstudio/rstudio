@@ -175,7 +175,7 @@ public class FontSizer
    
    static interface Resources extends ClientBundle
    {
-      @Source("FontSizer.css")
+      @Source("FontSizer.gss")
       Styles styles();
    }
 

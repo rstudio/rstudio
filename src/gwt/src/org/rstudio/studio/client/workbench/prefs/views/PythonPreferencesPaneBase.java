@@ -438,7 +438,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
 
    public interface Resources extends ClientBundle
    {
-      @Source("PythonPreferencesPane.css")
+      @Source("PythonPreferencesPane.gss")
       Styles styles();
    }
 

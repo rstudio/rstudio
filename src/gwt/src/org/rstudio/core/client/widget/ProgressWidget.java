@@ -35,7 +35,7 @@ public class ProgressWidget extends Widget
 
    public interface Resources extends ClientBundle
    {
-      @Source("ProgressWidget.css")
+      @Source("ProgressWidget.gss")
       Styles styles();
    }
 

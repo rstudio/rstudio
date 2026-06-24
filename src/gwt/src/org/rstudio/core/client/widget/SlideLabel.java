@@ -53,7 +53,7 @@ public class SlideLabel extends Composite
    
    interface Resources extends ClientBundle
    {
-      @Source("SlideLabel.css")
+      @Source("SlideLabel.gss")
       SlideLabelCss style();
    }
 

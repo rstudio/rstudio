@@ -26,7 +26,7 @@ public interface PanmirrorResources extends ClientBundle
    {
    }
 
-   @Source("PanmirrorStyles.css")
+   @Source("PanmirrorStyles.gss")
    Styles styles();
    
    public static PanmirrorResources INSTANCE = GWT.create(PanmirrorResources.class);

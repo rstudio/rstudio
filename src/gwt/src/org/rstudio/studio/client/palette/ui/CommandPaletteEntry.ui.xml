@@ -3,11 +3,11 @@
     xmlns:rw='urn:import:org.rstudio.core.client.widget'>
    <ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
       @external editor_dark;
-      @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+      @def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
 
       div.entry {
          width: 100%;
-         font-family: proportionalFont;
+         font-family: PROPORTIONAL_FONT;
          font-size: 10pt;
          padding-top: 6px;
          padding-bottom: 6px;

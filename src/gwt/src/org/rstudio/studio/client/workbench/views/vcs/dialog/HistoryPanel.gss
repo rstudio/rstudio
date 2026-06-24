@@ -1,0 +1,58 @@
+.splitPanel {
+}
+
+.toolbarWrapper {
+}
+
+.whitebg {
+}
+
+.toolbar {
+}
+
+.commitDetail {
+  border: 12px solid transparent;
+}
+
+.commitTableScrollPanel {
+  background-color: white;
+}
+
+.ref,
+.tag {
+  font-size: 80%;
+  border-radius: 8px;
+  background-color: green;
+  padding: 0 6px;
+  margin-right: 4px;
+}
+
+.head {
+  background-color: #b6e7e7;
+}
+
+.branch {
+  background-color: #ceb6fb;
+}
+
+.remote {
+  background-color: #d5daff;
+}
+
+.tag {
+  background-color: #ffe5aa;
+}
+
+.graphLineImg {
+  display: block;
+}
+
+.toolbarInnerWrapper {
+  height: 100%;
+}
+
+.diffToolbarInnerWrapper {
+}
+
+.diffToolbarWrapper {
+}

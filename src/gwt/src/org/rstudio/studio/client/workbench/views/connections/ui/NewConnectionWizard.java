@@ -119,7 +119,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionWizard.css")
+      @Source("NewConnectionWizard.gss")
       Styles styles();
 
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

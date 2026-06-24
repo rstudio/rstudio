@@ -1,0 +1,12 @@
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external fixedWidthFont;
+
+.viewPublicKeyContent {
+  font-family: FIXED_WIDTH_FONT;
+  font-size: 12px;
+}
+
+.viewPublicKeyLabel {
+  margin-bottom: 7px;
+}

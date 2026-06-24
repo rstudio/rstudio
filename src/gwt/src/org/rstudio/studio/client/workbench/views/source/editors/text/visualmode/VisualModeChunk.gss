@@ -1,0 +1,52 @@
+@external pm-ace-collapsed;
+.host {
+  position: relative;
+  transition-property: height;
+  transition-duration: 0.5s;
+}
+
+.summary {
+  position: relative;
+  top: 2px;
+  left: 5px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  display: none;
+  user-select: none;
+}
+
+.gutter {
+  position: absolute;
+  top: 3px;
+  left: -2px;
+}
+
+.gutterIcon {
+  left: -18px;
+  width: 16px;
+  margin-top: -1px;
+  background-position: 1px 0;
+}
+
+.chunkHost {
+  position: relative;
+  overflow: hidden;
+}
+
+.editor {
+  display: block;
+}
+
+.pm-ace-collapsed .gutter,
+.pm-ace-collapsed .toolbar {
+  display: none;
+}
+
+.pm-ace-collapsed .editorHost {
+  height: 0;
+  overflow: hidden;
+}
+
+.pm-ace-collapsed .summary {
+  display: block;
+}

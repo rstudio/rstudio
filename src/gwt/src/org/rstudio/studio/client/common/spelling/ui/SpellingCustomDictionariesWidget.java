@@ -215,7 +215,7 @@ public class SpellingCustomDictionariesWidget extends Composite
   
    static interface Resources extends ClientBundle
    {
-      @Source("SpellingCustomDictionariesWidget.css")
+      @Source("SpellingCustomDictionariesWidget.gss")
       Styles styles();
    }
    

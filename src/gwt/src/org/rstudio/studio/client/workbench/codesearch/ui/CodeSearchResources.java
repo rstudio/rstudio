@@ -45,7 +45,7 @@ public interface CodeSearchResources extends ClientBundle
    }
 
   
-   @Source("CodeSearch.css")
+   @Source("CodeSearch.gss")
    Styles styles();
  
    @Source("gotoFunction_2x.png")

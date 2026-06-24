@@ -197,7 +197,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       @Source("images/refresh_2x.png")
       ImageResource refresh2x();
       
-      @Source("ObjectExplorerEditingTargetWidget.css")
+      @Source("ObjectExplorerEditingTargetWidget.gss")
       Styles styles();
    }
    

@@ -177,7 +177,7 @@ public class SshKeyWidget extends Composite
 
    interface Resources extends ClientBundle
    {
-      @Source("SshKeyWidget.css")
+      @Source("SshKeyWidget.gss")
       Styles styles();
    }
 

@@ -916,7 +916,7 @@ public abstract class ModalDialogBase extends DialogBox
 
    public interface Resources extends ClientBundle
    {
-      @Source("ModalDialogBase.css")
+      @Source("ModalDialogBase.gss")
       Styles styles();
    }
 

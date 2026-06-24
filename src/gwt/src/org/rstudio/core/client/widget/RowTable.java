@@ -664,7 +664,7 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public interface Resources extends ClientBundle
    {
-      @Source("RowTable.css")
+      @Source("RowTable.gss")
       Styles styles();
    }
    

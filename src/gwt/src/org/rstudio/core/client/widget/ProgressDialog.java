@@ -47,7 +47,7 @@ public abstract class ProgressDialog extends ModalDialogBase
 {
    interface Resources extends ClientBundle
    {
-      @Source("ProgressDialog.css")
+      @Source("ProgressDialog.gss")
       Styles styles();
    }
 

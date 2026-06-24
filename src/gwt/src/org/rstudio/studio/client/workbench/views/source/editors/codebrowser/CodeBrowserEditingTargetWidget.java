@@ -494,7 +494,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
 
    interface Resources extends ClientBundle
    {
-      @Source("CodeBrowserEditingTargetWidget.css")
+      @Source("CodeBrowserEditingTargetWidget.gss")
       Styles styles();
 
    }

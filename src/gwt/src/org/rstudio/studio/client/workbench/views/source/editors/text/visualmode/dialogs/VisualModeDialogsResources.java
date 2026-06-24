@@ -35,7 +35,7 @@ public interface VisualModeDialogsResources extends ClientBundle
       String wrapAtColumn();
    }
 
-   @Source("VisualModeDialogs.css")
+   @Source("VisualModeDialogs.gss")
    Styles styles();
    
    static VisualModeDialogsResources INSTANCE = GWT.create(VisualModeDialogsResources.class);

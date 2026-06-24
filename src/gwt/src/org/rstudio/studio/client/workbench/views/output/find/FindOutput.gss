@@ -1,0 +1,145 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external editor_dark;
+@external rstudio-themes-dark;
+
+@def THEME_DARK_ROW_SELECTED eval('org.rstudio.core.client.theme.ThemeColors.darkRowSelected');
+@def THEME_DARK_ROW_FOCUSED eval('org.rstudio.core.client.theme.ThemeColors.darkRowFocused');
+@def THEME_DARK_DIALOG_CONTROL_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+
+.findOutput {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+.findOutput tr {
+  height: 20px;
+}
+
+.findOutput .headerRow td {
+  font-weight: bold;
+  font-size: 12px !important;
+  padding: 2px 2px 2px 3px;
+}
+
+.line {
+  color: #6e6e6e;
+  font-family: FIXED_WIDTH_FONT;
+  text-align: right;
+  padding-left: 12px;
+}
+
+.lineValue {
+  font-family: FIXED_WIDTH_FONT;
+  padding-right: 2px;
+  white-space: pre;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectedRow {
+  background-color: #ccc;
+}
+
+:focus .selectedRow {
+  background-color: #92c1f0;
+}
+
+.rstudio-themes-dark .selectedRow {
+  background-color: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-dark :focus .selectedRow {
+  background-color: THEME_DARK_ROW_FOCUSED;
+}
+
+.editor_dark .selectedRow {
+  color: #fff;
+}
+
+.overflowWarning {
+  font-weight: bold;
+  padding-left: 2px;
+  background-color: #900;
+  color: white;
+}
+
+.findOutput strong {
+  font-weight: normal;
+  color: #66a;
+}
+
+.findOutput mark {
+  font-weight: bold;
+  background-color: #a81900;
+  color: white;
+}
+
+.findOutputReplace strong {
+  font-weight: bold;
+  background-color: #a81900;
+  text-decoration: line-through;
+  color: white;
+}
+
+.findOutputReplace del {
+  font-weight: bold;
+  background-color: #a81900;
+  text-decoration: line-through;
+  color: white;
+}
+
+.findOutputReplace ins {
+  font-weight: bold;
+  background-color: #060;
+  text-decoration: none;
+  color: white;
+}
+
+.findOutputReplace mark {
+  font-weight: bold;
+  background-color: #a81900;
+  color: white;
+}
+
+.editor_dark .line {
+  color: #9e9e9e;
+}
+
+.editor_dark .findOutput strong {
+  color: #a0a0e0;
+}
+
+.editor_dark .findOutput mark,
+.editor_dark .findOutputReplace strong,
+.editor_dark .findOutputReplace del,
+.editor_dark .findOutputReplace mark {
+  background-color: #7a2d21;
+  color: #fff;
+}
+
+.editor_dark .findOutputReplace ins {
+  background-color: #2d5e2d;
+  color: #fff;
+}
+
+.replaceLabel {
+  margin-top: 2px;
+  padding-right: 6px;
+}
+
+.replaceTextBox {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin-top: 3px;
+}
+
+.rstudio-themes-dark .replaceTextBox {
+  background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+  border: 1px solid THEME_DARKGREY_BORDER;
+  color: #eee;
+  color-scheme: dark;
+}

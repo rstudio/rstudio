@@ -97,7 +97,7 @@ public class MarkdownToolbar extends SecondaryToolbar
    
    interface Resources extends ClientBundle
    {
-      @Source("MarkdownToolbar.css")
+      @Source("MarkdownToolbar.gss")
       Styles styles();
    }
    

@@ -1,0 +1,40 @@
+@external gwt-TextBox;
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+.image {
+  margin-right: 12px;
+}
+
+.grid {
+  width: 350px;
+}
+
+.label {
+}
+
+.invalidAppName {
+  background-color: #f2dede;
+}
+
+.appNameTextBox {
+  width: 180px;
+}
+
+.textBox,
+.textBox .gwt-TextBox {
+  padding-left: 4px;
+}
+
+.shinyTypeGroup {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .image {
+  background: radial-gradient(circle at center, black 68px, transparent 68px);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .invalidAppName {
+  background-color: #5a3232;
+}

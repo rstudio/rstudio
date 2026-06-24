@@ -42,7 +42,7 @@ public class VisualModeCollapseToggle extends Composite
       @Source("collapsedDark_2x.png")
       DataResource collapsedDark2x();
 
-      @Source("CollapseToggle.css")
+      @Source("CollapseToggle.gss")
       Styles collapseStyles();
    }
 

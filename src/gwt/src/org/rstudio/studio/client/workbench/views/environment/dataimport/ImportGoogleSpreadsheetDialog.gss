@@ -1,0 +1,71 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+@def FIXED_WIDTH_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
+
+@external search;
+
+.progressPanel {
+  background-color: white;
+  border: 1px solid #cfd2d4;
+}
+
+.scrollPanel {
+}
+
+.table td {
+  overflow: hidden;
+  padding: 4px;
+}
+
+.selected {
+  background-color: #ccc;
+}
+
+:focus .selected {
+  background-color: #92c1f0;
+}
+
+.date {
+  color: #aaa;
+  width: 175px;
+}
+
+.selected .date {
+  color: black;
+}
+
+.googleSpreadsheetSearch .search {
+  margin-right: 0;
+  margin-bottom: 3px;
+  width: 200px;
+}
+
+.overflowWarning {
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.varNameLabel {
+  display: inline;
+  margin-right: 4px;
+}
+
+.varName {
+  width: 175px;
+  border: #cfd2d4 solid 1px;
+  font-size: 12px;
+  font-family: PROPORTIONAL_FONT;
+  outline: none;
+}
+
+.spreadsheetIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.spreadsheetIcon {
+  gwt-sprite: "spreadsheet_2x";
+}
+
+td.iconCell {
+  padding-right: 0;
+}

@@ -1,0 +1,32 @@
+.button {
+  margin-left: 12px;
+  margin-top: -2px;
+}
+
+.assistantStatusLabel {
+  min-height: 20px;
+}
+
+.copilotTosLabel {
+  font-style: oblique;
+}
+
+.refreshSpinner {
+  margin-right: 8px;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.keyboardShortcut {
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  padding: 2px 6px;
+  text-align: right;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .keyboardShortcut {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: black;
+}

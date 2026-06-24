@@ -129,7 +129,7 @@ public class CaptionWithHelp extends Composite
    
    static interface Resources extends ClientBundle
    {
-      @Source("CaptionWithHelp.css")
+      @Source("CaptionWithHelp.gss")
       Styles styles();
    }
 

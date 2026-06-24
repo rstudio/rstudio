@@ -102,7 +102,7 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    interface Resources extends NineUpBorder.Resources, ClientBundle
    {
       @Override
-      @Source("NineUpBorder.css")
+      @Source("NineUpBorder.gss")
       Styles styles();
 
       @Override

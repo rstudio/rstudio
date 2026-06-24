@@ -5,11 +5,11 @@
    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
    ui:generateLocales="default">
    <ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectCloudAccount.ConnectStyle">
-    @eval fixedFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+    @def FIXED_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont()');
    
    .accountInfo
    {
-     font-family: fixedFont;
+     font-family: FIXED_FONT;
      padding: 5px;
      width: 325px;
    }

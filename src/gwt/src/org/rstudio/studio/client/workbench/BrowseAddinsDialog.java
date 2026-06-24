@@ -375,7 +375,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "BrowseAddinsDialog.css"})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "BrowseAddinsDialog.gss"})
       Styles dataGridStyle();
    }
    

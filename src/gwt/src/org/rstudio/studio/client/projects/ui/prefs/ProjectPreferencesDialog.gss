@@ -1,0 +1,132 @@
+@external gwt-Label gwt-TextBox;
+@external rstudio-themes-dark rstudio-theme-aware-dialog;
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def PROJECT_PANEL_CONTAINER_WIDTH eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.projectPanelContainerWidth()');
+@def PROJECT_PANEL_CONTAINER_HEIGHT eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.projectPanelContainerHeight()');
+@def PROJECT_PANEL_CONTAINER_WIDTH_NO_CHOOSER eval('org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.projectPanelContainerWidthNoChooser()');
+
+.panelContainer {
+  width: PROJECT_PANEL_CONTAINER_WIDTH;
+  height: PROJECT_PANEL_CONTAINER_HEIGHT;
+}
+
+.panelContainerNoChooser {
+  width: PROJECT_PANEL_CONTAINER_WIDTH_NO_CHOOSER;
+  height: PROJECT_PANEL_CONTAINER_HEIGHT;
+}
+
+.buildToolsPanel {
+  width: 100%;
+}
+
+.workspaceGrid {
+  margin-bottom: 10px;
+  margin-left: 5px;
+  width: 375px;
+}
+
+.workspaceGrid tr {
+  height: 24px;
+}
+
+.enableCodeIndexing {
+}
+
+.useGitignore {
+}
+
+.useSpacesForTab {
+}
+
+.numberOfTabs {
+}
+
+.useNativePipeOperator {
+}
+
+.editingOption {
+}
+
+.encodingChooser {
+}
+
+.lineEndings {
+}
+
+.vcsSelectExtraSpaced {
+  margin-bottom: 20px;
+}
+
+.vcsOriginLabel {
+  margin-left: 5px;
+}
+
+.vcsOriginUrl {
+  margin-top: -3px;
+  margin-left: 5px;
+  border: 1px solid #bbb;
+  padding: 2px;
+  padding-right: 10px;
+}
+
+.vcsNoOriginUrl {
+  width: 150px;
+  color: #494949;
+}
+
+.directorySelector {
+  width: 375px;
+}
+
+.buildToolsAdditionalArguments {
+  width: 375px;
+  margin-bottom: 12px;
+}
+
+.buildToolsAdditionalArguments .gwt-Label {
+  margin-bottom: 2px;
+}
+
+.buildToolsAdditionalArguments .gwt-TextBox {
+  width: 100%;
+}
+
+.buildToolsCheckBox {
+  margin-left: -5px;
+}
+
+.buildToolsRoxygenize {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.buildToolsDevtools {
+  margin-bottom: 10px;
+}
+
+.buildToolsCleanBeforeInstall {
+  margin-bottom: 10px;
+}
+
+.previewWebsite {
+  margin-top: 8px;
+}
+
+.infoLabel {
+  margin-top: 4px;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.websiteOutputFormat {
+  margin-top: 16px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .vcsOriginUrl {
+  border-color: THEME_DARKGREY_BORDER;
+  color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .vcsNoOriginUrl {
+  color: #999;
+}

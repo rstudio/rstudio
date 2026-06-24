@@ -6,20 +6,20 @@
    <ui:data field='statusBarSeparator' src='statusBarSeparator.png'/>
 
    <ui:style>
-      @url SEPARATOR statusBarSeparator;
+      @def SEPARATOR resourceUrl('statusBarSeparator');
       @external gwt-Label;
       @external rstudio-themes-dark;
       @external windows;
 
       @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-      @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
-      @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
-      @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+      @def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+      @def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+      @def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
 
 
-      @sprite .statusBar {
-         gwt-image: 'statusBarTile';
+      .statusBar {
+         gwt-sprite: "statusBarTile";
          width: 100%;
          font-size: 11px;
          color: #3c474d;

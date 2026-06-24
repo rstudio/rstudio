@@ -43,7 +43,7 @@ public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
       ImageResource bottom();
       ImageResource bottomRight();
 
-      @Source("NineUpBorder.css")
+      @Source("NineUpBorder.gss")
       Styles styles();
    }
 

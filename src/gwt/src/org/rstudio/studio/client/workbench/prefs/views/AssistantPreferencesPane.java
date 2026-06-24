@@ -1485,7 +1485,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    public interface Resources extends ClientBundle
    {
-      @Source("AssistantPreferencesPane.css")
+      @Source("AssistantPreferencesPane.gss")
       Styles styles();
    }
 

@@ -1,0 +1,49 @@
+@external gwt-Label;
+@external rstudio-themes-dark;
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@def THEME_DEFAULT_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.defaultBackground');
+@def THEME_DARKGREY_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBackground');
+@def THEME_ALTERNATE_BACKGROUND eval('org.rstudio.core.client.theme.ThemeColors.alternateBackground');
+
+.shelf {
+  gwt-sprite: "shelfbg";
+  padding: 0 8px 1px 8px;
+}
+
+.largeShelf {
+  gwt-sprite: "shelfbgLarge";
+  padding: 0 8px 1px 8px;
+}
+
+.shelf .gwt-Label {
+  font-size: 10px;
+}
+
+.largeShelf .gwt-Label {
+  font-size: 10px;
+}
+
+.left button {
+  margin-right: 4px;
+}
+
+.right button {
+  margin-top: 1px;
+  margin-left: 4px;
+}
+
+.rstudio-themes-dark .shelf {
+  color: #fff;
+}
+
+.rstudio-themes-default .shelf {
+  background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-dark-grey .shelf {
+  background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-alternate .shelf {
+  background: THEME_ALTERNATE_BACKGROUND;
+}

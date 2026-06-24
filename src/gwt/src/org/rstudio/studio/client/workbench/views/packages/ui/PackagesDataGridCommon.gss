@@ -1,0 +1,90 @@
+@def PROPORTIONAL_FONT eval('org.rstudio.core.client.theme.ThemeFonts.getProportionalFont()');
+
+@external ubuntu_mono;
+@external rstudio-themes-dark;
+@external rstudio-themes-default rstudio-themes-dark-grey rstudio-themes-alternate;
+@external editor_dark;
+
+@def THEME_DEFAULT_BORDER eval('org.rstudio.core.client.theme.ThemeColors.defaultBorder');
+@def THEME_DARKGREY_BORDER eval('org.rstudio.core.client.theme.ThemeColors.darkGreyBorder');
+@def THEME_ALTERNATE_BORDER eval('org.rstudio.core.client.theme.ThemeColors.alternateBorder');
+
+.dataGridHeader {
+  font-family: PROPORTIONAL_FONT;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* @alternate */ font-family: PROPORTIONAL_FONT;
+  border-bottom: 1px solid #d6dadc;
+  border-right: 1px solid #d6dadc;
+  border-top: none;
+  border-left: none;
+  padding: 1px 6px;
+  color: #3c474d;
+  background-color: #eeeff1;
+  font-weight: normal;
+  text-align: left;
+  border-collapse: separate;
+  font-size: 11px;
+  text-shadow: none;
+  height: 16px;
+}
+
+.rstudio-themes-dark .dataGridHeader {
+  color: white;
+}
+
+.dataGridHeader:last-child {
+  border-right: none;
+}
+
+.dataGridCell {
+  padding: 1px 6px;
+  vertical-align: top;
+}
+
+.dataGridCell img {
+  margin-top: 3px;
+}
+
+.dataGridLastColumn img {
+  margin-top: 0;
+}
+
+.dataGridEvenRow,
+.dataGridOddRow {
+  background-color: inherit;
+}
+
+.dataGridEvenRowCell {
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dataGridOddRowCell {
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+body.ubuntu_mono .dataGridCell input[type="checkbox"] {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.rstudio-themes-default .dataGridHeader,
+.rstudio-themes-default .dataGridEvenRowCell,
+.rstudio-themes-default .dataGridOddRowCell {
+  border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-dark-grey .dataGridHeader,
+.rstudio-themes-dark-grey .dataGridEvenRowCell,
+.rstudio-themes-dark-grey .dataGridOddRowCell {
+  border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-alternate .dataGridHeader,
+.rstudio-themes-alternate .dataGridEvenRowCell,
+.rstudio-themes-alternate .dataGridOddRowCell {
+  border-color: THEME_ALTERNATE_BORDER;
+}

@@ -1684,7 +1684,7 @@ public class VirtualConsole
    
    public static interface Resources extends ClientBundle
    {
-      @Source("VirtualConsole.css")
+      @Source("VirtualConsole.gss")
       Styles styles();
    }
    

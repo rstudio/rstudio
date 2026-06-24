@@ -51,7 +51,7 @@ public interface ExportPlotResources extends ClientBundle
    }
 
   
-   @Source("ExportPlot.css")
+   @Source("ExportPlot.gss")
    Styles styles();
    
    @Source("rightMouse_2x.png")

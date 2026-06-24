@@ -53,7 +53,7 @@ public class HistoryPane extends WorkbenchPane
 {
    interface Resources extends ClientBundle
    {
-      @Source("HistoryPane.css")
+      @Source("HistoryPane.gss")
       Styles styles();
 
       @Source("searchResultsContextButton_2x.png")

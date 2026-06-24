@@ -166,7 +166,7 @@ public class RSConnectDeploy extends Composite
       @Source("publishHTMLIllustrationDark_2x.png")
       ImageResource publishHTMLIllustrationDark2x();
 
-      @Source("RSConnectDeploy.css")
+      @Source("RSConnectDeploy.gss")
       DeployStyle style();
    }
    

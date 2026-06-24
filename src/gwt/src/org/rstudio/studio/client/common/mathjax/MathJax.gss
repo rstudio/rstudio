@@ -1,0 +1,4 @@
+.mathjaxRoot {
+  pointer-events: none;
+  cursor: default;
+}

@@ -62,7 +62,7 @@ public class LineActionButtonRenderer
       @Source("images/SmallBlueButtonRight.png")
       ImageResource buttonRight();
 
-      @Source("LineActionButton.css")
+      @Source("LineActionButton.gss")
       BlueStyles styles();
    }
 
@@ -84,7 +84,7 @@ public class LineActionButtonRenderer
       @Source("images/SmallGrayButtonRight.png")
       ImageResource buttonRight();
 
-      @Source("LineActionButton.css")
+      @Source("LineActionButton.gss")
       GrayStyles styles();
    }
 

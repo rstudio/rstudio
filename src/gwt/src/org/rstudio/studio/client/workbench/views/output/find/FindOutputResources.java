@@ -32,6 +32,6 @@ public interface FindOutputResources extends ClientBundle
       String replaceTextBox();
    }
 
-   @Source("FindOutput.css")
+   @Source("FindOutput.gss")
    Styles styles();
 }
