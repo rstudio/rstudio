@@ -57,6 +57,17 @@ if(DEFINED ENV{GWT_XSS})
    set(GWT_XSS $ENV{GWT_XSS})
 endif()
 
+# GWT output style (allow override from env). The production compile defaults
+# to OBFUSCATED (smallest output, unreadable symbols); set GWT_STYLE=PRETTY
+# (or DETAILED) so compiled-JS stack traces -- e.g. the uncaught client
+# exceptions captured by the e2e automation agent -- carry readable Java symbol
+# names. Intended for CI / e2e builds; release builds leave this unset.
+set(GWT_EXTRA_ARGS "")
+if(DEFINED ENV{GWT_STYLE})
+   set(GWT_EXTRA_ARGS "-style $ENV{GWT_STYLE}")
+   message(STATUS "Using GWT style: $ENV{GWT_STYLE}")
+endif()
+
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
    message(STATUS "Using GWT module: org.rstudio.studio.${GWT_MAIN_MODULE}")
@@ -103,6 +114,7 @@ if(GWT_BUILD)
          -Dextras.dir="${GWT_EXTRAS_DIR}"
          -Dgwt.xmx="${GWT_XMX}"
          -Dgwt.xss="${GWT_XSS}"
+         -Dgwt.extra.args="${GWT_EXTRA_ARGS}"
          -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
       COMMAND
          "${CMAKE_COMMAND}" -E touch "${GWT_BUILD_TIMESTAMP}")
