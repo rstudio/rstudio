@@ -278,8 +278,14 @@ export class SessionLauncher {
             version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
             parent: this.mainWindow.window,
             onClose: () => {
-              const state = new WhatsNewState();
-              state.markReleaseSeen(releaseName, info.RSTUDIO_VERSION_PATCH);
+              // Only persist seen-state for real releases. Dev builds reach
+              // this path only via RSTUDIO_SHOW_WHATS_NEW, which bypasses the
+              // seen check anyway; recording the in-progress release name here
+              // would otherwise suppress the eventual packaged release.
+              if (isReleaseBuild(info.RSTUDIO_VERSION)) {
+                const state = new WhatsNewState();
+                state.markReleaseSeen(releaseName, info.RSTUDIO_VERSION_PATCH);
+              }
               this.whatsNewWindow = undefined;
             },
           });
