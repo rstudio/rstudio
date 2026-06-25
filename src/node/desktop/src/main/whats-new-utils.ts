@@ -13,11 +13,18 @@
  *
  */
 
-import { accessSync, constants } from 'fs';
+import { accessSync, constants, readFileSync } from 'fs';
 import { join, resolve, sep } from 'path';
 import { fileURLToPath } from 'url';
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
+
+/**
+ * The release name baked into local developer builds (see build-info.ts).
+ * A packaged build substitutes the real flower name in its place, so seeing
+ * this value at runtime means the substitution never ran -- i.e. a dev build.
+ */
+export const DEV_RELEASE_NAME = 'Developer Build';
 
 /**
  * Create a URL checker scoped to the What's New window's allowed paths.
@@ -76,6 +83,31 @@ export function toReleaseSlug(flowerName: string): string {
     .replace(/'/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+/**
+ * Resolve the effective release ("flower") name.
+ *
+ * Packaged builds have the real release name baked into build-info, so this
+ * returns it unchanged. Local dev builds carry the DEV_RELEASE_NAME placeholder
+ * instead; for those we read the current flower name from version/RELEASE so
+ * What's New tracks the in-progress release rather than a stale placeholder.
+ * Any read failure falls back to the baked-in name.
+ *
+ * @param bakedName The RSTUDIO_RELEASE_NAME from build-info.
+ * @param repoRoot  The repo root for a dev build, or '' for a packaged build
+ *                  (see findRepoRoot). When empty, no override is attempted.
+ */
+export function resolveReleaseName(bakedName: string, repoRoot: string): string {
+  if (bakedName !== DEV_RELEASE_NAME || repoRoot.length === 0) {
+    return bakedName;
+  }
+  try {
+    const releaseName = readFileSync(join(repoRoot, 'version', 'RELEASE'), 'utf8').trim();
+    return releaseName.length > 0 ? releaseName : bakedName;
+  } catch {
+    return bakedName;
+  }
 }
 
 /**

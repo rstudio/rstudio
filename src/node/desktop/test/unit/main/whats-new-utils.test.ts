@@ -13,15 +13,18 @@
  *
  */
 
-import { describe, it } from 'mocha';
+import { describe, it, before, after } from 'mocha';
 import { assert } from 'chai';
-import { readdirSync, readFileSync } from 'fs';
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 
 import {
+  DEV_RELEASE_NAME,
   toReleaseSlug,
   isValidSlug,
   isReleaseBuild,
+  resolveReleaseName,
   resolveWhatsNewContentPath,
   createLocalUrlChecker,
 } from '../../../src/main/whats-new-utils';
@@ -128,6 +131,52 @@ describe('whats-new-utils', () => {
 
     it('returns false for Pro daily version', () => {
       assert.isFalse(isReleaseBuild('2026.04.0-daily+460.pro4'));
+    });
+  });
+
+  describe('resolveReleaseName', () => {
+    let repoRoot: string;
+
+    before(() => {
+      repoRoot = mkdtempSync(join(tmpdir(), 'whats-new-release-'));
+      mkdirSync(join(repoRoot, 'version'));
+      writeFileSync(join(repoRoot, 'version', 'RELEASE'), 'Pacific Dogwood\n');
+    });
+
+    after(() => {
+      rmSync(repoRoot, { recursive: true, force: true });
+    });
+
+    it('reads version/RELEASE for a dev build', () => {
+      assert.equal(resolveReleaseName(DEV_RELEASE_NAME, repoRoot), 'Pacific Dogwood');
+    });
+
+    it('returns the baked-in name for a packaged build (empty repo root)', () => {
+      assert.equal(resolveReleaseName('Globemaster Allium', ''), 'Globemaster Allium');
+    });
+
+    it('does not override a real baked-in release name', () => {
+      assert.equal(resolveReleaseName('Globemaster Allium', repoRoot), 'Globemaster Allium');
+    });
+
+    it('falls back to the placeholder when version/RELEASE is missing', () => {
+      const emptyRoot = mkdtempSync(join(tmpdir(), 'whats-new-empty-'));
+      try {
+        assert.equal(resolveReleaseName(DEV_RELEASE_NAME, emptyRoot), DEV_RELEASE_NAME);
+      } finally {
+        rmSync(emptyRoot, { recursive: true, force: true });
+      }
+    });
+
+    it('falls back to the placeholder when version/RELEASE is blank', () => {
+      const blankRoot = mkdtempSync(join(tmpdir(), 'whats-new-blank-'));
+      try {
+        mkdirSync(join(blankRoot, 'version'));
+        writeFileSync(join(blankRoot, 'version', 'RELEASE'), '   \n');
+        assert.equal(resolveReleaseName(DEV_RELEASE_NAME, blankRoot), DEV_RELEASE_NAME);
+      } finally {
+        rmSync(blankRoot, { recursive: true, force: true });
+      }
     });
   });
 
