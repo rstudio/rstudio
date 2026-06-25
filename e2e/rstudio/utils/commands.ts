@@ -19,6 +19,7 @@ type CommandEntry = {
   (): void;
   isChecked(): boolean;
   isEnabled(): boolean;
+  isVisible(): boolean;
 };
 
 type PrefEntry = {
@@ -183,6 +184,16 @@ type ErrorsBridge = {
   simulate(message: string): void;
 };
 
+type ConsoleBridge = {
+  /**
+   * Monotonic count of completed console commands (advances on each top-level
+   * prompt). Absent on binaries built before the counter was added. See
+   * ApplicationAutomation.registerConsole for the authoritative rationale, and
+   * waitForConsoleCommandComplete for how callers consume it.
+   */
+  promptCount: number;
+};
+
 type ShinyBridge = {
   /**
    * Stop the running foreground shiny app via shiny::stopApp() on rsession.
@@ -203,6 +214,8 @@ type RStudioBridge = {
   dialogs: DialogsBridge;
   layout: LayoutBridge;
   errors: ErrorsBridge;
+  /** Console completion-signal surface (promptCount). */
+  console?: ConsoleBridge;
   /** Shiny-app automation surface. */
   shiny?: ShinyBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
@@ -257,7 +270,7 @@ export async function executeCommand(page: Page, commandId: string): Promise<voi
   try {
     await page.waitForFunction(
       (id) => {
-        const cmd = (window.rstudio?.commands as Record<string, ((() => void) & { isEnabled(): boolean; isVisible(): boolean }) | undefined> | undefined)?.[id];
+        const cmd = window.rstudio?.commands?.[id];
         return typeof cmd === 'function' && (cmd.isEnabled() || !cmd.isVisible());
       },
       commandId,
@@ -268,7 +281,7 @@ export async function executeCommand(page: Page, commandId: string): Promise<voi
     // failure names the command and its actual blocking condition, rather
     // than a generic waitForFunction timeout.
     const exists = await page.evaluate(
-      (id) => typeof (window.rstudio?.commands as Record<string, unknown> | undefined)?.[id] === 'function',
+      (id) => typeof window.rstudio?.commands?.[id] === 'function',
       commandId,
     );
     throw new Error(

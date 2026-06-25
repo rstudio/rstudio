@@ -4,6 +4,7 @@
    <ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
       @external editor_dark;
       @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+      @eval THEME_MUTED_GRAY org.rstudio.core.client.theme.ThemeColors.mutedGray;
 
       div.entry {
          width: 100%;
@@ -32,7 +33,7 @@
       }
 
       .keyboard {
-         border: 1px solid #a0a0a0;
+         border: 1px solid THEME_MUTED_GRAY;
          border-radius: 3px;
          padding: 3px;
          margin-left: 3px;

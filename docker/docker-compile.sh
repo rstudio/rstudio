@@ -186,9 +186,14 @@ echo "Running build command:"
 echo "${CMD}"
 
 # run compile step!
+#
+# The ":z" suffix on the volume mount tells Docker to relabel the bind-mounted
+# content so it's accessible from within the container on hosts with SELinux
+# enabled (otherwise the confined container process is denied access to the
+# source tree and the build fails). The suffix is ignored on non-SELinux hosts.
 docker run                 \
   --name "$CONTAINER_ID"   \
-  --volume "$(pwd):/src"   \
+  --volume "$(pwd):/src:z" \
   "$REPO:$IMAGE_TAG" bash -c "${CMD}"
 
 # extract logs to get filename (should be on the last line)

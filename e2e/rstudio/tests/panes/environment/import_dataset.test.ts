@@ -21,6 +21,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand } from '@utils/commands';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { rPathLiteral } from '@utils/r';
 import { TIMEOUTS } from '@utils/constants';
 
 // The dialog's aria-label comes from the caption passed to the
@@ -30,13 +31,14 @@ const IMPORT_DIALOG = '.gwt-DialogBox[aria-label="Import Text Data"]';
 // The preview iframe is a GridViewerFrame titled with constants_.dataPreview().
 const PREVIEW_FRAME = 'iframe[title="Data Preview"]';
 
-// Open Import Dataset > From Text (readr) for the given CSV path and drive the
-// dialog until the preview iframe is up. Returns the dialog + preview frame so
-// each test can assert on the rendered preview. The caller cancels the dialog.
-// Waits for the readr preview iframe to show its first column header.
-// On Windows CI the preview subprocess occasionally fails to start; soft-skip
-// rather than hard-fail so an environment issue doesn't mask other results.
-async function awaitPreviewOrSkip(
+// Wait for the readr preview iframe to render its first column header. On
+// failure, scrape the top-level "Error" dialog into the thrown message: when
+// the preview subprocess errors, the message surfaces through the progress
+// indicator's onError -> GlobalDisplay.showErrorMessage
+// (ModalDialogBase.addProgressIndicator), which renders a separate top-level
+// "Error" dialog rather than a label inside the import dialog. The message is
+// prefixed with "Is this a valid CSV file? " by enhancePreviewErrorMessage.
+async function awaitPreview(
   dialog: Locator,
   previewFrame: FrameLocator,
 ): Promise<void> {
@@ -49,24 +51,12 @@ async function awaitPreviewOrSkip(
   if (previewReady)
     return;
 
-  // The header never appeared. When the preview subprocess fails, the error is
-  // surfaced through the progress indicator's onError, which routes to
-  // GlobalDisplay.showErrorMessage (ModalDialogBase.addProgressIndicator) and
-  // renders a separate top-level "Error" dialog -- not a label inside the
-  // import dialog. Scrape that dialog for a more specific diagnostic. The
-  // message is prefixed with "Is this a valid CSV file? " by
-  // enhancePreviewErrorMessage, so key on that marker.
   const errorDialog = dialog.page().locator('.gwt-DialogBox[aria-label="Error"]');
   const errorText = (await errorDialog.textContent().catch(() => null)) ?? '';
-  const detail = errorText.includes('valid CSV file')
-    ? `readr CSV preview failed on Windows CI: ${errorText.trim()}`
-    : 'readr CSV preview subprocess did not load on Windows CI';
-
-  // Cancel out of the import dialog before skipping so teardown stays clean.
-  await dialog.locator('#rstudio_dlg_cancel').click().catch(() => {});
-
-  test.fixme(os.platform() === 'win32' && !!process.env.CI, detail);
-  throw new Error('readr CSV preview did not produce column headers within 45 s');
+  throw new Error(
+    'readr CSV preview did not render its column headers within 45s' +
+    (errorText ? ` (Error dialog: ${errorText.trim()})` : ''),
+  );
 }
 
 async function openReadrCsvPreview(
@@ -75,10 +65,18 @@ async function openReadrCsvPreview(
   csvPath: string,
 ): Promise<{ dialog: Locator; previewFrame: FrameLocator }> {
   // Write the CSV via the R session so the path is valid on the rsession host
-  // (matters for Server mode where runner and session can be on different
-  // machines).
+  // (matters for Server mode where runner and session can differ). The preview
+  // runs in a separate --vanilla R subprocess, so the file must be on disk
+  // before the dialog opens, or vroom reports "<csv> does not exist" and the
+  // preview never renders (#17985).
+  //
+  // Use rPathLiteral, NOT a raw "${csvPath}": on Windows sandbox.dir comes back
+  // from R's tempfile() with backslashes, and embedding that into R source
+  // turns it into escape sequences (\r, \a become control chars; \p, \w are a
+  // hard parse error), so the writeLines never runs. rPathLiteral normalizes to
+  // forward slashes (which R accepts on Windows) and quotes safely.
   await consoleActions.executeInConsole(
-    `writeLines(c("a,b,c","1,2,3","4,5,6"), "${csvPath}")`,
+    `writeLines(c("a,b,c","1,2,3","4,5,6"), ${rPathLiteral(csvPath)})`,
     { wait: true },
   );
 
@@ -102,10 +100,14 @@ async function openReadrCsvPreview(
   // the label-association in DataImport.ui.xml.
   const fileInput = dialog.getByRole('textbox', { name: 'File/URL:' });
   await expect(fileInput).toBeVisible({ timeout: 5000 });
-  // On Windows the readr dialog's file chooser passes the path to a subprocess
-  // via Java's File API, which expects backslash separators. Forward-slash
-  // paths (produced by R's tempfile()) cause the preview to silently fail.
-  const fillPath = os.platform() === 'win32' ? csvPath.replace(/\//g, '\\') : csvPath;
+  // The file chooser passes the typed path to Java's File API; on Windows use
+  // native backslash separators. createSandbox now normalizes its workdir to
+  // forward slashes, so csvPath has no backslashes and the first replace is a
+  // belt-and-suspenders no-op on every platform; it stays only to guard a
+  // future caller that builds csvPath from a raw backslash path. The Windows
+  // branch then converts to backslashes for the File API.
+  const forwardPath = csvPath.replace(/\\/g, '/');
+  const fillPath = os.platform() === 'win32' ? forwardPath.replace(/\//g, '\\') : forwardPath;
   await fileInput.fill(fillPath);
 
   // Click "Update" to commit the path and kick off preview_data_import_async.
@@ -141,7 +143,7 @@ test.describe('Import Dataset (readr)', () => {
     // CSV file?" error prefix instead. The grid renders each header as
     // "<name>(<type>)" once column inference completes; anchor on the name
     // prefix so the assertion doesn't depend on the inferred type string.
-    await awaitPreviewOrSkip(dialog, previewFrame);
+    await awaitPreview(dialog, previewFrame);
 
     const firstColHeader = previewFrame.locator('th[data-col-idx="1"]');
     await expect(firstColHeader).toHaveText(/^a/);
@@ -165,7 +167,7 @@ test.describe('Import Dataset (readr)', () => {
     );
 
     // Gate on the preview being up before asserting sidebar state.
-    await awaitPreviewOrSkip(dialog, previewFrame);
+    await awaitPreview(dialog, previewFrame);
 
     // The fix: GridViewerFrame requests show_summary=0, so the panel never
     // gains the "expanded" class and the toggle reports collapsed. Pre-fix the
