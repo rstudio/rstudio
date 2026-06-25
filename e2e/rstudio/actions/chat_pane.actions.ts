@@ -28,25 +28,75 @@ export class ChatPaneActions {
   }
 
   async dismissSetupPrompts(): Promise<void> {
-    // These prompts are visible immediately when present; absence is the common
-    // case. Gate each click on isVisible() (snapshot) so we don't burn the full
-    // click({ timeout }) auto-wait when the button is missing.
-    if (await this.chatPane.installBtn.isVisible()) {
+    // openChatPane() only waits for the iframe element, not its contents. The
+    // setup prompts (Install / Update) and the real chat app all render
+    // asynchronously after a backend install-status round-trip, so a single
+    // isVisible() snapshot here races that render: when Posit Assistant is not
+    // installed, the "Not Installed" view (with its Install button) has not
+    // appeared yet, the snapshot reads false, and we fall through to
+    // waitForChatReady() -- which then waits 30s for a composer that will never
+    // exist. Poll until one terminal setup state is reached instead.
+    const state = await this.waitForSetupState();
+
+    if (state === 'install') {
       await this.chatPane.installBtn.click();
       console.log('Clicked Install button -- waiting for installation...');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 60000 });
       await expect(this.chatPane.chatInput).toBeVisible({ timeout: 30000 });
-    } else if (await this.chatPane.updateBtn.isVisible()) {
+    } else if (state === 'update') {
       await this.chatPane.updateBtn.click();
       console.log('Clicked Update on update prompt -- updating Posit Assistant');
       await expect(this.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
     }
 
     // The TrustOverlay and the chat input both render asynchronously after
-    // the iframe loads; waitForChatReady polls for either path through the
+    // the chat app loads; waitForChatReady polls for either path through the
     // workspace-trust dialog or a clean editable composer, so callers don't
     // need to handle it themselves.
     await this.waitForChatReady();
+  }
+
+  /**
+   * Poll the chat iframe until it settles into a terminal setup state:
+   * an Install prompt ('install'), an Update prompt ('update'), or the real
+   * chat app having loaded ('ready').
+   *
+   * The chat app mounts at #root, which the plain-HTML "Not Installed" /
+   * "Update Available" views never contain, so its presence reliably means
+   * installation is complete and only trust/sign-in (handled by
+   * waitForChatReady) may remain. Install is checked before update because the
+   * downgrade variant of the update view also carries an "Install ..." button.
+   *
+   * The timeout must exceed the backend manifest-fetch bound that gates which
+   * view renders: chat_check_for_updates can run a manifest download for up to
+   * kManifestDeadlineSeconds (currently 30s, SessionChat.cpp) before any prompt
+   * appears, so a shorter window could give up just before a slow-manifest
+   * Install prompt renders. We poll past that bound with margin.
+   *
+   * On timeout (a genuine stall past the manifest bound), returns 'ready' so
+   * the caller defers to waitForChatReady, whose sign-in vs. stalled error is
+   * more actionable than anything we'd raise here.
+   */
+  private async waitForSetupState(
+    timeout: number = 40000
+  ): Promise<'install' | 'update' | 'ready'> {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+      if (await this.chatPane.installBtn.isVisible().catch(() => false)) {
+        return 'install';
+      }
+      if (await this.chatPane.updateBtn.isVisible().catch(() => false)) {
+        return 'update';
+      }
+      if (await this.chatPane.chatRoot.isVisible().catch(() => false)) {
+        return 'ready';
+      }
+      await sleep(500);
+    }
+    // Not a positive signal: waitForChatReady() (which dismissSetupPrompts always
+    // calls next) is the real readiness gate and throws on a genuine stall. Keep
+    // that call if this code is ever refactored, or this becomes a silent failure.
+    return 'ready';
   }
 
   /**
