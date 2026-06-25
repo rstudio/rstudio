@@ -3,7 +3,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 let consoleActions: ConsolePaneActions;
 
-// TODO(aza): file a follow-up issue to unblock on Server.
+// Tracked by #18064 (re-enable on Server).
 // Server-on-Linux: ConsolePaneActions.restartSession() relies on the
 // `__RESTART_<ts>__DONE` marker being printed cleanly via afterRestart's
 // cat(). On Server the post-restart console fills with what look like

@@ -64,7 +64,7 @@ test.describe.serial('ProjectId in .Rproj', () => {
     // lines we write below), `providedDefaults` becomes true and the IDE
     // re-writes the file with the full defaults filled in -- including a
     // freshly-generated `ProjectId: <uuid>` line whenever
-    // getCustomUserDataDir() is non-empty (SessionProjectContext.cpp:1175).
+    // getCustomUserDataDir() is non-empty.
     // That helper reads `project_user_data_directory` (user pref) first,
     // falling back to `session-project-user-data-dir` (admin option). A
     // leftover non-empty value from a prior interaction in the same worker

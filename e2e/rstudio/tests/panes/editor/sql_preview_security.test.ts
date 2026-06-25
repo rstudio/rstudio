@@ -143,18 +143,16 @@ test.describe('SQL Preview security (rstudio-pro#10981)', () => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
   });
 
-  // TODO(aza): file a follow-up issue to unblock this test on Server.
-  // Server-on-Linux: the IDE throws an uncaught client exception during
-  // this test's consent flow (TypeError: Cannot read properties of null
-  // (reading 'WXc') in obfuscated GWT code), which prevents the
-  // error-confirmation dialog from ever rendering. This is a product-side
-  // crash specific to how the SQL injection payload + connection-failure
-  // path interact with the Server build -- not a test-side issue.
-  // To unblock: build the IDE with PRETTY GWT symbols (cmake --build build
-  // -DGWT_STYLE=PRETTY), reproduce locally against rstudio-server, and
-  // decode the YRe -> eSe -> Cm -> Fm stack to find the null-deref in
-  // src/gwt/. Drop the @desktop_only tag once the GWT bug is fixed.
-  test('preview runs the expression after the user consents', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
+  // Tracked by #18064 (re-enable on Server). On Server the consent flow hits
+  // a GWT null dereference (product bug #18065), which keeps the
+  // error-confirmation dialog from rendering. Marked test.fixme (not skipped)
+  // so it stays visible and re-enables itself once #18065 is fixed; matches
+  // the r2d3 preview-consent test, which fixmes the same crash.
+  test('preview runs the expression after the user consents', async ({ rstudioPage: page }) => {
+    test.fixme(
+      process.env.PW_RSTUDIO_MODE === 'server',
+      'GWT null dereference during SQL preview consent on Linux Server; see #18065',
+    );
     const sentinel = `${sandbox.dir}/pwned_preview_allowed.txt`;
     const fileName = 'injection_preview_allowed.sql';
     const content = heredoc`
@@ -173,10 +171,7 @@ test.describe('SQL Preview security (rstudio-pro#10981)', () => {
     // Consenting evaluates the expression (which here writes the sentinel and
     // then fails to produce a real connection, surfacing an error dialog we
     // dismiss). The point is that evaluation now happens only after consent.
-    // Server can take longer to surface the error dialog because the
-    // expression evaluation round-trips through rsession; use a generous
-    // wait rather than the file-open default.
-    await expect(page.locator(CONFIRM_BTN)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+    await expect(page.locator(CONFIRM_BTN)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     await page.locator(CONFIRM_BTN).click();
 
     expect(await sentinelExists(page, sentinel)).toBe(true);

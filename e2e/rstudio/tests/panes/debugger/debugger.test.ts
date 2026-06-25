@@ -575,7 +575,7 @@ test.describe('R debugger', () => {
       ).toBe(true);
     });
 
-    // TODO(aza): file a follow-up issue to unblock on Server.
+    // Tracked by #18064 (re-enable on Server).
     // Server-on-Linux: the previous attempt to fix this used force-click
     // (since the call-frame label's actionability checks were timing out).
     // The click now lands -- but the env-pane assertion below
