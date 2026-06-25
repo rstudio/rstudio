@@ -223,13 +223,24 @@ jobs:
               $chocoArgs = @('install', $tool.Package, '--yes', '--no-progress', '--use-enhanced-exit-codes')
               if ($i -gt 1) { $chocoArgs += '--force' }      # clear a half-installed record on retry
               choco @chocoArgs
+
               # choco updates the machine PATH and drops shims in
               # C:\ProgramData\chocolatey\bin, but this already-running process
               # won't see them until we re-read the environment -- otherwise a
               # PATH-only probe (e.g. ant) could fail even after a good install.
-              $env:PATH = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-                          [Environment]::GetEnvironmentVariable('Path', 'User')
-              if (& $tool.Probe) { $ok = $true; break }
+              # Refresh PATH only for the probe, then restore it, so we don't
+              # disturb the runner-managed PATH ($GITHUB_PATH entries for node,
+              # rig, sccache, MSVC, ...) for the rest of the step.
+              $savedPath = $env:PATH
+              try {
+                $env:PATH = $savedPath + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'User')
+                if (& $tool.Probe) { $ok = $true }
+              } finally {
+                $env:PATH = $savedPath
+              }
+              if ($ok) { break }
               Write-Host "::warning::$($tool.Package) not usable after attempt $i; retrying in 15s..."
               Start-Sleep -Seconds 15
             }
