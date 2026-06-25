@@ -62,10 +62,15 @@ endif()
 # (or DETAILED) so compiled-JS stack traces -- e.g. the uncaught client
 # exceptions captured by the e2e automation agent -- carry readable Java symbol
 # names. Intended for CI / e2e builds; release builds leave this unset.
-set(GWT_EXTRA_ARGS "")
+#
+# Only the bare style value is threaded through to Ant (via the gwt.style
+# property); build.xml assembles the "-style X" argument itself. Passing the
+# single-token value avoids embedding a space in an argument that must survive
+# the CMake -> shell -> Ant boundary.
+set(GWT_STYLE "")
 if(DEFINED ENV{GWT_STYLE})
-   set(GWT_EXTRA_ARGS "-style $ENV{GWT_STYLE}")
-   message(STATUS "Using GWT style: $ENV{GWT_STYLE}")
+   set(GWT_STYLE $ENV{GWT_STYLE})
+   message(STATUS "Using GWT style: ${GWT_STYLE}")
 endif()
 
 if(GWT_BUILD)
@@ -110,11 +115,11 @@ if(GWT_BUILD)
       COMMAND
          ${ANT}
          -Dbuild.dir="${GWT_BIN_DIR}"
-         -Dwww.dir="${GWT_WWW_DIR}"
          -Dextras.dir="${GWT_EXTRAS_DIR}"
+         -Dwww.dir="${GWT_WWW_DIR}"
+         -Dgwt.style="${GWT_STYLE}"
          -Dgwt.xmx="${GWT_XMX}"
          -Dgwt.xss="${GWT_XSS}"
-         -Dgwt.extra.args="${GWT_EXTRA_ARGS}"
          -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
       COMMAND
          "${CMAKE_COMMAND}" -E touch "${GWT_BUILD_TIMESTAMP}")
