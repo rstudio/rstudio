@@ -1843,6 +1843,14 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
 int saveWorkspaceAction()
 {
+   // A headless script run (--run-script, e.g. the 'r' test scope) must never
+   // save or prompt to save the workspace on exit. This matters most on
+   // Windows: R's native cleanup runs at script end (our RScriptCleanUp
+   // SA_NOSAVE override is not wired into the Win32 Rstart) and would pop a
+   // modal "Save workspace image?" dialog, hanging an unattended/CI run.
+   if (!rsession::options().runScript().empty())
+      return rstudio::r::session::kSaveActionNoSave;
+
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
