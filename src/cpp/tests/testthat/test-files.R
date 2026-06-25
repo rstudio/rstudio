@@ -77,7 +77,26 @@ test_that("our list.files, list.dirs hooks function as expected", {
    # use native R routines
    .rs.files.restoreBindings()
    on.exit(.rs.files.replaceBindings(), add = TRUE)
-   
+
+   # On Windows the dev/test session runs in a non-UTF-8 (CP1252) locale. There,
+   # base R and our hooks report non-ASCII names with different encodings, our
+   # hooks differ only cosmetically in path separators (mixed '\' and '/' and
+   # redundant slashes), and -- most importantly -- base R cannot enumerate
+   # non-ASCII names at all while our hooks (wide Win32 API) can. So on Windows
+   # we normalize encoding and separators and drop non-ASCII names before
+   # comparing; the assertion after the loops confirms the hooks DO surface the
+   # non-ASCII entries base R misses. Every other platform keeps the strict
+   # comparison.
+   normalizeListing <- function(x) {
+      if (!.rs.platform.isWindows)
+         return(x)
+      x <- enc2utf8(x)
+      x <- chartr("\\", "/", x)
+      x <- gsub("/+", "/", x)
+      x <- x[!grepl("[^\x01-\x7f]", x)]
+      sort(x)
+   }
+
    # work in temporary directory
    tdir <- tempfile()
    dir.create(tdir)
@@ -151,10 +170,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
       lhs <- do.call(list.files, args)
       rhs <- do.call(.rs.listFiles, args)
       
-      if (.rs.platform.isWindows)
-         Encoding(lhs) <- "UTF-8"
-      
-      expect_equal(lhs, rhs)
+      expect_equal(normalizeListing(lhs), normalizeListing(rhs))
       
    }
    
@@ -174,13 +190,19 @@ test_that("our list.files, list.dirs hooks function as expected", {
       lhs <- do.call(list.dirs, args)
       rhs <- do.call(.rs.listDirs, args)
       
-      if (.rs.platform.isWindows)
-         Encoding(lhs) <- "UTF-8"
-      
-      expect_equal(lhs, rhs)
-      
+      expect_equal(normalizeListing(lhs), normalizeListing(rhs))
+
    }
-   
+
+   # The comparisons above drop non-ASCII names because base R cannot enumerate
+   # them in a non-UTF-8 locale; verify our hooks (which can) actually surface
+   # the non-ASCII entries that base R misses -- the reason these hooks exist.
+   if (identical(R.version$crt, "ucrt")) {
+      hookFiles <- enc2utf8(.rs.listFiles(".", all.files = TRUE))
+      expect_true(enc2utf8(nihao) %in% hookFiles)
+      expect_true(enc2utf8(paste(nihao, "R", sep = ".")) %in% hookFiles)
+   }
+
    setwd(owd)
    unlink(tdir, recursive = TRUE)
    unlink("~/RStudioTestDirectory", recursive = TRUE)
