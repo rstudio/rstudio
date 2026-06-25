@@ -595,6 +595,9 @@ export function getDesktopBridge() {
     },
 
     setViewerUrl: (url: string, callback: VoidCallback<void>) => {
+      // Best-effort fallback: even if the IPC call fails, we still attempt
+      // navigation. A blank viewer pane is worse than re-surfacing the
+      // SecurityError from #17982; the logged IpcError can be correlated.
       ipcRenderer
         .invoke('desktop_set_viewer_url', url)
         .then(() => callback())

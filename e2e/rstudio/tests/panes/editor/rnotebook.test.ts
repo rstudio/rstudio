@@ -70,7 +70,6 @@ test.describe('R Notebook', () => {
       `required R package(s) not available: ${missingPackages.join(', ')}`,
     );
   });
-
   test('create new R Notebook and preview', async ({ rstudioPage: page }) => {
     // Original: test_desktop_RNotebook.py::test_creating_new_r_notebook_and_preview
 

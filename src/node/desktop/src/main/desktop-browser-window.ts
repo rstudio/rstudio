@@ -540,6 +540,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   setViewerUrl(viewerUrl: string): void {
     const url = makeAbsoluteUrl(viewerUrl);
     if (!isLocalUrl(url)) {
+      logger().logDebug(`Skipping viewer authority registration for non-local url: ${viewerUrl}`);
       return;
     }
 
