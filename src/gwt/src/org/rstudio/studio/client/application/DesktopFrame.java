@@ -209,7 +209,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void reloadZoomWindow();
    
-   void setViewerUrl(String url);
+   void setViewerUrl(String url, Command callback);
    void reloadViewerZoomWindow(String url);
    void setPresentationUrl(String url);
    void setTutorialUrl(String url);

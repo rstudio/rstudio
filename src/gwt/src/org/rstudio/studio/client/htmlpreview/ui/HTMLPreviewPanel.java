@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Command;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -302,9 +303,23 @@ public class HTMLPreviewPanel extends ResizeComposite
    private void navigate(String url)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-      // use setUrl rather than navigate to deal with same origin policy
-      previewFrame_.setUrl(url);
+      {
+         final String notNullUrl = StringUtil.notNull(url);
+         Desktop.getFrame().setViewerUrl(notNullUrl, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // use setUrl rather than navigate to deal with same origin policy
+               previewFrame_.setUrl(url);
+            }
+         });
+      }
+      else
+      {
+         // use setUrl rather than navigate to deal with same origin policy
+         previewFrame_.setUrl(url);
+      }
    }
    
    private final LayoutPanel layoutPanel_;

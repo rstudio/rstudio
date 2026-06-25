@@ -594,8 +594,14 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_tutorial_url', url);
     },
 
-    setViewerUrl: (url: string) => {
-      ipcRenderer.send('desktop_set_viewer_url', url);
+    setViewerUrl: (url: string, callback: VoidCallback<void>) => {
+      ipcRenderer
+        .invoke('desktop_set_viewer_url', url)
+        .then(() => callback())
+        .catch((error) => {
+          reportIpcError('desktop_set_viewer_url', error);
+          callback();
+        });
     },
 
     setPresentationUrl: (url: string) => {
