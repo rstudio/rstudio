@@ -67,11 +67,18 @@ export class ChatPaneActions {
    * waitForChatReady) may remain. Install is checked before update because the
    * downgrade variant of the update view also carries an "Install ..." button.
    *
-   * On timeout, returns 'ready' so the caller defers to waitForChatReady, whose
-   * sign-in vs. stalled error is more actionable than anything we'd raise here.
+   * The timeout must exceed the backend manifest-fetch bound that gates which
+   * view renders: chat_check_for_updates can run a manifest download for up to
+   * kManifestDeadlineSeconds (30s, SessionChat.cpp) before any prompt appears,
+   * so a shorter window could give up just before a slow-manifest Install
+   * prompt renders. We poll past that bound with margin.
+   *
+   * On timeout (a genuine stall past the manifest bound), returns 'ready' so
+   * the caller defers to waitForChatReady, whose sign-in vs. stalled error is
+   * more actionable than anything we'd raise here.
    */
   private async waitForSetupState(
-    timeout: number = 15000
+    timeout: number = 40000
   ): Promise<'install' | 'update' | 'ready'> {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
