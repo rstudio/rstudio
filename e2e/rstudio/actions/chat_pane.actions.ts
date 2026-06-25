@@ -69,9 +69,9 @@ export class ChatPaneActions {
    *
    * The timeout must exceed the backend manifest-fetch bound that gates which
    * view renders: chat_check_for_updates can run a manifest download for up to
-   * kManifestDeadlineSeconds (30s, SessionChat.cpp) before any prompt appears,
-   * so a shorter window could give up just before a slow-manifest Install
-   * prompt renders. We poll past that bound with margin.
+   * kManifestDeadlineSeconds (currently 30s, SessionChat.cpp) before any prompt
+   * appears, so a shorter window could give up just before a slow-manifest
+   * Install prompt renders. We poll past that bound with margin.
    *
    * On timeout (a genuine stall past the manifest bound), returns 'ready' so
    * the caller defers to waitForChatReady, whose sign-in vs. stalled error is
@@ -93,6 +93,9 @@ export class ChatPaneActions {
       }
       await sleep(500);
     }
+    // Not a positive signal: waitForChatReady() (which dismissSetupPrompts always
+    // calls next) is the real readiness gate and throws on a genuine stall. Keep
+    // that call if this code is ever refactored, or this becomes a silent failure.
     return 'ready';
   }
 
