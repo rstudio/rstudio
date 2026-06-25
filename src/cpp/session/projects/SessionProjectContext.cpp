@@ -263,6 +263,16 @@ Error computeScratchPaths(const FilePath& projectFile,
 
 bool ProjectContext::reduceRemoteFilesystemOperations() const
 {
+   // resolve at most once per session and cache the result. this is called per
+   // poll from checkForExternalEdit (which fires on window focus and file-change
+   // events), and scratchPath_ (.Rproj.user) lives by default on the same remote
+   // mount this feature exists to stay off, so re-reading the local prefs file
+   // and re-probing the mount on every call would defeat the purpose. the
+   // per-project override only changes via a dialog apply that forces a session
+   // restart, so the resolved value is stable for the session.
+   if (reduceRemoteFilesystemOpsResolved_)
+      return reduceRemoteFilesystemOps_;
+
    // an explicit per-project setting takes precedence over the global
    // preference. this is a user-specific project-local preference, stored
    // under .Rproj.user (so it is not shared via version control). we read the
@@ -270,6 +280,7 @@ bool ProjectContext::reduceRemoteFilesystemOperations() const
    // preference layer, because this is consulted very early during project
    // startup -- before that layer has been initialized
    // (see session::projects::initialize).
+   boost::optional<bool> localOverride;
    if (!scratchPath_.isEmpty())
    {
       FilePath localPrefsFile = scratchPath_.completePath(kUserPrefsFile);
@@ -278,38 +289,26 @@ bool ProjectContext::reduceRemoteFilesystemOperations() const
          std::string contents;
          Error error = readStringFromFile(localPrefsFile, &contents);
          if (error)
-         {
             LOG_ERROR(error);
-         }
          else
-         {
-            json::Value value;
-            error = value.parse(contents);
-            if (!error && value.isObject())
-            {
-               const json::Object& localPrefs = value.getObject();
-               auto it = localPrefs.find(kReduceRemoteFilesystemOperations);
-               if (it != localPrefs.end() && (*it).getValue().isBool())
-                  return (*it).getValue().getBool();
-            }
-         }
+            localOverride = parseReduceRemoteFilesystemOperationsOverride(contents);
       }
    }
 
-   // when the global preference is disabled, never reduce
-   if (!prefs::userPrefs().reduceRemoteFilesystemOperations())
-      return false;
+   bool globalPref = prefs::userPrefs().reduceRemoteFilesystemOperations();
 
-   // otherwise (automatic): reduce only when the project lives on a remote
-   // filesystem. cache the detection: directory_ is fixed for the session, and
-   // statfs() on a hung remote mount can block, so probe at most once.
-   if (!remoteFilesystemChecked_)
-   {
-      remoteFilesystem_ = core::system::isRemotePath(directory_);
-      remoteFilesystemChecked_ = true;
-   }
+   // only probe the filesystem when the decision actually depends on it: an
+   // explicit override or a disabled global preference both decide the outcome
+   // without it, and statfs() on a hung remote mount can block.
+   bool remoteDetected = false;
+   if (!localOverride && globalPref)
+      remoteDetected = core::system::isRemotePath(directory_);
 
-   return remoteFilesystem_;
+   reduceRemoteFilesystemOps_ =
+         resolveReduceRemoteFilesystemOperations(localOverride, globalPref, remoteDetected);
+   reduceRemoteFilesystemOpsResolved_ = true;
+
+   return reduceRemoteFilesystemOps_;
 }
 
 FilePath ProjectContext::oldScratchPath() const

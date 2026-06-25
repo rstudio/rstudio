@@ -275,7 +275,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       advanced.add(projectUserDataDirChooser_);
       advanced.add(new VerticalSpacer("16px"));
 
-      advanced.add(checkboxPref(prefs_.reduceRemoteFilesystemOperations()));
+      reduceRemoteFilesystemOperations_ = checkboxPref(prefs_.reduceRemoteFilesystemOperations());
+      initialReduceRemoteFilesystemOperations_ = reduceRemoteFilesystemOperations_.getValue();
+      advanced.add(reduceRemoteFilesystemOperations_);
       advanced.add(new VerticalSpacer("16px"));
 
       showServerHomePage_ = new SelectWidget(
@@ -547,6 +549,17 @@ public class GeneralPreferencesPane extends PreferencesPane
          prefs.fullProjectPathInWindowTitle().setGlobalValue(fullPathInTitle_.getValue());
       }
 
+      // whether to reduce background filesystem operations is consulted at
+      // session startup (it decides file monitoring and code indexing), so a
+      // mid-session change to the global preference needs a session restart to
+      // take full effect -- matching the per-project control, which also forces
+      // one. (the checkboxPref binding already writes the value via super.onApply.)
+      if (reduceRemoteFilesystemOperations_ != null &&
+          reduceRemoteFilesystemOperations_.getValue() != initialReduceRemoteFilesystemOperations_)
+      {
+         restartRequirement.setSessionRestartRequired(true);
+      }
+
       if (renderingEngineWidget_ != null &&
           !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
@@ -721,6 +734,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
+   private CheckBox reduceRemoteFilesystemOperations_ = null;
+   private boolean initialReduceRemoteFilesystemOperations_ = false;
    private CheckBox nativeFileDialogs_ = null;
    private CheckBox disableRendererAccessibility_ = null;
    private SelectWidget renderingEngineWidget_ = null;

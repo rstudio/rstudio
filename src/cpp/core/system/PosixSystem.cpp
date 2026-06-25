@@ -71,12 +71,12 @@
 # define SMB_SUPER_MAGIC 0x517B
 #endif
 
-#ifndef SMB2_MAGIC_NUMBER
-# define SMB2_MAGIC_NUMBER 0xFE534D42
+#ifndef SMB2_SUPER_MAGIC
+# define SMB2_SUPER_MAGIC 0xFE534D42
 #endif
 
-#ifndef CIFS_MAGIC_NUMBER
-# define CIFS_MAGIC_NUMBER 0xFF534D42
+#ifndef CIFS_SUPER_MAGIC
+# define CIFS_SUPER_MAGIC 0xFF534D42
 #endif
 
 #ifndef FUSE_SUPER_MAGIC
@@ -1044,7 +1044,15 @@ bool isRemotePath(const FilePath& filePath)
    // absence indicates a network/remote filesystem (NFS, SMB, AFP, WebDAV).
    struct statfs buf;
    if (::statfs(path.c_str(), &buf) != 0)
+   {
+      // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
+      // on a stale NFS handle) so an "optimization never activates on my share"
+      // report is debuggable; the fail-safe answer is still "not remote".
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      LOG_ERROR(error);
       return false;
+   }
 
    return (buf.f_flags & MNT_LOCAL) == 0;
 
@@ -1054,15 +1062,29 @@ bool isRemotePath(const FilePath& filePath)
    // NFS_SUPER_MAGIC etc. definitions above).
    struct statfs buf;
    if (::statfs(path.c_str(), &buf) != 0)
+   {
+      // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
+      // on a stale NFS handle) so an "optimization never activates on my share"
+      // report is debuggable; the fail-safe answer is still "not remote".
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      LOG_ERROR(error);
       return false;
+   }
 
    switch ((unsigned long) buf.f_type)
    {
    case NFS_SUPER_MAGIC:
    case SMB_SUPER_MAGIC:
-   case CIFS_MAGIC_NUMBER:
-   case SMB2_MAGIC_NUMBER:
-   case FUSE_SUPER_MAGIC:  // sshfs, rclone, etc.
+   case CIFS_SUPER_MAGIC:
+   case SMB2_SUPER_MAGIC:
+   // FUSE is a mechanism, not inherently remote: local FUSE mounts (ntfs-3g,
+   // exfat-fuse, gocryptfs, squashfuse, bindfs, mergerfs, ...) also report
+   // FUSE_SUPER_MAGIC and so are classified as remote here. this is a
+   // deliberately conservative over-match -- remote FUSE mounts (sshfs, rclone,
+   // ...) are the case we care about, and a user on a local FUSE mount can opt
+   // out via the per-project setting.
+   case FUSE_SUPER_MAGIC:
    case NCP_SUPER_MAGIC:
    case CODA_SUPER_MAGIC:
    case AFS_SUPER_MAGIC:   // OpenAFS

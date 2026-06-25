@@ -284,8 +284,10 @@ bool isHiddenFile(const FileInfo& fileInfo);
 bool isReadOnly(const FilePath& filePath);
 
 // Best-effort detection of whether a path lives on a network or remote
-// filesystem (e.g. a Windows UNC path or mapped network drive). Used to
-// reduce background filesystem operations on slow drives.
+// filesystem: a Windows UNC path or mapped network drive, or an NFS/SMB/CIFS/
+// AFP/FUSE/etc. mount on macOS and Linux. Used to reduce background filesystem
+// operations on slow drives. Fails safe (returns false) when detection is not
+// possible.
 // See https://github.com/rstudio/rstudio/issues/10417.
 bool isRemotePath(const FilePath& filePath);
    
