@@ -15,8 +15,9 @@ on:
   # broad superset of the exact hashFiles() patterns that feed the cache keys
   # (see the build workflow), so the trigger paths don't have to stay in
   # lockstep with those patterns. Most edits here re-run the seed without
-  # changing any key (a no-op refresh); an edit that touches one of the hashed
-  # files additionally rotates the affected key, saving a fresh cache on main.
+  # rotating any cache key (refreshing recency only); an edit that touches one
+  # of the hashed files additionally rotates the affected key, saving a fresh
+  # cache on main.
   push:
     branches: [main]
     paths:

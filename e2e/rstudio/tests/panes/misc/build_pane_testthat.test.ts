@@ -53,7 +53,6 @@ test.describe('Build pane', () => {
     // with a letter, so build the name from a hex stamp rather than Date.now().
     const projectName = `BuildPaneTest${Math.random().toString(16).slice(2, 10)}`;
     const projectDir = path.join(sandbox.dir, projectName);
-    const testFile = path.join(projectDir, 'tests', 'testthat', 'test-example.R');
     const projectNameLit = rStringLiteral(projectName);
     const projectDirLit = rPathLiteral(projectDir);
 
@@ -76,7 +75,7 @@ test.describe('Build pane', () => {
     // document, so the file has to be the current source tab. seedSandboxFile
     // mkdirs the tests/testthat tree and writes via R when the sandbox is
     // not writable from the test process (Server-on-Linux: rsession-owned).
-    await seedSandboxFile(
+    const testFile = await seedSandboxFile(
       page,
       projectDir,
       'tests/testthat/test-example.R',

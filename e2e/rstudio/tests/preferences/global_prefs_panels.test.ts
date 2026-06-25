@@ -169,6 +169,7 @@ test.describe('Global Options panels', () => {
     await closeGlobalOptions(page);
   });
 
+  // Tracked by #18064 (re-enable on Server).
   // Server-on-Linux: PYTHON_INTERPRETERS_MODAL doesn't open within 15s
   // after clicking the interpreter-select button. Native interpreter
   // selection likely behaves differently on Server; needs investigation.

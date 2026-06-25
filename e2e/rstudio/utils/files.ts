@@ -90,10 +90,8 @@ export async function seedSandboxFile(
       page,
       `dir.create(${rPathLiteral(parentDir)}, recursive = TRUE, showWarnings = FALSE)`,
     );
-    // sep="" + useBytes=TRUE keeps writeLines byte-identical to Node's
-    // fs.writeFileSync. Default sep="\n" would append an extra trailing
-    // newline that the original Node write doesn't, breaking content-equality
-    // assertions (toBe / toContain) in tests that round-trip the file.
+    // sep="" + useBytes=TRUE for byte-identical output -- see writeAndOpenFile
+    // above for the full rationale.
     await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${rPathLiteral(fullPath)}, sep="", useBytes=TRUE)`);
   }
   return fullPath;

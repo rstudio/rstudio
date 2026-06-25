@@ -101,7 +101,9 @@ test.describe.serial('Terminal pane', () => {
     // and the captured editor content interleaves a wrap marker (·) and the
     // shell prompt between the command and its output. The semantic check
     // ("editor has the command and the output 2") is what the test is really
-    // verifying, and that holds regardless of wrap.
+    // verifying, and that holds regardless of wrap. The rstudioapi::terminalBuffer
+    // ^2$ poll above is the authoritative output check; this assertion only
+    // confirms the editor tab received both the command and the result.
     const editor = new AceEditor(page, 'expr 1 + 1');
     await expect.poll(
       async () => {
@@ -112,7 +114,7 @@ test.describe.serial('Terminal pane', () => {
         }
       },
       { timeout: TIMEOUTS.fileOpen },
-    ).toMatch(/expr 1 \+ 1[\s\S]*(?:^|\n)2(?:\n|$)/);
+    ).toMatch(/expr 1 \+ 1[\s\S]*\n2(?:\n|$)/);
   });
 
   test('toolbar shows next and previous terminal buttons', async ({ rstudioPage: page }) => {

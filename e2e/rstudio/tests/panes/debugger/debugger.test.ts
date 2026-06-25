@@ -576,14 +576,13 @@ test.describe('R debugger', () => {
     });
 
     // Tracked by #18064 (re-enable on Server).
-    // Server-on-Linux: the previous attempt to fix this used force-click
-    // (since the call-frame label's actionability checks were timing out).
-    // The click now lands -- but the env-pane assertion below
-    // (envPane.hasVariable('marker_g', 'in_g')) still fails, suggesting the
-    // force-click hits a "fr_g" text node OTHER than the call-stack label
-    // (e.g. the source editor's breakpoint marker), so the frame doesn't
-    // actually switch. Needs a more targeted locator that scopes to the
-    // call-stack widget only. Skip on Server until the locator is fixed.
+    // Server-on-Linux: clicking the call-frame label does not switch the
+    // Environment context -- the post-click env-pane assertion below
+    // (envPane.hasVariable('marker_g', 'in_g')) fails. Working hypothesis:
+    // the click resolves a "fr_g" text node other than the call-stack label
+    // (e.g. the source editor's breakpoint marker), so the frame never
+    // switches; a locator scoped to the call-stack widget is likely needed.
+    // Skip on Server until that is sorted.
     test('Clicking a call frame switches Environment context', { tag: ['@desktop_only'] }, async () => {
       const fileName = `tb_click_${Date.now()}.R`;
       const content = heredoc`
@@ -617,16 +616,13 @@ test.describe('R debugger', () => {
 
       // Click the "fr_g" frame label. The call frames render inside the
       // Environment workbench panel; we click the first matching text node.
-      // On Server, the call stack pane can render the frames a few seconds
-      // after waitForDebugMode resolves -- wait for the specific frame to
-      // become visible before clicking. Even once visible, Playwright's
-      // actionability checks (stable, no pointer-event blocker) time out
-      // intermittently on Server during the debugger handoff; force-click
-      // bypasses those checks. The post-click env assertion below catches
+      // The call-stack pane can render the frames a moment after
+      // waitForDebugMode resolves, so wait for the specific frame to be
+      // visible before clicking. The post-click env assertion below catches
       // any case where the click didn't actually land.
       const frGLabel = envPane.callFrameByText('fr_g').first();
       await expect(frGLabel).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await frGLabel.click({ force: true });
+      await frGLabel.click();
 
       // After switching to fr_g's frame, marker_g becomes the visible local.
       await expect.poll(

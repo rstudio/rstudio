@@ -150,7 +150,8 @@ jobs:
       # GWT Java sources / build scripts haven't changed, make-server-package
       # can skip the recompile entirely. The Linux build script does this via
       # the NO_REBUILD env var (sets GWT_BUILD=no, which becomes -DGWT_BUILD=no
-      # to cmake) -- see package/linux/make-package lines 226-235. Restore-only
+      # to cmake) -- see the NO_REBUILD/GWT_BUILD handling in
+      # package/linux/make-package. Restore-only
       # here; the matching Save step runs after the build with a success gate
       # so a failed mid-compile run can't poison the cache.
       - name: Restore GWT output
@@ -174,7 +175,8 @@ jobs:
       # internally), then calls install-common which downloads Boost, SOCI,
       # pandoc, quarto, node, panmirror, sccache, GWT jar, etc. into
       # RSTUDIO_TOOLS_ROOT. The scripts are idempotent, so a cache hit on
-      # rstudio-tools-deps makes this a fast no-op for the heavy downloads.
+      # rstudio-tools-deps makes this a fast pass: the heavy downloads are
+      # skipped and the cached tools are reused.
       - name: Install build dependencies
         working-directory: dependencies/linux
         run: ./install-dependencies-noble
@@ -272,9 +274,9 @@ jobs:
         run: |
           sudo apt-get update
           # xvfb + jq: virtual display for Playwright/Chrome, JSON parsing.
-          # pandoc: needed by rsession's rmarkdown rendering. The rstudio-server
-          # .deb may bundle a pandoc, but installing system pandoc is a
-          # belt-and-suspenders measure -- we point RSTUDIO_PANDOC at it below.
+          # pandoc: needed by rsession's rmarkdown rendering. Install system
+          # pandoc and point RSTUDIO_PANDOC at it below so rendering has a
+          # known-good pandoc regardless of what the .deb ships.
           # Several R packages installed below also have system-library
           # dependencies: libfreetype6 / libfontconfig1 (ragg, systemfonts),
           # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime
@@ -448,12 +450,18 @@ jobs:
       - name: Seed R packages into system library for rsession
         run: |
           sudo R --vanilla -s -e '
+            pkgs <- c("rmarkdown", "knitr", "readr",
+                      "shiny", "testthat", "tidyverse")
             install.packages(
-              c("rmarkdown", "knitr", "readr",
-                "shiny", "testthat", "tidyverse"),
-              repos = "https://packagemanager.posit.co/cran/latest",
+              pkgs,
+              repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest",
               lib = .Library
             )
+            missing <- pkgs[!pkgs %in% rownames(installed.packages(lib.loc = .Library))]
+            if (length(missing)) {
+              cat(sprintf("::error::Failed to seed R packages: %s\n", paste(missing, collapse = ", ")))
+              quit(status = 1)
+            }
           '
 
       - name: Start RStudio Server
