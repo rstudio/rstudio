@@ -153,6 +153,10 @@ export interface DesktopSession {
   browser: Browser;
   rstudioProcess: ChildProcess;
   configRoot: string;
+  // Directory rsession writes its log files to for this launch:
+  // RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp userLogDir). The per-test
+  // fixture reads them from here to attach backend logs on a failure.
+  logDir: string;
 }
 
 // Gated diagnostic: when PW_DEBUG_LAUNCH=1 is set, attach listeners to every
@@ -657,7 +661,9 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
 
-    return { page, browser, rstudioProcess, configRoot };
+    // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
+    const logDir = path.join(tempConfig.dataHome, 'log');
+    return { page, browser, rstudioProcess, configRoot, logDir };
   } catch (err) {
     await browser?.close().catch(() => {});
     killProcessTree(rstudioProcess);

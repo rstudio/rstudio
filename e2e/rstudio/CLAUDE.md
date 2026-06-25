@@ -15,6 +15,8 @@ The `window.rstudio` surface includes:
 - `window.rstudio.layout.reset()` -- end any active pane/column zoom or pane maximize.
 - `window.rstudio.errors` -- `list()` / `clear()` the uncaught client exceptions recorded by the agent (message + stack); `simulate(msg)` raises a real one (harness self-test only). The per-test fixture drains this and fails the test that raised an exception (opt out with `PW_IGNORE_CLIENT_EXCEPTIONS=1`).
 
+When a test fails, the per-test fixture (`fixtures/rstudio.fixture.ts`) attaches two diagnostics to the report so symptoms that never reach a failed assertion are still recoverable: `browser-console.log` (buffered `console.error`/`console.warning` plus uncaught `pageerror`s captured during the test body) and, on Desktop, the slice of each rsession log file (`RSTUDIO_DATA_HOME/log/*.log`) written while the test ran. Both are scoped to the single test -- the console buffer is cleared and the log byte-offsets are snapshotted at test start. This is separate from the `window.rstudio.errors` fail-the-test mechanism above: client exceptions still fail the test by themselves, but the attachments add the surrounding browser-console and backend-log context.
+
 Commands and prefs are enumerated up front at agent init, so a missing-by-name lookup is a genuine "doesn't exist" rather than "not yet touched by GWT code".
 
 See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.
