@@ -202,16 +202,7 @@ ProgramStatus Options::read(int argc,
  
    // Detect --check-config (and its --test-config alias) once here so the
    // result is available to callers via checkConfigMode() without re-scanning.
-   checkConfigMode_ = false;
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--check-config" || arg == "--test-config")
-      {
-         checkConfigMode_ = true;
-         break;
-      }
-   }
+   checkConfigMode_ = program_options::detectCheckConfigMode(argc, argv);
 
    // read options; pass deferCheckConfig=true so that a clean --check-config
    // result returns run() rather than exitSuccess(), allowing ServerMain to
@@ -274,81 +265,89 @@ ProgramStatus Options::read(int argc,
    if (authNone_)
       authValidateUsers_ = false;
 
-   if (serverUser_.empty())
+   // Config validation does not need to resolve runtime privileges -- the
+   // privilege check would otherwise reject a valid config when a non-root
+   // admin runs `rserver --check-config` because the default server user
+   // ("rstudio-server") exists with a different uid.  Skip the entire block
+   // and let the extended checks in ServerMain handle anything config-related.
+   if (!checkConfigMode_)
    {
-      // it's an error to run with no server user at all, so presume root
-      serverUser_ = "root";
-      LOG_WARNING_MESSAGE("No server user specified, running as root instead "
-            "(not recommended)");
-   }
-   else
-   {
-      // if specified, confirm that the program user exists. however, if the
-      // program user is the default and it doesn't exist then allow that to pass,
-      // this just means that the user did a simple make install and hasn't setup
-      // an rserver user yet. in this case the program will run as root
-
-      // look up details for the proposed user
-      system::User user;
-      Error error = system::getUserFromUsername(serverUser_, user);
-
-      if (core::system::realUserIsRoot())
+      if (serverUser_.empty())
       {
-         if (error || !user.exists())
+         // it's an error to run with no server user at all, so presume root
+         serverUser_ = "root";
+         LOG_WARNING_MESSAGE("No server user specified, running as root instead "
+               "(not recommended)");
+      }
+      else
+      {
+         // if specified, confirm that the program user exists. however, if the
+         // program user is the default and it doesn't exist then allow that to pass,
+         // this just means that the user did a simple make install and hasn't setup
+         // an rserver user yet. in this case the program will run as root
+
+         // look up details for the proposed user
+         system::User user;
+         Error error = system::getUserFromUsername(serverUser_, user);
+
+         if (core::system::realUserIsRoot())
          {
-            if (serverUser_ == "rstudio-server")
+            if (error || !user.exists())
             {
-               // administrator hasn't created an rserver system account yet
-               // so we'll end up running as root. note that we have to specify "root" as
-               // the server user explicitly here since many codepaths look up the server
-               // user by name (can't be empty)
-               serverUser_ = "root";
-               LOG_WARNING_MESSAGE("Server user ' " + serverUser_ + "' does not exist, running as "
-                     "root instead (not recommended)");
+               if (serverUser_ == "rstudio-server")
+               {
+                  // administrator hasn't created an rserver system account yet
+                  // so we'll end up running as root. note that we have to specify "root" as
+                  // the server user explicitly here since many codepaths look up the server
+                  // user by name (can't be empty)
+                  serverUser_ = "root";
+                  LOG_WARNING_MESSAGE("Server user ' " + serverUser_ + "' does not exist, running as "
+                        "root instead (not recommended)");
+               }
+               else
+               {
+                  LOG_ERROR_MESSAGE("Server user '" + serverUser_ + "' does not exist");
+                  return ProgramStatus::exitFailure();
+               }
             }
             else
             {
-               LOG_ERROR_MESSAGE("Server user '" + serverUser_ + "' does not exist");
-               return ProgramStatus::exitFailure();
+               LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (with privilege)");
             }
          }
          else
          {
-            LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (with privilege)");
-         }
-      }
-      else
-      {
-         if (error)
-         {
-            LOG_ERROR_MESSAGE("Could not find details for server user '" + serverUser_ + "'");
-            LOG_ERROR(error);
-            return ProgramStatus::exitFailure();
-         }
+            if (error)
+            {
+               LOG_ERROR_MESSAGE("Could not find details for server user '" + serverUser_ + "'");
+               LOG_ERROR(error);
+               return ProgramStatus::exitFailure();
+            }
 
-         // We don't have privilege, which is okay so long as the server user is also the current
-         // user (we can't change users without privilege)
-         system::User currentUser;
-         error = system::User::getCurrentUser(currentUser);
-         if (error)
-         {
-            LOG_ERROR_MESSAGE("Could not find details for current user while attempting to "
-                  "compare to server user '" + serverUser_ + "'");
-            LOG_ERROR(error);
-            return ProgramStatus::exitFailure();
-         }
+            // We don't have privilege, which is okay so long as the server user is also the current
+            // user (we can't change users without privilege)
+            system::User currentUser;
+            error = system::User::getCurrentUser(currentUser);
+            if (error)
+            {
+               LOG_ERROR_MESSAGE("Could not find details for current user while attempting to "
+                     "compare to server user '" + serverUser_ + "'");
+               LOG_ERROR(error);
+               return ProgramStatus::exitFailure();
+            }
 
-         if (user.getUserId() != currentUser.getUserId())
-         {
-            LOG_ERROR_MESSAGE("Attempt to run server as user '" + serverUser_ + "' (uid " +
-                     safe_convert::numberToString(user.getUserId()) + ") "
-                     "from account '" + currentUser.getUsername() + "' (uid " +
-                     safe_convert::numberToString(currentUser.getUserId()) + ") "
-                     "without privilege, which is required to run as a different uid");
-            return ProgramStatus::exitFailure();
-         }
+            if (user.getUserId() != currentUser.getUserId())
+            {
+               LOG_ERROR_MESSAGE("Attempt to run server as user '" + serverUser_ + "' (uid " +
+                        safe_convert::numberToString(user.getUserId()) + ") "
+                        "from account '" + currentUser.getUsername() + "' (uid " +
+                        safe_convert::numberToString(currentUser.getUserId()) + ") "
+                        "without privilege, which is required to run as a different uid");
+               return ProgramStatus::exitFailure();
+            }
 
-         LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (without privilege)");
+            LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (without privilege)");
+         }
       }
    }
 

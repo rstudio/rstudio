@@ -108,6 +108,11 @@ struct OptionsDescription
 };
 
 
+// Returns true if --check-config (or its deprecated alias --test-config) is
+// present in argv.  Used to avoid duplicating the raw argv scan in multiple
+// callers.
+bool detectCheckConfigMode(int argc, const char* const argv[]);
+
 // Primary overload.  When deferCheckConfig is true and --check-config (or the
 // deprecated --test-config alias) is present, the function performs the syntax
 // parse and prints the per-file [PASS]/[FAIL] line but, on a clean result,

@@ -29,7 +29,18 @@ namespace rstudio {
 namespace core {
 
 namespace program_options {
- 
+
+bool detectCheckConfigMode(int argc, const char* const argv[])
+{
+   for (int i = 1; i < argc; ++i)
+   {
+      std::string arg(argv[i]);
+      if (arg == "--check-config" || arg == "--test-config")
+         return true;
+   }
+   return false;
+}
+
 namespace {
 
 enum class OptionsParseState
@@ -239,16 +250,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    // raw argv scan so we can relax config parsing before the full parse runs;
    // this lets us collect ALL unrecognized keys in a single pass rather than
    // stopping at the first
-   bool checkConfigMode = false;
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--check-config" || arg == "--test-config")
-      {
-         checkConfigMode = true;
-         break;
-      }
-   }
+   bool checkConfigMode = detectCheckConfigMode(argc, argv);
    if (checkConfigMode)
       allowUnregisteredConfigOptions = true;
 

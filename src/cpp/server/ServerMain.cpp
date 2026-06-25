@@ -723,13 +723,14 @@ int main(int argc, char * const argv[])
          // For each configured path that is non-empty, verify that the path
          // exists on disk and report [PASS] or [FAIL] via checkConfigFilePath.
 
-         // secureCookieKeyFile (FilePath accessor)
-         if (!checkConfigFilePath("secure-cookie-key-file",
-                                  options.secureCookieKeyFile(),
-                                  std::cout,
-                                  false /* informational */,
-                                  true  /* fileOnly */))
-            allPassed = false;
+         // secureCookieKeyFile (FilePath accessor) -- informational: the server
+         // auto-generates this key on startup when the file does not exist;
+         // under load-balanced setups the key may live in the database instead.
+         // A missing file is therefore not a fatal config error.
+         checkConfigFilePath("secure-cookie-key-file",
+                             options.secureCookieKeyFile(),
+                             std::cout,
+                             true /* informational */);
 
          // serverDataDir (FilePath accessor) -- informational: the server
          // creates this directory on startup so a missing dir is not a fatal
