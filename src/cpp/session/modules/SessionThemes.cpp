@@ -33,6 +33,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <r/RExec.hpp>
@@ -245,10 +246,14 @@ FilePath getGlobalCustomThemePath()
 {
    using rstudio::core::FilePath;
 
-   const char* kGlobalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
-   if (kGlobalPathAlt)
+   // Use core::system::getenv (live Win32 environment on Windows) rather than
+   // std::getenv: R's Sys.setenv updates the Win32 environment but not the CRT
+   // environment that std::getenv reads, so RS_THEME_*_HOME set at runtime
+   // (e.g. by the themes tests) would otherwise be invisible here.
+   std::string globalPathAlt = core::system::getenv("RS_THEME_GLOBAL_HOME");
+   if (!globalPathAlt.empty())
    {
-      return FilePath(kGlobalPathAlt);
+      return FilePath(globalPathAlt);
    }
 
    return core::system::xdg::systemConfigFile("themes");
@@ -262,10 +267,12 @@ FilePath getGlobalCustomThemePath()
  */
 FilePath getEnvCustomThemePath()
 {
-   const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
-   if (kLocalPathAlt)
+   // See getGlobalCustomThemePath: use the live process environment so a
+   // runtime Sys.setenv from R is visible here on Windows.
+   std::string localPathAlt = core::system::getenv("RS_THEME_LOCAL_HOME");
+   if (!localPathAlt.empty())
    {
-      return FilePath(kLocalPathAlt);
+      return FilePath(localPathAlt);
    }
 
    return FilePath();
