@@ -107,6 +107,11 @@ runs:
         restore-keys: |
           ${{ runner.os }}-pw-
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
     - name: Install Playwright browsers
       shell: bash
       working-directory: ${{ inputs.working-directory }}

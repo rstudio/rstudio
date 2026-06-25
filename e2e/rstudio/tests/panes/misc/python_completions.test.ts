@@ -36,6 +36,16 @@ test.describe('Python REPL completions', () => {
     missingPackages = await consoleActions.ensurePackages(['reticulate']);
   });
 
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    // Skip the test if there is no Python interpreter available; reticulate
+    // may be installed but py_available(initialize = TRUE) can return FALSE
+    // when no suitable Python is found (e.g. Windows CI environments).
+    const pyAvailable = await consoleActions.evalRLogical(
+      'reticulate::py_available(initialize = TRUE)',
+    );
+    test.skip(pyAvailable === false, 'No Python interpreter available');
+  });
+
   test.afterEach(async ({ rstudioPage: page }) => {
     // Always leave the REPL so a failed test does not leak state into the
     // next test in this worker.
