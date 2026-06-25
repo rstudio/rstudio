@@ -229,20 +229,34 @@ public class ApplicationAutomation
    }
 
    // window.rstudio.console.promptCount is a monotonic counter that advances by
-   // one each time R returns to its top-level prompt -- i.e. each time a
-   // submitted console command completes. It is driven by ConsolePromptEvent
-   // (the client-side dispatch of the server's kConsolePrompt event), so it is
-   // a race-free completion signal: automation can capture the value, submit a
-   // command, and wait for the counter to increase, instead of sampling the
-   // rstudio-console-busy CSS class (which can be observed stale in the
-   // submit->busy gap, or miss a fast command's busy flash entirely).
+   // one each time R issues a console prompt that is waiting for fresh client
+   // input -- i.e. each time a submitted command either completes (the top-level
+   // "> " prompt) or settles at an interactive sub-prompt that needs us to act
+   // next (browser()/Browse[N]>, readline(), menu(), scan()). It is driven by
+   // ConsolePromptEvent (the client-side dispatch of the server's kConsolePrompt
+   // event), so it is a race-free completion signal: automation can capture the
+   // value, submit a command, and wait for the counter to increase, instead of
+   // sampling the rstudio-console-busy CSS class (which can be observed stale in
+   // the submit->busy gap, or miss a fast command's busy flash entirely).
    //
-   // The bump is gated on the prompt's busy flag: ConsolePromptEvent also fires
-   // for mid-execution prompts (continuation "+", browser(), readline(),
-   // menu()), which carry busy == true. Counting those would let a waiter
-   // resolve on an intermediate prompt, before the command truly returns to
-   // top-level. Only the top-level prompt (busy == false) advances the counter,
-   // so "promptCount increased" means "command completed".
+   // Every new ConsolePromptEvent advances the counter -- including "busy"
+   // prompts. This is deliberate, and safe: a single submission's intermediate
+   // continuation ("+ ") and inter-statement prompts never reach the client.
+   // The server (SessionConsoleInput.cpp rConsoleRead) services those directly
+   // from its buffered, line-split console input via popConsoleInput() WITHOUT
+   // firing a kConsolePrompt event; a client event fires only once the buffer
+   // drains and R genuinely stops to wait for new input. So a new prompt event
+   // is always a real "R is waiting for us again" point, never a mid-expression
+   // state. Counting only the top-level (busy == false) prompt was too strict:
+   // a command that parks at a browser()/readline() prompt never returns to the
+   // top level on its own, so a waiter would hang until timeout (this broke the
+   // debugger e2e tests, whose commands hit a breakpoint and enter Browse mode).
+   //
+   // The consequence for callers: waitForConsoleCommandComplete now means "R
+   // stopped to ask for input again," not strictly "returned to top level."
+   // That is the desired behavior for the interactive/debugger cases; all
+   // self-contained one-shot expressions still fire exactly one event (at
+   // completion), so their behavior is unchanged.
    //
    // Handlers are registered once per GWT page lifetime (initializeAgent runs
    // again on each session restart), guarded like registerReadinessHandlers.
@@ -256,11 +270,7 @@ public class ApplicationAutomation
       if (consoleHandlersRegistered_)
          return;
 
-      eventBus_.addHandler(ConsolePromptEvent.TYPE, event ->
-      {
-         if (!event.getPrompt().getBusy())
-            bumpConsolePromptCount();
-      });
+      eventBus_.addHandler(ConsolePromptEvent.TYPE, event -> bumpConsolePromptCount());
       consoleHandlersRegistered_ = true;
    }
 

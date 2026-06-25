@@ -93,11 +93,13 @@ export async function waitForConsoleIdle(
 /**
  * Read the automation agent's monotonic console prompt counter, or null if the
  * running binary predates it (`window.rstudio.console.promptCount`, added in
- * ApplicationAutomation). The counter advances by one each time R returns to
- * its top-level prompt -- i.e. each time a submitted console command completes
- * -- so it is a race-free completion signal, unlike the busy CSS class which is
- * sampled (and can be read stale in the submit->busy gap, or miss a fast
- * command's busy flash). See waitForConsoleCommandComplete.
+ * ApplicationAutomation). The counter advances by one each time R issues a
+ * console prompt awaiting fresh client input -- a submitted command either
+ * completing (top-level prompt) or settling at an interactive sub-prompt
+ * (browser()/readline()/menu()) -- so it is a race-free completion signal,
+ * unlike the busy CSS class which is sampled (and can be read stale in the
+ * submit->busy gap, or miss a fast command's busy flash). See
+ * waitForConsoleCommandComplete.
  */
 export async function getConsolePromptCount(page: Page): Promise<number | null> {
   return page.evaluate(() => {
@@ -112,18 +114,20 @@ let warnedMissingPromptCount = false;
 /**
  * Wait for a console command to finish, given the prompt count captured *before*
  * it was submitted (via getConsolePromptCount). Resolves once the count exceeds
- * `promptCountBefore`, i.e. R returned to its top-level prompt. This is the
- * reliable replacement for waitForConsoleIdle when bracketing a submission: it
- * keys off the prompt *event*, not a sampled class, so it can't return
+ * `promptCountBefore`, i.e. R issued a new prompt awaiting client input. This is
+ * the reliable replacement for waitForConsoleIdle when bracketing a submission:
+ * it keys off the prompt *event*, not a sampled class, so it can't return
  * spuriously-idle before the command starts.
  *
- * The counter advances only on top-level prompts (the bump is gated on the
- * prompt's busy flag in ApplicationAutomation), so nested/intermediate prompts
- * (`browser()`, `readline()`, `menu()`) don't trip it early. It still assumes
- * the submitted command returns to top-level exactly once: a command left
- * sitting at a continuation (`+`) or interactive prompt never advances the
- * counter, so the wait times out rather than resolving. All current callers
- * submit self-contained one-shot expressions, which satisfies this.
+ * Every new prompt event advances the counter, but a single submission only
+ * produces one: the server services a multi-line/multi-statement submission's
+ * intermediate continuation (`+`) and inter-statement prompts from its buffered
+ * input without firing a client event (see ApplicationAutomation.registerConsole
+ * for the full rationale). So this resolves when the command completes (back to
+ * the top-level prompt) OR when it settles at an interactive sub-prompt that
+ * needs the test to act next -- `browser()`/Browse[N]>, readline(), menu(). The
+ * latter is what lets debugger tests submit a breakpoint-triggering call and
+ * proceed once R parks at the Browse prompt, rather than hanging until timeout.
  *
  * Falls back to the busy-class wait when the counter is unavailable (a binary
  * built before the counter, or one where registerConsole failed to install it),
