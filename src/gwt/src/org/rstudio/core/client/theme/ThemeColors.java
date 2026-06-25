@@ -47,6 +47,9 @@ public class ThemeColors
    public static String lightControlBackground                     = "#FFF";
    public static String lightControlBorder                         = "#d6dadc";
 
+   // A mid-gray used for de-emphasized borders and secondary text.
+   public static String mutedGray                                  = "#a0a0a0";
+
    public static String darkControlBackground                      = "rgb(108,121,131)";
    public static String darkControlBorder                          = "rgb(45,60,75)";
    public static String darkDialogControlBackground                = "rgb(68, 80, 90)";

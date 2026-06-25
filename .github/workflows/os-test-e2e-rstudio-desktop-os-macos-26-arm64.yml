@@ -295,9 +295,11 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
-            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
-            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
+            # macOS ships a single universal .dmg keyed "macos" in the daily
+            # manifest (older schemas used "mac-arm64"/"mac"; kept as fallbacks).
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].link // .products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].sha256 // .products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].filename // .products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1

@@ -1762,6 +1762,7 @@ namespace session {
 void exitEarly(int status)
 {
    stopMonitorWorkerThread();
+   server_rpc::stop();
    offlineService().stop();
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
@@ -2000,8 +2001,20 @@ Error ensureLibRSoValid()
    return Success();
 }
 
-// io_context for performing monitor work on the thread
-boost::asio::io_context s_monitorIoContext;
+// io_context for performing monitor work on the thread.
+//
+// Intentionally heap-allocated and never freed, for the same reason as
+// server_rpc's s_ioContext (see the comment there): stopMonitorWorkerThread()
+// stops it and joins the worker on the clean path, but if the join times out
+// and the worker is detached, never running ~io_context() avoids destroying it
+// while a detached worker is still inside run() -- the documented Windows-IOCP
+// teardown hang. The OS reclaims it at process exit.
+boost::asio::io_context& s_monitorIoContext = *new boost::asio::io_context();
+
+// the monitor worker thread. retained as a joinable handle so that
+// stopMonitorWorkerThread() can wait for run() to return before the process
+// tears s_monitorIoContext down at exit (see stopMonitorWorkerThread).
+boost::thread s_monitorWorkerThread;
 
 void monitorWorkerThreadFunc()
 {
@@ -2011,7 +2024,18 @@ void monitorWorkerThreadFunc()
 
 void stopMonitorWorkerThread()
 {
+   // stop() makes run() return; we then wait for the thread to actually leave
+   // run() so this is a clean, prompt shutdown of the worker (see the matching
+   // server_rpc::stop()). joinOrAbandonThread bounds the wait so we never trade
+   // a teardown hang for an indefinite join hang on the process-exit path; if it
+   // times out and detaches the worker, s_monitorIoContext is never destroyed
+   // (it is the intentionally-leaked global above), so ~io_context() cannot run
+   // while the detached worker is still inside run() -- the Windows-IOCP hang.
    s_monitorIoContext.stop();
+   core::thread::joinOrAbandonThread(
+      s_monitorWorkerThread,
+      "monitor worker thread",
+      false); // released via s_monitorIoContext.stop() above, not interruptible
 }
 
 void initMonitorClient()
@@ -2036,11 +2060,11 @@ void initMonitorClient()
    // connect to, so every async log/event would fail-fast and race the worker
    // thread against the initiating thread on the same socket. The worker thread
    // also never gets stopped on the test path (R exits via exit()), so it would
-   // race static destruction of s_monitorIoContext at process exit. Both produce
+   // race static destruction of other process state at exit. Both produce
    // intermittent SIGSEGVs. The client object is still initialized above so that
   // monitor::client() stays valid; queued async ops are simply never processed.
    if (!options().runTests())
-      core::thread::safeLaunchThread(monitorWorkerThreadFunc);
+      core::thread::safeLaunchThread(monitorWorkerThreadFunc, &s_monitorWorkerThread);
 }
 
 void beforeResume()

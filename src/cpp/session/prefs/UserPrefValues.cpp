@@ -2780,6 +2780,32 @@ core::Error UserPrefValues::setDataViewerShowSummary(bool val)
 }
 
 /**
+ * Whether the data viewer filter UI is shown by default when opening the data viewer.
+ */
+bool UserPrefValues::dataViewerShowFilters()
+{
+   return readPref<bool>("data_viewer_show_filters");
+}
+
+core::Error UserPrefValues::setDataViewerShowFilters(bool val)
+{
+   return writePref("data_viewer_show_filters", val);
+}
+
+/**
+ * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+ */
+bool UserPrefValues::dataViewerUseOverlayScrollbars()
+{
+   return readPref<bool>("data_viewer_use_overlay_scrollbars");
+}
+
+core::Error UserPrefValues::setDataViewerUseOverlayScrollbars(bool val)
+{
+   return writePref("data_viewer_use_overlay_scrollbars", val);
+}
+
+/**
  * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
@@ -4099,6 +4125,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,
       kDataViewerShowSummary,
+      kDataViewerShowFilters,
+      kDataViewerUseOverlayScrollbars,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,

@@ -4,13 +4,16 @@
   "private": true,
   "scripts": {
     "test": "npm run test:desktop",
-    "test:desktop": "npx playwright test --project=desktop",
+    "test:desktop": "tsx scripts/test.ts --project=desktop",
     "test:desktop-dev": "tsx scripts/desktop-dev.ts",
-    "test:server": "cross-env PW_RSERVER_BIN=/usr/lib/rstudio-server/bin/rserver PW_RSERVER_CONF=/etc/rstudio/rserver.conf npx playwright test --project=server",
+    "test:server": "tsx scripts/test.ts --project=server",
     "test:server-dev": "tsx scripts/server-dev.ts",
-    "test:autocomplete": "npx playwright test autocomplete",
+    "test:autocomplete": "tsx scripts/test.ts --project=desktop autocomplete",
     "test:report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   },
   "dependencies": {
     "@playwright/test": "1.59.1",

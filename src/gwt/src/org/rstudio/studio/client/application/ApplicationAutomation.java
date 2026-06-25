@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 import com.google.gwt.core.client.GWT;
@@ -65,6 +66,7 @@ import com.google.inject.Singleton;
  *   window.rstudio.commands.&lt;commandId&gt;()           // execute
  *   window.rstudio.commands.&lt;commandId&gt;.isChecked()
  *   window.rstudio.commands.&lt;commandId&gt;.isEnabled()
+ *   window.rstudio.commands.&lt;commandId&gt;.isVisible()
  *   window.rstudio.commands.list                       // string[] of all command ids
  *
  *   window.rstudio.prefs.&lt;camelCaseName&gt;.get()
@@ -100,6 +102,11 @@ import com.google.inject.Singleton;
  *   window.rstudio.shiny.stopForegroundApp() // stop the running foreground
  *                                            // shiny app via shiny::stopApp();
  *                                            // resolves once R exits runApp
+ *
+ *   window.rstudio.console.promptCount   // monotonic count of console prompts
+ *                                        // (advances when a submitted command
+ *                                        // completes); a race-free completion
+ *                                        // signal, vs sampling the busy class
  * </pre>
  *
  * <h2>Why enumerate everything up front</h2>
@@ -156,6 +163,7 @@ public class ApplicationAutomation
       registerDialogs();
       registerLayout();
       registerErrors();
+      registerConsole();
       registerReadinessHandlers();
    }
 
@@ -218,6 +226,52 @@ public class ApplicationAutomation
          setReadyFlag(true);
 
       readinessHandlersRegistered_ = true;
+   }
+
+   // window.rstudio.console.promptCount is a monotonic counter that advances by
+   // one each time R issues a console prompt that is waiting for fresh client
+   // input -- i.e. each time a submitted command either completes (the top-level
+   // "> " prompt) or settles at an interactive sub-prompt that needs us to act
+   // next (browser()/Browse[N]>, readline(), menu(), scan()). It is driven by
+   // ConsolePromptEvent (the client-side dispatch of the server's kConsolePrompt
+   // event), so it is a race-free completion signal: automation can capture the
+   // value, submit a command, and wait for the counter to increase, instead of
+   // sampling the rstudio-console-busy CSS class (which can be observed stale in
+   // the submit->busy gap, or miss a fast command's busy flash entirely).
+   //
+   // Every new ConsolePromptEvent advances the counter -- including "busy"
+   // prompts. This is deliberate, and safe: a single submission's intermediate
+   // continuation ("+ ") and inter-statement prompts never reach the client.
+   // The server (SessionConsoleInput.cpp rConsoleRead) services those directly
+   // from its buffered, line-split console input via popConsoleInput() WITHOUT
+   // firing a kConsolePrompt event; a client event fires only once the buffer
+   // drains and R genuinely stops to wait for new input. So a new prompt event
+   // is always a real "R is waiting for us again" point, never a mid-expression
+   // state. Counting only the top-level (busy == false) prompt was too strict:
+   // a command that parks at a browser()/readline() prompt never returns to the
+   // top level on its own, so a waiter would hang until timeout (this broke the
+   // debugger e2e tests, whose commands hit a breakpoint and enter Browse mode).
+   //
+   // The consequence for callers: waitForConsoleCommandComplete now means "R
+   // stopped to ask for input again," not strictly "returned to top level."
+   // That is the desired behavior for the interactive/debugger cases; all
+   // self-contained one-shot expressions still fire exactly one event (at
+   // completion), so their behavior is unchanged.
+   //
+   // Handlers are registered once per GWT page lifetime (initializeAgent runs
+   // again on each session restart), guarded like registerReadinessHandlers.
+   // The counter is intentionally not reset across restarts -- it only needs to
+   // be monotonic so a captured "before" value stays comparable; a full page
+   // reload wipes it back to 0 with the rest of the JS state.
+   private void registerConsole()
+   {
+      registerConsoleObject();
+
+      if (consoleHandlersRegistered_)
+         return;
+
+      eventBus_.addHandler(ConsolePromptEvent.TYPE, event -> bumpConsolePromptCount());
+      consoleHandlersRegistered_ = true;
    }
 
    private void registerCommands()
@@ -472,6 +526,11 @@ public class ApplicationAutomation
       return command.isEnabled();
    }
 
+   private boolean isCommandVisible(AppCommand command)
+   {
+      return command.isVisible();
+   }
+
    private Object getPrefValue(Prefs.PrefValue<?> pref)
    {
       return pref.getValue();
@@ -637,6 +696,9 @@ public class ApplicationAutomation
       fn.isEnabled = $entry(function() {
          return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandEnabled(*)(command);
       });
+      fn.isVisible = $entry(function() {
+         return self.@org.rstudio.studio.client.application.ApplicationAutomation::isCommandVisible(*)(command);
+      });
       $wnd.rstudio.commands[id] = fn;
    }-*/;
 
@@ -737,6 +799,20 @@ public class ApplicationAutomation
          $wnd.rstudio.ready = false;
          self.@org.rstudio.studio.client.application.ApplicationAutomation::switchToProject(*)(path);
       });
+   }-*/;
+
+   // Install (idempotently) window.rstudio.console.promptCount. Not reset on
+   // re-init so the counter stays monotonic across session restarts; see
+   // registerConsole for the rationale and how callers use it.
+   private native final void registerConsoleObject() /*-{
+      $wnd.rstudio.console = $wnd.rstudio.console || {};
+      if (typeof $wnd.rstudio.console.promptCount !== 'number')
+         $wnd.rstudio.console.promptCount = 0;
+   }-*/;
+
+   private native final void bumpConsolePromptCount() /*-{
+      if ($wnd.rstudio && $wnd.rstudio.console)
+         $wnd.rstudio.console.promptCount = ($wnd.rstudio.console.promptCount || 0) + 1;
    }-*/;
 
    // Versions are stable for the life of the session, so install a plain
@@ -859,4 +935,5 @@ public class ApplicationAutomation
    private final Provider<PaneManager> pPaneManager_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
+   private boolean consoleHandlersRegistered_ = false;
 }

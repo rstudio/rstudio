@@ -31,6 +31,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
+#include <core/Thread.hpp>
 #include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
@@ -134,8 +135,15 @@ public:
    
    ~ConsoleInputService()
    {
-      thread_.interrupt();
-      thread_.timed_join(1);
+      // seconds(1) is a real 1-second bound. This replaced a prior bare
+      // timed_join(1), which boost interprets as 1 nanosecond -- effectively no
+      // wait, which left the thread joinable and could std::terminate from this
+      // destructor. The worker polls boost interruption points, so interrupt.
+      core::thread::joinOrAbandonThread(
+            thread_,
+            "console input service thread",
+            true,
+            boost::posix_time::seconds(1));
    }
    
    void enqueue(const std::string& input)

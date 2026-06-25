@@ -310,6 +310,44 @@ TEST(SessionFindTest, ReplaceRegexWithBracketsAndSpecialChars) {
    EXPECT_EQ(13u, replaceMatchOff);
 }
 
+TEST(SessionFindTest, ReplacePreviewNoOp) {
+   // When the replacement is identical to the matched text, replacePreview
+   // should set *pIsNoOp to true and leave the line untouched.
+   setFindResultsForTest("cat", "cat", true, false);
+
+   std::string encodedLine("the cat sat");
+   std::string decodedLine("the cat sat");
+   size_t replaceMatchOff;
+   bool isNoOp = false;
+
+   Replacer replacer(false);
+   Error error = replacer.replacePreview(4, 7, 4, 7,
+                                          &encodedLine, &decodedLine,
+                                          &replaceMatchOff, &isNoOp);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(isNoOp);
+   EXPECT_EQ("the cat sat", encodedLine); // line untouched
+}
+
+TEST(SessionFindTest, ReplacePreviewRealChange) {
+   // When the replacement differs from the matched text, replacePreview
+   // should set *pIsNoOp to false and perform the replacement.
+   setFindResultsForTest("c.t", "cat", true, false);
+
+   std::string encodedLine("the cot sat");
+   std::string decodedLine("the cot sat");
+   size_t replaceMatchOff;
+   bool isNoOp = false;
+
+   Replacer replacer(false);
+   Error error = replacer.replacePreview(4, 7, 4, 7,
+                                          &encodedLine, &decodedLine,
+                                          &replaceMatchOff, &isNoOp);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(isNoOp);
+   EXPECT_NE("the cot sat", encodedLine); // line was modified
+}
+
 } // namespace tests
 } // namespace find
 } // namespace modules

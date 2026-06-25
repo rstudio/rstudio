@@ -907,37 +907,34 @@ void AsyncChildProcess::poll()
       }
       else
       {
-         // read all remaining stdout, stderr -- use threads to avoid unexpected
-         // cases where reading from a handle on Windows can block
+         // Drain any remaining stdout/stderr. The process has already exited
+         // (WaitForSingleObject above signaled), so its write ends of the pipes
+         // are closed and whatever it wrote is sitting in the OS pipe buffer.
+         // Read it with the non-blocking, PeekNamedPipe-based helper -- the same
+         // one the steady-state read above uses -- so no read can block.
+         //
+         // This used to spawn a thread per stream running a blocking read and
+         // bound it with timed_join(1s). That had three problems (rstudio#18022):
+         // a join timeout left the boost::thread joinable, so ~thread called
+         // std::terminate; the stdout reader wrote a shadowing local, so trailing
+         // stdout was silently dropped; and on timeout the buffers were read here
+         // while the reader thread might still be writing them. A non-blocking
+         // read on this thread avoids all three.
          std::string stdOut, stdErr;
 
-         auto readStdOutThread = core::thread::run([&]()
+         if (pImpl_->hStdOutRead)
          {
-            if (pImpl_->hStdOutRead)
-            {
-               std::string stdOut;
-               Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
-               if (error)
-                  reportError(error);
-            }
-         });
+            Error error = readPipeAvailable(pImpl_->hStdOutRead, &stdOut);
+            if (error)
+               reportError(error);
+         }
 
-         auto readStdErrThread = core::thread::run([&]()
+         if (pImpl_->hStdErrRead)
          {
-            // read all remaining stderr
-            if (pImpl_->hStdErrRead)
-            {
-               Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
-               if (error)
-                  reportError(error);
-            }
-         });
-
-         if (readStdOutThread.joinable())
-            readStdOutThread.timed_join(boost::posix_time::seconds(1));
-
-         if (readStdErrThread.joinable())
-            readStdErrThread.timed_join(boost::posix_time::seconds(1));
+            Error error = readPipeAvailable(pImpl_->hStdErrRead, &stdErr);
+            if (error)
+               reportError(error);
+         }
 
          if (!stdOut.empty() && callbacks_.onStdout)
          {

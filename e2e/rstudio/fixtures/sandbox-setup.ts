@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 
@@ -59,7 +60,14 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  * normal child-process env; globalTeardown reads PW_SANDBOX directly from
  * process.env.
  */
-export default async function globalSetup() {
+export default async function globalSetup(config: FullConfig) {
+  // Export the resolved worker count so the Desktop fixture and r-libs helpers
+  // can decide whether to partition HOME / R_LIBS_USER per worker. The default
+  // (1 worker) keeps the historical shared-state behavior; >1 activates the
+  // per-worker subtrees. Honor an explicit override if already set.
+  if (!process.env.PW_TOTAL_WORKERS)
+    process.env.PW_TOTAL_WORKERS = String(config.workers ?? 1);
+
   const parent = process.env.PW_SANDBOX_ROOT ?? os.tmpdir();
   const shouldCreate = ['1', 'true'].includes(
     (process.env.PW_SANDBOX_ROOT_CREATE ?? '').toLowerCase(),
@@ -206,7 +214,13 @@ export default async function globalSetup() {
   // does on save is open a "stringr needs updating" dialog that hangs the
   // test. Pre-populating here is idempotent -- a warm cache is a fast
   // installed.packages() check with no install call.
-  await prepareRLibs();
+  //
+  // The resolved (token-expanded) path is exported so parallel workers can
+  // hardlink-clone this prebuilt library into their own hermetic copies
+  // (see workerRLibsUser); single-worker runs use it directly.
+  const rLibsTemplate = await prepareRLibs();
+  if (rLibsTemplate)
+    process.env.PW_R_LIBS_TEMPLATE = rLibsTemplate;
 
   // Warmup launch: workers are recycled between spec files, so each new file
   // pays the cold-launch cost. Booting once here populates dyld/page caches

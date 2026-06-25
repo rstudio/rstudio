@@ -31,7 +31,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
@@ -150,58 +149,12 @@ public abstract class ModalDialogBase extends DialogBox
       {
          addStyleName("rstudio-theme-aware-dialog");
          syncDarkThemeClass();
-         if (SuperDevMode.isActive())
-            addThemeToggleButton();
       }
       else
       {
          removeStyleName("rstudio-theme-aware-dialog");
          removeStyleName("rstudio-themes-dark");
       }
-   }
-
-   private void addThemeToggleButton()
-   {
-      if (themeToggleAdded_)
-         return;
-      themeToggleAdded_ = true;
-
-      Element captionEl = getCaption().asWidget().getElement();
-      captionEl.getStyle().setPosition(Style.Position.RELATIVE);
-
-      Element btn = Document.get().createButtonElement().cast();
-      btn.setInnerHTML("&#x263E;");
-      btn.setTitle("Toggle dark theme");
-      btn.setClassName(ALLOW_ENTER_KEY_CLASS);
-      Style s = btn.getStyle();
-      s.setPosition(Style.Position.ABSOLUTE);
-      s.setRight(4, Unit.PX);
-      s.setTop(50, Unit.PCT);
-      s.setProperty("transform", "translateY(-50%)");
-      s.setProperty("background", "transparent");
-      s.setProperty("border", "none");
-      s.setProperty("cursor", "pointer");
-      s.setFontSize(14, Unit.PX);
-      s.setPadding(2, Unit.PX);
-      s.setProperty("paddingLeft", "6px");
-      s.setProperty("paddingRight", "6px");
-      s.setOpacity(0.6);
-      s.setColor("inherit");
-
-      Event.sinkEvents(btn, Event.ONCLICK);
-      Event.setEventListener(btn, event ->
-      {
-         if (Event.ONCLICK == event.getTypeInt())
-         {
-            event.stopPropagation();
-            if (getStyleName().contains("rstudio-themes-dark"))
-               removeStyleName("rstudio-themes-dark");
-            else
-               addStyleName("rstudio-themes-dark");
-         }
-      });
-
-      captionEl.appendChild(btn);
    }
 
    private void syncDarkThemeClass()
@@ -983,7 +936,6 @@ public abstract class ModalDialogBase extends DialogBox
 
    private boolean escapeDisabled_ = false;
    private boolean themeAware_ = false;
-   private boolean themeToggleAdded_ = false;
    private HandlerRegistration themeChangedReg_;
    private UserPrefs userPrefs_;
    private boolean enterDisabled_ = false;

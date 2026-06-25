@@ -276,6 +276,7 @@ using chat_installation::writeProtocolVersionFileIfMissing;
 using throttle::ManifestCheckRecord;
 using throttle::ResolvedBlock;
 using throttle::SuccessOutcome;
+using throttle::PendingUpdate;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -2006,11 +2007,21 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Send successful response
    sendJsonRpcResponse(ops, requestId, result);
 
-   // Fire change detection event to trigger environment refresh
-   // Use ChangeSourceREPL if a plot was captured so the Plots pane gets activated
-   module_context::ChangeSource changeSource = !plotsArray.isEmpty()
-      ? module_context::ChangeSourceREPL
-      : module_context::ChangeSourceRPC;
+   // Fire change detection event to trigger environment refresh. Interactive
+   // executions mimic the REPL, which always reports ChangeSourceREPL after a
+   // console turn (see SessionConsoleInput.cpp); that is what lets the Plots
+   // pane activate when R drew a plot. Activation self-gates on actual
+   // graphics-device changes (SessionPlots.cpp), so this is a no-op when
+   // nothing was plotted. We cannot key off plotsArray here: it is only
+   // populated when the caller requests capturePlot, yet an interactive
+   // execution may produce a plot with capturePlot disabled (e.g. the Posit
+   // Assistant's interleaved path, which captures plots through its own R-side
+   // hook). Keying activation off whether this was a console-style turn is
+   // correct regardless of how the caller captures plots. Silent setup/teardown
+   // helpers are not REPL turns and must not activate the pane.
+   module_context::ChangeSource changeSource = silentExecution
+      ? module_context::ChangeSourceRPC
+      : module_context::ChangeSourceREPL;
    module_context::events().onDetectChanges(changeSource);
 }
 
@@ -3620,7 +3631,13 @@ void onBackgroundProcessing(bool isIdle)
 // Update Management
 // ============================================================================
 
-// Structure to hold update check state
+// Structure to hold update check state.
+//
+// The pending-update fields (updateAvailable, isDowngrade, newVersion,
+// downloadUrl, expectedSha256) mirror throttle::PendingUpdate, which carries
+// them across a throttled skip in resolveWithoutManifestFetch(). Keep the two
+// field sets in sync: a field added here that isn't carried there would be
+// silently dropped on a skip (the regression #18014 fixed).
 struct UpdateState
 {
    bool updateAvailable;
@@ -4725,6 +4742,28 @@ void resolveWithoutManifestFetch()
 
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+      // A throttled skip re-fetches no manifest, so the pending update from the
+      // last completed check is still authoritative -- carry it through instead of
+      // clearing it. Clearing it here would let a later install see no update and
+      // fail with "No update available" even though the pane still offered one. The
+      // carry is gated on the installed version being unchanged from that check
+      // (s_updateState.currentVersion), so an out-of-band install can't leave a
+      // stale target or downgrade classification behind.
+      PendingUpdate prior;
+      prior.updateAvailable = s_updateState.updateAvailable;
+      prior.isDowngrade = s_updateState.isDowngrade;
+      prior.newVersion = s_updateState.newVersion;
+      prior.downloadUrl = s_updateState.downloadUrl;
+      prior.expectedSha256 = s_updateState.expectedSha256;
+      PendingUpdate carried = throttle::carryPendingUpdateThroughSkip(
+         prior, s_updateState.currentVersion, installedVersion);
+
+      if (prior.updateAvailable)
+         DLOG("Throttled skip: pending update {} (installed {}, last checked {})",
+              carried.updateAvailable ? "carried" : "cleared",
+              installedVersion, s_updateState.currentVersion);
+
       s_updateState.currentVersion = installedVersion;
       s_updateState.manifestUnavailable = false;
       s_updateState.errorMessage = "";
@@ -4732,11 +4771,11 @@ void resolveWithoutManifestFetch()
       s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
       s_updateState.noCompatibleVersion = false;
       s_updateState.additionalProvidersAvailable = false;
-      s_updateState.updateAvailable = false;
-      s_updateState.isDowngrade = false;
-      s_updateState.newVersion = "";
-      s_updateState.downloadUrl = "";
-      s_updateState.expectedSha256 = "";
+      s_updateState.updateAvailable = carried.updateAvailable;
+      s_updateState.isDowngrade = carried.isDowngrade;
+      s_updateState.newVersion = carried.newVersion;
+      s_updateState.downloadUrl = carried.downloadUrl;
+      s_updateState.expectedSha256 = carried.expectedSha256;
    }
 
    // Non-blocking, like onUpdateCheckComplete: this resolves the

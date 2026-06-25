@@ -20,7 +20,7 @@ import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
-import { generateRandomPort } from '../core/system';
+import { findFreePort, generateRandomPort } from '../core/system';
 import { DesktopActivation } from './activation-overlay';
 import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
@@ -404,8 +404,8 @@ export class Application implements AppState {
     return this.activationInst;
   }
 
-  generateNewPort(): void {
-    this.port = generateRandomPort();
+  async generateNewPort(): Promise<void> {
+    this.port = await findFreePort();
   }
 
   setScratchTempDir(path: FilePath): void {

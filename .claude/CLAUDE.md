@@ -345,8 +345,9 @@ When documenting R code, use Roxygen style for formatting. For example:
 C++ code is formatted with clang-format. The configuration is in `src/cpp/.clang-format`. Key settings:
 
 - 3-space indentation
-- Allman brace style
+- Allman brace style, except namespaces keep their opening brace on the same line (`namespace x {`)
 - No tabs
+- No column limit: clang-format does not re-wrap long lines, and include/using order and comment prose are left as written. It acts as a brace/indent/spacing normalizer, so running it over existing code stays low-churn.
 
 
 ### TypeScript (Desktop)
@@ -438,7 +439,7 @@ Exceptions — do NOT add a NEWS.md entry for:
 
 ## Pull Requests
 
-- Pull requests should be associated with a GitHub issue.
+- Pull requests that resolve a user-facing issue should be associated with a GitHub issue. Developer-only or internal changes (e.g. debugging helpers, build/tooling tweaks) do not require one.
 - Pull requests that fix an existing issue, and also include tests, should include "Fixes #<issue>." in their body.
 - Pull requests that only partially address an issue, or require manual verification, should include "Addresses #<issue>." in their body.
 - When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.

@@ -3,7 +3,9 @@ import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import {
   ConsolePane,
+  getConsolePromptCount,
   waitForConsoleBusy,
+  waitForConsoleCommandComplete,
   waitForConsoleIdle,
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
@@ -109,6 +111,10 @@ export class ConsolePaneActions {
       editor.setValue(text, 1); // 1 = move cursor to end
       editor.focus();
     }, command);
+    // Capture the prompt count before submitting so the wait keys off a new
+    // prompt (command completed), not a sampled busy class -- read it before
+    // pressing Enter, while R is still at the prior prompt.
+    const promptCountBefore = await getConsolePromptCount(this.page);
     if (await this.page.locator('#rstudio_popup_completions').isVisible()) {
       await this.page.keyboard.press('Escape');
     }
@@ -118,7 +124,7 @@ export class ConsolePaneActions {
     // leaving the text in the buffer but never submitted.
     await this.consolePane.consoleInput.press('Enter');
     if (opts.wait ?? true) {
-      await waitForConsoleIdle(this.page, opts.timeout);
+      await waitForConsoleCommandComplete(this.page, promptCountBefore, opts.timeout);
     }
   }
 

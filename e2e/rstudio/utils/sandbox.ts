@@ -69,10 +69,20 @@ export async function createSandbox(page: Page): Promise<string> {
 
   // Build the R expression on a single line so executeInConsole's single
   // press('Enter') executes it atomically.
+  //
+  // normalizePath(winslash = "/") forces forward slashes: on Windows tempfile()
+  // yields a backslash path (the tmpdir root comes from PW_SANDBOX, a Node
+  // path), and backslashes are escape sequences in an R string literal -- so
+  // embedding the returned dir into generated R code (e.g.
+  // writeLines(..., "<dir>/foo")) mangles it or hard-errors (\p, \w are
+  // unrecognized escapes; see #17985). R accepts forward slashes on every
+  // platform, so this is the safe canonical form for callers to interpolate.
+  // (Defense in depth: callers should still pass paths through rPathLiteral.)
   const rCode = [
     `{ root <- ${rootExpr()}`,
     `d <- tempfile("${SANDBOX_DIR_PREFIX}", tmpdir = root)`,
     `dir.create(d, recursive = TRUE)`,
+    `d <- normalizePath(d, winslash = "/", mustWork = FALSE)`,
     `setwd(d)`,
     `cat("${marker}", d, "${marker}") }`,
   ].join('; ');

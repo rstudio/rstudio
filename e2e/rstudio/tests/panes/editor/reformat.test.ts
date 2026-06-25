@@ -83,6 +83,9 @@ test.describe.serial('styler reformat on save', () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache package install can outlast the global per-test timeout;
+    // keep the headroom this install hook's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.resetSourcePane();
     missingPackages = await consoleActions.ensurePackages(['styler'], 180_000);
@@ -153,6 +156,9 @@ test.describe('styler reformat #17471 (Windows)', { tag: ['@windows_only'] }, ()
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache package install can outlast the global per-test timeout;
+    // keep the headroom this install hook's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.resetSourcePane();
     missingPackages = await consoleActions.ensurePackages(['styler'], 180_000);

@@ -82,6 +82,9 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
   let missingPackages: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A cold-cache package install can outlast the global per-test timeout;
+    // keep the headroom this install hook's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
     // Every test in this file drives chunks or saves a notebook, both of
@@ -390,6 +393,9 @@ test.describe.serial('R Markdown chunks', { tag: ['@serial'] }, () => {
   //     method, re-triggering its stateful shouldPrint() and dumping the table.
   // https://github.com/rstudio/rstudio/issues/17278
   test('data.table auto-print: normal renders paged, invisible := is suppressed (#17278)', async ({ rstudioPage: page }) => {
+    // A cold-cache data.table install can outlast the global per-test timeout;
+    // keep the headroom this test's ensurePackages() budget assumes.
+    test.setTimeout(300000);
     const missing = await consoleActions.ensurePackages(['data.table'], 180_000);
     test.skip(missing.length > 0, `required R package(s) not available: ${missing.join(', ')}`);
 

@@ -70,6 +70,19 @@ public:
    }
 };
 
+// A resource-exhaustion accept error (out of file descriptors or memory) is
+// handled differently from other accept errors: rather than spinning on the
+// still-queued connection, the server backs off before re-accepting (and, when
+// abortOnResourceError_ is set, aborts first so it can be respawned). Free
+// function so it can be unit tested without exhausting descriptors (see
+// AsyncServerTests.cpp).
+inline bool isResourceExhaustionError(const boost::system::error_code& ec)
+{
+   return ec.category() == boost::system::system_category() &&
+          (ec.value() == boost::system::errc::too_many_files_open ||
+           ec.value() == boost::system::errc::not_enough_memory);
+}
+
 template <typename ProtocolType>
 class AsyncServerImpl : public AsyncServer, boost::noncopyable
 {
@@ -90,6 +103,7 @@ public:
         additionalResponseHeaders_(additionalResponseHeaders),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioContext()),
+        acceptRetryTimer_(acceptorService_.ioContext()),
         running_(false),
         totalTime_(boost::posix_time::seconds(0)),
         minTime_(boost::posix_time::seconds(0)),
@@ -656,6 +670,7 @@ private:
       // Warning about performance: until the acceptNextConnection is performed, the server is not accepting
       // new connections and so it's important no long-running or I/O ops are performed in this next section
       // or we could lose out on processing opportunities on the server (i.e. a bottleneck)
+      bool resourceError = false;
       try
       {
          if (!ec)
@@ -686,8 +701,9 @@ private:
             {
                // log the error
                LOG_ERROR(Error(ec, ERROR_LOCATION));
-               
+
                // check for resource exhaustion
+               resourceError = isResourceExhaustionError(ec);
                checkForResourceExhaustion(ec, ERROR_LOCATION);
             }
          }
@@ -696,13 +712,51 @@ private:
       {
          // always log
          LOG_ERROR_MESSAGE(std::string("Unexpected exception: ") + e.what());
-         
+
          // check for resource exhaustion
+         resourceError = isResourceExhaustionError(e.code());
          checkForResourceExhaustion(e.code(), ERROR_LOCATION);
       }
       CATCH_UNEXPECTED_EXCEPTION
 
-      // ALWAYS accept next connection
+      // ALWAYS accept the next connection -- but on resource exhaustion (e.g.
+      // EMFILE), back off briefly first. The pending connection stays in the
+      // accept queue, so an immediate re-accept would fail again at once and
+      // spin the CPU until a descriptor frees. (If abortOnResourceError_ is
+      // set, checkForResourceExhaustion already aborted the process above.)
+      try
+      {
+         if (resourceError)
+            scheduleAcceptRetry();
+         else
+            acceptNextConnection();
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   // How long to wait before re-accepting after a resource-exhaustion error.
+   // Long enough not to busy-spin, short enough to recover promptly once a
+   // descriptor frees.
+   static constexpr long kAcceptRetryDelayMs = 100;
+
+   void scheduleAcceptRetry()
+   {
+      LOG_DEBUG_MESSAGE(serverName_ + " - backing off " +
+                        std::to_string(kAcceptRetryDelayMs) +
+                        "ms before re-accepting after resource exhaustion");
+
+      acceptRetryTimer_.expires_after(std::chrono::milliseconds(kAcceptRetryDelayMs));
+      acceptRetryTimer_.async_wait(
+         boost::bind(&AsyncServerImpl<ProtocolType>::handleAcceptRetry,
+                     this,
+                     boost::asio::placeholders::error));
+   }
+
+   void handleAcceptRetry(const boost::system::error_code& ec)
+   {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+
       try
       {
          acceptNextConnection();
@@ -1001,12 +1055,10 @@ private:
    void checkForResourceExhaustion(const boost::system::error_code& ec,
                                    const core::ErrorLocation& location)
    {
-      if ( ec.category() == boost::system::system_category() &&
-          (ec.value() == boost::system::errc::too_many_files_open ||
-           ec.value() == boost::system::errc::not_enough_memory) )
+      if (isResourceExhaustionError(ec))
       {
-         // our process has run out of memory or file handles. in this 
-         // case the only way future requests can be serviced is if we 
+         // our process has run out of memory or file handles. in this
+         // case the only way future requests can be serviced is if we
          // abort and allow upstart to respawn us
          maybeAbortServer("Resource exhaustion", location);
       }
@@ -1054,6 +1106,9 @@ private:
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::system_timer scheduledCommandTimer_;
+
+   // backs off re-accepting after a resource-exhaustion error (see handleAccept)
+   boost::asio::system_timer acceptRetryTimer_;
 
    boost::mutex scheduledCommandMutex_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;

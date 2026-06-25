@@ -172,6 +172,99 @@
    .rs.toJSON(data, unbox = TRUE)
 })
 
+#' Request PPM vulnerability info for a single package, synchronously.
+#'
+#' A by-hand debugging helper that exercises the same request-and-parse path as
+#' the asynchronous refresh (see ppm.getVulnerabilityRequestPlan in this file and
+#' ppm::refreshVulnerabilitiesAsync in SessionPPM.cpp), but performs the
+#' filter/packages POST synchronously from R so the result can be inspected
+#' directly at the console. Unlike the live path, it does NOT update the per-repo
+#' caches or fire a client event -- it just issues one request and returns the
+#' parsed records.
+#'
+#' @param package The package name to query.
+#' @param version The package version to query. When NULL (the default), PPM is
+#'   asked about the package by name only and answers for its current-snapshot
+#'   version.
+#' @param repoUrl The repository URL to query. When NULL (the default), the first
+#'   PPM repository found in getOption("repos") is used.
+#' @return The parsed per-package records (see ppm.parsePackageRecords), each
+#'   carrying both its 'vulns' and 'metadata'; an empty list when PPM reported
+#'   nothing; or NULL when the request failed.
+.rs.addFunction("ppm.requestPackageVulnerabilities", function(package, version = NULL, repoUrl = NULL)
+{
+   # resolve the repository to query: the caller's repoUrl, else the first
+   # configured PPM repository
+   if (is.null(repoUrl))
+   {
+      for (url in getOption("repos"))
+      {
+         if (length(.rs.ppm.fromRepositoryUrl(url)) > 0L)
+         {
+            repoUrl <- url
+            break
+         }
+      }
+   }
+
+   if (is.null(repoUrl))
+      stop("no PPM repository found in getOption(\"repos\"); pass 'repoUrl' explicitly")
+
+   ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
+   if (length(ppmUrl) == 0L)
+      stop(sprintf("'%s' is not a Posit Package Manager repository URL", repoUrl))
+
+   # build the same request the async plan would: a single "name" (or
+   # "name==version") key posted to filter/packages, authenticated from the
+   # user's .netrc when one is configured
+   key <- if (is.null(version)) package else paste(package, version, sep = "==")
+   endpoint <- file.path(ppmUrl[["root"]], "__api__/filter/packages")
+   authHeader <- .rs.computeAuthorizationHeader(endpoint)
+   body <- .rs.ppm.buildVulnerabilityRequestBody(ppmUrl[["repos"]], key)
+
+   # POST synchronously and parse via the same helper the async path uses
+   response <- .rs.ppm.postSync(endpoint, authHeader, body)
+   .rs.ppm.parsePackageRecords(response)
+})
+
+#' Perform a synchronous HTTP POST of a JSON body via the curl binary.
+#'
+#' Used only by the by-hand ppm.requestPackageVulnerabilities helper; the live
+#' refresh posts asynchronously from C++ (see sendVulnerabilityRequest in
+#' SessionPPM.cpp). Returns the response body as a single newline-joined string,
+#' the shape ppm.parsePackageRecords expects (it parses only the first element
+#' of a multi-element vector, so the lines must be collapsed here).
+.rs.addFunction("ppm.postSync", function(endpoint, authHeader, body)
+{
+   curl <- Sys.which("curl")
+   if (!nzchar(curl))
+      stop("could not find the 'curl' executable on the PATH")
+
+   args <- c(
+      "--silent", "--show-error",
+      "--request", "POST",
+      "--header", shQuote("Content-Type: application/json")
+   )
+
+   if (nzchar(authHeader))
+      args <- c(args, "--header", shQuote(paste0("Authorization: ", authHeader)))
+
+   args <- c(
+      args,
+      "--data", shQuote(body),
+      shQuote(endpoint)
+   )
+
+   output <- suppressWarnings(system2(curl, args, stdout = TRUE, stderr = TRUE))
+
+   status <- attr(output, "status")
+   if (!is.null(status) && status != 0L)
+      stop(sprintf("curl request to '%s' failed (status %d): %s",
+                   endpoint, status, paste(output, collapse = "\n")))
+
+   paste(output, collapse = "\n")
+})
+
 # Record the response to an asynchronous filter/packages request. Called by the
 # C++ backend on the main thread once the network request for 'repoUrl' has
 # completed successfully; 'body' is the raw (NDJSON) response payload. A single
@@ -409,6 +502,7 @@
          "(?<platform>[^/]+)/",             # platform for binaries
       ")?",                                 # end optional binary parts
       "(?<snapshot>[^/]+)",                 # snapshot
+      "/?",                                 # tolerate a trailing slash
       "$"
    )
    

@@ -1458,6 +1458,18 @@
             "title": "Show data viewer summary panel by default",
             "description": "Whether the Summary side panel is shown by default when opening the data viewer."
         },
+        "data_viewer_show_filters": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show data viewer filter UI by default",
+            "description": "Whether the data viewer filter UI is shown by default when opening the data viewer."
+        },
+        "data_viewer_use_overlay_scrollbars": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use overlay scrollbars in the data viewer",
+            "description": "Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead."
+        },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,

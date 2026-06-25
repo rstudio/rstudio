@@ -26,6 +26,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/SocketRpc.hpp>
+#include <core/Thread.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/text/TemplateFilter.hpp>
@@ -505,7 +506,15 @@ Error waitForSignals()
             }
          });
 
-         waitThread.timed_join(boost::chrono::seconds(60));
+         // the reaper blocks in waitpid(), which is not an interruption point;
+         // it ends on its own once every child is reaped. bound the wait so a
+         // child that refuses to die can't hang shutdown, and abandon it
+         // otherwise (the stuck-process check below then reports what remains).
+         core::thread::joinOrAbandonThread(
+               waitThread,
+               "child reaper thread",
+               false,
+               boost::posix_time::seconds(60));
 
          // notify user if there seem to still be some processes around
          int status = 0;

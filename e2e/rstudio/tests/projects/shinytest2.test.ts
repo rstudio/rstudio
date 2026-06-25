@@ -103,6 +103,10 @@ test.describe('shinytest2 integration', () => {
   let missingShinytest2: string[] = [];
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // Installs shiny + shinytest2 and their full dependency trees, which can
+    // run well past the lowered global per-test timeout on a cold package
+    // cache -- give this hook the larger budget it had before.
+    test.setTimeout(300000);
     consoleActions = new ConsolePaneActions(page);
     missingShiny = await consoleActions.ensurePackages(['shiny']);
     // shinytest2 is optional for the toolbar-button test but required for

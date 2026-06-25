@@ -1,7 +1,10 @@
 node_modules/
 dist/
 test-results/
-playwright-report/
+# Per-run HTML report dirs (playwright-report-<timestamp>) and the
+# playwright-report symlink that points at the most recent one.
+playwright-report
+playwright-report-*/
 .env
 .env.*
 !.env.example

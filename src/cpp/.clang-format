@@ -1,8 +1,46 @@
 ---
+# This configuration is tuned to match the prevailing hand-written style of the
+# existing C++ sources rather than to impose a strict canonical layout. In
+# particular, clang-format is treated as a brace/indent/spacing normalizer, not
+# a line re-wrapper: ColumnLimit is 0 and comment/include/using reordering is
+# disabled so that running it over existing code does not churn deliberate
+# manual wrapping.
 BasedOnStyle: LLVM
+
+# 3-space indentation throughout; the continuation, constructor-initializer, and
+# access-modifier offsets are all kept in step with it (LLVM's defaults assume a
+# 2-space indent and otherwise drift out of alignment with the codebase).
 IndentWidth: 3
+ContinuationIndentWidth: 3
+ConstructorInitializerIndentWidth: 3
+AccessModifierOffset: -3
 UseTab: Never
-BreakBeforeBraces: Allman
+
+# Do not enforce a column limit. The sources contain many intentionally long
+# lines (signatures, string literals, comments) and manage their own wrapping;
+# a limit makes clang-format reflow them and produces large, noisy diffs.
+ColumnLimit: 0
+
+# Allman braces everywhere except namespaces, which keep their opening brace on
+# the same line (the universal convention in this codebase: "namespace x {").
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 SpaceAfterCStyleCast: true
@@ -11,4 +49,11 @@ BinPackArguments: false
 BinPackParameters: false
 BreakConstructorInitializers: BeforeColon
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# Leave include order, using-declaration order, comment prose, and existing
+# blank-line grouping as the author wrote them.
+SortIncludes: false
+SortUsingDeclarations: false
+ReflowComments: false
+MaxEmptyLinesToKeep: 2
 ---
