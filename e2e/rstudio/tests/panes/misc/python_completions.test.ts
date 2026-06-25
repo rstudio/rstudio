@@ -2,7 +2,6 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import type { Page } from 'playwright';
-import * as os from 'os';
 
 async function waitForConsoleIdle(page: Page): Promise<void> {
   await page.waitForFunction(
@@ -36,6 +35,16 @@ test.describe('Python REPL completions', () => {
     missingPackages = await consoleActions.ensurePackages(['reticulate']);
   });
 
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    // Skip the test if there is no Python interpreter available; reticulate
+    // may be installed but py_available(initialize = TRUE) can return FALSE
+    // when no suitable Python is found (e.g. Windows CI environments).
+    const pyAvailable = await consoleActions.evalRLogical(
+      'reticulate::py_available(initialize = TRUE)',
+    );
+    test.skip(pyAvailable === false, 'No Python interpreter available');
+  });
+
   test.afterEach(async ({ rstudioPage: page }) => {
     // Always leave the REPL so a failed test does not leak state into the
     // next test in this worker.
@@ -51,16 +60,12 @@ test.describe('Python REPL completions', () => {
     await consoleActions.executeInConsole('import sys');
     await waitForConsoleIdle(page);
 
-    // Type the partial attribute and wait for the completion popup. On some
-    // Windows configurations the Python REPL completion engine does not produce
-    // a popup (reticulate's jedi integration may not be initialised); skip the
-    // rest of the test rather than hard-fail in that case.
+    // Type the partial attribute and wait for the completion popup.
     await consoleActions.typeInConsole('sys.__name');
     const popupVisible = await page.locator('#rstudio_popup_completions')
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
-    test.fixme(!popupVisible && os.platform() === 'win32' && !!process.env.CI, 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
     if (!popupVisible) throw new Error('Python REPL completion popup did not appear');
 
     await page.keyboard.press('Tab');

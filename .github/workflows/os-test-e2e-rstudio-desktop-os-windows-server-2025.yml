@@ -197,7 +197,62 @@ jobs:
             rstudio-gwt-win64-${{ env.GWT_STYLE }}-
 
       - name: Install build tools
-        run: choco install ant nsis --yes --no-progress
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Trust the probe, not choco: choco can exit 0 after a failed feed
+          # fetch ("installed 0/1 packages"), and can also report a package
+          # installed from a prior run's lib record even when the binary is
+          # missing/broken. Probing the real tool sidesteps both. ant is
+          # provided by the runner image; nsis is fetched from the community
+          # feed (which intermittently 503s) for the cpack -G NSIS step. Verify
+          # both so a missing tool fails here, not ~1h later at packaging.
+          function Test-AntInstalled {
+            [bool](Get-Command ant -ErrorAction SilentlyContinue)
+          }
+
+          function Test-NsisInstalled {
+            (Get-Command makensis -ErrorAction SilentlyContinue) -or
+            (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe')
+          }
+
+          $tools = @(
+            @{ Package = 'ant';  Probe = 'Test-AntInstalled'  }
+            @{ Package = 'nsis'; Probe = 'Test-NsisInstalled' }
+          )
+
+          foreach ($tool in $tools) {
+            $ok = $false
+            for ($i = 1; $i -le 3; $i++) {
+              if (& $tool.Probe) { $ok = $true; break }     # already usable -> done
+              $chocoArgs = @('install', $tool.Package, '--yes', '--no-progress', '--use-enhanced-exit-codes')
+              if ($i -gt 1) { $chocoArgs += '--force' }      # clear a half-installed record on retry
+              choco @chocoArgs
+
+              # choco updates the machine PATH and drops shims in
+              # C:\ProgramData\chocolatey\bin, but this already-running process
+              # won't see them until we re-read the environment -- otherwise a
+              # PATH-only probe (e.g. ant) could fail even after a good install.
+              # Refresh PATH only for the probe, then restore it, so we don't
+              # disturb the runner-managed PATH ($GITHUB_PATH entries for node,
+              # rig, sccache, MSVC, ...) for the rest of the step.
+              $savedPath = $env:PATH
+              try {
+                $env:PATH = $savedPath + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'User')
+                if (& $tool.Probe) { $ok = $true }
+              } finally {
+                $env:PATH = $savedPath
+              }
+              if ($ok) { break }
+              Write-Host "::warning::$($tool.Package) not usable after attempt $i; retrying in 15s..."
+              Start-Sleep -Seconds 15
+            }
+            if (-not $ok) {
+              throw "$($tool.Package) not installed/usable after 3 attempts; aborting before the build."
+            }
+          }
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
