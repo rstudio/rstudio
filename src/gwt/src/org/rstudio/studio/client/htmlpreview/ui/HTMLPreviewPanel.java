@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
@@ -302,9 +303,23 @@ public class HTMLPreviewPanel extends ResizeComposite
    private void navigate(String url)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-      // use setUrl rather than navigate to deal with same origin policy
-      previewFrame_.setUrl(url);
+      {
+         final String notNullUrl = StringUtil.notNull(url);
+         Desktop.getFrame().setViewerUrl(notNullUrl, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // use setUrl rather than navigate to deal with same origin policy
+               previewFrame_.setUrl(url);
+            }
+         });
+      }
+      else
+      {
+         // use setUrl rather than navigate to deal with same origin policy
+         previewFrame_.setUrl(url);
+      }
    }
    
    private final LayoutPanel layoutPanel_;
