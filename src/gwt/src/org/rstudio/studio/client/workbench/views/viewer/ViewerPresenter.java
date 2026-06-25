@@ -21,7 +21,6 @@ import com.google.inject.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.rstudio.core.client.Command;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.SingleShotTimer;
