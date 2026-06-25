@@ -2,7 +2,6 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import type { Page } from 'playwright';
-import * as os from 'os';
 
 async function waitForConsoleIdle(page: Page): Promise<void> {
   await page.waitForFunction(
@@ -61,16 +60,12 @@ test.describe('Python REPL completions', () => {
     await consoleActions.executeInConsole('import sys');
     await waitForConsoleIdle(page);
 
-    // Type the partial attribute and wait for the completion popup. On some
-    // Windows configurations the Python REPL completion engine does not produce
-    // a popup (reticulate's jedi integration may not be initialised); skip the
-    // rest of the test rather than hard-fail in that case.
+    // Type the partial attribute and wait for the completion popup.
     await consoleActions.typeInConsole('sys.__name');
     const popupVisible = await page.locator('#rstudio_popup_completions')
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
-    test.fixme(!popupVisible && os.platform() === 'win32' && !!process.env.CI, 'Python REPL completion popup did not appear on Windows CI; known reticulate/jedi initialisation issue');
     if (!popupVisible) throw new Error('Python REPL completion popup did not appear');
 
     await page.keyboard.press('Tab');
