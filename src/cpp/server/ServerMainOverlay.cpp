@@ -15,8 +15,11 @@
 
 #include <shared_core/Error.hpp>
 #include <set>
+#include <ostream>
 
 #include <core/system/System.hpp>
+
+#include <server/ServerOptions.hpp>
 
 using namespace rstudio::core;
 
@@ -59,12 +62,21 @@ void shutdown()
 bool requireLocalR()
 {
    return true;
-} 
+}
 
 bool isLoadBalanced()
 {
    return false;
 }
+
+// OSS no-op stub for the extended --check-config overlay hook.
+// Pro builds override this to run database-connectivity and license checks.
+Error checkConfig(const Options& /*options*/, std::ostream& /*out*/, bool* pPassed)
+{
+   *pPassed = true;
+   return Success();
+}
+
 } // namespace overlay
 } // namespace server
 } // namespace rstudio

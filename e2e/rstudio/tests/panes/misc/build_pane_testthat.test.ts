@@ -5,7 +5,7 @@ import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
 import { documentOpen, executeCommand, openProject } from '@utils/commands';
-import * as fs from 'fs';
+import { seedSandboxFile } from '@utils/files';
 import * as path from 'path';
 import type { Page } from 'playwright';
 
@@ -53,7 +53,6 @@ test.describe('Build pane', () => {
     // with a letter, so build the name from a hex stamp rather than Date.now().
     const projectName = `BuildPaneTest${Math.random().toString(16).slice(2, 10)}`;
     const projectDir = path.join(sandbox.dir, projectName);
-    const testFile = path.join(projectDir, 'tests', 'testthat', 'test-example.R');
     const projectNameLit = rStringLiteral(projectName);
     const projectDirLit = rPathLiteral(projectDir);
 
@@ -72,11 +71,14 @@ test.describe('Build pane', () => {
     await openProject(page, `${projectDir}/${projectName}.Rproj`);
     await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
 
-    // Write a trivial testthat test file via Node fs and open it -- testTestthatFile
-    // runs the active document, so the file has to be the current source tab.
-    fs.mkdirSync(path.dirname(testFile), { recursive: true });
-    fs.writeFileSync(
-      testFile,
+    // Seed the testthat test file -- testTestthatFile runs the active
+    // document, so the file has to be the current source tab. seedSandboxFile
+    // mkdirs the tests/testthat tree and writes via R when the sandbox is
+    // not writable from the test process (Server-on-Linux: rsession-owned).
+    const testFile = await seedSandboxFile(
+      page,
+      projectDir,
+      'tests/testthat/test-example.R',
       'test_that("we can run a test", {\n  expect_equal(2 + 2, 4)\n})\n',
     );
     await documentOpen(page, testFile);

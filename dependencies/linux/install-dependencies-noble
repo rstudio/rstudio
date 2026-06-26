@@ -54,6 +54,7 @@ sudo apt-get -y install \
   libsqlite3-dev \
   libssl-dev \
   libuser1-dev \
+  libuv1-dev \
   libxslt1-dev \
   lsof \
   openjdk-17-jdk \

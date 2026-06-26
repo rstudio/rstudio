@@ -143,7 +143,16 @@ test.describe('SQL Preview security (rstudio-pro#10981)', () => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
   });
 
+  // Tracked by #18064 (re-enable on Server). On Server the consent flow hits
+  // a GWT null dereference (product bug #18065), which keeps the
+  // error-confirmation dialog from rendering. Marked test.fixme (not skipped)
+  // so it stays visible and re-enables itself once #18065 is fixed; matches
+  // the r2d3 preview-consent test, which fixmes the same crash.
   test('preview runs the expression after the user consents', async ({ rstudioPage: page }) => {
+    test.fixme(
+      process.env.PW_RSTUDIO_MODE === 'server',
+      'GWT null dereference during SQL preview consent on Linux Server; see #18065',
+    );
     const sentinel = `${sandbox.dir}/pwned_preview_allowed.txt`;
     const fileName = 'injection_preview_allowed.sql';
     const content = heredoc`

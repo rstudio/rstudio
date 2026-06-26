@@ -198,7 +198,13 @@ async function createProjectInNewDir(
   }
 
   const createBtn = page.locator(CREATE_PROJECT_BTN);
-  await expect(createBtn).toBeVisible({ timeout: 5000 });
+  // The Quarto project pages fire an async quartoCapabilities() server call in
+  // onActivate and surface the wait via indicator.onProgress(); the modal
+  // dialog's progress indicator disables ALL dialog buttons (including this
+  // one) until the response lands or the page's 30s capabilities timeout
+  // fires. Waiting on `toBeVisible` alone races that fetch on slow CI, so
+  // wait for the button to actually be enabled before clicking.
+  await expect(createBtn).toBeEnabled({ timeout: 30000 });
 
   // Pre-reset the readiness flag before creating: project creation restarts
   // the session into the new project, and we want waitForSessionRestart to

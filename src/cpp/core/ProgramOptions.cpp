@@ -29,7 +29,18 @@ namespace rstudio {
 namespace core {
 
 namespace program_options {
- 
+
+bool detectCheckConfigMode(int argc, const char* const argv[])
+{
+   for (int i = 1; i < argc; ++i)
+   {
+      std::string arg(argv[i]);
+      if (arg == "--check-config" || arg == "--test-config")
+         return true;
+   }
+   return false;
+}
+
 namespace {
 
 enum class OptionsParseState
@@ -170,6 +181,57 @@ bool parseConfigFile(variables_map& vm,
    return true;
 }
 
+// Collect all unrecognized keys from the config file by parsing with
+// allow_unregistered=true. Used by --check-config to report every
+// unrecognized key in a single pass rather than stopping at the first.
+// On a read failure pError is set; a successful read leaves it unmodified.
+std::vector<std::string> collectUnrecognizedConfigKeys(
+      const std::string& configFile,
+      const OptionsDescription& optionsDescription,
+      Error* pError)
+{
+   std::vector<std::string> unrecognized;
+
+   if (configFile.empty())
+      return unrecognized;
+
+   std::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(configFile).openForRead(pIfs);
+   if (error)
+   {
+      if (pError)
+         *pError = error;
+      return unrecognized;
+   }
+
+   // Parse with allow_unregistered=true to collect every unrecognized key in a
+   // single pass. Only an invalid-syntax error is caught here -- it is already
+   // reported by the main parse, which runs before this scan -- so that any
+   // other exception propagates rather than being silently reported as a clean
+   // check.
+   try
+   {
+      parsed_options parsed = parse_config_file(*pIfs,
+                                                optionsDescription.configFile,
+                                                true /* allow_unregistered */);
+
+      // collect the key name of each unregistered option; we use string_key
+      // rather than collect_unrecognized() so we report only the option names
+      // and not their values
+      for (const auto& option : parsed.options)
+      {
+         if (option.unregistered && !option.string_key.empty())
+            unrecognized.push_back(option.string_key);
+      }
+   }
+   catch(const boost::program_options::invalid_config_file_syntax&)
+   {
+      // a syntax error would already have been reported by the main parse
+   }
+
+   return unrecognized;
+}
+
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
@@ -177,18 +239,29 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
                    bool allowUnregisteredConfigOptions,
-                   bool configFileHasPrecedence)
+                   bool configFileHasPrecedence,
+                   bool deferCheckConfig)
 {
    *pHelp = false;
    std::string configFile;
    OptionsParseState state = OptionsParseState::Initial;
+
+   // detect --check-config (and its deprecated alias --test-config) early via a
+   // raw argv scan so we can relax config parsing before the full parse runs;
+   // this lets us collect ALL unrecognized keys in a single pass rather than
+   // stopping at the first
+   bool checkConfigMode = detectCheckConfigMode(argc, argv);
+   if (checkConfigMode)
+      allowUnregisteredConfigOptions = true;
+
    try
-   {        
+   {
       // general options
       options_description general("general");
       general.add_options()
          ("help", "print help message")
-         ("test-config", "test to ensure the config file is valid")
+         ("test-config", "deprecated alias for --check-config")
+         ("check-config", "validate the configuration file and report all unrecognized options in a single pass")
          ("config-file",
            value<std::string>(&configFile)->default_value(
                                     optionsDescription.defaultConfigFilePath),
@@ -256,10 +329,58 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          }
       }
 
-      // if this was a config-test then return exitSuccess, otherwise run
-      if (vm.count("test-config"))
+      // run the configuration check for --check-config (or its deprecated
+      // alias --test-config); otherwise start normally
+      if (checkConfigMode)
       {
-         return ProgramStatus::exitSuccess();
+         // --test-config is retained as a deprecated alias for --check-config
+         if (vm.count("test-config"))
+         {
+            std::cerr << "Warning: --test-config is deprecated and will be removed "
+                         "in a future release; use --check-config instead."
+                      << std::endl;
+         }
+
+         // report a missing config file explicitly rather than as a clean
+         // check, so a typo'd or absent path is not mistaken for success. The
+         // PASS/FAIL verdict goes to stdout; the exit code is the contract.
+         if (configFile.empty())
+         {
+            std::cout << "[FAIL] No configuration file found to validate; "
+                         "specify one with --config-file" << std::endl;
+            return ProgramStatus::exitFailure();
+         }
+
+         // collect every unrecognized option in a single pass
+         Error scanError;
+         std::vector<std::string> unrecognizedKeys =
+               collectUnrecognizedConfigKeys(configFile, optionsDescription, &scanError);
+         if (scanError)
+         {
+            std::cout << "[FAIL] Config file " << configFile << ": "
+                      << scanError.getSummary() << std::endl;
+            return ProgramStatus::exitFailure();
+         }
+
+         if (unrecognizedKeys.empty())
+         {
+            std::cout << "[PASS] Config file " << configFile
+                      << ": no unrecognized options found" << std::endl;
+            // When the caller has requested deferred mode it will run additional
+            // extended checks (file-path existence, R installation, etc.) before
+            // deciding the final exit code, so hand control back via run().
+            // In non-deferred mode (rsession, postback, ...) exit immediately as
+            // before so that behaviour is completely unchanged for those callers.
+            if (deferCheckConfig)
+               return ProgramStatus::run();
+            return ProgramStatus::exitSuccess();
+         }
+
+         std::cout << "[FAIL] Config file " << configFile
+                   << ": unrecognized option(s):" << std::endl;
+         for (const std::string& key : unrecognizedKeys)
+            std::cout << "  - " << key << std::endl;
+         return ProgramStatus::exitFailure();
       }
       else
       {
