@@ -537,14 +537,22 @@ jobs:
           # directly. xvfb-run is a shell wrapper that does not forward signals
           # to its child, which left cancelled Linux e2e jobs running until
           # their timeout-minutes instead of stopping. -ac disables X access
-          # control so Chromium connects without an auth cookie; we wait for
-          # the X socket before launching so it doesn't race a cold display.
+          # control so Chromium connects without an auth cookie; -nolisten tcp
+          # keeps the display on the local socket only. We wait for the X socket
+          # before launching so it doesn't race a cold display, and fail loudly
+          # (dumping the Xvfb log) if it never comes up, rather than exec-ing
+          # Playwright against a dead display and surfacing an opaque launch error.
           Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
           export DISPLAY=:99
           for _ in $(seq 1 50); do
             [ -S /tmp/.X11-unix/X99 ] && break
             sleep 0.1
           done
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
+            cat /tmp/xvfb.log || true
+            exit 1
+          fi
           exec npx playwright test "${ARGS[@]}"
 
       # Platform-prefixed artifact name. When this Linux Server workflow runs
