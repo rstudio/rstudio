@@ -17,6 +17,8 @@
 
   Var MUI_TEMP
   Var START_MENU
+  Var RunningAsShellUser
+  Var RunningFromInstaller
 ;--------------------------------
 ;Include Modern UI
 
@@ -49,6 +51,7 @@
 
   !include "UAC.nsh"
   !include "NsisMultiUser.nsh"
+  !include "StdUtils.nsh"
 
   ;
   ; RSTUDIO CHANGE - Replace PROGRAMFILES with PROGRAMFILES64 (done in 3 locations)
@@ -281,6 +284,7 @@ FunctionEnd
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 
+  !insertmacro MULTIUSER_UNPAGE_INSTALLMODE
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -361,7 +365,7 @@ Section "-Remove previous installation"
   ;Run the uninstaller (in place, to allow ExecWait to work properly)
   ClearErrors
   DetailPrint "Removing previous installation..."    
-  ExecWait '"$INSTDIR\Uninstall.exe" /S _?=$INSTDIR'
+  ExecWait '"$INSTDIR\Uninstall.exe" /S /uninstall _?=$INSTDIR'
 
   ; don't remove the uninstaller if we failed
   IfErrors done
@@ -408,27 +412,34 @@ SectionEnd
 ;--------------------------------
 ; determine admin versus local install
 Function un.onInit
+  ${GetParameters} $R0
 
-  ClearErrors
-  UserInfo::GetName
-  IfErrors noLM
-  Pop $0
-  UserInfo::GetAccountType
-  Pop $1
-  StrCmp $1 "Admin" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Admin group'
-    Goto done
-  StrCmp $1 "Power" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Power Users group'
-    Goto done
+  ${GetOptions} $R0 "/uninstall" $R1
+  ${ifnot} ${errors}
+    StrCpy $RunningFromInstaller 1
+  ${else}
+    StrCpy $RunningFromInstaller 0
+  ${endif}
 
-  noLM:
-    ;Get installation folder from registry if available
+  ${GetOptions} $R0 "/shelluser" $R1
+  ${ifnot} ${errors}
+    StrCpy $RunningAsShellUser 1
+  ${else}
+    StrCpy $RunningAsShellUser 0
+  ${endif}
 
-  done:
+  ${ifnot} ${UAC_IsInnerInstance}
+  ${andif} $RunningFromInstaller = 0
+    ${if} ${UAC_IsAdmin}
+    ${andif} $RunningAsShellUser = 0
+      ; Relaunch the uninstaller as the (unelevated) shell user so a per-user
+      ; uninstall doesn't needlessly prompt for elevation (#14122).
+      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${UNINSTALL_FILENAME}" "open" "/shelluser $R0"
+      Quit
+    ${endif}
+  ${endif}
 
+  !insertmacro MULTIUSER_UNINIT
 FunctionEnd
 
 ;--- Add/Remove callback functions: ---
@@ -489,7 +500,7 @@ Section "Uninstall"
 
   ;Remove the uninstaller itself.
   Delete "$INSTDIR\Uninstall.exe"
-  DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@"
+  !insertmacro MULTIUSER_RegistryRemoveInstallInfo
 
   ;
   ; RSTUDIO CHANGE - Remove shortcuts
