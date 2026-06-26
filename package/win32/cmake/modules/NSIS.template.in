@@ -16,13 +16,39 @@
 ;Variables
 
   Var MUI_TEMP
-  Var SV_ALLUSERS
   Var START_MENU
-  Var IS_DEFAULT_INSTALLDIR
 ;--------------------------------
 ;Include Modern UI
 
   !include "MUI.nsh"
+
+;--------------------------------
+; NsisMultiUser: per-user / all-users install with UAC on demand
+
+  !addincludedir "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Include"
+  !addplugindir /x86-ansi    "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-ansi"
+  !addplugindir /x86-unicode "@CPACK_DEPENDENCIES_DIR@/nsis-multiuser/@CPACK_NSIS_MULTIUSER_VERSION@/Plugins/x86-unicode"
+
+  !define PRODUCT_NAME "RStudio"
+  !define PROGEXE "rstudio.exe"
+  !define COMPANY_NAME "@CPACK_PACKAGE_VENDOR@"
+  !define CONTACT "@CPACK_NSIS_CONTACT@"
+  !define URL_INFO_ABOUT "@CPACK_NSIS_URL_INFO_ABOUT@"
+  !define URL_HELP_LINK "@CPACK_NSIS_HELP_LINK@"
+  !define URL_UPDATE_INFO "@CPACK_NSIS_URL_INFO_ABOUT@"
+  !define UNINSTALL_FILENAME "Uninstall.exe"
+
+  !define MULTIUSER_INSTALLMODE_INSTDIR "@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+  !define MULTIUSER_INSTALLMODE_DISPLAYNAME "@CPACK_NSIS_DISPLAY_NAME@"
+  !define MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY "@CPACK_PACKAGE_NAME@"
+  !define MULTIUSER_INSTALLMODE_64_BIT 1
+  !define MULTIUSER_INSTALLMODE_ALLOW_ELEVATION 1
+  !define MULTIUSER_INSTALLMODE_ALLOW_ELEVATION_IF_SILENT 1
+  !define MULTIUSER_INSTALLMODE_ALLOW_BOTH_INSTALLATIONS 0
+  !define MULTIUSER_INSTALLMODE_DEFAULT_ALLUSERS 1
+
+  !include "UAC.nsh"
+  !include "NsisMultiUser.nsh"
 
   ;
   ; RSTUDIO CHANGE - Replace PROGRAMFILES with PROGRAMFILES64 (done in 3 locations)
@@ -61,12 +87,6 @@
   VIAddVersionKey InternalName "RStudio"
   VIAddVersionKey LegalCopyright "Copyright (C) @CPACK_COPYRIGHT_YEAR@ by Posit Software, PBC"
   VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of Posit Software, PBC"
-
-  ;
-  ; RSTUDIO CHANGE - Don't require admin privs to install
-  ; (preserves behavior in < 2.5)
-  ;
-  RequestExecutionLevel none
 
   ;Set compression
   SetCompressor @CPACK_NSIS_COMPRESSOR@
@@ -108,7 +128,7 @@ Var AR_RegFlags
 
   ClearErrors
   ;Reading component status from registry
-  ReadRegDWORD $AR_RegFlags HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" "Installed"
+  ReadRegDWORD $AR_RegFlags SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" "Installed"
   IfErrors "default_${SecName}"
     ;Status will stay default if registry value not found
     ;(component was never installed)
@@ -141,13 +161,13 @@ Var AR_RegFlags
     ;Section is not selected:
     ;Calling Section uninstall macro and writing zero installed flag
     !insertmacro "Remove_${${SecName}}"
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" \
+    WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" \
   "Installed" 0
     Goto "exit_${SecName}"
 
  "leave_${SecName}:"
     ;Section is selected:
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" \
+    WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@\Components\${SecName}" \
   "Installed" 1
 
  "exit_${SecName}:"
@@ -249,6 +269,7 @@ FunctionEnd
 ;--------------------------------
 ;Pages
   !insertmacro MUI_PAGE_WELCOME
+  !insertmacro MULTIUSER_PAGE_INSTALLMODE
 
   ;
   ; RSTUDIO CHANGE - eliminate license screen
@@ -317,6 +338,7 @@ FunctionEnd
   !insertmacro MUI_LANGUAGE "Turkish"
   !insertmacro MUI_LANGUAGE "Ukrainian"
   !insertmacro MUI_LANGUAGE "Welsh"
+  !insertmacro MULTIUSER_LANGUAGE_INIT
 
 ;--------------------------------
 ;Reserve Files
@@ -364,46 +386,8 @@ Section "-Core installation"
 
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  Push "DisplayName"
-  Push "@CPACK_NSIS_DISPLAY_NAME@"
-  Call ConditionalAddToRegisty
-  Push "DisplayVersion"
-  Push "@CPACK_PACKAGE_VERSION@"
-  Call ConditionalAddToRegisty
-  Push "Publisher"
-  Push "@CPACK_PACKAGE_VENDOR@"
-  Call ConditionalAddToRegisty
-  Push "UninstallString"
-  Push "$INSTDIR\Uninstall.exe"
-  Call ConditionalAddToRegisty
-  Push "NoRepair"
-  Push "1"
-  Call ConditionalAddToRegisty
-
-  !ifdef CPACK_NSIS_ADD_REMOVE
-  ;Create add/remove functionality
-  Push "ModifyPath"
-  Push "$INSTDIR\AddRemove.exe"
-  Call ConditionalAddToRegisty
-  !else
-  Push "NoModify"
-  Push "1"
-  Call ConditionalAddToRegisty
-  !endif
-
-  ; Optional registration
-  Push "DisplayIcon"
-  Push "$INSTDIR\@CPACK_NSIS_INSTALLED_ICON_NAME@"
-  Call ConditionalAddToRegisty
-  Push "HelpLink"
-  Push "@CPACK_NSIS_HELP_LINK@"
-  Call ConditionalAddToRegisty
-  Push "URLInfoAbout"
-  Push "@CPACK_NSIS_URL_INFO_ABOUT@"
-  Call ConditionalAddToRegisty
-  Push "Contact"
-  Push "@CPACK_NSIS_CONTACT@"
-  Call ConditionalAddToRegisty
+  !insertmacro MULTIUSER_RegistryAddInstallInfo
+  !insertmacro MULTIUSER_RegistryAddInstallSizeInfo
 
   ;Create shortcuts
   CreateShortCut "$SMPROGRAMS\RStudio.lnk" "$INSTDIR\.\rstudio.exe"
@@ -566,71 +550,22 @@ Section "Uninstall"
 SectionEnd
 
 ;--------------------------------
-; determine admin versus local install
-; Is install for "AllUsers" or "JustMe"?
-; Default to "JustMe" - set to "AllUsers" if admin or on Win9x
-; This function is used for the very first "custom page" of the installer.
-; This custom page does not show up visibly, but it executes prior to the
-; first visible page and sets up $INSTDIR properly...
-; Choose different default installation folder based on SV_ALLUSERS...
-; "Program Files" for AllUsers, "%localappdata%\Programs" for JustMe...
-
 Function .onInit
 
-  ;
-  ; RSTUDIO CHANGE - check for running version of app
-  ;
+  ; Guard the running-app check so it runs only in the (unelevated) outer
+  ; instance, before MULTIUSER_INIT (which may relaunch elevated).
+  ${ifnot} ${UAC_IsInnerInstance}
+    ${nsProcess::FindProcess} "rstudio.exe" $R0
+    ${If} $R0 = 0
+      MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
+      Abort
+    ${EndIf}
+    ${nsProcess::Unload}
+  ${endif}
 
-  ; Detect whether the application is running
+  !insertmacro MULTIUSER_INIT
 
-  ${nsProcess::FindProcess} "rstudio.exe" $R0
-  ${If} $R0 = 0
-    MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
-    Abort
-  ${EndIf}
-  ${nsProcess::Unload}
-
-  ; Reads components status for registry
+  ; Component status (uses SHCTX set by MULTIUSER_INIT)
   !insertmacro SectionList "InitSection"
-
-  ; check to see if /D has been used to change
-  ; the install directory by comparing it to the
-  ; install directory that is expected to be the
-  ; default
-  StrCpy $IS_DEFAULT_INSTALLDIR 0
-  StrCmp "$INSTDIR" "$PROGRAMFILES64\@CPACK_PACKAGE_INSTALL_DIRECTORY@" 0 +2
-    StrCpy $IS_DEFAULT_INSTALLDIR 1
-
-  StrCpy $SV_ALLUSERS "JustMe"
-  ; if default install dir then change the default
-  ; if it is installed for JustMe
-  StrCmp "$IS_DEFAULT_INSTALLDIR" "1" 0 +2
-    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
-
-  ClearErrors
-  UserInfo::GetName
-  IfErrors noLM
-  Pop $0
-  UserInfo::GetAccountType
-  Pop $1
-  StrCmp $1 "Admin" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Admin group'
-    StrCpy $SV_ALLUSERS "AllUsers"
-    Goto done
-  StrCmp $1 "Power" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Power Users group'
-    StrCpy $SV_ALLUSERS "AllUsers"
-    Goto done
-
-  noLM:
-    StrCpy $SV_ALLUSERS "AllUsers"
-    ;Get installation folder from registry if available
-
-  done:
-  StrCmp $SV_ALLUSERS "AllUsers" 0 +3
-    StrCmp "$IS_DEFAULT_INSTALLDIR" "1" 0 +2
-      StrCpy $INSTDIR "$PROGRAMFILES64\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
 
 FunctionEnd
