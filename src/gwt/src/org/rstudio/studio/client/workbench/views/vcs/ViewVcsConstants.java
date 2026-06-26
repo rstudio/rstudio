@@ -146,6 +146,8 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String selectedChangesInFileWillBeLost();
     String commit();
     String diff();
+    String showMore();
+    String showLess();
     String addedCapitalized();
     String modifiedCapitalized();
     String deletedCapitalized();
