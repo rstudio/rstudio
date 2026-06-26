@@ -113,6 +113,11 @@ jobs:
       SCCACHE_GHA_ENABLED: 'true'
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
 
     steps:
       - uses: actions/checkout@v4
@@ -187,9 +192,9 @@ jobs:
             src/gwt/www
             src/gwt/bin
             src/gwt/extras
-          key: rstudio-gwt-win64-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-win64-${{ env.GWT_STYLE }}-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-win64-
+            rstudio-gwt-win64-${{ env.GWT_STYLE }}-
 
       - name: Install build tools
         run: |
