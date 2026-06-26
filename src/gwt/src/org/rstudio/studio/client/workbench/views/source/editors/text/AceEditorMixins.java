@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.JavaScriptEventHistory;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.JavaScriptEventHistory.EventData;
@@ -40,6 +41,7 @@ public class AceEditorMixins
          @Override
          public void run()
          {
+            selectionPending_ = false;
             Desktop.getFrame().setGlobalMouseSelection(lastSelection_);
          }
       };
@@ -61,6 +63,7 @@ public class AceEditorMixins
                // save the current selection, and prepare to update pasteboard
                String selection = editor_.getSelectedText();
                lastSelection_ = selection;
+               selectionPending_ = true;
                timer_.schedule(TIMER_DELAY_MS);
             }
          });
@@ -87,6 +90,7 @@ public class AceEditorMixins
 
                String selection = editor_.getSelectedText();
                lastSelection_ = selection;
+               selectionPending_ = true;
                timer_.schedule(TIMER_DELAY_MS);
             }
          });
@@ -103,7 +107,20 @@ public class AceEditorMixins
          selectionChangedReg_ = null;
       }
    }
-   
+
+   // push a pending selection to the global mouse selection immediately,
+   // bypassing the debounce timer (invoked on mouse-up); a no-op when no
+   // selection is pending (e.g. on non-Linux-Desktop platforms)
+   private final void flushPendingSelection()
+   {
+      if (!selectionPending_)
+         return;
+
+      selectionPending_ = false;
+      timer_.cancel();
+      Desktop.getFrame().setGlobalMouseSelection(lastSelection_);
+   }
+
    @Inject
    private void initialize(JavaScriptEventHistory history)
    {
@@ -124,6 +141,13 @@ public class AceEditorMixins
          self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(*)(this, text);
 
       });
+
+      // flush any pending selection to the global mouse selection as soon as
+      // the mouse is released, so a quick select-then-middle-click-paste sees
+      // the selection even before the debounce timer has fired
+      editor.container.addEventListener("mouseup", $entry(function(event) {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::flushPendingSelection()();
+      }), true);
 
    }-*/;
    
@@ -153,7 +177,15 @@ public class AceEditorMixins
       if (useGlobalMouseSelection)
       {
          Desktop.getFrame().getGlobalMouseSelection(selection ->
-               onReadyToPaste.execute(selection));
+         {
+            // the tracked selection is pushed on a debounce timer, and only
+            // by Ace editors -- so it can be empty here (e.g. the user selected
+            // and middle-clicked faster than the timer fired, or the selection
+            // came from a non-Ace source). in that case, fall back to the text
+            // the paste event already carried, which holds the primary selection.
+            String pasteText = StringUtil.isNullOrEmpty(selection) ? text : selection;
+            onReadyToPaste.execute(pasteText);
+         });
       }
       else
       {
@@ -197,9 +229,9 @@ public class AceEditorMixins
       // (be permissive as to what mouse even occurred)
       String type = event.getType();
       return
-            type == "mousedown" ||
-            type == "click" ||
-            type == "mouseup";
+            type.contentEquals("mousedown") ||
+            type.contentEquals("click") ||
+            type.contentEquals("mouseup");
    }
    
    private static final native void invokePasteHandler(AceEditorNative editor, String text)
@@ -214,6 +246,7 @@ public class AceEditorMixins
    private final Timer timer_;
 
    private String lastSelection_;
+   private boolean selectionPending_;
    private HandlerRegistration selectionChangedReg_;
    
    // Injected ----
