@@ -120,3 +120,9 @@ Set `RSTUDIO_SHOW_WHATS_NEW=1` when launching RStudio Desktop to force the
 What's New window to appear at startup, regardless of build type or seen state.
 
 Use **Help** > **What's New** to open it on demand.
+
+In a local developer build the release name is not yet baked in, so it is read
+from `version/RELEASE` at runtime. This means **Help** > **What's New** shows the
+content folder for the in-progress release (the slugified flower name, e.g.
+`pacific-dogwood`), letting you preview the current release's content while it is
+still being written. Packaged builds use the release name baked in at build time.

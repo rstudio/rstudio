@@ -63,7 +63,7 @@ import { buildInfo } from './build-info';
 import { detectRosetta } from './detect-rosetta';
 import { showPersistentSplashScreen } from './splash-screen';
 import { showWhatsNewWindow } from './whats-new-window';
-import { toReleaseSlug, isValidSlug, resolveWhatsNewContentPath } from './whats-new-utils';
+import { toReleaseSlug, isValidSlug, resolveReleaseName, resolveWhatsNewContentPath } from './whats-new-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -1107,7 +1107,8 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_show_whats_new', () => {
       const info = buildInfo();
-      const slug = toReleaseSlug(info.RSTUDIO_RELEASE_NAME);
+      const releaseName = resolveReleaseName(info.RSTUDIO_RELEASE_NAME, findRepoRoot());
+      const slug = toReleaseSlug(releaseName);
 
       if (!isValidSlug(slug) || !resolveWhatsNewContentPath(slug)) {
         const msgBoxOptions = {
@@ -1131,7 +1132,7 @@ export class GwtCallback extends EventEmitter {
 
       showWhatsNewWindow({
         releaseSlug: slug,
-        releaseName: info.RSTUDIO_RELEASE_NAME,
+        releaseName: releaseName,
         version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
         parent: this.mainWindow.window,
       });
