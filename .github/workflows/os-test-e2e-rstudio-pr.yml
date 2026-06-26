@@ -34,11 +34,10 @@ jobs:
   #      (link + filename + sha256 + commit all present).
   #   3. The daily's commit already contains this branch's merge-base, else it
   #      predates the behavior the (possibly main-merged) test-only branch assumes.
-  # Any miss falls back to a source build. macOS, Windows, and Linux Desktop are
-  # decided independently via decide() -- each has an electron-product entry in
-  # the manifest, possibly carrying a different commit per platform. Linux Server
-  # ships as a .deb the electron manifest doesn't cover, so it uses the simpler
-  # source-changed signal instead.
+  # Any miss falls back to a source build. All four platforms are decided
+  # independently via decide(): macOS/Windows/Linux Desktop look up the electron
+  # product, Linux Server the server product. Each manifest entry carries its own
+  # commit, so every platform is checked against its own daily build.
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -81,31 +80,33 @@ jobs:
             MANIFEST=""
           fi
 
-          # Echoes "true" (build from source) or "false" (use the daily) for
-          # the electron platform key passed as $1.
+          # Echoes "true" (build from source) or "false" (use the daily) for the
+          # manifest product ($1, e.g. "electron" or "server") and platform key
+          # ($2). product/key appears in every log line because some keys
+          # (e.g. "noble-amd64") exist under more than one product.
           decide() {
-            local key="$1"
+            local product="$1" key="$2"
 
             if [ "$SOURCE_CHANGED" = true ]; then
-              echo "$key: source files changed -- building from source" >&2
+              echo "$product/$key: source files changed -- building from source" >&2
               echo true
               return
             fi
 
             if [ -z "$MANIFEST" ]; then
-              echo "$key: daily manifest unreachable -- building from source" >&2
+              echo "$product/$key: daily manifest unreachable -- building from source" >&2
               echo true
               return
             fi
 
             local entry link filename sha commit
-            entry=$(echo "$MANIFEST" | jq -c --arg k "$key" '.products.electron.platforms[$k] // empty')
+            entry=$(echo "$MANIFEST" | jq -c --arg p "$product" --arg k "$key" '.products[$p].platforms[$k] // empty')
             link=$(echo "$entry" | jq -r '.link // empty')
             filename=$(echo "$entry" | jq -r '.filename // empty')
             sha=$(echo "$entry" | jq -r '.sha256 // empty')
             commit=$(echo "$entry" | jq -r '.commit // empty')
             if [ -z "$link" ] || [ -z "$filename" ] || [ -z "$sha" ] || [ -z "$commit" ]; then
-              echo "$key: daily manifest missing fields (link='$link' filename='$filename' sha256='$sha' commit='$commit') -- building from source" >&2
+              echo "$product/$key: daily manifest missing fields (link='$link' filename='$filename' sha256='$sha' commit='$commit') -- building from source" >&2
               echo true
               return
             fi
@@ -119,30 +120,27 @@ jobs:
               git fetch --no-tags --quiet origin "$commit" 2>/dev/null || true
             fi
             if git merge-base --is-ancestor "$BASE" "$commit" 2>/dev/null; then
-              echo "$key: daily $commit contains merge-base $BASE -- using daily" >&2
+              echo "$product/$key: daily $commit contains merge-base $BASE -- using daily" >&2
               echo false
             else
-              echo "$key: daily $commit does not contain merge-base $BASE -- building from source" >&2
+              echo "$product/$key: daily $commit does not contain merge-base $BASE -- building from source" >&2
               echo true
             fi
           }
 
-          MACOS=$(decide macos)
-          WINDOWS=$(decide windows)
-          # Linux Desktop ships as an Electron .deb keyed "noble-amd64" under
-          # the electron product in the manifest, so it rides decide() with that
-          # key just like macOS/Windows.
-          LINUXDESKTOP=$(decide noble-amd64)
-          # Linux Server ships as a .deb the electron daily manifest doesn't
-          # carry, so it can't use decide()'s per-platform daily lookup. Use the
-          # source-changed signal: build from source on a source change;
-          # otherwise the linux server reusable resolves the latest daily .deb
-          # itself.
-          echo "Decision: macos build_from_source=$MACOS, windows build_from_source=$WINDOWS, linux-desktop build_from_source=$LINUXDESKTOP, linux-server build_from_source=$SOURCE_CHANGED"
+          # macOS/Windows/Linux Desktop are electron-product builds; Linux Server
+          # is the server-product .deb. Both products carry the same per-platform
+          # fields (link/filename/sha256/commit), so all four ride decide() and
+          # get the same staleness check against the daily's commit.
+          MACOS=$(decide electron macos)
+          WINDOWS=$(decide electron windows)
+          LINUXDESKTOP=$(decide electron noble-amd64)
+          LINUXSERVER=$(decide server noble-amd64)
+          echo "Decision: macos build_from_source=$MACOS, windows build_from_source=$WINDOWS, linux-desktop build_from_source=$LINUXDESKTOP, linux-server build_from_source=$LINUXSERVER"
           echo "macos_build_from_source=$MACOS" >> "$GITHUB_OUTPUT"
           echo "windows_build_from_source=$WINDOWS" >> "$GITHUB_OUTPUT"
           echo "linux_desktop_build_from_source=$LINUXDESKTOP" >> "$GITHUB_OUTPUT"
-          echo "linux_server_build_from_source=$SOURCE_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "linux_server_build_from_source=$LINUXSERVER" >> "$GITHUB_OUTPUT"
 
   windows:
     needs: detect-changes
