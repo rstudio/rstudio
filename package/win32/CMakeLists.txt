@@ -166,7 +166,6 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
 
    WriteRegStr SHCTX 'Software\\\\Classes\\\\.Rtex' '' 'RStudio.rtex'
    WriteRegStr SHCTX 'Software\\\\Classes\\\\.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
-   WriteRegStr SHCTX 'Software\\\\Classes\\\\.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
    WriteRegStr SHCTX 'Software\\\\Classes\\\\RStudio.rtex' '' 'Sweave File'
    WriteRegStr SHCTX 'Software\\\\Classes\\\\RStudio.rtex\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-14'
    WriteRegStr SHCTX 'Software\\\\Classes\\\\RStudio.rtex\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
@@ -246,7 +245,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegValue SHCTX 'Software\\\\Classes\\\\.Rnw\\\\OpenWithProgids' 'RStudio.rnw'
    DeleteRegValue SHCTX 'Software\\\\Classes\\\\.tex\\\\OpenWithProgids' 'RStudio.tex'
    DeleteRegValue SHCTX 'Software\\\\Classes\\\\.Rprofvis\\\\OpenWithProgids' 'RStudio.rprofvis'
-   DeleteRegValue SHCTX 'Software\\\\Classes\\\\.Rtex\\\\OpenWithProgids' 'RStudio.rprofvis'
+   DeleteRegValue SHCTX 'Software\\\\Classes\\\\.Rtex\\\\OpenWithProgids' 'RStudio.rtex'
 #")
 
 # build installer
