@@ -85,7 +85,7 @@ RUN choco install -y awscli
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 RUN choco install -y jq
 RUN choco install -y ninja --version "1.12.1"
-RUN choco install -y nsis --version "3.10"
+RUN choco install -y nsis --version "3.12"
 RUN choco install -y python313
 RUN choco install -y strawberryperl
 RUN choco install -y temurin17
