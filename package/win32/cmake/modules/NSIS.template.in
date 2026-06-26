@@ -215,19 +215,6 @@ Var AR_RegFlags
 !include "WinMessages.NSH"
 !verbose 4
 
-;----------------------------------------
-
-Function ConditionalAddToRegisty
-  Pop $0
-  Pop $1
-  StrCmp "$0" "" ConditionalAddToRegisty_EmptyString
-    WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@" \
-    "$1" "$0"
-    ;MessageBox MB_OK "Set Registry: '$1' to '$0'"
-    DetailPrint "Set install registry entry: '$1' to '$0'"
-  ConditionalAddToRegisty_EmptyString:
-FunctionEnd
-
 ;--------------------------------
 
 !ifdef CPACK_USES_DOWNLOAD
@@ -410,7 +397,7 @@ Section "-Core installation"
 SectionEnd
 
 ;--------------------------------
-; determine admin versus local install
+; Uninstaller init: de-elevate a current-user uninstall, then hand off to NsisMultiUser
 Function un.onInit
   ${GetParameters} $R0
 
