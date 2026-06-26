@@ -3,7 +3,7 @@
              xmlns:hist='urn:import:org.rstudio.studio.client.workbench.views.vcs.dialog'
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
-   <ui:style>
+   <ui:style type="org.rstudio.studio.client.workbench.views.vcs.dialog.CommitDetail.DescriptionStyle">
       .summary td:first-child {
          font-weight: bold;
          padding-right: 16px;
@@ -19,6 +19,46 @@
 
       .summary td {
          padding-bottom: 6px;
+      }
+
+      .descriptionPanel {
+         max-width: 72ch;
+         margin-top: 6px;
+         border: 1px solid rgba(128, 128, 128, 0.25);
+         border-radius: 4px;
+         background-color: rgba(128, 128, 128, 0.06);
+         overflow: hidden;
+      }
+
+      .descriptionBody {
+         padding: 8px 12px;
+         white-space: pre-wrap;
+      }
+
+      .descriptionBody.clamped {
+         display: -webkit-box;
+         -webkit-box-orient: vertical;
+         -webkit-line-clamp: 4;
+         overflow: hidden;
+      }
+
+      .descriptionToggle {
+         display: block;
+         box-sizing: border-box;
+         width: 100%;
+         padding: 4px 0;
+         text-align: center;
+         font-size: 90%;
+         color: inherit;
+         cursor: pointer;
+         text-decoration: none;
+         border-top: 1px solid rgba(128, 128, 128, 0.25);
+         background-color: rgba(128, 128, 128, 0.12);
+      }
+
+      .descriptionToggle:hover {
+         background-color: rgba(128, 128, 128, 0.2);
+         text-decoration: none;
       }
 
       .toc {
@@ -71,6 +111,10 @@
                <td><g:Label ui:field="labelParent_" /></td>
             </tr>
          </table>
+         <g:HTMLPanel ui:field="descriptionPanel_" styleName="{style.descriptionPanel}" visible="false">
+            <g:HTML ui:field="labelDescription_" styleName="{style.descriptionBody}" />
+            <g:Anchor ui:field="descriptionToggle_" styleName="{style.descriptionToggle}" visible="false" />
+         </g:HTMLPanel>
          <hist:SizeWarningWidget ui:field="sizeWarning_"/>
          <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
          <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />

@@ -17,12 +17,16 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -48,6 +52,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    interface Binder extends UiBinder<Widget, CommitDetail>
    {}
 
+   public interface DescriptionStyle extends CssResource
+   {
+      String clamped();
+   }
+
    public CommitDetail()
    {
       sizeWarning_ = new SizeWarningWidget(constants_.commit());
@@ -58,6 +67,17 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       ThemeStyles styles = ThemeStyles.INSTANCE;
       labelId_.addStyleName(styles.selectableText());
       labelParent_.addStyleName(styles.selectableText());
+      labelDescription_.addStyleName(styles.selectableText());
+
+      descriptionToggle_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            event.preventDefault();
+            toggleDescriptionExpanded();
+         }
+      });
    }
 
    public void setIdDesc(String idDesc)
@@ -74,6 +94,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    public void setSelectedCommit(CommitInfo commit)
    {
       commit_ = commit;
+      descriptionExpanded_ = false;
       if (commit_ != null)
          updateInfo();
 
@@ -84,6 +105,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @Override
    public void clearDetails()
    {
+      descriptionExpanded_ = false;
       invalidation_.invalidate();
       tocPanel_.clear();
       detailPanel_.clear();
@@ -198,10 +220,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       );
       labelSubject_.setText(commit_.getSubject());
 
-      parentTableRow_.getStyle().setProperty(
-            "display",
-            StringUtil.isNullOrEmpty(commit_.getParent()) ? "none"
-                                                          : "table-row");
+      updateDescription();
+
+      parentTableRow_.getStyle().setDisplay(
+            StringUtil.isNullOrEmpty(commit_.getParent()) ? Display.NONE
+                                                          : Display.TABLE_ROW);
       labelParent_.setText(commit_.getParent());
    }
 
@@ -226,6 +249,62 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
          progressPanel_.setVisible(false);
          progressPanel_.endProgressOperation();
       }
+   }
+
+   private boolean descriptionExpanded_;
+
+   private void updateDescription()
+   {
+      // The commit description includes the subject as its first line; strip it
+      // here so the panel shows only the message body (the subject is already
+      // displayed separately in labelSubject_).
+      String description = commit_.getDescription();
+      String body = "";
+      int newline = description.indexOf('\n');
+      if (newline != -1)
+         body = description.substring(newline + 1).trim();
+
+      if (StringUtil.isNullOrEmpty(body))
+      {
+         descriptionPanel_.setVisible(false);
+         return;
+      }
+
+      descriptionPanel_.setVisible(true);
+      labelDescription_.setText(body);
+
+      // Start collapsed (clamped) so we can measure whether the body overflows.
+      setDescriptionExpanded(false);
+
+      // The "Show more"/"Show less" toggle is only useful when the body actually
+      // overflows the clamped height. Measure after layout (the body must be
+      // attached and clamped), and drop the clamp entirely for short bodies so
+      // they aren't truncated.
+      descriptionToggle_.setVisible(false);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            Element bodyEl = labelDescription_.getElement();
+            boolean overflowing = bodyEl.getScrollHeight() > bodyEl.getClientHeight();
+            descriptionToggle_.setVisible(overflowing);
+            if (!overflowing)
+               labelDescription_.removeStyleName(style.clamped());
+         }
+      });
+   }
+
+   private void toggleDescriptionExpanded()
+   {
+      setDescriptionExpanded(!descriptionExpanded_);
+   }
+
+   private void setDescriptionExpanded(boolean expanded)
+   {
+      descriptionExpanded_ = expanded;
+      labelDescription_.setStyleName(style.clamped(), !expanded);
+      descriptionToggle_.setText(expanded ? constants_.showLess() : constants_.showMore());
    }
 
    public void hideSizeWarning()
@@ -254,6 +333,12 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    Label labelSubject_;
    @UiField
+   HTML labelDescription_;
+   @UiField
+   HTMLPanel descriptionPanel_;
+   @UiField
+   Anchor descriptionToggle_;
+   @UiField
    Label labelParent_;
    @UiField
    VerticalPanel tocPanel_;
@@ -269,6 +354,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    Label emptySelectionLabel_;
    @UiField
    HTMLPanel commitViewPanel_;
+   @UiField
+   DescriptionStyle style;
 
    private ScrollPanel container_;
    private static final DateTimeFormat yearMonthDayFormat = DateTimeFormat.getFormat("yyyy-MM-dd");
