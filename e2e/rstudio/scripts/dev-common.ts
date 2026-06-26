@@ -363,10 +363,21 @@ export function runPlaywright(
   const reportEnv = manageReportDir ? { PLAYWRIGHT_HTML_OUTPUT_DIR: reportDir } : {};
 
   const isWindows = process.platform === 'win32';
-  const npx = isWindows ? 'npx.cmd' : 'npx';
-  const args = ['playwright', 'test', ...outputArgs, ...extraArgs];
+  // Run the Playwright CLI with the current node binary rather than the `npx`
+  // shim. On Windows `npx` is `npx.cmd`, and Node (>=22, and >=18.20 / >=20.12)
+  // refuses to spawn .cmd/.bat files without shell:true (CVE-2024-27980), which
+  // throws EINVAL here. shell:true would dodge that but reintroduce a quoting
+  // hazard for args containing spaces (e.g. --grep "open file"); invoking the
+  // resolved cli.js via process.execPath keeps array args intact on every
+  // platform. `playwright/cli` is blocked by the package's exports map, so
+  // resolve it from package.json (cli.js is the package's bin entry).
+  const playwrightCli = path.join(
+    path.dirname(require.resolve('playwright/package.json')),
+    'cli.js',
+  );
+  const args = [playwrightCli, 'test', ...outputArgs, ...extraArgs];
 
-  const child = spawn(npx, args, {
+  const child = spawn(process.execPath, args, {
     stdio: 'inherit',
     env: { ...process.env, PATH: pathWithPinnedNode(), ...reportEnv, ...env },
     // POSIX: give the child its own process group so a terminal Ctrl-C is
