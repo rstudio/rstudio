@@ -82,7 +82,8 @@ public class QuartoCommands
                   format = result.getFormat();
                   if (format.equals(QuartoCommandConstants.FORMAT_HTML) ||
                       format.equals(QuartoCommandConstants.FORMAT_PDF) ||
-                      format.equals(QuartoCommandConstants.FORMAT_DOCX))
+                      format.equals(QuartoCommandConstants.FORMAT_DOCX) ||
+                      format.equals(QuartoCommandConstants.FORMAT_TYPST))
                   {
                      template = "document.qmd";
                   }

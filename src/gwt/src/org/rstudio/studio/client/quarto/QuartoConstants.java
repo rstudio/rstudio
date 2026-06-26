@@ -34,8 +34,10 @@ public interface QuartoConstants extends Messages {
     String titleRequiredErrorMessage();
     String htmlFormatText();
     String htmlFormatDesc();
-    String pdfFormatText();
-    String pdfFormatDesc();
+    String pdfTypstFormatText();
+    String pdfLatexFormatText();
+    String pdfFormatDescLatex();
+    String pdfFormatDescTypst();
     String wordFormatText();
     String wordFormatDesc();
     String jsFormatText();
