@@ -4,6 +4,7 @@
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
 
 ### Fixed
+- ([#6796](https://github.com/rstudio/rstudio/issues/6796)): The Git History pane now shows the full commit message body (not just the subject line) when viewing commit details.
 - ([#17982](https://github.com/rstudio/rstudio/issues/17982)): Fixed a race condition in RStudio Desktop where the viewer pane iframe could be blocked by Electron's navigation policy, causing cross-origin SecurityErrors when previewing markdown files or R Notebooks as HTML. The `setViewerUrl` IPC call is now awaited before the iframe navigates, ensuring the URL authority is registered in time.
 - ([#18057](https://github.com/rstudio/rstudio/issues/18057)): Reduced the padding on text input fields and drop-down (select) controls, which had grown overly large (most noticeably in dark themes), and made the padding consistent across text inputs, password fields, and selects in both light and dark themes.
 - ([#18037](https://github.com/rstudio/rstudio/issues/18037)): Fixed the Plots pane not being brought to the front when Posit Assistant runs code that produces a plot. Interactive agent code now activates the Plots pane like a console command does.

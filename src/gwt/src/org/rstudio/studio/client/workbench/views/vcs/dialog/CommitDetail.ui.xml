@@ -21,6 +21,25 @@
          padding-bottom: 6px;
       }
 
+      .descriptionPanel {
+         width: 100%;
+         margin-top: 8px;
+         padding: 8px 12px;
+         white-space: pre-wrap;
+         overflow: hidden;
+         cursor: pointer;
+         max-height: 40px;
+         transition: max-height 0.2s ease;
+      }
+
+      .descriptionPanel.expanded {
+         max-height: none;
+      }
+
+      .descriptionPanel:hover {
+         background-color: #f0f0f0;
+      }
+
       .toc {
 
       }
@@ -71,6 +90,9 @@
                <td><g:Label ui:field="labelParent_" /></td>
             </tr>
          </table>
+         <g:HTMLPanel ui:field="descriptionPanel_" styleName="{style.descriptionPanel}" visible="false">
+            <g:HTML ui:field="labelDescription_" />
+         </g:HTMLPanel>
          <hist:SizeWarningWidget ui:field="sizeWarning_"/>
          <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
          <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />

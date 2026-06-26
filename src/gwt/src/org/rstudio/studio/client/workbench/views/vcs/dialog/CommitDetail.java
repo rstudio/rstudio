@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -58,6 +59,15 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       ThemeStyles styles = ThemeStyles.INSTANCE;
       labelId_.addStyleName(styles.selectableText());
       labelParent_.addStyleName(styles.selectableText());
+
+      descriptionPanel_.addDomHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            toggleDescriptionExpanded();
+         }
+      }, ClickEvent.getType());
    }
 
    public void setIdDesc(String idDesc)
@@ -74,6 +84,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    public void setSelectedCommit(CommitInfo commit)
    {
       commit_ = commit;
+      descriptionExpanded_ = false;
       if (commit_ != null)
          updateInfo();
 
@@ -84,6 +95,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @Override
    public void clearDetails()
    {
+      descriptionExpanded_ = false;
       invalidation_.invalidate();
       tocPanel_.clear();
       detailPanel_.clear();
@@ -198,10 +210,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       );
       labelSubject_.setText(commit_.getSubject());
 
-      parentTableRow_.getStyle().setProperty(
-            "display",
-            StringUtil.isNullOrEmpty(commit_.getParent()) ? "none"
-                                                          : "table-row");
+      updateDescription();
+
+      parentTableRow_.getStyle().setDisplay(
+            StringUtil.isNullOrEmpty(commit_.getParent()) ? Display.NONE
+                                                          : Display.TABLE_ROW);
       labelParent_.setText(commit_.getParent());
    }
 
@@ -226,6 +239,35 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
          progressPanel_.setVisible(false);
          progressPanel_.endProgressOperation();
       }
+   }
+
+   private boolean descriptionExpanded_;
+
+   private void updateDescription()
+   {
+      String description = commit_.getDescription();
+      if (StringUtil.isNullOrEmpty(description))
+      {
+         descriptionPanel_.setVisible(false);
+         return;
+      }
+
+      descriptionPanel_.setVisible(true);
+      labelDescription_.setText(description);
+
+      if (descriptionExpanded_)
+         descriptionPanel_.addStyleName("expanded");
+      else
+         descriptionPanel_.removeStyleName("expanded");
+   }
+
+   private void toggleDescriptionExpanded()
+   {
+      descriptionExpanded_ = !descriptionExpanded_;
+      if (descriptionExpanded_)
+         descriptionPanel_.addStyleName("expanded");
+      else
+         descriptionPanel_.removeStyleName("expanded");
    }
 
    public void hideSizeWarning()
@@ -253,6 +295,10 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    Label labelDate_;
    @UiField
    Label labelSubject_;
+   @UiField
+   HTML labelDescription_;
+   @UiField
+   HTMLPanel descriptionPanel_;
    @UiField
    Label labelParent_;
    @UiField
