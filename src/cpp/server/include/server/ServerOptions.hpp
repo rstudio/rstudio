@@ -87,6 +87,8 @@ public:
       return serverOffline_;
    }
 
+   bool checkConfigMode() const { return checkConfigMode_; }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -95,6 +97,7 @@ public:
 private:
    std::string monitorSharedSecret_;
    bool serverOffline_;
+   bool checkConfigMode_ = false;
    core::FilePath installPath_;
 
    std::map<std::string,std::string> overlayOptions_;

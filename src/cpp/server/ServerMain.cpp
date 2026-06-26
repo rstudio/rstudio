@@ -45,6 +45,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server_core/RVersionsScanner.hpp>
 #include <server_core/SecureKeyFile.hpp>
 #include <server_core/ServerDatabase.hpp>
 #include <server_core/http/SecureCookie.hpp>
@@ -75,6 +76,7 @@
 #include "server-config.h"
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
+#include "ServerCheckConfig.hpp"
 #include "ServerEval.hpp"
 #include "ServerEnvVars.hpp"
 #include "ServerInit.hpp"
@@ -104,6 +106,12 @@ void addProcsToShutdown(std::vector<core::system::ProcessInfo> *pChildren);
 std::set<std::string> interruptProcs();
 void shutdown();
 bool requireLocalR();
+
+// Extended --check-config hook for pro builds (database connectivity,
+// license status, etc.).  The OSS stub sets *pPassed = true and prints
+// nothing.  Returns an Error only on a hard failure to run the check
+// itself; individual sub-check failures are reported via *pPassed.
+Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 
 } // namespace overlay
 } // namespace server
@@ -709,6 +717,89 @@ int main(int argc, char * const argv[])
       if ( status.exit() )
       {
          return status.exitCode();
+      }
+
+      // Extended --check-config checks.  At this point options is fully
+      // populated and no subsystems have been started.  A clean config-file
+      // parse (handled inside program_options::read) has already printed its
+      // [PASS] line and returned run() instead of exitSuccess() so we arrive
+      // here.  We now run additional checks and collect an overall verdict.
+      if (options.checkConfigMode())
+      {
+         bool allPassed = true;
+
+         // -- File-path checks -----------------------------------------------
+         // For each configured path that is non-empty, verify that the path
+         // exists on disk and report [PASS] or [FAIL] via checkConfigFilePath.
+
+         // secureCookieKeyFile (FilePath accessor) -- informational: the server
+         // auto-generates this key on startup when the file does not exist;
+         // under load-balanced setups the key may live in the database instead.
+         // A missing file is therefore not a fatal config error.
+         checkConfigFilePath("secure-cookie-key-file",
+                             options.secureCookieKeyFile(),
+                             std::cout,
+                             true /* informational */);
+
+         // serverDataDir (FilePath accessor) -- informational: the server
+         // creates this directory on startup so a missing dir is not a fatal
+         // error; pass informational=true so it is always reported as [PASS].
+         checkConfigFilePath("server-data-dir",
+                             options.serverDataDir(),
+                             std::cout,
+                             true /* informational */);
+
+         // rsessionConfigFile (string accessor)
+         if (!checkConfigFilePath("rsession-config-file",
+                                  options.rsessionConfigFile(),
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
+            allPassed = false;
+
+         // databaseConfigFile (string accessor)
+         if (!checkConfigFilePath("database-config-file",
+                                  options.databaseConfigFile(),
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
+            allPassed = false;
+
+         // Note: product binaries resolved relative to the install (rsession,
+         // r-ldpath, rserver-pam) are intentionally not checked here. They are
+         // install artifacts rather than admin-provided configuration, and
+         // their integrity is the domain of --verify-installation.
+
+         // -- R installation check (informational, never fails the check) ----
+         {
+            core::RVersionsScanner rScanner(true,
+                                            options.rsessionWhichR(),
+                                            options.rldpathPath(),
+                                            options.rsessionLdLibraryPath());
+            core::r_util::RVersion rVersion;
+            std::string rErrMsg;
+            if (rScanner.detectSystemRVersion(&rVersion, &rErrMsg))
+               std::cout << "[PASS] R installation: found R " << rVersion.number() << std::endl;
+            else
+               std::cout << "[PASS] R installation: no R installation detected (informational)" << std::endl;
+         }
+
+         // -- Overlay (pro) hook ---------------------------------------------
+         {
+            bool overlayPassed = true;
+            Error overlayError = overlay::checkConfig(options, std::cout, &overlayPassed);
+            if (overlayError)
+            {
+               std::cout << "[FAIL] overlay check-config: " << overlayError.getSummary() << std::endl;
+               allPassed = false;
+            }
+            else if (!overlayPassed)
+            {
+               allPassed = false;
+            }
+         }
+
+         return allPassed ? EXIT_SUCCESS : EXIT_FAILURE;
       }
 
       // daemonize if requested
