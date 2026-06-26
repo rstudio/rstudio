@@ -48,10 +48,22 @@ async function closeProject(page: Page): Promise<void> {
   }
 }
 
+// Tracked by #18064 (re-enable on Server).
+// Server-on-Linux: the second restartSessionWithSentinel (after clearing
+// project_user_data_directory, line 125) times out waiting for
+// window.rstudio.ready. Server logs show the session restarts cleanly (event
+// stream up in ~2s, client_init in 1-3s), so this is the automation bridge's
+// ready signal not re-arming across a Server restart -- not a slow or failed
+// session, and distinct from the post-restart console-text issue that
+// disables the other restart suites. Intermittent (the first restart in this
+// test passes; Desktop passes). Skip on Server until restartSessionWithSentinel
+// handles the Server restart lifecycle; the whole serial describe is tagged
+// because its beforeAll/afterAll also restart.
+//
 // Regression: ProjectId should only be added to .Rproj when a project
 // requires per-project user data (project_user_data_directory pref set),
 // and once generated, must persist even after the pref is cleared.
-test.describe.serial('ProjectId in .Rproj', () => {
+test.describe.serial('ProjectId in .Rproj', { tag: ['@desktop_only'] }, () => {
   const sandbox = useSuiteSandbox();
   let projectDir = '';
   let rprojLit = '';
