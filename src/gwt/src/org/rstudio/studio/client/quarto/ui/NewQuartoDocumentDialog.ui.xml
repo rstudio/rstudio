@@ -7,7 +7,7 @@
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    
    <g:HTMLPanel>
-   <g:HorizontalPanel height="375px" styleName="{resources.styles.templatePanel}">
+   <g:HorizontalPanel height="435px" styleName="{resources.styles.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{resources.styles.fillHeight} {resources.styles.templateList}" 
                 width="150px"></rw:WidgetListBox>

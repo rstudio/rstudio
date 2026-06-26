@@ -1,7 +1,7 @@
 ## RStudio 2026.07.0 "Pacific Dogwood" Release Notes
 
 ### New
-- ([#18077](https://github.com/rstudio/rstudio/issues/18077)): The Quarto Document dialog now includes Typst as a format option, allowing you to create Quarto documents that render to PDF using the Typst typesetting system.
+- ([#18077](https://github.com/rstudio/rstudio/issues/18077)): The Quarto Document dialog now offers separate PDF (Typst) and PDF (LaTeX) output options. Typst is bundled with Quarto and requires no additional software.
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
 - ([#10417](https://github.com/rstudio/rstudio/issues/10417)): RStudio can now reduce background file operations (recursive file monitoring, code indexing, and external-edit checks) for projects located on network or remote filesystems, improving responsiveness on slow drives. This applies automatically when a remote filesystem is detected, and can be configured globally (Tools > Global Options > General > Advanced) or overridden per-project (Project Options > General).
 
