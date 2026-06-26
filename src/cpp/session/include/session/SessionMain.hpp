@@ -17,7 +17,7 @@
 #define SESSION_MAIN_HPP
 
 // On Windows, the bulk of the session code -- including the rsessionMain()
-// entry point below -- is built into a shared library (rsession-shared.dll)
+// entry point below -- is built into a shared library (rsession.dll)
 // shared by two thin launcher executables, rsession.exe and rsession-utf8.exe.
 // Those executables are identical apart from the manifest embedded via their
 // .rc file: rsession-utf8.exe selects a UTF-8 active code page (for UCRT builds

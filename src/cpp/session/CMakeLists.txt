@@ -595,23 +595,19 @@ endif()
 # define executable
 if(WIN32)
 
-   # Build the bulk of the session code into a single shared library so that
-   # rsession.exe and rsession-utf8.exe can share one copy of the code rather
-   # than each statically linking its own. The two executables are identical
-   # apart from their embedded manifest: rsession-utf8 declares a UTF-8 active
-   # code page (for UCRT builds of R 4.2.0 and newer) while rsession uses the
-   # system default. The active code page is fixed at process startup from the
-   # executable's manifest and applies process-wide -- including to code running
-   # in this DLL -- so a thin per-manifest launcher stub is all that differs
-   # between the two. See SessionMain.hpp.
+   # Build the bulk of the session code into a single shared library shared by
+   # the thin rsession.exe / rsession-utf8.exe launcher stubs. See SessionMain.hpp.
    add_library(rsession-shared SHARED
        ${SESSION_SOURCE_FILES}
        ${SESSION_HEADER_FILES})
 
-   # produce rsession-shared.dll (a distinct name from the rsession.exe stub, so
-   # their import libs and .pdb files do not collide); drop any "lib" prefix
+   # ship the runtime DLL as rsession.dll, but keep its import lib and .pdb under
+   # the rsession-shared name so they do not collide with the rsession.exe stub's
+   # own .lib/.pdb; drop any "lib" prefix
    set_target_properties(rsession-shared PROPERTIES
-      OUTPUT_NAME "rsession-shared"
+      OUTPUT_NAME "rsession"
+      ARCHIVE_OUTPUT_NAME "rsession-shared"
+      PDB_NAME "rsession-shared"
       PREFIX "")
 
    # mark rsessionMain() for export from the DLL (vs import in the stubs)

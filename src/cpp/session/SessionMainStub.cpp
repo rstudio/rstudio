@@ -1,7 +1,7 @@
 /*
  * SessionMainStub.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -15,17 +15,11 @@
 
 #include <session/SessionMain.hpp>
 
-// Thin launcher stub for the R session.
-//
-// On Windows the session code lives in a shared library (rsession-shared.dll),
-// and this stub is compiled into each launcher executable (rsession.exe and
-// rsession-utf8.exe). Those executables are identical apart from the manifest
-// embedded via their .rc file. The embedded manifest fixes the process active
-// code page at startup, and that setting applies process-wide -- including to
-// the code running in the DLL -- so the two stubs give the shared library
-// the correct (legacy or UTF-8) code page. On other platforms all of the
-// session code is linked into a single executable and this simply forwards to
-// rsessionMain(). See SessionMain.hpp for details.
+// Thin launcher stub for the R session. On Windows the session code lives in a
+// shared library (rsession.dll) loaded by each launcher executable (rsession.exe
+// and rsession-utf8.exe); on other platforms it is linked into a single
+// executable. Either way this simply forwards to rsessionMain(). See
+// SessionMain.hpp for details.
 int main(int argc, char* const argv[])
 {
    return rsessionMain(argc, argv);
