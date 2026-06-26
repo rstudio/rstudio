@@ -389,14 +389,14 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             constants_.pdfFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoCommandConstants.FORMAT_DOCX,
-            constants_.wordFormatText(),
-            constants_.wordFormatDesc())
-         );
-         templateFormatPanel_.add(createFormatOption(
             QuartoCommandConstants.FORMAT_TYPST,
             constants_.typstFormatText(),
             constants_.typstFormatDesc())
+         );
+         templateFormatPanel_.add(createFormatOption(
+            QuartoCommandConstants.FORMAT_DOCX,
+            constants_.wordFormatText(),
+            constants_.wordFormatDesc())
          );
       }
       else if (selectedTemplate.equals(TEMPLATE_PRESENTATION))
