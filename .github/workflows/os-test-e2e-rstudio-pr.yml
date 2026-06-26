@@ -13,6 +13,7 @@ on:
       - ".github/workflows/os-test-e2e-rstudio-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml"
       - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
 
 concurrency:
@@ -25,22 +26,25 @@ permissions:
 
 jobs:
   # Single change-detection job shared by all e2e platforms (Windows Desktop,
-  # macOS Desktop, Linux Server). Decides, per platform, whether to build from
-  # source or test against the latest daily. A daily is used only when ALL hold:
+  # macOS Desktop, Linux Desktop, Linux Server). Decides, per platform, whether
+  # to build from source or test against the latest daily. A daily is used only
+  # when ALL hold:
   #   1. No compiled-binary source changed in this PR.
   #   2. The daily manifest resolves a usable installer for that platform
   #      (link + filename + sha256 + commit all present).
   #   3. The daily's commit already contains this branch's merge-base, else it
   #      predates the behavior the (possibly main-merged) test-only branch assumes.
-  # Any miss falls back to a source build. macOS and Windows are decided
-  # independently because the manifest can carry a different commit per platform.
-  # Linux Server ships as a .deb the electron manifest doesn't cover, so it uses
-  # the simpler source-changed signal instead.
+  # Any miss falls back to a source build. macOS, Windows, and Linux Desktop are
+  # decided independently via decide() -- each has an electron-product entry in
+  # the manifest, possibly carrying a different commit per platform. Linux Server
+  # ships as a .deb the electron manifest doesn't cover, so it uses the simpler
+  # source-changed signal instead.
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
       macos_build_from_source: ${{ steps.check.outputs.macos_build_from_source }}
       windows_build_from_source: ${{ steps.check.outputs.windows_build_from_source }}
+      linux_desktop_build_from_source: ${{ steps.check.outputs.linux_desktop_build_from_source }}
       linux_server_build_from_source: ${{ steps.check.outputs.linux_server_build_from_source }}
     steps:
       - uses: actions/checkout@v4
@@ -125,15 +129,19 @@ jobs:
 
           MACOS=$(decide macos)
           WINDOWS=$(decide windows)
-          # Linux Server ships as a .deb, which the electron daily manifest
-          # (macOS/Windows desktop builds) doesn't carry, so it can't use
-          # decide()'s per-platform daily lookup. Use the source-changed signal:
-          # build from source on a source change; otherwise the linux server
-          # reusable resolves the latest daily .deb itself. A future Linux
-          # Desktop callee would be electron and would ride decide() instead.
-          echo "Decision: macos build_from_source=$MACOS, windows build_from_source=$WINDOWS, linux-server build_from_source=$SOURCE_CHANGED"
+          # Linux Desktop ships as an Electron .deb keyed "noble-amd64" under
+          # the electron product in the manifest, so it rides decide() with that
+          # key just like macOS/Windows.
+          LINUXDESKTOP=$(decide noble-amd64)
+          # Linux Server ships as a .deb the electron daily manifest doesn't
+          # carry, so it can't use decide()'s per-platform daily lookup. Use the
+          # source-changed signal: build from source on a source change;
+          # otherwise the linux server reusable resolves the latest daily .deb
+          # itself.
+          echo "Decision: macos build_from_source=$MACOS, windows build_from_source=$WINDOWS, linux-desktop build_from_source=$LINUXDESKTOP, linux-server build_from_source=$SOURCE_CHANGED"
           echo "macos_build_from_source=$MACOS" >> "$GITHUB_OUTPUT"
           echo "windows_build_from_source=$WINDOWS" >> "$GITHUB_OUTPUT"
+          echo "linux_desktop_build_from_source=$LINUXDESKTOP" >> "$GITHUB_OUTPUT"
           echo "linux_server_build_from_source=$SOURCE_CHANGED" >> "$GITHUB_OUTPUT"
 
   windows:
@@ -155,6 +163,18 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.macos_build_from_source) }}
+      project: desktop
+      r_version: "4.5.3"
+      grep_invert: "@ai"
+      post_pr_comment: true
+
+  linux-desktop:
+    needs: detect-changes
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
