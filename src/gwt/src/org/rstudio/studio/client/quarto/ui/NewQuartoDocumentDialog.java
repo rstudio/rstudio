@@ -393,6 +393,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             constants_.wordFormatText(),
             constants_.wordFormatDesc())
          );
+         templateFormatPanel_.add(createFormatOption(
+            QuartoCommandConstants.FORMAT_TYPST,
+            constants_.typstFormatText(),
+            constants_.typstFormatDesc())
+         );
       }
       else if (selectedTemplate.equals(TEMPLATE_PRESENTATION))
       {

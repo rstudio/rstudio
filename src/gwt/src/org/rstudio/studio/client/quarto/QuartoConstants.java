@@ -38,6 +38,8 @@ public interface QuartoConstants extends Messages {
     String pdfFormatDesc();
     String wordFormatText();
     String wordFormatDesc();
+    String typstFormatText();
+    String typstFormatDesc();
     String jsFormatText();
     String jsFormatDesc();
     String beamerFormatText();
