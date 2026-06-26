@@ -2148,7 +2148,12 @@ void mainThreadWorkaround()
 } // anonymous namespace
 
 // run session
-int main(int argc, char * const argv[])
+//
+// This is the real entry point for the R session. On Windows it is compiled
+// into a shared library (rsession.dll) and invoked by main() in the thin
+// launcher stubs (rsession.exe / rsession-utf8.exe); see SessionMainStub.cpp
+// and the comments in SessionMain.hpp and CMakeLists.txt.
+RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 {
    mainThreadWorkaround();
 

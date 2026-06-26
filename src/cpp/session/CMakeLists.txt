@@ -595,25 +595,43 @@ endif()
 # define executable
 if(WIN32)
 
-   # define shared object library (avoid re-compiling source files twice)
-   add_library(rsession-objects OBJECT
+   # Build the bulk of the session code into a single shared library shared by
+   # the thin rsession.exe / rsession-utf8.exe launcher stubs. See SessionMain.hpp.
+   add_library(rsession-shared SHARED
        ${SESSION_SOURCE_FILES}
        ${SESSION_HEADER_FILES})
 
-    target_link_libraries(rsession-objects ${SESSION_LIBRARIES})
+   # ship the runtime DLL as rsession.dll, but keep its import lib and .pdb under
+   # the rsession-shared name so they do not collide with the rsession.exe stub's
+   # own .lib/.pdb; drop any "lib" prefix
+   set_target_properties(rsession-shared PROPERTIES
+      OUTPUT_NAME "rsession"
+      ARCHIVE_OUTPUT_NAME "rsession-shared"
+      PDB_NAME "rsession-shared"
+      PREFIX "")
 
-   # main executable
+   # mark rsessionMain() for export from the DLL (vs import in the stubs)
+   target_compile_definitions(rsession-shared PRIVATE RSESSION_BUILDING_SHARED)
+
+   target_link_libraries(rsession-shared ${SESSION_LIBRARIES} "${LIBR_LIBRARIES}")
+   if(RSTUDIO_SERVER)
+      target_link_libraries(rsession-shared rstudio-server-core)
+   endif()
+
+   # thin launcher stub; identical code, manifest embedded via the .rc differs
    add_stripped_executable(
       rsession
       "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
-      $<TARGET_OBJECTS:rsession-objects>)
+      SessionMainStub.cpp)
+   target_link_libraries(rsession rsession-shared)
 
    # UTF-8 alternative
    if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
       add_stripped_executable(
          rsession-utf8
          "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
-         $<TARGET_OBJECTS:rsession-objects>)
+         SessionMainStub.cpp)
+      target_link_libraries(rsession-utf8 rsession-shared)
    endif()
 
 else()
@@ -621,32 +639,33 @@ else()
    add_stripped_executable(
       rsession
       ${SESSION_SOURCE_FILES}
-      ${SESSION_HEADER_FILES})
+      ${SESSION_HEADER_FILES}
+      SessionMainStub.cpp)
 
 endif()
 
-# skip libR RPATH at development time
-if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
-   set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
-endif()
+# Remaining link configuration for the single-executable (non-Windows) build;
+# the Windows shared-library and launcher-stub targets are fully configured above.
+if(NOT WIN32)
 
-target_link_libraries(rsession ${SESSION_LIBRARIES})
-if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
-   target_link_libraries(rsession-utf8 ${SESSION_LIBRARIES})
-endif()
-
-if(APPLE)
-   target_link_libraries(rsession "-undefined dynamic_lookup")
-   target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
-else()
-   target_link_libraries(rsession "${LIBR_LIBRARIES}")
-   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
-      target_link_libraries(rsession-utf8 "${LIBR_LIBRARIES}")
+   # skip libR RPATH at development time
+   if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
+      set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
    endif()
-endif()
 
-if(RSTUDIO_SERVER)
-   target_link_libraries(rsession rstudio-server-core)
+   target_link_libraries(rsession ${SESSION_LIBRARIES})
+
+   if(APPLE)
+      target_link_libraries(rsession "-undefined dynamic_lookup")
+      target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
+   else()
+      target_link_libraries(rsession "${LIBR_LIBRARIES}")
+   endif()
+
+   if(RSTUDIO_SERVER)
+      target_link_libraries(rsession rstudio-server-core)
+   endif()
+
 endif()
 
 # configure and install r-ldpaths script
@@ -667,6 +686,10 @@ endif()
 
 # install binary
 install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
+if(WIN32)
+   # the shared library holding the session code (loaded by the launcher stubs)
+   install(TARGETS rsession-shared RUNTIME DESTINATION "${RSTUDIO_INSTALL_BIN}")
+endif()
 if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
     install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
@@ -675,6 +698,10 @@ endif()
 if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
    install(
       FILES "$<TARGET_PDB_FILE:rsession>"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   # the shared library carries essentially all of the session debug info
+   install(
+      FILES "$<TARGET_PDB_FILE:rsession-shared>"
       DESTINATION "${RSTUDIO_INSTALL_BIN}")
    if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
       install(
