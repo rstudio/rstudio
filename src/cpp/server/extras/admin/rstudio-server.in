@@ -15,7 +15,7 @@ daemonCmd() {
 }
 
 testConfig() {
-  `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
+  ${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config
 }
 
 checkConfig() {
