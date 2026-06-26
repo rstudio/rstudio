@@ -360,6 +360,7 @@ if(WIN32)
    endif()
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
+   set(CPACK_NSIS_MULTIUSER_VERSION "a33d494c62ad")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")

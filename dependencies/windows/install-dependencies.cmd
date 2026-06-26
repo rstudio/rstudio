@@ -17,6 +17,7 @@ set GWT_VERSION=2.12.2-apple-blossom
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
 set MSVC_TOOLSET_VERSION=143
+set NSISMULTIUSER_VERSION=a33d494c62ad
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
@@ -101,6 +102,11 @@ set RESHACKER_OUTPUT=resource-hacker
 set NSPROCESS_URL=nsprocess/NsProcess.zip
 set NSPROCESS_FOLDER=nsprocess\%NSPROCESS_VERSION%
 set NSPROCESS_OUTPUT=nsprocess\%NSPROCESS_VERSION%
+
+
+set NSISMULTIUSER_URL=nsis-multiuser/%NSISMULTIUSER_VERSION%/NsisMultiUser.zip
+set NSISMULTIUSER_FOLDER=nsis-multiuser\%NSISMULTIUSER_VERSION%
+set NSISMULTIUSER_OUTPUT=nsis-multiuser\%NSISMULTIUSER_VERSION%
 
 
 set DICTIONARIES_URL=dictionaries/core-dictionaries.zip
@@ -241,6 +247,7 @@ cd ..\windows
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
+%RUN% install NSISMULTIUSER
 
 
 echo -- Installing panmirror (Visual Editor)
