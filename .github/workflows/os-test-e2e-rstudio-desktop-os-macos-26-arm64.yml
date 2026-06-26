@@ -278,7 +278,7 @@ jobs:
         run: |
           tar -xzf "${{ github.workspace }}/RStudio.app.tar.gz" -C "${{ github.workspace }}"
           sudo rm -rf /Applications/RStudio.app
-          sudo ditto "${{ github.workspace }}/RStudio.app" /Applications/RStudio.app
+          sudo cp -R "${{ github.workspace }}/RStudio.app" /Applications/
           sudo xattr -cr /Applications/RStudio.app
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
 
@@ -362,8 +362,7 @@ jobs:
             exit 1
           fi
           echo "Mounted at: $MOUNT"
-          sudo rm -rf /Applications/RStudio.app
-          sudo ditto "$MOUNT/RStudio.app" /Applications/RStudio.app
+          sudo cp -R "$MOUNT/RStudio.app" /Applications/
           hdiutil detach "$MOUNT"
           sudo xattr -cr /Applications/RStudio.app
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
