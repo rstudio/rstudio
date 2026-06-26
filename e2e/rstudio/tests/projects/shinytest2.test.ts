@@ -6,7 +6,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
 import { documentOpen, executeCommand, openProject } from '@utils/commands';
-import * as fs from 'fs';
+import { seedSandboxFile } from '@utils/files';
 import * as path from 'path';
 import type { Page } from 'playwright';
 
@@ -61,14 +61,20 @@ async function scaffoldShinytest2Project(
   projectDir: string,
 ): Promise<void> {
   const projectName = projectDir.split('/').pop()!;
-  const testFilePath = path.join(projectDir, 'tests', 'testthat', 'test-shinytest2.R');
 
-  // Create the project tree and seed files via Node fs before opening the
-  // project. Avoids R-string-escape issues with writeLines("...") containing
-  // embedded double quotes (test_that("..."), AppDriver$new(name = "..."),
-  // etc.) and keeps the test file content readable as a TS template literal.
-  fs.mkdirSync(path.dirname(testFilePath), { recursive: true });
-  fs.writeFileSync(testFilePath, SHINYTEST2_TEST_CONTENT);
+  // Seed the test file under the project's tests/testthat tree.
+  // seedSandboxFile mkdirs the parent chain and writes via Node fs when the
+  // sandbox is writable from here, falling back to R-side dir.create +
+  // writeLines on Server-on-Linux where the sandbox is owned by rsession's
+  // uid. The R-side fallback uses rPathLiteral / rStringLiteral, which
+  // escape embedded quotes correctly -- the original Node-side path was
+  // chosen to avoid quote-escape headaches, but the helper handles them too.
+  const testFilePath = await seedSandboxFile(
+    page,
+    projectDir,
+    'tests/testthat/test-shinytest2.R',
+    SHINYTEST2_TEST_CONTENT,
+  );
 
   const projectDirLit = rPathLiteral(projectDir);
   const appPathLit = rPathLiteral(`${projectDir}/app.R`);

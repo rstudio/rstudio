@@ -129,6 +129,20 @@ test.describe('Import Dataset (readr)', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
+    // Pre-install readr into rsession's own R library before the first test
+    // runs. On Desktop the test process and rsession share an R library, so
+    // installDepIfPrompted covered the missing-package case. On Server,
+    // rsession runs as a different uid with its own empty user library; the
+    // install-prompt path is fragile from there, and the import dialog can
+    // race past TIMEOUTS.fileOpen waiting for it. Pre-installing keeps the
+    // test on the happy path (readr already present, no prompt, dialog opens
+    // promptly) on both modes. ensurePackages installs from the correct
+    // per-platform binary repo and returns the packages it could not install,
+    // so a failed seed fails loudly here instead of as a confusing dialog
+    // timeout below. (pillar, which the importer also uses, is already seeded
+    // via REQUIRED_PACKAGES at global setup.)
+    const failed = await consoleActions.ensurePackages(['readr']);
+    expect(failed).toEqual([]);
   });
 
   // https://github.com/rstudio/rstudio/issues/17777

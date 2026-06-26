@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
-import { executeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT, waitForConsoleIdle } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
 import { assertAbsolutePath } from './paths';
 
@@ -45,6 +45,27 @@ function rootExpr(): string {
  */
 export async function createSandbox(page: Page): Promise<string> {
   const marker = `__SANDBOX_${Date.now()}__`;
+
+  // Gate on R actually being ready to receive input before submitting the
+  // marker command. Without this, a createSandbox called right after a
+  // session restart (project open/close, restart-R, or just the initial
+  // page load) lands while R's startup banner is still rendering -- R
+  // drops or queues the input and our cat(marker) is never echoed back,
+  // surfacing as an opaque "marker not found within 15000ms" timeout.
+  // window.rstudio.ready flips to true on DeferredInitCompletedEvent
+  // (workspace restored, deferred-init modules sourced); waitForConsoleIdle
+  // then confirms the console isn't mid-execution from anything else. Both
+  // checks are no-ops in the common case (the IDE is already ready by the
+  // time a suite's beforeAll runs), so this only pays cost on the race.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 30000, polling: 50 },
+  ).catch(() => {
+    // Bridge not in scope yet -- let the marker poll below surface any
+    // real failure rather than blocking the suite on the readiness wait.
+  });
+  await waitForConsoleIdle(page);
 
   // Build the R expression on a single line so executeInConsole's single
   // press('Enter') executes it atomically.
