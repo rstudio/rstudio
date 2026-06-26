@@ -3870,6 +3870,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _GPU Diagnostics") // $NON-NLS-1$
     String showGpuDiagnosticsMenuLabel();
     
+    // toggleGpuExclusionList
+    @DefaultStringValue("Toggle GPU _Exclusion List") // $NON-NLS-1$
+    String toggleGpuExclusionListMenuLabel();
+    
+    // toggleGpuDriverBugWorkarounds
+    @DefaultStringValue("Toggle GPU Driver Bug _Workarounds") // $NON-NLS-1$
+    String toggleGpuDriverBugWorkaroundsMenuLabel();
+    
     // showA11yDiagnostics
     @DefaultStringValue("Show _Accessibility Diagnostics") // $NON-NLS-1$
     String showA11yDiagnosticsMenuLabel();

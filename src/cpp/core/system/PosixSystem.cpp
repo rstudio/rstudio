@@ -41,6 +41,8 @@
 #include <gsl/gsl-lite.hpp>
 #include <libproc.h>
 #include <mach-o/dyld.h>
+#include <sys/param.h>
+#include <sys/mount.h>
 #include <sys/proc_info.h>
 #endif
 
@@ -48,10 +50,58 @@
 
 #include <dirent.h>
 #include <linux/kernel.h>
+#include <linux/magic.h>
 #include <stdarg.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
+#include <sys/vfs.h>
+
+// Magic numbers identifying network/remote filesystems, as returned in the
+// 'f_type' field of statfs(2). Most of these are provided by <linux/magic.h>;
+// we supply fallback definitions for any that may be absent from older kernel
+// headers. The values are stable kernel constants -- see <linux/magic.h> and
+// the corresponding fs/<name>/ sources in the Linux kernel tree:
+// https://github.com/torvalds/linux/blob/master/include/uapi/linux/magic.h
+#ifndef NFS_SUPER_MAGIC
+# define NFS_SUPER_MAGIC 0x6969
+#endif
+
+#ifndef SMB_SUPER_MAGIC
+# define SMB_SUPER_MAGIC 0x517B
+#endif
+
+#ifndef SMB2_SUPER_MAGIC
+# define SMB2_SUPER_MAGIC 0xFE534D42
+#endif
+
+#ifndef CIFS_SUPER_MAGIC
+# define CIFS_SUPER_MAGIC 0xFF534D42
+#endif
+
+#ifndef FUSE_SUPER_MAGIC
+# define FUSE_SUPER_MAGIC 0x65735546
+#endif
+
+#ifndef NCP_SUPER_MAGIC
+# define NCP_SUPER_MAGIC 0x564C
+#endif
+
+#ifndef CODA_SUPER_MAGIC
+# define CODA_SUPER_MAGIC 0x73757245
+#endif
+
+#ifndef AFS_SUPER_MAGIC
+# define AFS_SUPER_MAGIC 0x5346414F
+#endif
+
+#ifndef AFS_FS_MAGIC
+# define AFS_FS_MAGIC 0x6B414653
+#endif
+
+#ifndef V9FS_MAGIC
+# define V9FS_MAGIC 0x01021997
+#endif
 
 // Some data structures here don't compile on rhel8 due to 'private' being used as a symbol???
 // so defining them again here
@@ -980,7 +1030,78 @@ bool isReadOnly(const FilePath& filePath)
       return false;
    }
 }
-   
+
+bool isRemotePath(const FilePath& filePath)
+{
+   if (filePath.isEmpty())
+      return false;
+
+   std::string path = filePath.getAbsolutePath();
+
+#ifdef __APPLE__
+
+   // On macOS, statfs reports MNT_LOCAL for locally-stored filesystems; its
+   // absence indicates a network/remote filesystem (NFS, SMB, AFP, WebDAV).
+   struct statfs buf;
+   if (::statfs(path.c_str(), &buf) != 0)
+   {
+      // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
+      // on a stale NFS handle) so an "optimization never activates on my share"
+      // report is debuggable; the fail-safe answer is still "not remote".
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return (buf.f_flags & MNT_LOCAL) == 0;
+
+#elif defined(__linux__)
+
+   // On Linux, classify by the mounted filesystem's magic number (see the
+   // NFS_SUPER_MAGIC etc. definitions above).
+   struct statfs buf;
+   if (::statfs(path.c_str(), &buf) != 0)
+   {
+      // log the unexpected errno (e.g. EIO/ETIMEDOUT on a hung mount, ENOTCONN
+      // on a stale NFS handle) so an "optimization never activates on my share"
+      // report is debuggable; the fail-safe answer is still "not remote".
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      LOG_ERROR(error);
+      return false;
+   }
+
+   switch ((unsigned long) buf.f_type)
+   {
+   case NFS_SUPER_MAGIC:
+   case SMB_SUPER_MAGIC:
+   case CIFS_SUPER_MAGIC:
+   case SMB2_SUPER_MAGIC:
+   // FUSE is a mechanism, not inherently remote: local FUSE mounts (ntfs-3g,
+   // exfat-fuse, gocryptfs, squashfuse, bindfs, mergerfs, ...) also report
+   // FUSE_SUPER_MAGIC and so are classified as remote here. this is a
+   // deliberately conservative over-match -- remote FUSE mounts (sshfs, rclone,
+   // ...) are the case we care about, and a user on a local FUSE mount can opt
+   // out via the per-project setting.
+   case FUSE_SUPER_MAGIC:
+   case NCP_SUPER_MAGIC:
+   case CODA_SUPER_MAGIC:
+   case AFS_SUPER_MAGIC:   // OpenAFS
+   case AFS_FS_MAGIC:      // kAFS
+   case V9FS_MAGIC:        // Plan 9 / virtio-9p
+      return true;
+   default:
+      return false;
+   }
+
+#else
+
+   return false;
+
+#endif
+}
+
 bool stderrIsTerminal()
 {
    return ::isatty(STDERR_FILENO) == 1;

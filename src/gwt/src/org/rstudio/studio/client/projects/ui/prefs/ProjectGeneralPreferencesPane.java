@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRVersion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -113,6 +115,16 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       quitChildProcessesOnExit_ = new CheckBox(constants_.quitChildProcessesOnExitText());
       container.add(nudgeRight(quitChildProcessesOnExit_));
 
+      // reduce background file operations on remote/network filesystems;
+      // "(Default)" inherits the global preference
+      reduceRemoteFilesystemOperations_ = new YesNoAskDefault(false);
+      LayoutGrid remoteFsGrid = new LayoutGrid(1, 2);
+      remoteFsGrid.addStyleName(RESOURCES.styles().workspaceGrid());
+      remoteFsGrid.setWidget(0, 0, new FormLabel(
+            constants_.reduceRemoteFilesystemOperationsText(), reduceRemoteFilesystemOperations_));
+      remoteFsGrid.setWidget(0, 1, reduceRemoteFilesystemOperations_);
+      container.add(remoteFsGrid);
+
       if (sessionInfo_.getAllowFullUI())
       {
          container.add(spacedBefore(headerLabel("Advanced")));
@@ -177,6 +189,24 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
 
+      // the per-project override is a user-specific project-local preference
+      // (stored under .Rproj.user, not in the shared .Rproj file). a present
+      // key indicates an explicit Yes/No; an absent key means "(Default)",
+      // which inherits the global preference.
+      JsObject localPrefs = options.getLocalProjectPrefs();
+      if (localPrefs.hasKey(UserPrefsAccessor.REDUCE_REMOTE_FILESYSTEM_OPERATIONS))
+      {
+         initialReduceRemoteFilesystemOperations_ = localPrefs.getBoolean(
+               UserPrefsAccessor.REDUCE_REMOTE_FILESYSTEM_OPERATIONS)
+                     ? YesNoAskDefault.YES_VALUE
+                     : YesNoAskDefault.NO_VALUE;
+      }
+      else
+      {
+         initialReduceRemoteFilesystemOperations_ = YesNoAskDefault.USE_DEFAULT_VALUE;
+      }
+      reduceRemoteFilesystemOperations_.setSelectedIndex(initialReduceRemoteFilesystemOperations_);
+
       projectName_.setText(config.getProjectName());
       
       String scratchPath = config.getScratchPath();
@@ -212,7 +242,26 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       config.setProjectName(projectName_.getValue());
       config.setScratchPath(scratchPath_.getText());
-      
+
+      // write the per-project override into the user-specific local project
+      // prefs: "(Default)" clears the key (inherit the global preference),
+      // while Yes/No store an explicit boolean.
+      int reduceRemoteFilesystemOperations = reduceRemoteFilesystemOperations_.getSelectedIndex();
+      JsObject localPrefs = options.getLocalProjectPrefs();
+      if (reduceRemoteFilesystemOperations == YesNoAskDefault.USE_DEFAULT_VALUE)
+      {
+         localPrefs.unset(UserPrefsAccessor.REDUCE_REMOTE_FILESYSTEM_OPERATIONS);
+      }
+      else
+      {
+         localPrefs.setBoolean(UserPrefsAccessor.REDUCE_REMOTE_FILESYSTEM_OPERATIONS,
+               reduceRemoteFilesystemOperations == YesNoAskDefault.YES_VALUE);
+      }
+      if (reduceRemoteFilesystemOperations != initialReduceRemoteFilesystemOperations_)
+      {
+         needsRestart = true;
+      }
+
       if (!StringUtil.equals(scratchPath_.getText(), initialConfig_.getScratchPath()))
       {
          needsRestart = true;
@@ -230,6 +279,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault alwaysSaveHistory_;
    private CheckBox disableExecuteRprofile_;
    private CheckBox quitChildProcessesOnExit_;
+   private YesNoAskDefault reduceRemoteFilesystemOperations_;
+   private int initialReduceRemoteFilesystemOperations_;
    private SessionInfo sessionInfo_;
 
    private String tutorialPath_;

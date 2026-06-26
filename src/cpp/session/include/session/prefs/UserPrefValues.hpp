@@ -372,6 +372,7 @@ namespace prefs {
 #define kAutoSaveOnIdleNone "none"
 #define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
+#define kReduceRemoteFilesystemOperations "reduce_remote_filesystem_operations"
 #define kTerminalInitialDirectory "terminal_initial_directory"
 #define kTerminalInitialDirectoryProject "project"
 #define kTerminalInitialDirectoryCurrent "current"
@@ -1847,6 +1848,12 @@ public:
     */
    bool autoSaveOnBlur();
    core::Error setAutoSaveOnBlur(bool val);
+
+   /**
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+    */
+   bool reduceRemoteFilesystemOperations();
+   core::Error setReduceRemoteFilesystemOperations(bool val);
 
    /**
     * Initial directory for new terminals.

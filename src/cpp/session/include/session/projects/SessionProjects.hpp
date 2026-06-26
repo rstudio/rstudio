@@ -21,6 +21,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/FileInfo.hpp>
@@ -113,7 +114,9 @@ class ProjectContext : boost::noncopyable
 public:
    ProjectContext()
       : isNewProject_(false),
-        hasFileMonitor_(false)
+        hasFileMonitor_(false),
+        reduceRemoteFilesystemOpsResolved_(false),
+        reduceRemoteFilesystemOps_(false)
    {
    }
    
@@ -157,6 +160,15 @@ public:
    core::FilePath fileUnderWebsitePath(const core::FilePath& file) const;
 
    const core::r_util::RProjectConfig& config() const { return config_; }
+
+   // Resolves whether background filesystem operations should be reduced for
+   // this project: an explicit per-project setting wins (a user-specific,
+   // project-local preference stored under .Rproj.user), otherwise the global
+   // 'reduce_remote_filesystem_operations' preference, which in automatic mode
+   // applies only when the project lives on a remote filesystem.
+   // See https://github.com/rstudio/rstudio/issues/10417.
+   bool reduceRemoteFilesystemOperations() const;
+
    void setConfig(const core::r_util::RProjectConfig& config)
    {
       config_ = config;
@@ -287,6 +299,14 @@ private:
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
+
+   // cached result of reduceRemoteFilesystemOperations(); resolved at most once
+   // per session. the per-project override only changes via a dialog apply that
+   // forces a session restart, and statfs() on a hung remote mount can block, so
+   // we avoid re-reading the local prefs file and re-probing the mount on every
+   // checkForExternalEdit poll.
+   mutable bool reduceRemoteFilesystemOpsResolved_;
+   mutable bool reduceRemoteFilesystemOps_;
    RSTUDIO_BOOST_SIGNAL<void(const tree<core::FileInfo>&)> onMonitoringEnabled_;
    RSTUDIO_BOOST_SIGNAL<void(const std::vector<core::system::FileChangeEvent>&)>
                                                             onFilesChanged_;
@@ -306,6 +326,23 @@ core::json::Array websiteOutputFormatsJson();
 // otherwise the existing on-disk value (preserved when the key is omitted).
 std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
                                       const core::json::Object& configJson);
+
+// Parses the per-project 'reduce_remote_filesystem_operations' override out of
+// the contents of a local prefs (rstudio-prefs.json) file. Returns an empty
+// optional when the file is malformed (logged), is not a JSON object, omits the
+// key, or stores a non-boolean value -- in all of which cases the caller should
+// fall back to the global preference.
+boost::optional<bool> parseReduceRemoteFilesystemOperationsOverride(
+      const std::string& prefsContents);
+
+// Resolves whether to reduce background filesystem operations, given the
+// per-project local override (if any), the global preference, and whether the
+// project was detected to live on a remote filesystem. An explicit override
+// wins; otherwise a disabled global preference means never reduce, and an
+// enabled (automatic) global preference reduces only when remote was detected.
+bool resolveReduceRemoteFilesystemOperations(boost::optional<bool> localOverride,
+                                             bool globalPref,
+                                             bool remoteDetected);
 
 } // namespace projects
 } // namespace session

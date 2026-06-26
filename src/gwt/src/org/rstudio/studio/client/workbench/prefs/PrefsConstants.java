@@ -201,8 +201,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String renderingEngineDesktopOption();
     String renderingEngineLinuxDesktopOption();
     String renderingEngineSoftwareOption();
-    String useGpuExclusionListLabel();
-    String useGpuDriverBugWorkaroundsLabel();
     String clipboardMonitoringLabel();
     String otherLabel();
     String experimentalLabel();

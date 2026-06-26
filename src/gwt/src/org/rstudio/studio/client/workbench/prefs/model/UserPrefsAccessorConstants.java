@@ -1874,6 +1874,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoSaveOnBlurDescription();
 
    /**
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+    */
+   @DefaultStringValue("Reduce background file operations on network and remote drives")
+   String reduceRemoteFilesystemOperationsTitle();
+   @DefaultStringValue("When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.")
+   String reduceRemoteFilesystemOperationsDescription();
+
+   /**
     * Initial directory for new terminals.
     */
    @DefaultStringValue("Initial working directory for new terminals")

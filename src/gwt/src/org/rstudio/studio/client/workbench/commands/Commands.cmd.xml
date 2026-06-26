@@ -4138,6 +4138,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"
         context="diagnostics"/>
 
+   <cmd id="toggleGpuExclusionList"
+        menuLabel="Toggle GPU _Exclusion List"
+        rebindable="false"
+        context="diagnostics"/>
+
+   <cmd id="toggleGpuDriverBugWorkarounds"
+        menuLabel="Toggle GPU Driver Bug _Workarounds"
+        rebindable="false"
+        context="diagnostics"/>
+
    <cmd id="showA11yDiagnostics"
         menuLabel="Show _Accessibility Diagnostics"
         rebindable="false"

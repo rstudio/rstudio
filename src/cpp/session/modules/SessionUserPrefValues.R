@@ -2089,6 +2089,18 @@
    clear = function() { .rs.clearUserPref("auto_save_on_blur") }
 )
 
+# Reduce background file operations on network and remote drives
+#
+# When enabled, RStudio reduces background file monitoring, code indexing, and
+# external-edit checks for projects detected to be on a network or remote
+# filesystem. This improves responsiveness on slow drives, at the cost of less
+# frequent automatic refreshing of file listings and version-control status.
+.rs.uiPrefs$reduceRemoteFilesystemOperations <- list(
+   get = function() { .rs.getUserPref("reduce_remote_filesystem_operations") },
+   set = function(value) { .rs.setUserPref("reduce_remote_filesystem_operations", value) },
+   clear = function() { .rs.clearUserPref("reduce_remote_filesystem_operations") }
+)
+
 # Initial working directory for new terminals
 #
 # Initial directory for new terminals.

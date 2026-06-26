@@ -1126,6 +1126,17 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
    result["modified"] = false;
    result["deleted"] = false;
 
+   // When reducing remote filesystem operations, skip the external-edit check;
+   // the exists() / getLastWriteTime() stats below can be slow on network
+   // drives. This is intentionally project-scoped (keyed on the active project,
+   // not the individual document's path), matching the rest of the feature.
+   // See https://github.com/rstudio/rstudio/issues/10417.
+   if (module_context::reduceRemoteFilesystemOperations())
+   {
+      pResponse->setResult(result);
+      return Success();
+   }
+
    // Only check if this document has ever been saved
    if (!pDoc->path().empty())
    {

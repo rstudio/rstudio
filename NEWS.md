@@ -2,6 +2,7 @@
 
 ### New
 - ([#17992](https://github.com/rstudio/rstudio/issues/17992)): The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.
+- ([#10417](https://github.com/rstudio/rstudio/issues/10417)): RStudio can now reduce background file operations (recursive file monitoring, code indexing, and external-edit checks) for projects located on network or remote filesystems, improving responsiveness on slow drives. This applies automatically when a remote filesystem is detected, and can be configured globally (Tools > Global Options > General > Advanced) or overridden per-project (Project Options > General).
 
 ### Fixed
 - ([#17982](https://github.com/rstudio/rstudio/issues/17982)): Fixed a race condition in RStudio Desktop where the viewer pane iframe could be blocked by Electron's navigation policy, causing cross-origin SecurityErrors when previewing markdown files or R Notebooks as HTML. The `setViewerUrl` IPC call is now awaited before the iframe navigates, ensuring the URL authority is registered in time.

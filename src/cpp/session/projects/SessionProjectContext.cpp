@@ -29,6 +29,7 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/FileMonitor.hpp>
+#include <core/system/System.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -260,6 +261,56 @@ Error computeScratchPaths(const FilePath& projectFile,
 }
 
 
+bool ProjectContext::reduceRemoteFilesystemOperations() const
+{
+   // resolve at most once per session and cache the result. this is called per
+   // poll from checkForExternalEdit (which fires on window focus and file-change
+   // events), and scratchPath_ (.Rproj.user) lives by default on the same remote
+   // mount this feature exists to stay off, so re-reading the local prefs file
+   // and re-probing the mount on every call would defeat the purpose. the
+   // per-project override only changes via a dialog apply that forces a session
+   // restart, so the resolved value is stable for the session.
+   if (reduceRemoteFilesystemOpsResolved_)
+      return reduceRemoteFilesystemOps_;
+
+   // an explicit per-project setting takes precedence over the global
+   // preference. this is a user-specific project-local preference, stored
+   // under .Rproj.user (so it is not shared via version control). we read the
+   // local preferences file directly rather than through the project
+   // preference layer, because this is consulted very early during project
+   // startup -- before that layer has been initialized
+   // (see session::projects::initialize).
+   boost::optional<bool> localOverride;
+   if (!scratchPath_.isEmpty())
+   {
+      FilePath localPrefsFile = scratchPath_.completePath(kUserPrefsFile);
+      if (localPrefsFile.exists())
+      {
+         std::string contents;
+         Error error = readStringFromFile(localPrefsFile, &contents);
+         if (error)
+            LOG_ERROR(error);
+         else
+            localOverride = parseReduceRemoteFilesystemOperationsOverride(contents);
+      }
+   }
+
+   bool globalPref = prefs::userPrefs().reduceRemoteFilesystemOperations();
+
+   // only probe the filesystem when the decision actually depends on it: an
+   // explicit override or a disabled global preference both decide the outcome
+   // without it, and statfs() on a hung remote mount can block.
+   bool remoteDetected = false;
+   if (!localOverride && globalPref)
+      remoteDetected = core::system::isRemotePath(directory_);
+
+   reduceRemoteFilesystemOps_ =
+         resolveReduceRemoteFilesystemOperations(localOverride, globalPref, remoteDetected);
+   reduceRemoteFilesystemOpsResolved_ = true;
+
+   return reduceRemoteFilesystemOps_;
+}
+
 FilePath ProjectContext::oldScratchPath() const
 {
    // start from the standard .Rproj.user dir
@@ -411,8 +462,10 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
-   // repaired by a single refresh of the files pane
-   hasFileMonitor_ = config_.enableCodeIndexing;
+   // repaired by a single refresh of the files pane.
+   // the recursive file monitor is suppressed when reducing remote filesystem
+   // operations, since monitoring a slow network drive is expensive.
+   hasFileMonitor_ = config_.enableCodeIndexing && !reduceRemoteFilesystemOperations();
 
    // return success
    return Success();
@@ -641,8 +694,10 @@ Error ProjectContext::initialize()
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
-      // subscribe to deferred init (for initializing our file monitor)
-      if (config().enableCodeIndexing)
+      // subscribe to deferred init (for initializing our file monitor); skip
+      // when reducing remote filesystem operations, as the recursive monitor
+      // would repeatedly traverse a slow network drive
+      if (config().enableCodeIndexing && !reduceRemoteFilesystemOperations())
       {
          module_context::events().onDeferredInit.connect(
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));
