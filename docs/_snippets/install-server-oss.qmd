@@ -1,0 +1,6 @@
+| Platform | Download |
+|----------|----------|
+| Ubuntu 22 / 24, Debian 12 / 13 | [`rstudio-server-{{< var osVersion >}}-amd64.deb`](https://download2.rstudio.org/server/jammy/amd64/rstudio-server-{{< var osVersion >}}-amd64.deb) |
+| RHEL 8 | [`rstudio-server-rhel-{{< var osVersion >}}-x86_64.rpm`](https://download2.rstudio.org/server/rhel8/x86_64/rstudio-server-rhel-{{< var osVersion >}}-x86_64.rpm) |
+| RHEL 9 / 10 | [`rstudio-server-rhel-{{< var osVersion >}}-x86_64.rpm`](https://download2.rstudio.org/server/rhel9/x86_64/rstudio-server-rhel-{{< var osVersion >}}-x86_64.rpm) |
+| SUSE 15 SP7 / openSUSE 15.6 | [`rstudio-server-{{< var osVersion >}}-x86_64.rpm`](https://download2.rstudio.org/server/opensuse15/x86_64/rstudio-server-{{< var osVersion >}}-x86_64.rpm) |
