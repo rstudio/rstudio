@@ -302,9 +302,13 @@ public class FilesPane extends WorkbenchPane implements Files.Display
 
       // create file list and file progress
       filesList_ = new FilesList(new DisplayObserverProxy(), fileTypeRegistry_,
-            pPrefs_.get().sortFileNamesNaturally().getValue() ? 
+            pPrefs_.get().sortFileNamesNaturally().getValue() ?
                FilesList.SortOrder.Natural :
                FilesList.SortOrder.Lexicographic);
+
+      // redraw the file listing when the date/time display format changes
+      pPrefs_.get().dateFormat().addValueChangeHandler(event -> filesList_.redraw());
+      pPrefs_.get().timeFormat24Hour().addValueChangeHandler(event -> filesList_.redraw());
 
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());

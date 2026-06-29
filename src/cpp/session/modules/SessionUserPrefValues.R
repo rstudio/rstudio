@@ -1534,6 +1534,26 @@
    clear = function() { .rs.clearUserPref("sort_file_names_naturally") }
 )
 
+# Date display format
+#
+# The order in which the components of a date are displayed, e.g. in the Files
+# pane Modified column.
+.rs.uiPrefs$dateFormat <- list(
+   get = function() { .rs.getUserPref("date_format") },
+   set = function(value) { .rs.setUserPref("date_format", value) },
+   clear = function() { .rs.clearUserPref("date_format") }
+)
+
+# Use a 24-hour clock
+#
+# Whether to display times using a 24-hour clock, e.g. in the Files pane Modified
+# column.
+.rs.uiPrefs$timeFormat24Hour <- list(
+   get = function() { .rs.getUserPref("time_format_24_hour") },
+   set = function(value) { .rs.setUserPref("time_format_24_hour", value) },
+   clear = function() { .rs.clearUserPref("time_format_24_hour") }
+)
+
 # Synchronize the Files pane with the current working directory
 #
 # Whether to change the directory in the Files pane automatically when the

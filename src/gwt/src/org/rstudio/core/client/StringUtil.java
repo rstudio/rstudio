@@ -29,6 +29,8 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -85,7 +87,42 @@ public class StringUtil
       if (date == null)
          return "";
 
-      return DATE_FORMAT.format(date);
+      return DateTimeFormat.getFormat(dateTimePattern()).format(date);
+   }
+
+   // Resolve the user's preferred date/time display format. Falls back to the
+   // historical default ("MMM d, yyyy, h:mm a") if preferences are not yet
+   // available, e.g. during early startup or in unit tests.
+   private static String dateTimePattern()
+   {
+      String datePart = "MMM d, yyyy";
+      String timePart = "h:mm a";
+
+      try
+      {
+         UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+
+         switch (prefs.dateFormat().getValue())
+         {
+            case UserPrefs.DATE_FORMAT_DAY_MONTH_YEAR:
+               datePart = "d MMM yyyy";
+               break;
+            case UserPrefs.DATE_FORMAT_YEAR_MONTH_DAY:
+               datePart = "yyyy-MM-dd";
+               break;
+            default:
+               break;
+         }
+
+         if (prefs.timeFormat24Hour().getValue())
+            timePart = "HH:mm";
+      }
+      catch (Throwable e)
+      {
+         // preferences unavailable; keep the default format
+      }
+
+      return datePart + ", " + timePart;
    }
 
    /**
@@ -1689,7 +1726,6 @@ public class StringUtil
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
-   private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
    private static final Pattern BASH_RESERVED_CHAR = Pattern.create("[^a-zA-Z0-9,._+@%/-]");
    private static final Pattern RE_TRAILING_COLON = Pattern.create(":\\s*$", "");

@@ -1384,6 +1384,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sortFileNamesNaturallyDescription();
 
    /**
+    * The order in which the components of a date are displayed, e.g. in the Files pane Modified column.
+    */
+   @DefaultStringValue("Date display format")
+   String dateFormatTitle();
+   @DefaultStringValue("The order in which the components of a date are displayed, e.g. in the Files pane Modified column.")
+   String dateFormatDescription();
+
+   /**
+    * Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.
+    */
+   @DefaultStringValue("Use a 24-hour clock")
+   String timeFormat24HourTitle();
+   @DefaultStringValue("Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.")
+   String timeFormat24HourDescription();
+
+   /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
     */
    @DefaultStringValue("Synchronize the Files pane with the current working directory")

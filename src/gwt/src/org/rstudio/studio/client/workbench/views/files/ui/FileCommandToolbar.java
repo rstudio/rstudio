@@ -133,6 +133,28 @@ public class FileCommandToolbar extends Toolbar
       ElementIds.assignElementId(moreButton_, ElementIds.MB_FILES_MORE);
       addLeftWidget(moreButton_);
 
+      // Settings (date/time display format)
+      ToolbarPopupMenu settingsMenu = new ToolbarPopupMenu();
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.dateFormat(),
+         UserPrefs.DATE_FORMAT_MONTH_DAY_YEAR, constants_.dateFormatMonthDayYearLabel(), prefs));
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.dateFormat(),
+         UserPrefs.DATE_FORMAT_DAY_MONTH_YEAR, constants_.dateFormatDayMonthYearLabel(), prefs));
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.dateFormat(),
+         UserPrefs.DATE_FORMAT_YEAR_MONTH_DAY, constants_.dateFormatYearMonthDayLabel(), prefs));
+      settingsMenu.addSeparator();
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.timeFormat24Hour(), true,
+         constants_.use24HourClockLabel(), prefs));
+
+      settingsButton_ = new ToolbarMenuButton(
+            "",
+            constants_.fileDisplaySettingsLabel(),
+            new ImageResource2x(icons.options2x()),
+            settingsMenu,
+            true);
+      ElementIds.assignElementId(settingsButton_, ElementIds.MB_FILES_SETTINGS);
+      addRightWidget(settingsButton_);
+      addRightSeparator();
+
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
@@ -185,5 +207,6 @@ public class FileCommandToolbar extends Toolbar
    private ToolbarButton deleteButton_;
    private ToolbarButton renameButton_;
    private ToolbarMenuButton moreButton_;
+   private ToolbarMenuButton settingsButton_;
    private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

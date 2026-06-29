@@ -2143,6 +2143,32 @@ core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
 }
 
 /**
+ * The order in which the components of a date are displayed, e.g. in the Files pane Modified column.
+ */
+std::string UserPrefValues::dateFormat()
+{
+   return readPref<std::string>("date_format");
+}
+
+core::Error UserPrefValues::setDateFormat(std::string val)
+{
+   return writePref("date_format", val);
+}
+
+/**
+ * Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.
+ */
+bool UserPrefValues::timeFormat24Hour()
+{
+   return readPref<bool>("time_format_24_hour");
+}
+
+core::Error UserPrefValues::setTimeFormat24Hour(bool val)
+{
+   return writePref("time_format_24_hour", val);
+}
+
+/**
  * Whether to change the directory in the Files pane automatically when the working directory in R changes.
  */
 bool UserPrefValues::syncFilesPaneWorkingDir()
@@ -4089,6 +4115,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
+      kDateFormat,
+      kTimeFormat24Hour,
       kSyncFilesPaneWorkingDir,
       kJobsTabVisibility,
       kShowLauncherJobsTab,

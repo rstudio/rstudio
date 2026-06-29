@@ -1146,6 +1146,19 @@
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
+        "date_format": {
+            "type": "string",
+            "enum": ["month_day_year", "day_month_year", "year_month_day"],
+            "default": "month_day_year",
+            "title": "Date display format",
+            "description": "The order in which the components of a date are displayed, e.g. in the Files pane Modified column."
+        },
+        "time_format_24_hour": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use a 24-hour clock",
+            "description": "Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column."
+        },
         "sync_files_pane_working_dir": {
             "type": "boolean",
             "default": false,

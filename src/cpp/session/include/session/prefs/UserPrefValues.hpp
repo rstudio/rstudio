@@ -281,6 +281,11 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kDateFormat "date_format"
+#define kDateFormatMonthDayYear "month_day_year"
+#define kDateFormatDayMonthYear "day_month_year"
+#define kDateFormatYearMonthDay "year_month_day"
+#define kTimeFormat24Hour "time_format_24_hour"
 #define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -1488,6 +1493,18 @@ public:
     */
    bool sortFileNamesNaturally();
    core::Error setSortFileNamesNaturally(bool val);
+
+   /**
+    * The order in which the components of a date are displayed, e.g. in the Files pane Modified column.
+    */
+   std::string dateFormat();
+   core::Error setDateFormat(std::string val);
+
+   /**
+    * Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.
+    */
+   bool timeFormat24Hour();
+   core::Error setTimeFormat24Hour(bool val);
 
    /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
