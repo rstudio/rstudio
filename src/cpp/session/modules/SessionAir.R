@@ -82,8 +82,18 @@
 
 .rs.addFunction("air.installedVersions", function()
 {
-   versions <- list.files(.rs.air.rootDir())
-   versions <- versions[file.exists(.rs.air.exePath(versions))]
+   # Search every known root (the current data directory plus any legacy
+   # locations) so that copies of air installed by older versions of
+   # RStudio are still discovered. https://github.com/rstudio/rstudio/issues/18068
+   versions <- character()
+   for (root in .rs.air.rootDirs())
+   {
+      candidates <- list.files(root)
+      candidates <- candidates[file.exists(.rs.air.exePath(candidates, root))]
+      versions <- c(versions, candidates)
+   }
+
+   versions <- unique(versions)
    if (length(versions) == 0L)
       return(character())
 
@@ -119,22 +129,39 @@
    if (is.null(version))
       version <- .rs.air.defaultVersion()
 
-   exe <- .rs.air.exePath(version)
-   if (!file.exists(exe))
+   # Use an existing copy if we can find one (searching legacy roots too);
+   # otherwise install into the current data directory.
+   exe <- .rs.air.findExe(version)
+   if (is.null(exe))
    {
       autoinstall <- getOption("rstudio.air.autoinstall", default = TRUE)
       if (autoinstall)
          .rs.air.installVersion(version)
+
+      exe <- .rs.air.findExe(version)
    }
 
-   if (!file.exists(exe))
-      stop(sprintf("Air binary not found at '%s'.", exe))
+   if (is.null(exe))
+      stop(sprintf("Air binary not found at '%s'.", .rs.air.exePath(version)))
 
    normalizePath(exe)
 })
 
 .rs.addFunction("air.rootDir", function()
 {
+   # Install air underneath RStudio's per-user data directory, e.g.
+   # '~/.local/share/rstudio/air' on Linux, '~/Library/.../rstudio/air' on
+   # macOS, or '%LOCALAPPDATA%\rstudio\air' on Windows. The C++ helper handles
+   # the platform-specific resolution (and any environment overrides).
+   # https://github.com/rstudio/rstudio/issues/18068
+   dataDir <- .Call("rs_userDataDir", PACKAGE = "(embedding)")
+   chartr("\\", "/", file.path(dataDir, "air"))
+})
+
+.rs.addFunction("air.oldRootDir", function()
+{
+   # The location used by older versions of RStudio. We still look here when
+   # discovering already-installed copies of air, but never install here.
    homeDir <- if (.rs.platform.isWindows)
    {
       Sys.getenv("USERPROFILE", unset = path.expand("~"))
@@ -147,15 +174,37 @@
    chartr("\\", "/", file.path(homeDir, ".local", "lib", "air"))
 })
 
-.rs.addFunction("air.binDir", function(version)
+.rs.addFunction("air.rootDirs", function()
 {
-   file.path(.rs.air.rootDir(), version, "bin")
+   # The current root is searched first, so installations there take
+   # precedence over copies left behind in a legacy location.
+   unique(c(.rs.air.rootDir(), .rs.air.oldRootDir()))
 })
 
-.rs.addFunction("air.exePath", function(version)
+.rs.addFunction("air.binDir", function(version, root = .rs.air.rootDir())
+{
+   file.path(root, version, "bin")
+})
+
+.rs.addFunction("air.exePath", function(version, root = .rs.air.rootDir())
 {
    exe <- if (.rs.platform.isWindows) "air.exe" else "air"
-   file.path(.rs.air.binDir(version), exe)
+   file.path(.rs.air.binDir(version, root), exe)
+})
+
+.rs.addFunction("air.findExe", function(version)
+{
+   # Return the path to an installed copy of air for the requested version,
+   # preferring the current root but falling back to legacy locations.
+   # Returns NULL when no installed copy exists.
+   for (root in .rs.air.rootDirs())
+   {
+      exe <- .rs.air.exePath(version, root)
+      if (file.exists(exe))
+         return(exe)
+   }
+
+   NULL
 })
 
 .rs.addFunction("air.installVersion", function(version)

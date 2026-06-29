@@ -24,6 +24,7 @@
 - ([#17807](https://github.com/rstudio/rstudio/issues/17807)): Fixed a startup stall and missing package vulnerability badges that could occur when an intermediary (such as a proxy) kept the connection to Posit Package Manager open after responding. RStudio's HTTP client now completes a response as soon as its full Content-Length body has been received, rather than waiting for the connection to close.
 - ([#18019](https://github.com/rstudio/rstudio/issues/18019)): Fixed an issue where a transient connection failure while writing user state during startup could leave the IDE stuck on an empty grey screen.
 - ([#1667](https://github.com/rstudio/rstudio/issues/1667)): On Linux Desktop, hardened middle-click (primary selection) paste in the editor and console: a selection is now flushed to the primary selection on mouse release rather than only after a short delay, and a middle-click paste falls back to the event's clipboard text when the tracked selection is empty, so quickly selecting and middle-click-pasting no longer pastes nothing.
+- ([#18068](https://github.com/rstudio/rstudio/issues/18068)): Auto-downloaded copies of the Air formatter are now installed under RStudio's per-user data directory (for example `~/.local/share/rstudio/air` on Linux or `%LOCALAPPDATA%\rstudio\air` on Windows) instead of `~/.local/lib/air`. Copies installed by older versions of RStudio in the previous location are still detected and reused.
 
 ### Dependencies
 - Ace 1.43.5
