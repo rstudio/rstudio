@@ -1146,18 +1146,17 @@
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
-        "date_format": {
-            "type": "string",
-            "enum": ["month_day_year", "day_month_year", "year_month_day"],
-            "default": "month_day_year",
-            "title": "Date display format",
-            "description": "The order in which the components of a date are displayed, e.g. in the Files pane Modified column."
-        },
-        "time_format_24_hour": {
+        "date_time_use_iso8601": {
             "type": "boolean",
             "default": false,
-            "title": "Use a 24-hour clock",
-            "description": "Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column."
+            "title": "Use ISO-8601 date-time formatting",
+            "description": "Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region."
+        },
+        "date_time_use_utc": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use UTC time zone",
+            "description": "Whether to display dates and times in the UTC time zone instead of the local time zone."
         },
         "sync_files_pane_working_dir": {
             "type": "boolean",

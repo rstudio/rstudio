@@ -1534,24 +1534,24 @@
    clear = function() { .rs.clearUserPref("sort_file_names_naturally") }
 )
 
-# Date display format
+# Use ISO-8601 date-time formatting
 #
-# The order in which the components of a date are displayed, e.g. in the Files
-# pane Modified column.
-.rs.uiPrefs$dateFormat <- list(
-   get = function() { .rs.getUserPref("date_format") },
-   set = function(value) { .rs.setUserPref("date_format", value) },
-   clear = function() { .rs.clearUserPref("date_format") }
+# Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09
+# 14:30) instead of the format inferred from the system region.
+.rs.uiPrefs$dateTimeUseIso8601 <- list(
+   get = function() { .rs.getUserPref("date_time_use_iso8601") },
+   set = function(value) { .rs.setUserPref("date_time_use_iso8601", value) },
+   clear = function() { .rs.clearUserPref("date_time_use_iso8601") }
 )
 
-# Use a 24-hour clock
+# Use UTC time zone
 #
-# Whether to display times using a 24-hour clock, e.g. in the Files pane Modified
-# column.
-.rs.uiPrefs$timeFormat24Hour <- list(
-   get = function() { .rs.getUserPref("time_format_24_hour") },
-   set = function(value) { .rs.setUserPref("time_format_24_hour", value) },
-   clear = function() { .rs.clearUserPref("time_format_24_hour") }
+# Whether to display dates and times in the UTC time zone instead of the local
+# time zone.
+.rs.uiPrefs$dateTimeUseUtc <- list(
+   get = function() { .rs.getUserPref("date_time_use_utc") },
+   set = function(value) { .rs.setUserPref("date_time_use_utc", value) },
+   clear = function() { .rs.clearUserPref("date_time_use_utc") }
 )
 
 # Synchronize the Files pane with the current working directory

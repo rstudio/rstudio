@@ -281,11 +281,8 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
-#define kDateFormat "date_format"
-#define kDateFormatMonthDayYear "month_day_year"
-#define kDateFormatDayMonthYear "day_month_year"
-#define kDateFormatYearMonthDay "year_month_day"
-#define kTimeFormat24Hour "time_format_24_hour"
+#define kDateTimeUseIso8601 "date_time_use_iso8601"
+#define kDateTimeUseUtc "date_time_use_utc"
 #define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -1495,16 +1492,16 @@ public:
    core::Error setSortFileNamesNaturally(bool val);
 
    /**
-    * The order in which the components of a date are displayed, e.g. in the Files pane Modified column.
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
     */
-   std::string dateFormat();
-   core::Error setDateFormat(std::string val);
+   bool dateTimeUseIso8601();
+   core::Error setDateTimeUseIso8601(bool val);
 
    /**
-    * Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
     */
-   bool timeFormat24Hour();
-   core::Error setTimeFormat24Hour(bool val);
+   bool dateTimeUseUtc();
+   core::Error setDateTimeUseUtc(bool val);
 
    /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.

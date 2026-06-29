@@ -1384,20 +1384,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sortFileNamesNaturallyDescription();
 
    /**
-    * The order in which the components of a date are displayed, e.g. in the Files pane Modified column.
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
     */
-   @DefaultStringValue("Date display format")
-   String dateFormatTitle();
-   @DefaultStringValue("The order in which the components of a date are displayed, e.g. in the Files pane Modified column.")
-   String dateFormatDescription();
+   @DefaultStringValue("Use ISO-8601 date-time formatting")
+   String dateTimeUseIso8601Title();
+   @DefaultStringValue("Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.")
+   String dateTimeUseIso8601Description();
 
    /**
-    * Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
     */
-   @DefaultStringValue("Use a 24-hour clock")
-   String timeFormat24HourTitle();
-   @DefaultStringValue("Whether to display times using a 24-hour clock, e.g. in the Files pane Modified column.")
-   String timeFormat24HourDescription();
+   @DefaultStringValue("Use UTC time zone")
+   String dateTimeUseUtcTitle();
+   @DefaultStringValue("Whether to display dates and times in the UTC time zone instead of the local time zone.")
+   String dateTimeUseUtcDescription();
 
    /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.

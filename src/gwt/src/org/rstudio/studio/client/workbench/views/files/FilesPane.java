@@ -307,8 +307,8 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                FilesList.SortOrder.Lexicographic);
 
       // redraw the file listing when the date/time display format changes
-      pPrefs_.get().dateFormat().addValueChangeHandler(event -> filesList_.redraw());
-      pPrefs_.get().timeFormat24Hour().addValueChangeHandler(event -> filesList_.redraw());
+      pPrefs_.get().dateTimeUseIso8601().addValueChangeHandler(event -> filesList_.redraw());
+      pPrefs_.get().dateTimeUseUtc().addValueChangeHandler(event -> filesList_.redraw());
 
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());

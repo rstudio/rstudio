@@ -1,14 +1,14 @@
 // Files pane date/time display format settings (#5908).
 //
-// The Files pane toolbar has a settings (gear) menu that controls how the
-// Modified column renders dates: the date component order (month/day/year,
-// day/month/year, year/month/day) and whether a 24-hour clock is used. These
-// are backed by the global `date_format` and `time_format_24_hour` prefs,
-// consulted by StringUtil.formatDate. This test drives the gear menu and
-// asserts the Modified column reformats accordingly.
+// By default the Files pane Modified column formats dates according to the
+// system region (via the browser's Intl API) in the local time zone. The
+// toolbar settings (gear) menu offers two overrides, each backed by a global
+// pref consulted by StringUtil.formatDate:
+//   - "Use ISO-8601 date-time formatting" (date_time_use_iso8601)
+//   - "Use UTC time zone"                 (date_time_use_utc)
 //
-// Assertions check the *shape* of the formatted value (via regex), not an
-// absolute timestamp, so they are insensitive to the runner's timezone and
+// Assertions check the *shape* of the formatted value (via regex) rather than
+// an absolute timestamp, so they are insensitive to the runner's timezone and
 // locale.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -42,9 +42,9 @@ test.describe.serial('Files pane date/time format settings (#5908)', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
 
-    // Start from the documented defaults regardless of prior runs.
-    await clearPref(page, 'date_format');
-    await clearPref(page, 'time_format_24_hour');
+    // Start from the defaults regardless of prior runs.
+    await clearPref(page, 'date_time_use_iso8601');
+    await clearPref(page, 'date_time_use_utc');
 
     // Create a file on the session's filesystem and point the Files pane at it.
     await consoleActions.executeInConsole(
@@ -57,49 +57,41 @@ test.describe.serial('Files pane date/time format settings (#5908)', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await clearPref(page, 'date_format');
-    await clearPref(page, 'time_format_24_hour');
+    await clearPref(page, 'date_time_use_iso8601');
+    await clearPref(page, 'date_time_use_utc');
     await consoleActions.executeInConsole(
       `{ unlink(file.path(${JSON.stringify(sandbox.dir)}, ${JSON.stringify(FILE_NAME)})); .rs.api.filesPaneNavigate(path.expand("~")) }`,
       { wait: true },
     );
   });
 
-  test('defaults to month/day/year with a 12-hour clock', async ({ rstudioPage: page }) => {
+  test('defaults to a region-formatted (non-ISO, local) value', async ({ rstudioPage: page }) => {
     const filesPanel = page.locator('#rstudio_workbench_panel_files');
-    // e.g. "Jun 29, 2026, 5:00 PM": abbreviated month, day, year, then a
-    // 12-hour time with a meridiem (PM or p.m. depending on the locale data).
-    await expect(modifiedCell(filesPanel, page)).toHaveText(
-      /^[A-Za-z]{3} \d{1,2}, \d{4}, \d{1,2}:\d{2}\s?[AaPp]\.?[Mm]\.?$/,
-      { timeout: 15000 },
-    );
+    // The locale default (e.g. "Mar 9, 2026, 2:30 PM") must not look like the
+    // ISO override (which begins with a yyyy-MM-dd date), and the local time
+    // zone carries no " UTC" marker.
+    await expect(modifiedCell(filesPanel, page)).not.toHaveText(/^\d{4}-\d{2}-\d{2}/, { timeout: 15000 });
+    await expect(modifiedCell(filesPanel, page)).not.toHaveText(/ UTC$/);
   });
 
-  test('the 24-hour clock toggle reformats the time', async ({ rstudioPage: page }) => {
+  test('the UTC toggle renders in the UTC time zone', async ({ rstudioPage: page }) => {
     const filesPanel = page.locator('#rstudio_workbench_panel_files');
 
-    await chooseSetting(page, '24-Hour Clock');
+    await chooseSetting(page, 'Use UTC time zone');
 
-    // The pref is written, and the time loses its meridiem in favor of a
-    // 24-hour HH:mm. Date order is still month/day/year.
-    await expect.poll(async () => getPref(page, 'time_format_24_hour'), { timeout: 5000 }).toBe(true);
-    await expect(modifiedCell(filesPanel, page)).toHaveText(
-      /^[A-Za-z]{3} \d{1,2}, \d{4}, \d{2}:\d{2}$/,
-      { timeout: 15000 },
-    );
+    await expect.poll(async () => getPref(page, 'date_time_use_utc'), { timeout: 5000 }).toBe(true);
+    // Still the region format (ISO not yet enabled), now marked as UTC.
+    await expect(modifiedCell(filesPanel, page)).toHaveText(/ UTC$/, { timeout: 15000 });
+    await expect(modifiedCell(filesPanel, page)).not.toHaveText(/^\d{4}-\d{2}-\d{2}/);
   });
 
-  test('the date-order setting reformats the date', async ({ rstudioPage: page }) => {
+  test('the ISO-8601 toggle reformats to yyyy-MM-dd', async ({ rstudioPage: page }) => {
     const filesPanel = page.locator('#rstudio_workbench_panel_files');
 
-    await chooseSetting(page, 'Year, Month, Day');
+    await chooseSetting(page, 'Use ISO-8601 date-time formatting');
 
-    // The pref is written, and the date renders ISO-style (yyyy-MM-dd). The
-    // 24-hour time from the previous test is retained.
-    await expect.poll(async () => getPref(page, 'date_format'), { timeout: 5000 }).toBe('year_month_day');
-    await expect(modifiedCell(filesPanel, page)).toHaveText(
-      /^\d{4}-\d{2}-\d{2}, \d{2}:\d{2}$/,
-      { timeout: 15000 },
-    );
+    await expect.poll(async () => getPref(page, 'date_time_use_iso8601'), { timeout: 5000 }).toBe(true);
+    // ISO-8601 with UTC (enabled in the previous test) ends with a "Z".
+    await expect(modifiedCell(filesPanel, page)).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}Z$/, { timeout: 15000 });
   });
 });
