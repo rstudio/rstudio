@@ -13,7 +13,7 @@ if [ $# -eq 0 ]; then
     echo "--arch    The CPU architecture supported by the build. Example: arm64"
     echo ""
     echo "--url     A URL to a location where the build can be downloaded. Example:"
-    echo "          https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/RStudio-pro.exe"
+    echo "          https://dl.dailies.rstudio.com/desktop/windows/RStudio-pro.exe"
     echo ""
     echo "--file    A path to a local copy of the build file. Example:"
     echo "          /tmp/RStudio-pro.exe"
@@ -107,7 +107,7 @@ if [ -z "$arch" ]; then
 fi
 
 if [ -z "$url" ]; then
-    echo "URL not set; specify a build with --url. Example: --url https:/s3.amazonaws.com/rstudio-ide-build/desktop/windows/RStudio-pro.exe"
+    echo "URL not set; specify a build with --url. Example: --url https://dl.dailies.rstudio.com/desktop/windows/RStudio-pro.exe"
     exit 1
 fi
 
