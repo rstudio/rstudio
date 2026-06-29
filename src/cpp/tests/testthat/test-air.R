@@ -15,27 +15,32 @@
 
 context("air")
 
-# Point the air installation root at a sandbox by overriding the home
-# directory used by .rs.air.rootDir(). Returns the sandbox root.
+# Point the air installation roots at sandboxes by overriding the data
+# directory used by .rs.air.rootDir() and the home directory used by
+# .rs.air.oldRootDir(). RSTUDIO_DATA_HOME is honored on every platform and is
+# used verbatim (no 'rstudio' suffix), so .rs.air.rootDir() resolves to
+# '<data>/air'. Returns the (current) sandbox root.
 local_air_root <- function(envir = parent.frame()) {
 
+   data <- tempfile("air-data-")
    home <- tempfile("air-home-")
+   dir.create(data, recursive = TRUE)
    dir.create(home, recursive = TRUE)
 
    withr::local_envvar(
-      c(HOME = home, USERPROFILE = home),
+      c(RSTUDIO_DATA_HOME = data, HOME = home, USERPROFILE = home),
       .local_envir = envir
    )
 
-   withr::defer(unlink(home, recursive = TRUE), envir = envir)
+   withr::defer(unlink(c(data, home), recursive = TRUE), envir = envir)
 
    .rs.air.rootDir()
 }
 
-# Create a fake air installation for the given version.
-install_fake_air <- function(version, withExe = TRUE) {
+# Create a fake air installation for the given version, in the given root.
+install_fake_air <- function(version, withExe = TRUE, root = .rs.air.rootDir()) {
 
-   binDir <- .rs.air.binDir(version)
+   binDir <- .rs.air.binDir(version, root)
    dir.create(binDir, recursive = TRUE, showWarnings = FALSE)
 
    if (withExe) {
@@ -62,6 +67,45 @@ test_that(".rs.air.installedVersions() finds and sorts installed versions", {
    expect_identical(
       .rs.air.installedVersions(),
       c("v0.11.0", "0.10.1", "0.9.0", "0.4.0")
+   )
+
+})
+
+test_that(".rs.air.installedVersions() also discovers copies in the legacy root", {
+
+   local_air_root()
+
+   # one copy in the current root, one only in the legacy root
+   install_fake_air("0.9.0")
+   install_fake_air("0.4.0", root = .rs.air.oldRootDir())
+
+   expect_identical(
+      .rs.air.installedVersions(),
+      c("0.9.0", "0.4.0")
+   )
+
+})
+
+test_that(".rs.air.ensureAvailable() reuses a copy from the legacy root", {
+
+   local_air_root()
+
+   # only available in the legacy location
+   install_fake_air("0.7.1", root = .rs.air.oldRootDir())
+
+   # make sure any 'air' on the PATH is not used
+   oldPath <- Sys.getenv("PATH")
+   Sys.setenv(PATH = tempdir())
+   on.exit(Sys.setenv(PATH = oldPath), add = TRUE)
+
+   # never query GitHub or install; the legacy copy must be reused as-is
+   options(rstudio.air.version = "0.7.1", rstudio.air.autoinstall = FALSE)
+   on.exit(options(rstudio.air.version = NULL, rstudio.air.autoinstall = NULL), add = TRUE)
+
+   exe <- .rs.air.ensureAvailable()
+   expect_identical(
+      normalizePath(exe),
+      normalizePath(.rs.air.exePath("0.7.1", .rs.air.oldRootDir()))
    )
 
 })
