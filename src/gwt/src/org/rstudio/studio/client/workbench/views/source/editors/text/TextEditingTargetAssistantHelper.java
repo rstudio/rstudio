@@ -452,18 +452,22 @@ public class TextEditingTargetAssistantHelper
     */
    public void showEditSuggestion(AssistantCompletion completion)
    {
-      showEditSuggestionImpl(completion, true, false);
+      showEditSuggestionImpl(completion, true, false, false);
    }
-   
+
    /**
     * Internal implementation for showing edit suggestions.
-    * 
+    *
     * @param completion The completion containing the range and replacement text
     * @param autoshow If true, render the suggestion immediately; if false, show gutter icon only
     * @param notifyServer Whether to notify the server that the completion was shown
     *                     (true for Assistant/Copilot flow, false for API callers)
+    * @param fromCompletionFallback Whether this suggestion arrived as a fallback from a
+    *                     completion request that returned no inline completions. When true,
+    *                     the position-based collapse is skipped so the user's autoshow
+    *                     preference is honored (see issue #18046).
     */
-   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
+   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer, boolean fromCompletionFallback)
    {
       if (dismissed_)
          return;
@@ -476,10 +480,14 @@ public class TextEditingTargetAssistantHelper
       // (which we need to send back to the server as-is in some language-server methods).
       AssistantCompletion normalized = normalizeSuggestion(completion);
 
-      // If the suggestion starts before the cursor, collapse it by default (show gutter-only)
       Position cursorPosition = display_.getCursorPosition();
       Position suggestionStart = Position.create(normalized.range.start.line, normalized.range.start.character);
-      if (suggestionStart.isBefore(cursorPosition))
+
+      // If the suggestion starts before the cursor, collapse it by default (show gutter-only).
+      // Skip this when the suggestion arrived as a fallback from a completion request -- there,
+      // the user explicitly asked for a completion at the cursor, so honor their autoshow
+      // preference even if the agent anchored the edit slightly before the cursor (#18046).
+      if (!fromCompletionFallback && suggestionStart.isBefore(cursorPosition))
       {
          autoshow = false;
       }
@@ -1438,6 +1446,7 @@ public class TextEditingTargetAssistantHelper
                               // For Copilot, fall back to NES; for Posit AI, just report no completions
                               if (shouldFallbackToNes())
                               {
+                                 nesFromCompletionFallback_ = true;
                                  nesTimer_.schedule(20);
                               }
                               else
@@ -1481,6 +1490,7 @@ public class TextEditingTargetAssistantHelper
 
                               if (shouldFallbackToNes())
                               {
+                                 nesFromCompletionFallback_ = true;
                                  nesTimer_.schedule(20);
                               }
                               return;
@@ -2023,6 +2033,11 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestions()
    {
+      // Capture and clear the completion-fallback flag up-front, so that an
+      // early return below doesn't leave a stale value for a later request.
+      final boolean fromCompletionFallback = nesFromCompletionFallback_;
+      nesFromCompletionFallback_ = false;
+
       if (dismissed_)
          return;
 
@@ -2043,11 +2058,11 @@ public class TextEditingTargetAssistantHelper
 
       target_.withSavedDoc(() ->
       {
-         requestNextEditSuggestionsImpl();
+         requestNextEditSuggestionsImpl(fromCompletionFallback);
       });
    }
 
-   private void requestNextEditSuggestionsImpl()
+   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback)
    {
       // Invalidate any prior requests.
       nesId_ += 1;
@@ -2100,9 +2115,9 @@ public class TextEditingTargetAssistantHelper
 
                // Check if autoshow is enabled
                boolean autoshow = prefs_.assistantNesAutoshow().getValue();
-               
+
                // Display the suggestion using the common helper
-               showEditSuggestionImpl(completion, autoshow, true);
+               showEditSuggestionImpl(completion, autoshow, true, fromCompletionFallback);
             }
 
             @Override
@@ -2804,6 +2819,11 @@ public class TextEditingTargetAssistantHelper
    private int nesId_ = 0;
    private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
+
+   // Set when the next NES request originates as a fallback from a completion
+   // request that returned no inline completions. Consumed (and cleared) by
+   // requestNextEditSuggestions(). See issue #18046.
+   private boolean nesFromCompletionFallback_ = false;
    private final HandlerRegistrations registrations_;
    private final HandlerRegistration commandsRegistration_;
 
