@@ -532,23 +532,41 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-            npx playwright test "${ARGS[@]}"
+          # Run Playwright under our own Xvfb and exec it as the step's main
+          # process, so a job cancellation's SIGTERM reaches Playwright
+          # directly. xvfb-run is a shell wrapper that does not forward signals
+          # to its child, which left cancelled Linux e2e jobs running until
+          # their timeout-minutes instead of stopping. -ac disables X access
+          # control so Chromium connects without an auth cookie; -nolisten tcp
+          # keeps the display on the local socket only. We wait for the X socket
+          # before launching so it doesn't race a cold display, and fail loudly
+          # (dumping the Xvfb log) if it never comes up, rather than exec-ing
+          # Playwright against a dead display and surfacing an opaque launch error.
+          Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for _ in $(seq 1 50); do
+            [ -S /tmp/.X11-unix/X99 ] && break
+            sleep 0.1
+          done
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
+            cat /tmp/xvfb.log || true
+            exit 1
+          fi
+          exec npx playwright test "${ARGS[@]}"
 
-      # Platform-prefixed artifact name. When this Linux workflow runs from
-      # the same parent PR run as the Desktop platforms (via the combined
-      # os-test-e2e-rstudio-pr.yml orchestrator), all three platforms upload
-      # to the same artifact namespace. macOS uses `-mac-`, Windows uses
-      # `-win-`; matching them with `-linux-` keeps each platform's merge
-      # job downloading ONLY its own shard reports. Without the prefix, the
-      # Linux merge job globs `playwright-blob-report-*` and silently
-      # ingests every platform's blobs, reporting combined totals under the
-      # Linux Server sticky comment header.
+      # Platform-prefixed artifact name. When this Linux Server workflow runs
+      # from the same parent PR run as the other platforms (via the combined
+      # os-test-e2e-rstudio-pr.yml orchestrator), all platforms upload to the
+      # same artifact namespace. macOS uses `-mac-`, Windows uses `-win-`, and
+      # Linux Desktop uses `-linux-desktop-`; `-linux-server-` keeps this
+      # platform's shard reports separate so its merge job downloads ONLY its
+      # own. A bare `-linux-` prefix would also match the Linux Desktop blobs.
       - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-blob-report-linux-${{ matrix.shard }}
+          name: playwright-blob-report-linux-server-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -560,22 +578,23 @@ jobs:
           # Platform-prefixed for the same reason as the blob report above:
           # macOS uploads test-results-${{ matrix.shard }} too, so under the
           # combined PR orchestrator the two would collide and upload-artifact
-          # would reject the second one. -linux- matches the -mac- / -win-
-          # convention the Desktop workflows already use.
-          name: test-results-linux-${{ matrix.shard }}
+          # would reject the second one. -linux-server- distinguishes this from
+          # the Linux Desktop workflow's test-results-linux-desktop-*.
+          name: test-results-linux-server-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
       # Preserved per-spec sandbox tree on failure -- includes rsession logs,
       # the spec's RStudio config / data home, and per-test working dirs.
-      # Platform-prefixed name to avoid colliding with the macOS Desktop
-      # workflow's identically-named pw-sandbox-${{ matrix.shard }} when both
-      # platforms run under the combined PR orchestrator.
+      # Platform-prefixed name to avoid colliding with the other platforms'
+      # sandbox artifacts (macOS pw-sandbox-${{ matrix.shard }}, Linux Desktop
+      # pw-sandbox-linux-desktop-*) when they run under the combined PR
+      # orchestrator.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pw-sandbox-linux-${{ matrix.shard }}
+          name: pw-sandbox-linux-server-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
@@ -636,11 +655,12 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
         with:
-          # Linux-only glob: in the combined PR orchestrator, macOS and
-          # Windows shards also publish under the same artifact namespace
-          # (playwright-blob-report-mac-* and playwright-blob-report-win-*).
-          # A bare `playwright-blob-report-*` would sweep all three.
-          pattern: playwright-blob-report-linux-*
+          # Linux-Server-only glob: in the combined PR orchestrator the other
+          # platforms also publish blob reports (playwright-blob-report-mac-*,
+          # -win-*, and -linux-desktop-*). A bare `playwright-blob-report-*` --
+          # or even `-linux-*`, which would match the Linux Desktop blobs --
+          # would sweep in other platforms' reports.
+          pattern: playwright-blob-report-linux-server-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
@@ -706,10 +726,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # Match the -mac / -win suffix the Desktop workflows already use
-          # for their merged reports. Avoids a future collision if the bare
+          # Match the -mac / -win / -linux-desktop suffixes the other workflows
+          # use for their merged reports. Avoids a future collision if the bare
           # `playwright-report` name is ever introduced by another callee.
-          name: playwright-report-linux
+          name: playwright-report-linux-server
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
