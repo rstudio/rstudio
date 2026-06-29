@@ -51,6 +51,11 @@ volatile sig_atomic_t s_forceSuspend = 0;
 volatile sig_atomic_t s_forceSuspendInterruptedR = 0;
 bool s_suspendedFromTimeout = false;
 
+// set once we begin a forced suspend (e.g. SIGTERM/SIGUSR2 from a server
+// shutdown). in that case the client is no longer reachable, so cleanup can
+// skip steps that exist only to flush final state to a connected client.
+bool s_suspendedForcibly = false;
+
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
@@ -315,9 +320,18 @@ void setSuspendedFromTimeout(bool suspended)
 {
    s_suspendedFromTimeout = suspended;
 }
-   
+
+bool suspendedForcibly()
+{
+   return s_suspendedForcibly;
+}
+
 bool suspendSession(bool force, int status)
 {
+   // remember whether this is a forced suspend so later cleanup can decide
+   // whether it is still worth trying to deliver final events to the client
+   s_suspendedForcibly = force;
+
 #ifndef _WIN32
    // Attempt to lower this session's CPU priority to something below average.
    // Suspension is never as important as ongoing work on the system, but large

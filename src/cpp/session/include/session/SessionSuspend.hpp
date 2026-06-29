@@ -59,6 +59,7 @@ void handleUSR1(int unused);
 void handleUSR2(int unused);
 bool suspendedFromTimeout();
 void setSuspendedFromTimeout(bool suspended);
+bool suspendedForcibly();
 bool sessionResumed();
 void setSessionResumed(bool resumed);
 

@@ -16,6 +16,7 @@
 #ifndef SESSION_CLIENT_EVENT_SERVICE_HPP
 #define SESSION_CLIENT_EVENT_SERVICE_HPP
 
+#include <atomic>
 #include <string>
 
 #include <boost/utility.hpp>
@@ -48,14 +49,25 @@ public:
    // COPYING: boost::noncopyable
 
    core::Error start(const std::string& clientId);
-   void stop();
-   
+
+   // stop the service. when flushPendingEvents is true (the default, used for
+   // user-initiated quits) the service thread is given a brief last-chance
+   // window to deliver any remaining events to a connected client. when false
+   // (e.g. a forced suspend from a server shutdown, where the client is no
+   // longer reachable) that window is skipped so shutdown is not delayed.
+   void stop(bool flushPendingEvents = true);
+
    void setClientId(const std::string& clientId, bool clearEvents);
 
    std::string clientId();
 
 private:
    void run();
+
+   // how long the run loop should wait for a client connection to retrieve
+   // final events while stopping. zero when there is no point waiting (a
+   // forced suspend, or no client has been active recently).
+   long lastChanceWaitSeconds() const;
 
    void erasePreviouslyDeliveredEvents(int lastClientEventIdSeen);
    bool havePendingClientEvents();
@@ -66,6 +78,10 @@ private:
 private:
    boost::mutex mutex_;
    boost::thread serviceThread_;
+
+   // when false, the service thread skips its last-chance event-delivery wait
+   // on stop (set by stop() before the thread is interrupted)
+   std::atomic<bool> flushPendingEventsOnStop_{true};
 
    std::string clientId_;
    core::json::Array clientEvents_;
