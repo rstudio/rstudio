@@ -526,6 +526,8 @@ public class ElementIds
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
    public final static String MB_FILES_TOUCH_FILE = "mb_files_touch_file";
    public static String getMbFilesTouchFile() { return getElementId(MB_FILES_TOUCH_FILE); }
+   public final static String MB_FILES_SETTINGS = "mb_files_settings";
+   public static String getMbFilesSettings() { return getElementId(MB_FILES_SETTINGS); }
 
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";

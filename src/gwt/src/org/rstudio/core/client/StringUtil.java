@@ -29,6 +29,8 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -85,8 +87,74 @@ public class StringUtil
       if (date == null)
          return "";
 
-      return DATE_FORMAT.format(date);
+      // By default dates are formatted according to the system region (via the
+      // browser's Intl API) in the local time zone. Two user preferences can
+      // override this: ISO-8601 formatting, and UTC time zone.
+      boolean iso8601 = false;
+      boolean utc = false;
+      try
+      {
+         UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+         iso8601 = prefs.dateTimeUseIso8601().getValue();
+         utc = prefs.dateTimeUseUtc().getValue();
+      }
+      catch (Throwable e)
+      {
+         // preferences unavailable; use the defaults
+      }
+
+      try
+      {
+         double millis = (double) date.getTime();
+         return iso8601 ? formatDateIso8601(millis, utc) : formatDateLocale(millis, utc);
+      }
+      catch (Throwable e)
+      {
+         // the Intl API may be unavailable in some environments (e.g. certain
+         // test harnesses); fall back to a fixed locale-independent format
+         return FALLBACK_DATE_FORMAT.format(date);
+      }
    }
+
+   // Format a date according to the system region using the browser's Intl
+   // API (medium date, short time). When utc is true the date is rendered in
+   // the UTC time zone, with " UTC" appended (the short time style omits the
+   // zone, and timeZoneName cannot be combined with dateStyle/timeStyle).
+   private static native String formatDateLocale(double millis, boolean utc)
+   /*-{
+      var options = { dateStyle: "medium", timeStyle: "short" };
+      if (utc)
+         options.timeZone = "UTC";
+      var result = new Intl.DateTimeFormat(undefined, options).format(new Date(millis));
+      return utc ? result + " UTC" : result;
+   }-*/;
+
+   // Format a date as ISO-8601 ("YYYY-MM-DD HH:mm"), in the local time zone or,
+   // when utc is true, in UTC (with a trailing "Z" designator).
+   private static native String formatDateIso8601(double millis, boolean utc)
+   /*-{
+      var d = new Date(millis);
+      var pad = function(n) { return (n < 10 ? "0" : "") + n; };
+      var year, month, day, hours, minutes;
+      if (utc)
+      {
+         year = d.getUTCFullYear();
+         month = d.getUTCMonth() + 1;
+         day = d.getUTCDate();
+         hours = d.getUTCHours();
+         minutes = d.getUTCMinutes();
+      }
+      else
+      {
+         year = d.getFullYear();
+         month = d.getMonth() + 1;
+         day = d.getDate();
+         hours = d.getHours();
+         minutes = d.getMinutes();
+      }
+      return year + "-" + pad(month) + "-" + pad(day) + " " +
+             pad(hours) + ":" + pad(minutes) + (utc ? "Z" : "");
+   }-*/;
 
    /**
     * Formats a datetime object according to how long ago it occurred; recent
@@ -1689,7 +1757,7 @@ public class StringUtil
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
-   private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
+   private static final DateTimeFormat FALLBACK_DATE_FORMAT = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
    private static final Pattern BASH_RESERVED_CHAR = Pattern.create("[^a-zA-Z0-9,._+@%/-]");
    private static final Pattern RE_TRAILING_COLON = Pattern.create(":\\s*$", "");
