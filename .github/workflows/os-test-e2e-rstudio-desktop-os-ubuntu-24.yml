@@ -118,6 +118,11 @@ jobs:
       # .o), so PRs automatically inherit main's warm cache from the seed job
       # without per-SHA tarball rotation. No AWS / S3 / secrets required.
       SCCACHE_GHA_ENABLED: 'true'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
       # Quiet npm during install-common's panmirror build, the Electron app
       # build, and any other transitive npm step.
       NPM_CONFIG_LOGLEVEL: error
@@ -166,9 +171,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: package/linux/build-Electron-DEB/gwt
-          key: rstudio-gwt-linux-desktop-x86_64-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-linux-desktop-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-linux-desktop-x86_64-v1-
+            rstudio-gwt-linux-desktop-x86_64-${{ env.GWT_STYLE }}-v1-
 
       # GHA-backed sccache. Installs sccache on PATH and starts the sccache
       # server with the GH Actions cache API as the storage backend. Object-level

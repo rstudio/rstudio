@@ -119,6 +119,11 @@ jobs:
       # report into the build log on every PR run.
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
 
     steps:
       - uses: actions/checkout@v4
@@ -159,9 +164,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: package/linux/build-Server-DEB/gwt
-          key: rstudio-gwt-linux-x86_64-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-linux-x86_64-v1-
+            rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-
 
       # GHA-backed sccache. Installs sccache on PATH and starts the sccache
       # server with the GH Actions cache API as the storage backend (via
