@@ -281,6 +281,8 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kDateTimeUseIso8601 "date_time_use_iso8601"
+#define kDateTimeUseUtc "date_time_use_utc"
 #define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -1488,6 +1490,18 @@ public:
     */
    bool sortFileNamesNaturally();
    core::Error setSortFileNamesNaturally(bool val);
+
+   /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   bool dateTimeUseIso8601();
+   core::Error setDateTimeUseIso8601(bool val);
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   bool dateTimeUseUtc();
+   core::Error setDateTimeUseUtc(bool val);
 
    /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.

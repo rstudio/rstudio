@@ -1384,6 +1384,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sortFileNamesNaturallyDescription();
 
    /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   @DefaultStringValue("Use ISO-8601 date-time formatting")
+   String dateTimeUseIso8601Title();
+   @DefaultStringValue("Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.")
+   String dateTimeUseIso8601Description();
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   @DefaultStringValue("Use UTC time zone")
+   String dateTimeUseUtcTitle();
+   @DefaultStringValue("Whether to display dates and times in the UTC time zone instead of the local time zone.")
+   String dateTimeUseUtcDescription();
+
+   /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
     */
    @DefaultStringValue("Synchronize the Files pane with the current working directory")

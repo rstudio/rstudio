@@ -133,6 +133,25 @@ public class FileCommandToolbar extends Toolbar
       ElementIds.assignElementId(moreButton_, ElementIds.MB_FILES_MORE);
       addLeftWidget(moreButton_);
 
+      // Settings (date/time display format). By default dates are formatted
+      // according to the system region in the local time zone; these toggles
+      // override that.
+      ToolbarPopupMenu settingsMenu = new ToolbarPopupMenu();
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.dateTimeUseIso8601(), true,
+         constants_.useIso8601Label(), prefs));
+      settingsMenu.addItem(new UserPrefMenuItem<>(prefs.dateTimeUseUtc(), true,
+         constants_.useUtcTimeZoneLabel(), prefs));
+
+      settingsButton_ = new ToolbarMenuButton(
+            "",
+            constants_.fileDisplaySettingsLabel(),
+            new ImageResource2x(icons.options2x()),
+            settingsMenu,
+            true);
+      ElementIds.assignElementId(settingsButton_, ElementIds.MB_FILES_SETTINGS);
+      addRightWidget(settingsButton_);
+      addRightSeparator();
+
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
@@ -185,5 +204,6 @@ public class FileCommandToolbar extends Toolbar
    private ToolbarButton deleteButton_;
    private ToolbarButton renameButton_;
    private ToolbarMenuButton moreButton_;
+   private ToolbarMenuButton settingsButton_;
    private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

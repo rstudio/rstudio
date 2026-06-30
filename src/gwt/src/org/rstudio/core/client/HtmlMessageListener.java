@@ -38,11 +38,13 @@ public class HtmlMessageListener
    @Inject
    public HtmlMessageListener(FileTypeRegistry fileTypeRegistry,
                                  EventBus eventBus,
-                                 Provider<UserPrefs> pUIPrefs)
+                                 Provider<UserPrefs> pUIPrefs,
+                                 Provider<UserState> pUserState)
    {
       htmlMessageListener_ = this;
       fileTypeRegistry_ = fileTypeRegistry;
       pUserPrefs_ = pUIPrefs;
+      pUserState_ = pUserState;
       themeSources_ = new ArrayList<>();
 
       initializeMessageListeners();
