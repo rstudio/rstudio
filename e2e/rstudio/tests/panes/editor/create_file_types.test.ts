@@ -21,9 +21,7 @@ import type { Page } from 'playwright';
 // types inside a single test; here they're one test each so one type's failure
 // doesn't mask the rest.
 
-// A successful create opens a new tab next to the placeholder, bringing the
-// source-tab count to 2. Gating on this proves the new doc opened before we read
-// the footer, instead of racing the leftover placeholder.
+// Source-document tabs; a successful create brings the count to 2 (see header).
 function sourceTabs(page: Page) {
   return page.locator("[class*='rstudio_source_panel'] [role='tab']");
 }
@@ -71,16 +69,18 @@ test.describe('Create file types', () => {
     });
   }
 
-  // SQL is its own test (not in the sweep above) because creating a SQL doc
-  // pops a modal offering to update/install RSQLite -- triggered by the
-  // template's `-- !preview conn=DBI::dbConnect(RSQLite::SQLite())` line. The
-  // doc is created regardless; declining the prompt keeps the leftover modal
+  // SQL is its own test (not in the sweep above) because the New SQL handler
+  // runs a prerequisites check on the template's preview-connection line, which
+  // can pop a modal offering to install/update RSQLite. The doc is created
+  // regardless; declining the prompt (if it appears) keeps the leftover modal
   // from blocking the next test's console focus (it otherwise broke newRNotebook).
   test('create SQL document via newSqlDoc', async ({ rstudioPage: page }) => {
     await executeCommand(page, 'newSqlDoc');
     await expect(sourceTabs(page)).toHaveCount(2, { timeout: 20000 });
     await expect(sourceActions.sourcePane.footerTable).toContainText('SQL');
-    await page.locator(NO_BTN).click({ timeout: 15000 }); // decline the RSQLite prompt
+    // Decline the RSQLite prompt if it appeared; it may not (e.g. RSQLite
+    // already current), and the doc is created either way.
+    await page.locator(NO_BTN).click({ timeout: 15000 }).catch(() => {});
     await consoleActions.resetSourcePane();
   });
 
