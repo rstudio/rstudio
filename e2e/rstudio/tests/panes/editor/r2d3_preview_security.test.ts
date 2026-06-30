@@ -1,5 +1,4 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import * as os from 'os';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN, CONFIRM_BTN } from '@pages/modals.page';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
@@ -117,15 +116,6 @@ test.describe('r2d3 Preview security', () => {
   });
 
   test('preview runs the command in the console after the user consents', async ({ rstudioPage: page }) => {
-    // GWT null dereference in compiled JS during the consent + render flow
-    // on Windows CI and Linux Server (product bug #18065). Marked fixme
-    // rather than skipped so it still runs and a future fix lights it up
-    // automatically, keeping the failure visible in reports.
-    test.fixme(
-      (os.platform() === 'win32' && !!process.env.CI)
-        || process.env.PW_RSTUDIO_MODE === 'server',
-      'GWT null dereference during r2d3 widget render on Windows CI and Linux Server; see #18065',
-    );
     const sentinel = `${sandbox.dir}/pwned_r2d3_allowed.txt`;
     const fileName = 'injection_r2d3_allowed.js';
     // The 'data' argument both smuggles in the (unsafe) sentinel-writing call

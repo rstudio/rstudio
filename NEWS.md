@@ -24,6 +24,7 @@
 - ([#17807](https://github.com/rstudio/rstudio/issues/17807)): Fixed a startup stall and missing package vulnerability badges that could occur when an intermediary (such as a proxy) kept the connection to Posit Package Manager open after responding. RStudio's HTTP client now completes a response as soon as its full Content-Length body has been received, rather than waiting for the connection to close.
 - ([#18019](https://github.com/rstudio/rstudio/issues/18019)): Fixed an issue where a transient connection failure while writing user state during startup could leave the IDE stuck on an empty grey screen.
 - ([#1667](https://github.com/rstudio/rstudio/issues/1667)): On Linux Desktop, hardened middle-click (primary selection) paste in the editor and console: a selection is now flushed to the primary selection on mouse release rather than only after a short delay, and a middle-click paste falls back to the event's clipboard text when the tracked selection is empty, so quickly selecting and middle-click-pasting no longer pastes nothing.
+- ([#18065](https://github.com/rstudio/rstudio/issues/18065)): Fixed an uncaught JavaScript exception thrown when an r2d3 widget requested the editor theme, caused by an uninjected user-state provider in the page's message listener. The theme handshake now completes so r2d3 widgets pick up the editor theme.
 
 ### Dependencies
 - Ace 1.43.5

@@ -13,7 +13,7 @@ name: "Cache Seed: E2E Playwright RStudio (Desktop, Ubuntu 24, Open Source)"
 #
 # The rstudio-tools and build-time R package caches are shared with the Linux
 # Server seed (same keys); the GWT cache key is desktop-specific
-# (rstudio-gwt-linux-desktop-x86_64-v1-), so this seeder warms it on main.
+# (rstudio-gwt-linux-desktop-x86_64-PRETTY-v1-), so this seeder warms it on main.
 on:
   # Re-seed when files under dependencies/ change. This glob is deliberately a
   # broad superset of the exact hashFiles() patterns that feed the cache keys
