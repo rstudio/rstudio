@@ -698,9 +698,27 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
-   private void resizeEditor() 
+   private void resizeEditor()
    {
+      // Don't resize (or sync content width) while this editor isn't actually
+      // showing. The content-width padding is applied via a single shared style
+      // element keyed on the .pm-editing-root-node class, so a hidden editor
+      // (measured width of 0) would compute the minimum padding and clobber the
+      // visible editor's width. See https://github.com/rstudio/rstudio/issues/14040.
+      if (!isEditorVisible())
+         return;
+
+      // re-assert the content width here as well, so that an editor that was
+      // hidden when the preference last changed picks up the current value when
+      // it becomes visible again
+      syncContentWidth();
+
       editor_.resize();
+   }
+
+   private boolean isEditorVisible()
+   {
+      return editor_ != null && getOffsetWidth() > 0;
    }
    
    private void syncEditorTheme()
@@ -716,6 +734,13 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private void syncContentWidth()
    {
+      // only apply the content width when this editor is actually visible; a
+      // hidden editor has a measured width of 0, which would cause the shared
+      // padding style to be set to the minimum (resetting the visible editor's
+      // content width). See https://github.com/rstudio/rstudio/issues/14040.
+      if (!isEditorVisible())
+         return;
+
       int contentWidth = userPrefs_.visualMarkdownEditingMaxContentWidth().getValue();
       editor_.setMaxContentWidth(contentWidth, 20);
    }
