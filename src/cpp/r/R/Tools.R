@@ -270,6 +270,38 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    opt$cpp11_preserve_env  <- NULL
    opt$cpp11_preserve_xptr <- NULL
 
+   # don't serialize these RStudio-managed options. their values are functions
+   # (or lists of functions) that close over the large internal '.rs' tools
+   # environment, so serializing them is slow -- each one drags the whole
+   # environment into the saved image. it is also pointless: RStudio re-sets
+   # each of these on every session start (see SessionConnections.R, Api.R,
+   # SessionReticulate.R), so any restored value is overwritten on resume.
+   rsManagedOptions <- c(
+      "connectionObserver",
+      "terminal.manager",
+      "reticulate.initialized",
+      "reticulate.repl.initialize",
+      "reticulate.repl.hook",
+      "reticulate.repl.busy",
+      "reticulate.repl.teardown"
+   )
+   opt[rsManagedOptions] <- NULL
+
+   # 'error' is commonly set by users, so only drop it when it is one of the
+   # error handlers RStudio itself installs. those are tagged with the
+   # 'rstudioErrorHandler' attribute via .rs.addErrorHandlerFunction (see
+   # SessionErrors.R) and are re-installed on every session start; a
+   # user-supplied handler carries no such tag and is preserved.
+   #
+   # note that R coerces a function assigned to options(error=) into a call
+   # that wraps the function, so the attribute is found on the embedded
+   # function (the first element of the call) rather than on the option value.
+   errorHandler <- opt$error
+   if (is.call(errorHandler))
+      errorHandler <- errorHandler[[1L]]
+   if (isTRUE(attr(errorHandler, "rstudioErrorHandler", exact = TRUE)))
+      opt$error <- NULL
+
    # first write to sidecar file, and then rename that file
    # (don't let failed serialization leave behind broken workspace)
    sidecarFile <- paste(filename, "incomplete", sep = ".")

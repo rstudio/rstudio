@@ -44,6 +44,11 @@ namespace {
 
 const int kLastChanceWaitSeconds = 4;
 
+// when stopping, only spend the last-chance wait above on retrieving final
+// events if a client connection was serviced within this window (i.e. a client
+// is likely still around to reconnect). otherwise there is no point waiting.
+const int kClientActiveThresholdSeconds = 5;
+
 bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 {
    const json::Object& eventJSON = event.getObject();
@@ -86,15 +91,43 @@ Error ClientEventService::start(const std::string& clientId)
    }
 }
    
-void ClientEventService::stop()
+void ClientEventService::stop(bool flushPendingEvents)
 {
+   // communicate to the service thread whether it should bother waiting to
+   // deliver remaining events to a client. must be set before the thread is
+   // interrupted below so the run loop observes it when it begins to stop.
+   flushPendingEventsOnStop_ = flushPendingEvents;
+
    core::thread::joinOrAbandonThread(
          serviceThread_,
          "ClientEventService thread",
          true,
          boost::posix_time::seconds(kLastChanceWaitSeconds + 1));
 }
-   
+
+long ClientEventService::lastChanceWaitSeconds() const
+{
+   using namespace boost::posix_time;
+
+   // a forced suspend (e.g. server shutdown) means the client is unreachable
+   // even if it polled an instant ago, so never wait
+   if (!flushPendingEventsOnStop_)
+      return 0;
+
+   // otherwise only wait if a client connection was serviced recently; if not,
+   // no client is around to reconnect and the wait would just be dead time
+   ptime lastConnection =
+         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
+   if (lastConnection.is_not_a_date_time())
+      return 0;
+
+   ptime now = second_clock::universal_time();
+   if ((now - lastConnection) > seconds(kClientActiveThresholdSeconds))
+      return 0;
+
+   return kLastChanceWaitSeconds;
+}
+
 void ClientEventService::setClientId(const std::string& clientId, bool clearEvents)
 {
    LOCK_MUTEX(mutex_)
@@ -191,8 +224,11 @@ void ClientEventService::run()
          boost::shared_ptr<HttpConnection> ptrConnection;
          try
          {
-            // wait for up to 1 second for a connection
-            long secondsToWait = stopServer ? kLastChanceWaitSeconds : 1;
+            // wait for up to 1 second for a connection. once we are stopping,
+            // give a still-connected client a last chance to retrieve any
+            // remaining events, but skip that wait when no client is reachable
+            // (see lastChanceWaitSeconds).
+            long secondsToWait = stopServer ? lastChanceWaitSeconds() : 1;
             ptrConnection =
              httpConnectionListener().eventsConnectionQueue().dequeConnection(
                                              boost::posix_time::seconds(secondsToWait));

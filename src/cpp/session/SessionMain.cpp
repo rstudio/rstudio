@@ -1528,7 +1528,9 @@ void rCleanup(bool terminatedNormally)
       // unix domain socket file so it is no big deal to bypass it
       if (rsession::options().programMode() == kSessionProgramModeServer)
       {
-         clientEventService().stop();
+         // on a forced suspend (e.g. SIGTERM from a server shutdown) the client
+         // is no longer reachable, so don't wait to flush pending events to it
+         clientEventService().stop(!suspend::suspendedForcibly());
          httpConnectionListener().stop();
       }
 
