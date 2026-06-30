@@ -177,7 +177,6 @@ pipeline {
             }
 
             environment {
-              AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
               BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
               PKG_EXTENSION = "${ext_map[env.OS]}"
@@ -359,6 +358,7 @@ pipeline {
                       dir("${PACKAGE_DIR}") {
                         script {
                           // publish build to dailies page
+                          echo "Publishing https://dl.dailies.rstudio.com/${AWS_PATH}/${PACKAGE_FILE} to dailies site"
                           utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                           utils.optionalPublishToDailies PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
