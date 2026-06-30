@@ -32,10 +32,13 @@ namespace packages {
 core::Error initialize();
 void enquePackageStateChanged();
 
-// Returns true if 'input' looks like a package-management function call
-// (install/update/remove and friends). Exposed for testing; also used
-// internally by onConsolePrompt to decide when to refresh the Packages pane.
-bool isPackageManagementCall(const std::string& input);
+// Cheap syntactic pre-filter: returns true if 'input' contains a function call
+// of the form 'fn(' or 'pkg::fn('. This only gates the more expensive, precise
+// check in '.rs.isPackageManagementCall' (which parses the input and resolves
+// each call's namespace), so that call-free console input -- assignments,
+// comments, bare expressions -- never pays for it. Exposed for testing; also
+// used by onConsolePrompt.
+bool containsCallSyntax(const std::string& input);
 
 } // namespace packages
 } // namespace modules
