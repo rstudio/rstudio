@@ -409,7 +409,7 @@ jobs:
           ls -la /usr/bin/rstudio
 
       - name: Install e2e test dependencies
-        uses: ./.github/actions/e2e-deps
+        uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 

@@ -76,7 +76,7 @@ runs:
         else
           export PKG_REPO="https://packagemanager.posit.co/cran/latest"
         fi
-        echo "[e2e-deps] R package repo: $PKG_REPO"
+        echo "[os-e2e-deps] R package repo: $PKG_REPO"
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
