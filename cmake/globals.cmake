@@ -185,15 +185,49 @@ if(RSTUDIO_USE_CCACHE AND
             RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
          if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
             set(RSTUDIO_COMPILER_CACHE "${${_cache_var}_EXECUTABLE}")
+            set(RSTUDIO_COMPILER_CACHE_NAME "${_cache_name}")
             break()
          endif()
       endif()
    endforeach()
 
    if(RSTUDIO_COMPILER_CACHE)
-      set(CMAKE_C_COMPILER_LAUNCHER "${RSTUDIO_COMPILER_CACHE}" CACHE STRING "")
-      set(CMAKE_CXX_COMPILER_LAUNCHER "${RSTUDIO_COMPILER_CACHE}" CACHE STRING "")
+      # By default the launcher is just the cache binary itself.
+      set(RSTUDIO_COMPILER_CACHE_LAUNCHER "${RSTUDIO_COMPILER_CACHE}")
+
+      # For ccache specifically, normalize absolute paths so objects compiled in
+      # one checkout (or git worktree) are reused in another. Without this, each
+      # checkout's absolute source/include paths hash differently and the cache
+      # never hits across checkouts -- defeating the git-worktree reuse this
+      # block exists to provide.
+      #
+      #   CCACHE_BASEDIR   rewrites absolute paths under the source tree to paths
+      #                    relative to the build dir before hashing.
+      #   CCACHE_NOHASHDIR stops ccache from folding the build dir into the hash.
+      #
+      # We thread these through `env` in the launcher list so the normalization
+      # is automatic (no reliance on the developer's shell). ccache-only:
+      # sccache has no BASEDIR equivalent. Non-Windows only: the worktree
+      # workflow this serves is POSIX, and `env` may not be present on Windows.
+      #
+      # Trade-off: a cross-checkout cache hit reuses the object that first
+      # populated the cache, so embedded debug / __FILE__ paths may point at the
+      # checkout that built it. Acceptable for development builds.
+      if(RSTUDIO_COMPILER_CACHE_NAME STREQUAL "ccache" AND NOT WIN32)
+         find_program(RSTUDIO_ENV_EXECUTABLE NAMES env)
+         if(RSTUDIO_ENV_EXECUTABLE)
+            set(RSTUDIO_COMPILER_CACHE_LAUNCHER
+               "${RSTUDIO_ENV_EXECUTABLE}"
+               "CCACHE_BASEDIR=${CMAKE_SOURCE_DIR}"
+               "CCACHE_NOHASHDIR=true"
+               "${RSTUDIO_COMPILER_CACHE}")
+         endif()
+      endif()
+
+      set(CMAKE_C_COMPILER_LAUNCHER   ${RSTUDIO_COMPILER_CACHE_LAUNCHER} CACHE STRING "")
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${RSTUDIO_COMPILER_CACHE_LAUNCHER} CACHE STRING "")
       message(STATUS "Using compiler cache: ${RSTUDIO_COMPILER_CACHE}")
+      message(STATUS "Compiler cache launcher: ${RSTUDIO_COMPILER_CACHE_LAUNCHER}")
    endif()
 endif()
 

@@ -134,12 +134,14 @@ public class StringUtilTests extends GWTTestCase
 
    public void testFormatDate()
    {
-      String result = StringUtil.formatDate(new Date());
-   
-      // just check that it's got minimum valid length; don't want to 
-      // mess with timezone awareness to do exact check
-      // MMM d, yyyy, h:mm AM
-      assertTrue(result.length() >= 20);
+      // formatDate now delegates to the browser Intl API, whose exact output
+      // (length, 12h/24h, separators) varies by locale, timezone, and time of
+      // day. Use a fixed date and assert the result is non-empty and contains
+      // the year
+      Date input = new Date(1592222400000L); // 2020-06-15T12:00:00Z
+      String result = StringUtil.formatDate(input);
+      assertFalse(StringUtil.isNullOrEmpty(result));
+      assertTrue(result.contains("2020"));
    }
    
    public void testNewlineCount()

@@ -632,18 +632,25 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition start = selection.getStart().movePosition(-1, true);
                   InputEditorPosition end = selection.getStart();
 
+                  // when deleting a colon, the namespace-completion context can
+                  // change (e.g. 'pkg:::' shows all objects but 'pkg::' shows
+                  // only exported ones), so the cached completions are no longer
+                  // valid -- flush the cache and re-query the server
+                  boolean flushCache =
+                        StringUtil.charAt(currentLine, cursorColumn - 1) == ':';
+
                   if (StringUtil.charAt(currentLine, cursorColumn) == ')' &&
                         StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
-                     requester_.flushCache();
+                     flushCache = true;
                      end = selection.getStart().movePosition(1, true);
                   }
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-                  
-                  return beginSuggest(false, false, false);
+
+                  return beginSuggest(flushCache, false, false);
                }
             }
             else
