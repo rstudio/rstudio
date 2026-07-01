@@ -143,9 +143,15 @@ bool isInDirectoryList(const std::string& path,
 // Walks up the directory tree from the given path to the root,
 // checking at each level for a match. The first (most specific)
 // ancestor found wins.
+//
+// When a "trusted" or "untrusted" result is produced via an ancestor,
+// the matching directory is reported in *pSource (when non-null). This
+// allows callers to explain why a directory inherited its trust status.
+// For a "default" result, *pSource is left empty.
 std::string resolveTrustStatus(const FilePath& dir,
                                const std::vector<std::string>& trustedDirs,
-                               const std::vector<std::string>& untrustedDirs)
+                               const std::vector<std::string>& untrustedDirs,
+                               std::string* pSource = nullptr)
 {
    FilePath current(dir.getCanonicalPath());
    while (!current.isEmpty())
@@ -153,10 +159,18 @@ std::string resolveTrustStatus(const FilePath& dir,
       std::string path = current.getAbsolutePath();
 
       if (isInDirectoryList(path, untrustedDirs))
+      {
+         if (pSource != nullptr)
+            *pSource = path;
          return kTrustStatusUntrusted;
+      }
 
       if (isInDirectoryList(path, trustedDirs))
+      {
+         if (pSource != nullptr)
+            *pSource = path;
          return kTrustStatusTrusted;
+      }
 
       if (current == current.getParent())
          break;
@@ -441,8 +455,22 @@ SEXP rs_trustStatus(SEXP directorySEXP)
       return Rf_mkString(kTrustStatusUnknown);
    }
 
-   std::string status = resolveTrustStatus(dir, trustedDirs, untrustedDirs);
-   return Rf_mkString(status.c_str());
+   r::sexp::Protect protect;
+
+   std::string source;
+   std::string status =
+         resolveTrustStatus(dir, trustedDirs, untrustedDirs, &source);
+
+   SEXP statusSEXP = r::sexp::create(status, &protect);
+
+   // Attach the directory responsible for the trust decision as a "source"
+   // attribute. When a directory inherits its status from an ancestor, this
+   // is that ancestor; when the directory itself was trusted or untrusted, it
+   // is the directory itself. The attribute is omitted for "default" results.
+   if (!source.empty())
+      r::sexp::setAttrib(statusSEXP, "source", r::sexp::create(source, &protect));
+
+   return statusSEXP;
 }
 
 } // anonymous namespace
