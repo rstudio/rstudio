@@ -152,6 +152,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       
       txtTitle_.setText("Untitled"); //$NON-NLS-1$
       DomUtils.setPlaceholder(txtAuthor_, constants_.newDocAuthorPlaceholderText());
+
+      // these are short form fields rather than prose, so disable the
+      // browser's native spell checking (https://github.com/rstudio/rstudio/issues/17796)
+      txtTitle_.getElement().setAttribute("spellcheck", "false");
+      txtAuthor_.getElement().setAttribute("spellcheck", "false");
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templateAriaLabelValue());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {

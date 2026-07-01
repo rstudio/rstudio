@@ -63,7 +63,12 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       A11y.associateLabelWithField(titleLabel_, txtTitle_.getElement());
       txtAuthor_.setText(defaultAuthor);
       A11y.associateLabelWithField(authorLabel_, txtAuthor_.getElement());
-      
+
+      // these are short form fields rather than prose, so disable the
+      // browser's native spell checking (https://github.com/rstudio/rstudio/issues/17796)
+      txtTitle_.getElement().setAttribute("spellcheck", "false");
+      txtAuthor_.getElement().setAttribute("spellcheck", "false");
+
       if (showTypes_)
       {
          setType(defaultType);
