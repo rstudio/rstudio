@@ -115,6 +115,18 @@ export default async function globalSetup(config: FullConfig) {
   const userHome = path.join(sandbox, 'user-home');
   fs.mkdirSync(userHome, { recursive: true });
 
+  // Seed an empty `.here` marker in the sandbox home. The home dir has no
+  // project markers (.Rproj/.git/renv.lock/...), so any R code that resolves a
+  // project root via the `here` / `rprojroot` packages -- e.g. reticulate's
+  // pipenv interpreter probe, which calls an unguarded here::here() (see
+  // rstudio/reticulate#1909) -- throws "No root directory found" when run from
+  // here. That error has surfaced as a spurious modal (e.g. "Error Listing
+  // Packages" on session resume) whose glass overlay then wedges unrelated
+  // tests. `.here` is the marker `here` looks for first, so it makes here()
+  // resolve to the home dir instead of erroring. It only affects code that
+  // actually calls here()/rprojroot; RStudio's own project detection ignores it.
+  fs.writeFileSync(path.join(userHome, '.here'), '');
+
   // On Windows, redirecting USERPROFILE to a directory that doesn't contain
   // an AppData/Roaming subdirectory makes Electron's app.getPath('appData')
   // fail at startup ("Failed to get 'appData' path" popup), which blocks
