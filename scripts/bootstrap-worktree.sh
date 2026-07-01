@@ -30,20 +30,36 @@
 # Run under bash (Git Bash or WSL on Windows).
 #
 # Usage:
-#   scripts/bootstrap-worktree.sh [worktree-dir] [--skip-desktop]
+#   scripts/bootstrap-worktree.sh [worktree-dir] [--skip-desktop] \
+#       [--with-build-dir[=<dir>]]
 #
 #   worktree-dir   defaults to the current directory; may be any path inside
 #                  the target worktree (it is normalized to the repo top).
 #   --skip-desktop skip src/node/desktop (its deps are large; skip when you
 #                  only need the e2e/rstudio suite).
+#   --with-build-dir[=<dir>]
+#                  also configure a CMake build directory for the worktree
+#                  (default <worktree>/build; <dir> may be absolute or relative
+#                  to the worktree). This configures FRESH -- it never copies
+#                  the main checkout's build/, which bakes absolute paths (the
+#                  cache's source dir, ninja depfiles, generated dev confs, and
+#                  debug/__FILE__ strings in objects), so a copied tree would
+#                  build and serve the wrong checkout. A fresh configure writes
+#                  correct paths; the cross-checkout CCACHE_BASEDIR setup in
+#                  cmake/globals.cmake then lets the compile reuse objects
+#                  another checkout already built, keeping it cheap.
 
 set -euo pipefail
 
 SKIP_DESKTOP=0
+WANT_BUILD_DIR=0
+BUILD_DIR_ARG=""
 TARGET=""
 for arg in "$@"; do
   case "$arg" in
     --skip-desktop) SKIP_DESKTOP=1 ;;
+    --with-build-dir) WANT_BUILD_DIR=1 ;;
+    --with-build-dir=*) WANT_BUILD_DIR=1; BUILD_DIR_ARG="${arg#*=}" ;;
     *) TARGET="$arg" ;;
   esac
 done
@@ -125,6 +141,35 @@ copy_generated() {
   cp "$MAIN_CHECKOUT/$rel" "$WORKTREE/$rel"
 }
 
+# Configure a CMake build directory for the worktree. Always a fresh configure
+# (cmake -S <worktree> -B <dir>), never a copy of the main checkout's build/ --
+# a CMake build tree bakes absolute paths into the cache, ninja depfiles, the
+# generated dev confs (www-local-path), and the compiled objects themselves, so
+# a copied tree would build and serve the main checkout rather than this one. A
+# fresh configure writes correct paths; the cross-checkout CCACHE_BASEDIR setup
+# in cmake/globals.cmake makes the subsequent compile reuse cached objects, so
+# this stays cheap despite not copying.
+configure_build() {
+  local dir="$1"
+
+  # Resolve a relative path against the worktree root so the build dir lands
+  # inside the worktree no matter where this script was invoked from.
+  case "$dir" in
+    /*) ;;
+    *) dir="$WORKTREE/$dir" ;;
+  esac
+
+  if ! command -v cmake >/dev/null 2>&1; then
+    echo "[bootstrap] WARNING: cmake not found on PATH; skipping --with-build-dir"
+    return
+  fi
+
+  echo "[bootstrap] configuring CMake build dir: $dir"
+  cmake -S "$WORKTREE" -B "$dir" -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+  echo "[bootstrap] build dir configured; compile with: cmake --build \"$dir\""
+}
+
 # The e2e/rstudio Playwright suite -- the common case.
 ensure_deps "e2e/rstudio"
 
@@ -136,6 +181,12 @@ if [ "$SKIP_DESKTOP" -eq 0 ]; then
   copy_generated "src/node/desktop/src/types/user-state-schema.d.ts"
 else
   echo "[bootstrap] skipping src/node/desktop (--skip-desktop)"
+fi
+
+# Optional CMake build-dir configure (default <worktree>/build when no path
+# was given).
+if [ "$WANT_BUILD_DIR" -eq 1 ]; then
+  configure_build "${BUILD_DIR_ARG:-build}"
 fi
 
 echo "[bootstrap] done"

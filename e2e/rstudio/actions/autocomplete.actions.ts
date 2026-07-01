@@ -78,6 +78,46 @@ export class AutocompleteActions {
   }
 
   /**
+   * Regression coverage for #17831. Types `pkg:::` in the console to bring up
+   * the all-objects completion popup, reads the items, then presses Backspace
+   * once (turning `:::` into `::`) and reads the items again. Deleting the
+   * colon changes the namespace context, so the list should narrow from all
+   * objects to only the exported ones.
+   *
+   * Returns both lists. `exported` is whatever the popup settled on after the
+   * backspace; if the fix is absent it stays equal to `all`, so the caller's
+   * assertion fails clearly rather than relying on a generic wait timeout.
+   */
+  async getNamespaceCompletionsBeforeAndAfterBackspace(
+    pkg: string,
+  ): Promise<{ all: string[]; exported: string[] }> {
+    await this.consoleActions.typeInConsole(`${pkg}:::`);
+    await this.page.locator(COMPLETION_POPUP).waitFor({ state: 'visible', timeout: 15000 });
+    const all = await this.getCompletionItems();
+
+    // Delete the trailing colon: ':::' -> '::'. This re-queries the server,
+    // which should narrow the list from all objects to only exported ones.
+    await this.page.keyboard.press('Backspace');
+
+    // Poll until the popup shrinks (the fix landed) or the deadline passes
+    // (the bug is present and the count never changes).
+    let exported = all;
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      const current = await this.getCompletionItems();
+      exported = current;
+      if (current.length < all.length) break;
+    }
+
+    // Cleanup: dismiss popup, cancel partial input
+    await this.dismiss();
+    await this.page.keyboard.press('Escape');
+    await sleep(300);
+
+    return { all, exported };
+  }
+
+  /**
    * Get completions in the editor.
    * Executes setupCode in console, creates a temp file (default extension `R`)
    * with fileContent, positions cursor at cursorLine/cursorCol (or end of
