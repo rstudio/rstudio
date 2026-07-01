@@ -153,7 +153,9 @@ jobs:
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
-      post_pr_comment: true
+      # Suppress each platform's own merge/publish/comment; the e2e-merge-all
+      # job below combines every platform's blobs into a single report + comment.
+      defer_merge: true
 
   macos:
     needs: detect-changes
@@ -165,7 +167,9 @@ jobs:
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
-      post_pr_comment: true
+      # Suppress each platform's own merge/publish/comment; the e2e-merge-all
+      # job below combines every platform's blobs into a single report + comment.
+      defer_merge: true
 
   linux-desktop:
     needs: detect-changes
@@ -177,7 +181,9 @@ jobs:
       project: desktop
       r_version: "4.5.3"
       grep_invert: "@ai"
-      post_pr_comment: true
+      # Suppress each platform's own merge/publish/comment; the e2e-merge-all
+      # job below combines every platform's blobs into a single report + comment.
+      defer_merge: true
 
   linux-server:
     needs: detect-changes
@@ -189,4 +195,125 @@ jobs:
       project: server
       r_version: "4.5.3"
       grep_invert: "@ai"
-      post_pr_comment: true
+      # Suppress each platform's own merge/publish/comment; the e2e-merge-all
+      # job below combines every platform's blobs into a single report + comment.
+      defer_merge: true
+
+  # Combine every platform's per-shard blob reports into ONE HTML report, publish
+  # it to Connect, and post a single PR comment with a per-platform breakdown.
+  # Artifacts are shared across the whole run, so this job can read the blobs
+  # uploaded by the reusable platform workflows above. Runs even when some
+  # platforms failed (if: always) so a partial report is still produced.
+  e2e-merge-all:
+    needs: [windows, macos, linux-desktop, linux-server]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        run: npm ci --ignore-scripts
+
+      # Every platform's shards uploaded blobs named
+      # playwright-blob-report-<platform>-<shard>; pull them all into one dir.
+      # Blob file names are platform+shard unique (PLAYWRIGHT_BLOB_OUTPUT_NAME),
+      # so flattening with merge-multiple cannot clobber one platform with another.
+      - name: Download all platform blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-blob-report-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge all reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- every platform failed to produce artifacts"
+            exit 1
+          fi
+          cat > merge.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            reporter: [
+              ['html', { outputFolder: 'playwright-report', open: 'never' }],
+              ['json', { outputFile: 'playwright-report/test-results.json' }],
+            ],
+          });
+          EOF
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      - name: Summarize results
+        id: summary
+        if: always()
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Publish the merged report to Connect on every PR run (pass or fail) so a
+      # browsable link is always available. Best-effort: a no-op on fork PRs
+      # (empty key) and never fails the job. The daily cleanup cron reaps it.
+      - name: Publish report to Connect
+        id: publish-report
+        if: always() && github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          connect-api-key: ${{ secrets.CONNECT_API_KEY }}
+          title: "E2E RStudio (all platforms) - PR #${{ github.event.pull_request.number }} - run #${{ github.run_number }}"
+
+      - name: Post E2E results to PR
+        if: |
+          always() &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          header: e2e-results
+          message: |
+            ## RStudio E2E - all platforms
+
+            ${{ steps.summary.outputs.failed == '0' && '### All tests passed!' || format('### {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | Passed | Failed | Skipped | Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            ${{ steps.summary.outputs.platform_table }}
+
+            <details>
+            <summary>View / download the full report</summary>
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[View report online]({0})** -- opens in the browser (requires Connect login). Available for up to 1 week.
+            ', steps.publish-report.outputs.url) || '' }}
+            **[Download playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** -- extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>All platforms - commit <code>${{ github.event.pull_request.head.sha }}</code> - <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

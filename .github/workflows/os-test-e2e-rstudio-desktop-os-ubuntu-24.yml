@@ -82,6 +82,10 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -420,7 +424,9 @@ jobs:
         working-directory: e2e/rstudio
         env:
           PW_RSTUDIO_MODE: desktop
-          PW_PROJECT_NAME: ${{ inputs.project }}
+          # Platform-labelled project name so a cross-platform merged report can
+          # distinguish these results (see PW_PROJECT_LABEL in playwright.config.ts).
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -428,6 +434,10 @@ jobs:
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
+          # Platform+shard-unique blob file name. The default is report-<shard>.zip,
+          # which would collide across platforms (mac shard 1 vs windows shard 1)
+          # when the PR job flattens every platform's blobs into one dir to merge.
+          PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ inputs.project }}-linux-${{ matrix.shard }}.zip
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
           # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
           # uploads fail with warnings (never fails the run).
@@ -443,7 +453,7 @@ jobs:
             ARGS+=($PW_TEST_SELECTOR)
             set +f
           fi
-          ARGS+=(--project "$PW_PROJECT_NAME")
+          ARGS+=(--project "$PW_PROJECT_LABEL")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
@@ -513,7 +523,7 @@ jobs:
   # (when post_pr_comment is set).
   e2e-merge:
     needs: [e2e-desktop-ubuntu]
-    if: always() && needs.e2e-desktop-ubuntu.result != 'skipped' && needs.e2e-desktop-ubuntu.result != 'cancelled'
+    if: always() && inputs.defer_merge != true && needs.e2e-desktop-ubuntu.result != 'skipped' && needs.e2e-desktop-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

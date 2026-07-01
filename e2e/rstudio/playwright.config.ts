@@ -89,8 +89,11 @@ function parseProjectFromArgv(): string | undefined {
 }
 
 const argvProject = parseProjectFromArgv()?.toLowerCase();
-if (argvProject) {
+if (argvProject === 'desktop' || argvProject === 'server') {
   // --project wins over a pre-existing PW_RSTUDIO_MODE (README documents this).
+  // Only the bare mode names drive mode selection; a platform-labelled project
+  // (e.g. --project desktop-macos, see PW_PROJECT_LABEL below) must NOT clobber
+  // PW_RSTUDIO_MODE, or the modeEnv guard would reject it.
   process.env.PW_RSTUDIO_MODE = argvProject;
 }
 
@@ -98,7 +101,17 @@ const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase() ?? 'desktop';
 if (modeEnv !== 'desktop' && modeEnv !== 'server') {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
-const projects = allProjects.filter(p => p.name === modeEnv);
+
+// Display label for the active project, surfaced as the project "name" in
+// reports (and matched by --project). CI passes a distinct label per platform
+// (e.g. desktop-macos, desktop-windows, server-linux) so a cross-platform
+// merged report can tell results apart -- without it every desktop platform
+// collapses under a single indistinguishable "desktop" group. Defaults to the
+// mode for local runs, so `--project desktop|server` keeps working unchanged.
+const projectLabel = process.env.PW_PROJECT_LABEL || modeEnv;
+const projects = allProjects
+  .filter(p => p.name === modeEnv)
+  .map(p => ({ ...p, name: projectLabel }));
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
