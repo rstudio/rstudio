@@ -37,6 +37,8 @@
 - ([#18068](https://github.com/rstudio/rstudio/issues/18068)): Auto-downloaded copies of the Air formatter are now installed under RStudio's per-user data directory (for example `~/.local/share/rstudio/air` on Linux or `%LOCALAPPDATA%\rstudio\air` on Windows) instead of `~/.local/lib/air`. Copies installed by older versions of RStudio in the previous location are still detected and reused.
 - ([#18093](https://github.com/rstudio/rstudio/issues/18093)): Fixed interactive execution of `sql` chunks that use the `--|` cell-option comment syntax (for example `--| connection: con`). The option line is now stripped from the chunk body before the query is sent to the database, so backends such as MySQL and MariaDB that reject `--|` as invalid SQL syntax no longer error.
 
+- ([#18101](https://github.com/rstudio/rstudio/issues/18101)): Fixed "Run Selection as Background Job" (and the related Source/Launcher job commands) appearing to do nothing when invoked from a detached source window on Windows Desktop. The job launcher dialog is shown in the main window, which is now brought forward so the dialog is visible.
+
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.509.1

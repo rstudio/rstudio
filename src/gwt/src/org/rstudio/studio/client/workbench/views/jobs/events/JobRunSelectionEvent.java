@@ -55,6 +55,16 @@ public class JobRunSelectionEvent extends CrossWindowEvent<JobRunSelectionEvent.
       return TYPE;
    }
 
+   // when fired from a detached source window, this event is forwarded to the
+   // main window, which shows the job launcher dialog. bring the main window
+   // forward so that dialog is visible (otherwise it can appear behind the
+   // source window and the command appears to do nothing; see rstudio#18101)
+   @Override
+   public int focusMode()
+   {
+      return CrossWindowEvent.MODE_FOCUS;
+   }
+
    @Override
    protected void dispatch(Handler handler)
    {
