@@ -79,12 +79,20 @@ runs:
         # Deploy the directory as static HTML. rsconnect writes a deployment
         # record under <report-dir>/rsconnect-python/*.json from which we read
         # the created content's GUID; we also tee stdout as a fallback source.
-        if ! rsconnect deploy html \
+        #
+        # We cd into the report directory and deploy "." rather than passing the
+        # directory as an argument: rsconnect-python validates --entrypoint with
+        # exists() relative to the process CWD (not the deploy path), so
+        # "--entrypoint index.html <report-dir>" run from the repo root fails
+        # with "Entrypoint index.html does not exist." Deploying from inside the
+        # directory makes index.html resolve correctly and keeps the manifest
+        # entrypoint a bare basename.
+        if ! ( cd "${REPORT_DIR}" && rsconnect deploy html \
               --server "${CONNECT_SERVER}" \
               --api-key "${CONNECT_API_KEY}" \
               --entrypoint index.html \
               --title "${CONTENT_TITLE}" \
-              "${REPORT_DIR}" 2>&1 | tee /tmp/rsconnect-deploy.log; then
+              . ) 2>&1 | tee /tmp/rsconnect-deploy.log; then
           echo "::warning::rsconnect deploy failed; see log above. Skipping publication."
           exit 0
         fi
