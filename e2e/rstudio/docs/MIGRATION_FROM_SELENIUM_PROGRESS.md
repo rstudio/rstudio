@@ -9,7 +9,7 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 31 |
+| Files fully converted | 32 |
 | Files partially converted | 0 |
 | Files not started | 5 |
 
@@ -19,7 +19,7 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (to be scrapped) | Failed miserably (restart from scratch) | First attempt failed miserably: only 6 of 18 tests passing, a mid-session refactor regressed a 9-passing state, and Quarto never reaches visual mode. Scrapping the file and redoing the migration from scratch. |
+| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (11) | Complete | Restarted from scratch. The 17 Selenium methods are collapsed into 11 representative tests (per-source and per-format delete/blank/dont-escape duplicates folded): DOI insert (markdown + Quarto), R Package insert, delete a staged citation, no-duplicate dedup with a references.bib single-entry check, blank-insert dialog dismissal, non-escaping visual round-trip (.md + .qmd), and keyword search for Crossref/DataCite/PubMed. Insert tests also assert references.bib content (key, entry type, title, DOI, and no author field). All against live services. R Package delete is not ported (delete is source-agnostic, covered by the DOI delete; package staging is covered by the R Package insert). |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command_palette.test.ts (2) | Complete | Open/filter/run (Escape closes; "script" keeps R + SQL script, drops text file; Enter runs the front-loaded New R Script), and the inline native-pipe pref toggle (verified by inserting "\|>"). Both cross-mode. |
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
