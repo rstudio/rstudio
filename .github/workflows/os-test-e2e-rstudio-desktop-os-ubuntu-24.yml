@@ -461,9 +461,10 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          # Run Playwright under our own Xvfb and exec it as the step's main
-          # process, so a job cancellation's SIGTERM reaches Playwright
-          # directly. xvfb-run is a shell wrapper that does not forward signals
+          # Run Playwright under our own Xvfb and exec the watchdog as the step's
+          # main process, so a job cancellation's SIGTERM reaches the watchdog
+          # (which forwards it to Playwright's process tree). xvfb-run is a shell
+          # wrapper that does not forward signals
           # to its child, which left cancelled Linux e2e jobs running until
           # their timeout-minutes instead of stopping. -ac disables X access
           # control so Chromium connects without an auth cookie; -nolisten tcp
@@ -482,7 +483,7 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          exec npx playwright test "${ARGS[@]}"
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       # Platform-prefixed artifact name. When this Linux Desktop workflow runs
       # from the same parent PR run as the other platforms (via the combined

@@ -425,7 +425,7 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          npx playwright test "${ARGS[@]}"
+          node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       - name: Upload blob report
         if: always()

@@ -816,7 +816,7 @@ jobs:
           }
           $pwArgs += '--shard'
           $pwArgs += "$($env:PW_SHARD)/${{ strategy.job-total }}"
-          npx playwright test $pwArgs
+          node scripts/run-with-heartbeat.mjs -- test $pwArgs
 
       - name: Upload blob report
         if: always()

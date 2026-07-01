@@ -145,13 +145,16 @@ if (process.env.GITHUB_ACTIONS)
 
 // Sharded CI runs use blob reporter so the merge job can reassemble a single
 // HTML report and accurate counts from all shards. Other human-facing reporters
-// are suppressed per-shard. sandbox-reporter is kept so teardown can still
-// detect failures and preserve sandbox state for artifact upload. The E2E Test
-// Insights reporter rides alongside blob so per-shard results also reach the
-// dashboard. Without CONNECT_API_KEY (e.g. fork PRs) it still runs but
-// its uploads fail with warnings (never fails the run).
+// are suppressed per-shard. 'list' is kept so the CI log shows per-test progress
+// (blob is silent during the run); this also gives the run-with-heartbeat
+// watchdog a reliable heartbeat -- a line per test -- so a hung run is detected
+// by its silence. sandbox-reporter is kept so teardown can still detect failures
+// and preserve sandbox state for artifact upload. The E2E Test Insights reporter
+// rides alongside blob so per-shard results also reach the dashboard. Without
+// CONNECT_API_KEY (e.g. fork PRs) it still runs but its uploads fail with
+// warnings (never fails the run).
 if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
-  reporters.splice(0, reporters.length, ['blob'], ['./fixtures/sandbox-reporter.ts'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
+  reporters.splice(0, reporters.length, ['blob'], ['list'], ['./fixtures/sandbox-reporter.ts'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
 
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
