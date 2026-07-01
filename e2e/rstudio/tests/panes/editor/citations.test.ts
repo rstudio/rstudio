@@ -95,6 +95,10 @@ test.describe('Citations', () => {
     expect(bib).toContain('effects1999');
     expect(bib).toContain('Bobolink');
     expect(bib).toContain('10.3133/93888');
+    // No author: the key is title-derived. If this DOI ever gains an author
+    // field upstream, the key would change and this test's premise breaks --
+    // fail here rather than silently testing the wrong thing.
+    expect(bib).not.toMatch(/author\s*=/i);
   });
 
   // The same DOI insert flow works in a Quarto (.qmd) document -- the format
