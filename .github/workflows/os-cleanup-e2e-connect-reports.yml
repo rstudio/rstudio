@@ -48,14 +48,27 @@ jobs:
           CUTOFF=$(date -u -d "-${RETENTION_DAYS} days" +%s)
           echo "Deleting E2E report content last deployed before $(date -u -d "@${CUTOFF}" '+%Y-%m-%d %H:%M:%SZ') (retention: ${RETENTION_DAYS} days)."
 
+          # Scope deletion to content owned by the CI publisher account (the
+          # identity behind CONNECT_API_KEY). Combined with the title match
+          # below this ensures we never touch content owned by anyone else,
+          # even if they happen to use an "E2E ..." title.
+          OWNER=$(curl -sS -H "Authorization: Key ${CONNECT_API_KEY}" \
+            "${SERVER}/__api__/v1/user" | jq -r '.guid // empty')
+          if [ -z "${OWNER}" ]; then
+            echo "::error::Could not resolve the API key's owner GUID; refusing to delete."
+            exit 1
+          fi
+
           # The reports we publish are titled "E2E <platform> - PR #<n> - run
-          # #<m>"; match on that prefix so we never touch unrelated content.
+          # #<m>". Match that exact shape (not a bare "E2E " prefix) so a
+          # differently-titled item owned by the same account is never touched.
           curl -sS -H "Authorization: Key ${CONNECT_API_KEY}" \
             "${SERVER}/__api__/v1/content" > /tmp/content.json
 
-          jq -r --argjson cutoff "${CUTOFF}" '
+          jq -r --argjson cutoff "${CUTOFF}" --arg owner "${OWNER}" '
             .[]
-            | select((.title // "") | startswith("E2E "))
+            | select(.owner_guid == $owner)
+            | select((.title // "") | test("^E2E .+ - PR #[0-9]+ - run #[0-9]+$"))
             | select(((.last_deployed_time // .created_time) | sub("\\.[0-9]+"; "") | fromdateiso8601) < $cutoff)
             | "\(.guid)\t\(.title)"
           ' /tmp/content.json > /tmp/stale.tsv || true
