@@ -181,3 +181,44 @@ for (const context of contexts) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Issue 17831 — Completions update when deleting a colon (`pkg:::` -> `pkg::`)
+// https://github.com/rstudio/rstudio/issues/17831
+//
+// Console-only: the regression is in the shared backspace handling in
+// RCompletionManager, so exercising one context is sufficient.
+// ---------------------------------------------------------------------------
+test.describe('Issue 17831 - Namespace completions update on backspace', () => {
+  let consoleActions: ConsolePaneActions;
+  let sourceActions: SourcePaneActions;
+  let autocomplete: AutocompleteActions;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    consoleActions = new ConsolePaneActions(page);
+    sourceActions = new SourcePaneActions(page, consoleActions);
+    autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
+    await consoleActions.resetSourcePane();
+  });
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+  });
+
+  test('deleting a colon narrows tools::: to tools::', async () => {
+    const { all, exported } =
+      await autocomplete.getNamespaceCompletionsBeforeAndAfterBackspace('tools');
+
+    expect(all.length).toBeGreaterThan(0);
+    expect(exported.length).toBeGreaterThan(0);
+
+    // The exported-only list must be strictly smaller than the all-objects
+    // list (tools always has more internal than exported objects), and every
+    // exported entry must also appear in the all-objects list.
+    expect(exported.length).toBeLessThan(all.length);
+    for (const item of exported) {
+      expect(all).toContain(item);
+    }
+  });
+});
