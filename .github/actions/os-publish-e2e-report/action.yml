@@ -1,0 +1,123 @@
+name: "Publish E2E report to Connect"
+description: >
+  Publish a merged Playwright HTML report to Posit Connect as static content
+  and return its browsable URL. Intended to run in the e2e-merge job on failure
+  so reviewers can inspect screenshots, traces, and step details in a browser
+  without downloading and extracting the artifact zip.
+
+  The content is created with access_type "logged_in", so viewing it requires
+  authenticating to Connect. Publishing is best-effort: any failure (including
+  a missing API key on fork PRs) is logged and leaves the "url" output empty
+  rather than failing the calling job.
+
+inputs:
+  report-dir:
+    description: "Directory containing the merged Playwright HTML report (index.html at its root)."
+    required: false
+    default: "e2e/rstudio/playwright-report"
+  connect-server:
+    description: "Base URL of the Posit Connect server to publish to."
+    required: false
+    default: "https://connect.posit.it"
+  connect-api-key:
+    description: "Connect API key with publish rights. Empty (e.g. fork PRs) makes this a no-op."
+    required: true
+  title:
+    description: "Human-readable title for the published content."
+    required: true
+  access-type:
+    description: >
+      Connect access_type for the published content: "logged_in" (any
+      authenticated Connect user), "acl" (owner plus named viewers), or "all"
+      (public). Defaults to "logged_in".
+    required: false
+    default: "logged_in"
+
+outputs:
+  url:
+    description: "Browsable URL of the published report, or empty if nothing was published."
+    value: ${{ steps.publish.outputs.url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Publish report to Connect
+      id: publish
+      shell: bash
+      env:
+        REPORT_DIR: ${{ inputs.report-dir }}
+        CONNECT_SERVER: ${{ inputs.connect-server }}
+        CONNECT_API_KEY: ${{ inputs.connect-api-key }}
+        CONTENT_TITLE: ${{ inputs.title }}
+        ACCESS_TYPE: ${{ inputs.access-type }}
+      run: |
+        set -uo pipefail
+
+        # Always define the output up front so callers can safely reference it
+        # even when we bail out early below.
+        echo "url=" >> "$GITHUB_OUTPUT"
+
+        # Fork PRs (and any run without the secret) get an empty API key. Skip
+        # quietly rather than failing, mirroring the Test Insights reporter.
+        if [ -z "${CONNECT_API_KEY}" ]; then
+          echo "::notice::CONNECT_API_KEY is empty; skipping report publication."
+          exit 0
+        fi
+
+        if [ ! -f "${REPORT_DIR}/index.html" ]; then
+          echo "::warning::No report found at ${REPORT_DIR}/index.html; skipping publication."
+          exit 0
+        fi
+
+        # rsconnect-python builds the static-content manifest + bundle, uploads
+        # it, and polls the deploy task for us. It ships as a pip package.
+        python3 -m pip install --quiet --disable-pip-version-check "rsconnect-python>=1.24" || {
+          echo "::warning::Failed to install rsconnect-python; skipping publication."
+          exit 0
+        }
+
+        # Deploy the directory as static HTML. rsconnect writes a deployment
+        # record under <report-dir>/rsconnect-python/*.json from which we read
+        # the created content's GUID; we also tee stdout as a fallback source.
+        if ! rsconnect deploy html \
+              --server "${CONNECT_SERVER}" \
+              --api-key "${CONNECT_API_KEY}" \
+              --entrypoint index.html \
+              --title "${CONTENT_TITLE}" \
+              "${REPORT_DIR}" 2>&1 | tee /tmp/rsconnect-deploy.log; then
+          echo "::warning::rsconnect deploy failed; see log above. Skipping publication."
+          exit 0
+        fi
+
+        # Prefer the machine-readable deployment record; fall back to scraping a
+        # /content/<guid>/ URL out of the deploy log.
+        GUID=""
+        RECORD=$(ls -t "${REPORT_DIR}"/rsconnect-python/*.json 2>/dev/null | head -n1 || true)
+        if [ -n "${RECORD}" ]; then
+          GUID=$(jq -r '.guid // empty' "${RECORD}" 2>/dev/null || true)
+        fi
+        if [ -z "${GUID}" ]; then
+          GUID=$(grep -oE '/content/[0-9a-fA-F-]{36}' /tmp/rsconnect-deploy.log | head -n1 | sed 's#/content/##' || true)
+        fi
+        if [ -z "${GUID}" ]; then
+          echo "::warning::Published, but could not determine the content GUID; access type not set and no URL emitted."
+          exit 0
+        fi
+
+        # New content defaults to owner-only ACL. Widen it so reviewers can open
+        # the link after logging in to Connect. Best-effort: a failure here
+        # leaves the content owner-only but still returns the URL.
+        HTTP_CODE=$(curl -sS -o /tmp/patch-access.out -w '%{http_code}' \
+          -X PATCH \
+          -H "Authorization: Key ${CONNECT_API_KEY}" \
+          -H "Content-Type: application/json" \
+          --data "{\"access_type\":\"${ACCESS_TYPE}\"}" \
+          "${CONNECT_SERVER%/}/__api__/v1/content/${GUID}" || echo "000")
+        if [ "${HTTP_CODE}" != "200" ]; then
+          echo "::warning::Failed to set access_type=${ACCESS_TYPE} (HTTP ${HTTP_CODE}); content may remain owner-only."
+          cat /tmp/patch-access.out 2>/dev/null || true
+        fi
+
+        URL="${CONNECT_SERVER%/}/content/${GUID}/"
+        echo "Published report: ${URL}"
+        echo "url=${URL}" >> "$GITHUB_OUTPUT"
