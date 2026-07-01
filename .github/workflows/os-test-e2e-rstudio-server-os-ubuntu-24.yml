@@ -516,8 +516,10 @@ jobs:
           PW_RSTUDIO_MODE: server
           PW_RSTUDIO_EDITION: os
           PW_RSTUDIO_SERVER_URL: http://localhost:8787
-          # Platform-labelled project name so a cross-platform merged report can
-          # distinguish these results (see PW_PROJECT_LABEL in playwright.config.ts).
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
           PW_PROJECT_LABEL: ${{ inputs.project }}-linux
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
@@ -525,10 +527,6 @@ jobs:
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
-          # Platform+shard-unique blob file name. The default is report-<shard>.zip,
-          # which would collide across platforms (server shard 1 vs desktop shard 1)
-          # when the PR job flattens every platform's blobs into one dir to merge.
-          PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ inputs.project }}-linux-${{ matrix.shard }}.zip
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
           SHARD_NAME: server-ubuntu24-${{ matrix.shard }}
@@ -539,7 +537,6 @@ jobs:
             ARGS+=($PW_TEST_SELECTOR)
             set +f
           fi
-          ARGS+=(--project "$PW_PROJECT_LABEL")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
@@ -549,8 +546,9 @@ jobs:
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
           # Run Playwright under our own Xvfb and exec the watchdog as the step's
           # main process, so a job cancellation's SIGTERM reaches the watchdog
-          # (which forwards it to Playwright's process tree). xvfb-run is a shell
-          # wrapper that does not forward signals
+          # (which forwards it to Playwright's process group as SIGINT -- its
+          # cancellation signal -- then escalates to SIGKILL if the run doesn't
+          # wind down). xvfb-run is a shell wrapper that does not forward signals
           # to its child, which left cancelled Linux e2e jobs running until
           # their timeout-minutes instead of stopping. -ac disables X access
           # control so Chromium connects without an auth cookie; -nolisten tcp
@@ -687,55 +685,15 @@ jobs:
             echo "::error::No blob reports found -- both shards failed to produce artifacts"
             exit 1
           fi
-          cat > merge.config.ts <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({
-            reporter: [
-              ['html', { outputFolder: 'playwright-report', open: 'never' }],
-              ['json', { outputFile: 'playwright-report/test-results.json' }],
-            ],
-          });
-          EOF
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
 
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
       - name: Parse aggregated results
         id: summary
         if: always()
-        run: |
-          FILE="e2e/rstudio/playwright-report/test-results.json"
-          if [ -f "$FILE" ]; then
-            if ! PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (PASSED)"; exit 1
-            fi
-            if ! FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FAILED)"; exit 1
-            fi
-            if ! SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (SKIPPED)"; exit 1
-            fi
-            if ! FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FLAKY)"; exit 1
-            fi
-          else
-            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
-          fi
-          TOTAL=$((PASSED + FAILED))
-          if [ "$TOTAL" -gt 0 ]; then
-            RATE=$(( (PASSED * 100) / TOTAL ))
-            FILLED=$(( (RATE * 20) / 100 ))
-            EMPTY=$(( 20 - FILLED ))
-            BAR=""
-            [ "$FILLED" -gt 0 ] && BAR=$(printf '█%.0s' $(seq 1 $FILLED))
-            [ "$EMPTY"  -gt 0 ] && BAR="${BAR}$(printf '░%.0s' $(seq 1 $EMPTY))"
-          else
-            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
-          fi
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
-          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
-          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
-          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
-          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
 
       - name: Upload merged Playwright report
         id: upload-report

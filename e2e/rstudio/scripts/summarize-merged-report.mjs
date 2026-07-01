@@ -1,8 +1,9 @@
-// Summarize a merged Playwright JSON report for the unified PR comment.
+// Summarize a merged Playwright JSON report for the CI PR comments.
 //
-// The PR e2e run merges every platform's blob reports into one HTML report
-// (see os-test-e2e-rstudio-pr.yml). This script reads the companion
-// test-results.json and emits, to $GITHUB_OUTPUT:
+// Used by both the per-platform e2e-merge jobs (scheduled/standalone runs) and
+// the PR run's unified e2e-merge-all job (see os-test-e2e-rstudio-pr.yml), so
+// every comment computes its counts from one definition. This script reads the
+// merged report's companion test-results.json and emits, to $GITHUB_OUTPUT:
 //
 //   passed / failed / skipped / flaky  -- overall test counts
 //   rate / bar                         -- overall pass-rate percent and a bar
@@ -46,10 +47,14 @@ for (const suite of data.suites ?? [])
 function tally(list) {
   const counts = { passed: 0, failed: 0, flaky: 0, skipped: 0 };
   for (const test of list) {
-    if (test.status === 'expected')        counts.passed++;
-    else if (test.status === 'unexpected') counts.failed++;
-    else if (test.status === 'flaky')      counts.flaky++;
-    else if (test.status === 'skipped')    counts.skipped++;
+    if (test.status === 'expected')
+      counts.passed++;
+    else if (test.status === 'unexpected')
+      counts.failed++;
+    else if (test.status === 'flaky')
+      counts.flaky++;
+    else if (test.status === 'skipped')
+      counts.skipped++;
   }
   return counts;
 }
@@ -77,12 +82,11 @@ const table = [
   ...(rows.length > 0 ? rows : ['| _no results_ | 0 | 0 | 0 | 0 |']),
 ].join('\n');
 
-// Pass rate over decided tests only (passed + failed), matching the per-platform
-// jobs' definition, rendered as a 20-cell bar.
+// Pass rate over decided tests only (passed + failed), rendered as a 20-cell bar.
 const decided = overall.passed + overall.failed;
 const rate = decided > 0 ? Math.floor((overall.passed * 100) / decided) : 0;
 const filled = Math.floor((rate * 20) / 100);
-const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+const bar = '#'.repeat(filled) + '-'.repeat(20 - filled);
 
 function setOutput(name, value) {
   const delimiter = `__EOF_${name}__`;
