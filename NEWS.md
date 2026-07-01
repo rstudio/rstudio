@@ -30,6 +30,8 @@
 - ([#18065](https://github.com/rstudio/rstudio/issues/18065)): Fixed an uncaught JavaScript exception thrown when an r2d3 widget requested the editor theme, caused by an uninjected user-state provider in the page's message listener. The theme handshake now completes so r2d3 widgets pick up the editor theme.
 - ([#18068](https://github.com/rstudio/rstudio/issues/18068)): Auto-downloaded copies of the Air formatter are now installed under RStudio's per-user data directory (for example `~/.local/share/rstudio/air` on Linux or `%LOCALAPPDATA%\rstudio\air` on Windows) instead of `~/.local/lib/air`. Copies installed by older versions of RStudio in the previous location are still detected and reused.
 
+- ([#18101](https://github.com/rstudio/rstudio/issues/18101)): Fixed "Run Selection as Background Job" (and the related Source/Launcher job commands) appearing to do nothing when invoked from a detached source window on Windows Desktop. The job launcher dialog is shown in the main window, which is now brought forward so the dialog is visible.
+
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.509.1
