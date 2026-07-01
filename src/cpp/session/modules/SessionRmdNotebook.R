@@ -1001,7 +1001,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
 
    code <- code[(start + 1):(end - 1)]
-   code <- gsub("#[|].*$", "", code)
+
+   # strip cell-option lines (e.g. '#| key: value'). these use a
+   # language-specific comment prefix, so handle each of the prefixes
+   # understood by .rs.evaluateChunkOptions(): '#' for most engines,
+   # '--' for sql / haskell, and '//' for c-like engines. this ensures
+   # option lines are never sent to (e.g.) a database server, which some
+   # backends (MySQL / MariaDB) would otherwise reject as invalid syntax.
+   # https://github.com/rstudio/rstudio/issues/18093
+   code <- gsub("(#|--|//)[|].*$", "", code)
 
    paste(code, collapse = "\n")
 })

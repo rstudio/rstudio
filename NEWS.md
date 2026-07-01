@@ -35,6 +35,7 @@
 - ([#1667](https://github.com/rstudio/rstudio/issues/1667)): On Linux Desktop, hardened middle-click (primary selection) paste in the editor and console: a selection is now flushed to the primary selection on mouse release rather than only after a short delay, and a middle-click paste falls back to the event's clipboard text when the tracked selection is empty, so quickly selecting and middle-click-pasting no longer pastes nothing.
 - ([#18065](https://github.com/rstudio/rstudio/issues/18065)): Fixed an uncaught JavaScript exception thrown when an r2d3 widget requested the editor theme, caused by an uninjected user-state provider in the page's message listener. The theme handshake now completes so r2d3 widgets pick up the editor theme.
 - ([#18068](https://github.com/rstudio/rstudio/issues/18068)): Auto-downloaded copies of the Air formatter are now installed under RStudio's per-user data directory (for example `~/.local/share/rstudio/air` on Linux or `%LOCALAPPDATA%\rstudio\air` on Windows) instead of `~/.local/lib/air`. Copies installed by older versions of RStudio in the previous location are still detected and reused.
+- ([#18093](https://github.com/rstudio/rstudio/issues/18093)): Fixed interactive execution of `sql` chunks that use the `--|` cell-option comment syntax (for example `--| connection: con`). The option line is now stripped from the chunk body before the query is sent to the database, so backends such as MySQL and MariaDB that reject `--|` as invalid SQL syntax no longer error.
 
 ### Dependencies
 - Ace 1.43.5
