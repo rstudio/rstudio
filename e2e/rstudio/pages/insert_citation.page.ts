@@ -62,8 +62,9 @@ export class InsertCitationDialog extends PageObject {
   /**
    * Select a network source and return its latent-search box, surviving the
    * dialog's one-time init reset: when the bibliography load resolves, panmirror
-   * snaps the active panel back to My Sources exactly once, leaving the tree
-   * highlight where we put it. Re-select if that happens -- the second selection
+   * snaps the active panel back to the dialog's initially-selected node (My
+   * Sources on a fresh open) exactly once, leaving the tree highlight where we
+   * put it. Re-select if that happens -- the second selection
    * lands after the reset and is permanent.
    */
   async selectSource(source: CitationSource): Promise<Locator> {

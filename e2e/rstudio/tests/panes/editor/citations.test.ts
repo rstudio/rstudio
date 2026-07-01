@@ -28,7 +28,10 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
         match = output.match(pattern);
         return match !== null;
       },
-      { timeout: 15000 },
+      {
+        timeout: 15000,
+        message: `captureResult: no marker-wrapped output for \`${rExpression}\` within 15s -- the R expression likely errored (e.g. references.bib missing)`,
+      },
     )
     .toBe(true);
   return match![1].trim();
@@ -52,8 +55,9 @@ test.describe('Citations', () => {
     sourceActions = new SourcePaneActions(page, consoleActions);
   });
 
-  // Each test starts from a single clean Untitled tab; resetToUntitled reverts
-  // the previous test's dirty doc without a save prompt.
+  // Each test starts from a single clean Untitled tab. resetSourcePane()
+  // dispatches resetToUntitled under the hood, reverting the previous test's
+  // dirty doc without a save prompt.
   test.beforeEach(async () => {
     await consoleActions.resetSourcePane();
     // Citation inserts append to references.bib in the shared workdir; remove
@@ -93,6 +97,7 @@ test.describe('Citations', () => {
     expect(await captureResult(page, 'file.exists("references.bib")')).toBe('TRUE');
     const bib = await captureResult(page, 'readLines("references.bib")');
     expect(bib).toContain('effects1999');
+    expect(bib).toContain('@techreport'); // entry type, not just fields
     expect(bib).toContain('Bobolink');
     expect(bib).toContain('10.3133/93888');
     // No author: the key is title-derived. If this DOI ever gains an author
@@ -202,22 +207,27 @@ test.describe('Citations', () => {
   });
 
   // A citation already in the text must survive a visual<->source round-trip
-  // without its brackets being backslash-escaped (#10075).
-  test('does not escape citation brackets across a visual round-trip', async ({ rstudioPage: page }) => {
-    const fileName = `citation_escape_${Date.now()}.md`;
-    const line = 'This is some text [@abelsen1993, 93].';
-    await sourceActions.createAndOpenFile(fileName, line);
-    await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+  // without its brackets being backslash-escaped (#10075). Checked in both
+  // markdown and Quarto: pandoc's markdown and quarto writers escape
+  // differently, so the .qmd round-trip is distinct coverage.
+  for (const ext of ['md', 'qmd']) {
+    test(`does not escape citation brackets across a visual round-trip (.${ext})`, async ({ rstudioPage: page }) => {
+      const fileName = `citation_escape_${Date.now()}.${ext}`;
+      const line = 'This is some text [@abelsen1993, 93].';
+      await sourceActions.createAndOpenFile(fileName, line);
+      await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
 
-    // Visual mode renders the citation as-is.
-    await sourceActions.ensureVisualMode();
-    await expect(page.locator('.ProseMirror')).toContainText(line, { timeout: 15000 });
+      // Visual mode renders the citation as-is.
+      await sourceActions.ensureVisualMode();
+      await expect(page.locator('.ProseMirror')).toContainText(line, { timeout: 15000 });
 
-    // Back in source mode the brackets must remain unescaped (no backslashes).
-    await sourceActions.ensureSourceMode();
-    await expect(sourceActions.sourcePane.contentPane).toContainText(line, { timeout: 10000 });
-    await expect(sourceActions.sourcePane.contentPane).not.toContainText('\\[@abelsen1993');
-  });
+      // Back in source mode the brackets must remain unescaped (no backslashes).
+      await sourceActions.ensureSourceMode();
+      await expect(sourceActions.sourcePane.contentPane).toContainText(line, { timeout: 10000 });
+      await expect(sourceActions.sourcePane.contentPane).not.toContainText('\\[@abelsen1993');
+      await expect(sourceActions.sourcePane.contentPane).not.toContainText('93\\]');
+    });
+  }
 
   // Selecting each network-backed source and searching returns matching results.
   // "bobolink" returns hits on all three services (DataCite, Crossref, PubMed).

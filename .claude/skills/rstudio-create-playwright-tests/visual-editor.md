@@ -41,8 +41,9 @@ search box (placeholder e.g. `Search DataCite for Citations`) or its Search
 button becoming visible -- never by the highlight class.
 
 **Survive the one-time init reset.** When the dialog's bibliography load
-resolves, panmirror runs a single `setSelectedPanelProvider` that snaps the
-active panel back to the default source (My Sources) while leaving the tree
+resolves, the post-load configuration poll fires once and calls
+`setSelectedPanelProvider`, snapping the active panel back to the dialog's
+initially-selected node (My Sources on a fresh open) while leaving the tree
 highlight where you put it. It fires at most once. So select, and re-select if
 the panel reverts -- the second selection lands after the reset and is
 permanent:
@@ -73,7 +74,7 @@ search is running. Type, then click the button:
 ```typescript
 await box.pressSequentially('bobolink');   // real keystrokes, not fill()
 await page.locator('button.pm-insert-citation-panel-latent-search-button').click();
-const results = page.locator("[class*='citation-source-panel-item-detailed']");
+const results = page.locator('.pm-insert-citation-source-panel-item-detailed');
 await expect.poll(() => results.count(), { timeout: 30000 }).toBeGreaterThan(0);
 ```
 
