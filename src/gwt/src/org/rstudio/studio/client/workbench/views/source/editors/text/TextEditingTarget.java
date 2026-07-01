@@ -4515,27 +4515,11 @@ public class TextEditingTarget implements
          return;
       }
 
-      // Only format files within the current project folder
-      String path = getPath();
-      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
-      if (projectDir != null && path != null)
-      {
-         String projectPath = projectDir.getPath();
-         // Check if the file is within the project directory
-         if (!path.startsWith(projectPath + "/") && !path.equals(projectPath))
-         {
-            // File is not within the project folder, skip formatting
-            onFormatted.execute();
-            return;
-         }
-      }
-      else
-      {
-         // No project or no path, skip formatting
-         onFormatted.execute();
-         return;
-      }
-
+      // Format-on-save mirrors the "Reformat Document" command: it relies on
+      // withFormatContext() to resolve the formatter (and any air.toml) for
+      // the document, whether or not the file lives inside the active project.
+      // We deliberately do not restrict this to project files -- standalone R
+      // scripts opened outside a project should still be formatted on save.
       withFormatContext((context) ->
       {
          // If no external formatter is configured, skip formatting on save

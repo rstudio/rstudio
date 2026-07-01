@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 30 |
+| Files fully converted | 31 |
 | Files partially converted | 0 |
-| Files not started | 6 |
+| Files not started | 5 |
 
 ## Conversion Status
 
@@ -37,7 +37,7 @@ Target: `e2e/rstudio/tests/`
 |----------------|---------|-------------------|--------|-------|
 | test_desktop_CodeSuggestions.ts | — | panes/editor/code_suggestions.test.ts (5) | Complete | Already TypeScript in electron-tests |
 | test_desktop_Copilot.py | 12 | panes/editor/copilot_ghost_text.test.ts (22) | Complete | Restructured with loops; test_enabling_copilot not included |
-| test_desktop_Create_File_Types.py | 6 | panes/editor/create_file_types.test.ts (19) | Not started | Data-driven; 15 no-modal + 4 modal tests; includes Sweave creation. TODO: 3 WIP types from Selenium still need conversion (newRDocumentationDoc, newRPlumberDoc, newRPresentationDoc) — each requires extra dialog fields |
+| test_desktop_Create_File_Types.py | 6 | panes/editor/create_file_types.test.ts (22 + 1 fixme) | Complete | One test per type. 13 need no package or dialog (C/C++ x3, CSS, HTML, JavaScript, Markdown, Python, R HTML, Shell, R Script, R Sweave, Text). Each create gates on the source-tab count reaching 2 so it can't race the leftover Untitled placeholder (and the footer reading the placeholder's "R Script"). SQL is its own test: creating it pops an "update RSQLite" modal (from the template's !preview line) which the test declines (the doc is created either way), so the leftover modal can't block the next test -- it was breaking newRNotebook. D3 and R Notebook need packages; R Notebook's footer reads "R Markdown" (it creates an RMARKDOWN doc). Quarto document and presentation, R Markdown, and Shiny drive their creation dialogs; the Selenium presentation method re-ran newQuartoDoc (dead newQuartoPres var), fixed to drive newQuartoPres. Rd and Plumber (Selenium WIP types) pass. Stan (also WIP) skips unless rstan is already installed (no auto-install; heavy source compile). R Presentation is fixme (save-file dialog). |
 | test_desktop_DataViewer.py | 4 | panes/data-viewer/pagination-sorting.test.ts (4) | Complete | |
 | test_desktop_Markdown.py | 2 | panes/editor/markdown.test.ts (2) | Complete | newMarkdownDoc creation, plus previewHTML to the Viewer pane with rendered-text assertions |
 | test_desktop_Quarto.py | 1 | panes/editor/quarto.test.ts (1) | Complete | |
@@ -80,4 +80,4 @@ Target: `e2e/rstudio/tests/`
 
 | Playwright File | Test Name | Blocker | Notes |
 |----------------|-----------|---------|-------|
-| — | — | — | None tracked yet |
+| panes/editor/create_file_types.test.ts | create R Presentation via newRPresentationDoc | Opens a save-file dialog (native OS chooser on Desktop, GWT chooser on Server) to choose the .Rpres path; the harness can't drive that yet. R Presentation was never implemented in Selenium either, only a WIP comment in the source. | — |
