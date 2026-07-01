@@ -1,5 +1,6 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { dismissBlockingModals } from '@pages/modals.page';
 import { waitForSessionRestart } from '@utils/project';
 import { rStringLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
@@ -25,6 +26,18 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 async function suspendAndResume(page: Page): Promise<void> {
   await executeCommand(page, 'suspendSession');
   await waitForSessionRestart(page);
+
+  // Defensive: a stray modal that pops up during resume renders a
+  // gwt-PopupPanelGlass overlay that then blocks the console tab and wedges the
+  // next executeInConsole with an opaque pointer-intercept timeout. The one
+  // trigger we know of -- reticulate's unguarded here::here() throwing "No root
+  // directory found" from the rootless sandbox HOME (rstudio/reticulate#1909),
+  // surfacing as an "Error Listing Packages" dialog on resume -- is prevented at
+  // the source by the `.here` marker seeded into the sandbox home (see
+  // fixtures/sandbox-setup.ts). This clear stays as a cheap safety net for any
+  // other out-of-band dialog, since these tests exercise search-path
+  // preservation, not whatever pane raised it.
+  await dismissBlockingModals(page);
 }
 
 // Suspend/resume relies on the Server reconnection path. Desktop has no

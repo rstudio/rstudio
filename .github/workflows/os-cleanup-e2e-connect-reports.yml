@@ -1,0 +1,95 @@
+name: "Cleanup: E2E Connect reports"
+
+# Enforces the short lifetime of the Playwright reports published to Connect by
+# the e2e-merge jobs (see .github/actions/os-publish-e2e-report). Connect has no
+# per-content TTL, so this scheduled job deletes any E2E report content whose
+# last deployment is older than the retention window. Reports published for
+# still-open PRs age out on the same schedule; re-running the tests republishes
+# a fresh copy.
+
+on:
+  schedule:
+    # Daily at 07:00 UTC.
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: "Delete E2E report content older than this many days."
+        type: string
+        default: "7"
+      dry_run:
+        description: "List what would be deleted without deleting."
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete aged-out E2E reports
+        env:
+          CONNECT_SERVER: "https://connect.posit.it"
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          RETENTION_DAYS: ${{ inputs.retention_days || '7' }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CONNECT_API_KEY}" ]; then
+            echo "::error::CONNECT_API_KEY is not set; cannot enumerate content."
+            exit 1
+          fi
+
+          SERVER="${CONNECT_SERVER%/}"
+          CUTOFF=$(date -u -d "-${RETENTION_DAYS} days" +%s)
+          echo "Deleting E2E report content last deployed before $(date -u -d "@${CUTOFF}" '+%Y-%m-%d %H:%M:%SZ') (retention: ${RETENTION_DAYS} days)."
+
+          # Scope deletion to content owned by the CI publisher account (the
+          # identity behind CONNECT_API_KEY). Combined with the title match
+          # below this ensures we never touch content owned by anyone else,
+          # even if they happen to use an "E2E ..." title.
+          OWNER=$(curl -sS -H "Authorization: Key ${CONNECT_API_KEY}" \
+            "${SERVER}/__api__/v1/user" | jq -r '.guid // empty')
+          if [ -z "${OWNER}" ]; then
+            echo "::error::Could not resolve the API key's owner GUID; refusing to delete."
+            exit 1
+          fi
+
+          # The reports we publish are titled "E2E <platform> - PR #<n> - run
+          # #<m>". Match that exact shape (not a bare "E2E " prefix) so a
+          # differently-titled item owned by the same account is never touched.
+          curl -sS -H "Authorization: Key ${CONNECT_API_KEY}" \
+            "${SERVER}/__api__/v1/content" > /tmp/content.json
+
+          jq -r --argjson cutoff "${CUTOFF}" --arg owner "${OWNER}" '
+            .[]
+            | select(.owner_guid == $owner)
+            | select((.title // "") | test("^E2E .+ - PR #[0-9]+ - run #[0-9]+$"))
+            | select(((.last_deployed_time // .created_time) | sub("\\.[0-9]+"; "") | fromdateiso8601) < $cutoff)
+            | "\(.guid)\t\(.title)"
+          ' /tmp/content.json > /tmp/stale.tsv || true
+
+          COUNT=$(wc -l < /tmp/stale.tsv | tr -d ' ')
+          echo "Found ${COUNT} report(s) to remove."
+          [ "${COUNT}" = "0" ] && exit 0
+
+          while IFS=$'\t' read -r GUID TITLE; do
+            [ -z "${GUID}" ] && continue
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "[dry-run] would delete ${GUID}  (${TITLE})"
+              continue
+            fi
+            HTTP_CODE=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -X DELETE \
+              -H "Authorization: Key ${CONNECT_API_KEY}" \
+              "${SERVER}/__api__/v1/content/${GUID}" || echo "000")
+            if [ "${HTTP_CODE}" = "204" ] || [ "${HTTP_CODE}" = "200" ]; then
+              echo "deleted ${GUID}  (${TITLE})"
+            else
+              echo "::warning::failed to delete ${GUID} (HTTP ${HTTP_CODE}): ${TITLE}"
+            fi
+          done < /tmp/stale.tsv

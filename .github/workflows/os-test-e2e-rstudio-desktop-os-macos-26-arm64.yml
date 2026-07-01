@@ -373,7 +373,7 @@ jobs:
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
 
       - name: Install e2e test dependencies
-        uses: ./.github/actions/e2e-deps
+        uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
@@ -557,6 +557,17 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
+      # Publish a browsable copy of the report to Connect on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: a
+      # no-op on fork PRs (empty key) and never fails the job.
+      - name: Publish report to Connect
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          connect-api-key: ${{ secrets.CONNECT_API_KEY }}
+          title: "E2E macOS Desktop - PR #${{ github.event.pull_request.number }} - run #${{ github.run_number }}"
+
       - name: Post E2E results to PR
         if: |
           always() &&
@@ -580,7 +591,9 @@ jobs:
 
             <details>
             <summary>📥 Download Playwright report</summary>
-
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})** — opens in the browser (requires Connect login). Available for up to 1 week.
+            ', steps.publish-report.outputs.url) || '' }}
             **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
 
             > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
