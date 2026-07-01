@@ -159,13 +159,18 @@ export interface DesktopSession {
   logDir: string;
 }
 
-// Gated diagnostic: when PW_DEBUG_LAUNCH=1 is set, attach listeners to every
+// Gated diagnostic: when PW_DEBUG_PAGES=1 is set, attach listeners to every
 // existing and future page in every context, so we can see the navigation /
 // load / console / error sequence that produces the renderer's "double load"
 // behavior during startup. Output is prefixed `[debug-launch]` with relative
 // timestamps. Leave the flag unset for normal runs.
+//
+// Deliberately a separate flag from PW_DEBUG_LAUNCH (the `[launch-timing]`
+// phase timeline CI keeps enabled): these listeners stay attached for the
+// whole run and would otherwise trace every popup and secondary window --
+// plot zoom, presentations, etc. -- long after launch.
 function attachLaunchDebug(browser: Browser): void {
-  if (process.env.PW_DEBUG_LAUNCH !== '1' && process.env.PW_DEBUG_LAUNCH !== 'true') {
+  if (process.env.PW_DEBUG_PAGES !== '1' && process.env.PW_DEBUG_PAGES !== 'true') {
     return;
   }
 
