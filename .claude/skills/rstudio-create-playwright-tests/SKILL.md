@@ -72,3 +72,5 @@ When working in these areas, also read the corresponding file:
   `edit_suggestions.test.ts`): see `code-suggestions.md`.
 - **Chat pane / Posit Assistant / RPC interception**
   (`tests/panes/posit-assistant-chat/`): see `chat-pane.md`.
+- **Visual editor / citations** (`tests/panes/editor/citations.test.ts`, and any
+  test that drives the panmirror visual editor): see `visual-editor.md`.
