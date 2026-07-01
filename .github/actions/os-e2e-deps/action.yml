@@ -45,16 +45,24 @@ runs:
         echo "Resolved R version (major.minor): $VERSION"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-    - name: Cache R packages (pak download cache)
-      uses: actions/cache@v4
+    # All three caches below are restore-only, with matching Save steps after
+    # the corresponding install. The saves run only from main-scoped runs (the
+    # scheduled workflows): a cache saved from a PR run lands in that PR's
+    # merge-ref scope, which no other branch can restore -- each copy is pure
+    # pressure on the repo's 10 GB Actions cache quota, and that pressure is
+    # what evicts main's copies and sends every run cold in the first place.
+    - name: Restore R packages (pak download cache)
+      id: pak-cache
+      uses: actions/cache/restore@v4
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
         restore-keys: |
           ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-
 
-    - name: Cache R library
-      uses: actions/cache@v4
+    - name: Restore R library
+      id: rlib-cache
+      uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.r-libs-user }}
         key: ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
@@ -85,6 +93,20 @@ runs:
         EOF
         Rscript "$SCRIPT"
 
+    - name: Save R packages (pak download cache)
+      if: github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ github.workspace }}/.r-pkg-cache
+        key: ${{ steps.pak-cache.outputs.cache-primary-key }}
+
+    - name: Save R library
+      if: github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.r-libs-user }}
+        key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
+
     - name: Install npm dependencies
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -99,8 +121,9 @@ runs:
           sleep 10
         done
 
-    - name: Cache Playwright browsers
-      uses: actions/cache@v4
+    - name: Restore Playwright browsers
+      id: pw-cache
+      uses: actions/cache/restore@v4
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ runner.os }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
@@ -116,3 +139,10 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: npx playwright install --with-deps chromium
+
+    - name: Save Playwright browsers
+      if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ github.workspace }}/ms-playwright
+        key: ${{ steps.pw-cache.outputs.cache-primary-key }}
