@@ -189,6 +189,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       txtAuthor_.setText(prefs.documentAuthor().getGlobalValue());
       txtTitle_.setText("Untitled"); //$NON-NLS-1$
       checkboxAutoDate_.setText(prefs.rmdAutoDate().getDescription());
+
+      // these are short form fields rather than prose, so disable the
+      // browser's native spell checking (https://github.com/rstudio/rstudio/issues/17796)
+      txtTitle_.getElement().setAttribute("spellcheck", "false");
+      txtAuthor_.getElement().setAttribute("spellcheck", "false");
+      txtDate_.getElement().setAttribute("spellcheck", "false");
       
       boolean auto = prefs.rmdAutoDate().getGlobalValue();
       txtDate_.setText(getISODate());
