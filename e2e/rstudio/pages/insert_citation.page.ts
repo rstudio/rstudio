@@ -33,6 +33,8 @@ export const CITATION_SOURCES = {
 export class InsertCitationDialog extends PageObject {
   public readonly dialog: Locator;
   public readonly results: Locator;
+  /** Result rows in the R Package (typeahead) source's list. */
+  public readonly packageResults: Locator;
   public readonly searchButton: Locator;
   public readonly insertButton: Locator;
   public readonly cancelButton: Locator;
@@ -43,6 +45,7 @@ export class InsertCitationDialog extends PageObject {
     super(page);
     this.dialog = page.locator('[role="dialog"][aria-label="Insert Citation"]');
     this.results = page.locator('.pm-insert-citation-source-panel-item-detailed');
+    this.packageResults = page.locator('.pm-insert-citation-source-panel-item');
     this.searchButton = page.locator('button.pm-insert-citation-panel-latent-search-button');
     this.insertButton = this.dialog.getByRole('button', { name: 'Insert', exact: true });
     this.cancelButton = this.dialog.getByRole('button', { name: 'Cancel', exact: true });
@@ -80,6 +83,39 @@ export class InsertCitationDialog extends PageObject {
       await this.page.waitForTimeout(200);
     }
     return searchBox;
+  }
+
+  /**
+   * Select the R Package source and filter to a package by name, returning its
+   * result row. R Package is a typeahead panel (filters live, no Search button)
+   * and its placeholder is shared with My Sources, so the init reset can't be
+   * detected via the search box the way selectSource() does. Instead we watch
+   * for the package's own result row and re-select if it vanishes -- the reset
+   * reverts the panel to My Sources, which has no such package row.
+   */
+  async selectPackageSource(packageName: string): Promise<Locator> {
+    const node = this.page.locator('.pm-navigation-tree-node', {
+      has: this.page.locator("[alt='R Package']"),
+    });
+    const box = this.page.getByPlaceholder('Search for citation');
+    const match = this.packageResults.filter({ hasText: `@${packageName}` }).first();
+
+    const selectAndFilter = async (): Promise<void> => {
+      await node.click();
+      await box.pressSequentially(packageName); // typeahead filters on each keystroke
+      await expect(match).toBeVisible({ timeout: 15000 });
+    };
+
+    await selectAndFilter();
+    const revertDeadline = Date.now() + 6000;
+    while (Date.now() < revertDeadline) {
+      if (!(await match.isVisible().catch(() => false))) {
+        await selectAndFilter(); // reverted to My Sources; re-select (now permanent)
+        break;
+      }
+      await this.page.waitForTimeout(200);
+    }
+    return match;
   }
 
   /**

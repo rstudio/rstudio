@@ -5,7 +5,34 @@ import { InsertCitationDialog, CITATION_SOURCES } from '@pages/insert_citation.p
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
+
+// Read the value of an R expression via marker-wrapped console output. Runs on
+// the rsession host, so it reads files the IDE wrote (e.g. references.bib in the
+// working directory) regardless of where the sandbox lives.
+async function captureResult(page: Page, rExpression: string): Promise<string> {
+  const marker = `__CIT_${Date.now()}__`;
+  await executeInConsole(
+    page,
+    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
+    { wait: true },
+  );
+  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
+  let match: RegExpMatchArray | null = null;
+  await expect
+    .poll(
+      async () => {
+        const output = await page.locator(CONSOLE_OUTPUT).innerText();
+        match = output.match(pattern);
+        return match !== null;
+      },
+      { timeout: 15000 },
+    )
+    .toBe(true);
+  return match![1].trim();
+}
 
 // Migrated from Selenium test_desktop_Citations.py. Citations live in the
 // panmirror visual editor's Insert menu; see the InsertCitationDialog page
@@ -29,6 +56,9 @@ test.describe('Citations', () => {
   // the previous test's dirty doc without a save prompt.
   test.beforeEach(async () => {
     await consoleActions.resetSourcePane();
+    // Citation inserts append to references.bib in the shared workdir; remove
+    // any leftover so each test's bib assertions start from a clean file.
+    await consoleActions.executeInConsole('unlink("references.bib")', { wait: true });
   });
 
   // Open a fresh markdown document in visual mode (the only place citations are
@@ -57,6 +87,14 @@ test.describe('Citations', () => {
     // key from the title ("Effects of management practices on grassland birds:
     // Bobolink", 1999) -> effects1999.
     await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
+
+    // The citation metadata is persisted to references.bib (in the session's
+    // working directory), not just the key placed in the document.
+    expect(await captureResult(page, 'file.exists("references.bib")')).toBe('TRUE');
+    const bib = await captureResult(page, 'readLines("references.bib")');
+    expect(bib).toContain('effects1999');
+    expect(bib).toContain('Bobolink');
+    expect(bib).toContain('10.3133/93888');
   });
 
   // The same DOI insert flow works in a Quarto (.qmd) document -- the format
@@ -80,6 +118,23 @@ test.describe('Citations', () => {
     await citation.insert();
 
     await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
+  });
+
+  // The R Package source is a typeahead list of installed packages, not a latent
+  // search. Insert one and verify it lands in the document -- the only insert
+  // test that exercises a non-network source.
+  test('inserts an R Package citation into the document', async ({ rstudioPage: page }) => {
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+
+    // knitr is pre-installed (REQUIRED_PACKAGES); its cite key is the package name.
+    const match = await citation.selectPackageSource('knitr');
+    await match.locator('button').click(); // stage via "+"
+    await citation.insert();
+
+    await expect(page.locator('.ProseMirror')).toContainText('[@knitr]', { timeout: 15000 });
   });
 
   test('deletes a staged citation', async ({ rstudioPage: page }) => {
@@ -125,6 +180,10 @@ test.describe('Citations', () => {
     await citation.stageFirstResult();
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020][@bermúdez2020]', { timeout: 15000 });
+
+    // references.bib holds a single entry despite two citations in the document
+    // -- the direct #8335 check (one "@" entry header, not two).
+    expect(await captureResult(page, 'sum(grepl("^@", readLines("references.bib")))')).toBe('1');
   });
 
   // Clicking Insert with nothing staged should dismiss the dialog rather than
