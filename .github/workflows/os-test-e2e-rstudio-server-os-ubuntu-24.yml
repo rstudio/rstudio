@@ -75,6 +75,10 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -512,7 +516,11 @@ jobs:
           PW_RSTUDIO_MODE: server
           PW_RSTUDIO_EDITION: os
           PW_RSTUDIO_SERVER_URL: http://localhost:8787
-          PW_PROJECT_NAME: ${{ inputs.project }}
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -529,7 +537,6 @@ jobs:
             ARGS+=($PW_TEST_SELECTOR)
             set +f
           fi
-          ARGS+=(--project "$PW_PROJECT_NAME")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
@@ -537,9 +544,11 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          # Run Playwright under our own Xvfb and exec it as the step's main
-          # process, so a job cancellation's SIGTERM reaches Playwright
-          # directly. xvfb-run is a shell wrapper that does not forward signals
+          # Run Playwright under our own Xvfb and exec the watchdog as the step's
+          # main process, so a job cancellation's SIGTERM reaches the watchdog
+          # (which forwards it to Playwright's process group as SIGINT -- its
+          # cancellation signal -- then escalates to SIGKILL if the run doesn't
+          # wind down). xvfb-run is a shell wrapper that does not forward signals
           # to its child, which left cancelled Linux e2e jobs running until
           # their timeout-minutes instead of stopping. -ac disables X access
           # control so Chromium connects without an auth cookie; -nolisten tcp
@@ -558,7 +567,7 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          exec npx playwright test "${ARGS[@]}"
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       # Platform-prefixed artifact name. When this Linux Server workflow runs
       # from the same parent PR run as the other platforms (via the combined
@@ -633,7 +642,7 @@ jobs:
   # (when post_pr_comment is set).
   e2e-merge:
     needs: [e2e-server-ubuntu]
-    if: always() && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
+    if: always() && inputs.defer_merge != true && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -676,55 +685,15 @@ jobs:
             echo "::error::No blob reports found -- both shards failed to produce artifacts"
             exit 1
           fi
-          cat > merge.config.ts <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({
-            reporter: [
-              ['html', { outputFolder: 'playwright-report', open: 'never' }],
-              ['json', { outputFile: 'playwright-report/test-results.json' }],
-            ],
-          });
-          EOF
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
 
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
       - name: Parse aggregated results
         id: summary
         if: always()
-        run: |
-          FILE="e2e/rstudio/playwright-report/test-results.json"
-          if [ -f "$FILE" ]; then
-            if ! PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (PASSED)"; exit 1
-            fi
-            if ! FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FAILED)"; exit 1
-            fi
-            if ! SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (SKIPPED)"; exit 1
-            fi
-            if ! FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FLAKY)"; exit 1
-            fi
-          else
-            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
-          fi
-          TOTAL=$((PASSED + FAILED))
-          if [ "$TOTAL" -gt 0 ]; then
-            RATE=$(( (PASSED * 100) / TOTAL ))
-            FILLED=$(( (RATE * 20) / 100 ))
-            EMPTY=$(( 20 - FILLED ))
-            BAR=""
-            [ "$FILLED" -gt 0 ] && BAR=$(printf '█%.0s' $(seq 1 $FILLED))
-            [ "$EMPTY"  -gt 0 ] && BAR="${BAR}$(printf '░%.0s' $(seq 1 $EMPTY))"
-          else
-            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
-          fi
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
-          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
-          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
-          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
-          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
 
       - name: Upload merged Playwright report
         id: upload-report

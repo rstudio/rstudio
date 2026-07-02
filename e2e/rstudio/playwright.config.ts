@@ -98,7 +98,21 @@ const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase() ?? 'desktop';
 if (modeEnv !== 'desktop' && modeEnv !== 'server') {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
-const projects = allProjects.filter(p => p.name === modeEnv);
+
+// Display label for the active project, surfaced as the project "name" in
+// reports. CI sets a distinct label per platform (e.g. desktop-macos,
+// desktop-windows, server-linux) so a cross-platform merged report can tell
+// results apart -- without it every desktop platform collapses under a single
+// indistinguishable "desktop" group. The label is env-only: CI does not pass
+// --project (the config already narrows to one project), so mode selection
+// never sees the label. Defaults to the mode for local runs, so
+// `--project desktop|server` keeps working unchanged. NOTE: the E2E Test
+// Insights reporter also records this as its dashboard "project" field, so
+// per-platform labels show up there as distinct series.
+const projectLabel = process.env.PW_PROJECT_LABEL || modeEnv;
+const projects = allProjects
+  .filter(p => p.name === modeEnv)
+  .map(p => ({ ...p, name: projectLabel }));
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
@@ -131,14 +145,24 @@ if (process.env.GITHUB_ACTIONS)
   }]);
 
 // Sharded CI runs use blob reporter so the merge job can reassemble a single
-// HTML report and accurate counts from all shards. Other human-facing reporters
-// are suppressed per-shard. sandbox-reporter is kept so teardown can still
-// detect failures and preserve sandbox state for artifact upload. The E2E Test
-// Insights reporter rides alongside blob so per-shard results also reach the
-// dashboard. Without CONNECT_API_KEY (e.g. fork PRs) it still runs but
-// its uploads fail with warnings (never fails the run).
+// HTML report and accurate counts from all shards. The blob file name embeds
+// the platform label and shard: the default report-<shard>.zip would collide
+// across platforms (mac shard 1 vs windows shard 1) when the PR run flattens
+// every platform's blobs into one directory to merge. Other human-facing
+// reporters are suppressed per-shard. 'list' is kept so the CI log shows
+// per-test progress (blob is silent during the run); this also gives the
+// run-with-heartbeat watchdog a reliable heartbeat -- a line per test -- so a
+// hung run is detected by its silence. sandbox-reporter is kept so teardown can
+// still detect failures and preserve sandbox state for artifact upload. The E2E
+// Test Insights reporter rides alongside blob so per-shard results also reach
+// the dashboard. Without CONNECT_API_KEY (e.g. fork PRs) it still runs but its
+// uploads fail with warnings (never fails the run).
 if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
-  reporters.splice(0, reporters.length, ['blob'], ['./fixtures/sandbox-reporter.ts'], ['@midleman/playwright-reporter', { mode: 'prod' }]);
+  reporters.splice(0, reporters.length,
+    ['blob', { fileName: `report-${projectLabel}-${process.env.PW_SHARD}.zip` }],
+    ['list'],
+    ['./fixtures/sandbox-reporter.ts'],
+    ['@midleman/playwright-reporter', { mode: 'prod' }]);
 
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
