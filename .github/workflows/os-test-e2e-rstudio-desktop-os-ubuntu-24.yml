@@ -90,6 +90,9 @@ on:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
         required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
+        required: false
 
 permissions:
   contents: read
@@ -98,6 +101,9 @@ permissions:
   # permissions in a reusable workflow at call time, so this must be declared
   # at the top level even though only e2e-merge uses it.
   pull-requests: write
+  # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
+  # role (see .github/actions/os-publish-e2e-report).
+  id-token: write
 
 jobs:
   # Builds RStudio Desktop (Electron) from this PR's source on the same runner
@@ -553,6 +559,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -608,16 +616,16 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
-      # Publish a browsable copy of the report to Connect on failure only, so
+      # Publish a browsable copy of the report to S3 on failure only, so
       # reviewers can inspect it without downloading the zip. Best-effort: a
-      # no-op on fork PRs (empty key) and never fails the job.
-      - name: Publish report to Connect
+      # no-op on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
         id: publish-report
         if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
         uses: ./.github/actions/os-publish-e2e-report
         with:
-          connect-api-key: ${{ secrets.CONNECT_API_KEY }}
-          title: "E2E Linux Desktop - PR #${{ github.event.pull_request.number }} - run #${{ github.run_number }}"
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: linux-desktop
 
       - name: Post E2E results to PR
         if: |
@@ -643,7 +651,7 @@ jobs:
             <details>
             <summary>📥 Download Playwright report</summary>
             ${{ steps.publish-report.outputs.url != '' && format('
-            **[🌐 View report online]({0})** — opens in the browser (requires Connect login). Available for up to 1 week.
+            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
             ', steps.publish-report.outputs.url) || '' }}
             **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
 
