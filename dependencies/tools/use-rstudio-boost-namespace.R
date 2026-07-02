@@ -51,10 +51,10 @@ for (file in files) {
    # static assert fires. Patch the literals to match the renamed namespace.
    # (boost/exception/detail/type_info.hpp)
    replacement <- gsub(
-      pattern     = "boost::n::",
+      pattern     = "(?<!rstudio_)boost::n::",
       replacement = "rstudio_boost::n::",
       x           = replacement,
-      fixed       = TRUE
+      perl        = TRUE
    )
    
    if (!identical(original, replacement)) {
