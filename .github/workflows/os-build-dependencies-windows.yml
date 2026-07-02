@@ -74,6 +74,44 @@ jobs:
       CMAKE_GENERATOR: ${{ inputs.cmake_generator }}
 
     steps:
+      # TEMPORARY probe: print MSVC __FUNCSIG__ under /Od vs /O2 to diagnose
+      # the Boost 1.91 type_info.hpp pattern-match failure, then stop early.
+      # Remove this step before merging.
+      - name: Probe MSVC __FUNCSIG__
+        shell: pwsh
+        run: |
+          @'
+          #include <cstdio>
+          namespace rstudio_boost { namespace n {
+          struct r { const char* s; };
+          struct tag_original_exception_type;
+          template <class T> __forceinline r __cdecl p() { return { __FUNCSIG__ }; }
+          template <class Tag> struct error_info {
+             virtual void serialize_to() const { std::printf("from virtual member: [%s]\n", p<Tag>().s); }
+             virtual ~error_info() {}
+          };
+          } }
+          int main() {
+             std::printf("direct: [%s]\n", rstudio_boost::n::p<rstudio_boost::n::tag_original_exception_type>().s);
+             rstudio_boost::n::error_info<rstudio_boost::n::tag_original_exception_type> ei;
+             ei.serialize_to();
+             return 0;
+          }
+          '@ | Set-Content -Path probe.cpp -Encoding ascii
+          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
+            -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          $vcvarsall = Join-Path $vsPath 'VC\Auxiliary\Build\vcvarsall.bat'
+          foreach ($arch in @('x86', 'x64')) {
+            foreach ($opt in @('/Od', '/O2 /Ob2')) {
+              Write-Host "===== $arch $opt ====="
+              cmd /c "`"$vcvarsall`" $arch >nul && cl /nologo /EHs /W4 $opt probe.cpp /Fe:probe.exe && probe.exe"
+              if ($LASTEXITCODE -ne 0) { exit 1 }
+            }
+          }
+          Write-Host "probe complete; stopping the job early on purpose"
+          exit 1
+
       - uses: actions/checkout@v4
 
       # install-boost.R and install-soci.R are driven by R.
