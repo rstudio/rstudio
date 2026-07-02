@@ -64,20 +64,31 @@ export class InsertCitationDialog extends PageObject {
    * dialog's one-time init reset: when the bibliography load resolves, panmirror
    * snaps the active panel back to the dialog's initially-selected node (My
    * Sources on a fresh open) exactly once, leaving the tree highlight where we
-   * put it. Re-select if that happens -- the second selection
-   * lands after the reset and is permanent.
+   * put it. The reset can land on either side of our first sighting of the
+   * panel, so both the initial selection and the post-sighting watch must be
+   * able to re-click.
    */
   async selectSource(source: CitationSource): Promise<Locator> {
     const node = this.page.locator('.pm-navigation-tree-node', {
       has: this.page.locator(`[alt='${source.alt}']`),
     });
     const searchBox = this.page.getByPlaceholder(source.placeholder);
-    await node.click();
-    await expect(searchBox).toBeVisible({ timeout: 15000 });
+
+    // Click and verify as one retryable unit: if the reset fires before the
+    // panel is ever seen (slow bibliography load on a loaded CI machine), the
+    // panel snaps back to My Sources with our node still highlighted, and only
+    // another click can bring it back -- a plain visibility wait just times out.
+    await expect(async () => {
+      await node.click();
+      await expect(searchBox).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 30000 });
+
+    // The reset may instead land after the panel was seen; watch briefly and
+    // re-select if the panel reverts (the re-selection is permanent).
     const revertDeadline = Date.now() + 6000;
     while (Date.now() < revertDeadline) {
       if (!(await searchBox.isVisible().catch(() => false))) {
-        await node.click(); // reverted; re-select (now permanent)
+        await node.click();
         await expect(searchBox).toBeVisible({ timeout: 15000 });
         break;
       }
@@ -103,11 +114,21 @@ export class InsertCitationDialog extends PageObject {
 
     const selectAndFilter = async (): Promise<void> => {
       await node.click();
+      // Clear leftover filter text from a prior attempt with real key events
+      // (React's controlled input ignores fill()), then retype. The reset can
+      // remount the panel mid-typing, wiping or orphaning what was typed.
+      await box.click();
+      await this.page.keyboard.press('ControlOrMeta+a');
+      await this.page.keyboard.press('Backspace');
       await box.pressSequentially(packageName); // typeahead filters on each keystroke
-      await expect(match).toBeVisible({ timeout: 15000 });
+      await expect(match).toBeVisible({ timeout: 5000 });
     };
 
-    await selectAndFilter();
+    // Retryable for the same reason as selectSource(): the one-time init reset
+    // can land before the package row is ever seen, and only re-selecting the
+    // node recovers from that.
+    await expect(selectAndFilter).toPass({ timeout: 30000 });
+
     const revertDeadline = Date.now() + 6000;
     while (Date.now() < revertDeadline) {
       if (!(await match.isVisible().catch(() => false))) {
