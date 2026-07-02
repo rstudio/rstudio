@@ -1,5 +1,5 @@
 
-BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.90.0")
+BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.91.0")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 
 # derive the b2 toolset from the MSVC toolset version (e.g. 143 => msvc-14.3),

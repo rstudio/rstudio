@@ -107,10 +107,18 @@ exec <- function(command, ..., output = NULL, dir = NULL) {
    if (status) {
 
       msg <- paste0("Command exited with status ", as.integer(status), ".")
-      if (is.character(output) && file.exists(output)) {
-         logmsg <- paste0("Logs written to ", output, ":\n")
-         logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
-         msg <- paste(msg, logmsg, sep = "\n")
+
+      # 'output' is a log file path by default, but is the captured output
+      # itself (a character vector of lines) when the caller passed
+      # 'output = TRUE'
+      if (is.character(output)) {
+         if (length(output) == 1L && file.exists(output)) {
+            logmsg <- paste0("Logs written to ", output, ":\n")
+            logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
+            msg <- paste(msg, logmsg, sep = "\n")
+         } else {
+            msg <- paste(msg, paste(output, collapse = "\n"), "", sep = "\n")
+         }
       }
 
       fatal("%s\n", msg)

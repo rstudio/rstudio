@@ -44,6 +44,18 @@ for (file in files) {
       x           = replacement,
       fixed       = TRUE
    )
+
+   # Boost.Exception (1.91+) parses __PRETTY_FUNCTION__ at compile time by
+   # matching string literals that hard-code the 'boost' namespace; after the
+   # rename the compiler emits 'rstudio_boost', so no pattern matches and a
+   # static assert fires. Patch the literals to match the renamed namespace.
+   # (boost/exception/detail/type_info.hpp)
+   replacement <- gsub(
+      pattern     = "boost::n::",
+      replacement = "rstudio_boost::n::",
+      x           = replacement,
+      fixed       = TRUE
+   )
    
    if (!identical(original, replacement)) {
       writeLines(replacement, con = file, useBytes = TRUE)
