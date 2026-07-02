@@ -148,6 +148,39 @@ function expandRLibsUserTemplate(template: string): string | null {
 }
 
 /**
+ * PPM binary repo for the current platform. On Linux we derive the Ubuntu
+ * release codename from /etc/os-release so PPM serves binaries built for the
+ * runner's actual release (noble on 24.04, resolute on 26.04) instead of a
+ * hardcoded distro, which avoids cross-release ABI mismatches. If the codename
+ * can't be determined (e.g. a non-Ubuntu Linux box), fall back to source CRAN,
+ * which isn't tied to a specific Ubuntu release.
+ */
+function packageRepo(): string {
+  if (process.platform !== 'linux') return 'https://cran.r-project.org';
+
+  let codename = '';
+  try {
+    const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+    const match =
+      /^VERSION_CODENAME=(.*)$/m.exec(osRelease) ??
+      /^UBUNTU_CODENAME=(.*)$/m.exec(osRelease);
+    codename = (match?.[1] ?? '').replace(/["']/g, '').trim();
+  } catch {
+    // /etc/os-release unreadable; fall through to source CRAN below.
+  }
+
+  if (!codename) {
+    console.warn(
+      '[r-libs] no Ubuntu codename in /etc/os-release; falling back to source CRAN ' +
+        '(installs compile from source, no PPM binaries).',
+    );
+    return 'https://cran.r-project.org';
+  }
+
+  return `https://packagemanager.posit.co/cran/__linux__/${codename}/latest`;
+}
+
+/**
  * Pre-create the R user library and install any packages from
  * REQUIRED_PACKAGES that are missing. Idempotent: a warm cache results in a
  * fast `installed.packages()` check and no install call.
@@ -177,9 +210,8 @@ export async function prepareRLibs(): Promise<string | null> {
   fs.mkdirSync(expanded, { recursive: true });
   console.log(`[r-libs] user library: ${expanded}`);
 
-  const repos = process.platform === 'linux'
-    ? 'https://packagemanager.posit.co/cran/__linux__/jammy/latest'
-    : 'https://cran.r-project.org';
+  const repos = packageRepo();
+  console.log(`[r-libs] package repo: ${repos}`);
 
   // Single Rscript invocation: check installed.packages() in the resolved
   // library, then install any missing entries from the manifest in one batch.

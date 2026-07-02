@@ -68,10 +68,15 @@ runs:
         R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/noble/latest"
+          # Track the runner's actual Ubuntu release so PPM serves native
+          # binaries (noble on 24.04, resolute on 26.04) and there's no
+          # cross-release ABI mismatch.
+          . /etc/os-release
+          export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
         else
           export PKG_REPO="https://packagemanager.posit.co/cran/latest"
         fi
+        echo "[os-e2e-deps] R package repo: $PKG_REPO"
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
