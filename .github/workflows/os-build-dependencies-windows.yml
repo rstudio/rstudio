@@ -15,7 +15,10 @@
 #   the rstudio-buildtools bucket (install-boost.R downloads it from there),
 #   as must the SOCI source archive soci-<version>.tar.gz.
 # - S3 upload requires the AWS_BUILDTOOLS_UPLOAD_ROLE_ARN secret to be
-#   configured with an OIDC role that can write to rstudio-buildtools.
+#   configured with an OIDC role that can write to rstudio-buildtools
+#   (tracked in https://github.com/rstudio/rstudio/issues/18124). Until it
+#   exists, run with 'upload' disabled and push the workflow artifacts with
+#   dependencies/tools/upload-windows-dependencies.sh.
 #
 # The MSVC toolset version selects both the compiler toolset and the names
 # of the produced archives: 143 for Visual Studio 2022 (windows-2022
