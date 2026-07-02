@@ -386,12 +386,30 @@ endif()
 
 # dependencies
 if(WIN32)
-   if(EXISTS "C:/rstudio-tools/dependencies")
-      set(RSTUDIO_DEPENDENCIES_DIR "C:/rstudio-tools/dependencies")
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
-   else()
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies/windows")
+
+   # Resolve the tools root first; Windows dependencies are installed within
+   # it by dependencies/windows/install-dependencies.cmd. Honor an explicit
+   # override (CMake or environment variable); otherwise, use the default
+   # install location on the system drive.
+   if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
+      if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
+         file(TO_CMAKE_PATH "$ENV{RSTUDIO_TOOLS_ROOT}" RSTUDIO_TOOLS_ROOT)
+      elseif(DEFINED ENV{SYSTEMDRIVE})
+         file(TO_CMAKE_PATH "$ENV{SYSTEMDRIVE}/rstudio-tools" RSTUDIO_TOOLS_ROOT)
+      else()
+         set(RSTUDIO_TOOLS_ROOT "C:/rstudio-tools")
+      endif()
    endif()
+
+   # Prefer dependencies installed within the tools root; fall back to
+   # dependencies installed within the source tree (the legacy layout).
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/dependencies/windows")
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_TOOLS_ROOT}/dependencies")
+   else()
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
+   endif()
+
+   set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
 else()
@@ -420,12 +438,10 @@ if(NOT WIN32 AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/node")
    endif()
 endif()
 
-# tools
+# tools (the Windows tools root is resolved above, before dependencies)
 if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
    if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
       set(RSTUDIO_TOOLS_ROOT $ENV{RSTUDIO_TOOLS_ROOT})
-   elseif(WIN32)
-      set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
    elseif(APPLE)
       find_path(RSTUDIO_TOOLS_ROOT
          NAMES boost

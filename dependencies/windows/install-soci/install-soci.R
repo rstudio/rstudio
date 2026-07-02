@@ -8,17 +8,30 @@ BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.91.0")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
 
-owd <- getwd()
+# the source-tree folder containing this script and its helpers
+script_dir <- getwd()
 source("../tools.R")
 section("Building SOCI %s", SOCI_VERSION)
+
+# put RStudio tools on PATH (resolve now; the working directory may change)
+PATH$prepend(normalizePath("../tools"))
+
+# build into RSTUDIO_TOOLS_ROOT when set (see install-dependencies.cmd), so
+# that build artifacts land outside the source tree; otherwise, build within
+# the source tree as before
+tools_root <- Sys.getenv("RSTUDIO_TOOLS_ROOT", unset = "")
+if (nzchar(tools_root)) {
+   install_dir <- file.path(tools_root, "dependencies/windows/install-soci")
+   dir.create(install_dir, recursive = TRUE, showWarnings = FALSE)
+   setwd(install_dir)
+}
+
+owd <- getwd()
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)
 dir.create("logs")
 options(log.dir = normalizePath("logs"))
-
-# put RStudio tools on PATH
-PATH$prepend("../tools")
 
 # initialize variables
 output_dir <- normalizePath("..", winslash = "/")
@@ -69,8 +82,9 @@ Sys.setenv(PATH = paste(path, collapse = ";"))
 dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
 downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
-# build SQLite static library
-run("build-sqlite.cmd")
+# build SQLite static library (the script lives in the source tree; its
+# artifacts are placed relative to the current working directory)
+run(shQuote(normalizePath(file.path(script_dir, "build-sqlite.cmd"))))
 
 # clone repository if we dont already have it
 if (!file.exists(soci_base_name)) {
