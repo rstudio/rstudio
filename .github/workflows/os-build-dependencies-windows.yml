@@ -33,7 +33,7 @@ on:
       boost_version:
         description: "Boost version to build"
         type: string
-        default: "1.90.0"
+        default: "1.91.0"
       soci_version:
         description: "SOCI version to build"
         type: string

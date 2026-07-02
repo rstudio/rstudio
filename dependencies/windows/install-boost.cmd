@@ -3,7 +3,7 @@ setlocal
 
 REM Variables defining the build. Update as appropriate, or set in the
 REM environment to override (e.g. when building for a newer MSVC toolset).
-if not defined BOOST_VERSION set BOOST_VERSION=1.90.0
+if not defined BOOST_VERSION set BOOST_VERSION=1.91.0
 if not defined MSVC_TOOLSET_VERSION set MSVC_TOOLSET_VERSION=143
 
 REM The file name prefix used for Boost build folders.
