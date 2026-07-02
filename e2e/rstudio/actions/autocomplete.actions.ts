@@ -118,18 +118,19 @@ export class AutocompleteActions {
   }
 
   /**
-   * Get completions in the editor.
-   * Executes setupCode in console, creates a temp file (default extension `R`)
-   * with fileContent, positions cursor at cursorLine/cursorCol (or end of
-   * content), presses Ctrl+Space.
+   * Shared setup for the editor completion helpers: executes setupCode in
+   * console, creates a temp file (default extension `R`) with fileContent,
+   * positions cursor at cursorLine/cursorCol (or end of content), and presses
+   * Ctrl+Space unless a popup is already showing. Returns the temp file name
+   * so the caller can clean up with closeSourceAndDeleteFile.
    */
-  async getCompletionsInEditor(
+  private async triggerCompletionInEditor(
     setupCode: string[],
     fileContent: string,
     cursorLine?: number,
     cursorCol?: number,
     extension: string = 'R',
-  ): Promise<string[]> {
+  ): Promise<string> {
     for (const code of setupCode) {
       await this.consoleActions.executeInConsole(code);
       await sleep(1000);
@@ -174,6 +175,31 @@ export class AutocompleteActions {
     if (!popupAlreadyVisible) {
       await this.page.keyboard.press('Control+Space');
     }
+
+    return fileName;
+  }
+
+  /**
+   * Get completions in the editor.
+   * Executes setupCode in console, creates a temp file (default extension `R`)
+   * with fileContent, positions cursor at cursorLine/cursorCol (or end of
+   * content), presses Ctrl+Space.
+   */
+  async getCompletionsInEditor(
+    setupCode: string[],
+    fileContent: string,
+    cursorLine?: number,
+    cursorCol?: number,
+    extension: string = 'R',
+  ): Promise<string[]> {
+    const fileName = await this.triggerCompletionInEditor(
+      setupCode,
+      fileContent,
+      cursorLine,
+      cursorCol,
+      extension,
+    );
+
     const items = await this.getCompletionItems();
 
     // Cleanup: dismiss popup, close and delete file
@@ -181,5 +207,58 @@ export class AutocompleteActions {
     await this.sourceActions.closeSourceAndDeleteFile(fileName);
 
     return items;
+  }
+
+  /**
+   * Trigger completion in the editor for a token expected to have a unique
+   * match. An explicit completion request (Ctrl+Space) with exactly one
+   * result is accepted directly by RCompletionManager without ever showing
+   * the completion popup, so instead of reading popup items this waits for
+   * the accepted completion to be inserted and returns the resulting line.
+   *
+   * The cursor is placed at the end of the last non-empty line of
+   * fileContent, and that line is the one watched for the insertion.
+   */
+  async completeInEditorExpectingUniqueMatch(
+    setupCode: string[],
+    fileContent: string,
+  ): Promise<string> {
+    const fileName = await this.triggerCompletionInEditor(setupCode, fileContent);
+
+    // The completion replaces the token in place, so waiting for the cursor
+    // line to differ from its original text is the "completion accepted"
+    // signal. Compute the original text from fileContent (rather than
+    // sampling the editor after Ctrl+Space) so a fast accept can't race us.
+    const lines = fileContent.split('\n');
+    let triggerLine = '';
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].trim() !== '') {
+        triggerLine = lines[i];
+        break;
+      }
+    }
+
+    await this.page.waitForFunction(
+      (original) => {
+        const editor = window.rstudio?.documents.activeEditor() ?? null;
+        if (!editor) return false;
+        const row = editor.getCursorPosition().row;
+        return editor.session.getLine(row) !== original;
+      },
+      triggerLine,
+      { timeout: 15000 },
+    );
+
+    const line = await this.page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      return editor.session.getLine(editor.getCursorPosition().row);
+    });
+
+    // Cleanup: dismiss any follow-on suggest popup, close and delete file
+    await this.dismiss();
+    await this.sourceActions.closeSourceAndDeleteFile(fileName);
+
+    return line;
   }
 }
