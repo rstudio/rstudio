@@ -24,6 +24,9 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  # Lets the e2e-merge jobs mint an OIDC token to assume the S3 report-upload
+  # role (see .github/actions/os-publish-e2e-report).
+  id-token: write
 
 jobs:
   # Single change-detection job shared by all e2e platforms (Windows Desktop,
@@ -148,6 +151,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.windows_build_from_source) }}
       project: desktop
@@ -162,6 +166,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.macos_build_from_source) }}
       project: desktop
@@ -176,6 +181,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
@@ -190,6 +196,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_server_build_from_source) }}
       project: server
@@ -200,7 +207,7 @@ jobs:
       defer_merge: true
 
   # Combine every platform's per-shard blob reports into ONE HTML report, publish
-  # it to Connect, and post a single PR comment with a per-platform breakdown.
+  # it to S3, and post a single PR comment with a per-platform breakdown.
   # Artifacts are shared across the whole run, so this job can read the blobs
   # uploaded by the reusable platform workflows above. Runs even when some
   # platforms failed, so a partial report is still produced -- but not when the
@@ -217,6 +224,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -269,16 +278,17 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
-      # Publish the merged report to Connect on every PR run (pass or fail) so a
+      # Publish the merged report to S3 on every PR run (pass or fail) so a
       # browsable link is always available. Best-effort: a no-op on fork PRs
-      # (empty key) and never fails the job. The daily cleanup cron reaps it.
-      - name: Publish report to Connect
+      # (no secret) and never fails the job. The bucket's 14-day lifecycle
+      # rule reaps it.
+      - name: Publish report to S3
         id: publish-report
         if: always() && github.event.pull_request.head.repo.fork == false
         uses: ./.github/actions/os-publish-e2e-report
         with:
-          connect-api-key: ${{ secrets.CONNECT_API_KEY }}
-          title: "E2E RStudio (all platforms) - PR #${{ github.event.pull_request.number }} - run #${{ github.run_number }}"
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: all-platforms
 
       # Post when there are results to report OR the merge itself did not
       # succeed (failed, or skipped because an earlier step failed) -- otherwise
@@ -311,7 +321,7 @@ jobs:
             <details>
             <summary>View / download the full report</summary>
             ${{ steps.publish-report.outputs.url != '' && format('
-            **[View report online]({0})** -- opens in the browser (requires Connect login). Available for up to 1 week.
+            **[View report online]({0})** -- opens in the browser, no download needed. Available for 14 days.
             ', steps.publish-report.outputs.url) || '' }}
             ${{ steps.upload-report.outputs.artifact-url != '' && format('**[Download playwright-report.zip]({0})** -- extract and open `index.html`', steps.upload-report.outputs.artifact-url) || '_No report artifact was produced._' }}
 
