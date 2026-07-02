@@ -76,11 +76,17 @@ runs:
         R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          # Track the runner's actual Ubuntu release so PPM serves native
-          # binaries (noble on 24.04, resolute on 26.04) and there's no
-          # cross-release ABI mismatch.
+          # Track the runner's actual distro so PPM serves native binaries and
+          # there's no cross-release ABI mismatch. Debian/Ubuntu key off the
+          # release codename (noble on 24.04, resolute on 26.04); RHEL and its
+          # rebuilds have no VERSION_CODENAME, so key off the major version
+          # (rhel9, rhel10) instead.
           . /etc/os-release
-          export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
+          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
+            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
+          else
+            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
+          fi
         else
           export PKG_REPO="https://packagemanager.posit.co/cran/latest"
         fi
@@ -143,7 +149,23 @@ runs:
     - name: Install Playwright browsers
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: npx playwright install --with-deps chromium
+      # --with-deps has Playwright shell out to the OS package manager to
+      # install the browser's system libraries, but Playwright only supports
+      # that on Debian/Ubuntu. On RHEL-family hosts the calling workflow installs
+      # those libraries via dnf, so just fetch the browser binary here.
+      run: |
+        IS_RHEL=false
+        if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
+          . /etc/os-release
+          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
+            IS_RHEL=true
+          fi
+        fi
+        if [ "$IS_RHEL" = true ]; then
+          npx playwright install chromium
+        else
+          npx playwright install --with-deps chromium
+        fi
 
     - name: Save Playwright browsers
       if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
