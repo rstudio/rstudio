@@ -17,13 +17,13 @@ cd install-boost
 
 cmd.exe /C R --vanilla -s -f install-boost.R --args debug static
 if ERRORLEVEL 1 (
-  echo ^^!^^! ERROR: Boost debug build failed.
+  echo !! ERROR: Boost debug build failed.
   exit /b 1
 )
 
 cmd.exe /C R --vanilla -s -f install-boost.R --args release static
 if ERRORLEVEL 1 (
-  echo ^^!^^! ERROR: Boost release build failed.
+  echo !! ERROR: Boost release build failed.
   exit /b 1
 )
 
@@ -36,7 +36,7 @@ echo -- Packaging Boost %BOOST_VERSION% ...
    %BOOST_PREFIX%-debug-static ^
    %BOOST_PREFIX%-release-static
 if ERRORLEVEL 1 (
-  echo ^^!^^! ERROR: Failed to package Boost archive.
+  echo !! ERROR: Failed to package Boost archive.
   exit /b 1
 )
 echo -- Done!
