@@ -182,6 +182,16 @@ jobs:
           restore-keys: |
             rstudio-tools-win64-
 
+      # The cache above covers dependencies/common and dependencies/windows,
+      # which also contain tracked files (the install scripts themselves).
+      # When restore-keys pulls a stale cache, extraction overwrites the
+      # checked-out scripts with the cached copies -- silently reverting any
+      # dependency version bump in the PR (the Boost 1.91 bump hit this: the
+      # restored install-dependencies.cmd still said 1.90.0). Restore tracked
+      # files from git; the cached downloads are untracked and unaffected.
+      - name: Restore tracked files clobbered by cache restore
+        run: git checkout -- dependencies/common dependencies/windows
+
       # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
       # is the single most expensive step in the build (~15-30 min). When the
       # GWT sources haven't changed since the last seeder run on main, the cache
