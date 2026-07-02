@@ -7,7 +7,17 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
+import { isServiceReachable, CITATION_SERVICE_HOSTS } from '@utils/network';
 import type { Page } from 'playwright';
+
+// Skip (rather than fail) a test whose citation source depends on an external
+// service that is unreachable from this runner -- an outage or blocked egress
+// is not a product bug. Probes are Node-side and cached; see utils/network.ts.
+async function skipUnlessReachable(...urls: string[]): Promise<void> {
+  for (const url of urls) {
+    test.skip(!(await isServiceReachable(url)), `${url} is unreachable from this runner`);
+  }
+}
 
 // Read the value of an R expression via marker-wrapped console output. Runs on
 // the rsession host, so it reads files the IDE wrote (e.g. references.bib in the
@@ -76,6 +86,7 @@ test.describe('Citations', () => {
   }
 
   test('inserts an authorless DOI citation into a markdown visual editor', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
     await newMarkdownVisualDoc(page);
 
     const citation = new InsertCitationDialog(page);
@@ -110,6 +121,7 @@ test.describe('Citations', () => {
   // where the previous migration attempt stalled ("never reaches visual mode").
   // Opening a file-based .qmd and using ensureVisualMode() gets there reliably.
   test('inserts a DOI citation into a Quarto visual editor', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
     const fileName = `citations_${Date.now()}.qmd`;
     await sourceActions.createAndOpenFile(fileName, '---\ntitle: Citations\n---\n\nGrassland bird research.\n');
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
@@ -147,6 +159,7 @@ test.describe('Citations', () => {
   });
 
   test('deletes a staged citation', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
     await newMarkdownVisualDoc(page);
 
     const citation = new InsertCitationDialog(page);
@@ -169,6 +182,8 @@ test.describe('Citations', () => {
   // key twice; a regression would produce a de-duplicated variant like
   // "bermúdez2020a" (and a second bib entry) instead.
   test('does not duplicate a citation inserted from two sources', async ({ rstudioPage: page }) => {
+    // The same work is inserted first via From DOI, then via DataCite.
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi, CITATION_SERVICE_HOSTS.datacite);
     await newMarkdownVisualDoc(page);
     const citation = new InsertCitationDialog(page);
     const doi = '10.5281/ZENODO.4266706';
@@ -232,10 +247,15 @@ test.describe('Citations', () => {
   // Selecting each network-backed source and searching returns matching results.
   // "bobolink" returns hits on all three services (DataCite, Crossref, PubMed).
   // Listed in the dialog's tree order (top to bottom): Crossref, DataCite, PubMed.
-  const SEARCH_SOURCES = [CITATION_SOURCES.crossref, CITATION_SOURCES.datacite, CITATION_SOURCES.pubmed];
+  const SEARCH_SOURCES = [
+    { source: CITATION_SOURCES.crossref, host: CITATION_SERVICE_HOSTS.crossref },
+    { source: CITATION_SOURCES.datacite, host: CITATION_SERVICE_HOSTS.datacite },
+    { source: CITATION_SOURCES.pubmed, host: CITATION_SERVICE_HOSTS.pubmed },
+  ];
   const searchTerm = 'bobolink';
-  for (const source of SEARCH_SOURCES) {
+  for (const { source, host } of SEARCH_SOURCES) {
     test(`searches ${source.alt} and returns matching results`, async ({ rstudioPage: page }) => {
+      await skipUnlessReachable(host);
       await newMarkdownVisualDoc(page);
 
       const citation = new InsertCitationDialog(page);
