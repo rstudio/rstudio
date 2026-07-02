@@ -149,6 +149,17 @@ public class ApplicationAutomation
       return isAutomationAgent_;
    }
 
+   // When true, a completion request that returns exactly one result shows
+   // the completion popup instead of auto-accepting the match. Only settable
+   // through the automation bridge (window.rstudio.completions), so ordinary
+   // sessions always see the default auto-accept behavior. Consulted by
+   // RCompletionManager and CompletionManagerBase at their auto-accept
+   // branches.
+   public final boolean isCompletionPopupForced()
+   {
+      return completionPopupForced_;
+   }
+
    public final void initializeAgent()
    {
       isAutomationAgent_ = true;
@@ -164,6 +175,7 @@ public class ApplicationAutomation
       registerLayout();
       registerErrors();
       registerConsole();
+      registerCompletions();
       registerReadinessHandlers();
    }
 
@@ -329,6 +341,11 @@ public class ApplicationAutomation
    private void registerLayout()
    {
       registerLayoutObject();
+   }
+
+   private void registerCompletions()
+   {
+      registerCompletionsObject();
    }
 
    // Record uncaught client exceptions where the automation harness can see
@@ -885,6 +902,26 @@ public class ApplicationAutomation
       });
    }-*/;
 
+   // window.rstudio.completions: automation-only completion overrides.
+   //   setAlwaysShowPopup(force) -> when force is true, a completion request
+   //   that returns exactly one result shows the popup instead of
+   //   auto-accepting the match. Lets tests enumerate popup items
+   //   deterministically regardless of how many results a token happens to
+   //   have; the auto-accept behavior itself stays the default (and remains
+   //   separately testable) when the flag is off.
+   private native final void registerCompletionsObject() /*-{
+      var self = this;
+      $wnd.rstudio.completions = $wnd.rstudio.completions || {};
+      $wnd.rstudio.completions.setAlwaysShowPopup = $entry(function(force) {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::setCompletionPopupForced(*)(!!force);
+      });
+   }-*/;
+
+   private void setCompletionPopupForced(boolean forced)
+   {
+      completionPopupForced_ = forced;
+   }
+
    private native final void registerChatObject() /*-{
       var self = this;
       $wnd.rstudio.chat = $wnd.rstudio.chat || {};
@@ -936,4 +973,5 @@ public class ApplicationAutomation
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
    private boolean consoleHandlersRegistered_ = false;
+   private boolean completionPopupForced_ = false;
 }

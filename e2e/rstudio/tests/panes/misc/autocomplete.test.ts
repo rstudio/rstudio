@@ -179,6 +179,58 @@ for (const context of contexts) {
         expect(items).toContain('面面面');
       });
     });
+
+    // -----------------------------------------------------------------------
+    // Issue 18125 — ggplot2 aesthetic completions when the token matches only
+    // an aesthetic, not a formal argument.
+    // https://github.com/rstudio/rstudio/issues/18125
+    //
+    // `geom_line()` has real formal args `lineend`/`linejoin`/`linemitre`, so
+    // the token `line` matched a formal and the geom's aesthetics (`linetype`,
+    // `linewidth`) were offered too. But `linet` matched no formal, which used
+    // to suppress the aesthetics entirely -- so `linetype` (an aesthetic, not a
+    // formal) went missing and the popup showed "No match".
+    // -----------------------------------------------------------------------
+    test.describe('Issue 18125 - ggplot2 aesthetic completions', () => {
+      let missingPackages: string[] = [];
+
+      test.beforeAll(async () => {
+        missingPackages = await consoleActions.ensurePackages(['ggplot2']);
+      });
+
+      // The completion helpers force the popup to display via the
+      // window.rstudio.completions bridge, so the unique match is listed
+      // here rather than auto-accepted (the auto-accept behavior itself is
+      // covered by the editor-only test below).
+      test('aesthetic-only token completes (linet -> linetype)', async () => {
+        test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+        const items = await getCompletions(['library(ggplot2)'], 'geom_line(linet');
+        expect(items).toContain('linetype =');
+      });
+
+      if (context === 'editor') {
+        // Without the popup override, an explicit completion request
+        // (Ctrl+Space) with a unique match is accepted directly into the
+        // buffer and the popup never shows.
+        test('unique match is auto-accepted on explicit request', async () => {
+          test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+          const line = await autocomplete.completeInEditorExpectingUniqueMatch(
+            ['library(ggplot2)'],
+            'geom_line(linet',
+          );
+          expect(line).toBe('geom_line(linetype = ');
+        });
+      }
+
+      test('token matching a formal also offers aesthetics', async () => {
+        test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+        const items = await getCompletions(['library(ggplot2)'], 'geom_line(line');
+        // Both real formal args and aesthetics surface for the shorter token.
+        expect(items).toContain('lineend =');   // formal argument
+        expect(items).toContain('linetype =');  // aesthetic
+        expect(items).toContain('linewidth ='); // aesthetic
+      });
+    });
   });
 }
 
