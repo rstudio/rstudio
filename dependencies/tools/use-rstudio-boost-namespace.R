@@ -1,4 +1,9 @@
 
+# NOTE: this script may run more than once over the same tree (on Windows,
+# install-boost.cmd invokes install-boost.R once per build variant), so every
+# replacement below must be idempotent: re-applying it to already-patched
+# sources must be a no-op.
+
 # figure out which files to explore
 exts <- c("cpp", "h", "hpp", "inc", "inl", "ipp")
 pattern <- sprintf("[.](%s)$", paste(exts, collapse = "|"))
