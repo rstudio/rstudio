@@ -1,7 +1,16 @@
 
 BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.90.0")
-BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.3")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
+
+# derive the b2 toolset from the MSVC toolset version (e.g. 143 => msvc-14.3),
+# unless explicitly overridden in the environment
+BOOST_TOOLSET_DEFAULT <- paste0(
+   "msvc-",
+   substring(MSVC_TOOLSET_VERSION, 1L, 2L),
+   ".",
+   substring(MSVC_TOOLSET_VERSION, 3L)
+)
+BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = BOOST_TOOLSET_DEFAULT)
 
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
