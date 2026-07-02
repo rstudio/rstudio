@@ -169,8 +169,8 @@ jobs:
       # land in dependencies/common and dependencies/windows within the
       # workspace when c:\rstudio-tools\dependencies doesn't exist. Keyed on
       # the install scripts so a version bump forces a fresh download.
-      # Restore-only; Save rstudio-tools cache runs after the build with
-      # if: always() so deps are cached even when compilation fails.
+      # Restore-only; Save rstudio-tools cache runs after the build (from
+      # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
         id: tools-cache
         uses: actions/cache/restore@v4
@@ -506,8 +506,14 @@ jobs:
             make-package.bat nozip
           )
 
+      # Save the tools cache only from main-scoped runs (the seed and
+      # scheduled workflows), and only on a key miss. A cache saved from a PR
+      # run lands in that PR's merge-ref scope, which no other branch can
+      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # cache quota, and that pressure is what evicts main's copies and sends
+      # every PR build cold in the first place.
       - name: Save rstudio-tools cache
-        if: steps.install-deps.conclusion == 'success'
+        if: steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -515,8 +521,11 @@ jobs:
             dependencies/windows
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
+      # Skip on an exact restore hit: re-saving would just duplicate the entry
+      # into this run's ref scope. PR runs that changed GWT sources still
+      # save, so re-pushes to the same PR skip the recompile.
       - name: Save GWT output
-        if: steps.build.conclusion == 'success'
+        if: steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: |

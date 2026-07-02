@@ -138,10 +138,11 @@ jobs:
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
       # Shares the key with the Linux Server build so a single cache (and the
-      # cache-seed job) warms both.
-      - name: Cache rstudio-tools deps
+      # cache-seed job) warms both. Restore-only; the matching Save steps after
+      # "Install build dependencies" run only from main-scoped runs.
+      - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -152,8 +153,9 @@ jobs:
       # packages (via install-packages) into R_LIBS_USER. Cache the whole
       # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
       # Same key as the Linux Server build so the cache is shared.
-      - name: Cache build-time R packages
-        uses: actions/cache@v4
+      - name: Restore build-time R packages
+        id: rlibs-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -196,6 +198,26 @@ jobs:
         working-directory: dependencies/linux
         run: ./install-dependencies-noble
 
+      # Save the tools / R-libs caches only from main-scoped runs (the seed
+      # and scheduled workflows), and only on a key miss. A cache saved from a
+      # PR run lands in that PR's merge-ref scope, which no other branch can
+      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # cache quota, and that pressure is what evicts main's copies and sends
+      # every PR build cold in the first place.
+      - name: Save rstudio-tools deps
+        if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      - name: Save build-time R packages
+        if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
+
       - name: Zero sccache stats
         run: sccache --zero-stats || true
 
@@ -227,9 +249,12 @@ jobs:
       # Save GWT output only when the build succeeded. A failed mid-compile run
       # could otherwise write partial GWT output to the cache, and every future
       # restore would silently ship a broken frontend until the hashFiles key
-      # rotates.
+      # rotates. Skip on an exact restore hit: re-saving would just duplicate
+      # the entry into this run's ref scope (per-PR copies that waste quota).
+      # PR runs that changed GWT sources still save, so re-pushes to the same
+      # PR skip the ~15-30 min recompile.
       - name: Save GWT output
-        if: steps.build.conclusion == 'success'
+        if: steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: package/linux/build-Electron-DEB/gwt
