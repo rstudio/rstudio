@@ -1914,7 +1914,8 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1
                && canAutoAccept_
                && completions.canAutoAccept()
-               && results[0].type != RCompletionType.DIRECTORY)
+               && results[0].type != RCompletionType.DIRECTORY
+               && !automation_.isCompletionPopupForced())
          {
             onSelection(results[0]);
          }

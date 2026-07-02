@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -94,12 +95,14 @@ public abstract class CompletionManagerBase
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
                            Assistant assistant,
-                           HelpStrategy helpStrategy)
+                           HelpStrategy helpStrategy,
+                           ApplicationAutomation automation)
    {
       events_ = events;
       userPrefs_ = uiPrefs;
       assistant_ = assistant;
       helpStrategy_ = helpStrategy;
+      automation_ = automation;
    }
    
    protected void onPopupSelection(QualifiedName completion)
@@ -233,7 +236,8 @@ public abstract class CompletionManagerBase
       boolean shouldAutoAccept =
             results.length == 1 &&
             data.autoAcceptSingleCompletionResult() &&
-            results[0].type != RCompletionType.DIRECTORY;
+            results[0].type != RCompletionType.DIRECTORY &&
+            !automation_.isCompletionPopupForced();
       
       if (shouldAutoAccept)
       {
@@ -1140,5 +1144,6 @@ public abstract class CompletionManagerBase
    protected EventBus events_;
    protected UserPrefs userPrefs_;
    protected Assistant assistant_;
+   private ApplicationAutomation automation_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

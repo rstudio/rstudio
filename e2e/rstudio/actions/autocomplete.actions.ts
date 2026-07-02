@@ -48,6 +48,19 @@ export class AutocompleteActions {
   }
 
   /**
+   * Toggle the automation-only "always show popup" completion override, so a
+   * unique match is listed in the popup instead of being auto-accepted. The
+   * popup-reading helpers wrap their request in this to stay deterministic
+   * regardless of how many results the token happens to have. No-op on
+   * builds that predate the knob (those keep the auto-accept behavior).
+   */
+  private async setAlwaysShowPopup(force: boolean): Promise<void> {
+    await this.page.evaluate((f) => {
+      window.rstudio?.completions?.setAlwaysShowPopup(f);
+    }, force);
+  }
+
+  /**
    * Get completions in the console.
    * Executes setupCode, then types triggerText (without Enter) and presses Ctrl+Space.
    */
@@ -57,24 +70,26 @@ export class AutocompleteActions {
       await sleep(1000);
     }
 
-    // Type trigger text without executing -- needs per-key events to fire the completer.
-    await this.consoleActions.typeInConsole(triggerText);
-    await sleep(500);
+    await this.setAlwaysShowPopup(true);
+    try {
+      // Type trigger text without executing -- needs per-key events to fire the completer.
+      await this.consoleActions.typeInConsole(triggerText);
+      await sleep(500);
 
-    // If autocomplete already appeared (e.g. after typing $ or (), use it;
-    // otherwise trigger explicitly with Ctrl+Space
-    const popupAlreadyVisible = await this.page.locator(COMPLETION_POPUP).isVisible();
-    if (!popupAlreadyVisible) {
-      await this.page.keyboard.press('Control+Space');
+      // If autocomplete already appeared (e.g. after typing $ or (), use it;
+      // otherwise trigger explicitly with Ctrl+Space
+      const popupAlreadyVisible = await this.page.locator(COMPLETION_POPUP).isVisible();
+      if (!popupAlreadyVisible) {
+        await this.page.keyboard.press('Control+Space');
+      }
+      return await this.getCompletionItems();
+    } finally {
+      // Cleanup: restore auto-accept, dismiss popup, cancel partial input
+      await this.setAlwaysShowPopup(false);
+      await this.dismiss();
+      await this.page.keyboard.press('Escape');
+      await sleep(300);
     }
-    const items = await this.getCompletionItems();
-
-    // Cleanup: dismiss popup, cancel partial input
-    await this.dismiss();
-    await this.page.keyboard.press('Escape');
-    await sleep(300);
-
-    return items;
   }
 
   /**
@@ -192,21 +207,26 @@ export class AutocompleteActions {
     cursorCol?: number,
     extension: string = 'R',
   ): Promise<string[]> {
-    const fileName = await this.triggerCompletionInEditor(
-      setupCode,
-      fileContent,
-      cursorLine,
-      cursorCol,
-      extension,
-    );
+    await this.setAlwaysShowPopup(true);
+    let fileName: string | null = null;
+    try {
+      fileName = await this.triggerCompletionInEditor(
+        setupCode,
+        fileContent,
+        cursorLine,
+        cursorCol,
+        extension,
+      );
 
-    const items = await this.getCompletionItems();
-
-    // Cleanup: dismiss popup, close and delete file
-    await this.dismiss();
-    await this.sourceActions.closeSourceAndDeleteFile(fileName);
-
-    return items;
+      return await this.getCompletionItems();
+    } finally {
+      // Cleanup: restore auto-accept, dismiss popup, close and delete file
+      await this.setAlwaysShowPopup(false);
+      await this.dismiss();
+      if (fileName !== null) {
+        await this.sourceActions.closeSourceAndDeleteFile(fileName);
+      }
+    }
   }
 
   /**
@@ -215,6 +235,10 @@ export class AutocompleteActions {
    * result is accepted directly by RCompletionManager without ever showing
    * the completion popup, so instead of reading popup items this waits for
    * the accepted completion to be inserted and returns the resulting line.
+   *
+   * Deliberately leaves the "always show popup" override off: this helper
+   * exists to exercise the real unique-match auto-accept path (use
+   * getCompletionsInEditor to enumerate popup items instead).
    *
    * The cursor is placed at the end of the last non-empty line of
    * fileContent, and that line is the one watched for the insertion.

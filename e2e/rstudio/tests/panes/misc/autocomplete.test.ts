@@ -198,24 +198,29 @@ for (const context of contexts) {
         missingPackages = await consoleActions.ensurePackages(['ggplot2']);
       });
 
+      // The completion helpers force the popup to display via the
+      // window.rstudio.completions bridge, so the unique match is listed
+      // here rather than auto-accepted (the auto-accept behavior itself is
+      // covered by the editor-only test below).
       test('aesthetic-only token completes (linet -> linetype)', async () => {
         test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
-        if (context === 'console') {
-          // Typing in the console opens the popup implicitly while the token
-          // grows, so the unique match is listed rather than accepted.
-          const items = await getCompletions(['library(ggplot2)'], 'geom_line(linet');
-          expect(items).toContain('linetype =');
-        } else {
-          // In the editor the request is explicit (Ctrl+Space), and an
-          // explicit request with a unique match is auto-accepted without
-          // ever showing the popup -- assert on the inserted text instead.
+        const items = await getCompletions(['library(ggplot2)'], 'geom_line(linet');
+        expect(items).toContain('linetype =');
+      });
+
+      if (context === 'editor') {
+        // Without the popup override, an explicit completion request
+        // (Ctrl+Space) with a unique match is accepted directly into the
+        // buffer and the popup never shows.
+        test('unique match is auto-accepted on explicit request', async () => {
+          test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
           const line = await autocomplete.completeInEditorExpectingUniqueMatch(
             ['library(ggplot2)'],
             'geom_line(linet',
           );
           expect(line).toBe('geom_line(linetype = ');
-        }
-      });
+        });
+      }
 
       test('token matching a formal also offers aesthetics', async () => {
         test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
