@@ -157,6 +157,12 @@ jobs:
             || dnf config-manager setopt ubi-10-codeready-builder-rpms.enabled=1 2>/dev/null \
             || dnf config-manager --set-enabled crb 2>/dev/null \
             || true
+          # Name the failure here rather than letting an unenabled CRB resurface
+          # two steps later as an opaque "Unable to find a match: boost-devel".
+          # Best-effort still: a warning, not a hard fail, since a given package
+          # set might resolve from the base repos alone.
+          dnf repolist --enabled | grep -qiE 'codeready|crb' \
+            || echo "::warning::CodeReady Builder repo not enabled; build -devel packages may fail to resolve."
 
       - uses: actions/checkout@v4
 
@@ -191,11 +197,12 @@ jobs:
       # Java sources / build scripts haven't changed, make-electron-package can
       # skip the recompile entirely via the NO_REBUILD env var (sets
       # GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake) -- see the
-      # NO_REBUILD/GWT_BUILD handling in package/linux/make-package. The RPM
-      # build dir differs from the DEB build dir, so this uses an rhel10-specific
-      # key rather than sharing the Ubuntu Electron GWT cache. Restore-only here;
-      # the matching Save step runs after the build with a success gate so a
-      # failed mid-compile run can't poison the cache.
+      # NO_REBUILD/GWT_BUILD handling in package/linux/make-package. GWT output
+      # is Java-to-JS and platform-independent, but the key is rhel10-scoped for
+      # per-distro cache isolation (matching the tools/rlibs keys); the RPM build
+      # dir also differs from the DEB dir, so the path can't collide either.
+      # Restore-only here; the matching Save step runs after the build with a
+      # success gate so a failed mid-compile run can't poison the cache.
       - name: Restore GWT output
         id: gwt-cache
         uses: actions/cache/restore@v4
@@ -283,13 +290,16 @@ jobs:
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
-      # so packaging and uploading it would be pure waste. CPack drops the .rpm
-      # under build-Electron-RPM/_CPack_Packages/Linux/RPM, so search the whole
-      # tree rather than just the top level.
+      # so packaging and uploading it would be pure waste. CPack writes the
+      # shippable .rpm to the TOP LEVEL of build-Electron-RPM (no
+      # CPACK_PACKAGE_DIRECTORY is set and cpack runs from inside that dir),
+      # exactly like the .deb sibling -- so -maxdepth 1 is correct and
+      # deterministic. _CPack_Packages/.../RPM holds only rpmbuild staging
+      # copies and the xcopy tarball, which we must not pick up.
       - name: Package RStudio Desktop .rpm
         if: inputs.build_only != true
         run: |
-          RPM=$(find package/linux/build-Electron-RPM -name '*.rpm' | head -1)
+          RPM=$(find package/linux/build-Electron-RPM -maxdepth 1 -name '*.rpm' | head -1)
           if [ -z "$RPM" ]; then
             echo "::error::No .rpm found in package/linux/build-Electron-RPM"
             exit 1
@@ -353,11 +363,13 @@ jobs:
         run: |
           # Xvfb (virtual display for the Electron app / Playwright) plus the
           # runtime libraries Chromium/Electron and the Playwright-managed
-          # chromium need on RHEL. dnf resolves the RStudio .rpm's own GUI deps
-          # on install, but the Playwright browser needs these present too. The
-          # last row mirrors the font/text libs some test R packages load:
-          # freetype/fontconfig (ragg, systemfonts), harfbuzz/fribidi
-          # (textshaping).
+          # chromium need on RHEL. This list is load-bearing, not redundant: the
+          # RStudio Electron RPM is built with CPACK_RPM_PACKAGE_AUTOREQPROV off
+          # (see package/linux/CMakeLists.txt) and declares only libxkbcommon-x11
+          # and sqlite, so dnf does NOT auto-pull the GUI/Chromium libs on
+          # install -- they must come from here. The last row mirrors the
+          # font/text libs some test R packages load: freetype/fontconfig (ragg,
+          # systemfonts), harfbuzz/fribidi (textshaping).
           dnf -y install \
             xorg-x11-server-Xvfb \
             nss nspr atk at-spi2-atk at-spi2-core cups-libs \
@@ -381,7 +393,9 @@ jobs:
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build
-      # job above and install it. dnf resolves the runtime GUI deps.
+      # job above and install it. The RPM declares only minimal deps (AUTOREQPROV
+      # is off), so the GUI/Chromium runtime libs come from the "Install OS
+      # dependencies" step above, not from the RPM's own resolution.
       - name: Download RStudio Desktop .rpm artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
@@ -480,6 +494,10 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # Isolate the R-library / pak caches from the Ubuntu workflows: they
+          # all share runner.os == Linux, and an Ubuntu-compiled R library is
+          # ABI-incompatible with RHEL's R. See os-e2e-deps cache-scope.
+          cache-scope: rhel10-x86_64
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

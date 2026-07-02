@@ -13,6 +13,16 @@ inputs:
     description: "Directory containing the Playwright project (package.json / DESCRIPTION)."
     required: false
     default: "e2e/rstudio"
+  cache-scope:
+    description: >
+      Optional distro/ABI discriminator folded into the R-library and pak cache
+      keys. runner.os is only Linux/macOS/Windows, so every Linux caller would
+      otherwise share one key -- and a compiled R library built on one distro
+      (Ubuntu) is not loadable on another (RHEL). Linux callers on a non-default
+      distro should set this (e.g. 'rhel10-x86_64') to isolate their caches.
+      Leave empty to keep the legacy runner.os-only key (existing callers).
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -28,6 +38,13 @@ runs:
       shell: bash
       run: |
         echo "PLAYWRIGHT_BROWSERS_PATH=${{ github.workspace }}/ms-playwright" >> "$GITHUB_ENV"
+        # Fold the optional distro/ABI scope into a cache-os discriminator used
+        # by the R-library and pak keys below. Empty scope reproduces the legacy
+        # runner.os-only key byte-for-byte, so existing callers are unchanged;
+        # a caller that sets cache-scope (e.g. rhel10-x86_64) gets an isolated
+        # key so its compiled R packages can't collide with another distro's.
+        SCOPE="${{ inputs.cache-scope }}"
+        echo "CACHE_OS=${RUNNER_OS}${SCOPE:+-$SCOPE}" >> "$GITHUB_ENV"
 
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
@@ -56,18 +73,18 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
-        key: ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        key: ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
         restore-keys: |
-          ${{ runner.os }}-pak-${{ steps.r_version.outputs.version }}-
+          ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-
 
     - name: Restore R library
       id: rlib-cache
       uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.r-libs-user }}
-        key: ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
         restore-keys: |
-          ${{ runner.os }}-r-${{ steps.r_version.outputs.version }}-
+          ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-
 
     - name: Install R packages from DESCRIPTION
       shell: bash
@@ -151,8 +168,11 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       # --with-deps has Playwright shell out to the OS package manager to
       # install the browser's system libraries, but Playwright only supports
-      # that on Debian/Ubuntu. On RHEL-family hosts the calling workflow installs
-      # those libraries via dnf, so just fetch the browser binary here.
+      # that on Debian/Ubuntu. So on RHEL-family hosts we fetch only the browser
+      # binary -- which means the caller MUST have already installed the Chromium
+      # runtime libraries (nss, gtk3, mesa-libgbm, ...) via dnf. This is a real
+      # cross-file contract: a RHEL caller that omits that dnf step gets a
+      # browser that can't launch, surfacing far away as an opaque launch error.
       run: |
         IS_RHEL=false
         if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
