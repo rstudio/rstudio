@@ -9,7 +9,7 @@ call %RSTUDIO_TOOLS%
 
 %RUN% add-first-to-path ^
 	%RSTUDIO_PROJECT_ROOT%\dependencies\common\node\%RSTUDIO_NODE_VERSION% ^
-	c:\rstudio-tools\dependencies\common\node\%RSTUDIO_NODE_VERSION%
+	%RSTUDIO_TOOLS_ROOT%\dependencies\common\node\%RSTUDIO_NODE_VERSION%
 
 %RUN% subprocess "node --version" NODE_VERSION
 echo node: %NODE_VERSION%

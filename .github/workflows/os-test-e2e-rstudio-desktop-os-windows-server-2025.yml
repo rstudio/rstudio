@@ -113,6 +113,13 @@ jobs:
         shell: pwsh
     env:
       R_LIBS_USER: ${{ github.workspace }}\R-libs
+      # Build dependencies install here (outside any directory holding tracked
+      # files), mirroring the RSTUDIO_TOOLS_ROOT layout the posix workflows
+      # use. Keeping tracked install scripts out of the cached path means a
+      # stale cache restore can never clobber this PR's checked-out scripts
+      # (rstudio/rstudio#18129). Consumed by install-dependencies.cmd,
+      # make-package.bat, and CMake.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}\rstudio-tools
       SCCACHE_ENABLED: '1'
       SCCACHE_GHA_ENABLED: 'true'
       NPM_CONFIG_LOGLEVEL: error
@@ -166,21 +173,22 @@ jobs:
           Write-Host "Disk space after cleanup:  $freeGB GB free (freed ~$freed GB)"
 
       # Downloaded build deps (Boost, SOCI, GWT, Node, pandoc, quarto, etc.)
-      # land in dependencies/common and dependencies/windows within the
-      # workspace when c:\rstudio-tools\dependencies doesn't exist. Keyed on
-      # the install scripts so a version bump forces a fresh download.
+      # land in RSTUDIO_TOOLS_ROOT\dependencies, outside any directory that
+      # holds tracked files, so restoring a stale cache can never overwrite
+      # this PR's install scripts. Keyed on the install scripts so a version
+      # bump forces a fresh download; the v2 prefix fences off caches saved
+      # under the old in-tree layout, whose archives would extract into
+      # dependencies/ and clobber tracked files (rstudio/rstudio#18129).
       # Restore-only; Save rstudio-tools cache runs after the build (from
       # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
         id: tools-cache
         uses: actions/cache/restore@v4
         with:
-          path: |
-            dependencies/common
-            dependencies/windows
-          key: rstudio-tools-win64-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-dependencies.cmd', 'dependencies/tools/rstudio-tools.cmd') }}
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
-            rstudio-tools-win64-
+            rstudio-tools-win64-v2-
 
       # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
       # is the single most expensive step in the build (~15-30 min). When the
@@ -395,7 +403,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
             -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
-          $nodeDir = "$env:GITHUB_WORKSPACE\dependencies\common\node\$nodeVersion"
+          $nodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
           if (-not (Test-Path $nodeDir)) {
             Write-Error "Bundled node directory not found: $nodeDir"
             exit 1
@@ -432,7 +440,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
             -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
-          $bundledNodeDir = "$env:GITHUB_WORKSPACE\dependencies\common\node\$nodeVersion"
+          $bundledNodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
           $bundledGypDir  = "$bundledNodeDir\node_modules\npm\node_modules\node-gyp"
           if (-not (Test-Path $bundledGypDir)) {
             Write-Error "Bundled node-gyp directory not found: $bundledGypDir"
@@ -516,9 +524,7 @@ jobs:
         if: steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: |
-            dependencies/common
-            dependencies/windows
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       # Skip on an exact restore hit: re-saving would just duplicate the entry

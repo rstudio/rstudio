@@ -96,10 +96,15 @@
    </exec>
    <dirname property="git.main.worktree" file="${git.common.dir}"/>
 
+   <!-- Environment variables (e.g. env.RSTUDIO_TOOLS_ROOT) -->
+   <property environment="env"/>
+
    <!-- Path to GWT libraries -->
+   <set-if-exists property="lib.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="${git.main.worktree}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
+   <set-if-exists property="lib.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="C:/rstudio-tools/dependencies/common/gwtproject"/>
 
    <!-- Configure path to GWT SDK -->
@@ -245,15 +250,20 @@
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="22.22.2"/>
+   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="C:/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
    <!-- use yarn from system but will prefer yarn from dependencies if available -->
    <set-if-exists property="yarn.bin" value="${node.dir}/bin/yarn"/>
    <set-if-exists property="yarn.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"/>
+   <set-if-exists property="yarn.bin" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
+   <set-if-exists property="yarn.bin" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-exists property="yarn.bin" value="c:/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-unset  property="yarn.bin" value="yarn"/>

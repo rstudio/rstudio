@@ -44,6 +44,19 @@ exit /b %ERRORLEVEL%
 :: Set the project root directory
 call :find-project-root
 
+:: Pick a default RSTUDIO_TOOLS_ROOT location. Build dependencies are
+:: downloaded and installed here, outside of the source tree. This is the
+:: Windows analog of the default chosen in rstudio-tools.sh.
+if not defined RSTUDIO_TOOLS_ROOT (
+  if defined SYSTEMDRIVE (
+    set "RSTUDIO_TOOLS_ROOT=%SYSTEMDRIVE%\rstudio-tools"
+  ) else (
+    set "RSTUDIO_TOOLS_ROOT=C:\rstudio-tools"
+  )
+)
+
+echo -- Using RStudio tools root: %RSTUDIO_TOOLS_ROOT%
+
 :: Put Visual Studio tools on the PATH
 call :add-vstools-to-path
 

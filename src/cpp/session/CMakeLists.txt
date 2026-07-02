@@ -499,6 +499,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
 # environments found in the source tree.
 set(RSTUDIO_PANMIRROR_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
 if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   # Windows tools root layout (e.g. C:/rstudio-tools/src/gwt/lib/quarto)
+   set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+endif()
+if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   # posix tools root layout (e.g. /opt/rstudio-tools/src/gwt/lib/quarto,
+   # a sibling of the arch-specific tools root)
    set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/../src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
 endif()
 # quarto is gitignored, so a secondary git worktree won't have it in its source
