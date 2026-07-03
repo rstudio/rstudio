@@ -35,6 +35,33 @@ test.describe('client exception capture', () => {
     await dismissAllModals(page);
   });
 
+  test('unhandled promise rejections are recorded with a stack', async ({ rstudioPage: page }) => {
+    // GWT does not $entry-wrap native promise continuations, so an exception
+    // thrown in one bypasses the uncaught-exception handler and previously
+    // vanished entirely (#18134's silent visual-editor stall). The agent
+    // listens for unhandledrejection and records it into the same
+    // window.rstudio.errors buffer the fixture drains.
+    await page.evaluate(() => {
+      void Promise.reject(new Error('automation rejection probe'));
+    });
+
+    // The unhandledrejection event fires after the current task; poll for it.
+    await expect.poll(
+      () => page.evaluate(
+        () => window.rstudio!.errors.list().map((e) => e.message).join('|'),
+      ),
+    ).toContain('automation rejection probe');
+
+    const errors = await page.evaluate(() => window.rstudio!.errors.list());
+    const rejection = errors.find((e) => e.message.includes('automation rejection probe'));
+    expect(rejection!.message).toContain('Unhandled promise rejection');
+    expect(typeof rejection!.stack).toBe('string');
+
+    // Clean up so the per-test drain doesn't fail this test. Unlike the
+    // simulate() path, no Error dialog is shown for a rejection.
+    await page.evaluate(() => window.rstudio!.errors.clear());
+  });
+
   // NOTE: there is deliberately no self-test that leaves an exception in the
   // record to prove the fixture fails the test. The fail-on-exception throw
   // happens in the auto fixture's teardown (after use()), and Playwright's

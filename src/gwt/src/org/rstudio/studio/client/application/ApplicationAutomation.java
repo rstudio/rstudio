@@ -870,6 +870,12 @@ public class ApplicationAutomation
    //   clear()          -> empty the record
    //   simulate(message)-> throw an uncaught exception from a scheduled
    //                       context (harness self-test only)
+   //
+   // Also records unhandled promise rejections. GWT does not $entry-wrap
+   // native promise continuations, so an exception thrown in one bypasses the
+   // uncaught-exception handler entirely and can silently strand async UI
+   // (e.g. the visual editor loading spinner, rstudio/rstudio#18134). The
+   // listener gives such failures a message + stack in the test record.
    private native final void registerErrorsObject() /*-{
       var self = this;
       $wnd.rstudio.errors = $wnd.rstudio.errors || {};
@@ -882,6 +888,17 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.errors.simulate = $entry(function(message) {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::simulateUncaughtException(Ljava/lang/String;)(message);
+      });
+      $wnd.addEventListener("unhandledrejection", function(event) {
+         try {
+            var reason = event.reason;
+            var message = "Unhandled promise rejection: " +
+               (reason && reason.message ? reason.message : String(reason));
+            var stack = (reason && reason.stack) ? String(reason.stack) : "";
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::recordClientException(Ljava/lang/String;Ljava/lang/String;)(message, stack);
+         } catch (e) {
+            // never let recording produce its own rejection cascade
+         }
       });
    }-*/;
 
