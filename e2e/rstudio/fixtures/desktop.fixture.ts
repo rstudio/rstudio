@@ -93,16 +93,30 @@ export const RSTUDIO_PATH = process.platform === 'win32'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
 // Deterministic per-worker CDP port: each parallel worker gets its own fixed
-// port (base + parallel index) so concurrent workers never collide. A random
-// port would, with a handful of workers, occasionally have two workers draw the
-// same value -- and the per-launch `lsof :PORT | kill` cleanup would then kill
-// another worker's RStudio. The dev/logger ports derive from this (+1000/+2000),
-// so a small index keeps all three bands disjoint. PW_CDP_PORT overrides for
-// single-instance debugging.
+// port (base + checkout offset + parallel index) so concurrent workers never
+// collide. A random port would, with a handful of workers, occasionally have
+// two workers draw the same value -- and the per-launch `lsof :PORT | kill`
+// cleanup would then kill another worker's RStudio. The checkout offset (a
+// stable hash of this checkout's path) keeps concurrent runs from different
+// checkouts/worktrees on the same machine in disjoint bands, so one run's
+// cleanup can't reclaim another run's live instance (rstudio#18135). The
+// dev/logger ports derive from this (+1000/+2000); the offset is folded into
+// [0, 900) so with < 100 workers all three bands stay disjoint. PW_CDP_PORT
+// overrides for single-instance debugging.
 const CDP_PORT_BASE = 9231;
+function checkoutPortOffset(): number {
+  // FNV-1a over the checkout path (this file's directory is stable and
+  // unique per checkout/worktree).
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < __dirname.length; i++) {
+    hash ^= __dirname.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) % 900;
+}
 function defaultCdpPort(): number {
   const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
-  return CDP_PORT_BASE + idx;
+  return CDP_PORT_BASE + checkoutPortOffset() + idx;
 }
 export const CDP_PORT = Number(process.env.PW_CDP_PORT) || defaultCdpPort();
 export const CDP_URL = `http://localhost:${CDP_PORT}`;
@@ -342,19 +356,23 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
 
 async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
   // Clean up any existing RStudio on our specific CDP port. The port is fixed
-  // per worker (base + parallel index), so this only ever reclaims an orphaned
-  // process from a prior interrupted run on this worker's own port -- never a
-  // sibling worker's live instance.
+  // per worker (base + checkout offset + parallel index), so this only ever
+  // reclaims an orphaned process from a prior interrupted run on this worker's
+  // own port -- never a sibling worker's live instance. Match the LISTEN
+  // socket only: an unqualified port match also selects the *client* end of
+  // established connections to that port, and if the band were ever shared
+  // (e.g. PW_CDP_PORT collisions) that would SIGKILL another run's Playwright
+  // worker process, not just a leftover RStudio (rstudio#18135).
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
     if (process.platform === 'win32') {
       execSync(
-        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"`,
+        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"`,
         { encoding: 'utf-8', stdio: 'pipe' }
       );
     } else {
-      execSync(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
+      execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
     }
   } catch {
     // No process on that port, that's fine
@@ -363,19 +381,21 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // Wait for the port to be free. When nothing was ever bound, the first
   // probe throws immediately and we break out in microseconds. When we
   // just killed something, the OS usually releases the port within a few
-  // hundred ms; the 15s ceiling is purely a safety net.
+  // hundred ms; the 15s ceiling is purely a safety net. As above, probe the
+  // LISTEN socket only -- what matters is whether Electron can bind the port,
+  // and matching connected client sockets too would stall the full 15s.
   const portDeadline = Date.now() + 15000;
   while (Date.now() < portDeadline) {
     try {
       if (process.platform === 'win32') {
-        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
+        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
         if (!result.trim()) break;
       } else {
-        execSync(`lsof -i :${CDP_PORT} -t`, { encoding: 'utf-8' });
+        execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN`, { encoding: 'utf-8' });
         // If lsof succeeds, port is still in use -- keep waiting
       }
     } catch {
-      break; // No connections on the port
+      break; // No listener on the port
     }
     await sleep(100);
   }
@@ -470,9 +490,10 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
       // from the per-worker CDP port so concurrent workers -- and a developer's
       // own manually-launched dev instance on the defaults -- don't collide.
-      // CDP ports are now fixed per worker (base + parallel index), so with a
-      // realistic worker count the CDP / dev (+1000) / logger (+2000) bands stay
-      // disjoint and no two workers share a port.
+      // CDP ports are fixed per worker (base + checkout offset + parallel
+      // index), and the offset stays under 900, so with a realistic worker
+      // count the CDP / dev (+1000) / logger (+2000) bands stay disjoint and
+      // no two workers share a port.
       // forge.config.js reads these; ignored by the installed-binary path.
       ...(DEV_MODE ? {
         RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
