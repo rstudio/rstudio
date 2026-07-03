@@ -90,3 +90,31 @@ test_that("atomic vectors with duplicated names are accessed by index (#17937)",
    for (i in seq_along(children))
       expect_equal(inspectionAccessEval(object, access[[i]]), object[[i]])
 })
+
+test_that("objects with non-scalar length() methods can be inspected (#18138)", {
+   # mimic Formula::length.Formula, which returns a length-2 integer
+   # (one count each for the left-hand and right-hand sides); register
+   # the method the same way a package NAMESPACE would
+   registerS3method("length", "rs_test_formula", function(x) c(1L, 1L))
+   on.exit({
+      table <- get(".__S3MethodsTable__.", envir = asNamespace("base"))
+      rm(list = "length.rs_test_formula", envir = table)
+   }, add = TRUE)
+
+   formula <- structure(y ~ x, class = c("rs_test_formula", "formula"))
+   expect_identical(length(formula), c(1L, 1L))
+
+   # inspecting the object directly succeeds, and reports the
+   # internal length rather than the dispatched one
+   context <- .rs.explorer.createContext(recursive = 1)
+   result <- .rs.explorer.inspectObject(formula, context)
+   expect_equal(as.integer(result$length), 3L)
+   expect_true(as.logical(result$expandable))
+   expect_length(result$children, 3)
+
+   # inspecting a model-like object containing it succeeds as well;
+   # this is the path exercised by View() on an mlogit model
+   model <- list(coefficients = c(a = 1, b = 2), formula = formula)
+   result <- .rs.explorer.inspectObject(model, context)
+   expect_length(result$children, 2)
+})
