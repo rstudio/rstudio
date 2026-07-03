@@ -66,7 +66,7 @@ PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 PW_RSTUDIO_EDITION=pro npx playwright test
 ```
 
-The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
+The desktop fixture automatically launches RStudio with CDP enabled on a deterministic port (base 9231 + a per-checkout offset + the worker index, so parallel workers and concurrent runs from other checkouts/worktrees never collide), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
 #### Against the in-tree dev build
 
@@ -225,7 +225,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 
 The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
-- **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
+- **Desktop**: Kills any process still *listening* on this worker's CDP port (a leftover RStudio from a prior interrupted run), spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
 - **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, `--automation-agent`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
 
 Both fixtures dismiss leftover save dialogs from previous runs.
@@ -470,7 +470,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 |----------|------|----------|-------------|
 | `PW_RSTUDIO_MODE` | Both | No | Fallback for `--project` (`desktop` or `server`); `--project` wins if both set. Default: `desktop`. |
 | `PW_RSTUDIO_EDITION` | Both | No | `os` (default) or `pro`. Filters out `@pro_only` or `@os_only` tagged tests. |
-| `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
+| `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: 9231 + per-checkout offset + worker index) |
 | `PW_RSTUDIO_DEV` | Desktop | No | Set to `1`/`true` to launch the in-tree dev build via `npm run start` in `src/node/desktop` instead of the installed RStudio binary. Assumes the rest of the product is already built. |
 | `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787`. If unset, a private in-tree `rserver-dev` is spawned per worker. |
 | `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
