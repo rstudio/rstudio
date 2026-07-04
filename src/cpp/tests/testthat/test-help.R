@@ -17,6 +17,21 @@ library(testthat)
 
 context("help")
 
+# tools::parse_Rd() loads user-macro definitions from R's system.Rd by
+# default, but minimal R installations can ship without that file, turning
+# parsing into an error. The Rd fixtures in these tests use only base Rd
+# tags, so when system.Rd is missing, fall back to a structurally-valid but
+# empty user-macro set loaded from an empty file; this parses identically.
+parseRd <- function(file) {
+    macros <- file.path(R.home("share"), "Rd", "macros", "system.Rd")
+    if (!file.exists(macros)) {
+        macros <- tempfile(fileext = ".Rd")
+        file.create(macros)
+        on.exit(unlink(macros), add = TRUE)
+    }
+    tools::parse_Rd(file, macros = macros)
+}
+
 test_that(".rs.getHelp() handles empty and NULL package", {
     help_rnorm1 <- .rs.getHelp("rnorm")
     help_rnorm2 <- .rs.getHelp("rnorm", package = "")
@@ -160,8 +175,8 @@ test_that(".rs.helpExampleDivertCommand() handles examples", {
     )
 
     db <- list(
-        blocking = tools::parse_Rd(blockingRd),
-        benign = tools::parse_Rd(benignRd)
+        blocking = parseRd(blockingRd),
+        benign = parseRd(benignRd)
     )
     tools:::makeLazyLoadDB(db, file.path(pkg, "help", "fakehelppkg"))
 
@@ -223,7 +238,7 @@ test_that(".rs.helpExampleDivertCommand() ignores launchers inside dontrun block
         dontrunRd
     )
 
-    db <- list(dontrun = tools::parse_Rd(dontrunRd))
+    db <- list(dontrun = parseRd(dontrunRd))
     tools:::makeLazyLoadDB(db, file.path(pkg, "help", "fakedontrunpkg"))
     saveRDS(c("dontrun" = "dontrun"), file.path(pkg, "help", "aliases.rds"))
 
