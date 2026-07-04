@@ -339,8 +339,22 @@ TEST(RutilTest, KnitrChunkEmbeds)
 
 TEST(RutilTest, UnicodeLetterIdentification)
 {
+   // on Linux, unicode letter classification goes through iswalnum(),
+   // which only classifies non-ASCII letters in a unicode locale -- as
+   // RStudio sessions set one at startup, set it here explicitly rather
+   // than relying on locale state leaked from other tests. macOS
+   // (CFCharacterSet) and Windows (UCRT) classify these independently
+   // of the narrow locale, so proceed even if the locale is unavailable.
+   const char* current = setlocale(LC_ALL, nullptr);
+   std::string original(current != nullptr ? current : "C");
+   bool changed = setlocale(LC_ALL, "C.UTF-8") != nullptr;
+
    RTokens rTokens(L"区 <- 42");
-   EXPECT_EQ(5u, rTokens.size());
+
+   if (changed)
+      setlocale(LC_ALL, original.c_str());
+
+   ASSERT_EQ(5u, rTokens.size());
    EXPECT_TRUE(rTokens.at(0).isType(RToken::ID));
    EXPECT_TRUE(rTokens.at(1).isType(RToken::WHITESPACE));
    EXPECT_TRUE(rTokens.at(2).isType(RToken::OPER));
