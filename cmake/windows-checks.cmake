@@ -35,7 +35,22 @@ if(NOT MSVC)
       "src/cpp/tools/windows-dev.cmd first, so cl.exe is on the PATH.")
 endif()
 
-# 2. Compiler architecture must match the target. The default target is 64-bit
+# 2. The toolset must match the Boost/SOCI prebuilts, which are pinned to
+#    MSVC 14.5 (Visual Studio 2026) by install-dependencies.cmd. Failing here
+#    with the real requirement beats the downstream "prebuilts not found"
+#    error, whose advice (re-run install-dependencies.cmd) cannot help a
+#    VS 2022 user: that script only ever installs msvc145 prebuilts.
+#    Keep this pin in sync with dependencies/windows/install-dependencies.cmd.
+if(NOT MSVC_TOOLSET_VERSION EQUAL 145)
+   message(FATAL_ERROR
+      "The RStudio Windows build requires the MSVC 14.5 toolset (Visual "
+      "Studio 2026), but toolset ${MSVC_TOOLSET_VERSION} was detected.\n"
+      "Install Visual Studio 2026 (see dependencies/windows/"
+      "Install-RStudio-Prereqs.ps1) and configure from its developer "
+      "command prompt.")
+endif()
+
+# 3. Compiler architecture must match the target. The default target is 64-bit
 #    (we add -D_WIN64 / -D_AMD64_ and link boost64); the SessionWin32 target is
 #    32-bit. A mismatch produces errors like
 #    "'size_t': redefinition; different basic types".
@@ -52,7 +67,7 @@ elseif(NOT RSTUDIO_SESSION_WIN32 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
       "src/cpp/tools/windows-dev.cmd (which sets -arch=amd64).")
 endif()
 
-# 3. Ninja is the supported, CI-tested generator. The Visual Studio multi-config
+# 4. Ninja is the supported, CI-tested generator. The Visual Studio multi-config
 #    generator can link (see the archive-output pinning in src/cpp/ext), but its
 #    staging/packaging/test layout is not exercised, so warn rather than fail.
 if(NOT CMAKE_GENERATOR MATCHES "Ninja")
