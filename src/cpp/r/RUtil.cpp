@@ -25,6 +25,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
@@ -421,7 +422,22 @@ void synchronizeLocale()
    {
       std::string locale = ::setlocale(LC_ALL, nullptr);
       if (locale != rLocale)
-         ::setlocale(LC_ALL, rLocale.c_str());
+      {
+         // NOTE: setlocale() can fail here, e.g. for locales whose names
+         // contain non-ASCII characters (the Turkish and Norwegian Bokmal
+         // locale names on Windows 11); a failed LC_ALL update may also
+         // leave only some categories applied, so make any failure visible
+         // in the session logs
+         // https://github.com/rstudio/rstudio/issues/18139
+         if (::setlocale(LC_ALL, rLocale.c_str()) == nullptr)
+         {
+            const char* current = ::setlocale(LC_ALL, nullptr);
+            WLOGF("Failed to synchronize locale: setlocale(LC_ALL, \"{}\") failed; "
+                  "current locale is \"{}\"",
+                  rLocale,
+                  current != nullptr ? current : "(unknown)");
+         }
+      }
    }
 
    // save the updated codepage

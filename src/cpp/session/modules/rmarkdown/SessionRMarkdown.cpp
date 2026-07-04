@@ -37,6 +37,7 @@
 #include <core/Base64.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Log.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -127,7 +128,13 @@ std::string utf8ToConsole(const std::string& string)
    
    // force C locale (ensures that any non-ASCII characters
    // will fail to convert and hence must be unicode escaped)
-   const char* locale = ::setlocale(LC_CTYPE, nullptr);
+   //
+   // NOTE: copy the locale name before switching locales -- the pointer
+   // returned by setlocale() refers to an internal buffer which may be
+   // overwritten by subsequent setlocale() calls, and restoring from a
+   // clobbered buffer would leave the session stuck in the "C" locale
+   const char* current = ::setlocale(LC_CTYPE, nullptr);
+   std::string locale(current != nullptr ? current : "C");
    ::setlocale(LC_CTYPE, "C");
 
    for (int i = 0; i < chars; i++)
@@ -146,8 +153,9 @@ std::string utf8ToConsole(const std::string& string)
       }
    }
    
-   ::setlocale(LC_CTYPE, locale);
-   
+   if (::setlocale(LC_CTYPE, locale.c_str()) == nullptr)
+      WLOGF("Failed to restore LC_CTYPE locale '{}' after conversion", locale);
+
    return output.str();
    
 }
