@@ -159,7 +159,7 @@ pipeline {
           }
           steps {
             bat '''
-              call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
+              call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
               curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"
               msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log
               type smtools-windows-x64.log
@@ -209,7 +209,7 @@ pipeline {
 
               steps {
                 bat '''
-                  call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
+                  call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
                   C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
                   "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
                   signtool.exe sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 %LONG_PACKAGE_PATH%
