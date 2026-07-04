@@ -191,9 +191,11 @@ test.describe.serial('Terminal pane', () => {
       // readline may redraw the whole (wrapped) prompt line instead of
       // erasing in place, and the server-side buffer capture keeps the stale
       // pre-erase command image, so a grep for the original text matches even
-      // though the deletion worked. Whether readline erases or redraws
-      // depends on prompt width, which varies per CI runner (hostname and
-      // sandbox path lengths), making buffer greps flaky.
+      // though the deletion worked. Whether readline erases or redraws is a
+      // shell implementation detail -- the grep started failing with Ubuntu
+      // 26.04 (bash 5.3 / readline 8.3, which reworked redisplay) while
+      // older Ubuntu erased in place -- and also depends on prompt width,
+      // which varies per CI runner (hostname and sandbox path lengths).
       const sandboxDir = sandbox.dir.replace(/\\/g, '/');
       await page.keyboard.type(`cd ${sandboxDir}`);
       await page.keyboard.press('Enter');
