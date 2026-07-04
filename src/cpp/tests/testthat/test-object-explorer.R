@@ -76,6 +76,29 @@ test_that("unnamed and empty-named list elements are accessed by index", {
    expect_equal(access, c("#[[1]]", "#[[\"b\"]]", "#[[3]]"))
 })
 
+test_that("environment-like S4 objects are described without warnings", {
+   setClass("TestS4Env", contains = "environment", where = environment())
+   object <- new("TestS4Env")
+   expect_no_warning(desc <- .rs.explorer.objectDesc(object))
+   expect_equal(desc, "S4 object of class TestS4Env")
+
+   generator <- setRefClass("TestRC", fields = list(x = "numeric"), where = environment())
+   object <- generator$new(x = 1)
+   expect_no_warning(desc <- .rs.explorer.objectDesc(object))
+   expect_equal(desc, "Reference class object of class TestRC")
+
+   # describing the object should not strip its S4 bit
+   expect_true(isS4(object))
+})
+
+test_that("environments are described without mutating their class", {
+   object <- new.env()
+   class(object) <- c("foo", "bar")
+   desc <- .rs.explorer.objectDesc(object)
+   expect_match(desc, "^<environment:")
+   expect_equal(class(object), c("foo", "bar"))
+})
+
 test_that("atomic vectors with duplicated names are accessed by index (#17937)", {
    object <- c(a = 1, a = 2, b = 3)
 
