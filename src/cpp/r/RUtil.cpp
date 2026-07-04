@@ -47,6 +47,9 @@
 #ifdef _WIN32
 
 #include <Windows.h>
+#include <clocale>
+
+#include <shared_core/system/Win32StringUtils.hpp>
 
 extern "C" {
 __declspec(dllimport) unsigned int localeCP;
@@ -420,22 +423,30 @@ void synchronizeLocale()
 
    if (!rLocale.empty())
    {
-      std::string locale = ::setlocale(LC_ALL, nullptr);
-      if (locale != rLocale)
+      // Compare and update using the wide _wsetlocale() variant. R reports
+      // its locale as UTF-8 (EmitEmbeddedUTF8), and the narrow setlocale()
+      // would re-interpret that byte string through the current C runtime
+      // code page -- which, when the process is in the "C" locale, mangles
+      // the non-ASCII characters in locale names such as Turkish_Türkiye.utf8
+      // or Norwegian Bokmål_Norway.utf8, causing the update to silently fail
+      // and leaving only some categories applied. Converting to a wide string
+      // and using _wsetlocale() keeps the name intact end-to-end.
+      // https://github.com/rstudio/rstudio/issues/18139
+      std::wstring wrLocale = string_utils::utf8ToWide(rLocale);
+
+      const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
+      std::wstring locale = pLocale != nullptr ? pLocale : L"";
+
+      if (locale != wrLocale)
       {
-         // NOTE: setlocale() can fail here, e.g. for locales whose names
-         // contain non-ASCII characters (the Turkish and Norwegian Bokmal
-         // locale names on Windows 11); a failed LC_ALL update may also
-         // leave only some categories applied, so make any failure visible
-         // in the session logs
-         // https://github.com/rstudio/rstudio/issues/18139
-         if (::setlocale(LC_ALL, rLocale.c_str()) == nullptr)
+         if (::_wsetlocale(LC_ALL, wrLocale.c_str()) == nullptr)
          {
-            const char* current = ::setlocale(LC_ALL, nullptr);
+            const wchar_t* pCurrent = ::_wsetlocale(LC_ALL, nullptr);
             WLOGF("Failed to synchronize locale: setlocale(LC_ALL, \"{}\") failed; "
                   "current locale is \"{}\"",
                   rLocale,
-                  current != nullptr ? current : "(unknown)");
+                  pCurrent != nullptr ? string_utils::wideToUtf8(pCurrent)
+                                      : std::string("(unknown)"));
          }
       }
    }
