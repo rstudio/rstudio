@@ -251,37 +251,24 @@ else()
       set(BOOST_ARCH "64")
    endif()
 
-   # install-dependencies.cmd downloads Boost prebuilts keyed to a specific
-   # MSVC toolset version. When the CI runner is upgraded to a newer toolset
-   # (e.g. msvc145 on VS 2026) before new prebuilts are available, fall back
-   # to the last-known prebuilt toolset -- MSVC 14.x releases are binary-
-   # compatible, so msvc143 libs link correctly against msvc144/145/etc.
-   set(_RSTUDIO_BOOST_MSVC_TOOLSET ${MSVC_TOOLSET_VERSION})
+   # install-dependencies.cmd downloads Boost prebuilts for the MSVC 14.5
+   # (Visual Studio 2026) toolset; build against the toolset CMake detected.
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(_RSTUDIO_BOOST_VARIANT "release")
+      set(BOOST_SUFFIX "vc${MSVC_TOOLSET_VERSION}-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${MSVC_TOOLSET_VERSION}-release-static/boost${BOOST_ARCH}")
    else()
-      set(_RSTUDIO_BOOST_VARIANT "debug")
-   endif()
-   if(NOT EXISTS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-${_RSTUDIO_BOOST_VARIANT}-static")
-      set(_RSTUDIO_BOOST_FALLBACK 143)
-      message(STATUS "Boost prebuilts for msvc${_RSTUDIO_BOOST_MSVC_TOOLSET} not found; using msvc${_RSTUDIO_BOOST_FALLBACK} prebuilts (MSVC 14.x binary-compatible)")
-      set(_RSTUDIO_BOOST_MSVC_TOOLSET ${_RSTUDIO_BOOST_FALLBACK})
-   endif()
-
-   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc${_RSTUDIO_BOOST_MSVC_TOOLSET}-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-release-static/boost${BOOST_ARCH}")
-   else()
-      set(BOOST_SUFFIX "vc${_RSTUDIO_BOOST_MSVC_TOOLSET}-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-debug-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc${MSVC_TOOLSET_VERSION}-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${MSVC_TOOLSET_VERSION}-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
    # CMake 4.x removed FindBoost.cmake (CMP0167). Since the Windows path
    # hard-codes every Boost path, bypass find_package and wire up
    # Boost_INCLUDE_DIRS directly -- equivalent validation without the module.
    if(NOT EXISTS "${BOOST_INCLUDEDIR}")
-      message(FATAL_ERROR "Boost include directory not found: ${BOOST_INCLUDEDIR}\n"
-                          "Check that install-dependencies.cmd ran successfully.")
+      message(FATAL_ERROR
+         "Boost prebuilts for the MSVC ${MSVC_TOOLSET_VERSION} toolset were not found:\n"
+         "  ${BOOST_INCLUDEDIR}\n"
+         "Run dependencies/windows/install-dependencies.cmd to download them.")
    endif()
    set(Boost_INCLUDE_DIRS "${BOOST_INCLUDEDIR}")
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
@@ -299,15 +286,15 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 # SOCI
 if(WIN32)
-   # Same toolset-fallback logic as Boost above: install-soci.R also defaults
-   # to msvc143, so fall back when the current toolset's directory is absent.
-   set(_RSTUDIO_SOCI_MSVC_TOOLSET ${MSVC_TOOLSET_VERSION})
-   if(NOT EXISTS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${_RSTUDIO_SOCI_MSVC_TOOLSET}-4.0.3")
-      set(_RSTUDIO_SOCI_FALLBACK 143)
-      message(STATUS "SOCI for msvc${_RSTUDIO_SOCI_MSVC_TOOLSET} not found; using msvc${_RSTUDIO_SOCI_FALLBACK} prebuilts (MSVC 14.x binary-compatible)")
-      set(_RSTUDIO_SOCI_MSVC_TOOLSET ${_RSTUDIO_SOCI_FALLBACK})
+   # install-soci.R builds SOCI for the MSVC 14.5 (Visual Studio 2026) toolset;
+   # locate it using the toolset CMake detected.
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${MSVC_TOOLSET_VERSION}-4.0.3")
+   if(NOT EXISTS "${RSTUDIO_TOOLS_SOCI}")
+      message(FATAL_ERROR
+         "SOCI prebuilts for the MSVC ${MSVC_TOOLSET_VERSION} toolset were not found:\n"
+         "  ${RSTUDIO_TOOLS_SOCI}\n"
+         "Run dependencies/windows/install-dependencies.cmd to build them.")
    endif()
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${_RSTUDIO_SOCI_MSVC_TOOLSET}-4.0.3")
    if(RSTUDIO_SESSION_WIN32)
       set(SOCI_ARCH "x86")
    else()

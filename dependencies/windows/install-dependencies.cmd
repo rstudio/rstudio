@@ -37,9 +37,8 @@ set GNUGREP_VERSION=3.0
 set GWT_VERSION=2.12.2-apple-blossom
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
-REM The MSVC toolset used for Boost prebuilts. Can be set in the environment
-REM to select a different set of prebuilts (e.g. 145 for Visual Studio 2026).
-if not defined MSVC_TOOLSET_VERSION set MSVC_TOOLSET_VERSION=143
+REM The MSVC toolset used for Boost prebuilts (145 = Visual Studio 2026).
+set MSVC_TOOLSET_VERSION=145
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
