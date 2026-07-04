@@ -442,7 +442,7 @@ void synchronizeLocale()
          if (::_wsetlocale(LC_ALL, wrLocale.c_str()) == nullptr)
          {
             const wchar_t* pCurrent = ::_wsetlocale(LC_ALL, nullptr);
-            WLOGF("Failed to synchronize locale: setlocale(LC_ALL, \"{}\") failed; "
+            WLOGF("Failed to synchronize locale: _wsetlocale(LC_ALL, \"{}\") failed; "
                   "current locale is \"{}\"",
                   rLocale,
                   pCurrent != nullptr ? string_utils::wideToUtf8(pCurrent)

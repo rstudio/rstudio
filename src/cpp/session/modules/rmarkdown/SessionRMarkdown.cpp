@@ -64,6 +64,11 @@
 #include "SessionBlogdown.hpp"
 #include "RMarkdownPresentation.hpp"
 
+#ifdef _WIN32
+# include <clocale>
+# include <shared_core/system/Win32StringUtils.hpp>
+#endif
+
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
 
@@ -130,12 +135,18 @@ std::string utf8ToConsole(const std::string& string)
    // will fail to convert and hence must be unicode escaped)
    //
    // NOTE: copy the locale name before switching locales -- the pointer
-   // returned by setlocale() refers to an internal buffer which may be
-   // overwritten by subsequent setlocale() calls, and restoring from a
-   // clobbered buffer would leave the session stuck in the "C" locale
-   const char* current = ::setlocale(LC_CTYPE, nullptr);
-   std::string locale(current != nullptr ? current : "C");
-   ::setlocale(LC_CTYPE, "C");
+   // returned by _wsetlocale() refers to an internal buffer which may be
+   // overwritten by subsequent calls, and restoring from a clobbered
+   // buffer would leave the session stuck in the "C" locale
+   //
+   // NOTE: use the wide _wsetlocale() variant so locale names containing
+   // non-ASCII characters (e.g. Turkish or Norwegian Bokmal locale names
+   // on Windows 11) survive the round-trip; the narrow setlocale() would
+   // re-interpret the saved name through the "C" locale's code page on
+   // restore, mangling it and leaving the restore to fail
+   const wchar_t* current = ::_wsetlocale(LC_CTYPE, nullptr);
+   std::wstring locale(current != nullptr ? current : L"C");
+   ::_wsetlocale(LC_CTYPE, L"C");
 
    for (int i = 0; i < chars; i++)
    {
@@ -153,8 +164,9 @@ std::string utf8ToConsole(const std::string& string)
       }
    }
    
-   if (::setlocale(LC_CTYPE, locale.c_str()) == nullptr)
-      WLOGF("Failed to restore LC_CTYPE locale '{}' after conversion", locale);
+   if (::_wsetlocale(LC_CTYPE, locale.c_str()) == nullptr)
+      WLOGF("Failed to restore LC_CTYPE locale '{}' after conversion",
+            string_utils::wideToUtf8(locale));
 
    return output.str();
    
