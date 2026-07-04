@@ -17,6 +17,8 @@
 
 #include "SessionObjectExplorer.hpp"
 
+#include <cstdint>
+
 #include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
@@ -322,6 +324,34 @@ SEXP rs_objectAddress(SEXP objectSEXP)
    return r::sexp::create(ss.str(), &protect);
 }
 
+SEXP rs_environmentDescription(SEXP envSEXP)
+{
+   if (TYPEOF(envSEXP) != ENVSXP)
+      return R_NilValue;
+
+   // mirrors the output of R's default print method for environments
+   std::string name;
+   if (envSEXP == R_GlobalEnv)
+      name = "R_GlobalEnv";
+   else if (envSEXP == R_BaseEnv)
+      name = "base";
+   else if (envSEXP == R_EmptyEnv)
+      name = "R_EmptyEnv";
+   else if (R_IsPackageEnv(envSEXP))
+      name = CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
+   else if (R_IsNamespaceEnv(envSEXP))
+      name = std::string("namespace:") + CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
+
+   std::stringstream ss;
+   if (!name.empty())
+      ss << "<environment: " << name << ">";
+   else
+      ss << "<environment: 0x" << std::hex << reinterpret_cast<std::uintptr_t>(envSEXP) << ">";
+
+   r::sexp::Protect protect;
+   return r::sexp::create(ss.str(), &protect);
+}
+
 SEXP rs_explorerCacheDir()
 {
    r::sexp::Protect protect;
@@ -344,6 +374,7 @@ core::Error initialize()
    
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
+   RS_REGISTER_CALL_METHOD(rs_environmentDescription, 1);
    RS_REGISTER_CALL_METHOD(rs_explorerCacheDir, 0);
    
    ExecBlock initBlock;

@@ -95,8 +95,16 @@ test_that("environments are described without mutating their class", {
    object <- new.env()
    class(object) <- c("foo", "bar")
    desc <- .rs.explorer.objectDesc(object)
-   expect_match(desc, "^<environment:")
+   expect_match(desc, "^<environment: 0x")
    expect_equal(class(object), c("foo", "bar"))
+})
+
+test_that("named environments are described like R's default print", {
+   expect_equal(.rs.explorer.objectDesc(globalenv()), "<environment: R_GlobalEnv>")
+   expect_equal(.rs.explorer.objectDesc(baseenv()), "<environment: base>")
+   expect_equal(.rs.explorer.objectDesc(emptyenv()), "<environment: R_EmptyEnv>")
+   expect_equal(.rs.explorer.objectDesc(asNamespace("stats")), "<environment: namespace:stats>")
+   expect_equal(.rs.explorer.objectDesc(as.environment("package:stats")), "<environment: package:stats>")
 })
 
 test_that("atomic vectors with duplicated names are accessed by index (#17937)", {

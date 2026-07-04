@@ -102,6 +102,11 @@
    .Call("rs_objectAddress", object, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("environmentDescription", function(object)
+{
+   .Call("rs_environmentDescription", object, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("objectClass", function(object)
 {
    .Call("rs_objectClass", object, PACKAGE = "(embedding)")
@@ -1159,9 +1164,10 @@
       }
       else
       {
-         # use 'print.default' to avoid dispatching to custom 'print'
-         # methods, which could evaluate arbitrary user code
-         output <- capture.output(base::print.default(object))[[1]]
+         # generate the default display for the environment directly,
+         # rather than via 'print'; this avoids dispatching to custom
+         # 'print' methods, which could evaluate arbitrary user code
+         output <- .rs.environmentDescription(object)
          more <- FALSE
       }
    }
