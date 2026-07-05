@@ -29,6 +29,20 @@
 # machine's main checkout, so the compiled native modules match the platform.
 # Run under bash (Git Bash or WSL on Windows).
 #
+# Alongside the desktop deps, this also materializes a "dev shim" build root
+# (<worktree>/build-dev-shim) for running the desktop-dev Playwright suite from
+# the worktree without a C++ build. The Electron dev launcher (findComponents
+# in src/node/desktop/src/main/utils.ts) honors RSTUDIO_CPP_BUILD_OUTPUT and
+# needs <root>/session/rsession.exe plus <root>/conf/rdesktop-dev.conf; the
+# shim links session/ from the main checkout's build and rewrites the conf's
+# www paths to THIS worktree's GWT output. Do NOT point
+# RSTUDIO_CPP_BUILD_OUTPUT at the main checkout's build/src/cpp directly: its
+# conf serves the main checkout's src/gwt/www, which (after `ant desktop` /
+# `ant devmode`) is a Super Dev Mode stub that redirects to a code server on
+# localhost:9876 -- without that code server running, RStudio dies at startup
+# with "code server not available" and automation times out waiting for
+# window.rstudio.ready.
+#
 # Usage:
 #   scripts/bootstrap-worktree.sh [worktree-dir] [--skip-desktop] \
 #       [--with-build-dir[=<dir>]]
@@ -36,7 +50,7 @@
 #   worktree-dir   defaults to the current directory; may be any path inside
 #                  the target worktree (it is normalized to the repo top).
 #   --skip-desktop skip src/node/desktop (its deps are large; skip when you
-#                  only need the e2e/rstudio suite).
+#                  only need the e2e/rstudio suite). Also skips the dev shim.
 #   --with-build-dir[=<dir>]
 #                  also configure a CMake build directory for the worktree
 #                  (default <worktree>/build; <dir> may be absolute or relative
@@ -141,6 +155,62 @@ copy_generated() {
   cp "$MAIN_CHECKOUT/$rel" "$WORKTREE/$rel"
 }
 
+# Materialize the desktop-dev shim build root (see header). Best-effort: when
+# the main checkout has no built rsession/conf yet, warn and move on -- the
+# rest of the bootstrap is still useful. The conf is regenerated on every run
+# (the main checkout's conf may have changed); the session link is only
+# created when missing.
+make_dev_shim() {
+  local dir="$WORKTREE/build-dev-shim"
+  local main_cpp="$MAIN_CHECKOUT/build/src/cpp"
+
+  if [ "$WORKTREE" = "$MAIN_CHECKOUT" ]; then
+    return
+  fi
+  if [ ! -f "$main_cpp/conf/rdesktop-dev.conf" ] || [ ! -d "$main_cpp/session" ]; then
+    echo "[bootstrap] WARNING: no built session/conf under $main_cpp; build the main checkout first -- skipping dev shim"
+    return
+  fi
+
+  mkdir -p "$dir/conf"
+
+  # session/ must hold the main checkout's built rsession. A symlink is fine
+  # everywhere but Windows, where Git Bash's `ln -s` silently degrades to a
+  # copy -- use a real NTFS junction there instead. PowerShell rather than
+  # `cmd /c mklink`: cmd's /c quote-stripping and MSYS path conversion both
+  # mangle the mklink arguments.
+  if [ ! -e "$dir/session" ]; then
+    case "$(uname -s)" in
+      MINGW*|MSYS*|CYGWIN*)
+        powershell.exe -NoProfile -Command \
+          "New-Item -ItemType Junction -Path '$(cygpath -w "$dir/session")' -Target '$(cygpath -w "$main_cpp/session")' | Out-Null"
+        ;;
+      *)
+        ln -s "$main_cpp/session" "$dir/session"
+        ;;
+    esac
+  fi
+
+  # Rewrite the conf's www paths to THIS worktree's GWT output; everything
+  # else (rpostback, staged R modules, dependency paths) stays pointed at the
+  # main checkout's build. The conf wants forward slashes even on Windows.
+  local wt_fwd="$WORKTREE"
+  if command -v cygpath >/dev/null 2>&1; then
+    wt_fwd="$(cygpath -m "$WORKTREE")"
+  fi
+  sed \
+    -e "s|^www-local-path=.*|www-local-path=$wt_fwd/src/gwt/www|" \
+    -e "s|^www-symbol-maps-path=.*|www-symbol-maps-path=$wt_fwd/src/gwt/extras/rstudio/symbolMaps|" \
+    "$main_cpp/conf/rdesktop-dev.conf" > "$dir/conf/rdesktop-dev.conf"
+
+  echo "[bootstrap] dev shim ready: $dir"
+  if [ ! -f "$WORKTREE/src/gwt/www/rstudio/rstudio.nocache.js" ]; then
+    echo "[bootstrap] NOTE: worktree GWT output missing; build it first: (cd src/gwt && ant draft)"
+  fi
+  echo "[bootstrap] run desktop-dev e2e from e2e/rstudio with:"
+  echo "[bootstrap]   PW_RSTUDIO_DEV=1 RSTUDIO_CPP_BUILD_OUTPUT=\"$dir\" npx playwright test <spec> --project=desktop"
+}
+
 # Configure a CMake build directory for the worktree. Always a fresh configure
 # (cmake -S <worktree> -B <dir>), never a copy of the main checkout's build/ --
 # a CMake build tree bakes absolute paths into the cache, ninja depfiles, the
@@ -179,6 +249,7 @@ ensure_deps "e2e/rstudio"
 if [ "$SKIP_DESKTOP" -eq 0 ]; then
   ensure_deps "src/node/desktop"
   copy_generated "src/node/desktop/src/types/user-state-schema.d.ts"
+  make_dev_shim
 else
   echo "[bootstrap] skipping src/node/desktop (--skip-desktop)"
 fi

@@ -52,6 +52,7 @@ import {
   findRepoRoot,
   getAppPath,
   handleLocaleCookies,
+  isAutomated,
   resolveAliasedPath,
   raiseAndActivateWindow,
 } from './utils';
@@ -577,7 +578,11 @@ export class GwtCallback extends EventEmitter {
         const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
-          minimalWindow.window.show();
+          if (isAutomated()) {
+            minimalWindow.window.showInactive();
+          } else {
+            minimalWindow.window.show();
+          }
         });
       },
     );
@@ -703,7 +708,14 @@ export class GwtCallback extends EventEmitter {
     );
 
     ipcMain.on('desktop_bring_main_frame_to_front', () => {
-      this.mainWindow.window.focus();
+      // GWT requests this on flows like opening a document from a satellite
+      // window. In automation mode, surface the window without stealing OS
+      // focus from whatever the user is doing while the tests run.
+      if (isAutomated()) {
+        this.mainWindow.window.showInactive();
+      } else {
+        this.mainWindow.window.focus();
+      }
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
