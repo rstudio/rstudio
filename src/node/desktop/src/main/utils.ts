@@ -414,6 +414,12 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
   if (window.isMinimized()) {
     window.restore();
   }
+  // In automation mode, surface the window without pulling OS focus away
+  // from whatever the user is doing while the tests run.
+  if (isAutomated()) {
+    window.showInactive();
+    return;
+  }
   window.moveTop();
   window.focus();
 }

@@ -16,6 +16,7 @@
 import { BrowserWindow, ipcMain, screen, session, shell } from 'electron';
 
 import { logger } from '../core/logger';
+import { isAutomated } from './utils';
 import { createLocalUrlChecker } from './whats-new-utils';
 
 declare const WHATS_NEW_WEBPACK_ENTRY: string;
@@ -43,8 +44,14 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
       if (activeWindow.isMinimized()) {
         activeWindow.restore();
       }
-      activeWindow.show();
-      activeWindow.focus();
+      // In automation mode, surface the window without stealing OS focus
+      // from whatever the user is doing while the tests run.
+      if (isAutomated()) {
+        activeWindow.showInactive();
+      } else {
+        activeWindow.show();
+        activeWindow.focus();
+      }
     }
     return activeWindow;
   }
@@ -203,7 +210,11 @@ export function showWhatsNewWindow(options: WhatsNewWindowOptions): BrowserWindo
     .then(() => {
       if (activeWindow === win && !win.isDestroyed()) {
         windowReady = true;
-        win.show();
+        if (isAutomated()) {
+          win.showInactive();
+        } else {
+          win.show();
+        }
       }
     })
     .catch((err: unknown) => {

@@ -247,8 +247,7 @@ export class SessionLauncher {
         }
         this.showSplash = false;
         // In automation mode, surface the window without pulling focus from
-        // the test driver. See main.ts for the matching macOS activation
-        // policy that suppresses OS-level app activation.
+        // the test driver.
         if (isAutomated()) {
           this.mainWindow?.window.showInactive();
         } else {
