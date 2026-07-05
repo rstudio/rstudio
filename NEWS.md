@@ -42,6 +42,7 @@
 
 - ([#18139](https://github.com/rstudio/rstudio/issues/18139)): Fixed an issue on Windows where the R session started in the "C" locale instead of the operating system's locale, corrupting non-ASCII console input and breaking `list.files()` and other locale-sensitive operations for users whose locale is not ASCII-compatible (for example Turkish on Windows 11). The session now adopts the operating system locale at startup, restores the session locale rather than pinning it to "C" after rendering an R Markdown document, and logs locale synchronization failures instead of failing silently.
 - ([#18101](https://github.com/rstudio/rstudio/issues/18101)): Fixed "Run Selection as Background Job" (and the related Source/Launcher job commands) appearing to do nothing when invoked from a detached source window on Windows Desktop. The job launcher dialog is shown in the main window, which is now brought forward so the dialog is visible.
+- ([#18143](https://github.com/rstudio/rstudio/issues/18143)): Fixed the Object Explorer emitting `Setting class(x) to "environment"` warnings (and showing no description) for S4 objects wrapping environments, such as reference class instances. The explorer also no longer temporarily modifies the class of an environment being described.
 
 ### Dependencies
 - Ace 1.43.5

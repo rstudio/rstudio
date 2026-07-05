@@ -102,6 +102,11 @@
    .Call("rs_objectAddress", object, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("environmentDescription", function(object)
+{
+   .Call("rs_environmentDescription", object, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("objectClass", function(object)
 {
    .Call("rs_objectClass", object, PACKAGE = "(embedding)")
@@ -1145,19 +1150,25 @@
          )
          more <- FALSE
       }
+      else if (isS4(object))
+      {
+         # S4 objects wrapping environments (e.g. reference class
+         # instances) have type "S4", and so cannot have their class
+         # attribute temporarily re-assigned -- describe them directly
+         fmt <- if (is(object, "envRefClass"))
+            "Reference class object of class %s"
+         else
+            "S4 object of class %s"
+         output <- sprintf(fmt, class(object))
+         more <- FALSE
+      }
       else
       {
-         # NOTE: R prevents us from calling 'unclass' on environment
-         # objects, so we need to do something a bit different here.
-         # We also want to avoid 'print' dispatching to custom methods
-         # to avoid evaluating arbitrary user code here
-         oldClass <- class(object)
-         tryCatch({
-            class(object) <- "environment"
-            output <- capture.output(base::print(object))[[1]]
-            more <- FALSE
-         }, error = identity)
-         class(object) <- oldClass
+         # generate the default display for the environment directly,
+         # rather than via 'print'; this avoids dispatching to custom
+         # 'print' methods, which could evaluate arbitrary user code
+         output <- .rs.environmentDescription(object)
+         more <- FALSE
       }
    }
    else if (is.double(object))
