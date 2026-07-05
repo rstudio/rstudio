@@ -39,6 +39,7 @@ import org.rstudio.core.client.widget.DocShadowPropMenuItem;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -367,8 +368,20 @@ public class TextEditingTargetWidget
 
       if (isCurrentlyDisabled)
       {
-         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "0");
-         target_.getPackageDependencyHelper().discoverPackageDependencies();
+         // Don't re-run discovery until the property write has been applied
+         // to the local property bag (which only happens once the RPC
+         // completes); the discovery response handler consults the local
+         // property and suppresses the banner if it still reads "1".
+         docUpdateSentinel_.setProperty(
+               DISABLE_DEPENDENCY_DISCOVERY, "0",
+               new NullProgressIndicator()
+               {
+                  @Override
+                  public void onCompleted()
+                  {
+                     target_.getPackageDependencyHelper().discoverPackageDependencies();
+                  }
+               });
       }
       else
       {
