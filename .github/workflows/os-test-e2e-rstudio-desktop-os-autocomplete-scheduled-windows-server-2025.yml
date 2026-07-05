@@ -150,23 +150,12 @@ jobs:
           "sha256=$sha"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      # Cache the installer keyed on its resolved filename. On the daily
-      # auto-resolve path the filename embeds the version + build number, so
-      # the content is immutable per name: a new daily misses and downloads, a
-      # same-day rerun hits and skips the download (SHA-256 still verified
-      # below). Skip caching on the override path -- a user-supplied URL has no
-      # immutability guarantee and its SHA check is skipped, so a reused
-      # basename could otherwise serve stale, unverified bytes.
-      - name: Cache RStudio installer
-        if: inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-installer-${{ steps.resolve.outputs.filename }}
-
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # runs can't share a cache entry with each other anyway, so caching here
+      # would just duplicate the same bytes into the shared 10 GB cache quota
+      # without saving meaningful time.
       - name: Download RStudio .exe
-        if: steps.installer-cache.outputs.cache-hit != 'true'
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
