@@ -223,11 +223,13 @@ jobs:
             ./make-package --arch=arm64 --build-dmg=0 --use-creds=0
           fi
 
-      # Skip on an exact restore hit: re-saving would just duplicate the entry
-      # into this run's ref scope. PR runs that changed GWT sources still
-      # save, so re-pushes to the same PR skip the recompile.
+      # Save only from main-scoped runs, and only on a key miss. A cache saved
+      # from a PR run lands in that PR's merge-ref scope, which no other
+      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # Actions cache quota, and that pressure is what evicts main's copy and
+      # sends every PR build cold in the first place.
       - name: Save GWT output
-        if: steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: package/osx/build-arm64/gwt
@@ -361,16 +363,13 @@ jobs:
           echo "sha256=$SHA"   >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
-      - name: Cache RStudio installer
-        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-installer-${{ steps.resolve.outputs.filename }}
-
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
       - name: Download RStudio .dmg
-        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
