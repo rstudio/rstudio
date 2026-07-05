@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -549,23 +550,31 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       true);
       fireDocTabsChanged();
 
-      target.getName().addValueChangeHandler(event -> {
+      // these handlers capture the tab widget, so they must be detached when
+      // the tab is removed from this column (see closeTabIndex) -- otherwise
+      // asynchronous work on the target (e.g. the visual editor marking the
+      // document dirty after its markdown conversion completes) can fire them
+      // with a widget that is no longer in the panel
+      HandlerRegistrations registrations = new HandlerRegistrations();
+      tabRegistrations_.put(target, registrations);
+
+      registrations.add(target.getName().addValueChangeHandler(event -> {
          display_.renameTab(widget,
                             target.getIcon(),
                             event.getValue(),
                             target.getPath());
          fireDocTabsChanged();
-      });
+      }));
 
       display_.setDirty(widget, target.dirtyState().getValue());
-      target.dirtyState().addValueChangeHandler(event -> {
+      registrations.add(target.dirtyState().addValueChangeHandler(event -> {
          display_.setDirty(widget, event.getValue());
          manageCommands(false);
-      });
+      }));
 
-      target.addEnsureVisibleHandler(event -> display_.selectTab(widget));
+      registrations.add(target.addEnsureVisibleHandler(event -> display_.selectTab(widget)));
 
-      target.addCloseHandler(voidCloseEvent -> closeTab(widget, false));
+      registrations.add(target.addCloseHandler(voidCloseEvent -> closeTab(widget, false)));
 
       events_.fireEvent(new SourceDocAddedEvent(doc, mode, name_));
 
@@ -1366,6 +1375,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       EditingTarget target = editors_.remove(idx);
 
+      HandlerRegistrations registrations = tabRegistrations_.remove(target);
+      if (registrations != null)
+         registrations.removeHandler();
+
       tabOrder_.remove(Integer.valueOf(idx));
       for (int i = 0; i < tabOrder_.size(); i++)
       {
@@ -1420,6 +1433,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private EditingTarget activeEditor_;
    private final ArrayList<EditingTarget> editors_ = new ArrayList<>();
    private final ArrayList<Integer> tabOrder_ = new ArrayList<>();
+   private final HashMap<EditingTarget, HandlerRegistrations> tabRegistrations_ = new HashMap<>();
    private HashSet<AppCommand> activeCommands_ = new HashSet<>();
 
    private RemoteFileSystemContext fileContext_;
