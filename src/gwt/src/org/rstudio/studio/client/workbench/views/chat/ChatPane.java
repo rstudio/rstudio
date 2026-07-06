@@ -737,7 +737,7 @@ public class ChatPane
          "<hr>" +
          descriptionHtml +
          "<p class='detail'>" +
-         "<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>" +
+         "<a href='https://www.rstudio.org/links/posit-assistant-learn-more' target='_blank' rel='noopener noreferrer'>" +
          constants_.chatLearnMore() + "</a></p>" +
          "<hr>" +
          "<button id='install-btn' class='chatIframeButton'>" +
