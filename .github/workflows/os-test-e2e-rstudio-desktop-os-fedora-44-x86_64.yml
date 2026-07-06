@@ -12,7 +12,7 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        description: "Ignored on Fedora: R is installed from Fedora's own repos (dnf), so this always uses the distro's R regardless of value. Kept for interface parity with the other platform workflows."
         type: string
         default: "release"
       project:
@@ -367,18 +367,32 @@ jobs:
             gtk3 pango cairo alsa-lib \
             freetype fontconfig harfbuzz fribidi
 
-      - name: Install rig
+      - name: Install R build toolchain and headers
         run: |
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
-            | tar xz -C /usr/local
+          # Fedora has no prebuilt CRAN binaries (PPM serves none), so the e2e R
+          # packages (tidyverse, shiny, rmarkdown, roxygen2, ...) are compiled
+          # from source by pak. That needs a compiler stack (gcc/g++/gfortran +
+          # make) plus the -devel headers their compiled dependencies link
+          # against: libcurl/openssl/libxml2 (curl, openssl, xml2), the font/text
+          # stack (systemfonts, textshaping, ragg), the image libs (ragg), zlib
+          # (data.table and others), and ICU (stringi). zlib ships as zlib-ng on
+          # Fedora, so the headers come from zlib-ng-compat-devel.
+          dnf -y install \
+            gcc gcc-c++ gcc-gfortran make \
+            libcurl-devel openssl-devel libxml2-devel \
+            fontconfig-devel freetype-devel harfbuzz-devel fribidi-devel \
+            libpng-devel libjpeg-turbo-devel libtiff-devel \
+            zlib-ng-compat-devel libicu-devel cairo-devel
 
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
+      # Fedora is not a supported platform for rig / r-builds (Fedora 44 R
+      # 404s on the rversions service) or for PPM binaries, so install R from
+      # Fedora's own repos and let pak compile CRAN packages from source (see
+      # os-e2e-deps and the toolchain step above). The r_version input is
+      # ignored on Fedora -- dnf provides whatever R the distro ships.
+      - name: Install R (Fedora native)
         run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
-          rig ls
+          dnf -y install R-core R-core-devel
+          R --version
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build

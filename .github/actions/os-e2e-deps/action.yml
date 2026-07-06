@@ -97,17 +97,17 @@ runs:
           # there's no cross-release ABI mismatch. Debian/Ubuntu key off the
           # release codename (noble on 24.04, resolute on 26.04); RHEL and its
           # rebuilds have no VERSION_CODENAME, so key off the major version
-          # (rhel9, rhel10) instead. Fedora has no PPM binary repo of its own,
-          # so it borrows the newest RHEL one (rhel10) -- see the fedora branch.
+          # (rhel9, rhel10) instead. Fedora has no PPM binary repo, so it
+          # compiles from source instead -- see the fedora branch.
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
           elif [ "$ID" = "fedora" ]; then
-            # PPM publishes no Fedora binaries, so borrow the newest RHEL binary
-            # repo (rhel10). Fedora is newer than RHEL 10, so forward glibc
-            # compatibility generally lets these binaries load; system-library
-            # soname drift is the residual risk this workflow is validating.
-            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel10/latest"
+            # PPM publishes no Fedora binaries and rig/r-builds has no Fedora 44
+            # R, so the Fedora workflow installs R via dnf and compiles CRAN
+            # packages from source. Point pak at PPM's source repo; the Fedora
+            # caller installs the toolchain and -devel headers the builds need.
+            export PKG_REPO="https://packagemanager.posit.co/cran/latest"
           else
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
           fi
