@@ -102,8 +102,8 @@ permissions:
 jobs:
   # Builds RStudio Desktop (Electron) from this PR's source inside a Fedora 44
   # container (GitHub has no Fedora-hosted runner), then uploads the .rpm as an
-  # artifact for the e2e job to consume. This is the same RPM the RHEL build
-  # produces -- Fedora and RHEL both ship the Electron .rpm. Skipped when
+  # artifact for the e2e job to consume. This is the same kind of Electron
+  # .rpm the RHEL build produces -- there is no Fedora-specific SKU. Skipped when
   # build_from_source is false, in which case the e2e job downloads the daily
   # .rpm (or rstudio_installer_url) instead.
   build:
@@ -484,9 +484,10 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
-          # Isolate the R-library / pak caches from the Ubuntu workflows: they
-          # all share runner.os == Linux, and an Ubuntu-compiled R library is
-          # ABI-incompatible with Fedora's R. See os-e2e-deps cache-scope.
+          # Isolate the R-library / pak caches from the Ubuntu and RHEL
+          # workflows: they all share runner.os == Linux, and an Ubuntu- or
+          # RHEL-compiled R library is ABI-incompatible with Fedora's R. See
+          # os-e2e-deps cache-scope.
           cache-scope: fedora44-x86_64
 
       - name: Run Playwright tests

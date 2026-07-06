@@ -97,10 +97,17 @@ runs:
           # there's no cross-release ABI mismatch. Debian/Ubuntu key off the
           # release codename (noble on 24.04, resolute on 26.04); RHEL and its
           # rebuilds have no VERSION_CODENAME, so key off the major version
-          # (rhel9, rhel10) instead.
+          # (rhel9, rhel10) instead. Fedora has no PPM binary repo of its own,
+          # so it borrows the newest RHEL one (rhel10) -- see the fedora branch.
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
+          elif [ "$ID" = "fedora" ]; then
+            # PPM publishes no Fedora binaries, so borrow the newest RHEL binary
+            # repo (rhel10). Fedora is newer than RHEL 10, so forward glibc
+            # compatibility generally lets these binaries load; system-library
+            # soname drift is the residual risk this workflow is validating.
+            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel10/latest"
           else
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
           fi
@@ -168,20 +175,21 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       # --with-deps has Playwright shell out to the OS package manager to
       # install the browser's system libraries, but Playwright only supports
-      # that on Debian/Ubuntu. So on RHEL-family hosts we fetch only the browser
-      # binary -- which means the caller MUST have already installed the Chromium
-      # runtime libraries (nss, gtk3, mesa-libgbm, ...) via dnf. This is a real
-      # cross-file contract: a RHEL caller that omits that dnf step gets a
-      # browser that can't launch, surfacing far away as an opaque launch error.
+      # that on Debian/Ubuntu. So on RHEL-family or Fedora hosts we fetch only
+      # the browser binary -- which means the caller MUST have already installed
+      # the Chromium runtime libraries (nss, gtk3, mesa-libgbm, ...) via dnf.
+      # This is a real cross-file contract: a dnf-based caller that omits that
+      # step gets a browser that can't launch, surfacing far away as an opaque
+      # launch error.
       run: |
-        IS_RHEL=false
+        BINARY_ONLY=false
         if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
           . /etc/os-release
-          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
-            IS_RHEL=true
+          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
+            BINARY_ONLY=true
           fi
         fi
-        if [ "$IS_RHEL" = true ]; then
+        if [ "$BINARY_ONLY" = true ]; then
           npx playwright install chromium
         else
           npx playwright install --with-deps chromium
