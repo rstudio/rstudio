@@ -233,33 +233,23 @@ interpolate <- function(string) {
 
 initialize <- function() {
 
-   # Locate Visual Studio via vswhere, which ships with the VS installer at a
-   # fixed, version-independent path. This finds any edition/version carrying
-   # the C++ toolset, so we avoid hardcoding install paths that change across
-   # VS releases (e.g. the "18" folder used by Visual Studio 2026).
-   vswhere <- "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-   vsInstall <- if (file.exists(vswhere)) {
-      output <- suppressWarnings(system2(
-         vswhere,
-         c("-latest", "-products", "*",
-           "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-           "-property", "installationPath"),
-         stdout = TRUE, stderr = FALSE
-      ))
-      if (length(output)) trimws(output[[1L]]) else ""
-   } else {
-      ""
-   }
+   # Make sure MSVC tools are available
+   msvcCandidates <- c(
+      "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build",
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+   )
 
-   msvc <- file.path(vsInstall, "VC/Auxiliary/Build")
-   if (!nzchar(vsInstall) || !dir.exists(msvc)) {
+   msvc <- Filter(file.exists, msvcCandidates)
+   if (length(msvc) == 0L) {
       message <- paste(
-         "No Visual Studio C++ toolset detected.",
+         "No MSVC 2022 installation detected.",
          "Install build tools using 'Install-RStudio-Prereqs.ps1'."
       )
       fatal(message)
    }
-   PATH$prepend(msvc)
+   PATH$prepend(msvc[[1L]])
 
    # Make sure perl is available
    # try to find a perl installation directory

@@ -20,9 +20,9 @@
 #   exists, run with 'upload' disabled and push the workflow artifacts with
 #   dependencies/tools/upload-windows-dependencies.sh.
 #
-# The build targets the MSVC 14.5 toolset (msvc145), which ships with
-# Visual Studio 2026 on the windows-2025 runner; this also names the
-# produced archives (boost-...-msvc145, soci-msvc145-...). See
+# The MSVC toolset version selects both the compiler toolset and the names
+# of the produced archives: 143 for Visual Studio 2022 (windows-2022
+# runner), 145 for Visual Studio 2026 (windows-2025 runner). See
 # https://github.com/rstudio/rstudio/issues/17986 for background.
 
 name: "Build Dependencies (Windows, Open Source)"
@@ -38,6 +38,21 @@ on:
         description: "SOCI version to build"
         type: string
         default: "4.0.3"
+      msvc_toolset_version:
+        description: "MSVC toolset version to target (143 = VS 2022, 145 = VS 2026)"
+        type: string
+        default: "145"
+      cmake_generator:
+        description: "CMake generator used for the SOCI build"
+        type: string
+        default: "Visual Studio 18 2026"
+      runner:
+        description: "Runner image (windows-2025 ships VS 2026, windows-2022 ships VS 2022)"
+        type: choice
+        options:
+          - windows-2025
+          - windows-2022
+        default: windows-2025
       upload:
         description: "Upload the built archives to s3://rstudio-buildtools"
         type: boolean
@@ -49,15 +64,14 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2025
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 300
 
     env:
       BOOST_VERSION: ${{ inputs.boost_version }}
       SOCI_VERSION: ${{ inputs.soci_version }}
-      # Fixed at the MSVC 14.5 toolset (Visual Studio 2026); used here to name
-      # the packaged/uploaded archives. install-boost/install-soci hardcode it.
-      MSVC_TOOLSET_VERSION: "145"
+      MSVC_TOOLSET_VERSION: ${{ inputs.msvc_toolset_version }}
+      CMAKE_GENERATOR: ${{ inputs.cmake_generator }}
 
     steps:
       - uses: actions/checkout@v4
@@ -68,9 +82,12 @@ jobs:
         with:
           r-version: release
 
-      # tools.R locates Visual Studio via vswhere, so no junction is needed.
-      # We still put vcvarsall.bat on the PATH here for later steps (e.g.
-      # make-package.bat) that call it by name.
+      # tools.R checks for MSVC at a set of hardcoded VS 2022 paths
+      # (BuildTools / Community). GitHub runners ship VS Enterprise -- and on
+      # windows-2025, VS 2026 -- neither of which is in that list. Locate the
+      # actual installation with vswhere, put vcvarsall.bat on the PATH, and
+      # create a junction at the BuildTools path so tools.R's check passes.
+      # This is the same pattern used by the Windows e2e build workflow.
       - name: Set up MSVC environment
         run: |
           $ErrorActionPreference = 'Stop'
@@ -86,6 +103,14 @@ jobs:
           $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
           Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
           Write-Host "Added to PATH: $vcBuildPath"
+          $junctionPath = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
+          if (-not (Test-Path $junctionPath)) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $junctionPath) | Out-Null
+            New-Item -ItemType Junction -Path $junctionPath -Target $vsPath | Out-Null
+            Write-Host "Junction created: $junctionPath -> $vsPath"
+          } else {
+            Write-Host "Junction already exists: $junctionPath"
+          }
 
       # tools.R also requires a perl installation; GitHub runner images ship
       # Strawberry Perl, but install it if a future image drops it.
@@ -121,7 +146,7 @@ jobs:
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-dependencies-msvc${{ env.MSVC_TOOLSET_VERSION }}
+          name: windows-dependencies-msvc${{ inputs.msvc_toolset_version }}
           path: |
             dependencies/windows/boost-*.zip
             dependencies/windows/soci-*.zip

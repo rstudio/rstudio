@@ -1,7 +1,7 @@
 # Visual C++ Runtime Files
 
 The DLLs in this folder will be installed as part of RStudio, and should be updated to match the
-ones included with most recent major version of the Microsoft Visual C++ toolset (currently 2026).
+ones included with most recent major version of the Microsoft Visual C++ toolset (currently 2022).
 
 ## How To Update These Files
 
@@ -19,11 +19,11 @@ vs_buildtools.exe --passive --add Microsoft.VisualStudio.Workload.VCTools --add 
 
 Copy all the files from the following to the x64 and x86 folders.
 
-- x64: `C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
-- x86: `C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
+- x64: `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.42.34433\x64\Microsoft.VC143.CRT\*.*`
+- x86: `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.42.34433\x64\Microsoft.VC143.CRT\*.*`
 - ARM: future
 
-Note that "2026", "14.50.xxxxx", and "VC145" will need to be updated to match what has actually
+Note that "2022", "14.29.30133", and "VC143" will need to be updated to match what has actually
 been installed.
 
 ## TLDR; More Background

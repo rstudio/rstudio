@@ -1,10 +1,10 @@
 @echo off
 setlocal
 
-REM Variables defining the build. BOOST_VERSION may be overridden in the
-REM environment; the MSVC toolset is fixed at 145 (Visual Studio 2026).
+REM Variables defining the build. Update as appropriate, or set in the
+REM environment to override (e.g. when building for a newer MSVC toolset).
 if not defined BOOST_VERSION set BOOST_VERSION=1.91.0
-set MSVC_TOOLSET_VERSION=145
+if not defined MSVC_TOOLSET_VERSION set MSVC_TOOLSET_VERSION=143
 
 REM The file name prefix used for Boost build folders.
 set BOOST_PREFIX=boost-%BOOST_VERSION%-win-msvc%MSVC_TOOLSET_VERSION%
