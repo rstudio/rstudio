@@ -533,17 +533,5 @@ if(WIN32 AND ZLIB_ENABLED)
    add_library(rstudio-zlib STATIC ${ZLIB_SOURCE_FILES} ${ZLIB_HEADER_FILES})
    # Source dir for zlib.h et al.; binary dir for the generated zconf.h.
    target_include_directories(rstudio-zlib PUBLIC "${ZLIB_SOURCE_DIR}" "${ZLIB_BINARY_DIR}")
-
-   # Pin the archive output to a flat, config-independent path so the hardcoded
-   # _RSTUDIO_ZLIB_LIBRARY above (fed to libgit2's find_package(ZLIB)) resolves
-   # under both the Ninja (single-config) and Visual Studio (multi-config)
-   # generators; the latter otherwise nests the .lib under a per-config subdir.
-   set_target_properties(rstudio-zlib PROPERTIES
-      ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/src/cpp/ext")
-   foreach(_cfg ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${_cfg}" _cfg_upper)
-      set_target_properties(rstudio-zlib PROPERTIES
-         ARCHIVE_OUTPUT_DIRECTORY_${_cfg_upper} "${CMAKE_BINARY_DIR}/src/cpp/ext")
-   endforeach()
 endif()
 
