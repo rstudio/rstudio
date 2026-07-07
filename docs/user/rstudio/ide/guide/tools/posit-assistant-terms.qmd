@@ -1,6 +1,8 @@
 ---
 title: "Posit Assistant Terms and Conditions"
 date-meta: 2026-07-02
+aliases:
+  - posit-ai-terms.html
 ---
 
 # Posit Assistant specific EULA

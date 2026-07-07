@@ -59,4 +59,3 @@ See the [Environment Variables](../../reference/environment-variables.qmd) refer
 ## Terms and Conditions
 
 -   [Posit Assistant](posit-assistant-terms.qmd)
--   [Posit AI](posit-ai-terms.qmd)
