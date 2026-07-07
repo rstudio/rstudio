@@ -531,7 +531,15 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
-          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Always launch with --no-sandbox in this container. Electron's
+          # Chromium sandbox needs an unprivileged user namespace, which the
+          # bare-runner Ubuntu jobs enable via a host sysctl -- unreachable from
+          # inside this fedora:44 container, so the sandbox can't initialize and
+          # RStudio starts but never opens its --remote-debugging-port (CDP
+          # connect gets ECONNREFUSED). The container is already the isolation
+          # boundary here, so disabling the in-process sandbox is safe. Any
+          # caller-supplied rstudio_extra_args are appended.
+          PW_RSTUDIO_EXTRA_ARGS: --no-sandbox ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
