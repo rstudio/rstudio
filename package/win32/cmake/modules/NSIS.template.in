@@ -19,6 +19,7 @@
   Var START_MENU
   Var RunningAsShellUser
   Var RunningFromInstaller
+  Var RunningAllUsers
 ;--------------------------------
 ;Include Modern UI
 
@@ -353,7 +354,14 @@ Section "-Remove previous installation"
   ;Run the uninstaller (in place, to allow ExecWait to work properly)
   ClearErrors
   DetailPrint "Removing previous installation..."    
-  ExecWait '"$INSTDIR\Uninstall.exe" /S /uninstall _?=$INSTDIR'
+  ; Pass the current install mode so the previous version's uninstaller runs
+  ; in the matching context. NsisMultiUser requires /allusers or /currentuser
+  ; in silent mode; without it the silent uninstall errors out during upgrades.
+  StrCpy $0 "/currentuser"
+  ${If} $MultiUser.InstallMode == "AllUsers"
+    StrCpy $0 "/allusers"
+  ${EndIf}
+  ExecWait '"$INSTDIR\Uninstall.exe" /S $0 /uninstall _?=$INSTDIR'
 
   ; don't remove the uninstaller if we failed
   IfErrors done
@@ -416,8 +424,20 @@ Function un.onInit
     StrCpy $RunningAsShellUser 0
   ${endif}
 
+  ; The Add/Remove UninstallString (and the installer's remove-previous step)
+  ; carry /allusers or /currentuser. A machine-wide (all-users) uninstall must
+  ; stay elevated; only a current-user uninstall is de-elevated to avoid a
+  ; needless UAC prompt (#14122).
+  ${GetOptions} $R0 "/allusers" $R1
+  ${ifnot} ${errors}
+    StrCpy $RunningAllUsers 1
+  ${else}
+    StrCpy $RunningAllUsers 0
+  ${endif}
+
   ${ifnot} ${UAC_IsInnerInstance}
   ${andif} $RunningFromInstaller = 0
+  ${andif} $RunningAllUsers = 0
     ${if} ${UAC_IsAdmin}
     ${andif} $RunningAsShellUser = 0
       ; Relaunch the uninstaller as the (unelevated) shell user so a per-user
