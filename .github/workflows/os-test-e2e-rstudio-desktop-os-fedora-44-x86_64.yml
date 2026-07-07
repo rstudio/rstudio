@@ -359,8 +359,13 @@ jobs:
           # row mirrors the font/text libs some test R packages load:
           # freetype/fontconfig (ragg, systemfonts), harfbuzz/fribidi
           # (textshaping).
+          # lsof: the desktop fixture uses it to reclaim an orphaned RStudio on
+          # the worker's fixed CDP port (a leftover from a prior interrupted
+          # run). Ubuntu/macOS ship it; the minimal Fedora image doesn't, so
+          # install it -- otherwise the reclaim and port-free wait silently
+          # degrade (the "lsof: command not found" spam in the logs).
           dnf -y install \
-            xorg-x11-server-Xvfb \
+            xorg-x11-server-Xvfb lsof \
             nss nspr atk at-spi2-atk at-spi2-core cups-libs \
             libdrm mesa-libgbm libxkbcommon \
             libX11 libXcomposite libXdamage libXext libXfixes libXrandr libXScrnSaver libXtst libxcb \
