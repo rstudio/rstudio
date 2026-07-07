@@ -12,7 +12,7 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        description: "Ignored on Fedora: R is installed from Fedora's own repos (dnf), so this always uses the distro's R regardless of value. Kept for interface parity with the other platform workflows."
         type: string
         default: "release"
       project:
@@ -325,7 +325,11 @@ jobs:
       # the sandbox still refuses to come up here, pass --no-sandbox via
       # rstudio_extra_args (PW_RSTUDIO_EXTRA_ARGS) rather than changing these.
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    timeout-minutes: 120
+    # TEMPORARY: bumped 120 -> 300 to let a COLD-cache run finish the from-source
+    # package compile (Fedora has no binaries) so we can verify the run end to
+    # end. Revert to 120 before merge -- warm-cache runs restore the prebuilt
+    # library and finish well under 120.
+    timeout-minutes: 300
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
@@ -359,26 +363,45 @@ jobs:
           # row mirrors the font/text libs some test R packages load:
           # freetype/fontconfig (ragg, systemfonts), harfbuzz/fribidi
           # (textshaping).
+          # lsof: the desktop fixture uses it to reclaim an orphaned RStudio on
+          # the worker's fixed CDP port (a leftover from a prior interrupted
+          # run). Ubuntu/macOS ship it; the minimal Fedora image doesn't, so
+          # install it -- otherwise the reclaim and port-free wait silently
+          # degrade (the "lsof: command not found" spam in the logs).
           dnf -y install \
-            xorg-x11-server-Xvfb \
+            xorg-x11-server-Xvfb lsof \
             nss nspr atk at-spi2-atk at-spi2-core cups-libs \
             libdrm mesa-libgbm libxkbcommon \
             libX11 libXcomposite libXdamage libXext libXfixes libXrandr libXScrnSaver libXtst libxcb \
             gtk3 pango cairo alsa-lib \
             freetype fontconfig harfbuzz fribidi
 
-      - name: Install rig
+      - name: Install R build toolchain and headers
         run: |
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
-            | tar xz -C /usr/local
+          # Fedora has no prebuilt CRAN binaries (PPM serves none), so the e2e R
+          # packages (tidyverse, shiny, rmarkdown, roxygen2, ...) are compiled
+          # from source by pak. That needs a compiler stack (gcc/g++/gfortran +
+          # make) plus the -devel headers their compiled dependencies link
+          # against: libcurl/openssl/libxml2 (curl, openssl, xml2), the font/text
+          # stack (systemfonts, textshaping, ragg), the image libs (ragg), zlib
+          # (data.table and others), and ICU (stringi). zlib ships as zlib-ng on
+          # Fedora, so the headers come from zlib-ng-compat-devel.
+          dnf -y install \
+            gcc gcc-c++ gcc-gfortran make \
+            libcurl-devel openssl-devel libxml2-devel \
+            fontconfig-devel freetype-devel harfbuzz-devel fribidi-devel \
+            libpng-devel libjpeg-turbo-devel libtiff-devel \
+            zlib-ng-compat-devel libicu-devel cairo-devel
 
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
+      # Fedora is not a supported platform for rig / r-builds (Fedora 44 R
+      # 404s on the rversions service) or for PPM binaries, so install R from
+      # Fedora's own repos and let pak compile CRAN packages from source (see
+      # os-e2e-deps and the toolchain step above). The r_version input is
+      # ignored on Fedora -- dnf provides whatever R the distro ships.
+      - name: Install R (Fedora native)
         run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
-          rig ls
+          dnf -y install R-core R-core-devel
+          R --version
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build
@@ -489,6 +512,11 @@ jobs:
           # RHEL-compiled R library is ABI-incompatible with Fedora's R. See
           # os-e2e-deps cache-scope.
           cache-scope: fedora44-x86_64
+          # Fedora has no CRAN binaries, so pre-install the harness's full
+          # REQUIRED_PACKAGES set into the cached R library here. Otherwise the
+          # Playwright globalSetup source-compiles that set at test time, which
+          # is what PW_HEARTBEAT_TIMEOUT_SECONDS below was papering over.
+          install-required-packages: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -514,6 +542,20 @@ jobs:
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
           PW_DEBUG_LAUNCH: '1'
+          # Point the Playwright harness's own R-libs provisioner
+          # (fixtures/r-libs-setup.ts, run in globalSetup) at the same library
+          # os-e2e-deps populated, instead of its default per-host cache. Because
+          # os-e2e-deps ran with install-required-packages, that library holds
+          # both the e2e DESCRIPTION deps and the full REQUIRED_PACKAGES set, so
+          # globalSetup finds everything present and installs nothing.
+          PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
+          # Defensive fallback. With install-required-packages above, globalSetup
+          # normally compiles nothing at test time. But if a package slipped
+          # through and had to be source-compiled here (Fedora has no PPM/CRAN
+          # binaries), that is a long silent stretch the default 300s heartbeat
+          # idle-timeout would kill (exit 124); the higher ceiling lets it finish
+          # rather than failing the run outright.
+          PW_HEARTBEAT_TIMEOUT_SECONDS: '2400'
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then

@@ -36,38 +36,29 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
 
 /**
  * Packages every Playwright run should be able to find without paying the
- * lazy-install tax inside an individual test. The list intentionally mirrors
- * what the suite already references via `ensurePackages` -- pre-populating it
- * once in globalSetup means tests start with the dependencies they expect.
+ * lazy-install tax inside an individual test. Pre-populating them once in
+ * globalSetup means tests start with the dependencies they expect.
  *
- * Adding a new package here is cheap; trim only when a package is genuinely
- * unused by any test in the suite.
+ * The list lives in ../required-packages.txt as the single source of truth, so
+ * the os-e2e-deps action (bash) can install the identical set into the cached
+ * R library on distros without CRAN binaries (Fedora) -- if the two lists ever
+ * drifted, globalSetup would source-compile the difference at test time. One
+ * package per line; blank lines and #-comments are ignored. Adding a package
+ * is cheap; trim only when it's genuinely unused by any test in the suite.
  */
-export const REQUIRED_PACKAGES = [
-  'DBI',
-  'MASS',
-  'S7',
-  'bslib',
-  'data.table',
-  'devtools',
-  'dplyr',
-  'evaluate',
-  'ggplot2',
-  'knitr',
-  'nycflights13',
-  'pillar',
-  'praise',
-  'remotes',
-  'reticulate',
-  'rmarkdown',
-  'rstudioapi',
-  'shiny',
-  'shinytest2',
-  'stringr',
-  'styler',
-  'testthat',
-  'tibble',
-] as const;
+const requiredPackagesFile = path.join(__dirname, '..', 'required-packages.txt');
+export const REQUIRED_PACKAGES: readonly string[] = fs
+  .readFileSync(requiredPackagesFile, 'utf8')
+  .split('\n')
+  .map((line) => line.replace(/#.*$/, '').trim()) // strip comments + whitespace
+  .filter((line) => line.length > 0);
+// Guard against an empty/all-comment manifest: without this the list would be
+// [] and globalSetup would install nothing while logging "all packages
+// present" -- silently reverting to slow per-test installs, worst on the
+// no-binaries platforms this manifest exists to speed up.
+if (REQUIRED_PACKAGES.length === 0) {
+  throw new Error(`No packages parsed from ${requiredPackagesFile} (empty or all-comment).`);
+}
 
 /**
  * Build the default R_LIBS_USER template. Resolved *before* HOME is redirected,

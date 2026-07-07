@@ -119,7 +119,12 @@ function defaultCdpPort(): number {
   return CDP_PORT_BASE + checkoutPortOffset() + idx;
 }
 export const CDP_PORT = Number(process.env.PW_CDP_PORT) || defaultCdpPort();
-export const CDP_URL = `http://localhost:${CDP_PORT}`;
+// Connect over IPv4 explicitly. Electron's --remote-debugging-port listens on
+// 127.0.0.1 only, but "localhost" resolves to IPv6 ::1 first on some Linux
+// distros (e.g. Fedora), so connectOverCDP dials ::1 and gets ECONNREFUSED even
+// though RStudio is up on 127.0.0.1. Using the literal 127.0.0.1 removes the
+// resolution ambiguity and is correct on every platform.
+export const CDP_URL = `http://127.0.0.1:${CDP_PORT}`;
 
 // PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
 // (electron-forge) in src/node/desktop, instead of the installed RStudio

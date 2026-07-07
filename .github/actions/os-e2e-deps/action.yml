@@ -23,6 +23,17 @@ inputs:
       Leave empty to keep the legacy runner.os-only key (existing callers).
     required: false
     default: ""
+  install-required-packages:
+    description: >
+      When "true", also install the harness's REQUIRED_PACKAGES set (from
+      <working-directory>/required-packages.txt) into R_LIBS_USER, before the
+      cache save. Set this only on distros with no prebuilt CRAN binaries
+      (Fedora): there the Playwright globalSetup would otherwise source-compile
+      that set at test time, so installing it here lands it in the cached
+      library instead. Platforms that get binaries (Ubuntu/macOS/Windows) leave
+      this empty -- their globalSetup install is a fast download.
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -82,32 +93,36 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.r-libs-user }}
-        key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        # When install-required-packages is set, fold required-packages.txt into
+        # the key so growing that list invalidates the cached library. Callers
+        # that don't set it get the exact same key as before (no cache churn).
+        key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}${{ inputs.install-required-packages == 'true' && format('-req{0}', hashFiles(format('{0}/required-packages.txt', inputs.working-directory))) || '' }}
         restore-keys: |
           ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-
 
-    - name: Install R packages from DESCRIPTION
+    - name: Install R packages (DESCRIPTION, plus required set when requested)
       shell: bash
       env:
         E2E_ROOT: ${{ inputs.working-directory }}
         R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
+        INSTALL_REQUIRED: ${{ inputs.install-required-packages }}
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           # Track the runner's actual distro so PPM serves native binaries and
           # there's no cross-release ABI mismatch. Debian/Ubuntu key off the
           # release codename (noble on 24.04, resolute on 26.04); RHEL and its
           # rebuilds have no VERSION_CODENAME, so key off the major version
-          # (rhel9, rhel10) instead. Fedora has no PPM binary repo of its own,
-          # so it borrows the newest RHEL one (rhel10) -- see the fedora branch.
+          # (rhel9, rhel10) instead. Fedora has no PPM binary repo, so it
+          # compiles from source instead -- see the fedora branch.
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
           elif [ "$ID" = "fedora" ]; then
-            # PPM publishes no Fedora binaries, so borrow the newest RHEL binary
-            # repo (rhel10). Fedora is newer than RHEL 10, so forward glibc
-            # compatibility generally lets these binaries load; system-library
-            # soname drift is the residual risk this workflow is validating.
-            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel10/latest"
+            # PPM publishes no Fedora binaries and rig/r-builds has no Fedora 44
+            # R, so the Fedora workflow installs R via dnf and compiles CRAN
+            # packages from source. Point pak at PPM's source repo; the Fedora
+            # caller installs the toolchain and -devel headers the builds need.
+            export PKG_REPO="https://packagemanager.posit.co/cran/latest"
           else
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
           fi
@@ -125,6 +140,37 @@ runs:
           ask = FALSE,
           upgrade = FALSE
         )
+        # On distros without CRAN binaries (Fedora), also install the harness's
+        # REQUIRED_PACKAGES set now so it lands in the cached library rather than
+        # being source-compiled by the Playwright globalSetup at test time. Reads
+        # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
+        # the two sets can't drift. Both the presence check and the install are
+        # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own
+        # lib.loc-scoped check -- an unscoped installed.packages() would count a
+        # package sitting only in the system library as "present" and skip it,
+        # so globalSetup would then source-compile it at test time on every run.
+        # Unlike the harness (which warns and lets tests self-heal), a failure
+        # here calls stop(): this is the hard gate that guarantees the cached
+        # library is complete.
+        if (identical(Sys.getenv("INSTALL_REQUIRED"), "true")) {
+          lib <- Sys.getenv("R_LIBS_USER")
+          reqfile <- file.path(Sys.getenv("E2E_ROOT"), "required-packages.txt")
+          lines <- trimws(sub("#.*$", "", readLines(reqfile, warn = FALSE)))
+          pkgs <- lines[nzchar(lines)]
+          if (length(pkgs) == 0L)
+            stop("[os-e2e-deps] required-packages.txt yielded no packages (empty or all-comment): ", reqfile)
+          missing <- setdiff(pkgs, rownames(installed.packages(lib.loc = lib)))
+          if (length(missing)) {
+            cat("[os-e2e-deps] installing required-packages:", paste(missing, collapse = ", "), "\n")
+            installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
+            install.packages(missing, lib = lib, type = installType)
+            still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+            if (length(still))
+              stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
+          } else {
+            cat("[os-e2e-deps] required-packages already present\n")
+          }
+        }
         EOF
         Rscript "$SCRIPT"
 
