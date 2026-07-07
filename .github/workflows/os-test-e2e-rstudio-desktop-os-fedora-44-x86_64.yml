@@ -528,6 +528,18 @@ jobs:
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
           PW_DEBUG_LAUNCH: '1'
+          # Point the Playwright harness's own R-libs provisioner
+          # (fixtures/r-libs-setup.ts, run in globalSetup) at the same library
+          # os-e2e-deps already populated, instead of its default per-host cache.
+          # That library holds the e2e DESCRIPTION deps, so globalSetup only has
+          # to add the extra REQUIRED_PACKAGES it doesn't already contain.
+          PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
+          # Fedora has no PPM/CRAN binaries, so the harness compiles those extra
+          # packages from source at test time -- a long silent stretch that the
+          # default 300s heartbeat idle-timeout would kill (exit 124). Raise it
+          # so the one-time source build can finish. (Option C: a stopgap until
+          # the harness reuses a fully-built cached library -- see PR #18155.)
+          PW_HEARTBEAT_TIMEOUT_SECONDS: '2400'
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
