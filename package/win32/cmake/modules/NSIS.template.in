@@ -54,11 +54,12 @@
   !include "StdUtils.nsh"
 
   ;
-  ; RSTUDIO CHANGE - Replace PROGRAMFILES with PROGRAMFILES64 (done in 3 locations)
+  ; RSTUDIO CHANGE - Do NOT set InstallDir here. NsisMultiUser owns $INSTDIR and
+  ; sets it per install mode ($PROGRAMFILES64\RStudio for all-users,
+  ; %LOCALAPPDATA%\Programs\RStudio for per-user). A non-empty $INSTDIR at
+  ; MULTIUSER_INIT time is interpreted as a /D command-line argument, so a static
+  ; InstallDir would pin BOTH modes to Program Files and break per-user installs.
   ;
-  
-  ;Default installation folder
-  InstallDir "$PROGRAMFILES64\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
 
 ;--------------------------------
 ;Include NsProcess to detect running RStudio instance
