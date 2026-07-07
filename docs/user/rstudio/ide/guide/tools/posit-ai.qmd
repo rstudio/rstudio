@@ -55,3 +55,7 @@ posit-assistant-enabled=0
 ```
 
 See the [Environment Variables](../../reference/environment-variables.qmd) reference for other environment variables that affect RStudio.
+
+## Terms and Conditions
+
+-   [Posit Assistant](posit-assistant-terms.qmd)
