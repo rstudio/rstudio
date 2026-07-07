@@ -708,30 +708,36 @@ public class ChatPane
    private String generateNotInstalledWithInstallHTML(String newVersion,
                                                       boolean additionalProvidersAvailable)
    {
-      String description;
+      String descriptionHtml;
       if (isWorkbench())
       {
-         description = constants_.chatNotInstalledDescriptionWorkbench();
+         descriptionHtml =
+            "<p class='detail'>" + constants_.chatNotInstalledDescriptionWorkbench() + "</p>";
       }
       else
       {
-         description = constants_.chatNotInstalledDescription();
+         String secondParagraph = constants_.chatNotInstalledDescription2();
 
          // The manifest can advertise additional providers for this build; when
-         // it does, extend the description with a sentence about that support.
-         // Only the open-source (Posit AI) description is extended; the Workbench
-         // variant describes the organization's own provider and is left as-is.
+         // it does, extend the provider paragraph with a sentence about that
+         // support. Only the open-source (Posit AI) description is extended; the
+         // Workbench variant describes the organization's own provider and is
+         // left as-is.
          if (additionalProvidersAvailable)
-            description += " " + constants_.chatNotInstalledAdditionalProviders();
+            secondParagraph += " " + constants_.chatNotInstalledAdditionalProviders();
+
+         descriptionHtml =
+            "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
+            "<p class='detail'>" + secondParagraph + "</p>";
       }
 
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
-         "<p class='detail'>" + description + "</p>" +
+         descriptionHtml +
          "<p class='detail'>" +
-         "<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>" +
+         "<a href='https://www.rstudio.org/links/posit-assistant-learn-more' target='_blank' rel='noopener noreferrer'>" +
          constants_.chatLearnMore() + "</a></p>" +
          "<hr>" +
          "<button id='install-btn' class='chatIframeButton'>" +
