@@ -36,38 +36,29 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
 
 /**
  * Packages every Playwright run should be able to find without paying the
- * lazy-install tax inside an individual test. The list intentionally mirrors
- * what the suite already references via `ensurePackages` -- pre-populating it
- * once in globalSetup means tests start with the dependencies they expect.
+ * lazy-install tax inside an individual test. Pre-populating them once in
+ * globalSetup means tests start with the dependencies they expect.
  *
- * Adding a new package here is cheap; trim only when a package is genuinely
- * unused by any test in the suite.
+ * The list lives in ../required-packages.txt as the single source of truth, so
+ * the os-e2e-deps action (bash) can install the identical set into the cached
+ * R library on distros without CRAN binaries (Fedora) -- if the two lists ever
+ * drifted, globalSetup would source-compile the difference at test time. One
+ * package per line; blank lines and #-comments are ignored. Adding a package
+ * is cheap; trim only when it's genuinely unused by any test in the suite.
  */
-export const REQUIRED_PACKAGES = [
-  'DBI',
-  'MASS',
-  'S7',
-  'bslib',
-  'data.table',
-  'devtools',
-  'dplyr',
-  'evaluate',
-  'ggplot2',
-  'knitr',
-  'nycflights13',
-  'pillar',
-  'praise',
-  'remotes',
-  'reticulate',
-  'rmarkdown',
-  'rstudioapi',
-  'shiny',
-  'shinytest2',
-  'stringr',
-  'styler',
-  'testthat',
-  'tibble',
-] as const;
+const requiredPackagesFile = path.join(__dirname, '..', 'required-packages.txt');
+export const REQUIRED_PACKAGES: readonly string[] = fs
+  .readFileSync(requiredPackagesFile, 'utf8')
+  .split('\n')
+  .map((line) => line.replace(/#.*$/, '').trim()) // strip comments + whitespace
+  .filter((line) => line.length > 0);
+// Guard against an empty/all-comment manifest: without this the list would be
+// [] and globalSetup would install nothing while logging "all packages
+// present" -- silently reverting to slow per-test installs, worst on the
+// no-binaries platforms this manifest exists to speed up.
+if (REQUIRED_PACKAGES.length === 0) {
+  throw new Error(`No packages parsed from ${requiredPackagesFile} (empty or all-comment).`);
+}
 
 /**
  * Build the default R_LIBS_USER template. Resolved *before* HOME is redirected,
@@ -148,6 +139,39 @@ function expandRLibsUserTemplate(template: string): string | null {
 }
 
 /**
+ * PPM binary repo for the current platform. On Linux we derive the Ubuntu
+ * release codename from /etc/os-release so PPM serves binaries built for the
+ * runner's actual release (noble on 24.04, resolute on 26.04) instead of a
+ * hardcoded distro, which avoids cross-release ABI mismatches. If the codename
+ * can't be determined (e.g. a non-Ubuntu Linux box), fall back to source CRAN,
+ * which isn't tied to a specific Ubuntu release.
+ */
+function packageRepo(): string {
+  if (process.platform !== 'linux') return 'https://cran.r-project.org';
+
+  let codename = '';
+  try {
+    const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+    const match =
+      /^VERSION_CODENAME=(.*)$/m.exec(osRelease) ??
+      /^UBUNTU_CODENAME=(.*)$/m.exec(osRelease);
+    codename = (match?.[1] ?? '').replace(/["']/g, '').trim();
+  } catch {
+    // /etc/os-release unreadable; fall through to source CRAN below.
+  }
+
+  if (!codename) {
+    console.warn(
+      '[r-libs] no Ubuntu codename in /etc/os-release; falling back to source CRAN ' +
+        '(installs compile from source, no PPM binaries).',
+    );
+    return 'https://cran.r-project.org';
+  }
+
+  return `https://packagemanager.posit.co/cran/__linux__/${codename}/latest`;
+}
+
+/**
  * Pre-create the R user library and install any packages from
  * REQUIRED_PACKAGES that are missing. Idempotent: a warm cache results in a
  * fast `installed.packages()` check and no install call.
@@ -177,9 +201,8 @@ export async function prepareRLibs(): Promise<string | null> {
   fs.mkdirSync(expanded, { recursive: true });
   console.log(`[r-libs] user library: ${expanded}`);
 
-  const repos = process.platform === 'linux'
-    ? 'https://packagemanager.posit.co/cran/__linux__/jammy/latest'
-    : 'https://cran.r-project.org';
+  const repos = packageRepo();
+  console.log(`[r-libs] package repo: ${repos}`);
 
   // Single Rscript invocation: check installed.packages() in the resolved
   // library, then install any missing entries from the manifest in one batch.

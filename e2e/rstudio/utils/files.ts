@@ -113,7 +113,10 @@ export async function seedSandboxFile(
  * `pathOrName` may be a basename, a relative path, or an absolute path.
  * When absolute, the active-doc post-condition compares full paths
  * (case-insensitive, slashes normalized) so two open files that share a
- * basename can't be confused for one another. When relative or a bare
+ * basename can't be confused for one another; a doc.path RStudio reports
+ * home-aliased ("~/sub/file.R" -- anything under the rsession's home,
+ * e.g. a sandbox under C:\Users\<user>\AppData\...\Temp on Windows) is
+ * matched by its home-relative suffix. When relative or a bare
  * basename, falls back to basename match -- R resolves the path against
  * its own cwd, which can differ from Node's, so the absolute form
  * RStudio reports back is not known to the helper.
@@ -142,8 +145,17 @@ export async function openFile(
       const docPath = doc.path.replace(/\\/g, '/');
       if (args.expectedFullPath !== null) {
         // Full-path match: case-insensitive to tolerate macOS HFS+ /
-        // Windows NTFS, where the filesystem itself folds case.
-        if (docPath.toLowerCase() !== args.expectedFullPath.toLowerCase()) return false;
+        // Windows NTFS, where the filesystem itself folds case. RStudio
+        // home-aliases paths under the rsession's home directory
+        // ("~/sub/file.R"), so a home-aliased doc.path matches when the
+        // expected absolute path ends with the aliased path minus the "~".
+        // That is still a full home-relative path comparison, so two open
+        // files sharing a basename can't be confused.
+        const dp = docPath.toLowerCase();
+        const expected = args.expectedFullPath.toLowerCase();
+        const matches = dp === expected
+          || (dp.startsWith('~/') && expected.endsWith(dp.slice(1)));
+        if (!matches) return false;
       } else {
         const docSlash = docPath.lastIndexOf('/');
         const docBase = docSlash >= 0 ? docPath.slice(docSlash + 1) : docPath;

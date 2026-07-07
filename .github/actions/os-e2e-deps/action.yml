@@ -1,0 +1,249 @@
+name: "E2E test dependencies"
+description: >
+  Install and cache the dependencies shared by every RStudio e2e Playwright
+  workflow: R packages (via pak), npm modules, and Playwright browsers. All
+  steps run in bash, which is available on the Linux, macOS, and Windows
+  hosted runners alike, so a single implementation covers every platform.
+
+inputs:
+  r-libs-user:
+    description: "Absolute path to R_LIBS_USER (the per-job R library tree to cache)."
+    required: true
+  working-directory:
+    description: "Directory containing the Playwright project (package.json / DESCRIPTION)."
+    required: false
+    default: "e2e/rstudio"
+  cache-scope:
+    description: >
+      Optional distro/ABI discriminator folded into the R-library and pak cache
+      keys. runner.os is only Linux/macOS/Windows, so every Linux caller would
+      otherwise share one key -- and a compiled R library built on one distro
+      (Ubuntu) is not loadable on another (RHEL). Linux callers on a non-default
+      distro should set this (e.g. 'rhel10-x86_64') to isolate their caches.
+      Leave empty to keep the legacy runner.os-only key (existing callers).
+    required: false
+    default: ""
+  install-required-packages:
+    description: >
+      When "true", also install the harness's REQUIRED_PACKAGES set (from
+      <working-directory>/required-packages.txt) into R_LIBS_USER, before the
+      cache save. Set this only on distros with no prebuilt CRAN binaries
+      (Fedora): there the Playwright globalSetup would otherwise source-compile
+      that set at test time, so installing it here lands it in the cached
+      library instead. Platforms that get binaries (Ubuntu/macOS/Windows) leave
+      this empty -- their globalSetup install is a fast download.
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    # Pin Playwright's browser download dir and pak's cache dir to fixed,
+    # workspace-local paths so the cache `path:` is identical on every OS
+    # (the platform defaults differ). PLAYWRIGHT_BROWSERS_PATH is exported to
+    # GITHUB_ENV so the later "Run Playwright tests" step in the calling
+    # workflow finds the cached browsers. R_USER_CACHE_DIR is honored by
+    # tools::R_user_dir(), which pak/pkgcache use to locate their download
+    # cache, so only the install step below needs it.
+    - name: Configure dependency cache paths
+      shell: bash
+      run: |
+        echo "PLAYWRIGHT_BROWSERS_PATH=${{ github.workspace }}/ms-playwright" >> "$GITHUB_ENV"
+        # Fold the optional distro/ABI scope into a cache-os discriminator used
+        # by the R-library and pak keys below. Empty scope reproduces the legacy
+        # runner.os-only key byte-for-byte, so existing callers are unchanged;
+        # a caller that sets cache-scope (e.g. rhel10-x86_64) gets an isolated
+        # key so its compiled R packages can't collide with another distro's.
+        SCOPE="${{ inputs.cache-scope }}"
+        echo "CACHE_OS=${RUNNER_OS}${SCOPE:+-$SCOPE}" >> "$GITHUB_ENV"
+
+    # Resolve the *installed* R version (major.minor) and fold it into the
+    # cache keys below. Installed packages and pak's binary downloads are only
+    # compatible within an R major.minor series, so when an alias like
+    # "release" rolls forward to a new R the keys must change -- otherwise a
+    # library built for the old R would be restored into the new one. Keying
+    # on the resolved version (rather than the requested alias, which never
+    # changes) handles that, and scoping restore-keys to the same version
+    # stops a prefix-match fallback from pulling a stale-version library in.
+    - name: Resolve R version
+      id: r_version
+      shell: bash
+      run: |
+        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        echo "Resolved R version (major.minor): $VERSION"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    # All three caches below are restore-only, with matching Save steps after
+    # the corresponding install. The saves run only from main-scoped runs (the
+    # scheduled workflows): a cache saved from a PR run lands in that PR's
+    # merge-ref scope, which no other branch can restore -- each copy is pure
+    # pressure on the repo's 10 GB Actions cache quota, and that pressure is
+    # what evicts main's copies and sends every run cold in the first place.
+    - name: Restore R packages (pak download cache)
+      id: pak-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ github.workspace }}/.r-pkg-cache
+        key: ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-
+
+    - name: Restore R library
+      id: rlib-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ inputs.r-libs-user }}
+        # When install-required-packages is set, fold required-packages.txt into
+        # the key so growing that list invalidates the cached library. Callers
+        # that don't set it get the exact same key as before (no cache churn).
+        key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}${{ inputs.install-required-packages == 'true' && format('-req{0}', hashFiles(format('{0}/required-packages.txt', inputs.working-directory))) || '' }}
+        restore-keys: |
+          ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-
+
+    - name: Install R packages (DESCRIPTION, plus required set when requested)
+      shell: bash
+      env:
+        E2E_ROOT: ${{ inputs.working-directory }}
+        R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
+        INSTALL_REQUIRED: ${{ inputs.install-required-packages }}
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          # Track the runner's actual distro so PPM serves native binaries and
+          # there's no cross-release ABI mismatch. Debian/Ubuntu key off the
+          # release codename (noble on 24.04, resolute on 26.04); RHEL and its
+          # rebuilds have no VERSION_CODENAME, so key off the major version
+          # (rhel9, rhel10) instead. Fedora has no PPM binary repo, so it
+          # compiles from source instead -- see the fedora branch.
+          . /etc/os-release
+          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
+            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
+          elif [ "$ID" = "fedora" ]; then
+            # PPM publishes no Fedora binaries and rig/r-builds has no Fedora 44
+            # R, so the Fedora workflow installs R via dnf and compiles CRAN
+            # packages from source. Point pak at PPM's source repo; the Fedora
+            # caller installs the toolchain and -devel headers the builds need.
+            export PKG_REPO="https://packagemanager.posit.co/cran/latest"
+          else
+            export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/${VERSION_CODENAME}/latest"
+          fi
+        else
+          export PKG_REPO="https://packagemanager.posit.co/cran/latest"
+        fi
+        echo "[os-e2e-deps] R package repo: $PKG_REPO"
+        SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
+        cat > "$SCRIPT" <<'EOF'
+        options(repos = c(P3M = Sys.getenv("PKG_REPO")))
+        if (!requireNamespace("pak", quietly = TRUE))
+          install.packages("pak")
+        pak::local_install_dev_deps(
+          root = Sys.getenv("E2E_ROOT"),
+          ask = FALSE,
+          upgrade = FALSE
+        )
+        # On distros without CRAN binaries (Fedora), also install the harness's
+        # REQUIRED_PACKAGES set now so it lands in the cached library rather than
+        # being source-compiled by the Playwright globalSetup at test time. Reads
+        # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
+        # the two sets can't drift. Both the presence check and the install are
+        # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own
+        # lib.loc-scoped check -- an unscoped installed.packages() would count a
+        # package sitting only in the system library as "present" and skip it,
+        # so globalSetup would then source-compile it at test time on every run.
+        # Unlike the harness (which warns and lets tests self-heal), a failure
+        # here calls stop(): this is the hard gate that guarantees the cached
+        # library is complete.
+        if (identical(Sys.getenv("INSTALL_REQUIRED"), "true")) {
+          lib <- Sys.getenv("R_LIBS_USER")
+          reqfile <- file.path(Sys.getenv("E2E_ROOT"), "required-packages.txt")
+          lines <- trimws(sub("#.*$", "", readLines(reqfile, warn = FALSE)))
+          pkgs <- lines[nzchar(lines)]
+          if (length(pkgs) == 0L)
+            stop("[os-e2e-deps] required-packages.txt yielded no packages (empty or all-comment): ", reqfile)
+          missing <- setdiff(pkgs, rownames(installed.packages(lib.loc = lib)))
+          if (length(missing)) {
+            cat("[os-e2e-deps] installing required-packages:", paste(missing, collapse = ", "), "\n")
+            installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
+            install.packages(missing, lib = lib, type = installType)
+            still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+            if (length(still))
+              stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
+          } else {
+            cat("[os-e2e-deps] required-packages already present\n")
+          }
+        }
+        EOF
+        Rscript "$SCRIPT"
+
+    - name: Save R packages (pak download cache)
+      if: github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ github.workspace }}/.r-pkg-cache
+        key: ${{ steps.pak-cache.outputs.cache-primary-key }}
+
+    - name: Save R library
+      if: github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.r-libs-user }}
+        key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
+
+    - name: Install npm dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        for i in 1 2 3; do
+          npm ci && break
+          if [ "$i" -eq 3 ]; then
+            echo "npm ci failed after 3 attempts"
+            exit 1
+          fi
+          echo "npm ci attempt $i failed, retrying in 10s..."
+          sleep 10
+        done
+
+    - name: Restore Playwright browsers
+      id: pw-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ github.workspace }}/ms-playwright
+        key: ${{ runner.os }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-pw-
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+
+    - name: Install Playwright browsers
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      # --with-deps has Playwright shell out to the OS package manager to
+      # install the browser's system libraries, but Playwright only supports
+      # that on Debian/Ubuntu. So on RHEL-family or Fedora hosts we fetch only
+      # the browser binary -- which means the caller MUST have already installed
+      # the Chromium runtime libraries (nss, gtk3, mesa-libgbm, ...) via dnf.
+      # This is a real cross-file contract: a dnf-based caller that omits that
+      # step gets a browser that can't launch, surfacing far away as an opaque
+      # launch error.
+      run: |
+        BINARY_ONLY=false
+        if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
+          . /etc/os-release
+          if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
+            BINARY_ONLY=true
+          fi
+        fi
+        if [ "$BINARY_ONLY" = true ]; then
+          npx playwright install chromium
+        else
+          npx playwright install --with-deps chromium
+        fi
+
+    - name: Save Playwright browsers
+      if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ github.workspace }}/ms-playwright
+        key: ${{ steps.pw-cache.outputs.cache-primary-key }}

@@ -16,8 +16,11 @@
 package org.rstudio.core.client.promise;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
+
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -50,22 +53,44 @@ public class PromiseWithProgress<V>
          {
             if (progressDelayer != null)
                progressDelayer.dismiss();
-            completed.execute(v);
+            reportingExceptions(() -> completed.execute(v));
             return null;
-           
+
          }
       },new ThenOnRejectedCallbackFn<V>() {
-      
+
          @Override
          public IThenable<V> onInvoke(Object error)
          {
             if (progressDelayer != null)
                progressDelayer.dismiss();
-            globalDisplay.showErrorMessage(constants_.promiseWithProgressError(), error.toString());
-            completed.execute(errorVal);
+            globalDisplay.showErrorMessage(constants_.promiseWithProgressError(), String.valueOf(error));
+            reportingExceptions(() -> completed.execute(errorVal));
             return null;
          }
       });
    }
+
+   // These callbacks run from a native promise continuation, which GWT does
+   // not wrap with $entry: an exception thrown here would become an unhandled
+   // promise rejection, invisible to the uncaught-exception handler. That can
+   // leave callers waiting forever with no diagnostic (see rstudio/rstudio#18134),
+   // so catch and route to the uncaught handler explicitly.
+   private void reportingExceptions(Command command)
+   {
+      try
+      {
+         command.execute();
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+
+         GWT.UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+         if (handler != null)
+            handler.onUncaughtException(e);
+      }
+   }
+
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

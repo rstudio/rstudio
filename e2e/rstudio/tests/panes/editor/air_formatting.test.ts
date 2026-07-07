@@ -34,6 +34,9 @@
  *       the synthesized indent-width
  *   13. external "air format" + air.toml + save               → Air honors the
  *       project air.toml (#18003)
+ *   14. checked + file outside the active project + save       → Air formats
+ *       (the format-on-save path is no longer gated on project membership,
+ *       #17774)
  *
  * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
  * default settings (case 6) is exercised via the save path, where the
@@ -429,14 +432,15 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
 
   test.beforeAll(async ({ rstudioPage }) => {
     page = rstudioPage;
-    // The save-triggered reformat path in TextEditingTarget.maybeFormatOnUserInitiatedSave
-    // is gated on "file is inside the active project" -- without a project,
-    // reformat-on-save is skipped entirely, so the save-path cases (5/6/11)
-    // can't pass. Open a
-    // project inside the suite sandbox; the project open also re-`setwd`s into
-    // the project dir, so relative paths still resolve consistently and air.toml
-    // ends up alongside the file being formatted (which is what Air's ancestor
-    // walk needs to find it).
+    // Open a project inside the suite sandbox. The save-triggered reformat
+    // path in TextEditingTarget.maybeFormatOnUserInitiatedSave is no longer
+    // gated on project membership (#17774) -- case 14 verifies that
+    // explicitly for a file outside the project. The project is still opened
+    // here because (a) the open re-`setwd`s into the project dir, so the
+    // relative paths used throughout this spec resolve consistently and
+    // air.toml ends up alongside the file being formatted (which is what
+    // Air's ancestor walk needs to find it), and (b) it supplies the 4-space
+    // indent width that case 12 keys on.
     //
     // The project declares a 4-space indent: with a project open the project
     // layer supplies use_spaces_for_tab/num_spaces_for_tab unconditionally
@@ -663,6 +667,39 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     await saveFile(page, sourceActions);
     const content = await sourceActions.getEditorContent();
     expectAirFormatted(content);
+  });
+
+  // --- Format-on-save works outside the active project (#17774) ---
+
+  test('14: checked, file outside the active project, save uses Air', async () => {
+    // #17774: format-on-save silently did nothing for files outside the
+    // active project (and with no project at all), while "Reformat Document"
+    // worked -- because maybeFormatOnUserInitiatedSave gated formatting on
+    // the file living inside the project. That guard has been removed, so a
+    // standalone R script saved outside the project is formatted on save like
+    // any other. The suite sandbox dir is the parent of the project dir, so a
+    // file written directly into it is outside the project. No air.toml is
+    // present, so Air formats with synthesized (default) settings -- and on
+    // the save path the built-in formatter never runs, so any formatting
+    // change can only come from Air.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, true);
+    await removeAirConfig(consoleActions);
+
+    const outsidePath = `${sandbox.dir.replace(/\\/g, '/')}/air_outside_${Date.now()}.R`;
+    await consoleActions.executeInConsole(
+      `writeLines(c("x<-1+2+3", "y<-list(a=1,b=2,c=3)"), "${outsidePath}")`,
+      { wait: true },
+    );
+    await openFile(page, outsidePath);
+
+    await saveFile(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirDefaultFormatted(content);
+
+    // The afterEach cleanup closes all source tabs; remove the out-of-project
+    // file explicitly since it lives outside the dir cleanup() unlinks.
+    await consoleActions.executeInConsole(`unlink("${outsidePath}")`, { wait: true });
   });
 
 });

@@ -16,13 +16,17 @@
 setlocal EnableDelayedExpansion
 set "PACKAGE_DIR=%CD%"
 
-if not exist c:\rstudio-tools\dependencies (
-    set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
-) else (
-    set RSTUDIO_DEPENDENCIES=c:\rstudio-tools\dependencies
-)
+REM This defines RSTUDIO_TOOLS_ROOT if it isn't already set in the environment.
+call %PACKAGE_DIR%\..\..\dependencies\tools\rstudio-tools.cmd
 
-call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
+REM Prefer dependencies installed within the tools root (see
+REM dependencies/windows/install-dependencies.cmd); fall back to
+REM dependencies installed within the source tree (the legacy layout).
+if exist "%RSTUDIO_TOOLS_ROOT%\dependencies\windows" (
+    set "RSTUDIO_DEPENDENCIES=%RSTUDIO_TOOLS_ROOT%\dependencies"
+) else (
+    set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
+)
 
 %RUN% normalize-path "%PACKAGE_DIR%\..\..\src\node\desktop" ELECTRON_SOURCE_DIR
 %RUN% normalize-path "%ELECTRON_SOURCE_DIR%\..\desktop-build-AMD64" ELECTRON_BINARY_DIR

@@ -1,0 +1,116 @@
+name: "Publish E2E report to S3"
+description: >
+  Upload a merged Playwright HTML report to the public
+  rstudio-playwright-reports S3 bucket and return its browsable URL, so
+  reviewers can inspect screenshots, traces, and step details in a browser
+  without downloading and extracting the artifact zip. Serving the report over
+  HTTPS also makes its embedded trace viewer work, which an extracted zip
+  opened via file:// cannot do.
+
+  Authentication uses GitHub OIDC (no stored AWS keys): the calling job must
+  grant `id-token: write`, and the role-arn input names an IAM role that
+  trusts this repository's workflows. Publishing is best-effort: any failure
+  (including a missing role ARN on fork PRs) is logged and leaves the "url"
+  output empty rather than failing the calling job. Published reports age out
+  via the bucket's 14-day lifecycle rule.
+
+inputs:
+  report-dir:
+    description: "Directory containing the merged Playwright HTML report (index.html at its root)."
+    required: false
+    default: "e2e/rstudio/playwright-report"
+  role-arn:
+    description: "IAM role assumed via GitHub OIDC for the upload. Empty (e.g. fork PRs) makes this a no-op."
+    required: true
+  label:
+    description: "Last path segment identifying the report within the run, e.g. 'all-platforms' or 'linux-desktop'."
+    required: true
+  bucket:
+    description: "S3 bucket to upload the report into."
+    required: false
+    default: "rstudio-playwright-reports"
+
+outputs:
+  url:
+    description: "Browsable URL of the published report, or empty if nothing was published."
+    value: ${{ steps.upload.outputs.url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check publish preconditions
+      id: check
+      shell: bash
+      env:
+        REPORT_DIR: ${{ inputs.report-dir }}
+        ROLE_ARN: ${{ inputs.role-arn }}
+      run: |
+        echo "proceed=false" >> "$GITHUB_OUTPUT"
+
+        # Fork PRs (and any run without the secret) get an empty role ARN.
+        # Skip quietly rather than failing, mirroring the Test Insights
+        # reporter.
+        if [ -z "${ROLE_ARN}" ]; then
+          echo "::notice::role-arn is empty; skipping report publication."
+          exit 0
+        fi
+
+        if [ ! -f "${REPORT_DIR}/index.html" ]; then
+          echo "::warning::No report found at ${REPORT_DIR}/index.html; skipping publication."
+          exit 0
+        fi
+
+        echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+    # Exchange the job's OIDC token for temporary AWS credentials.
+    # continue-on-error keeps a missing id-token permission or an STS outage
+    # from failing the run; the upload below then fails its own aws call and
+    # degrades to a warning.
+    - name: Configure AWS credentials
+      if: steps.check.outputs.proceed == 'true'
+      continue-on-error: true
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.role-arn }}
+        aws-region: us-east-1
+
+    - name: Upload report to S3
+      id: upload
+      if: steps.check.outputs.proceed == 'true'
+      shell: bash
+      env:
+        REPORT_DIR: ${{ inputs.report-dir }}
+        BUCKET: ${{ inputs.bucket }}
+        LABEL: ${{ inputs.label }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -uo pipefail
+
+        # Always define the output up front so callers can safely reference it
+        # even when the upload fails below.
+        echo "url=" >> "$GITHUB_OUTPUT"
+
+        # pr-<n>/... for PR runs, the triggering event name (schedule,
+        # workflow_dispatch, ...) otherwise. run_id + attempt keeps re-runs of
+        # the same PR from overwriting each other.
+        if [ -n "${PR_NUMBER}" ]; then
+          TOP="pr-${PR_NUMBER}"
+        else
+          TOP="${GITHUB_EVENT_NAME}"
+        fi
+        PREFIX="${TOP}/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/${LABEL}"
+
+        # The aws CLI infers each object's Content-Type from its extension,
+        # which is all the static report needs to render from the bucket.
+        if ! aws s3 cp "${REPORT_DIR}" "s3://${BUCKET}/${PREFIX}/" --recursive --only-show-errors; then
+          echo "::warning::S3 upload failed (missing id-token permission or role misconfiguration?); skipping publication."
+          exit 0
+        fi
+
+        URL="https://${BUCKET}.s3.amazonaws.com/${PREFIX}/index.html"
+        echo "Published report: ${URL}"
+        echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+        # Surface the link on the run's summary page too; scheduled runs have
+        # no PR comment to carry it.
+        echo "[View the Playwright report](${URL})" >> "$GITHUB_STEP_SUMMARY"

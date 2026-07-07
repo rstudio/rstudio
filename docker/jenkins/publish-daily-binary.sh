@@ -28,19 +28,19 @@ read -ra COMPONENTS <<< "$URL"
 IFS="$OLDIFS"
 
 # ensure sufficient components
-if [[ ${#COMPONENTS[@]} -lt 7 ]]; then
+if [[ ${#COMPONENTS[@]} -lt 6 ]]; then
     echo "Unexpected URL format '$URL'"
     exit 1
 fi
 
 # parse URL components to extract flavor/OS/platform
-FLAVOR=${COMPONENTS[4]}
-OS=${COMPONENTS[5]}
+FLAVOR=${COMPONENTS[3]}
+OS=${COMPONENTS[4]}
 # linux uses: /flavor/os/platform but windows/mac only have /flavor/os
 if [ "$OS" == "macos" ] || [ "$OS" == "windows" ];  then
    PLATFORM=""
 else
-   PLATFORM=${COMPONENTS[6]}
+   PLATFORM=${COMPONENTS[5]}
 fi
 
 # sanity check a URL component to fail faster if the URL is not in the format

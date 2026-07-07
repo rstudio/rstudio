@@ -13,7 +13,9 @@ npx playwright install
 
 ### Ubuntu 26.04 LTS
 
-Playwright doesn't yet ship a browser build or system-deps list for Ubuntu 26.04 (the release renamed SONAME-versioned libraries: `libicu74` -> `libicu78`, `libxml2` -> `libxml2-16`, etc.). Until Playwright catches up, point the installer at the Ubuntu 24.04 browser build and install the renamed system libraries by hand:
+Playwright 1.61 and later natively support Ubuntu 26.04 (Resolute), so this section is only needed for earlier versions of Playwright.
+
+Before 1.61, Playwright did not ship a browser build or system-deps list for Ubuntu 26.04 (the release renamed SONAME-versioned libraries: `libicu74` -> `libicu78`, `libxml2` -> `libxml2-16`, etc.). On those versions, point the installer at the Ubuntu 24.04 browser build and install the renamed system libraries by hand:
 
 ```bash
 # Intel/AMD64
@@ -25,7 +27,7 @@ PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-arm64 npx playwright install
 sudo apt-get install libicu78 libxml2-16 libmanette-0.2-0
 ```
 
-Remove the override once Playwright publishes an Ubuntu 26.04 build.
+On pre-1.61 Playwright, remove the override after upgrading to 1.61 or later.
 
 ### Prerequisites
 
@@ -64,7 +66,7 @@ PW_RSTUDIO_EXTRA_ARGS="--my-flag --other-option" npx playwright test
 PW_RSTUDIO_EDITION=pro npx playwright test
 ```
 
-The desktop fixture automatically launches RStudio with CDP enabled on a random port (9231-9299), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
+The desktop fixture automatically launches RStudio with CDP enabled on a deterministic port (base 9231 + a per-checkout offset + the worker index, so parallel workers and concurrent runs from other checkouts/worktrees never collide), connects Playwright, and shuts down gracefully after tests complete. Override the port with `PW_CDP_PORT=9222`.
 
 #### Against the in-tree dev build
 
@@ -223,7 +225,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 
 The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
-- **Desktop**: Kills any process on the CDP port, spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
+- **Desktop**: Kills any process still *listening* on this worker's CDP port (a leftover RStudio from a prior interrupted run), spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
 - **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, `--automation-agent`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
 
 Both fixtures dismiss leftover save dialogs from previous runs.
@@ -468,7 +470,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 |----------|------|----------|-------------|
 | `PW_RSTUDIO_MODE` | Both | No | Fallback for `--project` (`desktop` or `server`); `--project` wins if both set. Default: `desktop`. |
 | `PW_RSTUDIO_EDITION` | Both | No | `os` (default) or `pro`. Filters out `@pro_only` or `@os_only` tagged tests. |
-| `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: random 9231-9299) |
+| `PW_CDP_PORT` | Desktop | No | Override the CDP port (default: 9231 + per-checkout offset + worker index) |
 | `PW_RSTUDIO_DEV` | Desktop | No | Set to `1`/`true` to launch the in-tree dev build via `npm run start` in `src/node/desktop` instead of the installed RStudio binary. Assumes the rest of the product is already built. |
 | `PW_RSTUDIO_SERVER_URL` | Server | No | Full URL, e.g., `http://10.0.0.1:8787`. If unset, a private in-tree `rserver-dev` is spawned per worker. |
 | `PW_RSTUDIO_SERVER_PORT` | Server | No | Override the port in the URL |
@@ -490,7 +492,8 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_WARMUP_LAUNCH` | Desktop | No | `1`/`true` to force a warmup launch in globalSetup; `0`/`false` to skip it. Default: on under CI, off locally. Skipped entirely in Server mode. |
 | `PW_LAUNCH_ATTEMPTS` | Desktop | No | Number of attempts the in-fixture launch retry will make before giving up (default: `2`, i.e. one retry). |
 | `PW_GWT_READY_TIMEOUT_MS` | Desktop | No | Override how long the fixture waits for `window.rstudio.ready === true` after CDP connects. Default: `60000` on CI, `30000` locally. |
-| `PW_DEBUG_LAUNCH` | Desktop | No | Set to `1`/`true` to emit `[debug-launch]` / `[launch-timing]` traces (page lifecycle, console errors, post-CDP wait steps) during startup. Diagnostic only. |
+| `PW_DEBUG_LAUNCH` | Desktop | No | Set to `1`/`true` to emit `[launch-timing]` traces (post-CDP wait steps) during startup. Diagnostic only; enabled on CI so launch failures show which phase exceeded the deadline. |
+| `PW_DEBUG_PAGES` | Desktop | No | Set to `1`/`true` to emit `[debug-launch]` page-lifecycle traces (page created/navigated/load/close, console errors) for every page for the whole run, including popups like plot zoom. Diagnostic only. |
 | `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
 
 `PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually. `PW_AI_SEEDED_POSITAI` / `PW_AI_SEEDED_COPILOT` are also internal: `globalSetup` sets them to `1` for each provider whose credentials were successfully copied; `requireAiCredentials()` reads them to decide whether to skip an `@ai` test. Don't set those manually either.

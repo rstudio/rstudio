@@ -1,0 +1,100 @@
+name: "Cache Seed: Sentinel (re-seed evicted E2E build caches)"
+
+# The repo's GitHub Actions cache quota is 10 GB; past it, GitHub evicts
+# entries least-recently-used first -- including the build caches the seed
+# workflows maintain on main. PR runs can only restore caches from their own
+# merge ref or from main, so once main's copy is evicted every PR build goes
+# cold (full dependency download + GWT recompile) until the next nightly
+# seed. This sentinel closes that gap: it periodically checks that each
+# expected cache-key prefix still resolves on refs/heads/main and dispatches
+# the owning seed workflow when one has gone missing.
+#
+# Ubuntu 26 AMD64 has no seed workflow yet and is not part of the PR
+# orchestrator, so it is deliberately absent from the checks below.
+on:
+  schedule:
+    # Every 2 hours, offset from the nightly seeds (07:00 / 07:30 UTC).
+    - cron: '45 */2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: cache-seed-sentinel
+  cancel-in-progress: true
+
+permissions:
+  # Needed both to list caches / workflow runs and to dispatch the seed
+  # workflows via `gh workflow run`.
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Re-seed platforms whose main caches were evicted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # No checkout in this job; gh needs the repo set explicitly.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # One line per seed workflow: <workflow-file>=<cache-key prefixes>.
+          # The prefixes must track the cache keys in the matching build
+          # workflows (see the "Restore rstudio-tools deps" etc. steps). The
+          # rstudio-tools / rlibs linux keys are shared by the Desktop and
+          # Server Ubuntu 24 builds, so they are listed once, under the
+          # Desktop seed; each seed re-warms every cache its build job
+          # touches, missing or not.
+          CHECKS='
+          os-cache-seed-e2e-rstudio-desktop-os-ubuntu-24.yml=rstudio-tools-linux-x86_64- rstudio-build-rlibs-linux-x86_64- rstudio-gwt-linux-desktop-x86_64-
+          os-cache-seed-e2e-rstudio-server-os-ubuntu-24.yml=rstudio-gwt-linux-x86_64-
+          os-cache-seed-e2e-macos-26-arm64.yml=rstudio-tools-arm64- rstudio-build-rlibs-arm64- rstudio-gwt-arm64-
+          os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml=rstudio-tools-win64- rstudio-gwt-win64-
+          '
+
+          FAILED=0
+          while IFS= read -r LINE; do
+            # Trim leading whitespace; skip blank lines.
+            LINE="${LINE#"${LINE%%[![:space:]]*}"}"
+            if [ -z "$LINE" ]; then
+              continue
+            fi
+
+            SEED="${LINE%%=*}"
+            PREFIXES="${LINE#*=}"
+
+            MISSING=""
+            for PREFIX in $PREFIXES; do
+              # The caches API `key` parameter matches by prefix, so this asks
+              # "does any cache under this prefix still exist in main's scope?"
+              COUNT=$(gh api "repos/$GITHUB_REPOSITORY/actions/caches?ref=refs/heads/main&key=$PREFIX&per_page=1" --jq .total_count)
+              if [ "$COUNT" -eq 0 ]; then
+                MISSING="$MISSING $PREFIX"
+              fi
+            done
+
+            if [ -z "$MISSING" ]; then
+              echo "OK: $SEED -- all prefixes present on main"
+              continue
+            fi
+            echo "Evicted from main:$MISSING"
+
+            # Don't dispatch on top of an active run: the seeds' concurrency
+            # groups cancel in-flight runs, so piling on dispatches could keep
+            # a seed from ever finishing.
+            ACTIVE=0
+            for STATUS in queued in_progress; do
+              N=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$SEED/runs?status=$STATUS&per_page=1" --jq .total_count)
+              ACTIVE=$((ACTIVE + N))
+            done
+            if [ "$ACTIVE" -gt 0 ]; then
+              echo "Seed $SEED is already queued or running; not dispatching."
+              continue
+            fi
+
+            echo "Dispatching $SEED"
+            gh workflow run "$SEED" --ref main || FAILED=1
+          done <<EOF
+          $CHECKS
+          EOF
+
+          exit $FAILED

@@ -1,4 +1,9 @@
 
+# NOTE: this script may run more than once over the same tree (on Windows,
+# install-boost.cmd invokes install-boost.R once per build variant), so every
+# replacement below must be idempotent: re-applying it to already-patched
+# sources must be a no-op.
+
 # figure out which files to explore
 exts <- c("cpp", "h", "hpp", "inc", "inl", "ipp")
 pattern <- sprintf("[.](%s)$", paste(exts, collapse = "|"))
@@ -43,6 +48,18 @@ for (file in files) {
       replacement = "namespace rstudio_boost::",
       x           = replacement,
       fixed       = TRUE
+   )
+
+   # Boost.Exception (1.91+) parses __PRETTY_FUNCTION__ at compile time by
+   # matching string literals that hard-code the 'boost' namespace; after the
+   # rename the compiler emits 'rstudio_boost', so no pattern matches and a
+   # static assert fires. Patch the literals to match the renamed namespace.
+   # (boost/exception/detail/type_info.hpp)
+   replacement <- gsub(
+      pattern     = "(?<!rstudio_)boost::n::",
+      replacement = "rstudio_boost::n::",
+      x           = replacement,
+      perl        = TRUE
    )
    
    if (!identical(original, replacement)) {

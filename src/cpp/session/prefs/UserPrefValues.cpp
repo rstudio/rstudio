@@ -2143,6 +2143,32 @@ core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
 }
 
 /**
+ * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+ */
+bool UserPrefValues::dateTimeUseIso8601()
+{
+   return readPref<bool>("date_time_use_iso8601");
+}
+
+core::Error UserPrefValues::setDateTimeUseIso8601(bool val)
+{
+   return writePref("date_time_use_iso8601", val);
+}
+
+/**
+ * Whether to display dates and times in the UTC time zone instead of the local time zone.
+ */
+bool UserPrefValues::dateTimeUseUtc()
+{
+   return readPref<bool>("date_time_use_utc");
+}
+
+core::Error UserPrefValues::setDateTimeUseUtc(bool val)
+{
+   return writePref("date_time_use_utc", val);
+}
+
+/**
  * Whether to change the directory in the Files pane automatically when the working directory in R changes.
  */
 bool UserPrefValues::syncFilesPaneWorkingDir()
@@ -4089,6 +4115,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
+      kDateTimeUseIso8601,
+      kDateTimeUseUtc,
       kSyncFilesPaneWorkingDir,
       kJobsTabVisibility,
       kShowLauncherJobsTab,

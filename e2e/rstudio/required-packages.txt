@@ -1,0 +1,29 @@
+# R packages pre-installed into the shared R library by globalSetup
+# (fixtures/r-libs-setup.ts) and, on distros without CRAN binaries (Fedora),
+# by the os-e2e-deps action so they land in the cached library instead of
+# compiling at test time. Single source of truth -- both the TypeScript
+# harness and the bash action read this file. One package per line; blank
+# lines and #-comments are ignored.
+DBI
+MASS
+S7
+bslib
+data.table
+devtools
+dplyr
+evaluate
+ggplot2
+knitr
+nycflights13
+pillar
+praise
+remotes
+reticulate
+rmarkdown
+rstudioapi
+shiny
+shinytest2
+stringr
+styler
+testthat
+tibble

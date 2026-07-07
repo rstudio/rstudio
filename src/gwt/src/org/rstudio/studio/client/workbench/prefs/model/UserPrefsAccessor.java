@@ -207,6 +207,8 @@ public class UserPrefsAccessor extends Prefs
    public static final String ALWAYS_SHOWN_FILES = "always_shown_files";
    public static final String ALWAYS_SHOWN_EXTENSIONS = "always_shown_extensions";
    public static final String SORT_FILE_NAMES_NATURALLY = "sort_file_names_naturally";
+   public static final String DATE_TIME_USE_ISO8601 = "date_time_use_iso8601";
+   public static final String DATE_TIME_USE_UTC = "date_time_use_utc";
    public static final String SYNC_FILES_PANE_WORKING_DIR = "sync_files_pane_working_dir";
    public static final String JOBS_TAB_VISIBILITY = "jobs_tab_visibility";
    public static final String SHOW_LAUNCHER_JOBS_TAB = "show_launcher_jobs_tab";
@@ -2639,6 +2641,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   public PrefValue<Boolean> dateTimeUseIso8601()
+   {
+      return bool(
+         "date_time_use_iso8601",
+         _constants.dateTimeUseIso8601Title(), 
+         _constants.dateTimeUseIso8601Description(), 
+         false);
+   }
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   public PrefValue<Boolean> dateTimeUseUtc()
+   {
+      return bool(
+         "date_time_use_utc",
+         _constants.dateTimeUseUtcTitle(), 
+         _constants.dateTimeUseUtcDescription(), 
+         false);
+   }
+
+   /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
     */
    public PrefValue<Boolean> syncFilesPaneWorkingDir()
@@ -4934,6 +4960,10 @@ public class UserPrefsAccessor extends Prefs
          alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
+      if (source.hasKey("date_time_use_iso8601"))
+         dateTimeUseIso8601().setValue(layer, source.getBool("date_time_use_iso8601"));
+      if (source.hasKey("date_time_use_utc"))
+         dateTimeUseUtc().setValue(layer, source.getBool("date_time_use_utc"));
       if (source.hasKey("sync_files_pane_working_dir"))
          syncFilesPaneWorkingDir().setValue(layer, source.getBool("sync_files_pane_working_dir"));
       if (source.hasKey("jobs_tab_visibility"))
@@ -5375,6 +5405,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
+      prefs.add(dateTimeUseIso8601());
+      prefs.add(dateTimeUseUtc());
       prefs.add(syncFilesPaneWorkingDir());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());

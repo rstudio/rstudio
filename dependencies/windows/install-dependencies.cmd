@@ -2,21 +2,44 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
+:: Resolve paths relative to this script (not the current directory), so the
+:: tracked install scripts can be run from anywhere.
+for %%F in ("%~dp0..\tools\rstudio-tools.cmd") do (
   set "RSTUDIO_TOOLS=%%~fF"
 )
 
 echo -- Using RStudio tools: %RSTUDIO_TOOLS%
 call %RSTUDIO_TOOLS%
 
-set PATH=%CD%\tools;%PATH%
+:: The source-tree directories holding the (tracked) install scripts. The
+:: dependencies themselves are downloaded and installed into
+:: RSTUDIO_TOOLS_ROOT (set by rstudio-tools.cmd if not already defined in
+:: the environment), so that downloaded artifacts live outside the source
+:: tree. Set RSTUDIO_TOOLS_ROOT to the root of an RStudio checkout to
+:: reproduce the legacy in-tree layout.
+set "WINDOWS_SCRIPTS_DIR=%~dp0"
+for %%F in ("%~dp0..\common") do (
+  set "COMMON_SCRIPTS_DIR=%%~fF"
+)
 
-set BOOST_VERSION=1.90.0
+set "COMMON_INSTALL_DIR=%RSTUDIO_TOOLS_ROOT%\dependencies\common"
+set "WINDOWS_INSTALL_DIR=%RSTUDIO_TOOLS_ROOT%\dependencies\windows"
+
+if not exist "%COMMON_INSTALL_DIR%" mkdir "%COMMON_INSTALL_DIR%"
+if not exist "%WINDOWS_INSTALL_DIR%" mkdir "%WINDOWS_INSTALL_DIR%"
+
+echo -- Installing dependencies to: %RSTUDIO_TOOLS_ROOT%\dependencies
+
+set PATH=%WINDOWS_SCRIPTS_DIR%tools;%PATH%
+
+set BOOST_VERSION=1.91.0
 set GNUGREP_VERSION=3.0
 set GWT_VERSION=2.12.2-apple-blossom
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
-set MSVC_TOOLSET_VERSION=143
+REM The MSVC toolset used for Boost prebuilts. Can be set in the environment
+REM to select a different set of prebuilts (e.g. 145 for Visual Studio 2026).
+if not defined MSVC_TOOLSET_VERSION set MSVC_TOOLSET_VERSION=143
 set NSISMULTIUSER_VERSION=a33d494c62ad
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
@@ -143,8 +166,8 @@ set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_F
 set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-installed
 set NODEBUNDLE_OUTPUT=node
 
-:: Install dependencies within 'common' first.
-cd ..\common
+:: Install 'common' dependencies first.
+cd /d "%COMMON_INSTALL_DIR%"
 
 %RUN% install GWT
 %RUN% install DICTIONARIES
@@ -234,10 +257,10 @@ if not exist yarn.cmd (
 popd
 
 echo -- Installing packages
-call install-packages.cmd
+call "%COMMON_SCRIPTS_DIR%\install-packages.cmd"
 
-:: Install the rest of our dependencies in the 'windows' folder.
-cd ..\windows
+:: Install the rest of our dependencies into the 'windows' folder.
+cd /d "%WINDOWS_INSTALL_DIR%"
 
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
@@ -251,11 +274,13 @@ cd ..\windows
 
 
 echo -- Installing panmirror (Visual Editor)
-pushd install-panmirror
+pushd "%WINDOWS_SCRIPTS_DIR%install-panmirror"
 call clone-panmirror-repo.cmd
 popd
 
 echo -- Installing SOCI
-call install-soci.cmd
+call "%WINDOWS_SCRIPTS_DIR%install-soci.cmd"
 
+:: The i18n helper scripts live relative to the source tree; run from there.
+cd /d "%WINDOWS_SCRIPTS_DIR%"
 %RUN% install-i18n-dependencies

@@ -1,0 +1,279 @@
+import { test, expect } from '@fixtures/rstudio.fixture';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { SourcePaneActions } from '@actions/source_pane.actions';
+import { InsertCitationDialog, CITATION_SOURCES } from '@pages/insert_citation.page';
+import { installDepIfPrompted } from '@pages/modals.page';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { executeCommand } from '@utils/commands';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { rStringLiteral } from '@utils/r';
+import { isServiceReachable, CITATION_SERVICE_HOSTS } from '@utils/network';
+import type { Page } from 'playwright';
+
+// Skip (rather than fail) a test whose citation source depends on an external
+// service that is unreachable from this runner -- an outage or blocked egress
+// is not a product bug. Probes are Node-side and cached; see utils/network.ts.
+async function skipUnlessReachable(...urls: string[]): Promise<void> {
+  for (const url of urls) {
+    test.skip(!(await isServiceReachable(url)), `${url} is unreachable from this runner`);
+  }
+}
+
+// Read the value of an R expression via marker-wrapped console output. Runs on
+// the rsession host, so it reads files the IDE wrote (e.g. references.bib in the
+// working directory) regardless of where the sandbox lives.
+async function captureResult(page: Page, rExpression: string): Promise<string> {
+  const marker = `__CIT_${Date.now()}__`;
+  await executeInConsole(
+    page,
+    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
+    { wait: true },
+  );
+  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
+  let match: RegExpMatchArray | null = null;
+  await expect
+    .poll(
+      async () => {
+        const output = await page.locator(CONSOLE_OUTPUT).innerText();
+        match = output.match(pattern);
+        return match !== null;
+      },
+      {
+        timeout: 15000,
+        message: `captureResult: no marker-wrapped output for \`${rExpression}\` within 15s -- the R expression likely errored (e.g. references.bib missing)`,
+      },
+    )
+    .toBe(true);
+  return match![1].trim();
+}
+
+// Migrated from Selenium test_desktop_Citations.py. Citations live in the
+// panmirror visual editor's Insert menu; see the InsertCitationDialog page
+// object and visual-editor.md for the dialog's selectors and the one-time init
+// reset these tests work around.
+test.describe('Citations', () => {
+  // Inserting a citation writes references.bib to the working directory;
+  // useSuiteSandbox() redirects cwd into the per-run sandbox so nothing lands
+  // in the repo tree or home dir. The globalTeardown removes it.
+  useSuiteSandbox();
+
+  let consoleActions: ConsolePaneActions;
+  let sourceActions: SourcePaneActions;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    consoleActions = new ConsolePaneActions(page);
+    sourceActions = new SourcePaneActions(page, consoleActions);
+  });
+
+  // Each test starts from a single clean Untitled tab. resetSourcePane()
+  // dispatches resetToUntitled under the hood, reverting the previous test's
+  // dirty doc without a save prompt.
+  test.beforeEach(async () => {
+    await consoleActions.resetSourcePane();
+    // Citation inserts append to references.bib in the shared workdir; remove
+    // any leftover so each test's bib assertions start from a clean file.
+    await consoleActions.executeInConsole('unlink("references.bib")', { wait: true });
+  });
+
+  // Open a fresh markdown document in visual mode (the only place citations are
+  // reachable). Plain markdown is the cheapest host -- no rmarkdown package, no
+  // Quarto new-doc wizard.
+  async function newMarkdownVisualDoc(page: Page): Promise<void> {
+    await executeCommand(page, 'newMarkdownDoc');
+    await installDepIfPrompted(page);
+    await expect(sourceActions.sourcePane.selectedTab).toContainText('Untitled', { timeout: 20000 });
+    await sourceActions.ensureVisualMode();
+  }
+
+  test('inserts an authorless DOI citation into a markdown visual editor', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+
+    // A DOI resolves to exactly one work via a real service call (no intercept).
+    await citation.search(searchBox, '10.3133/93888');
+    await citation.stageFirstResult();
+    await citation.insert();
+
+    // The citation lands in the document. With no author, panmirror derives the
+    // key from the title ("Effects of management practices on grassland birds:
+    // Bobolink", 1999) -> effects1999.
+    await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
+
+    // The citation metadata is persisted to references.bib (in the session's
+    // working directory), not just the key placed in the document.
+    expect(await captureResult(page, 'file.exists("references.bib")')).toBe('TRUE');
+    const bib = await captureResult(page, 'readLines("references.bib")');
+    expect(bib).toContain('effects1999');
+    expect(bib).toContain('@techreport'); // entry type, not just fields
+    expect(bib).toContain('Bobolink');
+    expect(bib).toContain('10.3133/93888');
+    // No author: the key is title-derived. If this DOI ever gains an author
+    // field upstream, the key would change and this test's premise breaks --
+    // fail here rather than silently testing the wrong thing.
+    expect(bib).not.toMatch(/author\s*=/i);
+  });
+
+  // The same DOI insert flow works in a Quarto (.qmd) document -- the format
+  // where the previous migration attempt stalled ("never reaches visual mode").
+  // Opening a file-based .qmd and using ensureVisualMode() gets there reliably.
+  test('inserts a DOI citation into a Quarto visual editor', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    const fileName = `citations_${Date.now()}.qmd`;
+    await sourceActions.createAndOpenFile(fileName, '---\ntitle: Citations\n---\n\nGrassland bird research.\n');
+    await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+    await sourceActions.ensureVisualMode();
+
+    // Citations are disabled while the cursor sits in the YAML; click into the
+    // body paragraph first (the analogue of the Selenium navigate_out_of_quarto_yaml).
+    await page.locator('.ProseMirror').getByText('Grassland bird research.').click();
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+    await citation.search(searchBox, '10.3133/93888');
+    await citation.stageFirstResult();
+    await citation.insert();
+
+    await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
+  });
+
+  // The R Package source is a typeahead list of installed packages, not a latent
+  // search. Insert one and verify it lands in the document -- the only insert
+  // test that exercises a non-network source.
+  test('inserts an R Package citation into the document', async ({ rstudioPage: page }) => {
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+
+    // knitr is pre-installed (REQUIRED_PACKAGES); its cite key is the package name.
+    const match = await citation.selectPackageSource('knitr');
+    await match.locator('button').click(); // stage via "+"
+    await citation.insert();
+
+    await expect(page.locator('.ProseMirror')).toContainText('[@knitr]', { timeout: 15000 });
+  });
+
+  test('deletes a staged citation', async ({ rstudioPage: page }) => {
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+
+    // Stage the single DOI result, then remove it from the staging area (#9124).
+    await citation.search(searchBox, '10.3133/93888');
+    await citation.stageFirstResult();
+    await expect(citation.stagedCitations).toHaveCount(1);
+
+    await citation.deleteStagedCitation();
+    await expect(citation.stagedCitations).toHaveCount(0);
+
+    await citation.cancel();
+  });
+
+  // Inserting the same work via two different sources reuses its citation key
+  // rather than creating a duplicate (#8335). The document ends up showing the
+  // key twice; a regression would produce a de-duplicated variant like
+  // "bermúdez2020a" (and a second bib entry) instead.
+  test('does not duplicate a citation inserted from two sources', async ({ rstudioPage: page }) => {
+    // The same work is inserted first via From DOI, then via DataCite.
+    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi, CITATION_SERVICE_HOSTS.datacite);
+    await newMarkdownVisualDoc(page);
+    const citation = new InsertCitationDialog(page);
+    const doi = '10.5281/ZENODO.4266706';
+
+    // First insert via From DOI -> [@bermúdez2020].
+    await citation.open();
+    let searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+    await citation.search(searchBox, doi);
+    await citation.stageFirstResult();
+    await citation.insert();
+    await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020]', { timeout: 15000 });
+
+    // Insert the same work again via DataCite. It is already in the bibliography,
+    // so panmirror reuses the same key -> the document shows it twice.
+    await citation.open();
+    searchBox = await citation.selectSource(CITATION_SOURCES.datacite);
+    await citation.search(searchBox, doi);
+    await citation.stageFirstResult();
+    await citation.insert();
+    await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020][@bermúdez2020]', { timeout: 15000 });
+
+    // references.bib holds a single entry despite two citations in the document
+    // -- the direct #8335 check (one "@" entry header, not two).
+    expect(await captureResult(page, 'sum(grepl("^@", readLines("references.bib")))')).toBe('1');
+  });
+
+  // Clicking Insert with nothing staged should dismiss the dialog rather than
+  // leaving it stuck open (#12833).
+  test('dismisses the dialog when inserting with nothing staged', async ({ rstudioPage: page }) => {
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    await citation.insert();
+    await expect(citation.dialog).toBeHidden({ timeout: 5000 });
+  });
+
+  // A citation already in the text must survive a visual<->source round-trip
+  // without its brackets being backslash-escaped (#10075). Checked in both
+  // markdown and Quarto: pandoc's markdown and quarto writers escape
+  // differently, so the .qmd round-trip is distinct coverage.
+  for (const ext of ['md', 'qmd']) {
+    test(`does not escape citation brackets across a visual round-trip (.${ext})`, async ({ rstudioPage: page }) => {
+      const fileName = `citation_escape_${Date.now()}.${ext}`;
+      const line = 'This is some text [@abelsen1993, 93].';
+      await sourceActions.createAndOpenFile(fileName, line);
+      await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+
+      // Visual mode renders the citation as-is.
+      await sourceActions.ensureVisualMode();
+      await expect(page.locator('.ProseMirror')).toContainText(line, { timeout: 15000 });
+
+      // Back in source mode the brackets must remain unescaped (no backslashes).
+      await sourceActions.ensureSourceMode();
+      await expect(sourceActions.sourcePane.contentPane).toContainText(line, { timeout: 10000 });
+      await expect(sourceActions.sourcePane.contentPane).not.toContainText('\\[@abelsen1993');
+      await expect(sourceActions.sourcePane.contentPane).not.toContainText('93\\]');
+    });
+  }
+
+  // Selecting each network-backed source and searching returns matching results.
+  // "bobolink" returns hits on all three services (DataCite, Crossref, PubMed).
+  // Listed in the dialog's tree order (top to bottom): Crossref, DataCite, PubMed.
+  const SEARCH_SOURCES = [
+    { source: CITATION_SOURCES.crossref, host: CITATION_SERVICE_HOSTS.crossref },
+    { source: CITATION_SOURCES.datacite, host: CITATION_SERVICE_HOSTS.datacite },
+    { source: CITATION_SOURCES.pubmed, host: CITATION_SERVICE_HOSTS.pubmed },
+  ];
+  const searchTerm = 'bobolink';
+  for (const { source, host } of SEARCH_SOURCES) {
+    test(`searches ${source.alt} and returns matching results`, async ({ rstudioPage: page }) => {
+      await skipUnlessReachable(host);
+      await newMarkdownVisualDoc(page);
+
+      const citation = new InsertCitationDialog(page);
+      await citation.open();
+      const searchBox = await citation.selectSource(source);
+
+      // At least one of the first five results should mention the term, not just
+      // that some rows rendered -- otherwise arbitrary or stale hits would pass.
+      // We don't require it of result #1: relevance ranking can put a non-title
+      // match first (e.g. PubMed ranks a "Bobo-link" correspondence hit above the
+      // title matches). Poll to ride out the list still populating.
+      await citation.search(searchBox, searchTerm);
+      const matcher = new RegExp(searchTerm, 'i');
+      await expect
+        .poll(async () => (await citation.resultTexts(5)).some((t) => matcher.test(t)), { timeout: 30000 })
+        .toBe(true);
+
+      await citation.cancel();
+    });
+  }
+});

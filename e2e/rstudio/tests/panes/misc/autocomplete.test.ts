@@ -179,5 +179,98 @@ for (const context of contexts) {
         expect(items).toContain('面面面');
       });
     });
+
+    // -----------------------------------------------------------------------
+    // Issue 18125 — ggplot2 aesthetic completions when the token matches only
+    // an aesthetic, not a formal argument.
+    // https://github.com/rstudio/rstudio/issues/18125
+    //
+    // `geom_line()` has real formal args `lineend`/`linejoin`/`linemitre`, so
+    // the token `line` matched a formal and the geom's aesthetics (`linetype`,
+    // `linewidth`) were offered too. But `linet` matched no formal, which used
+    // to suppress the aesthetics entirely -- so `linetype` (an aesthetic, not a
+    // formal) went missing and the popup showed "No match".
+    // -----------------------------------------------------------------------
+    test.describe('Issue 18125 - ggplot2 aesthetic completions', () => {
+      let missingPackages: string[] = [];
+
+      test.beforeAll(async () => {
+        missingPackages = await consoleActions.ensurePackages(['ggplot2']);
+      });
+
+      // The completion helpers force the popup to display via the
+      // window.rstudio.completions bridge, so the unique match is listed
+      // here rather than auto-accepted (the auto-accept behavior itself is
+      // covered by the editor-only test below).
+      test('aesthetic-only token completes (linet -> linetype)', async () => {
+        test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+        const items = await getCompletions(['library(ggplot2)'], 'geom_line(linet');
+        expect(items).toContain('linetype =');
+      });
+
+      if (context === 'editor') {
+        // Without the popup override, an explicit completion request
+        // (Ctrl+Space) with a unique match is accepted directly into the
+        // buffer and the popup never shows.
+        test('unique match is auto-accepted on explicit request', async () => {
+          test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+          const line = await autocomplete.completeInEditorExpectingUniqueMatch(
+            ['library(ggplot2)'],
+            'geom_line(linet',
+          );
+          expect(line).toBe('geom_line(linetype = ');
+        });
+      }
+
+      test('token matching a formal also offers aesthetics', async () => {
+        test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
+        const items = await getCompletions(['library(ggplot2)'], 'geom_line(line');
+        // Both real formal args and aesthetics surface for the shorter token.
+        expect(items).toContain('lineend =');   // formal argument
+        expect(items).toContain('linetype =');  // aesthetic
+        expect(items).toContain('linewidth ='); // aesthetic
+      });
+    });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Issue 17831 — Completions update when deleting a colon (`pkg:::` -> `pkg::`)
+// https://github.com/rstudio/rstudio/issues/17831
+//
+// Console-only: the regression is in the shared backspace handling in
+// RCompletionManager, so exercising one context is sufficient.
+// ---------------------------------------------------------------------------
+test.describe('Issue 17831 - Namespace completions update on backspace', () => {
+  let consoleActions: ConsolePaneActions;
+  let sourceActions: SourcePaneActions;
+  let autocomplete: AutocompleteActions;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    consoleActions = new ConsolePaneActions(page);
+    sourceActions = new SourcePaneActions(page, consoleActions);
+    autocomplete = new AutocompleteActions(page, consoleActions, sourceActions);
+    await consoleActions.resetSourcePane();
+  });
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+  });
+
+  test('deleting a colon narrows tools::: to tools::', async () => {
+    const { all, exported } =
+      await autocomplete.getNamespaceCompletionsBeforeAndAfterBackspace('tools');
+
+    expect(all.length).toBeGreaterThan(0);
+    expect(exported.length).toBeGreaterThan(0);
+
+    // The exported-only list must be strictly smaller than the all-objects
+    // list (tools always has more internal than exported objects), and every
+    // exported entry must also appear in the all-objects list.
+    expect(exported.length).toBeLessThan(all.length);
+    for (const item of exported) {
+      expect(all).toContain(item);
+    }
+  });
+});

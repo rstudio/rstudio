@@ -9,9 +9,9 @@ Target: `e2e/rstudio/tests/`
 |--------|-------|
 | Total electron test files | 32 |
 | Total electron test methods | 115 |
-| Files fully converted | 30 |
+| Files fully converted | 32 |
 | Files partially converted | 0 |
-| Files not started | 6 |
+| Files not started | 5 |
 
 ## Conversion Status
 
@@ -19,7 +19,7 @@ Target: `e2e/rstudio/tests/`
 
 | Electron Source | Methods | Playwright Target | Status | Notes |
 |----------------|---------|-------------------|--------|-------|
-| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (to be scrapped) | Failed miserably (restart from scratch) | First attempt failed miserably: only 6 of 18 tests passing, a mid-session refactor regressed a 9-passing state, and Quarto never reaches visual mode. Scrapping the file and redoing the migration from scratch. |
+| test_desktop_Citations.py | 17 | panes/editor/citations.test.ts (11) | Complete | Restarted from scratch. The 17 Selenium methods are collapsed into 11 representative tests (per-source and per-format delete/blank/dont-escape duplicates folded): DOI insert (markdown + Quarto), R Package insert, delete a staged citation, no-duplicate dedup with a references.bib single-entry check, blank-insert dialog dismissal, non-escaping visual round-trip (.md + .qmd), and keyword search for Crossref/DataCite/PubMed. Insert tests also assert references.bib content (key, entry type, title, DOI, and no author field). All against live services. R Package delete is not ported (delete is source-agnostic, covered by the DOI delete; package staging is covered by the R Package insert). |
 | test_desktop_Command_Palette.py | 2 | panes/misc/command_palette.test.ts (2) | Complete | Open/filter/run (Escape closes; "script" keeps R + SQL script, drops text file; Enter runs the front-loaded New R Script), and the inline native-pipe pref toggle (verified by inserting "\|>"). Both cross-mode. |
 | test_desktop_console.py | 11 | panes/console/console_pane.test.ts (8), panes/console/console_command_effects.test.ts (7), panes/console/execute_from_editor.test.ts (1) | Complete | Split by theme; added Find in Console coverage (3 new tests) and upgraded `help.start()` to verify help-pane contents |
 | test_desktop_EnvironmentPane.py | 5 | panes/environment/environment_pane.test.ts (5) | Complete | Toolbar elements, the import-dataset/object-view/environment-list dropdowns, and memory-pie growth + usage-report modal. No Desktop-only assumptions; the Selenium maximize/restore workaround was dropped. |
@@ -37,7 +37,7 @@ Target: `e2e/rstudio/tests/`
 |----------------|---------|-------------------|--------|-------|
 | test_desktop_CodeSuggestions.ts | — | panes/editor/code_suggestions.test.ts (5) | Complete | Already TypeScript in electron-tests |
 | test_desktop_Copilot.py | 12 | panes/editor/copilot_ghost_text.test.ts (22) | Complete | Restructured with loops; test_enabling_copilot not included |
-| test_desktop_Create_File_Types.py | 6 | panes/editor/create_file_types.test.ts (19) | Not started | Data-driven; 15 no-modal + 4 modal tests; includes Sweave creation. TODO: 3 WIP types from Selenium still need conversion (newRDocumentationDoc, newRPlumberDoc, newRPresentationDoc) — each requires extra dialog fields |
+| test_desktop_Create_File_Types.py | 6 | panes/editor/create_file_types.test.ts (22 + 1 fixme) | Complete | One test per type. 13 need no package or dialog (C/C++ x3, CSS, HTML, JavaScript, Markdown, Python, R HTML, Shell, R Script, R Sweave, Text). Each create gates on the source-tab count reaching 2 so it can't race the leftover Untitled placeholder (and the footer reading the placeholder's "R Script"). SQL is its own test: creating it pops an "update RSQLite" modal (from the template's !preview line) which the test declines (the doc is created either way), so the leftover modal can't block the next test -- it was breaking newRNotebook. D3 and R Notebook need packages; R Notebook's footer reads "R Markdown" (it creates an RMARKDOWN doc). Quarto document and presentation, R Markdown, and Shiny drive their creation dialogs; the Selenium presentation method re-ran newQuartoDoc (dead newQuartoPres var), fixed to drive newQuartoPres. Rd and Plumber (Selenium WIP types) pass. Stan (also WIP) skips unless rstan is already installed (no auto-install; heavy source compile). R Presentation is fixme (save-file dialog). |
 | test_desktop_DataViewer.py | 4 | panes/data-viewer/pagination-sorting.test.ts (4) | Complete | |
 | test_desktop_Markdown.py | 2 | panes/editor/markdown.test.ts (2) | Complete | newMarkdownDoc creation, plus previewHTML to the Viewer pane with rendered-text assertions |
 | test_desktop_Quarto.py | 1 | panes/editor/quarto.test.ts (1) | Complete | |
@@ -80,4 +80,4 @@ Target: `e2e/rstudio/tests/`
 
 | Playwright File | Test Name | Blocker | Notes |
 |----------------|-----------|---------|-------|
-| — | — | — | None tracked yet |
+| panes/editor/create_file_types.test.ts | create R Presentation via newRPresentationDoc | Opens a save-file dialog (native OS chooser on Desktop, GWT chooser on Server) to choose the .Rpres path; the harness can't drive that yet. R Presentation was never implemented in Selenium either, only a WIP comment in the source. | — |

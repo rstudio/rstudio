@@ -17,7 +17,9 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
+#include <clocale>
 #include <iostream>
+#include <string>
 
 #include <gtest/gtest.h>
 
@@ -215,12 +217,19 @@ void testIdentifiers()
 
    // these tests assume a unicode locale -- note that RStudio
    // will also try to set a UTF-8 locale by default on startup
-   const char* locale = setlocale(LC_ALL, "C.UTF-8");
-   if (locale != nullptr)
+   //
+   // NOTE: copy the current locale name before switching -- setlocale()
+   // returns a pointer into an internal buffer that the next setlocale()
+   // call may overwrite, and it returns the name of the newly-set locale,
+   // so the previous code here was "restoring" the C.UTF-8 locale rather
+   // than the original one
+   const char* current = setlocale(LC_ALL, nullptr);
+   std::string original(current != nullptr ? current : "C");
+   if (setlocale(LC_ALL, "C.UTF-8") != nullptr)
    {
       v.verify(L"\x00C1" L"qc1");                     // 'Áqc1'
       v.verify(L"\x00C1" L"qc1" L"\x00C1");           // 'Áqc1Á'
-      setlocale(LC_ALL, locale);
+      setlocale(LC_ALL, original.c_str());
    }
 }
 
@@ -330,8 +339,22 @@ TEST(RutilTest, KnitrChunkEmbeds)
 
 TEST(RutilTest, UnicodeLetterIdentification)
 {
+   // on Linux, unicode letter classification goes through iswalnum(),
+   // which only classifies non-ASCII letters in a unicode locale -- as
+   // RStudio sessions set one at startup, set it here explicitly rather
+   // than relying on locale state leaked from other tests. macOS
+   // (CFCharacterSet) and Windows (UCRT) classify these independently
+   // of the narrow locale, so proceed even if the locale is unavailable.
+   const char* current = setlocale(LC_ALL, nullptr);
+   std::string original(current != nullptr ? current : "C");
+   bool changed = setlocale(LC_ALL, "C.UTF-8") != nullptr;
+
    RTokens rTokens(L"区 <- 42");
-   EXPECT_EQ(5u, rTokens.size());
+
+   if (changed)
+      setlocale(LC_ALL, original.c_str());
+
+   ASSERT_EQ(5u, rTokens.size());
    EXPECT_TRUE(rTokens.at(0).isType(RToken::ID));
    EXPECT_TRUE(rTokens.at(1).isType(RToken::WHITESPACE));
    EXPECT_TRUE(rTokens.at(2).isType(RToken::OPER));

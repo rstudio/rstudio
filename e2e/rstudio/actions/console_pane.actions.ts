@@ -214,7 +214,6 @@ export class ConsolePaneActions {
     }
 
     // Package not installed -- try to install it
-    console.log(`Installing R package: ${pkg}...`);
     await this.clearConsole();
     const repos = getInstallRepos();
     // Pick the install type at R runtime so source-only R builds (Homebrew
@@ -239,10 +238,8 @@ export class ConsolePaneActions {
     // verify by reading the package's availability back out of the console.
     const installed =
       (await this.evalRLogical(`requireNamespace("${pkg}", quietly = TRUE)`)) === true;
-    if (installed) {
-      console.log(`Package ${pkg} is now available.`);
-    } else {
-      console.log(`WARNING: Failed to install package ${pkg}.`);
+    if (!installed) {
+      console.warn(`WARNING: Failed to install package ${pkg}.`);
     }
     return installed;
   }

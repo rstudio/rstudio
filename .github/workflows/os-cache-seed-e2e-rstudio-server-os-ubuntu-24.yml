@@ -29,6 +29,8 @@ on:
   # haven't been accessed in 7 days.
   schedule:
     - cron: '0 7 * * *'
+  # Also dispatched by os-cache-seed-sentinel.yml when this seed's caches
+  # have been evicted from main's scope (10 GB repo quota, LRU eviction).
   workflow_dispatch:
 
 # Don't stack expensive ubuntu builds; the latest seed run wins.

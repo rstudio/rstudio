@@ -205,6 +205,19 @@ type ShinyBridge = {
   stopForegroundApp(): Promise<void>;
 };
 
+type CompletionsBridge = {
+  /**
+   * Automation-only override: when true, a completion request that returns
+   * exactly one result shows the popup instead of auto-accepting the match
+   * (RCompletionManager / CompletionManagerBase skip their auto-accept
+   * branch). Lets popup-reading helpers enumerate items deterministically
+   * regardless of how many results a token happens to have. Set it around a
+   * completion request and clear it afterwards; leave it off to exercise the
+   * real unique-match auto-accept behavior.
+   */
+  setAlwaysShowPopup(force: boolean): void;
+};
+
 type RStudioBridge = {
   commands: { [id: string]: CommandEntry } & { list: string[] };
   prefs: { [name: string]: PrefEntry };
@@ -218,6 +231,8 @@ type RStudioBridge = {
   console?: ConsoleBridge;
   /** Shiny-app automation surface. */
   shiny?: ShinyBridge;
+  /** Completion-popup overrides. Absent on builds that predate the knob. */
+  completions?: CompletionsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
   chat?: ChatBridge;
   /**
@@ -525,7 +540,10 @@ export async function waitForSourcePaneReset(page: Page, timeout = 10000): Promi
  * On case-insensitive filesystems (macOS HFS+, NTFS) the comparison ignores
  * case. On Windows, backslashes and forward slashes are treated as equivalent
  * so callers can pass Node.js path.join results regardless of whether RStudio
- * normalizes separators.
+ * normalizes separators. RStudio home-aliases doc paths under the rsession's
+ * home directory ("~/sub/file.R"); those match when `expectedPath` ends with
+ * the aliased path minus the "~" -- still a full home-relative comparison, so
+ * same-basename files in different directories can't be confused.
  */
 export async function waitForActiveDocument(
   page: Page,
@@ -535,8 +553,11 @@ export async function waitForActiveDocument(
   await page.waitForFunction(
     (target) => {
       const doc = window.rstudio?.documents.active() ?? null;
-      return doc !== null && doc.path !== null
-        && doc.path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
+      if (doc === null || doc.path === null) return false;
+      const dp = doc.path.replace(/\\/g, '/').toLowerCase();
+      const expected = target.replace(/\\/g, '/').toLowerCase();
+      return dp === expected
+        || (dp.startsWith('~/') && expected.endsWith(dp.slice(1)));
     },
     expectedPath,
     { timeout, polling: 100 },

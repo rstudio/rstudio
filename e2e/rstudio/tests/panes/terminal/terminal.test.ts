@@ -184,19 +184,35 @@ test.describe.serial('Terminal pane', () => {
       await killAllTerminals(page);
       await openTerminal(page);
 
-      await page.keyboard.type('echo hello');
+      // Verify the deletion through a filesystem side effect rather than the
+      // terminal buffer: type a `touch` command with a stray trailing "Q",
+      // delete it with Shift+Backspace, and check which file was created.
+      // The buffer is unsuitable for this assertion: after the deletion,
+      // readline may redraw the whole (wrapped) prompt line instead of
+      // erasing in place, and the server-side buffer capture keeps the stale
+      // pre-erase command image, so a grep for the original text matches even
+      // though the deletion worked. Whether readline erases or redraws is a
+      // shell implementation detail -- the grep started failing with Ubuntu
+      // 26.04 (bash 5.3 / readline 8.3, which reworked redisplay) while
+      // older Ubuntu erased in place -- and also depends on prompt width,
+      // which varies per CI runner (hostname and sandbox path lengths).
+      const sandboxDir = sandbox.dir.replace(/\\/g, '/');
+      await page.keyboard.type(`cd ${sandboxDir}`);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('touch term_bs_test.txtQ');
       await page.keyboard.press('Shift+Backspace');
       await page.keyboard.press('Enter');
 
-      // "echo hell" must appear AND "echo hello" must not -- if Shift+Backspace
-      // had no effect the full word would be present and the test would pass
-      // vacuously on the substring match alone.
+      // If Shift+Backspace deleted the trailing "Q", the file without the
+      // "Q" exists and the file with it does not. If the keystroke had no
+      // effect, only "term_bs_test.txtQ" exists and the first condition
+      // stays false; if it deleted more than one character, neither file
+      // matches. The file is cleaned up with the sandbox by globalTeardown.
       await expect.poll(
         () => captureResult(
           page,
-          '{ ids <- rstudioapi::terminalList(); ' +
-          'buf <- paste(rstudioapi::terminalBuffer(ids[[1]]), collapse = "\\n"); ' +
-          'grepl("echo hell", buf) && !grepl("echo hello", buf) }',
+          `{ file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txt")) && ` +
+          `!file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txtQ")) }`,
         ),
         { timeout: TIMEOUTS.consoleReady },
       ).toBe('TRUE');

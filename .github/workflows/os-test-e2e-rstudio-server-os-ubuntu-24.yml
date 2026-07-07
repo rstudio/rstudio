@@ -75,9 +75,16 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
 
 permissions:
@@ -87,6 +94,9 @@ permissions:
   # permissions in a reusable workflow at call time, so this must be declared
   # at the top level even though only e2e-merge uses it.
   pull-requests: write
+  # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
+  # role (see .github/actions/os-publish-e2e-report).
+  id-token: write
 
 jobs:
   # Builds RStudio Server from this PR's source on the same runner image as
@@ -119,15 +129,22 @@ jobs:
       # report into the build log on every PR run.
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
 
     steps:
       - uses: actions/checkout@v4
 
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
-      - name: Cache rstudio-tools deps
+      # Restore-only; the matching Save steps after "Install build
+      # dependencies" run only from main-scoped runs.
+      - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -137,8 +154,9 @@ jobs:
       # install-common (called by install-dependencies-noble) installs R
       # packages (via install-packages) into R_LIBS_USER. Cache the whole
       # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
-      - name: Cache build-time R packages
-        uses: actions/cache@v4
+      - name: Restore build-time R packages
+        id: rlibs-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -159,9 +177,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: package/linux/build-Server-DEB/gwt
-          key: rstudio-gwt-linux-x86_64-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          key: rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-linux-x86_64-v1-
+            rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-
 
       # GHA-backed sccache. Installs sccache on PATH and starts the sccache
       # server with the GH Actions cache API as the storage backend (via
@@ -180,6 +198,26 @@ jobs:
       - name: Install build dependencies
         working-directory: dependencies/linux
         run: ./install-dependencies-noble
+
+      # Save the tools / R-libs caches only from main-scoped runs (the seed
+      # and scheduled workflows), and only on a key miss. A cache saved from a
+      # PR run lands in that PR's merge-ref scope, which no other branch can
+      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # cache quota, and that pressure is what evicts main's copies and sends
+      # every PR build cold in the first place.
+      - name: Save rstudio-tools deps
+        if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      - name: Save build-time R packages
+        if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
 
       - name: Zero sccache stats
         run: sccache --zero-stats || true
@@ -213,8 +251,13 @@ jobs:
       # run could otherwise write partial GWT output to the cache, and every
       # future restore would silently ship a broken frontend until the
       # hashFiles key rotates. Same poison-resistance pattern macOS uses.
+      # Save only from main-scoped runs, and only on a key miss: a cache saved
+      # from a PR run lands in that PR's merge-ref scope, which no other
+      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # Actions cache quota, and that pressure is what evicts main's copy and
+      # sends every PR build cold in the first place.
       - name: Save GWT output
-        if: steps.build.conclusion == 'success'
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: package/linux/build-Server-DEB/gwt
@@ -359,23 +402,13 @@ jobs:
           echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
-      # Cache the daily installer keyed on its resolved filename. Filenames
-      # embed the version + build number on the auto-resolve path so the
-      # content is immutable per name: new daily misses and downloads, same
-      # day re-run hits and skips (SHA still verified below). Skip caching
-      # on the override path -- a user-supplied URL has no immutability
-      # guarantee and its SHA check is skipped, so a reused basename could
-      # otherwise serve stale, unverified bytes.
-      - name: Cache RStudio Server installer
-        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-server-installer-${{ steps.resolve.outputs.filename }}
-
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
       - name: Download RStudio Server .deb
-        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -497,7 +530,7 @@ jobs:
           exit 1
 
       - name: Install e2e test dependencies
-        uses: ./.github/actions/e2e-deps
+        uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
@@ -507,7 +540,11 @@ jobs:
           PW_RSTUDIO_MODE: server
           PW_RSTUDIO_EDITION: os
           PW_RSTUDIO_SERVER_URL: http://localhost:8787
-          PW_PROJECT_NAME: ${{ inputs.project }}
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -524,7 +561,6 @@ jobs:
             ARGS+=($PW_TEST_SELECTOR)
             set +f
           fi
-          ARGS+=(--project "$PW_PROJECT_NAME")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
@@ -532,23 +568,43 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
-            npx playwright test "${ARGS[@]}"
+          # Run Playwright under our own Xvfb and exec the watchdog as the step's
+          # main process, so a job cancellation's SIGTERM reaches the watchdog
+          # (which forwards it to Playwright's process group as SIGINT -- its
+          # cancellation signal -- then escalates to SIGKILL if the run doesn't
+          # wind down). xvfb-run is a shell wrapper that does not forward signals
+          # to its child, which left cancelled Linux e2e jobs running until
+          # their timeout-minutes instead of stopping. -ac disables X access
+          # control so Chromium connects without an auth cookie; -nolisten tcp
+          # keeps the display on the local socket only. We wait for the X socket
+          # before launching so it doesn't race a cold display, and fail loudly
+          # (dumping the Xvfb log) if it never comes up, rather than exec-ing
+          # Playwright against a dead display and surfacing an opaque launch error.
+          Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for _ in $(seq 1 50); do
+            [ -S /tmp/.X11-unix/X99 ] && break
+            sleep 0.1
+          done
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
+            cat /tmp/xvfb.log || true
+            exit 1
+          fi
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
-      # Platform-prefixed artifact name. When this Linux workflow runs from
-      # the same parent PR run as the Desktop platforms (via the combined
-      # os-test-e2e-rstudio-pr.yml orchestrator), all three platforms upload
-      # to the same artifact namespace. macOS uses `-mac-`, Windows uses
-      # `-win-`; matching them with `-linux-` keeps each platform's merge
-      # job downloading ONLY its own shard reports. Without the prefix, the
-      # Linux merge job globs `playwright-blob-report-*` and silently
-      # ingests every platform's blobs, reporting combined totals under the
-      # Linux Server sticky comment header.
+      # Platform-prefixed artifact name. When this Linux Server workflow runs
+      # from the same parent PR run as the other platforms (via the combined
+      # os-test-e2e-rstudio-pr.yml orchestrator), all platforms upload to the
+      # same artifact namespace. macOS uses `-mac-`, Windows uses `-win-`, and
+      # Linux Desktop uses `-linux-desktop-`; `-linux-server-` keeps this
+      # platform's shard reports separate so its merge job downloads ONLY its
+      # own. A bare `-linux-` prefix would also match the Linux Desktop blobs.
       - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-blob-report-linux-${{ matrix.shard }}
+          name: playwright-blob-report-linux-server-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -560,22 +616,23 @@ jobs:
           # Platform-prefixed for the same reason as the blob report above:
           # macOS uploads test-results-${{ matrix.shard }} too, so under the
           # combined PR orchestrator the two would collide and upload-artifact
-          # would reject the second one. -linux- matches the -mac- / -win-
-          # convention the Desktop workflows already use.
-          name: test-results-linux-${{ matrix.shard }}
+          # would reject the second one. -linux-server- distinguishes this from
+          # the Linux Desktop workflow's test-results-linux-desktop-*.
+          name: test-results-linux-server-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
       # Preserved per-spec sandbox tree on failure -- includes rsession logs,
       # the spec's RStudio config / data home, and per-test working dirs.
-      # Platform-prefixed name to avoid colliding with the macOS Desktop
-      # workflow's identically-named pw-sandbox-${{ matrix.shard }} when both
-      # platforms run under the combined PR orchestrator.
+      # Platform-prefixed name to avoid colliding with the other platforms'
+      # sandbox artifacts (macOS pw-sandbox-${{ matrix.shard }}, Linux Desktop
+      # pw-sandbox-linux-desktop-*) when they run under the combined PR
+      # orchestrator.
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pw-sandbox-linux-${{ matrix.shard }}
+          name: pw-sandbox-linux-server-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
@@ -609,12 +666,14 @@ jobs:
   # (when post_pr_comment is set).
   e2e-merge:
     needs: [e2e-server-ubuntu]
-    if: always() && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
+    if: always() && inputs.defer_merge != true && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -636,11 +695,12 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
         with:
-          # Linux-only glob: in the combined PR orchestrator, macOS and
-          # Windows shards also publish under the same artifact namespace
-          # (playwright-blob-report-mac-* and playwright-blob-report-win-*).
-          # A bare `playwright-blob-report-*` would sweep all three.
-          pattern: playwright-blob-report-linux-*
+          # Linux-Server-only glob: in the combined PR orchestrator the other
+          # platforms also publish blob reports (playwright-blob-report-mac-*,
+          # -win-*, and -linux-desktop-*). A bare `playwright-blob-report-*` --
+          # or even `-linux-*`, which would match the Linux Desktop blobs --
+          # would sweep in other platforms' reports.
+          pattern: playwright-blob-report-linux-server-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
@@ -651,68 +711,39 @@ jobs:
             echo "::error::No blob reports found -- both shards failed to produce artifacts"
             exit 1
           fi
-          cat > merge.config.ts <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({
-            reporter: [
-              ['html', { outputFolder: 'playwright-report', open: 'never' }],
-              ['json', { outputFile: 'playwright-report/test-results.json' }],
-            ],
-          });
-          EOF
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
 
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
       - name: Parse aggregated results
         id: summary
         if: always()
-        run: |
-          FILE="e2e/rstudio/playwright-report/test-results.json"
-          if [ -f "$FILE" ]; then
-            if ! PASSED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == true and (.tests[0].status // "expected") != "flaky" and (.tests[0].status // "expected") != "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (PASSED)"; exit 1
-            fi
-            if ! FAILED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]? | select(.ok == false)] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FAILED)"; exit 1
-            fi
-            if ! SKIPPED=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "skipped")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (SKIPPED)"; exit 1
-            fi
-            if ! FLAKY=$(jq '[.suites[] | recurse(.suites[]?) | .specs[]?.tests[]? | select(.status == "flaky")] | length' "$FILE"); then
-              echo "::error::Failed to parse test-results.json (FLAKY)"; exit 1
-            fi
-          else
-            PASSED=0; FAILED=0; SKIPPED=0; FLAKY=0
-          fi
-          TOTAL=$((PASSED + FAILED))
-          if [ "$TOTAL" -gt 0 ]; then
-            RATE=$(( (PASSED * 100) / TOTAL ))
-            FILLED=$(( (RATE * 20) / 100 ))
-            EMPTY=$(( 20 - FILLED ))
-            BAR=""
-            [ "$FILLED" -gt 0 ] && BAR=$(printf '█%.0s' $(seq 1 $FILLED))
-            [ "$EMPTY"  -gt 0 ] && BAR="${BAR}$(printf '░%.0s' $(seq 1 $EMPTY))"
-          else
-            RATE=0; BAR="░░░░░░░░░░░░░░░░░░░░"
-          fi
-          echo "passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
-          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
-          echo "flaky=$FLAKY" >> "$GITHUB_OUTPUT"
-          echo "rate=$RATE" >> "$GITHUB_OUTPUT"
-          echo "bar=$BAR" >> "$GITHUB_OUTPUT"
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
 
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # Match the -mac / -win suffix the Desktop workflows already use
-          # for their merged reports. Avoids a future collision if the bare
+          # Match the -mac / -win / -linux-desktop suffixes the other workflows
+          # use for their merged reports. Avoids a future collision if the bare
           # `playwright-report` name is ever introduced by another callee.
-          name: playwright-report-linux
+          name: playwright-report-linux-server
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
+
+      # Publish a browsable copy of the report to S3 on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: a
+      # no-op on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: linux-server
 
       - name: Post E2E results to PR
         if: |
@@ -737,7 +768,9 @@ jobs:
 
             <details>
             <summary>📥 Download Playwright report</summary>
-
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
+            ', steps.publish-report.outputs.url) || '' }}
             **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
 
             > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.

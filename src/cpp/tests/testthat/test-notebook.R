@@ -19,6 +19,16 @@ test_that("#| comments are removed by .rs.extractChunkInnerCode() (#11606)", {
    expect_true(!any(grepl("#[|]", extract)))
 })
 
+test_that("--| cell options are removed by .rs.extractChunkInnerCode() (#18093)", {
+   # SQL chunks may use the '--|' comment prefix for cell options; these
+   # must be stripped before the body is sent to the database server, as
+   # some backends (MySQL / MariaDB) reject '--|' as invalid SQL syntax.
+   code <- "```{sql}\n--| connection: con\nSELECT 1\n```"
+   extract <- .rs.extractChunkInnerCode(code)
+   expect_false(any(grepl("--[|]", extract)))
+   expect_true(any(grepl("SELECT 1", extract)))
+})
+
 test_that(".rs.rnb.extractInlineRCode() finds inline R code in prose only", {
    contents <- c(
       "---",

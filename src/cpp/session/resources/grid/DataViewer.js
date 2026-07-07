@@ -4180,6 +4180,11 @@ var onScrollEnd = function() {
 // internal timer state survives across bootstraps and addEventListener
 // stays idempotent.
 var onResize = debounce(TIMING.resizeDebounce, function() {
+   // A resize changes the viewport's clientWidth, which can widen or narrow the
+   // rendered column window. Recompute it (rebuilding the windowed header) so a
+   // wider pane fills with the now-visible columns instead of leaving the table
+   // cut off at the old window's edge -- the scroll handlers do the same.
+   syncColumnWindow();
    applyPinnedColumns();
    renderVisibleRows(true);
    updateInfoBar();

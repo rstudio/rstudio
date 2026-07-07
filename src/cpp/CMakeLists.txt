@@ -179,7 +179,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.90.0)
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.91.0)
 endif()
 
 # set up rstudio boost version components

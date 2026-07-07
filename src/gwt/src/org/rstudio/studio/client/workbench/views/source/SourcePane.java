@@ -182,7 +182,13 @@ public class SourcePane extends LazyPanel implements Display,
    @Override
    public void setDirty(Widget widget, boolean dirty)
    {
-      Widget tab = tabPanel_.getTabWidget(widget);
+      // the widget may no longer be in the panel (e.g. asynchronous work
+      // completing against a document whose tab has already been closed)
+      int index = tabPanel_.getWidgetIndex(widget);
+      if (index < 0)
+         return;
+
+      Widget tab = tabPanel_.getTabWidget(index);
       if (dirty)
          tab.addStyleName(ThemeStyles.INSTANCE.dirtyTab());
       else

@@ -149,6 +149,17 @@ public class ApplicationAutomation
       return isAutomationAgent_;
    }
 
+   // When true, a completion request that returns exactly one result shows
+   // the completion popup instead of auto-accepting the match. Only settable
+   // through the automation bridge (window.rstudio.completions), so ordinary
+   // sessions always see the default auto-accept behavior. Consulted by
+   // RCompletionManager and CompletionManagerBase at their auto-accept
+   // branches.
+   public final boolean isCompletionPopupForced()
+   {
+      return completionPopupForced_;
+   }
+
    public final void initializeAgent()
    {
       isAutomationAgent_ = true;
@@ -164,6 +175,7 @@ public class ApplicationAutomation
       registerLayout();
       registerErrors();
       registerConsole();
+      registerCompletions();
       registerReadinessHandlers();
    }
 
@@ -329,6 +341,11 @@ public class ApplicationAutomation
    private void registerLayout()
    {
       registerLayoutObject();
+   }
+
+   private void registerCompletions()
+   {
+      registerCompletionsObject();
    }
 
    // Record uncaught client exceptions where the automation harness can see
@@ -853,6 +870,12 @@ public class ApplicationAutomation
    //   clear()          -> empty the record
    //   simulate(message)-> throw an uncaught exception from a scheduled
    //                       context (harness self-test only)
+   //
+   // Also records unhandled promise rejections. GWT does not $entry-wrap
+   // native promise continuations, so an exception thrown in one bypasses the
+   // uncaught-exception handler entirely and can silently strand async UI
+   // (e.g. the visual editor loading spinner, rstudio/rstudio#18134). The
+   // listener gives such failures a message + stack in the test record.
    private native final void registerErrorsObject() /*-{
       var self = this;
       $wnd.rstudio.errors = $wnd.rstudio.errors || {};
@@ -865,6 +888,17 @@ public class ApplicationAutomation
       });
       $wnd.rstudio.errors.simulate = $entry(function(message) {
          self.@org.rstudio.studio.client.application.ApplicationAutomation::simulateUncaughtException(Ljava/lang/String;)(message);
+      });
+      $wnd.addEventListener("unhandledrejection", function(event) {
+         try {
+            var reason = event.reason;
+            var message = "Unhandled promise rejection: " +
+               (reason && reason.message ? reason.message : String(reason));
+            var stack = (reason && reason.stack) ? String(reason.stack) : "";
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::recordClientException(Ljava/lang/String;Ljava/lang/String;)(message, stack);
+         } catch (e) {
+            // never let recording produce its own rejection cascade
+         }
       });
    }-*/;
 
@@ -884,6 +918,26 @@ public class ApplicationAutomation
          });
       });
    }-*/;
+
+   // window.rstudio.completions: automation-only completion overrides.
+   //   setAlwaysShowPopup(force) -> when force is true, a completion request
+   //   that returns exactly one result shows the popup instead of
+   //   auto-accepting the match. Lets tests enumerate popup items
+   //   deterministically regardless of how many results a token happens to
+   //   have; the auto-accept behavior itself stays the default (and remains
+   //   separately testable) when the flag is off.
+   private native final void registerCompletionsObject() /*-{
+      var self = this;
+      $wnd.rstudio.completions = $wnd.rstudio.completions || {};
+      $wnd.rstudio.completions.setAlwaysShowPopup = $entry(function(force) {
+         self.@org.rstudio.studio.client.application.ApplicationAutomation::setCompletionPopupForced(*)(!!force);
+      });
+   }-*/;
+
+   private void setCompletionPopupForced(boolean forced)
+   {
+      completionPopupForced_ = forced;
+   }
 
    private native final void registerChatObject() /*-{
       var self = this;
@@ -936,4 +990,5 @@ public class ApplicationAutomation
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;
    private boolean consoleHandlersRegistered_ = false;
+   private boolean completionPopupForced_ = false;
 }

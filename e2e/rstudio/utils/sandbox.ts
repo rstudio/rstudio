@@ -111,7 +111,6 @@ export async function createSandbox(page: Page): Promise<string> {
           `[sandbox] R workdir ${dir} is not under PW_SANDBOX (${sandbox}); rsession appears to be on a different host. Workdir will not be auto-cleaned.`,
         );
       }
-      console.log(`[sandbox] createSandbox: workdir ${dir}`);
       return dir;
     }
   }
@@ -169,18 +168,7 @@ export function useSuiteSandbox(): { dir: string } {
     },
   };
   test.beforeAll(async ({ rstudioPage }) => {
-    // Timeline instrumentation: bracket the sandbox creation with the suite
-    // name so a later "Error Opening Project" / empty-dir failure can be
-    // correlated against whether (and when) this suite's workdir was created.
-    let suite = '';
-    try {
-      suite = test.info().titlePath.join(' > ');
-    } catch {
-      // test.info() unavailable outside a running hook/test; name is optional.
-    }
-    console.log(`[sandbox] useSuiteSandbox beforeAll start${suite ? ` (${suite})` : ''}`);
     ref.dir = await createSandbox(rstudioPage);
-    console.log(`[sandbox] useSuiteSandbox beforeAll done: dir=${ref.dir}`);
   });
   return ref;
 }
