@@ -508,6 +508,11 @@ jobs:
           # RHEL-compiled R library is ABI-incompatible with Fedora's R. See
           # os-e2e-deps cache-scope.
           cache-scope: fedora44-x86_64
+          # Fedora has no CRAN binaries, so pre-install the harness's full
+          # REQUIRED_PACKAGES set into the cached R library here. Otherwise the
+          # Playwright globalSetup source-compiles that set at test time, which
+          # is what PW_HEARTBEAT_TIMEOUT_SECONDS below was papering over.
+          install-required-packages: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -535,15 +540,17 @@ jobs:
           PW_DEBUG_LAUNCH: '1'
           # Point the Playwright harness's own R-libs provisioner
           # (fixtures/r-libs-setup.ts, run in globalSetup) at the same library
-          # os-e2e-deps already populated, instead of its default per-host cache.
-          # That library holds the e2e DESCRIPTION deps, so globalSetup only has
-          # to add the extra REQUIRED_PACKAGES it doesn't already contain.
+          # os-e2e-deps populated, instead of its default per-host cache. Because
+          # os-e2e-deps ran with install-required-packages, that library holds
+          # both the e2e DESCRIPTION deps and the full REQUIRED_PACKAGES set, so
+          # globalSetup finds everything present and installs nothing.
           PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
-          # Fedora has no PPM/CRAN binaries, so the harness compiles those extra
-          # packages from source at test time -- a long silent stretch that the
-          # default 300s heartbeat idle-timeout would kill (exit 124). Raise it
-          # so the one-time source build can finish. (Option C: a stopgap until
-          # the harness reuses a fully-built cached library -- see PR #18155.)
+          # Defensive fallback. With install-required-packages above, globalSetup
+          # normally compiles nothing at test time. But if a package slipped
+          # through and had to be source-compiled here (Fedora has no PPM/CRAN
+          # binaries), that is a long silent stretch the default 300s heartbeat
+          # idle-timeout would kill (exit 124); the higher ceiling lets it finish
+          # rather than failing the run outright.
           PW_HEARTBEAT_TIMEOUT_SECONDS: '2400'
         run: |
           ARGS=()
