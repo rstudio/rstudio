@@ -200,13 +200,18 @@ ProgramStatus Options::read(int argc,
    optionsDesc.commandLine.add(automation).add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
  
-   // Detect --check-config (and its --test-config alias) once here so the
-   // result is available to callers via checkConfigMode() without re-scanning.
+   // Detect --check-config (and its --test-config alias) and --setup-db once
+   // here so the result is available to callers via checkConfigMode() /
+   // setupDbMode() without re-scanning.
    checkConfigMode_ = program_options::detectCheckConfigMode(argc, argv);
+   setupDbMode_ = program_options::detectSetupDbMode(argc, argv);
 
    // read options; pass deferCheckConfig=true so that a clean --check-config
    // result returns run() rather than exitSuccess(), allowing ServerMain to
    // run extended file-path and R-installation checks before exiting.
+   // --setup-db does not go through the --check-config validation branch at
+   // all (it only needs allowUnregisteredConfigOptions, set above via
+   // setupDbMode_), so it always falls through read() to a normal run().
    bool help = false;
    ProgramStatus status = core::program_options::read(optionsDesc,
                                                       argc,
@@ -270,7 +275,9 @@ ProgramStatus Options::read(int argc,
    // admin runs `rserver --check-config` because the default server user
    // ("rstudio-server") exists with a different uid.  Skip the entire block
    // and let the extended checks in ServerMain handle anything config-related.
-   if (!checkConfigMode_)
+   // --setup-db has the same requirement: it's typically run by an admin
+   // before the service user even exists, to create the database it will use.
+   if (!checkConfigMode_ && !setupDbMode_)
    {
       if (serverUser_.empty())
       {

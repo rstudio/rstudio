@@ -1,0 +1,165 @@
+/*
+ * ServerSetupDbTests.cpp
+ *
+ * Copyright (C) 2026 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <unistd.h>
+
+#include <gtest/gtest.h>
+
+#include "ServerSetupDb.hpp"
+
+using namespace rstudio::core;
+
+namespace rstudio {
+namespace server {
+
+TEST(ServerSetupDbTests, RejectsInvalidIdentifier)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("not-a-valid-name; DROP TABLE x", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+}
+
+TEST(ServerSetupDbTests, AcceptsValidIdentifier)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("rstudio_os", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(passed);
+   EXPECT_TRUE(out.str().empty());
+}
+
+TEST(ServerSetupDbTests, AcceptsIdentifierWithHyphenAfterLeadingChar)
+{
+   // The tool's own default database name (kDefaultOpenSourceDatabaseName,
+   // "rstudio-os") must pass its own validation.
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("rstudio-os", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(passed);
+   EXPECT_TRUE(out.str().empty());
+}
+
+TEST(ServerSetupDbTests, GeneratesPasswordWithSafeCharsetAndLength)
+{
+   std::string password = generateServiceUserPassword();
+   EXPECT_GE(password.size(), 24u);
+   EXPECT_EQ(std::string::npos, password.find('\''));
+   EXPECT_EQ(std::string::npos, password.find('"'));
+   EXPECT_EQ(std::string::npos, password.find('\\'));
+   EXPECT_EQ(std::string::npos, password.find(';'));
+}
+
+TEST(ServerSetupDbTests, GeneratesDifferentPasswordsEachCall)
+{
+   // Not a rigorous randomness test -- just a sanity check that the CSPRNG
+   // seed isn't accidentally fixed.
+   EXPECT_NE(generateServiceUserPassword(), generateServiceUserPassword());
+}
+
+TEST(ServerSetupDbTests, ResolveMasterPasswordPrefersFileOverEnvAndPrompt)
+{
+   char path[] = "/tmp/setup-db-master-password-XXXXXX";
+   int fd = mkstemp(path);
+   ASSERT_GE(fd, 0);
+   close(fd);
+   {
+      std::ofstream file(path);
+      file << "from-file-secret\nignored-second-line\n";
+   }
+
+   setenv("RSERVER_SETUP_DB_MASTER_PASSWORD", "from-env-secret", 1 /* overwrite */);
+
+   std::istringstream in("");
+   std::ostringstream out;
+   std::string password;
+   Error error = resolveMasterPassword(path, in, out, &password);
+
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+   std::remove(path);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ("from-file-secret", password);
+}
+
+TEST(ServerSetupDbTests, ResolveMasterPasswordFallsBackToEnvVar)
+{
+   setenv("RSERVER_SETUP_DB_MASTER_PASSWORD", "from-env-secret", 1 /* overwrite */);
+
+   std::istringstream in("");
+   std::ostringstream out;
+   std::string password;
+   Error error = resolveMasterPassword(std::string(), in, out, &password);
+
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ("from-env-secret", password);
+}
+
+TEST(ServerSetupDbTests, ResolveMasterPasswordFallsBackToPromptWhenUnset)
+{
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+
+   std::istringstream in("typed-secret\n");
+   std::ostringstream out;
+   std::string password;
+   Error error = resolveMasterPassword(std::string(), in, out, &password);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ("typed-secret", password);
+   EXPECT_NE(std::string::npos, out.str().find("Master password:"));
+}
+
+TEST(ServerSetupDbTests, ResolveMasterPasswordFailsOnUnreadableFile)
+{
+   std::istringstream in("");
+   std::ostringstream out;
+   std::string password;
+   Error error = resolveMasterPassword("/nonexistent/path/that/does/not/exist", in, out, &password);
+   EXPECT_TRUE(error);
+}
+
+TEST(ServerSetupDbTests, ConnectAsMasterReportsConnectFailure)
+{
+   // No PostgreSQL server listening on this port, so connect() should fail
+   // and be reported as [FAIL] rather than propagated as an Error.
+   std::istringstream in("127.0.0.1\n1\nno-such-user\n");
+   std::ostringstream out;
+   setenv("RSERVER_SETUP_DB_MASTER_PASSWORD", "unused", 1 /* overwrite */);
+
+   SetupDbFlags flags;
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+}
+
+} // namespace server
+} // namespace rstudio
