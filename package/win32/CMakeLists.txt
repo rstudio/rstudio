@@ -248,6 +248,14 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegValue SHCTX 'Software\\\\Classes\\\\.Rtex\\\\OpenWithProgids' 'RStudio.rtex'
 #")
 
+# the installer requires NsisMultiUser; check at configure time since a missing
+# include directory only surfaces deep inside makensis as a cryptic
+# '!include: could not find: "UAC.nsh"' error
+set(NSIS_MULTIUSER_DIR "${CPACK_DEPENDENCIES_DIR}/nsis-multiuser/${CPACK_NSIS_MULTIUSER_VERSION}")
+if(NOT EXISTS "${NSIS_MULTIUSER_DIR}/Include/NsisMultiUser.nsh")
+   message(FATAL_ERROR "NsisMultiUser not found at ${NSIS_MULTIUSER_DIR}. Run dependencies/windows/install-dependencies.cmd to install it.")
+endif()
+
 # build installer
 include(CPack)
 
