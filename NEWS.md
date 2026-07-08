@@ -1,6 +1,7 @@
 ## RStudio 2026.08.0 "Yellow Yarrow" Release Notes
 
 ### New
+- ([#14122](https://github.com/rstudio/rstudio/issues/14122)): The Windows installer now lets you choose between installing for all users (the default, which prompts for administrator rights) and installing for the current user only (no administrator rights required). A current-user install no longer prompts for elevation, and uninstalling one now removes its files, Start Menu shortcut, and registry entries cleanly.
 
 ### Fixed
 
