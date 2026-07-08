@@ -325,11 +325,7 @@ jobs:
       # the sandbox still refuses to come up here, pass --no-sandbox via
       # rstudio_extra_args (PW_RSTUDIO_EXTRA_ARGS) rather than changing these.
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    # TEMPORARY: bumped 120 -> 300 to let a COLD-cache run finish the from-source
-    # package compile (Fedora has no binaries) so we can verify the run end to
-    # end. Revert to 120 before merge -- warm-cache runs restore the prebuilt
-    # library and finish well under 120.
-    timeout-minutes: 300
+    timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
