@@ -186,7 +186,7 @@ jobs:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/allusers', '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
