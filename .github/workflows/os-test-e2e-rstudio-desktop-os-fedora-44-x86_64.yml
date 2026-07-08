@@ -400,8 +400,17 @@ jobs:
       # ignored on Fedora -- dnf provides whatever R the distro ships.
       - name: Install R (Fedora native)
         run: |
-          dnf -y install R-core R-core-devel
+          # Clear tsflags for this transaction so R's documentation tree is
+          # installed. Fedora container images ship /etc/dnf/dnf.conf with
+          # tsflags=nodocs (a space-saving default), which makes dnf skip
+          # /usr/share/doc/R. RStudio's R discovery (r/session/RDiscovery.cpp)
+          # requires R_DOC_DIR to exist and aborts the session otherwise, so a
+          # docless R install starts but never reaches window.rstudio.ready.
+          dnf -y install --setopt=tsflags='' R-core R-core-devel
           R --version
+          # Diagnostics: the doc dir R reports, and confirm it now exists.
+          Rscript -e 'cat("doc=", R.home("doc"), " R_DOC_DIR=", Sys.getenv("R_DOC_DIR"), "\n", sep="")'
+          ls -ld /usr/share/doc/R || echo "MISSING /usr/share/doc/R"
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build
