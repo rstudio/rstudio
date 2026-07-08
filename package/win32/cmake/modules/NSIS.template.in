@@ -425,9 +425,12 @@ Function un.onInit
   ${endif}
 
   ; The Add/Remove UninstallString (and the installer's remove-previous step)
-  ; carry /allusers or /currentuser. A machine-wide (all-users) uninstall must
-  ; stay elevated; only a current-user uninstall is de-elevated to avoid a
-  ; needless UAC prompt (#14122).
+  ; carry /allusers or /currentuser. Windows runs uninstallers launched from
+  ; Apps & features elevated, and an elevated instance (possibly a different
+  ; admin account) resolves $LOCALAPPDATA and HKCU for the wrong user, so a
+  ; current-user uninstall is relaunched as the unelevated shell user. An
+  ; all-users uninstall stays elevated; de-elevating it would only trigger a
+  ; second elevation prompt from MULTIUSER_UNINIT (#14122).
   ${GetOptions} $R0 "/allusers" $R1
   ${ifnot} ${errors}
     StrCpy $RunningAllUsers 1
@@ -440,10 +443,14 @@ Function un.onInit
   ${andif} $RunningAllUsers = 0
     ${if} ${UAC_IsAdmin}
     ${andif} $RunningAsShellUser = 0
-      ; Relaunch the uninstaller as the (unelevated) shell user so a per-user
-      ; uninstall doesn't needlessly prompt for elevation (#14122).
+      ; Relaunch the uninstaller as the unelevated shell user so it removes the
+      ; correct user's files and registry entries. If the relaunch fails, fall
+      ; through and continue elevated rather than exit without uninstalling.
       ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${UNINSTALL_FILENAME}" "open" "/shelluser $R0"
-      Quit
+      ${if} $0 == "ok"
+      ${orif} $0 == "fallback"
+        Quit
+      ${endif}
     ${endif}
   ${endif}
 
