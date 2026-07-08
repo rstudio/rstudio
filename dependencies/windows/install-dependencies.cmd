@@ -270,7 +270,24 @@ cd /d "%WINDOWS_INSTALL_DIR%"
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
+
+REM The install helper creates the folder before downloading, so a failed download
+REM leaves an empty folder that later runs would skip as "already installed".
+REM Remove such remnants so the install can retry, and fail loudly if the
+REM framework header is still missing afterwards.
+if exist %NSISMULTIUSER_FOLDER% if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
+  echo -- Removing incomplete nsis-multiuser directory from a prior failed install
+  rmdir /s /q %NSISMULTIUSER_FOLDER%
+  if exist %NSISMULTIUSER_FOLDER% (
+    echo ^^!^^! ERROR: Could not remove incomplete nsis-multiuser directory. Close any process holding files in it and retry.
+    exit /b 1
+  )
+)
 %RUN% install NSISMULTIUSER
+if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
+  echo ^^!^^! ERROR: NsisMultiUser install failed: %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh not found.
+  exit /b 1
+)
 
 
 echo -- Installing panmirror (Visual Editor)
