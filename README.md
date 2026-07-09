@@ -6,11 +6,13 @@ RStudio is an integrated development environment (IDE) for the
 features include:
 
 - Customizable workbench with all of the tools required to work with R in one
-  place (console, source, plots, environment, history, help, files, packages,
-  etc.).
+  place (console, terminal, source, plots, environment, history, help, files,
+  packages, etc.).
 - Syntax highlighting editor with code completion.
 - Execute code directly from the source editor (line, selection, or file).
 - Authoring of reproducible documents and reports with Quarto and R Markdown.
+- Optional AI features, including GitHub Copilot completions, Posit AI Next
+  Edit Suggestions, and the Posit Assistant.
 - Support for authoring Sweave and TeX documents.
 - Runs on Windows, Mac, and Linux, and has a community-maintained
   [FreeBSD port](https://www.freshports.org/devel/RStudio/).
