@@ -31,8 +31,8 @@ the file COPYING. You can find our source code repository on GitHub at [https://
 Documentation
 -----------------------------------------------------------------------------
 
-For information on how to use RStudio check out our
-[online documentation](https://docs.posit.co/ide/user/).
+For information on how to use RStudio, see the
+[RStudio User Guide](https://docs.posit.co/ide/user/).
 
 See also the following files included with the distribution:
 
