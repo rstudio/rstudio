@@ -1,21 +1,23 @@
 RStudio
 =============================================================================
 
-RStudio is an integrated development environment (IDE) for the 
+RStudio is an integrated development environment (IDE) for the
 [R programming language](https://www.r-project.org). Some of its
 features include:
 
 - Customizable workbench with all of the tools required to work with R in one
-  place (console, source, plots, workspace, help, history, etc.).
+  place (console, source, plots, environment, history, help, files, packages,
+  etc.).
 - Syntax highlighting editor with code completion.
 - Execute code directly from the source editor (line, selection, or file).
-- Full support for authoring Sweave and TeX documents.
-- Runs on Windows, Mac, and Linux, and has a community-maintained 
+- Authoring of reproducible documents and reports with Quarto and R Markdown.
+- Support for authoring Sweave and TeX documents.
+- Runs on Windows, Mac, and Linux, and has a community-maintained
   [FreeBSD port](https://www.freshports.org/devel/RStudio/).
 - Can also be run as a server, enabling multiple users to access the RStudio
   IDE using a web browser.
 
-For more information on RStudio please visit the 
+For more information on RStudio please visit the
 [project website](https://posit.co/).
 
 Getting the Code
@@ -28,7 +30,7 @@ Documentation
 -----------------------------------------------------------------------------
 
 For information on how to use RStudio check out our
-[online documentation](https://docs.posit.co/ide/user/). 
+[online documentation](https://docs.posit.co/ide/user/).
 
 See also the following files included with the distribution:
 
@@ -39,4 +41,11 @@ See also the following files included with the distribution:
 
 If you have problems or want to share feedback with us please visit our
 [community forum](https://forum.posit.co/c/rstudio-ide). For other
-inquiries you can also email us at [info@posit.co](mailto:info@posit.co). 
+inquiries you can also email us at [info@posit.co](mailto:info@posit.co).
+
+Contributing
+-----------------------------------------------------------------------------
+
+We welcome contributions to RStudio. Please see
+[CONTRIBUTING.md](CONTRIBUTING.md) for details on filing bugs, requesting
+enhancements, and submitting code.
