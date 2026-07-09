@@ -325,11 +325,7 @@ jobs:
       # the sandbox still refuses to come up here, pass --no-sandbox via
       # rstudio_extra_args (PW_RSTUDIO_EXTRA_ARGS) rather than changing these.
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    # TEMPORARY: bumped 120 -> 300 to let a COLD-cache run finish the from-source
-    # package compile (Fedora has no binaries) so we can verify the run end to
-    # end. Revert to 120 before merge -- warm-cache runs restore the prebuilt
-    # library and finish well under 120.
-    timeout-minutes: 300
+    timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
@@ -400,8 +396,17 @@ jobs:
       # ignored on Fedora -- dnf provides whatever R the distro ships.
       - name: Install R (Fedora native)
         run: |
-          dnf -y install R-core R-core-devel
+          # Clear tsflags for this transaction so R's documentation tree is
+          # installed. Fedora container images ship /etc/dnf/dnf.conf with
+          # tsflags=nodocs (a space-saving default), which makes dnf skip
+          # /usr/share/doc/R. RStudio's R discovery (r/session/RDiscovery.cpp)
+          # requires R_DOC_DIR to exist and aborts the session otherwise, so a
+          # docless R install starts but never reaches window.rstudio.ready.
+          dnf -y install --setopt=tsflags='' R-core R-core-devel
           R --version
+          # Diagnostics: the doc dir R reports, and confirm it now exists.
+          Rscript -e 'cat("doc=", R.home("doc"), " R_DOC_DIR=", Sys.getenv("R_DOC_DIR"), "\n", sep="")'
+          ls -ld /usr/share/doc/R || echo "MISSING /usr/share/doc/R"
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build
@@ -531,7 +536,15 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
-          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Always launch with --no-sandbox in this container. Electron's
+          # Chromium sandbox needs an unprivileged user namespace, which the
+          # bare-runner Ubuntu jobs enable via a host sysctl -- unreachable from
+          # inside this fedora:44 container, so the sandbox can't initialize and
+          # RStudio starts but never opens its --remote-debugging-port (CDP
+          # connect gets ECONNREFUSED). The container is already the isolation
+          # boundary here, so disabling the in-process sandbox is safe. Any
+          # caller-supplied rstudio_extra_args are appended.
+          PW_RSTUDIO_EXTRA_ARGS: --no-sandbox ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
