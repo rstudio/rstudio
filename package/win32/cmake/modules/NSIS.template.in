@@ -346,8 +346,66 @@ FunctionEnd
 ;
 ; RSTUDIO CHANGE - uninstall previous version
 ;
+; With MULTIUSER_INSTALLMODE_ALLOW_BOTH_INSTALLATIONS 0 the install-mode page
+; tells the user that switching between per-user and all-users replaces the
+; existing installation, but NsisMultiUser leaves the actual removal to the
+; script. Without it the old copy stays on disk, and its Add/Remove entry is
+; shadowed because both modes register the same uninstall key name (see
+; MULTIUSER_RegistryAddInstallInfo in NsisMultiUser.nsh).
+;
+; Sets $1 to the opposite mode's uninstall command ('"<path>\Uninstall.exe"
+; /allusers|/currentuser', as NsisMultiUser stores UninstallString) and $2 to
+; its installation folder; both are empty when there is nothing to remove.
+; Invoked via UAC_AsUser_Call so the unelevated outer instance also holds the
+; values in case RunCrossModeUninstaller runs there.
+Function GetCrossModeUninstaller
+  StrCpy $1 ""
+  StrCpy $2 ""
+  ${If} $MultiUser.InstallMode == "AllUsers"
+    ${If} $HasPerUserInstallation = 1
+      StrCpy $1 $PerUserUninstallString
+      StrCpy $2 $PerUserInstallationFolder
+    ${EndIf}
+  ${ElseIf} $HasPerMachineInstallation = 1
+    StrCpy $1 $PerMachineUninstallString
+    StrCpy $2 $PerMachineInstallationFolder
+  ${EndIf}
+FunctionEnd
+
+; _?= makes the uninstaller run in place so ExecWait actually waits (it also
+; means the uninstaller cannot delete itself; the caller cleans up). /uninstall
+; suppresses un.onInit's de-elevation relaunch, which would otherwise detach
+; the real uninstall from ExecWait. $0 is -1 when the uninstaller failed to
+; launch, else its exit code.
+Function RunCrossModeUninstaller
+  StrCpy $0 -1
+  ExecWait '$1 /S /uninstall _?=$2' $0
+FunctionEnd
+
 Section "-Remove previous installation"
- 
+
+  ; remove an installation of the opposite mode (per-user vs all-users)
+  !insertmacro UAC_AsUser_Call Function GetCrossModeUninstaller ${UAC_SYNCREGISTERS}
+  ${If} $1 != ""
+    ${If} $MultiUser.InstallMode == "AllUsers"
+      ; a per-user installation belongs to the unelevated user; run its
+      ; uninstaller in that context so it cleans that user's profile and hive
+      DetailPrint "Removing the existing per-user installation..."
+      !insertmacro UAC_AsUser_Call Function RunCrossModeUninstaller ${UAC_SYNCREGISTERS}
+    ${Else}
+      ; removing a per-machine installation requires elevation; NsisMultiUser
+      ; already elevated this instance for exactly this case (ALLOW_BOTH 0)
+      DetailPrint "Removing the existing all-users installation..."
+      Call RunCrossModeUninstaller
+    ${EndIf}
+    ${If} $0 <> 0
+      DetailPrint "Warning: the existing installation could not be removed; continuing."
+    ${Else}
+      Delete "$2\Uninstall.exe"
+      RMDir "$2"
+    ${EndIf}
+  ${EndIf}
+
   ; check for uninstaller
   IfFileExists "$INSTDIR\Uninstall.exe" 0 done
   
