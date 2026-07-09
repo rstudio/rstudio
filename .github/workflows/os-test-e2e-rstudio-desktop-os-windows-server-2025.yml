@@ -564,7 +564,7 @@ jobs:
       # without the 'quick' flag) and placed in package\win32\build\. It
       # includes rsession.exe, GWT output, vcredist DLLs, and all cmake-installed
       # resources -- a complete, properly-assembled RStudio installation.
-      # The e2e job runs it with /S (silent) so RStudio lands at the standard
+      # The e2e job runs it with /allusers /S (silent; a mode is required for silent installs) so RStudio lands at the standard
       # C:\Program Files\RStudio\ path identical to end-user installs.
       # Skipped in build_only (seed) runs -- no e2e job consumes the artifact.
       - name: Find and stage NSIS installer
@@ -686,7 +686,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
       # Build-from-source path: download and install the NSIS installer produced
-      # by the build job above. Runs the same /S silent install as the
+      # by the build job above. Runs the same /allusers /S silent install as the
       # daily-download path so RStudio lands at C:\Program Files\RStudio\.
       - name: Download RStudio Desktop artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
@@ -705,7 +705,7 @@ jobs:
             exit 1
           }
           Write-Host "Installing from: $installer"
-          $p = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath $installer -ArgumentList '/allusers', '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
@@ -792,7 +792,7 @@ jobs:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/S' -Wait -PassThru
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/allusers', '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
           $exe = 'C:\Program Files\RStudio\rstudio.exe'
           if (-not (Test-Path $exe)) {
