@@ -373,13 +373,22 @@ Function GetCrossModeUninstaller
 FunctionEnd
 
 ; _?= makes the uninstaller run in place so ExecWait actually waits (it also
-; means the uninstaller cannot delete itself; the caller cleans up). /uninstall
-; suppresses un.onInit's de-elevation relaunch, which would otherwise detach
-; the real uninstall from ExecWait. $0 is -1 when the uninstaller failed to
-; launch, else its exit code.
+; means the uninstaller cannot delete itself, so this function cleans up after
+; it). /uninstall suppresses un.onInit's de-elevation relaunch, which would
+; otherwise detach the real uninstall from ExecWait. $0 is -1 when the
+; uninstaller failed to launch, else its exit code.
+;
+; The cleanup must stay in this function so it runs in the same context as the
+; uninstaller: $1 and $2 come from HKCU when removing a per-user installation,
+; and acting on those user-controlled values from the elevated instance would
+; hand a non-admin user an admin-privileged file deletion.
 Function RunCrossModeUninstaller
   StrCpy $0 -1
   ExecWait '$1 /S /uninstall _?=$2' $0
+  ${If} $0 = 0
+    Delete "$2\Uninstall.exe"
+    RMDir "$2"
+  ${EndIf}
 FunctionEnd
 
 Section "-Remove previous installation"
@@ -400,9 +409,6 @@ Section "-Remove previous installation"
     ${EndIf}
     ${If} $0 <> 0
       DetailPrint "Warning: the existing installation could not be removed; continuing."
-    ${Else}
-      Delete "$2\Uninstall.exe"
-      RMDir "$2"
     ${EndIf}
   ${EndIf}
 
