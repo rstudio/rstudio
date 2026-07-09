@@ -35,9 +35,12 @@ core::Error validateIdentifier(const std::string& identifier,
                                 std::ostream& out,
                                 bool* pPassed);
 
-// Generates a CSPRNG-sourced password using a SQL-literal-safe charset
-// (excludes ' " \ ;), at least 24 characters.
-std::string generateServiceUserPassword();
+// Generates a password from an OpenSSL CSPRNG (core::system::crypto::random),
+// mapped via unbiased rejection sampling onto a SQL-literal-safe charset
+// (excludes ' " \ ;), at least 24 characters. Returns a non-Success Error
+// only if the underlying CSPRNG call fails (e.g. the system entropy source
+// is unavailable).
+core::Error generateServiceUserPassword(std::string* pPassword);
 
 // Resolves the master password in order of precedence: masterPasswordFile (its
 // first line), then the RSERVER_SETUP_DB_MASTER_PASSWORD environment variable,

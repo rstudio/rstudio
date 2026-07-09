@@ -18,20 +18,22 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <random>
 #include <regex>
 #include <sstream>
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
 
 #include <boost/system/error_code.hpp>
 
 #include <core/Database.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Settings.hpp>
 #include <core/system/Xdg.hpp>
 #include <server_core/DatabaseConstants.hpp>
 #include <server_core/ServerDatabaseOverlay.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/system/Crypto.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
@@ -100,15 +102,16 @@ FilePath resolveDatabaseConfigFile(const std::string& databaseConfigFile)
 }
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
-// overwriting anything already there. Used for both database.conf (default
-// mode) and the standalone credentials file (--print-only mode); the two
-// differ only in destination and messaging, not format.
-Error writeConnectionSettingsFile(const FilePath& path,
-                                   const std::string& host,
-                                   const std::string& port,
-                                   const std::string& dbName,
-                                   const std::string& dbUser,
-                                   const std::string& password)
+// overwriting anything already there. Used only for the standalone
+// --print-only credentials file: it has no other keys worth preserving, and
+// may be stale from a previous run, so a fresh write is the right behavior
+// there (unlike database.conf -- see mergeWriteDatabaseConfigFile below).
+Error writeCredentialsFileFresh(const FilePath& path,
+                                 const std::string& host,
+                                 const std::string& port,
+                                 const std::string& dbName,
+                                 const std::string& dbUser,
+                                 const std::string& password)
 {
    std::ostringstream contents;
    contents << "provider=postgresql" << std::endl
@@ -129,6 +132,40 @@ Error writeConnectionSettingsFile(const FilePath& path,
    return path.changeFileMode(core::FileMode::USER_READ_WRITE);
 }
 
+// Loads any existing database.conf at `path` (a missing file is not an
+// error -- Settings::initialize() starts from an empty map), sets the six
+// connection keys, and writes it back -- preserving any other keys the
+// admin had already configured there rather than clobbering the whole file.
+// Settings doesn't set file permissions on write, so 0600 is applied
+// afterward to match writeCredentialsFileFresh's behavior.
+Error mergeWriteDatabaseConfigFile(const FilePath& path,
+                                    const std::string& host,
+                                    const std::string& port,
+                                    const std::string& dbName,
+                                    const std::string& dbUser,
+                                    const std::string& password)
+{
+   Error error = path.getParent().ensureDirectory();
+   if (error)
+      return error;
+
+   Settings settings;
+   error = settings.initialize(path);
+   if (error)
+      return error;
+
+   settings.beginUpdate();
+   settings.set("provider", "postgresql");
+   settings.set("host", host);
+   settings.set("port", port);
+   settings.set("database", dbName);
+   settings.set("username", dbUser);
+   settings.set("password", password);
+   settings.endUpdate();
+
+   return path.changeFileMode(core::FileMode::USER_READ_WRITE);
+}
+
 } // anonymous namespace
 
 Error validateIdentifier(const std::string& identifier, std::ostream& out, bool* pPassed)
@@ -144,18 +181,38 @@ Error validateIdentifier(const std::string& identifier, std::ostream& out, bool*
    return Success();
 }
 
-std::string generateServiceUserPassword()
+Error generateServiceUserPassword(std::string* pPassword)
 {
-   std::random_device rd;
-   std::mt19937_64 generator(rd());
-   std::uniform_int_distribution<size_t> distribution(0, kPasswordCharset.size() - 1);
+   const int kLength = 32;
+   const int kCharsetSize = static_cast<int>(kPasswordCharset.size());
 
-   std::string password;
-   const size_t kLength = 32;
-   password.reserve(kLength);
-   for (size_t i = 0; i < kLength; ++i)
-      password += kPasswordCharset[distribution(generator)];
-   return password;
+   // byte % kCharsetSize is biased toward the low end of the charset
+   // whenever 256 isn't an exact multiple of kCharsetSize, so reject any
+   // byte at or above the highest multiple of kCharsetSize below 256.
+   // Computed as int (not unsigned char) so this stays correct even if
+   // kCharsetSize is ever changed to a value that evenly divides 256.
+   const int kRejectionThreshold = 256 - (256 % kCharsetSize);
+
+   pPassword->clear();
+   pPassword->reserve(kLength);
+
+   while (static_cast<int>(pPassword->size()) < kLength)
+   {
+      std::vector<unsigned char> randomBytes;
+      Error error = core::system::crypto::random(kLength, randomBytes);
+      if (error)
+         return error;
+
+      for (unsigned char byte : randomBytes)
+      {
+         if (static_cast<int>(pPassword->size()) >= kLength)
+            break;
+         if (static_cast<int>(byte) < kRejectionThreshold)
+            *pPassword += kPasswordCharset[byte % kCharsetSize];
+      }
+   }
+
+   return Success();
 }
 
 Error resolveMasterPassword(const std::string& masterPasswordFile,
@@ -357,7 +414,17 @@ Error setupDb(const Options& options,
    // password is never actually applied to the (pre-existing) role.
    bool userAlreadyExists = rowExists(pMasterConnection,
       "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'");
-   std::string generatedPassword = userAlreadyExists ? std::string() : generateServiceUserPassword();
+   std::string generatedPassword;
+   if (!userAlreadyExists)
+   {
+      error = generateServiceUserPassword(&generatedPassword);
+      if (error)
+      {
+         out << "[FAIL] Could not generate service user password: " << error.getSummary() << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
 
    bool userCreated = false;
    error = createDatabaseAndUser(pMasterConnection, masterConnectionOptions,
@@ -376,9 +443,9 @@ Error setupDb(const Options& options,
    if (flags.printOnly)
    {
       FilePath credentialsPath = FilePath("./rserver-setup-db-credentials");
-      error = writeConnectionSettingsFile(credentialsPath, masterConnectionOptions.host,
-                                           masterConnectionOptions.port, dbName, dbUser,
-                                           generatedPassword);
+      error = writeCredentialsFileFresh(credentialsPath, masterConnectionOptions.host,
+                                         masterConnectionOptions.port, dbName, dbUser,
+                                         generatedPassword);
       if (error)
       {
          out << "[FAIL] Could not write credentials file: " << error.getSummary() << std::endl;
@@ -393,9 +460,9 @@ Error setupDb(const Options& options,
    else
    {
       FilePath configPath = resolveDatabaseConfigFile(options.databaseConfigFile());
-      error = writeConnectionSettingsFile(configPath, masterConnectionOptions.host,
-                                           masterConnectionOptions.port, dbName, dbUser,
-                                           generatedPassword);
+      error = mergeWriteDatabaseConfigFile(configPath, masterConnectionOptions.host,
+                                            masterConnectionOptions.port, dbName, dbUser,
+                                            generatedPassword);
       if (error)
       {
          out << "[FAIL] Could not write connection settings: " << error.getSummary() << std::endl;

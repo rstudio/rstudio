@@ -62,7 +62,9 @@ TEST(ServerSetupDbTests, AcceptsIdentifierWithHyphenAfterLeadingChar)
 
 TEST(ServerSetupDbTests, GeneratesPasswordWithSafeCharsetAndLength)
 {
-   std::string password = generateServiceUserPassword();
+   std::string password;
+   Error error = generateServiceUserPassword(&password);
+   EXPECT_FALSE(error);
    EXPECT_GE(password.size(), 24u);
    EXPECT_EQ(std::string::npos, password.find('\''));
    EXPECT_EQ(std::string::npos, password.find('"'));
@@ -72,9 +74,15 @@ TEST(ServerSetupDbTests, GeneratesPasswordWithSafeCharsetAndLength)
 
 TEST(ServerSetupDbTests, GeneratesDifferentPasswordsEachCall)
 {
-   // Not a rigorous randomness test -- just a sanity check that the CSPRNG
-   // seed isn't accidentally fixed.
-   EXPECT_NE(generateServiceUserPassword(), generateServiceUserPassword());
+   // Not a rigorous randomness test -- just a sanity check that the OpenSSL
+   // CSPRNG isn't accidentally producing the same output every call.
+   std::string password1;
+   std::string password2;
+   Error error1 = generateServiceUserPassword(&password1);
+   Error error2 = generateServiceUserPassword(&password2);
+   EXPECT_FALSE(error1);
+   EXPECT_FALSE(error2);
+   EXPECT_NE(password1, password2);
 }
 
 TEST(ServerSetupDbTests, ResolveMasterPasswordPrefersFileOverEnvAndPrompt)
