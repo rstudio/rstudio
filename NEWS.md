@@ -3,6 +3,7 @@
 ### New
 
 ### Fixed
+- ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
 
 ### Dependencies
 - Ace 1.43.5
