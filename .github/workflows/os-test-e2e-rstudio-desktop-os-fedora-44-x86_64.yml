@@ -523,6 +523,20 @@ jobs:
           # is what PW_HEARTBEAT_TIMEOUT_SECONDS below was papering over.
           install-required-packages: 'true'
 
+      # Run the tests as a non-root user, matching the bare-runner siblings
+      # (Ubuntu/macOS/Windows all execute as a non-root user). GHA container
+      # jobs default to root, and RStudio-as-root diverges from real usage:
+      # Chromium refuses its sandbox as root, the terminal gets a root shell,
+      # and rsession warns. All the setup above needs root (dnf, the .rpm
+      # install, cache writes), so only the test step drops down -- create the
+      # user here and hand it ownership of everything the run writes under the
+      # workspace (R-libs and its per-worker clones, ms-playwright, pw-sandbox,
+      # the pak cache, and the report dirs under e2e/rstudio).
+      - name: Create non-root test user
+        run: |
+          useradd -m -s /bin/bash rstudio-tester
+          chown -R rstudio-tester:rstudio-tester "$GITHUB_WORKSPACE"
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -536,15 +550,14 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
-          # Always launch with --no-sandbox in this container. Electron's
-          # Chromium sandbox needs an unprivileged user namespace, which the
-          # bare-runner Ubuntu jobs enable via a host sysctl -- unreachable from
-          # inside this fedora:44 container, so the sandbox can't initialize and
-          # RStudio starts but never opens its --remote-debugging-port (CDP
-          # connect gets ECONNREFUSED). The container is already the isolation
-          # boundary here, so disabling the in-process sandbox is safe. Any
-          # caller-supplied rstudio_extra_args are appended.
-          PW_RSTUDIO_EXTRA_ARGS: --no-sandbox ${{ inputs.rstudio_extra_args }}
+          # No --no-sandbox: the test step runs as a non-root user (see the
+          # "Create non-root test user" step and the setpriv drop below), so
+          # Chromium no longer refuses to start, and the container's SYS_ADMIN +
+          # unconfined seccomp let its namespace sandbox initialize -- matching
+          # how the bare-runner siblings run (sandbox on). If a future runner
+          # kernel forbids unprivileged user namespaces and the sandbox can't
+          # come up, set rstudio_extra_args to '--no-sandbox' as a fallback.
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
@@ -606,7 +619,18 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          # Drop to the non-root user for the run itself. setpriv execs in
+          # place (no fork), so a job-cancellation SIGTERM still reaches node
+          # directly and the watchdog's SIGINT->SIGKILL path is preserved --
+          # runuser/su would fork and swallow the signal. --init-groups adopts
+          # the user's groups; the environment is left intact (DISPLAY, PW_*,
+          # PATH, R_LIBS_USER all carry through), and we only override HOME,
+          # since the step's HOME is root-owned and node/Playwright write into
+          # it. Xvfb keeps running as root above; -ac lets the non-root Chromium
+          # attach to :99 without an auth cookie.
+          exec setpriv --reuid=rstudio-tester --regid=rstudio-tester --init-groups \
+            env HOME=/home/rstudio-tester \
+            node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       # Platform-prefixed artifact name keeps this Fedora Desktop platform's
       # shard reports separate from the other platforms (mac / win /
