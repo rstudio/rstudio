@@ -500,13 +500,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
-    getEnableSplashScreen: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_enable_splash_screen')
-        .then((enabled) => callback(enabled))
-        .catch((error) => reportIpcError('getEnableSplashScreen', error));
-    },
-
     setEnableSplashScreen: (enable: boolean) => {
       ipcRenderer.send('desktop_set_enable_splash_screen', enable);
     },
