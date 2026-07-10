@@ -1933,7 +1933,31 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    entry["path"] = aliasedPath;
    if (aliasedPath != rawPath)
       entry["raw_path"] = rawPath;
-   entry["dir"] = fileInfo.isDirectory();
+
+   bool isDir = fileInfo.isDirectory();
+
+#ifdef __APPLE__
+   // Finder aliases are regular files rather than symlinks, so the
+   // filesystem doesn't resolve them for us; surface the resolved target
+   // (and its directory-ness) so the client can follow them (#18158).
+   // Unresolvable aliases fall back to plain-file behavior.
+   if (!isDir)
+   {
+      FilePath filePath(fileInfo.absolutePath());
+      if (isFinderAlias(filePath))
+      {
+         FilePath targetPath;
+         Error error = resolveFinderAlias(filePath, &targetPath);
+         if (!error && targetPath.exists())
+         {
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetPath.isDirectory();
+         }
+      }
+   }
+#endif
+
+   entry["dir"] = isDir;
 
    // length requires cast
    try

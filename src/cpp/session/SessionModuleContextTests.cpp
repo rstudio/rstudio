@@ -23,6 +23,13 @@
 #include <core/http/Request.hpp>
 #include <shared_core/FilePath.hpp>
 
+#ifdef __APPLE__
+# include <climits>
+# include <cstdlib>
+# include <unistd.h>
+# include <CoreFoundation/CoreFoundation.h>
+#endif
+
 namespace rstudio {
 namespace session {
 namespace module_context {
@@ -336,6 +343,217 @@ TEST_F(ShouldIgnoreOutputDirTest, UnbuiltSubdirIsIgnored)
    // ignored (isEquivalentTo returns false when a path is missing).
    EXPECT_TRUE(shouldIgnoreOutputDir(baseDir_, "_site_not_built"));
 }
+
+#ifdef __APPLE__
+
+// --- Finder aliases (#18158) -------------------------------------------------
+//
+// macOS Finder aliases are bookmark files, not symlinks. The fixture creates
+// real alias files through the CoreFoundation bookmark API -- the same data
+// Finder writes -- so these tests exercise genuine alias resolution.
+
+namespace {
+
+CFURLRef createCFURL(const core::FilePath& path, bool isDirectory)
+{
+   const std::string& absolutePath = path.getAbsolutePath();
+   return CFURLCreateFromFileSystemRepresentation(
+            kCFAllocatorDefault,
+            reinterpret_cast<const UInt8*>(absolutePath.c_str()),
+            absolutePath.size(),
+            isDirectory);
+}
+
+bool createFinderAlias(const core::FilePath& targetPath,
+                       const core::FilePath& aliasPath)
+{
+   CFURLRef targetUrl = createCFURL(targetPath, targetPath.isDirectory());
+   if (targetUrl == nullptr)
+      return false;
+
+   CFDataRef bookmark = CFURLCreateBookmarkData(
+            kCFAllocatorDefault,
+            targetUrl,
+            kCFURLBookmarkCreationSuitableForBookmarkFile,
+            nullptr,
+            nullptr,
+            nullptr);
+   CFRelease(targetUrl);
+   if (bookmark == nullptr)
+      return false;
+
+   CFURLRef aliasUrl = createCFURL(aliasPath, false);
+   bool written = aliasUrl != nullptr &&
+                  CFURLWriteBookmarkDataToFile(bookmark, aliasUrl, 0, nullptr);
+   if (aliasUrl != nullptr)
+      CFRelease(aliasUrl);
+   CFRelease(bookmark);
+   return written;
+}
+
+} // anonymous namespace
+
+class FinderAliasTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      core::FilePath tempPath;
+      core::Error error = core::FilePath::tempFilePath(tempPath);
+      ASSERT_FALSE(error) << error.asString();
+      error = tempPath.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+
+      // canonicalize (/var -> /private/var) so fixture paths compare equal
+      // to resolved alias targets, which come back canonicalized
+      char realPath[PATH_MAX];
+      ASSERT_NE(nullptr,
+                ::realpath(tempPath.getAbsolutePath().c_str(), realPath));
+      baseDir_ = core::FilePath(realPath);
+
+      targetFile_ = baseDir_.completeChildPath("target.txt");
+      error = targetFile_.ensureFile();
+      ASSERT_FALSE(error) << error.asString();
+
+      targetDir_ = baseDir_.completeChildPath("target-dir");
+      error = targetDir_.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+   }
+
+   void TearDown() override
+   {
+      baseDir_.removeIfExists();
+   }
+
+   core::FilePath makeAlias(const core::FilePath& targetPath,
+                            const std::string& name)
+   {
+      core::FilePath aliasPath = baseDir_.completeChildPath(name);
+      EXPECT_TRUE(createFinderAlias(targetPath, aliasPath));
+      return aliasPath;
+   }
+
+   core::FilePath baseDir_;
+   core::FilePath targetFile_;
+   core::FilePath targetDir_;
+};
+
+TEST_F(FinderAliasTest, DetectsAliasToFile)
+{
+   core::FilePath alias = makeAlias(targetFile_, "file-alias");
+   EXPECT_TRUE(isFinderAlias(alias));
+}
+
+TEST_F(FinderAliasTest, DetectsAliasToDirectory)
+{
+   core::FilePath alias = makeAlias(targetDir_, "dir-alias");
+   EXPECT_TRUE(isFinderAlias(alias));
+}
+
+TEST_F(FinderAliasTest, RegularFileIsNotAlias)
+{
+   EXPECT_FALSE(isFinderAlias(targetFile_));
+}
+
+TEST_F(FinderAliasTest, DirectoryIsNotAlias)
+{
+   EXPECT_FALSE(isFinderAlias(targetDir_));
+}
+
+TEST_F(FinderAliasTest, SymlinkIsNotAlias)
+{
+   // symlinks already navigate correctly (the filesystem follows them);
+   // they must not be reported as aliases even though NSURLIsAliasFileKey
+   // is true for both
+   core::FilePath link = baseDir_.completeChildPath("symlink");
+   ASSERT_EQ(0, ::symlink(targetFile_.getAbsolutePath().c_str(),
+                          link.getAbsolutePath().c_str()));
+   EXPECT_FALSE(isFinderAlias(link));
+}
+
+TEST_F(FinderAliasTest, NonexistentPathIsNotAlias)
+{
+   EXPECT_FALSE(isFinderAlias(baseDir_.completeChildPath("does-not-exist")));
+}
+
+TEST_F(FinderAliasTest, ResolvesAliasToFile)
+{
+   core::FilePath alias = makeAlias(targetFile_, "file-alias");
+   core::FilePath target;
+   core::Error error = resolveFinderAlias(alias, &target);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(targetFile_.getAbsolutePath(), target.getAbsolutePath());
+}
+
+TEST_F(FinderAliasTest, ResolvesAliasToDirectory)
+{
+   core::FilePath alias = makeAlias(targetDir_, "dir-alias");
+   core::FilePath target;
+   core::Error error = resolveFinderAlias(alias, &target);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(targetDir_.getAbsolutePath(), target.getAbsolutePath());
+   EXPECT_TRUE(target.isDirectory());
+}
+
+TEST_F(FinderAliasTest, ResolveFailsWhenTargetDeleted)
+{
+   core::FilePath doomed = baseDir_.completeChildPath("doomed.txt");
+   core::Error error = doomed.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+   core::FilePath alias = makeAlias(doomed, "doomed-alias");
+   error = doomed.remove();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::FilePath target;
+   error = resolveFinderAlias(alias, &target);
+   EXPECT_TRUE(static_cast<bool>(error));
+}
+
+// --- createFileSystemItem alias contract -------------------------------------
+//
+// The Files pane decides navigate-vs-open from 'dir' and substitutes
+// 'alias_target' for the clicked path, so a directory alias must carry the
+// target's directory-ness, not the alias file's.
+
+TEST_F(FinderAliasTest, FileSystemItemForDirectoryAlias)
+{
+   core::FilePath alias = makeAlias(targetDir_, "dir-alias");
+   core::json::Object item = createFileSystemItem(alias);
+   EXPECT_TRUE(item["dir"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(targetDir_.getAbsolutePath(), item["alias_target"].getString());
+}
+
+TEST_F(FinderAliasTest, FileSystemItemForFileAlias)
+{
+   core::FilePath alias = makeAlias(targetFile_, "file-alias");
+   core::json::Object item = createFileSystemItem(alias);
+   EXPECT_FALSE(item["dir"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(targetFile_.getAbsolutePath(), item["alias_target"].getString());
+}
+
+TEST_F(FinderAliasTest, FileSystemItemForRegularFileHasNoAliasTarget)
+{
+   core::json::Object item = createFileSystemItem(targetFile_);
+   EXPECT_FALSE(item.hasMember("alias_target"));
+}
+
+TEST_F(FinderAliasTest, FileSystemItemForBrokenAliasHasNoAliasTarget)
+{
+   core::FilePath doomed = baseDir_.completeChildPath("doomed.txt");
+   core::Error error = doomed.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+   core::FilePath alias = makeAlias(doomed, "doomed-alias");
+   error = doomed.remove();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::json::Object item = createFileSystemItem(alias);
+   EXPECT_FALSE(item.hasMember("alias_target"));
+   EXPECT_FALSE(item["dir"].getBool());
+}
+
+#endif // __APPLE__
 
 } // namespace tests
 } // namespace module_context
