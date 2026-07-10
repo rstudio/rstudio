@@ -12,7 +12,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand, waitForActiveDocument } from '@utils/commands';
+import { documentCloseAllNoSave, executeCommand, waitForActiveDocument } from '@utils/commands';
 import {
   createFinderAliasFixture,
   removeFinderAliasFixture,
@@ -77,5 +77,35 @@ test.describe('Files pane follows macOS Finder aliases @desktop_only', () => {
 
     // the open command must act on the resolved target, not the alias
     await waitForActiveDocument(page, `~/${fx.targetDocName}`, 15000);
+  });
+
+  test('opening an alias and its target in columns opens one column', async ({ rstudioPage: page }) => {
+    // an alias and its target resolve to the same document; without
+    // dedupe by resolved path, columns mode opened an extra, empty
+    // source column for the duplicate
+    for (const name of [fx.fileAliasName, fx.targetDocName]) {
+      const row = page.locator('tr', { has: page.locator(`div[title="${name}"]`) });
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.locator('input[type="checkbox"]').check();
+    }
+    await executeCommand(page, 'openEachFileInColumns');
+    await waitForActiveDocument(page, `~/${fx.targetDocName}`, 15000);
+
+    // exactly the main source pane plus one new column
+    await expect
+      .poll(
+        () => page.evaluate(() => document.querySelectorAll("[class*='rstudio_source_panel']").length),
+        { timeout: 15000 },
+      )
+      .toBe(2);
+
+    // closing the document also removes the added column
+    await documentCloseAllNoSave(page);
+    await expect
+      .poll(
+        () => page.evaluate(() => document.querySelectorAll("[class*='rstudio_source_panel']").length),
+        { timeout: 15000 },
+      )
+      .toBe(1);
   });
 });
