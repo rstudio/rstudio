@@ -5,7 +5,7 @@ def labelForOS = [
   'rhel8':      'linux',
   'rhel9':      'linux',
   'opensuse15': 'linux',
-  'windows':    'windows',
+  'windows':    'windows2022',
   'macos':      'macos'
 ]
 
