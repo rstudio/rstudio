@@ -689,6 +689,17 @@ Function .onInit
   ;
   ${If} $HasPerMachineInstallation = 0
     ReadRegStr $R0 HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "UninstallString"
+    ReadRegStr $R2 HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "DisplayVersion"
+    ${If} $R0 == ""
+      ; NsisMultiUser switched this process to the 64-bit registry view
+      ; (MULTIUSER_INSTALLMODE_64_BIT), but the legacy installers were 32-bit
+      ; NSIS without SetRegView, so WOW64 redirected their registration to
+      ; WOW6432Node - visible only in the 32-bit view
+      SetRegView 32
+      ReadRegStr $R0 HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "UninstallString"
+      ReadRegStr $R2 HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "DisplayVersion"
+      SetRegView lastused
+    ${EndIf}
     ${If} $R0 != ""
       ; the legacy value is an unquoted uninstaller path with no arguments;
       ; unquote defensively, then derive the install folder from it
@@ -704,7 +715,7 @@ Function .onInit
       ${If} $R1 != ""
         StrCpy $PerMachineUninstallString '"$R0"'
         StrCpy $PerMachineInstallationFolder $R1
-        ReadRegStr $PerMachineInstallationVersion HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "DisplayVersion"
+        StrCpy $PerMachineInstallationVersion $R2
         StrCpy $HasPerMachineInstallation 1
         ; in silent runs InstallMode.AllUsers already ran during
         ; MULTIUSER_INIT with the un-backfilled values (and it returns early
