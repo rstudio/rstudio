@@ -101,4 +101,17 @@ test.describe('Files pane follows macOS Finder aliases @desktop_only', () => {
     // The editor must land on the resolved target document, not the alias.
     await waitForActiveDocument(page, `~/${targetDocName}`, 15000);
   });
+
+  test('open command on a selected file alias opens the target file', async ({ rstudioPage: page }) => {
+    const aliasRow = page.locator(`div[title="${fileAliasName}"]`);
+    await expect(aliasRow).toBeVisible({ timeout: 15000 });
+
+    // select via the row checkbox -- clicking the name would navigate instead
+    const row = page.locator('tr', { has: aliasRow });
+    await row.locator('input[type="checkbox"]').check();
+    await executeCommand(page, 'openFilesInSinglePane');
+
+    // the open command must act on the resolved target, not the alias
+    await waitForActiveDocument(page, `~/${targetDocName}`, 15000);
+  });
 });

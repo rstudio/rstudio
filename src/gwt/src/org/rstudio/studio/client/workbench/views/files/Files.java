@@ -788,8 +788,11 @@ public class Files
 
       // pre-process to make sure there aren't any directories, and that already-open files do not count
       // towards the column limit. Take notebooks out for additional processing.
-      for (FileSystemItem item : view_.getSelectedFiles()) 
+      for (FileSystemItem selected : view_.getSelectedFiles())
       {
+         // follow macOS Finder aliases so open commands act on the target;
+         // a directory alias then skips like any other directory
+         FileSystemItem item = selected.resolveAliasTarget();
          if (!item.isDirectory() && !mgr.openFileAlreadyOpen(item, null))
          {
             TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(item);
