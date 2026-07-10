@@ -554,6 +554,11 @@ export class SessionLauncher {
       return false;
     }
 
+    // User preference to disable the What's New window
+    if (!ElectronDesktopOptions().showWhatsNew()) {
+      return false;
+    }
+
     // Non-release builds don't auto-show
     if (!isReleaseBuild(info.RSTUDIO_VERSION)) {
       return false;

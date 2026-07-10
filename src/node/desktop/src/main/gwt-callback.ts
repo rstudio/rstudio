@@ -870,6 +870,10 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setEnableSplashScreen(enable);
     });
 
+    ipcMain.on('desktop_set_show_whats_new', (_event, enable) => {
+      ElectronDesktopOptions().setShowWhatsNew(enable);
+    });
+
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);

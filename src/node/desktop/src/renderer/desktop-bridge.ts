@@ -511,6 +511,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_splash_screen', enable);
     },
 
+    setShowWhatsNew: (enable: boolean) => {
+      ipcRenderer.send('desktop_set_show_whats_new', enable);
+    },
+
     setAutohideMenubar: (enable: boolean) => {
       ipcRenderer.send('desktop_set_autohide_menubar', enable);
     },

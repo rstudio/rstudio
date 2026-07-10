@@ -1430,6 +1430,12 @@
             "title": "Show splash screen when RStudio is starting",
             "description": "Whether to show the splash screen when RStudio is starting."
         },
+        "show_whats_new": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show the What's New window automatically after updating RStudio",
+            "description": "Whether to automatically show the What's New window after updating to a new version of RStudio Desktop."
+        },
         "default_r_version": {
             "type": "object",
             "properties": {
