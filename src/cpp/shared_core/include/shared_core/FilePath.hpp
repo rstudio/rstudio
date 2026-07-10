@@ -821,6 +821,18 @@ public:
    FilePath resolveSymlink() const;
 
    /**
+    * @brief Reads the target of this symbolic link, reporting read failures.
+    *
+    * Unlike resolveSymlink(), which silently returns this path when the link cannot be read, this reports an
+    * error instead. The target is returned verbatim, as stored in the link, so it may be a relative path.
+    *
+    * @param out_targetPath  The raw link target. Set only on success.
+    *
+    * @return Success if the link target was read; an error otherwise (including if this path is not a symlink).
+    */
+   Error readSymlink(std::string& out_targetPath) const;
+
+   /**
     * @brief Sets the last time that this file was modified to the specified time.
     *
     * @param in_time    The time to which to set the last write time of this file. Default: now.

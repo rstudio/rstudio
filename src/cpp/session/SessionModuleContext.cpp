@@ -1926,6 +1926,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry;
 
+   FilePath filePath(fileInfo.absolutePath());
+
    std::string aliasedPath = module_context::createAliasedPath(fileInfo);
    std::string rawPath =
       module_context::resolveAliasedPath(aliasedPath).getAbsolutePath();
@@ -1936,6 +1938,22 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 
    bool isDir = fileInfo.isDirectory();
 
+   // report symbolic-link status so the client can badge links (#9924). This
+   // adds one is_symlink (lstat-equivalent) call per entry; the target is read
+   // verbatim (ls -l style, possibly relative) only for actual symlinks and
+   // drives the client tooltip.
+   bool isSymlink = filePath.isSymlink();
+   entry["is_symlink"] = isSymlink;
+   if (isSymlink)
+   {
+      std::string symlinkTarget;
+      Error error = filePath.readSymlink(symlinkTarget);
+      if (error)
+         LOG_DEBUG_MESSAGE("Failed to read symlink target: " + error.asString());
+      else
+         entry["symlink_target"] = symlinkTarget;
+   }
+
 #ifdef __APPLE__
    // Finder aliases are regular files rather than symlinks, so the
    // filesystem doesn't resolve them for us; surface the resolved target
@@ -1943,9 +1961,13 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    // Unresolvable aliases fall back to plain-file behavior.
    if (!isDir)
    {
-      FilePath filePath(fileInfo.absolutePath());
       if (isFinderAlias(filePath))
       {
+         // flag the alias for the link badge (#9924) whether or not the target
+         // resolves, so even a broken alias is indicated (alias_target, which
+         // drives navigation, is only set when resolution succeeds)
+         entry["is_alias"] = true;
+
          FilePath targetPath;
          Error error = resolveFinderAlias(filePath, &targetPath);
          if (error)
@@ -1977,8 +1999,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
                         e.what());
       entry["length"] = 0;
    }
-   
-   entry["exists"] = FilePath(fileInfo.absolutePath()).exists();
+
+   entry["exists"] = filePath.exists();
 
    entry["lastModified"] = date_time::millisecondsSinceEpoch(
                                                    fileInfo.lastWriteTime());

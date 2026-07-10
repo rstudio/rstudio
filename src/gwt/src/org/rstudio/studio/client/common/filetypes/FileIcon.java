@@ -67,8 +67,36 @@ public class FileIcon
 
    public FileIcon(ImageResource imageResource, String description)
    {
+      this(imageResource, description, null, null, null);
+   }
+
+   private FileIcon(ImageResource imageResource,
+                    String description,
+                    ImageResource badgeResource,
+                    String badgeDescription,
+                    String tooltip)
+   {
       imageResource_ = imageResource;
       description_ = description;
+      badgeResource_ = badgeResource;
+      badgeDescription_ = badgeDescription;
+      tooltip_ = tooltip;
+   }
+
+   // Returns a COPY of this icon decorated with a small corner badge (e.g. the
+   // symlink/alias indicator, #9924) and a per-file tooltip. Deliberately
+   // creates a new FileIcon rather than mutating this one: FileTypeRegistry
+   // returns shared singleton icons, so mutating one would leak the badge and
+   // the per-file tooltip onto every other row using the same icon.
+   public FileIcon withLinkBadge(ImageResource badgeResource,
+                                 String badgeDescription,
+                                 String tooltip)
+   {
+      return new FileIcon(imageResource_,
+                          description_,
+                          badgeResource,
+                          badgeDescription,
+                          tooltip);
    }
 
    public ImageResource getImageResource()
@@ -91,6 +119,24 @@ public class FileIcon
       description_ = description;
    }
 
+   // Optional corner badge composited over the icon; null for an ordinary icon.
+   public ImageResource getBadgeResource()
+   {
+      return badgeResource_;
+   }
+
+   // Accessible description for the badge (e.g. "Symbolic link"); null when no badge.
+   public String getBadgeDescription()
+   {
+      return badgeDescription_;
+   }
+
+   // Optional hover tooltip for the whole icon (e.g. "name -> target"); null when none.
+   public String getTooltip()
+   {
+      return tooltip_;
+   }
+
    public Image getImage()
    {
       Image icon = new Image(getImageResource());
@@ -99,5 +145,8 @@ public class FileIcon
    }
    private ImageResource imageResource_;
    private String description_;
+   private final ImageResource badgeResource_;
+   private final String badgeDescription_;
+   private final String tooltip_;
 }
 

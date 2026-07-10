@@ -34,6 +34,9 @@ public interface FileIconResources extends ClientBundle
    @Source("iconUpFolder_2x.png")
    ImageResource iconUpFolder2x();
 
+   @Source("iconLinkBadge_2x.png")
+   ImageResource iconLinkBadge2x();
+
    @Source("iconPdf_2x.png")
    ImageResource iconPdf2x();
 
